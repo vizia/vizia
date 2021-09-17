@@ -1,2 +1,2 @@
-# VISIA
+# VIZIA
 Coming soon...
