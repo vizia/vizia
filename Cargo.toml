@@ -8,3 +8,8 @@ description = "A Rust GUI Framework"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+femtovg = "0.2.5"
+morphorm = {git = "https://github.com/geom3trik/morphorm"}
+glutin = "0.27.0"
+bitflags = "1.3.2"
+keyboard-types = "0.6.1"
