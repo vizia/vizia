@@ -4,7 +4,7 @@ mod label;
 pub use label::Label;
 
 mod stack;
-pub use stack::{HStack, VStack, NewStack};
+pub use stack::{HStack, VStack};
 
 mod button;
 pub use button::Button;

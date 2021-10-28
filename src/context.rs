@@ -1,6 +1,6 @@
-use std::{collections::{HashMap, VecDeque}, rc::Rc, sync::Arc};
+use std::{any::TypeId, collections::{HashMap, VecDeque}, rc::Rc, sync::Arc};
 
-use crate::{CachedData, ContainerHandler, Entity, Event, IdManager, MouseState, NodeHandler, State, StateData, StateID, Style, Tree, TreeExt};
+use crate::{CachedData, Entity, Event, IdManager, ModelData, MouseState, State, StateData, StateID, Style, Tree, TreeExt, ViewHandler};
 
 
 
@@ -9,10 +9,9 @@ pub struct Context {
     pub tree: Tree,
     pub current: Entity,
     pub count: usize,
-    pub containers: HashMap<Entity, Box<dyn ContainerHandler>>,
-    pub nodes: HashMap<Entity, Box<dyn NodeHandler>>,
-    pub container_builders: HashMap<Entity, Rc<dyn Fn(&mut Context)>>,
+    pub views: HashMap<Entity, Box<dyn ViewHandler>>,
     pub state: HashMap<StateID, Box<dyn StateData>>,
+    pub data: HashMap<TypeId, Box<dyn ModelData>>,
     pub event_queue: VecDeque<Event>,
     pub style: Style,
     pub cache: CachedData,

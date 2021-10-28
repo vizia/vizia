@@ -3,9 +3,9 @@ use vizia::*;
 fn main() {
 
     Application::new(|cx|{
-            HStack::new().build(cx, |cx| {
-                Label::new("Hello").build(cx);
-                Label::new("World").build(cx);
-            });
+        HStack::new(cx, |cx| {
+            Label::new(cx, "Hello");
+            Label::new(cx, "World");
+        });
     }).run();
 }

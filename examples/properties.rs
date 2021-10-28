@@ -3,15 +3,15 @@ use vizia::*;
 fn main() {
 
     Application::new(|cx|{
-        HStack::new().build(cx, |cx| {
+        HStack::new(cx, |cx| {
             let hello = "hello".to_string();
             let world = "world".to_string();
-            Label::new(&hello).build(cx);
-            Label::new(&world).build(cx);
+            Label::new(cx, &hello);
+            Label::new(cx, &world);
 
-            HStack::new().build(cx, move |cx| {
-                Label::new(&hello).build(cx);
-                Label::new(&world).build(cx);
+            HStack::new(cx, move |cx| {
+                Label::new(cx, &hello);
+                Label::new(cx, &world);
             });
         });
     }).run();

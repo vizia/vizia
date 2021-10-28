@@ -2,37 +2,32 @@ use vizia::*;
 
 fn main() {
 
-Application::new(|cx|{
-        VStack::new().build(cx, |cx| {
-            HelloView::new("Hello").build(cx, |cx| {
-                WorldView::new("World").build(cx, |cx|{
-                    Binding::new(HelloView::value).build(cx, |cx, hello|{
-                        Binding::new(WorldView::value).build(cx, |cx, world|{
-                            Label::new(&format!("{} {}", hello.get(cx), world.get(cx))).build(cx);
-                            Button::new(move |cx| hello.set(cx, |v| *v = "Goodbye".to_string())).build(cx, |cx| {});
-                        })
-                    });
-                })
+    Application::new(|cx|{
+        CustomData::new().build(cx);
+        
+        VStack::new(cx, |cx| {
+            Binding::new(cx, CustomData::value, |cx, data|{
+                Label::new(cx, &data.get(cx).to_string());
+                //Button::new(cx, |cx| data.set(cx, |val| val = "two".to_string()), |_|{});
             });
         });
-}).run();
+    }).run();
 }
 
-// Mutating the data in a binding causes all bound view to update and rebuild their bodies
 
-
-pub struct CustomView {
+#[derive(Lens)]
+pub struct CustomData {
     value: String,
 }
 
-impl CustomView {
+impl CustomData {
     pub fn new() -> Self {
         Self {
-            value: "one".to_string(),
+            value: "two".to_string(),
         }
     }
 }
 
-impl Model for CustomView {
+impl Model for CustomData {
 
 }

@@ -1,6 +1,6 @@
-use crate::{C, Color, MouseButton, StyleBuilder, WindowEvent};
+use crate::{Color, Handle, MouseButton, WindowEvent};
 
-use crate::{Container, Context, Entity, Event, N, Node, Stylable};
+use crate::{Context, Entity, Event, View};
 use crate::Units::*;
 
 
@@ -8,25 +8,36 @@ use crate::Units::*;
 
 pub struct Button {
     action: Option<Box<dyn Fn(&mut Context)>>,
+    label: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl Button {
-    pub fn new<F>(f: F) -> StyleBuilder<Self, C> 
-    where F: 'static + Fn(&mut Context)
+    pub fn new<'a, A, L>(cx: &'a mut Context, action: A, label: L) -> Handle<'a, Self>
+    where 
+        A: 'static + Fn(&mut Context),
+        L: 'static + Fn(&mut Context)
     {
-        StyleBuilder::new(Self {
-            action: Some(Box::new(f)),
-        }).width(Pixels(100.0)).height(Pixels(50.0)).background_color(Color::rgb(150,150,150))
+        Self {
+            action: Some(Box::new(action)),
+            label: Some(Box::new(label)),
+        }.build(cx).width(Pixels(100.0)).height(Pixels(50.0)).background_color(Color::rgb(150,150,150))
         
     }
 }
 
-impl Container for Button {
+impl View for Button {
     fn debug(&self, entity: Entity) -> String {
         format!("{} Button", entity)
     }
-    
-    fn on_event(&mut self, cx: &mut Context, event: &mut Event) {
+
+    fn body<'a>(&mut self, cx: &'a mut Context) {
+        if let Some(label) = self.label.take() {
+            (label)(cx);
+            self.label = Some(label);
+        }
+    }
+
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
@@ -48,8 +59,4 @@ impl Container for Button {
             }
         }
     }
-}
-
-impl Stylable for Button {
-    type Ret = N;
 }

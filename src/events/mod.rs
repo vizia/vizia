@@ -42,5 +42,5 @@ mod event;
 pub use event::{Event, Message, Propagation};
 
 mod event_handler;
-pub(crate) use event_handler::{ContainerHandler, NodeHandler};
+pub use event_handler::ViewHandler;
 

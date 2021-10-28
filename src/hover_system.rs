@@ -47,6 +47,8 @@ pub fn apply_hover(cx: &mut Context) {
             cx.cache.get_height(hovered_widget),
         );
 
+        cx.event_queue.push_back(Event::new(WindowEvent::MouseEnter).target(hovered_widget));
+        cx.event_queue.push_back(Event::new(WindowEvent::MouseLeave).target(cx.hovered));
 
         cx.hovered = hovered_widget;
     }

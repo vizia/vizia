@@ -1,30 +1,60 @@
 use vizia::*;
 
 fn main() {
-    List::new(TodoData::items).build(cx, |cx, item|{
-        Binding::new(TodoData::selected).build(cx, |cx, selected|{
-            HStack::new().background_color(
-                if selected {Color::red()} else {Color::blue()}
-            ).build(cx, |cx|{
-                Label::new(&item.text).build(cx);
-                Checkbox::new(item.completed).build(cx);
+    Application::new(|cx|{
+
+        TodoData {
+            items: vec![
+                    TodoItem {
+                        text: "Item 1".to_string(),
+                        completed: false,
+                    },
+
+                    TodoItem {
+                        text: "Item 2".to_string(),
+                        completed: true,
+                    }
+                ],
+            selected: 0,
+        }.build(cx);
+
+        List::new(cx, TodoData::items, |cx, index, item|{
+            
+            //let item = item.clone();
+            Binding::new(cx, TodoData::selected, move |cx, selected|{
+                let item = item.clone();
+                HStack::new(cx, move |cx|{
+                    let selected = *selected.get(cx);
+                    Label::new(cx, &item.get(cx).text.to_owned()).background_color(if selected == index {
+                        Color::green()
+                    } else {
+                        Color::blue()
+                    });
+                    Label::new(cx, &item.get(cx).completed.to_string());
+                });
             });
         });
-    });
-
-    Binding::new(TodoData::items).build(cx, |cx, items|{
-        HStack::new().build(cx, |cx|{
-            Button::new(|cx| items.get(cx))
-        });      
-    });
+    
+        // Binding::new(TodoData::items).build(cx, |cx, items|{
+        //     HStack::new().build(cx, |cx|{
+        //         Button::new(|cx| items.get(cx))
+        //     });      
+        // });
+    }).run();
 }
 
-struct TodoItem {
+#[derive(Lens, Clone)]
+pub struct TodoItem {
     text: String,
     completed: bool,
 }
 
-struct TodoData {
-    items: ObservableList<TodoItem>,
+#[derive(Lens)]
+pub struct TodoData {
+    items: Vec<TodoItem>,
     selected: usize,
+}
+
+impl Model for TodoData {
+
 }

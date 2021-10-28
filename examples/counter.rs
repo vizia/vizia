@@ -2,18 +2,18 @@ use vizia::*;
 
 fn main() {
     Application::new(|cx|{   
-        VStack::new().build(cx, |cx|{
+        VStack::new(cx, |cx|{
             
             let count = 0i32.build(cx);
 
-            Button::new(move |cx| count.set(cx, |c| *c += 1)).build(cx, |cx|{
-                Label::new("Increment").build(cx);
+            Button::new(cx, move |cx| {count.set(cx, |val| *val += 1)}, |cx|{
+                Label::new(cx, "Increment");
             });
-            Button::new(move |cx|  count.set(cx, |c| *c -= 1)).build(cx, |cx|{
-                Label::new("Decrement").build(cx);
+            Button::new(cx, move |cx|  count.set(cx, |val| *val -= 1), |cx|{
+                Label::new(cx, "Decrement");
             });
 
-            Label::new(&count.get(cx).to_string()).build(cx);
+            Label::new(cx, &count.get(cx).to_string());
         });  
     }).run();
 }

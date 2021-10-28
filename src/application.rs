@@ -2,8 +2,9 @@ use std::collections::{HashMap, VecDeque};
 
 use femtovg::{Align, Baseline, Canvas, Paint, Path, renderer::OpenGl};
 use glutin::{ContextBuilder, event_loop::{self, ControlFlow, EventLoop}, window::WindowBuilder};
+use morphorm::Cache;
 
-use crate::{CachedData, Context, Entity, Event, EventManager, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, WindowEvent, apply_hover};
+use crate::{CachedData, Color, Context, Entity, Event, EventManager, Handle, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, WindowEvent, apply_hover, style};
 
 static FONT: &[u8] = include_bytes!("Roboto-Regular.ttf");
 
@@ -15,17 +16,20 @@ impl Application {
     pub fn new<F>(func: F) -> Self
     where F: FnOnce(&mut Context)
     {
+
+        let mut cache = CachedData::default();
+        cache.add(Entity::root());
+
         let mut context = Context {
             entity_manager: IdManager::new(),
             tree: Tree::new(),
             current: Entity::root(),
             count: 0,
-            containers: HashMap::new(),
-            nodes: HashMap::new(),
-            container_builders: HashMap::new(),
+            views: HashMap::new(),
             state: HashMap::new(),  
+            data: HashMap::new(),
             style: Style::default(),
-            cache: CachedData::default(),
+            cache,
             event_queue: VecDeque::new(),
             mouse: MouseState::default(),
             hovered: Entity::root(),
@@ -36,12 +40,15 @@ impl Application {
 
         (func)(&mut context);
 
-        // for (id, _) in context.handlers.iter() {
-        //     println!("id: {}", id);
-        // }
         Self {
             context,
         }
+    }
+
+    pub fn background_color(mut self, color: Color) -> Self {
+        self.context.style.background_color.insert(Entity::root(), color);
+
+        self
     }
 
     pub fn run(self) {
@@ -65,16 +72,17 @@ impl Application {
         let dpi_factor = handle.window().scale_factor();
         let size = handle.window().inner_size();
 
+        let clear_color = context.style.background_color.get(Entity::root()).cloned().unwrap_or_default();
+
         canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
         canvas.clear_rect(
             0,
             0,
             size.width as u32,
             size.height as u32,
-            femtovg::Color::rgb(255, 80, 80),
+            clear_color.into(),
         );
 
-        context.cache.add(Entity::root());
         context
             .cache
             .set_width(Entity::root(), 800.0);
@@ -103,12 +111,13 @@ impl Application {
                 glutin::event::Event::RedrawRequested(_) => {
                     // Redraw here
                     //println!("Redraw");
+                    let clear_color = context.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
                     canvas.clear_rect(
                         0,
                         0,
                         size.width as u32,
                         size.height as u32,
-                        femtovg::Color::rgb(255, 80, 80),
+                        clear_color.into(),
                     );
                     for entity in context.tree.clone().into_iter() {
                         //println!("{}", debug(&mut context, entity));
@@ -193,10 +202,8 @@ impl Application {
 }
 
 fn debug(cx: &mut Context, entity: Entity) -> String {
-    if let Some(container) = cx.containers.get(&entity) {
-        container.debug(entity)
-    } else if let Some(node) = cx.nodes.get(&entity) {
-        node.debug(entity)
+    if let Some(view) = cx.views.get(&entity) {
+        view.debug(entity)
     } else {
         "None".to_string()
     }

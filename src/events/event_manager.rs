@@ -56,17 +56,13 @@ impl EventManager {
             // Direct
 
             // Send event to target
-            if let Some(mut container) = context.containers.remove(&event.target) {
-                container.on_event_(context, event);
+            if let Some(mut view) = context.views.remove(&event.target) {
+                view.event(context, event);
 
-                context.containers.insert(event.target, container);
+                context.views.insert(event.target, view);
 
-            } else if let Some(mut node) = context.nodes.remove(&event.target) {
-                node.on_event_(context, event);
-
-                context.nodes.insert(event.target, node);
             }
-            
+
             if event.consumed {
                 continue 'events;
             }
@@ -81,16 +77,12 @@ impl EventManager {
                     }
 
                     // Send event to all entities before the target
-                    if let Some(mut container) = context.containers.remove(&entity) {
-                        container.on_event_(context, event);
+                    if let Some(mut view) = context.views.remove(&entity) {
+                        view.event(context, event);
 
-                        context.containers.insert(entity, container);
+                        context.views.insert(entity, view);
                         
                         
-                    } else if let Some(mut node) = context.nodes.remove(&entity) {
-                        node.on_event_(context, event);
-
-                        context.nodes.insert(entity, node);
                     }
 
                     // Skip to the next event if the current event is consumed
