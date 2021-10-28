@@ -1,56 +1,21 @@
 use std::any::TypeId;
 use std::marker::PhantomData;
 
-use crate::{Context, Handle, Item, Lens, Store, View};
-use crate::Units::*;
-
-
-// pub struct List {
-//     num_items: usize,
-//     builder: Option<Box<dyn Fn(&mut Context, usize)>>,
-// }
-
-// impl List {
-//     pub fn new<'a,F>(cx: &'a mut Context, num_items: usize, item: F) -> Handle<'a, Self> 
-//     where F: 'static + Fn(&mut Context, usize),
-//     {
-//         Self {
-//             num_items,
-//             builder: Some(Box::new(item)),
-//         }.build(cx)
-//     }
-// }
-
-// impl View for List {
-//     fn body(&mut self, cx: &mut Context) 
-//     {
-//         if let Some(builder) = self.builder.take() {
-//             for i in 0..self.num_items {
-//                 (builder)(cx, i);
-//             }
-
-//             self.builder = Some(builder);
-//         }
-//     }
-// }
-
+use crate::{Context, Handle, Lens, Store, View};
 
 
 pub struct List<L,T: 'static> 
 where 
-    L: Lens,
-    <L as Lens>::Target: Clone + IntoIterator<Item = T>,
+    L: Lens<Target = Vec<T>>,
 {
     lens: L,
-    builder: Option<Box<dyn Fn(&mut Context, usize, Item<L,T>)>>,
+    builder: Option<Box<dyn Fn(&mut Context, usize, &T)>>,
 }
 
-impl<L: 'static + Lens, T> List<L,T> 
-where 
-    <L as Lens>::Target: Clone + IntoIterator<Item = T>,
+impl<L: 'static + Lens<Target = Vec<T>>, T> List<L,T>
 {
-    pub fn new<'b,F>(cx: &'b mut Context, lens: L, item: F) -> Handle<'b, Self> 
-    where F: 'static + Fn(&mut Context, usize, Item<L,T>),
+    pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<'_, Self> 
+    where F: 'static + Fn(&mut Context, usize, &T),
     {
         Self {
             lens,
@@ -59,27 +24,29 @@ where
     }
 }
 
-impl<L: 'static + Lens, T> View for List<L,T> 
-where 
-    <L as Lens>::Target: Clone + IntoIterator<Item = T>,
+impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L,T> 
 {
     fn body(&mut self, cx: &mut Context) 
     {
         if let Some(builder) = self.builder.take() {
-            // for i in 0..self.num_items {
-            //     (builder)(cx, i);
-            // }
 
-            if let Some(store) = cx.data.get(&TypeId::of::<L::Source>()).and_then(|model| model.downcast_ref::<Store<L::Source>>()) {
-                let list_data = self.lens.view(&store.data);
-                for (index, item) in list_data.clone().into_iter().enumerate() {
-                    (builder)(cx, index, Item {
-                        lens: self.lens.clone(),
-                        index,
-                        p: PhantomData::default(),
-                    });
+            if let Some(model) = cx.data.remove(&TypeId::of::<L::Source>()) {
+                if let Some(store) = model.downcast_ref::<Store<L::Source>>() {
+                    let list_data = self.lens.view(&store.data);
+                    for (index, item) in list_data.iter().enumerate() {
+                        (builder)(cx, index, item);
+                    }
                 }
+
+                cx.data.insert(TypeId::of::<L::Source>(), model);
             }
+
+            // if let Some(store) = cx.data.get(&TypeId::of::<L::Source>()).and_then(|model| model.downcast_ref::<Store<L::Source>>()) {
+            //     let list_data = self.lens.view(&store.data);
+            //     for (index, item) in list_data.iter().enumerate() {
+            //         (builder)(cx, index, item);
+            //     }
+            // }
 
             self.builder = Some(builder);
         }

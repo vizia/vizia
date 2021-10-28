@@ -2,6 +2,8 @@ use std::{any::TypeId, marker::PhantomData};
 
 use vizia::*;
 
+// WARNING - This example does not currently work
+
 fn main() {
     Application::new(|cx|{
         GameData::new().build(cx);
