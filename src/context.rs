@@ -1,8 +1,14 @@
-use std::{any::TypeId, collections::{HashMap, VecDeque}, rc::Rc, sync::Arc};
+use std::{
+    any::TypeId,
+    collections::{HashMap, VecDeque},
+    rc::Rc,
+    sync::Arc,
+};
 
-use crate::{CachedData, Entity, Event, IdManager, ModelData, MouseState, State, StateData, StateID, Style, Tree, TreeExt, ViewHandler};
-
-
+use crate::{
+    CachedData, Entity, Event, IdManager, ModelData, MouseState, State, StateData, StateID, Store,
+    Style, Tree, TreeExt, ViewHandler,
+};
 
 pub struct Context {
     pub entity_manager: IdManager<Entity>,
@@ -21,7 +27,6 @@ pub struct Context {
     pub hovered: Entity,
 
     pub state_count: u32,
-    
     //pub data: HashMap<u32, Box<dyn Model>>,
     //pub handlers: HashMap<i32, Box<dyn View>>,
 }
@@ -37,5 +42,13 @@ impl Context {
             //self.style.remove(*entity); TODO
             self.entity_manager.destroy(*entity);
         }
+    }
+
+    /// Get stored data from the context.
+    pub fn data<T: 'static>(&self) -> Option<&T> {
+        self.data
+            .get(&TypeId::of::<T>())
+            .and_then(|model| model.downcast_ref::<Store<T>>())
+            .map(|store| &store.data)
     }
 }
