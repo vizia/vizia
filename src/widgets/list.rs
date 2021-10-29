@@ -2,14 +2,6 @@ use std::any::TypeId;
 
 use crate::{Context, Handle, Lens, Store, View};
 
-pub struct List<L, T: 'static>
-where
-    L: Lens<Target = Vec<T>>,
-{
-    lens: L,
-    builder: Option<Box<dyn Fn(&mut Context, ItemPtr<L, T>)>>,
-}
-
 pub struct ItemPtr<L, T>
 where
     L: Lens<Target = Vec<T>>,
@@ -36,6 +28,14 @@ where
     {
         self.lens.view(cx.data().unwrap()).get(self.index).unwrap()
     }
+}
+
+pub struct List<L, T: 'static>
+where
+    L: Lens<Target = Vec<T>>,
+{
+    lens: L,
+    builder: Option<Box<dyn Fn(&mut Context, ItemPtr<L, T>)>>,
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
