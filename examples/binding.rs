@@ -8,7 +8,7 @@ fn main() {
         VStack::new(cx, |cx| {
             Binding::new(cx, CustomData::value, |cx, data|{
                 Label::new(cx, &data.get(cx).to_string());
-                //Button::new(cx, |cx| data.set(cx, |val| val = "two".to_string()), |_|{});
+                //Button::new(cx, |cx| {}, |_|{});
             });
         });
     }).run();
@@ -23,7 +23,7 @@ pub struct CustomData {
 impl CustomData {
     pub fn new() -> Self {
         Self {
-            value: "two".to_string(),
+            value: "one".to_string(),
         }
     }
 }

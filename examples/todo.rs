@@ -18,18 +18,19 @@ fn main() {
             selected: 0,
         }.build(cx);
 
-        List::new(cx, TodoData::items, |cx, index, item|{
+        List::new(cx, TodoData::items, |cx, item|{
             
             //let item = item.clone();
             Binding::new(cx, TodoData::selected, move |cx, selected|{
+                let item = item.clone();
                 HStack::new(cx, move |cx|{
                     let selected = *selected.get(cx);
-                    Label::new(cx, &item.text.to_owned()).background_color(if selected == index {
+                    Label::new(cx, &item.value(cx).text.to_owned()).background_color(if selected == item.index() {
                         Color::green()
                     } else {
                         Color::blue()
                     });
-                    Label::new(cx, &item.completed.to_string());
+                    Label::new(cx, &item.value(cx).completed.to_string());
                 });
             });
         });

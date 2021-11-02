@@ -7,7 +7,7 @@ struct CustomView {
 }
 
 impl CustomView {
-    pub fn new<'a,F>(cx: &'a mut Context, f: F) -> Handle<'a, Self> 
+    pub fn new<'a,F>(cx: &'a mut Context, f: F) -> Handle<Self> 
     where F: 'static + Fn(&mut Context)
     {
         Self {

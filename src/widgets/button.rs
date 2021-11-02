@@ -12,7 +12,7 @@ pub struct Button {
 }
 
 impl Button {
-    pub fn new<'a, A, L>(cx: &'a mut Context, action: A, label: L) -> Handle<'a, Self>
+    pub fn new<A, L>(cx: &mut Context, action: A, label: L) -> Handle<Self>
     where 
         A: 'static + Fn(&mut Context),
         L: 'static + Fn(&mut Context)

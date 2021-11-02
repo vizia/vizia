@@ -50,7 +50,7 @@ impl<L: Lens> Field<L>
 where <L as Lens>::Source: 'static,
 {
     pub fn get<'a>(&self, cx: &'a Context) -> &'a L::Target {
-        self.lens.view(&cx.data.get(&TypeId::of::<L::Source>()).unwrap().downcast_ref::<Store<L::Source>>().unwrap().data)
+        self.lens.view(&cx.data.model_data.get(&TypeId::of::<L::Source>()).unwrap().downcast_ref::<Store<L::Source>>().unwrap().data)
     }
 }
 
@@ -70,7 +70,7 @@ where
         <L as Lens>::Source: 'static,
         <L as Lens>::Target: 'static
     {
-        &self.lens.view(&cx.data.get(&TypeId::of::<L::Source>()).unwrap().downcast_ref::<Store<L::Source>>().unwrap().data)[self.index]
+        &self.lens.view(&cx.data.model_data.get(&TypeId::of::<L::Source>()).unwrap().downcast_ref::<Store<L::Source>>().unwrap().data)[self.index]
     }
 }
 

@@ -6,7 +6,7 @@ use crate::Units::*;
 pub struct Label;
 
 impl Label {
-    pub fn new<'a>(cx: &'a mut Context, text: &str) -> Handle<'a, Self> {
+    pub fn new(cx: &mut Context, text: &str) -> Handle<Self> {
         Self{}.build(cx)
              .width(Pixels(100.0))
              .height(Pixels(30.0))

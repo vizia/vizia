@@ -1,10 +1,10 @@
-use std::collections::{HashMap, VecDeque};
+use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
 
 use femtovg::{Align, Baseline, Canvas, Paint, Path, renderer::OpenGl};
 use glutin::{ContextBuilder, event_loop::{self, ControlFlow, EventLoop}, window::WindowBuilder};
 use morphorm::Cache;
 
-use crate::{CachedData, Color, Context, Entity, Event, EventManager, Handle, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, WindowEvent, apply_hover, style};
+use crate::{CachedData, Color, Context, Data, Entity, Event, EventManager, Handle, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, WindowEvent, apply_hover, style};
 
 static FONT: &[u8] = include_bytes!("Roboto-Regular.ttf");
 
@@ -27,8 +27,8 @@ impl Application {
             count: 0,
             views: HashMap::new(),
             state: HashMap::new(),  
-            data: HashMap::new(),
-            style: Style::default(),
+            data: Data::new(),
+            style: Rc::new(RefCell::new(Style::default())),
             cache,
             event_queue: VecDeque::new(),
             mouse: MouseState::default(),
@@ -46,7 +46,7 @@ impl Application {
     }
 
     pub fn background_color(mut self, color: Color) -> Self {
-        self.context.style.background_color.insert(Entity::root(), color);
+        self.context.style.borrow_mut().background_color.insert(Entity::root(), color);
 
         self
     }
@@ -72,7 +72,7 @@ impl Application {
         let dpi_factor = handle.window().scale_factor();
         let size = handle.window().inner_size();
 
-        let clear_color = context.style.background_color.get(Entity::root()).cloned().unwrap_or_default();
+        let clear_color = context.style.borrow_mut().background_color.get(Entity::root()).cloned().unwrap_or_default();
 
         canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
         canvas.clear_rect(
@@ -103,7 +103,7 @@ impl Application {
                     }
 
                     // Process VIZIA events here
-                    morphorm::layout(&mut context.cache, &context.tree, &context.style);
+                    morphorm::layout(&mut context.cache, &context.tree, &context.style.borrow());
 
                     handle.window().request_redraw();
                 }
@@ -111,7 +111,7 @@ impl Application {
                 glutin::event::Event::RedrawRequested(_) => {
                     // Redraw here
                     //println!("Redraw");
-                    let clear_color = context.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
+                    let clear_color = context.style.borrow_mut().background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
                     canvas.clear_rect(
                         0,
                         0,
@@ -125,10 +125,10 @@ impl Application {
                         let mut path = Path::new();
                         path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
 
-                        let background_color: femtovg::Color = context.style.background_color.get(entity).cloned().unwrap_or_default().into();
+                        let background_color: femtovg::Color = context.style.borrow_mut().background_color.get(entity).cloned().unwrap_or_default().into();
                         canvas.fill_path(&mut path, Paint::color(background_color));
                         
-                        if let Some(text) = context.style.text.get(entity) {
+                        if let Some(text) = context.style.borrow().text.get(entity) {
                             let mut paint = Paint::color(femtovg::Color::black());
                             paint.set_font(&[font]);
                             paint.set_text_align(Align::Center);

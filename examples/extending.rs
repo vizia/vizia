@@ -2,6 +2,7 @@ use std::marker::PhantomData;
 
 use vizia::*;
 
+/// Example currently broken due to changes in [Handle]. 
 fn main() {
     Application::new(|cx| {
         Button::new(cx, |_| println!("Pressed"), |cx|{
@@ -18,7 +19,7 @@ pub struct Hover<V: View> {
 }
 
 impl<V: View> Hover<V> {
-    pub fn new<'a,F>(handle: Handle<'a,V>, action: F) -> Handle<'a, Hover<V>> 
+    pub fn new<'a,F>(handle: Handle<V>, action: F) -> Handle<Hover<V>> 
     where F: 'static + Fn(&mut Context)
     {
         let view = handle.cx.views.remove(&handle.entity).unwrap();
@@ -32,7 +33,7 @@ impl<V: View> Hover<V> {
 
         Handle {
             entity: handle.entity,
-            cx: handle.cx,
+            style: handle.style.clone(),
             p: Default::default(),
         }
     }
@@ -68,8 +69,8 @@ pub trait Hoverable {
     where F: 'static + Fn(&mut Context);
 }
 
-impl<'a,V: View> Hoverable for Handle<'a,V> {
-    type View = Handle<'a,Hover<V>>;
+impl<'a,V: View> Hoverable for Handle<V> {
+    type View = Handle<Hover<V>>;
     fn on_hover<F>(self, action: F) -> Self::View
     where F: 'static + Fn(&mut Context) 
     {

@@ -1,14 +1,6 @@
-use std::{
-    any::TypeId,
-    collections::{HashMap, VecDeque},
-    rc::Rc,
-    sync::Arc,
-};
+use std::{any::TypeId, cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc, sync::Arc};
 
-use crate::{
-    CachedData, Entity, Event, IdManager, ModelData, MouseState, State, StateData, StateID, Store,
-    Style, Tree, TreeExt, ViewHandler,
-};
+use crate::{CachedData, Data, Entity, Event, IdManager, ModelData, MouseState, State, StateData, StateID, Store, Style, Tree, TreeExt, ViewHandler};
 
 pub struct Context {
     pub entity_manager: IdManager<Entity>,
@@ -17,9 +9,9 @@ pub struct Context {
     pub count: usize,
     pub views: HashMap<Entity, Box<dyn ViewHandler>>,
     pub state: HashMap<StateID, Box<dyn StateData>>,
-    pub data: HashMap<TypeId, Box<dyn ModelData>>,
+    pub data: Data,
     pub event_queue: VecDeque<Event>,
-    pub style: Style,
+    pub style: Rc<RefCell<Style>>,
     pub cache: CachedData,
 
     pub mouse: MouseState,
@@ -47,6 +39,7 @@ impl Context {
     /// Get stored data from the context.
     pub fn data<T: 'static>(&self) -> Option<&T> {
         self.data
+            .model_data
             .get(&TypeId::of::<T>())
             .and_then(|model| model.downcast_ref::<Store<T>>())
             .map(|store| &store.data)

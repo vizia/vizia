@@ -1,7 +1,8 @@
-use std::any::TypeId;
+use std::{any::TypeId, collections::HashMap};
 
-use crate::{Context, Handle, Lens, Store, View};
+use crate::{Context, Data, Handle, Lens, ModelData, Store, View};
 
+#[derive(Debug, Clone, Copy)]
 pub struct ItemPtr<L, T>
 where
     L: Lens<Target = Vec<T>>,
@@ -39,7 +40,7 @@ where
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
-    pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<'_, Self>
+    pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context, ItemPtr<L, T>),
     {
@@ -56,6 +57,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
         let builder = self.builder.take().unwrap();
         let store = cx
             .data
+            .model_data
             .get(&TypeId::of::<L::Source>())
             .and_then(|model| model.downcast_ref::<Store<L::Source>>());
         if let Some(store) = store {

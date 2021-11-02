@@ -1,13 +1,13 @@
-use std::marker::PhantomData;
+use std::{cell::RefCell, collections::HashMap, marker::PhantomData, rc::Rc};
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{Color, Context, Entity};
+use crate::{Color, Context, Entity, Style, ViewHandler};
 
 macro_rules! set_style {
     ($name:ident, $t:ty) => {
         pub fn $name(self, value: $t) -> Self {
-            self.cx.style.$name.insert(self.entity, value);
+            self.style.borrow_mut().$name.insert(self.entity, value);
 
             self
         }
@@ -15,16 +15,16 @@ macro_rules! set_style {
 }
 
 
-pub struct Handle<'a,T> {
+pub struct Handle<T> {
     pub entity: Entity,
-    pub cx: &'a mut Context,
+    pub style: Rc<RefCell<Style>>,
     pub p: PhantomData<T>,
 }
 
-impl<'a,T> Handle<'a,T> {
+impl<T> Handle<T> {
 
     pub fn text(self, value: &str) -> Self {
-        self.cx.style.text.insert(self.entity, value.to_owned());
+        self.style.borrow_mut().text.insert(self.entity, value.to_owned());
 
         self
     }

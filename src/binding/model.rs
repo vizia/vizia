@@ -1,4 +1,4 @@
-use std::any::{Any, TypeId};
+use std::{any::{Any, TypeId}, collections::HashMap};
 
 use crate::{Context, Store};
 
@@ -6,9 +6,13 @@ use crate::{Context, Store};
 
 pub trait Model: 'static + Sized {
     fn build(self, cx: &mut Context) {
-        cx.data.insert(
+        cx.data.model_data.insert(
             TypeId::of::<Self>(), 
             Box::new(Store::new(self)));
+    }
+
+    fn update(self, cx: &mut Context) {
+        
     }
 }
 
@@ -75,4 +79,23 @@ impl<T: Model> ModelData for Store<T> {
     
 }
 
+
+pub struct Data {
+    pub model_data: HashMap<TypeId, Box<dyn ModelData>>,
+}
+
+impl Data {
+    pub fn new() -> Self {
+        Self {
+            model_data: HashMap::default(),
+        }
+    }
+
+    pub fn data<T: 'static>(&self) -> Option<&T> {
+        self.model_data
+            .get(&TypeId::of::<T>())
+            .and_then(|model| model.downcast_ref::<Store<T>>())
+            .map(|store| &store.data)
+    }
+}
 

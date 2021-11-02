@@ -8,7 +8,7 @@ pub struct VStack {
 }
 
 impl VStack {
-    pub fn new<'a,F>(cx: &'a mut Context, f: F) -> Handle<'a, Self> 
+    pub fn new<'a,F>(cx: &'a mut Context, f: F) -> Handle<Self> 
     where F: 'static + Fn(&mut Context)
     {
         Self{
@@ -39,7 +39,7 @@ pub struct HStack {
 }
 
 impl HStack {
-    pub fn new<'a,F>(cx: &'a mut Context, f: F) -> Handle<'a, Self> 
+    pub fn new<F>(cx: &mut Context, f: F) -> Handle<Self> 
     where F: 'static + Fn(&mut Context)
     {
         Self{
@@ -58,16 +58,16 @@ impl HStack {
 
 }
 
-impl<'a> Handle<'a, HStack> {
-    pub fn custom_prop(self, value: f32) -> Self {
+// impl<'a> Handle<'a, HStack> {
+//     pub fn custom_prop(self, value: f32) -> Self {
 
-        if let Some(hstack) = self.cx.views.get(&self.entity).and_then(|f| f.downcast_ref::<HStack>()) {
-            hstack.custom_prop(value);
-        }
+//         if let Some(hstack) = self.cx.views.get(&self.entity).and_then(|f| f.downcast_ref::<HStack>()) {
+//             hstack.custom_prop(value);
+//         }
 
-        self
-    }
-}
+//         self
+//     }
+// }
 
 impl View for HStack {
     fn debug(&self, entity: Entity) -> String {

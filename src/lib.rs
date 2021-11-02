@@ -1,4 +1,4 @@
-use std::{any::{Any, TypeId}, collections::HashMap, marker::PhantomData, ops::Deref, rc::Rc};
+use std::{any::{Any, TypeId}, collections::HashMap, marker::PhantomData, rc::Rc};
 
 
 mod id;
@@ -99,7 +99,7 @@ pub use vizia_derive::Lens;
 
 pub trait View: 'static + Sized {
     fn body<'a>(&mut self, cx: &'a mut Context) {}
-    fn build<'a>(mut self, cx: &'a mut Context) -> Handle<'a, Self> {
+    fn build<'a>(mut self, cx: &'a mut Context) -> Handle<Self> {
 
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
             let prev = cx.current;
@@ -129,7 +129,7 @@ pub trait View: 'static + Sized {
 
         Handle {
             entity: id,
-            cx,
+            style: cx.style.clone(),
             p: Default::default(),
         }
     }
@@ -198,7 +198,7 @@ impl<T: StateTrait> State<T> {
     
                 cx.views.insert(self.id.view, view);
 
-                morphorm::layout(&mut cx.cache, &cx.tree, &cx.style);
+                morphorm::layout(&mut cx.cache, &cx.tree, &cx.style.clone().borrow());
                 apply_hover(cx);
             } else {
                 println!("No Builder: {}", self.id.view);
