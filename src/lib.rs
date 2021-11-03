@@ -100,7 +100,6 @@ pub use vizia_derive::Lens;
 pub trait View: 'static + Sized {
     fn body<'a>(&mut self, cx: &'a mut Context) {}
     fn build<'a>(mut self, cx: &'a mut Context) -> Handle<Self> {
-
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
             let prev = cx.current;
             cx.current = id;

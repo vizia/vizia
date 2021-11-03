@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, marker::PhantomData, rc::Rc};
+use std::{cell::RefCell, collections::{HashMap, HashSet}, marker::PhantomData, rc::Rc};
 
 use morphorm::{LayoutType, PositionType, Units};
 
@@ -23,8 +23,29 @@ pub struct Handle<T> {
 
 impl<T> Handle<T> {
 
+    pub fn class(self, name: &str) -> Self {
+        if let Some(class_list) = self.style.borrow_mut().classes.get_mut(self.entity) {
+            class_list.insert(name.to_string());
+        } else {
+            let mut class_list = HashSet::new();
+            class_list.insert(name.to_string());
+            self.style.borrow_mut().classes.insert(self.entity, class_list);
+        }
+
+        self
+    }
+
     pub fn text(self, value: &str) -> Self {
         self.style.borrow_mut().text.insert(self.entity, value.to_owned());
+
+        self
+    }
+
+    pub fn child_space(self, value: Units) -> Self {
+        self.style.borrow_mut().child_left.insert(self.entity, value);
+        self.style.borrow_mut().child_right.insert(self.entity, value);
+        self.style.borrow_mut().child_top.insert(self.entity, value);
+        self.style.borrow_mut().child_bottom.insert(self.entity, value);
 
         self
     }

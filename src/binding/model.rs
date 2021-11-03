@@ -1,23 +1,39 @@
-use std::{any::{Any, TypeId}, collections::HashMap};
+use std::{any::{Any, TypeId}, collections::HashMap, hash::Hash};
 
-use crate::{Context, Store};
+use crate::{Context, Entity, Event, Store, sparse_set::SparseSet};
 
 
 
 pub trait Model: 'static + Sized {
     fn build(self, cx: &mut Context) {
-        cx.data.model_data.insert(
-            TypeId::of::<Self>(), 
-            Box::new(Store::new(self)));
+        if let Some(data_list) = cx.data.model_data.get_mut(cx.current) {
+            data_list.push(Box::new(Store::new(self)));
+        } else {
+            let mut data_list: Vec<Box<dyn ModelData>> = Vec::new();
+            data_list.push(Box::new(Store::new(self)));
+            cx.data.model_data.insert(cx.current, data_list);
+        }
+        
     }
 
-    fn update(self, cx: &mut Context) {
-        
+    fn event(&mut self, cx: &mut Context, event: &mut Event) -> bool {
+        false
+    }
+
+    fn update(&mut self, cx: &mut Context) {
+
     }
 }
 
 pub trait ModelData: Any {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        println!("Default");
+    }
 
+    fn update(&self) -> Vec<Entity> {
+        println!("Default");
+        Vec::new()
+    }
 }
 
 impl dyn ModelData {
@@ -76,26 +92,41 @@ impl<T: ModelData> Downcast for T {
 }
 
 impl<T: Model> ModelData for Store<T> {
-    
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        if <T as Model>::event(&mut self.data, cx, event) {
+            self.needs_update();
+        }
+    }
+
+    fn update(&self) -> Vec<Entity> {
+        self.observers.clone()
+    }
 }
 
 
+pub struct DataId {
+    entity: Entity,
+    type_id: TypeId,
+}
+
 pub struct Data {
-    pub model_data: HashMap<TypeId, Box<dyn ModelData>>,
+    // pub model_data: HashMap<TypeId, Box<dyn ModelData>>,
+    pub model_data: SparseSet<Vec<Box<dyn ModelData>>>,
 }
 
 impl Data {
     pub fn new() -> Self {
         Self {
-            model_data: HashMap::default(),
+            model_data: SparseSet::default(),
         }
     }
 
-    pub fn data<T: 'static>(&self) -> Option<&T> {
-        self.model_data
-            .get(&TypeId::of::<T>())
-            .and_then(|model| model.downcast_ref::<Store<T>>())
-            .map(|store| &store.data)
-    }
+    // pub fn data<T: 'static>(&self) -> Option<&T> {
+    //     self.model_data
+    //         .get(cx.current)
+    //         .get(&TypeId::of::<T>())
+    //         .and_then(|model| model.downcast_ref::<Store<T>>())
+    //         .map(|store| &store.data)
+    // }
 }
 

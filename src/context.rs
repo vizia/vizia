@@ -1,6 +1,6 @@
 use std::{any::TypeId, cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc, sync::Arc};
 
-use crate::{CachedData, Data, Entity, Event, IdManager, ModelData, MouseState, State, StateData, StateID, Store, Style, Tree, TreeExt, ViewHandler};
+use crate::{CachedData, Data, Entity, Event, IdManager, Message, ModelData, MouseState, Propagation, State, StateData, StateID, Store, Style, Tree, TreeExt, ViewHandler};
 
 pub struct Context {
     pub entity_manager: IdManager<Entity>,
@@ -38,10 +38,26 @@ impl Context {
 
     /// Get stored data from the context.
     pub fn data<T: 'static>(&self) -> Option<&T> {
-        self.data
-            .model_data
-            .get(&TypeId::of::<T>())
-            .and_then(|model| model.downcast_ref::<Store<T>>())
-            .map(|store| &store.data)
+        for entity in self.current.parent_iter(&self.tree) {
+            if let Some(data_list) = self.data.model_data.get(entity) {
+                for model in data_list.iter() {
+                    if let Some(store) = model.downcast_ref::<Store<T>>() {
+                        return Some(&store.data);
+                    }
+                }
+            }
+            // self.data
+            //     .model_data
+            //     .get(&TypeId::of::<T>())
+            //     .and_then(|model| model.downcast_ref::<Store<T>>())
+            //     .map(|store| &store.data)            
+        }
+
+        None
+
+    }
+
+    pub fn emit<M: Message>(&mut self, message: M) {
+        self.event_queue.push_back(Event::new(message).target(self.current).origin(self.current).propagate(Propagation::Up));
     }
 }

@@ -98,11 +98,40 @@ impl Application {
             match event {
                 glutin::event::Event::MainEventsCleared => {
 
+                    // Events
                     while !context.event_queue.is_empty() {
                         event_manager.flush_events(&mut context);
                     }
 
-                    // Process VIZIA events here
+                    // Updates
+                    for entity in context.tree.clone().into_iter() {
+                        let mut observers = Vec::new();
+                        if let Some(model_list) = context.data.model_data.get(entity) {
+                            for model in model_list.iter() {
+                                observers = model.update();
+                            }
+                        }
+
+                        for observer in observers.iter() {
+                            if let Some(mut view) = context.views.remove(observer) {
+                
+                                let prev = context.current;
+                                context.current = *observer;
+                                let prev_count = context.count;
+                                context.count = 0;
+                                view.body(&mut context);
+                                context.current = prev;
+                                context.count = prev_count;
+                    
+                
+                                context.views.insert(*observer, view);
+                            }
+                        }
+                    }
+
+                    // Styling (TODO)
+
+                    // Layout
                     morphorm::layout(&mut context.cache, &context.tree, &context.style.borrow());
 
                     handle.window().request_redraw();
@@ -182,11 +211,11 @@ impl Application {
 
                             match state {
                                 MouseButtonState::Pressed => {
-                                    context.event_queue.push_back(Event::new(WindowEvent::MouseDown(button)).target(context.hovered).propagate(Propagation::Direct));
+                                    context.event_queue.push_back(Event::new(WindowEvent::MouseDown(button)).target(context.hovered).propagate(Propagation::Up));
                                 }
 
                                 MouseButtonState::Released => {
-                                    context.event_queue.push_back(Event::new(WindowEvent::MouseUp(button)).target(context.hovered).propagate(Propagation::Direct));
+                                    context.event_queue.push_back(Event::new(WindowEvent::MouseUp(button)).target(context.hovered).propagate(Propagation::Up));
                                 }
                             }
                         }

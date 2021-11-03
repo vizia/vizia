@@ -1,6 +1,8 @@
+use std::collections::HashSet;
+
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{animatable_set::AnimatableSet, style_set::StyleSet};
+use crate::{animatable_set::AnimatableSet, sparse_set::SparseSet, style_set::StyleSet};
 
 mod color;
 pub use color::Color;
@@ -19,6 +21,8 @@ pub use transform::*;
 
 #[derive(Default)]
 pub struct Style {
+
+    pub classes: SparseSet<HashSet<String>>,
 
     pub position_type: StyleSet<PositionType>,
     pub layout_type: StyleSet<LayoutType>,

@@ -10,7 +10,9 @@ impl Label {
         Self{}.build(cx)
              .width(Pixels(100.0))
              .height(Pixels(30.0))
-             .background_color(Color::blue())
+             .child_space(Stretch(1.0))
+             .child_left(Pixels(5.0))
+             //.background_color(Color::blue())
              .text(text)
     }
 }
