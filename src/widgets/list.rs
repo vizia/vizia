@@ -56,7 +56,6 @@ impl Model for ListData {
                 }
 
                 ListEvent::DecrementSelection => {
-                    println!("selected: {}", self.selected);
                     if self.selected <= 1 {
                         self.selected = 0;
                     } else {
