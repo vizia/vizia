@@ -36,6 +36,7 @@ where
 #[derive(Lens)]
 pub struct ListData {
     pub selected: usize,
+    pub length: usize,
 }
 
 pub enum ListEvent {
@@ -49,11 +50,19 @@ impl Model for ListData {
             match list_event {
                 ListEvent::IncrementSelection => {
                     self.selected += 1;
+                    self.selected = self.selected.clamp(0, self.length-1);
+                    
                     return true;
                 }
 
                 ListEvent::DecrementSelection => {
-                    self.selected -= 1;
+                    println!("selected: {}", self.selected);
+                    if self.selected <= 1 {
+                        self.selected = 0;
+                    } else {
+                        self.selected -= 1;
+                    }
+
                     return true;
                 }
             }
@@ -86,9 +95,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
 
 impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
     fn body(&mut self, cx: &mut Context) {
-        ListData {
-            selected: 3,
-        }.build(cx);
+
 
         let builder = self.builder.take().unwrap();
 
@@ -106,7 +113,14 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
         };
 
         if let Some(store) = found_store {
+            
             let len = self.lens.view(&store.data).len();
+            
+            ListData {
+                selected: 3,
+                length: len,
+            }.build(cx);
+
             for index in 0..len {
                 let ptr = ItemPtr::new(self.lens.clone(), index);
                 (builder)(cx, ptr);

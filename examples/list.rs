@@ -20,6 +20,7 @@ fn main() {
                     Label::new(cx, "Hello");
                     Label::new(cx, "World");
                     Label::new(cx, &item.value(cx).to_string());
+                    //Label::new(cx, &item.index().to_string());
                 }).background_color(
                     if item.index() == *selected.get(cx) {
                         Color::green()
