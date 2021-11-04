@@ -95,23 +95,26 @@ impl Model for Data {
             match data_event {
                 DataEvent::Update(index, value) => {
                     self.list[*index] = *value;
+                    return true;
                 }
 
                 DataEvent::All(value) => {
                     for item in self.list.iter_mut() {
                         *item = *value;
                     }
+                    return true;
                 }
 
                 DataEvent::Enumerate => {
                     for (index, item) in self.list.iter_mut().enumerate() {
                         *item = index as u32;
                     }
+                    return true;
                 }
             }
         }
 
-        return true;
+        return false;
     }
 }
 

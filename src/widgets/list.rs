@@ -29,7 +29,7 @@ where
     where
         <L as Lens>::Source: 'static,
     {
-        self.lens.view(cx.data().unwrap()).get(self.index).unwrap()
+        self.lens.view(cx.data().expect("Failed to get data")).get(self.index).expect("Failed to get item")
     }
 }
 

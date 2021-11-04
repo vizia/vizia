@@ -105,9 +105,13 @@ impl Application {
                     // Updates
                     for entity in context.tree.clone().into_iter() {
                         let mut observers = Vec::new();
+                     
                         if let Some(model_list) = context.data.model_data.get(entity) {
                             for model in model_list.iter() {
-                                observers = model.update();
+                                //observers = model.update();
+                                if model.is_dirty() {
+                                    observers.extend(model.update().iter());
+                                }
                             }
                         }
 
@@ -125,6 +129,13 @@ impl Application {
                                 context.views.insert(*observer, view);
                             }
                         }
+
+                        if let Some(model_list) = context.data.model_data.get_mut(entity) {
+                            for model in model_list.iter_mut() {
+                                model.reset();
+                            }
+                        }
+                        
                     }
 
                     // Styling (TODO)

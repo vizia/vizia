@@ -18,9 +18,9 @@ impl<T> Store<T> {
         }
     }
 
-    pub fn needs_update(&mut self) {
-        self.dirty = true;
-    }
+    // pub fn needs_update(&mut self) {
+    //     self.dirty = true;
+    // }
 
     pub fn update_observers(&mut self, cx: &mut Context) {
         if self.dirty {

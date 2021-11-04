@@ -34,6 +34,14 @@ pub trait ModelData: Any {
         println!("Default");
         Vec::new()
     }
+
+    fn is_dirty(&self) -> bool {
+        false
+    }
+
+    fn reset(&mut self) {
+        
+    }
 }
 
 impl dyn ModelData {
@@ -94,12 +102,20 @@ impl<T: ModelData> Downcast for T {
 impl<T: Model> ModelData for Store<T> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if <T as Model>::event(&mut self.data, cx, event) {
-            self.needs_update();
+            self.dirty = true;
         }
     }
 
     fn update(&self) -> Vec<Entity> {
         self.observers.clone()
+    }
+
+    fn is_dirty(&self) -> bool {
+        self.dirty
+    }
+
+    fn reset(&mut self) {
+        self.dirty = false;
     }
 }
 
