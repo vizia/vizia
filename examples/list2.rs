@@ -11,15 +11,20 @@ fn main() {
         }.build(cx);
 
         HStack::new(cx, |cx|{
-            // List of 12 items
+
             List::new(cx, Data::list, |cx, item| {
                 Binding::new(cx, ListData::selected, move |cx, selected|{
                     let item = item.clone();
                     HStack::new(cx, move |cx| {
                         Label::new(cx, "Hello");
                         Label::new(cx, "World");
-                        Label::new(cx, &item.value(cx).to_string());
-                        //Label::new(cx, &item.index().to_string());
+                        Label::new(cx, &item.value(cx).to_string()).background_color(
+                            if *item.value(cx) == 40 {
+                                Color::red()
+                            } else {
+                                Color::rgba(0,0,0,0)
+                            }
+                        );
                     }).background_color(
                         if item.index() == *selected.get(cx) {
                             Color::green()
@@ -30,14 +35,19 @@ fn main() {
                 });
             });
 
-            // List of 12 items
             List::new(cx, Data::list, |cx, item| {
                 Binding::new(cx, ListData::selected, move |cx, selected|{
                     let item = item.clone();
                     HStack::new(cx, move |cx| {
                         Label::new(cx, "Hello");
                         Label::new(cx, "World");
-                        Label::new(cx, &item.value(cx).to_string());
+                        Label::new(cx, &item.value(cx).to_string()).background_color(
+                            if *item.value(cx) == 40 {
+                                Color::red()
+                            } else {
+                                Color::rgba(0,0,0,0)
+                            }
+                        );
                         //Label::new(cx, &item.index().to_string());
                     }).background_color(
                         if item.index() == *selected.get(cx) {
@@ -53,10 +63,6 @@ fn main() {
                 cx.emit(DataEvent::Update(5, 40));
             }, |_|{});
         });
-
-        
-
-
     })
     .run();
 }
@@ -66,6 +72,7 @@ pub struct Data {
     list: Vec<u32>,
 }
 
+#[derive(Debug)]
 pub enum DataEvent {
     Update(usize, u32),
 }
@@ -88,23 +95,29 @@ impl Model for Data {
 
 pub struct Press<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut EventCtx)>>,
+    action: Option<Box<dyn Fn(&mut Context)>>,
 
     p: PhantomData<V>,
 }
 
 impl<V: View> Press<V> {
     pub fn new<'a,F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Press<V>> 
-    where F: 'static + Fn(&mut EventCtx)
+    where F: 'static + Fn(&mut Context)
     {
-        let view = cx.views.remove(&handle.entity).unwrap();
-        let item = Self {
-            view,
-            action: Some(Box::new(action)),
-            p: Default::default(),
-        }; 
+        if let Some(view) = cx.views.remove(&handle.entity) {
+            if view.downcast_ref::<V>().is_some() {
+                let item = Self {
+                    view,
+                    action: Some(Box::new(action)),
+                    p: Default::default(),
+                }; 
+        
+                cx.views.insert(handle.entity, Box::new(item));
+            } else {
+                cx.views.insert(handle.entity, view);
+            }
 
-        cx.views.insert(handle.entity, Box::new(item));
+        }
 
         Handle {
             entity: handle.entity,
@@ -119,7 +132,7 @@ impl<V: View> View for Press<V> {
         self.view.body(cx);
     }
 
-    fn event(&mut self, cx: &mut EventCtx, event: &mut Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
         if let Some(window_event) = event.message.downcast() {
@@ -141,13 +154,13 @@ impl<V: View> View for Press<V> {
 pub trait Hoverable {
     type View;
     fn on_press<F>(self, cx: &mut Context, action: F) -> Self::View
-    where F: 'static + Fn(&mut EventCtx);
+    where F: 'static + Fn(&mut Context);
 }
 
 impl<'a,V: View> Hoverable for Handle<V> {
     type View = Handle<Press<V>>;
     fn on_press<F>(self, cx: &mut Context, action: F) -> Self::View
-    where F: 'static + Fn(&mut EventCtx) 
+    where F: 'static + Fn(&mut Context) 
     {
         Press::new(self, cx, action)
     }

@@ -2,7 +2,7 @@ use vizia::*;
 
 fn main() {
     Application::new(|cx|{   
-        VStack::new(cx, |cx|{
+        HStack::new(cx, |cx|{
             
             let count = 0i32.build(cx);
 

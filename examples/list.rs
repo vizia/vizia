@@ -51,14 +51,21 @@ impl<V: View> Press<V> {
     pub fn new<'a,F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Press<V>> 
     where F: 'static + Fn(&mut EventCtx)
     {
-        let view = cx.views.remove(&handle.entity).unwrap();
-        let item = Self {
-            view,
-            action: Some(Box::new(action)),
-            p: Default::default(),
-        }; 
+        if let Some(view) = cx.views.remove(&handle.entity) {
+            if view.downcast_ref::<V>().is_some() {
+                let item = Self {
+                    view,
+                    action: Some(Box::new(action)),
+                    p: Default::default(),
+                }; 
+        
+                cx.views.insert(handle.entity, Box::new(item));
+            } else {
+                cx.views.insert(handle.entity, view);
+            }
 
-        cx.views.insert(handle.entity, Box::new(item));
+        }
+
 
         Handle {
             entity: handle.entity,

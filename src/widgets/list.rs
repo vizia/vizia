@@ -2,7 +2,7 @@ use std::{any::TypeId, collections::HashMap, result};
 
 use keyboard_types::Code;
 
-use crate::{Context, Data, Event, EventCtx, Handle, Lens, Model, ModelData, MouseButton, Store, TreeExt, View, WindowEvent};
+use crate::{Context, Data, Event, Handle, Lens, Model, ModelData, MouseButton, Store, TreeExt, View, WindowEvent};
 
 #[derive(Debug, Clone, Copy)]
 pub struct ItemPtr<L, T>
@@ -39,6 +39,7 @@ pub struct ListData {
     pub length: usize,
 }
 
+#[derive(Debug)]
 pub enum ListEvent {
     IncrementSelection,
     DecrementSelection,
@@ -154,7 +155,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
         self.builder = Some(builder);
     }
 
-    fn event(&mut self, cx: &mut EventCtx, event: &mut crate::Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
         // if let Some(window_event) = event.message.downcast() {
         //     match window_event {
         //         WindowEvent::MouseDown(button) => {

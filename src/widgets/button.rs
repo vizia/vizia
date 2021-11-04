@@ -1,4 +1,4 @@
-use crate::{Color, EventCtx, Handle, MouseButton, WindowEvent};
+use crate::{Color, Handle, MouseButton, WindowEvent};
 
 use crate::{Context, Entity, Event, View};
 use crate::Units::*;
@@ -7,14 +7,14 @@ use crate::Units::*;
 
 
 pub struct Button {
-    action: Option<Box<dyn Fn(&mut EventCtx)>>,
+    action: Option<Box<dyn Fn(&mut Context)>>,
     label: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl Button {
     pub fn new<A, L>(cx: &mut Context, action: A, label: L) -> Handle<Self>
     where 
-        A: 'static + Fn(&mut EventCtx),
+        A: 'static + Fn(&mut Context),
         L: 'static + Fn(&mut Context)
     {
         Self {
@@ -37,7 +37,7 @@ impl View for Button {
         }
     }
 
-    fn event(&mut self, cx: &mut EventCtx, event: &mut Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {

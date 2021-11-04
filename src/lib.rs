@@ -136,7 +136,7 @@ pub trait View: 'static + Sized {
         "".to_string()
     }
 
-    fn event(&mut self, cx: &mut EventCtx, event: &mut Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
 
     }
     
@@ -154,7 +154,7 @@ where
         <T as View>::body(self, cx);
     }
 
-    fn event(&mut self, cx: &mut EventCtx, event: &mut Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         <T as View>::event(self, cx, event);
     }
 }

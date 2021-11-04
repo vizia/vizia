@@ -7,7 +7,7 @@ use femtovg::{
     renderer::OpenGl, Canvas,
 };
 
-use crate::{Context, Event, EventCtx, Model, Propagation, Tree, TreeExt};
+use crate::{Context, Entity, Event, Model, Propagation, Tree, TreeExt};
 
 
 /// Dispatches events to widgets.
@@ -60,11 +60,7 @@ impl EventManager {
             // Send event to target
             if let Some(mut view) = context.views.remove(&event.target) {
                 context.current = event.target;
-                view.event(&mut EventCtx {
-                    tree: &mut context.tree,
-                    event_queue: &mut context.event_queue,
-                    current: event.target,
-                }, event);
+                view.event(context, event);
 
                 if let Some(mut model_list) = context.data.model_data.remove(event.target) {
                     for model in model_list.iter_mut() {
@@ -85,36 +81,32 @@ impl EventManager {
 
             // Propagate up from target to root (not including target)
             if event.propagation == Propagation::Up {
-              
                 // Walk up the tree from parent to parent
                 for entity in target.parent_iter(&self.tree) {
-          
+                    
                     // Skip the target entity
                     if entity == event.target {
                         continue;
                     }
-                
+                    
+                    
                     // Send event to all entities before the target
                     if let Some(mut view) = context.views.remove(&entity) {
                         context.current = entity;
-                        view.event(&mut EventCtx {
-                            tree: &mut context.tree,
-                            event_queue: &mut context.event_queue,
-                            current: entity,
-                        }, event);
+                        view.event(context, event);
 
-                        if let Some(mut model_list) = context.data.model_data.remove(entity) {
-                            for model in model_list.iter_mut() {
-                                model.event(context, event);
-                            }
-        
-                            context.data.model_data.insert(entity, model_list);
-        
-                        }
-
+                        
                         context.views.insert(entity, view);
                     }
-
+                    
+                    if let Some(mut model_list) = context.data.model_data.remove(entity) {
+                        for model in model_list.iter_mut() {
+                            model.event(context, event);
+                        }
+    
+                        context.data.model_data.insert(entity, model_list);
+                    }
+                    
                     // Skip to the next event if the current event is consumed
                     if event.consumed {
                         continue 'events;

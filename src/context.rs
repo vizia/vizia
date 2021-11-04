@@ -3,17 +3,18 @@ use std::{any::TypeId, cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc, 
 use crate::{CachedData, Data, Entity, Event, IdManager, Message, ModelData, MouseState, Propagation, State, StateData, StateID, Store, Style, Tree, TreeExt, ViewHandler};
 
 
-pub struct EventCtx<'a> {
-    pub tree: &'a Tree,
-    pub event_queue: &'a mut VecDeque<Event>,
-    pub current: Entity,
-}
+// pub struct EventCtx<'a> {
+//     pub tree: &'a Tree,
+//     pub event_queue: &'a mut VecDeque<Event>,
+//     pub current: Entity,
+//     pub state: &'a mut HashMap<StateID, Box<dyn StateData>>,
+// }
 
-impl<'a> EventCtx<'a> {
-    pub fn emit<M: Message>(&mut self, message: M) {
-        self.event_queue.push_back(Event::new(message).target(self.current).origin(self.current).propagate(Propagation::Up));
-    }
-}
+// impl<'a> EventCtx<'a> {
+//     pub fn emit<M: Message>(&mut self, message: M) {
+//         self.event_queue.push_back(Event::new(message).target(self.current).origin(self.current).propagate(Propagation::Up));
+//     }
+// }
 
 pub struct Context {
     pub entity_manager: IdManager<Entity>,
@@ -68,5 +69,9 @@ impl Context {
 
         None
 
+    }
+
+    pub fn emit<M: Message>(&mut self, message: M) {
+        self.event_queue.push_back(Event::new(message).target(self.current).origin(self.current).propagate(Propagation::Up));
     }
 }

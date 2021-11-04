@@ -1,4 +1,4 @@
-use crate::{Event, EventCtx};
+use crate::{Event};
 
 use crate::{Entity, Context};
 
@@ -17,7 +17,7 @@ pub trait ViewHandler: Any {
     fn body(&mut self, cx: &mut Context) {}
 
     // Called when events are flushed
-    fn event(&mut self, cx: &mut EventCtx, event: &mut Event) {}
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {}
 
 }
 
