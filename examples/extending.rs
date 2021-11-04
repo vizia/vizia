@@ -13,14 +13,14 @@ fn main() {
 
 pub struct Hover<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut EventCtx)>>,
+    action: Option<Box<dyn Fn(&mut Context)>>,
 
     p: PhantomData<V>,
 }
 
 impl<V: View> Hover<V> {
     pub fn new<'a,F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Hover<V>> 
-    where F: 'static + Fn(&mut EventCtx)
+    where F: 'static + Fn(&mut Context)
     {
         let view = cx.views.remove(&handle.entity).unwrap();
         let item = Self {
@@ -44,7 +44,7 @@ impl<V: View> View for Hover<V> {
         self.view.body(cx);
     }
 
-    fn event(&mut self, cx: &mut EventCtx, event: &mut Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
         if let Some(window_event) = event.message.downcast() {
@@ -66,13 +66,13 @@ impl<V: View> View for Hover<V> {
 pub trait Hoverable {
     type View;
     fn on_hover<F>(self, cx: &mut Context, action: F) -> Self::View
-    where F: 'static + Fn(&mut EventCtx);
+    where F: 'static + Fn(&mut Context);
 }
 
 impl<'a,V: View> Hoverable for Handle<V> {
     type View = Handle<Hover<V>>;
     fn on_hover<F>(self, cx: &mut Context, action: F) -> Self::View
-    where F: 'static + Fn(&mut EventCtx) 
+    where F: 'static + Fn(&mut Context) 
     {
         Hover::new(self, cx, action)
     }

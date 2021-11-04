@@ -17,7 +17,7 @@ fn main() {
                     Label::new(cx, "World");
                 });  
 
-            }).width(Pixels(200.0)).height(Pixels(200.0)).background_color(Color::green()).custom_prop(3.14);       
+            }).width(Pixels(200.0)).height(Pixels(200.0)).background_color(Color::green()).custom_prop(cx, 3.14);       
         });
 
     }).background_color(Color::red()).run();

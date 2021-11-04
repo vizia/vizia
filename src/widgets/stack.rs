@@ -58,16 +58,15 @@ impl HStack {
 
 }
 
-// impl<'a> Handle<'a, HStack> {
-//     pub fn custom_prop(self, value: f32) -> Self {
+impl Handle<HStack> {
+    pub fn custom_prop(self, cx: &mut Context, value: f32) -> Self {
+        if let Some(hstack) = cx.views.get(&self.entity).and_then(|f| f.downcast_ref::<HStack>()) {
+            hstack.custom_prop(value);
+        }
 
-//         if let Some(hstack) = self.cx.views.get(&self.entity).and_then(|f| f.downcast_ref::<HStack>()) {
-//             hstack.custom_prop(value);
-//         }
-
-//         self
-//     }
-// }
+        self
+    }
+}
 
 impl View for HStack {
     fn debug(&self, entity: Entity) -> String {
