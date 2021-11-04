@@ -51,7 +51,6 @@ impl<V: View> Press<V> {
     pub fn new<'a,F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Press<V>> 
     where F: 'static + Fn(&mut EventCtx)
     {
-        println!("press {:?}", handle.entity);
         let view = cx.views.remove(&handle.entity).unwrap();
         let item = Self {
             view,

@@ -50,7 +50,6 @@ fn main() {
             });
 
             Button::new(cx, |cx|{
-                println!("Press Button");
                 cx.emit(DataEvent::Update(5, 40));
             }, |_|{});
         });
