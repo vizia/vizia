@@ -1,4 +1,4 @@
-use std::{any::{Any, TypeId}, collections::HashMap, hash::Hash};
+use std::any::{Any, TypeId};
 
 use crate::{Context, Entity, Event, Store, sparse_set::SparseSet};
 

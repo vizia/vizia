@@ -1,5 +1,4 @@
 mod lens;
-use std::{any::TypeId, marker::PhantomData, ops::Index};
 
 pub use lens::*;
 
@@ -9,7 +8,7 @@ pub use model::*;
 mod store;
 pub use store::*;
 
-use crate::{Context, Handle, TreeExt, Units, View, entity};
+use crate::{Context, Handle, TreeExt, Units, View};
 
 
 pub struct Binding<L> 

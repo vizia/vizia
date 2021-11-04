@@ -3,11 +3,7 @@
 // use crate::{BindEvent, Context, Display, Entity, Event, FontOrId, Propagation, State, Tree, TreeExt, Visibility, WindowEvent, entity};
 
 
-use femtovg::{
-    renderer::OpenGl, Canvas,
-};
-
-use crate::{Context, Entity, Event, Model, Propagation, Tree, TreeExt};
+use crate::{Context, Event, Propagation, Tree, TreeExt};
 
 
 /// Dispatches events to widgets.

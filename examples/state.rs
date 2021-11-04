@@ -1,5 +1,7 @@
 use vizia::*;
 
+// Example of using state types to store view-local mutable state
+
 fn main() {
 
     Application::new(|cx|{

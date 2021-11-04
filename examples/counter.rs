@@ -1,5 +1,7 @@
 use vizia::*;
 
+// A basic counter example which uses state
+
 fn main() {
     Application::new(|cx|{   
         HStack::new(cx, |cx|{

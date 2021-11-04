@@ -1,6 +1,6 @@
-use std::{any::TypeId, cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc, sync::Arc};
+use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
 
-use crate::{CachedData, Data, Entity, Event, IdManager, Message, ModelData, MouseState, Propagation, State, StateData, StateID, Store, Style, Tree, TreeExt, ViewHandler};
+use crate::{CachedData, Data, Entity, Event, IdManager, Message, MouseState, Propagation, StateData, StateID, Store, Style, Tree, TreeExt, ViewHandler};
 
 
 // pub struct EventCtx<'a> {

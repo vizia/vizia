@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{Entity, animatable_set::AnimatableSet, entity, sparse_set::SparseSet, style_set::StyleSet};
+use crate::{Entity, animatable_set::AnimatableSet, sparse_set::SparseSet, style_set::StyleSet};
 
 mod color;
 pub use color::Color;

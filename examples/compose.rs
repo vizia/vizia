@@ -1,5 +1,7 @@
 use vizia::*;
 
+// Example of using functions to declare views
+
 fn other_view(cx: &mut Context) {
     Label::new(cx, "One");
 }

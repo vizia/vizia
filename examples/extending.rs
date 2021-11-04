@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use vizia::*;
 
-/// Example currently broken due to changes in [Handle]. 
+// Example of extending the behaviour of a view
 fn main() {
     Application::new(|cx| {
         Button::new(cx, |_| println!("Pressed"), |cx|{

@@ -1,20 +1,22 @@
 use vizia::*;
 
+
+// Example of a more complex app with multiple composed levels
 fn main() {
 
-    Application::new(|cx|{ //0
-        VStack::new(cx, |cx| { // 1 (0)
-            Label::new(cx, ""); // 2 (1)
-            Label::new(cx, ""); // 3 (1)
+    Application::new(|cx|{
+        VStack::new(cx, |cx| {
+            Label::new(cx, "");
+            Label::new(cx, "");
         });
 
-        VStack::new(cx, |cx| { // 4 (0)
-            VStack::new(cx, |cx| { // 5 (4)
-                Label::new(cx, ""); // 6 (5)
-                Label::new(cx, ""); // 7 (5)
+        VStack::new(cx, |cx| {
+            VStack::new(cx, |cx| {
+                Label::new(cx, "");
+                Label::new(cx, "");
             });
-            Label::new(cx, ""); // 8 (4)
-            Label::new(cx, ""); // 9 (4)
+            Label::new(cx, "");
+            Label::new(cx, "");
         });
     }).run();
 }

@@ -1,8 +1,8 @@
-use std::{any::TypeId, collections::HashMap, result};
+
 
 use keyboard_types::Code;
 
-use crate::{Color, Context, Data, Event, Handle, Lens, Model, ModelData, MouseButton, Store, TreeExt, View, WindowEvent, context};
+use crate::{Color, Context, Event, Handle, Lens, Model, MouseButton, Store, TreeExt, View};
 use crate::Units::*;
 #[derive(Debug, Clone, Copy)]
 pub struct ItemPtr<L, T>

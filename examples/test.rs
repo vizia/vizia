@@ -1,5 +1,6 @@
 use vizia::*;
 
+// Example showing how to set a custom property on a view
 fn main() {
 
     Application::new(|cx|{

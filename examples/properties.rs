@@ -1,5 +1,7 @@
 use vizia::*;
 
+// Example of read-only variables local to a view
+
 fn main() {
 
     Application::new(|cx|{

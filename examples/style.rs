@@ -1,6 +1,8 @@
 
 use vizia::*;
 
+// Example showing inline styling of views
+
 fn main() {
 
     Application::new(|cx|{

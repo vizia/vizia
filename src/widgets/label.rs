@@ -1,4 +1,4 @@
-use crate::{Color, Context, Entity, Handle, View, Units};
+use crate::{Context, Entity, Handle, View};
 use crate::Units::*;
 
 

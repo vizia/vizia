@@ -8,7 +8,6 @@ fn main() {
         VStack::new(cx, |cx| {
             Binding::new(cx, CustomData::value, |cx, data|{
                 Label::new(cx, &data.get(cx).to_string());
-                //Button::new(cx, |cx| {}, |_|{});
             });
         });
     }).run();

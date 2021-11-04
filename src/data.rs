@@ -137,7 +137,7 @@ pub struct CachedData {
     pub(crate) geometry_changed: SparseSet<GeometryChanged>,
 
     // TODO
-    pub(crate) shadow_image: HashMap<Entity, (ImageId, ImageId)>,
+    //pub(crate) shadow_image: HashMap<Entity, (ImageId, ImageId)>,
 }
 
 impl CachedData {

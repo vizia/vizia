@@ -1,10 +1,9 @@
 use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
 
 use femtovg::{Align, Baseline, Canvas, Paint, Path, renderer::OpenGl};
-use glutin::{ContextBuilder, event_loop::{self, ControlFlow, EventLoop}, window::WindowBuilder};
-use morphorm::Cache;
+use glutin::{ContextBuilder, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 
-use crate::{CachedData, Color, Context, Data, Entity, Event, EventManager, Handle, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, WindowEvent, apply_hover, style};
+use crate::{CachedData, Color, Context, Data, Entity, Event, EventManager, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, WindowEvent, apply_hover, style};
 
 static FONT: &[u8] = include_bytes!("Roboto-Regular.ttf");
 
@@ -45,7 +44,7 @@ impl Application {
         }
     }
 
-    pub fn background_color(mut self, color: Color) -> Self {
+    pub fn background_color(self, color: Color) -> Self {
         self.context.style.borrow_mut().background_color.insert(Entity::root(), color);
 
         self
@@ -114,7 +113,6 @@ impl Application {
 
                         for observer in observers.iter() {
                             if let Some(mut view) = context.views.remove(observer) {
-                
                                 let prev = context.current;
                                 context.current = *observer;
                                 let prev_count = context.count;

@@ -5,13 +5,11 @@
 pub(crate) mod cache;
 
 pub use morphorm::{GeometryChanged};
-pub(crate) use morphorm::Cache;
 
 pub(crate) mod node;
 
 pub(crate) mod hierarchy;
 
-use morphorm::{Hierarchy};
 // use crate::{Event, Propagation, State, Tree, WindowEvent};
 
 // pub(crate) fn geometry_changed(state: &mut State, tree: &Tree) {

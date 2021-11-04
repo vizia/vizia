@@ -1,6 +1,8 @@
 
 use vizia::*;
 
+// An example of triggering a callback when a button is pressed
+
 fn main() {
 
     Application::new(|cx|{

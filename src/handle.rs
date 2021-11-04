@@ -1,8 +1,8 @@
-use std::{cell::RefCell, collections::{HashMap, HashSet}, marker::PhantomData, rc::Rc};
+use std::{cell::RefCell, collections::HashSet, marker::PhantomData, rc::Rc};
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{Color, Context, Entity, Style, ViewHandler};
+use crate::{Color, Entity, Style};
 
 macro_rules! set_style {
     ($name:ident, $t:ty) => {

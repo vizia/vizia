@@ -1,5 +1,7 @@
 use vizia::*;
 
+// Example of binding to two pieces of data
+
 fn main() {
 
     Application::new(|cx|{

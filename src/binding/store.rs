@@ -1,4 +1,4 @@
-use crate::{Context, Entity, Event, View};
+use crate::{Context, Entity};
 
 
 
@@ -25,13 +25,11 @@ impl<T> Store<T> {
     pub fn update_observers(&mut self, cx: &mut Context) {
         if self.dirty {
 
-            println!("Update observers: {:?}", self.observers);
             for observer in self.observers.iter() {
                 if let Some(mut view) = cx.views.remove(observer) {
     
                     let prev = cx.current;
                     cx.current = *observer;
-                    println!("Body: {}", observer);
                     view.body(cx);
                     cx.current = prev;
         
