@@ -2,20 +2,6 @@ use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
 
 use crate::{CachedData, Data, Entity, Event, IdManager, Message, MouseState, Propagation, StateData, StateID, Store, Style, Tree, TreeExt, ViewHandler};
 
-
-// pub struct EventCtx<'a> {
-//     pub tree: &'a Tree,
-//     pub event_queue: &'a mut VecDeque<Event>,
-//     pub current: Entity,
-//     pub state: &'a mut HashMap<StateID, Box<dyn StateData>>,
-// }
-
-// impl<'a> EventCtx<'a> {
-//     pub fn emit<M: Message>(&mut self, message: M) {
-//         self.event_queue.push_back(Event::new(message).target(self.current).origin(self.current).propagate(Propagation::Up));
-//     }
-// }
-
 pub struct Context {
     pub entity_manager: IdManager<Entity>,
     pub tree: Tree,
@@ -33,8 +19,6 @@ pub struct Context {
     pub hovered: Entity,
 
     pub state_count: u32,
-    //pub data: HashMap<u32, Box<dyn Model>>,
-    //pub handlers: HashMap<i32, Box<dyn View>>,
 }
 
 impl Context {
@@ -47,7 +31,6 @@ impl Context {
             self.cache.remove(*entity);
             self.style.borrow_mut().remove(*entity);
             self.data.model_data.remove(*entity);
-            //self.style.remove(*entity); TODO
             self.entity_manager.destroy(*entity);
         }
     }
@@ -61,12 +44,7 @@ impl Context {
                         return Some(&store.data);
                     }
                 }
-            }
-            // self.data
-            //     .model_data
-            //     .get(&TypeId::of::<T>())
-            //     .and_then(|model| model.downcast_ref::<Store<T>>())
-            //     .map(|store| &store.data)            
+            }         
         }
 
         None
