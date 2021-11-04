@@ -42,9 +42,11 @@ impl Context {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         for entity in delete_list.iter().rev() {
-            println!("Removing: {}", entity);
+            //println!("Removing: {}", entity);
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
+            self.style.borrow_mut().remove(*entity);
+            self.data.model_data.remove(*entity);
             //self.style.remove(*entity); TODO
             self.entity_manager.destroy(*entity);
         }

@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{animatable_set::AnimatableSet, sparse_set::SparseSet, style_set::StyleSet};
+use crate::{Entity, animatable_set::AnimatableSet, entity, sparse_set::SparseSet, style_set::StyleSet};
 
 mod color;
 pub use color::Color;
@@ -71,6 +71,50 @@ pub struct Style {
     pub background_color: AnimatableSet<Color>,
 
     pub text: StyleSet<String>,
+}
+
+impl Style {
+    pub fn remove(&mut self, entity: Entity) {
+        self.classes.remove(entity);
+
+        self.position_type.remove(entity);
+        self.layout_type.remove(entity);
+        
+    
+        self.left.remove(entity);
+        self.right.remove(entity);
+        self.top.remove(entity);
+        self.bottom.remove(entity);
+        self.min_left.remove(entity);
+        self.max_left.remove(entity);
+        self.min_right.remove(entity);
+        self.max_right.remove(entity);
+        self.min_top.remove(entity);
+        self.max_top.remove(entity);
+        self.min_bottom.remove(entity);
+        self.max_bottom.remove(entity);
+        self.width.remove(entity);
+        self.height.remove(entity);
+        self.min_width.remove(entity);
+        self.max_width.remove(entity);
+        self.min_height.remove(entity);
+        self.max_height.remove(entity);
+        self.child_left.remove(entity);
+        self.child_right.remove(entity);
+        self.child_top.remove(entity);
+        self.child_bottom.remove(entity);
+        self.row_between.remove(entity);
+        self.col_between.remove(entity);
+        self.grid_rows.remove(entity);
+        self.grid_cols.remove(entity);
+        self.row_index.remove(entity);
+        self.row_span.remove(entity);
+        self.col_index.remove(entity);
+        self.col_span.remove(entity);
+        self.border_width.remove(entity);
+        self.background_color.remove(entity);
+        self.text.remove(entity);
+    }
 }
 
 // //! Style Data

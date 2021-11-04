@@ -5,7 +5,7 @@ use vizia::*;
 
 fn main() {
     Application::new(|cx| {
-        let list: Vec<u32> = (10..22u32).collect();
+        let list: Vec<u32> = (0..12u32).collect();
         Data { 
             list,
         }.build(cx);
@@ -13,7 +13,7 @@ fn main() {
         HStack::new(cx, |cx|{
 
             List::new(cx, Data::list, |cx, item| {
-                if *item.value(cx) < 15 {
+                if *item.value(cx) < 6 {
                     Binding::new(cx, ListData::selected, move |cx, selected|{
                         let item = item.clone();
                         HStack::new(cx, move |cx| {
@@ -61,9 +61,17 @@ fn main() {
                 });
             });
 
-            Button::new(cx, |cx|{
-                cx.emit(DataEvent::Update(5, 40));
-            }, |_|{});
+            VStack::new(cx, |cx|{
+                Button::new(cx, |cx|{
+                    cx.emit(DataEvent::Update(5, 40));
+                }, |_|{});
+                Button::new(cx, |cx|{
+                    cx.emit(DataEvent::All(3));
+                }, |_|{});
+                Button::new(cx, |cx|{
+                    cx.emit(DataEvent::Enumerate);
+                }, |_|{});
+            }).row_between(Pixels(10.0));
         });
     })
     .run();
@@ -77,6 +85,8 @@ pub struct Data {
 #[derive(Debug)]
 pub enum DataEvent {
     Update(usize, u32),
+    All(u32),
+    Enumerate,
 }
 
 impl Model for Data {
@@ -84,8 +94,18 @@ impl Model for Data {
         if let Some(data_event) = event.message.downcast() {
             match data_event {
                 DataEvent::Update(index, value) => {
+                    self.list[*index] = *value;
+                }
+
+                DataEvent::All(value) => {
                     for item in self.list.iter_mut() {
-                        *item = 10;
+                        *item = *value;
+                    }
+                }
+
+                DataEvent::Enumerate => {
+                    for (index, item) in self.list.iter_mut().enumerate() {
+                        *item = index as u32;
                     }
                 }
             }

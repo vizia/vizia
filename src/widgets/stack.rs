@@ -48,7 +48,7 @@ impl HStack {
             .layout_type(LayoutType::Row)
             .width(Auto)
             .height(Auto)
-            .background_color(Color::rgb(50, 50, 50))
+            // .background_color(Color::rgb(50, 50, 50))
     }
 
     fn custom_prop(&self, value: f32) {

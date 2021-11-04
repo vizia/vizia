@@ -66,6 +66,8 @@ impl<T> Handle<T> {
     set_style!(child_right, Units);
     set_style!(child_top, Units);
     set_style!(child_bottom, Units);
+    set_style!(row_between, Units);
+    set_style!(col_between, Units);
 
     // pub fn bottom(self, value: Units) -> Self {
     //     self.cx.style.bottom.insert(self.entity, value);

@@ -2,8 +2,8 @@ use std::{any::TypeId, collections::HashMap, result};
 
 use keyboard_types::Code;
 
-use crate::{Context, Data, Event, Handle, Lens, Model, ModelData, MouseButton, Store, TreeExt, View, WindowEvent};
-
+use crate::{Color, Context, Data, Event, Handle, Lens, Model, ModelData, MouseButton, Store, TreeExt, View, WindowEvent, context};
+use crate::Units::*;
 #[derive(Debug, Clone, Copy)]
 pub struct ItemPtr<L, T>
 where
@@ -105,7 +105,10 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
             lens,
             builder: Some(Box::new(item)),
         }
-        .build(cx);
+        .build(cx)
+        .height(Auto)
+        .width(Auto)
+        .background_color(Color::rgb(50,70,90));
 
         for entity in parent.parent_iter(&cx.tree) {
             if let Some(model_list) = cx.data.model_data.get_mut(entity) {
@@ -123,6 +126,10 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
 
 impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
     fn body(&mut self, cx: &mut Context) {
+
+        for child in cx.current.child_iter(&cx.tree.clone()) {
+            cx.remove(child);
+        }
 
 
         let builder = self.builder.take().unwrap();
@@ -148,6 +155,8 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
                 selected: 3,
                 length: len,
             }.build(cx);
+
+
 
             for index in 0..len {
                 let ptr = ItemPtr::new(self.lens.clone(), index);
