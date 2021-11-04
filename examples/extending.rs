@@ -7,29 +7,29 @@ fn main() {
     Application::new(|cx| {
         Button::new(cx, |_| println!("Pressed"), |cx|{
             Label::new(cx, "Press Me!");
-        }).on_hover(|cx| println!("Hover"));
+        }).on_hover(cx, |cx| println!("Hover"));
     }).run();
 }
 
 pub struct Hover<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
+    action: Option<Box<dyn Fn(&mut EventCtx)>>,
 
     p: PhantomData<V>,
 }
 
 impl<V: View> Hover<V> {
-    pub fn new<'a,F>(handle: Handle<V>, action: F) -> Handle<Hover<V>> 
-    where F: 'static + Fn(&mut Context)
+    pub fn new<'a,F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Hover<V>> 
+    where F: 'static + Fn(&mut EventCtx)
     {
-        let view = handle.cx.views.remove(&handle.entity).unwrap();
+        let view = cx.views.remove(&handle.entity).unwrap();
         let item = Self {
             view,
             action: Some(Box::new(action)),
             p: Default::default(),
         }; 
 
-        handle.cx.views.insert(handle.entity, Box::new(item));
+        cx.views.insert(handle.entity, Box::new(item));
 
         Handle {
             entity: handle.entity,
@@ -44,7 +44,7 @@ impl<V: View> View for Hover<V> {
         self.view.body(cx);
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventCtx, event: &mut Event) {
         self.view.event(cx, event);
 
         if let Some(window_event) = event.message.downcast() {
@@ -65,15 +65,15 @@ impl<V: View> View for Hover<V> {
 
 pub trait Hoverable {
     type View;
-    fn on_hover<F>(self, action: F) -> Self::View
-    where F: 'static + Fn(&mut Context);
+    fn on_hover<F>(self, cx: &mut Context, action: F) -> Self::View
+    where F: 'static + Fn(&mut EventCtx);
 }
 
 impl<'a,V: View> Hoverable for Handle<V> {
     type View = Handle<Hover<V>>;
-    fn on_hover<F>(self, action: F) -> Self::View
-    where F: 'static + Fn(&mut Context) 
+    fn on_hover<F>(self, cx: &mut Context, action: F) -> Self::View
+    where F: 'static + Fn(&mut EventCtx) 
     {
-        Hover::new(self, action)
+        Hover::new(self, cx, action)
     }
 }

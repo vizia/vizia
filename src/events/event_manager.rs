@@ -7,7 +7,7 @@ use femtovg::{
     renderer::OpenGl, Canvas,
 };
 
-use crate::{Context, Event, Model, Propagation, Tree, TreeExt};
+use crate::{Context, Event, EventCtx, Model, Propagation, Tree, TreeExt};
 
 
 /// Dispatches events to widgets.
@@ -60,7 +60,11 @@ impl EventManager {
             // Send event to target
             if let Some(mut view) = context.views.remove(&event.target) {
                 context.current = event.target;
-                view.event(context, event);
+                view.event(&mut EventCtx {
+                    tree: &mut context.tree,
+                    event_queue: &mut context.event_queue,
+                    current: event.target,
+                }, event);
 
                 if let Some(mut model_list) = context.data.model_data.remove(event.target) {
                     for model in model_list.iter_mut() {
@@ -93,7 +97,11 @@ impl EventManager {
                     // Send event to all entities before the target
                     if let Some(mut view) = context.views.remove(&entity) {
                         context.current = entity;
-                        view.event(context, event);
+                        view.event(&mut EventCtx {
+                            tree: &mut context.tree,
+                            event_queue: &mut context.event_queue,
+                            current: entity,
+                        }, event);
 
                         if let Some(mut model_list) = context.data.model_data.remove(entity) {
                             for model in model_list.iter_mut() {

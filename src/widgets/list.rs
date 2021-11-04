@@ -1,8 +1,8 @@
-use std::{any::TypeId, collections::HashMap};
+use std::{any::TypeId, collections::HashMap, result};
 
 use keyboard_types::Code;
 
-use crate::{Context, Data, Event, Handle, Lens, Model, ModelData, MouseButton, Store, TreeExt, View, WindowEvent};
+use crate::{Context, Data, Event, EventCtx, Handle, Lens, Model, ModelData, MouseButton, Store, TreeExt, View, WindowEvent};
 
 #[derive(Debug, Clone, Copy)]
 pub struct ItemPtr<L, T>
@@ -42,6 +42,7 @@ pub struct ListData {
 pub enum ListEvent {
     IncrementSelection,
     DecrementSelection,
+    SetSelected(usize),
 }
 
 impl Model for ListData {
@@ -62,6 +63,17 @@ impl Model for ListData {
                         self.selected -= 1;
                     }
 
+                    return true;
+                }
+
+                ListEvent::SetSelected(index) => {
+                    if *index <= 0 {
+                        self.selected = 0;
+                    } else if *index > self.length - 1 {
+                        self.selected = self.length - 1;
+                    } else {
+                        self.selected = *index;
+                    }
                     return true;
                 }
             }
@@ -142,21 +154,21 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
         self.builder = Some(builder);
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseDown(button) => {
-                    if *button == MouseButton::Left {
-                        cx.emit(ListEvent::IncrementSelection);
-                    }
+    fn event(&mut self, cx: &mut EventCtx, event: &mut crate::Event) {
+        // if let Some(window_event) = event.message.downcast() {
+        //     match window_event {
+        //         WindowEvent::MouseDown(button) => {
+        //             if *button == MouseButton::Left {
+        //                 cx.emit(ListEvent::IncrementSelection);
+        //             }
 
-                    if *button == MouseButton::Right {
-                        cx.emit(ListEvent::DecrementSelection);
-                    }
-                }
+        //             if *button == MouseButton::Right {
+        //                 cx.emit(ListEvent::DecrementSelection);
+        //             }
+        //         }
 
-                _=> {}
-            }
-        }
+        //         _=> {}
+        //     }
+        // }
     }
 }
