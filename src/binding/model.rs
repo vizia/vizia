@@ -1,4 +1,4 @@
-use std::any::{Any, TypeId};
+use std::{any::{Any, TypeId}, ops::Rem};
 
 use crate::{Context, Entity, Event, Store, sparse_set::SparseSet};
 
@@ -41,6 +41,10 @@ pub trait ModelData: Any {
 
     fn reset(&mut self) {
         
+    }
+
+    fn remove_observer(&mut self, observer: Entity) {
+
     }
 }
 
@@ -107,7 +111,7 @@ impl<T: Model> ModelData for Store<T> {
     }
 
     fn update(&self) -> Vec<Entity> {
-        self.observers.clone()
+        self.observers.iter().map(|e| *e).collect()
     }
 
     fn is_dirty(&self) -> bool {
@@ -116,6 +120,10 @@ impl<T: Model> ModelData for Store<T> {
 
     fn reset(&mut self) {
         self.dirty = false;
+    }
+
+    fn remove_observer(&mut self, observer: Entity) {
+        self.observers.remove(&observer);
     }
 }
 

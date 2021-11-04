@@ -26,18 +26,30 @@ impl Context {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         for entity in delete_list.iter().rev() {
+
+            // Remove from observers
+            for entry in self.data.model_data.dense.iter_mut() {
+                let model_list = &mut entry.value;
+                for model in model_list.iter_mut() {
+                    model.remove_observer(*entity);
+                }
+            }
+
             //println!("Removing: {}", entity);
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.style.borrow_mut().remove(*entity);
             self.data.model_data.remove(*entity);
             self.entity_manager.destroy(*entity);
+
+
         }
     }
 
     /// Get stored data from the context.
     pub fn data<T: 'static>(&self) -> Option<&T> {
         for entity in self.current.parent_iter(&self.tree) {
+            //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
             if let Some(data_list) = self.data.model_data.get(entity) {
                 for model in data_list.iter() {
                     if let Some(store) = model.downcast_ref::<Store<T>>() {

@@ -32,7 +32,8 @@ fn main() {
                             } else {
                                 Color::blue()
                             }
-                        ).on_press(cx, move |cx| cx.emit(ListEvent::SetSelected(item.index())));
+                        )
+                        .on_press(cx, move |cx| cx.emit(ListEvent::SetSelected(item.index())));
                     });
                 }
             });
@@ -62,12 +63,15 @@ fn main() {
             });
 
             VStack::new(cx, |cx|{
+                // Change item with index 5 to value of 40
                 Button::new(cx, |cx|{
                     cx.emit(DataEvent::Update(5, 40));
                 }, |_|{});
+                // Set all items to value of 3
                 Button::new(cx, |cx|{
                     cx.emit(DataEvent::All(3));
                 }, |_|{});
+                // Set all items value to their index
                 Button::new(cx, |cx|{
                     cx.emit(DataEvent::Enumerate);
                 }, |_|{});

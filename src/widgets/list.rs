@@ -114,7 +114,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
             if let Some(model_list) = cx.data.model_data.get_mut(entity) {
                 for model in model_list.iter_mut() {
                     if let Some(store) = model.downcast::<Store<L::Source>>() {
-                        store.observers.push(handle.entity);
+                        store.observers.insert(handle.entity);
                     }
                 }
             }
@@ -156,11 +156,10 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
                 length: len,
             }.build(cx);
 
-
-
             for index in 0..len {
                 let ptr = ItemPtr::new(self.lens.clone(), index);
                 (builder)(cx, ptr);
+                cx.count += 1;
             }
         }
 

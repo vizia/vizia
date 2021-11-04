@@ -1,9 +1,9 @@
 use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
 
 use femtovg::{Align, Baseline, Canvas, Paint, Path, renderer::OpenGl};
-use glutin::{ContextBuilder, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
+use glutin::{ContextBuilder, event::VirtualKeyCode, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 
-use crate::{CachedData, Color, Context, Data, Entity, Event, EventManager, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, WindowEvent, apply_hover, style};
+use crate::{CachedData, Color, Context, Data, Entity, Event, EventManager, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, TreeExt, WindowEvent, apply_hover, style};
 
 static FONT: &[u8] = include_bytes!("Roboto-Regular.ttf");
 
@@ -225,6 +225,19 @@ impl Application {
 
                                 MouseButtonState::Released => {
                                     context.event_queue.push_back(Event::new(WindowEvent::MouseUp(button)).target(context.hovered).propagate(Propagation::Up));
+                                }
+                            }
+                        }
+
+                        glutin::event::WindowEvent::KeyboardInput {
+                            device_id,
+                            input,
+                            is_synthetic,
+                        } => {
+                            if input.virtual_keycode == Some(VirtualKeyCode::H) {
+                                println!("Tree");
+                                for entity in context.tree.into_iter() {
+                                    println!("Entity: {} Parent: {:?} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&context.tree), context.cache.get_posx(entity), context.cache.get_posy(entity), context.cache.get_width(entity), context.cache.get_height(entity));
                                 }
                             }
                         }

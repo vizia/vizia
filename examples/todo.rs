@@ -1,6 +1,6 @@
 use vizia::*;
 
-// NOT CURRENTLY WORKING!
+// INCOMPLETE!
 
 fn main() {
     Application::new(|cx|{
@@ -24,18 +24,18 @@ fn main() {
             
             //let item = item.clone();
             Binding::new(cx, TodoData::selected, move |cx, selected|{
-                //let item_clone = item.clone();
-                //let selected = *selected.get(cx);
-                // HStack::new(cx, move |cx|{
-                //     Label::new(cx, &item_clone.value(cx).text.to_owned());
-                //     Label::new(cx, &item_clone.value(cx).completed.to_string());
-                // }).background_color(
-                //     if selected == item.index() {
-                //         Color::green()
-                //     } else {
-                //         Color::blue()
-                //     }
-                // );
+                let item_clone = item.clone();
+                let selected = *selected.get(cx);
+                HStack::new(cx, move |cx|{
+                    Label::new(cx, &item_clone.value(cx).text.to_owned());
+                    Label::new(cx, &item_clone.value(cx).completed.to_string());
+                }).background_color(
+                    if selected == item.index() {
+                        Color::green()
+                    } else {
+                        Color::blue()
+                    }
+                );
             });
         });
     
