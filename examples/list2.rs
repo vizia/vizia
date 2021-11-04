@@ -13,26 +13,28 @@ fn main() {
         HStack::new(cx, |cx|{
 
             List::new(cx, Data::list, |cx, item| {
-                Binding::new(cx, ListData::selected, move |cx, selected|{
-                    let item = item.clone();
-                    HStack::new(cx, move |cx| {
-                        Label::new(cx, "Hello");
-                        Label::new(cx, "World");
-                        Label::new(cx, &item.value(cx).to_string()).background_color(
-                            if *item.value(cx) == 40 {
-                                Color::red()
+                if *item.value(cx) < 15 {
+                    Binding::new(cx, ListData::selected, move |cx, selected|{
+                        let item = item.clone();
+                        HStack::new(cx, move |cx| {
+                            Label::new(cx, "Hello");
+                            Label::new(cx, "World");
+                            Label::new(cx, &item.value(cx).to_string()).background_color(
+                                if *item.value(cx) == 40 {
+                                    Color::red()
+                                } else {
+                                    Color::rgba(0,0,0,0)
+                                }
+                            );
+                        }).background_color(
+                            if item.index() == *selected.get(cx) {
+                                Color::green()
                             } else {
-                                Color::rgba(0,0,0,0)
+                                Color::blue()
                             }
-                        );
-                    }).background_color(
-                        if item.index() == *selected.get(cx) {
-                            Color::green()
-                        } else {
-                            Color::blue()
-                        }
-                    ).on_press(cx, move |cx| cx.emit(ListEvent::SetSelected(item.index())));
-                });
+                        ).on_press(cx, move |cx| cx.emit(ListEvent::SetSelected(item.index())));
+                    });
+                }
             });
 
             List::new(cx, Data::list, |cx, item| {
@@ -82,7 +84,9 @@ impl Model for Data {
         if let Some(data_event) = event.message.downcast() {
             match data_event {
                 DataEvent::Update(index, value) => {
-                    self.list[*index] = *value;
+                    for item in self.list.iter_mut() {
+                        *item = 10;
+                    }
                 }
             }
         }

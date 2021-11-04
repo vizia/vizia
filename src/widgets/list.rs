@@ -96,12 +96,28 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context, ItemPtr<L, T>),
+        <L as Lens>::Source: Model,
     {
-        Self {
+
+        let parent = cx.current;
+
+        let handle = Self {
             lens,
             builder: Some(Box::new(item)),
         }
-        .build(cx)
+        .build(cx);
+
+        for entity in parent.parent_iter(&cx.tree) {
+            if let Some(model_list) = cx.data.model_data.get_mut(entity) {
+                for model in model_list.iter_mut() {
+                    if let Some(store) = model.downcast::<Store<L::Source>>() {
+                        store.observers.push(handle.entity);
+                    }
+                }
+            }
+        }
+
+        handle
     }
 }
 
