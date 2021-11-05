@@ -126,6 +126,7 @@ impl Application {
                         if let Some(builder) = &builder {
                             (builder)(&mut context);
                         }
+                        context.enviroment.needs_rebuild = false;
                     }
 
                     // Events
