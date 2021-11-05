@@ -20,7 +20,7 @@ impl Button {
         Self {
             action: Some(Box::new(action)),
             label: Some(Box::new(label)),
-        }.build(cx).width(Pixels(100.0)).height(Pixels(50.0)).background_color(Color::rgb(150,150,150))
+        }.build(cx).width(Pixels(100.0)).height(Pixels(30.0)).background_color(Color::rgb(150,150,150))
         
     }
 }

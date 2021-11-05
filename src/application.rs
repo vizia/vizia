@@ -4,17 +4,18 @@ use femtovg::{Align, Baseline, Canvas, Paint, Path, renderer::OpenGl};
 use glutin::{ContextBuilder, event::VirtualKeyCode, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use morphorm::Units;
 
-use crate::{CachedData, Color, Context, Data, Entity, Event, EventManager, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, TreeExt, WindowEvent, apply_hover, style};
+use crate::{CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, TreeExt, WindowEvent, apply_hover, scan_to_code, style, vcode_to_code, vk_to_key};
 
 static FONT: &[u8] = include_bytes!("Roboto-Regular.ttf");
 
 pub struct Application {
     context: Context,
+    builder: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl Application {
-    pub fn new<F>(func: F) -> Self
-    where F: FnOnce(&mut Context)
+    pub fn new<F>(builder: F) -> Self
+    where F: 'static + Fn(&mut Context)
     {
 
         let mut cache = CachedData::default();
@@ -30,18 +31,21 @@ impl Application {
             data: Data::new(),
             style: Rc::new(RefCell::new(Style::default())),
             cache,
+            enviroment: Enviroment::new(),
             event_queue: VecDeque::new(),
             mouse: MouseState::default(),
             hovered: Entity::root(),
+            focused: Entity::root(),
             state_count: 0,
         };
 
         context.entity_manager.create();
 
-        (func)(&mut context);
+        
 
         Self {
             context,
+            builder: Some(Box::new(builder)),
         }
     }
 
@@ -51,7 +55,14 @@ impl Application {
         self
     }
 
-    pub fn run(self) {
+    pub fn locale(mut self, id: &str) -> Self {
+        self.context.enviroment.set_locale(id);
+
+
+        self
+    }
+
+    pub fn run(mut self) {
 
         let mut context = self.context;
         
@@ -95,11 +106,27 @@ impl Application {
 
         let mut event_manager = EventManager::new();
 
+        if let Some(builder) = self.builder.take() {
+            (builder)(&mut context);
+
+            self.builder = Some(builder);
+        }
+
+        let builder = self.builder.take();
+
         event_loop.run(move |event, _, control_flow|{
             *control_flow = ControlFlow::Wait;
 
             match event {
                 glutin::event::Event::MainEventsCleared => {
+
+                    if context.enviroment.needs_rebuild {
+                        context.current = Entity::root();
+                        context.count = 0;
+                        if let Some(builder) = &builder {
+                            (builder)(&mut context);
+                        }
+                    }
 
                     // Events
                     while !context.event_queue.is_empty() {
@@ -244,7 +271,66 @@ impl Application {
                                     println!("Entity: {} Parent: {:?} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&context.tree), context.cache.get_posx(entity), context.cache.get_posy(entity), context.cache.get_width(entity), context.cache.get_height(entity));
                                 }
                             }
+
+                            let s = match input.state {
+                                glutin::event::ElementState::Pressed => MouseButtonState::Pressed,
+                                glutin::event::ElementState::Released => MouseButtonState::Released,
+                            };
+
+	                        // Prefer virtual keycodes to scancodes, as scancodes aren't uniform between platforms
+	                        let code = if let Some(vkey) = input.virtual_keycode {
+		                        vcode_to_code(vkey)
+	                        } else {
+		                        scan_to_code(input.scancode)
+	                        };
+
+                            let key = vk_to_key(
+                                input.virtual_keycode.unwrap_or(VirtualKeyCode::NoConvert),
+                            );
+
+                            match s {
+                                MouseButtonState::Pressed => {
+                                    if context.focused != Entity::null() {
+                                        context.event_queue.push_back(
+                                            Event::new(WindowEvent::KeyDown(code, key))
+                                                .target(context.focused)
+                                                .propagate(Propagation::DownUp),
+                                        );
+                                    } else {
+                                        context.event_queue.push_back(
+                                            Event::new(WindowEvent::KeyDown(code, key))
+                                                .target(context.hovered)
+                                                .propagate(Propagation::DownUp),
+                                        );
+                                    }
+                                }
+
+                                MouseButtonState::Released => {
+                                    if context.focused != Entity::null() {
+                                        context.event_queue.push_back(
+                                            Event::new(WindowEvent::KeyUp(code, key))
+                                                .target(context.focused)
+                                                .propagate(Propagation::DownUp),
+                                        );
+                                    } else {
+                                        context.event_queue.push_back(
+                                            Event::new(WindowEvent::KeyUp(code, key))
+                                                .target(context.hovered)
+                                                .propagate(Propagation::DownUp),
+                                        );
+                                    }
+                                }
+                            }
                         }
+
+                        glutin::event::WindowEvent::ReceivedCharacter(character) => {
+                            context.event_queue.push_back(
+                                Event::new(WindowEvent::CharInput(character))
+                                    .target(context.focused)
+                                    .propagate(Propagation::Down),
+                            );
+                        }
+
 
                         _=> {}
                     }

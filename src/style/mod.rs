@@ -66,7 +66,21 @@ pub struct Style {
     pub col_index: StyleSet<usize>,
     pub col_span: StyleSet<usize>,
 
+    // Border
     pub border_width: AnimatableSet<Units>,
+    pub border_color: AnimatableSet<Color>,
+
+    // Border Shape
+    pub border_shape_top_left: StyleSet<BorderCornerShape>,
+    pub border_shape_top_right: StyleSet<BorderCornerShape>,
+    pub border_shape_bottom_left: StyleSet<BorderCornerShape>,
+    pub border_shape_bottom_right: StyleSet<BorderCornerShape>,
+
+    // Border Radius
+    pub border_radius_top_left: AnimatableSet<Units>,
+    pub border_radius_top_right: AnimatableSet<Units>,
+    pub border_radius_bottom_left: AnimatableSet<Units>,
+    pub border_radius_bottom_right: AnimatableSet<Units>,
 
     pub background_color: AnimatableSet<Color>,
 
@@ -112,6 +126,15 @@ impl Style {
         self.col_index.remove(entity);
         self.col_span.remove(entity);
         self.border_width.remove(entity);
+        self.border_color.remove(entity);
+        self.border_radius_top_left.remove(entity);
+        self.border_radius_top_right.remove(entity);
+        self.border_radius_bottom_left.remove(entity);
+        self.border_radius_bottom_right.remove(entity);
+        self.border_shape_top_left.remove(entity);
+        self.border_shape_top_right.remove(entity);
+        self.border_shape_bottom_left.remove(entity);
+        self.border_shape_bottom_right.remove(entity);
         self.background_color.remove(entity);
         self.text.remove(entity);
     }

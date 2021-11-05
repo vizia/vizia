@@ -14,3 +14,6 @@ pub use list::{ListData, List, ListEvent, ItemPtr};
 
 mod table;
 pub use table::Table;
+
+mod textbox;
+pub use textbox::Textbox;

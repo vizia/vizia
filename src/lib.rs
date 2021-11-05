@@ -4,6 +4,12 @@ use std::{any::{Any, TypeId}, collections::HashMap, marker::PhantomData, rc::Rc}
 mod id;
 pub use id::*;
 
+mod input;
+pub use input::*;
+
+mod localization;
+pub use localization::*;
+
 mod entity;
 pub use entity::*;
 

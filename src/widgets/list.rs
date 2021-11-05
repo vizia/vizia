@@ -2,7 +2,7 @@
 
 use keyboard_types::Code;
 
-use crate::{Color, Context, Event, Handle, Lens, Model, MouseButton, Store, TreeExt, View};
+use crate::{Color, Context, Event, Handle, Lens, Model, MouseButton, Store, TreeExt, View, WindowEvent};
 use crate::Units::*;
 #[derive(Debug, Copy)]
 pub struct ItemPtr<L, T>
@@ -141,6 +141,8 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
             }
         }
 
+        cx.focused = handle.entity;
+
         handle
     }
 }
@@ -201,20 +203,34 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
-        // if let Some(window_event) = event.message.downcast() {
-        //     match window_event {
-        //         WindowEvent::MouseDown(button) => {
-        //             if *button == MouseButton::Left {
-        //                 cx.emit(ListEvent::IncrementSelection);
-        //             }
+        if let Some(window_event) = event.message.downcast() {
+            match window_event {
+                // WindowEvent::MouseDown(button) => {
+                //     if *button == MouseButton::Left {
+                //         cx.emit(ListEvent::IncrementSelection);
+                //     }
 
-        //             if *button == MouseButton::Right {
-        //                 cx.emit(ListEvent::DecrementSelection);
-        //             }
-        //         }
+                //     if *button == MouseButton::Right {
+                //         cx.emit(ListEvent::DecrementSelection);
+                //     }
+                // }
 
-        //         _=> {}
-        //     }
-        // }
+                WindowEvent::KeyDown(code, key) => {
+                    match code {
+                        Code::ArrowDown => {
+                            cx.emit(ListEvent::IncrementSelection);
+                        }
+
+                        Code::ArrowUp => {
+                            cx.emit(ListEvent::DecrementSelection);
+                        }
+
+                        _=> {}
+                    }
+                }
+
+                _=> {}
+            }
+        }
     }
 }
