@@ -1,5 +1,6 @@
 use std::{cell::RefCell, collections::{HashMap, VecDeque}, io::Read, rc::Rc};
 
+use femtovg::FontId;
 use fluent_bundle::{FluentBundle, FluentResource};
 use unic_langid::LanguageIdentifier;
 
@@ -66,6 +67,9 @@ pub struct Context {
     pub focused: Entity,
 
     pub state_count: u32,
+
+    // Temp
+    pub fonts: Vec<FontId>,
 }
 
 impl Context {

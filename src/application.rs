@@ -4,7 +4,7 @@ use femtovg::{Align, Baseline, Canvas, Paint, Path, renderer::OpenGl};
 use glutin::{ContextBuilder, event::VirtualKeyCode, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use morphorm::Units;
 
-use crate::{CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, TreeExt, WindowEvent, apply_hover, scan_to_code, style, vcode_to_code, vk_to_key};
+use crate::{BoundingBox, CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, TreeExt, WindowEvent, apply_hover, scan_to_code, style, vcode_to_code, vk_to_key};
 
 static FONT: &[u8] = include_bytes!("Roboto-Regular.ttf");
 
@@ -37,6 +37,7 @@ impl Application {
             hovered: Entity::root(),
             focused: Entity::root(),
             state_count: 0,
+            fonts: Vec::new(),
         };
 
         context.entity_manager.create();
@@ -79,6 +80,8 @@ impl Application {
         let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
 
         let font = canvas.add_font_mem(FONT).expect("Failed to load font");
+
+        context.fonts = vec![font];
 
         let dpi_factor = handle.window().scale_factor();
         let size = handle.window().inner_size();
@@ -180,30 +183,27 @@ impl Application {
 
                 glutin::event::Event::RedrawRequested(_) => {
                     // Redraw here
-                    //println!("Redraw");
+                    // println!("Redraw");
+
+                    let window_width = context.cache.get_width(Entity::root());
+                    let window_height = context.cache.get_height(Entity::root());
+
+                    canvas.set_size(window_width as u32, window_height as u32, dpi_factor as f32);
                     let clear_color = context.style.borrow_mut().background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
                     canvas.clear_rect(
                         0,
                         0,
-                        size.width as u32,
-                        size.height as u32,
+                        window_width as u32,
+                        window_height as u32,
                         clear_color.into(),
                     );
                     for entity in context.tree.clone().into_iter() {
-                        //println!("{}", debug(&mut context, entity));
-                        let bounds = context.cache.get_bounds(entity);
-                        let mut path = Path::new();
-                        path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+                        if let Some(view) = context.views.remove(&entity) {
 
-                        let background_color: femtovg::Color = context.style.borrow_mut().background_color.get(entity).cloned().unwrap_or_default().into();
-                        canvas.fill_path(&mut path, Paint::color(background_color));
-                        
-                        if let Some(text) = context.style.borrow().text.get(entity) {
-                            let mut paint = Paint::color(femtovg::Color::black());
-                            paint.set_font(&[font]);
-                            paint.set_text_align(Align::Center);
-                            paint.set_text_baseline(Baseline::Middle);
-                            canvas.fill_text(bounds.x + bounds.w / 2.0, bounds.y + bounds.h / 2.0, text, paint);
+                            context.current = entity;
+                            view.draw(&context, &mut canvas);
+                            
+                            context.views.insert(entity, view);
                         }
                     }
 
@@ -330,6 +330,36 @@ impl Application {
                                     .target(context.focused)
                                     .propagate(Propagation::Down),
                             );
+                        }
+
+                        glutin::event::WindowEvent::Resized(size) => {
+                            //println!("Resized: {:?}", size);
+                            handle.resize(size);
+
+                            context
+                                .style
+                                .borrow_mut()
+                                .width
+                                .insert(Entity::root(), Units::Pixels(size.width as f32));
+
+                            context
+                                .style
+                                .borrow_mut()
+                                .height
+                                .insert(Entity::root(), Units::Pixels(size.height as f32));
+
+                            context
+                                .cache
+                                .set_width(Entity::root(), size.width as f32);
+                            context
+                                .cache
+                                .set_height(Entity::root(), size.height as f32);
+
+                            // let mut bounding_box = BoundingBox::default();
+                            // bounding_box.w = size.width as f32;
+                            // bounding_box.h = size.height as f32;
+
+                            // context.cache.set_clip_region(Entity::root(), bounding_box);
                         }
 
 

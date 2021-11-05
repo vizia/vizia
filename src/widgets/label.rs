@@ -15,7 +15,7 @@ impl Label {
 
 
         let handle = Self{}.build(cx)
-             .width(Pixels(130.0))
+             .width(Pixels(120.0))
              .height(Pixels(30.0))
              .child_space(Stretch(1.0))
              .child_left(Pixels(5.0))

@@ -64,6 +64,9 @@ pub use morphorm::Units::*;
 
 pub use vizia_derive::Lens;
 
+mod view;
+pub use view::{View, Canvas};
+
 // pub trait Model: Sized {
 //     fn build(&self, cx: &mut Context) -> TypedId<Self>;
 // }
@@ -103,67 +106,7 @@ pub use vizia_derive::Lens;
 //     }
 // }
 
-pub trait View: 'static + Sized {
-    fn body<'a>(&mut self, cx: &'a mut Context) {}
-    fn build<'a>(mut self, cx: &'a mut Context) -> Handle<Self> {
-        let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
-            let prev = cx.current;
-            cx.current = id;
-            let prev_count = cx.count;
-            cx.count = 0;
-            self.body(cx);
-            cx.current = prev;
-            cx.count = prev_count;
-            id
-        } else {
-            let id = cx.entity_manager.create();
-            cx.tree.add(id, cx.current);
-            cx.cache.add(id);
-            let prev = cx.current;
-            cx.current = id;
-            let prev_count = cx.count;
-            cx.count = 0;
-            self.body(cx);
-            cx.current = prev;
-            cx.count = prev_count;
-            cx.views.insert(id, Box::new(self));
-            id  
-        };
 
-        cx.count += 1;
-
-        Handle {
-            entity: id,
-            style: cx.style.clone(),
-            p: Default::default(),
-        }
-    }
-    fn debug(&self, entity: Entity) -> String {
-        "".to_string()
-    }
-
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-
-    }
-    
-}
-
-impl<T: View> ViewHandler for T 
-where
-    T: std::marker::Sized + View + 'static
-{
-    fn debug(&self, entity: Entity) -> String {
-        <T as View>::debug(self, entity)
-    }
-
-    fn body(&mut self, cx: &mut Context) {
-        <T as View>::body(self, cx);
-    }
-
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        <T as View>::event(self, cx, event);
-    }
-}
 
 
 #[derive(Clone, Copy)]
