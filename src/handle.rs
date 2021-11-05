@@ -59,6 +59,13 @@ impl<T> Handle<T> {
         self
     }
 
+    pub fn size(self, value: Units) -> Self {
+        self.style.borrow_mut().width.insert(self.entity, value);
+        self.style.borrow_mut().height.insert(self.entity, value);
+
+        self
+    }
+
     set_style!(background_color, Color);
 
     set_style!(layout_type, LayoutType);

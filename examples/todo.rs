@@ -20,30 +20,34 @@ fn main() {
             selected: 0,
         }.build(cx);
 
-        List::new(cx, TodoData::items, |cx, item|{
-            
-            //let item = item.clone();
-            Binding::new(cx, TodoData::selected, move |cx, selected|{
-                let item_clone = item.clone();
-                let selected = *selected.get(cx);
-                HStack::new(cx, move |cx|{
-                    Label::new(cx, &item_clone.value(cx).text.to_owned());
-                    Label::new(cx, &item_clone.value(cx).completed.to_string());
-                }).background_color(
-                    if selected == item.index() {
-                        Color::green()
-                    } else {
-                        Color::blue()
-                    }
-                );
+        VStack::new(cx, |cx|{
+            HStack::new(cx, |cx|{
+                Label::new(cx, "Enter a todo item...");
+                Button::new(cx, |_|{}, |_|{});
             });
-        });
-    
-        // Binding::new(TodoData::items).build(cx, |cx, items|{
-        //     HStack::new().build(cx, |cx|{
-        //         Button::new(|cx| items.get(cx))
-        //     });      
-        // });
+
+            List::new(cx, TodoData::items, |cx, item|{
+                
+                //let item = item.clone();
+                Binding::new(cx, TodoData::selected, move |cx, selected|{
+                    let item_clone = item.clone();
+                    let selected = *selected.get(cx);
+                    HStack::new(cx, move |cx|{
+                        Label::new(cx, &item_clone.value(cx).text.to_owned()).width(Stretch(1.0));
+                        Checkbox::new(cx, item_clone.value(cx).completed);
+                        //Label::new(cx, &item_clone.value(cx).completed.to_string());
+                    }).background_color(
+                        if selected == item.index() {
+                            Color::green()
+                        } else {
+                            Color::blue()
+                        }
+                    ).width(Stretch(1.0));
+                }).width(Stretch(1.0));
+            }).size(Stretch(1.0));
+
+        }).width(Stretch(1.0)).height(Stretch(1.0));
+
     }).run();
 }
 

@@ -17,3 +17,6 @@ pub use table::Table;
 
 mod textbox;
 pub use textbox::Textbox;
+
+mod checkbox;
+pub use checkbox::Checkbox;
