@@ -56,6 +56,8 @@ where L: 'static + Lens<Target = Vec<T>>
             
             let len = self.lens.view(&store.data).len();
 
+            assert!(len/self.width == self.width, "Only square tables supported at the moment");
+
             cx.style.borrow_mut().grid_rows.insert(cx.current, vec![Stretch(1.0); self.width]);
             cx.style.borrow_mut().grid_cols.insert(cx.current, vec![Stretch(1.0); self.width]);
 
