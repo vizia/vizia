@@ -2,7 +2,29 @@ use vizia::*;
 
 fn main() {
     Application::new(|cx|{
+        VStack::new(cx, |cx|{
+            Counter::new(cx);
+            Counter::new(cx);
+            Counter::new(cx);
+            Counter::new(cx);
+        });
+    }).run();
+}
 
+pub struct Counter {
+
+}
+
+impl Counter {
+    pub fn new(cx: &mut Context) -> Handle<Self> {
+        Self {
+            
+        }.build(cx).width(Auto).height(Auto)
+    }
+}
+
+impl View for Counter {
+    fn body(&mut self, cx: &mut Context) {
         CounterData {
             count: 0,
         }.build(cx);
@@ -24,8 +46,10 @@ fn main() {
                 Label::new(cx, &english_numbers::convert_all_fmt(*count.get(cx) as i64));
             });
         });  
-    }).run();
+    }
 }
+
+
 
 #[derive(Lens)]
 pub struct CounterData {
