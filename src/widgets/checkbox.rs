@@ -3,7 +3,7 @@ use crate::{Color, Context, Handle, Units::*, View};
 
 
 pub struct Checkbox {
-    checked: bool,
+    pub checked: bool,
     on_checked: Option<Box<dyn Fn(&mut Context)>>,
     on_unchecked: Option<Box<dyn Fn(&mut Context)>>,
 }

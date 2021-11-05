@@ -1,6 +1,6 @@
 use std::any::{Any, TypeId};
 
-use crate::{Context, Entity, Event, Store, sparse_set::SparseSet};
+use crate::{Context, Entity, Event, Store, storage::sparse_set::SparseSet};
 
 
 

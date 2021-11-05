@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashSet, marker::PhantomData, rc::Rc};
+use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 
 use morphorm::{LayoutType, PositionType, Units};
 

@@ -215,7 +215,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
                 //     }
                 // }
 
-                WindowEvent::KeyDown(code, key) => {
+                WindowEvent::KeyDown(code, _) => {
                     match code {
                         Code::ArrowDown => {
                             cx.emit(ListEvent::IncrementSelection);

@@ -1,12 +1,10 @@
 use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
 
-use femtovg::{Align, Baseline, Canvas, Paint, Path, renderer::OpenGl};
+use femtovg::{Canvas, renderer::OpenGl};
 use glutin::{ContextBuilder, event::VirtualKeyCode, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use morphorm::Units;
 
-use crate::{BoundingBox, CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, WindowEvent, apply_hover, apply_styles, scan_to_code, style, vcode_to_code, vk_to_key};
-
-static FONT: &[u8] = include_bytes!("Roboto-Regular.ttf");
+use crate::{CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, WindowEvent, apply_hover, apply_styles, scan_to_code, vcode_to_code, vk_to_key};
 
 pub struct Application {
     context: Context,
@@ -257,9 +255,9 @@ impl Application {
                         }
 
                         glutin::event::WindowEvent::CursorMoved {
-                            device_id,
+                            device_id: _,
                             position,
-                            modifiers
+                            modifiers: _
                         } => {
 
                             context.mouse.cursorx = position.x as f32;
@@ -269,10 +267,10 @@ impl Application {
                         }
 
                         glutin::event::WindowEvent::MouseInput {
-                            device_id,
+                            device_id: _,
                             button,
                             state,
-                            modifiers,
+                            modifiers: _,
                         } => {
                             let button = match button {
                                 glutin::event::MouseButton::Left => MouseButton::Left,
@@ -298,9 +296,9 @@ impl Application {
                         }
 
                         glutin::event::WindowEvent::KeyboardInput {
-                            device_id,
+                            device_id: _,
                             input,
-                            is_synthetic,
+                            is_synthetic: _,
                         } => {
                             if input.virtual_keycode == Some(VirtualKeyCode::H) {
                                 println!("Tree");
@@ -331,13 +329,13 @@ impl Application {
                                         context.event_queue.push_back(
                                             Event::new(WindowEvent::KeyDown(code, key))
                                                 .target(context.focused)
-                                                .propagate(Propagation::DownUp),
+                                                .propagate(Propagation::Up),
                                         );
                                     } else {
                                         context.event_queue.push_back(
                                             Event::new(WindowEvent::KeyDown(code, key))
                                                 .target(context.hovered)
-                                                .propagate(Propagation::DownUp),
+                                                .propagate(Propagation::Up),
                                         );
                                     }
                                 }
@@ -347,13 +345,13 @@ impl Application {
                                         context.event_queue.push_back(
                                             Event::new(WindowEvent::KeyUp(code, key))
                                                 .target(context.focused)
-                                                .propagate(Propagation::DownUp),
+                                                .propagate(Propagation::Up),
                                         );
                                     } else {
                                         context.event_queue.push_back(
                                             Event::new(WindowEvent::KeyUp(code, key))
                                                 .target(context.hovered)
-                                                .propagate(Propagation::DownUp),
+                                                .propagate(Propagation::Up),
                                         );
                                     }
                                 }
@@ -364,7 +362,7 @@ impl Application {
                             context.event_queue.push_back(
                                 Event::new(WindowEvent::CharInput(character))
                                     .target(context.focused)
-                                    .propagate(Propagation::Down),
+                                    .propagate(Propagation::Up),
                             );
                         }
 
@@ -409,10 +407,10 @@ impl Application {
     }
 }
 
-fn debug(cx: &mut Context, entity: Entity) -> String {
-    if let Some(view) = cx.views.get(&entity) {
-        view.debug(entity)
-    } else {
-        "None".to_string()
-    }
-}
+// fn debug(cx: &mut Context, entity: Entity) -> String {
+//     if let Some(view) = cx.views.get(&entity) {
+//         view.debug(entity)
+//     } else {
+//         "None".to_string()
+//     }
+// }

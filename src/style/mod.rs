@@ -4,7 +4,7 @@ use morphorm::{LayoutType, PositionType, Units};
 
 use cssparser::{Parser, ParserInput};
 
-use crate::{Animation, AnimationState, CursorIcon, Entity, IdManager, Interpolator, Transition, animatable_set::AnimatableSet, sparse_set::SparseSet, style_set::StyleSet};
+use crate::{Animation, AnimationState, CursorIcon, Entity, IdManager, Interpolator, Transition, storage::{animatable_set::AnimatableSet, sparse_set::SparseSet, style_set::StyleSet}};
 
 mod color;
 pub use color::Color;
@@ -31,7 +31,7 @@ mod selector;
 pub use selector::*;
 
 mod specificity;
-pub use specificity::*;
+use specificity::*;
 
 mod property;
 pub use property::*;
@@ -43,7 +43,7 @@ mod layout;
 pub use layout::Overflow;
 
 mod shadow;
-pub use shadow::*;
+use shadow::*;
 
 use morphorm::Units::*;
 

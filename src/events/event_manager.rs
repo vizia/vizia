@@ -51,8 +51,6 @@ impl EventManager {
             // Define the target to prevent multiple mutable borrows error
             let target = event.target;
 
-            // Direct
-
             // Send event to target
             if let Some(mut view) = context.views.remove(&event.target) {
                 context.current = event.target;

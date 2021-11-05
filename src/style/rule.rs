@@ -3,7 +3,6 @@
 use std::cmp::{Eq, PartialEq};
 use std::hash::Hash;
 
-use morphorm::Units;
 
 // use crate::{Color, PropSet2, Selector, State};
 use crate::id::GenerationalId;

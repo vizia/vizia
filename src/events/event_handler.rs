@@ -1,14 +1,7 @@
-use crate::{Canvas, Event};
-
-use crate::{Entity, Context};
-
-//use image::Pixels;
-
+use crate::{Entity, Context, Canvas, Event};
 
 use std::any::{Any, TypeId};
 
-
-/// TODO - Make crate private (provide method to retrieve event handler in state)
 pub trait ViewHandler: Any {
     fn debug(&self, entity: Entity) -> String {
         entity.to_string()
@@ -24,7 +17,7 @@ pub trait ViewHandler: Any {
 }
 
 impl dyn ViewHandler {
-    // Check if a message is a certain type
+    // Check if a view handler is a certain type
     pub fn is<T: ViewHandler + 'static>(&self) -> bool {
         // Get TypeId of the type this function is instantiated with
         let t = TypeId::of::<T>();
@@ -36,7 +29,7 @@ impl dyn ViewHandler {
         t == concrete
     }
 
-    // Casts a message to the specified type if the message is of that type
+    // Attempt to cast a view handler to a mutable reference to the specified type
     pub fn downcast_mut<T>(&mut self) -> Option<&mut T>
     where
         T: ViewHandler + 'static,
@@ -48,6 +41,7 @@ impl dyn ViewHandler {
         }
     }
 
+    // Attempt to cast a view handler to an immutable reference to the specified type
     pub fn downcast_ref<T>(&self) -> Option<&T>
     where
         T: ViewHandler + 'static,
