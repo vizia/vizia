@@ -50,6 +50,15 @@ impl<T> Handle<T> {
         self
     }
 
+    pub fn space(self, value: Units) -> Self {
+        self.style.borrow_mut().left.insert(self.entity, value);
+        self.style.borrow_mut().right.insert(self.entity, value);
+        self.style.borrow_mut().top.insert(self.entity, value);
+        self.style.borrow_mut().bottom.insert(self.entity, value);
+
+        self
+    }
+
     set_style!(background_color, Color);
 
     set_style!(layout_type, LayoutType);
@@ -68,6 +77,12 @@ impl<T> Handle<T> {
     set_style!(child_bottom, Units);
     set_style!(row_between, Units);
     set_style!(col_between, Units);
+    set_style!(row_index, usize);
+    set_style!(row_span, usize);
+    set_style!(col_index, usize);
+    set_style!(col_span, usize);
+    set_style!(grid_rows, Vec<Units>);
+    set_style!(grid_cols, Vec<Units>);
 
     // pub fn bottom(self, value: Units) -> Self {
     //     self.cx.style.bottom.insert(self.entity, value);

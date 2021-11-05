@@ -1,5 +1,5 @@
 
-pub trait Lens: Clone {
+pub trait Lens: 'static + Clone {
     type Source;
     type Target;
 

@@ -10,4 +10,7 @@ mod button;
 pub use button::Button;
 
 mod list;
-pub use list::{ListData, List, ListEvent};
+pub use list::{ListData, List, ListEvent, ItemPtr};
+
+mod table;
+pub use table::Table;

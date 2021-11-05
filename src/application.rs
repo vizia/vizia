@@ -2,6 +2,7 @@ use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
 
 use femtovg::{Align, Baseline, Canvas, Paint, Path, renderer::OpenGl};
 use glutin::{ContextBuilder, event::VirtualKeyCode, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
+use morphorm::Units;
 
 use crate::{CachedData, Color, Context, Data, Entity, Event, EventManager, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, TreeExt, WindowEvent, apply_hover, style};
 
@@ -88,6 +89,9 @@ impl Application {
         context
             .cache
             .set_height(Entity::root(), 600.0);
+
+        context.style.borrow_mut().width.insert(Entity::root(), Units::Pixels(800.0));
+        context.style.borrow_mut().height.insert(Entity::root(), Units::Pixels(600.0));
 
         let mut event_manager = EventManager::new();
 

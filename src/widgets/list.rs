@@ -4,25 +4,46 @@ use keyboard_types::Code;
 
 use crate::{Color, Context, Event, Handle, Lens, Model, MouseButton, Store, TreeExt, View};
 use crate::Units::*;
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Copy)]
 pub struct ItemPtr<L, T>
 where
     L: Lens<Target = Vec<T>>,
 {
     lens: L,
     index: usize,
+    row: usize,
+    col: usize,
+}
+
+impl<L: Lens<Target = Vec<T>>,T> Clone for ItemPtr<L,T> {
+    fn clone(&self) -> Self {
+        Self {
+            lens: self.lens.clone(),
+            index: self.index,
+            row: self.row,
+            col: self.col,
+        }
+    }
 }
 
 impl<L, T> ItemPtr<L, T>
 where
     L: Lens<Target = Vec<T>>,
 {
-    pub fn new(lens: L, index: usize) -> Self {
-        Self { lens, index }
+    pub fn new(lens: L, index: usize, row: usize, col: usize) -> Self {
+        Self { lens, index, row, col }
     }
 
     pub fn index(&self) -> usize {
         self.index
+    }
+
+    pub fn row(&self) -> usize {
+        self.row
+    }
+
+    pub fn col(&self) -> usize {
+        self.col
     }
 
     pub fn value<'a>(&self, cx: &'a Context) -> &'a T
@@ -157,7 +178,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
             }.build(cx);
 
             for index in 0..len {
-                let ptr = ItemPtr::new(self.lens.clone(), index);
+                let ptr = ItemPtr::new(self.lens.clone(), index, index, 0);
                 (builder)(cx, ptr);
                 cx.count += 1;
             }
