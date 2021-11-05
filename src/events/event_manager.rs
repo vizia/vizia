@@ -63,7 +63,7 @@ impl EventManager {
                         model.event(context, event);
                     }
 
-                    context.data.model_data.insert(event.target, model_list);
+                    context.data.model_data.insert(event.target, model_list).expect("Failed to insert data");
 
                 }
 
@@ -100,7 +100,7 @@ impl EventManager {
                             model.event(context, event);
                         }
     
-                        context.data.model_data.insert(entity, model_list);
+                        context.data.model_data.insert(entity, model_list).expect("Failed to insert data");
                     }
                     
                     // Skip to the next event if the current event is consumed

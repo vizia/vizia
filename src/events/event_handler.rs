@@ -11,15 +11,15 @@ use std::any::{Any, TypeId};
 /// TODO - Make crate private (provide method to retrieve event handler in state)
 pub trait ViewHandler: Any {
     fn debug(&self, entity: Entity) -> String {
-        "".to_string()
+        entity.to_string()
     }
 
-    fn body(&mut self, cx: &mut Context) {}
+    fn body(&mut self, cx: &mut Context);
 
     // Called when events are flushed
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {}
+    fn event(&mut self, cx: &mut Context, event: &mut Event);
 
-    fn draw(&self, cx: &Context, canvas: &mut Canvas) {}
+    fn draw(&self, cx: &Context, canvas: &mut Canvas);
 
 }
 

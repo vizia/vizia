@@ -5,7 +5,7 @@ use std::cmp::{Eq, PartialEq};
 use std::collections::HashSet;
 use std::string::ToString;
 
-use crate::Specificity;
+use super::Specificity;
 
 use bitflags::bitflags;
 
@@ -104,7 +104,7 @@ impl std::fmt::Display for Selector {
             write!(f, ".{}", class_name)?;
         }
 
-        write!(f, "{}", self.pseudo_classes);
+        write!(f, "{}", self.pseudo_classes)?;
 
         match self.relation {
             SelectorRelation::None => {}

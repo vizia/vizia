@@ -24,12 +24,9 @@ pub struct Handle<T> {
 impl<T> Handle<T> {
 
     pub fn class(self, name: &str) -> Self {
+        
         if let Some(class_list) = self.style.borrow_mut().classes.get_mut(self.entity) {
             class_list.insert(name.to_string());
-        } else {
-            let mut class_list = HashSet::new();
-            class_list.insert(name.to_string());
-            self.style.borrow_mut().classes.insert(self.entity, class_list);
         }
 
         self
@@ -90,7 +87,6 @@ impl<T> Handle<T> {
     set_style!(col_span, usize);
     set_style!(grid_rows, Vec<Units>);
     set_style!(grid_cols, Vec<Units>);
-
     // pub fn bottom(self, value: Units) -> Self {
     //     self.cx.style.bottom.insert(self.entity, value);
 

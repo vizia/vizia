@@ -1,4 +1,4 @@
-use std::{any::{Any, TypeId}, ops::Rem};
+use std::any::{Any, TypeId};
 
 use crate::{Context, Entity, Event, Store, sparse_set::SparseSet};
 
@@ -11,7 +11,7 @@ pub trait Model: 'static + Sized {
         } else {
             let mut data_list: Vec<Box<dyn ModelData>> = Vec::new();
             data_list.push(Box::new(Store::new(self)));
-            cx.data.model_data.insert(cx.current, data_list);
+            cx.data.model_data.insert(cx.current, data_list).expect("Failed to add data");
         }
         
     }
@@ -125,12 +125,6 @@ impl<T: Model> ModelData for Store<T> {
     fn remove_observer(&mut self, observer: Entity) {
         self.observers.remove(&observer);
     }
-}
-
-
-pub struct DataId {
-    entity: Entity,
-    type_id: TypeId,
 }
 
 pub struct Data {

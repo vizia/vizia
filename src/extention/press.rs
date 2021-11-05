@@ -1,35 +1,36 @@
 use std::marker::PhantomData;
 
-use vizia::*;
+use crate::{Context, Event, Handle, MouseButton, View, ViewHandler, WindowEvent};
 
-// Example of extending the behaviour of a view
-fn main() {
-    Application::new(|cx| {
-        Button::new(cx, |_| println!("Pressed"), |cx|{
-            Label::new(cx, "Press Me!");
-        }).on_hover(cx, |_| println!("Hover"));
-    }).run();
-}
 
-pub struct Hover<V: View> {
+
+
+pub struct Press<V: View> {
     view: Box<dyn ViewHandler>,
     action: Option<Box<dyn Fn(&mut Context)>>,
 
     p: PhantomData<V>,
 }
 
-impl<V: View> Hover<V> {
-    pub fn new<'a,F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Hover<V>> 
+impl<V: View> Press<V> {
+    pub fn new<'a,F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Press<V>> 
     where F: 'static + Fn(&mut Context)
     {
-        let view = cx.views.remove(&handle.entity).unwrap();
-        let item = Self {
-            view,
-            action: Some(Box::new(action)),
-            p: Default::default(),
-        }; 
+        if let Some(view) = cx.views.remove(&handle.entity) {
+            if view.downcast_ref::<V>().is_some() {
+                let item = Self {
+                    view,
+                    action: Some(Box::new(action)),
+                    p: Default::default(),
+                }; 
+        
+                cx.views.insert(handle.entity, Box::new(item));
+            } else {
+                cx.views.insert(handle.entity, view);
+            }
 
-        cx.views.insert(handle.entity, Box::new(item));
+        }
+
 
         Handle {
             entity: handle.entity,
@@ -39,7 +40,7 @@ impl<V: View> Hover<V> {
     }
 }
 
-impl<V: View> View for Hover<V> {
+impl<V: View> View for Press<V> {
     fn body<'a>(&mut self, cx: &'a mut Context) {
         self.view.body(cx);
     }
@@ -49,7 +50,7 @@ impl<V: View> View for Hover<V> {
 
         if let Some(window_event) = event.message.downcast() {
             match window_event {
-                WindowEvent::MouseEnter => {
+                WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                     if let Some(action) = self.action.take() {
                         (action)(cx);
 
@@ -65,15 +66,15 @@ impl<V: View> View for Hover<V> {
 
 pub trait Hoverable {
     type View;
-    fn on_hover<F>(self, cx: &mut Context, action: F) -> Self::View
+    fn on_press<F>(self, cx: &mut Context, action: F) -> Self::View
     where F: 'static + Fn(&mut Context);
 }
 
 impl<'a,V: View> Hoverable for Handle<V> {
-    type View = Handle<Hover<V>>;
-    fn on_hover<F>(self, cx: &mut Context, action: F) -> Self::View
+    type View = Handle<Press<V>>;
+    fn on_press<F>(self, cx: &mut Context, action: F) -> Self::View
     where F: 'static + Fn(&mut Context) 
     {
-        Hover::new(self, cx, action)
+        Press::new(self, cx, action)
     }
 }

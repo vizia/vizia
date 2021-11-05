@@ -126,10 +126,10 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
             lens,
             builder: Some(Box::new(item)),
         }
-        .build(cx)
-        .height(Auto)
-        .width(Auto)
-        .background_color(Color::rgb(50,70,90));
+        .build(cx);
+        //.height(Auto)
+        //.width(Auto)
+        //.background_color(Color::rgb(50,70,90));
 
         for entity in parent.parent_iter(&cx.tree) {
             if let Some(model_list) = cx.data.model_data.get_mut(entity) {

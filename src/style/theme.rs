@@ -364,8 +364,8 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "color" => Property::FontColor(parse_color(input)?),
             "background-image" => Property::BackgroundImage(parse_string(input)?),
 
-            // Positioning
-            "position" => Property::PositionType(parse_positioning_type(input)?),
+            // Position
+            "position" => Property::PositionType(parse_position_type(input)?),
 
             "left" => Property::Left(parse_units(input)?),
             "right" => Property::Right(parse_units(input)?),
@@ -437,7 +437,7 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "inner-shadow-color" => Property::InnerShadowColor(parse_color(input)?),
 
             "transition" => {
-                Property::Transition(input.parse_comma_separated(|F| parse_transition2(F))?)
+                Property::Transition(input.parse_comma_separated(|parser| parse_transition2(parser))?)
             }
 
             "z-index" => Property::ZIndex(parse_z_index(input)?),
@@ -822,7 +822,7 @@ fn parse_units<'i, 't>(
     })
 }
 
-fn parse_positioning_type<'i, 't>(
+fn parse_position_type<'i, 't>(
     input: &mut Parser<'i, 't>,
 ) -> Result<PositionType, ParseError<'i, CustomParseError>> {
     let location = input.current_source_location();

@@ -3,7 +3,7 @@ use crate::CursorIcon;
 use crate::Display;
 
 use crate::Color;
-use crate::LinearGradient;
+use super::LinearGradient;
 
 use crate::style::*;
 

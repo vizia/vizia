@@ -51,6 +51,9 @@ pub use layout::*;
 mod window;
 pub use window::*;
 
+mod resource;
+pub use resource::*;
+
 mod mouse;
 pub use mouse::*;
 
@@ -60,12 +63,18 @@ pub use binding::*;
 mod hover_system;
 pub use hover_system::apply_hover;
 
+mod style_system;
+pub use style_system::apply_styles;
+
 pub use morphorm::Units::*;
 
 pub use vizia_derive::Lens;
 
 mod view;
 pub use view::{View, Canvas};
+
+mod extention;
+pub use extention::*;
 
 // pub trait Model: Sized {
 //     fn build(&self, cx: &mut Context) -> TypedId<Self>;

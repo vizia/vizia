@@ -4,7 +4,7 @@ use femtovg::{Align, Baseline, Canvas, Paint, Path, renderer::OpenGl};
 use glutin::{ContextBuilder, event::VirtualKeyCode, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use morphorm::Units;
 
-use crate::{BoundingBox, CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, Style, Tree, TreeExt, WindowEvent, apply_hover, scan_to_code, style, vcode_to_code, vk_to_key};
+use crate::{BoundingBox, CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, WindowEvent, apply_hover, apply_styles, scan_to_code, style, vcode_to_code, vk_to_key};
 
 static FONT: &[u8] = include_bytes!("Roboto-Regular.ttf");
 
@@ -19,7 +19,7 @@ impl Application {
     {
 
         let mut cache = CachedData::default();
-        cache.add(Entity::root());
+        cache.add(Entity::root()).expect("Failed to add entity to cache");
 
         let mut context = Context {
             entity_manager: IdManager::new(),
@@ -37,6 +37,7 @@ impl Application {
             hovered: Entity::root(),
             focused: Entity::root(),
             state_count: 0,
+            resource_manager: ResourceManager::new(),
             fonts: Vec::new(),
         };
 
@@ -79,9 +80,23 @@ impl Application {
             .expect("Cannot create renderer");
         let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
 
-        let font = canvas.add_font_mem(FONT).expect("Failed to load font");
+        // let font = canvas.add_font_mem(FONT).expect("Failed to load font");
 
-        context.fonts = vec![font];
+        // context.fonts = vec![font];
+
+        let regular_font = include_bytes!("../fonts/Roboto-Regular.ttf");
+        let bold_font = include_bytes!("../fonts/Roboto-Bold.ttf");
+        let icon_font = include_bytes!("../fonts/entypo.ttf");
+        let emoji_font = include_bytes!("../fonts/OpenSansEmoji.ttf");
+        let arabic_font = include_bytes!("../fonts/amiri-regular.ttf");
+
+        context.add_font_mem("roboto", regular_font);
+        context.add_font_mem("roboto-bold", bold_font);
+        context.add_font_mem("icon", icon_font);
+        context.add_font_mem("emoji", emoji_font);
+        context.add_font_mem("arabic", arabic_font);
+
+        context.style.borrow_mut().default_font = "roboto".to_string();
 
         let dpi_factor = handle.window().scale_factor();
         let size = handle.window().inner_size();
@@ -132,6 +147,23 @@ impl Application {
                         context.enviroment.needs_rebuild = false;
                     }
 
+                    // Load resources
+                    for (name, font) in context.resource_manager.fonts.iter_mut() {
+            
+                        match font {
+                            FontOrId::Font(data) => {
+                                let id1 = canvas.add_font_mem(&data.clone()).expect(&format!("Failed to load font file for: {}", name));
+                                //let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
+                                // if id1 != id2 {
+                                //     panic!("Fonts in canvas must have the same id as fonts in the text context");
+                                // }
+                                *font = FontOrId::Id(id1);
+                            }
+            
+                            _=> {}
+                        }
+                    }
+
                     // Events
                     while !context.event_queue.is_empty() {
                         event_manager.flush_events(&mut context);
@@ -173,7 +205,11 @@ impl Application {
                         
                     }
 
+                    // Not ideal
+                    let tree = context.tree.clone();
+
                     // Styling (TODO)
+                    apply_styles(&mut context, &tree);
 
                     // Layout
                     morphorm::layout(&mut context.cache, &context.tree, &context.style.borrow());
