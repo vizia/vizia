@@ -122,11 +122,11 @@ impl Application {
 
         let mut event_manager = EventManager::new();
 
-        if let Some(builder) = self.builder.take() {
-            (builder)(&mut context);
+        // if let Some(builder) = self.builder.take() {
+        //     (builder)(&mut context);
 
-            self.builder = Some(builder);
-        }
+        //     self.builder = Some(builder);
+        // }
 
         let builder = self.builder.take();
 
@@ -172,7 +172,7 @@ impl Application {
                         let mut observers = Vec::new();
                      
                         if let Some(model_list) = context.data.model_data.get(entity) {
-                            for model in model_list.iter() {
+                            for (_, model) in model_list.iter() {
                                 //observers = model.update();
                                 if model.is_dirty() {
                                     observers.extend(model.update().iter());
@@ -196,7 +196,7 @@ impl Application {
                         }
 
                         if let Some(model_list) = context.data.model_data.get_mut(entity) {
-                            for model in model_list.iter_mut() {
+                            for (_, model) in model_list.iter_mut() {
                                 model.reset();
                             }
                         }

@@ -46,7 +46,6 @@ impl EventManager {
 
         // Loop over the events in the event queue
         'events: for event in self.event_queue.iter_mut() {
-            //println!("Event: {:?}", event);
 
             // Define the target to prevent multiple mutable borrows error
             let target = event.target;
@@ -57,7 +56,7 @@ impl EventManager {
                 view.event(context, event);
 
                 if let Some(mut model_list) = context.data.model_data.remove(event.target) {
-                    for model in model_list.iter_mut() {
+                    for (_, model) in model_list.iter_mut() {
                         model.event(context, event);
                     }
 
@@ -94,7 +93,7 @@ impl EventManager {
                     }
                     
                     if let Some(mut model_list) = context.data.model_data.remove(entity) {
-                        for model in model_list.iter_mut() {
+                        for (_, model) in model_list.iter_mut() {
                             model.event(context, event);
                         }
     

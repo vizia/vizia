@@ -89,6 +89,7 @@ impl Model for ListData {
                 }
 
                 ListEvent::SetSelected(index) => {
+                    println!("Set Selected");
                     if *index <= 0 {
                         self.selected = 0;
                     } else if *index > self.length - 1 {
@@ -133,7 +134,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
 
         for entity in parent.parent_iter(&cx.tree) {
             if let Some(model_list) = cx.data.model_data.get_mut(entity) {
-                for model in model_list.iter_mut() {
+                for (_, model) in model_list.iter_mut() {
                     if let Some(store) = model.downcast::<Store<L::Source>>() {
                         store.observers.insert(handle.entity);
                     }
@@ -161,7 +162,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
 
         'tree: for entity in cx.current.parent_iter(&cx.tree.clone()) {
             if let Some(model_list) = cx.data.model_data.get(entity) {
-                for model in model_list.iter() {
+                for (_, model) in model_list.iter() {
                     if let Some(store) = model.downcast_ref::<Store<L::Source>>() {
                         found_store = Some(store); 
                         break 'tree;

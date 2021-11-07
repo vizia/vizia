@@ -1,4 +1,4 @@
-use std::any::{Any, TypeId};
+use std::{any::{Any, TypeId}, collections::HashMap};
 
 use crate::{Context, Entity, Event, Store, storage::sparse_set::SparseSet};
 
@@ -7,10 +7,10 @@ use crate::{Context, Entity, Event, Store, storage::sparse_set::SparseSet};
 pub trait Model: 'static + Sized {
     fn build(self, cx: &mut Context) {
         if let Some(data_list) = cx.data.model_data.get_mut(cx.current) {
-            data_list.push(Box::new(Store::new(self)));
+            data_list.insert(TypeId::of::<Self>(), Box::new(Store::new(self)));
         } else {
-            let mut data_list: Vec<Box<dyn ModelData>> = Vec::new();
-            data_list.push(Box::new(Store::new(self)));
+            let mut data_list: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
+            data_list.insert(TypeId::of::<Self>(), Box::new(Store::new(self)));
             cx.data.model_data.insert(cx.current, data_list).expect("Failed to add data");
         }
         
@@ -129,7 +129,7 @@ impl<T: Model> ModelData for Store<T> {
 
 pub struct Data {
     // pub model_data: HashMap<TypeId, Box<dyn ModelData>>,
-    pub model_data: SparseSet<Vec<Box<dyn ModelData>>>,
+    pub model_data: SparseSet<HashMap<TypeId,Box<dyn ModelData>>>,
 }
 
 impl Data {

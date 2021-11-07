@@ -84,7 +84,7 @@ impl Context {
             // Remove from observers
             for entry in self.data.model_data.dense.iter_mut() {
                 let model_list = &mut entry.value;
-                for model in model_list.iter_mut() {
+                for (_, model) in model_list.iter_mut() {
                     model.remove_observer(*entity);
                 }
             }
@@ -105,7 +105,7 @@ impl Context {
         for entity in self.current.parent_iter(&self.tree) {
             //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
             if let Some(data_list) = self.data.model_data.get(entity) {
-                for model in data_list.iter() {
+                for (_, model) in data_list.iter() {
                     if let Some(store) = model.downcast_ref::<Store<T>>() {
                         return Some(&store.data);
                     }

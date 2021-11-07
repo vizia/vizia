@@ -43,7 +43,7 @@ where
 
         for entity in parent.parent_iter(&cx.tree) {
             if let Some(model_list) = cx.data.model_data.get_mut(entity) {
-                for model in model_list.iter_mut() {
+                for (_, model) in model_list.iter_mut() {
                     if let Some(store) = model.downcast::<Store<L::Source>>() {
                         store.observers.insert(handle.entity);
                     }
