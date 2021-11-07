@@ -1,4 +1,4 @@
-pub trait Lens: 'static + Clone {
+pub trait Lens: 'static + Clone + std::fmt::Debug {
     type Source;
     type Target;
 

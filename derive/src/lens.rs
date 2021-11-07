@@ -104,13 +104,19 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         quote! {
             #[doc = #struct_docs]
             #[allow(non_camel_case_types)]
-            #[derive(Debug, Copy, Clone)]
+            #[derive(Copy, Clone)]
             pub struct #field_name#lens_ty_generics(#(#phantom_decls),*);
 
             impl #lens_ty_generics #field_name#lens_ty_generics{
                 #[doc = #fn_docs]
                 pub const fn new()->Self{
                     Self(#(#phantom_inits),*)
+                }
+            }
+
+            impl #lens_ty_generics std::fmt::Debug for #field_name#lens_ty_generics {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f,"{}:{}",stringify!(#struct_type), stringify!(#field_name))
                 }
             }
         }
