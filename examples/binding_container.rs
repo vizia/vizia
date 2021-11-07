@@ -7,8 +7,12 @@ fn main() {
         Data {
             list: vec![5; 5],
         }.build(cx);
+        
+        Binding::new(cx, Data::list, |cx, list|{
+            CustomView::new(cx);
+            Label::new(cx, &list.get(cx).len().to_string());
+        });
 
-        CustomView::new(cx);
     }).run();
 }
 
