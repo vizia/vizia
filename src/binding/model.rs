@@ -123,7 +123,7 @@ impl<T: Model> ModelData for Store<T> {
     }
 
     fn remove_observer(&mut self, observer: Entity) {
-        self.observers.remove(&observer);
+        self.remove_observer(observer);
     }
 }
 

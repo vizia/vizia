@@ -4,9 +4,9 @@ use vizia::*;
 
 fn main() {
     Application::new(|cx|{
-        // Data {
-        //     list: vec![5; 5],
-        // }.build(cx);
+        Data {
+            list: vec![5; 5],
+        }.build(cx);
 
         CustomView::new(cx);
     }).run();

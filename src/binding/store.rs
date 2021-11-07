@@ -6,7 +6,7 @@ use crate::{Context, Entity};
 
 pub struct Store<T> {
     pub data: T,
-    pub observers: HashSet<Entity>,
+    pub observers: Vec<Entity>,
     pub dirty: bool,
 }
 
@@ -15,8 +15,20 @@ impl<T> Store<T> {
     pub fn new(data: T) -> Self {
         Self {
             data,
-            observers: HashSet::new(),
+            observers: Vec::new(),
             dirty: false,
+        }
+    }
+
+    pub fn insert_observer(&mut self, entity: Entity) {
+        if !self.observers.contains(&entity) {
+            self.observers.push(entity);
+        }
+    }
+
+    pub fn remove_observer(&mut self, entity: Entity) {
+        if let Some(index) = self.observers.iter().position(|item| *item == entity) {
+            self.observers.remove(index);
         }
     }
 
