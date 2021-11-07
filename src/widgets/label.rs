@@ -22,12 +22,12 @@ impl Label {
              //.background_color(Color::blue())
              .text(text.key());
 
-        if let Some(message) = cx.enviroment.bundle.get_message(text.key()) {
-            let pattern = message.value().expect("Message has no value.");
-            let mut errors = vec![];
-            let value = cx.enviroment.bundle.format_pattern(&pattern, None, &mut errors);
-            cx.style.borrow_mut().text.insert(handle.entity, value.to_string());
-        }
+        // if let Some(message) = cx.enviroment.bundle.get_message(text.key()) {
+        //     let pattern = message.value().expect("Message has no value.");
+        //     let mut errors = vec![];
+        //     let value = cx.enviroment.bundle.format_pattern(&pattern, None, &mut errors);
+        //     cx.style.borrow_mut().text.insert(handle.entity, value.to_string());
+        // }
 
         handle
         
