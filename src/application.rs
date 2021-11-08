@@ -1,7 +1,7 @@
 use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
 
 use femtovg::{Canvas, renderer::OpenGl};
-use glutin::{ContextBuilder, event::VirtualKeyCode, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
+use glutin::{ContextBuilder, event::{ElementState, VirtualKeyCode}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use morphorm::Units;
 
 use crate::{CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, WindowEvent, apply_hover, apply_styles, scan_to_code, vcode_to_code, vk_to_key};
@@ -208,6 +208,8 @@ impl Application {
                     // Not ideal
                     let tree = context.tree.clone();
 
+                    apply_hover(&mut context);
+
                     // Styling (TODO)
                     apply_styles(&mut context, &tree);
 
@@ -302,11 +304,16 @@ impl Application {
                             input,
                             is_synthetic: _,
                         } => {
-                            if input.virtual_keycode == Some(VirtualKeyCode::H) {
+                            if input.virtual_keycode == Some(VirtualKeyCode::H) && input.state == ElementState::Pressed {
                                 println!("Tree");
                                 for entity in context.tree.into_iter() {
                                     println!("Entity: {} Parent: {:?} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&context.tree), context.cache.get_posx(entity), context.cache.get_posy(entity), context.cache.get_width(entity), context.cache.get_height(entity));
                                 }
+                            }
+
+                            
+                            if input.virtual_keycode == Some(VirtualKeyCode::F5) && input.state == ElementState::Pressed {
+                                context.reload_styles().unwrap();
                             }
 
                             let s = match input.state {

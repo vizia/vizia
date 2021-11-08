@@ -81,6 +81,10 @@ impl EventManager {
                     if entity == event.target {
                         continue;
                     }
+
+                    if event.trace {
+                        println!("Event: {:?} -> Entity {}", event, entity);
+                    }
                     
                     
                     // Send event to all entities before the target

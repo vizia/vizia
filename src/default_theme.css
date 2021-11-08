@@ -10,6 +10,13 @@ button:hover {
     background-color: #AAAAAA;
 }
 
+label {
+    width: 100px;
+    height: 30px;
+    child-space: 1s;
+    child-left: 5px;
+}
+
 hstack {
     width: 1s;
     height: 1s;
@@ -18,4 +25,15 @@ hstack {
 vstack {
     width: 1s;
     height: 1s;
+}
+
+checkbox {
+    border-width: 1px;
+    border-color: black;
+    font: icons;
+    child-space: 1s;
+}
+
+checkbox:checked {
+    
 }

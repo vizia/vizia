@@ -45,7 +45,7 @@ impl View for Counter {
             Binding::new(cx, CounterData::count, |cx, count|{
                 Label::new(cx, &english_numbers::convert_all_fmt(*count.get(cx) as i64));
             });
-        });  
+        }).height(Auto);  
     }
 }
 

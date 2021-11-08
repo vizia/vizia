@@ -113,6 +113,9 @@ pub struct Event {
     pub unique: bool,
     // Specifies an order index which is used to sort the event queue
     pub order: i32,
+
+    pub trace: bool,
+
     // The event message
     pub message: Box<dyn Message>,
 }
@@ -140,8 +143,14 @@ impl Event {
             consumed: false,
             unique: false,
             order: 0,
+            trace: false,
             message: Box::new(message),
         }
+    }
+
+    pub fn trace(mut self) -> Self {
+        self.trace = true;
+        self
     }
 
     /// Sets the target of the event

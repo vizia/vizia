@@ -1,0 +1,38 @@
+
+panel>.container {
+    background-color: #383838;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 5px;
+}
+
+panel>.header {
+    height: 30px;
+    background-color: #424242;
+}
+
+knob {
+    background-color: #2e2e2e;
+}
+
+knob>.back {
+    background-color: #505050;
+}
+
+knob>.slider {
+    background-color: #3669c9;
+}
+
+knob>.tick {
+    background-color: #c8c8c8;
+}
+
+textbox {
+    background-color: #2e2e2e;
+    padding-left: 5px;
+}
+
+/* value_knob {
+    left: 50px;
+    top: 50px;
+} */

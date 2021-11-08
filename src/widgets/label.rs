@@ -15,10 +15,10 @@ impl Label {
 
 
         let handle = Self{}.build(cx)
-             .width(Pixels(120.0))
-             .height(Pixels(50.0))
-             .child_space(Stretch(1.0))
-             .child_left(Pixels(5.0))
+             //.width(Pixels(120.0))
+             //.height(Pixels(50.0))
+             //.child_space(Stretch(1.0))
+             //.child_left(Pixels(5.0))
              //.background_color(Color::blue())
              .text(text.key());
 
@@ -37,5 +37,9 @@ impl Label {
 impl View for Label {
     fn debug(&self, entity: Entity) -> String {
         format!("{} Label", entity)
+    }
+
+    fn element(&self) -> Option<String> {
+        Some("label".to_string())
     }
 }

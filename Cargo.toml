@@ -11,6 +11,10 @@ description = "A Rust GUI Framework"
 name = "button"
 path = "examples/controls/button.rs"
 
+[[example]]
+name = "checkbox"
+path = "examples/controls/checkbox.rs"
+
 [dependencies]
 vizia_derive = {version = "0.1.0", path = "derive"}
 femtovg = "0.2.5"

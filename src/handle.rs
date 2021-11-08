@@ -2,7 +2,7 @@ use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{Color, Entity, Style};
+use crate::{Color, Entity, Style, PseudoClass};
 
 macro_rules! set_style {
     ($name:ident, $t:ty) => {
@@ -27,6 +27,14 @@ impl<T> Handle<T> {
         
         if let Some(class_list) = self.style.borrow_mut().classes.get_mut(self.entity) {
             class_list.insert(name.to_string());
+        }
+
+        self
+    }
+
+    pub fn checked(self, state: bool) -> Self {
+        if let Some(pseudo_classes) = self.style.borrow_mut().pseudo_classes.get_mut(self.entity) {
+            pseudo_classes.set(PseudoClass::CHECKED, true);
         }
 
         self
@@ -87,11 +95,9 @@ impl<T> Handle<T> {
     set_style!(col_span, usize);
     set_style!(grid_rows, Vec<Units>);
     set_style!(grid_cols, Vec<Units>);
-    // pub fn bottom(self, value: Units) -> Self {
-    //     self.cx.style.bottom.insert(self.entity, value);
 
-    //     self
-    // }
+    set_style!(border_width, Units);
+    set_style!(border_color, Color);
 
 
     

@@ -121,6 +121,10 @@ impl Context {
         self.event_queue.push_back(Event::new(message).target(self.current).origin(self.current).propagate(Propagation::Up));
     }
 
+    pub fn emit_trace<M: Message>(&mut self, message: M) {
+        self.event_queue.push_back(Event::new(message).target(self.current).origin(self.current).propagate(Propagation::Up).trace());
+    }
+
     /// Add a font from memory to the application
     pub fn add_font_mem(&mut self, name: &str, data: &[u8]) {
         // TODO - return error
@@ -142,6 +146,14 @@ impl Context {
         self.resource_manager.themes.push(theme.to_owned());
 
         self.reload_styles().expect("Failed to reload styles");
+    }
+
+    pub fn add_stylesheet(&mut self, path: &str) -> Result<(), std::io::Error> {
+        let style_string = std::fs::read_to_string(path.clone())?;
+        self.resource_manager.stylesheets.push(path.to_owned());
+        self.style.borrow_mut().parse_theme(&style_string);
+
+        Ok(())
     }
 
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {

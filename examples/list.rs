@@ -39,9 +39,10 @@ fn main() {
                         Color::rgb(255,255,255)
                     }
                 )
+                .height(Auto)
                 .width(Stretch(1.0))
                 .on_press(cx, move |cx| cx.emit(ListEvent::SetSelected(item.index())));
-            }).width(Stretch(1.0));
+            }).height(Auto).width(Stretch(1.0));
         }).class("list");
     })
     .run();

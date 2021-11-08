@@ -14,9 +14,9 @@ impl VStack {
         Self{
             builder: Some(Box::new(f)),
         }.build(cx)
-            .width(Auto)
-            .height(Auto)
-            .background_color(Color::rgb(50, 50, 50))
+            //.width(Auto)
+            //.height(Auto)
+            //.background_color(Color::rgb(50, 50, 50))
     }
 }
 
@@ -46,8 +46,8 @@ impl HStack {
             builder: Some(Box::new(f)),
         }.build(cx)
             .layout_type(LayoutType::Row)
-            .width(Auto)
-            .height(Auto)
+            //.width(Auto)
+            //.height(Auto)
             // .background_color(Color::rgb(50, 50, 50))
     }
 

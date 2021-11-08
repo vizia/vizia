@@ -99,8 +99,8 @@ where
             style: cx.style.clone(),
             p: Default::default(),
         }
-        .width(Units::Auto)
-        .height(Units::Auto)
+        .width(Units::Stretch(1.0))
+        .height(Units::Stretch(1.0))
         
         // Use Lens::Source TypeId to look up data
         // 

@@ -1,5 +1,8 @@
 
 
+use std::collections::HashSet;
+use std::marker::PhantomData;
+
 use keyboard_types::Code;
 
 use crate::{Color, Context, Event, Handle, Lens, Model, MouseButton, Store, TreeExt, View, WindowEvent};
@@ -122,25 +125,79 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
     {
 
         let parent = cx.current;
-
-        let handle = Self {
+        let list = Self {
             lens,
             builder: Some(Box::new(item)),
-        }
-        .build(cx);
+        };
+
+        let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
+            let prev = cx.current;
+            cx.current = id;
+            let prev_count = cx.count;
+            cx.count = 0;
+            //binding.body(cx);
+            cx.current = prev;
+            cx.count = prev_count;
+            id
+        } else {
+            let id = cx.entity_manager.create();
+            cx.tree.add(id, cx.current).expect("Failed to add to tree");
+            cx.cache.add(id).expect("Failed to add to cache");
+            cx.style.borrow_mut().add(id);
+            let prev = cx.current;
+            cx.current = id;
+            let prev_count = cx.count;
+            cx.count = 0;
+            //binding.body(cx);
+            cx.current = prev;
+            cx.count = prev_count;
+            cx.views.insert(id, Box::new(list));
+            id  
+        };
+
+        cx.count += 1;
+
+        // let handle = Self {
+        //     lens,
+        //     builder: Some(Box::new(item)),
+        // }
+        // .build(cx);
         //.height(Auto)
         //.width(Auto)
         //.background_color(Color::rgb(50,70,90));
 
+        let mut ancestors = HashSet::new();
         for entity in parent.parent_iter(&cx.tree) {
+            ancestors.insert(entity);
+
             if let Some(model_list) = cx.data.model_data.get_mut(entity) {
                 for (_, model) in model_list.iter_mut() {
                     if let Some(store) = model.downcast::<Store<L::Source>>() {
-                        store.insert_observer(handle.entity);
+                        if store.observers.intersection(&ancestors).next().is_some() {
+                            break;
+                        }
+                        store.insert_observer(id);
                     }
                 }
             }
         }
+
+        if let Some(mut view_handler) = cx.views.remove(&id) {
+            let prev = cx.current;
+            cx.current = id;
+            let prev_count = cx.count;
+            cx.count = 0;
+            view_handler.body(cx);
+            cx.current = prev;
+            cx.count = prev_count;
+            cx.views.insert(id, view_handler);
+        }
+
+        let handle = Handle {
+            entity: id,
+            style: cx.style.clone(),
+            p: PhantomData::default(),
+        };
 
         cx.focused = handle.entity;
 
