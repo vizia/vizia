@@ -1,7 +1,11 @@
 
 
 button {
-    background-color: #CCCCCC;
+    background-color: #808080;
     width: 100px;
     height: 30px;
+}
+
+button:hover {
+    background-color: #AAAAAA;
 }

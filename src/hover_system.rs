@@ -1,6 +1,6 @@
 use morphorm::Cache;
 
-use crate::{Display, Entity, Event, Propagation, Context, Units, Visibility, WindowEvent};
+use crate::{Display, Entity, Event, Propagation, Context, Units, Visibility, WindowEvent, PseudoClass};
 
 /// Determines the hovered entity based on the mouse cursor position
 pub fn apply_hover(cx: &mut Context) {
@@ -46,6 +46,16 @@ pub fn apply_hover(cx: &mut Context) {
             cx.cache.get_width(hovered_widget),
             cx.cache.get_height(hovered_widget),
         );
+
+        // Set current hovered pseudoclass to true
+        if let Some(pseudo_classes) = cx.style.borrow_mut().pseudo_classes.get_mut(hovered_widget) {
+            pseudo_classes.set(PseudoClass::HOVER, true);
+        }
+
+        // Set previous hovered pseudoclass to false
+        if let Some(pseudo_classes) = cx.style.borrow_mut().pseudo_classes.get_mut(cx.hovered) {
+            pseudo_classes.set(PseudoClass::HOVER, false);
+        }
 
         cx.event_queue.push_back(Event::new(WindowEvent::MouseEnter).target(hovered_widget));
         cx.event_queue.push_back(Event::new(WindowEvent::MouseLeave).target(cx.hovered));
