@@ -9,3 +9,13 @@ button {
 button:hover {
     background-color: #AAAAAA;
 }
+
+hstack {
+    width: 1s;
+    height: 1s;
+}
+
+vstack {
+    width: 1s;
+    height: 1s;
+}
