@@ -7,6 +7,10 @@ pub trait ViewHandler: Any {
         entity.to_string()
     }
 
+    fn element(&self) -> Option<String> {
+        None
+    }
+
     fn body(&mut self, cx: &mut Context);
 
     // Called when events are flushed

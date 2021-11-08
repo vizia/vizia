@@ -52,5 +52,7 @@ impl Handle<Checkbox> {
 }
 
 impl View for Checkbox {
-    
+    fn element(&self) -> Option<String> {
+        Some("checkbox".to_string())
+    }
 }

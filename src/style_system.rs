@@ -145,8 +145,9 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
 
     // Check for element name match
     if let Some(selector_element) = &selector.element {
-        if let Some(element) = cx.style.borrow().elements.get(entity) {
-            if selector_element != element {
+
+        if let Some(element) = cx.views.get(&entity).and_then(|view| view.element()) {
+            if selector_element != &element {
                 return false;
             }
         } else {

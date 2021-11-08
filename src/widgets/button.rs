@@ -20,7 +20,7 @@ impl Button {
         Self {
             action: Some(Box::new(action)),
             label: Some(Box::new(label)),
-        }.build(cx).width(Pixels(100.0)).height(Pixels(30.0)).background_color(Color::rgb(150,150,150))
+        }.build(cx)
         
     }
 }
@@ -28,6 +28,10 @@ impl Button {
 impl View for Button {
     fn debug(&self, entity: Entity) -> String {
         format!("{} Button", entity)
+    }
+
+    fn element(&self) -> Option<String> {
+        Some("button".to_string())
     }
 
     fn body<'a>(&mut self, cx: &'a mut Context) {

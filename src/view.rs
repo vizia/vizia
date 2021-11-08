@@ -49,6 +49,10 @@ pub trait View: 'static + Sized {
         "".to_string()
     }
 
+    fn element(&self) -> Option<String> {
+        None
+    }
+
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
 
     }
@@ -769,6 +773,10 @@ where
 {
     fn debug(&self, entity: Entity) -> String {
         <T as View>::debug(self, entity)
+    }
+
+    fn element(&self) -> Option<String> {
+        <T as View>::element(&self)
     }
 
     fn body(&mut self, cx: &mut Context) {

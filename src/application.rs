@@ -6,6 +6,8 @@ use morphorm::Units;
 
 use crate::{CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, WindowEvent, apply_hover, apply_styles, scan_to_code, vcode_to_code, vk_to_key};
 
+static DEFAULT_THEME: &str = include_str!("default_theme.css");
+
 pub struct Application {
     context: Context,
     builder: Option<Box<dyn Fn(&mut Context)>>,
@@ -41,7 +43,7 @@ impl Application {
 
         context.entity_manager.create();
 
-        
+        context.add_theme(DEFAULT_THEME);
 
         Self {
             context,
