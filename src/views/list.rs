@@ -131,26 +131,12 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
         };
 
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
-            let prev = cx.current;
-            cx.current = id;
-            let prev_count = cx.count;
-            cx.count = 0;
-            //binding.body(cx);
-            cx.current = prev;
-            cx.count = prev_count;
             id
         } else {
             let id = cx.entity_manager.create();
             cx.tree.add(id, cx.current).expect("Failed to add to tree");
             cx.cache.add(id).expect("Failed to add to cache");
             cx.style.borrow_mut().add(id);
-            let prev = cx.current;
-            cx.current = id;
-            let prev_count = cx.count;
-            cx.count = 0;
-            //binding.body(cx);
-            cx.current = prev;
-            cx.count = prev_count;
             cx.views.insert(id, Box::new(list));
             id  
         };

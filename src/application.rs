@@ -34,6 +34,7 @@ impl Application {
             enviroment: Enviroment::new(),
             event_queue: VecDeque::new(),
             mouse: MouseState::default(),
+            captured: Entity::null(),
             hovered: Entity::root(),
             focused: Entity::root(),
             state_count: 0,
@@ -268,6 +269,19 @@ impl Application {
                             context.mouse.cursory = position.y as f32;
 
                             apply_hover(&mut context);
+
+                            if context.captured != Entity::null() {
+                                context.event_queue.push_back(
+                                    Event::new(WindowEvent::MouseMove(context.mouse.cursorx, context.mouse.cursory))
+                                        .target(context.captured)
+                                        .propagate(Propagation::Direct),
+                                );
+                            } else if context.hovered != Entity::root() {
+                                context.event_queue.push_back(
+                                    Event::new(WindowEvent::MouseMove(context.mouse.cursorx, context.mouse.cursory))
+                                        .target(context.hovered),
+                                );
+                            }
                         }
 
                         glutin::event::WindowEvent::MouseInput {
@@ -290,11 +304,37 @@ impl Application {
 
                             match state {
                                 MouseButtonState::Pressed => {
-                                    context.event_queue.push_back(Event::new(WindowEvent::MouseDown(button)).target(context.hovered).propagate(Propagation::Up));
+                                    //context.event_queue.push_back(Event::new(WindowEvent::MouseDown(button)).target(context.hovered).propagate(Propagation::Up));
+                                
+                                    if context.captured != Entity::null() {
+                                        context.event_queue.push_back(
+                                            Event::new(WindowEvent::MouseDown(button))
+                                                .target(context.captured)
+                                                .propagate(Propagation::Direct),
+                                        );
+                                    } else {
+                                        context.event_queue.push_back(
+                                            Event::new(WindowEvent::MouseDown(button))
+                                                .target(context.hovered),
+                                        );
+                                    }
                                 }
 
                                 MouseButtonState::Released => {
-                                    context.event_queue.push_back(Event::new(WindowEvent::MouseUp(button)).target(context.hovered).propagate(Propagation::Up));
+                                    //context.event_queue.push_back(Event::new(WindowEvent::MouseUp(button)).target(context.hovered).propagate(Propagation::Up));
+                                
+                                    if context.captured != Entity::null() {
+                                        context.event_queue.push_back(
+                                            Event::new(WindowEvent::MouseUp(button))
+                                                .target(context.captured)
+                                                .propagate(Propagation::Direct),
+                                        );
+                                    } else {
+                                        context.event_queue.push_back(
+                                            Event::new(WindowEvent::MouseUp(button))
+                                                .target(context.hovered),
+                                        );
+                                    }
                                 }
                             }
                         }

@@ -2,7 +2,7 @@ use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{Color, Entity, Style, PseudoClass};
+use crate::{Color, CursorIcon, Entity, PseudoClass, Style};
 
 macro_rules! set_style {
     ($name:ident, $t:ty) => {
@@ -22,6 +22,13 @@ pub struct Handle<T> {
 }
 
 impl<T> Handle<T> {
+
+    pub fn cursor(self, cursor_icon: CursorIcon) -> Self {
+
+        self.style.borrow_mut().cursor.insert(self.entity, cursor_icon);
+
+        self
+    }
 
     pub fn class(self, name: &str) -> Self {
         

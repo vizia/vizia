@@ -47,6 +47,10 @@ impl EventManager {
         // Loop over the events in the event queue
         'events: for event in self.event_queue.iter_mut() {
 
+            // if event.trace {
+            //     println!("Event: {:?}", event);
+            // }
+
             // Define the target to prevent multiple mutable borrows error
             let target = event.target;
 
@@ -72,32 +76,47 @@ impl EventManager {
 
             }
 
+            // if event.trace {
+            //     println!("Target: {} Parents: {:?} Tree: {:?}", target, target.parent_iter(&self.tree).collect::<Vec<_>>(), self.tree.parent);
+            // }
+
             // Propagate up from target to root (not including target)
             if event.propagation == Propagation::Up {
                 // Walk up the tree from parent to parent
                 for entity in target.parent_iter(&self.tree) {
+
+                    // if event.trace {
+                    //     println!("Entity: {} -> Target: {} -> Event: {:?}", entity, target, event);
+                    // }
+
                     
                     // Skip the target entity
                     if entity == event.target {
                         continue;
                     }
 
-                    if event.trace {
-                        println!("Event: {:?} -> Entity {}", event, entity);
-                    }
+                    // if event.trace {
+                    //     println!("Event: {:?} -> Entity {}", event, entity);
+                    // }
                     
                     
                     // Send event to all entities before the target
                     if let Some(mut view) = context.views.remove(&entity) {
+                        let prev = context.current;
                         context.current = entity;
                         view.event(context, event);
+                        context.current = prev;
 
                         
                         context.views.insert(entity, view);
                     }
                     
                     if let Some(mut model_list) = context.data.model_data.remove(entity) {
-                        for (_, model) in model_list.iter_mut() {
+                        for (ty, model) in model_list.iter_mut() {
+
+                            // if event.trace {
+                            //     println!("Event: {:?} -> Model {:?}", event, ty);
+                            // }
                             model.event(context, event);
                         }
     

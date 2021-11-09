@@ -50,14 +50,14 @@ where
 {
 
     /// Create a new empty sparse set
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             sparse: Vec::new(),
             dense: Vec::new(),
         }
     }
 
-    pub(crate) fn clear(&mut self) {
+    pub fn clear(&mut self) {
         self.sparse.clear();
         self.dense.clear();
     }
@@ -67,7 +67,7 @@ where
     }
 
     /// Returns the index of the data associated with the key if it exists
-    pub(crate) fn dense_idx<I: GenerationalId>(&self, key: I) -> Option<D> {
+    pub fn dense_idx<I: GenerationalId>(&self, key: I) -> Option<D> {
         let sparse_idx = key.index();
 
         if sparse_idx < self.sparse.len() {
@@ -85,7 +85,7 @@ where
 
 
     /// Returns true if the sparse set contains data for the given key
-    pub(crate) fn contains<I: GenerationalId>(&self, key: I) -> bool {
+    pub fn contains<I: GenerationalId>(&self, key: I) -> bool {
         self.dense_idx(key).is_some()
     }
 
@@ -95,7 +95,7 @@ where
     }
 
     /// Returns a mutable reference to the data for a given key if it exists
-    pub(crate) fn get_mut<I: GenerationalId>(&mut self, key: I) -> Option<&mut T> {
+    pub fn get_mut<I: GenerationalId>(&mut self, key: I) -> Option<&mut T> {
         self.dense_idx(key).map(move |dense_idx| &mut self.dense[dense_idx.index()].value)
     }
 
@@ -128,7 +128,7 @@ where
     }
 
     /// Removes the data for a given key from the sparse set
-    pub(crate) fn remove<I: GenerationalId>(&mut self, key: I) -> Option<T> {
+    pub fn remove<I: GenerationalId>(&mut self, key: I) -> Option<T> {
         if self.contains(key) {
             let sparse_idx = key.index();
             let dense_idx = self.sparse[sparse_idx];

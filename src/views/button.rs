@@ -1,7 +1,6 @@
-use crate::{Color, Handle, MouseButton, WindowEvent};
+use crate::{Handle, MouseButton, WindowEvent};
 
 use crate::{Context, Entity, Event, View};
-use crate::Units::*;
 
 
 

@@ -21,8 +21,8 @@ pub use morphorm::*;
 pub use style::Color;
 pub use tree::*;
 
-mod widgets;
-pub use widgets::*;
+pub mod views;
+pub use views::*;
 
 mod context;
 pub use context::*;

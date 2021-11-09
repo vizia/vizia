@@ -64,6 +64,7 @@ pub struct Context {
 
     pub mouse: MouseState,
 
+    pub captured: Entity,
     pub hovered: Entity,
     pub focused: Entity,
 
@@ -95,6 +96,7 @@ impl Context {
             self.style.borrow_mut().remove(*entity);
             self.data.model_data.remove(*entity);
             self.entity_manager.destroy(*entity);
+            self.views.remove(entity);
 
 
         }
