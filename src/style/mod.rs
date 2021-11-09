@@ -1391,7 +1391,7 @@ impl Style {
     //pub fn set_property(&mut self, entity: Entity, propert: Property) {}
 
     // Add style data to an entity
-    pub(crate) fn add(&mut self, entity: Entity) {
+    pub fn add(&mut self, entity: Entity) {
         self.pseudo_classes.insert(entity, PseudoClass::default()).unwrap();
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
 

@@ -4,7 +4,7 @@ use femtovg::{Canvas, renderer::OpenGl};
 use glutin::{ContextBuilder, event::{ElementState, VirtualKeyCode}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
 use morphorm::Units;
 
-use crate::{CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, WindowEvent, apply_hover, apply_styles, scan_to_code, vcode_to_code, vk_to_key};
+use crate::{CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, WindowEvent, apply_hover, apply_styles, scan_to_code, vcode_to_code, vk_to_key, Modifiers};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 
@@ -34,6 +34,7 @@ impl Application {
             enviroment: Enviroment::new(),
             event_queue: VecDeque::new(),
             mouse: MouseState::default(),
+            modifiers: Modifiers::empty(),
             captured: Entity::null(),
             hovered: Entity::root(),
             focused: Entity::root(),
@@ -444,6 +445,17 @@ impl Application {
 
                             // context.cache.set_clip_region(Entity::root(), bounding_box);
                         }
+
+                        glutin::event::WindowEvent::ModifiersChanged(modifiers_state) => {
+                            
+                            
+                            context.modifiers.set(Modifiers::SHIFT, modifiers_state.shift());
+                            context.modifiers.set(Modifiers::ALT, modifiers_state.alt());
+                            context.modifiers.set(Modifiers::CTRL, modifiers_state.ctrl());
+                            context.modifiers.set(Modifiers::LOGO, modifiers_state.logo());
+                            
+                        }
+
 
 
                         _=> {}

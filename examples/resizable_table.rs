@@ -129,7 +129,7 @@ impl View for ResizableItem {
     }
 }
 
-#[derive(Lens)]
+
 pub struct RowData {
     first_name: String,
     last_name: String,

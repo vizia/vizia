@@ -47,7 +47,7 @@ fn main() {
     }).run();
 }
 
-#[derive(Lens, Clone)]
+#[derive(Clone)]
 pub struct TodoItem {
     text: String,
     completed: bool,

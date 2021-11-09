@@ -4,7 +4,7 @@ use femtovg::FontId;
 use fluent_bundle::{FluentBundle, FluentResource};
 use unic_langid::LanguageIdentifier;
 
-use crate::{CachedData, Data, Entity, Event, FontOrId, IdManager, Message, MouseState, Propagation, ResourceManager, StateData, StateID, Store, Style, Tree, TreeExt, ViewHandler};
+use crate::{CachedData, Data, Entity, Event, FontOrId, IdManager, Message, MouseState, Propagation, ResourceManager, StateData, StateID, Store, Style, Tree, TreeExt, ViewHandler, Modifiers};
 
 pub struct Enviroment {
     // Signifies whether the app should be rebuilt
@@ -63,6 +63,7 @@ pub struct Context {
     pub enviroment: Enviroment,
 
     pub mouse: MouseState,
+    pub modifiers: Modifiers,
 
     pub captured: Entity,
     pub hovered: Entity,
