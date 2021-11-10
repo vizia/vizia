@@ -11,6 +11,7 @@ static DEFAULT_THEME: &str = include_str!("default_theme.css");
 pub struct Application {
     context: Context,
     builder: Option<Box<dyn Fn(&mut Context)>>,
+    on_idle: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl Application {
@@ -50,8 +51,32 @@ impl Application {
         Self {
             context,
             builder: Some(Box::new(builder)),
+            on_idle: None,
         }
     }
+
+
+    /// Takes a closure which will be called at the end of every loop of the application.
+    /// 
+    /// The callback provides a place to run 'idle' processing and happens at the end of each loop but before drawing.
+    /// If the callback pushes events into the queue in state then the event loop will re-run. Care must be taken not to
+    /// push events into the queue every time the callback runs unless this is intended.
+    /// 
+    /// # Example
+    /// ```
+    /// Application::new(WindowDescription::new(), |state, window|{
+    ///     // Build application here
+    /// })
+    /// .on_idle(|state|{
+    ///     // Code here runs at the end of every event loop after OS and tuix events have been handled 
+    /// })
+    /// .run();
+    /// ```
+    pub fn on_idle<F: 'static + Fn(&mut Context)>(mut self, callback: F) -> Self {
+        self.on_idle = Some(Box::new(callback));
+
+        self
+    } 
 
     pub fn background_color(self, color: Color) -> Self {
         self.context.style.borrow_mut().background_color.insert(Entity::root(), color);
@@ -133,6 +158,10 @@ impl Application {
         // }
 
         let builder = self.builder.take();
+
+        let on_idle = self.on_idle.take();
+
+        let event_loop_proxy = event_loop.create_proxy();
 
         event_loop.run(move |event, _, control_flow|{
             *control_flow = ControlFlow::Wait;
@@ -219,6 +248,14 @@ impl Application {
                     apply_hover(&mut context);
 
                     handle.window().request_redraw();
+
+                    if let Some(idle_callback) = &on_idle {
+                        (idle_callback)(&mut context);
+
+                        if !context.event_queue.is_empty() {
+                            event_loop_proxy.send_event(()).unwrap();
+                        }
+                    }
                 }
 
                 glutin::event::Event::RedrawRequested(_) => {
