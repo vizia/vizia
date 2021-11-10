@@ -257,6 +257,8 @@ impl Application {
                     handle.window().request_redraw();
 
                     if let Some(idle_callback) = &on_idle {
+                        context.current = Entity::root();
+                        context.count = 0;
                         (idle_callback)(&mut context);
 
                         if !context.event_queue.is_empty() {
