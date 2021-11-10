@@ -1,7 +1,7 @@
 use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
 
 use femtovg::{Canvas, renderer::OpenGl};
-use glutin::{ContextBuilder, event::{ElementState, VirtualKeyCode}, event_loop::{ControlFlow, EventLoop}, window::WindowBuilder};
+use glutin::{ContextBuilder, event::{ElementState, VirtualKeyCode}, event_loop::{ControlFlow, EventLoop, EventLoopProxy}, window::WindowBuilder};
 use morphorm::Units;
 
 use crate::{CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, WindowEvent, apply_hover, apply_styles, scan_to_code, vcode_to_code, vk_to_key, Modifiers};
@@ -10,6 +10,7 @@ static DEFAULT_THEME: &str = include_str!("default_theme.css");
 
 pub struct Application {
     context: Context,
+    event_loop: EventLoop<()>,
     builder: Option<Box<dyn Fn(&mut Context)>>,
     on_idle: Option<Box<dyn Fn(&mut Context)>>,
 }
@@ -50,6 +51,7 @@ impl Application {
 
         Self {
             context,
+            event_loop: EventLoop::new(),
             builder: Some(Box::new(builder)),
             on_idle: None,
         }
@@ -78,6 +80,11 @@ impl Application {
         self
     } 
 
+    // TODO - Rename this
+    pub fn get_proxy(&self) -> EventLoopProxy<()> {
+        self.event_loop.create_proxy()
+    }
+
     pub fn background_color(self, color: Color) -> Self {
         self.context.style.borrow_mut().background_color.insert(Entity::root(), color);
 
@@ -95,7 +102,7 @@ impl Application {
 
         let mut context = self.context;
         
-        let event_loop = EventLoop::new();
+        let event_loop = self.event_loop;
         
         let handle = ContextBuilder::new()
             .build_windowed(WindowBuilder::new(), &event_loop)
