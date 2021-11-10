@@ -186,7 +186,7 @@ impl Context {
 
         self.style.borrow_mut().parse_theme(&overall_theme);
 
-        self.enviroment.needs_rebuild = true;
+        //self.enviroment.needs_rebuild = true;
 
         // Entity::root().restyle(self);
         // Entity::root().relayout(self);
