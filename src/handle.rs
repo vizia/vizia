@@ -106,6 +106,8 @@ impl<T> Handle<T> {
     set_style!(border_width, Units);
     set_style!(border_color, Color);
 
+    set_style!(font_size, f32);
+
 
     
 }

@@ -47,6 +47,7 @@ where
             //binding.body(cx);
             cx.current = prev;
             cx.count = prev_count;
+            cx.views.insert(id, Box::new(binding));
             id
         } else {
             let id = cx.entity_manager.create();

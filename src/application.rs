@@ -210,13 +210,13 @@ impl Application {
                     // Not ideal
                     let tree = context.tree.clone();
 
-                    apply_hover(&mut context);
-
                     // Styling (TODO)
                     apply_styles(&mut context, &tree);
 
                     // Layout
                     morphorm::layout(&mut context.cache, &context.tree, &context.style.borrow());
+
+                    apply_hover(&mut context);
 
                     handle.window().request_redraw();
                 }
