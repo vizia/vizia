@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::{Context, Event, Handle, MouseButton, View, ViewHandler, WindowEvent};
+use crate::{Context, Entity, Event, Handle, MouseButton, View, ViewHandler, WindowEvent};
 
 
 
@@ -16,7 +16,7 @@ impl<V: View> Press<V> {
     pub fn new<'a,F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Press<V>> 
     where F: 'static + Fn(&mut Context)
     {
-        if let Some(view) = cx.views.remove(&handle.entity) {
+        if let Some(mut view) = cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
                 let item = Self {
                     view,
@@ -26,6 +26,9 @@ impl<V: View> Press<V> {
         
                 cx.views.insert(handle.entity, Box::new(item));
             } else {
+                if let Some(press) = view.downcast_mut::<Press<V>>() {
+                    press.action = Some(Box::new(action));
+                }
                 cx.views.insert(handle.entity, view);
             }
 
@@ -51,10 +54,14 @@ impl<V: View> View for Press<V> {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    if let Some(action) = self.action.take() {
-                        (action)(cx);
-
-                        self.action = Some(action);
+                    if event.target == cx.current {
+                        if let Some(action) = self.action.take() {
+                            (action)(cx);
+    
+                            self.action = Some(action);
+                        }
+                        
+                        cx.captured = cx.current;
                     }
                 }
 
@@ -75,7 +82,7 @@ impl<V: View> Release<V> {
     pub fn new<'a,F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Release<V>> 
     where F: 'static + Fn(&mut Context)
     {
-        if let Some(view) = cx.views.remove(&handle.entity) {
+        if let Some(mut view) = cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
                 let item = Self {
                     view,
@@ -85,6 +92,9 @@ impl<V: View> Release<V> {
         
                 cx.views.insert(handle.entity, Box::new(item));
             } else {
+                if let Some(release) = view.downcast_mut::<Release<V>>() {
+                    release.action = Some(Box::new(action));
+                }
                 cx.views.insert(handle.entity, view);
             }
 
@@ -110,10 +120,83 @@ impl<V: View> View for Release<V> {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
-                    if let Some(action) = self.action.take() {
-                        (action)(cx);
+                    if event.target == cx.current {
+                        if let Some(action) = self.action.take() {
+                            (action)(cx);
+    
+                            self.action = Some(action);
+                        }
 
-                        self.action = Some(action);
+                        cx.captured = Entity::null();
+
+                    }
+
+
+
+                }
+
+                _=> {}
+            }
+        }
+    }
+}
+
+
+pub struct Hover<V: View> {
+    view: Box<dyn ViewHandler>,
+    action: Option<Box<dyn Fn(&mut Context)>>,
+
+    p: PhantomData<V>,
+}
+
+impl<V: View> Hover<V> {
+    pub fn new<'a,F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Hover<V>> 
+    where F: 'static + Fn(&mut Context)
+    {
+        if let Some(mut view) = cx.views.remove(&handle.entity) {
+            if view.downcast_ref::<V>().is_some() {
+                let item = Self {
+                    view,
+                    action: Some(Box::new(action)),
+                    p: Default::default(),
+                }; 
+        
+                cx.views.insert(handle.entity, Box::new(item));
+            } else {
+                if let Some(hover) = view.downcast_mut::<Hover<V>>() {
+                    hover.action = Some(Box::new(action));
+                }
+                cx.views.insert(handle.entity, view);
+            }
+
+        }
+
+
+        Handle {
+            entity: handle.entity,
+            style: handle.style.clone(),
+            p: Default::default(),
+        }
+    }
+}
+
+impl<V: View> View for Hover<V> {
+    fn body<'a>(&mut self, cx: &'a mut Context) {
+        self.view.body(cx);
+    }
+
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        self.view.event(cx, event);
+
+        if let Some(window_event) = event.message.downcast() {
+            match window_event {
+                WindowEvent::MouseEnter => {
+                    if event.target == cx.current {
+                        if let Some(action) = self.action.take() {
+                            (action)(cx);
+    
+                            self.action = Some(action);
+                        }
                     }
                 }
 
@@ -131,6 +214,9 @@ pub trait Actions {
     fn on_release<F>(self, cx: &mut Context, action: F) -> Handle<Release<Self::View>>
     where F: 'static + Fn(&mut Context);
 
+    fn on_hover<F>(self, cx: &mut Context, action: F) -> Handle<Hover<Self::View>>
+    where F: 'static + Fn(&mut Context);
+
 
 }
 
@@ -146,6 +232,12 @@ impl<'a,V: View> Actions for Handle<V> {
     where F: 'static + Fn(&mut Context) 
     {
         Release::new(self, cx, action)
+    }
+
+    fn on_hover<F>(self, cx: &mut Context, action: F) -> Handle<Hover<Self::View>>
+    where F: 'static + Fn(&mut Context) 
+    {
+        Hover::new(self, cx, action)
     }
 
 
