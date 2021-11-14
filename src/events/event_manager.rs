@@ -47,9 +47,9 @@ impl EventManager {
         // Loop over the events in the event queue
         'events: for event in self.event_queue.iter_mut() {
 
-            // if event.trace {
-            //     println!("Event: {:?}", event);
-            // }
+            if event.trace {
+                println!("Event: {:?}", event);
+            }
 
             // Define the target to prevent multiple mutable borrows error
             let target = event.target;
@@ -59,21 +59,19 @@ impl EventManager {
                 context.current = event.target;
                 view.event(context, event);
 
-                if let Some(mut model_list) = context.data.model_data.remove(event.target) {
-                    for (_, model) in model_list.iter_mut() {
-                        model.event(context, event);
-                    }
+                context.views.insert(event.target, view);    
+            }
 
-                    context.data.model_data.insert(event.target, model_list).expect("Failed to insert data");
-
+            if let Some(mut model_list) = context.data.model_data.remove(event.target) {
+                for (_, model) in model_list.iter_mut() {
+                    model.event(context, event);
                 }
 
-                context.views.insert(event.target, view);
-
-                if event.consumed {
-                    continue 'events;
-                }
-
+                context.data.model_data.insert(event.target, model_list).expect("Failed to insert data");
+            }
+            
+            if event.consumed {
+                continue 'events;
             }
 
             // if event.trace {
