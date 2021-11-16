@@ -1,10 +1,10 @@
-use std::{cell::RefCell, collections::{HashMap, VecDeque}, io::Read, rc::Rc};
+use std::{any::TypeId, cell::RefCell, collections::{HashMap, VecDeque}, io::Read, rc::Rc};
 
 use femtovg::FontId;
 use fluent_bundle::{FluentBundle, FluentResource};
 use unic_langid::LanguageIdentifier;
 
-use crate::{CachedData, Data, Entity, Event, FontOrId, IdManager, Message, MouseState, Propagation, ResourceManager, StateData, StateID, Store, Style, Tree, TreeExt, ViewHandler, Modifiers};
+use crate::{AppData, CachedData, Data, Entity, Event, FontOrId, IdManager, Lens, LensWrap, Message, Modifiers, MouseState, Propagation, ResourceManager, Store, Style, Tree, TreeExt, ViewHandler};
 
 pub struct Enviroment {
     // Signifies whether the app should be rebuilt
@@ -54,8 +54,9 @@ pub struct Context {
     pub current: Entity,
     pub count: usize,
     pub views: HashMap<Entity, Box<dyn ViewHandler>>,
-    pub state: HashMap<StateID, Box<dyn StateData>>,
-    pub data: Data,
+    //pub state: HashMap<StateID, Box<dyn StateData>>,
+    pub lenses: HashMap<TypeId, Box<dyn LensWrap>>,
+    pub data: AppData,
     pub event_queue: VecDeque<Event>,
     pub style: Rc<RefCell<Style>>,
     pub cache: CachedData,
@@ -69,7 +70,7 @@ pub struct Context {
     pub hovered: Entity,
     pub focused: Entity,
 
-    pub state_count: u32,
+    // pub state_count: u32,
 
     pub resource_manager: ResourceManager,
 

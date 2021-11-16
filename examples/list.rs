@@ -24,7 +24,9 @@ fn main() {
 
         // List of 12 items
         List::new(cx, Data::list, |cx, item| {
+            println!("Rebuild List");
             Binding::new(cx, ListData::selected, move |cx, selected|{
+                println!("Rebuild Binding");
                 let item = item.clone();
                 HStack::new(cx, move |cx| {
                     Label::new(cx, "Hello").width(Stretch(1.0));

@@ -4,7 +4,7 @@ use femtovg::{Canvas, renderer::OpenGl};
 use glutin::{ContextBuilder, event::{ElementState, VirtualKeyCode}, event_loop::{ControlFlow, EventLoop, EventLoopProxy}, window::WindowBuilder};
 use morphorm::Units;
 
-use crate::{CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, WindowEvent, apply_hover, apply_styles, scan_to_code, vcode_to_code, vk_to_key, Modifiers};
+use crate::{AppData, CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, WindowEvent, apply_hover, apply_styles, scan_to_code, vcode_to_code, vk_to_key};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 
@@ -29,8 +29,9 @@ impl Application {
             current: Entity::root(),
             count: 0,
             views: HashMap::new(),
-            state: HashMap::new(),  
-            data: Data::new(),
+            lenses: HashMap::new(),
+            //state: HashMap::new(),  
+            data: AppData::new(),
             style: Rc::new(RefCell::new(Style::default())),
             cache,
             enviroment: Enviroment::new(),
@@ -40,7 +41,7 @@ impl Application {
             captured: Entity::null(),
             hovered: Entity::root(),
             focused: Entity::root(),
-            state_count: 0,
+            //state_count: 0,
             resource_manager: ResourceManager::new(),
             fonts: Vec::new(),
         };
@@ -207,41 +208,73 @@ impl Application {
                         event_manager.flush_events(&mut context);
                     }
 
-                    // Updates
-                    for entity in context.tree.clone().into_iter() {
-                        let mut observers = Vec::new();
-                     
-                        if let Some(model_list) = context.data.model_data.get(entity) {
-                            for (_, model) in model_list.iter() {
-                                //observers = model.update();
-                                if model.is_dirty() {
-                                    observers.extend(model.update().iter());
+                    let mut observers: Vec<Entity> = Vec::new();
+                    
+                    for model_list in context.data.model_data.dense.iter().map(|entry| &entry.value){
+                        for (_, model) in model_list.iter() {
+                            //println!("Lenses: {:?}", context.lenses.len());
+                            for (_, lens) in context.lenses.iter_mut() {
+                                if lens.update(model) {
+                                    observers.extend(lens.observers().iter());
                                 }
                             }
                         }
+                    }
+                    // if let Some(model_list) = context.data.model_data.get(Entity::root()) {
+                    // }
 
-                        for observer in observers.iter() {
-                            if let Some(mut view) = context.views.remove(observer) {
-                                let prev = context.current;
-                                context.current = *observer;
-                                let prev_count = context.count;
-                                context.count = 0;
-                                view.body(&mut context);
-                                context.current = prev;
-                                context.count = prev_count;
+                    //println!("Observers: {:?}", observers);
+
+                    for observer in observers.iter() {
+                        if let Some(mut view) = context.views.remove(observer) {
+                            let prev = context.current;
+                            context.current = *observer;
+                            let prev_count = context.count;
+                            context.count = 0;
+                            view.body(&mut context);
+                            context.current = prev;
+                            context.count = prev_count;
+                
+            
+                            context.views.insert(*observer, view);
+                        }
+                    }
+
+                    // Updates
+                    // for entity in context.tree.clone().into_iter() {
+                    //     let mut observers = Vec::new();
+                     
+                    //     if let Some(model_list) = context.data.model_data.get(entity) {
+                    //         for (_, model) in model_list.iter() {
+                    //             //observers = model.update();
+                    //             if model.is_dirty() {
+                    //                 observers.extend(model.update().iter());
+                    //             }
+                    //         }
+                    //     }
+
+                    //     for observer in observers.iter() {
+                    //         if let Some(mut view) = context.views.remove(observer) {
+                    //             let prev = context.current;
+                    //             context.current = *observer;
+                    //             let prev_count = context.count;
+                    //             context.count = 0;
+                    //             view.body(&mut context);
+                    //             context.current = prev;
+                    //             context.count = prev_count;
                     
                 
-                                context.views.insert(*observer, view);
-                            }
-                        }
+                    //             context.views.insert(*observer, view);
+                    //         }
+                    //     }
 
-                        if let Some(model_list) = context.data.model_data.get_mut(entity) {
-                            for (_, model) in model_list.iter_mut() {
-                                model.reset();
-                            }
-                        }
+                    //     if let Some(model_list) = context.data.model_data.get_mut(entity) {
+                    //         for (_, model) in model_list.iter_mut() {
+                    //             model.reset();
+                    //         }
+                    //     }
                         
-                    }
+                    // }
 
                     // Not ideal
                     let tree = context.tree.clone();

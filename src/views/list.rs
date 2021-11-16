@@ -1,11 +1,12 @@
 
 
+use std::any::TypeId;
 use std::collections::HashSet;
 use std::marker::PhantomData;
 
 use keyboard_types::Code;
 
-use crate::{Color, Context, Event, Handle, Lens, Model, MouseButton, Store, TreeExt, View, WindowEvent};
+use crate::{Color, Context, Event, Handle, Lens, Model, MouseButton, Data, State, StateStore, Store, TreeExt, View, WindowEvent};
 use crate::Units::*;
 #[derive(Debug, Copy)]
 pub struct ItemPtr<L, T>
@@ -71,24 +72,22 @@ pub enum ListEvent {
 }
 
 impl Model for ListData {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) -> bool {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(list_event) = event.message.downcast() {
             match list_event {
                 ListEvent::IncrementSelection => {
+                    println!("Increment");
                     self.selected += 1;
                     self.selected = self.selected.clamp(0, self.length-1);
-                    
-                    return true;
                 }
 
                 ListEvent::DecrementSelection => {
+                    println!("Decrement");
                     if self.selected <= 1 {
                         self.selected = 0;
                     } else {
                         self.selected -= 1;
                     }
-
-                    return true;
                 }
 
                 ListEvent::SetSelected(index) => {
@@ -100,24 +99,22 @@ impl Model for ListData {
                     } else {
                         self.selected = *index;
                     }
-                    return true;
                 }
             }
         }
-
-        false
     }
 }
 
 pub struct List<L, T: 'static>
 where
     L: Lens<Target = Vec<T>>,
+    T: Data,
 {
     lens: L,
     builder: Option<Box<dyn Fn(&mut Context, ItemPtr<L, T>)>>,
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
+impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context, ItemPtr<L, T>),
@@ -152,20 +149,33 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
         //.width(Auto)
         //.background_color(Color::rgb(50,70,90));
 
-        let mut ancestors = HashSet::new();
-        for entity in parent.parent_iter(&cx.tree) {
-            ancestors.insert(entity);
+        // let mut ancestors = HashSet::new();
+        // for entity in parent.parent_iter(&cx.tree) {
+        //     ancestors.insert(entity);
 
-            if let Some(model_list) = cx.data.model_data.get_mut(entity) {
-                for (_, model) in model_list.iter_mut() {
-                    if let Some(store) = model.downcast::<Store<L::Source>>() {
-                        if store.observers.intersection(&ancestors).next().is_some() {
-                            break;
-                        }
-                        store.insert_observer(id);
-                    }
-                }
-            }
+        //     if let Some(model_list) = cx.data.model_data.get_mut(entity) {
+        //         for (_, model) in model_list.iter_mut() {
+        //             if let Some(store) = model.downcast::<Store<L::Source>>() {
+        //                 if store.observers.intersection(&ancestors).next().is_some() {
+        //                     break;
+        //                 }
+        //                 store.insert_observer(id);
+        //             }
+        //         }
+        //     }
+        // }
+
+        if let Some(lens_wrap) = cx.lenses.get_mut(&TypeId::of::<L>()) {
+            lens_wrap.add_observer(id);
+        } else {
+            let mut observers = HashSet::new();
+            observers.insert(id);
+            let old = lens.view(cx.data().unwrap());
+            cx.lenses.insert(TypeId::of::<L>(), Box::new(StateStore {
+                lens,
+                old: old.clone(),
+                observers,
+            }));
         }
 
         if let Some(mut view_handler) = cx.views.remove(&id) {
@@ -191,7 +201,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
     }
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
+impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
     fn body(&mut self, cx: &mut Context) {
 
         for child in cx.current.child_iter(&cx.tree.clone()) {

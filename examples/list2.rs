@@ -92,30 +92,25 @@ pub enum DataEvent {
 }
 
 impl Model for Data {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) -> bool {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(data_event) = event.message.downcast() {
             match data_event {
                 DataEvent::Update(index, value) => {
                     self.list[*index] = *value;
-                    return true;
                 }
 
                 DataEvent::All(value) => {
                     for item in self.list.iter_mut() {
                         *item = *value;
                     }
-                    return true;
                 }
 
                 DataEvent::Enumerate => {
                     for (index, item) in self.list.iter_mut().enumerate() {
                         *item = index as u32;
                     }
-                    return true;
                 }
             }
         }
-
-        return false;
     }
 }

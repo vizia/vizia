@@ -1,14 +1,20 @@
 mod lens;
 
-use std::collections::HashSet;
+use std::{any::TypeId, collections::HashSet};
 
 pub use lens::*;
 
 mod model;
 pub use model::*;
 
+mod state;
+pub use state::*;
+
 mod store;
 pub use store::*;
+
+mod data;
+pub use data::*;
 
 use crate::{Context, Handle, TreeExt, Units, View};
 
@@ -24,6 +30,7 @@ impl<L> Binding<L>
 where 
     L: 'static + Lens,
     <L as Lens>::Source: 'static,
+    <L as Lens>::Target: Data,
 {
     pub fn new<F>(cx: &mut Context, lens: L, builder: F) -> Handle<Self> 
     where 
@@ -47,7 +54,7 @@ where
             //binding.body(cx);
             cx.current = prev;
             cx.count = prev_count;
-            cx.views.insert(id, Box::new(binding));
+            //cx.views.insert(id, Box::new(binding));
             id
         } else {
             let id = cx.entity_manager.create();
@@ -61,27 +68,54 @@ where
             //binding.body(cx);
             cx.current = prev;
             cx.count = prev_count;
-            cx.views.insert(id, Box::new(binding));
+            
             id  
         };
 
         cx.count += 1;
         
-        let mut ancestors = HashSet::new();
-        for entity in parent.parent_iter(&cx.tree) {
-            ancestors.insert(entity);
+        //let mut ancestors = HashSet::new();
+        //for entity in parent.parent_iter(&cx.tree) {
+            //ancestors.insert(entity);
 
-            if let Some(model_list) = cx.data.model_data.get_mut(entity) {
-                for (_, model) in model_list.iter_mut() {
-                    if let Some(store) = model.downcast::<Store<L::Source>>() {
-                        if store.observers.intersection(&ancestors).next().is_some() {
-                            break;
-                        }
-                        store.insert_observer(id);
-                    }
+            let ancestors = parent.parent_iter(&cx.tree).collect::<HashSet<_>>();
+
+            if let Some(lens_wrap) = cx.lenses.get_mut(&TypeId::of::<L>()) {
+                let observers = lens_wrap.observers();
+
+                if ancestors.intersection(observers).next().is_none() {
+                    lens_wrap.add_observer(id);
                 }
+                
+            } else {
+                let mut observers = HashSet::new();
+                observers.insert(id);
+                let old = lens.view(cx.data().unwrap());
+                cx.lenses.insert(TypeId::of::<L>(), Box::new(StateStore {
+                    lens,
+                    old: old.clone(),
+                    observers,
+                }));
             }
-        }
+
+            // if let Some(model_list) = cx.data.model_data.get_mut(entity) {
+            //     for (_, model) in model_list.iter_mut() {
+            //         if let Some(store) = model.downcast::<Store<L::Source>>() {
+
+            //             let state = binding.lens.view_mut(&mut store.data);
+
+            //             state.add_observer(id);
+
+            //             if store.observers.intersection(&ancestors).next().is_some() {
+            //                 break;
+            //             }
+            //             store.insert_observer(id);
+            //         }
+            //     }
+            // }
+        //}
+
+        cx.views.insert(id, Box::new(binding));
 
         // Call the body of the binding
         if let Some(mut view_handler) = cx.views.remove(&id) {
@@ -174,3 +208,7 @@ where <L as Lens>::Source: 'static,
 //         }
 //     }
 // } 
+
+fn typeid<T: std::any::Any>(_: &T) {
+    println!("{:?}", std::any::TypeId::of::<T>());
+}

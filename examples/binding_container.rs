@@ -58,16 +58,13 @@ pub enum CustomEvent {
 }
 
 impl Model for Data {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) -> bool {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(custom_event) = event.message.downcast() {
             match custom_event {
                 CustomEvent::Reset => {
                     self.list = vec![3;3];
-                    return true;
                 }
             }
         }
-
-        return false;
     }
 }

@@ -63,16 +63,12 @@ pub enum CounterEvent {
 }
 
 impl Model for CounterData {
-    fn event(&mut self, _: &mut Context, event: &mut Event) -> bool {
+    fn event(&mut self, _: &mut Context, event: &mut Event) {
         if let Some(counter_event) = event.message.downcast() {
             match counter_event {
                 CounterEvent::Increment => self.count += 1,
                 CounterEvent::Decrement => self.count -= 1,
             }
-
-            return true;
         }
-
-        false
     }
 }

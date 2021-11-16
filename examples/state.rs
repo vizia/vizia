@@ -1,26 +1,61 @@
+
+
 use vizia::*;
 
 // Example of using state types to store view-local mutable state
 
+#[derive(Lens)]
+pub struct Data {
+    something: String,
+    other: i32,
+}
+
+impl Model for Data {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        if let Some(data_event) = event.message.downcast() {
+            match data_event {
+                DataEvent::ChangeSomething => {
+                    self.something = "Test".to_string();
+                }
+
+                DataEvent::ChangeOther => {
+                    self.other = 44;
+                }
+            }
+        }
+    }
+}
+
+// Lens provides a way to filter the model for some specific data
+// When sending updates, store the lenses to a particular model and then iterate on them to get the `State<>`s
+// Then send the updates to the bound entities
+
 fn main() {
 
     Application::new(|cx|{
-        
-HStack::new(cx, move |cx| {
-    let hello = "hello".to_string().build(cx);
-    let world = "world".to_string().build(cx);
-    VStack::new(cx, move |cx|{
-        Label::new(cx, &hello.get(cx).to_owned()).background_color(
-            if hello.get(cx) == "hello" {
-                Color::red()
-            } else {
-                Color::blue()
-            }
-        );
-        Label::new(cx, &format!("{} {}", hello.get(cx), world.get(cx)));
-        let hello = hello.clone();
-        Button::new(cx, move |cx| hello.set(cx, |v| *v = "goodbye".to_string()), |cx| {});
-    });
-});
+
+        Data {
+            something: "Something".to_string(),
+            other: 32,
+        }.build(cx);
+
+        Binding::new(cx, Data::something, |cx, something|{
+            println!("Rebuild something");
+            Label::new(cx, &format!("{}", *something.get(cx)));
+        });
+
+        Binding::new(cx, Data::other, |cx, other|{
+            println!("Rebuild other");
+            Label::new(cx, &format!("{}", *other.get(cx)));
+        });
+
+        Button::new(cx, |cx| cx.emit(DataEvent::ChangeSomething), |cx| {Label::new(cx, "Change Something");});
+        Button::new(cx, |cx| cx.emit(DataEvent::ChangeOther), |cx| {Label::new(cx, "Change Other");});
     }).run();
+}
+
+#[derive(Debug)]
+pub enum DataEvent {
+    ChangeSomething,
+    ChangeOther,
 }

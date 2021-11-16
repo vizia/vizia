@@ -47,7 +47,7 @@ fn main() {
     }).run();
 }
 
-#[derive(Clone)]
+#[derive(Clone, Data)]
 pub struct TodoItem {
     text: String,
     completed: bool,
@@ -65,19 +65,15 @@ pub enum TodoEvent {
 }
 
 impl Model for TodoData {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) -> bool {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(todo_event) = event.message.downcast() {
             match todo_event {
                 TodoEvent::SetCompleted(index, flag) => {
-                    println!("SET TRUE");
                     if let Some(item) = self.items.get_mut(*index) {
                         item.completed = *flag;
-                        return  true;
                     }
                 }
             }
         }
-
-        false
     }
 }
