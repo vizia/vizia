@@ -35,11 +35,12 @@ fn main() {
                 let first_name = item.value(cx).first_name.clone();
                 Binding::new(cx, ColumnData::columns, move |cx, columns|{
                     
-                    let width = columns.get(cx)[0];
+                    //let width = columns.get(cx)[0];
+                    //println!("Width: {:?}", width);
                     
                     ResizableItem::new()
                         .on_size(|cx, width|{
-                            //println!("width {}", width);
+                            println!("width {}", width);
                             cx.emit(DataEvent::Test(width));
                         })
                         .build(cx, &first_name)
@@ -93,6 +94,10 @@ impl ResizableItem {
 
 impl View for ResizableItem {
 
+    fn update(&mut self, new: &Self) {
+        
+    }
+
     fn element(&self) -> Option<String> {
         Some("label".to_string())
     }
@@ -133,7 +138,7 @@ impl View for ResizableItem {
 }
 
 
-#[derive(Clone, Data)]
+#[derive(Clone, Data, Debug)]
 pub struct RowData {
     first_name: String,
     last_name: String,

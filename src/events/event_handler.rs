@@ -7,6 +7,8 @@ pub trait ViewHandler: Any {
         entity.to_string()
     }
 
+    fn update(&mut self, new: &dyn ViewHandler) {}
+
     fn element(&self) -> Option<String> {
         None
     }

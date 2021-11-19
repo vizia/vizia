@@ -145,6 +145,7 @@ where
         if let Some(store) = model.downcast_ref::<Store<L::Source>>() {
             let state = self.lens.view(&store.data);
             if !state.same(&self.old) {
+                
                 self.old = state.clone();
                 return true;
             }

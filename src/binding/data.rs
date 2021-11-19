@@ -265,7 +265,6 @@ impl<T: Data> Data for Vec<T> {
 
 impl Data for morphorm::Units {
     fn same(&self, other: &Self) -> bool {
-        //*self == *other
-        true
+        *self == *other
     }
 }

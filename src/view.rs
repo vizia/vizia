@@ -20,7 +20,10 @@ pub trait View: 'static + Sized {
             self.body(cx);
             cx.current = prev;
             cx.count = prev_count;
-            cx.views.insert(id, Box::new(self));
+            if let Some(view) = cx.views.get_mut(&id) {
+                view.update(&self);
+            }
+            //cx.views.insert(id, Box::new(self));
             id
         } else {
             let id = cx.entity_manager.create();
@@ -49,6 +52,10 @@ pub trait View: 'static + Sized {
     fn debug(&self, entity: Entity) -> String {
         "".to_string()
     }
+
+    fn update(&mut self, new: &Self) {
+
+    } 
 
     fn element(&self) -> Option<String> {
         None
@@ -772,6 +779,13 @@ impl<T: View> ViewHandler for T
 where
     T: std::marker::Sized + View + 'static
 {
+
+    fn update(&mut self, new: &dyn ViewHandler) {
+        if let Some(new) = new.downcast_ref::<Self>() {
+            <T as View>::update(self, new);
+        }
+    }
+
     fn debug(&self, entity: Entity) -> String {
         <T as View>::debug(self, entity)
     }
