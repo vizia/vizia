@@ -220,7 +220,7 @@ pub trait Actions {
 
 }
 
-impl<'a,V: View> Actions for Handle<V> {
+impl<V: View> Actions for Handle<V> {
     type View = V;
     fn on_press<F>(self, cx: &mut Context, action: F) -> Handle<Press<Self::View>>
     where F: 'static + Fn(&mut Context) 
@@ -239,6 +239,22 @@ impl<'a,V: View> Actions for Handle<V> {
     {
         Hover::new(self, cx, action)
     }
+}
 
 
+pub trait ViewModifers {
+    type View: View;
+
+    fn overlay<B>(self, cx: &mut Context, builder: B) -> Handle<Self::View>
+    where B: 'static + FnOnce(&mut Context);
+}
+
+impl<V: View> ViewModifers for Handle<V> {
+    type View = V;
+    fn overlay<B>(self, cx: &mut Context, builder: B) -> Handle<Self::View>
+    where B: 'static + FnOnce(&mut Context) {
+        (builder)(cx);
+
+        self
+    }
 }

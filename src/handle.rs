@@ -23,6 +23,18 @@ pub struct Handle<T> {
 
 impl<T> Handle<T> {
 
+    pub fn null() -> Self {
+        Self {
+            entity: Entity::null(),
+            style: Rc::default(),
+            p: PhantomData::default(),
+        }
+    }
+
+    pub fn entity(&self) -> Entity {
+        self.entity
+    }
+
     pub fn cursor(self, cursor_icon: CursorIcon) -> Self {
 
         self.style.borrow_mut().cursor.insert(self.entity, cursor_icon);

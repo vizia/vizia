@@ -26,3 +26,6 @@ pub use element::Element;
 
 mod for_each;
 pub use for_each::ForEach;
+
+// mod slider;
+// pub use slider::Slider;

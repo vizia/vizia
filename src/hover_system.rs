@@ -5,17 +5,37 @@ use crate::{Display, Entity, Event, Propagation, Context, Units, Visibility, Win
 /// Determines the hovered entity based on the mouse cursor position
 pub fn apply_hover(cx: &mut Context) {
     //println!("Apply Hover");
-    //let mut draw_tree: Vec<Entity> = cx.tree.into_iter().collect();
+    let mut draw_tree: Vec<Entity> = cx.tree.into_iter().collect();
 
     // This should be cached somewhere probably
-    //draw_tree.sort_by_cached_key(|entity| cx.data.get_z_index(*entity));
+    draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 
     let cursorx = cx.mouse.cursorx;
     let cursory = cx.mouse.cursory;
 
     let mut hovered_widget = Entity::root();
 
-    for entity in cx.tree.into_iter() {
+    for entity in draw_tree.into_iter() {
+
+        // Skip invisible widgets
+        if cx.cache.get_visibility(entity) == Visibility::Invisible {
+            continue;
+        }
+
+        // This shouldn't be here but there's a bug if it isn't
+        if cx.cache.get_opacity(entity) == 0.0 {
+            continue;
+        }
+
+        // Skip non-displayed widgets
+        if cx.cache.get_display(entity) == Display::None {
+            continue;
+        }
+
+        // Skip non-hoverable widgets
+        if cx.cache.get_hoverable(entity) != true {
+            continue;
+        }
 
         let posx = cx.cache.get_posx(entity);
         let posy = cx.cache.get_posy(entity);

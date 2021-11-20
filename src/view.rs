@@ -25,6 +25,8 @@ pub trait View: 'static + Sized {
             // }
             
             cx.views.insert(id, Box::new(self));
+
+            
             id
         } else {
             let id = cx.entity_manager.create();

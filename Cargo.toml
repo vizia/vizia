@@ -11,6 +11,11 @@ description = "A Rust GUI Framework"
 name = "button"
 path = "examples/controls/button.rs"
 
+
+[[example]]
+name = "slider"
+path = "examples/controls/slider.rs"
+
 [[example]]
 name = "checkbox"
 path = "examples/controls/checkbox.rs"
