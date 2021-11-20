@@ -365,7 +365,7 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "background-image" => Property::BackgroundImage(parse_string(input)?),
 
             // Position
-            "position" => Property::PositionType(parse_position_type(input)?),
+            "position" | "position-type" => Property::PositionType(parse_position_type(input)?),
 
             "left" => Property::Left(parse_units(input)?),
             "right" => Property::Right(parse_units(input)?),

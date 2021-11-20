@@ -27,6 +27,10 @@ vstack {
     height: 1s;
 }
 
+zstack>* {
+    position-type: self-directed;
+}
+
 checkbox {
     border-width: 1px;
     border-color: black;
