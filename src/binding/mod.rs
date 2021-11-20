@@ -90,7 +90,7 @@ where
             } else {
                 let mut observers = HashSet::new();
                 observers.insert(id);
-                let old = lens.view(cx.data().unwrap());
+                let old = lens.view(cx.data().expect("Failed to find model. Has it been built into the tree?"));
                 cx.lenses.insert(TypeId::of::<L>(), Box::new(StateStore {
                     lens,
                     old: old.clone(),

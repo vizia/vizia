@@ -4,7 +4,7 @@ use femtovg::{Canvas, renderer::OpenGl};
 use glutin::{ContextBuilder, event::{ElementState, VirtualKeyCode}, event_loop::{ControlFlow, EventLoop, EventLoopProxy}, window::WindowBuilder};
 use morphorm::Units;
 
-use crate::{AppData, CachedData, Color, Context, Data, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, WindowEvent, apply_hover, apply_styles, scan_to_code, style_system::{apply_visibility, apply_z_ordering}, vcode_to_code, vk_to_key};
+use crate::{AppData, BoundingBox, CachedData, Color, Context, Data, Display, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, WindowEvent, apply_hover, apply_styles, scan_to_code, style_system::{apply_clipping, apply_visibility, apply_z_ordering}, vcode_to_code, vk_to_key};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 
@@ -157,6 +157,12 @@ impl Application {
         context.style.borrow_mut().width.insert(Entity::root(), Units::Pixels(800.0));
         context.style.borrow_mut().height.insert(Entity::root(), Units::Pixels(600.0));
 
+        let mut bounding_box = BoundingBox::default();
+        bounding_box.w = size.width as f32;
+        bounding_box.h = size.height as f32;
+
+        context.cache.set_clip_region(Entity::root(), bounding_box);
+
         let mut event_manager = EventManager::new();
 
         // if let Some(builder) = self.builder.take() {
@@ -240,42 +246,6 @@ impl Application {
                         }
                     }
 
-                    // Updates
-                    // for entity in context.tree.clone().into_iter() {
-                    //     let mut observers = Vec::new();
-                     
-                    //     if let Some(model_list) = context.data.model_data.get(entity) {
-                    //         for (_, model) in model_list.iter() {
-                    //             //observers = model.update();
-                    //             if model.is_dirty() {
-                    //                 observers.extend(model.update().iter());
-                    //             }
-                    //         }
-                    //     }
-
-                    //     for observer in observers.iter() {
-                    //         if let Some(mut view) = context.views.remove(observer) {
-                    //             let prev = context.current;
-                    //             context.current = *observer;
-                    //             let prev_count = context.count;
-                    //             context.count = 0;
-                    //             view.body(&mut context);
-                    //             context.current = prev;
-                    //             context.count = prev_count;
-                    
-                
-                    //             context.views.insert(*observer, view);
-                    //         }
-                    //     }
-
-                    //     if let Some(model_list) = context.data.model_data.get_mut(entity) {
-                    //         for (_, model) in model_list.iter_mut() {
-                    //             model.reset();
-                    //         }
-                    //     }
-                        
-                    // }
-
                     // Not ideal
                     let tree = context.tree.clone();
 
@@ -293,6 +263,7 @@ impl Application {
 
                     apply_hover(&mut context);
 
+                    apply_clipping(&mut context, &tree);
                     handle.window().request_redraw();
 
                     if let Some(idle_callback) = &on_idle {
@@ -322,7 +293,47 @@ impl Application {
                         window_height as u32,
                         clear_color.into(),
                     );
-                    for entity in context.tree.clone().into_iter() {
+
+                    // Sort the tree by z order
+                    let mut draw_tree: Vec<Entity> = context.tree.into_iter().collect();
+                    draw_tree.sort_by_cached_key(|entity| context.cache.get_z_index(*entity));
+
+                    for entity in draw_tree.into_iter() {
+
+
+                        // Skip window
+                        if entity == Entity::root() {
+                            continue;
+                        }
+
+                        // Skip invisible widgets
+                        if context.cache.get_visibility(entity) == Visibility::Invisible {
+                            continue;
+                        }
+
+                        if context.cache.get_display(entity) == Display::None {
+                            continue;
+                        }
+
+                        // Skip widgets that have 0 opacity
+                        if context.cache.get_opacity(entity) == 0.0 {
+                            continue;
+                        }
+
+                        // Apply clipping
+                        let clip_region = context.cache.get_clip_region(entity);
+                        canvas.scissor(
+                            clip_region.x,
+                            clip_region.y,
+                            clip_region.w,
+                            clip_region.h,
+                        );
+                
+                        // Apply transform
+                        let transform = context.cache.get_transform(entity);
+                        canvas.save();
+                        canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+
                         if let Some(view) = context.views.remove(&entity) {
 
                             context.current = entity;
@@ -330,6 +341,8 @@ impl Application {
                             
                             context.views.insert(entity, view);
                         }
+
+                        canvas.restore();
                     }
 
                     canvas.flush();

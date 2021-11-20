@@ -1,4 +1,4 @@
-use crate::{Context, Display, Entity, Rule, Tree, TreeExt, Visibility, style::{Property, Selector, SelectorRelation}};
+use crate::{BoundingBox, Context, Display, Entity, Rule, Tree, TreeExt, Visibility, style::{Overflow, Property, Selector, SelectorRelation}};
 
 // use crate::{BoundingBox, Display, Entity, Overflow, PropGet, PropSet, Property, SelectorRelation, Rule, Selector, Cx, Tree, TreeExt, Visibility};
 
@@ -19,7 +19,7 @@ pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
         }
     }
 }
-/* TODO
+
 pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
     //println!("Apply Clipping");
     for entity in tree.into_iter() {
@@ -30,7 +30,7 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
         let parent = tree.get_parent(entity).unwrap();
 
         let mut parent_clip_region = cx.cache.get_clip_region(parent);
-        let parent_border_width = cx.style.borrow_mut().border_width.get(parent).cloned().unwrap_or_default().value_or(0.0, 0.0);
+        let parent_border_width = cx.style.borrow().border_width.get(parent).cloned().unwrap_or_default().value_or(0.0, 0.0);
 
         //println!("Parent border width: {}", parent_border_width);
         parent_clip_region.x += parent_border_width / 2.0;
@@ -42,7 +42,9 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
 
         let root_clip_region = cx.cache.get_clip_region(Entity::root());
 
-        if entity.get_overflow(cx) == Overflow::Hidden {
+        let overflow = cx.style.borrow().overflow.get(entity).cloned().unwrap_or_default();
+
+        if overflow == Overflow::Hidden {
             if let Some(clip_widget) = cx.style.borrow_mut().clip_widget.get(entity).cloned() {
                 let clip_widget_border_width = cx.style.borrow_mut().border_width.get(clip_widget).cloned().unwrap_or_default().value_or(0.0, 0.0);
                 let clip_x = cx.cache.get_posx(clip_widget) + clip_widget_border_width;
@@ -78,7 +80,6 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
         //println!("Entity: {}  Clip Region: {:?}", entity, clip_region);
     }
 }
-*/
 
 pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
     let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
