@@ -22,7 +22,7 @@ pub struct CustomData {
 impl CustomData {
     pub fn new() -> Self {
         Self {
-            value: "one".to_string(),
+            value: "Hello World".to_string(),
         }
     }
 }

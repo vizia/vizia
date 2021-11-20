@@ -20,10 +20,11 @@ pub trait View: 'static + Sized {
             self.body(cx);
             cx.current = prev;
             cx.count = prev_count;
-            if let Some(view) = cx.views.get_mut(&id) {
-                view.update(&self);
-            }
-            //cx.views.insert(id, Box::new(self));
+            // if let Some(view) = cx.views.get_mut(&id) {
+            //     view.update(&self);
+            // }
+            
+            cx.views.insert(id, Box::new(self));
             id
         } else {
             let id = cx.entity_manager.create();
