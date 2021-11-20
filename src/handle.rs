@@ -2,7 +2,7 @@ use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{Color, CursorIcon, Entity, PseudoClass, Style};
+use crate::{Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility};
 
 macro_rules! set_style {
     ($name:ident, $t:ty) => {
@@ -107,6 +107,9 @@ impl<T> Handle<T> {
     set_style!(border_color, Color);
 
     set_style!(font_size, f32);
+
+    set_style!(display, Display);
+    set_style!(visibility, Visibility);
 
 
     
