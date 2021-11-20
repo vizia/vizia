@@ -58,10 +58,19 @@ where
     }
 }
 
-#[derive(Lens)]
+#[derive(Lens, Default)]
 pub struct ListData {
     pub selected: usize,
     pub length: usize,
+}
+
+impl ListData {
+    pub fn new(selected: usize) -> Self {
+        Self {
+            selected,
+            length: 0,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -69,6 +78,7 @@ pub enum ListEvent {
     IncrementSelection,
     DecrementSelection,
     SetSelected(usize),
+    SetLength(usize),
 }
 
 impl Model for ListData {
@@ -76,13 +86,11 @@ impl Model for ListData {
         if let Some(list_event) = event.message.downcast() {
             match list_event {
                 ListEvent::IncrementSelection => {
-                    println!("Increment");
                     self.selected += 1;
                     self.selected = self.selected.clamp(0, self.length-1);
                 }
 
                 ListEvent::DecrementSelection => {
-                    println!("Decrement");
                     if self.selected <= 1 {
                         self.selected = 0;
                     } else {
@@ -91,7 +99,6 @@ impl Model for ListData {
                 }
 
                 ListEvent::SetSelected(index) => {
-                    println!("Set Selected");
                     if *index <= 0 {
                         self.selected = 0;
                     } else if *index > self.length - 1 {
@@ -99,6 +106,10 @@ impl Model for ListData {
                     } else {
                         self.selected = *index;
                     }
+                }
+
+                ListEvent::SetLength(length) => {
+                    self.length = *length;
                 }
             }
         }
@@ -112,6 +123,7 @@ where
 {
     lens: L,
     builder: Option<Box<dyn Fn(&mut Context, ItemPtr<L, T>)>>,
+    list_data: bool,
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
@@ -125,6 +137,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
         let list = Self {
             lens,
             builder: Some(Box::new(item)),
+            list_data: true,
         };
 
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
@@ -228,10 +241,12 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
             
             let len = self.lens.view(&store.data).len();
             
-            ListData {
-                selected: 3,
-                length: len,
-            }.build(cx);
+            if self.list_data {
+                ListData {
+                    selected: 3,
+                    length: len,
+                }.build(cx);
+            }
 
             for index in 0..len {
                 let ptr = ItemPtr::new(self.lens.clone(), index, index, 0);
@@ -288,3 +303,13 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
         }
     }
 }
+
+// impl<L: Lens<Target = Vec<T>>,T: Data> Handle<List<L,T>> {
+//     pub fn with_list_data(self, cx: &mut Context, flag: bool) -> Self {
+//         if let Some(list) = cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L,T>>()) {
+//             list.list_data = flag;
+//         }
+
+//         self
+//     }
+// }

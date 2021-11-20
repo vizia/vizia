@@ -537,6 +537,14 @@ impl Application {
                                 .cache
                                 .set_height(Entity::root(), size.height as f32);
 
+                            let mut bounding_box = BoundingBox::default();
+                            bounding_box.w = size.width as f32;
+                            bounding_box.h = size.height as f32;
+                        
+                            context.cache.set_clip_region(Entity::root(), bounding_box);
+
+                            
+
                             // let mut bounding_box = BoundingBox::default();
                             // bounding_box.w = size.width as f32;
                             // bounding_box.h = size.height as f32;
