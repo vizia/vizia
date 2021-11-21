@@ -34,13 +34,11 @@ where
     <L as Lens>::Source: 'static,
     <L as Lens>::Target: Data,
 {
-    pub fn new<F>(cx: &mut Context, lens: L, builder: F) -> Handle<Self> 
+    pub fn new<F>(cx: &mut Context, lens: L, builder: F) 
     where 
         F: 'static + Fn(&mut Context, Field<L>),
         <L as Lens>::Source: Model,
     {
-
-        println!("New binding: {}", cx.count);
         let parent = cx.current;
 
         let binding = Self {
@@ -138,7 +136,7 @@ where
 
 
 
-        Handle {
+        let _: Handle<Self> = Handle {
             entity: id,
             style: cx.style.clone(),
             p: Default::default(),
@@ -146,7 +144,7 @@ where
         .width(Units::Stretch(1.0))
         .height(Units::Stretch(1.0))
         .background_color(Color::blue())
-        .display(Display::None)
+        .display(Display::None);
         
         // Use Lens::Source TypeId to look up data
         // 
@@ -225,7 +223,3 @@ where <L as Lens>::Source: 'static,
 //         }
 //     }
 // } 
-
-fn typeid<T: std::any::Any>(_: &T) {
-    println!("{:?}", std::any::TypeId::of::<T>());
-}

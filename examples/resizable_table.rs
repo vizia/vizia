@@ -47,7 +47,7 @@ fn main() {
                         .border_width(Pixels(1.0))
                         .border_color(Color::black())
                         .width(columns.get(cx)[0]);
-                }).width(Auto).height(Auto);
+                });
            
                 Label::new(cx, &item.value(cx).last_name.clone()).border_width(Pixels(1.0)).border_color(Color::black());
                 Label::new(cx, &item.value(cx).age.to_string()).border_width(Pixels(1.0)).border_color(Color::black());

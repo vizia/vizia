@@ -7,7 +7,7 @@ fn main() {
     
         Binding::new(cx, CustomData::value, |cx, data|{
             Label::new(cx, &data.get(cx).to_string()).background_color(Color::red());
-        }).background_color(Color::blue()).display(Display::None);
+        });
         
     }).run();
 }
