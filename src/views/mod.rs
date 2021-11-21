@@ -4,7 +4,7 @@ mod label;
 pub use label::Label;
 
 mod stack;
-pub use stack::{HStack, VStack};
+pub use stack::{HStack, VStack, ZStack};
 
 mod button;
 pub use button::Button;
@@ -26,3 +26,6 @@ pub use element::Element;
 
 mod for_each;
 pub use for_each::ForEach;
+
+// mod slider;
+// pub use slider::Slider;

@@ -30,6 +30,16 @@ pub enum Visibility {
     Invisible,
 }
 
+impl From<bool> for Visibility {
+    fn from(val: bool) -> Self {
+        if val {
+            Visibility::Visible
+        } else {
+            Visibility::Invisible
+        }
+    }
+}
+
 impl Default for Visibility {
     fn default() -> Self {
         Visibility::Visible

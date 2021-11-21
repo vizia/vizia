@@ -104,7 +104,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         quote! {
             #[doc = #struct_docs]
             #[allow(non_camel_case_types)]
-            #[derive(Copy, Clone)]
+            #[derive(Copy, Clone, Hash, PartialEq, Eq)]
             pub struct #field_name#lens_ty_generics(#(#phantom_decls),*);
 
             impl #lens_ty_generics #field_name#lens_ty_generics{
@@ -162,6 +162,10 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                 fn view<'a>(&self, data: &'a#struct_type#ty_generics) -> &'a#field_ty {
                     &data.#field_name
                 }
+
+                fn view_mut<'a>(&self, data: &'a mut #struct_type#ty_generics) -> &'a mut #field_ty {
+                    &mut data.#field_name
+                }
             }
         }
     });
@@ -182,7 +186,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         #[doc = #mod_docs]
         pub mod #twizzled_name {
             #(#defs)*
-            #[derive(Debug, Copy, Clone)]
+            #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
             pub struct root;
 
             impl root {
@@ -199,6 +203,10 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             type Target = #struct_type#ty_generics;
 
             fn view<'a>(&self, source: &'a Self::Source) -> &'a Self::Target {
+                source
+            }
+
+            fn view_mut<'a>(&self, source: &'a mut Self::Source) -> &'a mut Self::Target {
                 source
             }
         }

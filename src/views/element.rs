@@ -13,5 +13,7 @@ impl Element {
 }
 
 impl View for Element {
-
+    fn element(&self) -> Option<String> {
+        Some("element".to_string())
+    }
 }

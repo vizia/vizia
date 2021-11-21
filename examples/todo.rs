@@ -38,8 +38,8 @@ fn main() {
                             .on_checked(cx, move |cx| cx.emit(TodoEvent::SetCompleted(item_index, true)))
                             .on_unchecked(cx, move |cx| cx.emit(TodoEvent::SetCompleted(item_index, false)));
                         Label::new(cx, &item.value(cx).completed.to_string());
-                    });
-                }).border_width(Pixels(1.0)).border_color(Color::black());
+                    }).border_width(Pixels(1.0)).border_color(Color::black());
+                });
             }).size(Stretch(1.0)).child_space(Pixels(10.0));
 
         }).width(Stretch(1.0)).height(Stretch(1.0));
@@ -47,7 +47,7 @@ fn main() {
     }).run();
 }
 
-#[derive(Clone)]
+#[derive(Clone, Data)]
 pub struct TodoItem {
     text: String,
     completed: bool,
@@ -65,19 +65,15 @@ pub enum TodoEvent {
 }
 
 impl Model for TodoData {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) -> bool {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(todo_event) = event.message.downcast() {
             match todo_event {
                 TodoEvent::SetCompleted(index, flag) => {
-                    println!("SET TRUE");
                     if let Some(item) = self.items.get_mut(*index) {
                         item.completed = *flag;
-                        return  true;
                     }
                 }
             }
         }
-
-        false
     }
 }

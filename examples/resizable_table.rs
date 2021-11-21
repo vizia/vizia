@@ -26,24 +26,28 @@ fn main() {
             ],
         }.build(cx);
 
-        Data {
+        ColumnData {
             columns: vec![Pixels(200.0), Pixels(100.0), Stretch(1.0)],
         }.build(cx);
 
         List::new(cx, UserData::data, |cx, item|{
             HStack::new(cx, move |cx|{
                 let first_name = item.value(cx).first_name.clone();
-                Binding::new(cx, Data::columns, move |cx, columns|{
+                Binding::new(cx, ColumnData::columns, move |cx, columns|{
+                    
+                    //let width = columns.get(cx)[0];
+                    //println!("Width: {:?}", width);
+                    
                     ResizableItem::new()
                         .on_size(|cx, width|{
-                            //println!("width {}", width);
+                            println!("width {}", width);
                             cx.emit(DataEvent::Test(width));
                         })
                         .build(cx, &first_name)
                         .border_width(Pixels(1.0))
                         .border_color(Color::black())
                         .width(columns.get(cx)[0]);
-                }).width(Auto).height(Auto);
+                });
            
                 Label::new(cx, &item.value(cx).last_name.clone()).border_width(Pixels(1.0)).border_color(Color::black());
                 Label::new(cx, &item.value(cx).age.to_string()).border_width(Pixels(1.0)).border_color(Color::black());
@@ -90,6 +94,10 @@ impl ResizableItem {
 
 impl View for ResizableItem {
 
+    fn update(&mut self, new: &Self) {
+        
+    }
+
     fn element(&self) -> Option<String> {
         Some("label".to_string())
     }
@@ -130,6 +138,7 @@ impl View for ResizableItem {
 }
 
 
+#[derive(Clone, Data, Debug)]
 pub struct RowData {
     first_name: String,
     last_name: String,
@@ -144,7 +153,7 @@ pub struct UserData {
 impl Model for UserData {}
 
 #[derive(Lens)]
-pub struct Data {
+pub struct ColumnData {
     columns: Vec<Units>,
 }
 
@@ -153,18 +162,15 @@ pub enum DataEvent {
     Test(f32),
 }
 
-impl Model for Data {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) -> bool {
+impl Model for ColumnData {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(data_event) = event.message.downcast() {
             match data_event {
                 DataEvent::Test(val) => {
                     self.columns[0] = Pixels(*val);
-                    return true;
                 }
             }
         }
-
-        false
     }
 }
 

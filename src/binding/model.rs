@@ -16,8 +16,8 @@ pub trait Model: 'static + Sized {
         
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) -> bool {
-        false
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+
     }
 
     fn update(&mut self, cx: &mut Context) {
@@ -105,9 +105,7 @@ impl<T: ModelData> Downcast for T {
 
 impl<T: Model> ModelData for Store<T> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        if <T as Model>::event(&mut self.data, cx, event) {
-            self.dirty = true;
-        }
+        <T as Model>::event(&mut self.data, cx, event);
     }
 
     fn update(&self) -> Vec<Entity> {
@@ -127,12 +125,12 @@ impl<T: Model> ModelData for Store<T> {
     }
 }
 
-pub struct Data {
+pub struct AppData {
     // pub model_data: HashMap<TypeId, Box<dyn ModelData>>,
     pub model_data: SparseSet<HashMap<TypeId,Box<dyn ModelData>>>,
 }
 
-impl Data {
+impl AppData {
     pub fn new() -> Self {
         Self {
             model_data: SparseSet::default(),
