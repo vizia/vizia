@@ -43,7 +43,7 @@ fn main() {
                 .width(Stretch(1.0))
                 .on_press(cx, move |cx| cx.emit(ListEvent::SetSelected(item.index())));
             }).height(Auto).width(Stretch(1.0));
-        }).class("list").with_list_data(cx, false);
+        }).class("list");
     })
     .run();
 }
