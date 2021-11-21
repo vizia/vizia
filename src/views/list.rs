@@ -251,7 +251,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
             for index in 0..len {
                 let ptr = ItemPtr::new(self.lens.clone(), index, index, 0);
                 (builder)(cx, ptr);
-                cx.count += 1;
+                //cx.count += 1;
             }
         }
 

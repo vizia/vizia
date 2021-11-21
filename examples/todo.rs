@@ -38,8 +38,8 @@ fn main() {
                             .on_checked(cx, move |cx| cx.emit(TodoEvent::SetCompleted(item_index, true)))
                             .on_unchecked(cx, move |cx| cx.emit(TodoEvent::SetCompleted(item_index, false)));
                         Label::new(cx, &item.value(cx).completed.to_string());
-                    });
-                }).border_width(Pixels(1.0)).border_color(Color::black());
+                    }).border_width(Pixels(1.0)).border_color(Color::black());
+                });
             }).size(Stretch(1.0)).child_space(Pixels(10.0));
 
         }).width(Stretch(1.0)).height(Stretch(1.0));

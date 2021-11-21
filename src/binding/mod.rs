@@ -16,13 +16,15 @@ pub use store::*;
 mod data;
 pub use data::*;
 
-use crate::{Context, Handle, TreeExt, Units, View};
+use crate::{Color, Context, Display, Entity, Handle, TreeExt, Units, View};
 
 
 pub struct Binding<L> 
 where L: Lens
 {
     lens: L,
+    parent: Entity,
+    count: usize,
     builder: Option<Box<dyn Fn(&mut Context, Field<L>)>>,
 }
 
@@ -32,28 +34,28 @@ where
     <L as Lens>::Source: 'static,
     <L as Lens>::Target: Data,
 {
-    pub fn new<F>(cx: &mut Context, lens: L, builder: F) -> Handle<Self> 
+    pub fn new<F>(cx: &mut Context, lens: L, builder: F) 
     where 
         F: 'static + Fn(&mut Context, Field<L>),
         <L as Lens>::Source: Model,
     {
-
-
         let parent = cx.current;
 
         let binding = Self {
             lens,
+            parent,
+            count: cx.count + 1,
             builder: Some(Box::new(builder)),
         };
 
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
-            let prev = cx.current;
-            cx.current = id;
-            let prev_count = cx.count;
-            cx.count = 0;
+            // let prev = cx.current;
+            // cx.current = id;
+            // let prev_count = cx.count;
+            // cx.count = 0;
             //binding.body(cx);
-            cx.current = prev;
-            cx.count = prev_count;
+            // cx.current = prev;
+            // cx.count = prev_count;
             //cx.views.insert(id, Box::new(binding));
             id
         } else {
@@ -61,18 +63,18 @@ where
             cx.tree.add(id, cx.current).expect("Failed to add to tree");
             cx.cache.add(id).expect("Failed to add to cache");
             cx.style.borrow_mut().add(id);
-            let prev = cx.current;
-            cx.current = id;
-            let prev_count = cx.count;
-            cx.count = 0;
+            //let prev = cx.current;
+            //cx.current = id;
+            //let prev_count = cx.count;
+            //cx.count = 0;
             //binding.body(cx);
-            cx.current = prev;
-            cx.count = prev_count;
+            //cx.current = prev;
+            //cx.count = prev_count;
             
             id  
         };
 
-        cx.count += 1;
+        
         
         //let mut ancestors = HashSet::new();
         //for entity in parent.parent_iter(&cx.tree) {
@@ -117,25 +119,32 @@ where
 
         cx.views.insert(id, Box::new(binding));
 
+        cx.count += 1;
+
         // Call the body of the binding
         if let Some(mut view_handler) = cx.views.remove(&id) {
-            let prev = cx.current;
-            cx.current = id;
-            let prev_count = cx.count;
-            cx.count = 0;
+            //let prev = cx.current;
+            //cx.current = parent;
+            //let prev_count = cx.count;
+            //cx.count = 0;
+            //println!("count: {}", cx.count);
             view_handler.body(cx);
-            cx.current = prev;
-            cx.count = prev_count;
+            //cx.current = prev;
+            //cx.count = prev_count;
             cx.views.insert(id, view_handler);
         }
 
-        Handle {
+
+
+        let _: Handle<Self> = Handle {
             entity: id,
             style: cx.style.clone(),
             p: Default::default(),
         }
         .width(Units::Stretch(1.0))
         .height(Units::Stretch(1.0))
+        .background_color(Color::blue())
+        .display(Display::None);
         
         // Use Lens::Source TypeId to look up data
         // 
@@ -153,7 +162,13 @@ where
 impl<L: 'static + Lens> View for Binding<L> {
     fn body<'a>(&mut self, cx: &'a mut Context) {
         if let Some(builder) = self.builder.take() {
+            let prev = cx.current;
+            let count = cx.count;
+            cx.current = self.parent;
+            cx.count = self.count;
             (builder)(cx, Field{lens: self.lens.clone()});
+            //cx.current = prev;
+            //cx.count = count;
             self.builder = Some(builder);
         }
     }
@@ -208,7 +223,3 @@ where <L as Lens>::Source: 'static,
 //         }
 //     }
 // } 
-
-fn typeid<T: std::any::Any>(_: &T) {
-    println!("{:?}", std::any::TypeId::of::<T>());
-}
