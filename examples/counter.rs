@@ -9,23 +9,20 @@ fn main() {
 
         HStack::new(cx, |cx|{
 
-            println!("button1: {:?} {}", cx.current, cx.count);
             Button::new(cx, move |cx| cx.emit(CounterEvent::Increment), |cx|{
                 Label::new(cx, "Increment");
             });
-            println!("button2: {:?} {}", cx.current, cx.count);
+
             Button::new(cx, move |cx| cx.emit(CounterEvent::Decrement), |cx|{
                 Label::new(cx, "Decrement");
             });
-            println!("binding1: {:?} {}", cx.current, cx.count);
+
             Binding::new(cx, CounterData::count, |cx, count|{
-                println!("label1: {:?} {}", cx.current, cx.count);
                 Label::new(cx, &count.get(cx).to_string()).background_color(Color::red());
             });
 
-            println!("binding2: {:?} {}", cx.current, cx.count);
+
             Binding::new(cx, CounterData::count, |cx, count|{
-                println!("label2: {:?} {}", cx.current, cx.count);
                 Label::new(cx, &english_numbers::convert_all_fmt(*count.get(cx) as i64)).background_color(Color::red());
             });
         });  

@@ -234,12 +234,12 @@ impl Application {
                     for observer in observers.iter() {
                         if let Some(mut view) = context.views.remove(observer) {
                             let prev = context.current;
-                            //context.current = *observer;
-                            //let prev_count = context.count;
-                            //context.count = 0;
+                            context.current = *observer;
+                            let prev_count = context.count;
+                            context.count = 0;
                             view.body(&mut context);
-                            //context.current = prev;
-                            //context.count = prev_count;
+                            context.current = prev;
+                            context.count = prev_count;
                 
             
                             context.views.insert(*observer, view);

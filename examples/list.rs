@@ -17,10 +17,12 @@ fn main() {
 
         cx.add_theme(STYLE);
 
-        let list: Vec<u32> = (10..22u32).collect();
+        let list: Vec<u32> = (10..14u32).collect();
         Data { 
             list,
         }.build(cx);
+
+        Button::new(cx, |cx| cx.emit(AppEvent::Add(20)), |cx| {Label::new(cx, "Add");});
 
         // List of 12 items
         List::new(cx, Data::list, |cx, item| {
@@ -52,6 +54,22 @@ fn main() {
 pub struct Data {
     list: Vec<u32>,
 }
-impl Model for Data {}
+
+#[derive(Debug)]
+pub enum AppEvent {
+    Add(u32),
+}
+
+impl Model for Data {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        if let Some(app_event) = event.message.downcast() {
+            match app_event {
+                AppEvent::Add(val) => {
+                    self.list.push(*val);
+                }
+            }
+        }
+    }
+}
 
 
