@@ -49,73 +49,39 @@ where
         };
 
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
-            // let prev = cx.current;
-            // cx.current = id;
-            // let prev_count = cx.count;
-            // cx.count = 0;
-            //binding.body(cx);
-            // cx.current = prev;
-            // cx.count = prev_count;
-            //cx.views.insert(id, Box::new(binding));
             id
         } else {
             let id = cx.entity_manager.create();
             cx.tree.add(id, cx.current).expect("Failed to add to tree");
             cx.cache.add(id).expect("Failed to add to cache");
             cx.style.borrow_mut().add(id);
-            //let prev = cx.current;
-            //cx.current = id;
-            //let prev_count = cx.count;
-            //cx.count = 0;
-            //binding.body(cx);
-            //cx.current = prev;
-            //cx.count = prev_count;
-            
             id  
         };
 
         
-        
-        //let mut ancestors = HashSet::new();
-        //for entity in parent.parent_iter(&cx.tree) {
-            //ancestors.insert(entity);
 
-            let ancestors = parent.parent_iter(&cx.tree).collect::<HashSet<_>>();
 
-            if let Some(lens_wrap) = cx.lenses.get_mut(&TypeId::of::<L>()) {
-                let observers = lens_wrap.observers();
+        let ancestors = parent.parent_iter(&cx.tree).collect::<HashSet<_>>();
 
-                if ancestors.intersection(observers).next().is_none() {
-                    lens_wrap.add_observer(id);
-                }
-                
-            } else {
-                let mut observers = HashSet::new();
-                observers.insert(id);
-                let old = lens.view(cx.data().expect("Failed to find model. Has it been built into the tree?"));
-                cx.lenses.insert(TypeId::of::<L>(), Box::new(StateStore {
-                    lens,
-                    old: old.clone(),
-                    observers,
-                }));
+        if let Some(lens_wrap) = cx.lenses.get_mut(&TypeId::of::<L>()) {
+            let observers = lens_wrap.observers();
+
+            if ancestors.intersection(observers).next().is_none() {
+                lens_wrap.add_observer(id);
             }
+            
+        } else {
+            let mut observers = HashSet::new();
+            observers.insert(id);
 
-            // if let Some(model_list) = cx.data.model_data.get_mut(entity) {
-            //     for (_, model) in model_list.iter_mut() {
-            //         if let Some(store) = model.downcast::<Store<L::Source>>() {
-
-            //             let state = binding.lens.view_mut(&mut store.data);
-
-            //             state.add_observer(id);
-
-            //             if store.observers.intersection(&ancestors).next().is_some() {
-            //                 break;
-            //             }
-            //             store.insert_observer(id);
-            //         }
-            //     }
-            // }
-        //}
+            let old = lens.view(cx.data().expect("Failed to find model. Has it been built into the tree?"));
+            
+            cx.lenses.insert(TypeId::of::<L>(), Box::new(StateStore {
+                lens,
+                old: old.clone(),
+                observers,
+            }));
+        }
 
         cx.views.insert(id, Box::new(binding));
 

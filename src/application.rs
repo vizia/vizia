@@ -4,7 +4,7 @@ use femtovg::{Canvas, renderer::OpenGl};
 use glutin::{ContextBuilder, event::{ElementState, VirtualKeyCode}, event_loop::{ControlFlow, EventLoop, EventLoopProxy}, window::WindowBuilder};
 use morphorm::Units;
 
-use crate::{AppData, BoundingBox, CachedData, Color, Context, Data, Display, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, WindowEvent, apply_hover, apply_styles, scan_to_code, style_system::{apply_clipping, apply_visibility, apply_z_ordering}, vcode_to_code, vk_to_key};
+use crate::{AppData, BoundingBox, CachedData, Color, Context, Data, Display, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, WindowEvent, apply_hover, apply_styles, geometry_changed, scan_to_code, style_system::{apply_clipping, apply_visibility, apply_z_ordering}, vcode_to_code, vk_to_key};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 
@@ -259,6 +259,14 @@ impl Application {
                     // Layout
                     morphorm::layout(&mut context.cache, &context.tree, &context.style.borrow());
 
+                    // Emit any geometry changed events
+                    geometry_changed(&mut context, &tree);
+
+                    if !context.event_queue.is_empty() {
+                        event_loop_proxy.send_event(());
+                    }
+
+
                     //apply_transform(state, &tree);
 
                     apply_hover(&mut context);
@@ -416,6 +424,28 @@ impl Application {
                                             Event::new(WindowEvent::MouseDown(button))
                                                 .target(context.hovered),
                                         );
+                                    }
+
+                                    match button {
+                                        MouseButton::Left => {
+                                            context.mouse.left.pos_down =
+                                                (context.mouse.cursorx, context.mouse.cursory);
+                                                context.mouse.left.pressed = context.hovered;
+                                        }
+
+                                        MouseButton::Right => {
+                                            context.mouse.right.pos_down =
+                                                (context.mouse.cursorx, context.mouse.cursory);
+                                                context.mouse.right.pressed = context.hovered;
+                                        }
+
+                                        MouseButton::Middle => {
+                                            context.mouse.middle.pos_down =
+                                                (context.mouse.cursorx, context.mouse.cursory);
+                                                context.mouse.middle.pressed = context.hovered;
+                                        }
+
+                                        _=> {}
                                     }
                                 }
 

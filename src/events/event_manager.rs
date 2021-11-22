@@ -64,6 +64,7 @@ impl EventManager {
 
             if let Some(mut model_list) = context.data.model_data.remove(event.target) {
                 for (_, model) in model_list.iter_mut() {
+                    context.current = event.target;
                     model.event(context, event);
                 }
 
@@ -115,6 +116,7 @@ impl EventManager {
                             // if event.trace {
                             //     println!("Event: {:?} -> Model {:?}", event, ty);
                             // }
+                            context.current = entity;
                             model.event(context, event);
                         }
     
