@@ -11,6 +11,44 @@ const KAPPA90: f32 = 0.5522847493;
 
 pub trait View: 'static + Sized {
     fn body(&mut self, cx: &mut Context) {}
+    fn build2<F>(mut self, cx: &mut Context, builder: F) -> Handle<Self> 
+    where F: 'static + FnOnce(&mut Context)
+    {
+
+        // Add the instance to context unless it already exists
+        let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
+            id
+        } else {
+            let id = cx.entity_manager.create();
+            cx.tree.add(id, cx.current).expect("Failed to add to tree");
+            cx.cache.add(id).expect("Failed to add to cache");
+            cx.style.borrow_mut().add(id);
+            cx.views.insert(id, Box::new(self));
+            id  
+        };
+
+        cx.count += 1;
+
+        let handle = Handle {
+            entity: id,
+            style: cx.style.clone(),
+            p: Default::default(),
+        };
+
+        // ...and this part
+        let prev = cx.current;
+        let prev_count = cx.count;
+        cx.current = handle.entity;
+        cx.count = 0;
+
+        (builder)(cx);
+
+        // This part will also be moved somewhere else
+        cx.current = prev;
+        cx.count = prev_count;
+
+        handle
+    }
     fn build(mut self, cx: &mut Context) -> Handle<Self> {
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
             let prev = cx.current;

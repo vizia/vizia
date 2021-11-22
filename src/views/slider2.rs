@@ -10,7 +10,7 @@ pub struct SliderData {
 }
 
 impl Model for SliderData {
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
+    fn event(&mut self, _: &mut Context, event: &mut crate::Event) {
         if let Some(slider_event) = event.message.downcast() {
             match slider_event {
                 SliderEvent::SetValue(value) => {
@@ -44,7 +44,6 @@ impl Model for SliderDataInternal {
     }
 }
 
-
 #[derive(Debug)]
 pub enum SliderEvent {
     SetValue(f32),
@@ -57,86 +56,49 @@ pub struct Slider {
 impl Slider {
     pub fn new(cx: &mut Context, init: f32) -> Handle<Self> {
 
-
-        // Create the slider instance
-        let slider = Self{
+        Self {
             sliding: false,
-        };
+        }.build2(cx, move |cx|{
+            // Create some slider data
+            SliderData {
+                value: init.clamp(0.0, 1.0),
+            }.build(cx);
 
-        // Add the instance to context unless it already exists
-        // This part will be moved to Context or View or something
-        let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
-            id
-        } else {
-            let id = cx.entity_manager.create();
-            cx.tree.add(id, cx.current).expect("Failed to add to tree");
-            cx.cache.add(id).expect("Failed to add to cache");
-            cx.style.borrow_mut().add(id);
-            cx.views.insert(id, Box::new(slider));
-            id  
-        };
+            // Create some internal slider data (not exposed to the user)
+            SliderDataInternal {
+                width: 0.0,
+            }.build(cx);
 
-        // ...and this part
-        cx.count += 1;
+            // Add the various slider components using bindings to the slider data
+            Binding::new(cx, SliderData::value, |cx, value|{
+                Binding::new(cx, SliderDataInternal::width, move |cx, width|{
+                    let value = value.clone();
+                    ZStack::new(cx, move |cx|{
+                        // TODO - Make this configurable
+                        let thumb_width = 30.0;
+                        
+                        let val = value.get(cx);
+                        let width = width.get(cx);
+                        let min = thumb_width / width;
+                        let max = 1.0;
+                        let dx = min + val * (max - min);
+                        let px = val * (1.0 -  (thumb_width / width));
 
-        // ...and this part
-        let handle = Handle {
-            entity: id,
-            style: cx.style.clone(),
-            p: Default::default(),
-        };
-
-        // ...and this part
-        let prev = cx.current;
-        let prev_count = cx.count;
-        cx.current = handle.entity;
-        cx.count = 0;
-
-        // Create some slider data
-        SliderData {
-            value: init.clamp(0.0, 1.0),
-        }.build(cx);
-
-        // Create some internal slider data (not exposed to the user)
-        SliderDataInternal {
-            width: 0.0,
-        }.build(cx);
-
-        // Add the various slider components using bindings to the slider data
-        Binding::new(cx, SliderData::value, |cx, value|{
-            Binding::new(cx, SliderDataInternal::width, move |cx, width|{
-                let value = value.clone();
-                ZStack::new(cx, move |cx|{
-                    // TODO - Make this configurable
-                    let thumb_width = 30.0;
-                    
-                    let val = value.get(cx);
-                    let width = width.get(cx);
-                    let min = thumb_width / width;
-                    let max = 1.0;
-                    let dx = min + val * (max - min);
-                    let px = val * (1.0 -  (thumb_width / width));
-
-                    Element::new(cx)
-                        .width(Percentage(dx * 100.0))
-                        .height(Stretch(1.0))
-                        .class("active");
-    
-                    Element::new(cx)
-                        .width(Pixels(thumb_width))
-                        .height(Pixels(thumb_width))
-                        .left(Percentage(100.0 * px))
-                        .class("thumb");
+                        Element::new(cx)
+                            .width(Percentage(dx * 100.0))
+                            .height(Stretch(1.0))
+                            .class("active");
+        
+                        Element::new(cx)
+                            .width(Pixels(thumb_width))
+                            .height(Pixels(thumb_width))
+                            .left(Percentage(100.0 * px))
+                            .class("thumb");
+                    });
                 });
+
             });
-
-        });
-
-        // This part will also be moved somewhere else
-        cx.current = prev;
-        cx.count = prev_count;
-
-        handle
+        })
     }
 }
 
