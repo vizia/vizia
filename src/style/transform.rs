@@ -5,6 +5,8 @@ use std::ops::{
     IndexMut,
 };
 
+use crate::{Context, Entity, Tree};
+
 
 /// A 2D transform matrix.
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
@@ -105,5 +107,52 @@ impl Index<usize> for Transform2D {
 impl IndexMut<usize> for Transform2D {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.0[index]
+    }
+}
+
+
+pub fn apply_transform(cx: &mut Context, tree: &Tree) {
+    //println!("Apply Transform");
+    for entity in tree.into_iter() {
+
+        //println!("Entity: {}", entity);
+        
+        if entity == Entity::root() {
+            continue;
+        }
+        
+        let parent = tree.get_parent(entity).unwrap();
+        //let parent_origin = state.data.get_origin(parent);
+        let parent_transform = cx.cache.get_transform(parent);
+
+        cx.cache.set_transform(entity, Transform2D::identity());
+
+        cx.cache.set_transform(entity, parent_transform);
+
+        let bounds = cx.cache.get_bounds(entity);
+
+        //state.data.set_origin(entity, parent_origin);
+        
+        if let Some(translate) = cx.style.borrow().translate.get(entity) {
+            cx.cache.set_translate(entity, *translate);
+        }
+
+        if let Some(rotate) = cx.style.borrow().rotate.get(entity) {
+            let x = bounds.x + (bounds.w / 2.0);
+            let y = bounds.y + (bounds.h / 2.0);
+            cx.cache.set_translate(entity, (x,y));
+            cx.cache.set_rotate(entity, (*rotate).to_radians());
+            cx.cache.set_translate(entity, (-x,-y));
+        }
+        //println!("End");
+
+        if let Some(scale) = cx.style.borrow().scale.get(entity) {
+            let x = bounds.x + (bounds.w / 2.0);
+            let y = bounds.y + (bounds.h / 2.0);
+            cx.cache.set_translate(entity, (x,y));
+            cx.cache.set_scale(entity, *scale);
+            cx.cache.set_translate(entity, (-x,-y));
+        }       
+
     }
 }

@@ -17,6 +17,10 @@ name = "slider"
 path = "examples/controls/slider.rs"
 
 [[example]]
+name = "knob"
+path = "examples/controls/knob.rs"
+
+[[example]]
 name = "checkbox"
 path = "examples/controls/checkbox.rs"
 

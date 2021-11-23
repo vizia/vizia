@@ -123,7 +123,8 @@ impl<T> Handle<T> {
     set_style!(display, Display);
     set_style!(visibility, Visibility);
 
-
+    set_style!(rotate, f32);
+    set_style!(translate, (f32, f32));
     
 }
 

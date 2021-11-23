@@ -488,7 +488,7 @@ pub trait View: 'static + Sized {
                     path.bezier_to(x + rx_tl * (1.0 - KAPPA90), y, x, y + ry_tl * (1.0 - KAPPA90), x, y + ry_tl);
                 } else {
                     path.line_to(x, y + ry_tl);
-                }                
+                }
             }
             
             path.close();

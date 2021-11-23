@@ -37,17 +37,26 @@ pub fn apply_hover(cx: &mut Context) {
             continue;
         }
 
+        let mut transform = cx.cache.get_transform(entity);
+        transform.inverse();
+
+        let (tx, ty) = transform.transform_point(cursorx, cursory);
+
         let posx = cx.cache.get_posx(entity);
         let posy = cx.cache.get_posy(entity);
         let width = cx.cache.get_width(entity);
         let height = cx.cache.get_height(entity);
 
-        let bounds = cx.cache.get_bounds(entity);
+        let clip_region = cx.cache.get_clip_region(entity);
 
-        if cursorx >= bounds.x
-            && cursorx < (bounds.x + bounds.w)
-            && cursory >= bounds.y
-            && cursory < (posy + height)
+        if tx >= posx
+            && tx >= clip_region.x
+            && tx < (posx + width)
+            && tx < (clip_region.x + clip_region.w)
+            && ty >= posy
+            && ty >= clip_region.y
+            && ty < (posy + height)
+            && ty < (clip_region.y + clip_region.h) 
         {
             hovered_widget = entity;
         }

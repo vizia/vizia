@@ -484,38 +484,38 @@ impl CachedData {
             .unwrap()
     }
 
-    // pub(crate) fn get_rotate(&self, entity: Entity) -> f32 {
-    //     self.transform
-    //         .get(entity)
-    //         .cloned()
-    //         .unwrap()[0]
-    //         .acos()
-    // }
+    pub(crate) fn get_rotate(&self, entity: Entity) -> f32 {
+        self.transform
+            .get(entity)
+            .cloned()
+            .unwrap()[0]
+            .acos()
+    }
 
-    // pub(crate) fn get_translate(&self, entity: Entity) -> (f32, f32) {
-    //     let transform = self.transform
-    //         .get(entity)
-    //         .cloned()
-    //         .unwrap();
+    pub(crate) fn get_translate(&self, entity: Entity) -> (f32, f32) {
+        let transform = self.transform
+            .get(entity)
+            .cloned()
+            .unwrap();
 
-    //     (transform[4], transform[5])
-    // }
+        (transform[4], transform[5])
+    }
 
-    // pub(crate) fn get_scale(&self, entity: Entity) -> f32 {
-    //     let scale = self.scale
-    //         .get(entity)
-    //         .cloned()
-    //         .unwrap();
+    pub(crate) fn get_scale(&self, entity: Entity) -> f32 {
+        let scale = self.scale
+            .get(entity)
+            .cloned()
+            .unwrap();
 
-    //     scale.0
-    // }
+        scale.0
+    }
 
-    // pub(crate) fn get_origin(&self, entity: Entity) -> (f32, f32) {
-    //     self.origin
-    //         .get(entity)
-    //         .cloned()
-    //         .unwrap()
-    // }
+    pub(crate) fn get_origin(&self, entity: Entity) -> (f32, f32) {
+        self.origin
+            .get(entity)
+            .cloned()
+            .unwrap()
+    }
 
     /// Returns the transform on the entity.
     pub fn get_transform(&self, entity: Entity) -> Transform2D {
@@ -772,39 +772,39 @@ impl CachedData {
         }
     }
 
-    // pub(crate) fn set_rotate(&mut self, entity: Entity, val: f32) {
-    //     if let Some(transform) = self.transform.get_mut(entity) {
-    //         let mut t = Transform2D::identity();
-    //         t.rotate(val);
-    //         transform.premultiply(&t);
-    //     }
-    // }
+    pub(crate) fn set_rotate(&mut self, entity: Entity, val: f32) {
+        if let Some(transform) = self.transform.get_mut(entity) {
+            let mut t = Transform2D::identity();
+            t.rotate(val);
+            transform.premultiply(&t);
+        }
+    }
 
-    // pub(crate) fn set_translate(&mut self, entity: Entity, val: (f32, f32)) {
-    //     if let Some(transform) = self.transform.get_mut(entity) {
-    //         let mut t = Transform2D::identity();
-    //         t.translate(val.0, val.1);
-    //         transform.premultiply(&t);
-    //     }
-    // }
+    pub(crate) fn set_translate(&mut self, entity: Entity, val: (f32, f32)) {
+        if let Some(transform) = self.transform.get_mut(entity) {
+            let mut t = Transform2D::identity();
+            t.translate(val.0, val.1);
+            transform.premultiply(&t);
+        }
+    }
 
-    // pub(crate) fn set_scale(&mut self, entity: Entity, val: f32) {
-    //     if let Some(transform) = self.transform.get_mut(entity) {
-    //         let mut t = Transform2D::identity();
-    //         t.scale(val, val);
-    //         transform.premultiply(&t);
-    //     }
-    // }
+    pub(crate) fn set_scale(&mut self, entity: Entity, val: f32) {
+        if let Some(transform) = self.transform.get_mut(entity) {
+            let mut t = Transform2D::identity();
+            t.scale(val, val);
+            transform.premultiply(&t);
+        }
+    }
 
-    // pub(crate) fn set_origin(&mut self, entity: Entity, val: (f32, f32)) {
-    //     if let Some(origin) = self.origin.get_mut(entity) {
-    //         *origin = val;
-    //     }
-    // }
+    pub(crate) fn set_origin(&mut self, entity: Entity, val: (f32, f32)) {
+        if let Some(origin) = self.origin.get_mut(entity) {
+            *origin = val;
+        }
+    }
 
-    // pub(crate) fn set_transform(&mut self, entity: Entity, val: Transform2D) {
-    //     if let Some(transform) = self.transform.get_mut(entity) {
-    //         *transform = val;
-    //     }
-    // }
+    pub(crate) fn set_transform(&mut self, entity: Entity, val: Transform2D) {
+        if let Some(transform) = self.transform.get_mut(entity) {
+            *transform = val;
+        }
+    }
 }

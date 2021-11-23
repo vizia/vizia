@@ -29,3 +29,9 @@ pub use for_each::ForEach;
 
 mod slider2;
 pub use slider2::{Slider, SliderData, SliderEvent};
+
+mod knob;
+pub use knob::{Knob, ArcTrack};
+
+mod normalized_map;
+pub use normalized_map::*;
