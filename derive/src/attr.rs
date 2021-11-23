@@ -198,7 +198,7 @@ impl Field<DataAttr> {
             DataAttr::Ignore => quote!(compiler_error!),
             DataAttr::Empty => {
                 let span = Span::call_site();
-                quote_spanned!(span=> vizia::Data::same)
+                quote_spanned!(span=> Data::same)
             }
         }
     }

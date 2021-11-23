@@ -61,7 +61,7 @@ fn derive_struct(
     };
 
     let res = quote! {
-        impl<#impl_generics> ::vizia::Data for #ident #ty_generics #where_clause {
+        impl<#impl_generics> Data for #ident #ty_generics #where_clause {
             fn same(&self, other: &Self) -> bool {
                 #diff
             }
@@ -93,7 +93,7 @@ fn derive_enum(
 
     if is_c_style_enum(s) {
         let res = quote! {
-            impl<#impl_generics> ::vizia::Data for #ident #ty_generics #where_clause {
+            impl<#impl_generics> Data for #ident #ty_generics #where_clause {
                 fn same(&self, other: &Self) -> bool { self == other }
             }
         };
@@ -168,7 +168,7 @@ fn derive_enum(
         .collect::<Result<Vec<proc_macro2::TokenStream>, syn::Error>>()?;
 
     let res = quote! {
-        impl<#impl_generics> ::vizia::Data for #ident #ty_generics #where_clause {
+        impl<#impl_generics> Data for #ident #ty_generics #where_clause {
             fn same(&self, other: &Self) -> bool {
                 match (self, other) {
                     #( #cases ),*
@@ -189,9 +189,9 @@ fn generics_bounds(generics: &syn::Generics) -> proc_macro2::TokenStream {
                 let ident = &ty.ident;
                 let bounds = &ty.bounds;
                 if bounds.is_empty() {
-                    quote_spanned!(ty.span()=> #ident : ::vizia::Data)
+                    quote_spanned!(ty.span()=> #ident : Data)
                 } else {
-                    quote_spanned!(ty.span()=> #ident : #bounds + ::vizia::Data)
+                    quote_spanned!(ty.span()=> #ident : #bounds + Data)
                 }
             }
             Lifetime(lf) => quote!(#lf),

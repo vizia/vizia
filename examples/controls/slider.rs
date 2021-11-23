@@ -10,6 +10,13 @@ const STYLE: &str = r#"
         border-radius: 4.5px;
     }
 
+    slider.vertical {
+        height: 1s;
+        width: 10px;
+        left: 1s;
+        right: 1s;
+    }
+
     slider track {
     }
 
@@ -25,6 +32,8 @@ const STYLE: &str = r#"
         border-radius: 14.5px;
         border-color: #757575;
         border-width: 1px;
+        width: 40px;
+        height: 40px;
     }
 
     label {
@@ -50,7 +59,7 @@ fn main() {
                     value: 0.5,
                 }.build(cx);
 
-                Slider::new(cx, 0.5);
+                Slider::new(cx, 0.5, Orientation::Horizontal);
                 
                 Binding::new(cx, SliderData::value, |cx, value|{
                     let value = value.get(cx);
@@ -58,6 +67,8 @@ fn main() {
                 });
             }).height(Pixels(50.0)).child_space(Pixels(50.0)).col_between(Pixels(50.0));            
         }
+
+        Slider::new(cx, 0.75, Orientation::Vertical).class("vertical");
         
     }).run();
 }

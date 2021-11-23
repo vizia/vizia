@@ -28,7 +28,7 @@ mod for_each;
 pub use for_each::ForEach;
 
 mod slider2;
-pub use slider2::{Slider, SliderData, SliderEvent};
+pub use slider2::{Slider, SliderData, SliderEvent, Orientation};
 
 mod knob;
 pub use knob::{Knob, ArcTrack};
