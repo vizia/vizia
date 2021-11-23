@@ -164,27 +164,27 @@ impl Default for Color {
 }
 
 impl Color {
-    pub fn black() -> Self {
+    pub const fn black() -> Self {
         Self { data: 0xFF000000 }
     }
 
-    pub fn white() -> Self {
+    pub const fn white() -> Self {
         Self { data: 0xFFFFFFFF }
     }
 
-    pub fn red() -> Self {
+    pub const fn red() -> Self {
         Self { data: 0xFFFF0000 }
     }
 
-    pub fn green() -> Self {
+    pub const fn green() -> Self {
         Self { data: 0xFF00FF00 }
     }
 
-    pub fn blue() -> Self {
+    pub const fn blue() -> Self {
         Self { data: 0xFF0000FF }
     }
 
-    pub fn yellow() -> Self {
+    pub const fn yellow() -> Self {
         Self { data: 0xFFFFFF00 }
     }
 }
