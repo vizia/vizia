@@ -201,10 +201,6 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             fn view<'a>(&self, source: &'a Self::Source) -> &'a Self::Target {
                 source
             }
-
-            fn view_mut<'a>(&self, source: &'a mut Self::Source) -> &'a mut Self::Target {
-                source
-            }
         }
 
         #[allow(non_upper_case_globals)]
