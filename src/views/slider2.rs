@@ -42,6 +42,7 @@ impl Model for SliderDataInternal {
                     match self.orientation {
                         Orientation::Horizontal => {
                             if geo.contains(GeometryChanged::WIDTH_CHANGED) {
+                                
                                 self.size = cx.cache.get_width(cx.current);
                             }
                         }
@@ -96,6 +97,15 @@ impl Default for Orientation {
 
 pub struct Slider {
     is_dragging: bool,
+
+    // Event sent when the slider value has changed
+    on_change: Option<Box<dyn Fn(&mut Context, f32)>>,
+    // event sent when the slider value is changing
+    on_changing: Option<Box<dyn Fn(&mut Context, f32)>>,
+    // Event sent when the slider reaches the minimum value
+    on_min: Option<Box<dyn Fn(&mut Context)>>,
+    // Event sent when the slider reaches the maximum value
+    on_max: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl Slider {
@@ -103,18 +113,35 @@ impl Slider {
 
         Self {
             is_dragging: false,
+
+            on_change: None,
+            on_changing: None,
+            on_min: None,
+            on_max: None,
+
         }.build2(cx, move |cx|{
             // Create some slider data
             SliderData {
                 value: init.clamp(0.0, 1.0),
             }.build(cx);
 
-            // Create some internal slider data (not exposed to the user)
-            SliderDataInternal {
-                size: 0.0,
-                thumb_size: 0.0,
-                orientation,
-            }.build(cx);
+            // Only create this if it doesn't already exist otherwise it resets the thumb_width
+            // This causes a very subtle bug:
+            //      When the slider is updated the style data doesn't change, which means the size doesn't change
+            //      and after layout the GeometryChanged event is never sent.
+            //      If this internal data is recreated with thumb_width == 0.0, then the calculation for thumb position
+            //      becomes NaN and the thumb size is never updated due to the lack of GeometryChanged event.
+            //      The solution is to only create this if it doesn't already exist. This wouldn't be a problem if
+            //      it were possible to bind directly to style properties.
+            if cx.data::<SliderDataInternal>().is_none() {
+                // Create some internal slider data (not exposed to the user)
+                SliderDataInternal {
+                    size: 0.0,
+                    thumb_size: 0.0,
+                    orientation,
+                }.build(cx);
+            }
+
 
             // Add the various slider components using bindings to the slider data
             Binding::new(cx, SliderData::value, |cx, value|{
@@ -149,8 +176,10 @@ impl Slider {
                                     .top(Stretch(1.0))
                                     .bottom(Stretch(1.0))
                                     .class("thumb")
-                                    .on_geo_changed(cx, |cx, _|{
-                                        cx.emit(SliderEventInternal::SetThumbSize(cx.cache.get_width(cx.current), cx.cache.get_height(cx.current)));
+                                    .on_geo_changed(cx, |cx, geo|{
+                                        if geo.contains(GeometryChanged::WIDTH_CHANGED) {
+                                            cx.emit(SliderEventInternal::SetThumbSize(cx.cache.get_width(cx.current), cx.cache.get_height(cx.current)));
+                                        }
                                     });
 
                             }
@@ -170,8 +199,10 @@ impl Slider {
                                     .left(Stretch(1.0))
                                     .right(Stretch(1.0))
                                     .class("thumb")
-                                    .on_geo_changed(cx, |cx, _|{
-                                        cx.emit(SliderEventInternal::SetThumbSize(cx.cache.get_width(cx.current), cx.cache.get_height(cx.current)));
+                                    .on_geo_changed(cx, |cx, geo|{
+                                        if geo.contains(GeometryChanged::HEIGHT_CHANGED) {
+                                            cx.emit(SliderEventInternal::SetThumbSize(cx.cache.get_width(cx.current), cx.cache.get_height(cx.current)));
+                                        }
                                     });
                             }
                         };
@@ -184,6 +215,96 @@ impl Slider {
 
             });
         })
+    }
+
+    /// Set the callback triggered when the slider value has changed.
+    ///
+    /// Takes a closure which provides the current value and returns an event to be sent when the slider
+    /// value has changed after releasing the slider. If the slider thumb is pressed but not moved, and thus
+    /// the value is not changed, then the event will not be sent.
+    ///
+    /// # Example
+    /// 
+    /// ```
+    /// Slider::new(cx, 0.0)
+    ///     .on_change(|cx, value| {
+    ///         cx.emit(WindowEvent::Debug(format!("Slider on_change: {}", value)));
+    ///     });
+    /// ```
+    pub fn on_change<F>(mut self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context, f32),
+    {
+        self.on_change = Some(Box::new(callback));
+        self
+    }
+
+    /// Set the callback triggered when the slider value is changing (dragging).
+    ///
+    /// Takes a closure which triggers when the slider value is changing, 
+    /// either by pressing the track or dragging the thumb along the track.
+    ///
+    /// # Example
+    /// 
+    /// ```
+    /// Slider::new()
+    ///     .on_changing(|slider, context, entity| {
+    ///         entity.emit(WindowEvent::Debug(format!("Slider on_changing: {}", slider.value)));
+    ///     })
+    ///     .build(context, parent, |builder| builder);
+    /// ```
+    pub fn on_changing<F>(mut self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context, f32),
+    {
+        self.on_changing = Some(Box::new(callback));
+        self
+    }
+
+    /// Set the callback triggered when the slider value reaches the minimum.
+    ///
+    /// Takes a closure which triggers when the slider reaches the minimum value, 
+    /// either by pressing the track at the start or dragging the thumb to the start
+    /// of the track. The event is sent once for each time the value reaches the minimum.
+    ///
+    /// # Example
+    /// 
+    /// ```
+    /// Slider::new()
+    ///     .on_min(|slider, context, entity| {
+    ///         entity.emit(WindowEvent::Debug(format!("Slider on_min: {}", slider.value)));
+    ///     })
+    ///     .build(context, parent, |builder| builder);
+    /// ```
+    pub fn on_min<F>(mut self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        self.on_min = Some(Box::new(callback));
+        self
+    }
+
+    /// Set the callback triggered when the slider value reaches the maximum.
+    ///
+    /// Takes a closure which triggers when the slider reaches the maximum value, 
+    /// either by pressing the track at the end or dragging the thumb to the end
+    /// of the track. The event is sent once for each time the value reaches the maximum.
+    ///
+    /// # Example
+    /// 
+    /// ```
+    /// Slider::new()
+    ///     .on_max(|slider, context, entity| {
+    ///         entity.emit(WindowEvent::Debug(format!("Slider on_min: {}", slider.value)));
+    ///     })
+    ///     .build(context, parent, |builder| builder);
+    /// ```
+    pub fn on_max<F>(mut self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        self.on_max = Some(Box::new(callback));
+        self
     }
 }
 
@@ -240,6 +361,14 @@ impl View for Slider {
                             };
                             
                             dx = dx.clamp(0.0, 1.0);
+
+
+                            if let Some(callback) = self.on_changing.take() {
+                                (callback)(cx, dx);
+
+                                self.on_changing = Some(callback);
+                            }
+
                             cx.emit(SliderEvent::SetValue(dx));
                         }
                     }

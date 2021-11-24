@@ -11,10 +11,10 @@ const STYLE: &str = r#"
     }
 
     slider.vertical {
+        top: auto;
+        bottom: auto;
         height: 1s;
         width: 10px;
-        left: 1s;
-        right: 1s;
     }
 
     slider track {
@@ -51,24 +51,53 @@ fn main() {
     Application::new(|cx|{
         
         cx.add_theme(STYLE);
+
+        SliderData {
+            value: 0.5,
+        }.build(cx);
             
         for _ in 0..5 {
             HStack::new(cx, |cx|{
-
-                SliderData {
-                    value: 0.5,
-                }.build(cx);
-
-                Slider::new(cx, 0.5, Orientation::Horizontal);
-                
+        
                 Binding::new(cx, SliderData::value, |cx, value|{
+                    Slider::new(cx, *value.get(cx), Orientation::Horizontal);
                     let value = value.get(cx);
                     Label::new(cx, &format!("{:.*}", 2, value));
                 });
             }).height(Pixels(50.0)).child_space(Pixels(50.0)).col_between(Pixels(50.0));            
         }
+        
+        HStack::new(cx, |cx|{
 
-        Slider::new(cx, 0.75, Orientation::Vertical).class("vertical");
+            SliderData {
+                value: 0.5,
+            }.build(cx);
+
+            
+            Binding::new(cx, SliderData::value, |cx, value|{
+                Slider::new(cx, *value.get(cx), Orientation::Vertical).class("vertical");
+                let value = value.get(cx);
+                Label::new(cx, &format!("{:.*}", 2, value));
+            });
+
+        }).child_space(Pixels(50.0)).col_between(Pixels(50.0));
         
     }).run();
+}
+
+#[derive(Debug, Lens)]
+pub struct AppData {
+    value: f32,
+}
+
+impl Model for AppData {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        if let Some(slider_event) = event.message.downcast() {
+            match slider_event {
+                SliderEvent::SetValue(val) => {
+                    self.value = *val;
+                }
+            }
+        }
+    }
 }

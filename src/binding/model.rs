@@ -7,6 +7,10 @@ use crate::{Context, Entity, Event, Store, storage::sparse_set::SparseSet};
 pub trait Model: 'static + Sized {
     fn build(self, cx: &mut Context) {
         if let Some(data_list) = cx.data.model_data.get_mut(cx.current) {
+            // This might be a bad idea
+            // if let Some(_) = data_list.get(&TypeId::of::<Self>()) {
+            //     return;
+            // }
             data_list.insert(TypeId::of::<Self>(), Box::new(Store::new(self)));
         } else {
             let mut data_list: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
