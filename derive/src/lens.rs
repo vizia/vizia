@@ -162,10 +162,6 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                 fn view<'a>(&self, data: &'a#struct_type#ty_generics) -> &'a#field_ty {
                     &data.#field_name
                 }
-
-                fn view_mut<'a>(&self, data: &'a mut #struct_type#ty_generics) -> &'a mut #field_ty {
-                    &mut data.#field_name
-                }
             }
         }
     });
