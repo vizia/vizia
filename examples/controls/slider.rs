@@ -69,11 +69,6 @@ fn main() {
         
         HStack::new(cx, |cx|{
 
-            SliderData {
-                value: 0.5,
-            }.build(cx);
-
-            
             Binding::new(cx, SliderData::value, |cx, value|{
                 Slider::new(cx, *value.get(cx), Orientation::Vertical).class("vertical");
                 let value = value.get(cx);

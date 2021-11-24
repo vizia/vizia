@@ -379,3 +379,16 @@ impl View for Slider {
         }
     }
 }
+
+impl Handle<Slider> {
+    pub fn on_changing<F>(self, cx: &mut Context, callback: F) -> Self 
+    where F: 'static + Fn(&mut Context, f32),
+    {
+
+        if let Some(slider) = cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>()) {
+            slider.on_changing = Some(Box::new(callback));
+        }
+
+        self
+    }
+}
