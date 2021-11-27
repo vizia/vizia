@@ -110,7 +110,6 @@ pub struct Slider {
 
 impl Slider {
     pub fn new(cx: &mut Context, init: f32, orientation: Orientation) -> Handle<Self> {
-
         Self {
             is_dragging: false,
 
@@ -362,10 +361,9 @@ impl View for Slider {
                             
                             dx = dx.clamp(0.0, 1.0);
 
-
                             if let Some(callback) = self.on_changing.take() {
                                 (callback)(cx, dx);
-
+                                
                                 self.on_changing = Some(callback);
                             }
 

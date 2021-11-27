@@ -7,7 +7,6 @@ pub fn apply_hover(cx: &mut Context) {
     //println!("Apply Hover");
     let mut draw_tree: Vec<Entity> = cx.tree.into_iter().collect();
 
-    // This should be cached somewhere probably
     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 
     let cursorx = cx.mouse.cursorx;

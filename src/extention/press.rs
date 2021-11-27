@@ -46,8 +46,13 @@ impl<V: View> Press<V> {
 }
 
 impl<V: View> View for Press<V> {
-    fn body<'a>(&mut self, cx: &'a mut Context) {
-        self.view.body(cx);
+
+    fn element(&self) -> Option<String> {
+        self.view.element()
+    }
+
+    fn debug(&self, entity: Entity) -> String {
+        self.view.debug(entity)
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
@@ -112,8 +117,13 @@ impl<V: View> Release<V> {
 }
 
 impl<V: View> View for Release<V> {
-    fn body<'a>(&mut self, cx: &'a mut Context) {
-        self.view.body(cx);
+
+    fn element(&self) -> Option<String> {
+        self.view.element()
+    }
+
+    fn debug(&self, entity: Entity) -> String {
+        self.view.debug(entity)
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
@@ -183,8 +193,13 @@ impl<V: View> Hover<V> {
 }
 
 impl<V: View> View for Hover<V> {
-    fn body<'a>(&mut self, cx: &'a mut Context) {
-        self.view.body(cx);
+
+    fn element(&self) -> Option<String> {
+        self.view.element()
+    }
+
+    fn debug(&self, entity: Entity) -> String {
+        self.view.debug(entity)
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
@@ -248,8 +263,13 @@ impl<V: View> Geo<V> {
 }
 
 impl<V: View> View for Geo<V> {
-    fn body<'a>(&mut self, cx: &'a mut Context) {
-        self.view.body(cx);
+
+    fn element(&self) -> Option<String> {
+        self.view.element()
+    }
+
+    fn debug(&self, entity: Entity) -> String {
+        self.view.debug(entity)
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {

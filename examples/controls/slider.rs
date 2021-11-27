@@ -70,7 +70,9 @@ fn main() {
         HStack::new(cx, |cx|{
 
             Binding::new(cx, SliderData::value, |cx, value|{
-                Slider::new(cx, *value.get(cx), Orientation::Vertical).class("vertical");
+                Slider::new(cx, *value.get(cx), Orientation::Vertical)
+                    .class("vertical")
+                    .on_press(cx, |_| println!("Press"));
                 let value = value.get(cx);
                 Label::new(cx, &format!("{:.*}", 2, value));
             });

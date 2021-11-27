@@ -268,3 +268,10 @@ impl Data for morphorm::Units {
         *self == *other
     }
 }
+
+#[cfg(feature = "meadowlark")]
+impl Data for rusty_daw_core::MusicalTime {
+    fn same(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
