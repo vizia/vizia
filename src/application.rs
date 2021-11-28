@@ -14,6 +14,7 @@ pub struct Application {
     builder: Option<Box<dyn Fn(&mut Context)>>,
     on_idle: Option<Box<dyn Fn(&mut Context)>>,
     window_description: WindowDescription,
+    should_poll: bool,
 }
 
 impl Application {
@@ -57,7 +58,15 @@ impl Application {
             builder: Some(Box::new(builder)),
             on_idle: None,
             window_description,
+            should_poll: false,
         }
+    }
+
+
+    pub fn should_poll(mut self) -> Self {
+        self.should_poll = true;
+
+        self
     }
 
 
@@ -185,8 +194,15 @@ impl Application {
 
         let event_loop_proxy = event_loop.create_proxy();
 
+        let should_poll = self.should_poll;
+
         event_loop.run(move |event, _, control_flow|{
-            *control_flow = ControlFlow::Wait;
+
+            if should_poll {
+                *control_flow = ControlFlow::Poll;
+            } else {
+                *control_flow = ControlFlow::Wait;
+            }
 
             match event {
 
