@@ -3,7 +3,7 @@
 use vizia::*;
 
 fn main() {
-    let app = Application::new(|cx|{
+    let app = Application::new(WindowDescription::new().with_title("Proxy"), |cx|{
 
     }).on_idle(|cx|{
         println!("On Idle: {:?}", std::time::Instant::now());
@@ -13,7 +13,7 @@ fn main() {
 
     std::thread::spawn(move ||{
         loop {
-            proxy.send_event(()).expect("Failed to send proxy event");
+            proxy.send_event(Event::new(())).expect("Failed to send proxy event");
             std::thread::sleep(std::time::Duration::from_secs(2));
         }
     });

@@ -3,7 +3,7 @@
 use vizia::*;
 
 fn main() {
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Binding Container"), |cx|{
         Data {
             list: vec![5; 5],
         }.build(cx);

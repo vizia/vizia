@@ -5,7 +5,7 @@ use vizia::*;
 
 fn main() {
 
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("On Press"), |cx|{
         VStack::new(cx, |cx| {
             Button::new(cx, |_| {println!("Pressed!")}, |cx|{
                 Label::new(cx, "Press Me!");

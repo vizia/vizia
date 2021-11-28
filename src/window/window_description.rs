@@ -47,7 +47,7 @@ pub struct WindowDescription {
 impl Default for WindowDescription {
     fn default() -> Self {
         Self {
-            title: "Tuix Application".to_string(),
+            title: "Vizia Application".to_string(),
             inner_size: WindowSize::new(800, 600),
             min_inner_size: WindowSize::new(100, 100),
             max_inner_size: None,

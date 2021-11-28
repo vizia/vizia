@@ -249,25 +249,25 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
         //     continue;
         // }
 
-        let mut _should_relayout = false;
-        let mut _should_redraw = false;
+        let mut should_relayout = false;
+        let mut should_redraw = false;
 
         // Display
         if cx.style.borrow_mut().display.link(entity, &matched_rules) {
             //println!("1");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
         if cx.style.borrow_mut().visibility.link(entity, &matched_rules) {
             //println!("2");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().z_order.link(entity, &matched_rules) {
             //println!("3");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         // Currently doesn't do anything - TODO
@@ -276,98 +276,98 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
         // Opacity
         if cx.style.borrow_mut().opacity.link(entity, &matched_rules) {
             //println!("4");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().left.link(entity, &matched_rules) {
             //println!("6");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().right.link(entity, &matched_rules) {
             //println!("7");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().top.link(entity, &matched_rules) {
             //println!("8");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().bottom.link(entity, &matched_rules) {
             //println!("9");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         // Size
         if cx.style.borrow_mut().width.link(entity, &matched_rules) {
             //println!("10");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().height.link(entity, &matched_rules) {
             //println!("11");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         // Size Constraints
         if cx.style.borrow_mut().max_width.link(entity, &matched_rules) {
             //println!("12");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().min_width.link(entity, &matched_rules) {
             //println!("13");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().max_height.link(entity, &matched_rules) {
             //println!("14");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().min_height.link(entity, &matched_rules) {
             //println!("15");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         // Border
         if cx.style.borrow_mut().border_width.link(entity, &matched_rules) {
             //println!("24");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().border_color.link(entity, &matched_rules) {
             //println!("25");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().border_shape_top_left.link(entity, &matched_rules) {
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().border_shape_top_right.link(entity, &matched_rules) {
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().border_shape_bottom_left.link(entity, &matched_rules) {
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().border_shape_bottom_right.link(entity, &matched_rules) {
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx
@@ -376,7 +376,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("26");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx
@@ -385,7 +385,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("27");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx
@@ -394,7 +394,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("28");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx
@@ -403,13 +403,13 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("29");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().layout_type.link(entity, &matched_rules) {
             //println!("30");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx
@@ -418,8 +418,8 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("30");
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         // Background
@@ -429,7 +429,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("41");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx
@@ -438,23 +438,23 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("42");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         // Font
         if cx.style.borrow_mut().font_color.link(entity, &matched_rules) {
             //println!("43");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().font_size.link(entity, &matched_rules) {
             //println!("44");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().font.link(entity, &matched_rules) {
             //println!("44");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         // Outer Shadow
@@ -464,7 +464,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("45");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx
@@ -473,7 +473,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("46");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx
@@ -482,7 +482,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("47");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx
@@ -491,7 +491,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("48");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         // Inner Shadow
@@ -501,7 +501,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("45");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx
@@ -510,7 +510,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("46");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx
@@ -519,7 +519,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("47");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx
@@ -528,44 +528,54 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             .link(entity, &matched_rules)
         {
             //println!("48");
-            _should_redraw = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().child_left.link(entity, &matched_rules) {
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().child_right.link(entity, &matched_rules) {
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().child_top.link(entity, &matched_rules) {
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().child_bottom.link(entity, &matched_rules) {
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().row_between.link(entity, &matched_rules) {
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
         if cx.style.borrow_mut().col_between.link(entity, &matched_rules) {
-            _should_relayout = true;
-            _should_redraw = true;
+            should_relayout = true;
+            should_redraw = true;
         }
 
 
         if cx.style.borrow_mut().cursor.link(entity, &matched_rules) {
-            //_should_relayout = true;
-            //_should_redraw = true;
+            should_redraw = true;
         }
+
+
+        if should_relayout {
+            cx.style.borrow_mut().needs_relayout = true;
+        }
+
+        if should_redraw {
+            cx.style.borrow_mut().needs_redraw = true;
+        }
+
+        
 
         // for rule_id in matched_rules.iter() {
         //     // TODO - remove cloned
@@ -588,12 +598,12 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
         //     }
         // }
 
-        // if _should_relayout {
+        // if should_relayout {
         //     Entity::root().relayout(cx);
         //     //cx.needs_relayout = true;
         // }
 
-        // if _should_redraw {
+        // if should_redraw {
         //     Entity::root().redraw(cx);
         //     //cx.needs_redraw = true;
         // }

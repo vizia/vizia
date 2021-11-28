@@ -4,7 +4,7 @@ use vizia::*;
 
 fn main() {
 
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Multiple Binding"), |cx|{
         CustomData::new().build(cx);
         OtherData::new().build(cx);
         

@@ -6,9 +6,9 @@ use std::marker::PhantomData;
 
 use keyboard_types::Code;
 
-use crate::{Color, Context, Event, Handle, Lens, Model, MouseButton, Data, State, StateStore, Store, TreeExt, View, WindowEvent};
+use crate::{Color, Context, Event, Handle, Lens, Model, MouseButton, Data, StateStore, Store, TreeExt, View, WindowEvent};
 use crate::Units::*;
-#[derive(Debug, Copy)]
+#[derive(Debug)]
 pub struct ItemPtr<L, T>
 where
     L: Lens<Target = Vec<T>>,
@@ -18,6 +18,10 @@ where
     row: usize,
     col: usize,
 }
+
+impl<L,T> Copy for ItemPtr<L,T> 
+where
+    L: Lens<Target = Vec<T>>, {}
 
 impl<L: Lens<Target = Vec<T>>,T> Clone for ItemPtr<L,T> {
     fn clone(&self) -> Self {
@@ -57,6 +61,24 @@ where
         self.lens.view(cx.data().expect("Failed to get data")).get(self.index).expect(&format!("Failed to get item: {}", self.index))
     }
 }
+
+
+pub trait DataHandle: Clone + Copy {
+    type Data;
+    fn get<'a>(&self, cx: &'a Context) -> &'a Self::Data;
+}
+
+impl<L, T> DataHandle for ItemPtr<L, T> 
+where
+    L: Lens<Target = Vec<T>>,
+{
+    type Data = T;
+    fn get<'a>(&self, cx: &'a Context) -> &'a Self::Data {
+        self.value(cx)
+    }
+}
+
+
 
 #[derive(Lens, Default)]
 pub struct ListData {

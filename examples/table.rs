@@ -7,7 +7,7 @@ use morphorm::LayoutType;
 use vizia::*;
 
 fn main() {
-    Application::new(|cx| {
+    Application::new(WindowDescription::new().with_title("Table"), |cx| {
 
         TableData {
             table_data: (0..100).collect(),

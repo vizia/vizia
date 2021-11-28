@@ -4,7 +4,7 @@ use vizia::*;
 
 fn main() {
 
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Properties"), |cx|{
         HStack::new(cx, |cx| {
             let hello = "hello".to_string();
             let world = "world".to_string();

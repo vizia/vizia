@@ -4,19 +4,20 @@ use femtovg::{Canvas, renderer::OpenGl};
 use glutin::{ContextBuilder, event::{ElementState, VirtualKeyCode}, event_loop::{ControlFlow, EventLoop, EventLoopProxy}, window::WindowBuilder};
 use morphorm::Units;
 
-use crate::{AppData, BoundingBox, CachedData, Color, Context, Data, Display, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, WindowEvent, apply_hover, apply_styles, geometry_changed, scan_to_code, style::apply_transform, style_system::{apply_clipping, apply_visibility, apply_z_ordering}, vcode_to_code, vk_to_key};
+use crate::{AppData, BoundingBox, CachedData, Color, Context, Data, Display, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, Window, WindowDescription, WindowEvent, apply_hover, apply_styles, geometry_changed, scan_to_code, style::apply_transform, style_system::{apply_clipping, apply_visibility, apply_z_ordering}, vcode_to_code, vk_to_key};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 
 pub struct Application {
     context: Context,
-    event_loop: EventLoop<()>,
+    event_loop: EventLoop<Event>,
     builder: Option<Box<dyn Fn(&mut Context)>>,
     on_idle: Option<Box<dyn Fn(&mut Context)>>,
+    window_description: WindowDescription,
 }
 
 impl Application {
-    pub fn new<F>(builder: F) -> Self
+    pub fn new<F>(window_description: WindowDescription, builder: F) -> Self
     where F: 'static + Fn(&mut Context)
     {
 
@@ -52,9 +53,10 @@ impl Application {
 
         Self {
             context,
-            event_loop: EventLoop::new(),
+            event_loop: EventLoop::with_user_event(),
             builder: Some(Box::new(builder)),
             on_idle: None,
+            window_description,
         }
     }
 
@@ -82,7 +84,7 @@ impl Application {
     } 
 
     // TODO - Rename this
-    pub fn get_proxy(&self) -> EventLoopProxy<()> {
+    pub fn get_proxy(&self) -> EventLoopProxy<Event> {
         self.event_loop.create_proxy()
     }
 
@@ -105,15 +107,19 @@ impl Application {
         
         let event_loop = self.event_loop;
         
-        let handle = ContextBuilder::new()
-            .build_windowed(WindowBuilder::new(), &event_loop)
-            .expect("Failed to build windowed context");
+        // let handle = ContextBuilder::new()
+        //     .with_vsync(true)
+        //     .build_windowed(WindowBuilder::new(), &event_loop)
+        //     .expect("Failed to build windowed context");
 
-        let handle = unsafe { handle.make_current().unwrap() };
+        // let handle = unsafe { handle.make_current().unwrap() };
 
-        let renderer = OpenGl::new(|s| handle.context().get_proc_address(s) as *const _)
-            .expect("Cannot create renderer");
-        let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
+        // let renderer = OpenGl::new(|s| handle.context().get_proc_address(s) as *const _)
+        //     .expect("Cannot create renderer");
+        // let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
+
+
+        let mut window = Window::new(&event_loop, &self.window_description);
 
         // let font = canvas.add_font_mem(FONT).expect("Failed to load font");
 
@@ -133,13 +139,13 @@ impl Application {
 
         context.style.borrow_mut().default_font = "roboto".to_string();
 
-        let dpi_factor = handle.window().scale_factor();
-        let size = handle.window().inner_size();
+        let dpi_factor = window.handle.window().scale_factor();
+        let size = window.handle.window().inner_size();
 
         let clear_color = context.style.borrow_mut().background_color.get(Entity::root()).cloned().unwrap_or_default();
 
-        canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
-        canvas.clear_rect(
+        window.canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
+        window.canvas.clear_rect(
             0,
             0,
             size.width as u32,
@@ -147,15 +153,17 @@ impl Application {
             clear_color.into(),
         );
 
-        context
-            .cache
-            .set_width(Entity::root(), 800.0);
-        context
-            .cache
-            .set_height(Entity::root(), 600.0);
+        context.views.insert(Entity::root(), Box::new(window));
 
-        context.style.borrow_mut().width.insert(Entity::root(), Units::Pixels(800.0));
-        context.style.borrow_mut().height.insert(Entity::root(), Units::Pixels(600.0));
+        context
+            .cache
+            .set_width(Entity::root(), self.window_description.inner_size.width as f32);
+        context
+            .cache
+            .set_height(Entity::root(), self.window_description.inner_size.height as f32);
+
+        context.style.borrow_mut().width.insert(Entity::root(), Units::Pixels(self.window_description.inner_size.width as f32));
+        context.style.borrow_mut().height.insert(Entity::root(), Units::Pixels(self.window_description.inner_size.height as f32));
 
         let mut bounding_box = BoundingBox::default();
         bounding_box.w = size.width as f32;
@@ -181,6 +189,11 @@ impl Application {
             *control_flow = ControlFlow::Wait;
 
             match event {
+
+                glutin::event::Event::UserEvent(event) => {
+                    context.event_queue.push_back(event);
+                }
+
                 glutin::event::Event::MainEventsCleared => {
 
                     if context.enviroment.needs_rebuild {
@@ -192,21 +205,30 @@ impl Application {
                         context.enviroment.needs_rebuild = false;
                     }
 
-                    // Load resources
-                    for (name, font) in context.resource_manager.fonts.iter_mut() {
-            
-                        match font {
-                            FontOrId::Font(data) => {
-                                let id1 = canvas.add_font_mem(&data.clone()).expect(&format!("Failed to load font file for: {}", name));
-                                //let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
-                                // if id1 != id2 {
-                                //     panic!("Fonts in canvas must have the same id as fonts in the text context");
-                                // }
-                                *font = FontOrId::Id(id1);
+                    if let Some(mut window_view) = context.views.remove(&Entity::root()) {
+                        if let Some(window) = window_view.downcast_mut::<Window>() {
+
+
+                            // Load resources
+                            for (name, font) in context.resource_manager.fonts.iter_mut() {
+                    
+                                match font {
+                                    FontOrId::Font(data) => {
+                                        let id1 = window.canvas.add_font_mem(&data.clone()).expect(&format!("Failed to load font file for: {}", name));
+                                        //let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
+                                        // if id1 != id2 {
+                                        //     panic!("Fonts in canvas must have the same id as fonts in the text context");
+                                        // }
+                                        *font = FontOrId::Id(id1);
+                                    }
+                    
+                                    _=> {}
+                                }
                             }
-            
-                            _=> {}
+
                         }
+
+                        context.views.insert(Entity::root(), window_view);
                     }
 
                     // Events
@@ -214,8 +236,8 @@ impl Application {
                         event_manager.flush_events(&mut context);
                     }
 
+                    // Data Updates
                     let mut observers: Vec<Entity> = Vec::new();
-                    
                     for model_list in context.data.model_data.dense.iter().map(|entry| &entry.value){
                         for (_, model) in model_list.iter() {
                             //println!("Lenses: {:?}", context.lenses.len());
@@ -226,10 +248,6 @@ impl Application {
                             }
                         }
                     }
-                    // if let Some(model_list) = context.data.model_data.get(Entity::root()) {
-                    // }
-
-                    //println!("Observers: {:?}", observers);
 
                     for observer in observers.iter() {
                         if let Some(mut view) = context.views.remove(observer) {
@@ -249,21 +267,27 @@ impl Application {
                     // Not ideal
                     let tree = context.tree.clone();
 
-                    // Styling (TODO)
-                    apply_styles(&mut context, &tree);
+                    // Styling
+                    //if context.style.borrow().needs_restyle {
+                        apply_styles(&mut context, &tree);
+                    //    context.style.borrow_mut().needs_restyle = false;
+                    //}
 
                     apply_z_ordering(&mut context, &tree);
 
                     apply_visibility(&mut context, &tree);
 
                     // Layout
-                    morphorm::layout(&mut context.cache, &context.tree, &context.style.borrow());
+                    if context.style.borrow().needs_relayout {
+                        morphorm::layout(&mut context.cache, &context.tree, &context.style.borrow());
+                        context.style.borrow_mut().needs_relayout = false;
+                    }
 
                     // Emit any geometry changed events
                     geometry_changed(&mut context, &tree);
 
                     if !context.event_queue.is_empty() {
-                        event_loop_proxy.send_event(());
+                        event_loop_proxy.send_event(Event::new(()));
                     }
 
                     apply_transform(&mut context, &tree);
@@ -271,7 +295,17 @@ impl Application {
                     apply_hover(&mut context);
 
                     apply_clipping(&mut context, &tree);
-                    handle.window().request_redraw();
+
+                    if let Some(window_view) = context.views.get(&Entity::root()) {
+                        if let Some(window) = window_view.downcast_ref::<Window>() {
+                            if context.style.borrow().needs_redraw {
+                                window.handle.window().request_redraw();
+                                context.style.borrow_mut().needs_redraw = false;
+                            }
+                        }
+                    }
+
+
 
                     if let Some(idle_callback) = &on_idle {
                         context.current = Entity::root();
@@ -279,81 +313,90 @@ impl Application {
                         (idle_callback)(&mut context);
 
                         if !context.event_queue.is_empty() {
-                            event_loop_proxy.send_event(()).unwrap();
+                            event_loop_proxy.send_event(Event::new(())).unwrap();
                         }
                     }
                 }
 
                 glutin::event::Event::RedrawRequested(_) => {
                     // Redraw here
-                    // println!("Redraw");
+                    //println!("Redraw");
 
-                    let window_width = context.cache.get_width(Entity::root());
-                    let window_height = context.cache.get_height(Entity::root());
-
-                    canvas.set_size(window_width as u32, window_height as u32, dpi_factor as f32);
-                    let clear_color = context.style.borrow_mut().background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
-                    canvas.clear_rect(
-                        0,
-                        0,
-                        window_width as u32,
-                        window_height as u32,
-                        clear_color.into(),
-                    );
-
-                    // Sort the tree by z order
-                    let mut draw_tree: Vec<Entity> = context.tree.into_iter().collect();
-                    draw_tree.sort_by_cached_key(|entity| context.cache.get_z_index(*entity));
-
-                    for entity in draw_tree.into_iter() {
-
-
-                        // Skip window
-                        if entity == Entity::root() {
-                            continue;
-                        }
-
-                        // Skip invisible widgets
-                        if context.cache.get_visibility(entity) == Visibility::Invisible {
-                            continue;
-                        }
-
-                        if context.cache.get_display(entity) == Display::None {
-                            continue;
-                        }
-
-                        // Skip widgets that have 0 opacity
-                        if context.cache.get_opacity(entity) == 0.0 {
-                            continue;
-                        }
-
-                        // Apply clipping
-                        let clip_region = context.cache.get_clip_region(entity);
-                        canvas.scissor(
-                            clip_region.x,
-                            clip_region.y,
-                            clip_region.w,
-                            clip_region.h,
-                        );
-                
-                        // Apply transform
-                        let transform = context.cache.get_transform(entity);
-                        canvas.save();
-                        canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
-
-                        if let Some(view) = context.views.remove(&entity) {
-
-                            context.current = entity;
-                            view.draw(&context, &mut canvas);
+                    if let Some(mut window_view) = context.views.remove(&Entity::root()) {
+                        if let Some(window) = window_view.downcast_mut::<Window>() {
                             
-                            context.views.insert(entity, view);
+                            let window_width = context.cache.get_width(Entity::root());
+                            let window_height = context.cache.get_height(Entity::root());
+
+                            window.canvas.set_size(window_width as u32, window_height as u32, dpi_factor as f32);
+                            let clear_color = context.style.borrow_mut().background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
+                            window.canvas.clear_rect(
+                                0,
+                                0,
+                                window_width as u32,
+                                window_height as u32,
+                                clear_color.into(),
+                            );
+
+                            // Sort the tree by z order
+                            let mut draw_tree: Vec<Entity> = context.tree.into_iter().collect();
+                            draw_tree.sort_by_cached_key(|entity| context.cache.get_z_index(*entity));
+
+                            for entity in draw_tree.into_iter() {
+
+
+                                // Skip window
+                                if entity == Entity::root() {
+                                    continue;
+                                }
+
+                                // Skip invisible widgets
+                                if context.cache.get_visibility(entity) == Visibility::Invisible {
+                                    continue;
+                                }
+
+                                if context.cache.get_display(entity) == Display::None {
+                                    continue;
+                                }
+
+                                // Skip widgets that have 0 opacity
+                                if context.cache.get_opacity(entity) == 0.0 {
+                                    continue;
+                                }
+
+                                // Apply clipping
+                                let clip_region = context.cache.get_clip_region(entity);
+                                window.canvas.scissor(
+                                    clip_region.x,
+                                    clip_region.y,
+                                    clip_region.w,
+                                    clip_region.h,
+                                );
+                        
+                                // Apply transform
+                                let transform = context.cache.get_transform(entity);
+                                window.canvas.save();
+                                window.canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+
+                                if let Some(view) = context.views.remove(&entity) {
+
+                                    context.current = entity;
+                                    view.draw(&context, &mut window.canvas);
+                                    
+                                    context.views.insert(entity, view);
+                                }
+
+                                window.canvas.restore();
+                            }
+
+                            window.canvas.flush();
+                            window.handle.swap_buffers().expect("Failed to swap buffers");
                         }
 
-                        canvas.restore();
+                        context.views.insert(Entity::root(), window_view);
                     }
 
-                    canvas.flush();
-                    handle.swap_buffers().expect("Failed to swap buffers");
+                    
                 }
 
                 glutin::event::Event::WindowEvent {
@@ -545,7 +588,16 @@ impl Application {
 
                         glutin::event::WindowEvent::Resized(size) => {
                             //println!("Resized: {:?}", size);
-                            handle.resize(size);
+
+                            
+                            if let Some(mut window_view) = context.views.remove(&Entity::root()) {
+                                if let Some(window) = window_view.downcast_mut::<Window>() {
+                                
+                                    window.handle.resize(size);
+                                }
+                                
+                                context.views.insert(Entity::root(), window_view);
+                            }
 
                             context
                                 .style
@@ -572,7 +624,9 @@ impl Application {
                         
                             context.cache.set_clip_region(Entity::root(), bounding_box);
 
-                            
+                            context.style.borrow_mut().needs_restyle = true;
+                            context.style.borrow_mut().needs_relayout = true;
+                            context.style.borrow_mut().needs_redraw = true;
 
                             // let mut bounding_box = BoundingBox::default();
                             // bounding_box.w = size.width as f32;

@@ -83,21 +83,11 @@ impl EventManager {
             if event.propagation == Propagation::Up {
                 // Walk up the tree from parent to parent
                 for entity in target.parent_iter(&self.tree) {
-
-                    // if event.trace {
-                    //     println!("Entity: {} -> Target: {} -> Event: {:?}", entity, target, event);
-                    // }
-
                     
                     // Skip the target entity
                     if entity == event.target {
                         continue;
                     }
-
-                    // if event.trace {
-                    //     println!("Event: {:?} -> Entity {}", event, entity);
-                    // }
-                    
                     
                     // Send event to all entities before the target
                     if let Some(mut view) = context.views.remove(&entity) {
@@ -111,7 +101,7 @@ impl EventManager {
                     }
                     
                     if let Some(mut model_list) = context.data.model_data.remove(entity) {
-                        for (ty, model) in model_list.iter_mut() {
+                        for (_, model) in model_list.iter_mut() {
 
                             // if event.trace {
                             //     println!("Event: {:?} -> Model {:?}", event, ty);

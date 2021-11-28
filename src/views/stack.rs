@@ -4,16 +4,18 @@ use crate::{Color, Context, Entity, Handle, View};
 use crate::Units::*;
 
 pub struct VStack {
-    pub builder: Option<Box<dyn Fn(&mut Context)>>,
+    //pub builder: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl VStack {
-    pub fn new<'a,F>(cx: &'a mut Context, f: F) -> Handle<Self> 
-    where F: 'static + Fn(&mut Context)
+    pub fn new<'a,F>(cx: &'a mut Context, builder: F) -> Handle<Self> 
+    where F: 'static + FnOnce(&mut Context)
     {
         Self{
-            builder: Some(Box::new(f)),
-        }.build(cx)
+            //builder: Some(Box::new(f)),
+        }.build2(cx, |cx|{
+            (builder)(cx);
+        })
             //.width(Auto)
             //.height(Auto)
             //.background_color(Color::rgb(50, 50, 50))
@@ -30,26 +32,28 @@ impl View for VStack {
     }
 
     fn body<'a>(&mut self, cx: &'a mut Context) {
-        if let Some(builder) = self.builder.take() {
-            (builder)(cx);
+        // if let Some(builder) = self.builder.take() {
+        //     (builder)(cx);
 
-            self.builder = Some(builder);
-        }
+        //     self.builder = Some(builder);
+        // }
     }
 }
 
 pub struct HStack {
-    pub builder: Option<Box<dyn Fn(&mut Context)>>,
+    //pub builder: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl HStack {
-    pub fn new<F>(cx: &mut Context, f: F) -> Handle<Self> 
-    where F: 'static + Fn(&mut Context)
+    pub fn new<F>(cx: &mut Context, builder: F) -> Handle<Self> 
+    where F: 'static + FnOnce(&mut Context)
     {
         Self{
-            builder: Some(Box::new(f)),
-        }.build(cx)
-            .layout_type(LayoutType::Row)
+            //builder: Some(Box::new(f)),
+        }.build2(cx, |cx|{
+            (builder)(cx);
+        })
+        .layout_type(LayoutType::Row)
             //.width(Auto)
             //.height(Auto)
             // .background_color(Color::rgb(50, 50, 50))
@@ -82,26 +86,28 @@ impl View for HStack {
     }
 
     fn body<'a>(&mut self, cx: &'a mut Context) {
-        if let Some(builder) = self.builder.take() {
-            (builder)(cx);
+        // if let Some(builder) = self.builder.take() {
+        //     (builder)(cx);
 
-            self.builder = Some(builder);
-        }
+        //     self.builder = Some(builder);
+        // }
     }
 }
 
 
 pub struct ZStack {
-    pub builder: Option<Box<dyn Fn(&mut Context)>>,
+    //pub builder: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl ZStack {
-    pub fn new<F>(cx: &mut Context, f: F) -> Handle<Self> 
-    where F: 'static + Fn(&mut Context)
+    pub fn new<F>(cx: &mut Context, builder: F) -> Handle<Self> 
+    where F: 'static + FnOnce(&mut Context)
     {
         Self{
-            builder: Some(Box::new(f)),
-        }.build(cx)
+            //builder: Some(Box::new(f)),
+        }.build2(cx, |cx|{
+            (builder)(cx);
+        })
     }
 }
 
@@ -115,10 +121,10 @@ impl View for ZStack {
     }
 
     fn body<'a>(&mut self, cx: &'a mut Context) {
-        if let Some(builder) = self.builder.take() {
-            (builder)(cx);
+        // if let Some(builder) = self.builder.take() {
+        //     (builder)(cx);
 
-            self.builder = Some(builder);
-        }
+        //     self.builder = Some(builder);
+        // }
     }
 }

@@ -2,7 +2,7 @@ use vizia::Lens;
 use vizia::*;
 
 fn main() {
-    Application::new(|cx| {
+    Application::new(WindowDescription::new().with_title("List2"), |cx| {
         let list: Vec<u32> = (0..12u32).collect();
         Data { 
             list,

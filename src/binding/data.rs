@@ -1,7 +1,5 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
-use crate::State;
-
 pub trait Data: 'static + Clone {
     fn same(&self, other: &Self) -> bool;
 }
@@ -271,6 +269,13 @@ impl Data for morphorm::Units {
 
 #[cfg(feature = "meadowlark")]
 impl Data for rusty_daw_core::MusicalTime {
+    fn same(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+#[cfg(feature = "meadowlark")]
+impl Data for rusty_daw_core::Seconds {
     fn same(&self, other: &Self) -> bool {
         self.0 == other.0
     }

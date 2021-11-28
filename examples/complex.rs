@@ -4,7 +4,7 @@ use vizia::*;
 // Example of a more complex app with multiple composed levels
 fn main() {
 
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Complex"), |cx|{
         VStack::new(cx, |cx| {
             Label::new(cx, "One");
             Label::new(cx, "Two");

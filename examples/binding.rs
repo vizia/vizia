@@ -2,7 +2,7 @@ use vizia::*;
 
 fn main() {
 
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Binding"), |cx|{
         CustomData::new().build(cx);
         
         VStack::new(cx, |cx| {

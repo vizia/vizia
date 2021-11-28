@@ -25,7 +25,7 @@ const STYLE: &str = r#"
 "#;
 
 fn main() {
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Modal"), |cx|{
 
         cx.add_theme(STYLE);
 

@@ -32,7 +32,7 @@ impl Model for Data {
 
 fn main() {
 
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("State"), |cx|{
 
         Data {
             something: "Something".to_string(),

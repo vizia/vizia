@@ -9,6 +9,10 @@ macro_rules! set_style {
         pub fn $name(self, value: $t) -> Self {
             self.style.borrow_mut().$name.insert(self.entity, value);
 
+            // TODO - Split this out
+            self.style.borrow_mut().needs_relayout = true;
+            self.style.borrow_mut().needs_redraw = true;
+
             self
         }
     };
@@ -39,6 +43,8 @@ impl<T> Handle<T> {
 
         self.style.borrow_mut().cursor.insert(self.entity, cursor_icon);
 
+        self.style.borrow_mut().needs_redraw = true;
+
         self
     }
 
@@ -48,6 +54,17 @@ impl<T> Handle<T> {
             class_list.insert(name.to_string());
         }
 
+        self.style.borrow_mut().needs_restyle = true;
+
+        self
+    }
+
+    pub fn font(self, font_name: &str) -> Self {
+        
+        self.style.borrow_mut().font.insert(self.entity, font_name.to_owned());
+
+        self.style.borrow_mut().needs_redraw = true;
+
         self
     }
 
@@ -56,11 +73,24 @@ impl<T> Handle<T> {
             pseudo_classes.set(PseudoClass::CHECKED, true);
         }
 
+        self.style.borrow_mut().needs_restyle = true;
+
         self
     }
 
     pub fn text(self, value: &str) -> Self {
         self.style.borrow_mut().text.insert(self.entity, value.to_owned());
+
+        self.style.borrow_mut().needs_redraw = true;
+
+        self
+    }
+
+    pub fn z_order(self, value: i32) -> Self {
+
+        self.style.borrow_mut().z_order.insert(self.entity, value);
+
+        self.style.borrow_mut().needs_redraw = true;
 
         self
     }
@@ -71,6 +101,9 @@ impl<T> Handle<T> {
         self.style.borrow_mut().child_top.insert(self.entity, value);
         self.style.borrow_mut().child_bottom.insert(self.entity, value);
 
+        self.style.borrow_mut().needs_relayout = true;
+        self.style.borrow_mut().needs_redraw = true;
+
         self
     }
 
@@ -80,12 +113,18 @@ impl<T> Handle<T> {
         self.style.borrow_mut().top.insert(self.entity, value);
         self.style.borrow_mut().bottom.insert(self.entity, value);
 
+        self.style.borrow_mut().needs_relayout = true;
+        self.style.borrow_mut().needs_redraw = true;
+
         self
     }
 
     pub fn size(self, value: Units) -> Self {
         self.style.borrow_mut().width.insert(self.entity, value);
         self.style.borrow_mut().height.insert(self.entity, value);
+
+        self.style.borrow_mut().needs_relayout = true;
+        self.style.borrow_mut().needs_redraw = true;
 
         self
     }

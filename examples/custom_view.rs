@@ -36,7 +36,7 @@ impl View for CustomView {
 
 fn main() {
 
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Custom View"), |cx|{
         CustomView::new(cx, |cx|{
             VStack::new(cx, |cx| {
                 Label::new(cx, "One");

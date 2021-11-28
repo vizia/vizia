@@ -14,7 +14,7 @@ const STYLE: &str = r#"
 // Example showing how to set a custom property on a view
 fn main() {
 
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Test"), |cx|{
 
         cx.add_theme(STYLE);
 

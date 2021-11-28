@@ -16,7 +16,7 @@ fn custom_view(cx: &mut Context) {
 
 fn main() {
 
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Compose"), |cx|{
         HStack::new(cx, |cx|{
             custom_view(cx);
             custom_view(cx);

@@ -1,7 +1,7 @@
 use vizia::*;
 
 fn main() {
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Counter View"), |cx|{
         VStack::new(cx, |cx|{
             Counter::new(cx);
             Counter::new(cx);

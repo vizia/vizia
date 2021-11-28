@@ -3,7 +3,7 @@ use vizia::*;
 // INCOMPLETE!
 
 fn main() {
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Todo"), |cx|{
 
         TodoData {
             items: vec![

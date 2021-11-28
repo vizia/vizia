@@ -4,7 +4,7 @@ use vizia::*;
 
 
 fn main() {
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Localization"), |cx|{
         HStack::new(cx, |cx|{
             Label::new(cx, "hello-world");
             Button::new(cx, |cx| cx.enviroment.set_locale("fr"), |cx|{

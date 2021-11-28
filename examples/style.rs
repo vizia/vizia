@@ -5,7 +5,7 @@ use vizia::*;
 
 fn main() {
 
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Style"), |cx|{
         VStack::new(cx, |cx| {
             Label::new(cx, "Label 1")
                 .width(Pixels(100.0))

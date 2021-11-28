@@ -4,7 +4,7 @@
 use vizia::*;
 
 fn main() {
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Local Data"), |cx|{
         CustomView::new().set_value(3.14).build(cx);
     }).run();
 }

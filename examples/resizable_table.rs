@@ -2,7 +2,7 @@ use glutin::window::Window;
 use vizia::*;
 
 fn main() {
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Resizable Table"), |cx|{
 
         UserData {
             data: vec![

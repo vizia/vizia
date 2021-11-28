@@ -13,7 +13,7 @@ const STYLE: &str = r#"
 
 
 fn main() {
-    Application::new(|cx| {
+    Application::new(WindowDescription::new().with_title("List"), |cx| {
 
         cx.add_theme(STYLE);
 

@@ -54,7 +54,6 @@ pub struct Context {
     pub current: Entity,
     pub count: usize,
     pub views: HashMap<Entity, Box<dyn ViewHandler>>,
-    //pub state: HashMap<StateID, Box<dyn StateData>>,
     pub lenses: HashMap<TypeId, Box<dyn LensWrap>>,
     pub data: AppData,
     pub event_queue: VecDeque<Event>,

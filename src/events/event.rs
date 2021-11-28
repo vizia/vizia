@@ -21,7 +21,7 @@ pub enum Propagation {
 }
 
 /// A message can be any static type.
-pub trait Message: Any + Debug {
+pub trait Message: Any + Debug + Send {
     // An &Any can be cast to a reference to a concrete type.
     fn as_any(&self) -> &dyn Any;
 
@@ -78,7 +78,7 @@ impl dyn Message {
 }
 
 // Implements message for any static type that implements Clone
-impl<S: Debug + 'static> Message for S {
+impl<S: Debug + 'static + Send> Message for S {
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -137,7 +137,7 @@ impl Event {
     {
         Event {
             origin: Entity::null(),
-            target: Entity::null(),
+            target: Entity::root(),
             propagation: Propagation::Up,
             consumable: true,
             consumed: false,

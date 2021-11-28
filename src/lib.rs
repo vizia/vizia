@@ -27,6 +27,9 @@ pub use views::*;
 mod context;
 pub use context::*;
 
+mod window;
+pub use window::*;
+
 mod application;
 pub use application::*;
 
@@ -46,9 +49,6 @@ pub use data::*;
 
 mod layout;
 pub use layout::*;
-
-mod window;
-pub use window::*;
 
 mod resource;
 pub use resource::*;

@@ -2,7 +2,7 @@ use vizia::*;
 
 fn main() {
 
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Binding Test"), |cx|{
         CustomData::new().build(cx);
     
         Binding::new(cx, CustomData::value, |cx, data|{

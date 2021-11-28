@@ -1,7 +1,7 @@
 use vizia::*;
 
 fn main() {
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Counter"), |cx|{
 
         CounterData {
             count: 0,

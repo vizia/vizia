@@ -384,6 +384,10 @@ pub struct Style {
     pub name: StyleSet<String>,
 
     pub cursor: StyleSet<CursorIcon>,
+
+    pub needs_restyle: bool,
+    pub needs_relayout: bool,
+    pub needs_redraw: bool,
 }
 
 impl Style {

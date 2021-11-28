@@ -30,6 +30,26 @@ impl Checkbox {
         )
         .checked(checked)
     }
+
+    pub fn with_icons(cx: &mut Context, checked: bool, icon_checked: &str, icon_unchecked: &str) -> Handle<Self> {
+        Self {
+            checked,
+            on_checked: None,
+            on_unchecked: None,
+            icon_checked: Some(icon_checked.to_owned()),
+            icon_unchecked: Some(icon_unchecked.to_owned()),
+        }.build(cx)
+        .width(Pixels(20.0))
+        .height(Pixels(20.0))
+        .text(
+            if checked {
+                icon_checked
+            } else {
+                icon_unchecked
+            }
+        )
+        .checked(checked)
+    }
 }
 
 impl Handle<Checkbox> {
@@ -83,7 +103,11 @@ impl View for Checkbox {
                                 pseudo_classes.set(PseudoClass::CHECKED, false);
                             }
 
-                            cx.style.borrow_mut().text.insert(cx.current, "".to_string());
+                            if let Some(icon_unchecked) = &self.icon_unchecked {
+                                cx.style.borrow_mut().text.insert(cx.current, icon_unchecked.to_owned());
+                            } else {
+                                cx.style.borrow_mut().text.insert(cx.current, "".to_string());
+                            }
 
                             if let Some(callback) = self.on_unchecked.take() {
                                 (callback)(cx);
@@ -97,7 +121,11 @@ impl View for Checkbox {
                                 pseudo_classes.set(PseudoClass::CHECKED, true);
                             }
 
-                            cx.style.borrow_mut().text.insert(cx.current, ICON_CHECK.to_string());
+                            if let Some(icon_checked) = &self.icon_checked {
+                                cx.style.borrow_mut().text.insert(cx.current, icon_checked.to_owned());
+                            } else {
+                                cx.style.borrow_mut().text.insert(cx.current, ICON_CHECK.to_string());
+                            }
 
                             if let Some(callback) = self.on_checked.take() {
                                 (callback)(cx);

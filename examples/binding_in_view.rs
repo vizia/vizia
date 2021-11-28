@@ -3,7 +3,7 @@ use vizia::*;
 
 fn main() {
 
-    Application::new(|cx|{
+    Application::new(WindowDescription::new().with_title("Binding in View"), |cx|{
 
         Data {
             something: 55,
