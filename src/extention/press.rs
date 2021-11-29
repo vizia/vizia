@@ -68,7 +68,7 @@ impl<V: View> View for Press<V> {
                             self.action = Some(action);
                         }
                         
-                        cx.captured = cx.current;
+                        //cx.captured = cx.current;
                     }
                 }
 

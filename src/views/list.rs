@@ -239,9 +239,8 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
 impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
     fn body(&mut self, cx: &mut Context) {
 
-        for child in cx.current.child_iter(&cx.tree.clone()) {
-            cx.remove(child);
-        }
+
+
 
 
         let builder = self.builder.take().unwrap();
@@ -262,6 +261,13 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
         if let Some(store) = found_store {
             
             let len = self.lens.view(&store.data).len();
+
+            if cx.current.child_iter(&cx.tree.clone()).count() != len {
+                println!("Remove Children: {} {}", cx.current.child_iter(&cx.tree.clone()).count(), len);
+                for child in cx.current.child_iter(&cx.tree.clone()) {
+                    cx.remove(child);
+                }                
+            }
             
             if self.list_data {
                 ListData {
