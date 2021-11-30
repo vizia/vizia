@@ -110,6 +110,7 @@ impl View for Window {
                 }
 
                 WindowEvent::SetCursor(cursor) => {
+                    //println!("Set The Cursor: {:?}", cursor);
                     match *cursor {
                         CursorIcon::Default => {
                             self.handle.window().set_cursor_visible(true);

@@ -266,7 +266,10 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
                 println!("Remove Children: {} {}", cx.current.child_iter(&cx.tree.clone()).count(), len);
                 for child in cx.current.child_iter(&cx.tree.clone()) {
                     cx.remove(child);
-                }                
+                }
+                
+                cx.style.borrow_mut().needs_relayout = true;
+                cx.style.borrow_mut().needs_redraw = true;
             }
             
             if self.list_data {
@@ -276,11 +279,14 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
                 }.build(cx);
             }
 
+            let prev_count = cx.count;
+            cx.count = 0;
             for index in 0..len {
                 let ptr = ItemPtr::new(self.lens.clone(), index, index, 0);
                 (builder)(cx, ptr);
                 //cx.count += 1;
             }
+            cx.count = prev_count;
         }
 
         // let store = cx

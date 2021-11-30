@@ -75,6 +75,11 @@ pub fn apply_hover(cx: &mut Context) {
             cx.cache.get_height(hovered_widget),
         );
 
+        let cursor = cx.style.borrow().cursor.get(hovered_widget).cloned().unwrap_or_default();
+        if cx.captured == Entity::null() {
+            cx.emit(WindowEvent::SetCursor(cursor));
+        }
+
         // Set current hovered pseudoclass to true
         if let Some(pseudo_classes) = cx.style.borrow_mut().pseudo_classes.get_mut(hovered_widget) {
             pseudo_classes.set(PseudoClass::HOVER, true);

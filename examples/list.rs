@@ -22,28 +22,33 @@ fn main() {
             list,
         }.build(cx);
 
-        Button::new(cx, |cx| cx.emit(AppEvent::Add(20)), |cx| {Label::new(cx, "Add");});
+        HStack::new(cx, |cx|{
+            Button::new(cx, |cx| cx.emit(AppEvent::Add(20)), |cx| {Label::new(cx, "Add");});
+            Button::new(cx, |cx| cx.emit(AppEvent::Remove), |cx| {Label::new(cx, "Remove");});
+        }).height(Auto);
 
         // List of 12 items
         List::new(cx, Data::list, |cx, item| {
-            Binding::new(cx, ListData::selected, move |cx, selected|{
-                let item = item.clone();
-                HStack::new(cx, move |cx| {
-                    Label::new(cx, "Hello").width(Stretch(1.0));
-                    Label::new(cx, "World");
-                    Label::new(cx, &item.value(cx).to_string());
-                    //Label::new(cx, &item.index().to_string());
-                })
-                .background_color(
-                    if item.index() == *selected.get(cx) {
-                        Color::rgb(50, 200, 50)
-                    } else {
-                        Color::rgb(255,255,255)
-                    }
-                )
-                .height(Auto)
-                .width(Stretch(1.0))
-                .on_press(cx, move |cx| cx.emit(ListEvent::SetSelected(item.index())));
+            ZStack::new(cx, move |cx|{
+                Binding::new(cx, ListData::selected, move |cx, selected|{
+                    let item = item.clone();
+                    HStack::new(cx, move |cx| {
+                        Label::new(cx, "Hello").width(Stretch(1.0));
+                        Label::new(cx, "World");
+                        Label::new(cx, &item.value(cx).to_string());
+                        //Label::new(cx, &item.index().to_string());
+                    })
+                    .background_color(
+                        if item.index() == *selected.get(cx) {
+                            Color::rgb(50, 200, 50)
+                        } else {
+                            Color::rgb(255,255,255)
+                        }
+                    )
+                    .height(Auto)
+                    .width(Stretch(1.0))
+                    .on_press(cx, move |cx| cx.emit(ListEvent::SetSelected(item.index())));
+                });
             });
         }).class("list");
     })
@@ -58,6 +63,7 @@ pub struct Data {
 #[derive(Debug)]
 pub enum AppEvent {
     Add(u32),
+    Remove,
 }
 
 impl Model for Data {
@@ -66,6 +72,10 @@ impl Model for Data {
             match app_event {
                 AppEvent::Add(val) => {
                     self.list.push(*val);
+                }
+
+                AppEvent::Remove => {
+                    self.list.pop();
                 }
             }
         }

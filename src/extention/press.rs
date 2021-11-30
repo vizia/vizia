@@ -223,6 +223,76 @@ impl<V: View> View for Hover<V> {
     }
 }
 
+// Leave
+pub struct Leave<V: View> {
+    view: Box<dyn ViewHandler>,
+    action: Option<Box<dyn Fn(&mut Context)>>,
+
+    p: PhantomData<V>,
+}
+
+impl<V: View> Leave<V> {
+    pub fn new<'a,F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Leave<V>> 
+    where F: 'static + Fn(&mut Context)
+    {
+        if let Some(mut view) = cx.views.remove(&handle.entity) {
+            if view.downcast_ref::<V>().is_some() {
+                let item = Self {
+                    view,
+                    action: Some(Box::new(action)),
+                    p: Default::default(),
+                }; 
+        
+                cx.views.insert(handle.entity, Box::new(item));
+            } else {
+                if let Some(hover) = view.downcast_mut::<Hover<V>>() {
+                    hover.action = Some(Box::new(action));
+                }
+                cx.views.insert(handle.entity, view);
+            }
+
+        }
+
+
+        Handle {
+            entity: handle.entity,
+            style: handle.style.clone(),
+            p: Default::default(),
+        }
+    }
+}
+
+impl<V: View> View for Leave<V> {
+
+    fn element(&self) -> Option<String> {
+        self.view.element()
+    }
+
+    fn debug(&self, entity: Entity) -> String {
+        self.view.debug(entity)
+    }
+
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        self.view.event(cx, event);
+
+        if let Some(window_event) = event.message.downcast() {
+            match window_event {
+                WindowEvent::MouseLeave => {
+                    if event.target == cx.current {
+                        if let Some(action) = self.action.take() {
+                            (action)(cx);
+    
+                            self.action = Some(action);
+                        }
+                    }
+                }
+
+                _=> {}
+            }
+        }
+    }
+}
+
 // Geo
 pub struct Geo<V: View> {
     view: Box<dyn ViewHandler>,
@@ -304,6 +374,9 @@ pub trait Actions {
     fn on_hover<F>(self, cx: &mut Context, action: F) -> Handle<Hover<Self::View>>
     where F: 'static + Fn(&mut Context);
 
+    fn on_leave<F>(self, cx: &mut Context, action: F) -> Handle<Leave<Self::View>>
+    where F: 'static + Fn(&mut Context);
+
     fn on_geo_changed<F>(self, cx: &mut Context, action: F) -> Handle<Geo<Self::View>>
     where F: 'static + Fn(&mut Context, GeometryChanged);
 
@@ -328,6 +401,12 @@ impl<V: View> Actions for Handle<V> {
     where F: 'static + Fn(&mut Context) 
     {
         Hover::new(self, cx, action)
+    }
+
+    fn on_leave<F>(self, cx: &mut Context, action: F) -> Handle<Leave<Self::View>>
+    where F: 'static + Fn(&mut Context) 
+    {
+        Leave::new(self, cx, action)
     }
 
     fn on_geo_changed<F>(self, cx: &mut Context, action: F) -> Handle<Geo<Self::View>>
