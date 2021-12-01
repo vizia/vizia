@@ -75,7 +75,7 @@ pub use view::{View, Canvas};
 mod extention;
 pub use extention::*;
 
-pub use keyboard_types::Code;
+pub use keyboard_types::{Code, Key};
 
 // pub trait Model: Sized {
 //     fn build(&self, cx: &mut Context) -> TypedId<Self>;

@@ -58,6 +58,31 @@ pub fn apply_hover(cx: &mut Context) {
             && ty < (clip_region.y + clip_region.h) 
         {
             hovered_widget = entity;
+            if cx.style.borrow().pseudo_classes.get(entity).cloned().unwrap_or_default().contains(PseudoClass::OVER) == false {
+                cx.event_queue.push_back(
+                    Event::new(WindowEvent::MouseOver)
+                        .target(entity)
+                        .propagate(Propagation::Direct),
+                );
+
+                if let Some(pseudo_class) = cx.style.borrow_mut().pseudo_classes.get_mut(entity) {
+                    pseudo_class.set(PseudoClass::OVER, true);
+                }
+            
+            }
+        } else {
+            if cx.style.borrow().pseudo_classes.get(entity).cloned().unwrap_or_default().contains(PseudoClass::OVER) == true {
+                cx.event_queue.push_back(
+                    Event::new(WindowEvent::MouseOut)
+                        .target(entity)
+                        .propagate(Propagation::Direct),
+                );
+
+                if let Some(pseudo_class) = cx.style.borrow_mut().pseudo_classes.get_mut(entity) {
+                    pseudo_class.set(PseudoClass::OVER, false);
+                }
+            
+            }
         }
     }
 
