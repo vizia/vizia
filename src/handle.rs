@@ -2,7 +2,7 @@ use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility};
+use crate::{Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility, Abilities};
 
 macro_rules! set_style {
     ($name:ident, $t:ty) => {
@@ -91,6 +91,17 @@ impl<T> Handle<T> {
         self.style.borrow_mut().z_order.insert(self.entity, value);
 
         self.style.borrow_mut().needs_redraw = true;
+
+        self
+    }
+
+    // Abilities
+    pub fn hoverable(self, state: bool) -> Self {
+        if let Some(abilities) = self.style.borrow_mut().abilities.get_mut(self.entity) {
+            abilities.set(Abilities::HOVERABLE, state);
+        }
+
+        self.style.borrow_mut().needs_restyle = true;
 
         self
     }

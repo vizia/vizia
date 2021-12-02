@@ -10,7 +10,7 @@ use crate::style::Transform2D;
 use crate::storage::sparse_set::SparseSet;
 use crate::storage::sparse_set::SparseSetError;
 
-use bitflags::bitflags;
+
 
 /// Computed properties used for layout and drawing
 
@@ -73,20 +73,7 @@ impl Default for BoundingBox {
     }
 }
 
-bitflags! {
-    pub struct Abilities: u8 {
-        const HOVERABLE = 1;
-        const FOCUSABLE = 1 << 1;
-        const CHECKABLE = 1 << 2;
-        const SELECTABLE = 1 << 3;
-    } 
-}
 
-impl Default for Abilities {
-    fn default() -> Abilities {
-        Abilities::all()
-    }
-}
 
 /// Stores data which can be cached between system runs.
 ///
@@ -98,8 +85,6 @@ pub struct CachedData {
     pub(crate) visibility: SparseSet<Visibility>,
     pub(crate) display: SparseSet<Display>,
     pub(crate) opacity: SparseSet<f32>,
-    // TODO - combine hoverable and focusable with a bitflag
-    pub(crate) abilities: SparseSet<Abilities>,
 
     pub(crate) z_index: SparseSet<i32>,
 
@@ -145,7 +130,6 @@ impl CachedData {
         self.bounds.insert(entity, Default::default())?;
         self.visibility.insert(entity, Default::default())?;
         self.display.insert(entity, Default::default())?;
-        self.abilities.insert(entity, Abilities::all())?;
         self.child_sum.insert(entity, (0.0, 0.0))?;
         self.child_max.insert(entity, (0.0, 0.0))?;
 
@@ -225,7 +209,6 @@ impl CachedData {
     pub fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
         self.visibility.remove(entity);
-        self.abilities.remove(entity);
         self.child_sum.remove(entity);
         self.child_max.remove(entity);
 
@@ -712,34 +695,6 @@ impl CachedData {
         if let Some(display) = self.display.get_mut(entity) {
             *display = val;
         }
-    }
-
-    pub fn get_hoverable(&self, entity: Entity) -> bool {
-        self.abilities
-            .get(entity)
-            .cloned()
-            .unwrap().intersects(Abilities::HOVERABLE)
-    }
-
-    pub fn get_focusable(&self, entity: Entity) -> bool {
-        self.abilities
-            .get(entity)
-            .cloned()
-            .unwrap().intersects(Abilities::FOCUSABLE)
-    }
-
-    pub fn get_checkable(&self, entity: Entity) -> bool {
-        self.abilities
-            .get(entity)
-            .cloned()
-            .unwrap().intersects(Abilities::CHECKABLE)
-    }
-
-    pub fn get_selectable(&self, entity: Entity) -> bool {
-        self.abilities
-            .get(entity)
-            .cloned()
-            .unwrap().intersects(Abilities::SELECTABLE)
     }
 
     // pub(crate) fn set_hoverable(&mut self, entity: Entity, val: bool) {

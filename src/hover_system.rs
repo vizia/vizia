@@ -1,6 +1,6 @@
 use morphorm::Cache;
 
-use crate::{Display, Entity, Event, Propagation, Context, Units, Visibility, WindowEvent, PseudoClass};
+use crate::{Display, Entity, Event, Propagation, Context, Units, Visibility, WindowEvent, PseudoClass, Abilities};
 
 /// Determines the hovered entity based on the mouse cursor position
 pub fn apply_hover(cx: &mut Context) {
@@ -32,8 +32,14 @@ pub fn apply_hover(cx: &mut Context) {
         }
 
         // Skip non-hoverable widgets
-        if cx.cache.get_hoverable(entity) != true {
-            continue;
+        // if cx.cache.get_hoverable(entity) != true {
+        //     continue;
+        // }
+
+        if let Some(abilities) = cx.style.borrow().abilities.get(entity).cloned() {
+            if !abilities.contains(Abilities::HOVERABLE) {
+                continue;
+            }
         }
 
         let mut transform = cx.cache.get_transform(entity);

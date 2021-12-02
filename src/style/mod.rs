@@ -240,6 +240,22 @@ use morphorm::Units::*;
 // use super::storage::style_set::StyleSet;
 
 // use bimap::BiMap;
+use bitflags::bitflags;
+
+bitflags! {
+    pub struct Abilities: u8 {
+        const HOVERABLE = 1;
+        const FOCUSABLE = 1 << 1;
+        const CHECKABLE = 1 << 2;
+        const SELECTABLE = 1 << 3;
+    } 
+}
+
+impl Default for Abilities {
+    fn default() -> Abilities {
+        Abilities::all()
+    }
+}
 
 
 /// Stores the style properties of all entities in the application. To set properties on entities see the [PropSet] trait.
@@ -258,6 +274,7 @@ pub struct Style {
     pub elements: SparseSet<String>,
     pub classes: SparseSet<HashSet<String>>,
     pub pseudo_classes: SparseSet<PseudoClass>,
+    pub abilities: SparseSet<Abilities>,
 
     // Display
     pub display: AnimatableSet<Display>,
@@ -1396,9 +1413,10 @@ impl Style {
 
     // Add style data to an entity
     pub fn add(&mut self, entity: Entity) {
-        self.pseudo_classes.insert(entity, PseudoClass::default()).unwrap();
+        self.pseudo_classes.insert(entity, PseudoClass::default()).expect("Failed to add pseudoclasses");
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
 
+        self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
         //self.z_order.insert(entity, 0);
 
         self.overflow.insert(entity, Default::default());

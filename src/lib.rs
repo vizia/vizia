@@ -18,7 +18,7 @@ pub use handle::*;
 
 mod tree;
 pub use morphorm::*;
-pub use style::Color;
+pub use style::{Abilities, Color};
 pub use tree::*;
 
 pub mod views;
