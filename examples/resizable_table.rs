@@ -94,10 +94,6 @@ impl ResizableItem {
 
 impl View for ResizableItem {
 
-    fn update(&mut self, new: &Self) {
-        
-    }
-
     fn element(&self) -> Option<String> {
         Some("label".to_string())
     }

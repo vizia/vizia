@@ -1,34 +1,42 @@
 
-use crate::{Context, Handle, View};
+use crate::{Context, Handle, TreeExt, View};
 
 
 type Template<T> = Option<Box<dyn Fn(&mut Context, T)>>;
 
 
 pub struct ForEach {
-    length: usize,
-    item_template: Template<usize>,
+
 }
 
 impl ForEach {
-    pub fn new<F>(cx: &mut Context, length: usize, template: F) -> Handle<Self> 
+    pub fn new<F>(cx: &mut Context, range: std::ops::Range<usize>, template: F) -> Handle<Self> 
     where F: 'static + Fn(&mut Context, usize),
     {
         Self{
-            length,
-            item_template: Some(Box::new(template)),
-        }.build(cx)
+
+        }.build2(cx, move |cx|{
+
+            if cx.current.child_iter(&cx.tree.clone()).count() != range.len() {
+
+                for child in cx.current.child_iter(&cx.tree.clone()) {
+                    cx.remove(child);
+                }
+                
+                cx.style.borrow_mut().needs_relayout = true;
+                cx.style.borrow_mut().needs_redraw = true;
+            }
+
+            let prev_count = cx.count;
+            cx.count = 0;
+            for i in range {
+                (template)(cx, i);
+            }
+            cx.count = prev_count;
+        })
     }
 }
 
 impl View for ForEach {
-    fn body(&mut self, cx: &mut Context) {
-        if let Some(template) = self.item_template.take() {
-            for i in 0..self.length {
-                (template)(cx, i);
-            }
 
-            self.item_template = Some(template);
-        }
-    }
 }
