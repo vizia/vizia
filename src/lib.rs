@@ -39,7 +39,7 @@ pub use events::*;
 mod storage;
 
 mod style;
-pub use style::{Style, Rule, Display, Visibility, PseudoClass};
+pub use style::{Style, Rule, Display, Visibility, PseudoClass, Overflow};
 
 mod animation;
 pub use animation::*;

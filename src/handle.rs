@@ -2,7 +2,7 @@ use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility, Abilities};
+use crate::{Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility, Abilities, style::Overflow};
 
 macro_rules! set_style {
     ($name:ident, $t:ty) => {
@@ -89,6 +89,15 @@ impl<T> Handle<T> {
     pub fn z_order(self, value: i32) -> Self {
 
         self.style.borrow_mut().z_order.insert(self.entity, value);
+
+        self.style.borrow_mut().needs_redraw = true;
+
+        self
+    }
+
+    pub fn overflow(self, value: Overflow) -> Self {
+
+        self.style.borrow_mut().overflow.insert(self.entity, value);
 
         self.style.borrow_mut().needs_redraw = true;
 

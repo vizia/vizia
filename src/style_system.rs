@@ -45,7 +45,8 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
         let overflow = cx.style.borrow().overflow.get(entity).cloned().unwrap_or_default();
 
         if overflow == Overflow::Hidden {
-            if let Some(clip_widget) = cx.style.borrow_mut().clip_widget.get(entity).cloned() {
+            let clip_widget = cx.style.borrow().clip_widget.get(entity).cloned().unwrap_or(entity);
+            //if let Some(clip_widget) = cx.style.borrow_mut().clip_widget.get(entity).cloned() {
                 let clip_widget_border_width = cx.style.borrow_mut().border_width.get(clip_widget).cloned().unwrap_or_default().value_or(0.0, 0.0);
                 let clip_x = cx.cache.get_posx(clip_widget) + clip_widget_border_width;
                 let clip_y = cx.cache.get_posy(clip_widget) + clip_widget_border_width;
@@ -69,9 +70,9 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
                 };
 
                 cx.cache.set_clip_region(entity, intersection);
-            } else {
-                cx.cache.set_clip_region(entity, parent_clip_region);
-            }
+            //} else {
+            //    cx.cache.set_clip_region(entity, parent_clip_region);
+            //}
         } else {
             cx.cache.set_clip_region(entity, root_clip_region);
         }
