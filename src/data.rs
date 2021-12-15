@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use morphorm::GeometryChanged;
+use crate::Abilities;
 use crate::style::Display;
 use crate::Entity;
 
@@ -86,6 +87,8 @@ pub struct CachedData {
     pub(crate) display: SparseSet<Display>,
     pub(crate) opacity: SparseSet<f32>,
 
+    pub(crate) abilities: SparseSet<Abilities>,
+
     pub(crate) z_index: SparseSet<i32>,
 
     pub(crate) child_sum: SparseSet<(f32, f32)>, // Sum of child (widths, heights)
@@ -159,7 +162,7 @@ impl CachedData {
 
         self.geometry_changed.insert(entity, Default::default())?;
 
-
+        self.abilities.insert(entity, Default::default())?;
 
         // let key = entity.index_unchecked();
 
@@ -237,6 +240,8 @@ impl CachedData {
         self.grid_col_max.remove(entity);
 
         self.geometry_changed.remove(entity);
+
+        self.abilities.remove(entity);
     }
 
     // For getters and setters it's safe to use unwrap because every entity must have a position and size.
@@ -285,7 +290,6 @@ impl CachedData {
             h: self.get_height(entity),
         }
     }
-
     // pub(crate) fn get_cross_stretch_sum(&self, entity: Entity) -> f32 {
     //     self.cross_stretch_sum
     //         .get(entity)

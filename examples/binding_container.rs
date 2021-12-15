@@ -43,7 +43,7 @@ impl View for CustomView {
             Label::new(cx, &format!("{}",item.get(cx).get(0).unwrap()));
         });
 
-        Button::new(cx, |cx| cx.emit(CustomEvent::Reset), |_|{});
+        Button::new(cx, |cx| cx.emit(CustomEvent::Reset), |cx| Label::new(cx, ""));
     }
 }
 

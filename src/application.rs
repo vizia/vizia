@@ -1,10 +1,10 @@
 use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
 
-use femtovg::{Canvas, renderer::OpenGl};
+use femtovg::{Canvas, renderer::OpenGl, TextContext};
 use glutin::{ContextBuilder, event::{ElementState, VirtualKeyCode}, event_loop::{ControlFlow, EventLoop, EventLoopProxy}, window::WindowBuilder};
 use morphorm::Units;
 
-use crate::{AppData, BoundingBox, CachedData, Color, Context, Data, Display, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, Window, WindowDescription, WindowEvent, apply_hover, apply_styles, geometry_changed, scan_to_code, style::apply_transform, style_system::{apply_clipping, apply_visibility, apply_z_ordering}, vcode_to_code, vk_to_key};
+use crate::{AppData, BoundingBox, CachedData, Color, Context, Data, Display, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, Window, WindowDescription, WindowEvent, apply_hover, apply_styles, geometry_changed, scan_to_code, style::apply_transform, style_system::{apply_clipping, apply_visibility, apply_z_ordering, apply_text_constraints}, vcode_to_code, vk_to_key};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 
@@ -46,6 +46,7 @@ impl Application {
             //state_count: 0,
             resource_manager: ResourceManager::new(),
             fonts: Vec::new(),
+            text_context: TextContext::default(),
         };
 
         context.entity_manager.create();
@@ -231,10 +232,10 @@ impl Application {
                                 match font {
                                     FontOrId::Font(data) => {
                                         let id1 = window.canvas.add_font_mem(&data.clone()).expect(&format!("Failed to load font file for: {}", name));
-                                        //let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
-                                        // if id1 != id2 {
-                                        //     panic!("Fonts in canvas must have the same id as fonts in the text context");
-                                        // }
+                                        let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
+                                        if id1 != id2 {
+                                            panic!("Fonts in canvas must have the same id as fonts in the text context");
+                                        }
                                         *font = FontOrId::Id(id1);
                                     }
                     
@@ -292,6 +293,8 @@ impl Application {
                     apply_z_ordering(&mut context, &tree);
 
                     apply_visibility(&mut context, &tree);
+
+                    apply_text_constraints(&mut context, &tree);
 
                     // Layout
                     if context.style.borrow().needs_relayout {

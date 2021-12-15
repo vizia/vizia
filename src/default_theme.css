@@ -1,19 +1,59 @@
 
-
+/* Filled Button */
 button {
-    background-color: #808080;
-    width: 100px;
+    background-color: #2000AA;
+    width: auto;
     height: 30px;
-    color: black;
+    border-radius: 3px;
+    child-space: 1s;
+    child-left: 5px;
+    child-right: 5px;
 }
 
-button:hover {
-    background-color: #AAAAAA;
+button label {
+    color: white;
+    background-color: #00000000;
+    child-space: 1s;
 }
+
+button:over {
+    background-color: #2000DD;
+}
+
+button.outlined {
+    background-color: #00000000;
+    border-color: #2000AA;
+    border-width: 1px;
+}
+
+button.outlined label {
+    color: #2000AA;
+}
+
+button.outlined:over {
+    background-color: #202000AA;
+}
+
+button.text {
+    background-color: #00000000;
+}
+
+button.text label {
+    color: #2000AA;
+}
+
+button.text:over {
+    background-color: #202000AA;
+}
+
+label.icon {
+    font: "icon";
+}
+
 
 label {
-    width: 100px;
-    height: 30px;
+    width: auto;
+    height: auto;
     child-space: 1s;
     child-left: 5px;
 }

@@ -31,12 +31,12 @@ impl View for Counter {
 
         HStack::new(cx, |cx|{
 
-            Button::new(cx, move |cx| cx.emit(CounterEvent::Increment), |cx|{
-                Label::new(cx, "Increment");
-            });
-            Button::new(cx, move |cx| cx.emit(CounterEvent::Decrement), |cx|{
-                Label::new(cx, "Decrement");
-            });
+            Button::new(cx, move |cx| cx.emit(CounterEvent::Increment), |cx|
+                Label::new(cx, "Increment")
+            );
+            Button::new(cx, move |cx| cx.emit(CounterEvent::Decrement), |cx|
+                Label::new(cx, "Decrement")
+            );
 
             Binding::new(cx, CounterData::count, |cx, count|{
                 Label::new(cx, &count.get(cx).to_string());

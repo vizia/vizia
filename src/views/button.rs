@@ -1,4 +1,4 @@
-use crate::{Handle, MouseButton, WindowEvent};
+use crate::{Handle, MouseButton, WindowEvent, TreeExt, Abilities};
 
 use crate::{Context, Entity, Event, View};
 
@@ -7,19 +7,20 @@ use crate::{Context, Entity, Event, View};
 
 pub struct Button {
     action: Option<Box<dyn Fn(&mut Context)>>,
-    label: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl Button {
-    pub fn new<A, L>(cx: &mut Context, action: A, label: L) -> Handle<Self>
+    pub fn new<A, L, Label>(cx: &mut Context, action: A, label: L) -> Handle<Self>
     where 
         A: 'static + Fn(&mut Context),
-        L: 'static + Fn(&mut Context)
+        L: 'static + Fn(&mut Context) -> Handle<Label>,
+        Label: 'static,
     {
         Self {
             action: Some(Box::new(action)),
-            label: Some(Box::new(label)),
-        }.build(cx)
+        }.build2(cx, move |cx|{
+            (label)(cx);
+        })
         
     }
 }
@@ -34,10 +35,6 @@ impl View for Button {
     }
 
     fn body<'a>(&mut self, cx: &'a mut Context) {
-        if let Some(label) = self.label.take() {
-            (label)(cx);
-            self.label = Some(label);
-        }
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {

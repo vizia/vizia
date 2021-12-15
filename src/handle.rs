@@ -149,6 +149,26 @@ impl<T> Handle<T> {
         self
     }
 
+    pub fn min_size(self, value: Units) -> Self {
+        self.style.borrow_mut().min_width.insert(self.entity, value);
+        self.style.borrow_mut().min_height.insert(self.entity, value);
+
+        self.style.borrow_mut().needs_relayout = true;
+        self.style.borrow_mut().needs_redraw = true;
+
+        self
+    }
+
+    pub fn max_size(self, value: Units) -> Self {
+        self.style.borrow_mut().max_width.insert(self.entity, value);
+        self.style.borrow_mut().max_height.insert(self.entity, value);
+
+        self.style.borrow_mut().needs_relayout = true;
+        self.style.borrow_mut().needs_redraw = true;
+
+        self
+    }
+
     set_style!(background_color, Color);
 
     set_style!(layout_type, LayoutType);
@@ -161,6 +181,22 @@ impl<T> Handle<T> {
     set_style!(bottom, Units);
     set_style!(width, Units);
     set_style!(height, Units);
+
+    set_style!(min_width, Units);
+    set_style!(max_width, Units);
+    set_style!(min_height, Units);
+    set_style!(max_height, Units);
+
+    set_style!(min_left, Units);
+    set_style!(max_left, Units);
+    set_style!(min_right, Units);
+    set_style!(max_right, Units);
+    set_style!(min_top, Units);
+    set_style!(max_top, Units);
+    set_style!(min_bottom, Units);
+    set_style!(max_bottom, Units);
+
+
     set_style!(child_left, Units);
     set_style!(child_right, Units);
     set_style!(child_top, Units);

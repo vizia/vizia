@@ -1,4 +1,7 @@
-use crate::{BoundingBox, Context, Display, Entity, Rule, Tree, TreeExt, Visibility, style::{Overflow, Property, Selector, SelectorRelation}};
+use femtovg::{Align, Baseline, Paint};
+use morphorm::Units;
+
+use crate::{BoundingBox, Context, Display, Entity, Rule, Tree, TreeExt, Visibility, style::{Overflow, Property, Selector, SelectorRelation}, Abilities, FontOrId};
 
 // use crate::{BoundingBox, Display, Entity, Overflow, PropGet, PropSet, Property, SelectorRelation, Rule, Selector, Cx, Tree, TreeExt, Visibility};
 
@@ -11,7 +14,7 @@ pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
 
         let parent = tree.get_parent(entity).unwrap();
 
-        if let Some(z_order) = cx.style.borrow_mut().z_order.get(entity) {
+        if let Some(z_order) = cx.style.borrow().z_order.get(entity) {
             cx.cache.set_z_index(entity, *z_order);
         } else {
             let parent_z_order = cx.cache.get_z_index(parent);
@@ -30,13 +33,13 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
         let parent = tree.get_parent(entity).unwrap();
 
         let mut parent_clip_region = cx.cache.get_clip_region(parent);
-        let parent_border_width = cx.style.borrow().border_width.get(parent).cloned().unwrap_or_default().value_or(0.0, 0.0);
+        //let parent_border_width = cx.style.borrow().border_width.get(parent).cloned().unwrap_or_default().value_or(0.0, 0.0);
 
         //println!("Parent border width: {}", parent_border_width);
-        parent_clip_region.x += parent_border_width / 2.0;
-        parent_clip_region.y += parent_border_width / 2.0;
-        parent_clip_region.w -= parent_border_width;
-        parent_clip_region.h -= parent_border_width;
+        // parent_clip_region.x;
+        // parent_clip_region.y;
+        // parent_clip_region.w;
+        // parent_clip_region.h;
 
 
 
@@ -47,11 +50,11 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
         if overflow == Overflow::Hidden {
             let clip_widget = cx.style.borrow().clip_widget.get(entity).cloned().unwrap_or(entity);
             //if let Some(clip_widget) = cx.style.borrow_mut().clip_widget.get(entity).cloned() {
-                let clip_widget_border_width = cx.style.borrow_mut().border_width.get(clip_widget).cloned().unwrap_or_default().value_or(0.0, 0.0);
-                let clip_x = cx.cache.get_posx(clip_widget) + clip_widget_border_width;
-                let clip_y = cx.cache.get_posy(clip_widget) + clip_widget_border_width;
-                let clip_w = cx.cache.get_width(clip_widget) - 2.0 * clip_widget_border_width;
-                let clip_h = cx.cache.get_height(clip_widget) - 2.0 * clip_widget_border_width;
+                //let clip_widget_border_width = cx.style.borrow_mut().border_width.get(clip_widget).cloned().unwrap_or_default().value_or(0.0, 0.0);
+                let clip_x = cx.cache.get_posx(clip_widget);
+                let clip_y = cx.cache.get_posy(clip_widget);
+                let clip_w = cx.cache.get_width(clip_widget);
+                let clip_h = cx.cache.get_height(clip_widget);
 
                 let mut intersection = BoundingBox::default();
                 intersection.x = clip_x.max(parent_clip_region.x);
@@ -97,7 +100,7 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
         if cx.cache.get_visibility(parent) == Visibility::Invisible {
             cx.cache.set_visibility(entity, Visibility::Invisible);
         } else {
-            if let Some(visibility) = cx.style.borrow_mut().visibility.get(entity) {
+            if let Some(visibility) = cx.style.borrow().visibility.get(entity) {
                 cx.cache.set_visibility(entity, *visibility);
             } else {
                 cx.cache.set_visibility(entity, Visibility::Visible);
@@ -107,7 +110,7 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
         if cx.cache.get_display(parent) == Display::None {
             cx.cache.set_display(entity, Display::None);
         } else {
-            if let Some(display) = cx.style.borrow_mut().display.get(entity) {
+            if let Some(display) = cx.style.borrow().display.get(entity) {
                 cx.cache.set_display(entity, *display);
             } else {
                 cx.cache.set_display(entity, Display::Flex);
@@ -116,11 +119,227 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
 
         let parent_opacity = cx.cache.get_opacity(parent);
 
-        let opacity = cx.style.borrow_mut().opacity.get(entity).cloned().unwrap_or_default();
+        let opacity = cx.style.borrow().opacity.get(entity).cloned().unwrap_or_default();
 
         cx.cache.set_opacity(entity, opacity.0 * parent_opacity);
     }
 }
+
+// Apply this before layout
+pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
+
+    let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
+    draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
+
+    for entity in draw_tree.into_iter() {
+
+        if entity == Entity::root() {
+            continue;
+        }
+
+        if cx.style.borrow().text.get(entity).is_some() {
+
+            let font = cx.style.borrow().font.get(entity).cloned().unwrap_or_default();
+
+            // TODO - This should probably be cached in cx to save look-up time
+            let default_font = cx.resource_manager.fonts.get(&cx.style.borrow().default_font).and_then(|font|{
+                match font {
+                    FontOrId::Id(id) => Some(id),
+                    _=> None,
+                }
+            }).expect("Failed to find default font");
+
+            let font_id = cx.resource_manager.fonts.get(&font).and_then(|font|{
+                match font {
+                    FontOrId::Id(id) => Some(id),
+                    _=> None,
+                }
+            }).unwrap_or(default_font);
+
+            let font_size = cx.style.borrow().font_size.get(entity).cloned().unwrap_or(16.0);
+
+            let mut paint = Paint::default();
+            paint.set_font_size(font_size);
+            paint.set_font(&[font_id.clone()]);
+
+            let parent = cx
+                .tree
+                .get_parent(entity)
+                .expect("Failed to find parent somehow");
+
+            let parent_posx = cx.cache.get_posx(parent);
+            let parent_posy = cx.cache.get_posy(parent);
+            let parent_width = cx.cache.get_width(parent);
+            let parent_height = cx.cache.get_height(parent);
+            
+            let border_width = match cx
+                .style
+                .borrow()
+                .border_width
+                .get(entity)
+                .cloned()
+                .unwrap_or_default()
+            {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => parent_width * val,
+                _ => 0.0,
+            };
+
+            let child_left = cx
+                .style
+                .borrow()
+                .child_left
+                .get(entity)
+                .cloned()
+                .unwrap_or_default();
+            let child_right = cx
+                .style
+                .borrow()
+                .child_right
+                .get(entity)
+                .cloned()
+                .unwrap_or_default();
+            let child_top = cx
+                .style
+                .borrow()
+                .child_top
+                .get(entity)
+                .cloned()
+                .unwrap_or_default();
+            let child_bottom = cx
+                .style
+                .borrow()
+                .child_bottom
+                .get(entity)
+                .cloned()
+                .unwrap_or_default();
+            
+            let font_metrics = cx.text_context
+                .measure_font(paint)
+                .expect("Failed to read font metrics");
+
+            let mut x = cx.cache.get_posx(entity);
+            let mut y = cx.cache.get_posy(entity);
+            let mut sy = y;
+            let width = cx.cache.get_width(entity);
+            let height = cx.cache.get_height(entity);
+
+            let align = match child_left {
+                Units::Pixels(val) => match child_right {
+                    Units::Stretch(_) => {
+                        x += val + border_width;
+                        Align::Left
+                    }
+
+                    _ => Align::Left,
+                },
+
+                Units::Stretch(_) => match child_right {
+                    Units::Pixels(val) => {
+                        x += width - val - border_width;
+                        Align::Right
+                    }
+
+                    Units::Stretch(_) => {
+                        x += 0.5 * width;
+                        Align::Center
+                    }
+
+                    _ => Align::Right,
+                },
+
+                _ => Align::Left,
+            };
+
+            let baseline = match child_top {
+                Units::Pixels(val) => match child_bottom {
+                    Units::Stretch(_) => {
+                        y += val + border_width;
+                        Baseline::Top
+                    }
+
+                    _ => Baseline::Top,
+                },
+
+                Units::Stretch(_) => match child_bottom {
+                    Units::Pixels(val) => {
+                        y += height - val - border_width;
+                        sy = y - font_metrics.height();
+                        Baseline::Bottom
+                    }
+
+                    Units::Stretch(_) => {
+                        y += 0.5 * height;
+                        sy = y - font_metrics.height() * 0.5;
+                        Baseline::Middle
+                    }
+
+                    _ => Baseline::Top,
+                },
+
+                _ => Baseline::Top,
+            };
+
+            paint.set_text_align(align);
+            paint.set_text_baseline(baseline);
+
+            let text = cx.style.borrow().text.get(entity).cloned().unwrap();
+            
+            if let Ok(text_metrics) = cx.text_context.measure_text(x, y, text, paint) {
+                let text_width = text_metrics.width();
+                let text_height = text_metrics.height();
+
+                if cx.style.borrow().width.get(entity) == Some(&Units::Auto) {
+                    cx.style.borrow_mut().min_width.insert(entity, Units::Pixels(text_width.round()));
+                    cx.style.borrow_mut().needs_relayout = true;
+                    cx.style.borrow_mut().needs_redraw = true;
+                    
+                }
+                
+                if cx.style.borrow().height.get(entity) == Some(&Units::Auto) {
+                    //println!("Entity: {} width: {} height: {}", entity, text_width, text_height);
+                    cx.style.borrow_mut().min_height.insert(entity, Units::Pixels(text_height.round()));
+                    cx.style.borrow_mut().needs_relayout = true;
+                    cx.style.borrow_mut().needs_redraw = true;
+                }
+            }
+
+        }
+
+    }
+}
+
+// pub fn apply_abilities(cx: &mut Context, tree: &Tree) {
+//     let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
+//     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
+
+//     for entity in draw_tree.into_iter() {
+
+//         if entity == Entity::root() {
+//             continue;
+//         }
+
+//         let parent= entity.parent(tree).unwrap();
+
+//         let parent_abilities = cx.cache.abilities.get(parent).cloned().unwrap_or_default();
+
+//         if !cx.style.borrow().abilities.get(parent).contains(Abilities::HOVERABLE) {
+//             if let Some(abilities) = cx.style.borrow_mut().abilities.get_mut(entity) {
+//                 abilities.set(Abilities::HOVERABLE, false);
+//             }
+//         }
+
+//         if cx.cache.get_visibility(parent) == Visibility::Invisible {
+//             cx.cache.set_visibility(entity, Visibility::Invisible);
+//         } else {
+//             if let Some(visibility) = cx.style.borrow_mut().visibility.get(entity) {
+//                 cx.cache.set_visibility(entity, *visibility);
+//             } else {
+//                 cx.cache.set_visibility(entity, Visibility::Visible);
+//             }
+//         }
+//     }
+// }
 
 // Returns true if the widget matches the selector
 fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {

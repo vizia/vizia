@@ -1,45 +1,19 @@
 use vizia::*;
 
-fn main() {
-    Application::new(WindowDescription::new().with_title("Counter"), |cx|{
-
-        CounterData {
-            count: 0,
-        }.build(cx);
-
-        HStack::new(cx, |cx|{
-
-            Button::new(cx, move |cx| cx.emit(CounterEvent::Increment), |cx|{
-                Label::new(cx, "Increment");
-            });
-
-            Button::new(cx, move |cx| cx.emit(CounterEvent::Decrement), |cx|{
-                Label::new(cx, "Decrement");
-            });
-
-            Binding::new(cx, CounterData::count, |cx, count|{
-                Label::new(cx, &count.get(cx).to_string()).background_color(Color::red());
-            });
-
-
-            Binding::new(cx, CounterData::count, |cx, count|{
-                Label::new(cx, &english_numbers::convert_all_fmt(*count.get(cx) as i64)).background_color(Color::red());
-            });
-        });  
-    }).run();
-}
-
+// Define some data which the counter will use
 #[derive(Lens)]
 pub struct CounterData {
     count: i32,
 }
 
+// Define some events
 #[derive(Debug)]
 pub enum CounterEvent {
     Increment,
     Decrement,
 }
 
+// Respond to events by updating the data
 impl Model for CounterData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
         if let Some(counter_event) = event.message.downcast() {
@@ -49,4 +23,39 @@ impl Model for CounterData {
             }
         }
     }
+}
+
+fn main() {
+
+    let window_description = WindowDescription::new().with_title("Counter").with_inner_size(500, 100);
+
+    Application::new(window_description, |cx|{
+
+        CounterData {
+            count: 0,
+        }.build(cx);
+
+        HStack::new(cx, |cx|{
+
+            // Button for incrementing the counter
+            Button::new(cx, move |cx| cx.emit(CounterEvent::Increment), |cx|
+                Label::new(cx, "Increment")
+            );
+
+            // Button for decrementing the counter
+            Button::new(cx, move |cx| cx.emit(CounterEvent::Decrement), |cx|
+                Label::new(cx, "Decrement")
+            );
+
+            // Label bound to the counter value
+            Binding::new(cx, CounterData::count, |cx, count|{
+                Label::new(cx, &count.get(cx).to_string());
+            });
+
+            // Label bound to the counter value displaying the value as english text
+            Binding::new(cx, CounterData::count, |cx, count|{
+                Label::new(cx, &english_numbers::convert_all_fmt(*count.get(cx) as i64));
+            });
+        }).child_space(Stretch(1.0));  
+    }).run();
 }
