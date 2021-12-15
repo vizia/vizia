@@ -290,15 +290,16 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                 let text_height = text_metrics.height();
 
                 if cx.style.borrow().width.get(entity) == Some(&Units::Auto) {
-                    cx.style.borrow_mut().min_width.insert(entity, Units::Pixels(text_width.round()));
+                    // Add an extra pixel to account to AA
+                    cx.style.borrow_mut().min_width.insert(entity, Units::Pixels(text_width.round() + 1.0));
                     cx.style.borrow_mut().needs_relayout = true;
                     cx.style.borrow_mut().needs_redraw = true;
                     
                 }
                 
                 if cx.style.borrow().height.get(entity) == Some(&Units::Auto) {
-                    //println!("Entity: {} width: {} height: {}", entity, text_width, text_height);
-                    cx.style.borrow_mut().min_height.insert(entity, Units::Pixels(text_height.round()));
+                    // Add an extra pixel to account for AA
+                    cx.style.borrow_mut().min_height.insert(entity, Units::Pixels(text_height.round() + 1.0));
                     cx.style.borrow_mut().needs_relayout = true;
                     cx.style.borrow_mut().needs_redraw = true;
                 }
