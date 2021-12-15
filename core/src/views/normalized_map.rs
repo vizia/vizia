@@ -1,4 +1,4 @@
-pub trait NormalizedMap: 'static {
+pub trait NormalizedMap: 'static + Clone {
     fn normalized_to_display(&self, normalized: f32) -> String;
 
     fn snap(&self, normalized: f32) -> f32 {

@@ -25,6 +25,9 @@ pub struct Knob<T: NormalizedMap> {
     centered: bool,
 
     pub map: T,
+
+    on_changing: Option<Box<dyn Fn(&mut Self, &mut Context)>>,
+
 }
 
 impl<T: NormalizedMap> Knob<T> {
@@ -44,14 +47,20 @@ impl<T: NormalizedMap> Knob<T> {
             centered: false,
 
             map,
+
+            on_changing: None,
+
         }.build2(cx, move |cx|{
             SliderData {
                 value: normalized_default.clamp(0.0, 1.0),
             }.build(cx);
 
             ZStack::new(cx, move |cx|{
+
+
+
                 Binding::new(cx, SliderData::value, |cx, value|{
-                    println!("{}", value.get(cx));
+                    //println!("{}", value.get(cx));
                     ArcTrack::new(cx, *value.get(cx))
                         .width(Stretch(1.0))
                         .height(Stretch(1.0))
@@ -69,6 +78,23 @@ impl<T: NormalizedMap> Knob<T> {
             });
         })
     }
+
+
+}
+
+impl<T: NormalizedMap> Handle<Knob<T>> {
+    pub fn on_changing<F>(mut self, cx: &mut Context, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Knob<T>, &mut Context),
+    {
+        if let Some(view) = cx.views.get_mut(&self.entity) {
+            if let Some(knob) = view.downcast_mut::<Knob<T>>() {
+                knob.on_changing = Some(Box::new(callback));
+            }
+        }
+
+        self
+    }
 }
 
 impl<T: NormalizedMap> View for Knob<T> {
@@ -84,12 +110,12 @@ impl<T: NormalizedMap> View for Knob<T> {
             self_ref.normalized_value = self_ref.map.snap(self_ref.continuous_normal);
             
             // TODO - Remove when done
-            println!("Normalized: {}, Display: {}", self_ref.normalized_value, self_ref.map.normalized_to_display(self_ref.normalized_value));
+            //println!("Normalized: {}, Display: {}", self_ref.normalized_value, self_ref.map.normalized_to_display(self_ref.normalized_value));
 
-            // if let Some(callback) = self_ref.on_changing.take() {
-            //     (callback)(self_ref, cx, entity);
-            //     self_ref.on_changing = Some(callback);
-            // }
+            if let Some(callback) = self_ref.on_changing.take() {
+                (callback)(self_ref, cx);
+                self_ref.on_changing = Some(callback);
+            }
 
             //entity.emit(cx, SliderEvent::ValueChanged(self_ref.normalized_value));
 
@@ -174,6 +200,8 @@ impl<T: NormalizedMap> View for Knob<T> {
     }
 }
 
+
+
 pub struct ArcTrack {
     angle_start: f32,
     angle_end: f32,
@@ -210,7 +238,7 @@ impl View for ArcTrack {
         let mut foreground_color: femtovg::Color = cx.style.borrow().background_color.get(cx.current).cloned().unwrap_or_default().into();    
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
-        //let mut background_color= femtovg::Color::rgb(200, 50, 50);
+        let mut background_color= femtovg::Color::rgb(54, 54, 54);
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
 
         let posx = cx.cache.get_posx(cx.current);
@@ -236,13 +264,13 @@ impl View for ArcTrack {
         let radius = self.radius.value_or(parent_width, 0.0);
         let span = self.span.value_or(parent_width, 0.0);
         
-        // // Draw the track arc
-        // let mut path = Path::new();
-        // path.arc(centerx, centery, radius - span/2.0, end, start, Solidity::Solid);
-        // let mut paint = Paint::color(background_color);
-        // paint.set_line_width(span);
-        // paint.set_line_cap(LineCap::Butt);
-        // canvas.stroke_path(&mut path, paint);
+        // Draw the track arc
+        let mut path = Path::new();
+        path.arc(centerx, centery, radius - span/2.0, end, start, Solidity::Solid);
+        let mut paint = Paint::color(background_color);
+        paint.set_line_width(span);
+        paint.set_line_cap(LineCap::Round);
+        canvas.stroke_path(&mut path, paint);
 
         
         
@@ -268,7 +296,7 @@ impl View for ArcTrack {
 
         let mut paint = Paint::color(foreground_color);
         paint.set_line_width(span);
-        paint.set_line_cap(LineCap::Butt);
+        paint.set_line_cap(LineCap::Round);
         canvas.stroke_path(&mut path, paint);
     }
 }
