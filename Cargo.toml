@@ -29,23 +29,15 @@ name = "zstack"
 path = "examples/controls/zstack.rs"
 
 [features]
-meadowlark = ["rusty-daw-core"]
+default = ["glutin"]
+glutin = ["vizia_glutin"]
+baseview = ["vizia_baseview"]
+
 
 [dependencies]
-vizia_derive = {version = "0.1.0", path = "derive"}
-femtovg = "0.2.5"
-morphorm = {git = "https://github.com/geom3trik/morphorm", features = ["rounding"]}
-# morphorm = {path = "../morphorm", features = ["rounding"]}
-glutin = "0.27.0"
-bitflags = "1.3.2"
-keyboard-types = "0.6.1"
-fluent-bundle = "0.15.2"
-fluent-langneg = "0.13"
-fluent-syntax = "0.11.0"
-unic-langid = "0.9"
-cssparser = "0.27.2"
-
-rusty-daw-core = {version = "0.2", optional = true}
+vizia_core = { version = "0.1.0", path = "core"}
+vizia_glutin = { version = "0.1.0", path = "glutin", optional = true }
+vizia_baseview = { version = "0.1.0", path = "baseview", optional = true }
 
 [dev-dependencies]
 english-numbers = "0.3.3"

@@ -24,7 +24,7 @@ impl <I: GenerationalId + Copy> Default for IdManager<I> {
 }
 
 impl <I: GenerationalId + Copy> IdManager<I> {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             generation: Vec::new(),
             free_list: VecDeque::with_capacity(MINIMUM_FREE_INDICES),

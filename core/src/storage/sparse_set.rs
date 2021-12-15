@@ -32,16 +32,16 @@ pub enum SparseSetError {
 
 /// Represents an entry of a sparse set storing the value and the linked key
 #[derive(Debug)]
-pub(crate) struct Entry<T> {
-    pub(crate) key: usize,
-    pub(crate) value: T,
+pub struct Entry<T> {
+    pub key: usize,
+    pub value: T,
 }
 
 /// A sparse set
 #[derive(Default, Debug)]
 pub struct SparseSetGeneric<T, D: DenseIndex> {
-    pub(crate) sparse: Vec<D>,
-    pub(crate) dense: Vec<Entry<T>>,
+    pub sparse: Vec<D>,
+    pub dense: Vec<Entry<T>>,
 }
 
 impl<T, D: DenseIndex> SparseSetGeneric<T, D> 

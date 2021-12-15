@@ -13,7 +13,7 @@ pub(crate) mod hierarchy;
 
 use crate::{Event, Propagation, Context, Tree, WindowEvent};
 
-pub(crate) fn geometry_changed(cx: &mut Context, tree: &Tree) {
+pub fn geometry_changed(cx: &mut Context, tree: &Tree) {
     for node in tree.down_iter() {
         let geometry_changed = cx.cache.geometry_changed(node);
         if !geometry_changed.is_empty() {

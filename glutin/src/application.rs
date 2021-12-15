@@ -2,11 +2,13 @@ use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
 
 use femtovg::{Canvas, renderer::OpenGl, TextContext};
 use glutin::{ContextBuilder, event::{ElementState, VirtualKeyCode}, event_loop::{ControlFlow, EventLoop, EventLoopProxy}, window::WindowBuilder};
-use morphorm::Units;
 
-use crate::{AppData, BoundingBox, CachedData, Color, Context, Data, Display, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, Window, WindowDescription, WindowEvent, apply_hover, apply_styles, geometry_changed, scan_to_code, style::apply_transform, style_system::{apply_clipping, apply_visibility, apply_z_ordering, apply_text_constraints}, vcode_to_code, vk_to_key};
+use vizia_core::{AppData, BoundingBox, CachedData, Units, Color, Context, Data, Display, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, WindowDescription, WindowEvent, apply_hover, apply_styles, geometry_changed, apply_transform, apply_clipping, apply_visibility, apply_z_ordering, apply_text_constraints};
 
-static DEFAULT_THEME: &str = include_str!("default_theme.css");
+use crate::keyboard::{vcode_to_code, vk_to_key, scan_to_code};
+use crate::window::Window;
+
+static DEFAULT_THEME: &str = include_str!("../../core/src/default_theme.css");
 
 pub struct Application {
     context: Context,
@@ -135,11 +137,11 @@ impl Application {
 
         // context.fonts = vec![font];
 
-        let regular_font = include_bytes!("../fonts/Roboto-Regular.ttf");
-        let bold_font = include_bytes!("../fonts/Roboto-Bold.ttf");
-        let icon_font = include_bytes!("../fonts/entypo.ttf");
-        let emoji_font = include_bytes!("../fonts/OpenSansEmoji.ttf");
-        let arabic_font = include_bytes!("../fonts/amiri-regular.ttf");
+        let regular_font = include_bytes!("../../fonts/Roboto-Regular.ttf");
+        let bold_font = include_bytes!("../../fonts/Roboto-Bold.ttf");
+        let icon_font = include_bytes!("../../fonts/entypo.ttf");
+        let emoji_font = include_bytes!("../../fonts/OpenSansEmoji.ttf");
+        let arabic_font = include_bytes!("../../fonts/amiri-regular.ttf");
 
         context.add_font_mem("roboto", regular_font);
         context.add_font_mem("roboto-bold", bold_font);
@@ -298,7 +300,7 @@ impl Application {
 
                     // Layout
                     if context.style.borrow().needs_relayout {
-                        morphorm::layout(&mut context.cache, &context.tree, &context.style.borrow());
+                        vizia_core::apply_layout(&mut context.cache, &context.tree, &context.style.borrow());
                         context.style.borrow_mut().needs_relayout = false;
                     }
 

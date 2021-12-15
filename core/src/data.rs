@@ -254,27 +254,27 @@ impl CachedData {
     //         .unwrap()
     // }
 
-    pub(crate) fn get_grid_row_max(&self, entity: Entity) -> f32 {
+    pub fn get_grid_row_max(&self, entity: Entity) -> f32 {
         self.grid_row_max.get(entity).cloned().unwrap_or_default()
     }
 
-    pub(crate) fn set_grid_row_max(&mut self, entity: Entity, value: f32) {
+    pub fn set_grid_row_max(&mut self, entity: Entity, value: f32) {
         if let Some(grid_row_max) = self.grid_row_max.get_mut(entity) {
             *grid_row_max = value;
         }
     }
 
-    pub(crate) fn get_grid_col_max(&self, entity: Entity) -> f32 {
+    pub fn get_grid_col_max(&self, entity: Entity) -> f32 {
         self.grid_col_max.get(entity).cloned().unwrap_or_default()
     }
 
-    pub(crate) fn set_grid_col_max(&mut self, entity: Entity, value: f32) {
+    pub fn set_grid_col_max(&mut self, entity: Entity, value: f32) {
         if let Some(grid_col_max) = self.grid_col_max.get_mut(entity) {
             *grid_col_max = value;
         }
     }
 
-    pub(crate) fn get_stack_child(&self, entity: Entity) -> (bool, bool) {
+    pub fn get_stack_child(&self, entity: Entity) -> (bool, bool) {
         self.stack_child
             .get(entity)
             .cloned()
@@ -366,32 +366,32 @@ impl CachedData {
     ///
     /// Entities can specify a z-index with `entity.set_z_index(state, value)`. 
     /// The z_order_system then determines the z-index of child entities based on their parent and any specified z-index.
-    pub(crate) fn get_z_index(&self, entity: Entity) -> i32 {
+    pub fn get_z_index(&self, entity: Entity) -> i32 {
         self.z_index.get(entity).cloned().unwrap()
     }
 
-    pub(crate) fn get_child_width_sum(&self, entity: Entity) -> f32 {
+    pub fn get_child_width_sum(&self, entity: Entity) -> f32 {
         self.child_sum
             .get(entity)
             .cloned()
             .unwrap().0
     }
 
-    pub(crate) fn get_child_height_sum(&self, entity: Entity) -> f32 {
+    pub fn get_child_height_sum(&self, entity: Entity) -> f32 {
         self.child_sum
             .get(entity)
             .cloned()
             .unwrap().1
     }
 
-    pub(crate) fn get_child_width_max(&self, entity: Entity) -> f32 {
+    pub fn get_child_width_max(&self, entity: Entity) -> f32 {
         self.child_max
             .get(entity)
             .cloned()
             .unwrap().0
     }
 
-    pub(crate) fn get_child_height_max(&self, entity: Entity) -> f32 {
+    pub fn get_child_height_max(&self, entity: Entity) -> f32 {
         self.child_max
             .get(entity)
             .cloned()
@@ -443,35 +443,35 @@ impl CachedData {
         self.opacity.get(entity).cloned().unwrap()
     }
 
-    pub(crate) fn get_horizontal_free_space(&self, entity: Entity) -> f32 {
+    pub fn get_horizontal_free_space(&self, entity: Entity) -> f32 {
         self.horizontal_free_space
             .get(entity)
             .cloned()
             .unwrap()
     }
 
-    pub(crate) fn get_horizontal_stretch_sum(&self, entity: Entity) -> f32 {
+    pub fn get_horizontal_stretch_sum(&self, entity: Entity) -> f32 {
         self.horizontal_stretch_sum
             .get(entity)
             .cloned()
             .unwrap()
     }
 
-    pub(crate) fn get_vertical_free_space(&self, entity: Entity) -> f32 {
+    pub fn get_vertical_free_space(&self, entity: Entity) -> f32 {
         self.vertical_free_space
             .get(entity)
             .cloned()
             .unwrap()
     }
 
-    pub(crate) fn get_vertical_stretch_sum(&self, entity: Entity) -> f32 {
+    pub fn get_vertical_stretch_sum(&self, entity: Entity) -> f32 {
         self.vertical_stretch_sum
             .get(entity)
             .cloned()
             .unwrap()
     }
 
-    pub(crate) fn get_rotate(&self, entity: Entity) -> f32 {
+    pub fn get_rotate(&self, entity: Entity) -> f32 {
         self.transform
             .get(entity)
             .cloned()
@@ -479,7 +479,7 @@ impl CachedData {
             .acos()
     }
 
-    pub(crate) fn get_translate(&self, entity: Entity) -> (f32, f32) {
+    pub fn get_translate(&self, entity: Entity) -> (f32, f32) {
         let transform = self.transform
             .get(entity)
             .cloned()
@@ -488,7 +488,7 @@ impl CachedData {
         (transform[4], transform[5])
     }
 
-    pub(crate) fn get_scale(&self, entity: Entity) -> f32 {
+    pub fn get_scale(&self, entity: Entity) -> f32 {
         let scale = self.scale
             .get(entity)
             .cloned()
@@ -497,7 +497,7 @@ impl CachedData {
         scale.0
     }
 
-    pub(crate) fn get_origin(&self, entity: Entity) -> (f32, f32) {
+    pub fn get_origin(&self, entity: Entity) -> (f32, f32) {
         self.origin
             .get(entity)
             .cloned()
@@ -528,19 +528,19 @@ impl CachedData {
     //     }
     // }
 
-    pub(crate) fn set_stack_first_child(&mut self, entity: Entity, value: bool) {
+    pub fn set_stack_first_child(&mut self, entity: Entity, value: bool) {
         if let Some(stack_child) = self.stack_child.get_mut(entity) {
             stack_child.0 = value;
         }
     }
 
-    pub(crate) fn set_stack_last_child(&mut self, entity: Entity, value: bool) {
+    pub fn set_stack_last_child(&mut self, entity: Entity, value: bool) {
         if let Some(stack_child) = self.stack_child.get_mut(entity) {
             stack_child.1 = value;
         }
     }
 
-    pub(crate) fn set_horizontal_free_space(&mut self, entity: Entity, value: f32) {
+    pub fn set_horizontal_free_space(&mut self, entity: Entity, value: f32) {
         if let Some(horizontal_free_space) =
             self.horizontal_free_space.get_mut(entity)
         {
@@ -548,7 +548,7 @@ impl CachedData {
         }
     }
 
-    pub(crate) fn set_horizontal_stretch_sum(&mut self, entity: Entity, value: f32) {
+    pub fn set_horizontal_stretch_sum(&mut self, entity: Entity, value: f32) {
         if let Some(horizontal_stretch_sum) = self
             .horizontal_stretch_sum
             .get_mut(entity)
@@ -557,7 +557,7 @@ impl CachedData {
         }
     }
 
-    pub(crate) fn set_vertical_free_space(&mut self, entity: Entity, value: f32) {
+    pub fn set_vertical_free_space(&mut self, entity: Entity, value: f32) {
         if let Some(vertical_free_space) =
             self.vertical_free_space.get_mut(entity)
         {
@@ -565,7 +565,7 @@ impl CachedData {
         }
     }
 
-    pub(crate) fn set_vertical_stretch_sum(&mut self, entity: Entity, value: f32) {
+    pub fn set_vertical_stretch_sum(&mut self, entity: Entity, value: f32) {
         if let Some(vertical_stretch_sum) =
             self.vertical_stretch_sum.get_mut(entity)
         {
@@ -585,7 +585,7 @@ impl CachedData {
     //     }
     // }
 
-    pub(crate) fn set_space_right(&mut self, entity: Entity, val: f32) {
+    pub fn set_space_right(&mut self, entity: Entity, val: f32) {
         if let Some(space) = self.space.get_mut(entity) {
             space.right = val;
         }
@@ -609,43 +609,43 @@ impl CachedData {
         }
     }
 
-    pub(crate) fn set_z_index(&mut self, entity: Entity, val: i32) {
+    pub fn set_z_index(&mut self, entity: Entity, val: i32) {
         if let Some(z_index) = self.z_index.get_mut(entity) {
             *z_index = val;
         }
     }
 
-    pub(crate) fn set_child_width_sum(&mut self, entity: Entity, val: f32) {
+    pub fn set_child_width_sum(&mut self, entity: Entity, val: f32) {
         if let Some(child_sum) = self.child_sum.get_mut(entity) {
             child_sum.0 = val;
         }
     }
 
-    pub(crate) fn set_child_height_sum(&mut self, entity: Entity, val: f32) {
+    pub fn set_child_height_sum(&mut self, entity: Entity, val: f32) {
         if let Some(child_sum) = self.child_sum.get_mut(entity) {
             child_sum.1 = val;
         }
     }
 
-    pub(crate) fn set_child_width_max(&mut self, entity: Entity, val: f32) {
+    pub fn set_child_width_max(&mut self, entity: Entity, val: f32) {
         if let Some(child_max) = self.child_max.get_mut(entity) {
             child_max.0 = val;
         }
     }
 
-    pub(crate) fn set_child_height_max(&mut self, entity: Entity, val: f32) {
+    pub fn set_child_height_max(&mut self, entity: Entity, val: f32) {
         if let Some(child_max) = self.child_max.get_mut(entity) {
             child_max.1 = val;
         }
     }
 
-    pub(crate) fn set_posx(&mut self, entity: Entity, val: f32) {
+    pub fn set_posx(&mut self, entity: Entity, val: f32) {
         if let Some(bounds) = self.bounds.get_mut(entity) {
             bounds.x = val;
         }
     }
 
-    pub(crate) fn set_posy(&mut self, entity: Entity, val: f32) {
+    pub fn set_posy(&mut self, entity: Entity, val: f32) {
         if let Some(bounds) = self.bounds.get_mut(entity) {
             bounds.y = val;
         }

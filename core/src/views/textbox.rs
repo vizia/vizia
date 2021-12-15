@@ -1,4 +1,4 @@
-use glutin::window::Window;
+
 use keyboard_types::Code;
 
 use crate::{Context, Handle, MouseButton, View, WindowEvent};

@@ -1,35 +1,35 @@
 //use crate::event_manager::EventManager;
-use crate::window::TuixWindow;
+use crate::window::ViziaWindow;
 use crate::Renderer;
-use baseview::{Window, WindowScalePolicy};
+use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
-use tuix_core::TreeExt;
-use tuix_core::{MouseButton, MouseButtonState};
-use tuix_core::WindowWidget;
-use tuix_core::{
+use vizia_core::TreeExt;
+use vizia_core::{MouseButton, MouseButtonState};
+//use vizia_core::WindowWidget;
+use vizia_core::{
     Event, Propagation,
     WindowDescription,
     BoundingBox
 };
-use tuix_core::{
-    Entity, EventManager, Tree, PropSet, WindowSize, State, Units, Visibility,
-    WindowEvent,
+use vizia_core::{
+    Entity, EventManager, Tree, WindowSize, Units, Visibility, FontOrId,
+    WindowEvent, Context, Modifiers, Display,  apply_hover, apply_styles, geometry_changed, apply_transform, apply_clipping, apply_visibility, apply_z_ordering, apply_text_constraints
 };
 
 pub struct Application<F>
 where
-    F: FnOnce(&mut State, Entity),
+    F: Fn(&mut Context),
     F: 'static + Send,
 {
     app: F,
     window_description: WindowDescription,
-    on_idle: Option<Box<dyn Fn(&mut State) + Send>>,
+    on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
 }
 
 impl<F> Application<F>
 where
-    F: FnOnce(&mut Context),
+    F: Fn(&mut Context),
     F: 'static + Send,
 {
     pub fn new(window_description: WindowDescription, app: F) -> Self {
@@ -47,7 +47,7 @@ where
     ///
     /// * `app` - The Tuix application builder.
     pub fn run(self) {
-        TuixWindow::open_blocking(self.window_description, self.app, self.on_idle)
+        ViziaWindow::open_blocking(self.window_description, self.app, self.on_idle)
     }
 
     /// Open a new child window.
@@ -57,8 +57,8 @@ where
     ///
     /// * `parent` - The parent window.
     /// * `app` - The Tuix application builder.
-    pub fn open_parented<P: HasRawWindowHandle>(self, parent: &P) {
-        TuixWindow::open_parented(parent, self.window_description, self.app, self.on_idle)
+    pub fn open_parented<P: HasRawWindowHandle>(self, parent: &P) -> WindowHandle {
+        ViziaWindow::open_parented(parent, self.window_description, self.app, self.on_idle)
     }
 
     /// Open a new window as if it had a parent window.
@@ -67,8 +67,8 @@ where
     /// used in the context of audio plugins.
     ///
     /// * `app` - The Tuix application builder.
-    pub fn open_as_if_parented(self) -> RawWindowHandle {
-        TuixWindow::open_as_if_parented(self.window_description, self.app, self.on_idle)
+    pub fn open_as_if_parented(self) -> WindowHandle {
+        ViziaWindow::open_as_if_parented(self.window_description, self.app, self.on_idle)
     }
 
 
@@ -88,7 +88,7 @@ where
     /// })
     /// .run();
     /// ```
-    pub fn on_idle<I: 'static + Fn(&mut State) + Send>(mut self, callback: I) -> Self {
+    pub fn on_idle<I: 'static + Fn(&mut Context) + Send>(mut self, callback: I) -> Self {
         self.on_idle = Some(Box::new(callback));
 
         self
@@ -98,7 +98,7 @@ where
 }
 
 pub(crate) struct ApplicationRunner {
-    state: State,
+    context: Context,
     event_manager: EventManager,
     canvas: Canvas<Renderer>,
     tree: Tree,
@@ -109,19 +109,21 @@ pub(crate) struct ApplicationRunner {
 }
 
 impl ApplicationRunner {
-    pub fn new(mut state: State, win_desc: WindowDescription, renderer: Renderer) -> Self {
+    pub fn new(mut context: Context, win_desc: WindowDescription, renderer: Renderer) -> Self {
         let event_manager = EventManager::new();
 
         let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
 
-        // TODO: Get scale policy from `win_desc`.
+        // // TODO: Get scale policy from `win_desc`.
         let scale_policy = WindowScalePolicy::SystemScaleFactor;
 
-        // Assume scale for now until there is an event with a new one.
-        let scale = match scale_policy {
-            WindowScalePolicy::ScaleFactor(scale) => scale,
-            WindowScalePolicy::SystemScaleFactor => 1.0,
-        };
+        // // Assume scale for now until there is an event with a new one.
+        // let scale = match scale_policy {
+        //     WindowScalePolicy::ScaleFactor(scale) => scale,
+        //     WindowScalePolicy::SystemScaleFactor => 1.0,
+        // };
+
+        let scale = 1.0;
 
         let logical_size = win_desc.inner_size;
         let physical_size = WindowSize {
@@ -131,57 +133,61 @@ impl ApplicationRunner {
 
         canvas.set_size(physical_size.width, physical_size.height, 1.0);
 
-        let regular_font = include_bytes!("../../resources/FiraCode-Regular.ttf");
-        let bold_font = include_bytes!("../../resources/Roboto-Bold.ttf");
-        let icon_font = include_bytes!("../../resources/entypo.ttf");
-        let emoji_font = include_bytes!("../../resources/OpenSansEmoji.ttf");
-        let arabic_font = include_bytes!("../../resources/amiri-regular.ttf");
+        let regular_font = include_bytes!("../../fonts/Roboto-Regular.ttf");
+        let bold_font = include_bytes!("../../fonts/Roboto-Bold.ttf");
+        let icon_font = include_bytes!("../../fonts/entypo.ttf");
+        let emoji_font = include_bytes!("../../fonts/OpenSansEmoji.ttf");
+        let arabic_font = include_bytes!("../../fonts/amiri-regular.ttf");
 
-        state.add_font_mem("roboto", regular_font);
-        state.add_font_mem("roboto-bold", bold_font);
-        state.add_font_mem("icon", icon_font);
-        state.add_font_mem("emoji", emoji_font);
-        state.add_font_mem("arabic", arabic_font);
+        context.add_font_mem("roboto", regular_font);
+        context.add_font_mem("roboto-bold", bold_font);
+        context.add_font_mem("icon", icon_font);
+        context.add_font_mem("emoji", emoji_font);
+        context.add_font_mem("arabic", arabic_font);
 
-        canvas.scale(scale as f32, scale as f32);
+        context.style.borrow_mut().default_font = "roboto".to_string();
 
-        state
+        //canvas.scale(scale as f32, scale as f32);
+
+        context
             .style
+            .borrow_mut()
             .width
             .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
-        state
+        context
             .style
+            .borrow_mut()
             .height
             .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
-        state
-            .data
+        context
+            .cache
             .set_width(Entity::root(), physical_size.width as f32);
-        state
-            .data
+        context
+            .cache
             .set_height(Entity::root(), physical_size.height as f32);
-        state.data.set_opacity(Entity::root(), 1.0);
+        context.cache.set_opacity(Entity::root(), 1.0);
 
         let mut bounding_box = BoundingBox::default();
         bounding_box.w = logical_size.width as f32;
         bounding_box.h = logical_size.height as f32;
 
-        state.data.set_clip_region(Entity::root(), bounding_box);
+        context.cache.set_clip_region(Entity::root(), bounding_box);
 
-        WindowWidget::new().build_window(&mut state);
+        //WindowWidget::new().build_window(&mut context);
 
         let root = Entity::root();
 
-        root.restyle(&mut state);
-        root.relayout(&mut state);
+        //root.restyle(&mut state);
+        //root.relayout(&mut state);
 
-        let tree = state.tree.clone();
+        let tree = context.tree.clone();
 
         //tuix_core::systems::apply_styles(&mut state, &tree);
 
         ApplicationRunner {
             event_manager,
-            state,
+            context,
             canvas,
             tree,
             pos: (0.0, 0.0),
@@ -197,7 +203,7 @@ impl ApplicationRunner {
     }
 
     pub fn get_state(&mut self) -> &mut State {
-        &mut self.state
+        &mut self.context
     }
 
     pub fn get_event_manager(&mut self) -> &mut EventManager {
@@ -207,36 +213,189 @@ impl ApplicationRunner {
 
     pub fn on_frame_update(&mut self) {
 
+        //if let Some(mut window_view) = context.views.remove(&Entity::root()) {
+            //if let Some(window) = window_view.downcast_mut::<Window>() {
+
+
+                // Load resources
+                for (name, font) in self.context.resource_manager.fonts.iter_mut() {
         
-        if self.state.apply_animations() {
-            Entity::root().restyle(&mut self.state);
-            Entity::root().relayout(&mut self.state);
-            Entity::root().redraw(&mut self.state);
+                    match font {
+                        FontOrId::Font(data) => {
+                            let id1 = self.canvas.add_font_mem(&data.clone()).expect(&format!("Failed to load font file for: {}", name));
+                            let id2 = self.context.text_context.add_font_mem(&data.clone()).expect("failed");
+                            if id1 != id2 {
+                                panic!("Fonts in canvas must have the same id as fonts in the text context");
+                            }
+                            *font = FontOrId::Id(id1);
+                        }
+        
+                        _=> {}
+                    }
+                }
+
+            //}
+
+            //context.views.insert(Entity::root(), window_view);
+        //}
+
+        // Events
+        while !self.context.event_queue.is_empty() {
+            self.event_manager.flush_events(&mut self.context);
         }
 
-        while !self.state.event_queue.is_empty() {
-            self.event_manager.flush_events(&mut self.state);
-        } 
+        // Data Updates
+        let mut observers: Vec<Entity> = Vec::new();
+        for model_list in self.context.data.model_data.dense.iter().map(|entry| &entry.value){
+            for (_, model) in model_list.iter() {
+                //println!("Lenses: {:?}", context.lenses.len());
+                for (_, lens) in self.context.lenses.iter_mut() {
+                    if lens.update(model) {
+                        observers.extend(lens.observers().iter());
+                    }
+                }
+            }
+        }
 
-        if self.state.needs_redraw {
+        for observer in observers.iter() {
+            if let Some(mut view) = self.context.views.remove(observer) {
+                let prev = self.context.current;
+                self.context.current = *observer;
+                let prev_count = self.context.count;
+                self.context.count = 0;
+                view.body(&mut self.context);
+                self.context.current = prev;
+                self.context.count = prev_count;
+    
+
+                self.context.views.insert(*observer, view);
+            }
+        }
+
+        // Not ideal
+        let tree = self.context.tree.clone();
+
+        // Styling
+        //if context.style.borrow().needs_restyle {
+            apply_styles(&mut self.context, &tree);
+        //    context.style.borrow_mut().needs_restyle = false;
+        //}
+
+        apply_z_ordering(&mut self.context, &tree);
+
+        apply_visibility(&mut self.context, &tree);
+
+        apply_text_constraints(&mut self.context, &tree);
+
+        // Layout
+        if self.context.style.borrow().needs_relayout {
+            vizia_core::apply_layout(&mut self.context.cache, &self.context.tree, &self.context.style.borrow());
+            self.context.style.borrow_mut().needs_relayout = false;
+        }
+
+        // Emit any geometry changed events
+        geometry_changed(&mut self.context, &tree);
+
+        apply_transform(&mut self.context, &tree);
+
+        apply_hover(&mut self.context);
+
+        apply_clipping(&mut self.context, &tree);
+
+
+        if self.context.style.borrow().needs_redraw {
         //     // TODO - Move this to EventManager
             self.should_redraw = true;
-            self.state.needs_redraw = false;
+            self.context.style.borrow_mut().needs_redraw = false;
         }
+
+
 
     }
 
     pub fn render(&mut self) {
-        let tree = self.state.tree.clone();
-        tuix_core::apply_clipping(&mut self.state, &tree);
-        self.event_manager.draw(&mut self.state, &mut self.canvas);
+        //let tree = self.context.tree.clone();
+        //vizia_core::apply_clipping(&mut self.context, &tree);
+        //self.event_manager.draw(&mut self.context, &mut self.canvas);
+
+        // TODO
+        let dpi_factor = 1.0;
+
+        let window_width = self.context.cache.get_width(Entity::root());
+        let window_height = self.context.cache.get_height(Entity::root());
+
+        self.canvas.set_size(window_width as u32, window_height as u32, dpi_factor as f32);
+        let clear_color = self.context.style.borrow_mut().background_color.get(Entity::root()).cloned().unwrap_or(vizia_core::Color::white());
+        self.canvas.clear_rect(
+            0,
+            0,
+            window_width as u32,
+            window_height as u32,
+            clear_color.into(),
+        );
+
+        // Sort the tree by z order
+        let mut draw_tree: Vec<Entity> = self.context.tree.into_iter().collect();
+        draw_tree.sort_by_cached_key(|entity| self.context.cache.get_z_index(*entity));
+
+        for entity in draw_tree.into_iter() {
+
+
+            // Skip window
+            if entity == Entity::root() {
+                continue;
+            }
+
+            // Skip invisible widgets
+            if self.context.cache.get_visibility(entity) == Visibility::Invisible {
+                continue;
+            }
+
+            if self.context.cache.get_display(entity) == Display::None {
+                continue;
+            }
+
+            // Skip widgets that have 0 opacity
+            if self.context.cache.get_opacity(entity) == 0.0 {
+                continue;
+            }
+
+            // Apply clipping
+            let clip_region = self.context.cache.get_clip_region(entity);
+            self.canvas.scissor(
+                clip_region.x,
+                clip_region.y,
+                clip_region.w,
+                clip_region.h,
+            );
+    
+            // Apply transform
+            let transform = self.context.cache.get_transform(entity);
+            self.canvas.save();
+            self.canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+
+            if let Some(view) = self.context.views.remove(&entity) {
+
+                self.context.current = entity;
+                view.draw(&self.context, &mut self.canvas);
+                
+                self.context.views.insert(entity, view);
+            }
+
+            self.canvas.restore();
+        }
+
+        self.canvas.flush();
+
+
         self.should_redraw = false;
     }
 
     pub fn handle_event(&mut self, event: baseview::Event, should_quit: &mut bool) {
         if requests_exit(&event) {
-            self.state
-                .insert_event(Event::new(WindowEvent::WindowClose));
+            self.context
+                .event_queue
+                .push_back(Event::new(WindowEvent::WindowClose));
             *should_quit = true;
         }
 
@@ -246,21 +405,21 @@ impl ApplicationRunner {
                     let cursorx = (position.x) as f32;
                     let cursory = (position.y) as f32;
 
-                    self.state.mouse.cursorx = cursorx;
-                    self.state.mouse.cursory = cursory;
+                    self.context.mouse.cursorx = cursorx;
+                    self.context.mouse.cursory = cursory;
 
-                    tuix_core::apply_hover(&mut self.state);
+                    vizia_core::apply_hover(&mut self.context);
 
-                    if self.state.captured != Entity::null() {
-                        self.state.insert_event(
+                    if self.context.captured != Entity::null() {
+                        self.context.event_queue.push_back(
                             Event::new(WindowEvent::MouseMove(cursorx, cursory))
-                                .target(self.state.captured)
+                                .target(self.context.captured)
                                 .propagate(Propagation::Direct),
                         );
-                    } else if self.state.hovered != Entity::root() {
-                        self.state.insert_event(
+                    } else if self.context.hovered != Entity::root() {
+                        self.context.event_queue.push_back(
                             Event::new(WindowEvent::MouseMove(cursorx, cursory))
-                                .target(self.state.hovered),
+                                .target(self.context.hovered),
                         );
                     }
                 }
@@ -276,63 +435,63 @@ impl ApplicationRunner {
 
                     match b {
                         MouseButton::Left => {
-                            self.state.mouse.left.state = MouseButtonState::Pressed;
+                            self.context.mouse.left.state = MouseButtonState::Pressed;
                         }
                         MouseButton::Right => {
-                            self.state.mouse.right.state = MouseButtonState::Pressed;
+                            self.context.mouse.right.state = MouseButtonState::Pressed;
                         }
                         MouseButton::Middle => {
-                            self.state.mouse.middle.state = MouseButtonState::Pressed;
+                            self.context.mouse.middle.state = MouseButtonState::Pressed;
                         }
                         _ => {}
                     };
 
-                    // if self.state.hovered != Entity::null()
-                    //     && self.state.active != self.state.hovered
+                    // if self.context.hovered != Entity::null()
+                    //     && self.context.active != self.context.hovered
                     // {
-                    //     self.state.active = self.state.hovered;
-                    //     self.state.insert_event(Event::new(WindowEvent::Restyle).target(Entity::root()));
-                    //     self.state.needs_restyle = true;
+                    //     self.context.active = self.context.hovered;
+                    //     self.context.event_queue.push_back(Event::new(WindowEvent::Restyle).target(Entity::root()));
+                    //     self.context.needs_restyle = true;
                     // }
 
-                    let target = if self.state.captured != Entity::null() {
-                        self.state.insert_event(
+                    let target = if self.context.captured != Entity::null() {
+                        self.context.event_queue.push_back(
                             Event::new(WindowEvent::MouseDown(b))
-                                .target(self.state.captured)
+                                .target(self.context.captured)
                                 .propagate(Propagation::Direct),
                         );
-                        self.state.captured
+                        self.context.captured
                     } else {
-                        self.state.insert_event(
+                        self.context.event_queue.push_back(
                             Event::new(WindowEvent::MouseDown(b))
-                                .target(self.state.hovered),
+                                .target(self.context.hovered),
                         );
-                        self.state.hovered
+                        self.context.hovered
                     };
 
                     // if let Some(event_handler) = self.event_manager.event_handlers.get_mut(&target) {
                     //     if let Some(callback) = self.event_manager.callbacks.get_mut(&target) {
-                    //         (callback)(event_handler, &mut self.state, target);
+                    //         (callback)(event_handler, &mut self.context, target);
                     //     }
                     // }
 
                     match b {
                         MouseButton::Left => {
-                            self.state.mouse.left.pos_down =
-                                (self.state.mouse.cursorx, self.state.mouse.cursory);
-                            self.state.mouse.left.pressed = self.state.hovered;
+                            self.context.mouse.left.pos_down =
+                                (self.context.mouse.cursorx, self.context.mouse.cursory);
+                            self.context.mouse.left.pressed = self.context.hovered;
                         }
 
                         MouseButton::Middle => {
-                            self.state.mouse.middle.pos_down =
-                                (self.state.mouse.cursorx, self.state.mouse.cursory);
-                            self.state.mouse.left.pressed = self.state.hovered;
+                            self.context.mouse.middle.pos_down =
+                                (self.context.mouse.cursorx, self.context.mouse.cursory);
+                            self.context.mouse.left.pressed = self.context.hovered;
                         }
 
                         MouseButton::Right => {
-                            self.state.mouse.right.pos_down =
-                                (self.state.mouse.cursorx, self.state.mouse.cursory);
-                            self.state.mouse.left.pressed = self.state.hovered;
+                            self.context.mouse.right.pos_down =
+                                (self.context.mouse.cursorx, self.context.mouse.cursory);
+                            self.context.mouse.left.pressed = self.context.hovered;
                         }
 
                         _ => {}
@@ -350,50 +509,50 @@ impl ApplicationRunner {
 
                     match b {
                         MouseButton::Left => {
-                            self.state.mouse.left.state = MouseButtonState::Released;
+                            self.context.mouse.left.state = MouseButtonState::Released;
                         }
                         MouseButton::Right => {
-                            self.state.mouse.right.state = MouseButtonState::Released;
+                            self.context.mouse.right.state = MouseButtonState::Released;
                         }
                         MouseButton::Middle => {
-                            self.state.mouse.middle.state = MouseButtonState::Released;
+                            self.context.mouse.middle.state = MouseButtonState::Released;
                         }
                         _ => {}
                     };
 
-                    // self.state.active = Entity::null();
-                    // self.state.insert_event(Event::new(WindowEvent::Restyle).target(Entity::root()));
-                    // self.state.needs_restyle = true;
+                    // self.context.active = Entity::null();
+                    // self.context.event_queue.push_back(Event::new(WindowEvent::Restyle).target(Entity::root()));
+                    // self.context.needs_restyle = true;
 
-                    if self.state.captured != Entity::null() {
-                        self.state.insert_event(
+                    if self.context.captured != Entity::null() {
+                        self.context.event_queue.push_back(
                             Event::new(WindowEvent::MouseUp(b))
-                                .target(self.state.captured)
+                                .target(self.context.captured)
                                 .propagate(Propagation::Direct),
                         );
                     } else {
-                        self.state.insert_event(
-                            Event::new(WindowEvent::MouseUp(b)).target(self.state.hovered),
+                        self.context.event_queue.push_back(
+                            Event::new(WindowEvent::MouseUp(b)).target(self.context.hovered),
                         );
                     }
 
                     match b {
                         MouseButton::Left => {
-                            self.state.mouse.left.pos_up =
-                                (self.state.mouse.cursorx, self.state.mouse.cursory);
-                            self.state.mouse.left.released = self.state.hovered;
+                            self.context.mouse.left.pos_up =
+                                (self.context.mouse.cursorx, self.context.mouse.cursory);
+                            self.context.mouse.left.released = self.context.hovered;
                         }
 
                         MouseButton::Middle => {
-                            self.state.mouse.middle.pos_up =
-                                (self.state.mouse.cursorx, self.state.mouse.cursory);
-                            self.state.mouse.left.released = self.state.hovered;
+                            self.context.mouse.middle.pos_up =
+                                (self.context.mouse.cursorx, self.context.mouse.cursory);
+                            self.context.mouse.left.released = self.context.hovered;
                         }
 
                         MouseButton::Right => {
-                            self.state.mouse.right.pos_up =
-                                (self.state.mouse.cursorx, self.state.mouse.cursory);
-                            self.state.mouse.left.released = self.state.hovered;
+                            self.context.mouse.right.pos_up =
+                                (self.context.mouse.cursorx, self.context.mouse.cursory);
+                            self.context.mouse.left.released = self.context.hovered;
                         }
 
                         _ => {}
@@ -420,16 +579,16 @@ impl ApplicationRunner {
                         ),
                     };
 
-                    if self.state.captured != Entity::null() {
-                        self.state.insert_event(
+                    if self.context.captured != Entity::null() {
+                        self.context.event_queue.push_back(
                             Event::new(WindowEvent::MouseScroll(lines_x, lines_y))
-                                .target(self.state.captured)
+                                .target(self.context.captured)
                                 .propagate(Propagation::Direct),
                         );
                     } else {
-                        self.state.insert_event(
+                        self.context.event_queue.push_back(
                             Event::new(WindowEvent::MouseScroll(lines_x, lines_y))
-                                .target(self.state.hovered),
+                                .target(self.context.hovered),
                         );
                     }
                 }
@@ -444,111 +603,112 @@ impl ApplicationRunner {
                 };
 
                 match event.code {
-                    Code::ShiftLeft | Code::ShiftRight => self.state.modifiers.shift = pressed,
-                    Code::ControlLeft | Code::ControlRight => self.state.modifiers.ctrl = pressed,
-                    Code::AltLeft | Code::AltRight => self.state.modifiers.alt = pressed,
-                    Code::MetaLeft | Code::MetaRight => self.state.modifiers.logo = pressed,
+                    Code::ShiftLeft | Code::ShiftRight => self.context.modifiers.set(Modifiers::SHIFT, pressed),
+                    Code::ControlLeft | Code::ControlRight => self.context.modifiers.set(Modifiers::CTRL, pressed),
+                    Code::AltLeft | Code::AltRight => self.context.modifiers.set(Modifiers::ALT, pressed),
+                    Code::MetaLeft | Code::MetaRight => self.context.modifiers.set(Modifiers::LOGO, pressed),
                     _ => (),
                 }
 
                 if event.code == Code::F5 && s == MouseButtonState::Pressed {
-                    self.state.reload_styles().unwrap();
+                    self.context.reload_styles().unwrap();
                 }
 
                 if event.code == Code::Tab && s == MouseButtonState::Pressed {
-                    let next_focus = self
-                        .state
-                        .style
-                        .focus_order
-                        .get(self.state.focused)
-                        .cloned()
-                        .unwrap_or_default()
-                        .next;
-                    let prev_focus = self
-                        .state
-                        .style
-                        .focus_order
-                        .get(self.state.focused)
-                        .cloned()
-                        .unwrap_or_default()
-                        .prev;
+                    // let next_focus = self
+                    //     .state
+                    //     .style
+                    //     .focus_order
+                    //     .get(self.context.focused)
+                    //     .cloned()
+                    //     .unwrap_or_default()
+                    //     .next;
+                    // let prev_focus = self
+                    //     .state
+                    //     .style
+                    //     .focus_order
+                    //     .get(self.context.focused)
+                    //     .cloned()
+                    //     .unwrap_or_default()
+                    //     .prev;
 
-                    if self.state.modifiers.shift {
-                        if prev_focus != Entity::null() {
-                            self.state.focused.set_focus(&mut self.state, false);
-                            self.state.focused = prev_focus;
-                            self.state.focused.set_focus(&mut self.state, true);
-                        } else {
-                            // TODO impliment reverse iterator for tree
-                            // state.focused = match state.focused.into_iter(&state.tree).next() {
-                            //     Some(val) => val,
-                            //     None => Entity::root(),
-                            // };
-                        }
-                    } else {
-                        if next_focus != Entity::null() {
-                            self.state.focused.set_focus(&mut self.state, false);
-                            self.state.focused = next_focus;
-                            self.state.focused.set_focus(&mut self.state, true);
-                        } else {
-                            self.state.focused.set_focus(&mut self.state, false);
-                            self.state.focused =
-                                match self.state.focused.tree_iter(&self.tree).next() {
-                                    Some(val) => val,
-                                    None => Entity::root(),
-                                };
-                            self.state.focused.set_focus(&mut self.state, true);
-                        }
-                    }
+                    // if self.context.modifiers.shift {
+                    //     if prev_focus != Entity::null() {
+                    //         self.context.focused.set_focus(&mut self.context, false);
+                    //         self.context.focused = prev_focus;
+                    //         self.context.focused.set_focus(&mut self.context, true);
+                    //     } else {
+                    //         // TODO impliment reverse iterator for tree
+                    //         // state.focused = match state.focused.into_iter(&state.tree).next() {
+                    //         //     Some(val) => val,
+                    //         //     None => Entity::root(),
+                    //         // };
+                    //     }
+                    // } else {
+                    //     if next_focus != Entity::null() {
+                    //         self.context.focused.set_focus(&mut self.context, false);
+                    //         self.context.focused = next_focus;
+                    //         self.context.focused.set_focus(&mut self.context, true);
+                    //     } else {
+                    //         self.context.focused.set_focus(&mut self.context, false);
+                    //         self.context.focused =
+                    //             match self.context.focused.tree_iter(&self.tree).next() {
+                    //                 Some(val) => val,
+                    //                 None => Entity::root(),
+                    //             };
+                    //         self.context.focused.set_focus(&mut self.context, true);
+                    //     }
+                    // }
 
-                    Entity::root().restyle(&mut self.state);
+                    self.context.style.borrow_mut().needs_restyle = true;
+
                 }
 
                 match s {
                     MouseButtonState::Pressed => {
-                        if self.state.focused != Entity::null() {
-                            self.state.insert_event(
+                        if self.context.focused != Entity::null() {
+                            self.context.event_queue.push_back(
                                 Event::new(WindowEvent::KeyDown(
                                     event.code,
                                     Some(event.key.clone()),
                                 ))
-                                .target(self.state.focused)
-                                .propagate(Propagation::DownUp),
+                                .target(self.context.focused)
+                                .propagate(Propagation::Up),
                             );
                         } else {
-                            self.state.insert_event(
+                            self.context.event_queue.push_back(
                                 Event::new(WindowEvent::KeyDown(
                                     event.code,
                                     Some(event.key.clone()),
                                 ))
-                                .target(self.state.hovered)
-                                .propagate(Propagation::DownUp),
+                                .target(self.context.hovered)
+                                .propagate(Propagation::Up),
                             );
                         }
 
                         if let keyboard_types::Key::Character(written) = &event.key {
                             for chr in written.chars() {
-                                self.state.insert_event(
+                                self.context.event_queue.push_back(
                                     Event::new(WindowEvent::CharInput(chr))
-                                        .target(self.state.focused)
-                                        .propagate(Propagation::Down),
+                                        .target(self.context.focused)
+                                        .propagate(Propagation::Up),
                                 );
                             }
                         }
                     }
 
                     MouseButtonState::Released => {
-                        if self.state.focused != Entity::null() {
-                            self.state.insert_event(
+                        if self.context.focused != Entity::null() {
+                            self.context.event_queue.push_back(
                                 Event::new(WindowEvent::KeyUp(event.code, Some(event.key)))
-                                    .target(self.state.focused)
-                                    .propagate(Propagation::DownUp),
+                                    .target(self.context.focused)
+                                    .propagate(Propagation::Up),
                             );
                         } else {
-                            self.state.insert_event(
+                            self.context.event_queue.push_back(
                                 Event::new(WindowEvent::KeyUp(event.code, Some(event.key)))
-                                    .target(self.state.hovered)
-                                    .propagate(Propagation::DownUp),
+                                    .target(self.context.hovered)
+                                    .propagate(Propagation::Up),
                             );
                         }
                     }
@@ -556,15 +716,17 @@ impl ApplicationRunner {
             }
             baseview::Event::Window(event) => match event {
                 baseview::WindowEvent::Focused => {
-                    Entity::root().restyle(&mut self.state);
-                    Entity::root().relayout(&mut self.state);
-                    Entity::root().redraw(&mut self.state);
+                    self.context.style.borrow_mut().needs_restyle = true;
+                    self.context.style.borrow_mut().needs_relayout = true;
+                    self.context.style.borrow_mut().needs_redraw = true;
                 }
                 baseview::WindowEvent::Resized(window_info) => {
                     self.scale_factor = match self.scale_policy {
                         WindowScalePolicy::ScaleFactor(scale) => scale,
                         WindowScalePolicy::SystemScaleFactor => window_info.scale(),
                     };
+
+                    self.scale_factor = 1.0;
 
                     let logical_size = (
                         (window_info.physical_size().width as f64 / self.scale_factor),
@@ -576,45 +738,63 @@ impl ApplicationRunner {
                         window_info.physical_size().height,
                     );
 
-                    self.state
+                    self.context
                         .style
+                        .borrow_mut()
                         .width
                         .insert(Entity::root(), Units::Pixels(logical_size.0 as f32));
-                    self.state
+                    self.context
                         .style
+                        .borrow_mut()
                         .height
                         .insert(Entity::root(), Units::Pixels(logical_size.1 as f32));
 
-                    self.state
-                        .data
+                    self.context
+                        .cache
                         .set_width(Entity::root(), physical_size.0 as f32);
-                    self.state
-                        .data
+                    self.context
+                        .cache
                         .set_height(Entity::root(), physical_size.1 as f32);
 
                     let mut bounding_box = BoundingBox::default();
                     bounding_box.w = physical_size.0 as f32;
                     bounding_box.h = physical_size.1 as f32;
 
-                    self.state.data.set_clip_region(Entity::root(), bounding_box);
+                    self.context.cache.set_clip_region(Entity::root(), bounding_box);
 
-                    Entity::root().restyle(&mut self.state);
-                    Entity::root().relayout(&mut self.state);
-                    Entity::root().redraw(&mut self.state);
+                    self.context.style.borrow_mut().needs_restyle = true;
+                    self.context.style.borrow_mut().needs_relayout = true;
+                    self.context.style.borrow_mut().needs_redraw = true;
 
                 }
                 baseview::WindowEvent::WillClose => {
-                    self.state
-                        .insert_event(Event::new(WindowEvent::WindowClose));
+                    self.context.event_queue.push_back(Event::new(WindowEvent::WindowClose));
                 }
                 _ => {}
             },
         }
     }
 
-    pub fn handle_idle(&mut self, on_idle: &Option<Box<dyn Fn(&mut State) + Send>>) {
+    pub fn rebuild(&mut self, builder: &Option<Box<dyn Fn(&mut Context) + Send>>) {
+        if self.context.enviroment.needs_rebuild {
+            self.context.current = Entity::root();
+            self.context.count = 0;
+            if let Some(builder) = &builder {
+                (builder)(&mut self.context);
+            }
+            self.context.enviroment.needs_rebuild = false;
+        }
+    }
+
+    pub fn handle_idle(&mut self, on_idle: &Option<Box<dyn Fn(&mut Context) + Send>>) {
+        // if let Some(idle_callback) = on_idle {
+        //     (idle_callback)(&mut self.context);
+        // }
+
         if let Some(idle_callback) = on_idle {
-            (idle_callback)(&mut self.state);
+            self.context.current = Entity::root();
+            self.context.count = 0;
+            (idle_callback)(&mut self.context);
         }
     }
 }

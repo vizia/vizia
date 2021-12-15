@@ -6,16 +6,8 @@ use glutin::ContextBuilder;
 
 use femtovg::{renderer::OpenGl, Canvas, Color};
 
-mod window_description;
-pub use window_description::*;
 
-mod window_event;
-pub use window_event::*;
-
-mod cursor;
-pub use cursor::*;
-
-use crate::{Context, Entity, Event, View};
+use vizia_core::{Context, Entity, Event, View, WindowDescription, WindowEvent, CursorIcon};
 
 pub struct Window {
     pub id: WindowId,
