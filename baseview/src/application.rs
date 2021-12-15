@@ -614,6 +614,13 @@ impl ApplicationRunner {
                     self.context.reload_styles().unwrap();
                 }
 
+                if event.code == Code::KeyH && s == MouseButtonState::Pressed {
+                    println!("Tree");
+                    for entity in self.context.tree.into_iter() {
+                        println!("Entity: {} Parent: {:?} posx: {} posy: {} width: {} height: {} scissor: {:?}", entity, entity.parent(&self.context.tree), self.context.cache.get_posx(entity), self.context.cache.get_posy(entity), self.context.cache.get_width(entity), self.context.cache.get_height(entity), self.context.cache.get_clip_region(entity));
+                    }
+                }
+
                 if event.code == Code::Tab && s == MouseButtonState::Pressed {
                     // let next_focus = self
                     //     .state

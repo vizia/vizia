@@ -286,12 +286,12 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             let text = cx.style.borrow().text.get(entity).cloned().unwrap();
             
             if let Ok(text_metrics) = cx.text_context.measure_text(x, y, text, paint) {
-                let text_width = text_metrics.width();
-                let text_height = text_metrics.height();
+                let text_width = text_metrics.width().round();
+                let text_height = text_metrics.height().round();
 
                 if cx.style.borrow().width.get(entity) == Some(&Units::Auto) {
                     // Add an extra pixel to account to AA
-                    cx.style.borrow_mut().min_width.insert(entity, Units::Pixels(text_width.round() + 1.0));
+                    cx.style.borrow_mut().min_width.insert(entity, Units::Pixels(text_width + 1.0));
                     cx.style.borrow_mut().needs_relayout = true;
                     cx.style.borrow_mut().needs_redraw = true;
                     
@@ -299,7 +299,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                 
                 if cx.style.borrow().height.get(entity) == Some(&Units::Auto) {
                     // Add an extra pixel to account for AA
-                    cx.style.borrow_mut().min_height.insert(entity, Units::Pixels(text_height.round() + 1.0));
+                    cx.style.borrow_mut().min_height.insert(entity, Units::Pixels(text_height + 1.0));
                     cx.style.borrow_mut().needs_relayout = true;
                     cx.style.borrow_mut().needs_redraw = true;
                 }

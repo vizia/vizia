@@ -55,7 +55,6 @@ label {
     width: auto;
     height: auto;
     child-space: 1s;
-    child-left: 5px;
 }
 
 hstack {
