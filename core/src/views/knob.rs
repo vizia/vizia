@@ -223,7 +223,7 @@ impl ArcTrack {
 
             normalized_value: value,
 
-            center: true,
+            center: false,
         }.build(cx)
     }
 }
