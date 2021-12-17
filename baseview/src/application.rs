@@ -211,6 +211,38 @@ impl ApplicationRunner {
     }
     */
 
+    // pub fn update_data(&mut self) {
+    //     // Data Updates
+    //     let mut observers: Vec<Entity> = Vec::new();
+    //     for model_list in self.context.data.model_data.dense.iter().map(|entry| &entry.value){
+    //         for (_, model) in model_list.iter() {
+    //             //println!("Lenses: {:?}", context.lenses.len());
+    //             for (_, lens) in self.context.lenses.iter_mut() {
+    //                 if lens.update(model) {
+    //                     observers.extend(lens.observers().iter());
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     for observer in observers.iter() {
+    //         if let Some(mut view) = self.context.views.remove(observer) {
+    //             let prev = self.context.current;
+    //             self.context.current = *observer;
+    //             let prev_count = self.context.count;
+    //             self.context.count = 0;
+    //             view.body(&mut self.context);
+    //             self.context.current = prev;
+    //             self.context.count = prev_count;
+
+    //             self.context.style.borrow_mut().needs_redraw = true;
+    
+
+    //             self.context.views.insert(*observer, view);
+    //         }
+    //     }
+    // }
+
     pub fn on_frame_update(&mut self) {
 
         //if let Some(mut window_view) = context.views.remove(&Entity::root()) {
@@ -250,9 +282,9 @@ impl ApplicationRunner {
             for (_, model) in model_list.iter() {
                 //println!("Lenses: {:?}", context.lenses.len());
                 for (_, lens) in self.context.lenses.iter_mut() {
-                    if lens.update(model) {
-                        observers.extend(lens.observers().iter());
-                    }
+                    //if lens.update(model) {
+                    observers.extend(lens.observers().iter());
+                    //}
                 }
             }
         }
@@ -266,6 +298,8 @@ impl ApplicationRunner {
                 view.body(&mut self.context);
                 self.context.current = prev;
                 self.context.count = prev_count;
+
+                self.context.style.borrow_mut().needs_redraw = true;
     
 
                 self.context.views.insert(*observer, view);

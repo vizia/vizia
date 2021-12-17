@@ -243,6 +243,8 @@ impl WindowHandler for ViziaWindow {
         let mut should_quit = false;
         self.application.handle_event(event, &mut should_quit);
 
+        //self.application.update_data();
+
         self.application.handle_idle(&self.on_idle);
 
 
