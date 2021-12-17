@@ -32,6 +32,7 @@ path = "examples/controls/zstack.rs"
 default = ["glutin"]
 glutin = ["vizia_glutin"]
 baseview = ["vizia_baseview"]
+meadowlark = ["glutin", "vizia_core/meadowlark"]
 
 
 [dependencies]

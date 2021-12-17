@@ -3,7 +3,7 @@ use morphorm::Node;
 use crate::{Entity, Style};
 
 // TODO - generate these with a macro
-impl Node for Entity {
+impl<'w> Node<'w> for Entity {
     type Data = Style;
 
     fn layout_type(&self, store: &Self::Data) -> Option<morphorm::LayoutType> {
