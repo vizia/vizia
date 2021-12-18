@@ -2,6 +2,6 @@
 pub use vizia_glutin::application::Application;
 
 #[cfg(all(not(feature = "glutin"), feature = "baseview"))]
-pub use vizia_baseview::Application;
+pub use vizia_baseview::{Application, ParentWindow};
 
 pub use vizia_core::*;

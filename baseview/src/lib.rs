@@ -1,7 +1,9 @@
 mod application;
 mod window;
+mod parent_window;
+pub use parent_window::ParentWindow;
 
 pub use application::Application;
-// pub use application2::Application2;
+
 
 use femtovg::renderer::OpenGl as Renderer;
