@@ -3,7 +3,7 @@ name = "vizia_core"
 version = "0.1.0"
 authors = ["George Atkinson"]
 license = "MIT"
-repository = "https://github.com/geom3trik/tuix"
+repository = "https://github.com/geom3trik/VIZIA"
 edition = "2021"
 description = "Core components of vizia"
 
