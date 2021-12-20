@@ -53,7 +53,7 @@ impl Knob {
             on_changing: None,
         }
         .build2(cx, move |cx| {
-            SliderData { value: normalized_default.clamp(0.0, 1.0) }.build(cx);
+            SliderData { value: normalized_value.clamp(0.0, 1.0) }.build(cx);
 
             ZStack::new(cx, move |cx| {
                 Binding::new(cx, SliderData::value, move |cx, value| {

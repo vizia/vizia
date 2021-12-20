@@ -17,12 +17,46 @@ const STYLE: &str = r#"
 
 "#;
 
+#[derive(Lens)]
+pub struct AppData {
+    value: f32,
+}
+
+
+#[derive(Debug)]
+pub enum AppEvent {
+    SetValue(f32),
+}
+
+impl Model for AppData {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        if let Some(app_event) = event.message.downcast() {
+            match app_event {
+                AppEvent::SetValue(value) => {
+                    self.value = *value;
+                }
+            }
+        }
+    }
+}
+
 fn main() {
     Application::new(WindowDescription::new().with_title("Knob"), |cx| {
         cx.add_theme(STYLE);
 
-        Knob::new(cx, 0.5, 0.5, false);
-        Knob::new(cx, 0.5, 0.5, true);
+        AppData {
+            value: 0.2,
+        }.build(cx);
+
+        Binding::new(cx, AppData::value, |cx, value|{
+            let val = *value.get(cx);
+            Knob::new(cx, 0.5, val, false).on_changing(cx, |knob, cx|{
+                cx.emit(AppEvent::SetValue(knob.normalized_value));
+            });
+            Knob::new(cx, 0.5, val, true).on_changing(cx, |knob, cx|{
+                cx.emit(AppEvent::SetValue(knob.normalized_value));
+            });
+        });
 
         //ArcTrack::new(cx).width(Pixels(50.0)).height(Pixels(50.0)).space(Pixels(20.0));
     })
