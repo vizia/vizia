@@ -1,28 +1,20 @@
-
 use crate::{Context, Handle, TreeExt, View};
-
 
 type Template<T> = Option<Box<dyn Fn(&mut Context, T)>>;
 
-
-pub struct ForEach {
-
-}
+pub struct ForEach {}
 
 impl ForEach {
-    pub fn new<F>(cx: &mut Context, range: std::ops::Range<usize>, template: F) -> Handle<Self> 
-    where F: 'static + Fn(&mut Context, usize),
+    pub fn new<F>(cx: &mut Context, range: std::ops::Range<usize>, template: F) -> Handle<Self>
+    where
+        F: 'static + Fn(&mut Context, usize),
     {
-        Self{
-
-        }.build2(cx, move |cx|{
-
+        Self {}.build2(cx, move |cx| {
             if cx.current.child_iter(&cx.tree.clone()).count() != range.len() {
-
                 for child in cx.current.child_iter(&cx.tree.clone()) {
                     cx.remove(child);
                 }
-                
+
                 cx.style.borrow_mut().needs_relayout = true;
                 cx.style.borrow_mut().needs_redraw = true;
             }
@@ -37,6 +29,4 @@ impl ForEach {
     }
 }
 
-impl View for ForEach {
-
-}
+impl View for ForEach {}

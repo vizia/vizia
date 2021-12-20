@@ -1,17 +1,26 @@
-use std::{any::TypeId, cell::RefCell, collections::{HashMap, VecDeque}, io::Read, rc::Rc};
+use std::{
+    any::TypeId,
+    cell::RefCell,
+    collections::{HashMap, VecDeque},
+    io::Read,
+    rc::Rc,
+};
 
 use femtovg::{FontId, TextContext};
 use fluent_bundle::{FluentBundle, FluentResource};
 use unic_langid::LanguageIdentifier;
 
-use crate::{AppData, CachedData, Data, Entity, Event, FontOrId, IdManager, Lens, LensWrap, Message, Modifiers, MouseState, Propagation, ResourceManager, Store, Style, Tree, TreeExt, ViewHandler, View};
+use crate::{
+    AppData, CachedData, Data, Entity, Event, FontOrId, IdManager, Lens, LensWrap, Message,
+    Modifiers, MouseState, Propagation, ResourceManager, Store, Style, Tree, TreeExt, View,
+    ViewHandler,
+};
 
 pub struct Enviroment {
     // Signifies whether the app should be rebuilt
     // Changing an enviroment variable requires a rebuild of the app
     pub needs_rebuild: bool,
     //pub bundle: FluentBundle<FluentResource>,
-
     pub include_default_theme: bool,
 }
 
@@ -60,7 +69,7 @@ pub struct Context {
     //pub lenses: HashMap<TypeId, Box<dyn LensWrap>>,
     pub data: AppData,
     pub event_queue: VecDeque<Event>,
-    pub listeners: HashMap<Entity, Box<dyn  Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
+    pub listeners: HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
     pub style: Rc<RefCell<Style>>,
     pub cache: CachedData,
 
@@ -74,7 +83,6 @@ pub struct Context {
     pub focused: Entity,
 
     // pub state_count: u32,
-
     pub resource_manager: ResourceManager,
 
     // Temp
@@ -88,7 +96,6 @@ impl Context {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         for entity in delete_list.iter().rev() {
-
             // Remove from observers
             for entry in self.data.model_data.dense.iter_mut() {
                 let model_list = &mut entry.value;
@@ -104,8 +111,6 @@ impl Context {
             self.data.model_data.remove(*entity);
             self.entity_manager.destroy(*entity);
             self.views.remove(entity);
-
-
         }
     }
 
@@ -119,31 +124,44 @@ impl Context {
                         return Some(&store.data);
                     }
                 }
-            }         
+            }
         }
 
         None
-
     }
 
     pub fn emit<M: Message>(&mut self, message: M) {
-        self.event_queue.push_back(Event::new(message).target(self.current).origin(self.current).propagate(Propagation::Up));
+        self.event_queue.push_back(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+        );
     }
 
-    pub fn add_listener<F,W>(&mut self, listener: F)
-    where 
-        W: View, 
-        F: 'static + Fn(&mut W, &mut Context, &mut Event)
-    {  
-        self.listeners.insert(self.current, Box::new(move |event_handler, context, event|{
-            if let Some(widget) = event_handler.downcast_mut::<W>() {
-                (listener)(widget, context, event);
-            }
-        }));
+    pub fn add_listener<F, W>(&mut self, listener: F)
+    where
+        W: View,
+        F: 'static + Fn(&mut W, &mut Context, &mut Event),
+    {
+        self.listeners.insert(
+            self.current,
+            Box::new(move |event_handler, context, event| {
+                if let Some(widget) = event_handler.downcast_mut::<W>() {
+                    (listener)(widget, context, event);
+                }
+            }),
+        );
     }
 
     pub fn emit_trace<M: Message>(&mut self, message: M) {
-        self.event_queue.push_back(Event::new(message).target(self.current).origin(self.current).propagate(Propagation::Up).trace());
+        self.event_queue.push_back(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up)
+                .trace(),
+        );
     }
 
     /// Add a font from memory to the application
@@ -185,7 +203,7 @@ impl Context {
         self.style.borrow_mut().remove_rules();
 
         self.style.borrow_mut().rules.clear();
-        
+
         self.style.borrow_mut().remove_all();
 
         let mut overall_theme = String::new();

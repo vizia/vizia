@@ -1,4 +1,3 @@
-
 /// A trait which describes a property which can be interpolated for animations.
 pub trait Interpolator {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self;

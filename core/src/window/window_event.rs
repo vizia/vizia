@@ -1,10 +1,8 @@
-use crate::{CursorIcon, MouseButton};
 use crate::Entity;
+use crate::{CursorIcon, MouseButton};
 
 use keyboard_types::{Code, Key};
 use morphorm::GeometryChanged;
-
-
 
 // // Used by the GeometryChanged event to signal that either posx, posy, width, or height of the entity have changed
 // #[derive(Debug, Default, Clone, PartialEq)]

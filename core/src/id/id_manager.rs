@@ -1,4 +1,3 @@
-
 use std::{collections::VecDeque, marker::PhantomData};
 
 use super::GenerationalId;
@@ -17,13 +16,13 @@ pub struct IdManager<I> {
     p: PhantomData<I>,
 }
 
-impl <I: GenerationalId + Copy> Default for IdManager<I> {
+impl<I: GenerationalId + Copy> Default for IdManager<I> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl <I: GenerationalId + Copy> IdManager<I> {
+impl<I: GenerationalId + Copy> IdManager<I> {
     pub fn new() -> Self {
         Self {
             generation: Vec::new(),
@@ -42,7 +41,11 @@ impl <I: GenerationalId + Copy> IdManager<I> {
         } else {
             let idx = (self.generation.len()) as u32;
             self.generation.push(0);
-            assert!((idx as u32) < IDX_MAX, "ID index exceeds maximum allowed value of {}", IDX_MAX);
+            assert!(
+                (idx as u32) < IDX_MAX,
+                "ID index exceeds maximum allowed value of {}",
+                IDX_MAX
+            );
             idx
         };
 
@@ -56,7 +59,7 @@ impl <I: GenerationalId + Copy> IdManager<I> {
     /// # Example
     /// ```
     /// entity_manager.destroy(entity);
-    /// ``` 
+    /// ```
     pub fn destroy(&mut self, id: I) -> bool {
         if self.is_alive(id) {
             let index = id.index();
@@ -68,7 +71,6 @@ impl <I: GenerationalId + Copy> IdManager<I> {
         } else {
             false
         }
-
     }
 
     /// Checks if an id is alive
@@ -78,8 +80,6 @@ impl <I: GenerationalId + Copy> IdManager<I> {
         self.generation[id.index()] == id.generation()
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -136,7 +136,6 @@ mod tests {
         assert_eq!(success, true);
         assert_eq!(id_manager.generation[id.index()], 1);
         assert_eq!(*id_manager.free_list.front().unwrap(), id.index() as u32);
-
     }
 
     /// Test of removing an invalid id
@@ -158,7 +157,6 @@ mod tests {
         assert_eq!(success, false);
     }
 
-
     /// Test for reusing an id
     #[test]
     fn resuse() {
@@ -167,9 +165,9 @@ mod tests {
         id_manager.destroy(id1);
         let id2 = id_manager.create();
         assert_eq!(id2, Entity::new(1, 0));
-        for _ in 0..MINIMUM_FREE_INDICES-1 {
+        for _ in 0..MINIMUM_FREE_INDICES - 1 {
             let id = id_manager.create();
-            id_manager.destroy(id); 
+            id_manager.destroy(id);
         }
 
         let id3 = id_manager.create();

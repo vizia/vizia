@@ -1,6 +1,6 @@
 use morphorm::Hierarchy;
 
-use crate::{Entity, TreeIterator, ChildIterator};
+use crate::{ChildIterator, Entity, TreeIterator};
 
 use std::iter::Rev;
 
@@ -11,17 +11,11 @@ impl<'a> Hierarchy<'a> for crate::Tree {
     type ChildIter = ChildIterator<'a>;
 
     fn down_iter(&'a self) -> Self::DownIter {
-        TreeIterator {
-            tree: self,
-            current_node: Some(Entity::root()),
-        }
+        TreeIterator { tree: self, current_node: Some(Entity::root()) }
     }
 
     fn up_iter(&'a self) -> Self::UpIter {
-        let iterator = TreeIterator {
-            tree: self,
-            current_node: Some(Entity::root()),
-        };
+        let iterator = TreeIterator { tree: self, current_node: Some(Entity::root()) };
         iterator.collect::<Vec<_>>().into_iter().rev()
     }
 

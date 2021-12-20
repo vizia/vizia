@@ -1,15 +1,12 @@
-use crate::{GenerationalId};
-
+use crate::GenerationalId;
 
 pub trait DenseIndex: Copy + Clone {
     fn new(index: usize) -> Self;
     fn null() -> Self;
     fn index(&self) -> usize;
-
 }
 
 impl DenseIndex for usize {
-
     fn new(index: usize) -> Self {
         index
     }
@@ -23,12 +20,10 @@ impl DenseIndex for usize {
     }
 }
 
-
 #[derive(Debug, PartialEq)]
 pub enum SparseSetError {
     NullKey,
 }
-
 
 /// Represents an entry of a sparse set storing the value and the linked key
 #[derive(Debug)]
@@ -44,17 +39,13 @@ pub struct SparseSetGeneric<T, D: DenseIndex> {
     pub dense: Vec<Entry<T>>,
 }
 
-impl<T, D: DenseIndex> SparseSetGeneric<T, D> 
+impl<T, D: DenseIndex> SparseSetGeneric<T, D>
 where
     T: Default,
 {
-
     /// Create a new empty sparse set
     pub fn new() -> Self {
-        Self {
-            sparse: Vec::new(),
-            dense: Vec::new(),
-        }
+        Self { sparse: Vec::new(), dense: Vec::new() }
     }
 
     pub fn clear(&mut self) {
@@ -77,12 +68,11 @@ where
                 if entry.key == sparse_idx {
                     return Some(dense_idx);
                 }
-            }            
+            }
         }
 
         None
     }
-
 
     /// Returns true if the sparse set contains data for the given key
     pub fn contains<I: GenerationalId>(&self, key: I) -> bool {
@@ -101,11 +91,9 @@ where
 
     /// Inserts data for a given key into the sparse set
     pub fn insert<I: GenerationalId>(&mut self, key: I, value: T) -> Result<(), SparseSetError> {
-
         if key.is_null() {
             return Err(SparseSetError::NullKey);
         }
-        
 
         if let Some(stored_value) = self.get_mut(key) {
             *stored_value = value;
@@ -119,10 +107,7 @@ where
         }
 
         self.sparse[sparse_idx] = D::new(self.dense.len());
-        self.dense.push(Entry {
-            key: sparse_idx,
-            value,
-        });
+        self.dense.push(Entry { key: sparse_idx, value });
 
         Ok(())
     }
@@ -135,7 +120,7 @@ where
             let r = self.dense.swap_remove(dense_idx.index()).value;
             if dense_idx.index() < self.dense.len() {
                 let swapped_entry = &self.dense[dense_idx.index()];
-                self.sparse[swapped_entry.key] = dense_idx; 
+                self.sparse[swapped_entry.key] = dense_idx;
             }
 
             self.sparse[sparse_idx] = D::null();
@@ -148,7 +133,6 @@ where
 }
 
 pub type SparseSet<T> = SparseSetGeneric<T, usize>;
-
 
 #[cfg(test)]
 mod tests {
@@ -179,7 +163,7 @@ mod tests {
     #[test]
     fn multiple_insert() {
         let mut sparse_set = SparseSet::new();
-        let res1 = sparse_set.insert(Entity::new(0,0), 42);
+        let res1 = sparse_set.insert(Entity::new(0, 0), 42);
         assert_eq!(res1, Ok(()));
         let res2 = sparse_set.insert(Entity::new(1, 0), 69);
         assert_eq!(res2, Ok(()));
@@ -189,14 +173,13 @@ mod tests {
 
         assert_eq!(sparse_set.dense[1].key, 1);
         assert_eq!(sparse_set.dense[1].value, 69);
-
     }
 
     /// Test adding multiple items with the same id (i.e. update the value)
     #[test]
     fn overlapping_insert() {
         let mut sparse_set = SparseSet::new();
-        let res1 = sparse_set.insert(Entity::new(0,0), 42);
+        let res1 = sparse_set.insert(Entity::new(0, 0), 42);
         assert_eq!(res1, Ok(()));
 
         assert_eq!(sparse_set.dense[0].key, 0);
@@ -238,7 +221,7 @@ mod tests {
     fn remove_first() {
         let mut sparse_set = SparseSet::new();
         let res1 = sparse_set.insert(Entity::root(), 42);
-        let res2 = sparse_set.insert(Entity::new(1,0), 69);
+        let res2 = sparse_set.insert(Entity::new(1, 0), 69);
 
         assert_eq!(res1, Ok(()));
         assert_eq!(res2, Ok(()));
@@ -258,7 +241,7 @@ mod tests {
     fn remove_last() {
         let mut sparse_set = SparseSet::new();
         let res1 = sparse_set.insert(Entity::root(), 42);
-        let res2 = sparse_set.insert(Entity::new(1,0), 69);
+        let res2 = sparse_set.insert(Entity::new(1, 0), 69);
 
         assert_eq!(res1, Ok(()));
         assert_eq!(res2, Ok(()));
@@ -268,7 +251,7 @@ mod tests {
         assert_eq!(sparse_set.dense[1].key, 1);
         assert_eq!(sparse_set.dense[1].value, 69);
 
-        let ret = sparse_set.remove(Entity::new(1,0));
+        let ret = sparse_set.remove(Entity::new(1, 0));
         assert_eq!(ret, Some(69));
         println!("{:?}", sparse_set);
     }
@@ -278,8 +261,8 @@ mod tests {
     fn remove_middle() {
         let mut sparse_set = SparseSet::new();
         let res1 = sparse_set.insert(Entity::root(), 42);
-        let res2 = sparse_set.insert(Entity::new(1,0), 69);
-        let res3 = sparse_set.insert(Entity::new(2,0), 33);
+        let res2 = sparse_set.insert(Entity::new(1, 0), 69);
+        let res3 = sparse_set.insert(Entity::new(2, 0), 33);
 
         assert_eq!(res1, Ok(()));
         assert_eq!(res2, Ok(()));
@@ -292,7 +275,7 @@ mod tests {
         assert_eq!(sparse_set.dense[2].key, 2);
         assert_eq!(sparse_set.dense[2].value, 33);
 
-        let ret = sparse_set.remove(Entity::new(1,0));
+        let ret = sparse_set.remove(Entity::new(1, 0));
         assert_eq!(ret, Some(69));
         println!("{:?}", sparse_set);
     }
@@ -302,23 +285,30 @@ mod tests {
     fn remove_sparse() {
         let mut sparse_set = SparseSet::new();
         let res1 = sparse_set.insert(Entity::root(), 42);
-        let res2 = sparse_set.insert(Entity::new(12,0), 69);
-        let res3 = sparse_set.insert(Entity::new(5,0), 33);
+        let res2 = sparse_set.insert(Entity::new(12, 0), 69);
+        let res3 = sparse_set.insert(Entity::new(5, 0), 33);
 
         assert_eq!(res1, Ok(()));
         assert_eq!(res2, Ok(()));
         assert_eq!(res3, Ok(()));
-        assert_eq!(sparse_set.sparse, [0, 
-            std::usize::MAX, std::usize::MAX, 
-            std::usize::MAX, std::usize::MAX, 
-            2, 
-            std::usize::MAX, 
-            std::usize::MAX, 
-            std::usize::MAX, 
-            std::usize::MAX, 
-            std::usize::MAX, 
-            std::usize::MAX, 
-            1]);
+        assert_eq!(
+            sparse_set.sparse,
+            [
+                0,
+                std::usize::MAX,
+                std::usize::MAX,
+                std::usize::MAX,
+                std::usize::MAX,
+                2,
+                std::usize::MAX,
+                std::usize::MAX,
+                std::usize::MAX,
+                std::usize::MAX,
+                std::usize::MAX,
+                std::usize::MAX,
+                1
+            ]
+        );
         assert_eq!(sparse_set.dense[0].key, 0);
         assert_eq!(sparse_set.dense[0].value, 42);
         assert_eq!(sparse_set.dense[1].key, 12);
@@ -326,13 +316,10 @@ mod tests {
         assert_eq!(sparse_set.dense[2].key, 5);
         assert_eq!(sparse_set.dense[2].value, 33);
 
-        let ret = sparse_set.remove(Entity::new(12,0));
+        let ret = sparse_set.remove(Entity::new(12, 0));
         assert_eq!(ret, Some(69));
 
         sparse_set.insert(Entity::new(12, 1), 77);
         println!("{:?}", sparse_set);
     }
-
-
-
 }

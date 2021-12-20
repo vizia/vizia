@@ -1,5 +1,7 @@
-use std::{any::{Any, TypeId}, marker::PhantomData};
-
+use std::{
+    any::{Any, TypeId},
+    marker::PhantomData,
+};
 
 mod id;
 pub use id::*;
@@ -17,8 +19,8 @@ mod handle;
 pub use handle::*;
 
 mod tree;
-pub use morphorm::*;
 pub use morphorm::layout as apply_layout;
+pub use morphorm::*;
 pub use style::{Abilities, Color};
 pub use tree::*;
 
@@ -34,7 +36,7 @@ pub use events::*;
 mod storage;
 
 mod style;
-pub use style::{Style, Rule, Display, Visibility, PseudoClass, Overflow, apply_transform};
+pub use style::{apply_transform, Display, Overflow, PseudoClass, Rule, Style, Visibility};
 
 mod animation;
 pub use animation::*;
@@ -68,7 +70,7 @@ pub use morphorm::Units::*;
 pub use vizia_derive::{Data, Lens};
 
 mod view;
-pub use view::{View, Canvas};
+pub use view::{Canvas, View};
 
 mod extention;
 pub use extention::*;

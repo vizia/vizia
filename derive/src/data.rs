@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-
 // Adapted from Druid data.rs
 
 // Copyright 2019 The Druid Authors.
@@ -16,7 +15,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 
 use crate::attr::{DataAttr, Field, FieldKind, Fields};
 
@@ -47,14 +45,9 @@ fn derive_struct(
     let fields = Fields::<DataAttr>::parse_ast(&s.fields)?;
 
     let diff = if fields.len() > 0 {
-        let same_fns = fields
-            .iter()
-            .filter(|f| f.attrs != DataAttr::Ignore)
-            .map(Field::same_fn_path_tokens);
-        let fields = fields
-            .iter()
-            .filter(|f| f.attrs != DataAttr::Ignore)
-            .map(Field::ident_tokens);
+        let same_fns =
+            fields.iter().filter(|f| f.attrs != DataAttr::Ignore).map(Field::same_fn_path_tokens);
+        let fields = fields.iter().filter(|f| f.attrs != DataAttr::Ignore).map(Field::ident_tokens);
         quote!( #( #same_fns(&self.#fields, &other.#fields) )&&* )
     } else {
         quote!(true)

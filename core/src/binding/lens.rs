@@ -7,10 +7,8 @@ pub trait Lens: 'static + Clone + Copy + std::fmt::Debug {
     fn view<'a>(&self, source: &'a Self::Source) -> &'a Self::Target;
 }
 
-
 /// Helpers for constructing more complex `Lens`es.
 pub trait LensExt: Lens {
-
     /// Used to construct a lens to some data contained within some other lensed data.
     ///
     /// # Example
@@ -47,9 +45,7 @@ pub trait LensExt: Lens {
 }
 
 // Implement LensExt for all types which implement Lens
-impl<T: Lens> LensExt for T {
-
-}
+impl<T: Lens> LensExt for T {}
 
 /// `Lens` composed of two lenses joined together
 #[derive(Debug, Copy)]
@@ -64,10 +60,7 @@ impl<A, B> Then<A, B> {
         A: Lens,
         B: Lens,
     {
-        Self {
-            a,
-            b,
-        }
+        Self { a, b }
     }
 }
 
@@ -76,7 +69,6 @@ where
     A: Lens,
     B: Lens<Source = A::Target>,
 {
-
     type Source = A::Source;
     type Target = B::Target;
 
@@ -87,10 +79,7 @@ where
 
 impl<T: Clone, U: Clone> Clone for Then<T, U> {
     fn clone(&self) -> Self {
-        Self {
-            a: self.a.clone(),
-            b: self.b.clone(),
-        }
+        Self { a: self.a.clone(), b: self.b.clone() }
     }
 }
 
@@ -100,8 +89,8 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
 // }
 
 // impl<A,B> And<A,B> {
-//     pub fn new(a: A, b: B) -> Self 
-//     where 
+//     pub fn new(a: A, b: B) -> Self
+//     where
 //         A: Lens,
 //         B: Lens,
 //     {
@@ -112,8 +101,8 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
 //     }
 // }
 
-// impl<A,B> Lens for And<A,B> 
-// where 
+// impl<A,B> Lens for And<A,B>
+// where
 //     A: Lens,
 //     B: Lens<Source = A::Source>,
 // {
@@ -139,8 +128,8 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
 //     }
 // }
 
-// impl<T,I> Lens for Index<T,I> 
-// where 
+// impl<T,I> Lens for Index<T,I>
+// where
 
 //     T: 'static + std::ops::Index<I> + Sized,
 //     I: 'static + Clone,

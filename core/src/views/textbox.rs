@@ -1,30 +1,25 @@
-
 use keyboard_types::Code;
 
 use crate::{Context, Handle, MouseButton, View, WindowEvent};
 
-
-
-
 pub struct Textbox {
     text: String,
     edit: bool,
-    on_submit: Option<Box<dyn Fn(&mut Context, &Self)>>
+    on_submit: Option<Box<dyn Fn(&mut Context, &Self)>>,
 }
 
 impl Textbox {
     pub fn new(cx: &mut Context, placeholder: &str) -> Handle<Self> {
-        Self {
-            text: placeholder.to_owned(),
-            edit: false,
-            on_submit: None,
-        }.build(cx).text(placeholder)
+        Self { text: placeholder.to_owned(), edit: false, on_submit: None }
+            .build(cx)
+            .text(placeholder)
     }
 }
 
 impl Handle<Textbox> {
-    pub fn on_submit<F>(self, cx: &mut Context, callback: F) -> Self 
-    where F: 'static + Fn(&mut Context, &Textbox)
+    pub fn on_submit<F>(self, cx: &mut Context, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context, &Textbox),
     {
         if let Some(view) = cx.views.get_mut(&self.entity) {
             if let Some(textbox) = view.downcast_mut::<Textbox>() {
@@ -50,17 +45,15 @@ impl View for Textbox {
                     }
                 }
 
-                WindowEvent::KeyDown(code, key) => {
-                    match code {
-                        Code::Enter => {
-                            self.edit = false;
-                        }
-
-                        _=> {}
+                WindowEvent::KeyDown(code, key) => match code {
+                    Code::Enter => {
+                        self.edit = false;
                     }
-                }
 
-                _=> {}
+                    _ => {}
+                },
+
+                _ => {}
             }
         }
     }

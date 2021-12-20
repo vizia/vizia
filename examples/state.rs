@@ -1,5 +1,3 @@
-
-
 use vizia::*;
 
 // Example of using state types to store view-local mutable state
@@ -31,27 +29,35 @@ impl Model for Data {
 // Then send the updates to the bound entities
 
 fn main() {
+    Application::new(WindowDescription::new().with_title("State"), |cx| {
+        Data { something: "Something".to_string(), other: 32 }.build(cx);
 
-    Application::new(WindowDescription::new().with_title("State"), |cx|{
-
-        Data {
-            something: "Something".to_string(),
-            other: 32,
-        }.build(cx);
-
-        Binding::new(cx, Data::something, |cx, something|{
+        Binding::new(cx, Data::something, |cx, something| {
             println!("Rebuild something");
             Label::new(cx, &format!("{}", *something.get(cx)));
         });
 
-        Binding::new(cx, Data::other, |cx, other|{
+        Binding::new(cx, Data::other, |cx, other| {
             println!("Rebuild other");
             Label::new(cx, &format!("{}", *other.get(cx)));
         });
 
-        Button::new(cx, |cx| cx.emit(DataEvent::ChangeSomething), |cx| {Label::new(cx, "Change Something");});
-        Button::new(cx, |cx| cx.emit(DataEvent::ChangeOther), |cx| {Label::new(cx, "Change Other");});
-    }).run();
+        Button::new(
+            cx,
+            |cx| cx.emit(DataEvent::ChangeSomething),
+            |cx| {
+                Label::new(cx, "Change Something");
+            },
+        );
+        Button::new(
+            cx,
+            |cx| cx.emit(DataEvent::ChangeOther),
+            |cx| {
+                Label::new(cx, "Change Other");
+            },
+        );
+    })
+    .run();
 }
 
 #[derive(Debug)]

@@ -1,6 +1,11 @@
-use crate::{Context, Entity, Event, FontOrId, Handle, ViewHandler, style::{BorderCornerShape, GradientDirection}};
+use crate::{
+    style::{BorderCornerShape, GradientDirection},
+    Context, Entity, Event, FontOrId, Handle, ViewHandler,
+};
 
-use femtovg::{Align, Baseline, ImageFlags, Paint, Path, PixelFormat, RenderTarget, renderer::OpenGl};
+use femtovg::{
+    renderer::OpenGl, Align, Baseline, ImageFlags, Paint, Path, PixelFormat, RenderTarget,
+};
 use morphorm::Units;
 
 pub type Canvas = femtovg::Canvas<OpenGl>;
@@ -8,13 +13,12 @@ pub type Canvas = femtovg::Canvas<OpenGl>;
 // Length proportional to radius of a cubic bezier handle for 90deg arcs.
 const KAPPA90: f32 = 0.5522847493;
 
-
 pub trait View: 'static + Sized {
     fn body(&mut self, cx: &mut Context) {}
-    fn build2<F>(mut self, cx: &mut Context, builder: F) -> Handle<Self> 
-    where F: 'static + FnOnce(&mut Context)
+    fn build2<F>(mut self, cx: &mut Context, builder: F) -> Handle<Self>
+    where
+        F: 'static + FnOnce(&mut Context),
     {
-
         // Add the instance to context unless it already exists
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
             id
@@ -24,16 +28,12 @@ pub trait View: 'static + Sized {
             cx.cache.add(id).expect("Failed to add to cache");
             cx.style.borrow_mut().add(id);
             cx.views.insert(id, Box::new(self));
-            id  
+            id
         };
 
         cx.count += 1;
 
-        let handle = Handle {
-            entity: id,
-            style: cx.style.clone(),
-            p: Default::default(),
-        };
+        let handle = Handle { entity: id, style: cx.style.clone(), p: Default::default() };
 
         // ...and this part
         let prev = cx.current;
@@ -50,10 +50,10 @@ pub trait View: 'static + Sized {
         handle
     }
 
-    fn update<F>(mut self, cx: &mut Context, builder: F) -> Handle<Self> 
-    where F: 'static + FnOnce(&mut Context)
+    fn update<F>(mut self, cx: &mut Context, builder: F) -> Handle<Self>
+    where
+        F: 'static + FnOnce(&mut Context),
     {
-
         // Add the instance to context unless it already exists
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
             cx.views.insert(id, Box::new(self));
@@ -64,16 +64,12 @@ pub trait View: 'static + Sized {
             cx.cache.add(id).expect("Failed to add to cache");
             cx.style.borrow_mut().add(id);
             cx.views.insert(id, Box::new(self));
-            id  
+            id
         };
 
         cx.count += 1;
 
-        let handle = Handle {
-            entity: id,
-            style: cx.style.clone(),
-            p: Default::default(),
-        };
+        let handle = Handle { entity: id, style: cx.style.clone(), p: Default::default() };
 
         // ...and this part
         let prev = cx.current;
@@ -102,10 +98,9 @@ pub trait View: 'static + Sized {
             // if let Some(view) = cx.views.get_mut(&id) {
             //     view.update(&self);
             // }
-            
+
             cx.views.insert(id, Box::new(self));
 
-            
             id
         } else {
             let id = cx.entity_manager.create();
@@ -120,34 +115,26 @@ pub trait View: 'static + Sized {
             cx.current = prev;
             cx.count = prev_count;
             cx.views.insert(id, Box::new(self));
-            id  
+            id
         };
 
         cx.count += 1;
 
-        Handle {
-            entity: id,
-            style: cx.style.clone(),
-            p: Default::default(),
-        }
+        Handle { entity: id, style: cx.style.clone(), p: Default::default() }
     }
     fn debug(&self, entity: Entity) -> String {
         "".to_string()
     }
 
-
     fn element(&self) -> Option<String> {
         None
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-
-    }
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {}
 
     fn draw(&self, cx: &Context, canvas: &mut Canvas) {
         //println!("{}", debug(&mut context, entity));
         let entity = cx.current;
-
 
         let bounds = cx.cache.get_bounds(entity);
 
@@ -155,14 +142,14 @@ pub trait View: 'static + Sized {
         if bounds.w == 0.0 || bounds.h == 0.0 {
             return;
         }
-    
 
         let padding_left = match cx.style.borrow().child_left.get(entity).unwrap_or(&Units::Auto) {
             Units::Pixels(val) => val,
             _ => &0.0,
         };
 
-        let padding_right = match cx.style.borrow().child_right.get(entity).unwrap_or(&Units::Auto) {
+        let padding_right = match cx.style.borrow().child_right.get(entity).unwrap_or(&Units::Auto)
+        {
             Units::Pixels(val) => val,
             _ => &0.0,
         };
@@ -172,34 +159,19 @@ pub trait View: 'static + Sized {
             _ => &0.0,
         };
 
-        let padding_bottom = match cx.style.borrow().child_bottom.get(entity).unwrap_or(&Units::Auto) {
-            Units::Pixels(val) => val,
-            _ => &0.0,
-        };
+        let padding_bottom =
+            match cx.style.borrow().child_bottom.get(entity).unwrap_or(&Units::Auto) {
+                Units::Pixels(val) => val,
+                _ => &0.0,
+            };
 
-        let background_color = cx
-            .style
-            .borrow()
-            .background_color
-            .get(entity)
-            .cloned()
-            .unwrap_or_default();
+        let background_color =
+            cx.style.borrow().background_color.get(entity).cloned().unwrap_or_default();
 
-        let font_color = cx
-            .style
-            .borrow()
-            .font_color
-            .get(entity)
-            .cloned()
-            .unwrap_or(crate::Color::rgb(0, 0, 0));
+        let font_color =
+            cx.style.borrow().font_color.get(entity).cloned().unwrap_or(crate::Color::rgb(0, 0, 0));
 
-        let border_color = cx
-            .style
-            .borrow()
-            .border_color
-            .get(entity)
-            .cloned()
-            .unwrap_or_default();
+        let border_color = cx.style.borrow().border_color.get(entity).cloned().unwrap_or_default();
 
         let parent = cx
             .tree
@@ -209,50 +181,25 @@ pub trait View: 'static + Sized {
         let parent_width = cx.cache.get_width(parent);
         let parent_height = cx.cache.get_height(parent);
 
-        let border_shape_top_left = cx
-            .style
-            .borrow()
-            .border_shape_top_left
-            .get(entity)
-            .cloned()
-            .unwrap_or_default();
+        let border_shape_top_left =
+            cx.style.borrow().border_shape_top_left.get(entity).cloned().unwrap_or_default();
 
-        let border_shape_top_right = cx
-            .style
-            .borrow()
-            .border_shape_top_right
-            .get(entity)
-            .cloned()
-            .unwrap_or_default();
+        let border_shape_top_right =
+            cx.style.borrow().border_shape_top_right.get(entity).cloned().unwrap_or_default();
 
-        let border_shape_bottom_left = cx
-            .style
-            .borrow()
-            .border_shape_bottom_left
-            .get(entity)
-            .cloned()
-            .unwrap_or_default();
+        let border_shape_bottom_left =
+            cx.style.borrow().border_shape_bottom_left.get(entity).cloned().unwrap_or_default();
 
-        let border_shape_bottom_right = cx
-            .style
-            .borrow()
-            .border_shape_bottom_right
-            .get(entity)
-            .cloned()
-            .unwrap_or_default();
+        let border_shape_bottom_right =
+            cx.style.borrow().border_shape_bottom_right.get(entity).cloned().unwrap_or_default();
 
-        let border_radius_top_left = match cx
-            .style
-            .borrow()
-            .border_radius_top_left
-            .get(entity)
-            .cloned()
-            .unwrap_or_default()
-        {
-            Units::Pixels(val) => val,
-            Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
-            _ => 0.0,
-        };
+        let border_radius_top_left =
+            match cx.style.borrow().border_radius_top_left.get(entity).cloned().unwrap_or_default()
+            {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
+                _ => 0.0,
+            };
 
         let border_radius_top_right = match cx
             .style
@@ -301,18 +248,12 @@ pub trait View: 'static + Sized {
         let mut border_color: femtovg::Color = border_color.into();
         border_color.set_alphaf(border_color.a * opacity);
 
-        let border_width = match cx
-            .style
-            .borrow()
-            .border_width
-            .get(entity)
-            .cloned()
-            .unwrap_or_default()
-        {
-            Units::Pixels(val) => val,
-            Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
-            _ => 0.0,
-        };
+        let border_width =
+            match cx.style.borrow().border_width.get(entity).cloned().unwrap_or_default() {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
+                _ => 0.0,
+            };
 
         let outer_shadow_h_offset = match cx
             .style
@@ -340,26 +281,15 @@ pub trait View: 'static + Sized {
             _ => 0.0,
         };
 
-        let outer_shadow_blur = match cx
-            .style
-            .borrow()
-            .outer_shadow_blur
-            .get(entity)
-            .cloned()
-            .unwrap_or_default()
-        {
-            Units::Pixels(val) => val,
-            Units::Percentage(val) => bounds.w * (val / 100.0),
-            _ => 0.0,
-        };
+        let outer_shadow_blur =
+            match cx.style.borrow().outer_shadow_blur.get(entity).cloned().unwrap_or_default() {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => bounds.w * (val / 100.0),
+                _ => 0.0,
+            };
 
-        let outer_shadow_color = cx
-            .style
-            .borrow()
-            .outer_shadow_color
-            .get(entity)
-            .cloned()
-            .unwrap_or_default();
+        let outer_shadow_color =
+            cx.style.borrow().outer_shadow_color.get(entity).cloned().unwrap_or_default();
 
         let mut outer_shadow_color: femtovg::Color = outer_shadow_color.into();
         outer_shadow_color.set_alphaf(outer_shadow_color.a * opacity);
@@ -390,30 +320,19 @@ pub trait View: 'static + Sized {
             _ => 0.0,
         };
 
-        let inner_shadow_blur = match cx
-            .style
-            .borrow()
-            .inner_shadow_blur
-            .get(entity)
-            .cloned()
-            .unwrap_or_default()
-        {
-            Units::Pixels(val) => val,
-            Units::Percentage(val) => bounds.w * (val / 100.0),
-            _ => 0.0,
-        };
+        let inner_shadow_blur =
+            match cx.style.borrow().inner_shadow_blur.get(entity).cloned().unwrap_or_default() {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => bounds.w * (val / 100.0),
+                _ => 0.0,
+            };
 
-        let inner_shadow_color = cx
-            .style
-            .borrow()
-            .inner_shadow_color
-            .get(entity)
-            .cloned()
-            .unwrap_or_default();
+        let inner_shadow_color =
+            cx.style.borrow().inner_shadow_color.get(entity).cloned().unwrap_or_default();
 
         let mut inner_shadow_color: femtovg::Color = inner_shadow_color.into();
         inner_shadow_color.set_alphaf(inner_shadow_color.a * opacity);
-        
+
         // // Draw outer shadow
         // let mut path = Path::new();
         // path.rounded_rect_varying(
@@ -454,7 +373,6 @@ pub trait View: 'static + Sized {
 
         // canvas.fill_path(&mut path, paint);
 
-        
         //let start = std::time::Instant::now();
         let mut path = Path::new();
 
@@ -469,7 +387,6 @@ pub trait View: 'static + Sized {
                 bounds.w / 2.0,
             );
         } else {
-
             let x = bounds.x + border_width / 2.0;
             let y = bounds.y + border_width / 2.0;
             let w = bounds.w - border_width;
@@ -493,44 +410,71 @@ pub trait View: 'static + Sized {
             path.line_to(x, y + h - ry_bl);
             if border_radius_bottom_left != 0.0 {
                 if border_shape_bottom_left == BorderCornerShape::Round {
-                    path.bezier_to(x, y + h - ry_bl * (1.0 - KAPPA90), x + rx_bl * (1.0 - KAPPA90), y + h, x + rx_bl, y + h);
+                    path.bezier_to(
+                        x,
+                        y + h - ry_bl * (1.0 - KAPPA90),
+                        x + rx_bl * (1.0 - KAPPA90),
+                        y + h,
+                        x + rx_bl,
+                        y + h,
+                    );
                 } else {
                     path.line_to(x + rx_bl, y + h);
-                } 
+                }
             }
 
             path.line_to(x + w - rx_br, y + h);
-            
+
             if border_radius_bottom_right != 0.0 {
                 if border_shape_bottom_right == BorderCornerShape::Round {
-                    path.bezier_to(x + w - rx_br * (1.0 - KAPPA90), y + h, x + w, y + h - ry_br * (1.0 - KAPPA90), x + w, y + h - ry_br);
+                    path.bezier_to(
+                        x + w - rx_br * (1.0 - KAPPA90),
+                        y + h,
+                        x + w,
+                        y + h - ry_br * (1.0 - KAPPA90),
+                        x + w,
+                        y + h - ry_br,
+                    );
                 } else {
                     path.line_to(x + w, y + h - ry_br);
-                }                
+                }
             }
 
             path.line_to(x + w, y + ry_tr);
-            
+
             if border_radius_top_right != 0.0 {
                 if border_shape_top_right == BorderCornerShape::Round {
-                    path.bezier_to(x + w, y + ry_tr * (1.0 - KAPPA90), x + w - rx_tr * (1.0 - KAPPA90), y, x + w - rx_tr, y);
+                    path.bezier_to(
+                        x + w,
+                        y + ry_tr * (1.0 - KAPPA90),
+                        x + w - rx_tr * (1.0 - KAPPA90),
+                        y,
+                        x + w - rx_tr,
+                        y,
+                    );
                 } else {
                     path.line_to(x + w - rx_tr, y);
-                }                
+                }
             }
 
             path.line_to(x + rx_tl, y);
 
             if border_radius_top_left != 0.0 {
                 if border_shape_top_left == BorderCornerShape::Round {
-                    path.bezier_to(x + rx_tl * (1.0 - KAPPA90), y, x, y + ry_tl * (1.0 - KAPPA90), x, y + ry_tl);
+                    path.bezier_to(
+                        x + rx_tl * (1.0 - KAPPA90),
+                        y,
+                        x,
+                        y + ry_tl * (1.0 - KAPPA90),
+                        x,
+                        y + ry_tl,
+                    );
                 } else {
                     path.line_to(x, y + ry_tl);
                 }
             }
-            
-            path.close();
 
+            path.close();
         }
 
         // Draw outer shadow
@@ -543,15 +487,15 @@ pub trait View: 'static + Sized {
 
             let shadow_image = cx.cache.shadow_image.get(&entity).cloned().unwrap_or(
                 (
-                    canvas.create_image_empty((bounds.w + d) as usize, 
-                    (bounds.h + d) as usize, 
-                    PixelFormat::Rgba8, 
+                    canvas.create_image_empty((bounds.w + d) as usize,
+                    (bounds.h + d) as usize,
+                    PixelFormat::Rgba8,
                     ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
                     ).expect("Failed to create image"),
 
-                    canvas.create_image_empty((bounds.w + d) as usize, 
-                    (bounds.h + d) as usize, 
-                    PixelFormat::Rgba8, 
+                    canvas.create_image_empty((bounds.w + d) as usize,
+                    (bounds.h + d) as usize,
+                    PixelFormat::Rgba8,
                     ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
                     ).expect("Failed to create image"),
                 )
@@ -567,26 +511,26 @@ pub trait View: 'static + Sized {
                 canvas.delete_image(shadow_image.1);
 
                 (
-                    canvas.create_image_empty((bounds.w + d) as usize, 
-                    (bounds.h + d) as usize, 
-                    PixelFormat::Rgba8, 
+                    canvas.create_image_empty((bounds.w + d) as usize,
+                    (bounds.h + d) as usize,
+                    PixelFormat::Rgba8,
                     ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
                     ).expect("Failed to create image"),
 
-                    canvas.create_image_empty((bounds.w + d) as usize, 
-                    (bounds.h + d) as usize, 
-                    PixelFormat::Rgba8, 
+                    canvas.create_image_empty((bounds.w + d) as usize,
+                    (bounds.h + d) as usize,
+                    PixelFormat::Rgba8,
                     ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
                     ).expect("Failed to create image"),
                 )
             } else {
                 (shadow_image.0, shadow_image.1)
             };
-        
+
 
             cx.cache.shadow_image.insert(entity, (source, target));
 
-            
+
             canvas.set_render_target(RenderTarget::Image(source));
             canvas.clear_rect(0, 0, size.0 as u32, size.1 as u32, femtovg::Color::rgba(0,0, 0, 0));
             canvas.translate(-bounds.x + d/2.0, -bounds.y + d/2.0);
@@ -614,14 +558,14 @@ pub trait View: 'static + Sized {
             canvas.translate(outer_shadow_h_offset, outer_shadow_v_offset);
             let mut path = Path::new();
             path.rect(bounds.x - d/2.0, bounds.y - d/2.0, bounds.w + d, bounds.h + d);
-            
+
             canvas.fill_path(&mut path, Paint::image(
-                target_image, 
-                bounds.x - d/2.0, 
-                bounds.y - d/2.0, 
-                bounds.w + d, 
-                bounds.h + d, 
-                0f32, 
+                target_image,
+                bounds.x - d/2.0,
+                bounds.y - d/2.0,
+                bounds.w + d,
+                bounds.h + d,
+                0f32,
                 1f32)
             );
             //canvas.fill_path(&mut path, Paint::color(femtovg::Color::rgb(0,0,0)));
@@ -709,25 +653,30 @@ pub trait View: 'static + Sized {
         // );
         // canvas.fill_path(&mut path, paint);
 
-        
         // Draw text
         if let Some(text) = cx.style.borrow().text.get(entity) {
             let font = cx.style.borrow().font.get(entity).cloned().unwrap_or_default();
 
             // TODO - This should probably be cached in cx to save look-up time
-            let default_font = cx.resource_manager.fonts.get(&cx.style.borrow().default_font).and_then(|font|{
-                match font {
+            let default_font = cx
+                .resource_manager
+                .fonts
+                .get(&cx.style.borrow().default_font)
+                .and_then(|font| match font {
                     FontOrId::Id(id) => Some(id),
-                    _=> None,
-                }
-            }).expect("Failed to find default font");
+                    _ => None,
+                })
+                .expect("Failed to find default font");
 
-            let font_id = cx.resource_manager.fonts.get(&font).and_then(|font|{
-                match font {
+            let font_id = cx
+                .resource_manager
+                .fonts
+                .get(&font)
+                .and_then(|font| match font {
                     FontOrId::Id(id) => Some(id),
-                    _=> None,
-                }
-            }).unwrap_or(default_font);
+                    _ => None,
+                })
+                .unwrap_or(default_font);
 
             // let mut x = posx + (border_width / 2.0);
             // let mut y = posy + (border_width / 2.0);
@@ -738,34 +687,12 @@ pub trait View: 'static + Sized {
             let text_string = text.to_owned();
 
             // TODO - Move this to a text layout system and include constraints
-            let child_left = cx
-                .style
-                .borrow()
-                .child_left
-                .get(entity)
-                .cloned()
-                .unwrap_or_default();
-            let child_right = cx
-                .style
-                .borrow()
-                .child_right
-                .get(entity)
-                .cloned()
-                .unwrap_or_default();
-            let child_top = cx
-                .style
-                .borrow()
-                .child_top
-                .get(entity)
-                .cloned()
-                .unwrap_or_default();
-            let child_bottom = cx
-                .style
-                .borrow()
-                .child_bottom
-                .get(entity)
-                .cloned()
-                .unwrap_or_default();
+            let child_left = cx.style.borrow().child_left.get(entity).cloned().unwrap_or_default();
+            let child_right =
+                cx.style.borrow().child_right.get(entity).cloned().unwrap_or_default();
+            let child_top = cx.style.borrow().child_top.get(entity).cloned().unwrap_or_default();
+            let child_bottom =
+                cx.style.borrow().child_bottom.get(entity).cloned().unwrap_or_default();
 
             let align = match child_left {
                 Units::Pixels(val) => match child_right {
@@ -842,7 +769,7 @@ pub trait View: 'static + Sized {
 
         // let background_color: femtovg::Color = cx.style.borrow_mut().background_color.get(entity).cloned().unwrap_or_default().into();
         // canvas.fill_path(&mut path, Paint::color(background_color));
-        
+
         // if let Some(text) = cx.style.borrow().text.get(entity) {
         //     let mut paint = Paint::color(femtovg::Color::black());
         //     paint.set_font(&cx.fonts);
@@ -851,14 +778,12 @@ pub trait View: 'static + Sized {
         //     canvas.fill_text(bounds.x + bounds.w / 2.0, bounds.y + bounds.h / 2.0, text, paint);
         // }
     }
-    
 }
 
-impl<T: View> ViewHandler for T 
+impl<T: View> ViewHandler for T
 where
-    T: std::marker::Sized + View + 'static
+    T: std::marker::Sized + View + 'static,
 {
-
     fn debug(&self, entity: Entity) -> String {
         <T as View>::debug(self, entity)
     }

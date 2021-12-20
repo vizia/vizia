@@ -1,5 +1,3 @@
-
-
 pub trait LocalizedStringKey<'a> {
     fn key(&self) -> &'a str;
 }

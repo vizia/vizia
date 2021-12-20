@@ -1,4 +1,3 @@
-
 // Not currently used
 
 #[derive(Copy, Clone, Debug, PartialEq)]

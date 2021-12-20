@@ -1,9 +1,8 @@
-
 use crate::CursorIcon;
 use crate::Display;
 
-use crate::Color;
 use super::LinearGradient;
+use crate::Color;
 
 use crate::style::*;
 
@@ -144,7 +143,7 @@ impl std::fmt::Display for Property {
                         string.clone()
                     }
                 })
-            }   
+            }
             // General
             Property::Display(val) => write!(f, "display: {};", 1),
             Property::Visibility(val) => write!(f, "visibility: {};", 2),

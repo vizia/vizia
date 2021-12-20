@@ -1,6 +1,9 @@
 use morphorm::Cache;
 
-use crate::{Display, Entity, Event, Propagation, Context, Units, Visibility, WindowEvent, PseudoClass, Abilities};
+use crate::{
+    Abilities, Context, Display, Entity, Event, Propagation, PseudoClass, Units, Visibility,
+    WindowEvent,
+};
 
 /// Determines the hovered entity based on the mouse cursor position
 pub fn apply_hover(cx: &mut Context) {
@@ -15,7 +18,6 @@ pub fn apply_hover(cx: &mut Context) {
     let mut hovered_widget = Entity::root();
 
     for entity in draw_tree.into_iter() {
-
         // Skip invisible widgets
         if cx.cache.get_visibility(entity) == Visibility::Invisible {
             continue;
@@ -61,10 +63,19 @@ pub fn apply_hover(cx: &mut Context) {
             && ty >= posy
             && ty >= clip_region.y
             && ty < (posy + height)
-            && ty < (clip_region.y + clip_region.h) 
+            && ty < (clip_region.y + clip_region.h)
         {
             hovered_widget = entity;
-            if cx.style.borrow().pseudo_classes.get(entity).cloned().unwrap_or_default().contains(PseudoClass::OVER) == false {
+            if cx
+                .style
+                .borrow()
+                .pseudo_classes
+                .get(entity)
+                .cloned()
+                .unwrap_or_default()
+                .contains(PseudoClass::OVER)
+                == false
+            {
                 cx.event_queue.push_back(
                     Event::new(WindowEvent::MouseOver)
                         .target(entity)
@@ -74,20 +85,25 @@ pub fn apply_hover(cx: &mut Context) {
                 if let Some(pseudo_class) = cx.style.borrow_mut().pseudo_classes.get_mut(entity) {
                     pseudo_class.set(PseudoClass::OVER, true);
                 }
-            
             }
         } else {
-            if cx.style.borrow().pseudo_classes.get(entity).cloned().unwrap_or_default().contains(PseudoClass::OVER) == true {
+            if cx
+                .style
+                .borrow()
+                .pseudo_classes
+                .get(entity)
+                .cloned()
+                .unwrap_or_default()
+                .contains(PseudoClass::OVER)
+                == true
+            {
                 cx.event_queue.push_back(
-                    Event::new(WindowEvent::MouseOut)
-                        .target(entity)
-                        .propagate(Propagation::Direct),
+                    Event::new(WindowEvent::MouseOut).target(entity).propagate(Propagation::Direct),
                 );
 
                 if let Some(pseudo_class) = cx.style.borrow_mut().pseudo_classes.get_mut(entity) {
                     pseudo_class.set(PseudoClass::OVER, false);
                 }
-            
             }
         }
     }

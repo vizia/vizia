@@ -1,8 +1,8 @@
 use crate::{Entity, Tree};
 
-use super::parent_iter::ParentIterator;
-use super::child_iter::ChildIterator;
 use super::branch_iter::BranchIterator;
+use super::child_iter::ChildIterator;
+use super::parent_iter::ParentIterator;
 use super::tree_iter::TreeIterator;
 
 /// Trait which provides methods for qerying the tree.
@@ -58,10 +58,7 @@ impl TreeExt for Entity {
     }
 
     fn parent_iter<'a>(&self, tree: &'a Tree) -> ParentIterator<'a> {
-        ParentIterator {
-            tree,
-            current: Some(*self),
-        }
+        ParentIterator { tree, current: Some(*self) }
     }
 
     fn child_iter<'a>(&self, tree: &'a Tree) -> ChildIterator<'a> {
@@ -73,17 +70,10 @@ impl TreeExt for Entity {
     }
 
     fn tree_iter<'a>(&self, tree: &'a Tree) -> TreeIterator<'a> {
-        TreeIterator {
-            tree,
-            current_node: Some(*self),
-        }
+        TreeIterator { tree, current_node: Some(*self) }
     }
 
     fn branch_iter<'a>(&self, tree: &'a Tree) -> BranchIterator<'a> {
-        BranchIterator {
-            tree,
-            start_node: *self,
-            current_node: Some(*self),
-        }
+        BranchIterator { tree, start_node: *self, current_node: Some(*self) }
     }
 }

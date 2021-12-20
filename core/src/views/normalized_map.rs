@@ -13,7 +13,7 @@ pub enum DisplayDecimals {
     Two,
     Three,
     Four,
-    Five
+    Five,
 }
 
 impl DisplayDecimals {
@@ -49,16 +49,14 @@ impl ValueScaling {
         } else if normalized >= 1.0 {
             return max;
         }
-    
-        let map = |x: f32| -> f32 {
-            (x * (max - min)) + min
-        };
-    
+
+        let map = |x: f32| -> f32 { (x * (max - min)) + min };
+
         match self {
             ValueScaling::Linear => map(normalized),
-    
+
             ValueScaling::Power(exponent) => map(normalized.powf(*exponent)),
-    
+
             ValueScaling::Frequency => {
                 let minl = min.log2();
                 let range = max.log2() - minl;
@@ -66,23 +64,21 @@ impl ValueScaling {
             }
         }
     }
-    
+
     pub fn value_to_normalized(&self, value: f32, min: f32, max: f32) -> f32 {
         if value <= min {
             return 0.0;
         } else if value >= max {
             return 1.0;
         }
-    
-        let unmap = |x: f32| -> f32 {
-            (x - min) / (max - min)
-        };
-    
+
+        let unmap = |x: f32| -> f32 { (x - min) / (max - min) };
+
         match self {
             ValueScaling::Linear => unmap(value),
-    
+
             ValueScaling::Power(exponent) => unmap(value).powf(1.0 / *exponent),
-    
+
             ValueScaling::Frequency => {
                 let minl = min.log2();
                 let range = max.log2() - minl;
@@ -105,17 +101,16 @@ pub struct GenericMap {
 }
 
 impl GenericMap {
-    pub fn new(min: f32, max: f32, value_scaling: ValueScaling, display_decimals: DisplayDecimals, units: Option<String>) -> Self {
+    pub fn new(
+        min: f32,
+        max: f32,
+        value_scaling: ValueScaling,
+        display_decimals: DisplayDecimals,
+        units: Option<String>,
+    ) -> Self {
         assert!(min < max);
 
-        Self {
-            min,
-            max,
-            span_recip: 1.0 / (max - min),
-            value_scaling,
-            display_decimals,
-            units,
-        }
+        Self { min, max, span_recip: 1.0 / (max - min), value_scaling, display_decimals, units }
     }
 
     pub fn min(&self) -> f32 {
@@ -167,16 +162,16 @@ pub struct DecibelMap {
 }
 
 impl DecibelMap {
-    pub fn new(min_db: f32, max_db: f32, value_scaling: ValueScaling, display_decimals: DisplayDecimals, display_units: bool) -> Self {
+    pub fn new(
+        min_db: f32,
+        max_db: f32,
+        value_scaling: ValueScaling,
+        display_decimals: DisplayDecimals,
+        display_units: bool,
+    ) -> Self {
         assert!(min_db < max_db);
 
-        Self {
-            min: min_db,
-            max: max_db,
-            value_scaling,
-            display_decimals,
-            display_units,
-        }
+        Self { min: min_db, max: max_db, value_scaling, display_decimals, display_units }
     }
 
     pub fn min_db(&self) -> f32 {
@@ -230,10 +225,7 @@ impl NormalizedMap for DecibelMap {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FrequencyDisplayMode {
     OnlyHz(DisplayDecimals),
-    HzThenKHz {
-        under_1k: DisplayDecimals,
-        over_1k: DisplayDecimals,
-    }
+    HzThenKHz { under_1k: DisplayDecimals, over_1k: DisplayDecimals },
 }
 
 impl Default for FrequencyDisplayMode {
@@ -266,13 +258,7 @@ impl FrequencyMap {
     ) -> Self {
         assert!(min_hz < max_hz);
 
-        Self {
-            min: min_hz,
-            max: max_hz,
-            value_scaling,
-            display_mode,
-            display_units,
-        }
+        Self { min: min_hz, max: max_hz, value_scaling, display_mode, display_units }
     }
 
     pub fn min_hz(&self) -> f32 {
@@ -337,7 +323,7 @@ impl NormalizedMap for FrequencyMap {
 pub struct IntMap {
     min: i32,
     max: i32,
-    span: f32,  // Small optimization.
+    span: f32, // Small optimization.
 
     display_map: Option<&'static dyn Fn(i32) -> String>,
 }
@@ -346,12 +332,7 @@ impl IntMap {
     pub fn new(min: i32, max: i32, display_map: Option<&'static dyn Fn(i32) -> String>) -> Self {
         assert!(min <= max);
 
-        Self {
-            min,
-            max,
-            span: (max - min) as f32,
-            display_map,
-        }
+        Self { min, max, span: (max - min) as f32, display_map }
     }
 
     pub fn min(&self) -> i32 {

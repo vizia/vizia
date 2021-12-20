@@ -8,14 +8,11 @@ use vizia_core::TreeExt;
 use vizia_core::{MouseButton, MouseButtonState};
 //use vizia_core::WindowWidget;
 use vizia_core::{
-    Event, Propagation,
-    WindowDescription,
-    BoundingBox
+    apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
+    apply_visibility, apply_z_ordering, geometry_changed, Context, Display, Entity, EventManager,
+    FontOrId, Modifiers, Tree, Units, Visibility, WindowEvent, WindowSize,
 };
-use vizia_core::{
-    Entity, EventManager, Tree, WindowSize, Units, Visibility, FontOrId,
-    WindowEvent, Context, Modifiers, Display,  apply_hover, apply_styles, geometry_changed, apply_transform, apply_clipping, apply_visibility, apply_z_ordering, apply_text_constraints
-};
+use vizia_core::{BoundingBox, Event, Propagation, WindowDescription};
 
 pub struct Application<F>
 where
@@ -33,11 +30,7 @@ where
     F: 'static + Send,
 {
     pub fn new(window_description: WindowDescription, app: F) -> Self {
-        Self {
-            app,
-            window_description,
-            on_idle: None,
-        }
+        Self { app, window_description, on_idle: None }
     }
 
     /// Open a new window that blocks the current thread until the window is destroyed.
@@ -71,9 +64,8 @@ where
         ViziaWindow::open_as_if_parented(self.window_description, self.app, self.on_idle)
     }
 
-
     /// Takes a closure which will be called at the end of every loop of the application.
-    /// 
+    ///
     /// The callback provides a place to run 'idle' processing and happens at the end of each loop but before drawing.
     /// If the callback pushes events into the queue in state then the event loop will re-run. Care must be taken not to
     /// push events into the queue every time the callback runs unless this is intended.
@@ -84,7 +76,7 @@ where
     ///     // Build application here
     /// })
     /// .on_idle(|state|{
-    ///     // Code here runs at the end of every event loop after OS and tuix events have been handled 
+    ///     // Code here runs at the end of every event loop after OS and tuix events have been handled
     /// })
     /// .run();
     /// ```
@@ -92,9 +84,7 @@ where
         self.on_idle = Some(Box::new(callback));
 
         self
-    } 
-
-
+    }
 }
 
 pub(crate) struct ApplicationRunner {
@@ -160,12 +150,8 @@ impl ApplicationRunner {
             .height
             .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
-        context
-            .cache
-            .set_width(Entity::root(), physical_size.width as f32);
-        context
-            .cache
-            .set_height(Entity::root(), physical_size.height as f32);
+        context.cache.set_width(Entity::root(), physical_size.width as f32);
+        context.cache.set_height(Entity::root(), physical_size.height as f32);
         context.cache.set_opacity(Entity::root(), 1.0);
 
         let mut bounding_box = BoundingBox::default();
@@ -236,7 +222,6 @@ impl ApplicationRunner {
     //             self.context.count = prev_count;
 
     //             self.context.style.borrow_mut().needs_redraw = true;
-    
 
     //             self.context.views.insert(*observer, view);
     //         }
@@ -244,31 +229,34 @@ impl ApplicationRunner {
     // }
 
     pub fn on_frame_update(&mut self) {
-
         //if let Some(mut window_view) = context.views.remove(&Entity::root()) {
-            //if let Some(window) = window_view.downcast_mut::<Window>() {
+        //if let Some(window) = window_view.downcast_mut::<Window>() {
 
-
-                // Load resources
-                for (name, font) in self.context.resource_manager.fonts.iter_mut() {
-        
-                    match font {
-                        FontOrId::Font(data) => {
-                            let id1 = self.canvas.add_font_mem(&data.clone()).expect(&format!("Failed to load font file for: {}", name));
-                            let id2 = self.context.text_context.add_font_mem(&data.clone()).expect("failed");
-                            if id1 != id2 {
-                                panic!("Fonts in canvas must have the same id as fonts in the text context");
-                            }
-                            *font = FontOrId::Id(id1);
-                        }
-        
-                        _=> {}
+        // Load resources
+        for (name, font) in self.context.resource_manager.fonts.iter_mut() {
+            match font {
+                FontOrId::Font(data) => {
+                    let id1 = self
+                        .canvas
+                        .add_font_mem(&data.clone())
+                        .expect(&format!("Failed to load font file for: {}", name));
+                    let id2 =
+                        self.context.text_context.add_font_mem(&data.clone()).expect("failed");
+                    if id1 != id2 {
+                        panic!(
+                            "Fonts in canvas must have the same id as fonts in the text context"
+                        );
                     }
+                    *font = FontOrId::Id(id1);
                 }
 
-            //}
+                _ => {}
+            }
+        }
 
-            //context.views.insert(Entity::root(), window_view);
+        //}
+
+        //context.views.insert(Entity::root(), window_view);
         //}
 
         // Events
@@ -278,13 +266,15 @@ impl ApplicationRunner {
 
         // Data Updates
         let mut observers: Vec<Entity> = Vec::new();
-        for model_store in self.context.data.model_data.dense.iter_mut().map(|entry| &mut entry.value) {
+        for model_store in
+            self.context.data.model_data.dense.iter_mut().map(|entry| &mut entry.value)
+        {
             for (_, lens) in model_store.lenses.iter_mut() {
                 for (_, model) in model_store.data.iter() {
                     //if lens.update(model) {
-                        observers.extend(lens.observers().iter());
+                    observers.extend(lens.observers().iter());
                     //}
-                } 
+                }
             }
         }
 
@@ -299,7 +289,6 @@ impl ApplicationRunner {
                 self.context.count = prev_count;
 
                 self.context.style.borrow_mut().needs_redraw = true;
-    
 
                 self.context.views.insert(*observer, view);
             }
@@ -310,7 +299,7 @@ impl ApplicationRunner {
 
         // Styling
         //if context.style.borrow().needs_restyle {
-            apply_styles(&mut self.context, &tree);
+        apply_styles(&mut self.context, &tree);
         //    context.style.borrow_mut().needs_restyle = false;
         //}
 
@@ -322,7 +311,11 @@ impl ApplicationRunner {
 
         // Layout
         if self.context.style.borrow().needs_relayout {
-            vizia_core::apply_layout(&mut self.context.cache, &self.context.tree, &self.context.style.borrow());
+            vizia_core::apply_layout(
+                &mut self.context.cache,
+                &self.context.tree,
+                &self.context.style.borrow(),
+            );
             self.context.style.borrow_mut().needs_relayout = false;
         }
 
@@ -335,15 +328,11 @@ impl ApplicationRunner {
 
         apply_clipping(&mut self.context, &tree);
 
-
         if self.context.style.borrow().needs_redraw {
-        //     // TODO - Move this to EventManager
+            //     // TODO - Move this to EventManager
             self.should_redraw = true;
             self.context.style.borrow_mut().needs_redraw = false;
         }
-
-
-
     }
 
     pub fn render(&mut self) {
@@ -358,22 +347,21 @@ impl ApplicationRunner {
         let window_height = self.context.cache.get_height(Entity::root());
 
         self.canvas.set_size(window_width as u32, window_height as u32, dpi_factor as f32);
-        let clear_color = self.context.style.borrow_mut().background_color.get(Entity::root()).cloned().unwrap_or(vizia_core::Color::white());
-        self.canvas.clear_rect(
-            0,
-            0,
-            window_width as u32,
-            window_height as u32,
-            clear_color.into(),
-        );
+        let clear_color = self
+            .context
+            .style
+            .borrow_mut()
+            .background_color
+            .get(Entity::root())
+            .cloned()
+            .unwrap_or(vizia_core::Color::white());
+        self.canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
 
         // Sort the tree by z order
         let mut draw_tree: Vec<Entity> = self.context.tree.into_iter().collect();
         draw_tree.sort_by_cached_key(|entity| self.context.cache.get_z_index(*entity));
 
         for entity in draw_tree.into_iter() {
-
-
             // Skip window
             if entity == Entity::root() {
                 continue;
@@ -395,23 +383,24 @@ impl ApplicationRunner {
 
             // Apply clipping
             let clip_region = self.context.cache.get_clip_region(entity);
-            self.canvas.scissor(
-                clip_region.x,
-                clip_region.y,
-                clip_region.w,
-                clip_region.h,
-            );
-    
+            self.canvas.scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
+
             // Apply transform
             let transform = self.context.cache.get_transform(entity);
             self.canvas.save();
-            self.canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+            self.canvas.set_transform(
+                transform[0],
+                transform[1],
+                transform[2],
+                transform[3],
+                transform[4],
+                transform[5],
+            );
 
             if let Some(view) = self.context.views.remove(&entity) {
-
                 self.context.current = entity;
                 view.draw(&self.context, &mut self.canvas);
-                
+
                 self.context.views.insert(entity, view);
             }
 
@@ -420,15 +409,12 @@ impl ApplicationRunner {
 
         self.canvas.flush();
 
-
         self.should_redraw = false;
     }
 
     pub fn handle_event(&mut self, event: baseview::Event, should_quit: &mut bool) {
         if requests_exit(&event) {
-            self.context
-                .event_queue
-                .push_back(Event::new(WindowEvent::WindowClose));
+            self.context.event_queue.push_back(Event::new(WindowEvent::WindowClose));
             *should_quit = true;
         }
 
@@ -496,8 +482,7 @@ impl ApplicationRunner {
                         self.context.captured
                     } else {
                         self.context.event_queue.push_back(
-                            Event::new(WindowEvent::MouseDown(b))
-                                .target(self.context.hovered),
+                            Event::new(WindowEvent::MouseDown(b)).target(self.context.hovered),
                         );
                         self.context.hovered
                     };
@@ -636,10 +621,18 @@ impl ApplicationRunner {
                 };
 
                 match event.code {
-                    Code::ShiftLeft | Code::ShiftRight => self.context.modifiers.set(Modifiers::SHIFT, pressed),
-                    Code::ControlLeft | Code::ControlRight => self.context.modifiers.set(Modifiers::CTRL, pressed),
-                    Code::AltLeft | Code::AltRight => self.context.modifiers.set(Modifiers::ALT, pressed),
-                    Code::MetaLeft | Code::MetaRight => self.context.modifiers.set(Modifiers::LOGO, pressed),
+                    Code::ShiftLeft | Code::ShiftRight => {
+                        self.context.modifiers.set(Modifiers::SHIFT, pressed)
+                    }
+                    Code::ControlLeft | Code::ControlRight => {
+                        self.context.modifiers.set(Modifiers::CTRL, pressed)
+                    }
+                    Code::AltLeft | Code::AltRight => {
+                        self.context.modifiers.set(Modifiers::ALT, pressed)
+                    }
+                    Code::MetaLeft | Code::MetaRight => {
+                        self.context.modifiers.set(Modifiers::LOGO, pressed)
+                    }
                     _ => (),
                 }
 
@@ -701,7 +694,6 @@ impl ApplicationRunner {
                     // }
 
                     self.context.style.borrow_mut().needs_restyle = true;
-
                 }
 
                 match s {
@@ -773,10 +765,8 @@ impl ApplicationRunner {
                         (window_info.physical_size().height as f64 / self.scale_factor),
                     );
 
-                    let physical_size = (
-                        window_info.physical_size().width,
-                        window_info.physical_size().height,
-                    );
+                    let physical_size =
+                        (window_info.physical_size().width, window_info.physical_size().height);
 
                     self.context
                         .style
@@ -789,12 +779,8 @@ impl ApplicationRunner {
                         .height
                         .insert(Entity::root(), Units::Pixels(logical_size.1 as f32));
 
-                    self.context
-                        .cache
-                        .set_width(Entity::root(), physical_size.0 as f32);
-                    self.context
-                        .cache
-                        .set_height(Entity::root(), physical_size.1 as f32);
+                    self.context.cache.set_width(Entity::root(), physical_size.0 as f32);
+                    self.context.cache.set_height(Entity::root(), physical_size.1 as f32);
 
                     let mut bounding_box = BoundingBox::default();
                     bounding_box.w = physical_size.0 as f32;
@@ -805,7 +791,6 @@ impl ApplicationRunner {
                     self.context.style.borrow_mut().needs_restyle = true;
                     self.context.style.borrow_mut().needs_relayout = true;
                     self.context.style.borrow_mut().needs_redraw = true;
-
                 }
                 baseview::WindowEvent::WillClose => {
                     self.context.event_queue.push_back(Event::new(WindowEvent::WindowClose));

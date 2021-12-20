@@ -1,20 +1,17 @@
-
-
 use std::cmp::{Eq, PartialEq};
 use std::hash::Hash;
 
 use crate::id::GenerationalId;
 
 const ANIMATION_INDEX_BITS: u32 = 24;
-const ANIMATION_INDEX_MASK: u32  = (1<<ANIMATION_INDEX_BITS)-1;
+const ANIMATION_INDEX_MASK: u32 = (1 << ANIMATION_INDEX_BITS) - 1;
 
 const ANIMATION_GENERATION_BITS: u32 = 8;
-const ANIMATION_GENERATION_MASK: u32 = (1<<ANIMATION_GENERATION_BITS)-1;
-
+const ANIMATION_GENERATION_MASK: u32 = (1 << ANIMATION_GENERATION_BITS) - 1;
 
 /// An id used to reference style animations stored in state.
 ///
-/// An animation id is returned by `state.create_animation()` and can be used to configure animations 
+/// An animation id is returned by `state.create_animation()` and can be used to configure animations
 /// as well as to play, pause, and stop aimations on entities (see [AnimExt]).
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Animation(u32);
@@ -40,7 +37,7 @@ impl std::fmt::Debug for Animation {
 impl Animation {
     /// Creates a null animation id.
     ///
-    /// A null animation can be used as a placeholder within a widget struct but cannot be used to 
+    /// A null animation can be used as a placeholder within a widget struct but cannot be used to
     /// get/set animation properties or control animation playback.
     pub fn null() -> Animation {
         Animation(std::u32::MAX)
@@ -52,7 +49,6 @@ impl Animation {
         assert!(generation < ANIMATION_GENERATION_MASK);
         Animation(index | generation << ANIMATION_INDEX_BITS)
     }
-
 }
 
 impl GenerationalId for Animation {

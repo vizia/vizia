@@ -1,22 +1,18 @@
-
-
 use std::cmp::{Eq, PartialEq};
 use std::hash::Hash;
-
 
 // use crate::{Color, PropSet2, Selector, State};
 use crate::id::GenerationalId;
 
 const RULE_INDEX_BITS: u32 = 24;
-const RULE_INDEX_MASK: u32  = (1<<RULE_INDEX_BITS)-1;
+const RULE_INDEX_MASK: u32 = (1 << RULE_INDEX_BITS) - 1;
 
 const RULE_GENERATION_BITS: u32 = 8;
-const RULE_GENERATION_MASK: u32 = (1<<RULE_GENERATION_BITS)-1;
+const RULE_GENERATION_MASK: u32 = (1 << RULE_GENERATION_BITS) - 1;
 
 // const RULE_MAX: u32 = std::u32::MAX>>8;
 
 // const MINIMUM_FREE_INDICES: usize = 1024;
-
 
 /// A rule is an id used to get/set shared style properties in State.
 ///
@@ -51,7 +47,6 @@ impl Rule {
         Rule(std::u32::MAX)
     }
 
-
     /// Creates a new rule with a given index and generation.
     pub(crate) fn new(index: u32, generation: u32) -> Rule {
         assert!(index < RULE_INDEX_MASK);
@@ -68,7 +63,6 @@ impl Rule {
     // pub fn selector(self, selector: Selector) -> Self {
     //     self
     // }
-
 }
 
 impl GenerationalId for Rule {
@@ -92,12 +86,11 @@ impl GenerationalId for Rule {
 
 // impl PropSet2 for Rule {
 
-
 //     // BACKGOUND
 
 //     /// Set the background-color property for the shared style rule.
 //     ///
-//     /// Note: background-color is overridden by background-gradient, which is overridden by background-image. 
+//     /// Note: background-color is overridden by background-gradient, which is overridden by background-image.
 //     ///
 //     /// # Example
 //     /// ```
@@ -126,7 +119,7 @@ impl GenerationalId for Rule {
 //     /// The child-space property can be set with a number (in pixels), a number with px units, a percentage, a stretch value, or auto.
 //     /// ```
 //     /// child-space: {} | {}px | {}% | {}s | auto
-//     /// ``` 
+//     /// ```
 //     fn set_space(self, state: &mut State, value: Units) {
 //         state.style.left.insert_rule(self, value);
 //         state.style.right.insert_rule(self, value);
@@ -218,7 +211,7 @@ impl GenerationalId for Rule {
 //     /// The child-space property can be set with a number (in pixels), a number with px units, a percentage, a stretch value, or auto.
 //     /// ```css
 //     /// child-space: {} | {}px | {}% | {}s | auto
-//     /// ``` 
+//     /// ```
 //     fn set_child_space(self, state: &mut State, value: Units) {
 //         state.style.child_left.insert_rule(self, value);
 //         state.style.child_right.insert_rule(self, value);
@@ -241,7 +234,7 @@ impl GenerationalId for Rule {
 //     /// The col-between property can be set with a number (in pixels), a number with px units, a percentage, a stretch value, or auto.
 //     /// ```css
 //     /// col-between: {} | {}px | {}% | {}s | auto
-//     /// ``` 
+//     /// ```
 //     fn set_col_between(self, state: &mut State, value: Units) {
 //         state.style.col_between.insert_rule(self, value);
 //     }
@@ -261,7 +254,7 @@ impl GenerationalId for Rule {
 //     /// The row-between property can be set with a number (in pixels), a number with px units, a percentage, a stretch value, or auto.
 //     /// ```css
 //     /// row-between: {} | {}px | {}% | {}s | auto
-//     /// ``` 
+//     /// ```
 //     fn set_row_between(self, state: &mut State, value: Units) {
 //         state.style.row_between.insert_rule(self, value);
 //     }
@@ -269,7 +262,7 @@ impl GenerationalId for Rule {
 //     /// Set the child-left property for the shared style rule.
 //     ///
 //     /// The child-left property determines how much space the layout system will place to the left of all of the children of an entity,
-//     /// provided that the left property of the child is set to auto. 
+//     /// provided that the left property of the child is set to auto.
 //     ///
 //     /// # Examples
 //     /// ```
@@ -287,7 +280,7 @@ impl GenerationalId for Rule {
 //     /// Set the child-right property for the shared style rule.
 //     ///
 //     /// The child-right property determines how much space the layout system will place to the right of all of the children of an entity,
-//     /// provided that the right property of the child is set to auto. 
+//     /// provided that the right property of the child is set to auto.
 //     ///
 //     /// # Examples
 //     /// ```
@@ -337,6 +330,5 @@ impl GenerationalId for Rule {
 //     fn set_child_bottom(self, state: &mut State, value: Units) {
 //         state.style.child_bottom.insert_rule(self, value);
 //     }
-
 
 // }

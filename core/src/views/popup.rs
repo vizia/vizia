@@ -1,7 +1,9 @@
 use morphorm::PositionType;
 
-use crate::{Handle, Context, View, Data, Lens, Model, Visibility, Code, Binding, WindowEvent, style::PropGet};
-
+use crate::{
+    style::PropGet, Binding, Code, Context, Data, Handle, Lens, Model, View, Visibility,
+    WindowEvent,
+};
 
 #[derive(Debug, Default, Data, Lens, Clone)]
 pub struct PopupData {
@@ -38,63 +40,62 @@ pub enum PopupEvent {
     Switch,
 }
 
-pub struct Popup {
-
-}
+pub struct Popup {}
 
 impl Popup {
-    pub fn new<F>(cx: &mut Context, builder: F) -> Handle<Self> 
-    where F: 'static + Fn(&mut Context)
+    pub fn new<F>(cx: &mut Context, builder: F) -> Handle<Self>
+    where
+        F: 'static + Fn(&mut Context),
     {
-
         // let is_open = if let Some(popup_data) = cx.data::<PopupData>() {
         //     popup_data.is_open
         // } else {
         //     true
         // };
 
-        Self {
+        Self {}
+            .build2(cx, |cx| {
+                Binding::new(cx, PopupData::is_open, move |cx, flag| {
+                    let is_open = *flag.get(cx);
 
-        }.build2(cx, |cx|{
-            Binding::new(cx, PopupData::is_open, move |cx, flag|{
-                let is_open = *flag.get(cx);
-                
-                cx.style.borrow_mut().visibility.insert(cx.current, if is_open {Visibility::Visible} else {Visibility::Invisible});
+                    cx.style.borrow_mut().visibility.insert(
+                        cx.current,
+                        if is_open { Visibility::Visible } else { Visibility::Invisible },
+                    );
 
-                (builder)(cx);
-            });
+                    (builder)(cx);
+                });
 
+                cx.add_listener(|popup: &mut Self, cx, event| {
+                    if let Some(popup_data) = cx.data::<PopupData>() {
+                        if let Some(window_event) = event.message.downcast() {
+                            match window_event {
+                                WindowEvent::MouseDown(_) => {
+                                    if popup_data.is_open {
+                                        if event.origin != cx.current {
+                                            if !cx.current.is_over(cx) {
+                                                cx.emit(PopupEvent::Close);
+                                                event.consume();
+                                            }
+                                        }
+                                    }
+                                }
 
-            cx.add_listener(|popup: &mut Self, cx, event| {
-                if let Some(popup_data) = cx.data::<PopupData>() {
-                    if let Some(window_event) = event.message.downcast() {
-                        match window_event {
-                            WindowEvent::MouseDown(_) => {
-                                if popup_data.is_open {
-                                    if event.origin != cx.current {
-                                        if !cx.current.is_over(cx) {
+                                WindowEvent::KeyDown(code, _) => {
+                                    if popup_data.is_open {
+                                        if *code == Code::Escape {
                                             cx.emit(PopupEvent::Close);
-                                            event.consume();
-                                        } 
+                                        }
                                     }
                                 }
+
+                                _ => {}
                             }
-        
-                            WindowEvent::KeyDown(code, _) => {
-                                if popup_data.is_open {
-                                    if *code == Code::Escape {
-                                        cx.emit(PopupEvent::Close);
-                                    }
-                                }
-                            }
-        
-                            _=> {}
                         }
                     }
-                }
-            });
-
-        }).position_type(PositionType::SelfDirected)
+                });
+            })
+            .position_type(PositionType::SelfDirected)
     }
 }
 

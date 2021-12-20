@@ -1,24 +1,26 @@
 use morphorm::LayoutType;
 
-use crate::{Color, Context, Entity, Handle, View};
 use crate::Units::*;
+use crate::{Color, Context, Entity, Handle, View};
 
 pub struct VStack {
     //pub builder: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl VStack {
-    pub fn new<'a,F>(cx: &'a mut Context, builder: F) -> Handle<Self> 
-    where F: 'static + FnOnce(&mut Context)
+    pub fn new<'a, F>(cx: &'a mut Context, builder: F) -> Handle<Self>
+    where
+        F: 'static + FnOnce(&mut Context),
     {
         Self{
             //builder: Some(Box::new(f)),
-        }.build2(cx, |cx|{
+        }
+        .build2(cx, |cx| {
             (builder)(cx);
         })
-            //.width(Auto)
-            //.height(Auto)
-            //.background_color(Color::rgb(50, 50, 50))
+        //.width(Auto)
+        //.height(Auto)
+        //.background_color(Color::rgb(50, 50, 50))
     }
 }
 
@@ -45,25 +47,25 @@ pub struct HStack {
 }
 
 impl HStack {
-    pub fn new<F>(cx: &mut Context, builder: F) -> Handle<Self> 
-    where F: 'static + FnOnce(&mut Context)
+    pub fn new<F>(cx: &mut Context, builder: F) -> Handle<Self>
+    where
+        F: 'static + FnOnce(&mut Context),
     {
         Self{
             //builder: Some(Box::new(f)),
-        }.build2(cx, |cx|{
+        }
+        .build2(cx, |cx| {
             (builder)(cx);
         })
         .layout_type(LayoutType::Row)
-            //.width(Auto)
-            //.height(Auto)
-            // .background_color(Color::rgb(50, 50, 50))
+        //.width(Auto)
+        //.height(Auto)
+        // .background_color(Color::rgb(50, 50, 50))
     }
 
     fn custom_prop(&self, value: f32) {
         println!("{}", value);
     }
-
-
 }
 
 impl Handle<HStack> {
@@ -94,18 +96,19 @@ impl View for HStack {
     }
 }
 
-
 pub struct ZStack {
     //pub builder: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl ZStack {
-    pub fn new<F>(cx: &mut Context, builder: F) -> Handle<Self> 
-    where F: 'static + FnOnce(&mut Context)
+    pub fn new<F>(cx: &mut Context, builder: F) -> Handle<Self>
+    where
+        F: 'static + FnOnce(&mut Context),
     {
         Self{
             //builder: Some(Box::new(f)),
-        }.build2(cx, |cx|{
+        }
+        .build2(cx, |cx| {
             (builder)(cx);
         })
     }

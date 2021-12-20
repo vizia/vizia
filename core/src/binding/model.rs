@@ -1,8 +1,9 @@
-use std::{any::{Any, TypeId}, collections::HashMap};
+use std::{
+    any::{Any, TypeId},
+    collections::HashMap,
+};
 
-use crate::{Context, Entity, Event, Store, storage::sparse_set::SparseSet, LensWrap};
-
-
+use crate::{storage::sparse_set::SparseSet, Context, Entity, Event, LensWrap, Store};
 
 pub trait Model: 'static + Sized {
     fn build(self, cx: &mut Context) {
@@ -15,21 +16,16 @@ pub trait Model: 'static + Sized {
         } else {
             let mut data_list: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
             data_list.insert(TypeId::of::<Self>(), Box::new(Store::new(self)));
-            cx.data.model_data.insert(cx.current, ModelDataStore {
-                data: data_list,
-                lenses: HashMap::default(),
-            }).expect("Failed to add data");
+            cx.data
+                .model_data
+                .insert(cx.current, ModelDataStore { data: data_list, lenses: HashMap::default() })
+                .expect("Failed to add data");
         }
-        
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {}
 
-    }
-
-    fn update(&mut self, cx: &mut Context) {
-
-    }
+    fn update(&mut self, cx: &mut Context) {}
 }
 
 pub trait ModelData: Any {
@@ -46,13 +42,9 @@ pub trait ModelData: Any {
         false
     }
 
-    fn reset(&mut self) {
-        
-    }
+    fn reset(&mut self) {}
 
-    fn remove_observer(&mut self, observer: Entity) {
-
-    }
+    fn remove_observer(&mut self, observer: Entity) {}
 }
 
 impl dyn ModelData {
@@ -93,18 +85,15 @@ impl dyn ModelData {
 }
 
 trait Downcast {
-    fn as_any (self: &'_ Self)
-      -> &'_ dyn Any
+    fn as_any(self: &'_ Self) -> &'_ dyn Any
     where
-        Self : 'static,
-    ;
+        Self: 'static;
 }
 
 impl<T: ModelData> Downcast for T {
-    fn as_any (self: &'_ Self)
-      -> &'_ dyn Any
+    fn as_any(self: &'_ Self) -> &'_ dyn Any
     where
-        Self : 'static,
+        Self: 'static,
     {
         self
     }
@@ -146,9 +135,7 @@ pub struct AppData {
 
 impl AppData {
     pub fn new() -> Self {
-        Self {
-            model_data: SparseSet::default(),
-        }
+        Self { model_data: SparseSet::default() }
     }
 
     // pub fn data<T: 'static>(&self) -> Option<&T> {
@@ -159,4 +146,3 @@ impl AppData {
     //         .map(|store| &store.data)
     // }
 }
-

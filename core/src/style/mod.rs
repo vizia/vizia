@@ -4,7 +4,10 @@ use morphorm::{LayoutType, PositionType, Units};
 
 use cssparser::{Parser, ParserInput};
 
-use crate::{Animation, AnimationState, CursorIcon, Entity, IdManager, Interpolator, Transition, storage::{animatable_set::AnimatableSet, sparse_set::SparseSet, style_set::StyleSet}};
+use crate::{
+    storage::{animatable_set::AnimatableSet, sparse_set::SparseSet, style_set::StyleSet},
+    Animation, AnimationState, CursorIcon, Entity, IdManager, Interpolator, Transition,
+};
 
 mod color;
 pub use color::Color;
@@ -57,7 +60,6 @@ use morphorm::Units::*;
 
 //     pub position_type: StyleSet<PositionType>,
 //     pub layout_type: StyleSet<LayoutType>,
-    
 
 //     pub left: AnimatableSet<Units>,
 //     pub right: AnimatableSet<Units>,
@@ -75,7 +77,7 @@ use morphorm::Units::*;
 
 //     pub width: AnimatableSet<Units>,
 //     pub height: AnimatableSet<Units>,
-    
+
 //     pub min_width: AnimatableSet<Units>,
 //     pub max_width: AnimatableSet<Units>,
 //     pub min_height: AnimatableSet<Units>,
@@ -124,8 +126,7 @@ use morphorm::Units::*;
 
 //         self.position_type.remove(entity);
 //         self.layout_type.remove(entity);
-        
-    
+
 //         self.left.remove(entity);
 //         self.right.remove(entity);
 //         self.top.remove(entity);
@@ -251,7 +252,7 @@ bitflags! {
         const FOCUSABLE = 1 << 1;
         const CHECKABLE = 1 << 2;
         const SELECTABLE = 1 << 3;
-    } 
+    }
 }
 
 impl Default for Abilities {
@@ -260,12 +261,10 @@ impl Default for Abilities {
     }
 }
 
-
 /// Stores the style properties of all entities in the application. To set properties on entities see the [PropSet] trait.
 #[derive(Default)]
 pub struct Style {
-
-    pub(crate) rule_manager: IdManager<Rule>, 
+    pub(crate) rule_manager: IdManager<Rule>,
 
     /// Creates and destroys animation ids
     pub(crate) animation_manager: IdManager<Animation>,
@@ -281,12 +280,12 @@ pub struct Style {
 
     // Display
     pub display: AnimatableSet<Display>,
-    
+
     // Visibility
     pub visibility: AnimatableSet<Visibility>,
 
     // Opacity
-    pub opacity: AnimatableSet<Opacity>,    
+    pub opacity: AnimatableSet<Opacity>,
 
     // Z Order
     pub z_order: StyleSet<i32>,
@@ -295,13 +294,12 @@ pub struct Style {
     pub clip_widget: SparseSet<Entity>,
 
     // Transform
-    pub rotate: AnimatableSet<f32>,   
+    pub rotate: AnimatableSet<f32>,
     pub translate: StyleSet<(f32, f32)>,
     pub scale: AnimatableSet<f32>,
 
     pub overflow: StyleSet<Overflow>, // TODO
     //pub scroll: DenseStorage<Scroll>,     // TODO
-
 
     // Border
     pub border_width: AnimatableSet<Units>,
@@ -318,8 +316,6 @@ pub struct Style {
     pub border_radius_top_right: AnimatableSet<Units>,
     pub border_radius_bottom_left: AnimatableSet<Units>,
     pub border_radius_bottom_right: AnimatableSet<Units>,
-
-
 
     // Focus Order
     pub focus_order: SparseSet<FocusOrder>,
@@ -374,7 +370,7 @@ pub struct Style {
     pub min_height: AnimatableSet<Units>,
 
     // Spacing Constraints
-    pub min_left: AnimatableSet<Units>,    
+    pub min_left: AnimatableSet<Units>,
     pub max_left: AnimatableSet<Units>,
     pub min_right: AnimatableSet<Units>,
     pub max_right: AnimatableSet<Units>,
@@ -399,7 +395,6 @@ pub struct Style {
     pub child_right: AnimatableSet<Units>,
     pub child_top: AnimatableSet<Units>,
     pub child_bottom: AnimatableSet<Units>,
-
 
     pub name: StyleSet<String>,
 
@@ -438,13 +433,14 @@ impl Style {
             rule_list_parser.collect::<Vec<_>>()
         };
 
-        let mut rule_list: Vec<StyleRule> =
-            rules.into_iter().filter_map(|rule| {
+        let mut rule_list: Vec<StyleRule> = rules
+            .into_iter()
+            .filter_map(|rule| {
                 match rule {
                     Ok(mut style_rule) => {
                         style_rule.id = self.rule_manager.create();
                         Some(style_rule)
-                    },
+                    }
                     Err(parse_error) => {
                         let style_parse_error = StyleParseError(parse_error.0);
                         println!("{}", style_parse_error);
@@ -452,7 +448,8 @@ impl Style {
                     }
                 }
                 //rule.ok()
-        }).collect();
+            })
+            .collect();
 
         self.rules.append(&mut rule_list);
 
@@ -473,7 +470,6 @@ impl Style {
 
             for property in rule.properties.clone() {
                 match property {
-
                     Property::Display(value) => {
                         self.display.insert_rule(rule_id, value);
                     }
@@ -565,7 +561,7 @@ impl Style {
                                 println!("{:?} {}", rule, val);
                             }
 
-                            _=> {}
+                            _ => {}
                         }
                         self.width.insert_rule(rule_id, value);
                     }
@@ -682,12 +678,9 @@ impl Style {
                     Property::OuterShadow(box_shadow) => {
                         self.outer_shadow_h_offset
                             .insert_rule(rule_id, box_shadow.horizontal_offset);
-                        self.outer_shadow_v_offset
-                            .insert_rule(rule_id, box_shadow.vertical_offset);
-                        self.outer_shadow_blur
-                            .insert_rule(rule_id, box_shadow.blur_radius);
-                        self.outer_shadow_color
-                            .insert_rule(rule_id, box_shadow.color);
+                        self.outer_shadow_v_offset.insert_rule(rule_id, box_shadow.vertical_offset);
+                        self.outer_shadow_blur.insert_rule(rule_id, box_shadow.blur_radius);
+                        self.outer_shadow_color.insert_rule(rule_id, box_shadow.color);
                     }
 
                     Property::OuterShadowColor(color) => {
@@ -698,12 +691,9 @@ impl Style {
                     Property::InnerShadow(box_shadow) => {
                         self.inner_shadow_h_offset
                             .insert_rule(rule_id, box_shadow.horizontal_offset);
-                        self.inner_shadow_v_offset
-                            .insert_rule(rule_id, box_shadow.vertical_offset);
-                        self.inner_shadow_blur
-                            .insert_rule(rule_id, box_shadow.blur_radius);
-                        self.inner_shadow_color
-                            .insert_rule(rule_id, box_shadow.color);
+                        self.inner_shadow_v_offset.insert_rule(rule_id, box_shadow.vertical_offset);
+                        self.inner_shadow_blur.insert_rule(rule_id, box_shadow.blur_radius);
+                        self.inner_shadow_color.insert_rule(rule_id, box_shadow.color);
                     }
 
                     // Child Spacing
@@ -749,151 +739,226 @@ impl Style {
                             match transition.property.as_ref() {
                                 "background-color" => {
                                     let animation = self.animation_manager.create();
-                                    self.background_color.insert_animation(animation, self.add_transition(transition));
+                                    self.background_color.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.background_color.insert_transition(rule_id, animation);
                                 }
 
                                 "left" => {
                                     let animation = self.animation_manager.create();
-                                    self.left.insert_animation(animation, self.add_transition(transition));
+                                    self.left.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.left.insert_transition(rule_id, animation);
                                 }
 
                                 "top" => {
                                     let animation = self.animation_manager.create();
-                                    self.top.insert_animation(animation, self.add_transition(transition));
+                                    self.top.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.top.insert_transition(rule_id, animation);
                                 }
 
                                 "right" => {
                                     let animation = self.animation_manager.create();
-                                    self.right.insert_animation(animation, self.add_transition(transition));
+                                    self.right.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.right.insert_transition(rule_id, animation);
                                 }
 
                                 "bottom" => {
                                     let animation = self.animation_manager.create();
-                                    self.bottom.insert_animation(animation, self.add_transition(transition));
+                                    self.bottom.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.bottom.insert_transition(rule_id, animation);
                                 }
 
                                 "min-left" => {
                                     let animation = self.animation_manager.create();
-                                    self.min_left.insert_animation(animation, self.add_transition(transition));
+                                    self.min_left.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.min_left.insert_transition(rule_id, animation);
                                 }
 
                                 "max-left" => {
                                     let animation = self.animation_manager.create();
-                                    self.max_left.insert_animation(animation, self.add_transition(transition));
+                                    self.max_left.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.max_left.insert_transition(rule_id, animation);
                                 }
 
                                 "min-right" => {
                                     let animation = self.animation_manager.create();
-                                    self.min_right.insert_animation(animation, self.add_transition(transition));
+                                    self.min_right.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.min_right.insert_transition(rule_id, animation);
                                 }
 
                                 "max-right" => {
                                     let animation = self.animation_manager.create();
-                                    self.max_right.insert_animation(animation, self.add_transition(transition));
+                                    self.max_right.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.max_right.insert_transition(rule_id, animation);
                                 }
 
                                 "min-top" => {
                                     let animation = self.animation_manager.create();
-                                    self.min_top.insert_animation(animation, self.add_transition(transition));
+                                    self.min_top.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.min_top.insert_transition(rule_id, animation);
                                 }
 
                                 "max-top" => {
                                     let animation = self.animation_manager.create();
-                                    self.max_top.insert_animation(animation, self.add_transition(transition));
+                                    self.max_top.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.max_top.insert_transition(rule_id, animation);
                                 }
 
                                 "min-bottom" => {
                                     let animation = self.animation_manager.create();
-                                    self.min_bottom.insert_animation(animation, self.add_transition(transition));
+                                    self.min_bottom.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.min_bottom.insert_transition(rule_id, animation);
                                 }
 
                                 "max-bottom" => {
                                     let animation = self.animation_manager.create();
-                                    self.max_bottom.insert_animation(animation, self.add_transition(transition));
+                                    self.max_bottom.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.max_bottom.insert_transition(rule_id, animation);
                                 }
 
                                 "width" => {
                                     let animation = self.animation_manager.create();
-                                    self.width.insert_animation(animation, self.add_transition(transition));
+                                    self.width.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.width.insert_transition(rule_id, animation);
                                 }
 
                                 "height" => {
                                     let animation = self.animation_manager.create();
-                                    self.height.insert_animation(animation, self.add_transition(transition));
+                                    self.height.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.height.insert_transition(rule_id, animation);
                                 }
 
                                 "min-width" => {
                                     let animation = self.animation_manager.create();
-                                    self.min_width.insert_animation(animation, self.add_transition(transition));
+                                    self.min_width.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.min_width.insert_transition(rule_id, animation);
                                 }
 
                                 "max-width" => {
                                     let animation = self.animation_manager.create();
-                                    self.max_width.insert_animation(animation, self.add_transition(transition));
+                                    self.max_width.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.max_width.insert_transition(rule_id, animation);
                                 }
 
                                 "min-height" => {
                                     let animation = self.animation_manager.create();
-                                    self.min_height.insert_animation(animation, self.add_transition(transition));
+                                    self.min_height.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.min_height.insert_transition(rule_id, animation);
                                 }
 
                                 "max-height" => {
                                     let animation = self.animation_manager.create();
-                                    self.max_height.insert_animation(animation, self.add_transition(transition));
+                                    self.max_height.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.max_height.insert_transition(rule_id, animation);
                                 }
 
                                 "child-left" => {
                                     let animation = self.animation_manager.create();
-                                    self.child_left.insert_animation(animation, self.add_transition(transition));
+                                    self.child_left.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.child_left.insert_transition(rule_id, animation);
                                 }
 
                                 "child-right" => {
                                     let animation = self.animation_manager.create();
-                                    self.child_right.insert_animation(animation, self.add_transition(transition));
+                                    self.child_right.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.child_right.insert_transition(rule_id, animation);
                                 }
 
                                 "child-top" => {
                                     let animation = self.animation_manager.create();
-                                    self.child_top.insert_animation(animation, self.add_transition(transition));
+                                    self.child_top.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.child_top.insert_transition(rule_id, animation);
                                 }
 
                                 "child-bottom" => {
                                     let animation = self.animation_manager.create();
-                                    self.child_bottom.insert_animation(animation, self.add_transition(transition));
+                                    self.child_bottom.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.child_bottom.insert_transition(rule_id, animation);
                                 }
 
                                 "opacity" => {
                                     let animation = self.animation_manager.create();
-                                    self.opacity.insert_animation(animation, self.add_transition(transition));
+                                    self.opacity.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.opacity.insert_transition(rule_id, animation);
                                 }
 
                                 "outer-shadow-color" => {
                                     let animation = self.animation_manager.create();
-                                    self.outer_shadow_color.insert_animation(animation, self.add_transition(transition));
+                                    self.outer_shadow_color.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
                                     self.outer_shadow_color.insert_transition(rule_id, animation);
                                 }
 
@@ -902,7 +967,7 @@ impl Style {
                         }
                     }
 
-                    _=> {}
+                    _ => {}
                 }
             }
         }
@@ -1416,7 +1481,9 @@ impl Style {
 
     // Add style data to an entity
     pub fn add(&mut self, entity: Entity) {
-        self.pseudo_classes.insert(entity, PseudoClass::default()).expect("Failed to add pseudoclasses");
+        self.pseudo_classes
+            .insert(entity, PseudoClass::default())
+            .expect("Failed to add pseudoclasses");
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
 
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
@@ -1430,7 +1497,6 @@ impl Style {
     }
 
     pub fn remove(&mut self, entity: Entity) {
-
         self.elements.remove(entity);
         self.classes.remove(entity);
         self.pseudo_classes.remove(entity);
@@ -1516,7 +1582,7 @@ impl Style {
         self.col_span.remove(entity);
         self.row_index.remove(entity);
         self.row_span.remove(entity);
-        
+
         // Text and Font
         self.text.remove(entity);
         self.font.remove(entity);
@@ -1525,8 +1591,6 @@ impl Style {
     }
 
     pub fn remove_all(&mut self) {
-
-
         self.z_order.clear_rules();
         self.rotate.clear_rules();
         self.translate.clear_rules();
@@ -1537,7 +1601,6 @@ impl Style {
         self.background_color.clear_rules();
         self.background_image.clear_rules();
         self.background_gradient.clear_rules();
-
 
         self.font_color.clear_rules();
         self.font.clear_rules();
@@ -1619,7 +1682,5 @@ impl Style {
         self.col_index.clear_rules();
         self.row_span.clear_rules();
         self.col_span.clear_rules();
-
-        
     }
 }

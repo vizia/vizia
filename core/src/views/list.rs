@@ -1,13 +1,14 @@
-
-
 use std::any::TypeId;
 use std::collections::HashSet;
 use std::marker::PhantomData;
 
 use keyboard_types::Code;
 
-use crate::{Color, Context, Event, Handle, Lens, Model, MouseButton, Data, StateStore, Store, TreeExt, View, WindowEvent};
 use crate::Units::*;
+use crate::{
+    Color, Context, Data, Event, Handle, Lens, Model, MouseButton, StateStore, Store, TreeExt,
+    View, WindowEvent,
+};
 #[derive(Debug)]
 pub struct ItemPtr<L, T>
 where
@@ -19,18 +20,11 @@ where
     col: usize,
 }
 
-impl<L,T> Copy for ItemPtr<L,T> 
-where
-    L: Lens<Target = Vec<T>>, {}
+impl<L, T> Copy for ItemPtr<L, T> where L: Lens<Target = Vec<T>> {}
 
-impl<L: Lens<Target = Vec<T>>,T> Clone for ItemPtr<L,T> {
+impl<L: Lens<Target = Vec<T>>, T> Clone for ItemPtr<L, T> {
     fn clone(&self) -> Self {
-        Self {
-            lens: self.lens.clone(),
-            index: self.index,
-            row: self.row,
-            col: self.col,
-        }
+        Self { lens: self.lens.clone(), index: self.index, row: self.row, col: self.col }
     }
 }
 
@@ -58,17 +52,19 @@ where
     where
         <L as Lens>::Source: 'static,
     {
-        self.lens.view(cx.data().expect("Failed to get data")).get(self.index).expect(&format!("Failed to get item: {}", self.index))
+        self.lens
+            .view(cx.data().expect("Failed to get data"))
+            .get(self.index)
+            .expect(&format!("Failed to get item: {}", self.index))
     }
 }
-
 
 pub trait DataHandle: Clone + Copy {
     type Data;
     fn get<'a>(&self, cx: &'a Context) -> &'a Self::Data;
 }
 
-impl<L, T> DataHandle for ItemPtr<L, T> 
+impl<L, T> DataHandle for ItemPtr<L, T>
 where
     L: Lens<Target = Vec<T>>,
 {
@@ -78,8 +74,6 @@ where
     }
 }
 
-
-
 #[derive(Lens, Default)]
 pub struct ListData {
     pub selected: usize,
@@ -88,10 +82,7 @@ pub struct ListData {
 
 impl ListData {
     pub fn new(selected: usize) -> Self {
-        Self {
-            selected,
-            length: 0,
-        }
+        Self { selected, length: 0 }
     }
 }
 
@@ -109,7 +100,7 @@ impl Model for ListData {
             match list_event {
                 ListEvent::IncrementSelection => {
                     let mut new_selected = self.selected + 1;
-                    new_selected = new_selected.clamp(0, self.length-1);
+                    new_selected = new_selected.clamp(0, self.length - 1);
                     cx.emit(ListEvent::SetSelected(new_selected));
                 }
 
@@ -153,13 +144,8 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
         F: 'static + Fn(&mut Context, ItemPtr<L, T>),
         <L as Lens>::Source: Model,
     {
-
         let parent = cx.current;
-        let list = Self {
-            lens,
-            builder: Some(Box::new(item)),
-            list_data: true,
-        };
+        let list = Self { lens, builder: Some(Box::new(item)), list_data: true };
 
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
             id
@@ -169,7 +155,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
             cx.cache.add(id).expect("Failed to add to cache");
             cx.style.borrow_mut().add(id);
             cx.views.insert(id, Box::new(list));
-            id  
+            id
         };
 
         cx.count += 1;
@@ -206,25 +192,22 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
                 if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
                     if let Some(lens_wrap) = model_data_store.lenses.get_mut(&TypeId::of::<L>()) {
                         let observers = lens_wrap.observers();
-            
+
                         if ancestors.intersection(observers).next().is_none() {
                             lens_wrap.add_observer(id);
                         }
-                        
                     } else {
                         let mut observers = HashSet::new();
                         observers.insert(id);
 
                         let model = model_data.downcast_ref::<Store<L::Source>>().unwrap();
-            
+
                         let old = lens.view(&model.data);
-                        
-                        model_data_store.lenses.insert(TypeId::of::<L>(), Box::new(StateStore {
-                            entity: id,
-                            lens,
-                            old: old.clone(),
-                            observers,
-                        }));
+
+                        model_data_store.lenses.insert(
+                            TypeId::of::<L>(),
+                            Box::new(StateStore { entity: id, lens, old: old.clone(), observers }),
+                        );
                     }
 
                     break;
@@ -243,11 +226,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
             cx.views.insert(id, view_handler);
         }
 
-        let handle = Handle {
-            entity: id,
-            style: cx.style.clone(),
-            p: PhantomData::default(),
-        };
+        let handle = Handle { entity: id, style: cx.style.clone(), p: PhantomData::default() };
 
         cx.focused = handle.entity;
 
@@ -257,11 +236,6 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
 
 impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
     fn body(&mut self, cx: &mut Context) {
-
-
-
-
-
         let builder = self.builder.take().unwrap();
 
         let mut found_store = None;
@@ -270,33 +244,33 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
             if let Some(model_list) = cx.data.model_data.get(entity) {
                 for (_, model) in model_list.data.iter() {
                     if let Some(store) = model.downcast_ref::<Store<L::Source>>() {
-                        found_store = Some(store); 
+                        found_store = Some(store);
                         break 'tree;
                     }
                 }
             }
-        };
+        }
 
         if let Some(store) = found_store {
-            
             let len = self.lens.view(&store.data).len();
 
             if cx.current.child_iter(&cx.tree.clone()).count() != len {
-                println!("Remove Children: {} {}", cx.current.child_iter(&cx.tree.clone()).count(), len);
+                println!(
+                    "Remove Children: {} {}",
+                    cx.current.child_iter(&cx.tree.clone()).count(),
+                    len
+                );
                 for child in cx.current.child_iter(&cx.tree.clone()) {
                     cx.remove(child);
                 }
-                
+
                 cx.style.borrow_mut().needs_relayout = true;
                 cx.style.borrow_mut().needs_redraw = true;
             }
-            
+
             if self.list_data {
                 if cx.data::<ListData>().is_none() {
-                    ListData {
-                        selected: 0,
-                        length: len,
-                    }.build(cx);
+                    ListData { selected: 0, length: len }.build(cx);
                 }
             }
 
@@ -338,22 +312,19 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
                 //         cx.emit(ListEvent::DecrementSelection);
                 //     }
                 // }
-
-                WindowEvent::KeyDown(code, _) => {
-                    match code {
-                        Code::ArrowDown => {
-                            cx.emit(ListEvent::IncrementSelection);
-                        }
-
-                        Code::ArrowUp => {
-                            cx.emit(ListEvent::DecrementSelection);
-                        }
-
-                        _=> {}
+                WindowEvent::KeyDown(code, _) => match code {
+                    Code::ArrowDown => {
+                        cx.emit(ListEvent::IncrementSelection);
                     }
-                }
 
-                _=> {}
+                    Code::ArrowUp => {
+                        cx.emit(ListEvent::DecrementSelection);
+                    }
+
+                    _ => {}
+                },
+
+                _ => {}
             }
         }
     }

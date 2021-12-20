@@ -2,8 +2,6 @@ use std::collections::HashSet;
 
 use crate::{Context, Entity};
 
-
-
 pub struct Store<T> {
     pub data: T,
     pub observers: HashSet<Entity>,
@@ -11,18 +9,12 @@ pub struct Store<T> {
 }
 
 impl<T> Store<T> {
-
     pub fn new(data: T) -> Self {
-        Self {
-            data,
-            observers: HashSet::new(),
-            dirty: false,
-        }
+        Self { data, observers: HashSet::new(), dirty: false }
     }
 
     pub fn insert_observer(&mut self, entity: Entity) {
         self.observers.insert(entity);
-        
     }
 
     pub fn remove_observer(&mut self, entity: Entity) {
@@ -35,20 +27,17 @@ impl<T> Store<T> {
 
     pub fn update_observers(&mut self, cx: &mut Context) {
         if self.dirty {
-
             for observer in self.observers.iter() {
                 if let Some(mut view) = cx.views.remove(observer) {
-    
                     let prev = cx.current;
                     cx.current = *observer;
                     view.body(cx);
                     cx.current = prev;
-        
-    
+
                     cx.views.insert(*observer, view);
                 }
             }
-    
+
             self.dirty = false;
         }
     }
@@ -59,4 +48,3 @@ impl<T> Store<T> {
 //         self.update(cx, event);
 //     }
 // }
-

@@ -2,44 +2,31 @@ use glutin::window::Window;
 use vizia::*;
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Resizable Table"), |cx|{
-
+    Application::new(WindowDescription::new().with_title("Resizable Table"), |cx| {
         UserData {
             data: vec![
-                RowData {
-                    first_name: "John".to_string(),
-                    last_name: "Doe".to_string(),
-                    age: 27,
-                },
-
-                RowData {
-                    first_name: "Jane".to_string(),
-                    last_name: "Doe".to_string(),
-                    age: 32,
-                },
-
+                RowData { first_name: "John".to_string(), last_name: "Doe".to_string(), age: 27 },
+                RowData { first_name: "Jane".to_string(), last_name: "Doe".to_string(), age: 32 },
                 RowData {
                     first_name: "Some".to_string(),
                     last_name: "Person".to_string(),
                     age: 50,
                 },
             ],
-        }.build(cx);
+        }
+        .build(cx);
 
-        ColumnData {
-            columns: vec![Pixels(200.0), Pixels(100.0), Stretch(1.0)],
-        }.build(cx);
+        ColumnData { columns: vec![Pixels(200.0), Pixels(100.0), Stretch(1.0)] }.build(cx);
 
-        List::new(cx, UserData::data, |cx, item|{
-            HStack::new(cx, move |cx|{
+        List::new(cx, UserData::data, |cx, item| {
+            HStack::new(cx, move |cx| {
                 let first_name = item.value(cx).first_name.clone();
-                Binding::new(cx, ColumnData::columns, move |cx, columns|{
-                    
+                Binding::new(cx, ColumnData::columns, move |cx, columns| {
                     //let width = columns.get(cx)[0];
                     //println!("Width: {:?}", width);
-                    
+
                     ResizableItem::new()
-                        .on_size(|cx, width|{
+                        .on_size(|cx, width| {
                             println!("width {}", width);
                             cx.emit(DataEvent::Test(width));
                         })
@@ -48,17 +35,23 @@ fn main() {
                         .border_color(Color::black())
                         .width(columns.get(cx)[0]);
                 });
-           
-                Label::new(cx, &item.value(cx).last_name.clone()).border_width(Pixels(1.0)).border_color(Color::black());
-                Label::new(cx, &item.value(cx).age.to_string()).border_width(Pixels(1.0)).border_color(Color::black());
-            }).height(Auto);
-        }).height(Pixels(300.0));
+
+                Label::new(cx, &item.value(cx).last_name.clone())
+                    .border_width(Pixels(1.0))
+                    .border_color(Color::black());
+                Label::new(cx, &item.value(cx).age.to_string())
+                    .border_width(Pixels(1.0))
+                    .border_color(Color::black());
+            })
+            .height(Auto);
+        })
+        .height(Pixels(300.0));
 
         // Button::new(cx, |cx| cx.emit(DataEvent::Test), |cx| {
         //     Label::new(cx, "Expand");
         // });
-
-    }).run();
+    })
+    .run();
 }
 
 pub struct ResizableItem {
@@ -68,32 +61,27 @@ pub struct ResizableItem {
 
 impl ResizableItem {
     pub fn new() -> Self {
-        Self {
-            resizing: false,
-            on_size: None,
-        }
-
+        Self { resizing: false, on_size: None }
     }
 
     pub fn build(self, cx: &mut Context, text: &str) -> Handle<Self> {
-        View::build(self, cx)        
-        .width(Pixels(200.0))
-        .height(Pixels(30.0))
-        //.background_color(Color::red())
-        .text(text)
+        View::build(self, cx)
+            .width(Pixels(200.0))
+            .height(Pixels(30.0))
+            //.background_color(Color::red())
+            .text(text)
     }
 
     pub fn on_size<F>(mut self, callback: F) -> Self
-    where F: 'static + Fn(&mut Context, f32)
+    where
+        F: 'static + Fn(&mut Context, f32),
     {
         self.on_size = Some(Box::new(callback));
         self
     }
 }
 
-
 impl View for ResizableItem {
-
     fn element(&self) -> Option<String> {
         Some("label".to_string())
     }
@@ -127,12 +115,11 @@ impl View for ResizableItem {
                     }
                 }
 
-                _=> {}
+                _ => {}
             }
         }
     }
 }
-
 
 #[derive(Clone, Data, Debug)]
 pub struct RowData {
@@ -171,5 +158,5 @@ impl Model for ColumnData {
 }
 
 pub struct TableData {
-    columns: Vec<Units>,   
+    columns: Vec<Units>,
 }

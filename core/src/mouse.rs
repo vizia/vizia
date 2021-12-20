@@ -28,12 +28,7 @@ pub struct ModifiersState {
 
 impl Default for ModifiersState {
     fn default() -> Self {
-        ModifiersState {
-            shift: false,
-            ctrl: false,
-            alt: false,
-            logo: false,
-        }
+        ModifiersState { shift: false, ctrl: false, alt: false, logo: false }
     }
 }
 

@@ -1,26 +1,22 @@
-use crate::{Context, Entity, Handle, LocalizedStringKey, View};
 use crate::Units::*;
-
-
+use crate::{Context, Entity, Handle, LocalizedStringKey, View};
 
 pub struct Label;
 
 impl Label {
     pub fn new<'a>(cx: &mut Context, text: impl LocalizedStringKey<'a>) -> Handle<Self> {
-
         // Get the enviroment data
         // Check the local
         // Replace the string
 
-
-
-        let handle = Self{}.build(cx)
-             //.width(Pixels(120.0))
-             //.height(Pixels(50.0))
-             //.child_space(Stretch(1.0))
-             //.child_left(Pixels(5.0))
-             //.background_color(Color::blue())
-             .text(text.key());
+        let handle = Self {}
+            .build(cx)
+            //.width(Pixels(120.0))
+            //.height(Pixels(50.0))
+            //.child_space(Stretch(1.0))
+            //.child_left(Pixels(5.0))
+            //.background_color(Color::blue())
+            .text(text.key());
 
         // if let Some(message) = cx.enviroment.bundle.get_message(text.key()) {
         //     let pattern = message.value().expect("Message has no value.");
@@ -30,7 +26,6 @@ impl Label {
         // }
 
         handle
-        
     }
 }
 

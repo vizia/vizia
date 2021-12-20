@@ -1,4 +1,4 @@
-use crate::{Color, Context, Handle, MouseButton, Units::*, View, WindowEvent, PseudoClass};
+use crate::{Color, Context, Handle, MouseButton, PseudoClass, Units::*, View, WindowEvent};
 
 const ICON_CHECK: &str = "\u{2713}";
 
@@ -18,43 +18,39 @@ impl Checkbox {
             on_unchecked: None,
             icon_checked: None,
             icon_unchecked: None,
-        }.build(cx)
+        }
+        .build(cx)
         .width(Pixels(20.0))
         .height(Pixels(20.0))
-        .text(
-            if checked {
-                ICON_CHECK
-            } else {
-                ""
-            }
-        )
+        .text(if checked { ICON_CHECK } else { "" })
         .checked(checked)
     }
 
-    pub fn with_icons(cx: &mut Context, checked: bool, icon_checked: &str, icon_unchecked: &str) -> Handle<Self> {
+    pub fn with_icons(
+        cx: &mut Context,
+        checked: bool,
+        icon_checked: &str,
+        icon_unchecked: &str,
+    ) -> Handle<Self> {
         Self {
             checked,
             on_checked: None,
             on_unchecked: None,
             icon_checked: Some(icon_checked.to_owned()),
             icon_unchecked: Some(icon_unchecked.to_owned()),
-        }.build(cx)
+        }
+        .build(cx)
         .width(Pixels(20.0))
         .height(Pixels(20.0))
-        .text(
-            if checked {
-                icon_checked
-            } else {
-                icon_unchecked
-            }
-        )
+        .text(if checked { icon_checked } else { icon_unchecked })
         .checked(checked)
     }
 }
 
 impl Handle<Checkbox> {
-    pub fn on_checked<F>(self, cx: &mut Context, callback: F) -> Self 
-    where F: 'static + Fn(&mut Context),
+    pub fn on_checked<F>(self, cx: &mut Context, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context),
     {
         if let Some(view) = cx.views.get_mut(&self.entity) {
             if let Some(checkbox) = view.downcast_mut::<Checkbox>() {
@@ -65,8 +61,9 @@ impl Handle<Checkbox> {
         self
     }
 
-    pub fn on_unchecked<F>(self, cx: &mut Context, callback: F) -> Self 
-    where F: 'static + Fn(&mut Context),
+    pub fn on_unchecked<F>(self, cx: &mut Context, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context),
     {
         if let Some(view) = cx.views.get_mut(&self.entity) {
             if let Some(checkbox) = view.downcast_mut::<Checkbox>() {
@@ -84,7 +81,6 @@ impl Handle<Checkbox> {
     pub fn icon_unchecked(self, cx: &mut Context, icon: &str) -> Self {
         self
     }
-
 }
 
 impl View for Checkbox {
@@ -99,12 +95,17 @@ impl View for Checkbox {
                     if event.target == cx.current {
                         if self.checked {
                             self.checked = false;
-                            if let Some(pseudo_classes) = cx.style.borrow_mut().pseudo_classes.get_mut(cx.current) {
+                            if let Some(pseudo_classes) =
+                                cx.style.borrow_mut().pseudo_classes.get_mut(cx.current)
+                            {
                                 pseudo_classes.set(PseudoClass::CHECKED, false);
                             }
 
                             if let Some(icon_unchecked) = &self.icon_unchecked {
-                                cx.style.borrow_mut().text.insert(cx.current, icon_unchecked.to_owned());
+                                cx.style
+                                    .borrow_mut()
+                                    .text
+                                    .insert(cx.current, icon_unchecked.to_owned());
                             } else {
                                 cx.style.borrow_mut().text.insert(cx.current, "".to_string());
                             }
@@ -114,17 +115,24 @@ impl View for Checkbox {
 
                                 self.on_unchecked = Some(callback);
                             }
-
                         } else {
                             self.checked = true;
-                            if let Some(pseudo_classes) = cx.style.borrow_mut().pseudo_classes.get_mut(cx.current) {
+                            if let Some(pseudo_classes) =
+                                cx.style.borrow_mut().pseudo_classes.get_mut(cx.current)
+                            {
                                 pseudo_classes.set(PseudoClass::CHECKED, true);
                             }
 
                             if let Some(icon_checked) = &self.icon_checked {
-                                cx.style.borrow_mut().text.insert(cx.current, icon_checked.to_owned());
+                                cx.style
+                                    .borrow_mut()
+                                    .text
+                                    .insert(cx.current, icon_checked.to_owned());
                             } else {
-                                cx.style.borrow_mut().text.insert(cx.current, ICON_CHECK.to_string());
+                                cx.style
+                                    .borrow_mut()
+                                    .text
+                                    .insert(cx.current, ICON_CHECK.to_string());
                             }
 
                             if let Some(callback) = self.on_checked.take() {
@@ -136,7 +144,7 @@ impl View for Checkbox {
                     }
                 }
 
-                _=> {}
+                _ => {}
             }
         }
     }

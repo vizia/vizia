@@ -1,5 +1,3 @@
-
-
 mod label;
 pub use label::Label;
 
@@ -10,7 +8,7 @@ mod button;
 pub use button::Button;
 
 mod list;
-pub use list::{ListData, List, ListEvent, ItemPtr, DataHandle};
+pub use list::{DataHandle, ItemPtr, List, ListData, ListEvent};
 
 mod table;
 pub use table::Table;
@@ -28,10 +26,10 @@ mod for_each;
 pub use for_each::ForEach;
 
 mod slider2;
-pub use slider2::{Slider, SliderData, SliderEvent, Orientation};
+pub use slider2::{Orientation, Slider, SliderData, SliderEvent};
 
 mod knob;
-pub use knob::{Knob, ArcTrack};
+pub use knob::{ArcTrack, Knob};
 
 mod normalized_map;
 pub use normalized_map::*;

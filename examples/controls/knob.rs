@@ -17,10 +17,8 @@ const STYLE: &str = r#"
 
 "#;
 
-
 fn main() {
-    Application::new(WindowDescription::new().with_title("Knob"), |cx|{
-        
+    Application::new(WindowDescription::new().with_title("Knob"), |cx| {
         cx.add_theme(STYLE);
 
         let map = DecibelMap::new(-12.0, 12.0, ValueScaling::Linear, DisplayDecimals::One, true);
@@ -29,6 +27,6 @@ fn main() {
         Knob::new(cx, map, normalized_default);
 
         //ArcTrack::new(cx).width(Pixels(50.0)).height(Pixels(50.0)).space(Pixels(20.0));
-
-    }).run();
+    })
+    .run();
 }

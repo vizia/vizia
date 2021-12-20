@@ -1,10 +1,10 @@
 use crate::{Entity, GenerationalId};
 
 const INDEX_BITS: u32 = 20;
-const INDEX_MASK: u32  = (1<<INDEX_BITS)-1;
+const INDEX_MASK: u32 = (1 << INDEX_BITS) - 1;
 
 const COUNT_BITS: u32 = 12;
-const COUNT_MASK: u32 = (1<<COUNT_BITS)-1;
+const COUNT_MASK: u32 = (1 << COUNT_BITS) - 1;
 
 struct Index(u32);
 
@@ -14,7 +14,7 @@ impl Index {
         Self(index | count << INDEX_BITS)
     }
 
-    fn  null() -> Self {
+    fn null() -> Self {
         Self(std::u32::MAX)
     }
 
@@ -59,7 +59,6 @@ impl Clone for Index {
     }
 }
 
-
 pub struct SharedSet<T> {
     indices: Vec<Index>,
     pub data: Vec<T>,
@@ -67,10 +66,7 @@ pub struct SharedSet<T> {
 
 impl<T> SharedSet<T> {
     pub fn new() -> Self {
-        Self {
-            indices: Vec::new(),
-            data: Vec::new(),
-        }
+        Self { indices: Vec::new(), data: Vec::new() }
     }
 
     pub fn insert(&mut self, entity: Entity, data: T) {
@@ -124,7 +120,7 @@ impl<T> SharedSet<T> {
         if entity1.index() >= self.indices.len() {
             self.indices.resize(entity1.index() + 1, Index::null());
         }
-        
+
         let data_index2 = self.indices[entity2.index()].clone();
 
         if data_index2.index() >= self.data.len() {
@@ -132,8 +128,7 @@ impl<T> SharedSet<T> {
         }
 
         self.indices[entity1.index()] = data_index2;
-        
-    } 
+    }
 
     pub fn get(&self, entity: Entity) -> Option<&T> {
         if entity.index() < self.indices.len() {
@@ -163,15 +158,11 @@ impl<T> SharedSet<T> {
         } else {
             None
         }
-    } 
+    }
 }
 
 impl<T> Default for SharedSet<T> {
     fn default() -> Self {
-        Self {
-            indices: Vec::new(),
-            data: Vec::new(),
-        }
+        Self { indices: Vec::new(), data: Vec::new() }
     }
 }
-

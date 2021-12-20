@@ -1,5 +1,3 @@
-
-
 /// Represents the size of the application window.
 pub struct WindowSize {
     pub width: u32,
@@ -31,13 +29,13 @@ pub struct WindowDescription {
     pub max_inner_size: Option<WindowSize>,
     pub position: Option<Position>,
     pub resizable: bool,
-    //pub fullscreen: 
+    //pub fullscreen:
     pub maximized: bool,
     pub visible: bool,
     pub transparent: bool,
     pub decorations: bool,
     pub always_on_top: bool,
-    
+
     // Change this to resource id when the resource manager is working
     pub icon: Option<Vec<u8>>,
     pub icon_width: u32,

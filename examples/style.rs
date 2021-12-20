@@ -1,11 +1,9 @@
-
 use vizia::*;
 
 // Example showing inline styling of views
 
 fn main() {
-
-    Application::new(WindowDescription::new().with_title("Style"), |cx|{
+    Application::new(WindowDescription::new().with_title("Style"), |cx| {
         VStack::new(cx, |cx| {
             Label::new(cx, "Label 1")
                 .width(Pixels(100.0))
@@ -16,7 +14,9 @@ fn main() {
                 .width(Pixels(200.0))
                 .height(Pixels(50.0))
                 .background_color(Color::green());
-                
-        }).width(Pixels(500.0)).height(Pixels(500.0));
-    }).run();
+        })
+        .width(Pixels(500.0))
+        .height(Pixels(500.0));
+    })
+    .run();
 }

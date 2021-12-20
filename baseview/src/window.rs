@@ -1,8 +1,20 @@
-use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc, hash::Hash};
 use crate::{application::ApplicationRunner, Renderer};
-use baseview::{Event, EventStatus, Window, WindowHandle, WindowHandler, WindowOpenOptions, WindowScalePolicy};
+use baseview::{
+    Event, EventStatus, Window, WindowHandle, WindowHandler, WindowOpenOptions, WindowScalePolicy,
+};
 use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
-use vizia_core::{AppData, BoundingBox, CachedData, Units, Color, Context, Data, Display, Entity, Enviroment, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, WindowDescription, WindowEvent};
+use std::{
+    cell::RefCell,
+    collections::{HashMap, VecDeque},
+    hash::Hash,
+    rc::Rc,
+};
+use vizia_core::{
+    AppData, BoundingBox, CachedData, Color, Context, Data, Display, Entity, Enviroment,
+    EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState,
+    MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Units, Visibility,
+    WindowDescription, WindowEvent,
+};
 
 static DEFAULT_THEME: &str = include_str!("../../core/src/default_theme.css");
 
@@ -15,26 +27,32 @@ pub(crate) struct ViziaWindow {
 }
 
 impl ViziaWindow {
-    fn new(cx: Context, win_desc: WindowDescription, window: &mut baseview::Window, builder: Option<Box<dyn Fn(&mut Context) + Send>>, on_idle: Option<Box<dyn Fn(&mut Context) + Send>>) -> ViziaWindow {
+    fn new(
+        cx: Context,
+        win_desc: WindowDescription,
+        window: &mut baseview::Window,
+        builder: Option<Box<dyn Fn(&mut Context) + Send>>,
+        on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+    ) -> ViziaWindow {
         let (renderer, context) = load_renderer(window);
 
         context.make_current();
         let application = ApplicationRunner::new(cx, win_desc, renderer);
         context.make_not_current();
 
-        ViziaWindow {
-            application,
-            context,
-            builder,
-            on_idle,
-        }
+        ViziaWindow { application, context, builder, on_idle }
     }
 
     /// Open a new child window.
     ///
     /// * `parent` - The parent window.
     /// * `app` - The Tuix application builder.
-    pub fn open_parented<P, F>(parent: &P, win_desc: WindowDescription, mut app: F, on_idle: Option<Box<dyn Fn(&mut Context) + Send>>) -> WindowHandle
+    pub fn open_parented<P, F>(
+        parent: &P,
+        win_desc: WindowDescription,
+        mut app: F,
+        on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+    ) -> WindowHandle
     where
         P: HasRawWindowHandle,
         F: Fn(&mut Context),
@@ -56,14 +74,14 @@ impl ViziaWindow {
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut cache = CachedData::default();
                 cache.add(Entity::root()).expect("Failed to add entity to cache");
-        
+
                 let mut context = Context {
                     entity_manager: IdManager::new(),
                     tree: Tree::new(),
                     current: Entity::root(),
                     count: 0,
                     views: HashMap::new(),
-                    //state: HashMap::new(),  
+                    //state: HashMap::new(),
                     data: AppData::new(),
                     style: Rc::new(RefCell::new(Style::default())),
                     cache,
@@ -80,9 +98,9 @@ impl ViziaWindow {
                     text_context: femtovg::TextContext::default(),
                     listeners: HashMap::new(),
                 };
-        
+
                 context.entity_manager.create();
-        
+
                 context.add_theme(DEFAULT_THEME);
 
                 let root = Entity::root();
@@ -98,7 +116,11 @@ impl ViziaWindow {
     /// Open a new window as if it had a parent window.
     ///
     /// * `app` - The Tuix application builder.
-    pub fn open_as_if_parented<F>(win_desc: WindowDescription, mut app: F, on_idle: Option<Box<dyn Fn(&mut Context) + Send>>) -> WindowHandle
+    pub fn open_as_if_parented<F>(
+        win_desc: WindowDescription,
+        mut app: F,
+        on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+    ) -> WindowHandle
     where
         F: Fn(&mut Context),
         F: 'static + Send,
@@ -118,14 +140,14 @@ impl ViziaWindow {
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut cache = CachedData::default();
                 cache.add(Entity::root()).expect("Failed to add entity to cache");
-        
+
                 let mut context = Context {
                     entity_manager: IdManager::new(),
                     tree: Tree::new(),
                     current: Entity::root(),
                     count: 0,
                     views: HashMap::new(),
-                    //state: HashMap::new(),  
+                    //state: HashMap::new(),
                     data: AppData::new(),
                     style: Rc::new(RefCell::new(Style::default())),
                     cache,
@@ -142,9 +164,9 @@ impl ViziaWindow {
                     text_context: femtovg::TextContext::default(),
                     listeners: HashMap::new(),
                 };
-        
+
                 context.entity_manager.create();
-        
+
                 context.add_theme(DEFAULT_THEME);
 
                 let root = Entity::root();
@@ -160,8 +182,11 @@ impl ViziaWindow {
     /// Open a new window that blocks the current thread until the window is destroyed.
     ///
     /// * `app` - The Tuix application builder.
-    pub fn open_blocking<F>(win_desc: WindowDescription, mut app: F, on_idle: Option<Box<dyn Fn(&mut Context) + Send>>)
-    where
+    pub fn open_blocking<F>(
+        win_desc: WindowDescription,
+        mut app: F,
+        on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+    ) where
         F: Fn(&mut Context),
         F: 'static + Send,
     {
@@ -180,14 +205,14 @@ impl ViziaWindow {
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut cache = CachedData::default();
                 cache.add(Entity::root()).expect("Failed to add entity to cache");
-        
+
                 let mut context = Context {
                     entity_manager: IdManager::new(),
                     tree: Tree::new(),
                     current: Entity::root(),
                     count: 0,
                     views: HashMap::new(),
-                    //state: HashMap::new(),  
+                    //state: HashMap::new(),
                     data: AppData::new(),
                     style: Rc::new(RefCell::new(Style::default())),
                     cache,
@@ -204,9 +229,9 @@ impl ViziaWindow {
                     text_context: femtovg::TextContext::default(),
                     listeners: HashMap::new(),
                 };
-        
+
                 context.entity_manager.create();
-        
+
                 context.add_theme(DEFAULT_THEME);
 
                 let root = Entity::root();
@@ -223,18 +248,14 @@ impl ViziaWindow {
 
 impl WindowHandler for ViziaWindow {
     fn on_frame(&mut self, _window: &mut Window) {
-
         self.application.rebuild(&self.builder);
 
         self.application.on_frame_update();
-
-
 
         self.context.make_current();
 
         self.application.render();
         self.context.swap_buffers();
-        
 
         self.context.make_not_current();
     }
@@ -246,8 +267,6 @@ impl WindowHandler for ViziaWindow {
         //self.application.update_data();
 
         self.application.handle_idle(&self.on_idle);
-
-
 
         if should_quit {
             // TODO: Request close.

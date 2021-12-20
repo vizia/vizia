@@ -1,3 +1,3 @@
 pub mod application;
-mod window;
 mod keyboard;
+mod window;

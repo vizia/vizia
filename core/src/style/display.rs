@@ -22,7 +22,7 @@ impl Interpolator for Display {
 }
 
 /// Visibility determines whether an entity will be rendered.
-/// An invisible entity will still be acted upon by the layout system. 
+/// An invisible entity will still be acted upon by the layout system.
 /// Use [Display] to hide an entity from both rendering and layout.
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Visibility {
@@ -52,7 +52,6 @@ impl Interpolator for Visibility {
     }
 }
 
-
 /// Describes the opacity of a entity.
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Opacity(pub f32);
@@ -78,10 +77,7 @@ pub struct FocusOrder {
 
 impl Default for FocusOrder {
     fn default() -> Self {
-        FocusOrder {
-            next: Entity::null(),
-            prev: Entity::null(),
-        }
+        FocusOrder { next: Entity::null(), prev: Entity::null() }
     }
 }
 

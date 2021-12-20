@@ -1,20 +1,17 @@
-
-
 use std::cmp::{Eq, PartialEq};
 use std::hash::Hash;
 
 use crate::GenerationalId;
 
 const ENTITY_INDEX_BITS: u32 = 24;
-const ENTITY_INDEX_MASK: u32  = (1<<ENTITY_INDEX_BITS)-1;
+const ENTITY_INDEX_MASK: u32 = (1 << ENTITY_INDEX_BITS) - 1;
 
 const ENTITY_GENERATION_BITS: u32 = 8;
-const ENTITY_GENERATION_MASK: u32 = (1<<ENTITY_GENERATION_BITS)-1;
+const ENTITY_GENERATION_MASK: u32 = (1 << ENTITY_GENERATION_BITS) - 1;
 
 // const ENTITY_MAX: u32 = std::u32::MAX>>8;
 
 // const MINIMUM_FREE_INDICES: usize = 1024;
-
 
 /// An entity is an id used to reference to get/set properties in State.
 ///
@@ -51,8 +48,8 @@ impl Entity {
 
     /// Creates a root entity
     ///
-    /// The root entity represents the main window and is always valid. 
-    /// The root entity can be used to set properties on the primary window, such as background color, 
+    /// The root entity represents the main window and is always valid.
+    /// The root entity can be used to set properties on the primary window, such as background color,
     /// as well as sending events to the window such as Restyle and Redraw events.
     pub fn root() -> Entity {
         Entity(0)
@@ -86,8 +83,6 @@ impl Entity {
     // pub(crate) fn index_unchecked(&self) -> usize {
     //     (self.0 & ENTITY_INDEX_MASK) as usize
     // }
-
-
 }
 
 impl GenerationalId for Entity {

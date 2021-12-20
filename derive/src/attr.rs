@@ -1,4 +1,3 @@
-
 // Adapted from Druid attr.rs
 
 // Copyright 2019 The Druid Authors.
@@ -147,10 +146,7 @@ impl Field<DataAttr> {
             } else if attr.path.is_ident(BASE_DATA_ATTR_PATH) {
                 match attr.parse_meta()? {
                     Meta::List(meta) => {
-                        assert!(
-                            meta.nested.len() <= 1,
-                            "only single data attribute is allowed"
-                        );
+                        assert!(meta.nested.len() <= 1, "only single data attribute is allowed");
                         if let Some(nested) = meta.nested.first() {
                             match nested {
                                 NestedMeta::Meta(Meta::Path(path))
@@ -182,11 +178,7 @@ impl Field<DataAttr> {
                 }
             }
         }
-        Ok(Field {
-            ident,
-            ty,
-            attrs: data_attr,
-        })
+        Ok(Field { ident, ty, attrs: data_attr })
     }
 
     /// The tokens to be used as the function for 'same'.
@@ -261,14 +253,7 @@ impl Field<LensAttrs> {
                 }
             }
         }
-        Ok(Field {
-            ident,
-            ty,
-            attrs: LensAttrs {
-                ignore,
-                lens_name_override,
-            },
-        })
+        Ok(Field { ident, ty, attrs: LensAttrs { ignore, lens_name_override } })
     }
 }
 
@@ -292,10 +277,7 @@ fn parse_lit_into_expr_path(lit: &syn::Lit) -> Result<ExprPath, Error> {
     let string = if let syn::Lit::Str(lit) = lit {
         lit
     } else {
-        return Err(Error::new(
-            lit.span(),
-            "expected str, found... something else",
-        ));
+        return Err(Error::new(lit.span(), "expected str, found... something else"));
     };
 
     let tokens = syn::parse_str(&string.value())?;
@@ -306,10 +288,7 @@ fn parse_lit_into_ident(lit: &syn::Lit) -> Result<Ident, Error> {
     let ident = if let syn::Lit::Str(lit) = lit {
         Ident::new(&lit.value(), lit.span())
     } else {
-        return Err(Error::new(
-            lit.span(),
-            "expected str, found... something else",
-        ));
+        return Err(Error::new(lit.span(), "expected str, found... something else"));
     };
 
     Ok(ident)

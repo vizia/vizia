@@ -26,36 +26,38 @@ impl Model for CounterData {
 }
 
 fn main() {
+    let window_description =
+        WindowDescription::new().with_title("Counter").with_inner_size(500, 100);
 
-    let window_description = WindowDescription::new().with_title("Counter").with_inner_size(500, 100);
+    Application::new(window_description, |cx| {
+        CounterData { count: 0 }.build(cx);
 
-    Application::new(window_description, |cx|{
-
-        CounterData {
-            count: 0,
-        }.build(cx);
-
-        HStack::new(cx, |cx|{
-
+        HStack::new(cx, |cx| {
             // Button for incrementing the counter
-            Button::new(cx, move |cx| cx.emit(CounterEvent::Increment), |cx|
-                Label::new(cx, "Increment")
+            Button::new(
+                cx,
+                move |cx| cx.emit(CounterEvent::Increment),
+                |cx| Label::new(cx, "Increment"),
             );
 
             // Button for decrementing the counter
-            Button::new(cx, move |cx| cx.emit(CounterEvent::Decrement), |cx|
-                Label::new(cx, "Decrement")
+            Button::new(
+                cx,
+                move |cx| cx.emit(CounterEvent::Decrement),
+                |cx| Label::new(cx, "Decrement"),
             );
 
             // Label bound to the counter value
-            Binding::new(cx, CounterData::count, |cx, count|{
+            Binding::new(cx, CounterData::count, |cx, count| {
                 Label::new(cx, &count.get(cx).to_string());
             });
 
             // Label bound to the counter value displaying the value as english text
-            Binding::new(cx, CounterData::count, |cx, count|{
+            Binding::new(cx, CounterData::count, |cx, count| {
                 Label::new(cx, &english_numbers::convert_all_fmt(*count.get(cx) as i64));
             });
-        }).child_space(Stretch(1.0));  
-    }).run();
+        })
+        .child_space(Stretch(1.0));
+    })
+    .run();
 }

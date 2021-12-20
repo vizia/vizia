@@ -1,5 +1,3 @@
-
-
 // Adapted from Druid lens.rs
 
 // Copyright 2019 The Druid Authors.
@@ -120,10 +118,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                 }
             }
         }
-
-        
     });
-
 
     // let used_params: HashSet<String> = input
     //     .generics

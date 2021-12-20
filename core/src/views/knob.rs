@@ -1,14 +1,16 @@
 use femtovg::{LineCap, Paint, Path, Solidity};
 use morphorm::{Hierarchy, Units};
 
-use crate::{Binding, Color, Context, Element, Modifiers, Entity, Handle, Model, MouseButton, NormalizedMap, SliderData, SliderEvent, Units::*, View, WindowEvent, ZStack};
+use crate::{
+    Binding, Color, Context, Element, Entity, Handle, Model, Modifiers, MouseButton, NormalizedMap,
+    SliderData, SliderEvent, Units::*, View, WindowEvent, ZStack,
+};
 
 static DEFAULT_DRAG_SCALAR: f32 = 0.0042;
 static DEFAULT_WHEEL_SCALAR: f32 = 0.005;
 static DEFAULT_MODIFIER_SCALAR: f32 = 0.04;
 
 use std::f32::consts::PI;
-
 
 pub struct Knob<T: NormalizedMap> {
     pub normalized_value: f32,
@@ -17,7 +19,7 @@ pub struct Knob<T: NormalizedMap> {
     is_dragging: bool,
     prev_drag_y: f32,
     continuous_normal: f32,
-    
+
     drag_scalar: f32,
     wheel_scalar: f32,
     modifier_scalar: f32,
@@ -27,7 +29,6 @@ pub struct Knob<T: NormalizedMap> {
     pub map: T,
 
     on_changing: Option<Box<dyn Fn(&mut Self, &mut Context)>>,
-
 }
 
 impl<T: NormalizedMap> Knob<T> {
@@ -49,24 +50,19 @@ impl<T: NormalizedMap> Knob<T> {
             map,
 
             on_changing: None,
+        }
+        .build2(cx, move |cx| {
+            SliderData { value: normalized_default.clamp(0.0, 1.0) }.build(cx);
 
-        }.build2(cx, move |cx|{
-            SliderData {
-                value: normalized_default.clamp(0.0, 1.0),
-            }.build(cx);
-
-            ZStack::new(cx, move |cx|{
-
-
-
-                Binding::new(cx, SliderData::value, |cx, value|{
+            ZStack::new(cx, move |cx| {
+                Binding::new(cx, SliderData::value, |cx, value| {
                     //println!("{}", value.get(cx));
                     ArcTrack::new(cx, *value.get(cx))
                         .width(Stretch(1.0))
                         .height(Stretch(1.0))
                         .class("track");
                 });
-                
+
                 // TODO
                 // Element::new(cx)
                 //     .width(Pixels(10.0))
@@ -78,8 +74,6 @@ impl<T: NormalizedMap> Knob<T> {
             });
         })
     }
-
-
 }
 
 impl<T: NormalizedMap> Handle<Knob<T>> {
@@ -108,7 +102,7 @@ impl<T: NormalizedMap> View for Knob<T> {
 
             // This will cause the knob to "snap" when using an `IntMap`.
             self_ref.normalized_value = self_ref.map.snap(self_ref.continuous_normal);
-            
+
             // TODO - Remove when done
             //println!("Normalized: {}, Display: {}", self_ref.normalized_value, self_ref.map.normalized_to_display(self_ref.normalized_value));
 
@@ -131,7 +125,6 @@ impl<T: NormalizedMap> View for Knob<T> {
         if let Some(window_event) = event.message.downcast::<WindowEvent>() {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    
                     self.is_dragging = true;
                     self.prev_drag_y = cx.mouse.left.pos_down.1;
 
@@ -142,11 +135,9 @@ impl<T: NormalizedMap> View for Knob<T> {
                     //     (callback)(self, cx, cx.current);
                     //     self.on_press = Some(callback);
                     // }
-                    
                 }
 
                 WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
-    
                     self.is_dragging = false;
                     self.continuous_normal = self.normalized_value;
 
@@ -156,24 +147,23 @@ impl<T: NormalizedMap> View for Knob<T> {
                     //     (callback)(self, cx, cx.current);
                     //     self.on_release = Some(callback);
                     // }
-                    
                 }
 
                 WindowEvent::MouseMove(_, y) => {
                     //if event.target == cx.current {
-                        if self.is_dragging {
-                            let mut delta_normal = (*y - self.prev_drag_y) * self.drag_scalar;
+                    if self.is_dragging {
+                        let mut delta_normal = (*y - self.prev_drag_y) * self.drag_scalar;
 
-                            self.prev_drag_y = *y;
+                        self.prev_drag_y = *y;
 
-                            if cx.modifiers.contains(Modifiers::SHIFT) {
-                                delta_normal *= self.modifier_scalar;
-                            }
-                
-                            let new_normal = self.continuous_normal - delta_normal;
-
-                            move_virtual_slider(self, cx, new_normal);
+                        if cx.modifiers.contains(Modifiers::SHIFT) {
+                            delta_normal *= self.modifier_scalar;
                         }
+
+                        let new_normal = self.continuous_normal - delta_normal;
+
+                        move_virtual_slider(self, cx, new_normal);
+                    }
                     //}
                 }
 
@@ -188,7 +178,6 @@ impl<T: NormalizedMap> View for Knob<T> {
                 }
 
                 WindowEvent::MouseDoubleClick(button) if *button == MouseButton::Left => {
-                  
                     self.is_dragging = false;
 
                     move_virtual_slider(self, cx, self.default_normal);
@@ -196,11 +185,9 @@ impl<T: NormalizedMap> View for Knob<T> {
 
                 _ => {}
             }
-        } 
+        }
     }
 }
-
-
 
 pub struct ArcTrack {
     angle_start: f32,
@@ -224,21 +211,23 @@ impl ArcTrack {
             normalized_value: value,
 
             center: false,
-        }.build(cx)
+        }
+        .build(cx)
     }
 }
 
 impl View for ArcTrack {
     fn draw(&self, cx: &Context, canvas: &mut crate::Canvas) {
         let opacity = cx.cache.get_opacity(cx.current);
-        
-        //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();    
+
+        //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
         // background_color.set_alphaf(background_color.a * opacity);
 
-        let mut foreground_color: femtovg::Color = cx.style.borrow().background_color.get(cx.current).cloned().unwrap_or_default().into();    
+        let mut foreground_color: femtovg::Color =
+            cx.style.borrow().background_color.get(cx.current).cloned().unwrap_or_default().into();
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
-        let mut background_color= femtovg::Color::rgb(54, 54, 54);
+        let mut background_color = femtovg::Color::rgb(54, 54, 54);
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
 
         let posx = cx.cache.get_posx(cx.current);
@@ -251,8 +240,8 @@ impl View for ArcTrack {
         let centery = posy + 0.5 * height;
 
         // Convert start and end angles to radians and rotate origin direction to be upwards instead of to the right
-        let start = self.angle_start.to_radians() - PI/2.0;
-        let end = self.angle_end.to_radians() - PI/2.0;
+        let start = self.angle_start.to_radians() - PI / 2.0;
+        let end = self.angle_end.to_radians() - PI / 2.0;
 
         //let parent = cx.current.get_parent(cx).unwrap();
 
@@ -263,36 +252,32 @@ impl View for ArcTrack {
         // Convert radius and span into screen coordinates
         let radius = self.radius.value_or(parent_width, 0.0);
         let span = self.span.value_or(parent_width, 0.0);
-        
+
         // Draw the track arc
         let mut path = Path::new();
-        path.arc(centerx, centery, radius - span/2.0, end, start, Solidity::Solid);
+        path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
         let mut paint = Paint::color(background_color);
         paint.set_line_width(span);
         paint.set_line_cap(LineCap::Round);
         canvas.stroke_path(&mut path, paint);
 
-        
-        
-
         // Draw the active arc
         let mut path = Path::new();
 
         if self.center {
-            let center = -PI/2.0;
-            
+            let center = -PI / 2.0;
+
             if self.normalized_value <= 0.5 {
                 let current = self.normalized_value * 2.0 * (center - start) + start;
-                path.arc(centerx, centery, radius - span/2.0, center, current, Solidity::Solid);
+                path.arc(centerx, centery, radius - span / 2.0, center, current, Solidity::Solid);
             } else {
                 let current = (self.normalized_value * 2.0 - 1.0) * (end - center) + center;
-                path.arc(centerx, centery, radius - span/2.0, current, center, Solidity::Solid);
+                path.arc(centerx, centery, radius - span / 2.0, current, center, Solidity::Solid);
             }
         } else {
             let current = self.normalized_value * (end - start) + start;
-            path.arc(centerx, centery, radius - span/2.0, current, start, Solidity::Solid);
+            path.arc(centerx, centery, radius - span / 2.0, current, start, Solidity::Solid);
         }
-
 
         let mut paint = Paint::color(foreground_color);
         paint.set_line_width(span);

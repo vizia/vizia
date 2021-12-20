@@ -1,4 +1,4 @@
-use crate::{Tree, Entity, GenerationalId};
+use crate::{Entity, GenerationalId, Tree};
 
 /// Iterator for iterating through the children of an entity.
 pub struct ChildIterator<'a> {

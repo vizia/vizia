@@ -248,7 +248,6 @@ impl<T: Data> Data for std::ops::Bound<T> {
 
 impl<T: Data> Data for Vec<T> {
     fn same(&self, other: &Self) -> bool {
-
         if self.len() != other.len() {
             return false;
         }

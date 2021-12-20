@@ -1,5 +1,3 @@
-
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Transition {
     // List of properties affected by transition
@@ -12,10 +10,6 @@ pub struct Transition {
 
 impl Transition {
     pub fn new() -> Self {
-        Transition {
-            property: String::new(),
-            duration: 0.0,
-            delay: 0.0,
-        }
+        Transition { property: String::new(), duration: 0.0, delay: 0.0 }
     }
 }

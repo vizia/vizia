@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{Interpolator};
+use crate::Interpolator;
 
 /// Describes a color
 #[derive(Copy, Clone)]
@@ -12,16 +12,12 @@ pub struct Color {
 impl Color {
     // Create a new color from RGB
     pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
-        Color {
-            data: 0xFF00_0000 | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32),
-        }
+        Color { data: 0xFF00_0000 | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32) }
     }
 
     // Create a new color from RGBA
     pub const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Color {
-            data: ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32),
-        }
+        Color { data: ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32) }
     }
 
     /// Returns color value specified by hue, saturation and lightness.
@@ -50,9 +46,7 @@ impl Color {
         let g = (hue(h, m1, m2).max(0.0).min(1.0) * 255.0) as u8;
         let b = (hue(h - 1.0 / 3.0, m1, m2).max(0.0).min(1.0) * 255.0) as u8;
 
-        Color {
-            data: ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32),
-        }
+        Color { data: ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32) }
     }
 
     // Get the red value
@@ -140,20 +134,16 @@ impl From<Color> for femtovg::Color {
 /// Compare two colors (Do not take care of alpha)
 impl PartialEq for Color {
     fn eq(&self, other: &Color) -> bool {
-        self.r() == other.r() && self.g() == other.g() && self.b() == other.b() && self.a() == other.a()
+        self.r() == other.r()
+            && self.g() == other.g()
+            && self.b() == other.b()
+            && self.a() == other.a()
     }
 }
 
 impl std::fmt::Debug for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "rgba({}, {}, {} {})",
-            self.r(),
-            self.g(),
-            self.b(),
-            self.a()
-        )
+        write!(f, "rgba({}, {}, {} {})", self.r(), self.g(), self.b(), self.a())
     }
 }
 
@@ -164,7 +154,6 @@ impl Default for Color {
 }
 
 impl Color {
-
     pub const fn transparent() -> Self {
         Self { data: 0x00000000 }
     }
@@ -199,7 +188,6 @@ impl Interpolator for Color {
         Color::interpolate(start.clone(), end.clone(), t as f64)
     }
 }
-
 
 fn hue(mut h: f32, m1: f32, m2: f32) -> f32 {
     if h < 0.0 {

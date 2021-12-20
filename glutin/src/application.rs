@@ -1,11 +1,27 @@
-use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc, hash::Hash};
+use std::{
+    cell::RefCell,
+    collections::{HashMap, VecDeque},
+    hash::Hash,
+    rc::Rc,
+};
 
-use femtovg::{Canvas, renderer::OpenGl, TextContext};
-use glutin::{ContextBuilder, event::{ElementState, VirtualKeyCode}, event_loop::{ControlFlow, EventLoop, EventLoopProxy}, window::WindowBuilder};
+use femtovg::{renderer::OpenGl, Canvas, TextContext};
+use glutin::{
+    event::{ElementState, VirtualKeyCode},
+    event_loop::{ControlFlow, EventLoop, EventLoopProxy},
+    window::WindowBuilder,
+    ContextBuilder,
+};
 
-use vizia_core::{AppData, BoundingBox, CachedData, Units, Color, Context, Data, Display, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, WindowDescription, WindowEvent, apply_hover, apply_styles, geometry_changed, apply_transform, apply_clipping, apply_visibility, apply_z_ordering, apply_text_constraints, Env};
+use vizia_core::{
+    apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
+    apply_visibility, apply_z_ordering, geometry_changed, AppData, BoundingBox, CachedData, Color,
+    Context, Data, Display, Entity, Env, Enviroment, Event, EventManager, FontOrId, IdManager,
+    ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager,
+    Style, Tree, TreeExt, Units, Visibility, WindowDescription, WindowEvent,
+};
 
-use crate::keyboard::{vcode_to_code, vk_to_key, scan_to_code};
+use crate::keyboard::{scan_to_code, vcode_to_code, vk_to_key};
 use crate::window::Window;
 
 static DEFAULT_THEME: &str = include_str!("../../core/src/default_theme.css");
@@ -21,9 +37,9 @@ pub struct Application {
 
 impl Application {
     pub fn new<F>(window_description: WindowDescription, builder: F) -> Self
-    where F: 'static + Fn(&mut Context)
+    where
+        F: 'static + Fn(&mut Context),
     {
-
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
 
@@ -33,7 +49,7 @@ impl Application {
             current: Entity::root(),
             count: 0,
             views: HashMap::new(),
-            //state: HashMap::new(),  
+            //state: HashMap::new(),
             data: AppData::new(),
             style: Rc::new(RefCell::new(Style::default())),
             cache,
@@ -65,27 +81,25 @@ impl Application {
         }
     }
 
-
     pub fn should_poll(mut self) -> Self {
         self.should_poll = true;
 
         self
     }
 
-
     /// Takes a closure which will be called at the end of every loop of the application.
-    /// 
+    ///
     /// The callback provides a place to run 'idle' processing and happens at the end of each loop but before drawing.
     /// If the callback pushes events into the queue in state then the event loop will re-run. Care must be taken not to
     /// push events into the queue every time the callback runs unless this is intended.
-    /// 
+    ///
     /// # Example
     /// ```
     /// Application::new(WindowDescription::new(), |state, window|{
     ///     // Build application here
     /// })
     /// .on_idle(|state|{
-    ///     // Code here runs at the end of every event loop after OS and tuix events have been handled 
+    ///     // Code here runs at the end of every event loop after OS and tuix events have been handled
     /// })
     /// .run();
     /// ```
@@ -93,7 +107,7 @@ impl Application {
         self.on_idle = Some(Box::new(callback));
 
         self
-    } 
+    }
 
     // TODO - Rename this
     pub fn get_proxy(&self) -> EventLoopProxy<Event> {
@@ -109,16 +123,14 @@ impl Application {
     pub fn locale(mut self, id: &str) -> Self {
         self.context.enviroment.set_locale(id);
 
-
         self
     }
 
     pub fn run(mut self) {
-
         let mut context = self.context;
-        
+
         let event_loop = self.event_loop;
-        
+
         // let handle = ContextBuilder::new()
         //     .with_vsync(true)
         //     .build_windowed(WindowBuilder::new(), &event_loop)
@@ -129,7 +141,6 @@ impl Application {
         // let renderer = OpenGl::new(|s| handle.context().get_proc_address(s) as *const _)
         //     .expect("Cannot create renderer");
         // let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
-
 
         let mut window = Window::new(&event_loop, &self.window_description);
 
@@ -154,28 +165,31 @@ impl Application {
         let dpi_factor = window.handle.window().scale_factor();
         let size = window.handle.window().inner_size();
 
-        let clear_color = context.style.borrow_mut().background_color.get(Entity::root()).cloned().unwrap_or_default();
+        let clear_color = context
+            .style
+            .borrow_mut()
+            .background_color
+            .get(Entity::root())
+            .cloned()
+            .unwrap_or_default();
 
         window.canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
-        window.canvas.clear_rect(
-            0,
-            0,
-            size.width as u32,
-            size.height as u32,
-            clear_color.into(),
-        );
+        window.canvas.clear_rect(0, 0, size.width as u32, size.height as u32, clear_color.into());
 
         context.views.insert(Entity::root(), Box::new(window));
 
-        context
-            .cache
-            .set_width(Entity::root(), self.window_description.inner_size.width as f32);
-        context
-            .cache
-            .set_height(Entity::root(), self.window_description.inner_size.height as f32);
+        context.cache.set_width(Entity::root(), self.window_description.inner_size.width as f32);
+        context.cache.set_height(Entity::root(), self.window_description.inner_size.height as f32);
 
-        context.style.borrow_mut().width.insert(Entity::root(), Units::Pixels(self.window_description.inner_size.width as f32));
-        context.style.borrow_mut().height.insert(Entity::root(), Units::Pixels(self.window_description.inner_size.height as f32));
+        context
+            .style
+            .borrow_mut()
+            .width
+            .insert(Entity::root(), Units::Pixels(self.window_description.inner_size.width as f32));
+        context.style.borrow_mut().height.insert(
+            Entity::root(),
+            Units::Pixels(self.window_description.inner_size.height as f32),
+        );
 
         let mut bounding_box = BoundingBox::default();
         bounding_box.w = size.width as f32;
@@ -657,17 +671,13 @@ impl Application {
                         }
 
                         glutin::event::WindowEvent::ModifiersChanged(modifiers_state) => {
-                            
-                            
                             context.modifiers.set(Modifiers::SHIFT, modifiers_state.shift());
                             context.modifiers.set(Modifiers::ALT, modifiers_state.alt());
                             context.modifiers.set(Modifiers::CTRL, modifiers_state.ctrl());
                             context.modifiers.set(Modifiers::LOGO, modifiers_state.logo());
                             
                         }
-
-
-
+                        
                         _=> {}
                     }
                 }
@@ -684,9 +694,8 @@ impl Env for Application {
             self.context.enviroment.include_default_theme = false;
             self.context.enviroment.needs_rebuild = true;
             self.context.reload_styles();
-
         }
-        
+
         self
     }
 }

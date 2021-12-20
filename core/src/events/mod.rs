@@ -18,7 +18,7 @@
 //! ```
 //! entity.emit_to(state, target, MyEvent::ReadDocs);
 //! ```
-//! 
+//!
 //! Widgets receive events through the `on_event` method of the [Widget] trait. The event message must then be downcast to the right type:
 //! fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
 //!     if let Some(my_event) = event.message.downcast() {
@@ -43,4 +43,3 @@ pub use event::{Event, Message, Propagation};
 
 mod event_handler;
 pub use event_handler::ViewHandler;
-

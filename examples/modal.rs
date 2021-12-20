@@ -25,35 +25,48 @@ const STYLE: &str = r#"
 "#;
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Modal"), |cx|{
-
+    Application::new(WindowDescription::new().with_title("Modal"), |cx| {
         cx.add_theme(STYLE);
 
-        AppData {
-            show_modal: false,
-        }.build(cx);
+        AppData { show_modal: false }.build(cx);
 
-        Button::new(cx, |cx| cx.emit(AppEvent::ShowModal), |cx| {
-            Label::new(cx, "Show Modal");
-        }).space(Pixels(50.0));
+        Button::new(
+            cx,
+            |cx| cx.emit(AppEvent::ShowModal),
+            |cx| {
+                Label::new(cx, "Show Modal");
+            },
+        )
+        .space(Pixels(50.0));
 
-        Binding::new(cx, AppData::show_modal, |cx, show|{
-            ZStack::new(cx, |cx|{
-                VStack::new(cx, |cx|{
+        Binding::new(cx, AppData::show_modal, |cx, show| {
+            ZStack::new(cx, |cx| {
+                VStack::new(cx, |cx| {
                     Label::new(cx, "This is a message").width(Stretch(1.0));
-                    HStack::new(cx, |cx|{
-                        Button::new(cx, |cx| cx.emit(AppEvent::HideModal), |cx| {
-                            Label::new(cx, "Cancel");
-                        });
-                        Button::new(cx, |cx| cx.emit(AppEvent::HideModal), |cx| {
-                            Label::new(cx, "Ok");
-                        });
+                    HStack::new(cx, |cx| {
+                        Button::new(
+                            cx,
+                            |cx| cx.emit(AppEvent::HideModal),
+                            |cx| {
+                                Label::new(cx, "Cancel");
+                            },
+                        );
+                        Button::new(
+                            cx,
+                            |cx| cx.emit(AppEvent::HideModal),
+                            |cx| {
+                                Label::new(cx, "Ok");
+                            },
+                        );
                     });
                 });
-            }).width(Pixels(300.0)).height(Pixels(100.0)).visibility((*show.get(cx)).into());
+            })
+            .width(Pixels(300.0))
+            .height(Pixels(100.0))
+            .visibility((*show.get(cx)).into());
         });
-
-    }).run();
+    })
+    .run();
 }
 
 #[derive(Debug)]

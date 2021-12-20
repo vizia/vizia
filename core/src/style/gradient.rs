@@ -1,4 +1,3 @@
-
 use crate::Color;
 
 use crate::Units;
@@ -45,10 +44,7 @@ pub struct LinearGradient {
 
 impl LinearGradient {
     pub fn new(direction: GradientDirection) -> Self {
-        Self {
-            direction,
-            stops: Vec::new(),
-        }
+        Self { direction, stops: Vec::new() }
     }
 
     pub fn add_stop(mut self, stop: GradientStop) -> Self {

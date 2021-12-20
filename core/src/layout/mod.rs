@@ -1,23 +1,27 @@
 //! # Layout
 //! Layout determines the size and position of entities on the screen.
-//! 
+//!
 //! All layout calculations are handled by the Morphorm crate.
 pub(crate) mod cache;
 
+pub use morphorm::GeometryChanged;
 use morphorm::{Cache, Hierarchy};
-pub use morphorm::{GeometryChanged};
 
 pub(crate) mod node;
 
 pub(crate) mod hierarchy;
 
-use crate::{Event, Propagation, Context, Tree, WindowEvent};
+use crate::{Context, Event, Propagation, Tree, WindowEvent};
 
 pub fn geometry_changed(cx: &mut Context, tree: &Tree) {
     for node in tree.down_iter() {
         let geometry_changed = cx.cache.geometry_changed(node);
         if !geometry_changed.is_empty() {
-            cx.event_queue.push_back(Event::new(WindowEvent::GeometryChanged(geometry_changed)).target(node).propagate(Propagation::Up));
+            cx.event_queue.push_back(
+                Event::new(WindowEvent::GeometryChanged(geometry_changed))
+                    .target(node)
+                    .propagate(Propagation::Up),
+            );
         }
 
         cx.cache.set_geo_changed(node, morphorm::GeometryChanged::POSX_CHANGED, false);
@@ -26,4 +30,3 @@ pub fn geometry_changed(cx: &mut Context, tree: &Tree) {
         cx.cache.set_geo_changed(node, morphorm::GeometryChanged::HEIGHT_CHANGED, false);
     }
 }
-

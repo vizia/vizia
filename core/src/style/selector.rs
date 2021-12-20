@@ -9,7 +9,6 @@ use super::Specificity;
 
 use bitflags::bitflags;
 
-
 bitflags! {
     /// A bitflag of possible pseudoclasses.
     pub struct PseudoClass: u8 {
@@ -32,7 +31,6 @@ impl Default for PseudoClass {
 
 impl std::fmt::Display for PseudoClass {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        
         if self.contains(PseudoClass::HOVER) {
             write!(f, ":hover")?;
         }
@@ -159,7 +157,7 @@ impl Selector {
             return false;
         }
 
-        // Check for element name match 
+        // Check for element name match
         if self.element.is_some() && self.element != entity_selector.element {
             return false;
         }

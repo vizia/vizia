@@ -1,4 +1,4 @@
-use crate::{Tree, Entity, GenerationalId};
+use crate::{Entity, GenerationalId, Tree};
 
 /// Iterator for iterating through the tree from top to bottom in depth first order
 pub struct TreeIterator<'a> {
@@ -14,8 +14,7 @@ impl<'a> TreeIterator<'a> {
         if let Some(current) = self.current_node {
             let mut temp = Some(current);
             while temp.is_some() {
-                if let Some(sibling) = self.tree.next_sibling[temp.unwrap().index()]
-                {
+                if let Some(sibling) = self.tree.next_sibling[temp.unwrap().index()] {
                     self.current_node = Some(sibling);
                     return r;
                 } else {
@@ -41,9 +40,7 @@ impl<'a> Iterator for TreeIterator<'a> {
             } else {
                 let mut temp = Some(current);
                 while temp.is_some() {
-                    if let Some(sibling) =
-                        self.tree.next_sibling[temp.unwrap().index()]
-                    {
+                    if let Some(sibling) = self.tree.next_sibling[temp.unwrap().index()] {
                         self.current_node = Some(sibling);
                         return r;
                     } else {

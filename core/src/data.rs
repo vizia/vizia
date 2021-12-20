@@ -1,17 +1,15 @@
 use std::fmt::Debug;
 
-use morphorm::GeometryChanged;
-use crate::Abilities;
 use crate::style::Display;
+use crate::Abilities;
 use crate::Entity;
+use morphorm::GeometryChanged;
 
-use crate::style::Visibility;
 use crate::style::Transform2D;
+use crate::style::Visibility;
 
 use crate::storage::sparse_set::SparseSet;
 use crate::storage::sparse_set::SparseSetError;
-
-
 
 /// Computed properties used for layout and drawing
 
@@ -31,10 +29,7 @@ impl std::ops::Add for Pos {
     type Output = Pos;
 
     fn add(self, other: Pos) -> Self {
-        Pos {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
+        Pos { x: self.x + other.x, y: self.y + other.y }
     }
 }
 
@@ -61,20 +56,11 @@ pub(crate) struct Size {
     pub height: f32,
 }
 
-
-
 impl Default for BoundingBox {
     fn default() -> Self {
-        Self {
-            x: 0.0,
-            y: 0.0,
-            w: std::f32::MAX,
-            h: std::f32::MAX,
-        }
+        Self { x: 0.0, y: 0.0, w: std::f32::MAX, h: std::f32::MAX }
     }
 }
-
-
 
 /// Stores data which can be cached between system runs.
 ///
@@ -121,15 +107,12 @@ pub struct CachedData {
     stack_child: SparseSet<(bool, bool)>,
 
     pub(crate) geometry_changed: SparseSet<GeometryChanged>,
-
     // TODO
     //pub(crate) shadow_image: HashMap<Entity, (ImageId, ImageId)>,
 }
 
 impl CachedData {
     pub fn add(&mut self, entity: Entity) -> Result<(), SparseSetError> {
-
-
         self.bounds.insert(entity, Default::default())?;
         self.visibility.insert(entity, Default::default())?;
         self.display.insert(entity, Default::default())?;
@@ -208,7 +191,6 @@ impl CachedData {
         Ok(())
     }
 
-
     pub fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
         self.visibility.remove(entity);
@@ -275,10 +257,7 @@ impl CachedData {
     }
 
     pub fn get_stack_child(&self, entity: Entity) -> (bool, bool) {
-        self.stack_child
-            .get(entity)
-            .cloned()
-            .unwrap_or((false, false))
+        self.stack_child.get(entity).cloned().unwrap_or((false, false))
     }
 
     /// Returns the bounding box of the entity, determined by the layout system.
@@ -352,73 +331,54 @@ impl CachedData {
     //     self.space.get(entity).cloned().unwrap()
     // }
 
-    /// Returns the clip region of the entity. 
+    /// Returns the clip region of the entity.
     ///
     /// This is the bounding box for which rendering of the widget will be clipped/cropped when outside of the bounds.
     pub fn get_clip_region(&self, entity: Entity) -> BoundingBox {
-        self.clip_region
-            .get(entity)
-            .cloned()
-            .unwrap()
+        self.clip_region.get(entity).cloned().unwrap()
     }
 
     /// Returns the Z index of the entity.
     ///
-    /// Entities can specify a z-index with `entity.set_z_index(state, value)`. 
+    /// Entities can specify a z-index with `entity.set_z_index(state, value)`.
     /// The z_order_system then determines the z-index of child entities based on their parent and any specified z-index.
     pub fn get_z_index(&self, entity: Entity) -> i32 {
         self.z_index.get(entity).cloned().unwrap()
     }
 
     pub fn get_child_width_sum(&self, entity: Entity) -> f32 {
-        self.child_sum
-            .get(entity)
-            .cloned()
-            .unwrap().0
+        self.child_sum.get(entity).cloned().unwrap().0
     }
 
     pub fn get_child_height_sum(&self, entity: Entity) -> f32 {
-        self.child_sum
-            .get(entity)
-            .cloned()
-            .unwrap().1
+        self.child_sum.get(entity).cloned().unwrap().1
     }
 
     pub fn get_child_width_max(&self, entity: Entity) -> f32 {
-        self.child_max
-            .get(entity)
-            .cloned()
-            .unwrap().0
+        self.child_max.get(entity).cloned().unwrap().0
     }
 
     pub fn get_child_height_max(&self, entity: Entity) -> f32 {
-        self.child_max
-            .get(entity)
-            .cloned()
-            .unwrap().1
+        self.child_max.get(entity).cloned().unwrap().1
     }
 
     /// Returns the x position of the entity.
     pub fn get_posx(&self, entity: Entity) -> f32 {
-
         self.bounds.get(entity).cloned().unwrap_or_default().x
     }
 
     /// Returns the y position of the entity.
     pub fn get_posy(&self, entity: Entity) -> f32 {
-
         self.bounds.get(entity).cloned().unwrap_or_default().y
     }
 
     /// Returns the width of the entity.
     pub fn get_width(&self, entity: Entity) -> f32 {
-
         self.bounds.get(entity).cloned().unwrap_or_default().w
     }
 
     /// Returns the height of the entity.
     pub fn get_height(&self, entity: Entity) -> f32 {
-
         self.bounds.get(entity).cloned().unwrap_or_default().h
     }
 
@@ -444,81 +404,49 @@ impl CachedData {
     }
 
     pub fn get_horizontal_free_space(&self, entity: Entity) -> f32 {
-        self.horizontal_free_space
-            .get(entity)
-            .cloned()
-            .unwrap()
+        self.horizontal_free_space.get(entity).cloned().unwrap()
     }
 
     pub fn get_horizontal_stretch_sum(&self, entity: Entity) -> f32 {
-        self.horizontal_stretch_sum
-            .get(entity)
-            .cloned()
-            .unwrap()
+        self.horizontal_stretch_sum.get(entity).cloned().unwrap()
     }
 
     pub fn get_vertical_free_space(&self, entity: Entity) -> f32 {
-        self.vertical_free_space
-            .get(entity)
-            .cloned()
-            .unwrap()
+        self.vertical_free_space.get(entity).cloned().unwrap()
     }
 
     pub fn get_vertical_stretch_sum(&self, entity: Entity) -> f32 {
-        self.vertical_stretch_sum
-            .get(entity)
-            .cloned()
-            .unwrap()
+        self.vertical_stretch_sum.get(entity).cloned().unwrap()
     }
 
     pub fn get_rotate(&self, entity: Entity) -> f32 {
-        self.transform
-            .get(entity)
-            .cloned()
-            .unwrap()[0]
-            .acos()
+        self.transform.get(entity).cloned().unwrap()[0].acos()
     }
 
     pub fn get_translate(&self, entity: Entity) -> (f32, f32) {
-        let transform = self.transform
-            .get(entity)
-            .cloned()
-            .unwrap();
+        let transform = self.transform.get(entity).cloned().unwrap();
 
         (transform[4], transform[5])
     }
 
     pub fn get_scale(&self, entity: Entity) -> f32 {
-        let scale = self.scale
-            .get(entity)
-            .cloned()
-            .unwrap();
+        let scale = self.scale.get(entity).cloned().unwrap();
 
         scale.0
     }
 
     pub fn get_origin(&self, entity: Entity) -> (f32, f32) {
-        self.origin
-            .get(entity)
-            .cloned()
-            .unwrap()
+        self.origin.get(entity).cloned().unwrap()
     }
 
     /// Returns the transform on the entity.
     pub fn get_transform(&self, entity: Entity) -> Transform2D {
-        self.transform
-            .get(entity)
-            .cloned()
-            .unwrap()
+        self.transform.get(entity).cloned().unwrap()
     }
 
-    
     pub fn get_transform_mut(&mut self, entity: Entity) -> &mut Transform2D {
-        self.transform
-            .get_mut(entity)
-            .unwrap()
+        self.transform.get_mut(entity).unwrap()
     }
-
 
     // SETTERS
 
@@ -541,34 +469,25 @@ impl CachedData {
     }
 
     pub fn set_horizontal_free_space(&mut self, entity: Entity, value: f32) {
-        if let Some(horizontal_free_space) =
-            self.horizontal_free_space.get_mut(entity)
-        {
+        if let Some(horizontal_free_space) = self.horizontal_free_space.get_mut(entity) {
             *horizontal_free_space = value;
         }
     }
 
     pub fn set_horizontal_stretch_sum(&mut self, entity: Entity, value: f32) {
-        if let Some(horizontal_stretch_sum) = self
-            .horizontal_stretch_sum
-            .get_mut(entity)
-        {
+        if let Some(horizontal_stretch_sum) = self.horizontal_stretch_sum.get_mut(entity) {
             *horizontal_stretch_sum = value;
         }
     }
 
     pub fn set_vertical_free_space(&mut self, entity: Entity, value: f32) {
-        if let Some(vertical_free_space) =
-            self.vertical_free_space.get_mut(entity)
-        {
+        if let Some(vertical_free_space) = self.vertical_free_space.get_mut(entity) {
             *vertical_free_space = value;
         }
     }
 
     pub fn set_vertical_stretch_sum(&mut self, entity: Entity, value: f32) {
-        if let Some(vertical_stretch_sum) =
-            self.vertical_stretch_sum.get_mut(entity)
-        {
+        if let Some(vertical_stretch_sum) = self.vertical_stretch_sum.get_mut(entity) {
             *vertical_stretch_sum = value;
         }
     }
@@ -676,17 +595,11 @@ impl CachedData {
     // }
 
     pub fn get_visibility(&self, entity: Entity) -> Visibility {
-        self.visibility
-            .get(entity)
-            .cloned()
-            .unwrap()
+        self.visibility.get(entity).cloned().unwrap()
     }
 
     pub fn get_display(&self, entity: Entity) -> Display {
-        self.display
-            .get(entity)
-            .cloned()
-            .unwrap()
+        self.display.get(entity).cloned().unwrap()
     }
 
     pub(crate) fn set_visibility(&mut self, entity: Entity, val: Visibility) {

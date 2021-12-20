@@ -3,19 +3,19 @@ use vizia::*;
 // Example of binding to two pieces of data
 
 fn main() {
-
-    Application::new(WindowDescription::new().with_title("Multiple Binding"), |cx|{
+    Application::new(WindowDescription::new().with_title("Multiple Binding"), |cx| {
         CustomData::new().build(cx);
         OtherData::new().build(cx);
-        
+
         VStack::new(cx, |cx| {
-            Binding::new(cx, CustomData::value, |cx, data|{
-                Binding::new(cx, OtherData::value, move |cx, other|{
+            Binding::new(cx, CustomData::value, |cx, data| {
+                Binding::new(cx, OtherData::value, move |cx, other| {
                     Label::new(cx, &format!("{} {}", data.get(cx), other.get(cx)));
                 });
             });
         });
-    }).run();
+    })
+    .run();
 }
 
 #[derive(Lens)]
@@ -25,16 +25,11 @@ pub struct CustomData {
 
 impl CustomData {
     pub fn new() -> Self {
-        Self {
-            value: "Hello".to_string(),
-        }
+        Self { value: "Hello".to_string() }
     }
 }
 
-impl Model for CustomData {
-
-}
-
+impl Model for CustomData {}
 
 #[derive(Lens)]
 pub struct OtherData {
@@ -43,13 +38,8 @@ pub struct OtherData {
 
 impl OtherData {
     pub fn new() -> Self {
-        Self {
-            value: "World".to_string(),
-        }
+        Self { value: "World".to_string() }
     }
 }
 
-impl Model for OtherData {
-
-}
-
+impl Model for OtherData {}

@@ -1,13 +1,15 @@
-use std::{collections::HashSet, marker::PhantomData, ops::{Deref, DerefMut}};
+use std::{
+    collections::HashSet,
+    marker::PhantomData,
+    ops::{Deref, DerefMut},
+};
 
-use crate::{Context, Entity, Lens, ModelData, Data, Store};
-
+use crate::{Context, Data, Entity, Lens, ModelData, Store};
 
 // Bindings take a lens
 // Use lens as a key to some database of observers and add the binding to the set
 // During update, iterate the lenses and check if the data has changed
 // If it has changed then update the observers
-
 
 // pub struct State<T>(T,usize);
 
@@ -120,15 +122,12 @@ use crate::{Context, Entity, Lens, ModelData, Data, Store};
 //     }
 // }
 
-
-
 pub trait LensWrap {
     fn update(&mut self, model: &Box<dyn ModelData>) -> bool;
     fn observers(&self) -> &HashSet<Entity>;
     fn add_observer(&mut self, observer: Entity);
     fn entity(&self) -> Entity;
 }
-
 
 pub struct StateStore<L: Lens, T> {
     pub entity: Entity,
@@ -137,12 +136,11 @@ pub struct StateStore<L: Lens, T> {
     pub observers: HashSet<Entity>,
 }
 
-impl<L: Lens, T> LensWrap for StateStore<L, T> 
+impl<L: Lens, T> LensWrap for StateStore<L, T>
 where
     L: Lens<Target = T>,
     <L as Lens>::Target: Data,
 {
-
     fn entity(&self) -> Entity {
         self.entity
     }

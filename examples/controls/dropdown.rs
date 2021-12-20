@@ -1,4 +1,3 @@
-
 use vizia::*;
 
 const ICON_DOWN_OPEN: &str = "\u{e75c}";
@@ -30,7 +29,6 @@ const STYLE: &str = r#"
     }
 "#;
 
-
 #[derive(Lens)]
 pub struct AppData {
     list: Vec<String>,
@@ -46,7 +44,6 @@ impl Model for AppData {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(app_event) = event.message.downcast() {
             match app_event {
-
                 AppEvent::SetChoice(choice) => {
                     self.choice = choice.clone();
                 }
@@ -59,12 +56,11 @@ impl Model for AppData {
                     self.choice = self.list.get(*index).unwrap().to_owned();
                 }
 
-                _=> {}
+                _ => {}
             }
         }
     }
 }
-
 
 fn main() {
     let window_description = WindowDescription::new();
@@ -117,6 +113,6 @@ fn choice_to_color(name: &str) -> Color {
         "Red" => Color::red(),
         "Green" => Color::green(),
         "Blue" => Color::blue(),
-        _=> Color::red(),
+        _ => Color::red(),
     }
 }

@@ -1,10 +1,8 @@
-
 use morphorm::{Cache, GeometryChanged};
 
 use crate::{CachedData, Display, Entity, Visibility};
 
 impl Cache for CachedData {
-
     type Item = Entity;
 
     fn visible(&self, node: Self::Item) -> bool {
@@ -14,7 +12,7 @@ impl Cache for CachedData {
 
     fn set_visible(&mut self, node: Self::Item, value: bool) {
         if let Some(visibility) = self.visibility.get_mut(node) {
-            *visibility = if value {Visibility::Visible} else {Visibility::Invisible} 
+            *visibility = if value { Visibility::Visible } else { Visibility::Invisible }
         }
     }
 
@@ -239,6 +237,4 @@ impl Cache for CachedData {
     fn set_grid_col_max(&mut self, node: Self::Item, value: f32) {
         self.set_grid_col_max(node, value);
     }
-
-
 }

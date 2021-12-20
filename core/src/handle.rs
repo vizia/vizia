@@ -2,7 +2,9 @@ use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility, Abilities, style::Overflow};
+use crate::{
+    style::Overflow, Abilities, Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility,
+};
 
 macro_rules! set_style {
     ($name:ident, $t:ty) => {
@@ -18,7 +20,6 @@ macro_rules! set_style {
     };
 }
 
-
 pub struct Handle<T> {
     pub entity: Entity,
     pub style: Rc<RefCell<Style>>,
@@ -26,13 +27,8 @@ pub struct Handle<T> {
 }
 
 impl<T> Handle<T> {
-
     pub fn null() -> Self {
-        Self {
-            entity: Entity::null(),
-            style: Rc::default(),
-            p: PhantomData::default(),
-        }
+        Self { entity: Entity::null(), style: Rc::default(), p: PhantomData::default() }
     }
 
     pub fn entity(&self) -> Entity {
@@ -40,7 +36,6 @@ impl<T> Handle<T> {
     }
 
     pub fn cursor(self, cursor_icon: CursorIcon) -> Self {
-
         self.style.borrow_mut().cursor.insert(self.entity, cursor_icon);
 
         self.style.borrow_mut().needs_redraw = true;
@@ -49,7 +44,6 @@ impl<T> Handle<T> {
     }
 
     pub fn class(self, name: &str) -> Self {
-        
         if let Some(class_list) = self.style.borrow_mut().classes.get_mut(self.entity) {
             class_list.insert(name.to_string());
         }
@@ -60,7 +54,6 @@ impl<T> Handle<T> {
     }
 
     pub fn font(self, font_name: &str) -> Self {
-        
         self.style.borrow_mut().font.insert(self.entity, font_name.to_owned());
 
         self.style.borrow_mut().needs_redraw = true;
@@ -87,7 +80,6 @@ impl<T> Handle<T> {
     }
 
     pub fn z_order(self, value: i32) -> Self {
-
         self.style.borrow_mut().z_order.insert(self.entity, value);
 
         self.style.borrow_mut().needs_redraw = true;
@@ -96,7 +88,6 @@ impl<T> Handle<T> {
     }
 
     pub fn overflow(self, value: Overflow) -> Self {
-
         self.style.borrow_mut().overflow.insert(self.entity, value);
 
         self.style.borrow_mut().needs_redraw = true;
@@ -174,7 +165,6 @@ impl<T> Handle<T> {
     set_style!(layout_type, LayoutType);
     set_style!(position_type, PositionType);
 
-
     set_style!(left, Units);
     set_style!(right, Units);
     set_style!(top, Units);
@@ -195,7 +185,6 @@ impl<T> Handle<T> {
     set_style!(max_top, Units);
     set_style!(min_bottom, Units);
     set_style!(max_bottom, Units);
-
 
     set_style!(child_left, Units);
     set_style!(child_right, Units);
@@ -220,6 +209,4 @@ impl<T> Handle<T> {
 
     set_style!(rotate, f32);
     set_style!(translate, (f32, f32));
-    
 }
-

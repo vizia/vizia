@@ -1,5 +1,4 @@
-use crate::{Tree, Entity};
-
+use crate::{Entity, Tree};
 
 /// Iterator for iterating through the ancestors of an entity
 pub struct ParentIterator<'a> {

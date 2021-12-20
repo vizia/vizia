@@ -1,32 +1,34 @@
-
-use crate::{Message, Context, View};
+use crate::{style::*, AsEntity};
+use crate::{Context, Message, View};
 use crate::{Entity, Propagation};
-use crate::{AsEntity, style::*};
 
 use crate::{Event, WindowEvent};
 
-use crate::tree::{TreeExt};
+use crate::tree::TreeExt;
 
 use morphorm::{LayoutType, PositionType, Units};
 
 use std::rc::Rc;
 
-
 /// To be replaced by [PropSet2]
 pub trait PropSet: AsEntity + Sized {
-
     /// Helper method for sending an event to self with upward propagation
     ///
     /// # Example
     /// Adds an event with a `WindowEvent::Close` message to the event queue to be sent up the tree
     /// ```
     /// entity.emit(cx, WindowEvent::Close);
-    /// ``` 
+    /// ```
     fn emit(&self, cx: &mut Context, message: impl Message) -> Entity
     where
         Self: 'static,
     {
-        cx.event_queue.push_back(Event::new(message).target(self.entity()).origin(self.entity()).propagate(Propagation::Up));
+        cx.event_queue.push_back(
+            Event::new(message)
+                .target(self.entity())
+                .origin(self.entity())
+                .propagate(Propagation::Up),
+        );
 
         self.entity()
     }
@@ -39,7 +41,9 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.emit_to(cx, target, WindowEvent::Close);
     /// ```
     fn emit_to(&self, cx: &mut Context, target: Entity, message: impl Message) -> Entity {
-        cx.event_queue.push_back(Event::new(message).target(target).origin(self.entity()).propagate(Propagation::Direct));
+        cx.event_queue.push_back(
+            Event::new(message).target(target).origin(self.entity()).propagate(Propagation::Direct),
+        );
 
         self.entity()
     }
@@ -50,7 +54,7 @@ pub trait PropSet: AsEntity + Sized {
     /// This allows entities with listeners to intercept events when they might normally be unable to.
     /// For example, a popup uses a listener to respond to mouse press events outside of its bounds to
     /// close the popup.
-    /// 
+    ///
     /// # Example
     /// Add a listener to a button which changes its background color to red when the mouse enters its bounds
     /// ```
@@ -67,10 +71,10 @@ pub trait PropSet: AsEntity + Sized {
     /// });
     /// ```
     // fn add_listener<F,W>(&self, cx: &mut Context, listener: F) -> Entity
-    // where 
-    //     W: View, 
+    // where
+    //     W: View,
     //     F: 'static + Fn(&mut W, &mut Context, Entity, &mut Event)
-    // {  
+    // {
     //     cx.listeners.insert(self.entity(), Box::new(move |event_handler, cx, entity, event|{
     //         if let Some(widget) = event_handler.downcast::<W>() {
     //             (listener)(widget, cx, entity, event);
@@ -89,7 +93,9 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.restyle(cx);
     /// ```
     fn restyle(&self, cx: &mut Context) {
-        cx.event_queue.push_back(Event::new(WindowEvent::Restyle).target(self.entity()).origin(self.entity()).unique());
+        cx.event_queue.push_back(
+            Event::new(WindowEvent::Restyle).target(self.entity()).origin(self.entity()).unique(),
+        );
     }
 
     /// Force a relayout
@@ -101,7 +107,9 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.relayout(cx);
     /// ```
     fn relayout(&self, cx: &mut Context) {
-        cx.event_queue.push_back(Event::new(WindowEvent::Relayout).target(self.entity()).origin(self.entity()).unique());
+        cx.event_queue.push_back(
+            Event::new(WindowEvent::Relayout).target(self.entity()).origin(self.entity()).unique(),
+        );
     }
 
     /// Force a redraw
@@ -113,7 +121,9 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.redraw(cx);
     /// ```
     fn redraw(&self, cx: &mut Context) {
-        cx.event_queue.push_back(Event::new(WindowEvent::Redraw).target(self.entity()).origin(self.entity()).unique());
+        cx.event_queue.push_back(
+            Event::new(WindowEvent::Redraw).target(self.entity()).origin(self.entity()).unique(),
+        );
     }
 
     // TODO
@@ -301,7 +311,6 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.set_element(cx, "foo");
     /// ```
     fn set_element(self, cx: &mut Context, value: &str) -> Entity {
-
         cx.style.borrow_mut().elements.insert(self.entity(), value.to_string());
 
         //flag_geo_change(cx, self.entity());
@@ -323,7 +332,7 @@ pub trait PropSet: AsEntity + Sized {
     /// Sets the entity to be invisible:
     /// ```
     /// entity.set_visibility(cx, Visibility::Invisible);
-    /// ``` 
+    /// ```
     fn set_visibility(self, cx: &mut Context, value: Visibility) -> Entity {
         cx.style.borrow_mut().visibility.insert(self.entity(), value);
 
@@ -353,7 +362,6 @@ pub trait PropSet: AsEntity + Sized {
     //     self.entity()
     // }
 
-    
     /// Sets whether the entity can be checked.
     ///
     /// Entities which are *not* checkable will not receive checkbox events and cannot be selected in css
@@ -424,7 +432,7 @@ pub trait PropSet: AsEntity + Sized {
 
     // Display
     /// Sets whether the entity should be displayed.
-    /// 
+    ///
     /// The display property of an entity can be set to either `Display::Flex` or `Display::None`.
     /// A non-displayed entity will not be rendered or acted on by the layout system. To make an entity
     /// invisible but remain part of layout, use `set_visibility()`.
@@ -432,7 +440,7 @@ pub trait PropSet: AsEntity + Sized {
     /// # Example
     /// ```
     /// entity.set_display(cx, Display::None);
-    /// ``` 
+    /// ```
     fn set_display(self, cx: &mut Context, value: Display) -> Entity {
         cx.style.borrow_mut().display.insert(self.entity(), value);
 
@@ -459,8 +467,8 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     /// Rotate the entity by a given number of degrees.
-    /// 
-    /// 
+    ///
+    ///
     fn set_rotate(self, cx: &mut Context, value: f32) -> Entity {
         cx.style.borrow_mut().rotate.insert(self.entity(), value);
 
@@ -516,16 +524,16 @@ pub trait PropSet: AsEntity + Sized {
     /// Set the space on all sides of an entity.
     ///
     /// This is equivalent to setting the `left`, `right`, `top`, and `bottom` properties.
-    /// Space can be specified as pixels, percentage, stretch, or auto, and can be thought of like adding margins. 
+    /// Space can be specified as pixels, percentage, stretch, or auto, and can be thought of like adding margins.
     /// Space is set to auto by default and so is controlled by the parent `child-space`.
-    /// 
+    ///
     ///
     /// Examples:
     /// Position a solo entity in the center of its parent by adding stretch space to all sides:
     /// ```
     /// entity.set_space(cx, Stratch(1.0));
-    /// ``` 
-    /// 
+    /// ```
+    ///
     /// # CSS
     /// ```css
     /// space: {}px | {}% | {}s | auto
@@ -541,7 +549,7 @@ pub trait PropSet: AsEntity + Sized {
 
         //flag_geo_change(cx, self.entity());
         self.entity()
-    } 
+    }
 
     /// Set the space on the left side of an entity.
     ///
@@ -552,8 +560,8 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     /// entity.set_left(cx, Pixels(5.0));
     /// ```
-    /// 
-    /// Center the entity horizontally by adding stretch space to the left and right sides. 
+    ///
+    /// Center the entity horizontally by adding stretch space to the left and right sides.
     /// ```
     /// entity.set_left(cx, Stratch(1.0)).set_right(cx, Stretch(1.0))
     /// ```
@@ -570,15 +578,15 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// For a fixed width entity (not stretch), left spacing will override right spacing when both in pixels.
     /// So if left is 5 px and right is 5 px, the entity will be positioned 5 pixels from the left edge.
-    /// Set left to stretch to position from the right edge. 
+    /// Set left to stretch to position from the right edge.
     ///
     /// # Examples
     /// Position an entity 5 pixels from the right edge of its parent. Notice that left space must be set to stretch.
     /// ```
     /// entity.set_right(cx, Pixels(5.0)).set_left(cx, Stretch(1.0));
     /// ```
-    /// 
-    /// Center the entity horizontally by adding stretch space to the left and right sides. 
+    ///
+    /// Center the entity horizontally by adding stretch space to the left and right sides.
     /// ```
     /// entity.set_left(cx, Stratch(1.0)).set_right(cx, Stretch(1.0))
     /// ```
@@ -713,7 +721,6 @@ pub trait PropSet: AsEntity + Sized {
     ///
     ///
     fn set_width(self, cx: &mut Context, value: Units) -> Entity {
-        
         cx.style.borrow_mut().width.insert(self.entity(), value);
 
         Entity::root().relayout(cx);
@@ -797,13 +804,13 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     /// Set the font of the text displayed within the entity.
-    /// 
+    ///
     /// Fonts are identified by a string key which is specified when adding a font with `cx.add_font_mem()`.
     /// There are 3 built-in fonts which can be used without having to add any font data:
     ///  1. `roboto` - Roboto-Regular.ttf (Default)
     ///  2. `roboto-bold` - Roboto-Bold.ttf
     ///  3. `icon` - entypo.ttf
-    /// 
+    ///
     /// # Example
     /// Sets the font to the icon font (entypo) for the text displayed within the entity:
     /// ```
@@ -823,7 +830,7 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     /// entity.set_font_size(cx, 20.0)
     /// ```
-    /// 
+    ///
     /// # CSS
     /// ```css
     /// font-size: {} | {}px | {}% | xx-small | x-small | small | medium | large | x-large | xx-large
@@ -843,7 +850,7 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     /// entity.set_color(cx, Color::red());
     /// ```
-    /// 
+    ///
     /// # CSS
     /// ```css
     /// color: color_name | #hex_code
@@ -895,11 +902,7 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     fn set_background_gradient(self, cx: &mut Context, value: LinearGradient) -> Entity {
-        cx
-            .style
-            .borrow_mut()
-            .background_gradient
-            .insert(self.entity(), value);
+        cx.style.borrow_mut().background_gradient.insert(self.entity(), value);
 
         self.entity()
     }
@@ -918,14 +921,14 @@ pub trait PropSet: AsEntity + Sized {
     /// The border width applies to all sides of the entity shape, including beveled and rounded corners.
     /// A border may not be visible after setting the width due to the default border color having 0 alpha.
     /// Border width uses the same units as size and space but only the pixels and percentage variants do anything.
-    /// 
+    ///
     ///
     /// # Example
     /// Set the border width of the entity to 2 pixels and set the border color to black:
     /// ```
     /// entity.set_border_width(cx, Units::Pixels(2.0)).set_border_color(Color::black());
     /// ```
-    /// 
+    ///
     /// # CSS
     /// ```css
     /// border-width: {}px | {}%
@@ -947,7 +950,7 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     /// entity.set_border_width(cx, Units::Pixels(2.0)).set_border_color(Color::black());
     /// ```
-    /// 
+    ///
     /// # CSS
     /// ```css
     /// border-color: color_name | #hex_code
@@ -970,7 +973,7 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     /// entity.set_border_corner_shape(cx, BorderCornerShape::Bevel).set_border_radius(cx, Pixels(10.0));
     /// ```
-    /// 
+    ///
     /// # CSS
     /// ```css
     /// border-corner-shape: round | bevel
@@ -1026,7 +1029,6 @@ pub trait PropSet: AsEntity + Sized {
         self.entity()
     }
 
-
     /// Set the border radius of the entity for all four corners.
     ///
     ///
@@ -1040,7 +1042,6 @@ pub trait PropSet: AsEntity + Sized {
 
         self.entity()
     }
-
 
     fn set_border_radius_top_left(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().border_radius_top_left.insert(self.entity(), value);
@@ -1128,13 +1129,10 @@ pub trait PropSet: AsEntity + Sized {
         if let Some(entity) = cx.style.borrow_mut().focus_order.get_mut(self.entity()) {
             entity.next = value;
         } else {
-            cx.style.borrow_mut().focus_order.insert(
-                self.entity(),
-                FocusOrder {
-                    next: value,
-                    ..Default::default()
-                },
-            );
+            cx.style
+                .borrow_mut()
+                .focus_order
+                .insert(self.entity(), FocusOrder { next: value, ..Default::default() });
         }
 
         self.entity()
@@ -1144,13 +1142,10 @@ pub trait PropSet: AsEntity + Sized {
         if let Some(focus_order) = cx.style.borrow_mut().focus_order.get_mut(self.entity()) {
             focus_order.prev = value;
         } else {
-            cx.style.borrow_mut().focus_order.insert(
-                self.entity(),
-                FocusOrder {
-                    prev: value,
-                    ..Default::default()
-                },
-            );
+            cx.style
+                .borrow_mut()
+                .focus_order
+                .insert(self.entity(), FocusOrder { prev: value, ..Default::default() });
         }
 
         self.entity()
@@ -1161,13 +1156,7 @@ pub trait PropSet: AsEntity + Sized {
             focus_order.prev = prev;
             focus_order.next = next;
         } else {
-            cx.style.borrow_mut().focus_order.insert(
-                self.entity(),
-                FocusOrder {
-                    prev,
-                    next,
-                },
-            );
+            cx.style.borrow_mut().focus_order.insert(self.entity(), FocusOrder { prev, next });
         }
 
         self.entity()
@@ -1183,7 +1172,7 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     /// entity.set_layout_type(cx, LayoutType::Column);
     /// ```
-    /// 
+    ///
     /// # CSS
     /// ```css
     /// layout-type: row | column | grid
@@ -1315,19 +1304,14 @@ pub trait PropSet: AsEntity + Sized {
 
         Entity::root().relayout(cx);
         Entity::root().redraw(cx);
-        
+
         self
     }
-
 }
 
 // Implement PropSet for all types which implement AsEntity
-impl<T: AsEntity> PropSet for T {
-
-}
+impl<T: AsEntity> PropSet for T {}
 pub trait PropGet: Sized + AsEntity {
-
-
     fn name(&self, cx: &mut Context) -> String {
         cx.style.borrow_mut().name.get(self.entity()).cloned().unwrap_or_default()
     }
@@ -1343,7 +1327,6 @@ pub trait PropGet: Sized + AsEntity {
     fn is_focused(self, cx: &mut Context) -> bool;
     fn is_selected(self, cx: &mut Context) -> bool;
     fn is_hovered(self, cx: &mut Context) -> bool;
-
 
     // fn is_hoverable(self, cx: &mut Context) -> bool {
     //     cx.cache.get_hoverable(self.entity())
@@ -1369,13 +1352,7 @@ pub trait PropGet: Sized + AsEntity {
     fn get_display(&self, cx: &mut Context) -> Display;
 
     fn get_layout_type(&self, cx: &mut Context) -> LayoutType {
-        cx
-            .style
-            .borrow()
-            .layout_type
-            .get(self.entity())
-            .cloned()
-            .unwrap_or_default()
+        cx.style.borrow().layout_type.get(self.entity()).cloned().unwrap_or_default()
     }
 
     // Background Color
@@ -1495,54 +1472,24 @@ impl PropGet for Entity {
 
     // Size Constraints
     fn get_min_width(&self, cx: &mut Context) -> Units {
-        cx
-            .style
-            .borrow()
-            .min_width
-            .get(*self)
-            .cloned()
-            .unwrap_or_default()
+        cx.style.borrow().min_width.get(*self).cloned().unwrap_or_default()
     }
 
     fn get_max_width(&self, cx: &mut Context) -> Units {
-        cx
-            .style
-            .borrow()
-            .max_width
-            .get(*self)
-            .cloned()
-            .unwrap_or_default()
+        cx.style.borrow().max_width.get(*self).cloned().unwrap_or_default()
     }
 
     fn get_min_height(&self, cx: &mut Context) -> Units {
-        cx
-            .style
-            .borrow()
-            .min_height
-            .get(*self)
-            .cloned()
-            .unwrap_or_default()
+        cx.style.borrow().min_height.get(*self).cloned().unwrap_or_default()
     }
 
     fn get_max_height(&self, cx: &mut Context) -> Units {
-        cx
-            .style
-            .borrow()
-            .max_height
-            .get(*self)
-            .cloned()
-            .unwrap_or_default()
+        cx.style.borrow().max_height.get(*self).cloned().unwrap_or_default()
     }
 
     // Border
     fn get_border_width(&self, cx: &mut Context) -> Units {
-        cx
-            .style
-            .borrow()
-            .border_width
-            .get(*self)
-            .cloned()
-            .unwrap_or_default()
+        cx.style.borrow().border_width.get(*self).cloned().unwrap_or_default()
     }
 
     // Tooltip

@@ -10,20 +10,16 @@ struct CustomView {
 }
 
 impl CustomView {
-    pub fn new<'a,F>(cx: &'a mut Context, f: F) -> Handle<Self> 
-    where F: 'static + Fn(&mut Context)
+    pub fn new<'a, F>(cx: &'a mut Context, f: F) -> Handle<Self>
+    where
+        F: 'static + Fn(&mut Context),
     {
-        Self {
-            builder: Some(Rc::new(f)),
-        }.build(cx)
+        Self { builder: Some(Rc::new(f)) }.build(cx)
     }
 }
 
-
-
 impl View for CustomView {
-    fn body(&mut self, cx: &mut Context) 
-    {
+    fn body(&mut self, cx: &mut Context) {
         if let Some(builder) = self.builder.clone() {
             VStack::new(cx, move |cx| {
                 (builder)(cx);
@@ -35,13 +31,13 @@ impl View for CustomView {
 }
 
 fn main() {
-
-    Application::new(WindowDescription::new().with_title("Custom View"), |cx|{
-        CustomView::new(cx, |cx|{
+    Application::new(WindowDescription::new().with_title("Custom View"), |cx| {
+        CustomView::new(cx, |cx| {
             VStack::new(cx, |cx| {
                 Label::new(cx, "One");
                 Label::new(cx, "Two");
             });
         });
-    }).run();
+    })
+    .run();
 }

@@ -18,9 +18,9 @@ pub use data::*;
 
 use crate::{Color, Context, Display, Entity, Handle, TreeExt, Units, View};
 
-
-pub struct Binding<L> 
-where L: Lens
+pub struct Binding<L>
+where
+    L: Lens,
 {
     lens: L,
     parent: Entity,
@@ -28,25 +28,20 @@ where L: Lens
     builder: Option<Box<dyn Fn(&mut Context, Field<L>)>>,
 }
 
-impl<L> Binding<L> 
-where 
+impl<L> Binding<L>
+where
     L: 'static + Lens,
     <L as Lens>::Source: 'static,
     <L as Lens>::Target: Data,
 {
-    pub fn new<F>(cx: &mut Context, lens: L, builder: F) 
-    where 
+    pub fn new<F>(cx: &mut Context, lens: L, builder: F)
+    where
         F: 'static + Fn(&mut Context, Field<L>),
         <L as Lens>::Source: Model,
     {
         let parent = cx.current;
 
-        let binding = Self {
-            lens,
-            parent,
-            count: cx.count + 1,
-            builder: Some(Box::new(builder)),
-        };
+        let binding = Self { lens, parent, count: cx.count + 1, builder: Some(Box::new(builder)) };
 
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
             id
@@ -55,11 +50,8 @@ where
             cx.tree.add(id, cx.current).expect("Failed to add to tree");
             cx.cache.add(id).expect("Failed to add to cache");
             cx.style.borrow_mut().add(id);
-            id  
+            id
         };
-
-        
-
 
         let ancestors = parent.parent_iter(&cx.tree).collect::<HashSet<_>>();
 
@@ -68,33 +60,28 @@ where
                 if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
                     if let Some(lens_wrap) = model_data_store.lenses.get_mut(&TypeId::of::<L>()) {
                         let observers = lens_wrap.observers();
-            
+
                         if ancestors.intersection(observers).next().is_none() {
                             lens_wrap.add_observer(id);
                         }
-                        
                     } else {
                         let mut observers = HashSet::new();
                         observers.insert(id);
 
                         let model = model_data.downcast_ref::<Store<L::Source>>().unwrap();
-            
+
                         let old = lens.view(&model.data);
-                        
-                        model_data_store.lenses.insert(TypeId::of::<L>(), Box::new(StateStore {
-                            entity: id,
-                            lens,
-                            old: old.clone(),
-                            observers,
-                        }));
+
+                        model_data_store.lenses.insert(
+                            TypeId::of::<L>(),
+                            Box::new(StateStore { entity: id, lens, old: old.clone(), observers }),
+                        );
                     }
 
                     break;
                 }
             }
         }
-
-
 
         cx.views.insert(id, Box::new(binding));
 
@@ -113,20 +100,14 @@ where
             cx.views.insert(id, view_handler);
         }
 
+        let _: Handle<Self> = Handle { entity: id, style: cx.style.clone(), p: Default::default() }
+            .width(Units::Stretch(1.0))
+            .height(Units::Stretch(1.0))
+            .background_color(Color::blue())
+            .display(Display::None);
 
-
-        let _: Handle<Self> = Handle {
-            entity: id,
-            style: cx.style.clone(),
-            p: Default::default(),
-        }
-        .width(Units::Stretch(1.0))
-        .height(Units::Stretch(1.0))
-        .background_color(Color::blue())
-        .display(Display::None);
-        
         // Use Lens::Source TypeId to look up data
-        // 
+        //
         //(builder)(cx, Field{lens});
         // if let Some(model) = cx.data.remove(&TypeId::of::<L::Source>()) {
         //     if let Some(store) = model.downcast_ref::<Store<L::Source>>() {
@@ -145,7 +126,7 @@ impl<L: 'static + Lens> View for Binding<L> {
             let count = cx.count;
             cx.current = self.parent;
             cx.count = self.count;
-            (builder)(cx, Field{lens: self.lens.clone()});
+            (builder)(cx, Field { lens: self.lens.clone() });
             //cx.current = prev;
             //cx.count = count;
             self.builder = Some(builder);
@@ -158,12 +139,15 @@ pub struct Field<L> {
     lens: L,
 }
 
-impl<L: Lens> Field<L> 
-where <L as Lens>::Source: 'static,
+impl<L: Lens> Field<L>
+where
+    <L as Lens>::Source: 'static,
 {
     pub fn get<'a>(&self, cx: &'a Context) -> &'a L::Target {
-
-        self.lens.view(cx.data().expect(&format!("Failed to get {:?} for entity: {:?}", self.lens, cx.current)))
+        self.lens.view(
+            cx.data()
+                .expect(&format!("Failed to get {:?} for entity: {:?}", self.lens, cx.current)),
+        )
         // self.lens
         //     .view(&cx.data.model_data
         //     .get(&TypeId::of::<L::Source>())
@@ -180,12 +164,12 @@ where <L as Lens>::Source: 'static,
 //     pub p: PhantomData<T>,
 // }
 
-// impl<L: Lens,T> Item<L,T> 
-// where 
+// impl<L: Lens,T> Item<L,T>
+// where
 //     <L as Lens>::Target: Index<usize, Output = T>,
 // {
-//     pub fn get<'a>(&self, cx: &'a Context) -> &'a T 
-//     where 
+//     pub fn get<'a>(&self, cx: &'a Context) -> &'a T
+//     where
 //         <L as Lens>::Source: 'static,
 //         <L as Lens>::Target: 'static
 //     {
@@ -201,4 +185,4 @@ where <L as Lens>::Source: 'static,
 //             self.builder = Some(builder);
 //         }
 //     }
-// } 
+// }

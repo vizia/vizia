@@ -1,15 +1,12 @@
-
 use crate::{Entity, GenerationalId, Rule};
 
 use super::sparse_set::{DenseIndex, SparseSetGeneric};
 
-
-
-const INDEX_MASK: u32 =  std::u32::MAX / 2;
+const INDEX_MASK: u32 = std::u32::MAX / 2;
 
 /// Represents an index that can either be used to retrieve inline or shared data
 ///
-/// Since inline data will override shared data, this allows the same index to be used 
+/// Since inline data will override shared data, this allows the same index to be used
 /// with a flag to indicate which data the index refers to.
 /// The first bit of the u32 internal value is used to signify if the data index
 /// refers to shared (default) or inline data:
@@ -19,7 +16,6 @@ const INDEX_MASK: u32 =  std::u32::MAX / 2;
 struct DataIndex(u32);
 
 impl DataIndex {
-
     /// Create a new data index with the first bit set to 1, indicating that
     /// the index refers to inline data.
     ///
@@ -68,10 +64,9 @@ impl DataIndex {
     }
 }
 
-
 /// An Index is used by the AnimatableStorage and contains a data index and an animation index.
 ///
-/// 
+///
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct Index {
     data_index: DataIndex,
@@ -80,19 +75,13 @@ struct Index {
 
 impl Default for Index {
     fn default() -> Self {
-        Index { 
-            data_index: DataIndex::null(), 
-            anim_index: std::u32::MAX, 
-        }
+        Index { data_index: DataIndex::null(), anim_index: std::u32::MAX }
     }
 }
 
 impl DenseIndex for Index {
     fn new(index: usize) -> Self {
-        Index {
-            data_index: DataIndex::inline(index),
-            anim_index: std::u32::MAX,
-        }
+        Index { data_index: DataIndex::inline(index), anim_index: std::u32::MAX }
     }
 
     fn null() -> Self {
@@ -113,14 +102,14 @@ impl DenseIndex for Index {
 #[derive(Default)]
 pub struct StyleSet<T> {
     /// Shared data determined by style rules
-    shared_data: SparseSetGeneric<T,Index>,
+    shared_data: SparseSetGeneric<T, Index>,
     /// Inline data defined on specific entities
-    inline_data: SparseSetGeneric<T,Index>,
+    inline_data: SparseSetGeneric<T, Index>,
 }
 
 impl<T> StyleSet<T>
 where
-    T: 'static + Default
+    T: 'static + Default,
 {
     /// Create a new empty animatable storage
     pub fn new() -> Self {
@@ -148,7 +137,7 @@ where
     /// ```
     pub fn remove(&mut self, entity: Entity) -> Option<T> {
         let entity_index = entity.index();
-        
+
         if entity_index < self.inline_data.sparse.len() {
             let data_index = self.inline_data.sparse[entity_index].data_index;
             if data_index.is_inline() {
@@ -247,14 +236,13 @@ where
 
     /// Get the animated, inline, or shared data value from the storage
     ///
-    /// # Example 
+    /// # Example
     /// ```
     /// animatable_storage.get(entity);
     /// ```
     pub fn get(&self, entity: Entity) -> Option<&T> {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
-
             let data_index = self.inline_data.sparse[entity_index].data_index;
             if data_index.is_inline() {
                 if data_index.index() < self.inline_data.dense.len() {
@@ -268,11 +256,10 @@ where
         }
 
         None
-    } 
+    }
 
     /// Link an entity to some shared data
     pub fn link(&mut self, entity: Entity, rules: &[Rule]) -> bool {
-
         let entity_index = entity.index();
 
         // Check if the entity already has some data
@@ -284,12 +271,9 @@ where
             }
         }
 
-        
-
         // Loop through matched rules and link to the first valid rule
         for rule in rules.iter() {
             if let Some(shared_data_index) = self.shared_data.dense_idx(*rule) {
-                
                 // If the entity doesn't have any previous shared data then create space for it
                 if entity_index >= self.inline_data.sparse.len() {
                     self.inline_data.sparse.resize(entity_index + 1, Index::null());
@@ -300,11 +284,11 @@ where
                 if data_index.index() == shared_data_index.index() {
                     return false;
                 }
-                
-                self.inline_data.sparse[entity_index].data_index = DataIndex::shared(shared_data_index.index());
-                
+
+                self.inline_data.sparse[entity_index].data_index =
+                    DataIndex::shared(shared_data_index.index());
+
                 return true;
-            
             }
         }
 
@@ -318,14 +302,12 @@ where
 
         false
     }
-
-
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     // DataIndex tests
 
     /// Test for creating an inline data index and retrieving the index
@@ -374,8 +356,6 @@ mod tests {
         assert_eq!(data_index.0, 2147483647);
     }
 
-
-
     // AnimatableStorage tests
 
     /// Test for constructing a new empty animatable storage
@@ -393,6 +373,4 @@ mod tests {
         animatable_storage.insert(Entity::root(), 5.0);
         //assert_eq!(animatable_storage.entity_indices.first().unwrap().data_index, DataIndex::inline(0));
     }
-
-
 }

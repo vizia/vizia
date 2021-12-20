@@ -1,6 +1,4 @@
-
 use bitflags::bitflags;
-
 
 bitflags! {
     pub struct Modifiers: u8 {

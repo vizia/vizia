@@ -31,7 +31,6 @@ pub struct Tree {
 impl Tree {
     /// Creates a new tree with a root entity
     pub fn new() -> Tree {
-
         Tree {
             parent: vec![None],
             first_child: vec![None],
@@ -51,7 +50,7 @@ impl Tree {
         }
 
         None
-    } 
+    }
 
     /// Returns the last child of an entity
     pub fn get_last_child(&self, entity: Entity) -> Option<Entity> {
@@ -64,7 +63,7 @@ impl Tree {
                 r = f;
                 f = self.next_sibling[f.unwrap().index()];
             }
-    
+
             return r;
         } else {
             None
@@ -73,7 +72,9 @@ impl Tree {
 
     /// Returns the nth child of an entity
     pub fn get_child(&self, entity: Entity, n: usize) -> Option<Entity> {
-        if entity.is_null() {return None};
+        if entity.is_null() {
+            return None;
+        };
         let index = entity.index();
         let mut f = self.first_child[index];
         let mut i = 0;
@@ -91,7 +92,9 @@ impl Tree {
     /// Returns the number of children of an entity
     pub fn get_num_children(&self, entity: Entity) -> Option<u32> {
         let index = entity.index();
-        if entity.is_null() {return None};
+        if entity.is_null() {
+            return None;
+        };
         let mut f = self.first_child[index];
         let mut r = 0;
         while f != None {
@@ -173,7 +176,6 @@ impl Tree {
     ///
     /// This method assumes that a check if the entity is alive has already been done prior to calling this method
     pub fn remove(&mut self, entity: Entity) -> Result<(), TreeError> {
-
         // Check if the entity is null
         if entity == Entity::null() {
             return Err(TreeError::NullEntity);
@@ -194,7 +196,7 @@ impl Tree {
         }
 
         // Set the next sibling of the previous sibling of the entity to the next sibling of the entity
-        // from:    [PS] -> [E] -> [NS] 
+        // from:    [PS] -> [E] -> [NS]
         // to:      [PS] -> [NS]
         // where:   PS - Previous Sibling, E - Entity, NS - Next Sibling
         if let Some(prev_sibling) = self.get_prev_sibling(entity) {
@@ -202,7 +204,7 @@ impl Tree {
         }
 
         // Set the previous sibling of the next sibling of the entity to the previous sibling of the entity
-        // from:    [PS] <- [E] <- [NS] 
+        // from:    [PS] <- [E] <- [NS]
         // to:      [PS] <- [NS]
         // where:   PS - Previous Sibling, E - Entity, NS - Next Sibling
         if let Some(next_sibling) = self.get_next_sibling(entity) {
@@ -268,11 +270,7 @@ impl Tree {
         Ok(())
     }
 
-    pub fn set_next_sibling(
-        &mut self,
-        entity: Entity,
-        sibling: Entity,
-    ) -> Result<(), TreeError> {
+    pub fn set_next_sibling(&mut self, entity: Entity, sibling: Entity) -> Result<(), TreeError> {
         if self.next_sibling[entity.index()] == Some(sibling) {
             return Err(TreeError::AlreadySibling);
         }
@@ -333,11 +331,7 @@ impl Tree {
         Ok(())
     }
 
-    pub fn set_prev_sibling(
-        &mut self,
-        entity: Entity,
-        sibling: Entity,
-    ) -> Result<(), TreeError> {
+    pub fn set_prev_sibling(&mut self, entity: Entity, sibling: Entity) -> Result<(), TreeError> {
         if self.prev_sibling[entity.index()] == Some(sibling) {
             return Err(TreeError::InvalidSibling);
         }
@@ -435,7 +429,6 @@ impl Tree {
 
     /// Adds an entity to the tree with the specified parent
     pub fn add(&mut self, entity: Entity, parent: Entity) -> Result<(), TreeError> {
-
         if entity == Entity::null() || parent == Entity::null() {
             return Err(TreeError::NullEntity);
         }
@@ -460,7 +453,6 @@ impl Tree {
         self.next_sibling[entity_index] = None;
         self.prev_sibling[entity_index] = None;
 
-
         // If the parent has no first child then this entity is the first child
         if self.first_child[parent_index] == None {
             self.first_child[parent_index] = Some(entity);
@@ -478,12 +470,10 @@ impl Tree {
             self.next_sibling[temp.unwrap().index()] = Some(entity);
             self.prev_sibling[entity_index] = temp;
         }
-        
 
         self.changed = true;
 
         Ok(())
-        
     }
 
     // pub fn add_with_sibling(&mut self, entity: Entity, sibling: Entity) {
@@ -521,16 +511,9 @@ impl<'a> IntoIterator for &'a Tree {
     type IntoIter = TreeIterator<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
-        TreeIterator {
-            tree: self,
-            current_node: Some(Entity::root()),
-        }
+        TreeIterator { tree: self, current_node: Some(Entity::root()) }
     }
 }
-
-
-
-
 
 // TODO
 // impl<'a> DoubleEndedIterator for TreeIterator<'a> {
@@ -545,7 +528,6 @@ impl<'a> IntoIterator for &'a Tree {
 //         return r;
 //     }
 // }
-
 
 // pub trait IntoParentIterator<'a> {
 //     type Item;
@@ -564,8 +546,6 @@ impl<'a> IntoIterator for &'a Tree {
 //         }
 //     }
 // }
-
-
 
 // pub trait IntoChildIterator<'a> {
 //     type Item;
@@ -622,4 +602,3 @@ impl<'a> IntoIterator for &'a Tree {
 //         }
 //     }
 // }
-

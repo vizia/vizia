@@ -1,9 +1,6 @@
-use crate::{Handle, MouseButton, WindowEvent, TreeExt, Abilities};
+use crate::{Abilities, Handle, MouseButton, TreeExt, WindowEvent};
 
 use crate::{Context, Entity, Event, View};
-
-
-
 
 pub struct Button {
     action: Option<Box<dyn Fn(&mut Context)>>,
@@ -11,17 +8,14 @@ pub struct Button {
 
 impl Button {
     pub fn new<A, L, Label>(cx: &mut Context, action: A, label: L) -> Handle<Self>
-    where 
+    where
         A: 'static + Fn(&mut Context),
         L: 'static + Fn(&mut Context) -> Handle<Label>,
         Label: 'static + View,
     {
-        Self {
-            action: Some(Box::new(action)),
-        }.build2(cx, move |cx|{
+        Self { action: Some(Box::new(action)) }.build2(cx, move |cx| {
             (label)(cx);
         })
-        
     }
 }
 
@@ -34,8 +28,7 @@ impl View for Button {
         Some("button".to_string())
     }
 
-    fn body<'a>(&mut self, cx: &'a mut Context) {
-    }
+    fn body<'a>(&mut self, cx: &'a mut Context) {}
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(window_event) = event.message.downcast() {
@@ -55,7 +48,7 @@ impl View for Button {
                     // }
                 }
 
-                _=> {}
+                _ => {}
             }
         }
     }

@@ -1,13 +1,11 @@
-
-use glutin::{dpi::*, window::WindowId};
 use glutin::event_loop::EventLoop;
-use glutin::window::{WindowBuilder};
+use glutin::window::WindowBuilder;
 use glutin::ContextBuilder;
+use glutin::{dpi::*, window::WindowId};
 
 use femtovg::{renderer::OpenGl, Canvas, Color};
 
-
-use vizia_core::{Context, Entity, Event, View, WindowDescription, WindowEvent, CursorIcon};
+use vizia_core::{Context, CursorIcon, Entity, Event, View, WindowDescription, WindowEvent};
 
 pub struct Window {
     pub id: WindowId,
@@ -66,20 +64,14 @@ impl Window {
         let size = handle.window().inner_size();
 
         canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
-        canvas.clear_rect(
-            0,
-            0,
-            size.width as u32,
-            size.height as u32,
-            Color::rgb(255, 80, 80),
-        );
+        canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
 
         // let height = size.height as f32;
         // let width = size.width as f32;
 
-        Window { 
+        Window {
             id: handle.window().id(),
-            handle, 
+            handle,
             canvas,
             //window_widget: WindowWidget::new(),
         }
@@ -87,18 +79,18 @@ impl Window {
 }
 
 impl View for Window {
-
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         //self.window_widget.on_event(state, entity, event);
         if let Some(window_event) = event.message.downcast() {
             match window_event {
-
                 WindowEvent::GrabCursor(flag) => {
                     self.handle.window().set_cursor_grab(*flag);
                 }
 
                 WindowEvent::SetCursorPosition(x, y) => {
-                    self.handle.window().set_cursor_position(glutin::dpi::Position::Physical(PhysicalPosition::new(*x as i32, *y as i32)));
+                    self.handle.window().set_cursor_position(glutin::dpi::Position::Physical(
+                        PhysicalPosition::new(*x as i32, *y as i32),
+                    ));
                 }
 
                 WindowEvent::SetCursor(cursor) => {
@@ -106,12 +98,16 @@ impl View for Window {
                     match *cursor {
                         CursorIcon::Default => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Default);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::Default);
                         }
 
                         CursorIcon::Crosshair => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Crosshair);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::Crosshair);
                         }
 
                         CursorIcon::Hand => {
@@ -146,17 +142,23 @@ impl View for Window {
 
                         CursorIcon::Progress => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Progress);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::Progress);
                         }
 
                         CursorIcon::NotAllowed => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::NotAllowed);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::NotAllowed);
                         }
 
                         CursorIcon::ContextMenu => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::ContextMenu);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::ContextMenu);
                         }
 
                         CursorIcon::Cell => {
@@ -166,7 +168,9 @@ impl View for Window {
 
                         CursorIcon::VerticalText => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::VerticalText);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::VerticalText);
                         }
 
                         CursorIcon::Alias => {
@@ -181,7 +185,9 @@ impl View for Window {
 
                         CursorIcon::NoDrop => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::NoDrop);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::NoDrop);
                         }
 
                         CursorIcon::Grab => {
@@ -191,92 +197,128 @@ impl View for Window {
 
                         CursorIcon::Grabbing => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Grabbing);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::Grabbing);
                         }
 
                         CursorIcon::AllScroll => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::AllScroll);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::AllScroll);
                         }
 
                         CursorIcon::ZoomIn => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::ZoomIn);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::ZoomIn);
                         }
 
                         CursorIcon::ZoomOut => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::ZoomOut);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::ZoomOut);
                         }
 
                         CursorIcon::EResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::EResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::EResize);
                         }
 
                         CursorIcon::NResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::NResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::NResize);
                         }
 
                         CursorIcon::NeResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::NeResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::NeResize);
                         }
 
                         CursorIcon::NwResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::NwResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::NwResize);
                         }
 
                         CursorIcon::SResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::SResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::SResize);
                         }
 
                         CursorIcon::SeResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::SeResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::SeResize);
                         }
 
                         CursorIcon::SwResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::SwResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::SwResize);
                         }
 
                         CursorIcon::WResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::WResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::WResize);
                         }
 
                         CursorIcon::EwResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::EwResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::EwResize);
                         }
 
                         CursorIcon::NsResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::NsResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::NsResize);
                         }
 
                         CursorIcon::NeswResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::NeswResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::NeswResize);
                         }
 
                         CursorIcon::NwseResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::NwseResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::NwseResize);
                         }
 
                         CursorIcon::ColResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::ColResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::ColResize);
                         }
 
                         CursorIcon::RowResize => {
                             self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::RowResize);
+                            self.handle
+                                .window()
+                                .set_cursor_icon(glutin::window::CursorIcon::RowResize);
                         }
 
                         CursorIcon::None => {
@@ -285,7 +327,7 @@ impl View for Window {
                     }
                 }
 
-                _=> {}
+                _ => {}
             }
         }
     }

@@ -5,15 +5,13 @@ use cssparser::{
     ParseError, ParseErrorKind, Parser, ParserInput, SourceLocation, Token,
 };
 
-
 use crate::style::property::Property;
-use crate::style::selector::{SelectorRelation, Selector};
+use crate::style::selector::{Selector, SelectorRelation};
 
-use crate::{CursorIcon, Transition};
 use crate::style::StyleRule;
+use crate::{CursorIcon, Transition};
 
 use crate::style::*;
-
 
 use crate::style::color::Color;
 
@@ -41,7 +39,6 @@ pub struct StyleParseError<'t>(pub ParseError<'t, CustomParseError>);
 
 impl<'t> std::fmt::Display for StyleParseError<'t> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-
         let error_message = match &self.0.kind {
             ParseErrorKind::Custom(custom_error) => {
                 format!("{:?}", custom_error)
@@ -59,7 +56,6 @@ impl<'t> std::fmt::Display for StyleParseError<'t> {
 impl Debug for CustomParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-
             CustomParseError::InvalidValue(error_string) => {
                 write!(f, "Invalid value: {}", error_string)
             }
@@ -120,11 +116,7 @@ impl<'i> cssparser::QualifiedRuleParser<'i> for RuleParser {
             .filter_map(|property| property.ok())
             .collect::<Vec<_>>();
 
-        Ok(StyleRule {
-            id: Rule::null(),
-            selectors,
-            properties,
-        })
+        Ok(StyleRule { id: Rule::null(), selectors, properties })
     }
 }
 
@@ -250,13 +242,9 @@ fn parse_selectors<'i, 't>(
                     selector.relation = SelectorRelation::Ancestor;
                     selectors.push(selector);
                     selector = Selector::default();
-                    selector
-                        .classes
-                        .insert(input.expect_ident()?.to_owned().to_string());
+                    selector.classes.insert(input.expect_ident()?.to_owned().to_string());
                 } else {
-                    selector
-                        .classes
-                        .insert(input.expect_ident()?.to_owned().to_string());
+                    selector.classes.insert(input.expect_ident()?.to_owned().to_string());
                 }
 
                 whitespace = false;
@@ -282,7 +270,11 @@ fn parse_selectors<'i, 't>(
 
                     _ => {
                         let parse_error = ParseError {
-                            kind: ParseErrorKind::Custom(CustomParseError::UnrecognisedPseudoclass(pseudo_class_str.to_string())),
+                            kind: ParseErrorKind::Custom(
+                                CustomParseError::UnrecognisedPseudoclass(
+                                    pseudo_class_str.to_string(),
+                                ),
+                            ),
                             location: input.current_source_location(),
                         };
 
@@ -436,16 +428,15 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "inner-shadow-blur" => Property::InnerShadowBlur(parse_units(input)?),
             "inner-shadow-color" => Property::InnerShadowColor(parse_color(input)?),
 
-            "transition" => {
-                Property::Transition(input.parse_comma_separated(|parser| parse_transition2(parser))?)
-            }
+            "transition" => Property::Transition(
+                input.parse_comma_separated(|parser| parse_transition2(parser))?,
+            ),
 
             "z-index" => Property::ZIndex(parse_z_index(input)?),
 
             "cursor" => Property::Cursor(parse_cursor(input)?),
 
             ident => Property::Unknown(ident.to_owned(), parse_unknown(input)?),
-
             // _ => {
             //     let basic_error = BasicParseError {
             //         kind: BasicParseErrorKind::UnexpectedToken(input.next()?.to_owned()),
@@ -506,19 +497,13 @@ fn parse_unknown<'i, 't>(
         Token::Number { value: x, .. } => PropType::Units(Units::Pixels(*x as f32)),
         Token::Percentage { unit_value: x, .. } => PropType::Units(Units::Percentage(*x as f32)),
 
-        Token::Dimension {
-            has_sign: _,
-            value: v,
-            int_value: _,
-            unit: u,
-        } if u == &"px" => PropType::Units(Units::Pixels(*v as f32)),
+        Token::Dimension { has_sign: _, value: v, int_value: _, unit: u } if u == &"px" => {
+            PropType::Units(Units::Pixels(*v as f32))
+        }
 
-        Token::Dimension {
-            has_sign: _,
-            value: v,
-            int_value: _,
-            unit: u,
-        } if u == &"s" => PropType::Units(Units::Stretch(*v as f32)),
+        Token::Dimension { has_sign: _, value: v, int_value: _, unit: u } if u == &"s" => {
+            PropType::Units(Units::Stretch(*v as f32))
+        }
 
         Token::Ident(name) if name == &"auto" => PropType::Units(Units::Auto),
 
@@ -562,7 +547,9 @@ fn parse_basic_color<'i, 't>(
         Token::Ident(s) => match css_color(&s) {
             Some(color) => color,
             None => {
-                return Err(CustomParseError::UnrecognisedColorName(s.to_owned().to_string()).into());
+                return Err(
+                    CustomParseError::UnrecognisedColorName(s.to_owned().to_string()).into()
+                );
             }
         },
 
@@ -796,19 +783,13 @@ fn parse_units<'i, 't>(
         Token::Number { value: x, .. } => Units::Pixels(*x as f32),
         Token::Percentage { unit_value: x, .. } => Units::Percentage((*x as f32) * 100.0),
 
-        Token::Dimension {
-            has_sign: _,
-            value: v,
-            int_value: _,
-            unit: u,
-        } if u == &"px" => Units::Pixels(*v as f32),
+        Token::Dimension { has_sign: _, value: v, int_value: _, unit: u } if u == &"px" => {
+            Units::Pixels(*v as f32)
+        }
 
-        Token::Dimension {
-            has_sign: _,
-            value: v,
-            int_value: _,
-            unit: u,
-        } if u == &"s" => Units::Stretch(*v as f32),
+        Token::Dimension { has_sign: _, value: v, int_value: _, unit: u } if u == &"s" => {
+            Units::Stretch(*v as f32)
+        }
 
         Token::Ident(name) if name == &"auto" => Units::Auto,
 
@@ -833,9 +814,7 @@ fn parse_position_type<'i, 't>(
             "parent-directed" => PositionType::ParentDirected,
 
             t => {
-                return Err(
-                    CustomParseError::InvalidStringName(name.to_owned().to_string()).into(),
-                );
+                return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());
             }
         },
 
@@ -894,9 +873,7 @@ fn parse_cursor<'i, 't>(
             "none" => CursorIcon::None,
 
             t => {
-                return Err(
-                    CustomParseError::InvalidStringName(name.to_owned().to_string()).into(),
-                );
+                return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());
             }
         },
 
@@ -921,9 +898,7 @@ fn parse_display<'i, 't>(
             "flex" => Display::Flex,
 
             _ => {
-                return Err(
-                    CustomParseError::InvalidStringName(name.to_owned().to_string()).into(),
-                );
+                return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());
             }
         },
 
@@ -948,9 +923,7 @@ fn parse_visibility<'i, 't>(
             "hidden" => Visibility::Invisible,
 
             _ => {
-                return Err(
-                    CustomParseError::InvalidStringName(name.to_owned().to_string()).into(),
-                );
+                return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());
             }
         },
 
@@ -975,9 +948,7 @@ fn parse_overflow<'i, 't>(
             "hidden" => Overflow::Hidden,
 
             _ => {
-                return Err(
-                    CustomParseError::InvalidStringName(name.to_owned().to_string()).into(),
-                );
+                return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());
             }
         },
 
@@ -1002,9 +973,7 @@ fn parse_border_corner_shape<'i, 't>(
             "bevel" => BorderCornerShape::Bevel,
 
             _ => {
-                return Err(
-                    CustomParseError::InvalidStringName(name.to_owned().to_string()).into(),
-                );
+                return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());
             }
         },
 
@@ -1030,9 +999,7 @@ fn parse_layout_type<'i, 't>(
             "grid" => LayoutType::Grid,
 
             _ => {
-                return Err(
-                    CustomParseError::InvalidStringName(name.to_owned().to_string()).into(),
-                );
+                return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());
             }
         },
 
@@ -1062,9 +1029,10 @@ fn parse_color<'i, 't>(
             match css_color(&name) {
                 Some(color) => color,
                 None => {
-                    return Err(
-                        CustomParseError::UnrecognisedColorName(name.to_owned().to_string()).into(),
-                    );
+                    return Err(CustomParseError::UnrecognisedColorName(
+                        name.to_owned().to_string(),
+                    )
+                    .into());
                 }
             }
         }
@@ -1093,9 +1061,10 @@ fn parse_color2<'i>(token: &Token<'i>) -> Result<Color, ParseError<'i, CustomPar
             match css_color(&name) {
                 Some(color) => Ok(color),
                 None => {
-                    return Err(
-                        CustomParseError::UnrecognisedColorName(name.to_owned().to_string()).into(),
-                    );
+                    return Err(CustomParseError::UnrecognisedColorName(
+                        name.to_owned().to_string(),
+                    )
+                    .into());
                 }
             }
         }
@@ -1128,9 +1097,7 @@ fn parse_font_size<'i, 't>(
             "xx-large" => 20.0,
 
             _ => {
-                return Err(
-                    CustomParseError::InvalidStringName(name.to_owned().to_string()).into(),
-                );
+                return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());
             }
         },
 

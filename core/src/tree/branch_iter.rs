@@ -1,4 +1,4 @@
-use crate::{Tree, Entity, GenerationalId};
+use crate::{Entity, GenerationalId, Tree};
 
 /// An iterator for a branch of the tree tree
 pub struct BranchIterator<'a> {
@@ -19,9 +19,7 @@ impl<'a> Iterator for BranchIterator<'a> {
                 if self.current_node != Some(self.start_node) {
                     let mut temp = Some(current);
                     while temp.is_some() {
-                        if let Some(sibling) =
-                            self.tree.next_sibling[temp.unwrap().index()]
-                        {
+                        if let Some(sibling) = self.tree.next_sibling[temp.unwrap().index()] {
                             self.current_node = Some(sibling);
                             return r;
                         } else {

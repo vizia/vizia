@@ -1,21 +1,20 @@
 use vizia::*;
 
-
-
 macro_rules! cursor_label {
     ($cx:ident, $name:ident) => {
-        Label::new($cx, stringify!($name)).width(Pixels(100.0)).height(Pixels(30.0)).on_hover($cx, |cx|{
-            cx.emit(WindowEvent::SetCursor(CursorIcon::$name));
-        });
+        Label::new($cx, stringify!($name)).width(Pixels(100.0)).height(Pixels(30.0)).on_hover(
+            $cx,
+            |cx| {
+                cx.emit(WindowEvent::SetCursor(CursorIcon::$name));
+            },
+        );
     };
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Cursor Icon"), |cx|{
-        
-
-        HStack::new(cx, |cx|{
-            VStack::new(cx, |cx|{
+    Application::new(WindowDescription::new().with_title("Cursor Icon"), |cx| {
+        HStack::new(cx, |cx| {
+            VStack::new(cx, |cx| {
                 cursor_label!(cx, Default);
                 cursor_label!(cx, Crosshair);
                 cursor_label!(cx, Hand);
@@ -29,8 +28,8 @@ fn main() {
                 cursor_label!(cx, ContextMenu);
                 cursor_label!(cx, Cell);
             });
-    
-            VStack::new(cx, |cx|{
+
+            VStack::new(cx, |cx| {
                 cursor_label!(cx, VerticalText);
                 cursor_label!(cx, Alias);
                 cursor_label!(cx, Copy);
@@ -44,8 +43,8 @@ fn main() {
                 cursor_label!(cx, NResize);
                 cursor_label!(cx, NeResize);
             });
-    
-            VStack::new(cx, |cx|{
+
+            VStack::new(cx, |cx| {
                 cursor_label!(cx, NwResize);
                 cursor_label!(cx, SResize);
                 cursor_label!(cx, SeResize);
@@ -60,9 +59,6 @@ fn main() {
                 cursor_label!(cx, None);
             });
         });
-
-
-
-
-    }).run();
+    })
+    .run();
 }
