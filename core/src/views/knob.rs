@@ -12,7 +12,7 @@ static DEFAULT_MODIFIER_SCALAR: f32 = 0.04;
 
 use std::f32::consts::PI;
 
-pub struct Knob<T: NormalizedMap> {
+pub struct Knob {
     pub normalized_value: f32,
     default_normal: f32,
 
@@ -26,15 +26,18 @@ pub struct Knob<T: NormalizedMap> {
 
     centered: bool,
 
-    pub map: T,
-
     on_changing: Option<Box<dyn Fn(&mut Self, &mut Context)>>,
 }
 
-impl<T: NormalizedMap> Knob<T> {
-    pub fn new(cx: &mut Context, map: T, normalized_default: f32) -> Handle<Self> {
+impl Knob {
+    pub fn new(
+        cx: &mut Context,
+        normalized_default: f32,
+        normalized_value: f32,
+        centered: bool,
+    ) -> Handle<Self> {
         Self {
-            normalized_value: normalized_default,
+            normalized_value,
             default_normal: normalized_default,
 
             is_dragging: false,
@@ -45,9 +48,7 @@ impl<T: NormalizedMap> Knob<T> {
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
             modifier_scalar: DEFAULT_MODIFIER_SCALAR,
 
-            centered: false,
-
-            map,
+            centered,
 
             on_changing: None,
         }
@@ -55,9 +56,9 @@ impl<T: NormalizedMap> Knob<T> {
             SliderData { value: normalized_default.clamp(0.0, 1.0) }.build(cx);
 
             ZStack::new(cx, move |cx| {
-                Binding::new(cx, SliderData::value, |cx, value| {
+                Binding::new(cx, SliderData::value, move |cx, value| {
                     //println!("{}", value.get(cx));
-                    ArcTrack::new(cx, *value.get(cx))
+                    ArcTrack::new(cx, *value.get(cx), centered)
                         .width(Stretch(1.0))
                         .height(Stretch(1.0))
                         .class("track");
@@ -76,13 +77,13 @@ impl<T: NormalizedMap> Knob<T> {
     }
 }
 
-impl<T: NormalizedMap> Handle<Knob<T>> {
+impl Handle<Knob> {
     pub fn on_changing<F>(mut self, cx: &mut Context, callback: F) -> Self
     where
-        F: 'static + Fn(&mut Knob<T>, &mut Context),
+        F: 'static + Fn(&mut Knob, &mut Context),
     {
         if let Some(view) = cx.views.get_mut(&self.entity) {
-            if let Some(knob) = view.downcast_mut::<Knob<T>>() {
+            if let Some(knob) = view.downcast_mut::<Knob>() {
                 knob.on_changing = Some(Box::new(callback));
             }
         }
@@ -91,7 +92,7 @@ impl<T: NormalizedMap> Handle<Knob<T>> {
     }
 }
 
-impl<T: NormalizedMap> View for Knob<T> {
+impl View for Knob {
     fn element(&self) -> Option<String> {
         Some("knob".to_string())
     }
@@ -101,7 +102,7 @@ impl<T: NormalizedMap> View for Knob<T> {
             self_ref.continuous_normal = new_normal.clamp(0.0, 1.0);
 
             // This will cause the knob to "snap" when using an `IntMap`.
-            self_ref.normalized_value = self_ref.map.snap(self_ref.continuous_normal);
+            self_ref.normalized_value = self_ref.continuous_normal;
 
             // TODO - Remove when done
             //println!("Normalized: {}, Display: {}", self_ref.normalized_value, self_ref.map.normalized_to_display(self_ref.normalized_value));
@@ -201,7 +202,7 @@ pub struct ArcTrack {
 }
 
 impl ArcTrack {
-    pub fn new(cx: &mut Context, value: f32) -> Handle<Self> {
+    pub fn new(cx: &mut Context, value: f32, center: bool) -> Handle<Self> {
         Self {
             angle_start: -150.0,
             angle_end: 150.0,
@@ -210,7 +211,7 @@ impl ArcTrack {
 
             normalized_value: value,
 
-            center: false,
+            center,
         }
         .build(cx)
     }

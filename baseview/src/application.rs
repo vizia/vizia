@@ -96,6 +96,11 @@ pub(crate) struct ApplicationRunner {
     should_redraw: bool,
     scale_policy: WindowScalePolicy,
     scale_factor: f64,
+
+    click_time: std::time::Instant,
+    double_click_interval: std::time::Duration,
+    double_click: bool,
+    click_pos: (f32, f32),
 }
 
 impl ApplicationRunner {
@@ -180,6 +185,11 @@ impl ApplicationRunner {
             should_redraw: true,
             scale_policy,
             scale_factor: scale,
+
+            click_time: std::time::Instant::now(),
+            double_click_interval: std::time::Duration::from_millis(500),
+            double_click: false,
+            click_pos: (0.0, 0.0),
         }
     }
 
@@ -464,6 +474,37 @@ impl ApplicationRunner {
                         }
                         _ => {}
                     };
+
+                    let new_click_time = std::time::Instant::now();
+                    let click_duration = new_click_time - self.click_time;
+                    let new_click_pos = (self.context.mouse.cursorx, self.context.mouse.cursory);
+
+                    if click_duration <= self.double_click_interval
+                        && new_click_pos == self.click_pos
+                    {
+                        if !self.double_click {
+                            let _target = if self.context.captured != Entity::null() {
+                                self.context.event_queue.push_back(
+                                    Event::new(WindowEvent::MouseDoubleClick(b))
+                                        .target(self.context.captured)
+                                        .propagate(Propagation::Direct),
+                                );
+                                self.context.captured
+                            } else {
+                                self.context.event_queue.push_back(
+                                    Event::new(WindowEvent::MouseDoubleClick(b))
+                                        .target(self.context.hovered),
+                                );
+                                self.context.hovered
+                            };
+                            self.double_click = true;
+                        }
+                    } else {
+                        self.double_click = false;
+                    }
+
+                    self.click_time = new_click_time;
+                    self.click_pos = new_click_pos;
 
                     // if self.context.hovered != Entity::null()
                     //     && self.context.active != self.context.hovered

@@ -213,6 +213,11 @@ impl Application {
 
         let should_poll = self.should_poll;
 
+        let mut click_time = std::time::Instant::now();
+        let double_click_interval = std::time::Duration::from_millis(500);
+        let mut double_click = false;
+        let mut click_pos = (0.0, 0.0);
+
         event_loop.run(move |event, _, control_flow|{
 
             if should_poll {
@@ -490,6 +495,37 @@ impl Application {
                                 MouseButtonState::Pressed => {
                                     //context.event_queue.push_back(Event::new(WindowEvent::MouseDown(button)).target(context.hovered).propagate(Propagation::Up));
                                 
+
+                                    let new_click_time = std::time::Instant::now();
+                                    let click_duration = new_click_time - click_time;
+                                    let new_click_pos = (context.mouse.cursorx, context.mouse.cursory);
+
+                                    if click_duration <= double_click_interval && new_click_pos == click_pos{
+                                        if !double_click {
+                                            let _target = if context.captured != Entity::null() {
+                                                context.event_queue.push_back(
+                                                    Event::new(WindowEvent::MouseDoubleClick(button))
+                                                        .target(context.captured)
+                                                        .propagate(Propagation::Direct),
+                                                );
+                                                context.captured
+                                            } else {
+                                                context.event_queue.push_back(
+                                                    Event::new(WindowEvent::MouseDoubleClick(button))
+                                                        .target(context.hovered),
+                                                );
+                                                context.hovered
+                                            };
+                                            double_click = true;
+                                        }
+                                        
+                                    } else {
+                                        double_click = false;
+                                    }
+                                    
+                                    click_time = new_click_time;
+                                    click_pos = new_click_pos;
+
                                     if context.captured != Entity::null() {
                                         context.event_queue.push_back(
                                             Event::new(WindowEvent::MouseDown(button))
@@ -677,7 +713,7 @@ impl Application {
                             context.modifiers.set(Modifiers::LOGO, modifiers_state.logo());
                             
                         }
-                        
+
                         _=> {}
                     }
                 }
