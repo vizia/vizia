@@ -63,25 +63,38 @@ where
 
         let ancestors = parent.parent_iter(&cx.tree).collect::<HashSet<_>>();
 
-        if let Some(lens_wrap) = cx.lenses.get_mut(&TypeId::of::<L>()) {
-            let observers = lens_wrap.observers();
+        for entity in id.parent_iter(&cx.tree) {
+            if let Some(model_data_store) = cx.data.model_data.get_mut(entity) {
+                if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
+                    if let Some(lens_wrap) = model_data_store.lenses.get_mut(&TypeId::of::<L>()) {
+                        let observers = lens_wrap.observers();
+            
+                        if ancestors.intersection(observers).next().is_none() {
+                            lens_wrap.add_observer(id);
+                        }
+                        
+                    } else {
+                        let mut observers = HashSet::new();
+                        observers.insert(id);
 
-            if ancestors.intersection(observers).next().is_none() {
-                lens_wrap.add_observer(id);
+                        let model = model_data.downcast_ref::<Store<L::Source>>().unwrap();
+            
+                        let old = lens.view(&model.data);
+                        
+                        model_data_store.lenses.insert(TypeId::of::<L>(), Box::new(StateStore {
+                            entity: id,
+                            lens,
+                            old: old.clone(),
+                            observers,
+                        }));
+                    }
+
+                    break;
+                }
             }
-            
-        } else {
-            let mut observers = HashSet::new();
-            observers.insert(id);
-
-            let old = lens.view(cx.data().expect("Failed to find model. Has it been built into the tree?"));
-            
-            cx.lenses.insert(TypeId::of::<L>(), Box::new(StateStore {
-                lens,
-                old: old.clone(),
-                observers,
-            }));
         }
+
+
 
         cx.views.insert(id, Box::new(binding));
 

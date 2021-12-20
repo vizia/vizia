@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
+use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc, hash::Hash};
 use crate::{application::ApplicationRunner, Renderer};
 use baseview::{Event, EventStatus, Window, WindowHandle, WindowHandler, WindowOpenOptions, WindowScalePolicy};
 use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
@@ -63,7 +63,6 @@ impl ViziaWindow {
                     current: Entity::root(),
                     count: 0,
                     views: HashMap::new(),
-                    lenses: HashMap::new(),
                     //state: HashMap::new(),  
                     data: AppData::new(),
                     style: Rc::new(RefCell::new(Style::default())),
@@ -79,6 +78,7 @@ impl ViziaWindow {
                     resource_manager: ResourceManager::new(),
                     fonts: Vec::new(),
                     text_context: femtovg::TextContext::default(),
+                    listeners: HashMap::new(),
                 };
         
                 context.entity_manager.create();
@@ -125,7 +125,6 @@ impl ViziaWindow {
                     current: Entity::root(),
                     count: 0,
                     views: HashMap::new(),
-                    lenses: HashMap::new(),
                     //state: HashMap::new(),  
                     data: AppData::new(),
                     style: Rc::new(RefCell::new(Style::default())),
@@ -141,6 +140,7 @@ impl ViziaWindow {
                     resource_manager: ResourceManager::new(),
                     fonts: Vec::new(),
                     text_context: femtovg::TextContext::default(),
+                    listeners: HashMap::new(),
                 };
         
                 context.entity_manager.create();
@@ -187,7 +187,6 @@ impl ViziaWindow {
                     current: Entity::root(),
                     count: 0,
                     views: HashMap::new(),
-                    lenses: HashMap::new(),
                     //state: HashMap::new(),  
                     data: AppData::new(),
                     style: Rc::new(RefCell::new(Style::default())),
@@ -203,6 +202,7 @@ impl ViziaWindow {
                     resource_manager: ResourceManager::new(),
                     fonts: Vec::new(),
                     text_context: femtovg::TextContext::default(),
+                    listeners: HashMap::new(),
                 };
         
                 context.entity_manager.create();

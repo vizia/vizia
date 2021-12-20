@@ -43,7 +43,7 @@ where L: 'static + Lens<Target = Vec<T>>
 
         'tree: for entity in cx.current.parent_iter(&cx.tree.clone()) {
             if let Some(model_list) = cx.data.model_data.get(entity) {
-                for (_, model) in model_list.iter() {
+                for (_, model) in model_list.data.iter() {
                     if let Some(store) = model.downcast_ref::<Store<L::Source>>() {
                         found_store = Some(store); 
                         break 'tree;

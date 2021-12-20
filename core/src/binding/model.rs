@@ -1,6 +1,6 @@
 use std::{any::{Any, TypeId}, collections::HashMap};
 
-use crate::{Context, Entity, Event, Store, storage::sparse_set::SparseSet};
+use crate::{Context, Entity, Event, Store, storage::sparse_set::SparseSet, LensWrap};
 
 
 
@@ -11,11 +11,14 @@ pub trait Model: 'static + Sized {
             // if let Some(_) = data_list.get(&TypeId::of::<Self>()) {
             //     return;
             // }
-            data_list.insert(TypeId::of::<Self>(), Box::new(Store::new(self)));
+            data_list.data.insert(TypeId::of::<Self>(), Box::new(Store::new(self)));
         } else {
             let mut data_list: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
             data_list.insert(TypeId::of::<Self>(), Box::new(Store::new(self)));
-            cx.data.model_data.insert(cx.current, data_list).expect("Failed to add data");
+            cx.data.model_data.insert(cx.current, ModelDataStore {
+                data: data_list,
+                lenses: HashMap::default(),
+            }).expect("Failed to add data");
         }
         
     }
@@ -129,9 +132,16 @@ impl<T: Model> ModelData for Store<T> {
     }
 }
 
+#[derive(Default)]
+pub struct ModelDataStore {
+    pub data: HashMap<TypeId, Box<dyn ModelData>>,
+    pub lenses: HashMap<TypeId, Box<dyn LensWrap>>,
+}
+
 pub struct AppData {
     // pub model_data: HashMap<TypeId, Box<dyn ModelData>>,
-    pub model_data: SparseSet<HashMap<TypeId,Box<dyn ModelData>>>,
+    //pub model_data: SparseSet<HashMap<TypeId,Box<dyn ModelData>>>,
+    pub model_data: SparseSet<ModelDataStore>,
 }
 
 impl AppData {

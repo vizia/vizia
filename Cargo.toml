@@ -30,6 +30,18 @@ path = "examples/controls/checkbox.rs"
 name = "zstack"
 path = "examples/controls/zstack.rs"
 
+[[example]]
+name = "picker"
+path = "examples/controls/picker.rs"
+
+[[example]]
+name = "popup"
+path = "examples/controls/popup.rs"
+
+[[example]]
+name = "dropdown"
+path = "examples/controls/dropdown.rs"
+
 [features]
 default = ["glutin"]
 glutin = ["vizia_glutin"]

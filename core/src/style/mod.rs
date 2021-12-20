@@ -45,6 +45,9 @@ pub use layout::Overflow;
 mod shadow;
 use shadow::*;
 
+mod prop;
+pub use prop::*;
+
 use morphorm::Units::*;
 
 // #[derive(Default)]

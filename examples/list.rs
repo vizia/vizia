@@ -23,13 +23,13 @@ fn main() {
         }.build(cx);
 
         HStack::new(cx, |cx|{
-            Button::new(cx, |cx| cx.emit(AppEvent::Add(20)), |cx| {Label::new(cx, "Add");});
-            Button::new(cx, |cx| cx.emit(AppEvent::Remove), |cx| {Label::new(cx, "Remove");});
+            Button::new(cx, |cx| cx.emit(AppEvent::Add(20)), |cx| {Label::new(cx, "Add")});
+            Button::new(cx, |cx| cx.emit(AppEvent::Remove), |cx| {Label::new(cx, "Remove")});
         }).height(Auto);
 
         // List of 12 items
         List::new(cx, Data::list, |cx, item| {
-            ZStack::new(cx, move |cx|{
+            VStack::new(cx, move |cx|{
                 Binding::new(cx, ListData::selected, move |cx, selected|{
                     let item = item.clone();
                     HStack::new(cx, move |cx| {
@@ -49,7 +49,7 @@ fn main() {
                     .width(Stretch(1.0))
                     .on_press(cx, move |cx| cx.emit(ListEvent::SetSelected(item.index())));
                 });
-            });
+            }).height(Auto).background_color(Color::red());
         }).class("list");
     })
     .run();

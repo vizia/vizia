@@ -3,7 +3,7 @@
 // use crate::{BindEvent, Context, Display, Entity, Event, FontOrId, Propagation, State, Tree, TreeExt, Visibility, WindowEvent, entity};
 
 
-use crate::{Context, Event, Propagation, Tree, TreeExt};
+use crate::{Context, Event, Propagation, Tree, TreeExt, Entity};
 
 
 /// Dispatches events to widgets.
@@ -51,6 +51,28 @@ impl EventManager {
                 println!("Event: {:?}", event);
             }
 
+            // Send events to any listeners
+            let listeners = context.listeners.iter().map(|(entity, _)| *entity).collect::<Vec<Entity>>();
+            for entity in listeners {
+                if let Some(listener) = context.listeners.remove(&entity) {
+                    if let Some(mut event_handler) = context.views.remove(&entity) {
+                        let prev = context.current;
+                        context.current = entity;
+                        (listener)(event_handler.as_mut(), context, event);
+                        context.current = prev;
+                        
+                        context.views.insert(entity, event_handler);
+                    }
+                    
+
+                    context.listeners.insert(entity, listener);
+                }
+
+                if event.consumed {
+                    continue 'events;
+                }
+            }
+
             // Define the target to prevent multiple mutable borrows error
             let target = event.target;
 
@@ -63,7 +85,7 @@ impl EventManager {
             }
 
             if let Some(mut model_list) = context.data.model_data.remove(event.target) {
-                for (_, model) in model_list.iter_mut() {
+                for (_, model) in model_list.data.iter_mut() {
                     context.current = event.target;
                     model.event(context, event);
                 }
@@ -101,7 +123,7 @@ impl EventManager {
                     }
                     
                     if let Some(mut model_list) = context.data.model_data.remove(entity) {
-                        for (_, model) in model_list.iter_mut() {
+                        for (_, model) in model_list.data.iter_mut() {
 
                             // if event.trace {
                             //     println!("Event: {:?} -> Model {:?}", event, ty);

@@ -1,5 +1,7 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
+use crate::Color;
+
 pub trait Data: 'static + Clone {
     fn same(&self, other: &Self) -> bool;
 }
@@ -262,6 +264,12 @@ impl<T: Data> Data for Vec<T> {
 }
 
 impl Data for morphorm::Units {
+    fn same(&self, other: &Self) -> bool {
+        *self == *other
+    }
+}
+
+impl Data for Color {
     fn same(&self, other: &Self) -> bool {
         *self == *other
     }

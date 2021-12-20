@@ -61,7 +61,7 @@ impl<V: View> View for Press<V> {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    if event.target == cx.current {
+                    //if event.target == cx.current {
                         if let Some(action) = self.action.take() {
                             (action)(cx);
     
@@ -69,7 +69,7 @@ impl<V: View> View for Press<V> {
                         }
                         
                         //cx.captured = cx.current;
-                    }
+                    //}
                 }
 
                 _=> {}

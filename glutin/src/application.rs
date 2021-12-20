@@ -1,9 +1,9 @@
-use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc};
+use std::{cell::RefCell, collections::{HashMap, VecDeque}, rc::Rc, hash::Hash};
 
 use femtovg::{Canvas, renderer::OpenGl, TextContext};
 use glutin::{ContextBuilder, event::{ElementState, VirtualKeyCode}, event_loop::{ControlFlow, EventLoop, EventLoopProxy}, window::WindowBuilder};
 
-use vizia_core::{AppData, BoundingBox, CachedData, Units, Color, Context, Data, Display, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, WindowDescription, WindowEvent, apply_hover, apply_styles, geometry_changed, apply_transform, apply_clipping, apply_visibility, apply_z_ordering, apply_text_constraints};
+use vizia_core::{AppData, BoundingBox, CachedData, Units, Color, Context, Data, Display, Entity, Enviroment, Event, EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Visibility, WindowDescription, WindowEvent, apply_hover, apply_styles, geometry_changed, apply_transform, apply_clipping, apply_visibility, apply_z_ordering, apply_text_constraints, Env};
 
 use crate::keyboard::{vcode_to_code, vk_to_key, scan_to_code};
 use crate::window::Window;
@@ -33,13 +33,13 @@ impl Application {
             current: Entity::root(),
             count: 0,
             views: HashMap::new(),
-            lenses: HashMap::new(),
             //state: HashMap::new(),  
             data: AppData::new(),
             style: Rc::new(RefCell::new(Style::default())),
             cache,
             enviroment: Enviroment::new(),
             event_queue: VecDeque::new(),
+            listeners: HashMap::default(),
             mouse: MouseState::default(),
             modifiers: Modifiers::empty(),
             captured: Entity::null(),
@@ -257,14 +257,14 @@ impl Application {
 
                     // Data Updates
                     let mut observers: Vec<Entity> = Vec::new();
-                    for model_list in context.data.model_data.dense.iter().map(|entry| &entry.value){
-                        for (_, model) in model_list.iter() {
-                            //println!("Lenses: {:?}", context.lenses.len());
-                            for (_, lens) in context.lenses.iter_mut() {
+
+                    for model_store in context.data.model_data.dense.iter_mut().map(|entry| &mut entry.value) {
+                        for (_, lens) in model_store.lenses.iter_mut() {
+                            for (_, model) in model_store.data.iter() {
                                 if lens.update(model) {
                                     observers.extend(lens.observers().iter());
                                 }
-                            }
+                            } 
                         }
                     }
 
@@ -675,6 +675,19 @@ impl Application {
                 _=> {}
             }
         });
+    }
+}
+
+impl Env for Application {
+    fn ignore_default_styles(mut self) -> Self {
+        if self.context.enviroment.include_default_theme {
+            self.context.enviroment.include_default_theme = false;
+            self.context.enviroment.needs_rebuild = true;
+            self.context.reload_styles();
+
+        }
+        
+        self
     }
 }
 

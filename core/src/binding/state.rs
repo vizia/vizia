@@ -126,10 +126,12 @@ pub trait LensWrap {
     fn update(&mut self, model: &Box<dyn ModelData>) -> bool;
     fn observers(&self) -> &HashSet<Entity>;
     fn add_observer(&mut self, observer: Entity);
+    fn entity(&self) -> Entity;
 }
 
 
 pub struct StateStore<L: Lens, T> {
+    pub entity: Entity,
     pub lens: L,
     pub old: T,
     pub observers: HashSet<Entity>,
@@ -141,11 +143,14 @@ where
     <L as Lens>::Target: Data,
 {
 
+    fn entity(&self) -> Entity {
+        self.entity
+    }
+
     fn update(&mut self, model: &Box<dyn ModelData>) -> bool {
         if let Some(store) = model.downcast_ref::<Store<L::Source>>() {
             let state = self.lens.view(&store.data);
             if !state.same(&self.old) {
-                
                 self.old = state.clone();
                 return true;
             }

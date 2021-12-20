@@ -14,7 +14,7 @@ impl Button {
     where 
         A: 'static + Fn(&mut Context),
         L: 'static + Fn(&mut Context) -> Handle<Label>,
-        Label: 'static,
+        Label: 'static + View,
     {
         Self {
             action: Some(Box::new(action)),

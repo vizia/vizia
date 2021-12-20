@@ -164,6 +164,11 @@ impl Default for Color {
 }
 
 impl Color {
+
+    pub const fn transparent() -> Self {
+        Self { data: 0x00000000 }
+    }
+
     pub const fn black() -> Self {
         Self { data: 0xFF000000 }
     }

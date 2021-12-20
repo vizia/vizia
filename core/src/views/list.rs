@@ -108,16 +108,15 @@ impl Model for ListData {
         if let Some(list_event) = event.message.downcast() {
             match list_event {
                 ListEvent::IncrementSelection => {
-                    self.selected += 1;
-                    self.selected = self.selected.clamp(0, self.length-1);
+                    let mut new_selected = self.selected + 1;
+                    new_selected = new_selected.clamp(0, self.length-1);
+                    cx.emit(ListEvent::SetSelected(new_selected));
                 }
 
                 ListEvent::DecrementSelection => {
-                    if self.selected <= 1 {
-                        self.selected = 0;
-                    } else {
-                        self.selected -= 1;
-                    }
+                    let mut new_selected = self.selected as i32 - 1;
+                    new_selected = new_selected.clamp(0, self.length as i32 - 1);
+                    cx.emit(ListEvent::SetSelected(new_selected as usize));
                 }
 
                 ListEvent::SetSelected(index) => {
@@ -200,17 +199,37 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
         //     }
         // }
 
-        if let Some(lens_wrap) = cx.lenses.get_mut(&TypeId::of::<L>()) {
-            lens_wrap.add_observer(id);
-        } else {
-            let mut observers = HashSet::new();
-            observers.insert(id);
-            let old = lens.view(cx.data().unwrap());
-            cx.lenses.insert(TypeId::of::<L>(), Box::new(StateStore {
-                lens,
-                old: old.clone(),
-                observers,
-            }));
+        let ancestors = parent.parent_iter(&cx.tree).collect::<HashSet<_>>();
+
+        for entity in id.parent_iter(&cx.tree) {
+            if let Some(model_data_store) = cx.data.model_data.get_mut(entity) {
+                if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
+                    if let Some(lens_wrap) = model_data_store.lenses.get_mut(&TypeId::of::<L>()) {
+                        let observers = lens_wrap.observers();
+            
+                        if ancestors.intersection(observers).next().is_none() {
+                            lens_wrap.add_observer(id);
+                        }
+                        
+                    } else {
+                        let mut observers = HashSet::new();
+                        observers.insert(id);
+
+                        let model = model_data.downcast_ref::<Store<L::Source>>().unwrap();
+            
+                        let old = lens.view(&model.data);
+                        
+                        model_data_store.lenses.insert(TypeId::of::<L>(), Box::new(StateStore {
+                            entity: id,
+                            lens,
+                            old: old.clone(),
+                            observers,
+                        }));
+                    }
+
+                    break;
+                }
+            }
         }
 
         if let Some(mut view_handler) = cx.views.remove(&id) {
@@ -249,7 +268,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
 
         'tree: for entity in cx.current.parent_iter(&cx.tree.clone()) {
             if let Some(model_list) = cx.data.model_data.get(entity) {
-                for (_, model) in model_list.iter() {
+                for (_, model) in model_list.data.iter() {
                     if let Some(store) = model.downcast_ref::<Store<L::Source>>() {
                         found_store = Some(store); 
                         break 'tree;
@@ -273,10 +292,12 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
             }
             
             if self.list_data {
-                ListData {
-                    selected: 3,
-                    length: len,
-                }.build(cx);
+                if cx.data::<ListData>().is_none() {
+                    ListData {
+                        selected: 0,
+                        length: len,
+                    }.build(cx);
+                }
             }
 
             let prev_count = cx.count;

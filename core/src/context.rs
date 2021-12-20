@@ -4,13 +4,15 @@ use femtovg::{FontId, TextContext};
 use fluent_bundle::{FluentBundle, FluentResource};
 use unic_langid::LanguageIdentifier;
 
-use crate::{AppData, CachedData, Data, Entity, Event, FontOrId, IdManager, Lens, LensWrap, Message, Modifiers, MouseState, Propagation, ResourceManager, Store, Style, Tree, TreeExt, ViewHandler};
+use crate::{AppData, CachedData, Data, Entity, Event, FontOrId, IdManager, Lens, LensWrap, Message, Modifiers, MouseState, Propagation, ResourceManager, Store, Style, Tree, TreeExt, ViewHandler, View};
 
 pub struct Enviroment {
     // Signifies whether the app should be rebuilt
     // Changing an enviroment variable requires a rebuild of the app
     pub needs_rebuild: bool,
     //pub bundle: FluentBundle<FluentResource>,
+
+    pub include_default_theme: bool,
 }
 
 impl Enviroment {
@@ -28,6 +30,7 @@ impl Enviroment {
         Self {
             needs_rebuild: true,
             //bundle,
+            include_default_theme: true,
         }
     }
 
@@ -54,9 +57,10 @@ pub struct Context {
     pub current: Entity,
     pub count: usize,
     pub views: HashMap<Entity, Box<dyn ViewHandler>>,
-    pub lenses: HashMap<TypeId, Box<dyn LensWrap>>,
+    //pub lenses: HashMap<TypeId, Box<dyn LensWrap>>,
     pub data: AppData,
     pub event_queue: VecDeque<Event>,
+    pub listeners: HashMap<Entity, Box<dyn  Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
     pub style: Rc<RefCell<Style>>,
     pub cache: CachedData,
 
@@ -88,7 +92,7 @@ impl Context {
             // Remove from observers
             for entry in self.data.model_data.dense.iter_mut() {
                 let model_list = &mut entry.value;
-                for (_, model) in model_list.iter_mut() {
+                for (_, model) in model_list.data.iter_mut() {
                     model.remove_observer(*entity);
                 }
             }
@@ -110,7 +114,7 @@ impl Context {
         for entity in self.current.parent_iter(&self.tree) {
             //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
             if let Some(data_list) = self.data.model_data.get(entity) {
-                for (_, model) in data_list.iter() {
+                for (_, model) in data_list.data.iter() {
                     if let Some(store) = model.downcast_ref::<Store<T>>() {
                         return Some(&store.data);
                     }
@@ -124,6 +128,18 @@ impl Context {
 
     pub fn emit<M: Message>(&mut self, message: M) {
         self.event_queue.push_back(Event::new(message).target(self.current).origin(self.current).propagate(Propagation::Up));
+    }
+
+    pub fn add_listener<F,W>(&mut self, listener: F)
+    where 
+        W: View, 
+        F: 'static + Fn(&mut W, &mut Context, &mut Event)
+    {  
+        self.listeners.insert(self.current, Box::new(move |event_handler, context, event|{
+            if let Some(widget) = event_handler.downcast_mut::<W>() {
+                (listener)(widget, context, event);
+            }
+        }));
     }
 
     pub fn emit_trace<M: Message>(&mut self, message: M) {
@@ -175,7 +191,11 @@ impl Context {
         let mut overall_theme = String::new();
 
         // Reload the stored themes
-        for theme in self.resource_manager.themes.iter() {
+        for (index, theme) in self.resource_manager.themes.iter().enumerate() {
+            if !self.enviroment.include_default_theme && index == 0 {
+                continue;
+            }
+
             //self.style.parse_theme(theme);
             overall_theme += theme;
         }
