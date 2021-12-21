@@ -96,6 +96,7 @@ impl Popup {
                 });
             })
             .position_type(PositionType::SelfDirected)
+            .z_order(100)
     }
 }
 
