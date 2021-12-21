@@ -42,7 +42,7 @@ impl Knob {
 
             is_dragging: false,
             prev_drag_y: 0.0,
-            continuous_normal: normalized_default,
+            continuous_normal: normalized_value,
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
