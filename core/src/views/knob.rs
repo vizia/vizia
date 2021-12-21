@@ -132,6 +132,8 @@ impl View for Knob {
                     cx.captured = cx.current;
                     cx.focused = cx.current;
 
+                    self.continuous_normal = self.normalized_value;
+
                     // if let Some(callback) = self.on_press.take() {
                     //     (callback)(self, cx, cx.current);
                     //     self.on_press = Some(callback);
