@@ -2,8 +2,8 @@ use femtovg::{LineCap, Paint, Path, Solidity};
 use morphorm::{Hierarchy, Units};
 
 use crate::{
-    Binding, Color, Context, Element, Entity, Handle, Model, Modifiers, MouseButton, NormalizedMap,
-    SliderData, SliderEvent, Units::*, View, WindowEvent, ZStack,
+    Binding, Context, Entity, Handle, Model, Modifiers, MouseButton, SliderData, SliderEvent,
+    Units::*, View, WindowEvent, ZStack,
 };
 
 static DEFAULT_DRAG_SCALAR: f32 = 0.0042;
@@ -132,7 +132,9 @@ impl View for Knob {
                     cx.captured = cx.current;
                     cx.focused = cx.current;
 
-                    self.continuous_normal = self.normalized_value;
+                    if let Some(slider_data) = cx.data::<SliderData>() {
+                        self.continuous_normal = slider_data.value;
+                    }
 
                     // if let Some(callback) = self.on_press.take() {
                     //     (callback)(self, cx, cx.current);

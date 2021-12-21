@@ -22,7 +22,6 @@ pub struct AppData {
     value: f32,
 }
 
-
 #[derive(Debug)]
 pub enum AppEvent {
     SetValue(f32),
@@ -44,16 +43,16 @@ fn main() {
     Application::new(WindowDescription::new().with_title("Knob"), |cx| {
         cx.add_theme(STYLE);
 
-        AppData {
-            value: 0.2,
-        }.build(cx);
+        if cx.data::<AppData>().is_none() {
+            AppData { value: 0.2 }.build(cx);
+        }
 
-        Binding::new(cx, AppData::value, |cx, value|{
+        Binding::new(cx, AppData::value, |cx, value| {
             let val = *value.get(cx);
-            Knob::new(cx, 0.5, val, false).on_changing(cx, |knob, cx|{
+            Knob::new(cx, 0.5, val, false).on_changing(cx, |knob, cx| {
                 cx.emit(AppEvent::SetValue(knob.normalized_value));
             });
-            Knob::new(cx, 0.5, val, true).on_changing(cx, |knob, cx|{
+            Knob::new(cx, 0.5, val, true).on_changing(cx, |knob, cx| {
                 cx.emit(AppEvent::SetValue(knob.normalized_value));
             });
         });
