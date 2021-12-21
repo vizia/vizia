@@ -235,6 +235,11 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
+
+    fn element(&self) -> Option<String> {
+        Some("list".to_string())
+    }
+
     fn body(&mut self, cx: &mut Context) {
         let builder = self.builder.take().unwrap();
 
