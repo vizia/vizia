@@ -277,7 +277,7 @@ impl Data for Color {
 #[cfg(feature = "meadowlark")]
 impl Data for rusty_daw_core::MusicalTime {
     fn same(&self, other: &Self) -> bool {
-        self.0 == other.0
+        self == other
     }
 }
 
