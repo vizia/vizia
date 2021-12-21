@@ -144,7 +144,11 @@ impl View for Knob {
 
                 WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                     self.is_dragging = false;
-                    self.continuous_normal = self.normalized_value;
+                    //self.continuous_normal = self.normalized_value;
+
+                    if let Some(slider_data) = cx.data::<SliderData>() {
+                        self.continuous_normal = slider_data.value;
+                    }
 
                     cx.captured = Entity::null();
 
