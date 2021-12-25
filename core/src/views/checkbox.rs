@@ -1,4 +1,4 @@
-use crate::{Color, Context, Handle, MouseButton, PseudoClass, Units::*, View, WindowEvent};
+use crate::{Color, Context, Handle, MouseButton, PseudoClass, Units::*, View, WindowEvent, style::PropSet};
 
 const ICON_CHECK: &str = "\u{2713}";
 
@@ -102,12 +102,14 @@ impl View for Checkbox {
                             }
 
                             if let Some(icon_unchecked) = &self.icon_unchecked {
-                                cx.style
-                                    .borrow_mut()
-                                    .text
-                                    .insert(cx.current, icon_unchecked.to_owned());
+                                // cx.style
+                                //     .borrow_mut()
+                                //     .text
+                                //     .insert(cx.current, icon_unchecked.to_owned());
+                                cx.current.set_text(cx, &icon_unchecked.to_owned());
                             } else {
-                                cx.style.borrow_mut().text.insert(cx.current, "".to_string());
+                                //cx.style.borrow_mut().text.insert(cx.current, "".to_string());
+                                cx.current.set_text(cx, "");
                             }
 
                             if let Some(callback) = self.on_unchecked.take() {
@@ -124,15 +126,17 @@ impl View for Checkbox {
                             }
 
                             if let Some(icon_checked) = &self.icon_checked {
-                                cx.style
-                                    .borrow_mut()
-                                    .text
-                                    .insert(cx.current, icon_checked.to_owned());
+                                // cx.style
+                                //     .borrow_mut()
+                                //     .text
+                                //     .insert(cx.current, icon_checked.to_owned());
+                                cx.current.set_text(cx, &icon_checked.to_owned());
                             } else {
-                                cx.style
-                                    .borrow_mut()
-                                    .text
-                                    .insert(cx.current, ICON_CHECK.to_string());
+                                // cx.style
+                                //     .borrow_mut()
+                                //     .text
+                                //     .insert(cx.current, ICON_CHECK.to_string());
+                                cx.current.set_text(cx, ICON_CHECK);
                             }
 
                             if let Some(callback) = self.on_checked.take() {

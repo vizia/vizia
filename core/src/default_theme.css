@@ -57,6 +57,10 @@ label {
     child-space: 1s;
 }
 
+checkbox {
+    color: black;
+}
+
 hstack {
     width: 1s;
     height: 1s;

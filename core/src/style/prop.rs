@@ -164,9 +164,9 @@ pub trait PropSet: AsEntity + Sized {
             cx.style.borrow_mut().classes.insert(self.entity(), class_list);
         }
 
-        Entity::root().restyle(cx);
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_restyle = true;
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -200,9 +200,9 @@ pub trait PropSet: AsEntity + Sized {
             pseudo_classes.set(PseudoClass::DISABLED, value);
         }
 
-        Entity::root().restyle(cx);
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_restyle = true;
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         ////flag_geo_change(cx, self.entity());
 
@@ -230,9 +230,9 @@ pub trait PropSet: AsEntity + Sized {
             pseudo_classes.set(PseudoClass::CHECKED, value);
         }
 
-        Entity::root().restyle(cx);
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_restyle = true;
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -242,9 +242,9 @@ pub trait PropSet: AsEntity + Sized {
             pseudo_classes.set(PseudoClass::OVER, value);
         }
 
-        Entity::root().restyle(cx);
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_restyle = true;
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -254,9 +254,9 @@ pub trait PropSet: AsEntity + Sized {
             pseudo_classes.set(PseudoClass::ACTIVE, value);
         }
 
-        Entity::root().restyle(cx);
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_restyle = true;
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -268,9 +268,9 @@ pub trait PropSet: AsEntity + Sized {
             pseudo_classes.set(PseudoClass::HOVER, value);
         }
 
-        Entity::root().restyle(cx);
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_restyle = true;
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -282,9 +282,9 @@ pub trait PropSet: AsEntity + Sized {
             pseudo_classes.set(PseudoClass::FOCUS, value);
         }
 
-        Entity::root().restyle(cx);
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_restyle = true;
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -336,9 +336,9 @@ pub trait PropSet: AsEntity + Sized {
     fn set_visibility(self, cx: &mut Context, value: Visibility) -> Entity {
         cx.style.borrow_mut().visibility.insert(self.entity(), value);
 
-        Entity::root().restyle(cx);
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_restyle = true;
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -423,9 +423,9 @@ pub trait PropSet: AsEntity + Sized {
     fn set_overflow(self, cx: &mut Context, value: Overflow) -> Entity {
         cx.style.borrow_mut().overflow.insert(self.entity(), value);
 
-        Entity::root().restyle(cx);
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_restyle = true;
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -444,10 +444,9 @@ pub trait PropSet: AsEntity + Sized {
     fn set_display(self, cx: &mut Context, value: Display) -> Entity {
         cx.style.borrow_mut().display.insert(self.entity(), value);
 
-        Entity::root().restyle(cx);
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
-
+        cx.style.borrow_mut().needs_restyle = true;
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
         //flag_geo_change(cx, self.entity());
 
         self.entity()
@@ -459,9 +458,9 @@ pub trait PropSet: AsEntity + Sized {
     fn set_opacity(self, cx: &mut Context, value: f32) -> Entity {
         cx.style.borrow_mut().opacity.insert(self.entity(), Opacity(value));
 
-        Entity::root().restyle(cx);
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_restyle = true;
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -472,7 +471,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_rotate(self, cx: &mut Context, value: f32) -> Entity {
         cx.style.borrow_mut().rotate.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -483,7 +482,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_translate(self, cx: &mut Context, value: (f32, f32)) -> Entity {
         cx.style.borrow_mut().translate.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -491,7 +490,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_scale(self, cx: &mut Context, value: f32) -> Entity {
         cx.style.borrow_mut().scale.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -515,8 +514,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_position_type(self, cx: &mut Context, value: PositionType) -> Entity {
         cx.style.borrow_mut().position_type.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -544,8 +543,8 @@ pub trait PropSet: AsEntity + Sized {
         cx.style.borrow_mut().top.insert(self.entity(), value);
         cx.style.borrow_mut().bottom.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
         self.entity()
@@ -568,8 +567,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_left(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().left.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -593,8 +592,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_right(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().right.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -604,8 +603,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_top(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().top.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -613,8 +612,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_bottom(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().bottom.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -625,8 +624,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_min_left(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().min_left.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -637,8 +636,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_max_left(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().max_left.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -649,8 +648,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_min_right(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().min_right.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -661,8 +660,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_max_right(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().max_right.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -673,8 +672,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_min_top(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().min_top.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -685,8 +684,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_max_top(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().max_top.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -697,8 +696,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_min_bottom(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().min_bottom.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -709,8 +708,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_max_bottom(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().max_bottom.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -723,8 +722,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_width(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().width.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -735,8 +734,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_height(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().height.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -745,8 +744,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_min_width(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().min_width.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -756,8 +755,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_max_width(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().max_width.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -767,8 +766,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_min_height(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().min_height.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -778,8 +777,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_max_height(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().max_height.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -798,7 +797,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_text(self, cx: &mut Context, text: &str) -> Entity {
         cx.style.borrow_mut().text.insert(self.entity(), text.to_owned());
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -819,7 +818,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_font(self, cx: &mut Context, font: &str) -> Entity {
         cx.style.borrow_mut().font.insert(self.entity(), font.to_owned());
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -838,8 +837,9 @@ pub trait PropSet: AsEntity + Sized {
     fn set_font_size(self, cx: &mut Context, value: f32) -> Entity {
         cx.style.borrow_mut().font_size.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
-
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
+        
         self.entity()
     }
 
@@ -858,7 +858,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_color(self, cx: &mut Context, value: Color) -> Entity {
         cx.style.borrow_mut().font_color.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -867,7 +867,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_tooltip(self, cx: &mut Context, text: &str) -> Entity {
         cx.style.borrow_mut().tooltip.insert(self.entity(), text.to_owned());
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -896,7 +896,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_background_color(self, cx: &mut Context, value: Color) -> Entity {
         cx.style.borrow_mut().background_color.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -911,7 +911,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_background_image(self, cx: &mut Context, value: Rc<()>) -> Entity {
         cx.style.borrow_mut().background_image.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -936,7 +936,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_border_width(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().border_width.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -957,8 +957,8 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     fn set_border_color(self, cx: &mut Context, value: Color) -> Entity {
         cx.style.borrow_mut().border_color.insert(self.entity(), value);
-
-        Entity::root().redraw(cx);
+        
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -984,7 +984,7 @@ pub trait PropSet: AsEntity + Sized {
         cx.style.borrow_mut().border_shape_bottom_left.insert(self.entity(), value);
         cx.style.borrow_mut().border_shape_bottom_right.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -994,7 +994,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_border_top_left_shape(self, cx: &mut Context, value: BorderCornerShape) -> Entity {
         cx.style.borrow_mut().border_shape_top_left.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1004,7 +1004,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_border_top_right_shape(self, cx: &mut Context, value: BorderCornerShape) -> Entity {
         cx.style.borrow_mut().border_shape_top_right.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1014,7 +1014,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_border_bottom_left_shape(self, cx: &mut Context, value: BorderCornerShape) -> Entity {
         cx.style.borrow_mut().border_shape_bottom_left.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1024,7 +1024,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_border_bottom_right_shape(self, cx: &mut Context, value: BorderCornerShape) -> Entity {
         cx.style.borrow_mut().border_shape_bottom_right.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1038,7 +1038,7 @@ pub trait PropSet: AsEntity + Sized {
         cx.style.borrow_mut().border_radius_bottom_left.insert(self.entity(), value);
         cx.style.borrow_mut().border_radius_bottom_right.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1046,7 +1046,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_border_radius_top_left(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().border_radius_top_left.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1054,7 +1054,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_border_radius_top_right(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().border_radius_top_right.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1062,7 +1062,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_border_radius_bottom_left(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().border_radius_bottom_left.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1070,7 +1070,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_border_radius_bottom_right(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().border_radius_bottom_right.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1112,7 +1112,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_clip_widget(self, cx: &mut Context, value: Entity) -> Entity {
         cx.style.borrow_mut().clip_widget.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1120,7 +1120,7 @@ pub trait PropSet: AsEntity + Sized {
     fn set_z_order(self, cx: &mut Context, value: i32) -> Entity {
         cx.style.borrow_mut().z_order.insert(self.entity(), value);
 
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1180,8 +1180,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_layout_type(&self, cx: &mut Context, value: LayoutType) -> Entity {
         cx.style.borrow_mut().layout_type.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -1194,8 +1194,8 @@ pub trait PropSet: AsEntity + Sized {
         cx.style.borrow_mut().child_top.insert(self.entity(), value);
         cx.style.borrow_mut().child_bottom.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1203,8 +1203,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_child_left(&self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().child_left.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1212,8 +1212,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_row_between(&self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().row_between.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1221,8 +1221,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_col_between(&self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().col_between.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1230,8 +1230,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_child_right(&self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().child_right.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1239,8 +1239,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_child_top(&self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().child_top.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1248,8 +1248,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_child_bottom(&self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().child_bottom.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1257,8 +1257,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_grid_rows(&self, cx: &mut Context, value: Vec<Units>) -> Entity {
         cx.style.borrow_mut().grid_rows.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1266,8 +1266,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_grid_cols(&self, cx: &mut Context, value: Vec<Units>) -> Entity {
         cx.style.borrow_mut().grid_cols.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1275,8 +1275,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_row_index(&self, cx: &mut Context, value: usize) -> Entity {
         cx.style.borrow_mut().row_index.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1284,8 +1284,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_col_index(&self, cx: &mut Context, value: usize) -> Entity {
         cx.style.borrow_mut().col_index.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1293,8 +1293,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_row_span(&self, cx: &mut Context, value: usize) -> Entity {
         cx.style.borrow_mut().row_span.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
     }
@@ -1302,8 +1302,8 @@ pub trait PropSet: AsEntity + Sized {
     fn set_col_span(mut self, cx: &mut Context, value: usize) -> Self {
         cx.style.borrow_mut().col_span.insert(self.entity(), value);
 
-        Entity::root().relayout(cx);
-        Entity::root().redraw(cx);
+        cx.style.borrow_mut().needs_relayout = true;
+        cx.style.borrow_mut().needs_redraw = true;
 
         self
     }
