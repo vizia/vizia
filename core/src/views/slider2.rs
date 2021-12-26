@@ -2,7 +2,7 @@ use morphorm::GeometryChanged;
 
 use crate::{
     Actions, Binding, Context, Data, Element, Entity, Handle, Lens, Model, MouseButton, Units::*,
-    View, WindowEvent, ZStack,
+    View, WindowEvent, ZStack, Overflow,
 };
 
 #[derive(Debug, Default, Lens)]
@@ -153,6 +153,7 @@ impl Slider {
                                         .right(Stretch(1.0))
                                         .top(Stretch(1.0))
                                         .bottom(Stretch(1.0))
+                                        .overflow(Overflow::Visible)
                                         .class("thumb")
                                         .on_geo_changed(cx, |cx, geo| {
                                             if geo.contains(GeometryChanged::WIDTH_CHANGED) {
@@ -178,6 +179,7 @@ impl Slider {
                                         .top(Stretch(1.0))
                                         .left(Stretch(1.0))
                                         .right(Stretch(1.0))
+                                        .overflow(Overflow::Visible)
                                         .class("thumb")
                                         .on_geo_changed(cx, |cx, geo| {
                                             if geo.contains(GeometryChanged::HEIGHT_CHANGED) {
