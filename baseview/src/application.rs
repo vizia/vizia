@@ -3,14 +3,14 @@ use crate::window::ViziaWindow;
 use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
-use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
+use raw_window_handle::{HasRawWindowHandle};
 use vizia_core::TreeExt;
 use vizia_core::{MouseButton, MouseButtonState};
 //use vizia_core::WindowWidget;
 use vizia_core::{
     apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
     apply_visibility, apply_z_ordering, geometry_changed, Context, Display, Entity, EventManager,
-    FontOrId, Modifiers, Tree, Units, Visibility, WindowEvent, WindowSize,
+    FontOrId, Modifiers, Units, Visibility, WindowEvent, WindowSize,
 };
 use vizia_core::{BoundingBox, Event, Propagation, WindowDescription};
 
@@ -91,8 +91,6 @@ pub(crate) struct ApplicationRunner {
     context: Context,
     event_manager: EventManager,
     canvas: Canvas<Renderer>,
-    tree: Tree,
-    pos: (f32, f32),
     should_redraw: bool,
     scale_policy: WindowScalePolicy,
     scale_factor: f64,
@@ -165,23 +163,11 @@ impl ApplicationRunner {
 
         context.cache.set_clip_region(Entity::root(), bounding_box);
 
-        //WindowWidget::new().build_window(&mut context);
-
-        let root = Entity::root();
-
-        //root.restyle(&mut state);
-        //root.relayout(&mut state);
-
-        let tree = context.tree.clone();
-
-        //tuix_core::systems::apply_styles(&mut state, &tree);
 
         ApplicationRunner {
             event_manager,
             context,
             canvas,
-            tree,
-            pos: (0.0, 0.0),
             should_redraw: true,
             scale_policy,
             scale_factor: scale,
@@ -280,7 +266,7 @@ impl ApplicationRunner {
             self.context.data.model_data.dense.iter_mut().map(|entry| &mut entry.value)
         {
             for (_, lens) in model_store.lenses.iter_mut() {
-                for (_, model) in model_store.data.iter() {
+                for (_, _) in model_store.data.iter() {
                     //if lens.update(model) {
                     observers.extend(lens.observers().iter());
                     //}
@@ -514,18 +500,18 @@ impl ApplicationRunner {
                     //     self.context.needs_restyle = true;
                     // }
 
-                    let target = if self.context.captured != Entity::null() {
+                    if self.context.captured != Entity::null() {
                         self.context.event_queue.push_back(
                             Event::new(WindowEvent::MouseDown(b))
                                 .target(self.context.captured)
                                 .propagate(Propagation::Direct),
                         );
-                        self.context.captured
+                        
                     } else {
                         self.context.event_queue.push_back(
                             Event::new(WindowEvent::MouseDown(b)).target(self.context.hovered),
                         );
-                        self.context.hovered
+                        
                     };
 
                     // if let Some(event_handler) = self.event_manager.event_handlers.get_mut(&target) {

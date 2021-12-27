@@ -668,11 +668,11 @@ impl CachedData {
         }
     }
 
-    pub(crate) fn set_origin(&mut self, entity: Entity, val: (f32, f32)) {
-        if let Some(origin) = self.origin.get_mut(entity) {
-            *origin = val;
-        }
-    }
+    // pub(crate) fn set_origin(&mut self, entity: Entity, val: (f32, f32)) {
+    //     if let Some(origin) = self.origin.get_mut(entity) {
+    //         *origin = val;
+    //     }
+    // }
 
     pub(crate) fn set_transform(&mut self, entity: Entity, val: Transform2D) {
         if let Some(transform) = self.transform.get_mut(entity) {

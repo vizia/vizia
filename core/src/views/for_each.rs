@@ -1,7 +1,4 @@
 use crate::{Context, Handle, TreeExt, View};
-
-type Template<T> = Option<Box<dyn Fn(&mut Context, T)>>;
-
 pub struct ForEach {}
 
 impl ForEach {

@@ -1,23 +1,21 @@
+
+
 use std::{
     cell::RefCell,
     collections::{HashMap, VecDeque},
-    hash::Hash,
     rc::Rc,
 };
 
-use femtovg::{renderer::OpenGl, Canvas, TextContext};
+use femtovg::{TextContext};
 use glutin::{
     event::{ElementState, VirtualKeyCode},
-    event_loop::{ControlFlow, EventLoop, EventLoopProxy},
-    window::WindowBuilder,
-    ContextBuilder,
+    event_loop::{ControlFlow, EventLoop, EventLoopProxy}
 };
 
 use vizia_core::{
     apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
     apply_visibility, apply_z_ordering, geometry_changed, AppData, BoundingBox, CachedData, Color,
-    Context, Data, Display, Entity, Env, Enviroment, Event, EventManager, FontOrId, IdManager,
-    ModelData, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager,
+    Context, Display, Entity, Env, Enviroment, Event, EventManager, FontOrId, IdManager, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager,
     Style, Tree, TreeExt, Units, Visibility, WindowDescription, WindowEvent,
 };
 
@@ -327,7 +325,7 @@ impl Application {
                     geometry_changed(&mut context, &tree);
 
                     if !context.event_queue.is_empty() {
-                        event_loop_proxy.send_event(Event::new(()));
+                        event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
                     }
 
                     apply_transform(&mut context, &tree);
@@ -448,6 +446,7 @@ impl Application {
                             *control_flow = ControlFlow::Exit;
                         }
 
+                        #[allow(deprecated)]
                         glutin::event::WindowEvent::CursorMoved {
                             device_id: _,
                             position,
@@ -473,6 +472,7 @@ impl Application {
                             }
                         }
 
+                        #[allow(deprecated)]
                         glutin::event::WindowEvent::MouseInput {
                             device_id: _,
                             button,
@@ -595,7 +595,7 @@ impl Application {
                         }
 
                         glutin::event::WindowEvent::MouseWheel {
-                            delta, phase, ..
+                            delta, phase: _, ..
                         } => {
                             let out_event = match delta {
                                 glutin::event::MouseScrollDelta::LineDelta(x, y) => {
@@ -760,7 +760,7 @@ impl Env for Application {
         if self.context.enviroment.include_default_theme {
             self.context.enviroment.include_default_theme = false;
             self.context.enviroment.needs_rebuild = true;
-            self.context.reload_styles();
+            self.context.reload_styles().expect("Failed to reload styles");
         }
 
         self

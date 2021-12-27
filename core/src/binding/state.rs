@@ -1,10 +1,8 @@
 use std::{
     collections::HashSet,
-    marker::PhantomData,
-    ops::{Deref, DerefMut},
 };
 
-use crate::{Context, Data, Entity, Lens, ModelData, Store};
+use crate::{Data, Entity, Lens, ModelData, Store};
 
 // Bindings take a lens
 // Use lens as a key to some database of observers and add the binding to the set

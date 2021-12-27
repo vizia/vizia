@@ -4,9 +4,8 @@ use std::marker::PhantomData;
 
 use keyboard_types::Code;
 
-use crate::Units::*;
 use crate::{
-    Color, Context, Data, Event, Handle, Lens, Model, MouseButton, StateStore, Store, TreeExt,
+    Context, Data, Event, Handle, Lens, Model, StateStore, Store, TreeExt,
     View, WindowEvent,
 };
 #[derive(Debug)]

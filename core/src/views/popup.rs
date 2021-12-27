@@ -11,7 +11,7 @@ pub struct PopupData {
 }
 
 impl Model for PopupData {
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
+    fn event(&mut self, _: &mut Context, event: &mut crate::Event) {
         if let Some(popup_event) = event.message.downcast() {
             match popup_event {
                 PopupEvent::Open => {
@@ -66,7 +66,7 @@ impl Popup {
                     (builder)(cx);
                 });
 
-                cx.add_listener(|popup: &mut Self, cx, event| {
+                cx.add_listener(|_: &mut Self, cx, event| {
                     if let Some(popup_data) = cx.data::<PopupData>() {
                         if let Some(window_event) = event.message.downcast() {
                             match window_event {

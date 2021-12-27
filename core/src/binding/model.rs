@@ -23,12 +23,15 @@ pub trait Model: 'static + Sized {
         }
     }
 
+    #[allow(unused_variables)]
     fn event(&mut self, cx: &mut Context, event: &mut Event) {}
 
+    #[allow(unused_variables)]
     fn update(&mut self, cx: &mut Context) {}
 }
 
 pub trait ModelData: Any {
+    #[allow(unused_variables)]
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         println!("Default");
     }
@@ -44,6 +47,7 @@ pub trait ModelData: Any {
 
     fn reset(&mut self) {}
 
+    #[allow(unused_variables)]
     fn remove_observer(&mut self, observer: Entity) {}
 }
 

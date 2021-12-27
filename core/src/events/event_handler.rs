@@ -1,4 +1,4 @@
-use crate::{Canvas, Context, Entity, Event, Handle};
+use crate::{Canvas, Context, Entity, Event};
 
 use std::any::{Any, TypeId};
 
@@ -7,6 +7,7 @@ pub trait ViewHandler: Any {
         entity.to_string()
     }
 
+    #[allow(unused_variables)]
     fn update(&mut self, new: &dyn ViewHandler) {}
 
     fn element(&self) -> Option<String> {

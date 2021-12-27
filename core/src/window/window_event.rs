@@ -1,4 +1,4 @@
-use crate::Entity;
+
 use crate::{CursorIcon, MouseButton};
 
 use keyboard_types::{Code, Key};

@@ -24,8 +24,6 @@ pub struct Knob {
     wheel_scalar: f32,
     modifier_scalar: f32,
 
-    centered: bool,
-
     on_changing: Option<Box<dyn Fn(&mut Self, &mut Context)>>,
 }
 
@@ -47,8 +45,6 @@ impl Knob {
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
             modifier_scalar: DEFAULT_MODIFIER_SCALAR,
-
-            centered,
 
             on_changing: None,
         }
@@ -78,7 +74,7 @@ impl Knob {
 }
 
 impl Handle<Knob> {
-    pub fn on_changing<F>(mut self, cx: &mut Context, callback: F) -> Self
+    pub fn on_changing<F>(self, cx: &mut Context, callback: F) -> Self
     where
         F: 'static + Fn(&mut Knob, &mut Context),
     {
@@ -236,7 +232,7 @@ impl View for ArcTrack {
             cx.style.borrow().background_color.get(cx.current).cloned().unwrap_or_default().into();
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
-        let mut background_color = femtovg::Color::rgb(54, 54, 54);
+        let background_color = femtovg::Color::rgb(54, 54, 54);
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
 
         let posx = cx.cache.get_posx(cx.current);

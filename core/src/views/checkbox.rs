@@ -1,4 +1,4 @@
-use crate::{Color, Context, Handle, MouseButton, PseudoClass, Units::*, View, WindowEvent, style::PropSet};
+use crate::{Context, Handle, MouseButton, PseudoClass, Units::*, View, WindowEvent, style::PropSet};
 
 const ICON_CHECK: &str = "\u{2713}";
 
@@ -74,13 +74,13 @@ impl Handle<Checkbox> {
         self
     }
 
-    pub fn icon_checked(self, cx: &mut Context, icon: &str) -> Self {
-        self
-    }
+    // pub fn icon_checked(self, cx: &mut Context, icon: &str) -> Self {
+    //     self
+    // }
 
-    pub fn icon_unchecked(self, cx: &mut Context, icon: &str) -> Self {
-        self
-    }
+    // pub fn icon_unchecked(self, cx: &mut Context, icon: &str) -> Self {
+    //     self
+    // }
 }
 
 impl View for Checkbox {

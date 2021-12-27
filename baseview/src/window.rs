@@ -2,18 +2,16 @@ use crate::{application::ApplicationRunner, Renderer};
 use baseview::{
     Event, EventStatus, Window, WindowHandle, WindowHandler, WindowOpenOptions, WindowScalePolicy,
 };
-use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
+use raw_window_handle::{HasRawWindowHandle};
 use std::{
     cell::RefCell,
     collections::{HashMap, VecDeque},
-    hash::Hash,
     rc::Rc,
 };
 use vizia_core::{
-    AppData, BoundingBox, CachedData, Color, Context, Data, Display, Entity, Enviroment,
-    EventManager, FontOrId, IdManager, ModelData, Modifiers, MouseButton, MouseButtonState,
-    MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, Units, Visibility,
-    WindowDescription, WindowEvent,
+    AppData, CachedData, Context, Entity, Enviroment, IdManager, Modifiers,
+    MouseState, ResourceManager, Style, Tree,
+    WindowDescription,
 };
 
 static DEFAULT_THEME: &str = include_str!("../../core/src/default_theme.css");
@@ -50,7 +48,7 @@ impl ViziaWindow {
     pub fn open_parented<P, F>(
         parent: &P,
         win_desc: WindowDescription,
-        mut app: F,
+        app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ) -> WindowHandle
     where
@@ -103,11 +101,6 @@ impl ViziaWindow {
 
                 context.add_theme(DEFAULT_THEME);
 
-                let root = Entity::root();
-                //state.tree.add(Entity::root(), None);
-
-                //(app)(&mut context);
-
                 ViziaWindow::new(context, win_desc, window, Some(Box::new(app)), on_idle)
             },
         )
@@ -118,7 +111,7 @@ impl ViziaWindow {
     /// * `app` - The Tuix application builder.
     pub fn open_as_if_parented<F>(
         win_desc: WindowDescription,
-        mut app: F,
+        app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ) -> WindowHandle
     where
@@ -169,11 +162,6 @@ impl ViziaWindow {
 
                 context.add_theme(DEFAULT_THEME);
 
-                let root = Entity::root();
-                //state.tree.add(Entity::root(), None);
-
-                //(app)(&mut context);
-
                 ViziaWindow::new(context, win_desc, window, Some(Box::new(app)), on_idle)
             },
         )
@@ -184,7 +172,7 @@ impl ViziaWindow {
     /// * `app` - The Tuix application builder.
     pub fn open_blocking<F>(
         win_desc: WindowDescription,
-        mut app: F,
+        app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ) where
         F: Fn(&mut Context),
@@ -233,12 +221,6 @@ impl ViziaWindow {
                 context.entity_manager.create();
 
                 context.add_theme(DEFAULT_THEME);
-
-                let root = Entity::root();
-                //state.tree.add(Entity::root(), None);
-
-                //let win_desc = WindowDescription::new();
-                //(app)(&mut context);
 
                 ViziaWindow::new(context, win_desc, window, Some(Box::new(app)), on_idle)
             },

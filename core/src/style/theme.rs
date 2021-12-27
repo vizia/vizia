@@ -402,12 +402,16 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "border-color" => Property::BorderColor(parse_color(input)?),
             // TODO - Support array for specifying each corner
             "border-radius" => Property::BorderRadius(parse_units(input)?),
-
-            "border-corner-shape" => Property::BorderCornerShape(parse_border_corner_shape(input)?),
             "border-top-left-radius" => Property::BorderTopLeftRadius(parse_units(input)?),
             "border-top-right-radius" => Property::BorderTopRightRadius(parse_units(input)?),
             "border-bottom-left-radius" => Property::BorderBottomLeftRadius(parse_units(input)?),
             "border-bottom-right-radius" => Property::BorderBottomRightRadius(parse_units(input)?),
+
+            "border-corner-shape" => Property::BorderCornerShape(parse_border_corner_shape(input)?),
+            "border-top-left-shape" => Property::BorderTopLeftShape(parse_border_corner_shape(input)?),
+            "border-top-right-shape" => Property::BorderTopRightShape(parse_border_corner_shape(input)?),
+            "border-bottom-left-shape" => Property::BorderBottomLeftShape(parse_border_corner_shape(input)?),
+            "border-bottom-right-shape" => Property::BorderBottomRightShape(parse_border_corner_shape(input)?),
 
             "opacity" => Property::Opacity(parse_length_or_percentage(input)?),
 

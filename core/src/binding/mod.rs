@@ -122,8 +122,8 @@ where
 impl<L: 'static + Lens> View for Binding<L> {
     fn body<'a>(&mut self, cx: &'a mut Context) {
         if let Some(builder) = self.builder.take() {
-            let prev = cx.current;
-            let count = cx.count;
+            //let prev = cx.current;
+            //let count = cx.count;
             cx.current = self.parent;
             cx.count = self.count;
             (builder)(cx, Field { lens: self.lens.clone() });

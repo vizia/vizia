@@ -50,7 +50,7 @@ pub enum CustomEvent {
 }
 
 impl Model for Data {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut Context, event: &mut Event) {
         if let Some(custom_event) = event.message.downcast() {
             match custom_event {
                 CustomEvent::Reset => {

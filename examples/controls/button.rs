@@ -1,11 +1,9 @@
-use std::process::Output;
-
 use vizia::*;
 
 const ICON_PLUS: &str = "\u{2b}";
 // const ICON_CHECK: &str = "\u{2713}";
 
-fn no_action(cx: &mut Context) {}
+fn no_action(_: &mut Context) {}
 
 fn main() {
     let window_description =

@@ -1,7 +1,6 @@
-use morphorm::Cache;
 
 use crate::{
-    Abilities, Context, Display, Entity, Event, Propagation, PseudoClass, Units, Visibility,
+    Abilities, Context, Display, Entity, Event, Propagation, PseudoClass, Visibility,
     WindowEvent,
 };
 

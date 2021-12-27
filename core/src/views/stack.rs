@@ -1,7 +1,7 @@
 use morphorm::LayoutType;
 
-use crate::Units::*;
-use crate::{Color, Context, Entity, Handle, View};
+
+use crate::{Context, Entity, Handle, View};
 
 pub struct VStack {
     //pub builder: Option<Box<dyn Fn(&mut Context)>>,
@@ -31,14 +31,6 @@ impl View for VStack {
 
     fn element(&self) -> Option<String> {
         Some("vstack".to_string())
-    }
-
-    fn body<'a>(&mut self, cx: &'a mut Context) {
-        // if let Some(builder) = self.builder.take() {
-        //     (builder)(cx);
-
-        //     self.builder = Some(builder);
-        // }
     }
 }
 
@@ -86,14 +78,6 @@ impl View for HStack {
     fn element(&self) -> Option<String> {
         Some("hstack".to_string())
     }
-
-    fn body<'a>(&mut self, cx: &'a mut Context) {
-        // if let Some(builder) = self.builder.take() {
-        //     (builder)(cx);
-
-        //     self.builder = Some(builder);
-        // }
-    }
 }
 
 pub struct ZStack {
@@ -121,13 +105,5 @@ impl View for ZStack {
 
     fn element(&self) -> Option<String> {
         Some("zstack".to_string())
-    }
-
-    fn body<'a>(&mut self, cx: &'a mut Context) {
-        // if let Some(builder) = self.builder.take() {
-        //     (builder)(cx);
-
-        //     self.builder = Some(builder);
-        // }
     }
 }

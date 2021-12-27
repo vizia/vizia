@@ -1,5 +1,5 @@
 use crate::{style::*, AsEntity};
-use crate::{Context, Message, View};
+use crate::{Context, Message};
 use crate::{Entity, Propagation};
 
 use crate::{Event, WindowEvent};
@@ -161,7 +161,7 @@ pub trait PropSet: AsEntity + Sized {
         } else {
             let mut class_list = HashSet::new();
             class_list.insert(class_name.to_string());
-            cx.style.borrow_mut().classes.insert(self.entity(), class_list);
+            cx.style.borrow_mut().classes.insert(self.entity(), class_list).expect("Failed to insert class name");
         }
 
         cx.style.borrow_mut().needs_restyle = true;
@@ -292,35 +292,11 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     // Style
-    /// Sets the element name of the entity.
-    ///
-    /// The element name can be used in css to select entities of a particular type, for example:
-    /// ```css
-    /// button {
-    ///     background-color: red;   
-    /// }
-    /// ```
-    /// This style rule will set the background color of all buttons to red.
-    /// Element names are unique, so calling this method again will replace the previous element name.
-    /// The element name is supposed to be unique to a widget type, e.g. a button, but this is not guaranteed
-    /// by this function and so this function should be called once within the `on_build` method of a [Widget].
-    ///
-    /// # Example
-    /// Sets the element name to `foo`:
-    /// ```
-    /// entity.set_element(cx, "foo");
-    /// ```
-    fn set_element(self, cx: &mut Context, value: &str) -> Entity {
-        cx.style.borrow_mut().elements.insert(self.entity(), value.to_string());
-
-        //flag_geo_change(cx, self.entity());
-
-        self.entity()
-    }
 
     // TODO
-    fn set_id(self, cx: &mut Context, value: &str) -> Entity {
-        self.entity()
+    fn set_id(self, _: &mut Context, _: &str) -> Entity {
+        todo!();
+        //self.entity()
     }
 
     /// Sets the visibility of an entity.
@@ -865,7 +841,7 @@ pub trait PropSet: AsEntity + Sized {
 
     // Tooltip
     fn set_tooltip(self, cx: &mut Context, text: &str) -> Entity {
-        cx.style.borrow_mut().tooltip.insert(self.entity(), text.to_owned());
+        cx.style.borrow_mut().tooltip.insert(self.entity(), text.to_owned()).expect("Failed to set tooltip");
 
         cx.style.borrow_mut().needs_redraw = true;
 
@@ -1096,13 +1072,13 @@ pub trait PropSet: AsEntity + Sized {
     //     self
     // }
 
-    fn set_outer_shadow_color(mut self, cx: &mut Context, value: Color) -> Self {
+    fn set_outer_shadow_color(self, cx: &mut Context, value: Color) -> Self {
         cx.style.borrow_mut().outer_shadow_color.insert(self.entity(), value);
 
         self
     }
 
-    fn set_outer_shadow_blur(mut self, cx: &mut Context, value: Units) -> Self {
+    fn set_outer_shadow_blur(self, cx: &mut Context, value: Units) -> Self {
         cx.style.borrow_mut().outer_shadow_blur.insert(self.entity(), value);
 
         self
@@ -1110,7 +1086,7 @@ pub trait PropSet: AsEntity + Sized {
 
     // Clipping
     fn set_clip_widget(self, cx: &mut Context, value: Entity) -> Entity {
-        cx.style.borrow_mut().clip_widget.insert(self.entity(), value);
+        cx.style.borrow_mut().clip_widget.insert(self.entity(), value).expect("Failed to set clip widget");
 
         cx.style.borrow_mut().needs_redraw = true;
 
@@ -1132,7 +1108,7 @@ pub trait PropSet: AsEntity + Sized {
             cx.style
                 .borrow_mut()
                 .focus_order
-                .insert(self.entity(), FocusOrder { next: value, ..Default::default() });
+                .insert(self.entity(), FocusOrder { next: value, ..Default::default() }).expect("Failed to set next focus");
         }
 
         self.entity()
@@ -1145,7 +1121,7 @@ pub trait PropSet: AsEntity + Sized {
             cx.style
                 .borrow_mut()
                 .focus_order
-                .insert(self.entity(), FocusOrder { prev: value, ..Default::default() });
+                .insert(self.entity(), FocusOrder { prev: value, ..Default::default() }).expect("Failed to set previous focus");
         }
 
         self.entity()
@@ -1156,7 +1132,7 @@ pub trait PropSet: AsEntity + Sized {
             focus_order.prev = prev;
             focus_order.next = next;
         } else {
-            cx.style.borrow_mut().focus_order.insert(self.entity(), FocusOrder { prev, next });
+            cx.style.borrow_mut().focus_order.insert(self.entity(), FocusOrder { prev, next }).expect("Failed to set focus order");
         }
 
         self.entity()
@@ -1299,7 +1275,7 @@ pub trait PropSet: AsEntity + Sized {
         self.entity()
     }
 
-    fn set_col_span(mut self, cx: &mut Context, value: usize) -> Self {
+    fn set_col_span(self, cx: &mut Context, value: usize) -> Self {
         cx.style.borrow_mut().col_span.insert(self.entity(), value);
 
         cx.style.borrow_mut().needs_relayout = true;

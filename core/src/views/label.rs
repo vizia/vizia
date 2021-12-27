@@ -1,4 +1,4 @@
-use crate::Units::*;
+
 use crate::{Context, Entity, Handle, LocalizedStringKey, View};
 
 pub struct Label;

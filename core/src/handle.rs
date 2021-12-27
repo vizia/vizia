@@ -63,7 +63,7 @@ impl<T> Handle<T> {
 
     pub fn checked(self, state: bool) -> Self {
         if let Some(pseudo_classes) = self.style.borrow_mut().pseudo_classes.get_mut(self.entity) {
-            pseudo_classes.set(PseudoClass::CHECKED, true);
+            pseudo_classes.set(PseudoClass::CHECKED, state);
         }
 
         self.style.borrow_mut().needs_restyle = true;

@@ -56,7 +56,7 @@ fn main() {
             HStack::new(cx, |cx| {
                 Binding::new(cx, SliderData::value, |cx, value| {
                     Slider::new(cx, *value.get(cx), Orientation::Horizontal);
-                    let value = value.get(cx);
+                    let value = *value.get(cx);
                     Label::new(cx, &format!("{:.*}", 2, value));
                 });
             })
@@ -70,7 +70,7 @@ fn main() {
                 Slider::new(cx, *value.get(cx), Orientation::Vertical)
                     .class("vertical")
                     .on_press(cx, |_| println!("Press"));
-                let value = value.get(cx);
+                let value = *value.get(cx);
                 Label::new(cx, &format!("{:.*}", 2, value));
             });
         })
@@ -86,7 +86,7 @@ pub struct AppData {
 }
 
 impl Model for AppData {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut Context, event: &mut Event) {
         if let Some(slider_event) = event.message.downcast() {
             match slider_event {
                 SliderEvent::SetValue(val) => {

@@ -1,4 +1,4 @@
-use crate::{Abilities, Handle, MouseButton, TreeExt, WindowEvent};
+use crate::{Handle, MouseButton, WindowEvent};
 
 use crate::{Context, Entity, Event, View};
 
@@ -27,8 +27,6 @@ impl View for Button {
     fn element(&self) -> Option<String> {
         Some("button".to_string())
     }
-
-    fn body<'a>(&mut self, cx: &'a mut Context) {}
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(window_event) = event.message.downcast() {
