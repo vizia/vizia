@@ -12,7 +12,6 @@ use glutin::{
     window::WindowBuilder,
     ContextBuilder,
 };
-use glutin::event::MouseScrollDelta;
 
 use vizia_core::{
     apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
@@ -599,10 +598,10 @@ impl Application {
                             delta, phase, ..
                         } => {
                             let out_event = match delta {
-                                MouseScrollDelta::LineDelta(x, y) => {
+                                glutin::event::MouseScrollDelta::LineDelta(x, y) => {
                                     WindowEvent::MouseScroll(x, y)
                                 }
-                                MouseScrollDelta::PixelDelta(pos) => {
+                                glutin::event::MouseScrollDelta::PixelDelta(pos) => {
                                     WindowEvent::MouseScroll(pos.x as f32, pos.y as f32)
                                 }
                             };
