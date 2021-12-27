@@ -12,6 +12,7 @@ use glutin::{
     window::WindowBuilder,
     ContextBuilder,
 };
+use glutin::event::MouseScrollDelta;
 
 use vizia_core::{
     apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
@@ -491,6 +492,19 @@ impl Application {
                                 glutin::event::ElementState::Released => MouseButtonState::Released,
                             };
 
+                            match button {
+                                MouseButton::Left => {
+                                    context.mouse.left.state = state;
+                                }
+                                MouseButton::Right => {
+                                    context.mouse.right.state = state;
+                                }
+                                MouseButton::Middle => {
+                                    context.mouse.middle.state = state;
+                                }
+                                _=> {}
+                            }
+
                             match state {
                                 MouseButtonState::Pressed => {
                                     //context.event_queue.push_back(Event::new(WindowEvent::MouseDown(button)).target(context.hovered).propagate(Propagation::Up));
@@ -543,7 +557,7 @@ impl Application {
                                         MouseButton::Left => {
                                             context.mouse.left.pos_down =
                                                 (context.mouse.cursorx, context.mouse.cursory);
-                                                context.mouse.left.pressed = context.hovered;
+                                            context.mouse.left.pressed = context.hovered;
                                         }
 
                                         MouseButton::Right => {
@@ -579,6 +593,24 @@ impl Application {
                                     }
                                 }
                             }
+                        }
+
+                        glutin::event::WindowEvent::MouseWheel {
+                            delta, phase, ..
+                        } => {
+                            let out_event = match delta {
+                                MouseScrollDelta::LineDelta(x, y) => {
+                                    WindowEvent::MouseScroll(x, y)
+                                }
+                                MouseScrollDelta::PixelDelta(pos) => {
+                                    WindowEvent::MouseScroll(pos.x as f32, pos.y as f32)
+                                }
+                            };
+                            context.event_queue.push_back(
+                                Event::new(out_event)
+                                    .target(context.hovered)
+                                    .propagate(Propagation::Up),
+                            );
                         }
 
                         glutin::event::WindowEvent::KeyboardInput {
