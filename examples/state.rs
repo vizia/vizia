@@ -46,14 +46,14 @@ fn main() {
             cx,
             |cx| cx.emit(DataEvent::ChangeSomething),
             |cx| {
-                Label::new(cx, "Change Something");
+                Label::new(cx, "Change Something")
             },
         );
         Button::new(
             cx,
             |cx| cx.emit(DataEvent::ChangeOther),
             |cx| {
-                Label::new(cx, "Change Other");
+                Label::new(cx, "Change Other")
             },
         );
     })

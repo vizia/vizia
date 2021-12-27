@@ -34,7 +34,7 @@ fn main() {
             cx,
             |cx| cx.emit(AppEvent::ShowModal),
             |cx| {
-                Label::new(cx, "Show Modal");
+                Label::new(cx, "Show Modal")
             },
         )
         .space(Pixels(50.0));
@@ -48,14 +48,14 @@ fn main() {
                             cx,
                             |cx| cx.emit(AppEvent::HideModal),
                             |cx| {
-                                Label::new(cx, "Cancel");
+                                Label::new(cx, "Cancel")
                             },
                         );
                         Button::new(
                             cx,
                             |cx| cx.emit(AppEvent::HideModal),
                             |cx| {
-                                Label::new(cx, "Ok");
+                                Label::new(cx, "Ok")
                             },
                         );
                     });

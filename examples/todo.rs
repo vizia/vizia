@@ -16,7 +16,7 @@ fn main() {
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 Label::new(cx, "Enter a todo item...");
-                Button::new(cx, |_| {}, |_| {});
+                Button::new(cx, |_| {}, |cx| Label::new(cx, "Add"));
             })
             .height(Auto)
             .child_space(Stretch(1.0));

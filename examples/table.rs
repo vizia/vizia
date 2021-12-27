@@ -1,6 +1,4 @@
-use std::rc::Rc;
 
-use morphorm::LayoutType;
 use vizia::*;
 
 fn main() {

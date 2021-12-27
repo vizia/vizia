@@ -8,14 +8,14 @@ fn main() {
                 cx,
                 |cx| cx.enviroment.set_locale("fr"),
                 |cx| {
-                    Label::new(cx, "fr");
+                    Label::new(cx, "fr")
                 },
             );
             Button::new(
                 cx,
                 |cx| cx.enviroment.set_locale("en-US"),
                 |cx| {
-                    Label::new(cx, "en-US");
+                    Label::new(cx, "en-US")
                 },
             );
         });

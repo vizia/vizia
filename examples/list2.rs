@@ -63,7 +63,7 @@ fn main() {
                     |cx| {
                         cx.emit(DataEvent::Update(5, 40));
                     },
-                    |_| {},
+                    |cx| Label::new(cx, "Action 1"),
                 );
                 // Set all items to value of 3
                 Button::new(
@@ -71,7 +71,7 @@ fn main() {
                     |cx| {
                         cx.emit(DataEvent::All(3));
                     },
-                    |_| {},
+                    |cx| Label::new(cx, "Action 2"),
                 );
                 // Set all items value to their index
                 Button::new(
@@ -79,7 +79,7 @@ fn main() {
                     |cx| {
                         cx.emit(DataEvent::Enumerate);
                     },
-                    |_| {},
+                    |cx| Label::new(cx, "Action 3"),
                 );
             })
             .row_between(Pixels(10.0));

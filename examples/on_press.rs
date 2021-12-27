@@ -9,7 +9,7 @@ fn main() {
                 cx,
                 |_| println!("Pressed!"),
                 |cx| {
-                    Label::new(cx, "Press Me!");
+                    Label::new(cx, "Press Me!")
                 },
             );
         });

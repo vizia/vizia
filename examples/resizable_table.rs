@@ -1,4 +1,4 @@
-use glutin::window::Window;
+
 use vizia::*;
 
 fn main() {
