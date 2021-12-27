@@ -1,7 +1,11 @@
 # VIZIA
 
-![GitHub](https://img.shields.io/github/license/geom3trik/tuix)
+[![License (MIT)](https://img.shields.io/crates/l/vizia)](https://github.com/geom3trik/VIZIA/blob/main/LICENSE)
 [![Discord](https://img.shields.io/discord/791142189005537332.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/aNkTPsRm2w)
+<!-- [![Dependency status](https://deps.rs/repo/github/geom3trik/VIZIA/status.svg)](https://deps.rs/repo/github/geom3trik/VIZIA) -->
+<!-- [![Crates.io](https://img.shields.io/crates/v/vizia)](https://crates.io/crates/vizia) -->
+<!-- [![docs.rs](https://img.shields.io/badge/docs-website-blue)](https://docs.rs/vizia/) -->
+
 
 
 VIZIA is a (in development) declarative GUI framework for the Rust programming language.
