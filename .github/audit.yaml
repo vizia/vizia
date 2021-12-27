@@ -1,0 +1,25 @@
+name: audit
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Runs at 15:00 UTC on Fri
+    - cron: "0 15 * * 5"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-audit
+          version: latest
+      - run: rustup update
+      - run: cargo audit --version
