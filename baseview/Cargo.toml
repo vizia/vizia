@@ -14,4 +14,4 @@ vizia_core = { path = "../core" }
 baseview = { git = "https://github.com/RustAudio/baseview.git", rev = "f6e99e9aa6f5aeb6b721cb05e4d882a51d995909"}
 keyboard-types = { version = "0.5.0", default-features = false }
 raw-window-handle = "0.3"
-femtovg = "0.2.5"
+femtovg = "0.2.8"
