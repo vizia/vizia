@@ -1,17 +1,15 @@
 use std::{
-    any::TypeId,
     cell::RefCell,
     collections::{HashMap, VecDeque},
-    io::Read,
     rc::Rc,
 };
 
 use femtovg::{FontId, TextContext};
-use fluent_bundle::{FluentBundle, FluentResource};
-use unic_langid::LanguageIdentifier;
+// use fluent_bundle::{FluentBundle, FluentResource};
+// use unic_langid::LanguageIdentifier;
 
 use crate::{
-    AppData, CachedData, Data, Entity, Event, FontOrId, IdManager, Lens, LensWrap, Message,
+    AppData, CachedData, Entity, Event, FontOrId, IdManager, Message,
     Modifiers, MouseState, Propagation, ResourceManager, Store, Style, Tree, TreeExt, View,
     ViewHandler,
 };
@@ -43,7 +41,8 @@ impl Enviroment {
         }
     }
 
-    pub fn set_locale(&mut self, locale: &str) {
+    // TODO
+    pub fn set_locale(&mut self, _locale: &str) {
         // TODO
         // let lang =  locale.parse::<LanguageIdentifier>().expect("Failed to parse locale");
         // let resolved_locales = vec![&lang];
