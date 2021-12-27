@@ -1,6 +1,10 @@
 # VIZIA
 
-VIZIA is an in development declarative GUI framework for the Rust programming language.
+![GitHub](https://img.shields.io/github/license/geom3trik/tuix)
+[![Discord](https://img.shields.io/discord/791142189005537332.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/aNkTPsRm2w)
+
+
+VIZIA is a (in development) declarative GUI framework for the Rust programming language.
 
 **WARNING** - VIZIA is currently experimental and *not* a fully functioning framwork. The code in this repositiory is not considered stable and is likely to change.
 
