@@ -12,7 +12,7 @@ meadowlark = ["rusty-daw-core"]
 
 [dependencies]
 vizia_derive = {version = "0.1.0", path = "../derive"}
-femtovg = "0.2.8"
+femtovg = {git = "https://github.com/femtovg/femtovg", rev = "138a45d7b92419cc9eb2566acef7fadf25b81c00"}
 morphorm = {git = "https://github.com/geom3trik/morphorm", features = ["rounding"]}
 # morphorm = {path = "../../morphorm", features = ["rounding"]}
 bitflags = "1.3.2"
