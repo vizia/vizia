@@ -19,6 +19,9 @@ pub use textbox::Textbox;
 mod checkbox;
 pub use checkbox::Checkbox;
 
+mod radio_buttons;
+pub use radio_buttons::RadioButtons;
+
 mod element;
 pub use element::Element;
 

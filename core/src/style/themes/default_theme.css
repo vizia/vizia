@@ -83,6 +83,15 @@ checkbox {
     color: black;
 }
 
+.radioknob {
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-width: 1px;
+    border-color: #757575;
+    color: black;
+}
+
 list {
     border-width: 1px;
     border-color: #999999;
