@@ -85,3 +85,14 @@ checkbox {
 checkbox:checked {
     
 }
+
+.radioknob {
+    width: 14px;
+    height: 14px;
+    background-color: white;
+    border-width: 1px;
+    border-color: #757575;
+    color: black;
+    border-radius: 7px;
+}
+
