@@ -1,7 +1,7 @@
 mod id_manager;
 pub use id_manager::IdManager;
 
-/// Trait implmented by any generational ID
+/// Trait implemented by any generational ID
 ///
 /// A generational id has an index, used for indexing into arrays, and a generation, used to check the alive status of the id
 pub trait GenerationalId: Copy {

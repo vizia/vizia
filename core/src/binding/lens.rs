@@ -1,5 +1,10 @@
 use crate::Model;
 
+/// A Lens allows the construction of a reference to a field of a struct.
+///
+/// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.
+/// The `view()` method takes a reference to the struct type as input and outputs a reference to the field.
+/// This provides a way to specify a binding to a specific field of some application data.
 pub trait Lens: 'static + Clone + Copy + std::fmt::Debug {
     type Source: Model;
     type Target;

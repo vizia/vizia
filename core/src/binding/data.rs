@@ -6,13 +6,6 @@ pub trait Data: 'static + Clone {
     fn same(&self, other: &Self) -> bool;
 }
 
-// impl<T> Data for State<T> {
-
-//     fn count(&self) -> usize {
-//         self.version()
-//     }
-// }
-
 macro_rules! impl_data_simple {
     ($t:ty) => {
         impl Data for $t {

@@ -1,5 +1,3 @@
-// use crate::{BindEvent, Context, Display, Entity, Event, FontOrId, Propagation, State, Tree, TreeExt, Visibility, WindowEvent, entity};
-
 use crate::{Context, Entity, Event, Propagation, Tree, TreeExt};
 
 /// Dispatches events to widgets.
