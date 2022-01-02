@@ -3,7 +3,7 @@ use crate::window::ViziaWindow;
 use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
-use raw_window_handle::{HasRawWindowHandle};
+use raw_window_handle::HasRawWindowHandle;
 use vizia_core::TreeExt;
 use vizia_core::{MouseButton, MouseButtonState};
 //use vizia_core::WindowWidget;
@@ -162,7 +162,6 @@ impl ApplicationRunner {
         bounding_box.h = logical_size.height as f32;
 
         context.cache.set_clip_region(Entity::root(), bounding_box);
-
 
         ApplicationRunner {
             event_manager,
@@ -506,12 +505,10 @@ impl ApplicationRunner {
                                 .target(self.context.captured)
                                 .propagate(Propagation::Direct),
                         );
-                        
                     } else {
                         self.context.event_queue.push_back(
                             Event::new(WindowEvent::MouseDown(b)).target(self.context.hovered),
                         );
-                        
                     };
 
                     // if let Some(event_handler) = self.event_manager.event_handlers.get_mut(&target) {

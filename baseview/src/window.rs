@@ -2,16 +2,15 @@ use crate::{application::ApplicationRunner, Renderer};
 use baseview::{
     Event, EventStatus, Window, WindowHandle, WindowHandler, WindowOpenOptions, WindowScalePolicy,
 };
-use raw_window_handle::{HasRawWindowHandle};
+use raw_window_handle::HasRawWindowHandle;
 use std::{
     cell::RefCell,
     collections::{HashMap, VecDeque},
     rc::Rc,
 };
 use vizia_core::{
-    AppData, CachedData, Context, Entity, Enviroment, IdManager, Modifiers,
-    MouseState, ResourceManager, Style, Tree,
-    WindowDescription,
+    AppData, CachedData, Context, Entity, Enviroment, IdManager, Modifiers, MouseState,
+    ResourceManager, Style, Tree, WindowDescription,
 };
 
 static DEFAULT_THEME: &str = include_str!("../../core/src/default_theme.css");

@@ -1,6 +1,5 @@
 use morphorm::LayoutType;
 
-
 use crate::{Context, Entity, Handle, View};
 
 pub struct VStack {

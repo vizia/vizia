@@ -73,14 +73,18 @@ fn main() {
         //     picker_item(cx, "Third",Options::Third, opt);
         // });
 
-        Dropdown::new(cx, |cx| Label::new(cx, "Options"), |cx| {
-            Picker::new(cx, AppData::option, |cx, option| {
-                let opt = *option.get(cx);
-                picker_item(cx, "First", Options::First, opt);
-                picker_item(cx, "Second", Options::Second, opt);
-                picker_item(cx, "Third", Options::Third, opt);
-            });
-        });
+        Dropdown::new(
+            cx,
+            |cx| Label::new(cx, "Options"),
+            |cx| {
+                Picker::new(cx, AppData::option, |cx, option| {
+                    let opt = *option.get(cx);
+                    picker_item(cx, "First", Options::First, opt);
+                    picker_item(cx, "Second", Options::Second, opt);
+                    picker_item(cx, "Third", Options::Third, opt);
+                });
+            },
+        );
     })
     .run();
 }

@@ -1,4 +1,6 @@
-use crate::{Context, Handle, MouseButton, PseudoClass, Units::*, View, WindowEvent, style::PropSet};
+use crate::{
+    style::PropSet, Context, Handle, MouseButton, PseudoClass, Units::*, View, WindowEvent,
+};
 
 const ICON_CHECK: &str = "\u{2713}";
 

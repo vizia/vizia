@@ -1,5 +1,17 @@
 use vizia::*;
 
+const STYLE: &str = r#"
+    botton {
+        width: 100px;
+        height: 30px;
+    }
+
+    label {
+        width: 100px;
+        height: 30px;
+    }
+"#;
+
 // Define some data which the counter will use
 #[derive(Lens)]
 pub struct CounterData {
@@ -13,7 +25,7 @@ pub enum CounterEvent {
     Decrement,
 }
 
-// Respond to events by updating the data
+// Respond to events and mutate the data
 impl Model for CounterData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
         if let Some(counter_event) = event.message.downcast() {
@@ -30,6 +42,10 @@ fn main() {
         WindowDescription::new().with_title("Counter").with_inner_size(500, 100);
 
     Application::new(window_description, |cx| {
+        // Add the stylesheet to the app
+        cx.add_theme(STYLE);
+
+        // Add the data to the app
         CounterData { count: 0 }.build(cx);
 
         HStack::new(cx, |cx| {
@@ -57,7 +73,8 @@ fn main() {
                 Label::new(cx, &english_numbers::convert_all_fmt(*count.get(cx) as i64));
             });
         })
-        .child_space(Stretch(1.0));
+        .child_space(Stretch(1.0))
+        .col_between(Pixels(10.0));
     })
     .run();
 }

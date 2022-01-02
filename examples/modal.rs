@@ -30,14 +30,8 @@ fn main() {
 
         AppData { show_modal: false }.build(cx);
 
-        Button::new(
-            cx,
-            |cx| cx.emit(AppEvent::ShowModal),
-            |cx| {
-                Label::new(cx, "Show Modal")
-            },
-        )
-        .space(Pixels(50.0));
+        Button::new(cx, |cx| cx.emit(AppEvent::ShowModal), |cx| Label::new(cx, "Show Modal"))
+            .space(Pixels(50.0));
 
         Binding::new(cx, AppData::show_modal, |cx, show| {
             ZStack::new(cx, |cx| {
@@ -47,16 +41,12 @@ fn main() {
                         Button::new(
                             cx,
                             |cx| cx.emit(AppEvent::HideModal),
-                            |cx| {
-                                Label::new(cx, "Cancel")
-                            },
+                            |cx| Label::new(cx, "Cancel"),
                         );
                         Button::new(
                             cx,
                             |cx| cx.emit(AppEvent::HideModal),
-                            |cx| {
-                                Label::new(cx, "Ok")
-                            },
+                            |cx| Label::new(cx, "Ok"),
                         );
                     });
                 });

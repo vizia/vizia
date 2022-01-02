@@ -1,7 +1,5 @@
-
 use crate::{
-    Abilities, Context, Display, Entity, Event, Propagation, PseudoClass, Visibility,
-    WindowEvent,
+    Abilities, Context, Display, Entity, Event, Propagation, PseudoClass, Visibility, WindowEvent,
 };
 
 /// Determines the hovered entity based on the mouse cursor position

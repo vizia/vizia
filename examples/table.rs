@@ -1,4 +1,3 @@
-
 use vizia::*;
 
 fn main() {

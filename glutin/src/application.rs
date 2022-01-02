@@ -1,22 +1,21 @@
-
-
 use std::{
     cell::RefCell,
     collections::{HashMap, VecDeque},
     rc::Rc,
 };
 
-use femtovg::{TextContext};
+use femtovg::TextContext;
 use glutin::{
     event::{ElementState, VirtualKeyCode},
-    event_loop::{ControlFlow, EventLoop, EventLoopProxy}
+    event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
 
 use vizia_core::{
     apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
     apply_visibility, apply_z_ordering, geometry_changed, AppData, BoundingBox, CachedData, Color,
-    Context, Display, Entity, Env, Enviroment, Event, EventManager, FontOrId, IdManager, Modifiers, MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager,
-    Style, Tree, TreeExt, Units, Visibility, WindowDescription, WindowEvent,
+    Context, Display, Entity, Env, Enviroment, Event, EventManager, FontOrId, IdManager, Modifiers,
+    MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt,
+    Units, Visibility, WindowDescription, WindowEvent,
 };
 
 use crate::keyboard::{scan_to_code, vcode_to_code, vk_to_key};

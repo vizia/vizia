@@ -88,9 +88,12 @@ impl View for Window {
                 }
 
                 WindowEvent::SetCursorPosition(x, y) => {
-                    self.handle.window().set_cursor_position(glutin::dpi::Position::Physical(
-                        PhysicalPosition::new(*x as i32, *y as i32),
-                    )).expect("Failed to set cursor position");
+                    self.handle
+                        .window()
+                        .set_cursor_position(glutin::dpi::Position::Physical(
+                            PhysicalPosition::new(*x as i32, *y as i32),
+                        ))
+                        .expect("Failed to set cursor position");
                 }
 
                 WindowEvent::SetCursor(cursor) => {

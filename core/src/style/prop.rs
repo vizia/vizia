@@ -161,7 +161,11 @@ pub trait PropSet: AsEntity + Sized {
         } else {
             let mut class_list = HashSet::new();
             class_list.insert(class_name.to_string());
-            cx.style.borrow_mut().classes.insert(self.entity(), class_list).expect("Failed to insert class name");
+            cx.style
+                .borrow_mut()
+                .classes
+                .insert(self.entity(), class_list)
+                .expect("Failed to insert class name");
         }
 
         cx.style.borrow_mut().needs_restyle = true;
@@ -815,7 +819,7 @@ pub trait PropSet: AsEntity + Sized {
 
         cx.style.borrow_mut().needs_relayout = true;
         cx.style.borrow_mut().needs_redraw = true;
-        
+
         self.entity()
     }
 
@@ -841,7 +845,11 @@ pub trait PropSet: AsEntity + Sized {
 
     // Tooltip
     fn set_tooltip(self, cx: &mut Context, text: &str) -> Entity {
-        cx.style.borrow_mut().tooltip.insert(self.entity(), text.to_owned()).expect("Failed to set tooltip");
+        cx.style
+            .borrow_mut()
+            .tooltip
+            .insert(self.entity(), text.to_owned())
+            .expect("Failed to set tooltip");
 
         cx.style.borrow_mut().needs_redraw = true;
 
@@ -933,7 +941,7 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     fn set_border_color(self, cx: &mut Context, value: Color) -> Entity {
         cx.style.borrow_mut().border_color.insert(self.entity(), value);
-        
+
         cx.style.borrow_mut().needs_redraw = true;
 
         self.entity()
@@ -1086,7 +1094,11 @@ pub trait PropSet: AsEntity + Sized {
 
     // Clipping
     fn set_clip_widget(self, cx: &mut Context, value: Entity) -> Entity {
-        cx.style.borrow_mut().clip_widget.insert(self.entity(), value).expect("Failed to set clip widget");
+        cx.style
+            .borrow_mut()
+            .clip_widget
+            .insert(self.entity(), value)
+            .expect("Failed to set clip widget");
 
         cx.style.borrow_mut().needs_redraw = true;
 
@@ -1108,7 +1120,8 @@ pub trait PropSet: AsEntity + Sized {
             cx.style
                 .borrow_mut()
                 .focus_order
-                .insert(self.entity(), FocusOrder { next: value, ..Default::default() }).expect("Failed to set next focus");
+                .insert(self.entity(), FocusOrder { next: value, ..Default::default() })
+                .expect("Failed to set next focus");
         }
 
         self.entity()
@@ -1121,7 +1134,8 @@ pub trait PropSet: AsEntity + Sized {
             cx.style
                 .borrow_mut()
                 .focus_order
-                .insert(self.entity(), FocusOrder { prev: value, ..Default::default() }).expect("Failed to set previous focus");
+                .insert(self.entity(), FocusOrder { prev: value, ..Default::default() })
+                .expect("Failed to set previous focus");
         }
 
         self.entity()
@@ -1132,7 +1146,11 @@ pub trait PropSet: AsEntity + Sized {
             focus_order.prev = prev;
             focus_order.next = next;
         } else {
-            cx.style.borrow_mut().focus_order.insert(self.entity(), FocusOrder { prev, next }).expect("Failed to set focus order");
+            cx.style
+                .borrow_mut()
+                .focus_order
+                .insert(self.entity(), FocusOrder { prev, next })
+                .expect("Failed to set focus order");
         }
 
         self.entity()

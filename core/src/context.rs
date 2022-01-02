@@ -9,9 +9,8 @@ use femtovg::{FontId, TextContext};
 // use unic_langid::LanguageIdentifier;
 
 use crate::{
-    AppData, CachedData, Entity, Event, FontOrId, IdManager, Message,
-    Modifiers, MouseState, Propagation, ResourceManager, Store, Style, Tree, TreeExt, View,
-    ViewHandler,
+    AppData, CachedData, Entity, Event, FontOrId, IdManager, Message, Modifiers, MouseState,
+    Propagation, ResourceManager, Store, Style, Tree, TreeExt, View, ViewHandler,
 };
 
 pub struct Enviroment {

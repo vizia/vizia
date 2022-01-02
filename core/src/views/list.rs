@@ -5,8 +5,7 @@ use std::marker::PhantomData;
 use keyboard_types::Code;
 
 use crate::{
-    Context, Data, Event, Handle, Lens, Model, StateStore, Store, TreeExt,
-    View, WindowEvent,
+    Context, Data, Event, Handle, Lens, Model, StateStore, Store, TreeExt, View, WindowEvent,
 };
 #[derive(Debug)]
 pub struct ItemPtr<L, T>
@@ -234,7 +233,6 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
-
     fn element(&self) -> Option<String> {
         Some("list".to_string())
     }
