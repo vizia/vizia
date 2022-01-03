@@ -34,7 +34,7 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
 
         let parent = tree.get_parent(entity).unwrap();
 
-        let mut parent_clip_region = cx.cache.get_clip_region(parent);
+        let parent_clip_region = cx.cache.get_clip_region(parent);
         //let parent_border_width = cx.style.borrow().border_width.get(parent).cloned().unwrap_or_default().value_or(0.0, 0.0);
 
         //println!("Parent border width: {}", parent_border_width);
@@ -166,10 +166,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
             let parent = cx.tree.get_parent(entity).expect("Failed to find parent somehow");
 
-            let parent_posx = cx.cache.get_posx(parent);
-            let parent_posy = cx.cache.get_posy(parent);
             let parent_width = cx.cache.get_width(parent);
-            let parent_height = cx.cache.get_height(parent);
 
             let border_width =
                 match cx.style.borrow().border_width.get(entity).cloned().unwrap_or_default() {
@@ -185,12 +182,12 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             let child_bottom =
                 cx.style.borrow().child_bottom.get(entity).cloned().unwrap_or_default();
 
-            let font_metrics =
+            // TODO - should auto size use text height or font height?
+            let _font_metrics =
                 cx.text_context.measure_font(paint).expect("Failed to read font metrics");
 
             let mut x = cx.cache.get_posx(entity);
             let mut y = cx.cache.get_posy(entity);
-            let mut sy = y;
             let width = cx.cache.get_width(entity);
             let height = cx.cache.get_height(entity);
 
@@ -234,13 +231,11 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                 Units::Stretch(_) => match child_bottom {
                     Units::Pixels(val) => {
                         y += height - val - border_width;
-                        sy = y - font_metrics.height();
                         Baseline::Bottom
                     }
 
                     Units::Stretch(_) => {
                         y += 0.5 * height;
-                        sy = y - font_metrics.height() * 0.5;
                         Baseline::Middle
                     }
 

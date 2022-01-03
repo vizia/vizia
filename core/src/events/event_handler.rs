@@ -1,4 +1,4 @@
-use crate::{Canvas, Context, Entity, Event};
+use crate::{Canvas, Context, Event};
 
 use std::any::{Any, TypeId};
 

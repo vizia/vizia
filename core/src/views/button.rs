@@ -1,6 +1,6 @@
 use crate::{Handle, MouseButton, WindowEvent};
 
-use crate::{Context, Entity, Event, View};
+use crate::{Context, Event, View};
 
 pub struct Button {
     action: Option<Box<dyn Fn(&mut Context)>>,

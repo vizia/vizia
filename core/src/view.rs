@@ -1,10 +1,10 @@
 use crate::{
     style::{BorderCornerShape, GradientDirection},
-    Context, Entity, Event, FontOrId, Handle, ViewHandler,
+    Context, Event, FontOrId, Handle, ViewHandler,
 };
 
 use femtovg::{
-    renderer::OpenGl, Align, Baseline, ImageFlags, Paint, Path, PixelFormat, RenderTarget,
+    renderer::OpenGl, Align, Baseline, Paint, Path,
 };
 use morphorm::Units;
 
@@ -15,7 +15,7 @@ const KAPPA90: f32 = 0.5522847493;
 
 pub trait View: 'static + Sized {
     fn body(&mut self, cx: &mut Context) {}
-    fn build2<F>(mut self, cx: &mut Context, builder: F) -> Handle<Self>
+    fn build2<F>(self, cx: &mut Context, builder: F) -> Handle<Self>
     where
         F: 'static + FnOnce(&mut Context),
     {

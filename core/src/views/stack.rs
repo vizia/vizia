@@ -1,6 +1,6 @@
 use morphorm::LayoutType;
 
-use crate::{Context, Entity, Handle, View};
+use crate::{Context, Handle, View};
 
 pub struct VStack {
     //pub builder: Option<Box<dyn Fn(&mut Context)>>,

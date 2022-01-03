@@ -92,7 +92,7 @@ impl ValueScaling {
 pub struct GenericMap {
     min: f32,
     max: f32,
-    span_recip: f32, // Small optimization to avoid division operations.
+    _span_recip: f32, // Small optimization to avoid division operations.
 
     value_scaling: ValueScaling,
 
@@ -110,7 +110,7 @@ impl GenericMap {
     ) -> Self {
         assert!(min < max);
 
-        Self { min, max, span_recip: 1.0 / (max - min), value_scaling, display_decimals, units }
+        Self { min, max, _span_recip: 1.0 / (max - min), value_scaling, display_decimals, units }
     }
 
     pub fn min(&self) -> f32 {
