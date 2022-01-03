@@ -196,96 +196,6 @@ impl Slider {
                 });
             })
     }
-
-    /// Set the callback triggered when the slider value has changed.
-    ///
-    /// Takes a closure which provides the current value and returns an event to be sent when the slider
-    /// value has changed after releasing the slider. If the slider thumb is pressed but not moved, and thus
-    /// the value is not changed, then the event will not be sent.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// Slider::new(cx, 0.0)
-    ///     .on_change(|cx, value| {
-    ///         cx.emit(WindowEvent::Debug(format!("Slider on_change: {}", value)));
-    ///     });
-    /// ```
-    pub fn on_change<F>(mut self, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut Context, f32),
-    {
-        self.on_change = Some(Box::new(callback));
-        self
-    }
-
-    /// Set the callback triggered when the slider value is changing (dragging).
-    ///
-    /// Takes a closure which triggers when the slider value is changing,
-    /// either by pressing the track or dragging the thumb along the track.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// Slider::new()
-    ///     .on_changing(|slider, context, entity| {
-    ///         entity.emit(WindowEvent::Debug(format!("Slider on_changing: {}", slider.value)));
-    ///     })
-    ///     .build(context, parent, |builder| builder);
-    /// ```
-    pub fn on_changing<F>(mut self, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut Context, f32),
-    {
-        self.on_changing = Some(Box::new(callback));
-        self
-    }
-
-    /// Set the callback triggered when the slider value reaches the minimum.
-    ///
-    /// Takes a closure which triggers when the slider reaches the minimum value,
-    /// either by pressing the track at the start or dragging the thumb to the start
-    /// of the track. The event is sent once for each time the value reaches the minimum.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// Slider::new()
-    ///     .on_min(|slider, context, entity| {
-    ///         entity.emit(WindowEvent::Debug(format!("Slider on_min: {}", slider.value)));
-    ///     })
-    ///     .build(context, parent, |builder| builder);
-    /// ```
-    pub fn on_min<F>(mut self, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        self.on_min = Some(Box::new(callback));
-        self
-    }
-
-    /// Set the callback triggered when the slider value reaches the maximum.
-    ///
-    /// Takes a closure which triggers when the slider reaches the maximum value,
-    /// either by pressing the track at the end or dragging the thumb to the end
-    /// of the track. The event is sent once for each time the value reaches the maximum.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// Slider::new()
-    ///     .on_max(|slider, context, entity| {
-    ///         entity.emit(WindowEvent::Debug(format!("Slider on_min: {}", slider.value)));
-    ///     })
-    ///     .build(context, parent, |builder| builder);
-    /// ```
-    pub fn on_max<F>(mut self, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        self.on_max = Some(Box::new(callback));
-        self
-    }
 }
 
 impl View for Slider {
@@ -368,6 +278,53 @@ impl View for Slider {
 }
 
 impl Handle<Slider> {
+
+    /// Set the callback triggered when the slider value has changed.
+    ///
+    /// Takes a closure which provides the current value and returns an event to be sent when the slider
+    /// value has changed after releasing the slider. If the slider thumb is pressed but not moved, and thus
+    /// the value is not changed, then the event will not be sent.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// Slider::new(cx, 0.0, Orientation::Horizontal)
+    ///     .on_change(cx, |cx, value| {
+    ///         cx.emit(WindowEvent::Debug(format!("Slider on_change: {}", value)));
+    ///     });
+    /// ```
+    pub fn on_change<F>(self, cx: &mut Context, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context, f32),
+    {
+        if let Some(slider) =
+            cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+        {
+            slider.on_change = Some(Box::new(callback));
+        }
+
+        self
+    }
+
+    /// Set the callback triggered when the slider value is changing (dragging).
+    ///
+    /// Takes a closure which triggers when the slider value is changing,
+    /// either by pressing the track or dragging the thumb along the track.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// Slider::new(cx, 0.0, Orientation::Horizontal)
+    ///     .on_changing(cx, |cx, value| {
+    ///         cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
+    ///     });
+    /// ```
     pub fn on_changing<F>(self, cx: &mut Context, callback: F) -> Self
     where
         F: 'static + Fn(&mut Context, f32),
@@ -380,4 +337,65 @@ impl Handle<Slider> {
 
         self
     }
+
+    /// Set the callback triggered when the slider value reaches the minimum.
+    ///
+    /// Takes a closure which triggers when the slider reaches the minimum value,
+    /// either by pressing the track at the start or dragging the thumb to the start
+    /// of the track. The event is sent once for each time the value reaches the minimum.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// Slider::new(cx, 0.0, Orientation::Horizontal)
+    ///     .on_min(cx, |cx| {
+    ///         cx.emit(WindowEvent::Debug(format!("Slider on_min")));
+    ///     });
+    /// ```
+    pub fn on_min<F>(self, cx: &mut Context, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        if let Some(slider) =
+            cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+        {
+            slider.on_min = Some(Box::new(callback));
+        }
+
+        self
+    }
+
+    /// Set the callback triggered when the slider value reaches the maximum.
+    ///
+    /// Takes a closure which triggers when the slider reaches the maximum value,
+    /// either by pressing the track at the end or dragging the thumb to the end
+    /// of the track. The event is sent once for each time the value reaches the maximum.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// Slider::new(cx, 0.0, Orientation::Horizontal)
+    ///     .on_max(cx, |cx| {
+    ///         cx.emit(WindowEvent::Debug(format!("Slider on_max")));
+    ///     });
+    /// ```
+    pub fn on_max<F>(self, cx: &mut Context, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        if let Some(slider) =
+            cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+        {
+            slider.on_max = Some(Box::new(callback));
+        }
+
+        self
+    }
+
 }

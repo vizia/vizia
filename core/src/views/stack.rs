@@ -24,9 +24,6 @@ impl VStack {
 }
 
 impl View for VStack {
-    fn debug(&self, entity: Entity) -> String {
-        format!("{} VStack", entity)
-    }
 
     fn element(&self) -> Option<String> {
         Some("vstack".to_string())
@@ -70,9 +67,6 @@ impl Handle<HStack> {
 }
 
 impl View for HStack {
-    fn debug(&self, entity: Entity) -> String {
-        format!("{} HStack", entity)
-    }
 
     fn element(&self) -> Option<String> {
         Some("hstack".to_string())
@@ -98,9 +92,6 @@ impl ZStack {
 }
 
 impl View for ZStack {
-    fn debug(&self, entity: Entity) -> String {
-        format!("{} ZStack", entity)
-    }
 
     fn element(&self) -> Option<String> {
         Some("zstack".to_string())

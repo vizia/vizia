@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::{Context, Entity};
+use crate::{Context, Data, Entity, Lens, ModelData};
 
 pub struct Store<T> {
     pub data: T,
@@ -48,3 +48,47 @@ impl<T> Store<T> {
 //         self.update(cx, event);
 //     }
 // }
+
+pub trait LensWrap {
+    fn update(&mut self, model: &Box<dyn ModelData>) -> bool;
+    fn observers(&self) -> &HashSet<Entity>;
+    fn add_observer(&mut self, observer: Entity);
+    fn entity(&self) -> Entity;
+}
+
+pub struct StateStore<L: Lens, T> {
+    pub entity: Entity,
+    pub lens: L,
+    pub old: T,
+    pub observers: HashSet<Entity>,
+}
+
+impl<L: Lens, T> LensWrap for StateStore<L, T>
+where
+    L: Lens<Target = T>,
+    <L as Lens>::Target: Data,
+{
+    fn entity(&self) -> Entity {
+        self.entity
+    }
+
+    fn update(&mut self, model: &Box<dyn ModelData>) -> bool {
+        if let Some(store) = model.downcast_ref::<Store<L::Source>>() {
+            let state = self.lens.view(&store.data);
+            if !state.same(&self.old) {
+                self.old = state.clone();
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn observers(&self) -> &HashSet<Entity> {
+        &self.observers
+    }
+
+    fn add_observer(&mut self, observer: Entity) {
+        self.observers.insert(observer);
+    }
+}

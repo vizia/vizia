@@ -1,6 +1,7 @@
 use bitflags::bitflags;
 
 bitflags! {
+    #[derive(Default)]
     pub struct Modifiers: u8 {
         const SHIFT = 1;
         const CTRL = 1<<1;

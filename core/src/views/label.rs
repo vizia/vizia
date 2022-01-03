@@ -29,9 +29,6 @@ impl Label {
 }
 
 impl View for Label {
-    fn debug(&self, entity: Entity) -> String {
-        format!("{} Label", entity)
-    }
 
     fn element(&self) -> Option<String> {
         Some("label".to_string())

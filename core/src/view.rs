@@ -95,9 +95,6 @@ pub trait View: 'static + Sized {
             self.body(cx);
             cx.current = prev;
             cx.count = prev_count;
-            // if let Some(view) = cx.views.get_mut(&id) {
-            //     view.update(&self);
-            // }
 
             cx.views.insert(id, Box::new(self));
 
@@ -121,9 +118,6 @@ pub trait View: 'static + Sized {
         cx.count += 1;
 
         Handle { entity: id, style: cx.style.clone(), p: Default::default() }
-    }
-    fn debug(&self, entity: Entity) -> String {
-        "".to_string()
     }
 
     fn element(&self) -> Option<String> {
@@ -784,10 +778,6 @@ impl<T: View> ViewHandler for T
 where
     T: std::marker::Sized + View + 'static,
 {
-    fn debug(&self, entity: Entity) -> String {
-        <T as View>::debug(self, entity)
-    }
-
     fn element(&self) -> Option<String> {
         <T as View>::element(&self)
     }

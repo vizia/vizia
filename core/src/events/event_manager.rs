@@ -1,6 +1,6 @@
 use crate::{Context, Entity, Event, Propagation, Tree, TreeExt};
 
-/// Dispatches events to widgets.
+/// Dispatches events to views.
 ///
 /// The [EventManager] is responsible for taking the events in the event queue in state
 /// and dispatching them to widgets based on the target and propagation metadata of the event.

@@ -31,13 +31,13 @@ pub use events::*;
 mod storage;
 
 mod style;
-pub use style::{apply_transform, Display, Overflow, PseudoClass, Rule, Style, Visibility};
+pub use style::{apply_transform, Display, Overflow, PseudoClass, Rule, Style, Visibility, PropSet, BorderCornerShape};
 
 mod animation;
 pub use animation::*;
 
-mod data;
-pub use data::*;
+mod cache;
+pub use cache::*;
 
 mod layout;
 pub use layout::*;
@@ -51,8 +51,8 @@ pub use mouse::*;
 mod window;
 pub use window::*;
 
-mod binding;
-pub use binding::*;
+mod state;
+pub use state::*;
 
 mod hover_system;
 pub use hover_system::apply_hover;

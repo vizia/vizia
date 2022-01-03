@@ -22,6 +22,7 @@ pub enum FontOrId {
 // #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 // pub struct Resource(u32);
 
+#[derive(Default)]
 pub struct ResourceManager {
     //pub images: HashMap<String, Image>,
     pub stylesheets: Vec<String>, // Stylesheets refer to a fiel path

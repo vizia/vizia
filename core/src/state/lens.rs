@@ -19,7 +19,9 @@ pub trait LensExt: Lens {
     /// # Example
     /// Binds a label to `other_data`, which is a field of a struct `SomeData`, which is a field of the root `AppData` model:
     /// ```
-    /// Label::new("").bind(AppData::some_data.then(SomeData::other_data))
+    /// Binding::new(cx, AppData::some_data.then(SomeData::other_data), |cx, data|{
+    /// 
+    /// });
     /// ```
     fn then<Other>(self, other: Other) -> Then<Self, Other>
     where

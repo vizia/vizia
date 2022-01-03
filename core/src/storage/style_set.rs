@@ -120,7 +120,7 @@ where
     ///
     /// # Example
     /// ```
-    /// let mut background_color = AnimatableStorage<Color>;
+    /// let mut background_color = StyleSet::new();
     /// background_color.insert(entity, Color::red())
     /// ```
     pub fn insert(&mut self, entity: Entity, value: T) {
@@ -131,7 +131,7 @@ where
     ///
     /// # Example
     /// ```
-    /// let mut background_color = AnimatableStorage<Color>;
+    /// let mut background_color = StyleSet::new();
     /// background_color.insert(entity, Color::red())
     /// background_color.remove(entity);
     /// ```

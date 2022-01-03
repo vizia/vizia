@@ -72,10 +72,13 @@ where
     ///
     /// # Example
     /// ```
-    /// Application::new(WindowDescription::new(), |state, window|{
+    ///
+    /// # use vizia_core::*;
+    /// # use vizia_baseview::Application;
+    /// Application::new(WindowDescription::new(), |cx|{
     ///     // Build application here
     /// })
-    /// .on_idle(|state|{
+    /// .on_idle(|cx|{
     ///     // Code here runs at the end of every event loop after OS and tuix events have been handled
     /// })
     /// .run();

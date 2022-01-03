@@ -17,7 +17,11 @@ pub trait PropSet: AsEntity + Sized {
     /// # Example
     /// Adds an event with a `WindowEvent::Close` message to the event queue to be sent up the tree
     /// ```
-    /// entity.emit(cx, WindowEvent::Close);
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root();
+    /// entity.emit(cx, WindowEvent::WindowClose);
     /// ```
     fn emit(&self, cx: &mut Context, message: impl Message) -> Entity
     where
@@ -38,7 +42,12 @@ pub trait PropSet: AsEntity + Sized {
     /// # Example
     /// Adds an event with a `WindowEvent::Close` message to the event queue to be sent directly to the `target` entity
     /// ```
-    /// entity.emit_to(cx, target, WindowEvent::Close);
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root();
+    /// # let target = Entity::root();
+    /// entity.emit_to(cx, target, WindowEvent::WindowClose);
     /// ```
     fn emit_to(&self, cx: &mut Context, target: Entity, message: impl Message) -> Entity {
         cx.event_queue.push_back(
@@ -48,28 +57,28 @@ pub trait PropSet: AsEntity + Sized {
         self.entity()
     }
 
-    /// Adds an event listener to an entity
-    ///
-    /// An event listener is a callback which is called before normal event handling takes place.
-    /// This allows entities with listeners to intercept events when they might normally be unable to.
-    /// For example, a popup uses a listener to respond to mouse press events outside of its bounds to
-    /// close the popup.
-    ///
-    /// # Example
-    /// Add a listener to a button which changes its background color to red when the mouse enters its bounds
-    /// ```
-    /// entity.add_listener(cx, |button: &mut Button, cx, entity, event|{
-    ///     if let Some(window_event) = event.message.downcast() {
-    ///         match window_event {
-    ///             WindowEvent::MouseEnter => {
-    ///                 entity.set_background_color(cx, Color::red());
-    ///             }
-    ///
-    ///             _=> {}
-    ///         }
-    ///     }   
-    /// });
-    /// ```
+    // Adds an event listener to an entity
+    //
+    // An event listener is a callback which is called before normal event handling takes place.
+    // This allows entities with listeners to intercept events when they might normally be unable to.
+    // For example, a popup uses a listener to respond to mouse press events outside of its bounds to
+    // close the popup.
+    //
+    // # Example
+    // Add a listener to a button which changes its background color to red when the mouse enters its bounds
+    // ```
+    // entity.add_listener(cx, |button: &mut Button, cx, entity, event|{
+    //     if let Some(window_event) = event.message.downcast() {
+    //         match window_event {
+    //             WindowEvent::MouseEnter => {
+    //                 entity.set_background_color(cx, Color::red());
+    //             }
+    //
+    //             _=> {}
+    //         }
+    //     }   
+    // });
+    // ```
     // fn add_listener<F,W>(&self, cx: &mut Context, listener: F) -> Entity
     // where
     //     W: View,
@@ -90,6 +99,10 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root();
     /// entity.restyle(cx);
     /// ```
     fn restyle(&self, cx: &mut Context) {
@@ -104,6 +117,10 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root();
     /// entity.relayout(cx);
     /// ```
     fn relayout(&self, cx: &mut Context) {
@@ -118,6 +135,10 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root();
     /// entity.redraw(cx);
     /// ```
     fn redraw(&self, cx: &mut Context) {
@@ -148,11 +169,19 @@ pub trait PropSet: AsEntity + Sized {
     /// # Examples
     /// Adds a class name `foo` and to an entity:
     /// ```
-    /// entity.class("foo");
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root();
+    /// entity.class(cx, "foo");
     /// ```
     ///
     /// Adds a class name `foo` and a class name `bar` to an entity:
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root();
     /// entity.class(cx, "foo").class(cx, "bar");
     /// ```
     fn class(self, cx: &mut Context, class_name: &str) -> Entity {
@@ -197,6 +226,10 @@ pub trait PropSet: AsEntity + Sized {
     /// # Example
     /// Sets the entity to disabled:
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root();
     /// entity.set_disabled(cx, true);
     /// ```
     fn set_disabled(self, cx: &mut Context, value: bool) -> Entity {
@@ -227,6 +260,10 @@ pub trait PropSet: AsEntity + Sized {
     /// # Example
     /// Sets the entity to checked:
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root();
     /// entity.set_checked(cx, true);
     /// ```
     fn set_checked(self, cx: &mut Context, value: bool) -> Entity {
@@ -311,6 +348,10 @@ pub trait PropSet: AsEntity + Sized {
     /// # Examples
     /// Sets the entity to be invisible:
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root();
     /// entity.set_visibility(cx, Visibility::Invisible);
     /// ```
     fn set_visibility(self, cx: &mut Context, value: Visibility) -> Entity {
@@ -323,15 +364,15 @@ pub trait PropSet: AsEntity + Sized {
         self.entity()
     }
 
-    /// Sets whether the entity can be hovered.
-    ///
-    /// Entities which are *not* hoverable will not receive mouse events and cannot be selected in css
-    /// with the `:hover` pseudoclass.
-    ///
-    /// # Example
-    /// ```
-    /// entity.set_hoverable(cx, false);
-    /// ```
+    // Sets whether the entity can be hovered.
+    //
+    // Entities which are *not* hoverable will not receive mouse events and cannot be selected in css
+    // with the `:hover` pseudoclass.
+    //
+    // # Example
+    // ```
+    // entity.set_hoverable(cx, false);
+    // ```
     // fn set_hoverable(self, cx: &mut Context, value: bool) -> Entity {
     //     cx.cache.set_hoverable(self.entity(), value);
 
@@ -342,15 +383,15 @@ pub trait PropSet: AsEntity + Sized {
     //     self.entity()
     // }
 
-    /// Sets whether the entity can be checked.
-    ///
-    /// Entities which are *not* checkable will not receive checkbox events and cannot be selected in css
-    /// with the `:checked` pseudoclass.
-    ///
-    /// # Example
-    /// ```
-    /// entity.set_checkable(cx, false);
-    /// ```
+    // Sets whether the entity can be checked.
+    //
+    // Entities which are *not* checkable will not receive checkbox events and cannot be selected in css
+    // with the `:checked` pseudoclass.
+    //
+    // # Example
+    // ```
+    // entity.set_checkable(cx, false);
+    // ```
     // fn set_checkable(self, cx: &mut Context, value: bool) -> Entity {
     //     cx.cache.set_checkable(self.entity(), value);
 
@@ -361,14 +402,14 @@ pub trait PropSet: AsEntity + Sized {
     //     self.entity()
     // }
 
-    /// Sets whether the entity can be selected in a list.
-    ///
-    /// Entities which are *not* selectable cannot be selected in css with the `:selected` pseudoclass.
-    ///
-    /// # Example
-    /// ```
-    /// entity.set_selectable(cx, false);
-    /// ```
+    // Sets whether the entity can be selected in a list.
+    //
+    // Entities which are *not* selectable cannot be selected in css with the `:selected` pseudoclass.
+    //
+    // # Example
+    // ```
+    // entity.set_selectable(cx, false);
+    // ```
     // fn set_selectable(self, cx: &mut Context, value: bool) -> Entity {
     //     cx.cache.set_selectable(self.entity(), value);
 
@@ -379,15 +420,15 @@ pub trait PropSet: AsEntity + Sized {
     //     self.entity()
     // }
 
-    /// Sets whether the entity can be focused.
-    ///
-    /// Entities which are *not* focusable will not receive keyboard events and cannot be selected in css
-    /// with the `:focus` pseudoclass.
-    ///
-    /// # Example
-    /// ```
-    /// entity.set_focusable(cx, false);
-    /// ```
+    // Sets whether the entity can be focused.
+    //
+    // Entities which are *not* focusable will not receive keyboard events and cannot be selected in css
+    // with the `:focus` pseudoclass.
+    //
+    // # Example
+    // ```
+    // entity.set_focusable(cx, false);
+    // ```
     // fn set_focusable(self, cx: &mut Context, value: bool) -> Entity {
     //     cx.cache.set_focusable(self.entity(), value);
 
@@ -419,6 +460,10 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root();
     /// entity.set_display(cx, Display::None);
     /// ```
     fn set_display(self, cx: &mut Context, value: Display) -> Entity {
@@ -484,6 +529,10 @@ pub trait PropSet: AsEntity + Sized {
     /// # Example
     /// Set the entity to be self-directed, ignroing the size and positioning of its siblings:
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
     /// entity.set_position_type(cx, PositionType::SelfDirected);
     /// ```
     ///
@@ -510,7 +559,11 @@ pub trait PropSet: AsEntity + Sized {
     /// Examples:
     /// Position a solo entity in the center of its parent by adding stretch space to all sides:
     /// ```
-    /// entity.set_space(cx, Stratch(1.0));
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
+    /// entity.set_space(cx, Stretch(1.0));
     /// ```
     ///
     /// # CSS
@@ -537,12 +590,20 @@ pub trait PropSet: AsEntity + Sized {
     /// # Examples
     /// Position an entity 5 pixels from the left edge of its parent
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
     /// entity.set_left(cx, Pixels(5.0));
     /// ```
     ///
     /// Center the entity horizontally by adding stretch space to the left and right sides.
     /// ```
-    /// entity.set_left(cx, Stratch(1.0)).set_right(cx, Stretch(1.0))
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
+    /// entity.set_left(cx, Stretch(1.0)).set_right(cx, Stretch(1.0));
     /// ```
     fn set_left(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().left.insert(self.entity(), value);
@@ -562,12 +623,20 @@ pub trait PropSet: AsEntity + Sized {
     /// # Examples
     /// Position an entity 5 pixels from the right edge of its parent. Notice that left space must be set to stretch.
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
     /// entity.set_right(cx, Pixels(5.0)).set_left(cx, Stretch(1.0));
     /// ```
     ///
     /// Center the entity horizontally by adding stretch space to the left and right sides.
     /// ```
-    /// entity.set_left(cx, Stratch(1.0)).set_right(cx, Stretch(1.0))
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
+    /// entity.set_left(cx, Stretch(1.0)).set_right(cx, Stretch(1.0));
     /// ```
     fn set_right(self, cx: &mut Context, value: Units) -> Entity {
         cx.style.borrow_mut().right.insert(self.entity(), value);
@@ -772,6 +841,10 @@ pub trait PropSet: AsEntity + Sized {
     /// # Example
     /// Set the entity to display the text `Hello World`.
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root();
     /// entity.set_text(cx, "Hello World");
     /// ```
     fn set_text(self, cx: &mut Context, text: &str) -> Entity {
@@ -793,7 +866,11 @@ pub trait PropSet: AsEntity + Sized {
     /// # Example
     /// Sets the font to the icon font (entypo) for the text displayed within the entity:
     /// ```
-    /// entity.set_font("icon");
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
+    /// entity.set_font(cx, "icon");
     /// ```
     fn set_font(self, cx: &mut Context, font: &str) -> Entity {
         cx.style.borrow_mut().font.insert(self.entity(), font.to_owned());
@@ -807,7 +884,11 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// ```
-    /// entity.set_font_size(cx, 20.0)
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
+    /// entity.set_font_size(cx, 20.0);
     /// ```
     ///
     /// # CSS
@@ -828,6 +909,10 @@ pub trait PropSet: AsEntity + Sized {
     /// # Example
     /// Set the font color to red:
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
     /// entity.set_color(cx, Color::red());
     /// ```
     ///
@@ -866,11 +951,20 @@ pub trait PropSet: AsEntity + Sized {
     /// # Examples
     /// Set the background color of the entity to red:
     /// ```
-    /// entity.set_background_color(Color::red());
+    /// # use vizia_core::*;
+    /// # use vizia_core::Color;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
+    /// entity.set_background_color(cx, Color::red());
     /// ```
     /// Set the background color of the entity with individual red, green, and blue components:
     /// ```
-    /// entity.set_background_color(Color::rgb(255, 50, 50));
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
+    /// entity.set_background_color(cx, Color::rgb(255, 50, 50));
     /// ```
     ///
     /// # CSS
@@ -910,7 +1004,11 @@ pub trait PropSet: AsEntity + Sized {
     /// # Example
     /// Set the border width of the entity to 2 pixels and set the border color to black:
     /// ```
-    /// entity.set_border_width(cx, Units::Pixels(2.0)).set_border_color(Color::black());
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
+    /// entity.set_border_width(cx, Units::Pixels(2.0)).set_border_color(cx, Color::black());
     /// ```
     ///
     /// # CSS
@@ -932,7 +1030,11 @@ pub trait PropSet: AsEntity + Sized {
     /// # Example
     /// Set the border width of the entity to 2 pixels and set the border color to black:
     /// ```
-    /// entity.set_border_width(cx, Units::Pixels(2.0)).set_border_color(Color::black());
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
+    /// entity.set_border_width(cx, Units::Pixels(2.0)).set_border_color(cx, Color::black());
     /// ```
     ///
     /// # CSS
@@ -955,6 +1057,10 @@ pub trait PropSet: AsEntity + Sized {
     /// # Example
     /// Sets the border corner shape to bevelled witn a radius of 10 pixels
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
     /// entity.set_border_corner_shape(cx, BorderCornerShape::Bevel).set_border_radius(cx, Pixels(10.0));
     /// ```
     ///
@@ -1164,6 +1270,10 @@ pub trait PropSet: AsEntity + Sized {
     /// # Exmaples
     /// Position children into a vertical stack:
     /// ```
+    /// # use vizia_core::*;
+    /// # let mut context = Context::default();
+    /// # let cx = &mut context;
+    /// # let entity = Entity::root(); 
     /// entity.set_layout_type(cx, LayoutType::Column);
     /// ```
     ///

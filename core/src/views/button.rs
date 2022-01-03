@@ -20,10 +20,7 @@ impl Button {
 }
 
 impl View for Button {
-    fn debug(&self, entity: Entity) -> String {
-        format!("{} Button", entity)
-    }
-
+    
     fn element(&self) -> Option<String> {
         Some("button".to_string())
     }

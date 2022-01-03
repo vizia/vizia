@@ -131,6 +131,7 @@ pub struct ModelDataStore {
     pub lenses: HashMap<TypeId, Box<dyn LensWrap>>,
 }
 
+#[derive(Default)]
 pub struct AppData {
     // pub model_data: HashMap<TypeId, Box<dyn ModelData>>,
     //pub model_data: SparseSet<HashMap<TypeId,Box<dyn ModelData>>>,

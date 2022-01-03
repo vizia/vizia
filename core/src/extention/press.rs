@@ -39,10 +39,6 @@ impl<V: View> View for Press<V> {
         self.view.element()
     }
 
-    fn debug(&self, entity: Entity) -> String {
-        self.view.debug(entity)
-    }
-
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
@@ -99,10 +95,6 @@ impl<V: View> Release<V> {
 impl<V: View> View for Release<V> {
     fn element(&self) -> Option<String> {
         self.view.element()
-    }
-
-    fn debug(&self, entity: Entity) -> String {
-        self.view.debug(entity)
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
@@ -163,10 +155,6 @@ impl<V: View> View for Hover<V> {
         self.view.element()
     }
 
-    fn debug(&self, entity: Entity) -> String {
-        self.view.debug(entity)
-    }
-
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
@@ -223,10 +211,6 @@ impl<V: View> View for Over<V> {
         self.view.element()
     }
 
-    fn debug(&self, entity: Entity) -> String {
-        self.view.debug(entity)
-    }
-
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
@@ -279,10 +263,6 @@ impl<V: View> Leave<V> {
 impl<V: View> View for Leave<V> {
     fn element(&self) -> Option<String> {
         self.view.element()
-    }
-
-    fn debug(&self, entity: Entity) -> String {
-        self.view.debug(entity)
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
@@ -341,10 +321,6 @@ impl<V: View> View for Move<V> {
         self.view.element()
     }
 
-    fn debug(&self, entity: Entity) -> String {
-        self.view.debug(entity)
-    }
-
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
@@ -397,10 +373,6 @@ impl<V: View> Geo<V> {
 impl<V: View> View for Geo<V> {
     fn element(&self) -> Option<String> {
         self.view.element()
-    }
-
-    fn debug(&self, entity: Entity) -> String {
-        self.view.debug(entity)
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
