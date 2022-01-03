@@ -15,7 +15,7 @@ pub use handle::*;
 
 mod tree;
 pub use morphorm::layout as apply_layout;
-pub use morphorm::*;
+pub use morphorm::{LayoutType, PositionType, GeometryChanged, Units};
 pub use style::{Abilities, Color};
 pub use tree::*;
 
@@ -25,7 +25,7 @@ pub use views::*;
 mod context;
 pub use context::*;
 
-mod events;
+pub mod events;
 pub use events::*;
 
 mod storage;

@@ -19,7 +19,7 @@
 //! cx.emit_to(target, MyEvent::ReadDocs);
 //! ```
 //!
-//! [View]s and [Model]s receive events through the `event()` method of the [View] or [Model] traits.
+//! Views and Models receive events through the `event()` method of the View or Model traits.
 //! The event message must then be downcast to the right type:
 //! ```
 //! fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
@@ -36,6 +36,7 @@
 //!     }
 //! }
 //! ```
+
 
 mod event_manager;
 pub use event_manager::EventManager;

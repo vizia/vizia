@@ -8,7 +8,7 @@ use std::fmt::Debug;
 pub enum Propagation {
     // /// Events propagate down the tree to the target entity, e.g. from grand-parent to parent to child (target)
     // Down,
-    /// Events propagate up the tree to the target entity, e.g. from child (target) to parent to grand-parent
+    /// Events propagate up the tree from the target entity from ancestor to ancestor, e.g. from child (target) to parent to grand-parent etc...
     Up,
     // /// Events propagate down the tree to the target entity and then back up to the root
     // DownUp,
