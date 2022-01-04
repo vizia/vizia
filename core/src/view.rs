@@ -3,9 +3,7 @@ use crate::{
     Context, Event, FontOrId, Handle, ViewHandler,
 };
 
-use femtovg::{
-    renderer::OpenGl, Align, Baseline, Paint, Path,
-};
+use femtovg::{renderer::OpenGl, Align, Baseline, Paint, Path};
 use morphorm::Units;
 
 pub type Canvas = femtovg::Canvas<OpenGl>;

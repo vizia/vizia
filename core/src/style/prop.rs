@@ -67,7 +67,7 @@ pub trait PropSet: AsEntity + Sized {
     //
     //             _=> {}
     //         }
-    //     }   
+    //     }
     // });
     // ```
     // fn add_listener<F,W>(&self, cx: &mut Context, listener: F) -> Entity
@@ -545,7 +545,7 @@ pub trait PropSet: AsEntity + Sized {
     /// # use vizia_core::*;
     /// # let mut context = Context::default();
     /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// # let entity = Entity::root();
     /// entity.set_left(cx, Stretch(1.0)).set_right(cx, Stretch(1.0));
     /// ```
     fn set_left(self, cx: &mut Context, value: Units) -> Entity {
@@ -570,7 +570,7 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     ///
     /// Center the entity horizontally by adding stretch space to the left and right sides.
-    /// ```compile_fail 
+    /// ```compile_fail
     /// entity.set_left(cx, Stretch(1.0)).set_right(cx, Stretch(1.0));
     /// ```
     fn set_right(self, cx: &mut Context, value: Units) -> Entity {
@@ -810,7 +810,7 @@ pub trait PropSet: AsEntity + Sized {
     /// Set the size of the font for the text displayed within the entity.
     ///
     /// # Example
-    /// ```compile_fail 
+    /// ```compile_fail
     /// entity.set_font_size(cx, 20.0);
     /// ```
     ///
@@ -877,7 +877,7 @@ pub trait PropSet: AsEntity + Sized {
     /// # use vizia_core::*;
     /// # let mut context = Context::default();
     /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// # let entity = Entity::root();
     /// entity.set_background_color(cx, Color::rgb(255, 50, 50));
     /// ```
     ///
@@ -917,7 +917,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Set the border width of the entity to 2 pixels and set the border color to black:
-    /// ```compile_fail 
+    /// ```compile_fail
     /// entity.set_border_width(cx, Units::Pixels(2.0)).set_border_color(cx, Color::black());
     /// ```
     ///
@@ -939,7 +939,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Set the border width of the entity to 2 pixels and set the border color to black:
-    /// ```compile_fail 
+    /// ```compile_fail
     /// entity.set_border_width(cx, Units::Pixels(2.0)).set_border_color(cx, Color::black());
     /// ```
     ///
@@ -962,7 +962,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Sets the border corner shape to bevelled witn a radius of 10 pixels
-    /// ```compile_fail 
+    /// ```compile_fail
     /// entity.set_border_corner_shape(cx, BorderCornerShape::Bevel).set_border_radius(cx, Pixels(10.0));
     /// ```
     ///
@@ -1175,7 +1175,7 @@ pub trait PropSet: AsEntity + Sized {
     /// # use vizia_core::*;
     /// # let mut context = Context::default();
     /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// # let entity = Entity::root();
     /// entity.set_layout_type(cx, LayoutType::Column);
     /// ```
     ///

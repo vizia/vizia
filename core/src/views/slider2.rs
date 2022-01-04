@@ -278,7 +278,6 @@ impl View for Slider {
 }
 
 impl Handle<Slider> {
-
     /// Set the callback triggered when the slider value has changed.
     ///
     /// Takes a closure which provides the current value and returns an event to be sent when the slider
@@ -385,5 +384,4 @@ impl Handle<Slider> {
 
         self
     }
-
 }

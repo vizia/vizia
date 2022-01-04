@@ -1489,7 +1489,7 @@ impl Style {
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
         //self.z_order.insert(entity, 0);
 
-        self.overflow.insert(entity, Default::default());
+        //self.overflow.insert(entity, Default::default());
         //self.scroll.insert(entity, Default::default());
 
         self.visibility.insert(entity, Default::default());

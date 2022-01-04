@@ -32,7 +32,6 @@ impl Handle<Textbox> {
 }
 
 impl View for Textbox {
-
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
         if let Some(window_event) = event.message.downcast() {
             match window_event {

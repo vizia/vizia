@@ -20,7 +20,6 @@ impl Button {
 }
 
 impl View for Button {
-    
     fn element(&self) -> Option<String> {
         Some("button".to_string())
     }

@@ -453,8 +453,9 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             should_redraw = true;
         }
 
-        // Currently doesn't do anything - TODO
-        cx.style.borrow_mut().overflow.link(entity, &matched_rules);
+        if cx.style.borrow_mut().overflow.link(entity, &matched_rules) {
+            should_redraw = true;
+        }
 
         // Opacity
         if cx.style.borrow_mut().opacity.link(entity, &matched_rules) {

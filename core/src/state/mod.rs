@@ -10,7 +10,7 @@
 //! struct AppData {
 //!     some_data: bool,
 //! }
-//! 
+//!
 //! ```
 //! Next we'll declare some events which will be sent by widgets to modify the app data. Data binding in vizia is one-way, events are sent up the tree
 //! to the app data to mutate it and updated values are sent to observer [Binding] views.

@@ -28,13 +28,9 @@ fn main() {
                     HStack::new(cx, move |cx| {
                         Label::new(cx, &item.value(cx).text.to_owned());
                         let item_index = item.index();
-                        Checkbox::new(cx, item.value(cx).completed)
-                            .on_checked(cx, move |cx| {
-                                cx.emit(TodoEvent::SetCompleted(item_index, true))
-                            })
-                            .on_unchecked(cx, move |cx| {
-                                cx.emit(TodoEvent::SetCompleted(item_index, false))
-                            });
+                        Checkbox::new(cx, item.value(cx).completed).on_toggle(cx, move |cx| {
+                            cx.emit(TodoEvent::ToggleCompleted(item_index))
+                        });
                         Label::new(cx, &item.value(cx).completed.to_string());
                     })
                     .border_width(Pixels(1.0))
@@ -64,16 +60,16 @@ pub struct TodoData {
 
 #[derive(Debug)]
 pub enum TodoEvent {
-    SetCompleted(usize, bool),
+    ToggleCompleted(usize),
 }
 
 impl Model for TodoData {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(todo_event) = event.message.downcast() {
             match todo_event {
-                TodoEvent::SetCompleted(index, flag) => {
+                TodoEvent::ToggleCompleted(index) => {
                     if let Some(item) = self.items.get_mut(*index) {
-                        item.completed = *flag;
+                        item.completed ^= true;
                     }
                 }
             }

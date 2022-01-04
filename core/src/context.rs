@@ -13,6 +13,7 @@ use crate::{
     MouseState, Propagation, ResourceManager, Store, Style, Tree, TreeExt, View, ViewHandler,
 };
 
+static DEFAULT_THEME: &str = include_str!("default_theme.css");
 
 #[derive(Default)]
 pub struct Context {
@@ -140,6 +141,12 @@ impl Context {
         self.resource_manager.themes.push(theme.to_owned());
 
         self.reload_styles().expect("Failed to reload styles");
+    }
+
+    pub fn remove_user_themes(&mut self) {
+        self.resource_manager.themes.clear();
+
+        self.add_theme(DEFAULT_THEME);
     }
 
     pub fn add_stylesheet(&mut self, path: &str) -> Result<(), std::io::Error> {

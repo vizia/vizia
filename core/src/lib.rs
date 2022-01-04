@@ -17,7 +17,7 @@ pub mod tree;
 pub use tree::*;
 
 pub use morphorm::layout as apply_layout;
-pub use morphorm::{LayoutType, PositionType, GeometryChanged, Units};
+pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
 
 pub use style::{Abilities, Color};
 
@@ -33,7 +33,10 @@ pub use events::*;
 mod storage;
 
 mod style;
-pub use style::{apply_transform, Display, Overflow, PseudoClass, Rule, Style, Visibility, PropSet, BorderCornerShape};
+pub use style::{
+    apply_transform, BorderCornerShape, Display, Overflow, PropSet, PseudoClass, Rule, Style,
+    Visibility,
+};
 
 mod animation;
 pub use animation::*;

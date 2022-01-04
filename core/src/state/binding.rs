@@ -131,10 +131,10 @@ where
     <L as Lens>::Source: 'static,
 {
     pub fn get<'a>(&self, cx: &'a Context) -> &'a L::Target {
-        self.lens.view(
-            cx.data()
-                .expect(&format!("Failed to get {:?} for entity: {:?}", self.lens, cx.current)),
-        )
+        self.lens.view(cx.data().expect(&format!(
+            "Failed to get {:?} for entity: {:?}. Is the data in the tree?",
+            self.lens, cx.current
+        )))
         // self.lens
         //     .view(&cx.data.model_data
         //     .get(&TypeId::of::<L::Source>())
