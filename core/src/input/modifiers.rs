@@ -1,6 +1,7 @@
 use bitflags::bitflags;
 
 bitflags! {
+    /// The state of the modifier keys.
     #[derive(Default)]
     pub struct Modifiers: u8 {
         const SHIFT = 1;

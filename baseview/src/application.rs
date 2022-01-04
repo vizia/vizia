@@ -71,8 +71,7 @@ where
     /// push events into the queue every time the callback runs unless this is intended.
     ///
     /// # Example
-    /// ```
-    ///
+    /// ```no_run
     /// # use vizia_core::*;
     /// # use vizia_baseview::Application;
     /// Application::new(WindowDescription::new(), |cx|{

@@ -8,7 +8,7 @@
 // !
 //! ## Example
 //! The following code creates an animation which will animate the `background-color` property from red to blue over 1 second:
-//! ```
+//! ```compile_fail
 //! let animation = state.create_animation(std::time::Duration::from_secs(1))
 //!     .add_keyframe(0.0, |keyframe| keyframe.set_background_color(Color::red()))
 //!     .add_keyframe(1.0, |keyframe| keyframe.set_background_color(Color::blue()))
@@ -20,7 +20,7 @@
 //! For example, the above animation can be modified to animate both background color and border color simultaneously over the 1 second duration:
 //!
 //! ## Example
-//! ```
+//! ```compile_fail
 //! let animation_id = state.create_animation(std::time::Duration::from_secs(1))
 //!     .add_keyframe(0.0, |keyframe|
 //!         keyframe
@@ -39,7 +39,7 @@
 //! Animations are linked to entities and controlled using methods from the [AnimExt] trait. For example,
 //! the following code links an entity to an animation. This causes the animation to become active and play until completion.
 //! An animation can be played on muliple entities by calling `.play_animation()` on each of the entities.
-//! ```
+//! ```compile_fail
 //! entity.play_animation(animation_id);
 //! ```
 mod animation;

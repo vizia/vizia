@@ -11,17 +11,17 @@
 //! }
 //! ```
 //! Then, to send an event up the tree from the current entity:
-//! ```
+//! ```compile_fail
 //! cx.emit(MyEvent::ReadDocs);
 //! ```
 //! Or, to send an event from the current entity directly to a target:
-//! ```
+//! ```compile_fail
 //! cx.emit_to(target, MyEvent::ReadDocs);
 //! ```
 //!
 //! Views and Models receive events through the `event()` method of the View or Model traits.
 //! The event message must then be downcast to the right type:
-//! ```
+//! ```compile_fail
 //! fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
 //!     if let Some(my_event) = event.message.downcast() {
 //!         match my_event {

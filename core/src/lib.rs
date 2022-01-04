@@ -1,7 +1,7 @@
 mod id;
 pub use id::*;
 
-mod input;
+pub mod input;
 pub use input::*;
 
 mod localization;
@@ -13,11 +13,13 @@ pub use entity::*;
 mod handle;
 pub use handle::*;
 
-mod tree;
+pub mod tree;
+pub use tree::*;
+
 pub use morphorm::layout as apply_layout;
 pub use morphorm::{LayoutType, PositionType, GeometryChanged, Units};
+
 pub use style::{Abilities, Color};
-pub use tree::*;
 
 pub mod views;
 pub use views::*;
@@ -44,9 +46,6 @@ pub use layout::*;
 
 mod resource;
 pub use resource::*;
-
-mod mouse;
-pub use mouse::*;
 
 mod window;
 pub use window::*;

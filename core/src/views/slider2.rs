@@ -287,10 +287,7 @@ impl Handle<Slider> {
     ///
     /// # Example
     ///
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
+    /// ```compile_fail
     /// Slider::new(cx, 0.0, Orientation::Horizontal)
     ///     .on_change(cx, |cx, value| {
     ///         cx.emit(WindowEvent::Debug(format!("Slider on_change: {}", value)));
@@ -316,10 +313,7 @@ impl Handle<Slider> {
     ///
     /// # Example
     ///
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
+    /// ```compile_fail
     /// Slider::new(cx, 0.0, Orientation::Horizontal)
     ///     .on_changing(cx, |cx, value| {
     ///         cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
@@ -346,10 +340,7 @@ impl Handle<Slider> {
     ///
     /// # Example
     ///
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
+    /// ```compile_fail
     /// Slider::new(cx, 0.0, Orientation::Horizontal)
     ///     .on_min(cx, |cx| {
     ///         cx.emit(WindowEvent::Debug(format!("Slider on_min")));
@@ -376,10 +367,7 @@ impl Handle<Slider> {
     ///
     /// # Example
     ///
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
+    /// ```compile_fail
     /// Slider::new(cx, 0.0, Orientation::Horizontal)
     ///     .on_max(cx, |cx| {
     ///         cx.emit(WindowEvent::Debug(format!("Slider on_max")));

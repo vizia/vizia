@@ -52,14 +52,9 @@ impl<I: GenerationalId + Copy> IdManager<I> {
         I::new(index as usize, self.generation[index as usize] as usize)
     }
 
-    /// Destroys an ID returning false if the ID has already been destroyed
+    /// Destroys an ID returning false if the ID has already been destroyed.
     ///
-    /// Destroyed IDs are reused after MINIMUM_FREE_INDICES are created for a single genration
-    ///
-    /// # Example
-    /// ```
-    /// entity_manager.destroy(entity);
-    /// ```
+    /// Destroyed IDs are reused after MINIMUM_FREE_INDICES are created for a single genration.
     pub fn destroy(&mut self, id: I) -> bool {
         if self.is_alive(id) {
             let index = id.index();
@@ -73,9 +68,9 @@ impl<I: GenerationalId + Copy> IdManager<I> {
         }
     }
 
-    /// Checks if an id is alive
+    /// Checks if an id is alive.
     ///
-    /// Works by comparing the id generation with an internal store of id generations
+    /// Works by comparing the id generation with an internal store of id generations.
     pub fn is_alive(&self, id: I) -> bool {
         self.generation[id.index()] == id.generation()
     }

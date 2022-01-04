@@ -5,23 +5,23 @@
 //!
 //! # Example
 //! Fist we declare the data for our application. The [Lens] trait has been derived for the data, which allows us to bind to fields of the struct:
-//! ```
-//! # use vizia_core::*;
+//! ```compile_fail
 //! #[derive(Default, Lens)]
 //! struct AppData {
 //!     some_data: bool,
 //! }
+//! 
 //! ```
 //! Next we'll declare some events which will be sent by widgets to modify the app data. Data binding in vizia is one-way, events are sent up the tree
 //! to the app data to mutate it and updated values are sent to observer [Binding] views.
 //! ```
 //! enum AppEvent {
 //!     SetTrue,
-//!     SetFalse,   
+//!     SetFalse,
 //! }
 //! ```
 //! Next we implement the [Model] trait on our app data, which allows us to modify the data in response to an [Event]:
-//! ```
+//! ```compile_fail
 //! impl Model for AppData {
 //!     fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
 //!         if let Some(app_event) = event.message.downcast() {
@@ -39,7 +39,7 @@
 //! }
 //! ```
 //! This trait also allows data to be built into the [Tree]:
-//! ```
+//! ```compile_fail
 //! fn main() {
 //!     Application::new(WindowDescription::new(), |cx|{
 //!         AppData::default().build(cx);
@@ -47,7 +47,7 @@
 //! }
 //! ```
 //! A [Binding] view allows the data to be used by widgets. A [Lens] is used to determine what data the binding should react to:
-//! ```
+//! ```compile_fail
 //! fn main() {
 //!     Application::new(WindowDescription::new(), |cx|{
 //!         AppData::default().build(cx);
@@ -63,7 +63,7 @@
 //! method, which takes the [Context] as an argument.
 //!
 //! Now when the data is modified by another widget, the label will update, for example:
-//! ```
+//! ```compile_fail
 //! fn main() {
 //!     Application::new(WindowDescription::new(), |cx|{
 //!         AppData::default().build(cx);

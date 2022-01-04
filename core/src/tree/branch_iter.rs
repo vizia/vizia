@@ -1,6 +1,6 @@
 use crate::{Entity, GenerationalId, Tree};
 
-/// An iterator for a branch of the tree tree
+/// An iterator for a branch of the entity tree.
 pub struct BranchIterator<'a> {
     pub(crate) tree: &'a Tree,
     pub(crate) start_node: Entity,

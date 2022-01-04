@@ -18,11 +18,6 @@ struct DataIndex(u32);
 impl DataIndex {
     /// Create a new data index with the first bit set to 1, indicating that
     /// the index refers to inline data.
-    ///
-    /// # Example
-    /// ```
-    /// let data_index = DataIndex::inline(42);
-    /// ```
     pub fn inline(index: usize) -> Self {
         assert!((index as u32) < INDEX_MASK);
         let value = (index as u32) | !INDEX_MASK;
@@ -31,26 +26,17 @@ impl DataIndex {
 
     /// Create a new data index with the first bit set to 0, indicating that
     /// the index refers to shared data.
-    ///
-    /// # Example
-    /// ```
-    /// let data_index = DataIndex::shared(42);
-    /// ```
     pub fn shared(index: usize) -> Self {
         assert!((index as u32) < INDEX_MASK);
         Self(index as u32)
     }
 
     /// Retrieve the inline or shared data index.
-    ///
-    ///
     pub fn index(&self) -> usize {
         (self.0 & INDEX_MASK) as usize
     }
 
     /// Returns true if the data index refers to inline data.
-    ///
-    ///
     pub fn is_inline(&self) -> bool {
         (self.0 & !INDEX_MASK).rotate_left(1) != 0
     }
@@ -58,7 +44,6 @@ impl DataIndex {
     /// Create a null data index.
     ///
     /// A null data index is used to signify that the index refers to no data.
-    ///
     pub fn null() -> Self {
         Self(std::u32::MAX >> 1)
     }
@@ -75,8 +60,6 @@ impl std::fmt::Debug for DataIndex {
 }
 
 /// An Index is used by the AnimatableStorage and contains a data index and an animation index.
-///
-///
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct InlineIndex {
     data_index: DataIndex,
@@ -151,30 +134,17 @@ impl<T> AnimatableSet<T>
 where
     T: 'static + Default + Clone + Interpolator + PartialEq + std::fmt::Debug,
 {
-    /// Create a new empty animatable storage
+    /// Create a new empty animatable storage.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Insert an inline value for an entity
-    ///
-    /// # Example
-    /// ```
-    /// let mut background_color = AnimatableStorage<Color>;
-    /// background_color.insert(entity, Color::red())
-    /// ```
+    /// Insert an inline value for an entity.
     pub fn insert(&mut self, entity: Entity, value: T) {
         self.inline_data.insert(entity, value).unwrap();
     }
 
-    /// Remove an entity and any inline data
-    ///
-    /// # Example
-    /// ```
-    /// let mut background_color = AnimatableStorage<Color>;
-    /// background_color.insert(entity, Color::red())
-    /// background_color.remove(entity);
-    /// ```
+    /// Remove an entity and any inline data.
     pub fn remove(&mut self, entity: Entity) -> Option<T> {
         let entity_index = entity.index();
 
@@ -395,13 +365,7 @@ where
         false
     }
 
-    /// Returns a reference to any inline data on the entity if it exists
-    ///
-    ///
-    /// # Example
-    /// ```
-    /// animatable_storage.get_inline(entity);
-    /// ```
+    /// Returns a reference to any inline data on the entity if it exists.
     pub fn get_inline(&self, entity: Entity) -> Option<&T> {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
@@ -414,13 +378,7 @@ where
         None
     }
 
-    /// Returns a mutable reference to any inline data on the entity if it exists
-    ///
-    ///
-    /// # Example
-    /// ```
-    /// animatable_storage.get_inline_mut(entity);
-    /// ```
+    /// Returns a mutable reference to any inline data on the entity if it exists.
     pub fn get_inline_mut(&mut self, entity: Entity) -> Option<&mut T> {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
@@ -433,24 +391,12 @@ where
         None
     }
 
-    /// Returns a reference to any shared data for a given rule if it exists
-    ///
-    ///
-    /// # Example
-    /// ```
-    /// animatable_storage.get_shared(entity);
-    /// ```
+    /// Returns a reference to any shared data for a given rule if it exists.
     pub fn get_shared(&self, rule: Rule) -> Option<&T> {
         self.shared_data.get(rule)
     }
 
-    /// Returns a mutable reference to any shared data for a given rule if it exists
-    ///
-    ///
-    /// # Example
-    /// ```
-    /// animatable_storage.get_shared_mut(Entity::root());
-    /// ```
+    /// Returns a mutable reference to any shared data for a given rule if it exists.
     pub fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut T> {
         self.shared_data.get_mut(rule)
     }
@@ -463,12 +409,7 @@ where
         self.animations.get_mut(animation)
     }
 
-    /// Get the animated, inline, or shared data value from the storage
-    ///
-    /// # Example
-    /// ```
-    /// animatable_storage.get(entity);
-    /// ```
+    /// Get the animated, inline, or shared data value from the storage.
     pub fn get(&self, entity: Entity) -> Option<&T> {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
@@ -494,7 +435,7 @@ where
         None
     }
 
-    /// Link an entity to some shared data
+    /// Link an entity to some shared data.
     pub fn link(&mut self, entity: Entity, rules: &[Rule]) -> bool {
         let entity_index = entity.index();
 
@@ -611,7 +552,7 @@ mod tests {
 
     // DataIndex tests
 
-    /// Test for creating an inline data index and retrieving the index
+    /// Test for creating an inline data index and retrieving the index.
     #[test]
     fn inline() {
         let data_index = DataIndex::inline(5);
@@ -619,14 +560,14 @@ mod tests {
         assert_eq!(data_index.index(), 5);
     }
 
-    /// Test that an invalid (too large) inline index causes a panic
+    /// Test that an invalid (too large) inline index causes a panic.
     #[test]
     #[should_panic]
     fn invalid_inline() {
         DataIndex::inline(std::usize::MAX);
     }
 
-    /// Test for creating a shared data index and retrieving the index
+    /// Test for creating a shared data index and retrieving the index.
     #[test]
     fn shared() {
         let data_index = DataIndex::shared(5);
@@ -634,14 +575,14 @@ mod tests {
         assert_eq!(data_index.index(), 5);
     }
 
-    /// Test that an invalid (too large) shared index causes a panic
+    /// Test that an invalid (too large) shared index causes a panic.
     #[test]
     #[should_panic]
     fn invalid_shared() {
         DataIndex::shared(std::usize::MAX);
     }
 
-    /// Test of the is_inline() method
+    /// Test of the is_inline() method.
     #[test]
     fn is_inline() {
         let data_index1 = DataIndex::inline(5);
@@ -650,7 +591,7 @@ mod tests {
         assert_eq!(data_index2.is_inline(), false);
     }
 
-    /// Test that a null data index is the correct value #7FFFFFFF (i.e. all bits = 1 except the first bit)
+    /// Test that a null data index is the correct value #7FFFFFFF (i.e. all bits = 1 except the first bit).
     #[test]
     fn null() {
         let data_index = DataIndex::null();
@@ -659,7 +600,7 @@ mod tests {
 
     // AnimatableStorage tests
 
-    /// Test for constructing a new empty animatable storage
+    /// Test for constructing a new empty animatable storage.
     #[test]
     fn new() {
         let animatable_storage = AnimatableSet::<f32>::new();
@@ -669,7 +610,7 @@ mod tests {
         assert_eq!(animatable_storage.active_animations.is_empty(), true);
     }
 
-    /// Test inserting inline data into the storage
+    /// Test inserting inline data into the storage.
     #[test]
     fn insert_inline() {
         let mut animatable_storage = AnimatableSet::new();

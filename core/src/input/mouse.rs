@@ -16,22 +16,6 @@ pub enum MouseButtonState {
     Released,
 }
 
-// Todo - replace with bitmask
-/// The current state of the modifier keys.
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub struct ModifiersState {
-    pub shift: bool,
-    pub ctrl: bool,
-    pub alt: bool,
-    pub logo: bool,
-}
-
-impl Default for ModifiersState {
-    fn default() -> Self {
-        ModifiersState { shift: false, ctrl: false, alt: false, logo: false }
-    }
-}
-
 /// Data which describes the current state of a mouse button.
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct MouseButtonData {

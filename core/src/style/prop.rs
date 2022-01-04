@@ -16,11 +16,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Adds an event with a `WindowEvent::Close` message to the event queue to be sent up the tree
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root();
+    /// ```compile_fail
     /// entity.emit(cx, WindowEvent::WindowClose);
     /// ```
     fn emit(&self, cx: &mut Context, message: impl Message) -> Entity
@@ -41,12 +37,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Adds an event with a `WindowEvent::Close` message to the event queue to be sent directly to the `target` entity
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root();
-    /// # let target = Entity::root();
+    /// ```compile_fail
     /// entity.emit_to(cx, target, WindowEvent::WindowClose);
     /// ```
     fn emit_to(&self, cx: &mut Context, target: Entity, message: impl Message) -> Entity {
@@ -98,11 +89,7 @@ pub trait PropSet: AsEntity + Sized {
     /// Sends a `WindowEvent::Restyle` message to the root window.
     ///
     /// # Example
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root();
+    /// ```compile_fail
     /// entity.restyle(cx);
     /// ```
     fn restyle(&self, cx: &mut Context) {
@@ -116,11 +103,7 @@ pub trait PropSet: AsEntity + Sized {
     /// Sends a `WindowEvent::Relayout` message to the root window.
     ///
     /// # Example
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root();
+    /// ```compile_fail
     /// entity.relayout(cx);
     /// ```
     fn relayout(&self, cx: &mut Context) {
@@ -134,11 +117,7 @@ pub trait PropSet: AsEntity + Sized {
     /// Sends a `WindowEvent::Redraw` message to the root window.
     ///
     /// # Example
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root();
+    /// ```compile_fail
     /// entity.redraw(cx);
     /// ```
     fn redraw(&self, cx: &mut Context) {
@@ -168,20 +147,12 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Examples
     /// Adds a class name `foo` and to an entity:
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root();
+    /// ```compile_fail
     /// entity.class(cx, "foo");
     /// ```
     ///
     /// Adds a class name `foo` and a class name `bar` to an entity:
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root();
+    /// ```compile_fail
     /// entity.class(cx, "foo").class(cx, "bar");
     /// ```
     fn class(self, cx: &mut Context, class_name: &str) -> Entity {
@@ -225,11 +196,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Sets the entity to disabled:
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root();
+    /// ```compile_fail
     /// entity.set_disabled(cx, true);
     /// ```
     fn set_disabled(self, cx: &mut Context, value: bool) -> Entity {
@@ -259,11 +226,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Sets the entity to checked:
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root();
+    /// ```compile_fail
     /// entity.set_checked(cx, true);
     /// ```
     fn set_checked(self, cx: &mut Context, value: bool) -> Entity {
@@ -347,11 +310,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Examples
     /// Sets the entity to be invisible:
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root();
+    /// ```compile_fail
     /// entity.set_visibility(cx, Visibility::Invisible);
     /// ```
     fn set_visibility(self, cx: &mut Context, value: Visibility) -> Entity {
@@ -459,11 +418,7 @@ pub trait PropSet: AsEntity + Sized {
     /// invisible but remain part of layout, use `set_visibility()`.
     ///
     /// # Example
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root();
+    /// ```compile_fail
     /// entity.set_display(cx, Display::None);
     /// ```
     fn set_display(self, cx: &mut Context, value: Display) -> Entity {
@@ -528,11 +483,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Set the entity to be self-directed, ignroing the size and positioning of its siblings:
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// ```compile_fail
     /// entity.set_position_type(cx, PositionType::SelfDirected);
     /// ```
     ///
@@ -558,11 +509,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// Examples:
     /// Position a solo entity in the center of its parent by adding stretch space to all sides:
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// ```compile_fail
     /// entity.set_space(cx, Stretch(1.0));
     /// ```
     ///
@@ -589,11 +536,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Examples
     /// Position an entity 5 pixels from the left edge of its parent
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// ```compile_fail
     /// entity.set_left(cx, Pixels(5.0));
     /// ```
     ///
@@ -622,20 +565,12 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Examples
     /// Position an entity 5 pixels from the right edge of its parent. Notice that left space must be set to stretch.
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// ```compile_fail
     /// entity.set_right(cx, Pixels(5.0)).set_left(cx, Stretch(1.0));
     /// ```
     ///
     /// Center the entity horizontally by adding stretch space to the left and right sides.
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// ```compile_fail 
     /// entity.set_left(cx, Stretch(1.0)).set_right(cx, Stretch(1.0));
     /// ```
     fn set_right(self, cx: &mut Context, value: Units) -> Entity {
@@ -840,11 +775,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Set the entity to display the text `Hello World`.
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root();
+    /// ```compile_fail
     /// entity.set_text(cx, "Hello World");
     /// ```
     fn set_text(self, cx: &mut Context, text: &str) -> Entity {
@@ -865,11 +796,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Sets the font to the icon font (entypo) for the text displayed within the entity:
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// ```compile_fail
     /// entity.set_font(cx, "icon");
     /// ```
     fn set_font(self, cx: &mut Context, font: &str) -> Entity {
@@ -883,11 +810,7 @@ pub trait PropSet: AsEntity + Sized {
     /// Set the size of the font for the text displayed within the entity.
     ///
     /// # Example
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// ```compile_fail 
     /// entity.set_font_size(cx, 20.0);
     /// ```
     ///
@@ -908,11 +831,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Set the font color to red:
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// ```compile_fail
     /// entity.set_color(cx, Color::red());
     /// ```
     ///
@@ -950,12 +869,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Examples
     /// Set the background color of the entity to red:
-    /// ```
-    /// # use vizia_core::*;
-    /// # use vizia_core::Color;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// ```compile_fail
     /// entity.set_background_color(cx, Color::red());
     /// ```
     /// Set the background color of the entity with individual red, green, and blue components:
@@ -1003,11 +917,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Set the border width of the entity to 2 pixels and set the border color to black:
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// ```compile_fail 
     /// entity.set_border_width(cx, Units::Pixels(2.0)).set_border_color(cx, Color::black());
     /// ```
     ///
@@ -1029,11 +939,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Set the border width of the entity to 2 pixels and set the border color to black:
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// ```compile_fail 
     /// entity.set_border_width(cx, Units::Pixels(2.0)).set_border_color(cx, Color::black());
     /// ```
     ///
@@ -1056,11 +962,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// # Example
     /// Sets the border corner shape to bevelled witn a radius of 10 pixels
-    /// ```
-    /// # use vizia_core::*;
-    /// # let mut context = Context::default();
-    /// # let cx = &mut context;
-    /// # let entity = Entity::root(); 
+    /// ```compile_fail 
     /// entity.set_border_corner_shape(cx, BorderCornerShape::Bevel).set_border_radius(cx, Pixels(10.0));
     /// ```
     ///

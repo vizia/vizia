@@ -91,11 +91,13 @@ impl Application {
     /// push events into the queue every time the callback runs unless this is intended.
     ///
     /// # Example
-    /// ```
-    /// Application::new(WindowDescription::new(), |state, window|{
+    /// ```no_run
+    /// # use vizia_core::*;
+    /// # use vizia_glutin::application::Application;
+    /// Application::new(WindowDescription::new(), |cx|{
     ///     // Build application here
     /// })
-    /// .on_idle(|state|{
+    /// .on_idle(|cx|{
     ///     // Code here runs at the end of every event loop after OS and tuix events have been handled
     /// })
     /// .run();
