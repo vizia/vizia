@@ -368,17 +368,21 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
         return false;
     }
 
-    // Check for pseudo-class match
-    // if let Some(pseudo_classes) = cx.style.borrow().pseudo_classes.get(entity) {
-    //     if !selector.pseudo_classes.is_empty()
-    //         && !selector.pseudo_classes.intersects(*pseudo_classes)
-    //     {
-    //         return false;
-    //     }
-    // }
-
+    // Disabled needs to be handled separately because it can be inherited
     if let Some(disabled) = cx.style.borrow().disabled.get(entity) {
         if !selector.pseudo_classes.is_empty() && *disabled != selector.pseudo_classes.contains(PseudoClass::DISABLED)
+        {
+            return false;
+        }
+    }
+
+    // Check for pseudo-class match
+    if let Some(pseudo_classes) = cx.style.borrow().pseudo_classes.get(entity) {
+        let mut selector_pseudo_classes = selector.pseudo_classes;
+        selector_pseudo_classes.set(PseudoClass::DISABLED, false);
+        
+        if !selector_pseudo_classes.is_empty()
+            && !selector_pseudo_classes.intersects(*pseudo_classes)
         {
             return false;
         }

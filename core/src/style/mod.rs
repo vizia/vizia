@@ -275,7 +275,7 @@ pub struct Style {
 
     pub elements: SparseSet<String>,
     pub classes: SparseSet<HashSet<String>>,
-    pub pseudo_classes: StyleSet<PseudoClass>,
+    pub pseudo_classes: SparseSet<PseudoClass>,
     pub disabled: StyleSet<bool>,
     pub abilities: SparseSet<Abilities>,
 
@@ -1482,9 +1482,9 @@ impl Style {
 
     // Add style data to an entity
     pub fn add(&mut self, entity: Entity) {
-        // self.pseudo_classes
-        //     .insert(entity, PseudoClass::default())
-        //     .expect("Failed to add pseudoclasses");
+        self.pseudo_classes
+            .insert(entity, PseudoClass::default())
+            .expect("Failed to add pseudoclasses");
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
 
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
