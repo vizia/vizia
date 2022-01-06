@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+use crate::PseudoClass;
 use crate::style::Display;
 use crate::Abilities;
 use crate::Entity;
@@ -74,6 +75,7 @@ pub struct CachedData {
     pub(crate) opacity: SparseSet<f32>,
 
     pub(crate) abilities: SparseSet<Abilities>,
+    pub(crate) pseudo_classes: SparseSet<PseudoClass>,
 
     pub(crate) z_index: SparseSet<i32>,
 
@@ -146,6 +148,7 @@ impl CachedData {
         self.geometry_changed.insert(entity, Default::default())?;
 
         self.abilities.insert(entity, Default::default())?;
+        self.pseudo_classes.insert(entity, Default::default())?;
 
         // let key = entity.index_unchecked();
 
@@ -224,6 +227,7 @@ impl CachedData {
         self.geometry_changed.remove(entity);
 
         self.abilities.remove(entity);
+        self.pseudo_classes.remove(entity);
     }
 
     // For getters and setters it's safe to use unwrap because every entity must have a position and size.

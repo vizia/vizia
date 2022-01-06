@@ -3,7 +3,7 @@ use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 use morphorm::{LayoutType, PositionType, Units};
 
 use crate::{
-    style::Overflow, Abilities, Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility,
+    style::Overflow, Abilities, Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility, BorderCornerShape,
 };
 
 macro_rules! set_style {
@@ -62,11 +62,36 @@ impl<T> Handle<T> {
     }
 
     pub fn checked(self, state: bool) -> Self {
-        if let Some(pseudo_classes) = self.style.borrow_mut().pseudo_classes.get_mut(self.entity) {
+        let style = self.style.clone();
+        let mut borrow = style.borrow_mut();
+        if let Some(pseudo_classes) = borrow.pseudo_classes.get_mut(self.entity) {
             pseudo_classes.set(PseudoClass::CHECKED, state);
+        } else {
+            let mut pseudoclass = PseudoClass::empty();
+            pseudoclass.set(PseudoClass::CHECKED, state);
+            borrow.pseudo_classes.insert(self.entity, pseudoclass);
         }
+        
+        borrow.needs_restyle = true;
 
+        self
+    }
+
+    pub fn disabled(self, state: bool) -> Self {
+
+        self.style.borrow_mut().disabled.insert(self.entity, state);
         self.style.borrow_mut().needs_restyle = true;
+        // let style = self.style.clone();
+        // let mut borrow = style.borrow_mut();
+        // if let Some(pseudo_classes) = borrow.pseudo_classes.get_mut(self.entity) {
+        //     pseudo_classes.set(PseudoClass::DISABLED, state);
+        // } else {
+        //     let mut pseudoclass = PseudoClass::empty();
+        //     pseudoclass.set(PseudoClass::DISABLED, state);
+        //     borrow.pseudo_classes.insert(self.entity, pseudoclass);
+        // }
+        
+        // borrow.needs_restyle = true;
 
         self
     }
@@ -118,6 +143,17 @@ impl<T> Handle<T> {
         self
     }
 
+    pub fn border_radius(self, value: Units) -> Self {
+        self.style.borrow_mut().border_radius_top_left.insert(self.entity, value);
+        self.style.borrow_mut().border_radius_top_right.insert(self.entity, value);
+        self.style.borrow_mut().border_radius_bottom_left.insert(self.entity, value);
+        self.style.borrow_mut().border_radius_bottom_right.insert(self.entity, value);
+
+        self.style.borrow_mut().needs_redraw = true;
+
+        self
+    }
+
     pub fn space(self, value: Units) -> Self {
         self.style.borrow_mut().left.insert(self.entity, value);
         self.style.borrow_mut().right.insert(self.entity, value);
@@ -156,6 +192,12 @@ impl<T> Handle<T> {
 
         self.style.borrow_mut().needs_relayout = true;
         self.style.borrow_mut().needs_redraw = true;
+
+        self
+    }
+
+    pub fn color(self, color: Color) -> Self {
+        self.style.borrow_mut().font_color.insert(self.entity, color);
 
         self
     }
@@ -209,4 +251,16 @@ impl<T> Handle<T> {
 
     set_style!(rotate, f32);
     set_style!(translate, (f32, f32));
+
+    set_style!(border_shape_top_left, BorderCornerShape);
+    set_style!(border_shape_top_right, BorderCornerShape);
+    set_style!(border_shape_bottom_left, BorderCornerShape);
+    set_style!(border_shape_bottom_right, BorderCornerShape);
+
+    set_style!(border_radius_top_left, Units);
+    set_style!(border_radius_top_right, Units);
+    set_style!(border_radius_bottom_left, Units);
+    set_style!(border_radius_bottom_right, Units);
+
+
 }

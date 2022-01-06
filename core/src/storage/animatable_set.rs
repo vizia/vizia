@@ -2,7 +2,9 @@ use crate::{Animation, AnimationState, Entity, GenerationalId, Interpolator, Rul
 
 use super::sparse_set::{DenseIndex, SparseSet, SparseSetGeneric};
 
-const INDEX_MASK: u32 = std::u32::MAX / 2;
+const INDEX_MASK: u32 = std::u32::MAX / 4;
+const INLINE_MASK: u32 = 1 << 31;
+const INHERITED_MASK: u32 = 1 << 30;
 
 /// Represents an index that can either be used to retrieve inline or shared data
 ///
@@ -20,8 +22,13 @@ impl DataIndex {
     /// the index refers to inline data.
     pub fn inline(index: usize) -> Self {
         assert!((index as u32) < INDEX_MASK);
-        let value = (index as u32) | !INDEX_MASK;
+        let value = (index as u32) | INLINE_MASK;
         Self(value)
+    }
+
+    pub fn inherited(mut self) -> Self {
+        let mut value = self.0;
+        Self(value | INHERITED_MASK)
     }
 
     /// Create a new data index with the first bit set to 0, indicating that
@@ -38,7 +45,12 @@ impl DataIndex {
 
     /// Returns true if the data index refers to inline data.
     pub fn is_inline(&self) -> bool {
-        (self.0 & !INDEX_MASK).rotate_left(1) != 0
+        (self.0 & INLINE_MASK).rotate_left(1) != 0
+    }
+
+    /// Returns true if the data index refers to an inherited value
+    pub fn is_inherited(&self) -> bool {
+        (self.0 & INHERITED_MASK).rotate_left(2) != 0
     }
 
     /// Create a null data index.
@@ -160,6 +172,55 @@ where
             None
         }
     }
+
+    pub fn inherit(&mut self, entity: Entity, parent: Entity) -> bool {
+        let entity_index = entity.index();
+        let parent_index = parent.index();
+
+        
+
+        if entity_index >= self.inline_data.sparse.len() {
+            self.inline_data.sparse.resize(entity_index + 1, InlineIndex::null());
+        }
+
+        
+        if parent_index < self.inline_data.sparse.len() {
+            let parent_sparse_index = self.inline_data.sparse[parent_index];
+            //println!("Parent: {} {} {:#034b}", entity, parent, parent_sparse_index.data_index.0);
+
+            //println!("{} {}", parent_sparse_index.data_index.is_inline(), parent_sparse_index.data_index.is_inherited());
+
+            if parent_sparse_index.data_index.is_inline() && parent_sparse_index.data_index.index() < self.inline_data.dense.len() {
+                let entity_sparse_index = self.inline_data.sparse[entity_index];
+                println!("Before: {} {} {:#034b} {:#034b} {:?} {:?}", entity, parent, entity_sparse_index.data_index.0, parent_sparse_index.data_index.0, self.inline_data.get(entity), self.inline_data.get(parent));
+                if entity_sparse_index.data_index.is_inline() && entity_sparse_index.data_index.index() < self.inline_data.dense.len() {
+                    if entity_sparse_index.data_index.is_inherited() {
+                        //let di = DataIndex::inline(parent_sparse_index.data_index.index()).inherited();
+                        //println!("di: {:#034b}", di.0);
+                        self.inline_data.sparse[entity_index] = InlineIndex { data_index: DataIndex::inline(parent_sparse_index.data_index.index()).inherited(), anim_index: std::u32::MAX};
+                        
+                        let entity_sparse_index = self.inline_data.sparse[entity_index];
+                        println!("After: {} {} {:#034b} {:#034b} {:?} {:?}", entity, parent, entity_sparse_index.data_index.0, parent_sparse_index.data_index.0, self.inline_data.dense[entity_sparse_index.index()], self.inline_data.get(parent));
+                        
+                        return true;
+                        
+                    }
+                } else {
+                    //let di = DataIndex::inline(parent_sparse_index.data_index.index()).inherited();
+                    //println!("di: {:#034b}", di.0);
+                    self.inline_data.sparse[entity_index] = InlineIndex { data_index: DataIndex::inline(parent_sparse_index.data_index.index()).inherited(), anim_index: std::u32::MAX};
+                    
+                    let entity_sparse_index = self.inline_data.sparse[entity_index];
+                    println!("After: {} {} {:#034b} {:#034b} {:?} {:?}", entity, parent, entity_sparse_index.data_index.0, parent_sparse_index.data_index.0, self.inline_data.dense[entity_sparse_index.index()], self.inline_data.get(parent));
+                    
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
 
     /// Inserts an animation
     ///
@@ -443,7 +504,7 @@ where
         if entity_index < self.inline_data.sparse.len() {
             let data_index = self.inline_data.sparse[entity_index].data_index;
             // If the data is inline then skip linking as inline data overrides shared data
-            if data_index.is_inline() {
+            if data_index.is_inline() && !data_index.is_inherited() {
                 return false;
             }
         }
@@ -508,7 +569,7 @@ where
 
                 let data_index = self.inline_data.sparse[entity_index].data_index;
                 // Already linked
-                if data_index.index() == shared_data_index.index() {
+                if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
                     return false;
                 }
 

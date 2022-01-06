@@ -3,7 +3,7 @@ use morphorm::Units;
 
 use crate::{
     style::{Overflow, Selector, SelectorRelation},
-    BoundingBox, Context, Display, Entity, FontOrId, Rule, Tree, TreeExt, Visibility,
+    BoundingBox, Context, Display, Entity, FontOrId, Rule, Tree, TreeExt, Visibility, PseudoClass,
 };
 
 // use crate::{BoundingBox, Display, Entity, Overflow, PropGet, PropSet, Property, SelectorRelation, Rule, Selector, Cx, Tree, TreeExt, Visibility};
@@ -275,6 +275,25 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
     }
 }
 
+pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
+    for entity in tree.into_iter() {
+        if let Some(parent) = entity.parent(tree) {
+            // if cx.style.borrow_mut().pseudo_classes.inherit(entity, parent) {
+            //     println!("Inherit: {} {}", entity, parent);
+            // }
+
+            cx.style.borrow_mut().disabled.inherit(entity, parent);
+            
+            cx.style.borrow_mut().border_shape_top_left.inherit(entity, parent);
+            cx.style.borrow_mut().border_shape_top_right.inherit(entity, parent);
+            cx.style.borrow_mut().border_shape_bottom_left.inherit(entity, parent);
+            cx.style.borrow_mut().border_shape_bottom_right.inherit(entity, parent);
+
+            cx.style.borrow_mut().font_color.inherit(entity, parent);
+        }
+    }
+}
+
 // pub fn apply_abilities(cx: &mut Context, tree: &Tree) {
 //     let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
 //     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
@@ -348,9 +367,16 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     }
 
     // Check for pseudo-class match
-    if let Some(pseudo_classes) = cx.style.borrow().pseudo_classes.get(entity) {
-        if !selector.pseudo_classes.is_empty()
-            && !selector.pseudo_classes.intersects(*pseudo_classes)
+    // if let Some(pseudo_classes) = cx.style.borrow().pseudo_classes.get(entity) {
+    //     if !selector.pseudo_classes.is_empty()
+    //         && !selector.pseudo_classes.intersects(*pseudo_classes)
+    //     {
+    //         return false;
+    //     }
+    // }
+
+    if let Some(disabled) = cx.style.borrow().disabled.get(entity) {
+        if !selector.pseudo_classes.is_empty() && *disabled != selector.pseudo_classes.contains(PseudoClass::DISABLED)
         {
             return false;
         }

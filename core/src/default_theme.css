@@ -63,8 +63,12 @@ label.h1 {
     bottom: 10px;
 }
 
+label:disabled {
+    color: gray;
+}
+
 checkbox {
-    color: black;
+    /* color: black; */
 }
 
 hstack {
@@ -88,6 +92,11 @@ checkbox {
     border-color: black;
     font: icons;
     child-space: 1s;
+}
+
+checkbox:disabled {
+    color: gray;
+    border-color: gray;
 }
 
 dropdown .title {

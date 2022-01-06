@@ -1,38 +1,51 @@
 use vizia::*;
 
+
 const STYLE: &str = r#"
     .test {
-        space: 100px;
-        background-color: green;
-    }
 
-    .test:hover {
-        background-color: red;
     }
 "#;
 
-// Example showing how to set a custom property on a view
+
+#[derive(Default, Lens)]
+pub struct AppData {
+    value: bool,
+}
+
+impl Model for AppData {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        if let Some(app_event) = event.message.downcast() {
+            match app_event {
+                AppEvent::ToggleValue => {
+                    self.value ^= true;
+                }
+            }
+        } 
+    }
+}
+
+#[derive(Debug)]
+pub enum AppEvent {
+    ToggleValue,
+}
+
 fn main() {
     Application::new(WindowDescription::new().with_title("Test"), |cx| {
+        
         cx.add_theme(STYLE);
-
-        Element::new(cx).class("test").width(Pixels(100.0)).height(Pixels(100.0)).rotate(30.0);
-        // VStack::new().build(cx, |cx| {
-        //     Label::new("Hello").build(cx);
-        //     Label::new("World").build(cx);
-        // });
-        // VStack::new(cx, |cx|{
-        //     HStack::new(cx, |cx|{
-        //         Label::new(cx, "Hello");
-        //         Label::new(cx, "World");
-
-        //         VStack::new(cx, |cx|{
-        //             Label::new(cx, "Hello");
-        //             Label::new(cx, "World");
-        //         });
-
-        //     }).width(Pixels(200.0)).height(Pixels(200.0)).background_color(Color::green()).custom_prop(cx, 3.14);
-        // });
+        
+        AppData::default().build(cx);
+        
+        HStack::new(cx, |cx|{
+            // Binding::new(cx, AppData::value, |cx, value|{
+            //     Checkbox::new(cx, *value.get(cx))
+            //         .on_toggle(cx, |cx| cx.emit(AppEvent::ToggleValue));
+            // });
+            Label::new(cx, "Press Me");
+        }).col_between(Pixels(5.0)).color(Color::red());
     })
     .run();
 }
+
+// .border_shape_top_left(BorderCornerShape::Bevel)
