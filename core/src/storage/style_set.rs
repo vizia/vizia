@@ -344,7 +344,7 @@ mod tests {
     #[test]
     fn inline() {
         let data_index = DataIndex::inline(5);
-        assert_eq!(data_index.0, !INDEX_MASK + 5);
+        assert_eq!(data_index.0, INLINE_MASK + 5);
         assert_eq!(data_index.index(), 5);
     }
 
