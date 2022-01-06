@@ -57,7 +57,7 @@ impl Knob {
                     let height = cx.cache.get_height(cx.current);
                     let width = cx.cache.get_width(cx.current);
                     let radius = height.min(width) / 2.;
-                    ArcTrack::new(cx, *value.get(cx), centered, Pixels(radius))
+                    ArcTrack::new(cx, *value.get(cx), centered, Pixels(radius), Percentage(15.), 300.)
                         .width(Stretch(1.0))
                         .height(Stretch(1.0))
                         .class("track");
@@ -202,19 +202,20 @@ pub struct ArcTrack {
     angle_end: f32,
     radius: Units,
     span: Units,
-
     normalized_value: f32,
 
     center: bool,
 }
 
 impl ArcTrack {
-    pub fn new(cx: &mut Context, value: f32, center: bool, radius: Units) -> Handle<Self> {
+    pub fn new(cx: &mut Context, value: f32, center: bool, radius: Units, span: Units, arc_len: f32) -> Handle<Self> {
         Self {
-            angle_start: -150.0,
-            angle_end: 150.0,
+            // angle_start: -150.0,
+            // angle_end: 150.0,
+            angle_start: -arc_len / 2.,
+            angle_end: arc_len / 2.,
             radius,
-            span: Units::Pixels(5.0),
+            span,
 
             normalized_value: value,
 
@@ -258,11 +259,9 @@ impl View for ArcTrack {
         let parent_width = cx.cache.get_width(parent);
 
         // Convert radius and span into screen coordinates
-        // let radius = parent_width.min(parent_height);
-        // let span = self.span.value_or(parent_width, 0.0);
         let radius = self.radius.value_or(parent_width, 0.0);
-        // set span to 15 % of radius. Original span value was 16.667%
-        let span = Percentage(15.).value_or(radius, 0.0);
+        // default value of span is 15 % of radius. Original span value was 16.667%
+        let span = self.span.value_or(radius, 0.0);
         
         // Draw the track arc
         let mut path = Path::new();
