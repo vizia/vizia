@@ -2,8 +2,8 @@ use vizia::*;
 
 
 const STYLE: &str = r#"
-    .test {
-
+    hstack {
+        color: green;
     }
 "#;
 
@@ -38,12 +38,12 @@ fn main() {
         AppData::default().build(cx);
         
         HStack::new(cx, |cx|{
-            // Binding::new(cx, AppData::value, |cx, value|{
-            //     Checkbox::new(cx, *value.get(cx))
-            //         .on_toggle(cx, |cx| cx.emit(AppEvent::ToggleValue));
-            // });
+            Binding::new(cx, AppData::value, |cx, value|{
+                Checkbox::new(cx, *value.get(cx))
+                    .on_toggle(cx, |cx| cx.emit(AppEvent::ToggleValue));
+            });
             Label::new(cx, "Press Me");
-        }).col_between(Pixels(5.0)).color(Color::red());
+        }).col_between(Pixels(5.0)).color(Color::red()).disabled(true);
     })
     .run();
 }

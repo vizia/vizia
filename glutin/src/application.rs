@@ -12,7 +12,7 @@ use glutin::{
 
 use vizia_core::{
     apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
-    apply_visibility, apply_z_ordering, geometry_changed, apply_inline_inheritance, AppData, BoundingBox, CachedData, Color,
+    apply_visibility, apply_z_ordering, geometry_changed, apply_inline_inheritance, apply_shared_inheritance, AppData, BoundingBox, CachedData, Color,
     Context, Display, Entity, Env, Enviroment, Event, EventManager, FontOrId, IdManager, Modifiers,
     MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt,
     Units, Visibility, WindowDescription, WindowEvent, PseudoClass
@@ -192,8 +192,7 @@ impl Application {
 
         context.style.borrow_mut().pseudo_classes.insert(Entity::root(), PseudoClass::default());
         context.style.borrow_mut().disabled.insert(Entity::root(), false);
-        context.style.borrow_mut().font_color.insert(Entity::root(), Color::black());
-
+        
         let mut bounding_box = BoundingBox::default();
         bounding_box.w = size.width as f32;
         bounding_box.h = size.height as f32;
@@ -315,6 +314,8 @@ impl Application {
                         apply_styles(&mut context, &tree);
                     //    context.style.borrow_mut().needs_restyle = false;
                     //}
+
+                    apply_shared_inheritance(&mut context, &tree);
 
                     
 

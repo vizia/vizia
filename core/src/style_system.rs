@@ -278,21 +278,23 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
         if let Some(parent) = entity.parent(tree) {
-            // if cx.style.borrow_mut().pseudo_classes.inherit(entity, parent) {
-            //     println!("Inherit: {} {}", entity, parent);
-            // }
 
-            cx.style.borrow_mut().disabled.inherit(entity, parent);
+            cx.style.borrow_mut().disabled.inherit_inline(entity, parent);
             
-            cx.style.borrow_mut().border_shape_top_left.inherit(entity, parent);
-            cx.style.borrow_mut().border_shape_top_right.inherit(entity, parent);
-            cx.style.borrow_mut().border_shape_bottom_left.inherit(entity, parent);
-            cx.style.borrow_mut().border_shape_bottom_right.inherit(entity, parent);
-
-            cx.style.borrow_mut().font_color.inherit(entity, parent);
+            cx.style.borrow_mut().font_color.inherit_inline(entity, parent);
         }
     }
 }
+
+pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
+    for entity in tree.into_iter() {
+        if let Some(parent) = entity.parent(tree) {
+            cx.style.borrow_mut().font_color.inherit_shared(entity, parent);
+        }
+    }
+}
+
+
 
 // pub fn apply_abilities(cx: &mut Context, tree: &Tree) {
 //     let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
