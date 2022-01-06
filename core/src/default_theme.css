@@ -1,5 +1,5 @@
 
-/* Filled Button */
+
 button {
     background-color: #2000AA;
     width: auto;
@@ -68,7 +68,7 @@ label:disabled {
 }
 
 checkbox {
-    /* color: black; */
+    color: black;
 }
 
 hstack {
