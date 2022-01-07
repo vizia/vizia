@@ -38,7 +38,7 @@ where
             let id = cx.entity_manager.create();
             cx.tree.add(id, cx.current).expect("Failed to add to tree");
             cx.cache.add(id).expect("Failed to add to cache");
-            cx.style.borrow_mut().add(id);
+            cx.style.add(id);
             id
         };
 
@@ -89,7 +89,7 @@ where
             cx.views.insert(id, view_handler);
         }
 
-        let _: Handle<Self> = Handle { entity: id, style: cx.style.clone(), p: Default::default(), cx }
+        let _: Handle<Self> = Handle { entity: id, p: Default::default(), cx }
             .width(Units::Stretch(1.0))
             .height(Units::Stretch(1.0))
             .background_color(Color::blue())

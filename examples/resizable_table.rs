@@ -105,7 +105,7 @@ impl View for ResizableItem {
                     let dx = *x - cx.mouse.left.pos_down.0;
                     if self.resizing {
                         //println!("dx: {} {}", dx, cx.current);
-                        cx.style.borrow_mut().width.insert(cx.current, Pixels(200.0 + dx));
+                        cx.style.width.insert(cx.current, Pixels(200.0 + dx));
                         if let Some(callback) = self.on_size.take() {
                             (callback)(cx, dx);
 

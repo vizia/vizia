@@ -111,7 +111,7 @@ impl View for Checkbox {
                         // if self.checked {
                         //     self.checked = false;
                         //     if let Some(pseudo_classes) =
-                        //         cx.style.borrow_mut().pseudo_classes.get_mut(cx.current)
+                        //         cx.style.pseudo_classes.get_mut(cx.current)
                         //     {
                         //         pseudo_classes.set(PseudoClass::CHECKED, false);
                         //     }
@@ -127,7 +127,7 @@ impl View for Checkbox {
                         // } else {
                         //     self.checked = true;
                         //     if let Some(pseudo_classes) =
-                        //         cx.style.borrow_mut().pseudo_classes.get_mut(cx.current)
+                        //         cx.style.pseudo_classes.get_mut(cx.current)
                         //     {
                         //         pseudo_classes.set(PseudoClass::CHECKED, true);
                         //     }

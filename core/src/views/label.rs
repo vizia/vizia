@@ -21,7 +21,7 @@ impl Label {
         //     let pattern = message.value().expect("Message has no value.");
         //     let mut errors = vec![];
         //     let value = cx.enviroment.bundle.format_pattern(&pattern, None, &mut errors);
-        //     cx.style.borrow_mut().text.insert(handle.entity, value.to_string());
+        //     cx.style.text.insert(handle.entity, value.to_string());
         // }
 
         handle
@@ -46,7 +46,7 @@ impl<'a> Handle<'a, Label> {
         //     }
         // }
 
-        self.cx.style.borrow_mut().background_color.insert(self.entity, *test.get(self.cx));
+        self.cx.style.background_color.insert(self.entity, *test.get(self.cx));
 
         self
     }

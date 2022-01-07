@@ -24,14 +24,14 @@ pub trait View: 'static + Sized {
             let id = cx.entity_manager.create();
             cx.tree.add(id, cx.current).expect("Failed to add to tree");
             cx.cache.add(id).expect("Failed to add to cache");
-            cx.style.borrow_mut().add(id);
+            cx.style.add(id);
             cx.views.insert(id, Box::new(self));
             id
         };
 
         cx.count += 1;
 
-        let handle = Handle { entity: id, style: cx.style.clone(), p: Default::default(), cx };
+        let handle = Handle { entity: id, p: Default::default(), cx };
 
         // ...and this part
         let prev = handle.cx.current;
@@ -60,7 +60,7 @@ pub trait View: 'static + Sized {
             let id = cx.entity_manager.create();
             cx.tree.add(id, cx.current).expect("Failed to add to tree");
             cx.cache.add(id).expect("Failed to add to cache");
-            cx.style.borrow_mut().add(id);
+            cx.style.add(id);
             cx.views.insert(id, Box::new(self));
             id
         };
@@ -74,7 +74,7 @@ pub trait View: 'static + Sized {
         cx.current = id;
         cx.count = 0;
         
-        let handle = Handle { entity: id, style: cx.style.clone(), p: Default::default(), cx };
+        let handle = Handle { entity: id, p: Default::default(), cx };
 
         (builder)(handle.cx);
 
@@ -102,7 +102,7 @@ pub trait View: 'static + Sized {
             let id = cx.entity_manager.create();
             cx.tree.add(id, cx.current).expect("Failed to add to tree");
             cx.cache.add(id).expect("Failed to add to cache");
-            cx.style.borrow_mut().add(id);
+            cx.style.add(id);
             let prev = cx.current;
             cx.current = id;
             let prev_count = cx.count;
@@ -116,7 +116,7 @@ pub trait View: 'static + Sized {
 
         cx.count += 1;
 
-        Handle { entity: id, style: cx.style.clone(), p: Default::default(), cx }
+        Handle { entity: id, p: Default::default(), cx }
     }
 
     fn element(&self) -> Option<String> {
@@ -136,35 +136,35 @@ pub trait View: 'static + Sized {
             return;
         }
 
-        let padding_left = match cx.style.borrow().child_left.get(entity).unwrap_or(&Units::Auto) {
+        let padding_left = match cx.style.child_left.get(entity).unwrap_or(&Units::Auto) {
             Units::Pixels(val) => val,
             _ => &0.0,
         };
 
-        let padding_right = match cx.style.borrow().child_right.get(entity).unwrap_or(&Units::Auto)
+        let padding_right = match cx.style.child_right.get(entity).unwrap_or(&Units::Auto)
         {
             Units::Pixels(val) => val,
             _ => &0.0,
         };
 
-        let padding_top = match cx.style.borrow().child_top.get(entity).unwrap_or(&Units::Auto) {
+        let padding_top = match cx.style.child_top.get(entity).unwrap_or(&Units::Auto) {
             Units::Pixels(val) => val,
             _ => &0.0,
         };
 
         let padding_bottom =
-            match cx.style.borrow().child_bottom.get(entity).unwrap_or(&Units::Auto) {
+            match cx.style.child_bottom.get(entity).unwrap_or(&Units::Auto) {
                 Units::Pixels(val) => val,
                 _ => &0.0,
             };
 
         let background_color =
-            cx.style.borrow().background_color.get(entity).cloned().unwrap_or_default();
+            cx.style.background_color.get(entity).cloned().unwrap_or_default();
 
         let font_color =
-            cx.style.borrow().font_color.get(entity).cloned().unwrap_or(crate::Color::rgb(0, 0, 0));
+            cx.style.font_color.get(entity).cloned().unwrap_or(crate::Color::rgb(0, 0, 0));
 
-        let border_color = cx.style.borrow().border_color.get(entity).cloned().unwrap_or_default();
+        let border_color = cx.style.border_color.get(entity).cloned().unwrap_or_default();
 
         let parent = cx
             .tree
@@ -175,19 +175,19 @@ pub trait View: 'static + Sized {
         let parent_height = cx.cache.get_height(parent);
 
         let border_shape_top_left =
-            cx.style.borrow().border_shape_top_left.get(entity).cloned().unwrap_or_default();
+            cx.style.border_shape_top_left.get(entity).cloned().unwrap_or_default();
 
         let border_shape_top_right =
-            cx.style.borrow().border_shape_top_right.get(entity).cloned().unwrap_or_default();
+            cx.style.border_shape_top_right.get(entity).cloned().unwrap_or_default();
 
         let border_shape_bottom_left =
-            cx.style.borrow().border_shape_bottom_left.get(entity).cloned().unwrap_or_default();
+            cx.style.border_shape_bottom_left.get(entity).cloned().unwrap_or_default();
 
         let border_shape_bottom_right =
-            cx.style.borrow().border_shape_bottom_right.get(entity).cloned().unwrap_or_default();
+            cx.style.border_shape_bottom_right.get(entity).cloned().unwrap_or_default();
 
         let border_radius_top_left =
-            match cx.style.borrow().border_radius_top_left.get(entity).cloned().unwrap_or_default()
+            match cx.style.border_radius_top_left.get(entity).cloned().unwrap_or_default()
             {
                 Units::Pixels(val) => val,
                 Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
@@ -196,7 +196,7 @@ pub trait View: 'static + Sized {
 
         let border_radius_top_right = match cx
             .style
-            .borrow()
+            
             .border_radius_top_right
             .get(entity)
             .cloned()
@@ -209,7 +209,7 @@ pub trait View: 'static + Sized {
 
         let border_radius_bottom_left = match cx
             .style
-            .borrow()
+            
             .border_radius_bottom_left
             .get(entity)
             .cloned()
@@ -222,7 +222,7 @@ pub trait View: 'static + Sized {
 
         let border_radius_bottom_right = match cx
             .style
-            .borrow()
+            
             .border_radius_bottom_right
             .get(entity)
             .cloned()
@@ -242,7 +242,7 @@ pub trait View: 'static + Sized {
         border_color.set_alphaf(border_color.a * opacity);
 
         let border_width =
-            match cx.style.borrow().border_width.get(entity).cloned().unwrap_or_default() {
+            match cx.style.border_width.get(entity).cloned().unwrap_or_default() {
                 Units::Pixels(val) => val,
                 Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
                 _ => 0.0,
@@ -250,7 +250,7 @@ pub trait View: 'static + Sized {
 
         let outer_shadow_h_offset = match cx
             .style
-            .borrow()
+            
             .outer_shadow_h_offset
             .get(entity)
             .cloned()
@@ -263,7 +263,7 @@ pub trait View: 'static + Sized {
 
         let outer_shadow_v_offset = match cx
             .style
-            .borrow()
+            
             .outer_shadow_v_offset
             .get(entity)
             .cloned()
@@ -275,21 +275,21 @@ pub trait View: 'static + Sized {
         };
 
         let outer_shadow_blur =
-            match cx.style.borrow().outer_shadow_blur.get(entity).cloned().unwrap_or_default() {
+            match cx.style.outer_shadow_blur.get(entity).cloned().unwrap_or_default() {
                 Units::Pixels(val) => val,
                 Units::Percentage(val) => bounds.w * (val / 100.0),
                 _ => 0.0,
             };
 
         let outer_shadow_color =
-            cx.style.borrow().outer_shadow_color.get(entity).cloned().unwrap_or_default();
+            cx.style.outer_shadow_color.get(entity).cloned().unwrap_or_default();
 
         let mut outer_shadow_color: femtovg::Color = outer_shadow_color.into();
         outer_shadow_color.set_alphaf(outer_shadow_color.a * opacity);
 
         let inner_shadow_h_offset = match cx
             .style
-            .borrow()
+            
             .inner_shadow_h_offset
             .get(entity)
             .cloned()
@@ -302,7 +302,7 @@ pub trait View: 'static + Sized {
 
         let inner_shadow_v_offset = match cx
             .style
-            .borrow()
+            
             .inner_shadow_v_offset
             .get(entity)
             .cloned()
@@ -314,14 +314,14 @@ pub trait View: 'static + Sized {
         };
 
         let inner_shadow_blur =
-            match cx.style.borrow().inner_shadow_blur.get(entity).cloned().unwrap_or_default() {
+            match cx.style.inner_shadow_blur.get(entity).cloned().unwrap_or_default() {
                 Units::Pixels(val) => val,
                 Units::Percentage(val) => bounds.w * (val / 100.0),
                 _ => 0.0,
             };
 
         let inner_shadow_color =
-            cx.style.borrow().inner_shadow_color.get(entity).cloned().unwrap_or_default();
+            cx.style.inner_shadow_color.get(entity).cloned().unwrap_or_default();
 
         let mut inner_shadow_color: femtovg::Color = inner_shadow_color.into();
         inner_shadow_color.set_alphaf(inner_shadow_color.a * opacity);
@@ -472,7 +472,7 @@ pub trait View: 'static + Sized {
 
         // Draw outer shadow
         /*
-        if cx.style.borrow().outer_shadow_color.get(entity).is_some() {
+        if cx.style.outer_shadow_color.get(entity).is_some() {
 
 
             let sigma = outer_shadow_blur / 2.0;
@@ -569,7 +569,7 @@ pub trait View: 'static + Sized {
         // Fill with background color
         let mut paint = Paint::color(background_color);
 
-        // if let Some(background_image) = cx.style.borrow().background_image.get(entity) {
+        // if let Some(background_image) = cx.style.background_image.get(entity) {
         //     if let Some(image_id) = cx.resource_manager.image_ids.get(background_image) {
         //         match image_id {
         //             crate::ImageOrId::Id(id) => {
@@ -582,7 +582,7 @@ pub trait View: 'static + Sized {
         // }
 
         // Gradient overrides background color
-        if let Some(background_gradient) = cx.style.borrow().background_gradient.get(entity) {
+        if let Some(background_gradient) = cx.style.background_gradient.get(entity) {
             let (_, _, end_x, end_y, parent_length) = match background_gradient.direction {
                 GradientDirection::LeftToRight => (0.0, 0.0, bounds.w, 0.0, parent_width),
                 GradientDirection::TopToBottom => (0.0, 0.0, 0.0, bounds.h, parent_height),
@@ -647,14 +647,14 @@ pub trait View: 'static + Sized {
         // canvas.fill_path(&mut path, paint);
 
         // Draw text
-        if let Some(text) = cx.style.borrow().text.get(entity) {
-            let font = cx.style.borrow().font.get(entity).cloned().unwrap_or_default();
+        if let Some(text) = cx.style.text.get(entity) {
+            let font = cx.style.font.get(entity).cloned().unwrap_or_default();
 
             // TODO - This should probably be cached in cx to save look-up time
             let default_font = cx
                 .resource_manager
                 .fonts
-                .get(&cx.style.borrow().default_font)
+                .get(&cx.style.default_font)
                 .and_then(|font| match font {
                     FontOrId::Id(id) => Some(id),
                     _ => None,
@@ -680,12 +680,12 @@ pub trait View: 'static + Sized {
             let text_string = text.to_owned();
 
             // TODO - Move this to a text layout system and include constraints
-            let child_left = cx.style.borrow().child_left.get(entity).cloned().unwrap_or_default();
+            let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
             let child_right =
-                cx.style.borrow().child_right.get(entity).cloned().unwrap_or_default();
-            let child_top = cx.style.borrow().child_top.get(entity).cloned().unwrap_or_default();
+                cx.style.child_right.get(entity).cloned().unwrap_or_default();
+            let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
             let child_bottom =
-                cx.style.borrow().child_bottom.get(entity).cloned().unwrap_or_default();
+                cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
 
             let align = match child_left {
                 Units::Pixels(val) => match child_right {
@@ -744,7 +744,7 @@ pub trait View: 'static + Sized {
             let mut font_color: femtovg::Color = font_color.into();
             font_color.set_alphaf(font_color.a * opacity);
 
-            let font_size = cx.style.borrow().font_size.get(entity).cloned().unwrap_or(16.0);
+            let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
 
             let mut paint = Paint::color(font_color);
             paint.set_font_size(font_size);
@@ -760,10 +760,10 @@ pub trait View: 'static + Sized {
         // let mut path = Path::new();
         // path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
 
-        // let background_color: femtovg::Color = cx.style.borrow_mut().background_color.get(entity).cloned().unwrap_or_default().into();
+        // let background_color: femtovg::Color = cx.style.background_color.get(entity).cloned().unwrap_or_default().into();
         // canvas.fill_path(&mut path, Paint::color(background_color));
 
-        // if let Some(text) = cx.style.borrow().text.get(entity) {
+        // if let Some(text) = cx.style.text.get(entity) {
         //     let mut paint = Paint::color(femtovg::Color::black());
         //     paint.set_font(&cx.fonts);
         //     paint.set_text_align(Align::Center);

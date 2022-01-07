@@ -30,7 +30,7 @@ impl<V: View> Press<V> {
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default(), cx: handle.cx }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -88,7 +88,7 @@ impl<V: View> Release<V> {
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default(), cx: handle.cx }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -146,7 +146,7 @@ impl<V: View> Hover<V> {
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default(), cx: handle.cx }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -202,7 +202,7 @@ impl<V: View> Over<V> {
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default(), cx: handle.cx }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -256,7 +256,7 @@ impl<V: View> Leave<V> {
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default(), cx: handle.cx }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -312,7 +312,7 @@ impl<V: View> Move<V> {
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default(), cx: handle.cx }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -366,7 +366,7 @@ impl<V: View> Geo<V> {
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default(), cx: handle.cx }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 

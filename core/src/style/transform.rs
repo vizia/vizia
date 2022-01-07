@@ -127,11 +127,11 @@ pub fn apply_transform(cx: &mut Context, tree: &Tree) {
 
         //state.data.set_origin(entity, parent_origin);
 
-        if let Some(translate) = cx.style.borrow().translate.get(entity) {
+        if let Some(translate) = cx.style.translate.get(entity) {
             cx.cache.set_translate(entity, *translate);
         }
 
-        if let Some(rotate) = cx.style.borrow().rotate.get(entity) {
+        if let Some(rotate) = cx.style.rotate.get(entity) {
             let x = bounds.x + (bounds.w / 2.0);
             let y = bounds.y + (bounds.h / 2.0);
             cx.cache.set_translate(entity, (x, y));
@@ -140,7 +140,7 @@ pub fn apply_transform(cx: &mut Context, tree: &Tree) {
         }
         //println!("End");
 
-        if let Some(scale) = cx.style.borrow().scale.get(entity) {
+        if let Some(scale) = cx.style.scale.get(entity) {
             let x = bounds.x + (bounds.w / 2.0);
             let y = bounds.y + (bounds.h / 2.0);
             cx.cache.set_translate(entity, (x, y));
