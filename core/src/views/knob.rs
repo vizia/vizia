@@ -74,14 +74,14 @@ impl Knob {
             });
         })
     }
-    pub fn custom<'a, F>(
+    pub fn custom<'a, F, T>(
         cx: &'a mut Context,
         normalized_default: f32,
         normalized_value: f32,
         content: F
     ) -> Handle<Self> 
     where
-        F: 'static + Fn(&mut Context, f32),
+        F: 'static + Fn(&mut Context, f32) -> Handle<T>,
         {
         Self {
             normalized_value,
@@ -105,8 +105,8 @@ impl Knob {
                     //println!("{}", value.get(cx));
                     let height = cx.cache.get_height(cx.current);
                     let width = cx.cache.get_width(cx.current);
-                    let radius = height.min(width) / 2.;
-                    (content)(cx, *value.get(cx));
+                    // let radius = height.min(width) / 2.;
+                    (content)(cx, *value.get(cx)).width(Percentage(100.0)).height(Percentage(100.0));
                 });
             });
         })
