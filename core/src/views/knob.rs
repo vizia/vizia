@@ -74,6 +74,43 @@ impl Knob {
             });
         })
     }
+    pub fn custom<'a, F>(
+        cx: &'a mut Context,
+        normalized_default: f32,
+        normalized_value: f32,
+        content: F
+    ) -> Handle<Self> 
+    where
+        F: 'static + Fn(&mut Context, f32),
+        {
+        Self {
+            normalized_value,
+            default_normal: normalized_default,
+
+            is_dragging: false,
+            prev_drag_y: 0.0,
+            continuous_normal: normalized_value,
+
+            drag_scalar: DEFAULT_DRAG_SCALAR,
+            wheel_scalar: DEFAULT_WHEEL_SCALAR,
+            modifier_scalar: DEFAULT_MODIFIER_SCALAR,
+
+            on_changing: None,
+        }
+        .build2(cx, move |cx| {
+            SliderData { value: normalized_value.clamp(0.0, 1.0) }.build(cx);
+
+            ZStack::new(cx, move |cx| {
+                Binding::new(cx, SliderData::value, move |cx, value| {
+                    //println!("{}", value.get(cx));
+                    let height = cx.cache.get_height(cx.current);
+                    let width = cx.cache.get_width(cx.current);
+                    let radius = height.min(width) / 2.;
+                    (content)(cx, *value.get(cx));
+                });
+            });
+        })
+    }
 }
 
 impl Handle<Knob> {
