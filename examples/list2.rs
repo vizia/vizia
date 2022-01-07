@@ -11,23 +11,17 @@ fn main() {
                 if *item.value(cx) < 6 {
                     Binding::new(cx, ListData::selected, move |cx, selected| {
                         let item = item.clone();
+                        let is_selected = item.index() == *selected.get(cx);
                         HStack::new(cx, move |cx| {
                             Label::new(cx, "Hello");
                             Label::new(cx, "World");
-                            Label::new(cx, &item.value(cx).to_string()).background_color(
-                                if *item.value(cx) == 40 {
-                                    Color::red()
-                                } else {
-                                    Color::rgba(0, 0, 0, 0)
-                                },
-                            );
                         })
-                        .background_color(if item.index() == *selected.get(cx) {
+                        .background_color(if is_selected {
                             Color::green()
                         } else {
                             Color::blue()
                         })
-                        .on_press(cx, move |cx| cx.emit(ListEvent::SetSelected(item.index())));
+                        .on_press(move |cx| cx.emit(ListEvent::SetSelected(item.index())));
                     });
                 }
             });
@@ -38,21 +32,9 @@ fn main() {
                     HStack::new(cx, move |cx| {
                         Label::new(cx, "Hello");
                         Label::new(cx, "World");
-                        Label::new(cx, &item.value(cx).to_string()).background_color(
-                            if *item.value(cx) == 40 {
-                                Color::red()
-                            } else {
-                                Color::rgba(0, 0, 0, 0)
-                            },
-                        );
                         //Label::new(cx, &item.index().to_string());
                     })
-                    .background_color(if item.index() == *selected.get(cx) {
-                        Color::green()
-                    } else {
-                        Color::blue()
-                    })
-                    .on_press(cx, move |cx| cx.emit(ListEvent::SetSelected(item.index())));
+                    .on_press(move |cx| cx.emit(ListEvent::SetSelected(item.index())));
                 });
             });
 

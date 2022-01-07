@@ -79,7 +79,7 @@ fn main() {
                 HStack::new(cx, |cx| {
                     Binding::new(cx, AppData::options.then(Options::option1), |cx, option1| {
                         Checkbox::new(cx, *option1.get(cx))
-                            .on_toggle(cx, |cx| cx.emit(AppEvent::ToggleOption(0)));
+                            .on_toggle(|cx| cx.emit(AppEvent::ToggleOption(0)));
                     });
                     Label::new(cx, "Option 1");
                 })
@@ -88,7 +88,7 @@ fn main() {
                 HStack::new(cx, |cx| {
                     Binding::new(cx, AppData::options.then(Options::option2), |cx, option2| {
                         Checkbox::new(cx, *option2.get(cx))
-                            .on_toggle(cx, |cx| cx.emit(AppEvent::ToggleOption(1)));
+                            .on_toggle(|cx| cx.emit(AppEvent::ToggleOption(1)));
                     });
                     Label::new(cx, "Option 2");
                 })
@@ -97,7 +97,7 @@ fn main() {
                 HStack::new(cx, |cx| {
                     Binding::new(cx, AppData::options.then(Options::option3), |cx, option3| {
                         Checkbox::new(cx, *option3.get(cx))
-                            .on_toggle(cx, |cx| cx.emit(AppEvent::ToggleOption(2)));
+                            .on_toggle(|cx| cx.emit(AppEvent::ToggleOption(2)));
                     });
                     Label::new(cx, "Option 3");
                 })
@@ -115,7 +115,7 @@ fn main() {
                         AppData::exclusive_options.then(Options::option1),
                         |cx, option1| {
                             Checkbox::new(cx, *option1.get(cx))
-                                .on_toggle(cx, |cx| cx.emit(AppEvent::ToggleExclusiveOption(0)));
+                                .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(0)));
                         },
                     );
                     Label::new(cx, "Option 1");
@@ -128,7 +128,7 @@ fn main() {
                         AppData::exclusive_options.then(Options::option2),
                         |cx, option2| {
                             Checkbox::new(cx, *option2.get(cx))
-                                .on_toggle(cx, |cx| cx.emit(AppEvent::ToggleExclusiveOption(1)));
+                                .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(1)));
                         },
                     );
                     Label::new(cx, "Option 2");
@@ -141,7 +141,7 @@ fn main() {
                         AppData::exclusive_options.then(Options::option3),
                         |cx, option3| {
                             Checkbox::new(cx, *option3.get(cx))
-                                .on_toggle(cx, |cx| cx.emit(AppEvent::ToggleExclusiveOption(2)));
+                                .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(2)));
                         },
                     );
                     Label::new(cx, "Option 3");

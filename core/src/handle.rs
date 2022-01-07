@@ -3,13 +3,13 @@ use std::{cell::RefCell, marker::PhantomData, rc::Rc};
 use morphorm::{LayoutType, PositionType, Units};
 
 use crate::{
-    style::Overflow, Abilities, Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility,
+    style::Overflow, Abilities, Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility, Context, Res,
 };
 
 macro_rules! set_style {
     ($name:ident, $t:ty) => {
-        pub fn $name(self, value: $t) -> Self {
-            self.style.borrow_mut().$name.insert(self.entity, value);
+        pub fn $name(self, value: impl Res<$t>) -> Self {
+            self.style.borrow_mut().$name.insert(self.entity, value.get(self.cx).clone().into());
 
             // TODO - Split this out
             self.style.borrow_mut().needs_relayout = true;
@@ -20,16 +20,17 @@ macro_rules! set_style {
     };
 }
 
-pub struct Handle<T> {
+pub struct Handle<'a, T> {
     pub entity: Entity,
     pub style: Rc<RefCell<Style>>,
     pub p: PhantomData<T>,
+    pub cx: &'a mut Context, 
 }
 
-impl<T> Handle<T> {
-    pub fn null() -> Self {
-        Self { entity: Entity::null(), style: Rc::default(), p: PhantomData::default() }
-    }
+impl<'a,T> Handle<'a,T> {
+    // pub fn null() -> Self {
+    //     Self { entity: Entity::null(), style: Rc::default(), p: PhantomData::default() }
+    // }
 
     pub fn entity(&self) -> Entity {
         self.entity
@@ -91,6 +92,14 @@ impl<T> Handle<T> {
         self.style.borrow_mut().overflow.insert(self.entity, value);
 
         self.style.borrow_mut().needs_redraw = true;
+
+        self
+    }
+
+    pub fn visibility<U: Clone + Into<Visibility>>(self, value: impl Res<U>) -> Self {
+        self.cx.style.borrow_mut().visibility.insert(self.entity, value.get(self.cx).clone().into());
+
+        self.cx.style.borrow_mut().needs_redraw = true;
 
         self
     }
@@ -205,7 +214,9 @@ impl<T> Handle<T> {
     set_style!(font_size, f32);
 
     set_style!(display, Display);
-    set_style!(visibility, Visibility);
+    //set_style!(visibility, Visibility);
+
+
 
     set_style!(rotate, f32);
     set_style!(translate, (f32, f32));

@@ -224,9 +224,9 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
             cx.views.insert(id, view_handler);
         }
 
-        let handle = Handle { entity: id, style: cx.style.clone(), p: PhantomData::default() };
+        let handle = Handle { entity: id, style: cx.style.clone(), p: PhantomData::default(), cx };
 
-        cx.focused = handle.entity;
+        handle.cx.focused = handle.entity;
 
         handle
     }

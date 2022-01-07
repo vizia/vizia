@@ -31,19 +31,19 @@ pub trait View: 'static + Sized {
 
         cx.count += 1;
 
-        let handle = Handle { entity: id, style: cx.style.clone(), p: Default::default() };
+        let handle = Handle { entity: id, style: cx.style.clone(), p: Default::default(), cx };
 
         // ...and this part
-        let prev = cx.current;
-        let prev_count = cx.count;
-        cx.current = handle.entity;
-        cx.count = 0;
+        let prev = handle.cx.current;
+        let prev_count = handle.cx.count;
+        handle.cx.current = handle.entity;
+        handle.cx.count = 0;
 
-        (builder)(cx);
+        (builder)(handle.cx);
 
         // This part will also be moved somewhere else
-        cx.current = prev;
-        cx.count = prev_count;
+        handle.cx.current = prev;
+        handle.cx.count = prev_count;
 
         handle
     }
@@ -67,19 +67,20 @@ pub trait View: 'static + Sized {
 
         cx.count += 1;
 
-        let handle = Handle { entity: id, style: cx.style.clone(), p: Default::default() };
-
+        
         // ...and this part
         let prev = cx.current;
         let prev_count = cx.count;
-        cx.current = handle.entity;
+        cx.current = id;
         cx.count = 0;
+        
+        let handle = Handle { entity: id, style: cx.style.clone(), p: Default::default(), cx };
 
-        (builder)(cx);
+        (builder)(handle.cx);
 
         // This part will also be moved somewhere else
-        cx.current = prev;
-        cx.count = prev_count;
+        handle.cx.current = prev;
+        handle.cx.count = prev_count;
 
         handle
     }
@@ -115,7 +116,7 @@ pub trait View: 'static + Sized {
 
         cx.count += 1;
 
-        Handle { entity: id, style: cx.style.clone(), p: Default::default() }
+        Handle { entity: id, style: cx.style.clone(), p: Default::default(), cx }
     }
 
     fn element(&self) -> Option<String> {

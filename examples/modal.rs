@@ -9,7 +9,7 @@ const STYLE: &str = r#"
     }
 
     label {
-        width: 1s;
+        width: auto;
         height: 1s;
         child-space: 1s;
     }
@@ -53,7 +53,7 @@ fn main() {
             })
             .width(Pixels(300.0))
             .height(Pixels(100.0))
-            .visibility((*show.get(cx)).into());
+            .visibility(show);
         });
     })
     .run();

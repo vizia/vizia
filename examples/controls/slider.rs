@@ -65,17 +65,17 @@ fn main() {
             .col_between(Pixels(50.0));
         }
 
-        HStack::new(cx, |cx| {
-            Binding::new(cx, SliderData::value, |cx, value| {
-                Slider::new(cx, *value.get(cx), Orientation::Vertical)
-                    .class("vertical")
-                    .on_press(cx, |_| println!("Press"));
-                let value = *value.get(cx);
-                Label::new(cx, &format!("{:.*}", 2, value));
-            });
-        })
-        .child_space(Pixels(50.0))
-        .col_between(Pixels(50.0));
+        // HStack::new(cx, |cx| {
+        //     Binding::new(cx, SliderData::value, |cx, value| {
+        //         Slider::new(cx, *value.get(cx), Orientation::Vertical)
+        //             .class("vertical")
+        //             .on_press(cx, |_| println!("Press"));
+        //         let value = *value.get(cx);
+        //         Label::new(cx, &format!("{:.*}", 2, value));
+        //     });
+        // })
+        // .child_space(Pixels(50.0))
+        // .col_between(Pixels(50.0));
     })
     .run();
 }

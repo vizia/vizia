@@ -155,7 +155,7 @@ impl Slider {
                                         .bottom(Stretch(1.0))
                                         .overflow(Overflow::Visible)
                                         .class("thumb")
-                                        .on_geo_changed(cx, |cx, geo| {
+                                        .on_geo_changed(|cx, geo| {
                                             if geo.contains(GeometryChanged::WIDTH_CHANGED) {
                                                 cx.emit(SliderEventInternal::SetThumbSize(
                                                     cx.cache.get_width(cx.current),
@@ -181,7 +181,7 @@ impl Slider {
                                         .right(Stretch(1.0))
                                         .overflow(Overflow::Visible)
                                         .class("thumb")
-                                        .on_geo_changed(cx, |cx, geo| {
+                                        .on_geo_changed(|cx, geo| {
                                             if geo.contains(GeometryChanged::HEIGHT_CHANGED) {
                                                 cx.emit(SliderEventInternal::SetThumbSize(
                                                     cx.cache.get_width(cx.current),
@@ -277,7 +277,7 @@ impl View for Slider {
     }
 }
 
-impl Handle<Slider> {
+impl<'a> Handle<'a, Slider> {
     /// Set the callback triggered when the slider value has changed.
     ///
     /// Takes a closure which provides the current value and returns an event to be sent when the slider

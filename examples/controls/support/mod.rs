@@ -84,6 +84,7 @@ pub fn style_dropdown(cx: &mut Context) -> Handle<ZStack> {
                         // Need this because of a bug to do ith bindings inside a list
                         VStack::new(cx, move |cx|{
                                 let option = item.get(cx).clone();
+                                let is_selected = item.get(cx) == choice.get(cx);
                                 // Button which updates the chosen option
                                 Button::new(cx, move |cx| {
                                     cx.emit(ThemeEvent::SetTheme(option.clone()));
@@ -91,7 +92,7 @@ pub fn style_dropdown(cx: &mut Context) -> Handle<ZStack> {
                                 }, move |cx|{
                                     let opt = item.get(cx).clone();
                                     Label::new(cx, &opt.clone()).width(Stretch(1.0)).height(Pixels(20.0))
-                                }).width(Stretch(1.0)).background_color(if item.get(cx) == choice.get(cx) {Color::from("#f8ac14")} else {Color::transparent()});
+                                }).width(Stretch(1.0)).background_color(if is_selected {Color::from("#f8ac14")} else {Color::transparent()});
                         }).width(Stretch(1.0));
                     });
                 });

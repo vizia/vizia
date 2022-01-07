@@ -47,12 +47,12 @@ pub enum PickerEvent<T: std::fmt::Debug> {
 pub struct PickerItem {}
 
 impl PickerItem {
-    pub fn new<T: 'static + std::fmt::Debug + Clone + PartialEq + Send>(
-        cx: &mut Context,
+    pub fn new<'a, T: 'static + std::fmt::Debug + Clone + PartialEq + Send>(
+        cx: &'a mut Context,
         text: &'static str,
         option: T,
         value: T,
-    ) -> Handle<Self> {
+    ) -> Handle<'a, Self> {
         Self {}
             .build2(cx, move |cx| {
                 let opt = option.clone();
@@ -88,7 +88,7 @@ impl Dropdown {
                     PopupData::default().build(cx);
                 }
 
-                (label)(cx).class("title").on_press(cx, |cx| cx.emit(PopupEvent::Switch));
+                (label)(cx).class("title").on_press(|cx| cx.emit(PopupEvent::Switch));
 
                 Popup::new(cx, move |cx| {
                     (builder)(cx);

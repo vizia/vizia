@@ -4,7 +4,7 @@ use vizia::*;
 fn main() {
     Application::new(WindowDescription::new().with_title("Extending"), |cx| {
         Button::new(cx, |_| println!("Pressed"), |cx| Label::new(cx, "Press Me!"))
-            .on_hover(cx, |_| println!("Hover"));
+            .on_hover(|_| println!("Hover"));
     })
     .run();
 }

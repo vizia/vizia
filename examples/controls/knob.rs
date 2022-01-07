@@ -49,10 +49,10 @@ fn main() {
 
         Binding::new(cx, AppData::value, |cx, value| {
             let val = *value.get(cx);
-            Knob::new(cx, 0.5, val, false).on_changing(cx, |knob, cx| {
+            Knob::new(cx, 0.5, val, false).on_changing(|knob, cx| {
                 cx.emit(AppEvent::SetValue(knob.normalized_value));
             });
-            Knob::new(cx, 0.5, val, true).on_changing(cx, |knob, cx| {
+            Knob::new(cx, 0.5, val, true).on_changing(|knob, cx| {
                 cx.emit(AppEvent::SetValue(knob.normalized_value));
             });
         });

@@ -1,7 +1,9 @@
 use std::any::TypeId;
 use std::collections::HashSet;
 
-use crate::{Color, Context, Display, Entity, Handle, StateStore, Store, TreeExt, Units, View};
+use morphorm::{PositionType, LayoutType};
+
+use crate::{Color, Context, Display, Entity, Handle, StateStore, Store, TreeExt, Units, View, Visibility};
 
 use crate::{Data, Lens, Model};
 
@@ -87,7 +89,7 @@ where
             cx.views.insert(id, view_handler);
         }
 
-        let _: Handle<Self> = Handle { entity: id, style: cx.style.clone(), p: Default::default() }
+        let _: Handle<Self> = Handle { entity: id, style: cx.style.clone(), p: Default::default(), cx }
             .width(Units::Stretch(1.0))
             .height(Units::Stretch(1.0))
             .background_color(Color::blue())
@@ -144,6 +146,61 @@ where
     }
 }
 
+pub trait Res<T> {
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a T;
+}
+
+impl<T,L> Res<T> for Field<L>
+where
+    L: Lens<Target = T>,
+{
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a T
+    {
+        self.get(cx)
+    }
+}
+
+impl Res<Color> for Color {
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a Color {
+        self
+    }
+}
+
+impl Res<Units> for Units {
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a Units {
+        self
+    }
+}
+
+impl Res<Visibility> for Visibility {
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a Visibility {
+        self
+    }
+}
+
+impl Res<Display> for Display {
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a Display {
+        self
+    }
+}
+
+impl Res<LayoutType> for LayoutType {
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a LayoutType {
+        self
+    }
+}
+
+impl Res<PositionType> for PositionType {
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a PositionType {
+        self
+    }
+}
+
+impl Res<usize> for usize {
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a usize {
+        self
+    }
+}
 // #[derive(Clone, Copy)]
 // pub struct Item<L,T> {
 //     pub lens: L,
