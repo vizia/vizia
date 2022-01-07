@@ -47,7 +47,7 @@ const ICON_CHECK: &str = "\u{2713}";
 /// # AppData{value: false}.build(cx);
 /// Binding::new(cx, AppData::value, |cx, value|{
 ///     Checkbox::new(cx, *value.get(cx))
-///         .on_toggle(cx, |cx| cx.emit(AppEvent::ToggleValue));
+///         .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
 /// })
 /// # }).run();
 /// ```
