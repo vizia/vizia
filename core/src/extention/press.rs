@@ -13,24 +13,24 @@ pub struct Press<V: View> {
 }
 
 impl<V: View> Press<V> {
-    pub fn new<'a, F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Press<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Press<V>>
     where
         F: 'static + Fn(&mut Context),
     {
-        if let Some(mut view) = cx.views.remove(&handle.entity) {
+        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
                 let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
 
-                cx.views.insert(handle.entity, Box::new(item));
+                handle.cx.views.insert(handle.entity, Box::new(item));
             } else {
                 if let Some(press) = view.downcast_mut::<Press<V>>() {
                     press.action = Some(Box::new(action));
                 }
-                cx.views.insert(handle.entity, view);
+                handle.cx.views.insert(handle.entity, view);
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default() }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -71,24 +71,24 @@ pub struct Release<V: View> {
 }
 
 impl<V: View> Release<V> {
-    pub fn new<'a, F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Release<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Release<V>>
     where
         F: 'static + Fn(&mut Context),
     {
-        if let Some(mut view) = cx.views.remove(&handle.entity) {
+        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
                 let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
 
-                cx.views.insert(handle.entity, Box::new(item));
+                handle.cx.views.insert(handle.entity, Box::new(item));
             } else {
                 if let Some(release) = view.downcast_mut::<Release<V>>() {
                     release.action = Some(Box::new(action));
                 }
-                cx.views.insert(handle.entity, view);
+                handle.cx.views.insert(handle.entity, view);
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default() }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -129,24 +129,24 @@ pub struct Hover<V: View> {
 }
 
 impl<V: View> Hover<V> {
-    pub fn new<'a, F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Hover<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Hover<V>>
     where
         F: 'static + Fn(&mut Context),
     {
-        if let Some(mut view) = cx.views.remove(&handle.entity) {
+        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
                 let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
 
-                cx.views.insert(handle.entity, Box::new(item));
+                handle.cx.views.insert(handle.entity, Box::new(item));
             } else {
                 if let Some(hover) = view.downcast_mut::<Hover<V>>() {
                     hover.action = Some(Box::new(action));
                 }
-                cx.views.insert(handle.entity, view);
+                handle.cx.views.insert(handle.entity, view);
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default() }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -185,24 +185,24 @@ pub struct Over<V: View> {
 }
 
 impl<V: View> Over<V> {
-    pub fn new<'a, F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Over<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Over<V>>
     where
         F: 'static + Fn(&mut Context),
     {
-        if let Some(mut view) = cx.views.remove(&handle.entity) {
+        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
                 let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
 
-                cx.views.insert(handle.entity, Box::new(item));
+                handle.cx.views.insert(handle.entity, Box::new(item));
             } else {
                 if let Some(over) = view.downcast_mut::<Over<V>>() {
                     over.action = Some(Box::new(action));
                 }
-                cx.views.insert(handle.entity, view);
+                handle.cx.views.insert(handle.entity, view);
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default() }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -239,24 +239,24 @@ pub struct Leave<V: View> {
 }
 
 impl<V: View> Leave<V> {
-    pub fn new<'a, F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Leave<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Leave<V>>
     where
         F: 'static + Fn(&mut Context),
     {
-        if let Some(mut view) = cx.views.remove(&handle.entity) {
+        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
                 let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
 
-                cx.views.insert(handle.entity, Box::new(item));
+                handle.cx.views.insert(handle.entity, Box::new(item));
             } else {
                 if let Some(hover) = view.downcast_mut::<Leave<V>>() {
                     hover.action = Some(Box::new(action));
                 }
-                cx.views.insert(handle.entity, view);
+                handle.cx.views.insert(handle.entity, view);
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default() }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -295,24 +295,24 @@ pub struct Move<V: View> {
 }
 
 impl<V: View> Move<V> {
-    pub fn new<'a, F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Move<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Move<V>>
     where
         F: 'static + Fn(&mut Context, f32, f32),
     {
-        if let Some(mut view) = cx.views.remove(&handle.entity) {
+        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
                 let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
 
-                cx.views.insert(handle.entity, Box::new(item));
+                handle.cx.views.insert(handle.entity, Box::new(item));
             } else {
                 if let Some(hover) = view.downcast_mut::<Move<V>>() {
                     hover.action = Some(Box::new(action));
                 }
-                cx.views.insert(handle.entity, view);
+                handle.cx.views.insert(handle.entity, view);
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default() }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -349,24 +349,24 @@ pub struct Geo<V: View> {
 }
 
 impl<V: View> Geo<V> {
-    pub fn new<'a, F>(handle: Handle<V>, cx: &mut Context, action: F) -> Handle<Geo<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Geo<V>>
     where
         F: 'static + Fn(&mut Context, GeometryChanged),
     {
-        if let Some(mut view) = cx.views.remove(&handle.entity) {
+        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
                 let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
 
-                cx.views.insert(handle.entity, Box::new(item));
+                handle.cx.views.insert(handle.entity, Box::new(item));
             } else {
                 if let Some(geo) = view.downcast_mut::<Geo<V>>() {
                     geo.action = Some(Box::new(action));
                 }
-                cx.views.insert(handle.entity, view);
+                handle.cx.views.insert(handle.entity, view);
             }
         }
 
-        Handle { entity: handle.entity, style: handle.style.clone(), p: Default::default() }
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
@@ -396,105 +396,105 @@ impl<V: View> View for Geo<V> {
     }
 }
 
-pub trait Actions {
+pub trait Actions<'a> {
     type View: View;
-    fn on_press<F>(self, cx: &mut Context, action: F) -> Handle<Press<Self::View>>
+    fn on_press<F>(self, action: F) -> Handle<'a, Press<Self::View>>
     where
         F: 'static + Fn(&mut Context);
 
-    fn on_release<F>(self, cx: &mut Context, action: F) -> Handle<Release<Self::View>>
+    fn on_release<F>(self, action: F) -> Handle<'a, Release<Self::View>>
     where
         F: 'static + Fn(&mut Context);
 
-    fn on_hover<F>(self, cx: &mut Context, action: F) -> Handle<Hover<Self::View>>
+    fn on_hover<F>(self, action: F) -> Handle<'a, Hover<Self::View>>
     where
         F: 'static + Fn(&mut Context);
 
-    fn on_over<F>(self, cx: &mut Context, action: F) -> Handle<Over<Self::View>>
+    fn on_over<F>(self, action: F) -> Handle<'a, Over<Self::View>>
     where
         F: 'static + Fn(&mut Context);
 
-    fn on_leave<F>(self, cx: &mut Context, action: F) -> Handle<Leave<Self::View>>
+    fn on_leave<F>(self, action: F) -> Handle<'a, Leave<Self::View>>
     where
         F: 'static + Fn(&mut Context);
 
-    fn on_move<F>(self, cx: &mut Context, action: F) -> Handle<Move<Self::View>>
+    fn on_move<F>(self, action: F) -> Handle<'a, Move<Self::View>>
     where
         F: 'static + Fn(&mut Context, f32, f32);
 
-    fn on_geo_changed<F>(self, cx: &mut Context, action: F) -> Handle<Geo<Self::View>>
+    fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<Self::View>>
     where
         F: 'static + Fn(&mut Context, GeometryChanged);
 }
 
-impl<V: View> Actions for Handle<V> {
+impl<'a, V: View> Actions<'a> for Handle<'a, V> {
     type View = V;
-    fn on_press<F>(self, cx: &mut Context, action: F) -> Handle<Press<Self::View>>
+    fn on_press<F>(self, action: F) -> Handle<'a, Press<Self::View>>
     where
         F: 'static + Fn(&mut Context),
     {
-        Press::new(self, cx, action)
+        Press::new(self, action)
     }
 
-    fn on_release<F>(self, cx: &mut Context, action: F) -> Handle<Release<Self::View>>
+    fn on_release<F>(self, action: F) -> Handle<'a, Release<Self::View>>
     where
         F: 'static + Fn(&mut Context),
     {
-        Release::new(self, cx, action)
+        Release::new(self, action)
     }
 
-    fn on_hover<F>(self, cx: &mut Context, action: F) -> Handle<Hover<Self::View>>
+    fn on_hover<F>(self, action: F) -> Handle<'a, Hover<Self::View>>
     where
         F: 'static + Fn(&mut Context),
     {
-        Hover::new(self, cx, action)
+        Hover::new(self, action)
     }
 
-    fn on_over<F>(self, cx: &mut Context, action: F) -> Handle<Over<Self::View>>
+    fn on_over<F>(self, action: F) -> Handle<'a, Over<Self::View>>
     where
         F: 'static + Fn(&mut Context),
     {
-        Over::new(self, cx, action)
+        Over::new(self, action)
     }
 
-    fn on_leave<F>(self, cx: &mut Context, action: F) -> Handle<Leave<Self::View>>
+    fn on_leave<F>(self, action: F) -> Handle<'a, Leave<Self::View>>
     where
         F: 'static + Fn(&mut Context),
     {
-        Leave::new(self, cx, action)
+        Leave::new(self, action)
     }
 
-    fn on_move<F>(self, cx: &mut Context, action: F) -> Handle<Move<Self::View>>
+    fn on_move<F>(self, action: F) -> Handle<'a, Move<Self::View>>
     where
         F: 'static + Fn(&mut Context, f32, f32),
     {
-        Move::new(self, cx, action)
+        Move::new(self, action)
     }
 
-    fn on_geo_changed<F>(self, cx: &mut Context, action: F) -> Handle<Geo<Self::View>>
+    fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<Self::View>>
     where
         F: 'static + Fn(&mut Context, GeometryChanged),
     {
-        Geo::new(self, cx, action)
+        Geo::new(self, action)
     }
 }
 
-pub trait ViewModifers {
-    type View: View;
+// pub trait ViewModifers {
+//     type View: View;
 
-    fn overlay<B>(self, cx: &mut Context, builder: B) -> Handle<Self::View>
-    where
-        B: 'static + FnOnce(&mut Context);
-}
+//     fn overlay<B>(self, cx: &mut Context, builder: B) -> Handle<Self::View>
+//     where
+//         B: 'static + FnOnce(&mut Context);
+// }
 
-impl<V: View> ViewModifers for Handle<V> {
-    type View = V;
-    fn overlay<B>(self, cx: &mut Context, builder: B) -> Handle<Self::View>
-    where
-        B: 'static + FnOnce(&mut Context),
-    {
-        (builder)(cx);
+// impl<'a, V: View> ViewModifers for Handle<'a, V> {
+//     type View = V;
+//     fn overlay<B>(self, cx: &mut Context, builder: B) -> Handle<Self::View>
+//     where
+//         B: 'static + FnOnce(&mut Context),
+//     {
+//         (builder)(cx);
 
-        self
-    }
-}
+//         self
+//     }
+// }

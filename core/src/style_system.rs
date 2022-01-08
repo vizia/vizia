@@ -16,7 +16,7 @@ pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
 
         let parent = tree.get_parent(entity).unwrap();
 
-        if let Some(z_order) = cx.style.borrow().z_order.get(entity) {
+        if let Some(z_order) = cx.style.z_order.get(entity) {
             cx.cache.set_z_index(entity, *z_order);
         } else {
             let parent_z_order = cx.cache.get_z_index(parent);
@@ -35,7 +35,7 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
         let parent = tree.get_parent(entity).unwrap();
 
         let parent_clip_region = cx.cache.get_clip_region(parent);
-        //let parent_border_width = cx.style.borrow().border_width.get(parent).cloned().unwrap_or_default().value_or(0.0, 0.0);
+        //let parent_border_width = cx.style.border_width.get(parent).cloned().unwrap_or_default().value_or(0.0, 0.0);
 
         //println!("Parent border width: {}", parent_border_width);
         // parent_clip_region.x;
@@ -45,12 +45,12 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
 
         let root_clip_region = cx.cache.get_clip_region(Entity::root());
 
-        let overflow = cx.style.borrow().overflow.get(entity).cloned().unwrap_or_default();
+        let overflow = cx.style.overflow.get(entity).cloned().unwrap_or_default();
 
         if overflow == Overflow::Hidden {
-            let clip_widget = cx.style.borrow().clip_widget.get(entity).cloned().unwrap_or(entity);
-            //if let Some(clip_widget) = cx.style.borrow_mut().clip_widget.get(entity).cloned() {
-            //let clip_widget_border_width = cx.style.borrow_mut().border_width.get(clip_widget).cloned().unwrap_or_default().value_or(0.0, 0.0);
+            let clip_widget = cx.style.clip_widget.get(entity).cloned().unwrap_or(entity);
+            //if let Some(clip_widget) = cx.style.clip_widget.get(entity).cloned() {
+            //let clip_widget_border_width = cx.style.border_width.get(clip_widget).cloned().unwrap_or_default().value_or(0.0, 0.0);
             let clip_x = cx.cache.get_posx(clip_widget);
             let clip_y = cx.cache.get_posy(clip_widget);
             let clip_w = cx.cache.get_width(clip_widget);
@@ -99,7 +99,7 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
         if cx.cache.get_visibility(parent) == Visibility::Invisible {
             cx.cache.set_visibility(entity, Visibility::Invisible);
         } else {
-            if let Some(visibility) = cx.style.borrow().visibility.get(entity) {
+            if let Some(visibility) = cx.style.visibility.get(entity) {
                 cx.cache.set_visibility(entity, *visibility);
             } else {
                 cx.cache.set_visibility(entity, Visibility::Visible);
@@ -109,7 +109,7 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
         if cx.cache.get_display(parent) == Display::None {
             cx.cache.set_display(entity, Display::None);
         } else {
-            if let Some(display) = cx.style.borrow().display.get(entity) {
+            if let Some(display) = cx.style.display.get(entity) {
                 cx.cache.set_display(entity, *display);
             } else {
                 cx.cache.set_display(entity, Display::Flex);
@@ -118,7 +118,7 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
 
         let parent_opacity = cx.cache.get_opacity(parent);
 
-        let opacity = cx.style.borrow().opacity.get(entity).cloned().unwrap_or_default();
+        let opacity = cx.style.opacity.get(entity).cloned().unwrap_or_default();
 
         cx.cache.set_opacity(entity, opacity.0 * parent_opacity);
     }
@@ -134,14 +134,14 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
-        if cx.style.borrow().text.get(entity).is_some() {
-            let font = cx.style.borrow().font.get(entity).cloned().unwrap_or_default();
+        if cx.style.text.get(entity).is_some() {
+            let font = cx.style.font.get(entity).cloned().unwrap_or_default();
 
             // TODO - This should probably be cached in cx to save look-up time
             let default_font = cx
                 .resource_manager
                 .fonts
-                .get(&cx.style.borrow().default_font)
+                .get(&cx.style.default_font)
                 .and_then(|font| match font {
                     FontOrId::Id(id) => Some(id),
                     _ => None,
@@ -158,7 +158,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                 })
                 .unwrap_or(default_font);
 
-            let font_size = cx.style.borrow().font_size.get(entity).cloned().unwrap_or(16.0);
+            let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
 
             let mut paint = Paint::default();
             paint.set_font_size(font_size);
@@ -169,18 +169,18 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             let parent_width = cx.cache.get_width(parent);
 
             let border_width =
-                match cx.style.borrow().border_width.get(entity).cloned().unwrap_or_default() {
+                match cx.style.border_width.get(entity).cloned().unwrap_or_default() {
                     Units::Pixels(val) => val,
                     Units::Percentage(val) => parent_width * val,
                     _ => 0.0,
                 };
 
-            let child_left = cx.style.borrow().child_left.get(entity).cloned().unwrap_or_default();
+            let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
             let child_right =
-                cx.style.borrow().child_right.get(entity).cloned().unwrap_or_default();
-            let child_top = cx.style.borrow().child_top.get(entity).cloned().unwrap_or_default();
+                cx.style.child_right.get(entity).cloned().unwrap_or_default();
+            let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
             let child_bottom =
-                cx.style.borrow().child_bottom.get(entity).cloned().unwrap_or_default();
+                cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
 
             // TODO - should auto size use text height or font height?
             let _font_metrics =
@@ -248,27 +248,27 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             paint.set_text_align(align);
             paint.set_text_baseline(baseline);
 
-            let text = cx.style.borrow().text.get(entity).cloned().unwrap();
+            let text = cx.style.text.get(entity).cloned().unwrap();
 
             if let Ok(text_metrics) = cx.text_context.measure_text(x, y, text, paint) {
                 let text_width = text_metrics.width().round();
                 let text_height = text_metrics.height().round();
 
-                if cx.style.borrow().width.get(entity) == Some(&Units::Auto) {
+                if cx.style.width.get(entity) == Some(&Units::Auto) {
                     // Add an extra pixel to account to AA
-                    cx.style.borrow_mut().min_width.insert(entity, Units::Pixels(text_width + 1.0));
-                    cx.style.borrow_mut().needs_relayout = true;
-                    cx.style.borrow_mut().needs_redraw = true;
+                    cx.style.min_width.insert(entity, Units::Pixels(text_width + 1.0));
+                    cx.style.needs_relayout = true;
+                    cx.style.needs_redraw = true;
                 }
 
-                if cx.style.borrow().height.get(entity) == Some(&Units::Auto) {
+                if cx.style.height.get(entity) == Some(&Units::Auto) {
                     // Add an extra pixel to account for AA
                     cx.style
-                        .borrow_mut()
+                        
                         .min_height
                         .insert(entity, Units::Pixels(text_height + 1.0));
-                    cx.style.borrow_mut().needs_relayout = true;
-                    cx.style.borrow_mut().needs_redraw = true;
+                    cx.style.needs_relayout = true;
+                    cx.style.needs_redraw = true;
                 }
             }
         }
@@ -279,9 +279,9 @@ pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
         if let Some(parent) = entity.parent(tree) {
 
-            cx.style.borrow_mut().disabled.inherit_inline(entity, parent);
+            cx.style.disabled.inherit_inline(entity, parent);
             
-            cx.style.borrow_mut().font_color.inherit_inline(entity, parent);
+            cx.style.font_color.inherit_inline(entity, parent);
         }
     }
 }
@@ -289,7 +289,7 @@ pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
 pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
         if let Some(parent) = entity.parent(tree) {
-            cx.style.borrow_mut().font_color.inherit_shared(entity, parent);
+            cx.style.font_color.inherit_shared(entity, parent);
         }
     }
 }
@@ -310,8 +310,8 @@ pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
 
 //         let parent_abilities = cx.cache.abilities.get(parent).cloned().unwrap_or_default();
 
-//         if !cx.style.borrow().abilities.get(parent).contains(Abilities::HOVERABLE) {
-//             if let Some(abilities) = cx.style.borrow_mut().abilities.get_mut(entity) {
+//         if !cx.style.abilities.get(parent).contains(Abilities::HOVERABLE) {
+//             if let Some(abilities) = cx.style.abilities.get_mut(entity) {
 //                 abilities.set(Abilities::HOVERABLE, false);
 //             }
 //         }
@@ -319,7 +319,7 @@ pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
 //         if cx.cache.get_visibility(parent) == Visibility::Invisible {
 //             cx.cache.set_visibility(entity, Visibility::Invisible);
 //         } else {
-//             if let Some(visibility) = cx.style.borrow_mut().visibility.get(entity) {
+//             if let Some(visibility) = cx.style.visibility.get(entity) {
 //                 cx.cache.set_visibility(entity, *visibility);
 //             } else {
 //                 cx.cache.set_visibility(entity, Visibility::Visible);
@@ -332,7 +332,7 @@ pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
 fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     // Universal selector always matches
     if selector.asterisk {
-        if let Some(pseudo_classes) = cx.style.borrow().pseudo_classes.get(entity) {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(entity) {
             if !pseudo_classes.is_empty() && !pseudo_classes.intersects(*pseudo_classes) {
                 return false;
             } else {
@@ -360,7 +360,7 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     }
 
     // Check for classes match
-    if let Some(classes) = cx.style.borrow().classes.get(entity) {
+    if let Some(classes) = cx.style.classes.get(entity) {
         if !selector.classes.is_subset(classes) {
             return false;
         }
@@ -369,7 +369,7 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     }
 
     // Disabled needs to be handled separately because it can be inherited
-    if let Some(disabled) = cx.style.borrow().disabled.get(entity) {
+    if let Some(disabled) = cx.style.disabled.get(entity) {
         if !selector.pseudo_classes.is_empty() && *disabled != selector.pseudo_classes.contains(PseudoClass::DISABLED)
         {
             return false;
@@ -377,7 +377,7 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     }
 
     // Check for pseudo-class match
-    if let Some(pseudo_classes) = cx.style.borrow().pseudo_classes.get(entity) {
+    if let Some(pseudo_classes) = cx.style.pseudo_classes.get(entity) {
         let mut selector_pseudo_classes = selector.pseudo_classes;
         selector_pseudo_classes.set(PseudoClass::DISABLED, false);
         
@@ -400,11 +400,11 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
-        // Create a list of style.borrow_mut() rules that match this entity
+        // Create a list of style rules that match this entity
         let mut matched_rules: Vec<Rule> = Vec::new();
 
-        // Loop through all of the style.borrow_mut() rules
-        'rule_loop: for rule in cx.style.borrow().rules.iter() {
+        // Loop through all of the style rules
+        'rule_loop: for rule in cx.style.rules.iter() {
             let mut relation_entity = entity;
             // Loop through selectors (Should be from right to left)
             // All the selectors need to match for the rule to apply
@@ -468,276 +468,276 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
         let mut should_redraw = false;
 
         // Display
-        if cx.style.borrow_mut().display.link(entity, &matched_rules) {
+        if cx.style.display.link(entity, &matched_rules) {
             //println!("1");
             should_relayout = true;
             should_redraw = true;
         }
-        if cx.style.borrow_mut().visibility.link(entity, &matched_rules) {
+        if cx.style.visibility.link(entity, &matched_rules) {
             //println!("2");
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().z_order.link(entity, &matched_rules) {
+        if cx.style.z_order.link(entity, &matched_rules) {
             //println!("3");
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().overflow.link(entity, &matched_rules) {
+        if cx.style.overflow.link(entity, &matched_rules) {
             should_redraw = true;
         }
 
         // Opacity
-        if cx.style.borrow_mut().opacity.link(entity, &matched_rules) {
+        if cx.style.opacity.link(entity, &matched_rules) {
             //println!("4");
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().left.link(entity, &matched_rules) {
+        if cx.style.left.link(entity, &matched_rules) {
             //println!("6");
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().right.link(entity, &matched_rules) {
+        if cx.style.right.link(entity, &matched_rules) {
             //println!("7");
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().top.link(entity, &matched_rules) {
+        if cx.style.top.link(entity, &matched_rules) {
             //println!("8");
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().bottom.link(entity, &matched_rules) {
+        if cx.style.bottom.link(entity, &matched_rules) {
             //println!("9");
             should_relayout = true;
             should_redraw = true;
         }
 
         // Size
-        if cx.style.borrow_mut().width.link(entity, &matched_rules) {
+        if cx.style.width.link(entity, &matched_rules) {
             //println!("10");
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().height.link(entity, &matched_rules) {
+        if cx.style.height.link(entity, &matched_rules) {
             //println!("11");
             should_relayout = true;
             should_redraw = true;
         }
 
         // Size Constraints
-        if cx.style.borrow_mut().max_width.link(entity, &matched_rules) {
+        if cx.style.max_width.link(entity, &matched_rules) {
             //println!("12");
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().min_width.link(entity, &matched_rules) {
+        if cx.style.min_width.link(entity, &matched_rules) {
             //println!("13");
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().max_height.link(entity, &matched_rules) {
+        if cx.style.max_height.link(entity, &matched_rules) {
             //println!("14");
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().min_height.link(entity, &matched_rules) {
+        if cx.style.min_height.link(entity, &matched_rules) {
             //println!("15");
             should_relayout = true;
             should_redraw = true;
         }
 
         // Border
-        if cx.style.borrow_mut().border_width.link(entity, &matched_rules) {
+        if cx.style.border_width.link(entity, &matched_rules) {
             //println!("24");
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().border_color.link(entity, &matched_rules) {
+        if cx.style.border_color.link(entity, &matched_rules) {
             //println!("25");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().border_shape_top_left.link(entity, &matched_rules) {
+        if cx.style.border_shape_top_left.link(entity, &matched_rules) {
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().border_shape_top_right.link(entity, &matched_rules) {
+        if cx.style.border_shape_top_right.link(entity, &matched_rules) {
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().border_shape_bottom_left.link(entity, &matched_rules) {
+        if cx.style.border_shape_bottom_left.link(entity, &matched_rules) {
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().border_shape_bottom_right.link(entity, &matched_rules) {
+        if cx.style.border_shape_bottom_right.link(entity, &matched_rules) {
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().border_radius_top_left.link(entity, &matched_rules) {
+        if cx.style.border_radius_top_left.link(entity, &matched_rules) {
             //println!("26");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().border_radius_top_right.link(entity, &matched_rules) {
+        if cx.style.border_radius_top_right.link(entity, &matched_rules) {
             //println!("27");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().border_radius_bottom_left.link(entity, &matched_rules) {
+        if cx.style.border_radius_bottom_left.link(entity, &matched_rules) {
             //println!("28");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().border_radius_bottom_right.link(entity, &matched_rules) {
+        if cx.style.border_radius_bottom_right.link(entity, &matched_rules) {
             //println!("29");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().layout_type.link(entity, &matched_rules) {
+        if cx.style.layout_type.link(entity, &matched_rules) {
             //println!("30");
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().position_type.link(entity, &matched_rules) {
+        if cx.style.position_type.link(entity, &matched_rules) {
             //println!("30");
             should_relayout = true;
             should_redraw = true;
         }
 
         // Background
-        if cx.style.borrow_mut().background_color.link(entity, &matched_rules) {
+        if cx.style.background_color.link(entity, &matched_rules) {
             //println!("41");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().background_image.link(entity, &matched_rules) {
+        if cx.style.background_image.link(entity, &matched_rules) {
             //println!("42");
             should_redraw = true;
         }
 
         // Font
-        if cx.style.borrow_mut().font_color.link(entity, &matched_rules) {
+        if cx.style.font_color.link(entity, &matched_rules) {
             //println!("43");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().font_size.link(entity, &matched_rules) {
+        if cx.style.font_size.link(entity, &matched_rules) {
             //println!("44");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().font.link(entity, &matched_rules) {
+        if cx.style.font.link(entity, &matched_rules) {
             //println!("44");
             should_redraw = true;
         }
 
         // Outer Shadow
-        if cx.style.borrow_mut().outer_shadow_h_offset.link(entity, &matched_rules) {
+        if cx.style.outer_shadow_h_offset.link(entity, &matched_rules) {
             //println!("45");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().outer_shadow_v_offset.link(entity, &matched_rules) {
+        if cx.style.outer_shadow_v_offset.link(entity, &matched_rules) {
             //println!("46");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().outer_shadow_blur.link(entity, &matched_rules) {
+        if cx.style.outer_shadow_blur.link(entity, &matched_rules) {
             //println!("47");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().outer_shadow_color.link(entity, &matched_rules) {
+        if cx.style.outer_shadow_color.link(entity, &matched_rules) {
             //println!("48");
             should_redraw = true;
         }
 
         // Inner Shadow
-        if cx.style.borrow_mut().inner_shadow_h_offset.link(entity, &matched_rules) {
+        if cx.style.inner_shadow_h_offset.link(entity, &matched_rules) {
             //println!("45");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().inner_shadow_v_offset.link(entity, &matched_rules) {
+        if cx.style.inner_shadow_v_offset.link(entity, &matched_rules) {
             //println!("46");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().inner_shadow_blur.link(entity, &matched_rules) {
+        if cx.style.inner_shadow_blur.link(entity, &matched_rules) {
             //println!("47");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().inner_shadow_color.link(entity, &matched_rules) {
+        if cx.style.inner_shadow_color.link(entity, &matched_rules) {
             //println!("48");
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().child_left.link(entity, &matched_rules) {
+        if cx.style.child_left.link(entity, &matched_rules) {
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().child_right.link(entity, &matched_rules) {
+        if cx.style.child_right.link(entity, &matched_rules) {
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().child_top.link(entity, &matched_rules) {
+        if cx.style.child_top.link(entity, &matched_rules) {
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().child_bottom.link(entity, &matched_rules) {
+        if cx.style.child_bottom.link(entity, &matched_rules) {
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().row_between.link(entity, &matched_rules) {
+        if cx.style.row_between.link(entity, &matched_rules) {
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().col_between.link(entity, &matched_rules) {
+        if cx.style.col_between.link(entity, &matched_rules) {
             should_relayout = true;
             should_redraw = true;
         }
 
-        if cx.style.borrow_mut().cursor.link(entity, &matched_rules) {
+        if cx.style.cursor.link(entity, &matched_rules) {
             should_redraw = true;
         }
 
         if should_relayout {
-            cx.style.borrow_mut().needs_relayout = true;
+            cx.style.needs_relayout = true;
         }
 
         if should_redraw {
-            cx.style.borrow_mut().needs_redraw = true;
+            cx.style.needs_redraw = true;
         }
 
         // for rule_id in matched_rules.iter() {
         //     // TODO - remove cloned
-        //     if let Some(rule_index) = cx.style.borrow_mut().rules.iter().position(|rule| rule.id == *rule_id) {
-        //         if let Some(rule) = cx.style.borrow_mut().rules.get(rule_index).cloned() {
+        //     if let Some(rule_index) = cx.style.rules.iter().position(|rule| rule.id == *rule_id) {
+        //         if let Some(rule) = cx.style.rules.get(rule_index).cloned() {
         //             for property in rule.properties.iter() {
         //                 match property {
         //                     Property::Unknown(ident, prop) => {
         //                         if let Some(mut event_handler) = cx.event_handlers.remove(&entity) {
-        //                             event_handler.on_style.borrow_mut()(cx, entity, (ident.clone(), prop.clone()));
+        //                             event_handler.on_style(cx, entity, (ident.clone(), prop.clone()));
 
         //                             cx.event_handlers.insert(entity, event_handler);
         //                         }

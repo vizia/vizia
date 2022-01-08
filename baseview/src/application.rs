@@ -140,18 +140,18 @@ impl ApplicationRunner {
         context.add_font_mem("emoji", emoji_font);
         context.add_font_mem("arabic", arabic_font);
 
-        context.style.borrow_mut().default_font = "roboto".to_string();
+        context.style.default_font = "roboto".to_string();
 
         //canvas.scale(scale as f32, scale as f32);
 
         context
             .style
-            .borrow_mut()
+            
             .width
             .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
         context
             .style
-            .borrow_mut()
+            
             .height
             .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
@@ -220,7 +220,7 @@ impl ApplicationRunner {
     //             self.context.current = prev;
     //             self.context.count = prev_count;
 
-    //             self.context.style.borrow_mut().needs_redraw = true;
+    //             self.context.style.needs_redraw = true;
 
     //             self.context.views.insert(*observer, view);
     //         }
@@ -287,7 +287,7 @@ impl ApplicationRunner {
                 self.context.current = prev;
                 self.context.count = prev_count;
 
-                self.context.style.borrow_mut().needs_redraw = true;
+                self.context.style.needs_redraw = true;
 
                 self.context.views.insert(*observer, view);
             }
@@ -308,13 +308,13 @@ impl ApplicationRunner {
         apply_text_constraints(&mut self.context, &tree);
 
         // Layout
-        if self.context.style.borrow().needs_relayout {
+        if self.context.style.needs_relayout {
             vizia_core::apply_layout(
                 &mut self.context.cache,
                 &self.context.tree,
-                &self.context.style.borrow(),
+                &self.context.style,
             );
-            self.context.style.borrow_mut().needs_relayout = false;
+            self.context.style.needs_relayout = false;
         }
 
         // Emit any geometry changed events
@@ -326,10 +326,10 @@ impl ApplicationRunner {
 
         apply_clipping(&mut self.context, &tree);
 
-        if self.context.style.borrow().needs_redraw {
+        if self.context.style.needs_redraw {
             //     // TODO - Move this to EventManager
             self.should_redraw = true;
-            self.context.style.borrow_mut().needs_redraw = false;
+            self.context.style.needs_redraw = false;
         }
     }
 
@@ -348,7 +348,7 @@ impl ApplicationRunner {
         let clear_color = self
             .context
             .style
-            .borrow_mut()
+            
             .background_color
             .get(Entity::root())
             .cloned()
@@ -720,7 +720,7 @@ impl ApplicationRunner {
                     //     }
                     // }
 
-                    self.context.style.borrow_mut().needs_restyle = true;
+                    self.context.style.needs_restyle = true;
                 }
 
                 match s {
@@ -775,9 +775,9 @@ impl ApplicationRunner {
             }
             baseview::Event::Window(event) => match event {
                 baseview::WindowEvent::Focused => {
-                    self.context.style.borrow_mut().needs_restyle = true;
-                    self.context.style.borrow_mut().needs_relayout = true;
-                    self.context.style.borrow_mut().needs_redraw = true;
+                    self.context.style.needs_restyle = true;
+                    self.context.style.needs_relayout = true;
+                    self.context.style.needs_redraw = true;
                 }
                 baseview::WindowEvent::Resized(window_info) => {
                     self.scale_factor = match self.scale_policy {
@@ -797,12 +797,12 @@ impl ApplicationRunner {
 
                     self.context
                         .style
-                        .borrow_mut()
+                        
                         .width
                         .insert(Entity::root(), Units::Pixels(logical_size.0 as f32));
                     self.context
                         .style
-                        .borrow_mut()
+                        
                         .height
                         .insert(Entity::root(), Units::Pixels(logical_size.1 as f32));
 
@@ -815,9 +815,9 @@ impl ApplicationRunner {
 
                     self.context.cache.set_clip_region(Entity::root(), bounding_box);
 
-                    self.context.style.borrow_mut().needs_restyle = true;
-                    self.context.style.borrow_mut().needs_relayout = true;
-                    self.context.style.borrow_mut().needs_redraw = true;
+                    self.context.style.needs_restyle = true;
+                    self.context.style.needs_relayout = true;
+                    self.context.style.needs_redraw = true;
                 }
                 baseview::WindowEvent::WillClose => {
                     self.context.event_queue.push_back(Event::new(WindowEvent::WindowClose));

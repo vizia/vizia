@@ -1,203 +1,195 @@
-use std::{cell::RefCell, marker::PhantomData, rc::Rc};
+use std::marker::PhantomData;
 
 use morphorm::{LayoutType, PositionType, Units};
 
 use crate::{
-    style::Overflow, Abilities, Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility, BorderCornerShape,
+    style::Overflow, Abilities, Color, CursorIcon, Display, Entity, PseudoClass, Visibility, Context, Res, BorderCornerShape,
 };
 
 macro_rules! set_style {
     ($name:ident, $t:ty) => {
-        pub fn $name(self, value: $t) -> Self {
-            self.style.borrow_mut().$name.insert(self.entity, value);
+        pub fn $name(self, value: impl Res<$t>) -> Self {
+            self.cx.style.$name.insert(self.entity, value.get(self.cx).clone().into());
 
             // TODO - Split this out
-            self.style.borrow_mut().needs_relayout = true;
-            self.style.borrow_mut().needs_redraw = true;
+            self.cx.style.needs_relayout = true;
+            self.cx.style.needs_redraw = true;
 
             self
         }
     };
 }
 
-pub struct Handle<T> {
+pub struct Handle<'a, T> {
     pub entity: Entity,
-    pub style: Rc<RefCell<Style>>,
     pub p: PhantomData<T>,
+    pub cx: &'a mut Context, 
 }
 
-impl<T> Handle<T> {
-    pub fn null() -> Self {
-        Self { entity: Entity::null(), style: Rc::default(), p: PhantomData::default() }
-    }
+impl<'a,T> Handle<'a,T> {
 
     pub fn entity(&self) -> Entity {
         self.entity
     }
 
     pub fn cursor(self, cursor_icon: CursorIcon) -> Self {
-        self.style.borrow_mut().cursor.insert(self.entity, cursor_icon);
+        self.cx.style.cursor.insert(self.entity, cursor_icon);
 
-        self.style.borrow_mut().needs_redraw = true;
+        self.cx.style.needs_redraw = true;
 
         self
     }
 
     pub fn class(self, name: &str) -> Self {
-        if let Some(class_list) = self.style.borrow_mut().classes.get_mut(self.entity) {
+        if let Some(class_list) = self.cx.style.classes.get_mut(self.entity) {
             class_list.insert(name.to_string());
         }
 
-        self.style.borrow_mut().needs_restyle = true;
+        self.cx.style.needs_restyle = true;
 
         self
     }
 
     pub fn font(self, font_name: &str) -> Self {
-        self.style.borrow_mut().font.insert(self.entity, font_name.to_owned());
+        self.cx.style.font.insert(self.entity, font_name.to_owned());
 
-        self.style.borrow_mut().needs_redraw = true;
+        self.cx.style.needs_redraw = true;
 
         self
     }
 
     pub fn checked(self, state: bool) -> Self {
-        let style = self.style.clone();
-        let mut borrow = style.borrow_mut();
-        if let Some(pseudo_classes) = borrow.pseudo_classes.get_mut(self.entity) {
+        if let Some(pseudo_classes) = self.cx.style.pseudo_classes.get_mut(self.entity) {
             pseudo_classes.set(PseudoClass::CHECKED, state);
         } else {
             let mut pseudoclass = PseudoClass::empty();
             pseudoclass.set(PseudoClass::CHECKED, state);
-            borrow.pseudo_classes.insert(self.entity, pseudoclass);
+            self.cx.style.pseudo_classes.insert(self.entity, pseudoclass);
         }
         
-        borrow.needs_restyle = true;
+        self.cx.style.needs_restyle = true;
 
         self
     }
 
     pub fn disabled(self, state: bool) -> Self {
 
-        self.style.borrow_mut().disabled.insert(self.entity, state);
-        self.style.borrow_mut().needs_restyle = true;
-        // let style = self.style.clone();
-        // let mut borrow = style.borrow_mut();
-        // if let Some(pseudo_classes) = borrow.pseudo_classes.get_mut(self.entity) {
-        //     pseudo_classes.set(PseudoClass::DISABLED, state);
-        // } else {
-        //     let mut pseudoclass = PseudoClass::empty();
-        //     pseudoclass.set(PseudoClass::DISABLED, state);
-        //     borrow.pseudo_classes.insert(self.entity, pseudoclass);
-        // }
-        
-        // borrow.needs_restyle = true;
+        self.cx.style.disabled.insert(self.entity, state);
+        self.cx.style.needs_restyle = true;
 
         self
     }
 
     pub fn text(self, value: &str) -> Self {
-        self.style.borrow_mut().text.insert(self.entity, value.to_owned());
+        self.cx.style.text.insert(self.entity, value.to_owned());
 
-        self.style.borrow_mut().needs_redraw = true;
+        self.cx.style.needs_redraw = true;
 
         self
     }
 
     pub fn z_order(self, value: i32) -> Self {
-        self.style.borrow_mut().z_order.insert(self.entity, value);
+        self.cx.style.z_order.insert(self.entity, value);
 
-        self.style.borrow_mut().needs_redraw = true;
+        self.cx.style.needs_redraw = true;
 
         self
     }
 
     pub fn overflow(self, value: Overflow) -> Self {
-        self.style.borrow_mut().overflow.insert(self.entity, value);
+        self.cx.style.overflow.insert(self.entity, value);
 
-        self.style.borrow_mut().needs_redraw = true;
+        self.cx.style.needs_redraw = true;
+
+        self
+    }
+
+    pub fn visibility<U: Clone + Into<Visibility>>(self, value: impl Res<U>) -> Self {
+        self.cx.style.visibility.insert(self.entity, value.get(self.cx).clone().into());
+
+        self.cx.style.needs_redraw = true;
 
         self
     }
 
     // Abilities
     pub fn hoverable(self, state: bool) -> Self {
-        if let Some(abilities) = self.style.borrow_mut().abilities.get_mut(self.entity) {
+        if let Some(abilities) = self.cx.style.abilities.get_mut(self.entity) {
             abilities.set(Abilities::HOVERABLE, state);
         }
 
-        self.style.borrow_mut().needs_restyle = true;
+        self.cx.style.needs_restyle = true;
 
         self
     }
 
     pub fn child_space(self, value: Units) -> Self {
-        self.style.borrow_mut().child_left.insert(self.entity, value);
-        self.style.borrow_mut().child_right.insert(self.entity, value);
-        self.style.borrow_mut().child_top.insert(self.entity, value);
-        self.style.borrow_mut().child_bottom.insert(self.entity, value);
+        self.cx.style.child_left.insert(self.entity, value);
+        self.cx.style.child_right.insert(self.entity, value);
+        self.cx.style.child_top.insert(self.entity, value);
+        self.cx.style.child_bottom.insert(self.entity, value);
 
-        self.style.borrow_mut().needs_relayout = true;
-        self.style.borrow_mut().needs_redraw = true;
+        self.cx.style.needs_relayout = true;
+        self.cx.style.needs_redraw = true;
 
         self
     }
 
     pub fn border_radius(self, value: Units) -> Self {
-        self.style.borrow_mut().border_radius_top_left.insert(self.entity, value);
-        self.style.borrow_mut().border_radius_top_right.insert(self.entity, value);
-        self.style.borrow_mut().border_radius_bottom_left.insert(self.entity, value);
-        self.style.borrow_mut().border_radius_bottom_right.insert(self.entity, value);
+        self.cx.style.border_radius_top_left.insert(self.entity, value);
+        self.cx.style.border_radius_top_right.insert(self.entity, value);
+        self.cx.style.border_radius_bottom_left.insert(self.entity, value);
+        self.cx.style.border_radius_bottom_right.insert(self.entity, value);
 
-        self.style.borrow_mut().needs_redraw = true;
+        self.cx.style.needs_redraw = true;
 
         self
     }
 
     pub fn space(self, value: Units) -> Self {
-        self.style.borrow_mut().left.insert(self.entity, value);
-        self.style.borrow_mut().right.insert(self.entity, value);
-        self.style.borrow_mut().top.insert(self.entity, value);
-        self.style.borrow_mut().bottom.insert(self.entity, value);
+        self.cx.style.left.insert(self.entity, value);
+        self.cx.style.right.insert(self.entity, value);
+        self.cx.style.top.insert(self.entity, value);
+        self.cx.style.bottom.insert(self.entity, value);
 
-        self.style.borrow_mut().needs_relayout = true;
-        self.style.borrow_mut().needs_redraw = true;
+        self.cx.style.needs_relayout = true;
+        self.cx.style.needs_redraw = true;
 
         self
     }
 
     pub fn size(self, value: Units) -> Self {
-        self.style.borrow_mut().width.insert(self.entity, value);
-        self.style.borrow_mut().height.insert(self.entity, value);
+        self.cx.style.width.insert(self.entity, value);
+        self.cx.style.height.insert(self.entity, value);
 
-        self.style.borrow_mut().needs_relayout = true;
-        self.style.borrow_mut().needs_redraw = true;
+        self.cx.style.needs_relayout = true;
+        self.cx.style.needs_redraw = true;
 
         self
     }
 
     pub fn min_size(self, value: Units) -> Self {
-        self.style.borrow_mut().min_width.insert(self.entity, value);
-        self.style.borrow_mut().min_height.insert(self.entity, value);
+        self.cx.style.min_width.insert(self.entity, value);
+        self.cx.style.min_height.insert(self.entity, value);
 
-        self.style.borrow_mut().needs_relayout = true;
-        self.style.borrow_mut().needs_redraw = true;
+        self.cx.style.needs_relayout = true;
+        self.cx.style.needs_redraw = true;
 
         self
     }
 
     pub fn max_size(self, value: Units) -> Self {
-        self.style.borrow_mut().max_width.insert(self.entity, value);
-        self.style.borrow_mut().max_height.insert(self.entity, value);
+        self.cx.style.max_width.insert(self.entity, value);
+        self.cx.style.max_height.insert(self.entity, value);
 
-        self.style.borrow_mut().needs_relayout = true;
-        self.style.borrow_mut().needs_redraw = true;
+        self.cx.style.needs_relayout = true;
+        self.cx.style.needs_redraw = true;
 
         self
     }
 
     pub fn color(self, color: Color) -> Self {
-        self.style.borrow_mut().font_color.insert(self.entity, color);
+        self.cx.style.font_color.insert(self.entity, color);
 
         self
     }
@@ -247,7 +239,9 @@ impl<T> Handle<T> {
     set_style!(font_size, f32);
 
     set_style!(display, Display);
-    set_style!(visibility, Visibility);
+    //set_style!(visibility, Visibility);
+
+
 
     set_style!(rotate, f32);
     set_style!(translate, (f32, f32));

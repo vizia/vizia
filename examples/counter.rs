@@ -52,14 +52,14 @@ fn main() {
             // Button for incrementing the counter
             Button::new(
                 cx,
-                move |cx| cx.emit(CounterEvent::Increment),
+                |cx| cx.emit(CounterEvent::Increment),
                 |cx| Label::new(cx, "Increment"),
             );
 
             // Button for decrementing the counter
             Button::new(
                 cx,
-                move |cx| cx.emit(CounterEvent::Decrement),
+                |cx| cx.emit(CounterEvent::Decrement),
                 |cx| Label::new(cx, "Decrement"),
             );
 

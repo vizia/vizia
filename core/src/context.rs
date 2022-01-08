@@ -26,7 +26,7 @@ pub struct Context {
     pub data: AppData,
     pub event_queue: VecDeque<Event>,
     pub listeners: HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
-    pub style: Rc<RefCell<Style>>,
+    pub style: Style,
     pub cache: CachedData,
 
     pub enviroment: Enviroment,
@@ -63,7 +63,7 @@ impl Context {
             //println!("Removing: {}", entity);
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
-            self.style.borrow_mut().remove(*entity);
+            self.style.remove(*entity);
             self.data.model_data.remove(*entity);
             self.entity_manager.destroy(*entity);
             self.views.remove(entity);
@@ -134,7 +134,7 @@ impl Context {
 
     /// Sets the global default font for the application
     pub fn set_default_font(&mut self, name: &str) {
-        self.style.borrow_mut().default_font = name.to_string();
+        self.style.default_font = name.to_string();
     }
 
     pub fn add_theme(&mut self, theme: &str) {
@@ -152,7 +152,7 @@ impl Context {
     pub fn add_stylesheet(&mut self, path: &str) -> Result<(), std::io::Error> {
         let style_string = std::fs::read_to_string(path.clone())?;
         self.resource_manager.stylesheets.push(path.to_owned());
-        self.style.borrow_mut().parse_theme(&style_string);
+        self.style.parse_theme(&style_string);
 
         Ok(())
     }
@@ -162,11 +162,11 @@ impl Context {
             return Ok(());
         }
 
-        self.style.borrow_mut().remove_rules();
+        self.style.remove_rules();
 
-        self.style.borrow_mut().rules.clear();
+        self.style.rules.clear();
 
-        self.style.borrow_mut().remove_all();
+        self.style.remove_all();
 
         let mut overall_theme = String::new();
 
@@ -186,7 +186,7 @@ impl Context {
             overall_theme += &theme;
         }
 
-        self.style.borrow_mut().parse_theme(&overall_theme);
+        self.style.parse_theme(&overall_theme);
 
         self.enviroment.needs_rebuild = true;
 

@@ -21,7 +21,7 @@ fn main() {
             HStack::new(cx, move |cx| {
                 let first_name = item.value(cx).first_name.clone();
                 Binding::new(cx, ColumnData::columns, move |cx, columns| {
-                    //let width = columns.get(cx)[0];
+                    let width = columns.get(cx)[0];
                     //println!("Width: {:?}", width);
 
                     ResizableItem::new()
@@ -32,7 +32,7 @@ fn main() {
                         .build(cx, &first_name)
                         .border_width(Pixels(1.0))
                         .border_color(Color::black())
-                        .width(columns.get(cx)[0]);
+                        .width(width);
                 });
 
                 Label::new(cx, &item.value(cx).last_name.clone())
@@ -63,7 +63,7 @@ impl ResizableItem {
         Self { resizing: false, on_size: None }
     }
 
-    pub fn build(self, cx: &mut Context, text: &str) -> Handle<Self> {
+    pub fn build<'a>(self, cx: &'a mut Context, text: &str) -> Handle<'a, Self> {
         View::build(self, cx)
             .width(Pixels(200.0))
             .height(Pixels(30.0))
@@ -105,7 +105,7 @@ impl View for ResizableItem {
                     let dx = *x - cx.mouse.left.pos_down.0;
                     if self.resizing {
                         //println!("dx: {} {}", dx, cx.current);
-                        cx.style.borrow_mut().width.insert(cx.current, Pixels(200.0 + dx));
+                        cx.style.width.insert(cx.current, Pixels(200.0 + dx));
                         if let Some(callback) = self.on_size.take() {
                             (callback)(cx, dx);
 

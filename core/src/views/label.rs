@@ -1,4 +1,4 @@
-use crate::{Context, Handle, LocalizedStringKey, View};
+use crate::{Context, Handle, LocalizedStringKey, View, Color, Res};
 
 pub struct Label;
 
@@ -21,10 +21,14 @@ impl Label {
         //     let pattern = message.value().expect("Message has no value.");
         //     let mut errors = vec![];
         //     let value = cx.enviroment.bundle.format_pattern(&pattern, None, &mut errors);
-        //     cx.style.borrow_mut().text.insert(handle.entity, value.to_string());
+        //     cx.style.text.insert(handle.entity, value.to_string());
         // }
 
         handle
+    }
+
+    pub fn test(&mut self, test: &str) {
+        println!("{}", test);
     }
 }
 
@@ -33,3 +37,17 @@ impl View for Label {
         Some("label".to_string())
     }
 }
+
+impl<'a> Handle<'a, Label> {
+    pub fn custom(self, test: impl Res<Color>) -> Self {
+        // if let Some(view) = self.cx.views.get_mut(&self.entity) {
+        //     if let Some(label) = view.downcast_mut::<Label>() {
+        //         label.test(test);
+        //     }
+        // }
+
+        self.cx.style.background_color.insert(self.entity, *test.get(self.cx));
+
+        self
+    }
+} 

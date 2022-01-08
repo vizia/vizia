@@ -27,20 +27,21 @@ fn main() {
             VStack::new(cx, move |cx| {
                 Binding::new(cx, ListData::selected, move |cx, selected| {
                     let item = item.clone();
+                    let selected = *selected.get(cx);
                     HStack::new(cx, move |cx| {
                         Label::new(cx, "Hello").width(Stretch(1.0));
                         Label::new(cx, "World");
                         Label::new(cx, &item.value(cx).to_string());
                         //Label::new(cx, &item.index().to_string());
                     })
-                    .background_color(if item.index() == *selected.get(cx) {
+                    .background_color(if item.index() == selected {
                         Color::rgb(50, 200, 50)
                     } else {
                         Color::rgb(255, 255, 255)
                     })
                     .height(Auto)
                     .width(Stretch(1.0))
-                    .on_press(cx, move |cx| cx.emit(ListEvent::SetSelected(item.index())));
+                    .on_press(move |cx| cx.emit(ListEvent::SetSelected(item.index())));
                 });
             })
             .height(Auto)

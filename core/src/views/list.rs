@@ -151,7 +151,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
             let id = cx.entity_manager.create();
             cx.tree.add(id, cx.current).expect("Failed to add to tree");
             cx.cache.add(id).expect("Failed to add to cache");
-            cx.style.borrow_mut().add(id);
+            cx.style.add(id);
             cx.views.insert(id, Box::new(list));
             id
         };
@@ -224,9 +224,9 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
             cx.views.insert(id, view_handler);
         }
 
-        let handle = Handle { entity: id, style: cx.style.clone(), p: PhantomData::default() };
+        let handle = Handle { entity: id, p: PhantomData::default(), cx };
 
-        cx.focused = handle.entity;
+        handle.cx.focused = handle.entity;
 
         handle
     }
@@ -266,8 +266,8 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
                     cx.remove(child);
                 }
 
-                cx.style.borrow_mut().needs_relayout = true;
-                cx.style.borrow_mut().needs_redraw = true;
+                cx.style.needs_relayout = true;
+                cx.style.needs_redraw = true;
             }
 
             if self.list_data {
