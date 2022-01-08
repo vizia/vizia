@@ -3,7 +3,7 @@ use morphorm::Units;
 
 use crate::{
     style::{Overflow, Selector, SelectorRelation},
-    BoundingBox, Context, Display, Entity, FontOrId, Rule, Tree, TreeExt, Visibility,
+    BoundingBox, Context, Display, Entity, FontOrId, Rule, Tree, TreeExt, Visibility, PseudoClass,
 };
 
 // use crate::{BoundingBox, Display, Entity, Overflow, PropGet, PropSet, Property, SelectorRelation, Rule, Selector, Cx, Tree, TreeExt, Visibility};
@@ -275,6 +275,27 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
     }
 }
 
+pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
+    for entity in tree.into_iter() {
+        if let Some(parent) = entity.parent(tree) {
+
+            cx.style.disabled.inherit_inline(entity, parent);
+            
+            cx.style.font_color.inherit_inline(entity, parent);
+        }
+    }
+}
+
+pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
+    for entity in tree.into_iter() {
+        if let Some(parent) = entity.parent(tree) {
+            cx.style.font_color.inherit_shared(entity, parent);
+        }
+    }
+}
+
+
+
 // pub fn apply_abilities(cx: &mut Context, tree: &Tree) {
 //     let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
 //     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
@@ -347,10 +368,21 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
         return false;
     }
 
+    // Disabled needs to be handled separately because it can be inherited
+    if let Some(disabled) = cx.style.disabled.get(entity) {
+        if !selector.pseudo_classes.is_empty() && *disabled != selector.pseudo_classes.contains(PseudoClass::DISABLED)
+        {
+            return false;
+        }
+    }
+
     // Check for pseudo-class match
     if let Some(pseudo_classes) = cx.style.pseudo_classes.get(entity) {
-        if !selector.pseudo_classes.is_empty()
-            && !selector.pseudo_classes.intersects(*pseudo_classes)
+        let mut selector_pseudo_classes = selector.pseudo_classes;
+        selector_pseudo_classes.set(PseudoClass::DISABLED, false);
+        
+        if !selector_pseudo_classes.is_empty()
+            && !selector_pseudo_classes.intersects(*pseudo_classes)
         {
             return false;
         }

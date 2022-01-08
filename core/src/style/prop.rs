@@ -200,10 +200,7 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.set_disabled(cx, true);
     /// ```
     fn set_disabled(self, cx: &mut Context, value: bool) -> Entity {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self.entity()) {
-            pseudo_classes.set(PseudoClass::DISABLED, value);
-        }
-
+        cx.style.disabled.insert(self.entity(), value);
         cx.style.needs_restyle = true;
         cx.style.needs_relayout = true;
         cx.style.needs_redraw = true;
@@ -1395,11 +1392,7 @@ pub trait PropGet: Sized + AsEntity {
 
 impl PropGet for Entity {
     fn is_disabled(self, cx: &mut Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self) {
-            pseudo_classes.contains(PseudoClass::DISABLED)
-        } else {
-            false
-        }
+        cx.style.disabled.get(self).cloned().unwrap_or_default()
     }
     fn is_hovered(self, cx: &mut Context) -> bool {
         if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self) {

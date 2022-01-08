@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+use crate::PseudoClass;
 use crate::style::Display;
 use crate::Abilities;
 use crate::Entity;
@@ -146,47 +147,6 @@ impl CachedData {
         self.geometry_changed.insert(entity, Default::default())?;
 
         self.abilities.insert(entity, Default::default())?;
-
-        // let key = entity.index_unchecked();
-
-        // if (key + 1) > self.visibility.len() {
-        //     self.bounds.resize(key + 1, Default::default());
-        //     self.visibility.resize(key + 1, Default::default());
-        //     self.hoverable.resize(key + 1, true);
-        //     self.focusable.resize(key + 1, true);
-        //     self.child_sum.resize(key + 1, (0.0, 0.0));
-        //     self.child_max.resize(key + 1, (0.0, 0.0));
-        //     self.prev_size.resize(key + 1, Default::default());
-
-        //     self.opacity.resize(key + 1, 0.0);
-
-        //     self.rotate.resize(key + 1, 0.0);
-        //     self.scale.resize(key + 1, (1.0, 1.0));
-        //     self.transform.resize(key + 1, Transform2D::identity());
-        //     self.origin.resize(key + 1, (0.0, 0.0));
-
-        //     self.z_index.resize(key + 1, 0);
-
-        //     self.clip_region.resize(key + 1, Default::default());
-        //     self.space.resize(key + 1, Default::default());
-        //     self.size.resize(key + 1, Default::default());
-        //     self.cross_stretch_sum.resize(key + 1, Default::default());
-        //     self.cross_free_space.resize(key + 1, Default::default());
-
-        //     self.horizontal_free_space
-        //         .resize(key + 1, Default::default());
-        //     self.horizontal_stretch_sum
-        //         .resize(key + 1, Default::default());
-        //     self.vertical_free_space.resize(key + 1, Default::default());
-        //     self.vertical_stretch_sum
-        //         .resize(key + 1, Default::default());
-        //     self.stack_child.resize(key + 1, (false, false));
-
-        //     self.grid_row_max.resize(key + 1, 0.0);
-        //     self.grid_col_max.resize(key + 1, 0.0);
-
-        //     self.geometry_changed.resize(key + 1, Default::default());
-        // }
 
         Ok(())
     }

@@ -276,6 +276,7 @@ pub struct Style {
     pub elements: SparseSet<String>,
     pub classes: SparseSet<HashSet<String>>,
     pub pseudo_classes: SparseSet<PseudoClass>,
+    pub disabled: StyleSet<bool>,
     pub abilities: SparseSet<Abilities>,
 
     // Display

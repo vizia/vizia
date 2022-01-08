@@ -1,9 +1,9 @@
-use std::{cell::RefCell, marker::PhantomData, rc::Rc};
+use std::marker::PhantomData;
 
 use morphorm::{LayoutType, PositionType, Units};
 
 use crate::{
-    style::Overflow, Abilities, Color, CursorIcon, Display, Entity, PseudoClass, Style, Visibility, Context, Res,
+    style::Overflow, Abilities, Color, CursorIcon, Display, Entity, PseudoClass, Visibility, Context, Res, BorderCornerShape,
 };
 
 macro_rules! set_style {
@@ -27,9 +27,6 @@ pub struct Handle<'a, T> {
 }
 
 impl<'a,T> Handle<'a,T> {
-    // pub fn null() -> Self {
-    //     Self { entity: Entity::null(), style: Rc::default(), p: PhantomData::default() }
-    // }
 
     pub fn entity(&self) -> Entity {
         self.entity
@@ -64,8 +61,20 @@ impl<'a,T> Handle<'a,T> {
     pub fn checked(self, state: bool) -> Self {
         if let Some(pseudo_classes) = self.cx.style.pseudo_classes.get_mut(self.entity) {
             pseudo_classes.set(PseudoClass::CHECKED, state);
+        } else {
+            let mut pseudoclass = PseudoClass::empty();
+            pseudoclass.set(PseudoClass::CHECKED, state);
+            self.cx.style.pseudo_classes.insert(self.entity, pseudoclass);
         }
+        
+        self.cx.style.needs_restyle = true;
 
+        self
+    }
+
+    pub fn disabled(self, state: bool) -> Self {
+
+        self.cx.style.disabled.insert(self.entity, state);
         self.cx.style.needs_restyle = true;
 
         self
@@ -126,6 +135,17 @@ impl<'a,T> Handle<'a,T> {
         self
     }
 
+    pub fn border_radius(self, value: Units) -> Self {
+        self.cx.style.border_radius_top_left.insert(self.entity, value);
+        self.cx.style.border_radius_top_right.insert(self.entity, value);
+        self.cx.style.border_radius_bottom_left.insert(self.entity, value);
+        self.cx.style.border_radius_bottom_right.insert(self.entity, value);
+
+        self.cx.style.needs_redraw = true;
+
+        self
+    }
+
     pub fn space(self, value: Units) -> Self {
         self.cx.style.left.insert(self.entity, value);
         self.cx.style.right.insert(self.entity, value);
@@ -164,6 +184,12 @@ impl<'a,T> Handle<'a,T> {
 
         self.cx.style.needs_relayout = true;
         self.cx.style.needs_redraw = true;
+
+        self
+    }
+
+    pub fn color(self, color: Color) -> Self {
+        self.cx.style.font_color.insert(self.entity, color);
 
         self
     }
@@ -219,4 +245,16 @@ impl<'a,T> Handle<'a,T> {
 
     set_style!(rotate, f32);
     set_style!(translate, (f32, f32));
+
+    set_style!(border_shape_top_left, BorderCornerShape);
+    set_style!(border_shape_top_right, BorderCornerShape);
+    set_style!(border_shape_bottom_left, BorderCornerShape);
+    set_style!(border_shape_bottom_right, BorderCornerShape);
+
+    set_style!(border_radius_top_left, Units);
+    set_style!(border_radius_top_right, Units);
+    set_style!(border_radius_bottom_left, Units);
+    set_style!(border_radius_bottom_right, Units);
+
+
 }

@@ -4,7 +4,7 @@ use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
-use vizia_core::TreeExt;
+use vizia_core::{TreeExt, apply_inline_inheritance, apply_shared_inheritance};
 use vizia_core::{MouseButton, MouseButtonState};
 //use vizia_core::WindowWidget;
 use vizia_core::{
@@ -155,6 +155,8 @@ impl ApplicationRunner {
             .height
             .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
+        context.style.disabled.insert(Entity::root(), false);
+
         context.cache.set_width(Entity::root(), physical_size.width as f32);
         context.cache.set_height(Entity::root(), physical_size.height as f32);
         context.cache.set_opacity(Entity::root(), 1.0);
@@ -295,8 +297,9 @@ impl ApplicationRunner {
         let tree = self.context.tree.clone();
 
         // Styling
+        apply_inline_inheritance(&mut self.context, &tree);
         apply_styles(&mut self.context, &tree);
-
+        apply_shared_inheritance(&mut self.context, &tree);
 
         apply_z_ordering(&mut self.context, &tree);
 

@@ -64,10 +64,10 @@ where
         if sparse_idx < self.sparse.len() {
             let dense_idx = self.sparse[key.index()];
             if dense_idx.index() < self.dense.len() {
-                let entry = &self.dense[dense_idx.index()];
-                if entry.key == sparse_idx {
+                //let entry = &self.dense[dense_idx.index()];
+                //if entry.key == sparse_idx {
                     return Some(dense_idx);
-                }
+                //}
             }
         }
 
@@ -81,6 +81,9 @@ where
 
     /// Returns a reference to the data for a given key if it exists
     pub fn get<I: GenerationalId>(&self, key: I) -> Option<&T> {
+        // if self.dense_idx(key).is_none() {
+        //     println!("Failed: {}", key.index());
+        // }
         self.dense_idx(key).map(|dense_idx| &self.dense[dense_idx.index()].value)
     }
 
