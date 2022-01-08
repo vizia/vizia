@@ -190,8 +190,8 @@ impl Application {
             Units::Pixels(self.window_description.inner_size.height as f32),
         );
 
-        context.style.borrow_mut().pseudo_classes.insert(Entity::root(), PseudoClass::default());
-        context.style.borrow_mut().disabled.insert(Entity::root(), false);
+        context.style.pseudo_classes.insert(Entity::root(), PseudoClass::default());
+        context.style.disabled.insert(Entity::root(), false);
         
         let mut bounding_box = BoundingBox::default();
         bounding_box.w = size.width as f32;
