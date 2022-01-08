@@ -99,6 +99,19 @@ checkbox:disabled {
     border-color: gray;
 }
 
+radiobutton {
+    width: 15px;
+    height: 15px;
+    right: 4px;
+    color: black;
+    border-color: black;
+}
+
+radiobutton:checked {
+    color: #003080;
+    border-color: #003080;
+}
+
 dropdown .title {
     background-color: white;
     border-width: 1px;
