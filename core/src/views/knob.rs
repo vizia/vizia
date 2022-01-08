@@ -54,7 +54,10 @@ impl Knob {
             ZStack::new(cx, move |cx| {
                 Binding::new(cx, SliderData::value, move |cx, value| {
                     //println!("{}", value.get(cx));
-                    ArcTrack::new(cx, *value.get(cx), centered)
+                    let height = cx.cache.get_height(cx.current);
+                    let width = cx.cache.get_width(cx.current);
+                    let radius = height.min(width) / 2.;
+                    ArcTrack::new(cx, *value.get(cx), centered, Pixels(radius), Percentage(15.), 300.)
                         .width(Stretch(1.0))
                         .height(Stretch(1.0))
                         .class("track");
@@ -68,6 +71,43 @@ impl Knob {
                 //     .background_color(Color::red())
                 //     .translate((30.0,0.0))
                 //     .rotate(30.0);
+            });
+        })
+    }
+    pub fn custom<'a, F, T>(
+        cx: &'a mut Context,
+        normalized_default: f32,
+        normalized_value: f32,
+        content: F
+    ) -> Handle<Self> 
+    where
+        F: 'static + Fn(&mut Context, f32) -> Handle<T>,
+        {
+        Self {
+            normalized_value,
+            default_normal: normalized_default,
+
+            is_dragging: false,
+            prev_drag_y: 0.0,
+            continuous_normal: normalized_value,
+
+            drag_scalar: DEFAULT_DRAG_SCALAR,
+            wheel_scalar: DEFAULT_WHEEL_SCALAR,
+            modifier_scalar: DEFAULT_MODIFIER_SCALAR,
+
+            on_changing: None,
+        }
+        .build2(cx, move |cx| {
+            SliderData { value: normalized_value.clamp(0.0, 1.0) }.build(cx);
+
+            ZStack::new(cx, move |cx| {
+                Binding::new(cx, SliderData::value, move |cx, value| {
+                    //println!("{}", value.get(cx));
+                    let height = cx.cache.get_height(cx.current);
+                    let width = cx.cache.get_width(cx.current);
+                    // let radius = height.min(width) / 2.;
+                    (content)(cx, *value.get(cx)).width(Percentage(100.0)).height(Percentage(100.0));
+                });
             });
         })
     }
@@ -199,19 +239,20 @@ pub struct ArcTrack {
     angle_end: f32,
     radius: Units,
     span: Units,
-
     normalized_value: f32,
 
     center: bool,
 }
 
 impl ArcTrack {
-    pub fn new(cx: &mut Context, value: f32, center: bool) -> Handle<Self> {
+    pub fn new(cx: &mut Context, value: f32, center: bool, radius: Units, span: Units, arc_len: f32) -> Handle<Self> {
         Self {
-            angle_start: -150.0,
-            angle_end: 150.0,
-            radius: Units::Pixels(30.0),
-            span: Units::Pixels(5.0),
+            // angle_start: -150.0,
+            // angle_end: 150.0,
+            angle_start: -arc_len / 2.,
+            angle_end: arc_len / 2.,
+            radius,
+            span,
 
             normalized_value: value,
 
@@ -256,8 +297,9 @@ impl View for ArcTrack {
 
         // Convert radius and span into screen coordinates
         let radius = self.radius.value_or(parent_width, 0.0);
-        let span = self.span.value_or(parent_width, 0.0);
-
+        // default value of span is 15 % of radius. Original span value was 16.667%
+        let span = self.span.value_or(radius, 0.0);
+        
         // Draw the track arc
         let mut path = Path::new();
         path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
