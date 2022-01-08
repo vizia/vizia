@@ -9,14 +9,14 @@ pub struct Textbox {
 }
 
 impl Textbox {
-    pub fn new(cx: &mut Context, placeholder: &str) -> Handle<Self> {
+    pub fn new<'a>(cx: &'a mut Context, placeholder: &str) -> Handle<'a, Self> {
         Self { text: placeholder.to_owned(), edit: false, on_submit: None }
             .build(cx)
             .text(placeholder)
     }
 }
 
-impl Handle<Textbox> {
+impl<'a> Handle<'a, Textbox> {
     pub fn on_submit<F>(self, cx: &mut Context, callback: F) -> Self
     where
         F: 'static + Fn(&mut Context, &Textbox),

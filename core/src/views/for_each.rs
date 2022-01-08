@@ -12,8 +12,8 @@ impl ForEach {
                     cx.remove(child);
                 }
 
-                cx.style.borrow_mut().needs_relayout = true;
-                cx.style.borrow_mut().needs_redraw = true;
+                cx.style.needs_relayout = true;
+                cx.style.needs_redraw = true;
             }
 
             let prev_count = cx.count;

@@ -75,6 +75,7 @@ fn main() {
 
 
         Binding::new(cx, AppData::choice, |cx, choice|{
+            let option = choice.get(cx).clone();
             HStack::new(cx, move |cx|{
                 // Dropdown List
                 Dropdown::new(cx, move |cx|
@@ -90,6 +91,7 @@ fn main() {
                         // Need this because of a bug to do ith bindings inside a list
                         VStack::new(cx, move |cx|{
                                 let option = item.get(cx).clone();
+                                let is_selected = item.get(cx) == choice.get(cx);
                                 // Button which updates the chosen option
                                 Button::new(cx, move |cx| {
                                     cx.emit(AppEvent::SetChoice(option.clone()));
@@ -97,12 +99,12 @@ fn main() {
                                 }, move |cx|{
                                     let opt = item.get(cx).clone();
                                     Label::new(cx, &opt.clone()).width(Stretch(1.0)).height(Pixels(20.0))
-                                }).width(Stretch(1.0)).background_color(if item.get(cx) == choice.get(cx) {Color::from("#f8ac14")} else {Color::transparent()});
+                                }).width(Stretch(1.0)).background_color(if is_selected {Color::from("#f8ac14")} else {Color::transparent()});
                         }).width(Stretch(1.0));
                     });
                 });
                 // Set background color based on the chosen value of the dropdown
-            }).background_color(choice_to_color(choice.get(cx)));
+            }).background_color(choice_to_color(&option));
         });
 
     }).run();

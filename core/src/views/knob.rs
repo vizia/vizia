@@ -113,12 +113,12 @@ impl Knob {
     }
 }
 
-impl Handle<Knob> {
-    pub fn on_changing<F>(self, cx: &mut Context, callback: F) -> Self
+impl<'a> Handle<'a, Knob> {
+    pub fn on_changing<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut Knob, &mut Context),
     {
-        if let Some(view) = cx.views.get_mut(&self.entity) {
+        if let Some(view) = self.cx.views.get_mut(&self.entity) {
             if let Some(knob) = view.downcast_mut::<Knob>() {
                 knob.on_changing = Some(Box::new(callback));
             }
@@ -270,7 +270,7 @@ impl View for ArcTrack {
         // background_color.set_alphaf(background_color.a * opacity);
 
         let mut foreground_color: femtovg::Color =
-            cx.style.borrow().background_color.get(cx.current).cloned().unwrap_or_default().into();
+            cx.style.background_color.get(cx.current).cloned().unwrap_or_default().into();
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
         let background_color = femtovg::Color::rgb(54, 54, 54);

@@ -345,7 +345,7 @@ impl Slider {
         // self.thumb
         //     .set_left(cx, Units::Percentage(100.0 * (dx - thumb_width / 2.0) / width));
 
-        //cx.style.borrow_mut().left.insert(self.thumb, Percentage(100.0 * (dx - thumb_width / 2.0) / width));
+        //cx.style.left.insert(self.thumb, Percentage(100.0 * (dx - thumb_width / 2.0) / width));
 
         self.thumb.left(Percentage(100.0 * (dx - thumb_width / 2.0) / width));
 

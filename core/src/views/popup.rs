@@ -58,7 +58,7 @@ impl Popup {
                 Binding::new(cx, PopupData::is_open, move |cx, flag| {
                     let is_open = *flag.get(cx);
 
-                    cx.style.borrow_mut().visibility.insert(
+                    cx.style.visibility.insert(
                         cx.current,
                         if is_open { Visibility::Visible } else { Visibility::Invisible },
                     );

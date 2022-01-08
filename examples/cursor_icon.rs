@@ -3,7 +3,6 @@ use vizia::*;
 macro_rules! cursor_label {
     ($cx:ident, $name:ident) => {
         Label::new($cx, stringify!($name)).width(Pixels(100.0)).height(Pixels(30.0)).on_hover(
-            $cx,
             |cx| {
                 cx.emit(WindowEvent::SetCursor(CursorIcon::$name));
             },

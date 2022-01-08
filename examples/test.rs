@@ -11,28 +11,31 @@ const STYLE: &str = r#"
     }
 "#;
 
+#[derive(Lens)]
+pub struct AppData {
+    color: Color,
+}
+
+impl Model for AppData {
+
+}
+
 // Example showing how to set a custom property on a view
 fn main() {
     Application::new(WindowDescription::new().with_title("Test"), |cx| {
         cx.add_theme(STYLE);
 
-        Element::new(cx).class("test").width(Pixels(100.0)).height(Pixels(100.0)).rotate(30.0);
-        // VStack::new().build(cx, |cx| {
-        //     Label::new("Hello").build(cx);
-        //     Label::new("World").build(cx);
-        // });
-        // VStack::new(cx, |cx|{
-        //     HStack::new(cx, |cx|{
-        //         Label::new(cx, "Hello");
-        //         Label::new(cx, "World");
+        AppData {
+            color: Color::red(),
+        }.build(cx);
 
-        //         VStack::new(cx, |cx|{
-        //             Label::new(cx, "Hello");
-        //             Label::new(cx, "World");
-        //         });
-
-        //     }).width(Pixels(200.0)).height(Pixels(200.0)).background_color(Color::green()).custom_prop(cx, 3.14);
-        // });
+        Binding::new(cx, AppData::color, |cx, color|{
+            Label::new(cx, "Test").custom(color);
+            HStack::new(cx, move |cx|{
+                Label::new(cx, "Test").custom(color);
+            });
+            Label::new(cx, "Test").custom(Color::green());
+        });
     })
     .run();
 }

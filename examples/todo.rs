@@ -28,7 +28,7 @@ fn main() {
                     HStack::new(cx, move |cx| {
                         Label::new(cx, &item.value(cx).text.to_owned());
                         let item_index = item.index();
-                        Checkbox::new(cx, item.value(cx).completed).on_toggle(cx, move |cx| {
+                        Checkbox::new(cx, item.value(cx).completed).on_toggle(move |cx| {
                             cx.emit(TodoEvent::ToggleCompleted(item_index))
                         });
                         Label::new(cx, &item.value(cx).completed.to_string());

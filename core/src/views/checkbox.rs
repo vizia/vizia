@@ -47,7 +47,7 @@ const ICON_CHECK: &str = "\u{2713}";
 /// # AppData{value: false}.build(cx);
 /// Binding::new(cx, AppData::value, |cx, value|{
 ///     Checkbox::new(cx, *value.get(cx))
-///         .on_toggle(cx, |cx| cx.emit(AppEvent::ToggleValue));
+///         .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
 /// })
 /// # }).run();
 /// ```
@@ -67,7 +67,7 @@ impl Checkbox {
     }
 }
 
-impl Handle<Checkbox> {
+impl<'a> Handle<'a, Checkbox> {
     /// Set the callback triggered when the checkbox is pressed.
     ///
     /// # Example
@@ -78,11 +78,11 @@ impl Handle<Checkbox> {
     ///         cx.emit(WindowEvent::Debug(format!("Checkbox pressed!")));
     ///     });
     /// ```
-    pub fn on_toggle<F>(self, cx: &mut Context, callback: F) -> Self
+    pub fn on_toggle<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut Context),
     {
-        if let Some(view) = cx.views.get_mut(&self.entity) {
+        if let Some(view) = self.cx.views.get_mut(&self.entity) {
             if let Some(checkbox) = view.downcast_mut::<Checkbox>() {
                 checkbox.on_toggle = Some(Box::new(callback));
             }
@@ -111,7 +111,7 @@ impl View for Checkbox {
                         // if self.checked {
                         //     self.checked = false;
                         //     if let Some(pseudo_classes) =
-                        //         cx.style.borrow_mut().pseudo_classes.get_mut(cx.current)
+                        //         cx.style.pseudo_classes.get_mut(cx.current)
                         //     {
                         //         pseudo_classes.set(PseudoClass::CHECKED, false);
                         //     }
@@ -127,7 +127,7 @@ impl View for Checkbox {
                         // } else {
                         //     self.checked = true;
                         //     if let Some(pseudo_classes) =
-                        //         cx.style.borrow_mut().pseudo_classes.get_mut(cx.current)
+                        //         cx.style.pseudo_classes.get_mut(cx.current)
                         //     {
                         //         pseudo_classes.set(PseudoClass::CHECKED, true);
                         //     }
