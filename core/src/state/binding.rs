@@ -201,6 +201,13 @@ impl Res<usize> for usize {
         self
     }
 }
+
+impl<T> Res<(T,T)> for (T,T) {
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a (T,T) {
+        self
+    }
+}
+
 // #[derive(Clone, Copy)]
 // pub struct Item<L,T> {
 //     pub lens: L,
