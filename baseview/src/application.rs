@@ -155,7 +155,7 @@ impl ApplicationRunner {
             .height
             .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
-        context.style.borrow_mut().disabled.insert(Entity::root(), false);
+        context.style.disabled.insert(Entity::root(), false);
 
         context.cache.set_width(Entity::root(), physical_size.width as f32);
         context.cache.set_height(Entity::root(), physical_size.height as f32);
