@@ -100,17 +100,12 @@ checkbox:disabled {
 }
 
 radiobutton {
-    width: 15px;
-    height: 15px;
-    border-width: 16%;
+    width: 20px;
+    height: 20px;
+    border-width: 6%;
     right: 4px;
     color: black;
     border-color: black;
-}
-
-radiobutton:checked {
-    color: #003080;
-    border-color: #003080;
 }
 
 dropdown .title {

@@ -70,11 +70,11 @@ impl View for RadioButton {
 }
 
 impl Handle<'_, RadioButton> {
-    pub fn on_select<F>(self, cx: &mut Context, callback: F) -> Self
+    pub fn on_select<F>(self, callback: F) -> Self
         where
             F: 'static + Fn(&mut Context),
     {
-        if let Some(view) = cx.views.get_mut(&self.entity) {
+        if let Some(view) = self.cx.views.get_mut(&self.entity) {
             if let Some(checkbox) = view.downcast_mut::<RadioButton>() {
                 checkbox.on_select = Some(Box::new(callback));
             }

@@ -15,6 +15,17 @@ const DIFFERENT: &str = r#"
         border-width: 0px;
         color: white;
     }
+
+    radiobutton {
+        background-color: white;
+        border-color: blue;
+        border-width: 1px;
+    }
+
+    radiobutton:checked {
+        background-color: blue;
+        color: white;
+    }
 "#;
 
 #[derive(Lens)]
