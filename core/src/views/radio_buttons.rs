@@ -33,7 +33,7 @@ impl View for RadioButton {
         let entity = cx.current;
         let bounds = cx.cache.get_bounds(entity);
         let border_width =
-            match cx.style.borrow().border_width.get(entity).cloned().unwrap_or_default() {
+            match cx.style.border_width.get(entity).cloned().unwrap_or_default() {
                 Units::Pixels(val) => val,
                 Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
                 _ => 0.0,
@@ -42,9 +42,9 @@ impl View for RadioButton {
         let dot_radius_y = (bounds.h / 2.0 - border_width) / 2.0;
 
         let background_color =
-            cx.style.borrow().background_color.get(entity).cloned().unwrap_or_default();
-        let border_color = cx.style.borrow().border_color.get(entity).cloned().unwrap_or_default();
-        let font_color = cx.style.borrow().font_color.get(entity).cloned().unwrap_or_default();
+            cx.style.background_color.get(entity).cloned().unwrap_or_default();
+        let border_color = cx.style.border_color.get(entity).cloned().unwrap_or_default();
+        let font_color = cx.style.font_color.get(entity).cloned().unwrap_or_default();
 
         let mut path = Path::new();
         path.ellipse(
@@ -69,7 +69,7 @@ impl View for RadioButton {
     }
 }
 
-impl Handle<RadioButton> {
+impl Handle<'_, RadioButton> {
     pub fn on_select<F>(self, cx: &mut Context, callback: F) -> Self
         where
             F: 'static + Fn(&mut Context),
