@@ -102,6 +102,7 @@ checkbox:disabled {
 radiobutton {
     width: 15px;
     height: 15px;
+    border-width: 16%;
     right: 4px;
     color: black;
     border-color: black;

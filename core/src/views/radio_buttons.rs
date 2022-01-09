@@ -32,7 +32,14 @@ impl View for RadioButton {
     fn draw(&self, cx: &Context, canvas: &mut Canvas) {
         let entity = cx.current;
         let bounds = cx.cache.get_bounds(entity);
-        let border_width = if bounds.w < bounds.h { bounds.w } else { bounds.h } / 6.0;
+        let border_width =
+            match cx.style.borrow().border_width.get(entity).cloned().unwrap_or_default() {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
+                _ => 0.0,
+            };
+        let dot_radius_x = (bounds.w / 2.0 - border_width) / 2.0;
+        let dot_radius_y = (bounds.h / 2.0 - border_width) / 2.0;
 
         let background_color =
             cx.style.borrow().background_color.get(entity).cloned().unwrap_or_default();
@@ -54,8 +61,8 @@ impl View for RadioButton {
             path.ellipse(
                 bounds.x + bounds.w / 2.0,
                 bounds.y + bounds.h / 2.0,
-                bounds.w / 6.0,
-                bounds.h / 6.0,
+                dot_radius_x,
+                dot_radius_y,
             );
             canvas.fill_path(&mut path, Paint::color(font_color.into()));
         }
