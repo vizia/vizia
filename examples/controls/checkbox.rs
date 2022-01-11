@@ -3,6 +3,16 @@ use vizia::*;
 mod support;
 use support::*;
 
+const STYLE: &str = r#"
+    hstack {
+        child-space: 1s;
+    }
+
+    vstack {
+        child-space: 1s;
+    }
+"#;
+
 #[derive(Debug, Default, Lens)]
 pub struct Options {
     pub option1: bool,
@@ -62,6 +72,9 @@ impl Model for AppData {
 
 fn main() {
     Application::new(WindowDescription::new().with_title("Checkbox"), |cx| {
+        
+        cx.add_theme(STYLE);
+        
         if cx.data::<AppData>().is_none() {
             AppData {
                 options: Options { option1: true, option2: false, option3: false },
@@ -104,18 +117,18 @@ fn main() {
                 .col_between(Pixels(5.0));
             });
 
-            // Exclusive checkboxes with labels
+            // Exclusive checkboxes (radio buttons) with labels
             // Only one checkbox can be checked at a time and cannot be unchecked
             VStack::new(cx, |cx| {
-                Label::new(cx, "Exclusive Check Boxes").class("h1");
+                Label::new(cx, "Radio Buttons").class("h1");
 
                 HStack::new(cx, |cx| {
                     Binding::new(
                         cx,
                         AppData::exclusive_options.then(Options::option1),
                         |cx, option1| {
-                            Checkbox::new(cx, *option1.get(cx))
-                                .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(0)));
+                            RadioButton::new(cx, *option1.get(cx))
+                                .on_select(|cx| cx.emit(AppEvent::ToggleExclusiveOption(0)));
                         },
                     );
                     Label::new(cx, "Option 1");
@@ -127,8 +140,8 @@ fn main() {
                         cx,
                         AppData::exclusive_options.then(Options::option2),
                         |cx, option2| {
-                            Checkbox::new(cx, *option2.get(cx))
-                                .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(1)));
+                            RadioButton::new(cx, *option2.get(cx))
+                                .on_select(|cx| cx.emit(AppEvent::ToggleExclusiveOption(1)));
                         },
                     );
                     Label::new(cx, "Option 2");
@@ -140,8 +153,8 @@ fn main() {
                         cx,
                         AppData::exclusive_options.then(Options::option3),
                         |cx, option3| {
-                            Checkbox::new(cx, *option3.get(cx))
-                                .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(2)));
+                            RadioButton::new(cx, *option3.get(cx))
+                                .on_select(|cx| cx.emit(AppEvent::ToggleExclusiveOption(2)));
                         },
                     );
                     Label::new(cx, "Option 3");

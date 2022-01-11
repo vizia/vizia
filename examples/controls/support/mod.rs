@@ -15,6 +15,17 @@ const DIFFERENT: &str = r#"
         border-width: 0px;
         color: white;
     }
+
+    radiobutton {
+        background-color: white;
+        border-color: blue;
+        border-width: 1px;
+    }
+
+    radiobutton:checked {
+        background-color: blue;
+        color: white;
+    }
 "#;
 
 #[derive(Lens)]
@@ -43,16 +54,6 @@ impl Model for ThemeData {
                 }
             }
         }
-
-        // if let Some(list_event) = event.message.downcast() {
-        //     match list_event {
-        //         ListEvent::SetSelected(index) => {
-        //             self.choice = self.list.get(*index).unwrap().to_owned();
-        //         }
-
-        //         _ => {}
-        //     }
-        // }
     }
 }
 
@@ -68,35 +69,35 @@ pub fn style_dropdown(cx: &mut Context) -> Handle<ZStack> {
     }
 
     ZStack::new(cx, |cx|{
-        Binding::new(cx, ThemeData::choice, |cx, choice|{
+        //Binding::new(cx, ThemeData::choice, |cx, choice|{
             HStack::new(cx, move |cx|{
                 // Dropdown List
                 Dropdown::new(cx, move |cx|
                     // A Label and an Icon
                     HStack::new(cx, move |cx|{
-                        let choice = choice.get(cx).clone();
-                        Label::new(cx, &choice).left(Pixels(5.0));
+                        Binding::new(cx, ThemeData::choice, |cx, choice|{
+                            Label::new(cx, &choice.get(cx).to_string());
+                        });
                         Label::new(cx, ICON_DOWN_OPEN).font("icons").left(Stretch(1.0)).right(Pixels(5.0));
-                    }).child_space(Auto), 
+                    }),
                     move |cx|{
                     // List of options
-                    List::new(cx, ThemeData::list, move |cx, item|{
-                        // Need this because of a bug to do ith bindings inside a list
+                    List::new(cx, ThemeData::list, |cx, item|{
                         VStack::new(cx, move |cx|{
-                                let option = item.get(cx).clone();
-                                let is_selected = item.get(cx) == choice.get(cx);
-                                // Button which updates the chosen option
-                                Button::new(cx, move |cx| {
-                                    cx.emit(ThemeEvent::SetTheme(option.clone()));
-                                    cx.emit(PopupEvent::Close);
-                                }, move |cx|{
-                                    let opt = item.get(cx).clone();
-                                    Label::new(cx, &opt.clone()).width(Stretch(1.0)).height(Pixels(20.0))
-                                }).width(Stretch(1.0)).background_color(if is_selected {Color::from("#f8ac14")} else {Color::transparent()});
-                        }).width(Stretch(1.0));
+                            Binding::new(cx, ThemeData::choice, move |cx, choice|{
+                                let selected = *item.get(cx) == *choice.get(cx);
+                                Label::new(cx, &item.get(cx).to_string())
+                                    .width(Stretch(1.0))
+                                    .background_color(if selected {Color::from("#f8ac14")} else {Color::white()})
+                                    .on_press(move |cx| {
+                                        cx.emit(ThemeEvent::SetTheme(item.get(cx).clone()));
+                                        cx.emit(PopupEvent::Close);
+                                    });
+                            });
+                        }).height(Auto);
                     });
-                });
+                }).width(Pixels(100.0));
             });
-        });
+        //});
     }).size(Auto).overflow(Overflow::Visible)
 }
