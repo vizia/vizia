@@ -93,6 +93,7 @@ impl Dropdown {
                 Popup::new(cx, move |cx| {
                     (builder)(cx);
                 })
+                .background_color(Color::green())
                 .top(Percentage(100.0))
                 .width(Stretch(1.0))
                 .height(Auto)

@@ -4,7 +4,7 @@ const ICON_DOWN_OPEN: &str = "\u{e75c}";
 
 const STYLE: &str = r#"
     dropdown .title {
-        background-color: #101010;
+        background-color: #FFFFFF;
         height: 30px;
         width: 100px;
         child-space: 1s;
@@ -12,20 +12,17 @@ const STYLE: &str = r#"
     }
 
     dropdown>popup {
-        background-color: #141414;
+        background-color: #FFFFFF;
     }
 
-    button {
-        width: auto;
-        height: auto;
-        child-space: 5px;
-        background-color: gray;
+    dropdown>popup>list {
+        width: 1s;
     }
 
-    label {
-        width: auto;
-        height: auto;
-        color: white;
+    dropdown list label {
+        width: 1s;
+        height: 30px;
+        child-left: 6px;
     }
 "#;
 
@@ -49,16 +46,6 @@ impl Model for AppData {
                 }
             }
         }
-
-        if let Some(list_event) = event.message.downcast() {
-            match list_event {
-                ListEvent::SetSelected(index) => {
-                    self.choice = self.list.get(*index).unwrap().to_owned();
-                }
-
-                _ => {}
-            }
-        }
     }
 }
 
@@ -70,7 +57,7 @@ fn main() {
 
         AppData {
             list: vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()],
-            choice: "Color".to_string(),
+            choice: "Red".to_string(),
         }.build(cx);
 
 
@@ -81,30 +68,29 @@ fn main() {
                 Dropdown::new(cx, move |cx|
                     // A Label and an Icon
                     HStack::new(cx, move |cx|{
-                        let choice = choice.get(cx).clone();
-                        Label::new(cx, &choice);
+                        // /let choice = choice.get(cx).clone();
+                        Binding::new(cx, AppData::choice, |cx, choice|{
+                            Label::new(cx, &choice.get(cx).to_string());
+                        });
                         Label::new(cx, ICON_DOWN_OPEN).font("icons").left(Stretch(1.0)).right(Pixels(5.0));
                     }), 
                     move |cx|{
-                    // List of options
-                    List::new(cx, AppData::list, move |cx, item|{
-                        // Need this because of a bug to do ith bindings inside a list
+                    List::new(cx, AppData::list, |cx, item|{
                         VStack::new(cx, move |cx|{
-                                let option = item.get(cx).clone();
-                                let is_selected = item.get(cx) == choice.get(cx);
-                                // Button which updates the chosen option
-                                Button::new(cx, move |cx| {
-                                    cx.emit(AppEvent::SetChoice(option.clone()));
-                                    cx.emit(PopupEvent::Close);
-                                }, move |cx|{
-                                    let opt = item.get(cx).clone();
-                                    Label::new(cx, &opt.clone()).width(Stretch(1.0)).height(Pixels(20.0))
-                                }).width(Stretch(1.0)).background_color(if is_selected {Color::from("#f8ac14")} else {Color::transparent()});
-                        }).width(Stretch(1.0));
+                            Binding::new(cx, AppData::choice, move |cx, choice|{
+                                let selected = *item.get(cx) == *choice.get(cx);
+                                Label::new(cx, &item.get(cx).to_string())
+                                    .width(Stretch(1.0))
+                                    .background_color(if selected {Color::from("#f8ac14")} else {Color::white()})
+                                    .on_press(move |cx| {
+                                        cx.emit(AppEvent::SetChoice(item.get(cx).clone()));
+                                        cx.emit(PopupEvent::Close);
+                                    });
+                            });
+                        }).height(Auto);
                     });
-                });
-                // Set background color based on the chosen value of the dropdown
-            }).background_color(choice_to_color(&option));
+                }).width(Pixels(100.0));
+            }).background_color(choice_to_color(&option)).child_space(Stretch(1.0));
         });
 
     }).run();
@@ -112,9 +98,9 @@ fn main() {
 
 fn choice_to_color(name: &str) -> Color {
     match name {
-        "Red" => Color::red(),
-        "Green" => Color::green(),
-        "Blue" => Color::blue(),
+        "Red" => Color::rgb(200, 100, 100),
+        "Green" => Color::rgb(100, 200, 100),
+        "Blue" => Color::rgb(100, 100, 200),
         _ => Color::red(),
     }
 }

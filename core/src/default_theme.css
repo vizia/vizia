@@ -1,4 +1,7 @@
-
+/* * {
+    border-width: 1px;
+    border-color: red;
+} */
 
 button {
     background-color: #2000AA;
@@ -74,13 +77,11 @@ checkbox {
 hstack {
     width: 1s;
     height: 1s;
-    child-space: 1s;
 }
 
 vstack {
     width: 1s;
     height: 1s;
-    child-space: 1s;
 }
 
 zstack>* {
@@ -100,9 +101,7 @@ checkbox:disabled {
 }
 
 dropdown .title {
-    background-color: white;
-    border-width: 1px;
-    border-color: black;
+    background-color: #FFFFFF;
     height: 30px;
     width: 100px;
     child-space: 1s;
@@ -110,28 +109,20 @@ dropdown .title {
 }
 
 dropdown>popup {
-    background-color: white;
-    border-width: 1px;
-    border-color: black;
-    top: -2px;
+    background-color: #FFFFFF;
 }
 
-dropdown button {
+dropdown>popup>list {
+    width: 1s;
+}
+
+dropdown list label {
     width: 1s;
     height: 30px;
-    border-radius: 0px;
+    child-left: 6px;
 }
 
-dropdown label {
+list {
     width: auto;
-    height: 30px;
-    color: black;
-}
-
-dropdown button label {
-    child-left: 0px;
-}
-
-dropdown vstack {
-    child-space: auto;
+    height: auto;
 }

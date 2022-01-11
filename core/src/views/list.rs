@@ -1,12 +1,14 @@
-use std::any::TypeId;
-use std::collections::HashSet;
+
 use std::marker::PhantomData;
 
 use keyboard_types::Code;
 
 use crate::{
-    Context, Data, Event, Handle, Lens, Model, StateStore, Store, TreeExt, View, WindowEvent,
+    Context, Data, Event, Handle, Lens, Model, TreeExt, View, WindowEvent, Binding,
 };
+
+
+/// An ItemPtr can be used to access an item from a bound list
 #[derive(Debug)]
 pub struct ItemPtr<L, T>
 where
@@ -18,6 +20,7 @@ where
     col: usize,
 }
 
+// Manual implementations of Clone and Copy or else the compiler complains about a Clone bound on T which isn't actually required
 impl<L, T> Copy for ItemPtr<L, T> where L: Lens<Target = Vec<T>> {}
 
 impl<L: Lens<Target = Vec<T>>, T> Clone for ItemPtr<L, T> {
@@ -30,10 +33,12 @@ impl<L, T> ItemPtr<L, T>
 where
     L: Lens<Target = Vec<T>>,
 {
+    /// Constructs a new ItemPtr from a lens and index
     pub fn new(lens: L, index: usize, row: usize, col: usize) -> Self {
         Self { lens, index, row, col }
     }
 
+    /// Returns the list index the ItemPtr links to 
     pub fn index(&self) -> usize {
         self.index
     }
@@ -46,7 +51,7 @@ where
         self.col
     }
 
-    pub fn value<'a>(&self, cx: &'a Context) -> &'a T
+    pub fn get<'a>(&self, cx: &'a Context) -> &'a T
     where
         <L as Lens>::Source: 'static,
     {
@@ -56,6 +61,7 @@ where
             .expect(&format!("Failed to get item: {}", self.index))
     }
 }
+
 
 pub trait DataHandle: Clone + Copy {
     type Data;
@@ -68,10 +74,12 @@ where
 {
     type Data = T;
     fn get<'a>(&self, cx: &'a Context) -> &'a Self::Data {
-        self.value(cx)
+        self.get(cx)
     }
 }
 
+
+/// Data for tracking the selected item in a list
 #[derive(Lens, Default)]
 pub struct ListData {
     pub selected: usize,
@@ -84,6 +92,7 @@ impl ListData {
     }
 }
 
+/// Events for modifying the selected item
 #[derive(Debug)]
 pub enum ListEvent {
     IncrementSelection,
@@ -126,109 +135,45 @@ impl Model for ListData {
     }
 }
 
+/// A view for creating a list of items from a binding to a Vec<T>
 pub struct List<L, T: 'static>
 where
     L: Lens<Target = Vec<T>>,
     T: Data,
 {
-    lens: L,
-    builder: Option<Box<dyn Fn(&mut Context, ItemPtr<L, T>)>>,
-    list_data: bool,
+    p: PhantomData<L>,
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
+    /// Creates a new ListView with a binding to the given lens and a template for constructing the list items
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context, ItemPtr<L, T>),
         <L as Lens>::Source: Model,
     {
-        let parent = cx.current;
-        let list = Self { lens, builder: Some(Box::new(item)), list_data: true };
+        //let item_template = Rc::new(item);
+        List {
+            p: PhantomData::default(),
+        }.build2(cx, move |cx|{
 
-        let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
-            id
-        } else {
-            let id = cx.entity_manager.create();
-            cx.tree.add(id, cx.current).expect("Failed to add to tree");
-            cx.cache.add(id).expect("Failed to add to cache");
-            cx.style.add(id);
-            cx.views.insert(id, Box::new(list));
-            id
-        };
+            cx.focused = cx.current;
 
-        cx.count += 1;
-
-        // let handle = Self {
-        //     lens,
-        //     builder: Some(Box::new(item)),
-        // }
-        // .build(cx);
-        //.height(Auto)
-        //.width(Auto)
-        //.background_color(Color::rgb(50,70,90));
-
-        // let mut ancestors = HashSet::new();
-        // for entity in parent.parent_iter(&cx.tree) {
-        //     ancestors.insert(entity);
-
-        //     if let Some(model_list) = cx.data.model_data.get_mut(entity) {
-        //         for (_, model) in model_list.iter_mut() {
-        //             if let Some(store) = model.downcast::<Store<L::Source>>() {
-        //                 if store.observers.intersection(&ancestors).next().is_some() {
-        //                     break;
-        //                 }
-        //                 store.insert_observer(id);
-        //             }
-        //         }
-        //     }
-        // }
-
-        let ancestors = parent.parent_iter(&cx.tree).collect::<HashSet<_>>();
-
-        for entity in id.parent_iter(&cx.tree) {
-            if let Some(model_data_store) = cx.data.model_data.get_mut(entity) {
-                if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
-                    if let Some(lens_wrap) = model_data_store.lenses.get_mut(&TypeId::of::<L>()) {
-                        let observers = lens_wrap.observers();
-
-                        if ancestors.intersection(observers).next().is_none() {
-                            lens_wrap.add_observer(id);
-                        }
-                    } else {
-                        let mut observers = HashSet::new();
-                        observers.insert(id);
-
-                        let model = model_data.downcast_ref::<Store<L::Source>>().unwrap();
-
-                        let old = lens.view(&model.data);
-
-                        model_data_store.lenses.insert(
-                            TypeId::of::<L>(),
-                            Box::new(StateStore { entity: id, lens, old: old.clone(), observers }),
-                        );
-                    }
-
-                    break;
+            // Bind to the list data
+            Binding::new(cx, lens.clone(), move |cx, list|{
+                // If the number of list items is different to the number of children of the ListView
+                // then remove and rebuild all the children
+                let list_len = list.get(cx).len();
+                if cx.current.child_iter(&cx.tree).count() != list_len {
+                    cx.remove_children(cx.current);
                 }
-            }
-        }
 
-        if let Some(mut view_handler) = cx.views.remove(&id) {
-            let prev = cx.current;
-            cx.current = id;
-            let prev_count = cx.count;
-            cx.count = 0;
-            view_handler.body(cx);
-            cx.current = prev;
-            cx.count = prev_count;
-            cx.views.insert(id, view_handler);
-        }
+                for index in 0..list_len {
+                    let ptr = ItemPtr::new(lens.clone(), index, index, 0);
+                    (item)(cx, ptr);
+                }
+            });
+        })
 
-        let handle = Handle { entity: id, p: PhantomData::default(), cx };
-
-        handle.cx.focused = handle.entity;
-
-        handle
     }
 }
 
@@ -237,83 +182,9 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
         Some("list".to_string())
     }
 
-    fn body(&mut self, cx: &mut Context) {
-        let builder = self.builder.take().unwrap();
-
-        let mut found_store = None;
-
-        'tree: for entity in cx.current.parent_iter(&cx.tree.clone()) {
-            if let Some(model_list) = cx.data.model_data.get(entity) {
-                for (_, model) in model_list.data.iter() {
-                    if let Some(store) = model.downcast_ref::<Store<L::Source>>() {
-                        found_store = Some(store);
-                        break 'tree;
-                    }
-                }
-            }
-        }
-
-        if let Some(store) = found_store {
-            let len = self.lens.view(&store.data).len();
-
-            if cx.current.child_iter(&cx.tree.clone()).count() != len {
-                println!(
-                    "Remove Children: {} {}",
-                    cx.current.child_iter(&cx.tree.clone()).count(),
-                    len
-                );
-                for child in cx.current.child_iter(&cx.tree.clone()) {
-                    cx.remove(child);
-                }
-
-                cx.style.needs_relayout = true;
-                cx.style.needs_redraw = true;
-            }
-
-            if self.list_data {
-                if cx.data::<ListData>().is_none() {
-                    ListData { selected: 0, length: len }.build(cx);
-                }
-            }
-
-            let prev_count = cx.count;
-            cx.count = 0;
-            for index in 0..len {
-                let ptr = ItemPtr::new(self.lens.clone(), index, index, 0);
-                (builder)(cx, ptr);
-                //cx.count += 1;
-            }
-            cx.count = prev_count;
-        }
-
-        // let store = cx
-        //     .data
-        //     .model_data
-        //     .get(&TypeId::of::<L::Source>())
-        //     .and_then(|model| model.downcast_ref::<Store<L::Source>>());
-
-        // if let Some(store) = store {
-        //     let len = self.lens.view(&store.data).len();
-        //     for index in 0..len {
-        //         let ptr = ItemPtr::new(self.lens.clone(), index);
-        //         (builder)(cx, ptr);
-        //     }
-        // }
-        self.builder = Some(builder);
-    }
-
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
-                // WindowEvent::MouseDown(button) => {
-                //     if *button == MouseButton::Left {
-                //         cx.emit(ListEvent::IncrementSelection);
-                //     }
-
-                //     if *button == MouseButton::Right {
-                //         cx.emit(ListEvent::DecrementSelection);
-                //     }
-                // }
                 WindowEvent::KeyDown(code, _) => match code {
                     Code::ArrowDown => {
                         cx.emit(ListEvent::IncrementSelection);

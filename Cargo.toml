@@ -42,6 +42,18 @@ path = "examples/controls/popup.rs"
 name = "dropdown"
 path = "examples/controls/dropdown.rs"
 
+[[example]]
+name = "list"
+path = "examples/lists/list.rs"
+
+[[example]]
+name = "selectable_list"
+path = "examples/lists/selectable_list.rs"
+
+[[example]]
+name = "editable_list"
+path = "examples/lists/editable_list.rs"
+
 [features]
 default = ["glutin"]
 glutin = ["vizia_glutin"]

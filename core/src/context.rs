@@ -48,8 +48,22 @@ pub struct Context {
 }
 
 impl Context {
+
+    pub fn remove_children(&mut self, entity: Entity) {
+        let children = entity.child_iter(&self.tree).collect::<Vec<_>>();
+        for child in children.into_iter() {
+            self.remove(child);
+        }
+    }
+
     pub fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
+
+        if !delete_list.is_empty() {
+            self.style.needs_restyle = true;
+            self.style.needs_relayout = true;
+            self.style.needs_redraw = true;
+        }
 
         for entity in delete_list.iter().rev() {
             // Remove from observers
@@ -68,6 +82,8 @@ impl Context {
             self.entity_manager.destroy(*entity);
             self.views.remove(entity);
         }
+
+
     }
 
     /// Get stored data from the context.
