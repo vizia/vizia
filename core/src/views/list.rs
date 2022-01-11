@@ -8,7 +8,19 @@ use crate::{
 };
 
 
-/// An ItemPtr can be used to access an item from a bound list
+/// An `ItemPtr` is used to access an item from context in a list item template.
+/// 
+/// An `ItemPtr` is provided by the item template of a list view and can be
+/// cloned and passed into content closures. To retrieve the item from the 
+/// `ItemPtr`, call the `get()` method:
+/// 
+/// # Example
+/// ```compile_fail
+/// List::new(cx, AppData::list, |cx, item|{
+///     let item = item.get(cx);
+/// });
+/// ```
+///  
 #[derive(Debug)]
 pub struct ItemPtr<L, T>
 where
@@ -33,12 +45,12 @@ impl<L, T> ItemPtr<L, T>
 where
     L: Lens<Target = Vec<T>>,
 {
-    /// Constructs a new ItemPtr from a lens and index
+    /// Constructs a new ItemPtr from a lens and index.
     pub fn new(lens: L, index: usize, row: usize, col: usize) -> Self {
         Self { lens, index, row, col }
     }
 
-    /// Returns the list index the ItemPtr links to 
+    /// Returns the list index the ItemPtr refers to.
     pub fn index(&self) -> usize {
         self.index
     }
