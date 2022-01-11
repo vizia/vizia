@@ -231,6 +231,7 @@ impl View for Slider {
 
                         dx = dx.clamp(0.0, 1.0);
                         cx.emit(SliderEvent::SetValue(dx));
+
                     }
                 }
 
@@ -288,16 +289,16 @@ impl<'a> Handle<'a, Slider> {
     ///
     /// ```compile_fail
     /// Slider::new(cx, 0.0, Orientation::Horizontal)
-    ///     .on_change(cx, |cx, value| {
+    ///     .on_change(|cx, value| {
     ///         cx.emit(WindowEvent::Debug(format!("Slider on_change: {}", value)));
     ///     });
     /// ```
-    pub fn on_change<F>(self, cx: &mut Context, callback: F) -> Self
+    pub fn on_change<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut Context, f32),
     {
         if let Some(slider) =
-            cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
         {
             slider.on_change = Some(Box::new(callback));
         }
@@ -318,12 +319,12 @@ impl<'a> Handle<'a, Slider> {
     ///         cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
     ///     });
     /// ```
-    pub fn on_changing<F>(self, cx: &mut Context, callback: F) -> Self
+    pub fn on_changing<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut Context, f32),
     {
         if let Some(slider) =
-            cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
         {
             slider.on_changing = Some(Box::new(callback));
         }
