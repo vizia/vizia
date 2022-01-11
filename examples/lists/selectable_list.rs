@@ -2,40 +2,46 @@ use vizia::*;
 
 const STYLE: &str = r#"
     
-    label {
+    .list_item {
         background-color: white;
+        width: 100px;
+        height: 30px;
+        border-color: black;
+        border-width: 1px;
     }
 
-    label:checked {
+    .list_item:checked {
         background-color: blue;
+    }
+
+    hstack {
+        child-space: 3px;
+    }
+    vstack {
+        child-space: 3px;
     }
 "#;
 
 #[derive(Lens)]
 pub struct AppData {
-    list: Vec<u32>,
-    selected: usize,
+    list1: Vec<u32>,
+    list2: Vec<u32>,
+    selected1: usize,
+    selected2: usize,
+}
+
+#[derive(Debug)]
+pub enum AppEvent {
+    SetSelected1(usize),
+    SetSelected2(usize),
 }
 
 impl Model for AppData {
-    // Intercept list events from the list view to modify the selected index in the model
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(list_event) = event.message.downcast() {
-            match list_event {
-                ListEvent::SetSelected(index) => {
-                    self.selected = *index;
-                }
-
-                ListEvent::IncrementSelection => {
-                    self.selected = self.selected.saturating_add(1).clamp(0, self.list.len()-1);
-                }
-
-                ListEvent::DecrementSelection => {
-                    self.selected = self.selected.saturating_sub(1).clamp(0, self.list.len()-1);
-                }
-
-                _=> {}
-            }
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        match event.message.downcast() {
+            Some(AppEvent::SetSelected1(idx)) => self.selected1 = *idx,
+            Some(AppEvent::SetSelected2(idx)) => self.selected2 = *idx,
+            _ => {}
         }
     }
 }
@@ -45,36 +51,72 @@ fn main() {
 
         cx.add_theme(STYLE);
 
-        let list: Vec<u32> = (10..14u32).collect();
-        AppData { 
-            list,
-            selected: 0,
+        let list1: Vec<u32> = (10..14u32).collect();
+        let list2: Vec<u32> = (20..24u32).collect();
+        AppData {
+            list1,
+            list2,
+            selected1: 0,
+            selected2: 0,
         }.build(cx);
 
-        List::new(cx, AppData::list, |cx, item|{
-            let item_text = item.get(cx).to_string();
-            let item_index = item.index();
-            // This vstack shouldn't be necessary but because of how bindings work it's required
-            VStack::new(cx, move |cx|{
-                Binding::new(cx, AppData::selected, move |cx, selected|{
-                    let selected = *selected.get(cx);
-                    
-                    Label::new(cx, &item_text)
-                        .width(Pixels(100.0))
-                        .height(Pixels(30.0))
-                        .border_color(Color::black())
-                        .border_width(Pixels(1.0))
-                        // Set the checked state based on whether this item is selected
-                        .checked(if selected == item_index {true} else {false})
-                        // Set the selected item to this one if pressed
-                        .on_press(move |cx| cx.emit(ListEvent::SetSelected(item_index)));
+        VStack::new(cx, |cx| {
+            HStack::new(cx, |cx| {
+                VStack::new(cx, |cx| {
+                    Label::new(cx, "List 1");
+                    List::new(cx, AppData::list1, |cx, item|{
+                        let item_text = item.get(cx).to_string();
+                        let item_index = item.index();
+                        // This vstack shouldn't be necessary but because of how bindings work it's required
+                        VStack::new(cx, move |cx|{
+                            Binding::new(cx, AppData::selected1, move |cx, selected|{
+                                let selected = *selected.get(cx);
+
+                                Label::new(cx, &item_text)
+                                    .class("list_item")
+                                    // Set the checked state based on whether this item is selected
+                                    .checked(if selected == item_index {true} else {false})
+                                    // Set the selected item to this one if pressed
+                                    .on_press(move |cx| cx.emit(ListEvent::SetSelected(item_index)));
+                            });
+                        });
+                    })
+                        .row_between(Pixels(5.0))
+                        .space(Stretch(1.0))
+                        .on_index_selected(|cx, idx| cx.emit(AppEvent::SetSelected1(idx)));
+                });
+
+                VStack::new(cx, |cx| {
+                    Label::new(cx, "List 2");
+                    List::new(cx, AppData::list2, |cx, item|{
+                        let item_text = item.get(cx).to_string();
+                        let item_index = item.index();
+                        // This vstack shouldn't be necessary but because of how bindings work it's required
+                        VStack::new(cx, move |cx|{
+                            Binding::new(cx, AppData::selected2, move |cx, selected|{
+                                let selected = *selected.get(cx);
+
+                                Label::new(cx, &item_text)
+                                    .class("list_item")
+                                    // Set the checked state based on whether this item is selected
+                                    .checked(if selected == item_index {true} else {false})
+                                    // Set the selected item to this one if pressed
+                                    .on_press(move |cx| cx.emit(ListEvent::SetSelected(item_index)));
+                            });
+                        });
+                    })
+                        .row_between(Pixels(5.0))
+                        .space(Stretch(1.0))
+                        .on_index_selected(|cx, idx| cx.emit(AppEvent::SetSelected2(idx)));
                 });
             });
-        })
-        .row_between(Pixels(5.0))
-        .space(Stretch(1.0));
+
+            Binding::new(cx, AppData::selected1, move |cx, selected1| {
+                Binding::new(cx, AppData::selected2, move |cx, selected2| {
+                    Label::new(cx, &format!("You selected items {} and {}", selected1.get(cx), selected2.get(cx)));
+                });
+            });
+        });
     })
-    .run();
+        .run();
 }
-
-

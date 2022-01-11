@@ -154,6 +154,7 @@ where
     T: Data,
 {
     p: PhantomData<L>,
+    callback: Option<Box<dyn Fn(&mut Context, usize)>>,
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
@@ -166,6 +167,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
         //let item_template = Rc::new(item);
         List {
             p: PhantomData::default(),
+            callback: None,
         }.build2(cx, move |cx|{
 
             cx.focused = cx.current;
@@ -212,6 +214,33 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
                 _ => {}
             }
         }
+
+        if let Some(list_event) = event.message.downcast() {
+            match list_event {
+                ListEvent::SetSelected(idx) => {
+                    if let Some(callback) = self.callback.take() {
+                        callback(cx, *idx);
+                        self.callback = Some(callback);
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+impl<L: 'static + Lens<Target = Vec<T>>, T: Data> Handle<'_, List<L, T>> {
+    pub fn on_index_selected<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context, usize)
+    {
+        if let Some(view) = self.cx.views.get_mut(&self.entity) {
+            if let Some(list) = view.downcast_mut::<List<L, T>>() {
+                list.callback = Some(Box::new(callback));
+            }
+        }
+
+        self
     }
 }
 
