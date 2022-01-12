@@ -100,6 +100,26 @@ checkbox:disabled {
     border-color: gray;
 }
 
+radiobutton {
+    width: 20px;
+    height: 20px;
+    border-width: 6%;
+    right: 4px;
+    color: black;
+    border-color: black;
+}
+
+dropdown .title {
+    background-color: white;
+    border-width: 1px;
+    border-color: black;
+}
+
+radiobutton:checked {
+    color: #003080;
+    border-color: #003080;
+}
+
 dropdown .title {
     background-color: #FFFFFF;
     height: 30px;
@@ -109,7 +129,7 @@ dropdown .title {
 }
 
 dropdown>popup {
-    background-color: #FFFFFF;
+    background-color: #AAAAAA;
 }
 
 dropdown>popup>list {
@@ -120,6 +140,10 @@ dropdown list label {
     width: 1s;
     height: 30px;
     child-left: 6px;
+}
+
+dropdown vstack {
+    child-space: auto;
 }
 
 list {
