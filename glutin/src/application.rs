@@ -311,7 +311,7 @@ impl Application {
 
                     // Styling
                     //if context.style.borrow().needs_restyle {
-                        apply_styles(&mut context, &tree);
+                    apply_styles(&mut context, &tree);
                     //    context.style.needs_restyle = false;
                     //}
 
