@@ -1,3 +1,5 @@
+use std::any::TypeId;
+use std::fmt::{Debug, Formatter};
 use crate::Model;
 
 /// A Lens allows the construction of a reference to a field of a struct.
@@ -149,3 +151,38 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
 //         &data[self.index.clone()]
 //     }
 // }
+
+pub struct StaticLens<T: 'static> {
+    data: &'static T,
+}
+
+impl<T> Clone for StaticLens<T> {
+    fn clone(&self) -> Self {
+        StaticLens { data: self.data }
+    }
+}
+
+impl<T> Copy for StaticLens<T> { }
+
+impl<T> Debug for StaticLens<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Static Lens: ")?;
+        TypeId::of::<T>().fmt(f)?;
+        Ok(())
+    }
+}
+
+impl<T> Lens for StaticLens<T> {
+    type Source = ();
+    type Target = T;
+
+    fn view<'a>(&self, _source: &'a Self::Source) -> &'a Self::Target {
+        self.data
+    }
+}
+
+impl<T> StaticLens<T> {
+    pub fn new(data: &'static T) -> Self {
+        StaticLens { data }
+    }
+}
