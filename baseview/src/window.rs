@@ -9,7 +9,7 @@ use std::{
     rc::Rc,
 };
 use vizia_core::{
-    AppData, CachedData, Context, Entity, Enviroment, IdManager, Modifiers, MouseState,
+    CachedData, Context, Entity, Enviroment, IdManager, Modifiers, MouseState,
     ResourceManager, Style, Tree, WindowDescription,
 };
 
@@ -69,32 +69,8 @@ impl ViziaWindow {
             parent,
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut cache = CachedData::default();
-                cache.add(Entity::root()).expect("Failed to add entity to cache");
 
-                let mut context = Context {
-                    entity_manager: IdManager::new(),
-                    tree: Tree::new(),
-                    current: Entity::root(),
-                    count: 0,
-                    views: HashMap::new(),
-                    //state: HashMap::new(),
-                    data: AppData::new(),
-                    style: Style::default(),
-                    cache,
-                    enviroment: Enviroment::new(),
-                    event_queue: VecDeque::new(),
-                    mouse: MouseState::default(),
-                    modifiers: Modifiers::empty(),
-                    captured: Entity::null(),
-                    hovered: Entity::root(),
-                    focused: Entity::root(),
-                    //state_count: 0,
-                    resource_manager: ResourceManager::new(),
-                    fonts: Vec::new(),
-                    text_context: femtovg::TextContext::default(),
-                    listeners: HashMap::new(),
-                };
+                let mut context = Context::new();
 
                 context.entity_manager.create();
 
@@ -130,32 +106,7 @@ impl ViziaWindow {
         Window::open_as_if_parented(
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut cache = CachedData::default();
-                cache.add(Entity::root()).expect("Failed to add entity to cache");
-
-                let mut context = Context {
-                    entity_manager: IdManager::new(),
-                    tree: Tree::new(),
-                    current: Entity::root(),
-                    count: 0,
-                    views: HashMap::new(),
-                    //state: HashMap::new(),
-                    data: AppData::new(),
-                    style: Style::default(),
-                    cache,
-                    enviroment: Enviroment::new(),
-                    event_queue: VecDeque::new(),
-                    mouse: MouseState::default(),
-                    modifiers: Modifiers::empty(),
-                    captured: Entity::null(),
-                    hovered: Entity::root(),
-                    focused: Entity::root(),
-                    //state_count: 0,
-                    resource_manager: ResourceManager::new(),
-                    fonts: Vec::new(),
-                    text_context: femtovg::TextContext::default(),
-                    listeners: HashMap::new(),
-                };
+                let mut context = Context::new();
 
                 context.entity_manager.create();
 
@@ -190,32 +141,7 @@ impl ViziaWindow {
         Window::open_blocking(
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut cache = CachedData::default();
-                cache.add(Entity::root()).expect("Failed to add entity to cache");
-
-                let mut context = Context {
-                    entity_manager: IdManager::new(),
-                    tree: Tree::new(),
-                    current: Entity::root(),
-                    count: 0,
-                    views: HashMap::new(),
-                    //state: HashMap::new(),
-                    data: AppData::new(),
-                    style: Style::default(),
-                    cache,
-                    enviroment: Enviroment::new(),
-                    event_queue: VecDeque::new(),
-                    mouse: MouseState::default(),
-                    modifiers: Modifiers::empty(),
-                    captured: Entity::null(),
-                    hovered: Entity::root(),
-                    focused: Entity::root(),
-                    //state_count: 0,
-                    resource_manager: ResourceManager::new(),
-                    fonts: Vec::new(),
-                    text_context: femtovg::TextContext::default(),
-                    listeners: HashMap::new(),
-                };
+                let mut context = Context::new();
 
                 context.entity_manager.create();
 

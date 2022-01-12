@@ -42,7 +42,7 @@ where
         let mut found_data = None;
 
         'tree: for entity in cx.current.parent_iter(&cx.tree.clone()) {
-            if let Some(model_list) = cx.data.model_data.get(entity) {
+            if let Some(model_list) = cx.data.get(entity) {
                 for (_, model) in model_list.data.iter() {
                     if let Some(data) = model.downcast_ref::<L::Source>() {
                         found_data = Some(data);

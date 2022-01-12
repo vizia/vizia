@@ -45,7 +45,7 @@ where
         let ancestors = parent.parent_iter(&cx.tree).collect::<HashSet<_>>();
 
         for entity in id.parent_iter(&cx.tree) {
-            if let Some(model_data_store) = cx.data.model_data.get_mut(entity) {
+            if let Some(model_data_store) = cx.data.get_mut(entity) {
                 if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
                     if let Some(lens_wrap) = model_data_store.lenses.get_mut(&TypeId::of::<L>()) {
                         let observers = lens_wrap.observers();

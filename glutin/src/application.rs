@@ -12,7 +12,7 @@ use glutin::{
 
 use vizia_core::{
     apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
-    apply_visibility, apply_z_ordering, geometry_changed, apply_inline_inheritance, apply_shared_inheritance, AppData, BoundingBox, CachedData, Color,
+    apply_visibility, apply_z_ordering, geometry_changed, apply_inline_inheritance, apply_shared_inheritance, BoundingBox, CachedData, Color,
     Context, Display, Entity, Env, Enviroment, Event, EventManager, FontOrId, IdManager, Modifiers,
     MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt,
     Units, Visibility, WindowDescription, WindowEvent, PseudoClass
@@ -37,32 +37,7 @@ impl Application {
     where
         F: 'static + Fn(&mut Context),
     {
-        let mut cache = CachedData::default();
-        cache.add(Entity::root()).expect("Failed to add entity to cache");
-
-        let mut context = Context {
-            entity_manager: IdManager::new(),
-            tree: Tree::new(),
-            current: Entity::root(),
-            count: 0,
-            views: HashMap::new(),
-            //state: HashMap::new(),
-            data: AppData::new(),
-            style: Style::default(),
-            cache,
-            enviroment: Enviroment::new(),
-            event_queue: VecDeque::new(),
-            listeners: HashMap::default(),
-            mouse: MouseState::default(),
-            modifiers: Modifiers::empty(),
-            captured: Entity::null(),
-            hovered: Entity::root(),
-            focused: Entity::root(),
-            //state_count: 0,
-            resource_manager: ResourceManager::new(),
-            fonts: Vec::new(),
-            text_context: TextContext::default(),
-        };
+        let mut context = Context::new();
 
         context.entity_manager.create();
 
@@ -279,7 +254,7 @@ impl Application {
                     // Data Updates
                     let mut observers: Vec<Entity> = Vec::new();
 
-                    for model_store in context.data.model_data.dense.iter_mut().map(|entry| &mut entry.value) {
+                    for model_store in context.data.dense.iter_mut().map(|entry| &mut entry.value) {
                         for (_, lens) in model_store.lenses.iter_mut() {
                             for (_, model) in model_store.data.iter() {
                                 if lens.update(model) {

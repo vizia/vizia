@@ -72,7 +72,7 @@ impl EventManager {
                 context.views.insert(event.target, view);
             }
 
-            if let Some(mut model_list) = context.data.model_data.remove(event.target) {
+            if let Some(mut model_list) = context.data.remove(event.target) {
                 for (_, model) in model_list.data.iter_mut() {
                     context.current = event.target;
                     model.event(context, event);
@@ -80,7 +80,6 @@ impl EventManager {
 
                 context
                     .data
-                    .model_data
                     .insert(event.target, model_list)
                     .expect("Failed to insert data");
             }
@@ -112,7 +111,7 @@ impl EventManager {
                         context.views.insert(entity, view);
                     }
 
-                    if let Some(mut model_list) = context.data.model_data.remove(entity) {
+                    if let Some(mut model_list) = context.data.remove(entity) {
                         for (_, model) in model_list.data.iter_mut() {
                             // if event.trace {
                             //     println!("Event: {:?} -> Model {:?}", event, ty);
@@ -123,7 +122,6 @@ impl EventManager {
 
                         context
                             .data
-                            .model_data
                             .insert(entity, model_list)
                             .expect("Failed to insert data");
                     }

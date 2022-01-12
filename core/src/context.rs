@@ -9,8 +9,8 @@ use femtovg::{FontId, TextContext};
 // use unic_langid::LanguageIdentifier;
 
 use crate::{
-    AppData, CachedData, Entity, Enviroment, Event, FontOrId, IdManager, Message, Modifiers,
-    MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, View, ViewHandler,
+    CachedData, Entity, Enviroment, Event, FontOrId, IdManager, Message, Modifiers,
+    MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, View, ViewHandler, storage::sparse_set::SparseSet, ModelDataStore,
 };
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
@@ -23,7 +23,7 @@ pub struct Context {
     pub count: usize,
     pub views: HashMap<Entity, Box<dyn ViewHandler>>,
     //pub lenses: HashMap<TypeId, Box<dyn LensWrap>>,
-    pub data: AppData,
+    pub data: SparseSet<ModelDataStore>,
     pub event_queue: VecDeque<Event>,
     pub listeners: HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
     pub style: Style,
@@ -49,6 +49,35 @@ pub struct Context {
 
 impl Context {
 
+    pub fn new() -> Self {
+        let mut cache = CachedData::default();
+        cache.add(Entity::root()).expect("Failed to add entity to cache");
+
+        Self {
+            entity_manager: IdManager::new(),
+            tree: Tree::new(),
+            current: Entity::root(),
+            count: 0,
+            views: HashMap::new(),
+            //state: HashMap::new(),
+            data: SparseSet::new(),
+            style: Style::default(),
+            cache,
+            enviroment: Enviroment::new(),
+            event_queue: VecDeque::new(),
+            listeners: HashMap::default(),
+            mouse: MouseState::default(),
+            modifiers: Modifiers::empty(),
+            captured: Entity::null(),
+            hovered: Entity::root(),
+            focused: Entity::root(),
+            //state_count: 0,
+            resource_manager: ResourceManager::new(),
+            fonts: Vec::new(),
+            text_context: TextContext::default(),
+        }
+    }
+
     pub fn remove_children(&mut self, entity: Entity) {
         let children = entity.child_iter(&self.tree).collect::<Vec<_>>();
         for child in children.into_iter() {
@@ -67,7 +96,7 @@ impl Context {
 
         for entity in delete_list.iter().rev() {
             // Remove from observers
-            for entry in self.data.model_data.dense.iter_mut() {
+            for entry in self.data.dense.iter_mut() {
                 let model_list = &mut entry.value;
                 for (_, model) in model_list.data.iter_mut() {
                     model.remove_observer(*entity);
@@ -78,7 +107,7 @@ impl Context {
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.style.remove(*entity);
-            self.data.model_data.remove(*entity);
+            self.data.remove(*entity);
             self.entity_manager.destroy(*entity);
             self.views.remove(entity);
         }
@@ -90,7 +119,7 @@ impl Context {
     pub fn data<T: 'static>(&self) -> Option<&T> {
         for entity in self.current.parent_iter(&self.tree) {
             //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
-            if let Some(data_list) = self.data.model_data.get(entity) {
+            if let Some(data_list) = self.data.get(entity) {
                 for (_, model) in data_list.data.iter() {
                     if let Some(data) = model.downcast_ref::<T>() {
                         return Some(data);
