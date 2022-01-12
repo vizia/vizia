@@ -3,7 +3,7 @@ use std::collections::HashSet;
 
 use morphorm::{PositionType, LayoutType};
 
-use crate::{Color, Context, Display, Entity, Handle, StateStore, Store, TreeExt, Units, View, Visibility};
+use crate::{Color, Context, Display, Entity, Handle, StateStore, TreeExt, Units, View, Visibility};
 
 use crate::{Data, Lens, Model};
 
@@ -57,9 +57,9 @@ where
                         let mut observers = HashSet::new();
                         observers.insert(id);
 
-                        let model = model_data.downcast_ref::<Store<L::Source>>().unwrap();
+                        let model = model_data.downcast_ref::<L::Source>().unwrap();
 
-                        let old = lens.view(&model.data);
+                        let old = lens.view(model);
 
                         model_data_store.lenses.insert(
                             TypeId::of::<L>(),

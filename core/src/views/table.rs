@@ -3,7 +3,7 @@ use std::rc::Rc;
 use morphorm::LayoutType;
 
 use crate::Units::*;
-use crate::{Context, HStack, Handle, ItemPtr, Lens, Model, Store, TreeExt, View};
+use crate::{Context, HStack, Handle, ItemPtr, Lens, Model, TreeExt, View};
 
 pub struct Table<L, T: 'static>
 where
@@ -39,21 +39,21 @@ where
 
         let builder = self.builder.take().unwrap();
 
-        let mut found_store = None;
+        let mut found_data = None;
 
         'tree: for entity in cx.current.parent_iter(&cx.tree.clone()) {
             if let Some(model_list) = cx.data.model_data.get(entity) {
                 for (_, model) in model_list.data.iter() {
-                    if let Some(store) = model.downcast_ref::<Store<L::Source>>() {
-                        found_store = Some(store);
+                    if let Some(data) = model.downcast_ref::<L::Source>() {
+                        found_data = Some(data);
                         break 'tree;
                     }
                 }
             }
         }
 
-        if let Some(store) = found_store {
-            let len = self.lens.view(&store.data).len();
+        if let Some(data) = found_data {
+            let len = self.lens.view(data).len();
 
             assert!(len / self.width == self.width, "Only square tables supported at the moment");
 

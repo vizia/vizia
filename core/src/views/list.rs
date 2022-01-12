@@ -175,8 +175,12 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
                 // If the number of list items is different to the number of children of the ListView
                 // then remove and rebuild all the children
                 let list_len = list.get(cx).len();
-                if cx.current.child_iter(&cx.tree).count() != list_len {
-                    cx.remove_children(cx.current);
+                let children = cx.current.child_iter(&cx.tree).enumerate().filter(|(child, _)| *child != 0).collect::<Vec<_>>();
+                if children.len() != list_len {
+                    //cx.remove_children(cx.current);
+                    for (_, child) in children {
+                        cx.remove(child);
+                    }
                 }
 
                 for index in 0..list_len {

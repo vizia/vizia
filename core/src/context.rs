@@ -10,7 +10,7 @@ use femtovg::{FontId, TextContext};
 
 use crate::{
     AppData, CachedData, Entity, Enviroment, Event, FontOrId, IdManager, Message, Modifiers,
-    MouseState, Propagation, ResourceManager, Store, Style, Tree, TreeExt, View, ViewHandler,
+    MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, View, ViewHandler,
 };
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
@@ -92,8 +92,8 @@ impl Context {
             //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
             if let Some(data_list) = self.data.model_data.get(entity) {
                 for (_, model) in data_list.data.iter() {
-                    if let Some(store) = model.downcast_ref::<Store<T>>() {
-                        return Some(&store.data);
+                    if let Some(data) = model.downcast_ref::<T>() {
+                        return Some(data);
                     }
                 }
             }
