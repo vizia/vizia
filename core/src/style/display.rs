@@ -9,6 +9,16 @@ pub enum Display {
     Flex,
 }
 
+impl From<bool> for Display {
+    fn from(val: bool) -> Self {
+        if val {
+            Display::Flex
+        } else {
+            Display::None
+        }
+    }
+}
+
 impl Default for Display {
     fn default() -> Self {
         Display::Flex
