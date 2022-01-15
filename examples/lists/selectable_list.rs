@@ -1,3 +1,5 @@
+use lazy_static::lazy_static;
+
 use vizia::*;
 
 const STYLE: &str = r#"
@@ -11,10 +13,23 @@ const STYLE: &str = r#"
     }
 "#;
 
+lazy_static! {
+    pub static ref STATIC_LIST: Vec<u32> = {
+        (20..24).collect()
+    };
+}
+
 #[derive(Lens)]
 pub struct AppData {
     list: Vec<u32>,
     selected: usize,
+    selected_static: usize,
+}
+
+#[derive(Debug)]
+pub enum AppEvent {
+    SelectDynamic(usize),
+    SelectStatic(usize),
 }
 
 impl Model for AppData {
@@ -22,19 +37,12 @@ impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
         if let Some(list_event) = event.message.downcast() {
             match list_event {
-                ListEvent::Select(index) => {
+                AppEvent::SelectDynamic(index) => {
                     self.selected = *index;
                 }
-
-                ListEvent::IncrementSelection => {
-                    self.selected = self.selected.saturating_add(1).clamp(0, self.list.len()-1);
+                AppEvent::SelectStatic(index) => {
+                    self.selected_static = *index;
                 }
-
-                ListEvent::DecrementSelection => {
-                    self.selected = self.selected.saturating_sub(1).clamp(0, self.list.len()-1);
-                }
-
-                _=> {}
             }
         }
     }
@@ -49,6 +57,7 @@ fn main() {
         AppData { 
             list,
             selected: 0,
+            selected_static: 0,
         }.build(cx);
 
         List::new(cx, AppData::list, |cx, item|{
@@ -67,12 +76,35 @@ fn main() {
                         // Set the checked state based on whether this item is selected
                         .checked(if selected == item_index {true} else {false})
                         // Set the selected item to this one if pressed
-                        .on_press(move |cx| cx.emit(ListEvent::Select(item_index)));
+                        .on_press(move |cx| cx.emit(AppEvent::SelectDynamic(item_index)));
                 });
             });
         })
-        .row_between(Pixels(5.0))
-        .space(Stretch(1.0));
+            .row_between(Pixels(5.0))
+            .space(Stretch(1.0));
+
+        List::new(cx, StaticLens::new(STATIC_LIST.as_ref()), |cx, item|{
+            let item_text = item.get(cx).to_string();
+            let item_index = item.index();
+            // This vstack shouldn't be necessary but because of how bindings work it's required
+            VStack::new(cx, move |cx|{
+                Binding::new(cx, AppData::selected_static, move |cx, selected|{
+                    let selected = *selected.get(cx);
+
+                    Label::new(cx, &item_text)
+                        .width(Pixels(100.0))
+                        .height(Pixels(30.0))
+                        .border_color(Color::black())
+                        .border_width(Pixels(1.0))
+                        // Set the checked state based on whether this item is selected
+                        .checked(if selected == item_index {true} else {false})
+                        // Set the selected item to this one if pressed
+                        .on_press(move |cx| cx.emit(AppEvent::SelectStatic(item_index)));
+                });
+            });
+        })
+            .row_between(Pixels(5.0))
+            .space(Stretch(1.0));
     })
-    .run();
+        .run();
 }

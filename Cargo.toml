@@ -73,3 +73,4 @@ vizia_baseview = { version = "0.1.0", path = "baseview", optional = true }
 
 [dev-dependencies]
 english-numbers = "0.3.3"
+lazy_static = "1.4.0"
