@@ -54,6 +54,18 @@ label.icon {
 }
 
 
+textbox {
+    width: auto;
+    height: auto;
+    overflow: visible;
+    background-color: gray;
+    color: black;
+    child-top: 1s;
+    child-bottom: 1s;
+    height: 30px;
+}
+
+
 label {
     width: auto;
     height: auto;
