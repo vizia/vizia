@@ -157,6 +157,8 @@ where
     T: Data,
 {
     p: PhantomData<L>,
+    increment_callback: Option<Box<dyn Fn(&mut Context)>>,
+    decrement_callback: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
@@ -169,6 +171,8 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
         //let item_template = Rc::new(item);
         List {
             p: PhantomData::default(),
+            increment_callback: None,
+            decrement_callback: None,
         }.build2(cx, move |cx|{
 
             cx.focused = cx.current;
@@ -207,10 +211,18 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
                 WindowEvent::KeyDown(code, _) => match code {
                     Code::ArrowDown => {
                         cx.emit(ListEvent::IncrementSelection);
+                        if let Some(callback) = self.increment_callback.take() {
+                            (callback)(cx);
+                            self.increment_callback = Some(callback);
+                        }
                     }
 
                     Code::ArrowUp => {
                         cx.emit(ListEvent::DecrementSelection);
+                        if let Some(callback) = self.decrement_callback.take() {
+                            (callback)(cx);
+                            self.decrement_callback = Some(callback);
+                        }
                     }
 
                     _ => {}
@@ -222,12 +234,22 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
     }
 }
 
-// impl<L: Lens<Target = Vec<T>>,T: Data> Handle<List<L,T>> {
-//     pub fn with_list_data(self, cx: &mut Context, flag: bool) -> Self {
-//         if let Some(list) = cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L,T>>()) {
-//             list.list_data = flag;
-//         }
+ impl<L: Lens<Target = Vec<T>>,T: Data> Handle<'_, List<L,T>> {
+     pub fn on_increment<F>(self, callback: F) -> Self
+     where F: 'static + Fn(&mut Context) {
+         if let Some(list) = self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L,T>>()) {
+             list.increment_callback = Some(Box::new(callback));
+         }
 
-//         self
-//     }
-// }
+         self
+     }
+
+     pub fn on_decrement<F>(self, callback: F) -> Self
+         where F: 'static + Fn(&mut Context) {
+         if let Some(list) = self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L,T>>()) {
+             list.decrement_callback = Some(Box::new(callback));
+         }
+
+         self
+     }
+ }

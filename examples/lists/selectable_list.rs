@@ -3,13 +3,25 @@ use lazy_static::lazy_static;
 use vizia::*;
 
 const STYLE: &str = r#"
-    
-    label {
+    .list_item {
+        width: 100px;
+        height: 30px;
+        border-color: black;
+        border-width: 1px;
         background-color: white;
     }
 
-    label:checked {
+    .list_item:checked {
         background-color: blue;
+    }
+
+    list {
+        row-between: 5px;
+        space: 5px;
+    }
+
+    vstack {
+        space: 1s;
     }
 "#;
 
@@ -60,51 +72,66 @@ fn main() {
             selected_static: 0,
         }.build(cx);
 
-        List::new(cx, AppData::list, |cx, item|{
-            let item_text = item.get(cx).to_string();
-            let item_index = item.index();
-            // This vstack shouldn't be necessary but because of how bindings work it's required
-            VStack::new(cx, move |cx|{
-                Binding::new(cx, AppData::selected, move |cx, selected|{
-                    let selected = *selected.get(cx);
-                    
-                    Label::new(cx, &item_text)
-                        .width(Pixels(100.0))
-                        .height(Pixels(30.0))
-                        .border_color(Color::black())
-                        .border_width(Pixels(1.0))
-                        // Set the checked state based on whether this item is selected
-                        .checked(if selected == item_index {true} else {false})
-                        // Set the selected item to this one if pressed
-                        .on_press(move |cx| cx.emit(AppEvent::SelectDynamic(item_index)));
+        VStack::new(cx, move |cx| {
+            HStack::new(cx, |cx| {
+                VStack::new(cx, |cx| {
+                    Label::new(cx, "Model-owned list");
+                    Binding::new(cx, AppData::selected, move |cx, selected| {
+                        let selected = *selected.get(cx);
+                        List::new(cx, AppData::list, move |cx, item| {
+                            let item_text = item.get(cx).to_string();
+                            let item_index = item.index();
+                            Label::new(cx, &item_text)
+                                .class("list_item")
+                                // Set the checked state based on whether this item is selected
+                                .checked(if selected == item_index { true } else { false })
+                                // Set the selected item to this one if pressed
+                                .on_press(move |cx| cx.emit(AppEvent::SelectDynamic(item_index)));
+                        })
+                            .on_increment(move |cx| {
+                                cx.emit(AppEvent::SelectDynamic(
+                                    (selected+1).min(cx.data::<AppData>().unwrap().list.len()-1)
+                                ));
+                            })
+                            .on_decrement(move |cx| {
+                                cx.emit(AppEvent::SelectDynamic(selected.saturating_sub(1)));
+                            });
+                    });
+                });
+
+                VStack::new(cx, |cx| {
+                    Label::new(cx, "Static list");
+                    Binding::new(cx, AppData::selected_static, move |cx, selected| {
+                        let selected = *selected.get(cx);
+                        List::new(cx, StaticLens::new(STATIC_LIST.as_ref()), move |cx, item| {
+                            let item_text = item.get(cx).to_string();
+                            let item_index = item.index();
+                            Label::new(cx, &item_text)
+                                .class("list_item")
+                                // Set the checked state based on whether this item is selected
+                                .checked(if selected == item_index { true } else { false })
+                                // Set the selected item to this one if pressed
+                                .on_press(move |cx| cx.emit(AppEvent::SelectStatic(item_index)));
+                        })
+                            .on_increment(move |cx| {
+                                cx.emit(AppEvent::SelectStatic((selected+1).min(STATIC_LIST.len()-1)));
+                            })
+                            .on_decrement(move |cx| {
+                                cx.emit(AppEvent::SelectStatic(selected.saturating_sub(1)));
+                            });
+                    });
                 });
             });
-        })
-            .row_between(Pixels(5.0))
-            .space(Stretch(1.0));
-
-        List::new(cx, StaticLens::new(STATIC_LIST.as_ref()), |cx, item|{
-            let item_text = item.get(cx).to_string();
-            let item_index = item.index();
-            // This vstack shouldn't be necessary but because of how bindings work it's required
-            VStack::new(cx, move |cx|{
-                Binding::new(cx, AppData::selected_static, move |cx, selected|{
-                    let selected = *selected.get(cx);
-
-                    Label::new(cx, &item_text)
-                        .width(Pixels(100.0))
-                        .height(Pixels(30.0))
-                        .border_color(Color::black())
-                        .border_width(Pixels(1.0))
-                        // Set the checked state based on whether this item is selected
-                        .checked(if selected == item_index {true} else {false})
-                        // Set the selected item to this one if pressed
-                        .on_press(move |cx| cx.emit(AppEvent::SelectStatic(item_index)));
+            Binding::new(cx, AppData::selected, move |cx, selected_item| {
+                Binding::new(cx, AppData::selected_static, move |cx, selected_static_item| {
+                    Label::new(cx, &format!(
+                        "You selected {} and {}",
+                        selected_item.get(cx),
+                        selected_static_item.get(cx)
+                    ));
                 });
             });
-        })
-            .row_between(Pixels(5.0))
-            .space(Stretch(1.0));
+        });
     })
         .run();
 }
