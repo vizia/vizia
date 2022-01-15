@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use keyboard_types::Code;
 
 use crate::{
-    Context, Data, Event, Handle, Lens, Model, TreeExt, View, WindowEvent, Binding,
+    Context, Data, Event, Handle, Lens, Model, TreeExt, View, WindowEvent, Binding, MouseButton,
 };
 
 
@@ -116,9 +116,6 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
             decrement_callback: None,
             clear_callback: None,
         }.build2(cx, move |cx|{
-
-            cx.focused = cx.current;
-
             // Bind to the list data
             Binding::new(cx, lens.clone(), move |cx, list|{
                 // If the number of list items is different to the number of children of the ListView
@@ -176,6 +173,12 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
                 },
 
                 _ => {}
+            }
+        }
+
+        if let Some(WindowEvent::MouseDown(MouseButton::Left)) = event.message.downcast() {
+            if !cx.focused.is_child_of(&cx.tree, cx.current) {
+                cx.focused = cx.current;
             }
         }
     }
