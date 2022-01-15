@@ -24,11 +24,11 @@ pub enum AppEvent {
 }
 
 impl Model for AppData {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut Context, event: &mut Event) {
         // Intercept list events from the list view to modify the selected index in the model
         if let Some(list_event) = event.message.downcast() {
             match list_event {
-                ListEvent::SetSelected(index) => {
+                ListEvent::Select(index) => {
                     self.selected = *index;
                 }
 
@@ -105,7 +105,7 @@ fn main() {
                             // Set the checked state based on whether this item is selected
                             .checked(if selected == item_index {true} else {false})
                             // Set the selected item to this one if pressed
-                            .on_press(move |cx| cx.emit(ListEvent::SetSelected(item_index)));
+                            .on_press(move |cx| cx.emit(ListEvent::Select(item_index)));
                     });
                 });
             })

@@ -1,3 +1,6 @@
+
+use std::collections::HashSet;
+
 use vizia::*;
 
 const STYLE: &str = r#"
@@ -14,7 +17,7 @@ const STYLE: &str = r#"
 #[derive(Lens)]
 pub struct AppData {
     list: Vec<u32>,
-    selected: usize,
+    selected: HashSet<usize>,
 }
 
 impl Model for AppData {
@@ -23,16 +26,16 @@ impl Model for AppData {
         if let Some(list_event) = event.message.downcast() {
             match list_event {
                 ListEvent::Select(index) => {
-                    self.selected = *index;
+
+                    if !self.selected.insert(*index) {
+                        self.selected.remove(index);
+                    }
+                }
+                
+                ListEvent::ClearSelection => {
+                    self.selected.clear();
                 }
 
-                ListEvent::IncrementSelection => {
-                    self.selected = self.selected.saturating_add(1).clamp(0, self.list.len()-1);
-                }
-
-                ListEvent::DecrementSelection => {
-                    self.selected = self.selected.saturating_sub(1).clamp(0, self.list.len()-1);
-                }
 
                 _=> {}
             }
@@ -48,7 +51,7 @@ fn main() {
         let list: Vec<u32> = (10..14u32).collect();
         AppData { 
             list,
-            selected: 0,
+            selected: HashSet::new(),
         }.build(cx);
 
         List::new(cx, AppData::list, |cx, item|{
@@ -57,7 +60,7 @@ fn main() {
             // This vstack shouldn't be necessary but because of how bindings work it's required
             VStack::new(cx, move |cx|{
                 Binding::new(cx, AppData::selected, move |cx, selected|{
-                    let selected = *selected.get(cx);
+                    let selected = selected.get(cx).clone();
                     
                     Label::new(cx, &item_text)
                         .width(Pixels(100.0))
@@ -65,7 +68,7 @@ fn main() {
                         .border_color(Color::black())
                         .border_width(Pixels(1.0))
                         // Set the checked state based on whether this item is selected
-                        .checked(if selected == item_index {true} else {false})
+                        .checked(if selected.contains(&item_index) {true} else {false})
                         // Set the selected item to this one if pressed
                         .on_press(move |cx| cx.emit(ListEvent::Select(item_index)));
                 });

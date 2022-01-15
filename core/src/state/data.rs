@@ -255,6 +255,16 @@ impl<T: Data> Data for Vec<T> {
     }
 }
 
+impl<T: std::hash::Hash + Eq + Data> Data for std::collections::HashSet<T> {
+    fn same(&self, other: &Self) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
+        *self == *other
+    }
+}
+
 impl Data for morphorm::Units {
     fn same(&self, other: &Self) -> bool {
         *self == *other

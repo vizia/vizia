@@ -54,6 +54,11 @@ path = "examples/lists/selectable_list.rs"
 name = "editable_list"
 path = "examples/lists/editable_list.rs"
 
+[[example]]
+name = "multiselectable_list"
+path = "examples/lists/multiselectable_list.rs"
+
+
 [features]
 default = ["glutin"]
 glutin = ["vizia_glutin"]

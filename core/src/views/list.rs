@@ -109,7 +109,8 @@ impl ListData {
 pub enum ListEvent {
     IncrementSelection,
     DecrementSelection,
-    SetSelected(usize),
+    Select(usize),
+    ClearSelection,
     SetLength(usize),
 }
 
@@ -120,16 +121,16 @@ impl Model for ListData {
                 ListEvent::IncrementSelection => {
                     let mut new_selected = self.selected + 1;
                     new_selected = new_selected.clamp(0, self.length - 1);
-                    cx.emit(ListEvent::SetSelected(new_selected));
+                    cx.emit(ListEvent::Select(new_selected));
                 }
 
                 ListEvent::DecrementSelection => {
                     let mut new_selected = self.selected as i32 - 1;
                     new_selected = new_selected.clamp(0, self.length as i32 - 1);
-                    cx.emit(ListEvent::SetSelected(new_selected as usize));
+                    cx.emit(ListEvent::Select(new_selected as usize));
                 }
 
-                ListEvent::SetSelected(index) => {
+                ListEvent::Select(index) => {
                     if *index <= 0 {
                         self.selected = 0;
                     } else if *index > self.length - 1 {
@@ -142,6 +143,8 @@ impl Model for ListData {
                 ListEvent::SetLength(length) => {
                     self.length = *length;
                 }
+
+                _=> {}
             }
         }
     }
