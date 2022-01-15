@@ -21,33 +21,11 @@ pub struct AppData {
 pub enum AppEvent {
     Add(u32),
     RemoveSelected,
+    Select(usize),
 }
 
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        // Intercept list events from the list view to modify the selected index in the model
-        if let Some(list_event) = event.message.downcast() {
-            match list_event {
-                ListEvent::Select(index) => {
-                    self.selected = *index;
-                }
-
-                ListEvent::IncrementSelection => {
-                    if !self.list.is_empty() {
-                        self.selected = self.selected.saturating_add(1).clamp(0, self.list.len()-1);
-                    }
-                }
-
-                ListEvent::DecrementSelection => {
-                    if !self.list.is_empty() {
-                        self.selected = self.selected.saturating_sub(1).clamp(0, self.list.len()-1);
-                    }
-                }
-
-                _=> {}
-            }
-        }
-
         if let Some(app_event) = event.message.downcast() {
             match app_event {
                 AppEvent::Add(value) => {
@@ -62,6 +40,10 @@ impl Model for AppData {
                     if !self.list.is_empty() {
                         self.selected = self.selected.clamp(0, self.list.len()-1);
                     }
+                }
+
+                AppEvent::Select(idx) => {
+                    self.selected = *idx;
                 }
             }
         }
@@ -89,27 +71,32 @@ fn main() {
                 Label::new(cx, "Remove Selected")
             });
 
-            List::new(cx, AppData::list, |cx, item|{
-                let item_text = item.get(cx).to_string();
-                let item_index = item.index();
-                // This vstack shouldn't be necessary but because of how bindings work it's required
-                VStack::new(cx, move |cx|{
-                    Binding::new(cx, AppData::selected, move |cx, selected|{
-                        let selected = *selected.get(cx);
-                        
-                        Label::new(cx, &item_text)
-                            .width(Pixels(100.0))
-                            .height(Pixels(30.0))
-                            .border_color(Color::black())
-                            .border_width(Pixels(1.0))
-                            // Set the checked state based on whether this item is selected
-                            .checked(if selected == item_index {true} else {false})
-                            // Set the selected item to this one if pressed
-                            .on_press(move |cx| cx.emit(ListEvent::Select(item_index)));
+            Binding::new(cx, AppData::selected, move |cx, selected| {
+                let selected = *selected.get(cx);
+
+                List::new(cx, AppData::list, move |cx, item| {
+                    let item_text = item.get(cx).to_string();
+                    let item_index = item.index();
+                    Label::new(cx, &item_text)
+                        .width(Pixels(100.0))
+                        .height(Pixels(30.0))
+                        .border_color(Color::black())
+                        .border_width(Pixels(1.0))
+                        // Set the checked state based on whether this item is selected
+                        .checked(if selected == item_index { true } else { false })
+                        // Set the selected item to this one if pressed
+                        .on_press(move |cx| cx.emit(AppEvent::Select(item_index)));
+                })
+                    .row_between(Pixels(5.0))
+                    .on_increment(move |cx| {
+                        cx.emit(AppEvent::Select((selected+1)
+                            .min(cx.data::<AppData>().unwrap().list.len().saturating_sub(1))
+                        ));
+                    })
+                    .on_decrement(move |cx| {
+                        cx.emit(AppEvent::Select(selected.saturating_sub(1)));
                     });
-                });
-            })
-            .row_between(Pixels(5.0));
+            });
 
         }).row_between(Pixels(5.0)).size(Auto).space(Stretch(1.0)).top(Pixels(100.0)).child_space(Stretch(1.0));
 
@@ -117,5 +104,3 @@ fn main() {
     })
     .run();
 }
-
-

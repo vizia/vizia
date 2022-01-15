@@ -90,66 +90,6 @@ where
     }
 }
 
-
-/// Data for tracking the selected item in a list
-#[derive(Lens, Default)]
-pub struct ListData {
-    pub selected: usize,
-    pub length: usize,
-}
-
-impl ListData {
-    pub fn new(selected: usize) -> Self {
-        Self { selected, length: 0 }
-    }
-}
-
-/// Events for modifying the selected item
-#[derive(Debug)]
-pub enum ListEvent {
-    IncrementSelection,
-    DecrementSelection,
-    Select(usize),
-    ClearSelection,
-    SetLength(usize),
-}
-
-impl Model for ListData {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        if let Some(list_event) = event.message.downcast() {
-            match list_event {
-                ListEvent::IncrementSelection => {
-                    let mut new_selected = self.selected + 1;
-                    new_selected = new_selected.clamp(0, self.length - 1);
-                    cx.emit(ListEvent::Select(new_selected));
-                }
-
-                ListEvent::DecrementSelection => {
-                    let mut new_selected = self.selected as i32 - 1;
-                    new_selected = new_selected.clamp(0, self.length as i32 - 1);
-                    cx.emit(ListEvent::Select(new_selected as usize));
-                }
-
-                ListEvent::Select(index) => {
-                    if *index <= 0 {
-                        self.selected = 0;
-                    } else if *index > self.length - 1 {
-                        self.selected = self.length - 1;
-                    } else {
-                        self.selected = *index;
-                    }
-                }
-
-                ListEvent::SetLength(length) => {
-                    self.length = *length;
-                }
-
-                _=> {}
-            }
-        }
-    }
-}
-
 /// A view for creating a list of items from a binding to a Vec<T>
 pub struct List<L, T: 'static>
 where
@@ -159,6 +99,7 @@ where
     p: PhantomData<L>,
     increment_callback: Option<Box<dyn Fn(&mut Context)>>,
     decrement_callback: Option<Box<dyn Fn(&mut Context)>>,
+    clear_callback: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
@@ -173,6 +114,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
             p: PhantomData::default(),
             increment_callback: None,
             decrement_callback: None,
+            clear_callback: None,
         }.build2(cx, move |cx|{
 
             cx.focused = cx.current;
@@ -210,7 +152,6 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
             match window_event {
                 WindowEvent::KeyDown(code, _) => match code {
                     Code::ArrowDown => {
-                        cx.emit(ListEvent::IncrementSelection);
                         if let Some(callback) = self.increment_callback.take() {
                             (callback)(cx);
                             self.increment_callback = Some(callback);
@@ -218,10 +159,16 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
                     }
 
                     Code::ArrowUp => {
-                        cx.emit(ListEvent::DecrementSelection);
                         if let Some(callback) = self.decrement_callback.take() {
                             (callback)(cx);
                             self.decrement_callback = Some(callback);
+                        }
+                    }
+
+                    Code::Escape => {
+                        if let Some(callback) = self.clear_callback.take() {
+                            (callback)(cx);
+                            self.clear_callback = Some(callback);
                         }
                     }
 
@@ -248,6 +195,15 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
          where F: 'static + Fn(&mut Context) {
          if let Some(list) = self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L,T>>()) {
              list.decrement_callback = Some(Box::new(callback));
+         }
+
+         self
+     }
+
+     pub fn on_clear<F>(self, callback: F) -> Self
+         where F: 'static + Fn(&mut Context) {
+         if let Some(list) = self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L,T>>()) {
+             list.clear_callback = Some(Box::new(callback));
          }
 
          self
