@@ -112,6 +112,14 @@ impl<'a,T> Handle<'a,T> {
         self
     }
 
+    pub fn display<U: Clone + Into<Display>>(self, value: impl Res<U>) -> Self {
+        self.cx.style.display.insert(self.entity, value.get(self.cx).clone().into());
+
+        self.cx.style.needs_redraw = true;
+
+        self
+    }
+
     // Abilities
     pub fn hoverable(self, state: bool) -> Self {
         if let Some(abilities) = self.cx.style.abilities.get_mut(self.entity) {
@@ -238,7 +246,7 @@ impl<'a,T> Handle<'a,T> {
 
     set_style!(font_size, f32);
 
-    set_style!(display, Display);
+    //set_style!(display, Display);
     //set_style!(visibility, Visibility);
 
 
