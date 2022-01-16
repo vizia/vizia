@@ -1,12 +1,116 @@
+use femtovg::{Paint, Align, Baseline};
 use keyboard_types::Code;
+use morphorm::{Units, PositionType};
+use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
-use crate::{Context, Handle, MouseButton, View, WindowEvent, Selection, Label, ZStack, Binding, Lens, Model, Element, Units::*, Color};
+use crate::{Context, Handle, MouseButton, View, WindowEvent, Selection, Label, ZStack, Binding, Lens, Model, Element, Units::*, Color, Action, Movement, EditableText, Modifiers, FontOrId, Entity, PropSet};
 
+use crate::text::Direction;
 
 #[derive(Lens)]
 pub struct TextData {
     text: String,
     selection: Selection,
+}
+
+impl TextData {
+    pub fn insert_text(&mut self, text: &str) {
+        let range = self.selection.range();
+        self.text.replace_range(range, text);
+        self.selection = Selection::caret(self.selection.min() + text.len());
+    }
+
+    pub fn delete_text(&mut self, movement: Movement) {
+        // If selection is a range - delete the selection
+        if !self.selection.is_caret() {
+            self.text.replace_range(self.selection.range(), "");
+            self.selection = Selection::caret(self.selection.min());
+        } else {
+            let range = self.selection.range();
+            match movement {
+                Movement::Grapheme(Direction::Upstream) => {
+                    if let Some(offset) = self.text.prev_grapheme_offset(self.selection.active) {
+                        self.text.replace_range(offset..self.selection.active, "");
+                        self.selection = Selection::caret(offset);
+                    }
+                }
+
+                Movement::Grapheme(Direction::Downstream) => {
+                    if let Some(offset) = self.text.next_grapheme_offset(self.selection.active) {
+                        self.text.replace_range(self.selection.active..offset, "");
+                        self.selection = Selection::caret(self.selection.active);
+                    }
+                }
+
+                Movement::Word(Direction::Upstream) => {
+                    if let Some(offset) = self.text.prev_word_offset(self.selection.active) {
+                        self.text.replace_range(offset..self.selection.active, "");
+                        self.selection = Selection::caret(offset);
+                    }
+                }
+
+                Movement::Word(Direction::Downstream) => {
+                    if let Some(offset) = self.text.next_word_offset(self.selection.active) {
+                        self.text.replace_range(self.selection.active..offset, "");
+                        self.selection = Selection::caret(self.selection.active);
+                    }
+                }
+
+                _=> {}
+            }
+        }
+    }
+
+    pub fn move_cursor(&mut self, movement: Movement, selection: bool) {
+        match movement {
+            Movement::Grapheme(Direction::Upstream) => {
+                if let Some(offset) = self.text.prev_grapheme_offset(self.selection.active) {
+                    self.selection.active = offset;
+                }
+
+                if !selection {
+                    self.selection.anchor = self.selection.active;
+                }
+            }
+
+            Movement::Grapheme(Direction::Downstream) => {
+                if let Some(offset) = self.text.next_grapheme_offset(self.selection.active) {
+                    self.selection.active = offset;
+                }
+
+                if !selection {
+                    self.selection.anchor = self.selection.active;
+                }
+            }
+
+            Movement::Word(Direction::Upstream) => {
+                if let Some(offset) = self.text.prev_word_offset(self.selection.active) {
+                    self.selection.active = offset;
+                }
+
+                if !selection {
+                    self.selection.anchor = self.selection.active;
+                }
+            }
+
+            Movement::Word(Direction::Downstream) => {
+                if let Some(offset) = self.text.next_word_offset(self.selection.active) {
+                    self.selection.active = offset;
+                }
+
+                if !selection {
+                    self.selection.anchor = self.selection.active;
+                }
+            }
+
+            _=> {}
+        }
+    }
+
+    pub fn select_all(&mut self) {
+        self.selection.anchor = 0;
+        self.selection.active = self.text.len();
+    }
 }
 
 impl Model for TextData {
@@ -16,33 +120,356 @@ impl Model for TextData {
 
 
 pub struct Textbox {
+    text_data: TextData,
     edit: bool,
+    hitx: f32,
+    dragx: f32,
     on_submit: Option<Box<dyn Fn(&mut Context, &Self)>>,
 }
 
 impl Textbox {
     pub fn new<'a>(cx: &'a mut Context, placeholder: &'static str) -> Handle<'a, Self> {
-        Self { 
-            edit: false, 
+        Self {
+            text_data: TextData {
+                text: placeholder.to_string(),
+                // selection: Selection::new(0, placeholder.len()),
+                selection: Selection::caret(placeholder.len()),
+            },
+            edit: false,
+            hitx: -1.0,
+            dragx: -1.0,
             on_submit: None 
         }
         .build2(cx, move |cx|{
 
 
 
-            TextData {
-                text: placeholder.to_owned(),
-                selection: Selection::new(0, placeholder.len()),
-            }.build(cx);
+            // TextData {
+            //     text: placeholder.to_owned(),
+            //     selection: Selection::new(0, placeholder.len()),
+            // }.build(cx);
             
-            ZStack::new(cx, move |cx|{
-                Binding::new(cx, TextData::selection, |cx, selection|{
-                    // Position the element according to the selection
-                    Element::new(cx).background_color(Color::rgba(100,100,200,120));
-                });
-            }).size(Auto).text(placeholder);
+            // Selection
+            Element::new(cx).background_color(Color::rgba(100,100,200,120)).position_type(PositionType::SelfDirected);
+            
+            // Caret
+            Element::new(cx).background_color(Color::rgba(255,0,0,255)).position_type(PositionType::SelfDirected).width(Pixels(1.0));
+            
 
-        })
+        }).text(placeholder)
+    }
+
+    fn set_caret(&mut self, cx: &mut Context, entity: Entity) {
+
+        let selection = cx.tree.get_child(entity, 0).unwrap();
+        let caret = cx.tree.get_child(entity, 1).unwrap();
+        
+        let posx = cx.cache.get_posx(entity);
+        let posy = cx.cache.get_posy(entity);
+        let width = cx.cache.get_width(entity);
+        let height = cx.cache.get_height(entity);
+        
+        if let Some(text) = cx.style.text.get(entity) {
+            let font = cx.style.font.get(entity).cloned().unwrap_or_default();
+
+            // TODO - This should probably be cached in cx to save look-up time
+            let default_font = cx.resource_manager.fonts.get(&cx.style.default_font).and_then(|font|{
+                match font {
+                    FontOrId::Id(id) => Some(id),
+                    _=> None,
+                }
+            }).expect("Failed to find default font");
+
+            let font_id = cx.resource_manager.fonts.get(&font).and_then(|font|{
+                match font {
+                    FontOrId::Id(id) => Some(id),
+                    _=> None,
+                }
+            }).unwrap_or(default_font);
+
+
+            let mut x = posx;
+            let mut y = posy;
+            //let mut sx = posx;
+            let mut sy = posy;
+
+            let text_string = text.to_owned();
+
+            let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
+
+            let mut paint = Paint::default();
+            paint.set_font_size(font_size);
+            paint.set_font(&[font_id.clone()]);
+
+            let font_metrics = cx.text_context
+                .measure_font(paint)
+                .expect("Failed to read font metrics");
+
+            
+            let parent = cx
+                .tree
+                .get_parent(entity)
+                .expect("Failed to find parent somehow");
+
+            let parent_posx = cx.cache.get_posx(parent);
+            let parent_posy = cx.cache.get_posy(parent);
+            let parent_width = cx.cache.get_width(parent);
+            let parent_height = cx.cache.get_height(parent);
+            
+            let border_width = match cx
+                .style
+                .border_width
+                .get(entity)
+                .cloned()
+                .unwrap_or_default()
+            {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => parent_width * val,
+                _ => 0.0,
+            };
+
+            // TODO - Move this to a text layout system and include constraints
+            let child_left = cx
+                .style
+                .child_left
+                .get(entity)
+                .cloned()
+                .unwrap_or_default();
+            let child_right = cx
+                .style
+                .child_right
+                .get(entity)
+                .cloned()
+                .unwrap_or_default();
+            let child_top = cx
+                .style
+                .child_top
+                .get(entity)
+                .cloned()
+                .unwrap_or_default();
+            let child_bottom = cx
+                .style
+                .child_bottom
+                .get(entity)
+                .cloned()
+                .unwrap_or_default();
+
+            let align = match child_left {
+                Units::Pixels(val) => match child_right {
+                    Units::Stretch(_) => {
+                        x += val + border_width;
+                        Align::Left
+                    }
+
+                    _ => Align::Left,
+                },
+
+                Units::Stretch(_) => match child_right {
+                    Units::Pixels(val) => {
+                        x += width - val - border_width;
+                        Align::Right
+                    }
+
+                    Units::Stretch(_) => {
+                        x += 0.5 * width;
+                        Align::Center
+                    }
+
+                    _ => Align::Right,
+                },
+
+                _ => Align::Left,
+            };
+
+            let baseline = match child_top {
+                Units::Pixels(val) => match child_bottom {
+                    Units::Stretch(_) => {
+                        y += val + border_width;
+                        Baseline::Top
+                    }
+
+                    _ => Baseline::Top,
+                },
+
+                Units::Stretch(_) => match child_bottom {
+                    Units::Pixels(val) => {
+                        y += height - val - border_width;
+                        sy = y - font_metrics.height();
+                        Baseline::Bottom
+                    }
+
+                    Units::Stretch(_) => {
+                        y += 0.5 * height;
+                        sy = y - font_metrics.height() * 0.5;
+                        Baseline::Middle
+                    }
+
+                    _ => Baseline::Top,
+                },
+
+                _ => Baseline::Top,
+            };
+
+            paint.set_text_align(align);
+            paint.set_text_baseline(baseline);
+
+            if let Ok(res) = cx.text_context.measure_text(x, y, &text_string, paint) {
+
+                let padding_left = match cx.style.child_left.get(entity).unwrap_or(&Units::Auto) {
+                    Units::Pixels(val) => *val,
+                    _ => 0.0,
+                };
+        
+                let padding_right = match cx.style.child_right.get(entity).unwrap_or(&Units::Auto) {
+                    Units::Pixels(val) => *val,
+                    _ => 0.0,
+                };
+
+                let text_width = res.width();
+                //let mut glyph_positions = res.glyphs.iter().peekable();
+
+                let mut caretx = x;
+
+                let mut selectx = caretx;
+
+                if self.edit {
+                    let startx = if let Some(first_glyph) = res.glyphs.first() {
+                        first_glyph.x
+                    } else {
+                        0.0 + padding_right
+                    };
+                    //let startx = x - text_width / 2.0;
+                    let endx = startx + text_width;
+
+                    if self.hitx != -1.0 {
+                        //let endx = res.glyphs.last().unwrap().x + res.glyphs.last().unwrap().w;
+
+                        selectx = if self.hitx < startx + text_width / 2.0 {
+                            self.text_data.selection.anchor = 0;
+                            startx
+                        } else {
+                            self.text_data.selection.anchor = text.len();
+                            endx
+                        };
+
+                        caretx = if self.dragx < startx + text_width / 2.0 {
+                            self.text_data.selection.active = 0;
+                            startx
+                        } else {
+                            self.text_data.selection.active = text.len();
+                            endx
+                        };
+
+                        let mut n = 0;
+                        let mut px = x + padding_left;
+
+                        for glyph in res.glyphs.iter() {
+                            let left_edge = glyph.x;
+                            let right_edge = left_edge + glyph.width;
+                            let gx = left_edge * 0.3 + right_edge * 0.7;
+
+                            // if n == 0 && self.hitx <= glyph.x {
+                            //     selectx = left_edge;
+                            //     self.select_pos = 0;
+                            // }
+
+                            // if n == res.glyphs.len() as u32 && self.hitx >= glyph.x + glyph.width {
+                            //     selectx = right_edge;
+                            //     self.select_pos = n;
+                            // }
+
+                            // if n == 0 && self.dragx <= glyph.x {
+                            //     caretx = left_edge;
+                            //     self.cursor_pos = 0;
+                            // }
+
+                            // if n == res.glyphs.len() as u32 && self.hitx >= glyph.x + glyph.width {
+                            //     caretx = right_edge;
+                            //     self.cursor_pos = n;
+                            // }
+
+                            if self.hitx >= px && self.hitx < gx {
+                                selectx = left_edge;
+
+                                self.text_data.selection.anchor = n;
+                            }
+
+                            if self.dragx >= px && self.dragx < gx {
+                                caretx = left_edge;
+
+                                self.text_data.selection.active = n;
+                            }
+
+                            px = gx;
+                            n += 1;
+                        }
+                    } else {
+                        let mut n = 0;
+                        //println!("cursor: {}", self.cursor_pos);
+                        //let mut start_x = 0.0;
+
+
+                        for (glyph, (index, _)) in res.glyphs.iter().zip(text_string.grapheme_indices(true)) {
+                            if index == self.text_data.selection.active {
+                                caretx = glyph.x;
+                            }
+
+                            if index == self.text_data.selection.anchor {
+                                selectx = glyph.x;
+                            }
+                        }
+
+                        if self.text_data.selection.active as usize == text.len() && text.len() != 0 {
+                            caretx = endx;
+                        }
+
+                        if self.text_data.selection.anchor as usize == text.len() && text.len() != 0 {
+                            selectx = endx;
+                        }
+                    }
+
+                    //Draw selection
+                    // let select_width = (caretx - selectx).abs();
+                    // if selectx > caretx {
+                    //     let mut path = Path::new();
+                    //     path.rect(caretx, sy, select_width, font_metrics.height());
+                    //     canvas.fill_path(&mut path, Paint::color(Color::rgba(0, 0, 0, 64)));
+                    // } else if caretx > selectx {
+                    //     let mut path = Path::new();
+                    //     path.rect(selectx, sy, select_width, font_metrics.height());
+                    //     canvas.fill_path(&mut path, Paint::color(Color::rgba(0, 0, 0, 64)));
+                    // }
+
+                    //Draw selection
+                    let select_width = (caretx - selectx).abs();
+                    if selectx > caretx {
+                        //path.rect(caretx, sy, select_width, font_metrics.height());
+                        selection.set_left(cx, Pixels(padding_left + caretx.floor() - posx - 1.0));
+                    } else if caretx > selectx {
+                        //path.rect(selectx, sy, select_width, font_metrics.height());
+                        selection.set_left(cx, Pixels(padding_left + selectx.floor() - posx - 1.0));
+                        
+                    }
+
+                    selection.set_width(cx, Pixels(select_width));
+                    selection.set_height(cx, Pixels(font_metrics.height()));
+                    selection.set_top(cx, Stretch(1.0));
+                    selection.set_bottom(cx, Stretch(1.0));
+
+                    // // Draw Caret
+                    // let mut path = Path::new();
+                    // path.rect(caretx.floor(), sy, 1.0, font_metrics.height());
+                    // canvas.fill_path(&mut path, Paint::color(Color::rgba(247, 76, 0, 255)));
+
+                    let caret_left = (caretx.floor() - posx - 1.0).max(0.0);
+
+                    caret.set_left(cx, Pixels(padding_left + caret_left));
+                    caret.set_top(cx, Stretch(1.0));
+                    caret.set_bottom(cx, Stretch(1.0));
+                    caret.set_height(cx, Pixels(font_metrics.height()));
+                }
+            }
+        }
     }
 }
 
@@ -75,6 +502,7 @@ impl View for Textbox {
                     if !self.edit {
                         self.edit = true;
                         cx.focused = cx.current;
+                        self.set_caret(cx, cx.current);
                     }
 
                     // Hit test
@@ -84,7 +512,17 @@ impl View for Textbox {
                 }
 
                 WindowEvent::CharInput(c) => {
-                    println!("Input character: {}", c);
+                    println!("Input character: {:?}", c);
+                    if  *c != '\u{1b}' && // Escape
+                        *c != '\u{8}' && // Backspace
+                        *c != '\u{7f}' && // Delete
+                        !cx.modifiers.contains(Modifiers::CTRL)
+                    {
+                        self.text_data.insert_text(&String::from(*c));
+                        cx.style.text.insert(cx.current, self.text_data.text.clone());
+                    }
+
+                    self.set_caret(cx, cx.current);
                     // Get the selection
                     // Replace the selected range
                     // Set the new selection
@@ -99,11 +537,31 @@ impl View for Textbox {
                     Code::ArrowLeft => {
                         // Determine grapheme or word movement
                         // Move the cursor
+                        let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                            Movement::Word(Direction::Upstream)
+                        } else {
+                            Movement::Grapheme(Direction::Upstream)
+                        };
+
+                        self.text_data.move_cursor(movement, cx.modifiers.contains(Modifiers::SHIFT));
+
+                        println!("{:?}", self.text_data.selection);
+                        self.set_caret(cx, cx.current);
                     }
 
                     Code::ArrowRight => {
                         // Determine grapheme or word movement
                         // Move the cursor
+                        let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                            Movement::Word(Direction::Downstream)
+                        } else {
+                            Movement::Grapheme(Direction::Downstream)
+                        };
+
+                        self.text_data.move_cursor(movement, cx.modifiers.contains(Modifiers::SHIFT));
+                        
+
+                        self.set_caret(cx, cx.current);
                     }
 
                     // TODO
@@ -117,13 +575,33 @@ impl View for Textbox {
                     }
 
                     Code::Backspace => {
+                        println!("Backspace");
                         // Determine grapheme or word deletion (upstream)
                         // Delete the text
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            self.text_data.delete_text(Movement::Word(Direction::Upstream));
+                        } else {
+                            self.text_data.delete_text(Movement::Grapheme(Direction::Upstream));
+                        }
+
+                        cx.style.text.insert(cx.current, self.text_data.text.clone());
+                        self.set_caret(cx, cx.current);
                     }
 
                     Code::Delete => {
                         // Determine grapheme or word deletion (downstream)
                         // Delete the text
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            self.text_data.delete_text(Movement::Word(Direction::Downstream));
+                        } else {
+                            self.text_data.delete_text(Movement::Grapheme(Direction::Downstream));
+                        }
+                        cx.style.text.insert(cx.current, self.text_data.text.clone());
+                        self.set_caret(cx, cx.current);
+                    }
+
+                    Code::Escape => {
+                        self.edit = false;
                     }
 
                     // TODO
@@ -144,6 +622,12 @@ impl View for Textbox {
                     // TODO
                     Code::PageDown => {
 
+                    }
+
+                    Code::KeyA => {
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            self.text_data.select_all();
+                        }
                     }
 
                     _ => {}

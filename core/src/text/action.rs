@@ -1,7 +1,8 @@
 use super::Movement;
 
 pub enum Action {
-    Move(Movement),
 
+    Move(Movement),
+    
     MoveSelecting(Movement),
 }
