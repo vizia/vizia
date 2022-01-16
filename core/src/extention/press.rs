@@ -60,6 +60,10 @@ impl<V: View> View for Press<V> {
             }
         }
     }
+
+    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+        self.view.draw(cx, canvas);
+    }
 }
 
 // Release
@@ -118,6 +122,10 @@ impl<V: View> View for Release<V> {
             }
         }
     }
+
+    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+        self.view.draw(cx, canvas);
+    }
 }
 
 // Hover
@@ -174,6 +182,10 @@ impl<V: View> View for Hover<V> {
             }
         }
     }
+
+    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+        self.view.draw(cx, canvas);
+    }
 }
 
 // Hover
@@ -227,6 +239,10 @@ impl<V: View> View for Over<V> {
                 _ => {}
             }
         }
+    }
+
+    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+        self.view.draw(cx, canvas);
     }
 }
 
@@ -284,6 +300,10 @@ impl<V: View> View for Leave<V> {
             }
         }
     }
+
+    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+        self.view.draw(cx, canvas);
+    }
 }
 
 // Move
@@ -337,6 +357,10 @@ impl<V: View> View for Move<V> {
                 _ => {}
             }
         }
+    }
+
+    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+        self.view.draw(cx, canvas);
     }
 }
 
@@ -393,6 +417,10 @@ impl<V: View> View for Geo<V> {
                 _ => {}
             }
         }
+    }
+
+    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+        self.view.draw(cx, canvas);
     }
 }
 
