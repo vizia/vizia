@@ -20,19 +20,25 @@ pub struct AppData {
     selected: HashSet<usize>,
 }
 
+#[derive(Debug)]
+pub enum AppEvent {
+    Select(usize),
+    ClearSelection,
+}
+
 impl Model for AppData {
     // Intercept list events from the list view to modify the selected index in the model
     fn event(&mut self, _: &mut Context, event: &mut Event) {
         if let Some(list_event) = event.message.downcast() {
             match list_event {
-                ListEvent::Select(index) => {
+                AppEvent::Select(index) => {
 
                     if !self.selected.insert(*index) {
                         self.selected.remove(index);
                     }
                 }
                 
-                ListEvent::ClearSelection => {
+                AppEvent::ClearSelection => {
                     self.selected.clear();
                 }
 
@@ -70,14 +76,15 @@ fn main() {
                         // Set the checked state based on whether this item is selected
                         .checked(if selected.contains(&item_index) {true} else {false})
                         // Set the selected item to this one if pressed
-                        .on_press(move |cx| cx.emit(ListEvent::Select(item_index)));
+                        .on_press(move |cx| cx.emit(AppEvent::Select(item_index)));
                 });
             });
         })
-        .row_between(Pixels(5.0))
-        .space(Stretch(1.0));
+            .row_between(Pixels(5.0))
+            .space(Stretch(1.0))
+            .on_clear(|cx| {
+                cx.emit(AppEvent::ClearSelection)
+            });
     })
     .run();
 }
-
-

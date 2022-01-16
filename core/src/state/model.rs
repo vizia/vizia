@@ -113,3 +113,5 @@ pub struct ModelDataStore {
     pub data: HashMap<TypeId, Box<dyn ModelData>>,
     pub lenses: HashMap<TypeId, Box<dyn LensWrap>>,
 }
+
+impl Model for () {}
