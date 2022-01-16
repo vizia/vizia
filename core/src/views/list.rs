@@ -1,19 +1,15 @@
-
 use std::marker::PhantomData;
 
 use keyboard_types::Code;
 
-use crate::{
-    Context, Data, Handle, Lens, Model, TreeExt, View, WindowEvent, Binding, MouseButton,
-};
-
+use crate::{Binding, Context, Data, Handle, Lens, Model, MouseButton, TreeExt, View, WindowEvent};
 
 /// An `ItemPtr` is used to access an item from context in a list item template.
-/// 
+///
 /// An `ItemPtr` is provided by the item template of a list view and can be
-/// cloned and passed into content closures. To retrieve the item from the 
+/// cloned and passed into content closures. To retrieve the item from the
 /// `ItemPtr`, call the `get()` method:
-/// 
+///
 /// # Example
 /// ```compile_fail
 /// List::new(cx, AppData::list, |cx, item|{
@@ -74,7 +70,6 @@ where
     }
 }
 
-
 pub trait DataHandle: Clone + Copy {
     type Data;
     fn get<'a>(&self, cx: &'a Context) -> &'a Self::Data;
@@ -115,13 +110,19 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
             increment_callback: None,
             decrement_callback: None,
             clear_callback: None,
-        }.build2(cx, move |cx|{
+        }
+        .build2(cx, move |cx| {
             // Bind to the list data
-            Binding::new(cx, lens.clone(), move |cx, list|{
+            Binding::new(cx, lens.clone(), move |cx, list| {
                 // If the number of list items is different to the number of children of the ListView
                 // then remove and rebuild all the children
                 let list_len = list.get(cx).len();
-                let children = cx.current.child_iter(&cx.tree).enumerate().filter(|(child, _)| *child != 0).collect::<Vec<_>>();
+                let children = cx
+                    .current
+                    .child_iter(&cx.tree)
+                    .enumerate()
+                    .filter(|(child, _)| *child != 0)
+                    .collect::<Vec<_>>();
                 if children.len() != list_len {
                     //cx.remove_children(cx.current);
                     for (_, child) in children {
@@ -135,7 +136,6 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
                 }
             });
         })
-
     }
 }
 
@@ -184,31 +184,43 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
     }
 }
 
- impl<L: Lens<Target = Vec<T>>,T: Data> Handle<'_, List<L,T>> {
-     pub fn on_increment<F>(self, callback: F) -> Self
-     where F: 'static + Fn(&mut Context) {
-         if let Some(list) = self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L,T>>()) {
-             list.increment_callback = Some(Box::new(callback));
-         }
+impl<L: Lens<Target = Vec<T>>, T: Data> Handle<'_, List<L, T>> {
+    pub fn on_increment<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        if let Some(list) =
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L, T>>())
+        {
+            list.increment_callback = Some(Box::new(callback));
+        }
 
-         self
-     }
+        self
+    }
 
-     pub fn on_decrement<F>(self, callback: F) -> Self
-         where F: 'static + Fn(&mut Context) {
-         if let Some(list) = self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L,T>>()) {
-             list.decrement_callback = Some(Box::new(callback));
-         }
+    pub fn on_decrement<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        if let Some(list) =
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L, T>>())
+        {
+            list.decrement_callback = Some(Box::new(callback));
+        }
 
-         self
-     }
+        self
+    }
 
-     pub fn on_clear<F>(self, callback: F) -> Self
-         where F: 'static + Fn(&mut Context) {
-         if let Some(list) = self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L,T>>()) {
-             list.clear_callback = Some(Box::new(callback));
-         }
+    pub fn on_clear<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        if let Some(list) =
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L, T>>())
+        {
+            list.clear_callback = Some(Box::new(callback));
+        }
 
-         self
-     }
- }
+        self
+    }
+}

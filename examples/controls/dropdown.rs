@@ -73,7 +73,7 @@ fn main() {
                             Label::new(cx, &choice.get(cx).to_string());
                         });
                         Label::new(cx, ICON_DOWN_OPEN).font("icons").left(Stretch(1.0)).right(Pixels(5.0));
-                    }), 
+                    }),
                     move |cx|{
                     List::new(cx, AppData::list, |cx, item|{
                         VStack::new(cx, move |cx|{

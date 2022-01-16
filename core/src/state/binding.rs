@@ -1,9 +1,11 @@
 use std::any::TypeId;
 use std::collections::HashSet;
 
-use morphorm::{PositionType, LayoutType};
+use morphorm::{LayoutType, PositionType};
 
-use crate::{Color, Context, Display, Entity, Handle, StateStore, TreeExt, Units, View, Visibility};
+use crate::{
+    Color, Context, Display, Entity, Handle, StateStore, TreeExt, Units, View, Visibility,
+};
 
 use crate::{Data, Lens, Model};
 
@@ -150,12 +152,11 @@ pub trait Res<T> {
     fn get<'a>(&'a self, cx: &'a Context) -> &'a T;
 }
 
-impl<T,L> Res<T> for Field<L>
+impl<T, L> Res<T> for Field<L>
 where
     L: Lens<Target = T>,
 {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a T
-    {
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a T {
         self.get(cx)
     }
 }
@@ -202,8 +203,8 @@ impl Res<usize> for usize {
     }
 }
 
-impl<T> Res<(T,T)> for (T,T) {
-    fn get<'a>(&'a self, _: &'a Context) -> &'a (T,T) {
+impl<T> Res<(T, T)> for (T, T) {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a (T, T) {
         self
     }
 }

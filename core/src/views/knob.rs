@@ -57,10 +57,17 @@ impl Knob {
                     let height = cx.cache.get_height(cx.current);
                     let width = cx.cache.get_width(cx.current);
                     let radius = height.min(width) / 2.;
-                    ArcTrack::new(cx, *value.get(cx), centered, Pixels(radius), Percentage(15.), 300.)
-                        .width(Stretch(1.0))
-                        .height(Stretch(1.0))
-                        .class("track");
+                    ArcTrack::new(
+                        cx,
+                        *value.get(cx),
+                        centered,
+                        Pixels(radius),
+                        Percentage(15.),
+                        300.,
+                    )
+                    .width(Stretch(1.0))
+                    .height(Stretch(1.0))
+                    .class("track");
                 });
 
                 // TODO
@@ -78,11 +85,11 @@ impl Knob {
         cx: &'a mut Context,
         normalized_default: f32,
         normalized_value: f32,
-        content: F
-    ) -> Handle<Self> 
+        content: F,
+    ) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context, f32) -> Handle<T>,
-        {
+    {
         Self {
             normalized_value,
             default_normal: normalized_default,
@@ -102,7 +109,9 @@ impl Knob {
 
             ZStack::new(cx, move |cx| {
                 Binding::new(cx, SliderData::value, move |cx, value| {
-                    (content)(cx, *value.get(cx)).width(Percentage(100.0)).height(Percentage(100.0));
+                    (content)(cx, *value.get(cx))
+                        .width(Percentage(100.0))
+                        .height(Percentage(100.0));
                 });
             });
         })
@@ -241,7 +250,14 @@ pub struct ArcTrack {
 }
 
 impl ArcTrack {
-    pub fn new(cx: &mut Context, value: f32, center: bool, radius: Units, span: Units, arc_len: f32) -> Handle<Self> {
+    pub fn new(
+        cx: &mut Context,
+        value: f32,
+        center: bool,
+        radius: Units,
+        span: Units,
+        arc_len: f32,
+    ) -> Handle<Self> {
         Self {
             // angle_start: -150.0,
             // angle_end: 150.0,
@@ -295,7 +311,7 @@ impl View for ArcTrack {
         let radius = self.radius.value_or(parent_width, 0.0);
         // default value of span is 15 % of radius. Original span value was 16.667%
         let span = self.span.value_or(radius, 0.0);
-        
+
         // Draw the track arc
         let mut path = Path::new();
         path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);

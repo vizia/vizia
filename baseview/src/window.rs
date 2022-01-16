@@ -62,7 +62,6 @@ impl ViziaWindow {
             parent,
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-
                 let mut context = Context::new();
 
                 context.entity_manager.create();

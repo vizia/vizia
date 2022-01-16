@@ -176,26 +176,36 @@ where
     pub fn inherit_inline(&mut self, entity: Entity, parent: Entity) -> bool {
         let entity_index = entity.index();
         let parent_index = parent.index();
-        
+
         if parent_index < self.inline_data.sparse.len() {
             let parent_sparse_index = self.inline_data.sparse[parent_index];
 
-            if parent_sparse_index.data_index.is_inline() && parent_sparse_index.data_index.index() < self.inline_data.dense.len() {
-                
+            if parent_sparse_index.data_index.is_inline()
+                && parent_sparse_index.data_index.index() < self.inline_data.dense.len()
+            {
                 if entity_index >= self.inline_data.sparse.len() {
                     self.inline_data.sparse.resize(entity_index + 1, InlineIndex::null());
                 }
-                
+
                 let entity_sparse_index = self.inline_data.sparse[entity_index];
 
-                if entity_sparse_index.data_index.is_inline() && entity_sparse_index.data_index.index() < self.inline_data.dense.len() {
+                if entity_sparse_index.data_index.is_inline()
+                    && entity_sparse_index.data_index.index() < self.inline_data.dense.len()
+                {
                     if entity_sparse_index.data_index.is_inherited() {
-                        self.inline_data.sparse[entity_index] = InlineIndex { data_index: DataIndex::inline(parent_sparse_index.data_index.index()).inherited(), anim_index: std::u32::MAX};
+                        self.inline_data.sparse[entity_index] = InlineIndex {
+                            data_index: DataIndex::inline(parent_sparse_index.data_index.index())
+                                .inherited(),
+                            anim_index: std::u32::MAX,
+                        };
                         return true;
-                        
                     }
                 } else {
-                    self.inline_data.sparse[entity_index] = InlineIndex { data_index: DataIndex::inline(parent_sparse_index.data_index.index()).inherited(), anim_index: std::u32::MAX};
+                    self.inline_data.sparse[entity_index] = InlineIndex {
+                        data_index: DataIndex::inline(parent_sparse_index.data_index.index())
+                            .inherited(),
+                        anim_index: std::u32::MAX,
+                    };
                     return true;
                 }
             }
@@ -204,30 +214,39 @@ where
         return false;
     }
 
-
     pub fn inherit_shared(&mut self, entity: Entity, parent: Entity) -> bool {
         let entity_index = entity.index();
         let parent_index = parent.index();
-        
+
         if parent_index < self.inline_data.sparse.len() {
             let parent_sparse_index = self.inline_data.sparse[parent_index];
 
-            if !parent_sparse_index.data_index.is_inline() && parent_sparse_index.data_index.index() < self.shared_data.dense.len() {
-                
+            if !parent_sparse_index.data_index.is_inline()
+                && parent_sparse_index.data_index.index() < self.shared_data.dense.len()
+            {
                 if entity_index >= self.inline_data.sparse.len() {
                     self.inline_data.sparse.resize(entity_index + 1, InlineIndex::null());
                 }
-                
+
                 let entity_sparse_index = self.inline_data.sparse[entity_index];
 
-                if !entity_sparse_index.data_index.is_inline() && entity_sparse_index.data_index.index() < self.shared_data.dense.len() {
+                if !entity_sparse_index.data_index.is_inline()
+                    && entity_sparse_index.data_index.index() < self.shared_data.dense.len()
+                {
                     if entity_sparse_index.data_index.is_inherited() {
-                        self.inline_data.sparse[entity_index] = InlineIndex { data_index: DataIndex::shared(parent_sparse_index.data_index.index()).inherited(), anim_index: std::u32::MAX};
+                        self.inline_data.sparse[entity_index] = InlineIndex {
+                            data_index: DataIndex::shared(parent_sparse_index.data_index.index())
+                                .inherited(),
+                            anim_index: std::u32::MAX,
+                        };
                         return true;
-                        
                     }
                 } else {
-                    self.inline_data.sparse[entity_index] = InlineIndex { data_index: DataIndex::shared(parent_sparse_index.data_index.index()).inherited(), anim_index: std::u32::MAX};
+                    self.inline_data.sparse[entity_index] = InlineIndex {
+                        data_index: DataIndex::shared(parent_sparse_index.data_index.index())
+                            .inherited(),
+                        anim_index: std::u32::MAX,
+                    };
                     return true;
                 }
             }

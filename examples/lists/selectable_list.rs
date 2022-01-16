@@ -26,9 +26,7 @@ const STYLE: &str = r#"
 "#;
 
 lazy_static! {
-    pub static ref STATIC_LIST: Vec<u32> = {
-        (20..24).collect()
-    };
+    pub static ref STATIC_LIST: Vec<u32> = { (20..24).collect() };
 }
 
 #[derive(Lens)]
@@ -60,14 +58,14 @@ impl Model for AppData {
                     self.selected_static = *index;
                 }
                 AppEvent::IncrementDynamic => {
-                    cx.emit(AppEvent::SelectDynamic((self.selected + 1).min(self.list.len()-1)))
+                    cx.emit(AppEvent::SelectDynamic((self.selected + 1).min(self.list.len() - 1)))
                 }
                 AppEvent::DecrementDynamic => {
                     cx.emit(AppEvent::SelectDynamic(self.selected.saturating_sub(1)))
                 }
-                AppEvent::IncrementStatic => {
-                    cx.emit(AppEvent::SelectStatic((self.selected_static + 1).min(STATIC_LIST.len()-1)))
-                }
+                AppEvent::IncrementStatic => cx.emit(AppEvent::SelectStatic(
+                    (self.selected_static + 1).min(STATIC_LIST.len() - 1),
+                )),
                 AppEvent::DecrementStatic => {
                     cx.emit(AppEvent::SelectStatic(self.selected_static.saturating_sub(1)))
                 }
@@ -78,15 +76,10 @@ impl Model for AppData {
 
 fn main() {
     Application::new(WindowDescription::new().with_title("List"), |cx| {
-
         cx.add_theme(STYLE);
 
         let list: Vec<u32> = (10..14u32).collect();
-        AppData { 
-            list,
-            selected: 0,
-            selected_static: 0,
-        }.build(cx);
+        AppData { list, selected: 0, selected_static: 0 }.build(cx);
 
         VStack::new(cx, move |cx| {
             HStack::new(cx, |cx| {
@@ -105,8 +98,8 @@ fn main() {
                                 .on_press(move |cx| cx.emit(AppEvent::SelectDynamic(item_index)));
                         });
                     })
-                        .on_increment(move |cx| cx.emit(AppEvent::IncrementDynamic))
-                        .on_decrement(move |cx| cx.emit(AppEvent::DecrementDynamic));
+                    .on_increment(move |cx| cx.emit(AppEvent::IncrementDynamic))
+                    .on_decrement(move |cx| cx.emit(AppEvent::DecrementDynamic));
                 });
 
                 VStack::new(cx, |cx| {
@@ -124,20 +117,23 @@ fn main() {
                                 .on_press(move |cx| cx.emit(AppEvent::SelectStatic(item_index)));
                         });
                     })
-                        .on_increment(move |cx| cx.emit(AppEvent::IncrementStatic))
-                        .on_decrement(move |cx| cx.emit(AppEvent::DecrementStatic));
+                    .on_increment(move |cx| cx.emit(AppEvent::IncrementStatic))
+                    .on_decrement(move |cx| cx.emit(AppEvent::DecrementStatic));
                 });
             });
             Binding::new(cx, AppData::selected, move |cx, selected_item| {
                 Binding::new(cx, AppData::selected_static, move |cx, selected_static_item| {
-                    Label::new(cx, &format!(
-                        "You selected {} and {}",
-                        selected_item.get(cx),
-                        selected_static_item.get(cx)
-                    ));
+                    Label::new(
+                        cx,
+                        &format!(
+                            "You selected {} and {}",
+                            selected_item.get(cx),
+                            selected_static_item.get(cx)
+                        ),
+                    );
                 });
             });
         });
     })
-        .run();
+    .run();
 }

@@ -1,6 +1,6 @@
+use crate::Model;
 use std::any::TypeId;
 use std::fmt::{Debug, Formatter};
-use crate::Model;
 
 /// A Lens allows the construction of a reference to a field of a struct.
 ///
@@ -162,7 +162,7 @@ impl<T> Clone for StaticLens<T> {
     }
 }
 
-impl<T> Copy for StaticLens<T> { }
+impl<T> Copy for StaticLens<T> {}
 
 impl<T> Debug for StaticLens<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

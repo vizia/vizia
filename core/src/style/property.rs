@@ -82,7 +82,6 @@ pub(crate) enum Property {
     BackgroundImage(String),
     // TODO
     //BackgroundGradient(LinearGradient),
-
     FontSize(f32),
     FontColor(Color),
     Font(String),
@@ -107,7 +106,6 @@ pub(crate) enum Property {
     // Translate((f32, f32)),
     // Rotate(f32),
     // Scale((f32, f32)),
-
     Cursor(CursorIcon),
 }
 

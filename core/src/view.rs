@@ -3,7 +3,9 @@ use crate::{
     Context, Event, FontOrId, Handle, ViewHandler,
 };
 
-use femtovg::{renderer::OpenGl, Align, Baseline, Paint, Path, PixelFormat, ImageFlags, RenderTarget};
+use femtovg::{
+    renderer::OpenGl, Align, Baseline, ImageFlags, Paint, Path, PixelFormat, RenderTarget,
+};
 use morphorm::Units;
 
 pub type Canvas = femtovg::Canvas<OpenGl>;
@@ -68,13 +70,12 @@ pub trait View: 'static + Sized {
 
         cx.count += 1;
 
-        
         // ...and this part
         let prev = cx.current;
         let prev_count = cx.count;
         cx.current = id;
         cx.count = 0;
-        
+
         let handle = Handle { entity: id, p: Default::default(), cx };
 
         (builder)(handle.cx);
@@ -143,8 +144,7 @@ pub trait View: 'static + Sized {
             _ => &0.0,
         };
 
-        let _padding_right = match cx.style.child_right.get(entity).unwrap_or(&Units::Auto)
-        {
+        let _padding_right = match cx.style.child_right.get(entity).unwrap_or(&Units::Auto) {
             Units::Pixels(val) => val,
             _ => &0.0,
         };
@@ -154,14 +154,12 @@ pub trait View: 'static + Sized {
             _ => &0.0,
         };
 
-        let _padding_bottom =
-            match cx.style.child_bottom.get(entity).unwrap_or(&Units::Auto) {
-                Units::Pixels(val) => val,
-                _ => &0.0,
-            };
+        let _padding_bottom = match cx.style.child_bottom.get(entity).unwrap_or(&Units::Auto) {
+            Units::Pixels(val) => val,
+            _ => &0.0,
+        };
 
-        let background_color =
-            cx.style.background_color.get(entity).cloned().unwrap_or_default();
+        let background_color = cx.style.background_color.get(entity).cloned().unwrap_or_default();
 
         let font_color =
             cx.style.font_color.get(entity).cloned().unwrap_or(crate::Color::rgb(0, 0, 0));
@@ -189,51 +187,32 @@ pub trait View: 'static + Sized {
             cx.style.border_shape_bottom_right.get(entity).cloned().unwrap_or_default();
 
         let border_radius_top_left =
-            match cx.style.border_radius_top_left.get(entity).cloned().unwrap_or_default()
-            {
+            match cx.style.border_radius_top_left.get(entity).cloned().unwrap_or_default() {
                 Units::Pixels(val) => val,
                 Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
                 _ => 0.0,
             };
 
-        let border_radius_top_right = match cx
-            .style
-            
-            .border_radius_top_right
-            .get(entity)
-            .cloned()
-            .unwrap_or_default()
-        {
-            Units::Pixels(val) => val,
-            Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
-            _ => 0.0,
-        };
+        let border_radius_top_right =
+            match cx.style.border_radius_top_right.get(entity).cloned().unwrap_or_default() {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
+                _ => 0.0,
+            };
 
-        let border_radius_bottom_left = match cx
-            .style
-            
-            .border_radius_bottom_left
-            .get(entity)
-            .cloned()
-            .unwrap_or_default()
-        {
-            Units::Pixels(val) => val,
-            Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
-            _ => 0.0,
-        };
+        let border_radius_bottom_left =
+            match cx.style.border_radius_bottom_left.get(entity).cloned().unwrap_or_default() {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
+                _ => 0.0,
+            };
 
-        let border_radius_bottom_right = match cx
-            .style
-            
-            .border_radius_bottom_right
-            .get(entity)
-            .cloned()
-            .unwrap_or_default()
-        {
-            Units::Pixels(val) => val,
-            Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
-            _ => 0.0,
-        };
+        let border_radius_bottom_right =
+            match cx.style.border_radius_bottom_right.get(entity).cloned().unwrap_or_default() {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
+                _ => 0.0,
+            };
 
         let opacity = cx.cache.get_opacity(entity);
 
@@ -243,38 +222,25 @@ pub trait View: 'static + Sized {
         let mut border_color: femtovg::Color = border_color.into();
         border_color.set_alphaf(border_color.a * opacity);
 
-        let border_width =
-            match cx.style.border_width.get(entity).cloned().unwrap_or_default() {
+        let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default() {
+            Units::Pixels(val) => val,
+            Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
+            _ => 0.0,
+        };
+
+        let outer_shadow_h_offset =
+            match cx.style.outer_shadow_h_offset.get(entity).cloned().unwrap_or_default() {
                 Units::Pixels(val) => val,
-                Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
+                Units::Percentage(val) => bounds.w * (val / 100.0),
                 _ => 0.0,
             };
 
-        let outer_shadow_h_offset = match cx
-            .style
-            
-            .outer_shadow_h_offset
-            .get(entity)
-            .cloned()
-            .unwrap_or_default()
-        {
-            Units::Pixels(val) => val,
-            Units::Percentage(val) => bounds.w * (val / 100.0),
-            _ => 0.0,
-        };
-
-        let outer_shadow_v_offset = match cx
-            .style
-            
-            .outer_shadow_v_offset
-            .get(entity)
-            .cloned()
-            .unwrap_or_default()
-        {
-            Units::Pixels(val) => val,
-            Units::Percentage(val) => bounds.w * (val / 100.0),
-            _ => 0.0,
-        };
+        let outer_shadow_v_offset =
+            match cx.style.outer_shadow_v_offset.get(entity).cloned().unwrap_or_default() {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => bounds.w * (val / 100.0),
+                _ => 0.0,
+            };
 
         let outer_shadow_blur =
             match cx.style.outer_shadow_blur.get(entity).cloned().unwrap_or_default() {
@@ -289,31 +255,19 @@ pub trait View: 'static + Sized {
         let mut outer_shadow_color: femtovg::Color = outer_shadow_color.into();
         outer_shadow_color.set_alphaf(outer_shadow_color.a * opacity);
 
-        let _inner_shadow_h_offset = match cx
-            .style
-            
-            .inner_shadow_h_offset
-            .get(entity)
-            .cloned()
-            .unwrap_or_default()
-        {
-            Units::Pixels(val) => val,
-            Units::Percentage(val) => bounds.w * (val / 100.0),
-            _ => 0.0,
-        };
+        let _inner_shadow_h_offset =
+            match cx.style.inner_shadow_h_offset.get(entity).cloned().unwrap_or_default() {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => bounds.w * (val / 100.0),
+                _ => 0.0,
+            };
 
-        let _inner_shadow_v_offset = match cx
-            .style
-            
-            .inner_shadow_v_offset
-            .get(entity)
-            .cloned()
-            .unwrap_or_default()
-        {
-            Units::Pixels(val) => val,
-            Units::Percentage(val) => bounds.w * (val / 100.0),
-            _ => 0.0,
-        };
+        let _inner_shadow_v_offset =
+            match cx.style.inner_shadow_v_offset.get(entity).cloned().unwrap_or_default() {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => bounds.w * (val / 100.0),
+                _ => 0.0,
+            };
 
         let _inner_shadow_blur =
             match cx.style.inner_shadow_blur.get(entity).cloned().unwrap_or_default() {
@@ -473,75 +427,76 @@ pub trait View: 'static + Sized {
         }
 
         // Draw outer shadow
-        
+
         if cx.style.outer_shadow_color.get(entity).is_some() {
-
-
             let sigma = outer_shadow_blur / 2.0;
             let d = (sigma * 5.0).ceil();
 
-            let shadow_image = cx.cache.shadow_image.get(&entity).cloned().unwrap_or_else(||
+            let shadow_image = cx.cache.shadow_image.get(&entity).cloned().unwrap_or_else(|| {
                 (
-                    canvas.create_image_empty((bounds.w + d) as usize,
-                    (bounds.h + d) as usize,
-                    PixelFormat::Rgba8,
-                    ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
-                    ).expect("Failed to create image"),
-
-                    canvas.create_image_empty((bounds.w + d) as usize,
-                    (bounds.h + d) as usize,
-                    PixelFormat::Rgba8,
-                    ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
-                    ).expect("Failed to create image"),
+                    canvas
+                        .create_image_empty(
+                            (bounds.w + d) as usize,
+                            (bounds.h + d) as usize,
+                            PixelFormat::Rgba8,
+                            ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
+                        )
+                        .expect("Failed to create image"),
+                    canvas
+                        .create_image_empty(
+                            (bounds.w + d) as usize,
+                            (bounds.h + d) as usize,
+                            PixelFormat::Rgba8,
+                            ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
+                        )
+                        .expect("Failed to create image"),
                 )
-            );
+            });
 
             canvas.save();
 
             let size = canvas.image_size(shadow_image.0).expect("Failed to get image");
 
+            let (source, target) =
+                if size.0 != (bounds.w + d) as usize || size.1 != (bounds.h + d) as usize {
+                    canvas.delete_image(shadow_image.0);
+                    canvas.delete_image(shadow_image.1);
 
-            let (source, target) = if size.0 != (bounds.w + d) as usize || size.1 != (bounds.h + d) as usize {
-                canvas.delete_image(shadow_image.0);
-                canvas.delete_image(shadow_image.1);
-
-                (
-                    canvas.create_image_empty((bounds.w + d) as usize,
-                    (bounds.h + d) as usize,
-                    PixelFormat::Rgba8,
-                    ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
-                    ).expect("Failed to create image"),
-
-                    canvas.create_image_empty((bounds.w + d) as usize,
-                    (bounds.h + d) as usize,
-                    PixelFormat::Rgba8,
-                    ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
-                    ).expect("Failed to create image"),
-                )
-            } else {
-                (shadow_image.0, shadow_image.1)
-            };
-
+                    (
+                        canvas
+                            .create_image_empty(
+                                (bounds.w + d) as usize,
+                                (bounds.h + d) as usize,
+                                PixelFormat::Rgba8,
+                                ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
+                            )
+                            .expect("Failed to create image"),
+                        canvas
+                            .create_image_empty(
+                                (bounds.w + d) as usize,
+                                (bounds.h + d) as usize,
+                                PixelFormat::Rgba8,
+                                ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
+                            )
+                            .expect("Failed to create image"),
+                    )
+                } else {
+                    (shadow_image.0, shadow_image.1)
+                };
 
             cx.cache.shadow_image.insert(entity, (source, target));
 
-
             canvas.set_render_target(RenderTarget::Image(source));
-            canvas.clear_rect(0, 0, size.0 as u32, size.1 as u32, femtovg::Color::rgba(0,0, 0, 0));
-            canvas.translate(-bounds.x + d/2.0, -bounds.y + d/2.0);
+            canvas.clear_rect(0, 0, size.0 as u32, size.1 as u32, femtovg::Color::rgba(0, 0, 0, 0));
+            canvas.translate(-bounds.x + d / 2.0, -bounds.y + d / 2.0);
             let mut outer_shadow = path.clone();
             let paint = Paint::color(outer_shadow_color);
             canvas.fill_path(&mut outer_shadow, paint);
 
-
             canvas.restore();
 
             let target_image = if outer_shadow_blur > 0.0 {
-                canvas.filter_image(
-                    target,
-                    femtovg::ImageFilter::GaussianBlur { sigma },
-                    source,
-                );
+                canvas.filter_image(target, femtovg::ImageFilter::GaussianBlur { sigma }, source);
                 target
             } else {
                 source
@@ -552,21 +507,23 @@ pub trait View: 'static + Sized {
             canvas.save();
             canvas.translate(outer_shadow_h_offset, outer_shadow_v_offset);
             let mut path = Path::new();
-            path.rect(bounds.x - d/2.0, bounds.y - d/2.0, bounds.w + d, bounds.h + d);
+            path.rect(bounds.x - d / 2.0, bounds.y - d / 2.0, bounds.w + d, bounds.h + d);
 
-            canvas.fill_path(&mut path, Paint::image(
-                target_image,
-                bounds.x - d/2.0,
-                bounds.y - d/2.0,
-                bounds.w + d,
-                bounds.h + d,
-                0f32,
-                1f32)
+            canvas.fill_path(
+                &mut path,
+                Paint::image(
+                    target_image,
+                    bounds.x - d / 2.0,
+                    bounds.y - d / 2.0,
+                    bounds.w + d,
+                    bounds.h + d,
+                    0f32,
+                    1f32,
+                ),
             );
             //canvas.fill_path(&mut path, Paint::color(femtovg::Color::rgb(0,0,0)));
             canvas.restore();
         }
-        
 
         // Fill with background color
         let mut paint = Paint::color(background_color);
@@ -683,11 +640,9 @@ pub trait View: 'static + Sized {
 
             // TODO - Move this to a text layout system and include constraints
             let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
-            let child_right =
-                cx.style.child_right.get(entity).cloned().unwrap_or_default();
+            let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();
             let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
-            let child_bottom =
-                cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
+            let child_bottom = cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
 
             let align = match child_left {
                 Units::Pixels(val) => match child_right {

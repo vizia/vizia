@@ -66,7 +66,7 @@ where
             if dense_idx.index() < self.dense.len() {
                 //let entry = &self.dense[dense_idx.index()];
                 //if entry.key == sparse_idx {
-                    return Some(dense_idx);
+                return Some(dense_idx);
                 //}
             }
         }

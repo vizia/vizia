@@ -1,15 +1,13 @@
-use std::{
-    collections::{HashMap, VecDeque},
-};
-
+use std::collections::{HashMap, VecDeque};
 
 use femtovg::{FontId, TextContext};
 // use fluent_bundle::{FluentBundle, FluentResource};
 // use unic_langid::LanguageIdentifier;
 
 use crate::{
-    CachedData, Entity, Enviroment, Event, FontOrId, IdManager, Message, Modifiers,
-    MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, View, ViewHandler, storage::sparse_set::SparseSet, ModelDataStore,
+    storage::sparse_set::SparseSet, CachedData, Entity, Enviroment, Event, FontOrId, IdManager,
+    Message, ModelDataStore, Modifiers, MouseState, Propagation, ResourceManager, Style, Tree,
+    TreeExt, View, ViewHandler,
 };
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
@@ -47,7 +45,6 @@ pub struct Context {
 }
 
 impl Context {
-
     pub fn new() -> Self {
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
@@ -110,8 +107,6 @@ impl Context {
             self.entity_manager.destroy(*entity);
             self.views.remove(entity);
         }
-
-
     }
 
     /// Get stored data from the context.

@@ -60,7 +60,6 @@ impl Window {
         let renderer = OpenGl::new(|s| handle.context().get_proc_address(s) as *const _)
             .expect("Cannot create renderer");
 
-
         let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
 
         let dpi_factor = handle.window().scale_factor();

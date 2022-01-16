@@ -494,7 +494,6 @@ impl Style {
                     // Property::BackgroundGradient(value) => {
                     //     self.background_gradient.insert_rule(rule_id, value);
                     // }
-
                     Property::PositionType(value) => {
                         self.position_type.insert_rule(rule_id, value);
                     }
