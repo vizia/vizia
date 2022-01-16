@@ -4,6 +4,7 @@ use std::{
     rc::Rc,
 };
 
+use copypasta::ClipboardContext;
 use femtovg::{FontId, TextContext};
 // use fluent_bundle::{FluentBundle, FluentResource};
 // use unic_langid::LanguageIdentifier;
@@ -15,7 +16,6 @@ use crate::{
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 
-#[derive(Default)]
 pub struct Context {
     pub entity_manager: IdManager<Entity>,
     pub tree: Tree,
@@ -45,6 +45,7 @@ pub struct Context {
     pub fonts: Vec<FontId>,
 
     pub text_context: TextContext,
+    pub clipboard: ClipboardContext,
 }
 
 impl Context {
@@ -75,6 +76,7 @@ impl Context {
             resource_manager: ResourceManager::new(),
             fonts: Vec::new(),
             text_context: TextContext::default(),
+            clipboard: ClipboardContext::new().expect("Failed to init clipboard"),
         }
     }
 

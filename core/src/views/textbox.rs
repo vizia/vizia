@@ -1,3 +1,4 @@
+use copypasta::ClipboardProvider;
 use femtovg::{Paint, Align, Baseline};
 use keyboard_types::Code;
 use morphorm::{Units, PositionType};
@@ -627,6 +628,23 @@ impl View for Textbox {
                     Code::KeyA => {
                         if cx.modifiers.contains(Modifiers::CTRL) {
                             self.text_data.select_all();
+                        }
+                    }
+
+                    Code::KeyC => {
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+
+                            cx.clipboard.set_contents(self.text_data.text[self.text_data.selection.range()].to_string());
+                        }
+                    }
+
+                    Code::KeyV => {
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            if let Ok(text) = cx.clipboard.get_contents() {
+                                self.text_data.insert_text(&text);
+                                cx.style.text.insert(cx.current, self.text_data.text.clone());
+                                self.set_caret(cx, cx.current);
+                            }
                         }
                     }
 
