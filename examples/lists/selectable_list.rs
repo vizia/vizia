@@ -26,7 +26,7 @@ const STYLE: &str = r#"
 "#;
 
 lazy_static! {
-    pub static ref STATIC_LIST: Vec<u32> = { (20..24).collect() };
+    pub static ref STATIC_LIST: Vec<u32> = (20..24).collect();
 }
 
 #[derive(Lens)]
