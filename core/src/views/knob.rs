@@ -102,10 +102,6 @@ impl Knob {
 
             ZStack::new(cx, move |cx| {
                 Binding::new(cx, SliderData::value, move |cx, value| {
-                    //println!("{}", value.get(cx));
-                    let height = cx.cache.get_height(cx.current);
-                    let width = cx.cache.get_width(cx.current);
-                    // let radius = height.min(width) / 2.;
                     (content)(cx, *value.get(cx)).width(Percentage(100.0)).height(Percentage(100.0));
                 });
             });
@@ -263,7 +259,7 @@ impl ArcTrack {
 }
 
 impl View for ArcTrack {
-    fn draw(&self, cx: &Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
         let opacity = cx.cache.get_opacity(cx.current);
 
         //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();

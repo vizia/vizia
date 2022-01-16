@@ -3,7 +3,7 @@ use crate::{
     Context, Event, FontOrId, Handle, ViewHandler,
 };
 
-use femtovg::{renderer::OpenGl, Align, Baseline, Paint, Path};
+use femtovg::{renderer::OpenGl, Align, Baseline, Paint, Path, PixelFormat, ImageFlags, RenderTarget};
 use morphorm::Units;
 
 pub type Canvas = femtovg::Canvas<OpenGl>;
@@ -12,6 +12,7 @@ pub type Canvas = femtovg::Canvas<OpenGl>;
 const KAPPA90: f32 = 0.5522847493;
 
 pub trait View: 'static + Sized {
+    #[allow(unused_variables)]
     fn body(&mut self, cx: &mut Context) {}
     fn build2<F>(self, cx: &mut Context, builder: F) -> Handle<Self>
     where
@@ -48,7 +49,7 @@ pub trait View: 'static + Sized {
         handle
     }
 
-    fn update<F>(mut self, cx: &mut Context, builder: F) -> Handle<Self>
+    fn update<F>(self, cx: &mut Context, builder: F) -> Handle<Self>
     where
         F: 'static + FnOnce(&mut Context),
     {
@@ -123,9 +124,10 @@ pub trait View: 'static + Sized {
         None
     }
 
+    #[allow(unused_variables)]
     fn event(&mut self, cx: &mut Context, event: &mut Event) {}
 
-    fn draw(&self, cx: &Context, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut Context, canvas: &mut Canvas) {
         //println!("{}", debug(&mut context, entity));
         let entity = cx.current;
 
@@ -136,23 +138,23 @@ pub trait View: 'static + Sized {
             return;
         }
 
-        let padding_left = match cx.style.child_left.get(entity).unwrap_or(&Units::Auto) {
+        let _padding_left = match cx.style.child_left.get(entity).unwrap_or(&Units::Auto) {
             Units::Pixels(val) => val,
             _ => &0.0,
         };
 
-        let padding_right = match cx.style.child_right.get(entity).unwrap_or(&Units::Auto)
+        let _padding_right = match cx.style.child_right.get(entity).unwrap_or(&Units::Auto)
         {
             Units::Pixels(val) => val,
             _ => &0.0,
         };
 
-        let padding_top = match cx.style.child_top.get(entity).unwrap_or(&Units::Auto) {
+        let _padding_top = match cx.style.child_top.get(entity).unwrap_or(&Units::Auto) {
             Units::Pixels(val) => val,
             _ => &0.0,
         };
 
-        let padding_bottom =
+        let _padding_bottom =
             match cx.style.child_bottom.get(entity).unwrap_or(&Units::Auto) {
                 Units::Pixels(val) => val,
                 _ => &0.0,
@@ -287,7 +289,7 @@ pub trait View: 'static + Sized {
         let mut outer_shadow_color: femtovg::Color = outer_shadow_color.into();
         outer_shadow_color.set_alphaf(outer_shadow_color.a * opacity);
 
-        let inner_shadow_h_offset = match cx
+        let _inner_shadow_h_offset = match cx
             .style
             
             .inner_shadow_h_offset
@@ -300,7 +302,7 @@ pub trait View: 'static + Sized {
             _ => 0.0,
         };
 
-        let inner_shadow_v_offset = match cx
+        let _inner_shadow_v_offset = match cx
             .style
             
             .inner_shadow_v_offset
@@ -313,7 +315,7 @@ pub trait View: 'static + Sized {
             _ => 0.0,
         };
 
-        let inner_shadow_blur =
+        let _inner_shadow_blur =
             match cx.style.inner_shadow_blur.get(entity).cloned().unwrap_or_default() {
                 Units::Pixels(val) => val,
                 Units::Percentage(val) => bounds.w * (val / 100.0),
@@ -471,14 +473,14 @@ pub trait View: 'static + Sized {
         }
 
         // Draw outer shadow
-        /*
+        
         if cx.style.outer_shadow_color.get(entity).is_some() {
 
 
             let sigma = outer_shadow_blur / 2.0;
             let d = (sigma * 5.0).ceil();
 
-            let shadow_image = cx.cache.shadow_image.get(&entity).cloned().unwrap_or(
+            let shadow_image = cx.cache.shadow_image.get(&entity).cloned().unwrap_or_else(||
                 (
                     canvas.create_image_empty((bounds.w + d) as usize,
                     (bounds.h + d) as usize,
@@ -564,7 +566,7 @@ pub trait View: 'static + Sized {
             //canvas.fill_path(&mut path, Paint::color(femtovg::Color::rgb(0,0,0)));
             canvas.restore();
         }
-        */
+        
 
         // Fill with background color
         let mut paint = Paint::color(background_color);
@@ -789,7 +791,7 @@ where
         <T as View>::event(self, cx, event);
     }
 
-    fn draw(&self, cx: &Context, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut Context, canvas: &mut Canvas) {
         <T as View>::draw(self, cx, canvas);
     }
 }

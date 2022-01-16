@@ -107,7 +107,7 @@ impl<'i> cssparser::QualifiedRuleParser<'i> for RuleParser {
     fn parse_block<'t>(
         &mut self,
         selectors: Self::Prelude,
-        location: SourceLocation,
+        _location: SourceLocation,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::QualifiedRule, ParseError<'i, Self::Error>> {
         let decl_parser = DeclarationParser {};
@@ -136,7 +136,7 @@ impl<'i> cssparser::AtRuleParser<'i> for RuleParser {
             "keyframes" => {
                 while let Ok(t) = input.next() {
                     match t {
-                        Token::Ident(animation_name) => {}
+                        Token::Ident(_animation_name) => {}
 
                         t => {
                             let basic_error = BasicParseError {
@@ -184,7 +184,7 @@ fn parse_selectors<'i, 't>(
 
     let mut selector = Selector::default();
 
-    let mut first_token_in_selector = true;
+    let mut _first_token_in_selector = true;
     let mut whitespace = false;
     while let Ok(t) = input.next_including_whitespace() {
         match t {
@@ -250,7 +250,7 @@ fn parse_selectors<'i, 't>(
                 whitespace = false;
             }
 
-            Token::WhiteSpace(ref ws) => {
+            Token::WhiteSpace(ref _ws) => {
                 whitespace = true;
             }
 
@@ -287,7 +287,7 @@ fn parse_selectors<'i, 't>(
             Token::Comma => {
                 selectors.push(selector);
                 selector = Selector::default();
-                first_token_in_selector = true;
+                _first_token_in_selector = true;
                 continue; // need to continue to avoid `first_token_in_selector` being set to false
             }
 
@@ -301,7 +301,7 @@ fn parse_selectors<'i, 't>(
             }
         }
 
-        first_token_in_selector = false;
+        _first_token_in_selector = false;
     }
 
     selectors.push(selector);
@@ -330,7 +330,7 @@ fn parse_selectors<'i, 't>(
 //     }
 // }
 
-struct RGBDeclaration;
+// struct RGBDeclaration;
 
 // impl<'i> cssparser::DeclarationParser<'i> for RGBDeclaration {
 //     type Declaration = Color;
@@ -552,31 +552,31 @@ fn parse_string<'i, 't>(
     })
 }
 
-fn parse_basic_color<'i, 't>(
-    input: &mut Parser<'i, 't>,
-) -> Result<Color, ParseError<'i, CustomParseError>> {
-    Ok(match input.next()? {
-        Token::Ident(s) => match css_color(&s) {
-            Some(color) => color,
-            None => {
-                return Err(
-                    CustomParseError::UnrecognisedColorName(s.to_owned().to_string()).into()
-                );
-            }
-        },
+// fn parse_basic_color<'i, 't>(
+//     input: &mut Parser<'i, 't>,
+// ) -> Result<Color, ParseError<'i, CustomParseError>> {
+//     Ok(match input.next()? {
+//         Token::Ident(s) => match css_color(&s) {
+//             Some(color) => color,
+//             None => {
+//                 return Err(
+//                     CustomParseError::UnrecognisedColorName(s.to_owned().to_string()).into()
+//                 );
+//             }
+//         },
 
-        Token::IDHash(hash) | Token::Hash(hash) => Color::from(hash.to_owned().to_string()),
+//         Token::IDHash(hash) | Token::Hash(hash) => Color::from(hash.to_owned().to_string()),
 
-        t => {
-            let basic_error = BasicParseErrorKind::UnexpectedToken(t.to_owned());
-            let parse_error = ParseError {
-                kind: ParseErrorKind::Basic(basic_error),
-                location: SourceLocation { line: 0, column: 0 },
-            };
-            return Err(parse_error);
-        }
-    })
-}
+//         t => {
+//             let basic_error = BasicParseErrorKind::UnexpectedToken(t.to_owned());
+//             let parse_error = ParseError {
+//                 kind: ParseErrorKind::Basic(basic_error),
+//                 location: SourceLocation { line: 0, column: 0 },
+//             };
+//             return Err(parse_error);
+//         }
+//     })
+// }
 
 fn parse_length_or_percentage<'i, 't>(
     input: &mut Parser<'i, 't>,
@@ -756,7 +756,7 @@ fn parse_transition2<'i, 't>(
                             transition.delay = *x;
                         }
 
-                        t => {
+                        _t => {
                             // let basic_error = BasicParseError {
                             //     kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
                             //     location: SourceLocation { line: 0, column: 0 },
@@ -825,7 +825,7 @@ fn parse_position_type<'i, 't>(
             "self-directed" => PositionType::SelfDirected,
             "parent-directed" => PositionType::ParentDirected,
 
-            t => {
+            _t => {
                 return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());
             }
         },
@@ -884,7 +884,7 @@ fn parse_cursor<'i, 't>(
             "row-resize" => CursorIcon::RowResize,
             "none" => CursorIcon::None,
 
-            t => {
+            _t => {
                 return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());
             }
         },
@@ -1128,7 +1128,7 @@ fn parse_font_size<'i, 't>(
     })
 }
 
-pub(crate) fn parse(s: &str) -> Vec<StyleRule> {
+pub(crate) fn _parse(s: &str) -> Vec<StyleRule> {
     let mut input = ParserInput::new(s);
     let mut parser = Parser::new(&mut input);
     let rule_parser = RuleParser::new();

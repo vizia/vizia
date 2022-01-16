@@ -1,22 +1,11 @@
-use std::{
-    cell::RefCell,
-    collections::{HashMap, VecDeque},
-    rc::Rc,
-};
 
-use femtovg::TextContext;
+
 use glutin::{
     event::{ElementState, VirtualKeyCode},
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
 
-use vizia_core::{
-    apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
-    apply_visibility, apply_z_ordering, geometry_changed, apply_inline_inheritance, apply_shared_inheritance, BoundingBox, CachedData, Color,
-    Context, Display, Entity, Env, Enviroment, Event, EventManager, FontOrId, IdManager, Modifiers,
-    MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt,
-    Units, Visibility, WindowDescription, WindowEvent, PseudoClass
-};
+use vizia_core::*;
 
 use crate::keyboard::{scan_to_code, vcode_to_code, vk_to_key};
 use crate::window::Window;
@@ -165,7 +154,7 @@ impl Application {
             Units::Pixels(self.window_description.inner_size.height as f32),
         );
 
-        context.style.pseudo_classes.insert(Entity::root(), PseudoClass::default());
+        context.style.pseudo_classes.insert(Entity::root(), PseudoClass::default()).unwrap();
         context.style.disabled.insert(Entity::root(), false);
         
         let mut bounding_box = BoundingBox::default();
@@ -404,7 +393,7 @@ impl Application {
                                 if let Some(view) = context.views.remove(&entity) {
 
                                     context.current = entity;
-                                    view.draw(&context, &mut window.canvas);
+                                    view.draw(&mut context, &mut window.canvas);
                                     
                                     context.views.insert(entity, view);
                                 }

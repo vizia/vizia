@@ -30,13 +30,11 @@ impl View for CustomView {
 }
 
 pub trait CustomTrait: Sized {
-    fn set_value(mut self, cx: &mut Context, value: f32) -> Self {
-        self
-    }
+    fn set_value(self, cx: &mut Context, value: f32) -> Self;
 }
 
 impl<'a> CustomTrait for Handle<'a, CustomView> {
-    fn set_value(mut self, cx: &mut Context, value: f32) -> Self {
+    fn set_value(self, cx: &mut Context, value: f32) -> Self {
         if let Some(custom_view) =
             cx.views.get_mut(&self.entity).and_then(|view| view.downcast_mut::<CustomView>())
         {

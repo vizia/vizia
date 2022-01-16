@@ -1,4 +1,4 @@
-use std::cmp::min;
+
 use femtovg::{Paint, Path};
 use crate::{Canvas, Context, Event, Handle, MouseButton, Units, View, WindowEvent};
 use crate::style::PropGet;
@@ -29,7 +29,7 @@ impl View for RadioButton {
         }
     }
 
-    fn draw(&self, cx: &Context, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut Context, canvas: &mut Canvas) {
         let entity = cx.current;
         let bounds = cx.cache.get_bounds(entity);
         let border_width =

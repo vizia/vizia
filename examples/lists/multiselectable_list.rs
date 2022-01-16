@@ -41,9 +41,6 @@ impl Model for AppData {
                 AppEvent::ClearSelection => {
                     self.selected.clear();
                 }
-
-
-                _=> {}
             }
         }
     }

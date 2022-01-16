@@ -1,9 +1,10 @@
+use std::collections::HashMap;
 use std::fmt::Debug;
 
-use crate::PseudoClass;
 use crate::style::Display;
 use crate::Abilities;
 use crate::Entity;
+use femtovg::ImageId;
 use morphorm::GeometryChanged;
 
 use crate::style::Transform2D;
@@ -108,8 +109,8 @@ pub struct CachedData {
     stack_child: SparseSet<(bool, bool)>,
 
     pub(crate) geometry_changed: SparseSet<GeometryChanged>,
-    // TODO
-    //pub(crate) shadow_image: HashMap<Entity, (ImageId, ImageId)>,
+
+    pub(crate) shadow_image: HashMap<Entity, (ImageId, ImageId)>,
 }
 
 impl CachedData {

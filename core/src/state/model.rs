@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
 };
 
-use crate::{storage::sparse_set::SparseSet, Context, Entity, Event, LensWrap};
+use crate::{Context, Entity, Event, LensWrap};
 
 pub trait Model: 'static + Sized {
     fn build(self, cx: &mut Context) {

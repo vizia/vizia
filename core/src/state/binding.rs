@@ -161,49 +161,49 @@ where
 }
 
 impl Res<Color> for Color {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a Color {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a Color {
         self
     }
 }
 
 impl Res<Units> for Units {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a Units {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a Units {
         self
     }
 }
 
 impl Res<Visibility> for Visibility {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a Visibility {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a Visibility {
         self
     }
 }
 
 impl Res<Display> for Display {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a Display {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a Display {
         self
     }
 }
 
 impl Res<LayoutType> for LayoutType {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a LayoutType {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a LayoutType {
         self
     }
 }
 
 impl Res<PositionType> for PositionType {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a PositionType {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a PositionType {
         self
     }
 }
 
 impl Res<usize> for usize {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a usize {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a usize {
         self
     }
 }
 
 impl<T> Res<(T,T)> for (T,T) {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a (T,T) {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a (T,T) {
         self
     }
 }

@@ -26,8 +26,8 @@ impl DataIndex {
         Self(value)
     }
 
-    pub fn inherited(mut self) -> Self {
-        let mut value = self.0;
+    pub fn inherited(self) -> Self {
+        let value = self.0;
         Self(value | INHERITED_MASK)
     }
 

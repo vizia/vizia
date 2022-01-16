@@ -3,14 +3,14 @@ use keyboard_types::Code;
 use crate::{Context, Handle, MouseButton, View, WindowEvent};
 
 pub struct Textbox {
-    text: String,
+    _text: String,
     edit: bool,
     on_submit: Option<Box<dyn Fn(&mut Context, &Self)>>,
 }
 
 impl Textbox {
     pub fn new<'a>(cx: &'a mut Context, placeholder: &str) -> Handle<'a, Self> {
-        Self { text: placeholder.to_owned(), edit: false, on_submit: None }
+        Self { _text: placeholder.to_owned(), edit: false, on_submit: None }
             .build(cx)
             .text(placeholder)
     }
@@ -32,7 +32,7 @@ impl<'a> Handle<'a, Textbox> {
 }
 
 impl View for Textbox {
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
+    fn event(&mut self, _cx: &mut Context, event: &mut crate::Event) {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
@@ -41,7 +41,7 @@ impl View for Textbox {
                     }
                 }
 
-                WindowEvent::KeyDown(code, key) => match code {
+                WindowEvent::KeyDown(code, _key) => match code {
                     Code::Enter => {
                         self.edit = false;
                     }

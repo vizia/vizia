@@ -64,7 +64,7 @@ impl<'a,T> Handle<'a,T> {
         } else {
             let mut pseudoclass = PseudoClass::empty();
             pseudoclass.set(PseudoClass::CHECKED, state);
-            self.cx.style.pseudo_classes.insert(self.entity, pseudoclass);
+            self.cx.style.pseudo_classes.insert(self.entity, pseudoclass).unwrap();
         }
         
         self.cx.style.needs_restyle = true;

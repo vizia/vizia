@@ -56,8 +56,10 @@ impl Window {
 
         let handle = unsafe { handle.make_current().unwrap() };
 
+        #[allow(deprecated)]
         let renderer = OpenGl::new(|s| handle.context().get_proc_address(s) as *const _)
             .expect("Cannot create renderer");
+
 
         let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
 

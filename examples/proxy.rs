@@ -2,7 +2,7 @@ use vizia::*;
 
 fn main() {
     let app =
-        Application::new(WindowDescription::new().with_title("Proxy"), |cx| {}).on_idle(|cx| {
+        Application::new(WindowDescription::new().with_title("Proxy"), |_| {}).on_idle(|_| {
             println!("On Idle: {:?}", std::time::Instant::now());
         });
 

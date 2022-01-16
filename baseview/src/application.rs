@@ -397,7 +397,7 @@ impl ApplicationRunner {
 
             if let Some(view) = self.context.views.remove(&entity) {
                 self.context.current = entity;
-                view.draw(&self.context, &mut self.canvas);
+                view.draw(&mut self.context, &mut self.canvas);
 
                 self.context.views.insert(entity, view);
             }
