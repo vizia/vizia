@@ -1,22 +1,9 @@
-use std::{
-    cell::RefCell,
-    collections::{HashMap, VecDeque},
-    rc::Rc,
-};
-
-use femtovg::TextContext;
 use glutin::{
     event::{ElementState, VirtualKeyCode},
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
 
-use vizia_core::{
-    apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
-    apply_visibility, apply_z_ordering, geometry_changed, apply_inline_inheritance, apply_shared_inheritance, BoundingBox, CachedData, Color,
-    Context, Display, Entity, Env, Enviroment, Event, EventManager, FontOrId, IdManager, Modifiers,
-    MouseButton, MouseButtonState, MouseState, Propagation, ResourceManager, Style, Tree, TreeExt,
-    Units, Visibility, WindowDescription, WindowEvent, PseudoClass
-};
+use vizia_core::*;
 
 use crate::keyboard::{scan_to_code, vcode_to_code, vk_to_key};
 use crate::window::Window;
@@ -139,13 +126,8 @@ impl Application {
         let dpi_factor = window.handle.window().scale_factor();
         let size = window.handle.window().inner_size();
 
-        let clear_color = context
-            .style
-            
-            .background_color
-            .get(Entity::root())
-            .cloned()
-            .unwrap_or_default();
+        let clear_color =
+            context.style.background_color.get(Entity::root()).cloned().unwrap_or_default();
 
         window.canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
         window.canvas.clear_rect(0, 0, size.width as u32, size.height as u32, clear_color.into());
@@ -157,7 +139,6 @@ impl Application {
 
         context
             .style
-            
             .width
             .insert(Entity::root(), Units::Pixels(self.window_description.inner_size.width as f32));
         context.style.height.insert(
@@ -165,9 +146,9 @@ impl Application {
             Units::Pixels(self.window_description.inner_size.height as f32),
         );
 
-        context.style.pseudo_classes.insert(Entity::root(), PseudoClass::default());
+        context.style.pseudo_classes.insert(Entity::root(), PseudoClass::default()).unwrap();
         context.style.disabled.insert(Entity::root(), false);
-        
+
         let mut bounding_box = BoundingBox::default();
         bounding_box.w = size.width as f32;
         bounding_box.h = size.height as f32;
@@ -226,7 +207,6 @@ impl Application {
 
                             // Load resources
                             for (name, font) in context.resource_manager.fonts.iter_mut() {
-                    
                                 match font {
                                     FontOrId::Font(data) => {
                                         let id1 = window.canvas.add_font_mem(&data.clone()).expect(&format!("Failed to load font file for: {}", name));
@@ -236,7 +216,7 @@ impl Application {
                                         }
                                         *font = FontOrId::Id(id1);
                                     }
-                    
+
                                     _=> {}
                                 }
                             }
@@ -260,7 +240,7 @@ impl Application {
                                 if lens.update(model) {
                                     observers.extend(lens.observers().iter());
                                 }
-                            } 
+                            }
                         }
                     }
 
@@ -273,8 +253,6 @@ impl Application {
                             view.body(&mut context);
                             context.current = prev;
                             context.count = prev_count;
-                
-            
                             context.views.insert(*observer, view);
                         }
                     }
@@ -284,15 +262,9 @@ impl Application {
 
                     apply_inline_inheritance(&mut context, &tree);
 
-                    // Styling
-                    //if context.style.borrow().needs_restyle {
                     apply_styles(&mut context, &tree);
-                    //    context.style.needs_restyle = false;
-                    //}
 
                     apply_shared_inheritance(&mut context, &tree);
-
-                    
 
                     apply_z_ordering(&mut context, &tree);
 
@@ -347,7 +319,7 @@ impl Application {
 
                     if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_mut::<Window>() {
-                            
+
                             let window_width = context.cache.get_width(Entity::root());
                             let window_height = context.cache.get_height(Entity::root());
 
@@ -395,7 +367,7 @@ impl Application {
                                     clip_region.w,
                                     clip_region.h,
                                 );
-                        
+
                                 // Apply transform
                                 let transform = context.cache.get_transform(entity);
                                 window.canvas.save();
@@ -404,8 +376,8 @@ impl Application {
                                 if let Some(view) = context.views.remove(&entity) {
 
                                     context.current = entity;
-                                    view.draw(&context, &mut window.canvas);
-                                    
+                                    view.draw(&mut context, &mut window.canvas);
+
                                     context.views.insert(entity, view);
                                 }
 
@@ -418,8 +390,6 @@ impl Application {
 
                         context.views.insert(Entity::root(), window_view);
                     }
-
-                    
                 }
 
                 glutin::event::Event::WindowEvent {
@@ -492,7 +462,6 @@ impl Application {
                             match state {
                                 MouseButtonState::Pressed => {
                                     //context.event_queue.push_back(Event::new(WindowEvent::MouseDown(button)).target(context.hovered).propagate(Propagation::Up));
-                                
 
                                     let new_click_time = std::time::Instant::now();
                                     let click_duration = new_click_time - click_time;
@@ -516,11 +485,10 @@ impl Application {
                                             };
                                             double_click = true;
                                         }
-                                        
                                     } else {
                                         double_click = false;
                                     }
-                                    
+
                                     click_time = new_click_time;
                                     click_pos = new_click_pos;
 
@@ -562,7 +530,7 @@ impl Application {
 
                                 MouseButtonState::Released => {
                                     //context.event_queue.push_back(Event::new(WindowEvent::MouseUp(button)).target(context.hovered).propagate(Propagation::Up));
-                                
+
                                     if context.captured != Entity::null() {
                                         context.event_queue.push_back(
                                             Event::new(WindowEvent::MouseUp(button))
@@ -609,7 +577,6 @@ impl Application {
                                 }
                             }
 
-                            
                             if input.virtual_keycode == Some(VirtualKeyCode::F5) && input.state == ElementState::Pressed {
                                 context.reload_styles().unwrap();
                             }
@@ -676,25 +643,21 @@ impl Application {
                         glutin::event::WindowEvent::Resized(size) => {
                             //println!("Resized: {:?}", size);
 
-                            
                             if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                                 if let Some(window) = window_view.downcast_mut::<Window>() {
-                                
                                     window.handle.resize(size);
                                 }
-                                
+
                                 context.views.insert(Entity::root(), window_view);
                             }
 
                             context
                                 .style
-                                
                                 .width
                                 .insert(Entity::root(), Units::Pixels(size.width as f32));
 
                             context
                                 .style
-                                
                                 .height
                                 .insert(Entity::root(), Units::Pixels(size.height as f32));
 
@@ -708,7 +671,7 @@ impl Application {
                             let mut bounding_box = BoundingBox::default();
                             bounding_box.w = size.width as f32;
                             bounding_box.h = size.height as f32;
-                        
+
                             context.cache.set_clip_region(Entity::root(), bounding_box);
 
                             context.style.needs_restyle = true;
@@ -727,7 +690,6 @@ impl Application {
                             context.modifiers.set(Modifiers::ALT, modifiers_state.alt());
                             context.modifiers.set(Modifiers::CTRL, modifiers_state.ctrl());
                             context.modifiers.set(Modifiers::LOGO, modifiers_state.logo());
-                            
                         }
 
                         _=> {}

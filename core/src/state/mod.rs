@@ -81,9 +81,6 @@
 //! Note, the checkbox does not need to be bound to the data to send an event to it. By default events will propagate up the tree.
 //!
 mod lens;
-
-use std::{any::TypeId, collections::HashSet};
-
 pub use lens::*;
 
 mod model;

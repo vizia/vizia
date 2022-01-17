@@ -62,7 +62,6 @@ impl Model for AppData {
 
 fn main() {
     Application::new(WindowDescription::new().with_title("Checkbox"), |cx| {
-        
         if cx.data::<AppData>().is_none() {
             AppData {
                 options: Options { option1: true, option2: false, option3: false },
@@ -103,7 +102,8 @@ fn main() {
                     Label::new(cx, "Option 3");
                 })
                 .col_between(Pixels(5.0));
-            }).child_space(Stretch(1.0));
+            })
+            .child_space(Stretch(1.0));
 
             // Exclusive checkboxes (radio buttons) with labels
             // Only one checkbox can be checked at a time and cannot be unchecked
@@ -148,8 +148,10 @@ fn main() {
                     Label::new(cx, "Option 3");
                 })
                 .col_between(Pixels(5.0));
-            }).child_space(Stretch(1.0));
-        }).child_space(Stretch(1.0));
+            })
+            .child_space(Stretch(1.0));
+        })
+        .child_space(Stretch(1.0));
 
         style_dropdown(cx)
             .position_type(PositionType::SelfDirected)

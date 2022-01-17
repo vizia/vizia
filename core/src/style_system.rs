@@ -3,7 +3,7 @@ use morphorm::Units;
 
 use crate::{
     style::{Overflow, Selector, SelectorRelation},
-    BoundingBox, Context, Display, Entity, FontOrId, Rule, Tree, TreeExt, Visibility, PseudoClass,
+    BoundingBox, Context, Display, Entity, FontOrId, PseudoClass, Rule, Tree, TreeExt, Visibility,
 };
 
 // use crate::{BoundingBox, Display, Entity, Overflow, PropGet, PropSet, Property, SelectorRelation, Rule, Selector, Cx, Tree, TreeExt, Visibility};
@@ -168,19 +168,17 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
             let parent_width = cx.cache.get_width(parent);
 
-            let border_width =
-                match cx.style.border_width.get(entity).cloned().unwrap_or_default() {
-                    Units::Pixels(val) => val,
-                    Units::Percentage(val) => parent_width * val,
-                    _ => 0.0,
-                };
+            let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
+            {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => parent_width * val,
+                _ => 0.0,
+            };
 
             let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
-            let child_right =
-                cx.style.child_right.get(entity).cloned().unwrap_or_default();
+            let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();
             let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
-            let child_bottom =
-                cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
+            let child_bottom = cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
 
             // TODO - should auto size use text height or font height?
             let _font_metrics =
@@ -263,10 +261,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
                 if cx.style.height.get(entity) == Some(&Units::Auto) {
                     // Add an extra pixel to account for AA
-                    cx.style
-                        
-                        .min_height
-                        .insert(entity, Units::Pixels(text_height + 1.0));
+                    cx.style.min_height.insert(entity, Units::Pixels(text_height + 1.0));
                     cx.style.needs_relayout = true;
                     cx.style.needs_redraw = true;
                 }
@@ -278,9 +273,8 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
         if let Some(parent) = entity.parent(tree) {
-
             cx.style.disabled.inherit_inline(entity, parent);
-            
+
             cx.style.font_color.inherit_inline(entity, parent);
         }
     }
@@ -293,8 +287,6 @@ pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
         }
     }
 }
-
-
 
 // pub fn apply_abilities(cx: &mut Context, tree: &Tree) {
 //     let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
@@ -370,7 +362,8 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
 
     // Disabled needs to be handled separately because it can be inherited
     if let Some(disabled) = cx.style.disabled.get(entity) {
-        if !selector.pseudo_classes.is_empty() && *disabled != selector.pseudo_classes.contains(PseudoClass::DISABLED)
+        if !selector.pseudo_classes.is_empty()
+            && *disabled != selector.pseudo_classes.contains(PseudoClass::DISABLED)
         {
             return false;
         }
@@ -380,7 +373,7 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     if let Some(pseudo_classes) = cx.style.pseudo_classes.get(entity) {
         let mut selector_pseudo_classes = selector.pseudo_classes;
         selector_pseudo_classes.set(PseudoClass::DISABLED, false);
-        
+
         if !selector_pseudo_classes.is_empty()
             && !selector_pseudo_classes.intersects(*pseudo_classes)
         {

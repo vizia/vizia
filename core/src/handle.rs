@@ -3,7 +3,8 @@ use std::marker::PhantomData;
 use morphorm::{LayoutType, PositionType, Units};
 
 use crate::{
-    style::Overflow, Abilities, Color, CursorIcon, Display, Entity, PseudoClass, Visibility, Context, Res, BorderCornerShape,
+    style::Overflow, Abilities, BorderCornerShape, Color, Context, CursorIcon, Display, Entity,
+    PseudoClass, Res, Visibility,
 };
 
 macro_rules! set_style {
@@ -23,11 +24,10 @@ macro_rules! set_style {
 pub struct Handle<'a, T> {
     pub entity: Entity,
     pub p: PhantomData<T>,
-    pub cx: &'a mut Context, 
+    pub cx: &'a mut Context,
 }
 
-impl<'a,T> Handle<'a,T> {
-
+impl<'a, T> Handle<'a, T> {
     pub fn entity(&self) -> Entity {
         self.entity
     }
@@ -64,16 +64,15 @@ impl<'a,T> Handle<'a,T> {
         } else {
             let mut pseudoclass = PseudoClass::empty();
             pseudoclass.set(PseudoClass::CHECKED, state);
-            self.cx.style.pseudo_classes.insert(self.entity, pseudoclass);
+            self.cx.style.pseudo_classes.insert(self.entity, pseudoclass).unwrap();
         }
-        
+
         self.cx.style.needs_restyle = true;
 
         self
     }
 
     pub fn disabled(self, state: bool) -> Self {
-
         self.cx.style.disabled.insert(self.entity, state);
         self.cx.style.needs_restyle = true;
 
@@ -241,8 +240,6 @@ impl<'a,T> Handle<'a,T> {
     set_style!(display, Display);
     //set_style!(visibility, Visibility);
 
-
-
     set_style!(rotate, f32);
     set_style!(translate, (f32, f32));
 
@@ -255,6 +252,4 @@ impl<'a,T> Handle<'a,T> {
     set_style!(border_radius_top_right, Units);
     set_style!(border_radius_bottom_left, Units);
     set_style!(border_radius_bottom_right, Units);
-
-
 }

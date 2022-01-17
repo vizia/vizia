@@ -162,7 +162,6 @@ pub trait PropSet: AsEntity + Sized {
             let mut class_list = HashSet::new();
             class_list.insert(class_name.to_string());
             cx.style
-                
                 .classes
                 .insert(self.entity(), class_list)
                 .expect("Failed to insert class name");
@@ -850,11 +849,7 @@ pub trait PropSet: AsEntity + Sized {
 
     // Tooltip
     fn set_tooltip(self, cx: &mut Context, text: &str) -> Entity {
-        cx.style
-            
-            .tooltip
-            .insert(self.entity(), text.to_owned())
-            .expect("Failed to set tooltip");
+        cx.style.tooltip.insert(self.entity(), text.to_owned()).expect("Failed to set tooltip");
 
         cx.style.needs_redraw = true;
 
@@ -1103,11 +1098,7 @@ pub trait PropSet: AsEntity + Sized {
 
     // Clipping
     fn set_clip_widget(self, cx: &mut Context, value: Entity) -> Entity {
-        cx.style
-            
-            .clip_widget
-            .insert(self.entity(), value)
-            .expect("Failed to set clip widget");
+        cx.style.clip_widget.insert(self.entity(), value).expect("Failed to set clip widget");
 
         cx.style.needs_redraw = true;
 
@@ -1127,7 +1118,6 @@ pub trait PropSet: AsEntity + Sized {
             entity.next = value;
         } else {
             cx.style
-                
                 .focus_order
                 .insert(self.entity(), FocusOrder { next: value, ..Default::default() })
                 .expect("Failed to set next focus");
@@ -1141,7 +1131,6 @@ pub trait PropSet: AsEntity + Sized {
             focus_order.prev = value;
         } else {
             cx.style
-                
                 .focus_order
                 .insert(self.entity(), FocusOrder { prev: value, ..Default::default() })
                 .expect("Failed to set previous focus");
@@ -1156,7 +1145,6 @@ pub trait PropSet: AsEntity + Sized {
             focus_order.next = next;
         } else {
             cx.style
-                
                 .focus_order
                 .insert(self.entity(), FocusOrder { prev, next })
                 .expect("Failed to set focus order");

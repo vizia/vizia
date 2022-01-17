@@ -1,7 +1,7 @@
 use crate::CursorIcon;
 use crate::Display;
 
-use super::LinearGradient;
+//use super::LinearGradient;
 use crate::Color;
 
 use crate::style::*;
@@ -80,8 +80,8 @@ pub(crate) enum Property {
     // Background
     BackgroundColor(Color),
     BackgroundImage(String),
-    BackgroundGradient(LinearGradient),
-
+    // TODO
+    //BackgroundGradient(LinearGradient),
     FontSize(f32),
     FontColor(Color),
     Font(String),
@@ -102,10 +102,10 @@ pub(crate) enum Property {
 
     ZIndex(i32),
 
-    Translate((f32, f32)),
-    Rotate(f32),
-    Scale((f32, f32)),
-
+    // TODO
+    // Translate((f32, f32)),
+    // Rotate(f32),
+    // Scale((f32, f32)),
     Cursor(CursorIcon),
 }
 

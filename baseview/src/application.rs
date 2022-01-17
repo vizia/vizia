@@ -4,7 +4,7 @@ use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
-use vizia_core::{TreeExt, apply_inline_inheritance, apply_shared_inheritance};
+use vizia_core::{apply_inline_inheritance, apply_shared_inheritance, TreeExt};
 use vizia_core::{MouseButton, MouseButtonState};
 //use vizia_core::WindowWidget;
 use vizia_core::{
@@ -144,16 +144,8 @@ impl ApplicationRunner {
 
         //canvas.scale(scale as f32, scale as f32);
 
-        context
-            .style
-            
-            .width
-            .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
-        context
-            .style
-            
-            .height
-            .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
+        context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
+        context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
         context.style.disabled.insert(Entity::root(), false);
 
@@ -265,9 +257,7 @@ impl ApplicationRunner {
 
         // Data Updates
         let mut observers: Vec<Entity> = Vec::new();
-        for model_store in
-            self.context.data.dense.iter_mut().map(|entry| &mut entry.value)
-        {
+        for model_store in self.context.data.dense.iter_mut().map(|entry| &mut entry.value) {
             for (_, lens) in model_store.lenses.iter_mut() {
                 for (_, _) in model_store.data.iter() {
                     //if lens.update(model) {
@@ -348,7 +338,6 @@ impl ApplicationRunner {
         let clear_color = self
             .context
             .style
-            
             .background_color
             .get(Entity::root())
             .cloned()
@@ -397,7 +386,7 @@ impl ApplicationRunner {
 
             if let Some(view) = self.context.views.remove(&entity) {
                 self.context.current = entity;
-                view.draw(&self.context, &mut self.canvas);
+                view.draw(&mut self.context, &mut self.canvas);
 
                 self.context.views.insert(entity, view);
             }
@@ -797,12 +786,10 @@ impl ApplicationRunner {
 
                     self.context
                         .style
-                        
                         .width
                         .insert(Entity::root(), Units::Pixels(logical_size.0 as f32));
                     self.context
                         .style
-                        
                         .height
                         .insert(Entity::root(), Units::Pixels(logical_size.1 as f32));
 

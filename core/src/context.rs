@@ -1,8 +1,4 @@
-use std::{
-    cell::RefCell,
-    collections::{HashMap, VecDeque},
-    rc::Rc,
-};
+use std::collections::{HashMap, VecDeque};
 
 use copypasta::ClipboardContext;
 use femtovg::{FontId, TextContext};
@@ -10,8 +6,9 @@ use femtovg::{FontId, TextContext};
 // use unic_langid::LanguageIdentifier;
 
 use crate::{
-    CachedData, Entity, Enviroment, Event, FontOrId, IdManager, Message, Modifiers,
-    MouseState, Propagation, ResourceManager, Style, Tree, TreeExt, View, ViewHandler, storage::sparse_set::SparseSet, ModelDataStore,
+    storage::sparse_set::SparseSet, CachedData, Entity, Enviroment, Event, FontOrId, IdManager,
+    Message, ModelDataStore, Modifiers, MouseState, Propagation, ResourceManager, Style, Tree,
+    TreeExt, View, ViewHandler,
 };
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
@@ -49,7 +46,6 @@ pub struct Context {
 }
 
 impl Context {
-
     pub fn new() -> Self {
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
@@ -113,12 +109,15 @@ impl Context {
             self.entity_manager.destroy(*entity);
             self.views.remove(entity);
         }
-
-
     }
 
     /// Get stored data from the context.
     pub fn data<T: 'static>(&self) -> Option<&T> {
+        // return data for the static model
+        if let Some(t) = ().as_any().downcast_ref::<T>() {
+            return Some(t);
+        }
+
         for entity in self.current.parent_iter(&self.tree) {
             //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
             if let Some(data_list) = self.data.get(entity) {

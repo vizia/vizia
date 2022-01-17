@@ -1,9 +1,11 @@
 use std::any::TypeId;
 use std::collections::HashSet;
 
-use morphorm::{PositionType, LayoutType};
+use morphorm::{LayoutType, PositionType};
 
-use crate::{Color, Context, Display, Entity, Handle, StateStore, TreeExt, Units, View, Visibility};
+use crate::{
+    Color, Context, Display, Entity, Handle, StateStore, TreeExt, Units, View, Visibility,
+};
 
 use crate::{Data, Lens, Model};
 
@@ -150,60 +152,59 @@ pub trait Res<T> {
     fn get<'a>(&'a self, cx: &'a Context) -> &'a T;
 }
 
-impl<T,L> Res<T> for Field<L>
+impl<T, L> Res<T> for Field<L>
 where
     L: Lens<Target = T>,
 {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a T
-    {
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a T {
         self.get(cx)
     }
 }
 
 impl Res<Color> for Color {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a Color {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a Color {
         self
     }
 }
 
 impl Res<Units> for Units {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a Units {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a Units {
         self
     }
 }
 
 impl Res<Visibility> for Visibility {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a Visibility {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a Visibility {
         self
     }
 }
 
 impl Res<Display> for Display {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a Display {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a Display {
         self
     }
 }
 
 impl Res<LayoutType> for LayoutType {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a LayoutType {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a LayoutType {
         self
     }
 }
 
 impl Res<PositionType> for PositionType {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a PositionType {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a PositionType {
         self
     }
 }
 
 impl Res<usize> for usize {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a usize {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a usize {
         self
     }
 }
 
-impl<T> Res<(T,T)> for (T,T) {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a (T,T) {
+impl<T> Res<(T, T)> for (T, T) {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a (T, T) {
         self
     }
 }

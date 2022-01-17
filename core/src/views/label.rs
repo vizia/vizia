@@ -1,4 +1,4 @@
-use crate::{Context, Handle, LocalizedStringKey, View, Color, Res};
+use crate::{Color, Context, Handle, LocalizedStringKey, Res, View};
 
 pub struct Label;
 
@@ -50,4 +50,4 @@ impl<'a> Handle<'a, Label> {
 
         self
     }
-} 
+}

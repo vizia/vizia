@@ -9,7 +9,7 @@ pub struct Data {
 }
 
 impl Model for Data {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut Context, event: &mut Event) {
         if let Some(data_event) = event.message.downcast() {
             match data_event {
                 DataEvent::ChangeSomething => {
