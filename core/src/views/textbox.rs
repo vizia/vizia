@@ -4,11 +4,11 @@ use keyboard_types::Code;
 use morphorm::{Units, PositionType};
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
-use crate::{Context, Handle, MouseButton, View, WindowEvent, Selection, Label, ZStack, Binding, Lens, Model, Element, Units::*, Color, Action, Movement, EditableText, Modifiers, FontOrId, Entity, PropSet};
+use crate::style::PropGet;
+use crate::{Context, Handle, MouseButton, View, WindowEvent, Selection, Label, ZStack, Binding, Lens, Model, Element, Units::*, Color, Action, Movement, EditableText, Modifiers, FontOrId, Entity, PropSet, CursorIcon, Event};
 
 use crate::text::Direction;
 
-#[derive(Lens)]
 pub struct TextData {
     text: String,
     selection: Selection,
@@ -114,8 +114,27 @@ impl TextData {
     }
 }
 
-impl Model for TextData {
+#[derive(Lens)]
+pub struct TextboxData {
+    editing: bool,
+}
 
+#[derive(Debug)]
+pub enum TextEvent {
+    SetEditing(bool),
+}
+
+
+impl Model for TextboxData {
+    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
+        if let Some(text_event) = event.message.downcast() {
+            match text_event {
+                TextEvent::SetEditing(flag) => {
+                    self.editing = *flag;
+                }
+            }
+        }
+    }
 }
 
 
@@ -134,7 +153,7 @@ impl Textbox {
             text_data: TextData {
                 text: placeholder.to_string(),
                 // selection: Selection::new(0, placeholder.len()),
-                selection: Selection::caret(placeholder.len()),
+                selection: Selection::new(0, placeholder.len()),
             },
             edit: false,
             hitx: -1.0,
@@ -144,26 +163,35 @@ impl Textbox {
         .build2(cx, move |cx|{
 
 
-
+            TextboxData {
+                editing: false,
+            }.build(cx);
             // TextData {
             //     text: placeholder.to_owned(),
             //     selection: Selection::new(0, placeholder.len()),
             // }.build(cx);
-            
-            // Selection
-            Element::new(cx).background_color(Color::rgba(100,100,200,120)).position_type(PositionType::SelfDirected);
-            
-            // Caret
-            Element::new(cx).background_color(Color::rgba(255,0,0,255)).position_type(PositionType::SelfDirected).width(Pixels(1.0));
-            
+            Binding::new(cx, TextboxData::editing, |cx, editing|{
+                // Selection
+                Element::new(cx)
+                    .background_color(Color::rgba(100,100,200,120))
+                    .position_type(PositionType::SelfDirected)
+                    .visibility(editing);
+                
+                // Caret
+                Element::new(cx)
+                    .background_color(Color::rgba(255,0,0,255))
+                    .position_type(PositionType::SelfDirected).width(Pixels(1.0))
+                    .visibility(editing);
+            });
 
         }).text(placeholder)
     }
 
     fn set_caret(&mut self, cx: &mut Context, entity: Entity) {
 
-        let selection = cx.tree.get_child(entity, 0).unwrap();
-        let caret = cx.tree.get_child(entity, 1).unwrap();
+        // TODO - replace this with something better
+        let selection = cx.tree.get_child(entity, 1).unwrap();
+        let caret = cx.tree.get_child(entity, 2).unwrap();
         
         let posx = cx.cache.get_posx(entity);
         let posy = cx.cache.get_posy(entity);
@@ -257,7 +285,7 @@ impl Textbox {
 
             let align = match child_left {
                 Units::Pixels(val) => match child_right {
-                    Units::Stretch(_) => {
+                    Units::Stretch(_) | Units::Auto => {
                         x += val + border_width;
                         Align::Left
                     }
@@ -337,7 +365,7 @@ impl Textbox {
                     let startx = if let Some(first_glyph) = res.glyphs.first() {
                         first_glyph.x
                     } else {
-                        0.0 + padding_right
+                        0.0
                     };
                     //let startx = x - text_width / 2.0;
                     let endx = startx + text_width;
@@ -361,13 +389,14 @@ impl Textbox {
                             endx
                         };
 
-                        let mut n = 0;
-                        let mut px = x + padding_left;
+                        let mut px = x;
 
-                        for glyph in res.glyphs.iter() {
+                        for (glyph, (index, _)) in res.glyphs.iter().zip(text_string.grapheme_indices(true)) {
                             let left_edge = glyph.x;
                             let right_edge = left_edge + glyph.width;
                             let gx = left_edge * 0.3 + right_edge * 0.7;
+
+                            //println!("{} {} {}", self.hitx, left_edge, right_edge);
 
                             // if n == 0 && self.hitx <= glyph.x {
                             //     selectx = left_edge;
@@ -392,17 +421,16 @@ impl Textbox {
                             if self.hitx >= px && self.hitx < gx {
                                 selectx = left_edge;
 
-                                self.text_data.selection.anchor = n;
+                                self.text_data.selection.anchor = index;
                             }
 
                             if self.dragx >= px && self.dragx < gx {
                                 caretx = left_edge;
 
-                                self.text_data.selection.active = n;
+                                self.text_data.selection.active = index;
                             }
 
                             px = gx;
-                            n += 1;
                         }
                     } else {
                         let mut n = 0;
@@ -445,10 +473,10 @@ impl Textbox {
                     let select_width = (caretx - selectx).abs();
                     if selectx > caretx {
                         //path.rect(caretx, sy, select_width, font_metrics.height());
-                        selection.set_left(cx, Pixels(padding_left + caretx.floor() - posx - 1.0));
+                        selection.set_left(cx, Pixels(caretx.floor() - posx - 1.0));
                     } else if caretx > selectx {
                         //path.rect(selectx, sy, select_width, font_metrics.height());
-                        selection.set_left(cx, Pixels(padding_left + selectx.floor() - posx - 1.0));
+                        selection.set_left(cx, Pixels(selectx.floor() - posx - 1.0));
                         
                     }
 
@@ -464,7 +492,7 @@ impl Textbox {
 
                     let caret_left = (caretx.floor() - posx - 1.0).max(0.0);
 
-                    caret.set_left(cx, Pixels(padding_left + caret_left));
+                    caret.set_left(cx, Pixels(caret_left));
                     caret.set_top(cx, Stretch(1.0));
                     caret.set_bottom(cx, Stretch(1.0));
                     caret.set_height(cx, Pixels(font_metrics.height()));
@@ -500,69 +528,102 @@ impl View for Textbox {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    if !self.edit {
-                        self.edit = true;
-                        cx.focused = cx.current;
+                    if cx.current.is_over(cx) {
+                        if !self.edit {
+                            self.edit = true;
+                            cx.emit(TextEvent::SetEditing(true));
+                            cx.focused = cx.current;
+                            cx.captured = cx.current;
+                            cx.current.set_checked(cx, true);
+                        }
+    
+                        // Hit test
+                        if self.edit {
+                            self.hitx = cx.mouse.cursorx;
+                            self.dragx = cx.mouse.cursorx;
+                        }
                         self.set_caret(cx, cx.current);
-                    }
-
-                    // Hit test
-                    if self.edit {
-                        
+                    } else {
+                        cx.captured = Entity::null();
+                        cx.current.set_checked(cx, false);
+                        self.edit = false;
+                        cx.emit(TextEvent::SetEditing(false));
+                        // Forward event to hovered
+                        cx.event_queue.push_back(Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered));
                     }
                 }
 
-                WindowEvent::CharInput(c) => {
-                    println!("Input character: {:?}", c);
-                    if  *c != '\u{1b}' && // Escape
-                        *c != '\u{8}' && // Backspace
-                        *c != '\u{7f}' && // Delete
-                        !cx.modifiers.contains(Modifiers::CTRL)
-                    {
-                        self.text_data.insert_text(&String::from(*c));
-                        cx.style.text.insert(cx.current, self.text_data.text.clone());
-                    }
-
+                WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+                    self.hitx = -1.0;
                     self.set_caret(cx, cx.current);
-                    // Get the selection
-                    // Replace the selected range
-                    // Set the new selection
+                }
+
+                WindowEvent::MouseMove(x, _) => {
+                    if self.hitx != -1.0 {
+                        self.dragx = *x;
+
+                        self.set_caret(cx, cx.current);
+                    }
+                }
+
+                WindowEvent::MouseOver => {
+                    cx.emit(WindowEvent::SetCursor(CursorIcon::Text));
+                }
+
+                WindowEvent::MouseOut => {
+                    cx.emit(WindowEvent::SetCursor(CursorIcon::Default));
+                }
+
+                WindowEvent::CharInput(c) => {
+                    if self.edit {
+                        if  *c != '\u{1b}' && // Escape
+                            *c != '\u{8}' && // Backspace
+                            *c != '\u{7f}' && // Delete
+                            !cx.modifiers.contains(Modifiers::CTRL)
+                        {
+                            self.text_data.insert_text(&String::from(*c));
+                            cx.style.text.insert(cx.current, self.text_data.text.clone());
+                        }
+    
+                        self.set_caret(cx, cx.current);
+                    }
                 }
 
                 WindowEvent::KeyDown(code, key) => match code {
                     Code::Enter => {
                         // Finish editing
                         self.edit = false;
+                        cx.emit(TextEvent::SetEditing(false));
+                        cx.current.set_checked(cx, false);
                     }
 
                     Code::ArrowLeft => {
-                        // Determine grapheme or word movement
-                        // Move the cursor
-                        let movement = if cx.modifiers.contains(Modifiers::CTRL) {
-                            Movement::Word(Direction::Upstream)
-                        } else {
-                            Movement::Grapheme(Direction::Upstream)
-                        };
-
-                        self.text_data.move_cursor(movement, cx.modifiers.contains(Modifiers::SHIFT));
-
-                        println!("{:?}", self.text_data.selection);
-                        self.set_caret(cx, cx.current);
+                        if self.edit {
+                            let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                                Movement::Word(Direction::Upstream)
+                            } else {
+                                Movement::Grapheme(Direction::Upstream)
+                            };
+    
+                            self.text_data.move_cursor(movement, cx.modifiers.contains(Modifiers::SHIFT));
+    
+                            println!("{:?}", self.text_data.selection);
+                            self.set_caret(cx, cx.current);
+                        }
                     }
 
                     Code::ArrowRight => {
-                        // Determine grapheme or word movement
-                        // Move the cursor
-                        let movement = if cx.modifiers.contains(Modifiers::CTRL) {
-                            Movement::Word(Direction::Downstream)
-                        } else {
-                            Movement::Grapheme(Direction::Downstream)
-                        };
-
-                        self.text_data.move_cursor(movement, cx.modifiers.contains(Modifiers::SHIFT));
-                        
-
-                        self.set_caret(cx, cx.current);
+                        if self.edit {
+                            let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                                Movement::Word(Direction::Downstream)
+                            } else {
+                                Movement::Grapheme(Direction::Downstream)
+                            };
+    
+                            self.text_data.move_cursor(movement, cx.modifiers.contains(Modifiers::SHIFT));
+                            
+                            self.set_caret(cx, cx.current);
+                        }
                     }
 
                     // TODO
@@ -576,33 +637,34 @@ impl View for Textbox {
                     }
 
                     Code::Backspace => {
-                        println!("Backspace");
-                        // Determine grapheme or word deletion (upstream)
-                        // Delete the text
-                        if cx.modifiers.contains(Modifiers::CTRL) {
-                            self.text_data.delete_text(Movement::Word(Direction::Upstream));
-                        } else {
-                            self.text_data.delete_text(Movement::Grapheme(Direction::Upstream));
+                        if self.edit {
+                            if cx.modifiers.contains(Modifiers::CTRL) {
+                                self.text_data.delete_text(Movement::Word(Direction::Upstream));
+                            } else {
+                                self.text_data.delete_text(Movement::Grapheme(Direction::Upstream));
+                            }
+    
+                            cx.style.text.insert(cx.current, self.text_data.text.clone());
+                            self.set_caret(cx, cx.current);
                         }
-
-                        cx.style.text.insert(cx.current, self.text_data.text.clone());
-                        self.set_caret(cx, cx.current);
                     }
 
                     Code::Delete => {
-                        // Determine grapheme or word deletion (downstream)
-                        // Delete the text
-                        if cx.modifiers.contains(Modifiers::CTRL) {
-                            self.text_data.delete_text(Movement::Word(Direction::Downstream));
-                        } else {
-                            self.text_data.delete_text(Movement::Grapheme(Direction::Downstream));
+                        if self.edit {
+                            if cx.modifiers.contains(Modifiers::CTRL) {
+                                self.text_data.delete_text(Movement::Word(Direction::Downstream));
+                            } else {
+                                self.text_data.delete_text(Movement::Grapheme(Direction::Downstream));
+                            }
+                            cx.style.text.insert(cx.current, self.text_data.text.clone());
+                            self.set_caret(cx, cx.current);
                         }
-                        cx.style.text.insert(cx.current, self.text_data.text.clone());
-                        self.set_caret(cx, cx.current);
                     }
 
                     Code::Escape => {
                         self.edit = false;
+                        cx.emit(TextEvent::SetEditing(false));
+                        cx.current.set_checked(cx, false);
                     }
 
                     // TODO
@@ -626,24 +688,29 @@ impl View for Textbox {
                     }
 
                     Code::KeyA => {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
-                            self.text_data.select_all();
+                        if self.edit {
+                            if cx.modifiers.contains(Modifiers::CTRL) {
+                                self.text_data.select_all();
+                            }
                         }
                     }
 
                     Code::KeyC => {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
-
-                            cx.clipboard.set_contents(self.text_data.text[self.text_data.selection.range()].to_string());
+                        if self.edit {
+                            if cx.modifiers.contains(Modifiers::CTRL) {
+                                cx.clipboard.set_contents(self.text_data.text[self.text_data.selection.range()].to_string());
+                            }
                         }
                     }
 
                     Code::KeyV => {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
-                            if let Ok(text) = cx.clipboard.get_contents() {
-                                self.text_data.insert_text(&text);
-                                cx.style.text.insert(cx.current, self.text_data.text.clone());
-                                self.set_caret(cx, cx.current);
+                        if self.edit {
+                            if cx.modifiers.contains(Modifiers::CTRL) {
+                                if let Ok(text) = cx.clipboard.get_contents() {
+                                    self.text_data.insert_text(&text);
+                                    cx.style.text.insert(cx.current, self.text_data.text.clone());
+                                    self.set_caret(cx, cx.current);
+                                }
                             }
                         }
                     }

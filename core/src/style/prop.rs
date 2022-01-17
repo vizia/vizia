@@ -226,9 +226,13 @@ pub trait PropSet: AsEntity + Sized {
     /// ```compile_fail
     /// entity.set_checked(cx, true);
     /// ```
-    fn set_checked(self, cx: &mut Context, value: bool) -> Entity {
+    fn set_checked(self, cx: &mut Context, state: bool) -> Entity {
         if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self.entity()) {
-            pseudo_classes.set(PseudoClass::CHECKED, value);
+            pseudo_classes.set(PseudoClass::CHECKED, state);
+        } else {
+            let mut pseudoclass = PseudoClass::empty();
+            pseudoclass.set(PseudoClass::CHECKED, state);
+            cx.style.pseudo_classes.insert(self.entity(), pseudoclass).unwrap();
         }
 
         cx.style.needs_restyle = true;

@@ -57,12 +57,22 @@ label.icon {
 textbox {
     width: auto;
     height: auto;
-    overflow: visible;
-    background-color: gray;
+    overflow: hidden;
     color: black;
+    border-width: 1px;
+    border-color: #9e9e9e;
     child-top: 1s;
     child-bottom: 1s;
     height: 30px;
+    border-radius: 3px;
+}
+
+textbox:over {
+    border-color: black;
+}
+
+textbox:checked {
+    border-color: #4c00ff;
 }
 
 
