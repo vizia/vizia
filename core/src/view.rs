@@ -228,21 +228,21 @@ pub trait View: 'static + Sized {
             _ => 0.0,
         };
 
-        let outer_shadow_h_offset =
+        let _outer_shadow_h_offset =
             match cx.style.outer_shadow_h_offset.get(entity).cloned().unwrap_or_default() {
                 Units::Pixels(val) => val,
                 Units::Percentage(val) => bounds.w * (val / 100.0),
                 _ => 0.0,
             };
 
-        let outer_shadow_v_offset =
+        let _outer_shadow_v_offset =
             match cx.style.outer_shadow_v_offset.get(entity).cloned().unwrap_or_default() {
                 Units::Pixels(val) => val,
                 Units::Percentage(val) => bounds.w * (val / 100.0),
                 _ => 0.0,
             };
 
-        let outer_shadow_blur =
+        let _outer_shadow_blur =
             match cx.style.outer_shadow_blur.get(entity).cloned().unwrap_or_default() {
                 Units::Pixels(val) => val,
                 Units::Percentage(val) => bounds.w * (val / 100.0),
@@ -428,102 +428,102 @@ pub trait View: 'static + Sized {
 
         // Draw outer shadow
 
-        if cx.style.outer_shadow_color.get(entity).is_some() {
-            let sigma = outer_shadow_blur / 2.0;
-            let d = (sigma * 5.0).ceil();
+        // if cx.style.outer_shadow_color.get(entity).is_some() {
+        //     let sigma = outer_shadow_blur / 2.0;
+        //     let d = (sigma * 5.0).ceil();
 
-            let shadow_image = cx.cache.shadow_image.get(&entity).cloned().unwrap_or_else(|| {
-                (
-                    canvas
-                        .create_image_empty(
-                            (bounds.w + d) as usize,
-                            (bounds.h + d) as usize,
-                            PixelFormat::Rgba8,
-                            ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
-                        )
-                        .expect("Failed to create image"),
-                    canvas
-                        .create_image_empty(
-                            (bounds.w + d) as usize,
-                            (bounds.h + d) as usize,
-                            PixelFormat::Rgba8,
-                            ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
-                        )
-                        .expect("Failed to create image"),
-                )
-            });
+        //     let shadow_image = cx.cache.shadow_image.get(&entity).cloned().unwrap_or_else(|| {
+        //         (
+        //             canvas
+        //                 .create_image_empty(
+        //                     (bounds.w + d) as usize,
+        //                     (bounds.h + d) as usize,
+        //                     PixelFormat::Rgba8,
+        //                     ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
+        //                 )
+        //                 .expect("Failed to create image"),
+        //             canvas
+        //                 .create_image_empty(
+        //                     (bounds.w + d) as usize,
+        //                     (bounds.h + d) as usize,
+        //                     PixelFormat::Rgba8,
+        //                     ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
+        //                 )
+        //                 .expect("Failed to create image"),
+        //         )
+        //     });
 
-            canvas.save();
+        //     canvas.save();
 
-            let size = canvas.image_size(shadow_image.0).expect("Failed to get image");
+        //     let size = canvas.image_size(shadow_image.0).expect("Failed to get image");
 
-            let (source, target) =
-                if size.0 != (bounds.w + d) as usize || size.1 != (bounds.h + d) as usize {
-                    canvas.delete_image(shadow_image.0);
-                    canvas.delete_image(shadow_image.1);
+        //     let (source, target) =
+        //         if size.0 != (bounds.w + d) as usize || size.1 != (bounds.h + d) as usize {
+        //             canvas.delete_image(shadow_image.0);
+        //             canvas.delete_image(shadow_image.1);
 
-                    (
-                        canvas
-                            .create_image_empty(
-                                (bounds.w + d) as usize,
-                                (bounds.h + d) as usize,
-                                PixelFormat::Rgba8,
-                                ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
-                            )
-                            .expect("Failed to create image"),
-                        canvas
-                            .create_image_empty(
-                                (bounds.w + d) as usize,
-                                (bounds.h + d) as usize,
-                                PixelFormat::Rgba8,
-                                ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
-                            )
-                            .expect("Failed to create image"),
-                    )
-                } else {
-                    (shadow_image.0, shadow_image.1)
-                };
+        //             (
+        //                 canvas
+        //                     .create_image_empty(
+        //                         (bounds.w + d) as usize,
+        //                         (bounds.h + d) as usize,
+        //                         PixelFormat::Rgba8,
+        //                         ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
+        //                     )
+        //                     .expect("Failed to create image"),
+        //                 canvas
+        //                     .create_image_empty(
+        //                         (bounds.w + d) as usize,
+        //                         (bounds.h + d) as usize,
+        //                         PixelFormat::Rgba8,
+        //                         ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
+        //                     )
+        //                     .expect("Failed to create image"),
+        //             )
+        //         } else {
+        //             (shadow_image.0, shadow_image.1)
+        //         };
 
-            cx.cache.shadow_image.insert(entity, (source, target));
+        //     cx.cache.shadow_image.insert(entity, (source, target));
 
-            canvas.set_render_target(RenderTarget::Image(source));
-            canvas.clear_rect(0, 0, size.0 as u32, size.1 as u32, femtovg::Color::rgba(0, 0, 0, 0));
-            canvas.translate(-bounds.x + d / 2.0, -bounds.y + d / 2.0);
-            let mut outer_shadow = path.clone();
-            let paint = Paint::color(outer_shadow_color);
-            canvas.fill_path(&mut outer_shadow, paint);
+        //     canvas.set_render_target(RenderTarget::Image(source));
+        //     canvas.clear_rect(0, 0, size.0 as u32, size.1 as u32, femtovg::Color::rgba(0, 0, 0, 0));
+        //     canvas.translate(-bounds.x + d / 2.0, -bounds.y + d / 2.0);
+        //     let mut outer_shadow = path.clone();
+        //     let paint = Paint::color(outer_shadow_color);
+        //     canvas.fill_path(&mut outer_shadow, paint);
 
-            canvas.restore();
+        //     canvas.restore();
 
-            let target_image = if outer_shadow_blur > 0.0 {
-                canvas.filter_image(target, femtovg::ImageFilter::GaussianBlur { sigma }, source);
-                target
-            } else {
-                source
-            };
+        //     let target_image = if outer_shadow_blur > 0.0 {
+        //         canvas.filter_image(target, femtovg::ImageFilter::GaussianBlur { sigma }, source);
+        //         target
+        //     } else {
+        //         source
+        //     };
 
-            canvas.set_render_target(RenderTarget::Screen);
+        //     canvas.set_render_target(RenderTarget::Screen);
 
-            canvas.save();
-            canvas.translate(outer_shadow_h_offset, outer_shadow_v_offset);
-            let mut path = Path::new();
-            path.rect(bounds.x - d / 2.0, bounds.y - d / 2.0, bounds.w + d, bounds.h + d);
+        //     canvas.save();
+        //     canvas.translate(outer_shadow_h_offset, outer_shadow_v_offset);
+        //     let mut path = Path::new();
+        //     path.rect(bounds.x - d / 2.0, bounds.y - d / 2.0, bounds.w + d, bounds.h + d);
 
-            canvas.fill_path(
-                &mut path,
-                Paint::image(
-                    target_image,
-                    bounds.x - d / 2.0,
-                    bounds.y - d / 2.0,
-                    bounds.w + d,
-                    bounds.h + d,
-                    0f32,
-                    1f32,
-                ),
-            );
-            //canvas.fill_path(&mut path, Paint::color(femtovg::Color::rgb(0,0,0)));
-            canvas.restore();
-        }
+        //     canvas.fill_path(
+        //         &mut path,
+        //         Paint::image(
+        //             target_image,
+        //             bounds.x - d / 2.0,
+        //             bounds.y - d / 2.0,
+        //             bounds.w + d,
+        //             bounds.h + d,
+        //             0f32,
+        //             1f32,
+        //         ),
+        //     );
+        //     //canvas.fill_path(&mut path, Paint::color(femtovg::Color::rgb(0,0,0)));
+        //     canvas.restore();
+        // }
 
         // Fill with background color
         let mut paint = Paint::color(background_color);
