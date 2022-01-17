@@ -130,6 +130,7 @@ dropdown .title {
 
 dropdown>popup {
     background-color: #AAAAAA;
+    outer-shadow: 0 3 5 #55000000;
 }
 
 dropdown>popup>list {
