@@ -543,7 +543,7 @@ pub trait PropSet: AsEntity + Sized {
     /// Center the entity horizontally by adding stretch space to the left and right sides.
     /// ```
     /// # use vizia_core::*;
-    /// # let mut context = Context::default();
+    /// # let mut context = Context::new();
     /// # let cx = &mut context;
     /// # let entity = Entity::root();
     /// entity.set_left(cx, Stretch(1.0)).set_right(cx, Stretch(1.0));
@@ -871,7 +871,7 @@ pub trait PropSet: AsEntity + Sized {
     /// Set the background color of the entity with individual red, green, and blue components:
     /// ```
     /// # use vizia_core::*;
-    /// # let mut context = Context::default();
+    /// # let mut context = Context::new();
     /// # let cx = &mut context;
     /// # let entity = Entity::root();
     /// entity.set_background_color(cx, Color::rgb(255, 50, 50));
@@ -1162,7 +1162,7 @@ pub trait PropSet: AsEntity + Sized {
     /// Position children into a vertical stack:
     /// ```
     /// # use vizia_core::*;
-    /// # let mut context = Context::default();
+    /// # let mut context = Context::new();
     /// # let cx = &mut context;
     /// # let entity = Entity::root();
     /// entity.set_layout_type(cx, LayoutType::Column);

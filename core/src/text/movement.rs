@@ -1,13 +1,9 @@
-
-
-
 pub enum Direction {
     Left,
     Right,
     Upstream,
     Downstream,
 }
-
 
 pub enum Movement {
     Grapheme(Direction),

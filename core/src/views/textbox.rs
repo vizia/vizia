@@ -1,11 +1,14 @@
 use copypasta::ClipboardProvider;
-use femtovg::{Paint, Align, Baseline};
+use femtovg::{Align, Baseline, Paint};
 use keyboard_types::Code;
-use morphorm::{Units, PositionType};
-use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
+use morphorm::{PositionType, Units};
+use unicode_segmentation::UnicodeSegmentation;
 
 use crate::style::PropGet;
-use crate::{Context, Handle, MouseButton, View, WindowEvent, Selection, Label, ZStack, Binding, Lens, Model, Element, Units::*, Color, Action, Movement, EditableText, Modifiers, FontOrId, Entity, PropSet, CursorIcon, Event};
+use crate::{
+    Binding, Color, Context, CursorIcon, EditableText, Element, Entity, Event, FontOrId, Handle,
+    Lens, Model, Modifiers, MouseButton, Movement, PropSet, Selection, Units::*, View, WindowEvent,
+};
 
 use crate::text::Direction;
 
@@ -27,7 +30,6 @@ impl TextData {
             self.text.replace_range(self.selection.range(), "");
             self.selection = Selection::caret(self.selection.min());
         } else {
-            let range = self.selection.range();
             match movement {
                 Movement::Grapheme(Direction::Upstream) => {
                     if let Some(offset) = self.text.prev_grapheme_offset(self.selection.active) {
@@ -57,7 +59,7 @@ impl TextData {
                     }
                 }
 
-                _=> {}
+                _ => {}
             }
         }
     }
@@ -104,7 +106,7 @@ impl TextData {
                 }
             }
 
-            _=> {}
+            _ => {}
         }
     }
 
@@ -124,9 +126,8 @@ pub enum TextEvent {
     SetEditing(bool),
 }
 
-
 impl Model for TextboxData {
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
+    fn event(&mut self, _: &mut Context, event: &mut crate::Event) {
         if let Some(text_event) = event.message.downcast() {
             match text_event {
                 TextEvent::SetEditing(flag) => {
@@ -136,8 +137,6 @@ impl Model for TextboxData {
         }
     }
 }
-
-
 
 pub struct Textbox {
     text_data: TextData,
@@ -158,69 +157,68 @@ impl Textbox {
             edit: false,
             hitx: -1.0,
             dragx: -1.0,
-            on_submit: None 
+            on_submit: None,
         }
-        .build2(cx, move |cx|{
-
-
-            TextboxData {
-                editing: false,
-            }.build(cx);
+        .build2(cx, move |cx| {
+            TextboxData { editing: false }.build(cx);
             // TextData {
             //     text: placeholder.to_owned(),
             //     selection: Selection::new(0, placeholder.len()),
             // }.build(cx);
-            Binding::new(cx, TextboxData::editing, |cx, editing|{
+            Binding::new(cx, TextboxData::editing, |cx, editing| {
                 // Selection
                 Element::new(cx)
-                    .background_color(Color::rgba(100,100,200,120))
+                    .background_color(Color::rgba(100, 100, 200, 120))
                     .position_type(PositionType::SelfDirected)
                     .visibility(editing);
-                
+
                 // Caret
                 Element::new(cx)
-                    .background_color(Color::rgba(255,0,0,255))
-                    .position_type(PositionType::SelfDirected).width(Pixels(1.0))
+                    .background_color(Color::rgba(255, 0, 0, 255))
+                    .position_type(PositionType::SelfDirected)
+                    .width(Pixels(1.0))
                     .visibility(editing);
             });
-
-        }).text(placeholder)
+        })
+        .text(placeholder)
     }
 
     fn set_caret(&mut self, cx: &mut Context, entity: Entity) {
-
         // TODO - replace this with something better
         let selection = cx.tree.get_child(entity, 1).unwrap();
         let caret = cx.tree.get_child(entity, 2).unwrap();
-        
+
         let posx = cx.cache.get_posx(entity);
         let posy = cx.cache.get_posy(entity);
         let width = cx.cache.get_width(entity);
         let height = cx.cache.get_height(entity);
-        
+
         if let Some(text) = cx.style.text.get(entity) {
             let font = cx.style.font.get(entity).cloned().unwrap_or_default();
 
             // TODO - This should probably be cached in cx to save look-up time
-            let default_font = cx.resource_manager.fonts.get(&cx.style.default_font).and_then(|font|{
-                match font {
+            let default_font = cx
+                .resource_manager
+                .fonts
+                .get(&cx.style.default_font)
+                .and_then(|font| match font {
                     FontOrId::Id(id) => Some(id),
-                    _=> None,
-                }
-            }).expect("Failed to find default font");
+                    _ => None,
+                })
+                .expect("Failed to find default font");
 
-            let font_id = cx.resource_manager.fonts.get(&font).and_then(|font|{
-                match font {
+            let font_id = cx
+                .resource_manager
+                .fonts
+                .get(&font)
+                .and_then(|font| match font {
                     FontOrId::Id(id) => Some(id),
-                    _=> None,
-                }
-            }).unwrap_or(default_font);
-
+                    _ => None,
+                })
+                .unwrap_or(default_font);
 
             let mut x = posx;
             let mut y = posy;
-            //let mut sx = posx;
-            let mut sy = posy;
 
             let text_string = text.to_owned();
 
@@ -230,27 +228,14 @@ impl Textbox {
             paint.set_font_size(font_size);
             paint.set_font(&[font_id.clone()]);
 
-            let font_metrics = cx.text_context
-                .measure_font(paint)
-                .expect("Failed to read font metrics");
+            let font_metrics =
+                cx.text_context.measure_font(paint).expect("Failed to read font metrics");
 
-            
-            let parent = cx
-                .tree
-                .get_parent(entity)
-                .expect("Failed to find parent somehow");
+            let parent = cx.tree.get_parent(entity).expect("Failed to find parent somehow");
 
-            let parent_posx = cx.cache.get_posx(parent);
-            let parent_posy = cx.cache.get_posy(parent);
             let parent_width = cx.cache.get_width(parent);
-            let parent_height = cx.cache.get_height(parent);
-            
-            let border_width = match cx
-                .style
-                .border_width
-                .get(entity)
-                .cloned()
-                .unwrap_or_default()
+
+            let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
             {
                 Units::Pixels(val) => val,
                 Units::Percentage(val) => parent_width * val,
@@ -258,30 +243,10 @@ impl Textbox {
             };
 
             // TODO - Move this to a text layout system and include constraints
-            let child_left = cx
-                .style
-                .child_left
-                .get(entity)
-                .cloned()
-                .unwrap_or_default();
-            let child_right = cx
-                .style
-                .child_right
-                .get(entity)
-                .cloned()
-                .unwrap_or_default();
-            let child_top = cx
-                .style
-                .child_top
-                .get(entity)
-                .cloned()
-                .unwrap_or_default();
-            let child_bottom = cx
-                .style
-                .child_bottom
-                .get(entity)
-                .cloned()
-                .unwrap_or_default();
+            let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
+            let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();
+            let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
+            let child_bottom = cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
 
             let align = match child_left {
                 Units::Pixels(val) => match child_right {
@@ -323,13 +288,11 @@ impl Textbox {
                 Units::Stretch(_) => match child_bottom {
                     Units::Pixels(val) => {
                         y += height - val - border_width;
-                        sy = y - font_metrics.height();
                         Baseline::Bottom
                     }
 
                     Units::Stretch(_) => {
                         y += 0.5 * height;
-                        sy = y - font_metrics.height() * 0.5;
                         Baseline::Middle
                     }
 
@@ -343,19 +306,7 @@ impl Textbox {
             paint.set_text_baseline(baseline);
 
             if let Ok(res) = cx.text_context.measure_text(x, y, &text_string, paint) {
-
-                let padding_left = match cx.style.child_left.get(entity).unwrap_or(&Units::Auto) {
-                    Units::Pixels(val) => *val,
-                    _ => 0.0,
-                };
-        
-                let padding_right = match cx.style.child_right.get(entity).unwrap_or(&Units::Auto) {
-                    Units::Pixels(val) => *val,
-                    _ => 0.0,
-                };
-
                 let text_width = res.width();
-                //let mut glyph_positions = res.glyphs.iter().peekable();
 
                 let mut caretx = x;
 
@@ -391,7 +342,9 @@ impl Textbox {
 
                         let mut px = x;
 
-                        for (glyph, (index, _)) in res.glyphs.iter().zip(text_string.grapheme_indices(true)) {
+                        for (glyph, (index, _)) in
+                            res.glyphs.iter().zip(text_string.grapheme_indices(true))
+                        {
                             let left_edge = glyph.x;
                             let right_edge = left_edge + glyph.width;
                             let gx = left_edge * 0.3 + right_edge * 0.7;
@@ -433,12 +386,9 @@ impl Textbox {
                             px = gx;
                         }
                     } else {
-                        let mut n = 0;
-                        //println!("cursor: {}", self.cursor_pos);
-                        //let mut start_x = 0.0;
-
-
-                        for (glyph, (index, _)) in res.glyphs.iter().zip(text_string.grapheme_indices(true)) {
+                        for (glyph, (index, _)) in
+                            res.glyphs.iter().zip(text_string.grapheme_indices(true))
+                        {
                             if index == self.text_data.selection.active {
                                 caretx = glyph.x;
                             }
@@ -448,11 +398,13 @@ impl Textbox {
                             }
                         }
 
-                        if self.text_data.selection.active as usize == text.len() && text.len() != 0 {
+                        if self.text_data.selection.active as usize == text.len() && text.len() != 0
+                        {
                             caretx = endx;
                         }
 
-                        if self.text_data.selection.anchor as usize == text.len() && text.len() != 0 {
+                        if self.text_data.selection.anchor as usize == text.len() && text.len() != 0
+                        {
                             selectx = endx;
                         }
                     }
@@ -477,7 +429,6 @@ impl Textbox {
                     } else if caretx > selectx {
                         //path.rect(selectx, sy, select_width, font_metrics.height());
                         selection.set_left(cx, Pixels(selectx.floor() - posx - 1.0));
-                        
                     }
 
                     selection.set_width(cx, Pixels(select_width));
@@ -518,8 +469,6 @@ impl<'a> Handle<'a, Textbox> {
 }
 
 impl View for Textbox {
-
-
     fn element(&self) -> Option<String> {
         Some("textbox".to_string())
     }
@@ -536,7 +485,7 @@ impl View for Textbox {
                             cx.captured = cx.current;
                             cx.current.set_checked(cx, true);
                         }
-    
+
                         // Hit test
                         if self.edit {
                             self.hitx = cx.mouse.cursorx;
@@ -549,7 +498,10 @@ impl View for Textbox {
                         self.edit = false;
                         cx.emit(TextEvent::SetEditing(false));
                         // Forward event to hovered
-                        cx.event_queue.push_back(Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered));
+                        cx.event_queue.push_back(
+                            Event::new(WindowEvent::MouseDown(MouseButton::Left))
+                                .target(cx.hovered),
+                        );
                     }
                 }
 
@@ -576,7 +528,7 @@ impl View for Textbox {
 
                 WindowEvent::CharInput(c) => {
                     if self.edit {
-                        if  *c != '\u{1b}' && // Escape
+                        if *c != '\u{1b}' && // Escape
                             *c != '\u{8}' && // Backspace
                             *c != '\u{7f}' && // Delete
                             !cx.modifiers.contains(Modifiers::CTRL)
@@ -584,12 +536,12 @@ impl View for Textbox {
                             self.text_data.insert_text(&String::from(*c));
                             cx.style.text.insert(cx.current, self.text_data.text.clone());
                         }
-    
+
                         self.set_caret(cx, cx.current);
                     }
                 }
 
-                WindowEvent::KeyDown(code, key) => match code {
+                WindowEvent::KeyDown(code, _) => match code {
                     Code::Enter => {
                         // Finish editing
                         self.edit = false;
@@ -604,9 +556,10 @@ impl View for Textbox {
                             } else {
                                 Movement::Grapheme(Direction::Upstream)
                             };
-    
-                            self.text_data.move_cursor(movement, cx.modifiers.contains(Modifiers::SHIFT));
-    
+
+                            self.text_data
+                                .move_cursor(movement, cx.modifiers.contains(Modifiers::SHIFT));
+
                             println!("{:?}", self.text_data.selection);
                             self.set_caret(cx, cx.current);
                         }
@@ -619,22 +572,19 @@ impl View for Textbox {
                             } else {
                                 Movement::Grapheme(Direction::Downstream)
                             };
-    
-                            self.text_data.move_cursor(movement, cx.modifiers.contains(Modifiers::SHIFT));
-                            
+
+                            self.text_data
+                                .move_cursor(movement, cx.modifiers.contains(Modifiers::SHIFT));
+
                             self.set_caret(cx, cx.current);
                         }
                     }
 
                     // TODO
-                    Code::ArrowUp => {
-
-                    }
+                    Code::ArrowUp => {}
 
                     // TODO
-                    Code::ArrowDown => {
-
-                    }
+                    Code::ArrowDown => {}
 
                     Code::Backspace => {
                         if self.edit {
@@ -643,7 +593,7 @@ impl View for Textbox {
                             } else {
                                 self.text_data.delete_text(Movement::Grapheme(Direction::Upstream));
                             }
-    
+
                             cx.style.text.insert(cx.current, self.text_data.text.clone());
                             self.set_caret(cx, cx.current);
                         }
@@ -654,7 +604,8 @@ impl View for Textbox {
                             if cx.modifiers.contains(Modifiers::CTRL) {
                                 self.text_data.delete_text(Movement::Word(Direction::Downstream));
                             } else {
-                                self.text_data.delete_text(Movement::Grapheme(Direction::Downstream));
+                                self.text_data
+                                    .delete_text(Movement::Grapheme(Direction::Downstream));
                             }
                             cx.style.text.insert(cx.current, self.text_data.text.clone());
                             self.set_caret(cx, cx.current);
@@ -668,24 +619,16 @@ impl View for Textbox {
                     }
 
                     // TODO
-                    Code::Home => {
-
-                    }
+                    Code::Home => {}
 
                     // TODO
-                    Code::End => {
-
-                    }
+                    Code::End => {}
 
                     // TODO
-                    Code::PageUp => {
-
-                    }
+                    Code::PageUp => {}
 
                     // TODO
-                    Code::PageDown => {
-
-                    }
+                    Code::PageDown => {}
 
                     Code::KeyA => {
                         if self.edit {
@@ -698,7 +641,12 @@ impl View for Textbox {
                     Code::KeyC => {
                         if self.edit {
                             if cx.modifiers.contains(Modifiers::CTRL) {
-                                cx.clipboard.set_contents(self.text_data.text[self.text_data.selection.range()].to_string());
+                                cx.clipboard
+                                    .set_contents(
+                                        self.text_data.text[self.text_data.selection.range()]
+                                            .to_string(),
+                                    )
+                                    .expect("Failed to add text to clipboard");
                             }
                         }
                     }

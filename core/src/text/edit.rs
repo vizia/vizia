@@ -1,4 +1,3 @@
-
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use std::ops::Range;
@@ -18,13 +17,9 @@ pub trait EditableText {
 
     // fn prev_codepoint_offset(&self, from: usize) -> Option<usize>;
     // fn next_codepoint_offset(&self, from: usize) -> Option<usize>;
-
-
-
 }
 
 impl EditableText for String {
-
     fn edit(&mut self, range: Range<usize>, txt: impl Into<String>) {
         self.replace_range(range, &txt.into());
     }
@@ -92,7 +87,6 @@ impl EditableText for String {
         Some(self.len())
     }
 }
-
 
 #[cfg(test)]
 mod tests {

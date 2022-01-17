@@ -2,9 +2,6 @@ use std::ops::Range;
 
 use crate::Data;
 
-
-
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Selection {
     pub anchor: usize,
@@ -12,19 +9,12 @@ pub struct Selection {
 }
 
 impl Selection {
-
     pub fn new(anchor: usize, active: usize) -> Self {
-        Self {
-            anchor,
-            active,
-        }
+        Self { anchor, active }
     }
 
     pub fn caret(index: usize) -> Self {
-        Self {
-            anchor: index,
-            active: index,
-        }
+        Self { anchor: index, active: index }
     }
 
     pub fn min(&self) -> usize {
