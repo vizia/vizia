@@ -2,7 +2,7 @@ use femtovg::{Align, Baseline, Paint};
 use morphorm::Units;
 
 use crate::{
-    style::{Overflow, Selector, SelectorRelation},
+    style::{Overflow, PropGet, Selector, SelectorRelation},
     BoundingBox, Context, Display, Entity, FontOrId, PseudoClass, Rule, Tree, TreeExt, Visibility,
 };
 
@@ -247,21 +247,26 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             let text = cx.style.text.get(entity).cloned().unwrap();
 
             if let Ok(text_metrics) = cx.text_context.measure_text(x, y, text, paint) {
-                let text_width = text_metrics.width().round();
-                let text_height = text_metrics.height().round();
+                // Add an extra pixel to account to AA
+                let text_width = text_metrics.width().round() + 1.0;
+                let text_height = text_metrics.height().round() + 1.0;
 
                 if cx.style.width.get(entity) == Some(&Units::Auto) {
-                    // Add an extra pixel to account to AA
-                    cx.style.min_width.insert(entity, Units::Pixels(text_width + 1.0));
-                    cx.style.needs_relayout = true;
-                    cx.style.needs_redraw = true;
+                    let previous_min_width = entity.get_min_width(cx).value_or(0.0, text_width);
+                    if previous_min_width != text_width {
+                        cx.style.min_width.insert(entity, Units::Pixels(text_width));
+                        cx.style.needs_relayout = true;
+                        cx.style.needs_redraw = true;
+                    }
                 }
 
                 if cx.style.height.get(entity) == Some(&Units::Auto) {
-                    // Add an extra pixel to account for AA
-                    cx.style.min_height.insert(entity, Units::Pixels(text_height + 1.0));
-                    cx.style.needs_relayout = true;
-                    cx.style.needs_redraw = true;
+                    let previous_min_height = entity.get_min_width(cx).value_or(0.0, text_height);
+                    if previous_min_height != text_height {
+                        cx.style.min_height.insert(entity, Units::Pixels(text_height));
+                        cx.style.needs_relayout = true;
+                        cx.style.needs_redraw = true;
+                    }
                 }
             }
         }
