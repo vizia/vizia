@@ -37,10 +37,12 @@ fn main() {
                 .width(Pixels(200.0))
                 .child_left(Pixels(5.0));
 
-            Textbox::new(cx, AppData::text)
-                .on_edit(|cx, range, text| cx.emit(AppEvent::EditRange(range, text)))
-                .width(Pixels(200.0))
-                .child_left(Pixels(5.0));
+            Binding::new(cx, AppData::text, |cx, text|{
+                Label::new(cx, &text.get(cx).clone())
+                    .width(Pixels(200.0))
+                    .height(Pixels(30.0))
+                    .child_left(Pixels(5.0));
+            });
         }).space(Stretch(1.0)).col_between(Pixels(10.0));
     })
     .run();
