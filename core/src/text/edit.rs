@@ -21,7 +21,6 @@ pub trait EditableText {
 }
 
 impl EditableText for String {
-
     fn as_str(&self) -> &str {
         self.as_str()
     }
