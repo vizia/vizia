@@ -6,8 +6,6 @@ use crate::{
     BoundingBox, Context, Display, Entity, FontOrId, PseudoClass, Rule, Tree, TreeExt, Visibility,
 };
 
-// use crate::{BoundingBox, Display, Entity, Overflow, PropGet, PropSet, Property, SelectorRelation, Rule, Selector, Cx, Tree, TreeExt, Visibility};
-
 pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
         if entity == Entity::root() {

@@ -1,5 +1,4 @@
 use crate::Color;
-
 use crate::Units;
 
 /// A stop in a gradient, defined by a position and a color

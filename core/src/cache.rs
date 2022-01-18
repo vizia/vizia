@@ -13,7 +13,7 @@ use crate::style::Visibility;
 use crate::storage::sparse_set::SparseSet;
 use crate::storage::sparse_set::SparseSetError;
 
-/// Computed properties used for layout and drawing
+/// Computed properties used for layout and drawing.
 
 #[derive(Clone, Copy, Debug)]
 struct Pos {

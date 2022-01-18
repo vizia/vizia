@@ -1,7 +1,7 @@
 use morphorm::PositionType;
 
 use crate::{
-    style::PropGet, Binding, Code, Context, Data, Handle, Lens, Model, View, Visibility,
+    style::PropGet, Binding, Code, Context, Data, Handle, Lens, Model, PropSet, View, Visibility,
     WindowEvent,
 };
 
@@ -47,19 +47,13 @@ impl Popup {
     where
         F: 'static + Fn(&mut Context),
     {
-        // let is_open = if let Some(popup_data) = cx.data::<PopupData>() {
-        //     popup_data.is_open
-        // } else {
-        //     true
-        // };
-
         Self {}
             .build2(cx, |cx| {
                 Binding::new(cx, PopupData::is_open, move |cx, flag| {
                     let is_open = *flag.get(cx);
 
-                    cx.style.visibility.insert(
-                        cx.current,
+                    cx.current.set_visibility(
+                        cx,
                         if is_open { Visibility::Visible } else { Visibility::Invisible },
                     );
 

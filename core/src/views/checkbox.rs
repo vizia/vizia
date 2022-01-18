@@ -12,42 +12,24 @@ const ICON_CHECK: &str = "\u{2713}";
 ///
 /// # Example
 /// The following creates a simple checkbox with an initial state of false.
-/// ```no_run
-/// # use vizia_core::*;
-/// # use vizia_glutin::application::*;
-/// # Application::new(WindowDescription::new(), |cx|{
+/// ```compile_fail
 /// Checkbox::new(cx, false);
-/// # }).run();
 /// ```
 ///
-/// To add a label, wrap the checkbox within a `HStack` view with a `Label` component:
-/// ```no_run
-/// # use vizia_core::*;
-/// # use vizia_glutin::application::*;
-/// # Application::new(WindowDescription::new(), |cx|{
+/// To add a label, wrap the checkbox within a `HStack` view with a `Label`:
+/// ```compile_fail
 /// HStack::new(cx, |cx|{
 ///     Checkbox::new(cx, false);
 ///     Label::new(cx, "Press me");
 /// }).col_between(Pixels(5.0));
-/// # }).run();
 /// ```
 ///
 /// To use the checkbox, bind its value to some app data and use the `on_toggle` callback to mutate the data:
-/// ```no_run
-/// # use vizia_core::*;
-/// # use vizia_glutin::application::*;
-/// # #[derive(Lens)]
-/// # pub struct AppData {value: bool};
-/// # impl Model for AppData {};
-/// # #[derive(Debug)]
-/// # pub enum AppEvent{ToggleValue};
-/// # Application::new(WindowDescription::new(), |cx|{
-/// # AppData{value: false}.build(cx);
+/// ```compile_fail
 /// Binding::new(cx, AppData::value, |cx, value|{
 ///     Checkbox::new(cx, *value.get(cx))
 ///         .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
 /// })
-/// # }).run();
 /// ```
 ///
 pub struct Checkbox {
@@ -105,45 +87,6 @@ impl View for Checkbox {
 
                             self.on_toggle = Some(callback);
                         }
-
-                        // if self.checked {
-                        //     self.checked = false;
-                        //     if let Some(pseudo_classes) =
-                        //         cx.style.pseudo_classes.get_mut(cx.current)
-                        //     {
-                        //         pseudo_classes.set(PseudoClass::CHECKED, false);
-                        //     }
-
-                        //     cx.current.set_text(cx, "");
-
-                        //     if let Some(callback) = self.on_unchecked.take() {
-                        //         (callback)(cx);
-
-                        //         self.on_unchecked = Some(callback);
-                        //     }
-
-                        // } else {
-                        //     self.checked = true;
-                        //     if let Some(pseudo_classes) =
-                        //         cx.style.pseudo_classes.get_mut(cx.current)
-                        //     {
-                        //         pseudo_classes.set(PseudoClass::CHECKED, true);
-                        //     }
-
-                        //     cx.current.set_text(cx, ICON_CHECK);
-
-                        //     if let Some(callback) = self.on_checked.take() {
-                        //         (callback)(cx);
-
-                        //         self.on_checked = Some(callback);
-                        //     }
-
-                        //     if let Some(callback) = self.on_change.take() {
-                        //         (callback)(cx, self.checked);
-
-                        //         self.on_change = Some(callback);
-                        //     }
-                        // }
                     }
                 }
 

@@ -4,7 +4,6 @@ use crate::Interpolator;
 
 /// Describes a color
 #[derive(Copy, Clone)]
-#[repr(packed)]
 pub struct Color {
     pub data: u32,
 }
@@ -131,7 +130,6 @@ impl From<Color> for femtovg::Color {
     }
 }
 
-/// Compare two colors (Do not take care of alpha)
 impl PartialEq for Color {
     fn eq(&self, other: &Color) -> bool {
         self.r() == other.r()
@@ -143,7 +141,7 @@ impl PartialEq for Color {
 
 impl std::fmt::Debug for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "rgba({}, {}, {} {})", self.r(), self.g(), self.b(), self.a())
+        write!(f, "rgba({}, {}, {}, {})", self.r(), self.g(), self.b(), self.a())
     }
 }
 

@@ -12,44 +12,15 @@ pub enum Propagation {
     Up,
     // /// Events propagate down the tree to the target entity and then back up to the root
     // DownUp,
-    // /// Events propagate from the target entity to all entities below but on the same branch
-    // Fall,
     /// Events propagate directly to the target entity and to no others
     Direct,
-    // /// Events propagate to all entities in the tree
-    // All,
 }
 
 /// A message can be any static type.
 pub trait Message: Any + Debug + Send {
     // An &Any can be cast to a reference to a concrete type.
     fn as_any(&self) -> &dyn Any;
-
-    // Perform the test
-    // fn equals_a(&self, _: &dyn Message) -> bool;
 }
-
-// An Any is not normally clonable. This is a way around that.
-// pub trait MessageClone {
-//     fn clone_message(&self) -> Box<Message>;
-// }
-
-// Implements MessageClone for any type that Implements Message and Clone
-// impl<T> MessageClone for T
-// where
-//     T: 'static + Message + Clone,
-// {
-//     fn clone_message(&self) -> Box<Message> {
-//         Box::new(self.clone())
-//     }
-// }
-
-// An implementation of clone for boxed messages
-// impl Clone for Box<Message> {
-//     fn clone(&self) -> Box<Message> {
-//         self.clone_message()
-//     }
-// }
 
 impl dyn Message {
     // Check if a message is a certain type
@@ -82,18 +53,6 @@ impl<S: Debug + 'static + Send> Message for S {
     fn as_any(&self) -> &dyn Any {
         self
     }
-
-    // fn equals_a(&self, other: &dyn Message) -> bool {
-    //     //other.as_any().type_id() == self.as_any().type_id()
-
-    //     //println!("{:?} {:?}", other.as_any().type_id(), self.as_any().type_id());
-    //     //println!("{:?} {:?}", other, self);
-
-    //     other
-    //         .as_any()
-    //         .downcast_ref::<S>()
-    //         .map_or(false, |a| self == a)
-    // }
 }
 
 /// An event is a wrapper around a message and provides metadata on how the event should be propagated through the tree
@@ -109,8 +68,6 @@ pub struct Event {
     pub consumable: bool,
     // Determines whether the event should continue to be propagated
     pub(crate) consumed: bool,
-    // Whether the event is unique (only the latest copy can exist in a queue at a time)
-    pub unique: bool,
     // Specifies an order index which is used to sort the event queue
     pub order: i32,
 
@@ -141,7 +98,6 @@ impl Event {
             propagation: Propagation::Up,
             consumable: true,
             consumed: false,
-            unique: false,
             order: 0,
             trace: false,
             message: Box::new(message),
@@ -162,13 +118,6 @@ impl Event {
     /// Sets the origin of the event
     pub fn origin(mut self, entity: Entity) -> Self {
         self.origin = entity;
-        self
-    }
-
-    /// Specifies that the event is unique
-    /// (only one of this event type should exist in the event queue at once)
-    pub fn unique(mut self) -> Self {
-        self.unique = true;
         self
     }
 

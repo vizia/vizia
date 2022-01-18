@@ -1,4 +1,4 @@
-/// Represents the size of the application window.
+// Represents the size of the application window.
 pub struct WindowSize {
     pub width: u32,
     pub height: u32,
@@ -21,7 +21,7 @@ impl Position {
     }
 }
 
-/// Passed to the window to set various window properties
+/// Passed to the window to set initial window properties.
 pub struct WindowDescription {
     pub title: String,
     pub inner_size: WindowSize,

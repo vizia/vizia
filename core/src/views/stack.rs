@@ -2,6 +2,9 @@ use morphorm::LayoutType;
 
 use crate::{Context, Handle, View};
 
+/// A view which arranges its children into a vertical stack (column).
+///
+///
 pub struct VStack {}
 
 impl VStack {
@@ -21,6 +24,7 @@ impl View for VStack {
     }
 }
 
+/// A view which arranges its children into a horizontal stack (row).
 pub struct HStack {}
 
 impl HStack {
@@ -42,6 +46,7 @@ impl View for HStack {
     }
 }
 
+/// A view which overlays its children on top of each other.
 pub struct ZStack {}
 
 impl ZStack {

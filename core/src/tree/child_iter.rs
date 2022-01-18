@@ -1,6 +1,6 @@
 use crate::{Entity, GenerationalId, Tree};
 
-/// Iterator for iterating through the children of an entity.
+/// Iterator for iterating the children of an entity.
 pub struct ChildIterator<'a> {
     pub tree: &'a Tree,
     pub current_forward: Option<Entity>,

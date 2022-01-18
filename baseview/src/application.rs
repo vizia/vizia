@@ -324,10 +324,6 @@ impl ApplicationRunner {
     }
 
     pub fn render(&mut self) {
-        //let tree = self.context.tree.clone();
-        //vizia_core::apply_clipping(&mut self.context, &tree);
-        //self.event_manager.draw(&mut self.context, &mut self.canvas);
-
         // TODO
         let dpi_factor = 1.0;
 

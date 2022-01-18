@@ -2,7 +2,6 @@ use morphorm::Node;
 
 use crate::{Entity, Style};
 
-// TODO - generate these with a macro
 impl<'w> Node<'w> for Entity {
     type Data = Style;
 
