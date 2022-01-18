@@ -141,6 +141,16 @@ impl Context {
         );
     }
 
+    pub fn emit_to<M: Message>(&mut self, target: Entity, message: M) {
+        self.event_queue.push_back(
+            Event::new(message)
+                .target(target)
+                .origin(self.current)
+                .propagate(Propagation::Direct),
+        );
+    }
+
+
     pub fn add_listener<F, W>(&mut self, listener: F)
     where
         W: View,

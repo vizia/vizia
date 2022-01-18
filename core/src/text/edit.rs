@@ -3,6 +3,7 @@ use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 use std::ops::Range;
 
 pub trait EditableText {
+    fn as_str(&self) -> &str;
     /// Replace range with new text
     fn edit(&mut self, range: Range<usize>, txt: impl Into<String>);
     /// Length of the text
@@ -20,6 +21,11 @@ pub trait EditableText {
 }
 
 impl EditableText for String {
+
+    fn as_str(&self) -> &str {
+        self.as_str()
+    }
+
     fn edit(&mut self, range: Range<usize>, txt: impl Into<String>) {
         self.replace_range(range, &txt.into());
     }
