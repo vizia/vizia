@@ -63,14 +63,20 @@ pub(crate) enum Property {
     RowBetween(Units),
     ColBetween(Units),
 
-    // Border
+    // Border Radius
     BorderRadius(Units),
     BorderTopLeftRadius(Units),
     BorderTopRightRadius(Units),
     BorderBottomLeftRadius(Units),
     BorderBottomRightRadius(Units),
+
+    // Border Width
     BorderWidth(Units),
+
+    // Border Color
     BorderColor(Color),
+
+    // Border Shape
     BorderCornerShape(BorderCornerShape),
     BorderTopLeftShape(BorderCornerShape),
     BorderTopRightShape(BorderCornerShape),
@@ -82,10 +88,13 @@ pub(crate) enum Property {
     BackgroundImage(String),
     // TODO
     //BackgroundGradient(LinearGradient),
+
+    // Font
     FontSize(f32),
     FontColor(Color),
     Font(String),
 
+    // Shadow
     OuterShadow(BoxShadow),
     OuterShadowHOffset(Units),
     OuterShadowVOffset(Units),

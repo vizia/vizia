@@ -28,14 +28,8 @@ pub struct Tree {
     pub changed: bool,
 }
 
-impl Default for Tree {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl Tree {
-    /// Creates a new tree with a root entity
+    /// Creates a new tree with a root entity.
     pub fn new() -> Tree {
         Tree {
             parent: vec![None],

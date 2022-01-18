@@ -92,37 +92,6 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
     }
 }
 
-// pub struct And<A,B> {
-//     a: A,
-//     b: B,
-// }
-
-// impl<A,B> And<A,B> {
-//     pub fn new(a: A, b: B) -> Self
-//     where
-//         A: Lens,
-//         B: Lens,
-//     {
-//         Self {
-//             a,
-//             b,
-//         }
-//     }
-// }
-
-// impl<A,B> Lens for And<A,B>
-// where
-//     A: Lens,
-//     B: Lens<Source = A::Source>,
-// {
-//     type Source = A::Source;
-//     type Target = (A::Target, B::Target);
-
-//     fn view<'a>(&self, data: &'a Self::Source) -> &Self::Target {
-//         &(self.a.view(data), self.b.view(data))
-//     }
-// }
-
 // pub struct Index<T,I> {
 //     index: I,
 //     output: PhantomData<T>,

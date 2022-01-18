@@ -5,7 +5,7 @@ use std::ops::{Index, IndexMut};
 use crate::{Context, Entity, Tree};
 
 /// A 2D transform matrix.
-#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct Transform2D(pub [f32; 6]);
 
 impl Transform2D {

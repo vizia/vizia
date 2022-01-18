@@ -1,7 +1,9 @@
+use crate::{Context, Event, View};
 use crate::{Handle, MouseButton, WindowEvent};
 
-use crate::{Context, Event, View};
-
+/// A simple push button with an action and a label.
+///
+///
 pub struct Button {
     action: Option<Box<dyn Fn(&mut Context)>>,
 }
@@ -28,18 +30,11 @@ impl View for Button {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    //println!("Mouse Down");
                     if let Some(callback) = self.action.take() {
                         (callback)(cx);
 
                         self.action = Some(callback);
                     }
-                }
-
-                WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
-                    // if let Some(callback) = self.action.take() {
-                    //     (callback)(cx);
-                    // }
                 }
 
                 _ => {}

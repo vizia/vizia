@@ -28,10 +28,9 @@ impl EventManager {
         // Move events from state to event manager
         self.event_queue.extend(context.event_queue.drain(0..));
 
-        // Sort the events by order
-        //self.event_queue.sort_by_cached_key(|event| event.order);
-
-        self.tree = context.tree.clone();
+        if context.tree.changed {
+            self.tree = context.tree.clone();
+        }
 
         // Loop over the events in the event queue
         'events: for event in self.event_queue.iter_mut() {

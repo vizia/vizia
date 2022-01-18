@@ -2,8 +2,8 @@ use crate::Entity;
 use crate::Interpolator;
 
 /// Display determines whether an entity will be rendered and acted on by the layout system.
-/// To make an entity invisible to rendering but still layed out, see [Visibility].
-#[derive(Copy, Clone, PartialEq, Debug)]
+/// To make an entity invisible to rendering but still visible to layout, see [Visibility].
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Display {
     None,
     Flex,
@@ -24,7 +24,7 @@ impl Interpolator for Display {
 /// Visibility determines whether an entity will be rendered.
 /// An invisible entity will still be acted upon by the layout system.
 /// Use [Display] to hide an entity from both rendering and layout.
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Visibility {
     Visible,
     Invisible,
@@ -52,8 +52,7 @@ impl Interpolator for Visibility {
     }
 }
 
-/// Describes the opacity of a entity.
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Opacity(pub f32);
 
 impl Default for Opacity {
@@ -68,8 +67,21 @@ impl Interpolator for Opacity {
     }
 }
 
+///  Determines whether content should be rendered outside of the bounding box of an element.
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum Overflow {
+    Visible,
+    Hidden,
+}
+
+impl Default for Overflow {
+    fn default() -> Self {
+        Overflow::Hidden
+    }
+}
+
 /// Next and previous widgets which receive focus.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct FocusOrder {
     pub next: Entity,
     pub prev: Entity,

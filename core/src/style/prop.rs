@@ -94,7 +94,7 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     fn restyle(&self, cx: &mut Context) {
         cx.event_queue.push_back(
-            Event::new(WindowEvent::Restyle).target(self.entity()).origin(self.entity()).unique(),
+            Event::new(WindowEvent::Restyle).target(self.entity()).origin(self.entity()),
         );
     }
 
@@ -108,7 +108,7 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     fn relayout(&self, cx: &mut Context) {
         cx.event_queue.push_back(
-            Event::new(WindowEvent::Relayout).target(self.entity()).origin(self.entity()).unique(),
+            Event::new(WindowEvent::Relayout).target(self.entity()).origin(self.entity()),
         );
     }
 
@@ -121,9 +121,8 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.redraw(cx);
     /// ```
     fn redraw(&self, cx: &mut Context) {
-        cx.event_queue.push_back(
-            Event::new(WindowEvent::Redraw).target(self.entity()).origin(self.entity()).unique(),
-        );
+        cx.event_queue
+            .push_back(Event::new(WindowEvent::Redraw).target(self.entity()).origin(self.entity()));
     }
 
     // TODO

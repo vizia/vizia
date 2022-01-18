@@ -2,11 +2,10 @@ use crate::{
     Abilities, Context, Display, Entity, Event, Propagation, PseudoClass, Visibility, WindowEvent,
 };
 
-/// Determines the hovered entity based on the mouse cursor position
+/// Determines the hovered entity based on the mouse cursor position.
 pub fn apply_hover(cx: &mut Context) {
-    //println!("Apply Hover");
+    // TODO - Cache this
     let mut draw_tree: Vec<Entity> = cx.tree.into_iter().collect();
-
     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 
     let cursorx = cx.mouse.cursorx;

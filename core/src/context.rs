@@ -19,7 +19,6 @@ pub struct Context {
     pub current: Entity,
     pub count: usize,
     pub views: HashMap<Entity, Box<dyn ViewHandler>>,
-    //pub lenses: HashMap<TypeId, Box<dyn LensWrap>>,
     pub data: SparseSet<ModelDataStore>,
     pub event_queue: VecDeque<Event>,
     pub listeners: HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
@@ -35,11 +34,7 @@ pub struct Context {
     pub hovered: Entity,
     pub focused: Entity,
 
-    // pub state_count: u32,
     pub resource_manager: ResourceManager,
-
-    // Temp
-    pub fonts: Vec<FontId>,
 
     pub text_context: TextContext,
     pub clipboard: ClipboardContext,
@@ -56,7 +51,6 @@ impl Context {
             current: Entity::root(),
             count: 0,
             views: HashMap::new(),
-            //state: HashMap::new(),
             data: SparseSet::new(),
             style: Style::default(),
             cache,
@@ -68,9 +62,7 @@ impl Context {
             captured: Entity::null(),
             hovered: Entity::root(),
             focused: Entity::root(),
-            //state_count: 0,
             resource_manager: ResourceManager::new(),
-            fonts: Vec::new(),
             text_context: TextContext::default(),
             clipboard: ClipboardContext::new().expect("Failed to init clipboard"),
         }
@@ -183,8 +175,7 @@ impl Context {
             println!("Font already exists");
             return;
         }
-        //let id = self.text_context.add_font_mem(&data.clone()).expect("failed");
-        //println!("{} {:?}", name, id);
+
         self.resource_manager.fonts.insert(name.to_owned(), FontOrId::Font(data.to_vec()));
     }
 
