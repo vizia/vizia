@@ -103,6 +103,15 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
+    pub fn display<U: Clone + Into<Display>>(self, value: impl Res<U>) -> Self {
+        self.cx.style.display.insert(self.entity, value.get(self.cx).clone().into());
+
+        self.cx.style.needs_relayout = true;
+        self.cx.style.needs_redraw = true;
+
+        self
+    }
+
     pub fn visibility<U: Clone + Into<Visibility>>(self, value: impl Res<U>) -> Self {
         self.cx.style.visibility.insert(self.entity, value.get(self.cx).clone().into());
 
@@ -237,7 +246,7 @@ impl<'a, T> Handle<'a, T> {
 
     set_style!(font_size, f32);
 
-    set_style!(display, Display);
+    //set_style!(display, Display);
     //set_style!(visibility, Visibility);
 
     set_style!(rotate, f32);

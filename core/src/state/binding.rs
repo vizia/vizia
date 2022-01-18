@@ -184,3 +184,9 @@ impl<T> Res<(T, T)> for (T, T) {
         self
     }
 }
+
+impl Res<bool> for bool {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a bool {
+        self
+    }
+}
