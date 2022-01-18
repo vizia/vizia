@@ -75,6 +75,14 @@ textbox:checked {
     border-color: #4c00ff;
 }
 
+textbox .caret {
+    background-color: #ff0000;
+}
+
+textbox .selection {
+    background-color: #6464c888;
+}
+
 
 label {
     width: auto;

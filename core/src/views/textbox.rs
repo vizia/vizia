@@ -313,14 +313,16 @@ where
                     Element::new(cx)
                         .left(Pixels(select_left))
                         .width(Pixels(select_width))
-                        .background_color(Color::rgba(100, 100, 200, 120))
+                        .class("selection")
+                        //.background_color(Color::rgba(100, 100, 200, 120))
                         .position_type(PositionType::SelfDirected)
                         .visibility(if editing {Visibility::Visible} else {Visibility::Invisible});
     
                     // Caret
                     Element::new(cx)
                         .left(Pixels(caret_left))
-                        .background_color(Color::rgba(255, 0, 0, 255))
+                        .class("caret")
+                        //.background_color(Color::rgba(255, 0, 0, 255))
                         .position_type(PositionType::SelfDirected)
                         .width(Pixels(1.0))
                         .visibility(if editing {Visibility::Visible} else {Visibility::Invisible});
