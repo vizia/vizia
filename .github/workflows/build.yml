@@ -23,7 +23,7 @@ jobs:
       run: |
         sudo apt update
         # baseview dependencies
-        sudo apt install libx11-xcb-dev libxcb-dri2-0-dev libgl1-mesa-dev libxcb-icccm4-dev libxcursor-dev libasound2-dev clang libspeechd-dev
+        sudo apt install libx11-xcb-dev libxcb-dri2-0-dev libgl1-mesa-dev libxcb-icccm4-dev libxcursor-dev -lxcb-render -lxcb-shape -lxcb-xfixes
       if: contains(matrix.os, 'ubuntu')
     - name: Install rust stable
       uses: actions-rs/toolchain@v1

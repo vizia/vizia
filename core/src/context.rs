@@ -1,5 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
+#[cfg(feature = "clipboard")]
 use copypasta::ClipboardContext;
 use femtovg::TextContext;
 // use fluent_bundle::{FluentBundle, FluentResource};
@@ -37,6 +38,8 @@ pub struct Context {
     pub resource_manager: ResourceManager,
 
     pub text_context: TextContext,
+
+    #[cfg(feature = "clipboard")]
     pub clipboard: ClipboardContext,
 }
 
@@ -64,6 +67,8 @@ impl Context {
             focused: Entity::root(),
             resource_manager: ResourceManager::new(),
             text_context: TextContext::default(),
+
+            #[cfg(feature = "clipboard")]
             clipboard: ClipboardContext::new().expect("Failed to init clipboard"),
         }
     }

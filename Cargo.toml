@@ -68,7 +68,8 @@ path = "examples/lists/multiselectable_list.rs"
 
 
 [features]
-default = ["glutin"]
+default = ["glutin", "clipboard"]
+clipboard = ["vizia_core/clipboard"]
 glutin = ["vizia_glutin"]
 baseview = ["vizia_baseview"]
 meadowlark = ["glutin", "vizia_core/meadowlark"]

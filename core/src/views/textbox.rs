@@ -1,6 +1,8 @@
 use std::ops::Range;
 
+#[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
+
 use femtovg::{Align, Baseline, Paint};
 use keyboard_types::Code;
 use morphorm::{PositionType, Units};
@@ -9,8 +11,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::style::PropGet;
 use crate::{
     Binding, Context, CursorIcon, Data, EditableText, Element, Entity, Event, FontOrId, Handle,
-    Lens, Model, Modifiers, MouseButton, Movement, PropSet, Selection, Units::*, View, Visibility,
-    WindowEvent,
+    Lens, Model, Modifiers, MouseButton, Movement, PropSet, Selection, Units::*, View, WindowEvent,
 };
 
 use crate::text::Direction;
@@ -975,7 +976,9 @@ where
                         }
                     }
 
-                    Code::KeyC => {
+                    Code::KeyC =>
+                    {
+                        #[cfg(feature = "clipboard")]
                         if self.edit {
                             if cx.modifiers.contains(Modifiers::CTRL) {
                                 if let Some(text) = self.get_text(cx).cloned() {
@@ -987,7 +990,9 @@ where
                         }
                     }
 
-                    Code::KeyV => {
+                    Code::KeyV =>
+                    {
+                        #[cfg(feature = "clipboard")]
                         if self.edit {
                             if cx.modifiers.contains(Modifiers::CTRL) {
                                 if let Ok(text) = cx.clipboard.get_contents() {
