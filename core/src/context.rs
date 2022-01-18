@@ -1,7 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 
 use copypasta::ClipboardContext;
-use femtovg::{TextContext};
+use femtovg::TextContext;
 // use fluent_bundle::{FluentBundle, FluentResource};
 // use unic_langid::LanguageIdentifier;
 

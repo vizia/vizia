@@ -8,9 +8,9 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::style::PropGet;
 use crate::{
-    Binding, Context, CursorIcon, Data, EditableText, Element, Entity, Event, FontOrId,
-    Handle, Lens, Model, Modifiers, MouseButton, Movement, PropSet, Selection, Units::*, View,
-    Visibility, WindowEvent,
+    Binding, Context, CursorIcon, Data, EditableText, Element, Entity, Event, FontOrId, Handle,
+    Lens, Model, Modifiers, MouseButton, Movement, PropSet, Selection, Units::*, View, Visibility,
+    WindowEvent,
 };
 
 use crate::text::Direction;
