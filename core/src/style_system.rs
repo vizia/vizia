@@ -252,8 +252,8 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                 let text_height = text_metrics.height().round() + 1.0;
 
                 if cx.style.width.get(entity) == Some(&Units::Auto) {
-                    let previous_min_width = entity.get_min_width(cx).value_or(0.0, text_width);
-                    if previous_min_width != text_width {
+                    //let previous_min_width = entity.get_min_width(cx).value_or(0.0, 0.0);
+                    if entity.get_min_width(cx) != Units::Pixels(text_width) {
                         cx.style.min_width.insert(entity, Units::Pixels(text_width));
                         cx.style.needs_relayout = true;
                         cx.style.needs_redraw = true;
@@ -261,8 +261,8 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                 }
 
                 if cx.style.height.get(entity) == Some(&Units::Auto) {
-                    let previous_min_height = entity.get_min_width(cx).value_or(0.0, text_height);
-                    if previous_min_height != text_height {
+                    let previous_min_height = entity.get_min_width(cx).value_or(0.0, 0.0);
+                    if entity.get_min_height(cx) != Units::Pixels(text_height) {
                         cx.style.min_height.insert(entity, Units::Pixels(text_height));
                         cx.style.needs_relayout = true;
                         cx.style.needs_redraw = true;
