@@ -243,7 +243,7 @@ mod tests {
         let hex_color = "#FF00FF88";
         let color = Color::from(hex_color);
 
-        assert_eq!(color, Color::rgba(255, 0, 255, 120));
+        assert_eq!(color, Color::rgba(255, 0, 255, 136));
     }
 
     #[test]

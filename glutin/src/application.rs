@@ -591,8 +591,8 @@ impl Application {
                             input,
                             is_synthetic: _,
                         } => {
+                            #[cfg(debug_assertions)]
                             if input.virtual_keycode == Some(VirtualKeyCode::H) && input.state == ElementState::Pressed {
-                                println!("Tree");
                                 for entity in context.tree.into_iter() {
                                     println!("Entity: {} Parent: {:?} posx: {} posy: {} width: {} height: {} scissor: {:?}", entity, entity.parent(&context.tree), context.cache.get_posx(entity), context.cache.get_posy(entity), context.cache.get_width(entity), context.cache.get_height(entity), context.cache.get_clip_region(entity));
                                 }
