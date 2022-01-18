@@ -27,6 +27,10 @@ name = "checkbox"
 path = "examples/controls/checkbox.rs"
 
 [[example]]
+name = "radiobutton"
+path = "examples/controls/radiobutton.rs"
+
+[[example]]
 name = "zstack"
 path = "examples/controls/zstack.rs"
 
