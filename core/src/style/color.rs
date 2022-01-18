@@ -126,10 +126,8 @@ impl From<&str> for Color {
                     Err(_) => 0,
                 };
 
-                x = x << 8;
-
                 if clean_hex.len() == 6 {
-                    x |= 0x00_000_0FF;
+                    x = (x << 8) | 0x00_000_0FF;
                 }
 
                 Color { data: x }
@@ -245,10 +243,10 @@ mod tests {
 
     #[test]
     fn test_hex() {
-        let hex_color = "#FF00FF";
+        let hex_color = "#FF00FF88";
         let color = Color::from(hex_color);
 
-        assert_eq!(color, Color::rgba(255, 0, 255, 255));
+        assert_eq!(color, Color::rgba(255, 0, 255, 120));
     }
 
     #[test]
