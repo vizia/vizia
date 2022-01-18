@@ -101,7 +101,6 @@ impl From<&str> for Color {
     fn from(s: &str) -> Color {
         let clean_hex = s.trim_start_matches('#');
         match clean_hex.len() {
-
             3 | 4 => {
                 let hex = clean_hex.as_bytes();
                 let r = (hex[0] as char).to_digit(16).unwrap() as u8 * 17;
@@ -117,7 +116,7 @@ impl From<&str> for Color {
                     data |= a as u32;
                 }
 
-                Color{ data }
+                Color { data }
             }
 
             6 | 8 => {
@@ -206,7 +205,6 @@ impl Color {
     pub const fn magenta() -> Self {
         Self { data: 0xFF00FFFF }
     }
-
 }
 
 impl Interpolator for Color {
@@ -235,7 +233,6 @@ fn hue(mut h: f32, m1: f32, m2: f32) -> f32 {
 
     m1
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -123,6 +123,27 @@ impl Application {
 
         context.style.default_font = "roboto".to_string();
 
+        // Load resources
+        for (name, font) in context.resource_manager.fonts.iter_mut() {
+            match font {
+                FontOrId::Font(data) => {
+                    let id1 = window
+                        .canvas
+                        .add_font_mem(&data.clone())
+                        .expect(&format!("Failed to load font file for: {}", name));
+                    let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
+                    if id1 != id2 {
+                        panic!(
+                            "Fonts in canvas must have the same id as fonts in the text context"
+                        );
+                    }
+                    *font = FontOrId::Id(id1);
+                }
+
+                _ => {}
+            }
+        }
+
         let dpi_factor = window.handle.window().scale_factor();
         let size = window.handle.window().inner_size();
 

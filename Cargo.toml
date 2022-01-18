@@ -47,6 +47,10 @@ name = "dropdown"
 path = "examples/controls/dropdown.rs"
 
 [[example]]
+name = "textbox"
+path = "examples/controls/textbox.rs"
+
+[[example]]
 name = "list"
 path = "examples/lists/list.rs"
 

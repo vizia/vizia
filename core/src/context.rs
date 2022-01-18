@@ -1,6 +1,9 @@
 use std::collections::{HashMap, VecDeque};
 
+use copypasta::ClipboardContext;
 use femtovg::TextContext;
+// use fluent_bundle::{FluentBundle, FluentResource};
+// use unic_langid::LanguageIdentifier;
 
 use crate::{
     storage::sparse_set::SparseSet, CachedData, Entity, Enviroment, Event, FontOrId, IdManager,
@@ -34,6 +37,7 @@ pub struct Context {
     pub resource_manager: ResourceManager,
 
     pub text_context: TextContext,
+    pub clipboard: ClipboardContext,
 }
 
 impl Context {
@@ -60,6 +64,7 @@ impl Context {
             focused: Entity::root(),
             resource_manager: ResourceManager::new(),
             text_context: TextContext::default(),
+            clipboard: ClipboardContext::new().expect("Failed to init clipboard"),
         }
     }
 
@@ -125,6 +130,12 @@ impl Context {
                 .target(self.current)
                 .origin(self.current)
                 .propagate(Propagation::Up),
+        );
+    }
+
+    pub fn emit_to<M: Message>(&mut self, target: Entity, message: M) {
+        self.event_queue.push_back(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
         );
     }
 
