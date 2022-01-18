@@ -11,12 +11,12 @@ pub struct Color {
 impl Color {
     // Create a new color from RGB
     pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
-        Color { data: 0xFF00_0000 | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32) }
+        Color { data: ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8) | 0x0000_00FF }
     }
 
     // Create a new color from RGBA
     pub const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Color { data: ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32) }
+        Color { data: ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8) | (a as u32) }
     }
 
     /// Returns color value specified by hue, saturation and lightness.
@@ -45,27 +45,27 @@ impl Color {
         let g = (hue(h, m1, m2).max(0.0).min(1.0) * 255.0) as u8;
         let b = (hue(h - 1.0 / 3.0, m1, m2).max(0.0).min(1.0) * 255.0) as u8;
 
-        Color { data: ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32) }
+        Color { data: ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8) | (a as u32) }
     }
 
     // Get the red value
     pub fn r(self) -> u8 {
-        ((self.data & 0x00FF_0000) >> 16) as u8
+        ((self.data & 0xFF00_0000) >> 24) as u8
     }
 
     // Get the green value
     pub fn g(self) -> u8 {
-        ((self.data & 0x0000_FF00) >> 8) as u8
+        ((self.data & 0x00FF_0000) >> 16) as u8
     }
 
     // Get the blue value
     pub fn b(self) -> u8 {
-        (self.data & 0x0000_00FF) as u8
+        ((self.data & 0x0000_FF00) >> 8) as u8
     }
 
     // Get the alpha value
     pub fn a(self) -> u8 {
-        ((self.data & 0xFF00_0000) >> 24) as u8
+        (self.data & 0x0000_00FF) as u8
     }
 
     // Interpolate between two colors
@@ -101,14 +101,35 @@ impl From<&str> for Color {
     fn from(s: &str) -> Color {
         let clean_hex = s.trim_start_matches('#');
         match clean_hex.len() {
+
+            3 | 4 => {
+                let hex = clean_hex.as_bytes();
+                let r = (hex[0] as char).to_digit(16).unwrap() as u8 * 17;
+                let g = (hex[1] as char).to_digit(16).unwrap() as u8 * 17;
+                let b = (hex[2] as char).to_digit(16).unwrap() as u8 * 17;
+
+                let mut data = ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8);
+
+                if clean_hex.len() == 3 {
+                    data |= 0x00_000_0FF;
+                } else {
+                    let a = (hex[0] as char).to_digit(16).unwrap() as u8 * 17;
+                    data |= a as u32;
+                }
+
+                Color{ data }
+            }
+
             6 | 8 => {
                 let mut x = match u32::from_str_radix(&clean_hex, 16) {
                     Ok(x) => x,
                     Err(_) => 0,
                 };
 
+                x = x << 8;
+
                 if clean_hex.len() == 6 {
-                    x |= 0xFF_000_000;
+                    x |= 0x00_000_0FF;
                 }
 
                 Color { data: x }
@@ -157,7 +178,7 @@ impl Color {
     }
 
     pub const fn black() -> Self {
-        Self { data: 0xFF000000 }
+        Self { data: 0x000000FF }
     }
 
     pub const fn white() -> Self {
@@ -165,20 +186,29 @@ impl Color {
     }
 
     pub const fn red() -> Self {
-        Self { data: 0xFFFF0000 }
-    }
-
-    pub const fn green() -> Self {
-        Self { data: 0xFF00FF00 }
-    }
-
-    pub const fn blue() -> Self {
         Self { data: 0xFF0000FF }
     }
 
-    pub const fn yellow() -> Self {
-        Self { data: 0xFFFFFF00 }
+    pub const fn green() -> Self {
+        Self { data: 0x00FF00FF }
     }
+
+    pub const fn blue() -> Self {
+        Self { data: 0x0000FFFF }
+    }
+
+    pub const fn yellow() -> Self {
+        Self { data: 0x00FFFFFF }
+    }
+
+    pub const fn cyan() -> Self {
+        Self { data: 0xFFFF00FF }
+    }
+
+    pub const fn magenta() -> Self {
+        Self { data: 0xFF00FFFF }
+    }
+
 }
 
 impl Interpolator for Color {
@@ -206,4 +236,26 @@ fn hue(mut h: f32, m1: f32, m2: f32) -> f32 {
     }
 
     m1
+}
+
+
+#[cfg(test)]
+mod tests {
+    use crate::Color;
+
+    #[test]
+    fn test_hex() {
+        let hex_color = "#FF00FF";
+        let color = Color::from(hex_color);
+
+        assert_eq!(color, Color::rgba(255, 0, 255, 255));
+    }
+
+    #[test]
+    fn test_short_hex() {
+        let hex_color = "#FFF";
+        let color = Color::from(hex_color);
+
+        assert_eq!(color, Color::rgba(255, 255, 255, 255));
+    }
 }
