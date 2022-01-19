@@ -1,8 +1,13 @@
+use lazy_static::lazy_static;
+
 use vizia::*;
+
+lazy_static! {
+    pub static ref STATIC_LIST: Vec<u32> = (20..24).collect();
+}
 
 #[derive(Lens)]
 pub struct AppData {
-    list: Vec<u32>,
     selected: usize,
 }
 
@@ -23,7 +28,7 @@ impl Model for AppData {
                 }
 
                 AppEvent::IncrementSelection => {
-                    cx.emit(AppEvent::Select((self.selected + 1).min(self.list.len() - 1)));
+                    cx.emit(AppEvent::Select((self.selected + 1).min(STATIC_LIST.len() - 1)));
                 }
 
                 AppEvent::DecrementSelection => {
@@ -39,18 +44,18 @@ fn main() {
 
         cx.add_stylesheet("examples/lists/list_style.css").unwrap();
 
-        let list: Vec<u32> = (10..14u32).collect();
-        AppData { list, selected: 0 }.build(cx);
+        AppData { selected: 0 }.build(cx);
 
         VStack::new(cx, move |cx| {
-           
-            List::new(cx, AppData::list, move |cx, item| {
+
+            List::new(cx, StaticLens::new(STATIC_LIST.as_ref()), move |cx, item| {
                 let item_text = item.get(cx).to_string();
                 let item_index = item.index();
                 VStack::new(cx, move |cx| {
                     Binding::new(cx, AppData::selected, move |cx, selected| {
                         let selected = *selected.get(cx);
                         Label::new(cx, &item_text)
+                            .class("list_item")
                             // Set the checked state based on whether this item is selected
                             .checked(if selected == item_index { true } else { false })
                             // Set the selected item to this one if pressed
@@ -60,7 +65,7 @@ fn main() {
             })
             .on_increment(move |cx| cx.emit(AppEvent::IncrementSelection))
             .on_decrement(move |cx| cx.emit(AppEvent::DecrementSelection));
-            
+
             Binding::new(cx, AppData::selected, move |cx, selected_item| {
                 Label::new(
                     cx,

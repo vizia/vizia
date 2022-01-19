@@ -2,17 +2,6 @@ use std::collections::HashSet;
 
 use vizia::*;
 
-const STYLE: &str = r#"
-    
-    label {
-        background-color: white;
-    }
-
-    label:checked {
-        background-color: blue;
-    }
-"#;
-
 #[derive(Lens)]
 pub struct AppData {
     list: Vec<u32>,
@@ -26,7 +15,6 @@ pub enum AppEvent {
 }
 
 impl Model for AppData {
-    // Intercept list events from the list view to modify the selected index in the model
     fn event(&mut self, _: &mut Context, event: &mut Event) {
         if let Some(list_event) = event.message.downcast() {
             match list_event {
@@ -46,7 +34,8 @@ impl Model for AppData {
 
 fn main() {
     Application::new(WindowDescription::new().with_title("List"), |cx| {
-        cx.add_theme(STYLE);
+        
+        cx.add_stylesheet("examples/lists/list_style.css").unwrap();
 
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list, selected: HashSet::new() }.build(cx);
@@ -60,18 +49,13 @@ fn main() {
                     let selected = selected.get(cx).clone();
 
                     Label::new(cx, &item_text)
-                        .width(Pixels(100.0))
-                        .height(Pixels(30.0))
-                        .border_color(Color::black())
-                        .border_width(Pixels(1.0))
                         // Set the checked state based on whether this item is selected
-                        .checked(if selected.contains(&item_index) { true } else { false })
+                        .checked(selected.contains(&item_index))
                         // Set the selected item to this one if pressed
                         .on_press(move |cx| cx.emit(AppEvent::Select(item_index)));
                 });
             });
         })
-        .row_between(Pixels(5.0))
         .space(Stretch(1.0))
         .on_clear(|cx| cx.emit(AppEvent::ClearSelection));
     })

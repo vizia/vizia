@@ -58,7 +58,8 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
-    pub fn checked(self, state: bool) -> Self {
+    pub fn checked(self, state: impl Res<bool>) -> Self {
+        let state = state.get(self.cx).clone();
         if let Some(pseudo_classes) = self.cx.style.pseudo_classes.get_mut(self.entity) {
             pseudo_classes.set(PseudoClass::CHECKED, state);
         } else {
