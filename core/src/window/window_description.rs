@@ -93,6 +93,12 @@ impl WindowDescription {
         self
     }
 
+    pub fn with_always_on_top(mut self, flag: bool) -> Self {
+        self.always_on_top = flag;
+
+        self
+    }
+
     pub fn with_icon(mut self, icon: Vec<u8>, width: u32, height: u32) -> Self {
         self.icon = Some(icon);
         self.icon_width = width;

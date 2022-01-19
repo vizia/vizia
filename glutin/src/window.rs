@@ -35,6 +35,7 @@ impl Window {
                 window_description.min_inner_size.width,
                 window_description.min_inner_size.height,
             ))
+            .with_always_on_top(window_description.always_on_top)
             .with_window_icon(if let Some(icon) = &window_description.icon {
                 Some(
                     glutin::window::Icon::from_rgba(
