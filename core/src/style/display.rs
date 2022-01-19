@@ -15,6 +15,16 @@ impl Default for Display {
     }
 }
 
+impl From<bool> for Display {
+    fn from(val: bool) -> Self {
+        if val {
+            Display::Flex
+        } else {
+            Display::None
+        }
+    }
+}
+
 impl Interpolator for Display {
     fn interpolate(_start: &Self, end: &Self, _t: f32) -> Self {
         return *end;
