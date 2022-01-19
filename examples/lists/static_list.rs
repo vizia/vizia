@@ -41,13 +41,11 @@ impl Model for AppData {
 
 fn main() {
     Application::new(WindowDescription::new().with_title("List"), |cx| {
-
         cx.add_stylesheet("examples/lists/list_style.css").unwrap();
 
         AppData { selected: 0 }.build(cx);
 
         VStack::new(cx, move |cx| {
-
             List::new(cx, StaticLens::new(STATIC_LIST.as_ref()), move |cx, item| {
                 let item_text = item.get(cx).to_string();
                 let item_index = item.index();
@@ -67,15 +65,10 @@ fn main() {
             .on_decrement(move |cx| cx.emit(AppEvent::DecrementSelection));
 
             Binding::new(cx, AppData::selected, move |cx, selected_item| {
-                Label::new(
-                    cx,
-                    &format!(
-                        "You have selected: {}",
-                        selected_item.get(cx),
-                    ),
-                );
+                Label::new(cx, &format!("You have selected: {}", selected_item.get(cx),));
             });
-        }).class("container");
+        })
+        .class("container");
     })
     .run();
 }

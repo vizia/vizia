@@ -9,9 +9,8 @@ impl Model for AppData {}
 
 fn main() {
     Application::new(WindowDescription::new().with_title("List"), |cx| {
-        
         cx.add_stylesheet("examples/lists/list_style.css").unwrap();
-        
+
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list }.build(cx);
 
