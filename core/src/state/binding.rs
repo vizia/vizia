@@ -25,6 +25,21 @@ where
     <L as Lens>::Source: 'static,
     <L as Lens>::Target: Data,
 {
+    pub fn new_fallible<F1, F2>(cx: &mut Context, lens: L, builder_some: F1, builder_none: F2)
+    where
+        F1: 'static + Fn(&mut Context, Field<L>),
+        F2: 'static + Fn(&mut Context),
+    {
+        Self::new(cx, lens, move |cx, field| {
+            // TODO: cache somewhere which branch we take and prune the tree if we switch
+            if field.get_fallible(cx).is_some() {
+                builder_some(cx, field);
+            } else {
+                builder_none(cx);
+            }
+        })
+    }
+
     pub fn new<F>(cx: &mut Context, lens: L, builder: F)
     where
         F: 'static + Fn(&mut Context, Field<L>),
@@ -65,7 +80,7 @@ where
 
                         model_data_store.lenses.insert(
                             TypeId::of::<L>(),
-                            Box::new(StateStore { entity: id, lens, old: old.clone(), observers }),
+                            Box::new(StateStore { entity: id, lens, old: old.cloned(), observers }),
                         );
                     }
 
@@ -117,6 +132,10 @@ where
     <L as Lens>::Source: 'static,
 {
     pub fn get<'a>(&self, cx: &'a Context) -> &'a L::Target {
+        self.get_fallible(cx).expect("Tried to get data from lens but it could not be retrieved. Do you want to use Binding::new_fallible or Field::get_fallible?")
+    }
+
+    pub fn get_fallible<'a>(&self, cx: &'a Context) -> Option<&'a L::Target> {
         self.lens.view(cx.data().expect(&format!(
             "Failed to get {:?} for entity: {:?}. Is the data in the tree?",
             self.lens, cx.current

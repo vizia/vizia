@@ -55,7 +55,7 @@ where
         }
 
         if let Some(data) = found_data {
-            let len = self.lens.view(data).len();
+            let len = self.lens.view(data).unwrap().len();
 
             assert!(len / self.width == self.width, "Only square tables supported at the moment");
 

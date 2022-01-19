@@ -11,7 +11,7 @@ pub trait Lens: 'static + Clone + Copy + std::fmt::Debug {
     type Source: Model;
     type Target;
 
-    fn view<'a>(&self, source: &'a Self::Source) -> &'a Self::Target;
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<&'a Self::Target>;
 }
 
 /// Helpers for constructing more complex `Lens`es.
@@ -81,8 +81,8 @@ where
     type Source = A::Source;
     type Target = B::Target;
 
-    fn view<'a>(&self, data: &'a Self::Source) -> &'a Self::Target {
-        &self.b.view(&self.a.view(data))
+    fn view<'a>(&self, data: &'a Self::Source) -> Option<&'a Self::Target> {
+        self.a.view(data).and_then(|intermediate| self.b.view(intermediate))
     }
 }
 
@@ -145,8 +145,8 @@ impl<T> Lens for StaticLens<T> {
     type Source = ();
     type Target = T;
 
-    fn view<'a>(&self, _source: &'a Self::Source) -> &'a Self::Target {
-        self.data
+    fn view<'a>(&self, _source: &'a Self::Source) -> Option<&'a Self::Target> {
+        Some(self.data)
     }
 }
 

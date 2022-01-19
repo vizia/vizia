@@ -316,7 +316,7 @@ where
 
     pub fn get_text<'a>(&self, cx: &'a Context) -> Option<&'a T> {
         if let Some(source) = cx.data::<L::Source>() {
-            return Some(self.lens.view(source));
+            return Some(self.lens.view(source).unwrap());
         }
 
         None

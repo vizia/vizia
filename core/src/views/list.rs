@@ -65,6 +65,7 @@ where
     {
         self.lens
             .view(cx.data().expect("Failed to get data"))
+            .expect("Failed to view data")
             .get(self.index)
             .expect(&format!("Failed to get item: {}", self.index))
     }
