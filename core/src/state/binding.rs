@@ -124,9 +124,36 @@ where
     }
 }
 
+macro_rules! impl_res_simple {
+    ($t:ty) => {
+        impl Res<$t> for $t {
+            fn get<'a>(&'a self, _: &'a Context) -> &'a $t {
+                self
+            }
+        }
+    };
+}
+
 pub trait Res<T> {
     fn get<'a>(&'a self, cx: &'a Context) -> &'a T;
 }
+
+impl_res_simple!(i8);
+impl_res_simple!(i16);
+impl_res_simple!(i32);
+impl_res_simple!(i64);
+impl_res_simple!(i128);
+impl_res_simple!(isize);
+impl_res_simple!(u8);
+impl_res_simple!(u16);
+impl_res_simple!(u32);
+impl_res_simple!(u64);
+impl_res_simple!(u128);
+impl_res_simple!(usize);
+impl_res_simple!(char);
+impl_res_simple!(bool);
+impl_res_simple!(f32);
+impl_res_simple!(f64);
 
 impl<T, L> Res<T> for Field<L>
 where
@@ -173,20 +200,8 @@ impl Res<PositionType> for PositionType {
     }
 }
 
-impl Res<usize> for usize {
-    fn get<'a>(&'a self, _: &'a Context) -> &'a usize {
-        self
-    }
-}
-
 impl<T> Res<(T, T)> for (T, T) {
     fn get<'a>(&'a self, _: &'a Context) -> &'a (T, T) {
-        self
-    }
-}
-
-impl Res<bool> for bool {
-    fn get<'a>(&'a self, _: &'a Context) -> &'a bool {
         self
     }
 }
