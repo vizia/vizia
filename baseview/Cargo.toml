@@ -9,7 +9,7 @@ description = "Baseview backend for vizia"
 
 
 [dependencies]
-raw-gl-context = "0.1"
+raw-gl-context = {git = "https://github.com/glowcoil/raw-gl-context", rev = "8f0baad7a03d0cab5e875d3c91b40299a5d77e0b"}
 vizia_core = { path = "../core" }
 baseview = { git = "https://github.com/RustAudio/baseview.git", rev = "f6e99e9aa6f5aeb6b721cb05e4d882a51d995909"}
 keyboard-types = { version = "0.5.0", default-features = false }
