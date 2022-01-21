@@ -278,6 +278,9 @@ pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
             cx.style.disabled.inherit_inline(entity, parent);
 
             cx.style.font_color.inherit_inline(entity, parent);
+            cx.style.font_size.inherit_inline(entity, parent);
+            cx.style.font.inherit_inline(entity, parent);
+
         }
     }
 }
@@ -286,6 +289,8 @@ pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
         if let Some(parent) = entity.parent(tree) {
             cx.style.font_color.inherit_shared(entity, parent);
+            cx.style.font_size.inherit_shared(entity, parent);
+            cx.style.font.inherit_shared(entity, parent);
         }
     }
 }

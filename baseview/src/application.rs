@@ -133,12 +133,15 @@ impl ApplicationRunner {
         let icon_font = include_bytes!("../../fonts/entypo.ttf");
         let emoji_font = include_bytes!("../../fonts/OpenSansEmoji.ttf");
         let arabic_font = include_bytes!("../../fonts/amiri-regular.ttf");
+        let material_font = include_bytes!("../../fonts/MaterialIcons-Regular.ttf");
+
 
         context.add_font_mem("roboto", regular_font);
         context.add_font_mem("roboto-bold", bold_font);
-        context.add_font_mem("icon", icon_font);
+        context.add_font_mem("icons", icon_font);
         context.add_font_mem("emoji", emoji_font);
         context.add_font_mem("arabic", arabic_font);
+        context.add_font_mem("material", material_font);
 
         context.style.default_font = "roboto".to_string();
 
