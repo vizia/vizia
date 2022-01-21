@@ -280,7 +280,6 @@ pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
             cx.style.font_color.inherit_inline(entity, parent);
             cx.style.font_size.inherit_inline(entity, parent);
             cx.style.font.inherit_inline(entity, parent);
-
         }
     }
 }

@@ -31,9 +31,11 @@ fn main() {
         cx.add_theme(STYLE);
 
         AppData::default().build(cx);
-        HStack::new(cx, |cx|{
+        HStack::new(cx, |cx| {
             Label::new(cx, "\u{e88a}");
-        }).font_size(50.0).font("material");
+        })
+        .font_size(50.0)
+        .font("material");
     })
     .run();
 }

@@ -292,12 +292,12 @@ impl<'a> Handle<'a, Slider> {
     ///         cx.emit(WindowEvent::Debug(format!("Slider on_change: {}", value)));
     ///     });
     /// ```
-    pub fn on_change<F>(self, cx: &mut Context, callback: F) -> Self
+    pub fn on_change<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut Context, f32),
     {
         if let Some(slider) =
-            cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
         {
             slider.on_change = Some(Box::new(callback));
         }
@@ -314,16 +314,16 @@ impl<'a> Handle<'a, Slider> {
     ///
     /// ```compile_fail
     /// Slider::new(cx, 0.0, Orientation::Horizontal)
-    ///     .on_changing(cx, |cx, value| {
+    ///     .on_changing(|cx, value| {
     ///         cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
     ///     });
     /// ```
-    pub fn on_changing<F>(self, cx: &mut Context, callback: F) -> Self
+    pub fn on_changing<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut Context, f32),
     {
         if let Some(slider) =
-            cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
         {
             slider.on_changing = Some(Box::new(callback));
         }
@@ -345,12 +345,12 @@ impl<'a> Handle<'a, Slider> {
     ///         cx.emit(WindowEvent::Debug(format!("Slider on_min")));
     ///     });
     /// ```
-    pub fn on_min<F>(self, cx: &mut Context, callback: F) -> Self
+    pub fn on_min<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut Context),
     {
         if let Some(slider) =
-            cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
         {
             slider.on_min = Some(Box::new(callback));
         }
@@ -368,16 +368,16 @@ impl<'a> Handle<'a, Slider> {
     ///
     /// ```compile_fail
     /// Slider::new(cx, 0.0, Orientation::Horizontal)
-    ///     .on_max(cx, |cx| {
+    ///     .on_max(|cx| {
     ///         cx.emit(WindowEvent::Debug(format!("Slider on_max")));
     ///     });
     /// ```
-    pub fn on_max<F>(self, cx: &mut Context, callback: F) -> Self
+    pub fn on_max<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut Context),
     {
         if let Some(slider) =
-            cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
         {
             slider.on_max = Some(Box::new(callback));
         }
