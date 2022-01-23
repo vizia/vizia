@@ -615,7 +615,8 @@ where
 
         // No matching rules so set if the data is shared set the index to null if not already null
         if entity_index < self.inline_data.sparse.len() {
-            if !self.inline_data.sparse[entity_index].data_index.is_inline() {
+            let data_index = self.inline_data.sparse[entity_index].data_index;
+            if !data_index.is_inline() && !data_index.is_inherited() {
                 if self.inline_data.sparse[entity_index].data_index != DataIndex::null() {
                     self.inline_data.sparse[entity_index].data_index = DataIndex::null();
                     return true;
