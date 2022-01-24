@@ -132,7 +132,12 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
-        if cx.style.text.get(entity).is_some() {
+        let desired_width = cx.style.width.get(entity).cloned().unwrap_or_default();
+        let desired_height = cx.style.width.get(entity).cloned().unwrap_or_default();
+
+        if cx.style.text.get(entity).is_some()
+            && (desired_width == Units::Auto || desired_height == Units::Auto)
+        {
             let font = cx.style.font.get(entity).cloned().unwrap_or_default();
 
             // TODO - This should probably be cached in cx to save look-up time
@@ -244,27 +249,27 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             paint.set_text_align(align);
             paint.set_text_baseline(baseline);
 
-            let text = cx.style.text.get(entity).cloned().unwrap();
+            if let Some(text) = cx.style.text.get(entity) {
+                if let Ok(text_metrics) = cx.text_context.measure_text(x, y, text, paint) {
+                    // Add an extra pixel to account to AA
+                    let text_width = text_metrics.width().round() + 1.0;
+                    let text_height = text_metrics.height().round() + 1.0;
 
-            if let Ok(text_metrics) = cx.text_context.measure_text(x, y, text, paint) {
-                // Add an extra pixel to account to AA
-                let text_width = text_metrics.width().round() + 1.0;
-                let text_height = text_metrics.height().round() + 1.0;
-
-                if cx.style.width.get(entity) == Some(&Units::Auto) {
-                    //let previous_min_width = entity.get_min_width(cx).value_or(0.0, 0.0);
-                    if entity.get_min_width(cx) != Units::Pixels(text_width) {
-                        cx.style.min_width.insert(entity, Units::Pixels(text_width));
-                        cx.style.needs_relayout = true;
-                        cx.style.needs_redraw = true;
+                    if cx.style.width.get(entity) == Some(&Units::Auto) {
+                        //let previous_min_width = entity.get_min_width(cx).value_or(0.0, 0.0);
+                        if entity.get_min_width(cx) != Units::Pixels(text_width) {
+                            cx.style.min_width.insert(entity, Units::Pixels(text_width));
+                            cx.style.needs_relayout = true;
+                            cx.style.needs_redraw = true;
+                        }
                     }
-                }
 
-                if cx.style.height.get(entity) == Some(&Units::Auto) {
-                    if entity.get_min_height(cx) != Units::Pixels(text_height) {
-                        cx.style.min_height.insert(entity, Units::Pixels(text_height));
-                        cx.style.needs_relayout = true;
-                        cx.style.needs_redraw = true;
+                    if cx.style.height.get(entity) == Some(&Units::Auto) {
+                        if entity.get_min_height(cx) != Units::Pixels(text_height) {
+                            cx.style.min_height.insert(entity, Units::Pixels(text_height));
+                            cx.style.needs_relayout = true;
+                            cx.style.needs_redraw = true;
+                        }
                     }
                 }
             }

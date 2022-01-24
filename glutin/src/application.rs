@@ -373,12 +373,19 @@ impl Application {
                                     continue;
                                 }
 
+                                // Skip non-displayed widgets
                                 if context.cache.get_display(entity) == Display::None {
                                     continue;
                                 }
 
                                 // Skip widgets that have 0 opacity
                                 if context.cache.get_opacity(entity) == 0.0 {
+                                    continue;
+                                }
+
+                                let bounds = context.cache.get_bounds(entity);
+
+                                if bounds.x > window_width || bounds.y > window_height {
                                     continue;
                                 }
 

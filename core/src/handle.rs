@@ -81,6 +81,12 @@ impl<'a, T> Handle<'a, T> {
     }
 
     pub fn text(self, value: &str) -> Self {
+        if let Some(prev_data) = self.cx.style.text.get(self.entity) {
+            if prev_data == value {
+                return self;
+            }
+        }
+
         self.cx.style.text.insert(self.entity, value.to_owned());
 
         self.cx.style.needs_redraw = true;
