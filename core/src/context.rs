@@ -236,7 +236,7 @@ impl Context {
 
         self.style.parse_theme(&overall_theme);
 
-        self.enviroment.needs_rebuild = true;
+        // self.enviroment.needs_rebuild = true;
 
         // Entity::root().restyle(self);
         // Entity::root().relayout(self);

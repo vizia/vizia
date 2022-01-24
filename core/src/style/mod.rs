@@ -977,6 +977,10 @@ impl Style {
                         }
                     }
 
+                    Property::Unknown(s, _) => {
+                        println!("Unknown style property: {}", s)
+                    }
+
                     _ => {}
                 }
             }
