@@ -1,7 +1,7 @@
 use vizia::*;
 
 fn main() {
-    Application::new(WindowDescription::new(), |cx|{
+    Application::new(WindowDescription::new().with_inner_size(1400, 800), |cx|{
         Inspector::new(cx, |cx|{
             VStack::new(cx, |cx|{
                 Element::new(cx)
