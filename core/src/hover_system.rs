@@ -135,5 +135,7 @@ pub fn apply_hover(cx: &mut Context) {
         cx.event_queue.push_back(Event::new(WindowEvent::MouseLeave).target(cx.hovered));
 
         cx.hovered = hovered_widget;
+
+        cx.style.needs_restyle = true;
     }
 }

@@ -215,6 +215,7 @@ impl Application {
 
                 glutin::event::Event::MainEventsCleared => {
 
+                    // Rebuild application if required
                     if context.enviroment.needs_rebuild {
                         context.current = Entity::root();
                         context.count = 0;
@@ -226,7 +227,6 @@ impl Application {
 
                     if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_mut::<Window>() {
-
 
                             // Load resources
                             for (name, font) in context.resource_manager.fonts.iter_mut() {
@@ -285,7 +285,10 @@ impl Application {
 
                     apply_inline_inheritance(&mut context, &tree);
 
-                    apply_styles(&mut context, &tree);
+                    if context.style.needs_restyle {
+                        apply_styles(&mut context, &tree);
+                        context.style.needs_restyle = false;
+                    }
 
                     apply_shared_inheritance(&mut context, &tree);
 
@@ -322,8 +325,6 @@ impl Application {
                             }
                         }
                     }
-
-
 
                     if let Some(idle_callback) = &on_idle {
                         context.current = Entity::root();
