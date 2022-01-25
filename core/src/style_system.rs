@@ -133,7 +133,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
         }
 
         let desired_width = cx.style.width.get(entity).cloned().unwrap_or_default();
-        let desired_height = cx.style.width.get(entity).cloned().unwrap_or_default();
+        let desired_height = cx.style.height.get(entity).cloned().unwrap_or_default();
 
         if cx.style.text.get(entity).is_some()
             && (desired_width == Units::Auto || desired_height == Units::Auto)
