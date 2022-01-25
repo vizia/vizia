@@ -1,6 +1,6 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
-use crate::Color;
+use crate::{Color, Entity};
 
 pub trait Data: 'static + Clone {
     fn same(&self, other: &Self) -> bool;
@@ -53,6 +53,7 @@ impl_data_simple!(std::net::SocketAddrV6);
 impl_data_simple!(std::net::IpAddr);
 impl_data_simple!(std::net::SocketAddr);
 impl_data_simple!(std::ops::RangeFull);
+impl_data_simple!(Entity);
 
 impl_data_simple!(String);
 

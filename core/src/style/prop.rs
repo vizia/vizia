@@ -174,7 +174,7 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     // TODO move to PropGet
-    fn get_parent(self, cx: &mut Context) -> Option<Entity> {
+    fn get_parent(self, cx: &Context) -> Option<Entity> {
         self.entity().parent(&cx.tree)
     }
 
