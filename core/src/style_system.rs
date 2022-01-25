@@ -485,7 +485,6 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
 
         if cx.style.z_order.link(entity, &matched_rules) {
             //println!("3");
-            should_relayout = true;
             should_redraw = true;
         }
 
@@ -496,7 +495,6 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
         // Opacity
         if cx.style.opacity.link(entity, &matched_rules) {
             //println!("4");
-            should_relayout = true;
             should_redraw = true;
         }
 
@@ -732,36 +730,5 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
         if should_redraw {
             cx.style.needs_redraw = true;
         }
-
-        // for rule_id in matched_rules.iter() {
-        //     // TODO - remove cloned
-        //     if let Some(rule_index) = cx.style.rules.iter().position(|rule| rule.id == *rule_id) {
-        //         if let Some(rule) = cx.style.rules.get(rule_index).cloned() {
-        //             for property in rule.properties.iter() {
-        //                 match property {
-        //                     Property::Unknown(ident, prop) => {
-        //                         if let Some(mut event_handler) = cx.event_handlers.remove(&entity) {
-        //                             event_handler.on_style(cx, entity, (ident.clone(), prop.clone()));
-
-        //                             cx.event_handlers.insert(entity, event_handler);
-        //                         }
-        //                     }
-
-        //                     _=> {}
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-
-        // if should_relayout {
-        //     Entity::root().relayout(cx);
-        //     //cx.needs_relayout = true;
-        // }
-
-        // if should_redraw {
-        //     Entity::root().redraw(cx);
-        //     //cx.needs_redraw = true;
-        // }
     }
 }
