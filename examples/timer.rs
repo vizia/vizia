@@ -43,28 +43,29 @@ impl Model for AppState {
 
 fn main() {
     Application::new(WindowDescription::new().with_title("Timer"), |cx| {
-        AppState {
-            count: 0,
-            current_timer: None,
-        }.build(cx);
+        AppState { count: 0, current_timer: None }.build(cx);
         VStack::new(cx, |cx| {
             Binding::new(cx, AppState::count, move |cx, count| {
                 let count = *count.get(cx);
-                Label::new(cx, &count.to_string())
-                    .font_size(100.0);
+                Label::new(cx, &count.to_string()).font_size(100.0);
             });
-            Button::new(cx, |cx| {
-                cx.emit(AppEvent::Start);
-            }, |cx| {
-                Label::new(cx, "Start")
-            });
-            Button::new(cx, |cx| {
-                cx.emit(AppEvent::Stop);
-            }, |cx| {
-                Label::new(cx, "Stop")
-            });
+            Button::new(
+                cx,
+                |cx| {
+                    cx.emit(AppEvent::Start);
+                },
+                |cx| Label::new(cx, "Start"),
+            );
+            Button::new(
+                cx,
+                |cx| {
+                    cx.emit(AppEvent::Stop);
+                },
+                |cx| Label::new(cx, "Stop"),
+            );
         })
-            .space(Units::Stretch(1.0))
-            .row_between(Units::Pixels(10.0));
-    }).run();
+        .space(Units::Stretch(1.0))
+        .row_between(Units::Pixels(10.0));
+    })
+    .run();
 }

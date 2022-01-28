@@ -9,8 +9,8 @@ use femtovg::TextContext;
 
 use crate::{
     storage::sparse_set::SparseSet, CachedData, Entity, Enviroment, Event, FontOrId, IdManager,
-    Message, ModelDataStore, Modifiers, MouseState, Propagation, ResourceManager, Style, Tree,
-    TreeExt, View, ViewHandler, TimedEvent, TimedEventHandle,
+    Message, ModelDataStore, Modifiers, MouseState, Propagation, ResourceManager, Style,
+    TimedEvent, TimedEventHandle, Tree, TreeExt, View, ViewHandler,
 };
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
@@ -154,26 +154,26 @@ impl Context {
             Event::new(message)
                 .target(self.current)
                 .origin(self.current)
-                .propagate(Propagation::Up), at)
+                .propagate(Propagation::Up),
+            at,
+        )
     }
 
-    pub fn schedule_emit_to<M: Message>(&mut self, message: M, target: Entity, at: Instant) -> TimedEventHandle {
+    pub fn schedule_emit_to<M: Message>(
+        &mut self,
+        message: M,
+        target: Entity,
+        at: Instant,
+    ) -> TimedEventHandle {
         self.schedule_event(
-            Event::new(message)
-                .target(target)
-                .origin(self.current)
-                .propagate(Propagation::Direct), at)
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+            at,
+        )
     }
 
     fn schedule_event(&mut self, event: Event, at: Instant) -> TimedEventHandle {
         let handle = TimedEventHandle(self.next_event_id);
-        self.event_schedule.push(
-            TimedEvent {
-                event,
-                time: at,
-                ident: handle,
-            }
-        );
+        self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
         self.next_event_id += 1;
         handle
     }
@@ -181,10 +181,8 @@ impl Context {
     pub fn cancel_scheduled(&mut self, handle: TimedEventHandle) -> Result<(), ()> {
         // holy shit. why is every single useful method on BinaryHeap unstable.
         let orig_size = self.event_schedule.len();
-        self.event_schedule = self.event_schedule
-            .drain()
-            .filter(|item| item.ident != handle)
-            .collect();
+        self.event_schedule =
+            self.event_schedule.drain().filter(|item| item.ident != handle).collect();
         if self.event_schedule.len() != orig_size {
             Ok(())
         } else {

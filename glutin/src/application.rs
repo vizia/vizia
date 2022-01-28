@@ -1,8 +1,8 @@
-use std::time::Instant;
 use glutin::{
     event::{ElementState, VirtualKeyCode},
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
+use std::time::Instant;
 
 use vizia_core::*;
 
