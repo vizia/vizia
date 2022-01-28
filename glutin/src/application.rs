@@ -1,3 +1,4 @@
+use std::time::Instant;
 use glutin::{
     event::{ElementState, VirtualKeyCode},
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
@@ -201,13 +202,17 @@ impl Application {
 
         event_loop.run(move |event, _, control_flow|{
 
-            if should_poll {
-                *control_flow = ControlFlow::Poll;
-            } else {
-                *control_flow = ControlFlow::Wait;
-            }
-
             match event {
+                glutin::event::Event::NewEvents(_) => {
+                    let now = Instant::now();
+                    while let Some(timed_event) = context.event_schedule.peek() {
+                        if timed_event.time <= now {
+                            context.event_queue.push_back(context.event_schedule.pop().unwrap().event);
+                        } else {
+                            break;
+                        }
+                    }
+                }
 
                 glutin::event::Event::UserEvent(event) => {
                     context.event_queue.push_back(event);
@@ -430,6 +435,7 @@ impl Application {
                     match event {
                         glutin::event::WindowEvent::CloseRequested => {
                             *control_flow = ControlFlow::Exit;
+                            return;
                         }
 
                         #[allow(deprecated)]
@@ -728,6 +734,16 @@ impl Application {
                 }
 
                 _=> {}
+            }
+
+            if should_poll {
+                *control_flow = ControlFlow::Poll;
+            } else {
+                if let Some(timed_event) = context.event_schedule.peek() {
+                    *control_flow = ControlFlow::WaitUntil(timed_event.time);
+                } else {
+                    *control_flow = ControlFlow::Wait;
+                }
             }
         });
     }

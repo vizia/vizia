@@ -41,7 +41,7 @@ mod event_manager;
 pub use event_manager::EventManager;
 
 mod event;
-pub use event::{Event, Message, Propagation};
+pub use event::{Event, TimedEvent, Message, Propagation, TimedEventHandle};
 
 mod event_handler;
 pub use event_handler::ViewHandler;
