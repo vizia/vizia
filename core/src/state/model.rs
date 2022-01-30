@@ -3,21 +3,16 @@ use std::{
     collections::HashMap,
 };
 
-use crate::{storage::sparse_set::SparseSet, Context, Entity, Event, LensWrap, Store};
+use crate::{Context, Entity, Event, LensWrap};
 
 pub trait Model: 'static + Sized {
     fn build(self, cx: &mut Context) {
-        if let Some(data_list) = cx.data.model_data.get_mut(cx.current) {
-            // This might be a bad idea
-            // if let Some(_) = data_list.get(&TypeId::of::<Self>()) {
-            //     return;
-            // }
-            data_list.data.insert(TypeId::of::<Self>(), Box::new(Store::new(self)));
+        if let Some(data_list) = cx.data.get_mut(cx.current) {
+            data_list.data.insert(TypeId::of::<Self>(), Box::new(self));
         } else {
             let mut data_list: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
-            data_list.insert(TypeId::of::<Self>(), Box::new(Store::new(self)));
+            data_list.insert(TypeId::of::<Self>(), Box::new(self));
             cx.data
-                .model_data
                 .insert(cx.current, ModelDataStore { data: data_list, lenses: HashMap::default() })
                 .expect("Failed to add data");
         }
@@ -103,25 +98,9 @@ impl<T: ModelData> Downcast for T {
     }
 }
 
-impl<T: Model> ModelData for Store<T> {
+impl<T: Model> ModelData for T {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        <T as Model>::event(&mut self.data, cx, event);
-    }
-
-    fn update(&self) -> Vec<Entity> {
-        self.observers.iter().map(|e| *e).collect()
-    }
-
-    fn is_dirty(&self) -> bool {
-        self.dirty
-    }
-
-    fn reset(&mut self) {
-        self.dirty = false;
-    }
-
-    fn remove_observer(&mut self, observer: Entity) {
-        self.remove_observer(observer);
+        <T as Model>::event(self, cx, event);
     }
 }
 
@@ -131,23 +110,4 @@ pub struct ModelDataStore {
     pub lenses: HashMap<TypeId, Box<dyn LensWrap>>,
 }
 
-#[derive(Default)]
-pub struct AppData {
-    // pub model_data: HashMap<TypeId, Box<dyn ModelData>>,
-    //pub model_data: SparseSet<HashMap<TypeId,Box<dyn ModelData>>>,
-    pub model_data: SparseSet<ModelDataStore>,
-}
-
-impl AppData {
-    pub fn new() -> Self {
-        Self { model_data: SparseSet::default() }
-    }
-
-    // pub fn data<T: 'static>(&self) -> Option<&T> {
-    //     self.model_data
-    //         .get(cx.current)
-    //         .get(&TypeId::of::<T>())
-    //         .and_then(|model| model.downcast_ref::<Store<T>>())
-    //         .map(|store| &store.data)
-    // }
-}
+impl Model for () {}

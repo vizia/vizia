@@ -1,9 +1,11 @@
 use std::any::TypeId;
 use std::collections::HashSet;
 
-use morphorm::{PositionType, LayoutType};
+use morphorm::{LayoutType, PositionType};
 
-use crate::{Color, Context, Display, Entity, Handle, StateStore, Store, TreeExt, Units, View, Visibility};
+use crate::{
+    Color, Context, Display, Entity, Handle, StateStore, TreeExt, Units, View, Visibility,
+};
 
 use crate::{Data, Lens, Model};
 
@@ -45,7 +47,7 @@ where
         let ancestors = parent.parent_iter(&cx.tree).collect::<HashSet<_>>();
 
         for entity in id.parent_iter(&cx.tree) {
-            if let Some(model_data_store) = cx.data.model_data.get_mut(entity) {
+            if let Some(model_data_store) = cx.data.get_mut(entity) {
                 if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
                     if let Some(lens_wrap) = model_data_store.lenses.get_mut(&TypeId::of::<L>()) {
                         let observers = lens_wrap.observers();
@@ -57,9 +59,9 @@ where
                         let mut observers = HashSet::new();
                         observers.insert(id);
 
-                        let model = model_data.downcast_ref::<Store<L::Source>>().unwrap();
+                        let model = model_data.downcast_ref::<L::Source>().unwrap();
 
-                        let old = lens.view(&model.data);
+                        let old = lens.view(model);
 
                         model_data_store.lenses.insert(
                             TypeId::of::<L>(),
@@ -78,14 +80,7 @@ where
 
         // Call the body of the binding
         if let Some(mut view_handler) = cx.views.remove(&id) {
-            //let prev = cx.current;
-            //cx.current = parent;
-            //let prev_count = cx.count;
-            //cx.count = 0;
-            //println!("count: {}", cx.count);
             view_handler.body(cx);
-            //cx.current = prev;
-            //cx.count = prev_count;
             cx.views.insert(id, view_handler);
         }
 
@@ -94,17 +89,6 @@ where
             .height(Units::Stretch(1.0))
             .background_color(Color::blue())
             .display(Display::None);
-
-        // Use Lens::Source TypeId to look up data
-        //
-        //(builder)(cx, Field{lens});
-        // if let Some(model) = cx.data.remove(&TypeId::of::<L::Source>()) {
-        //     if let Some(store) = model.downcast_ref::<Store<L::Source>>() {
-        //         (builder)(cx, lens.view(&store.data));
-        //     }
-
-        //     cx.data.insert(TypeId::of::<L::Source>(), model);
-        // }
     }
 }
 
@@ -137,103 +121,87 @@ where
             "Failed to get {:?} for entity: {:?}. Is the data in the tree?",
             self.lens, cx.current
         )))
-        // self.lens
-        //     .view(&cx.data.model_data
-        //     .get(&TypeId::of::<L::Source>())
-        //     .unwrap()
-        //     .downcast_ref::<Store<L::Source>>()
-        //     .unwrap().data)
     }
+}
+
+macro_rules! impl_res_simple {
+    ($t:ty) => {
+        impl Res<$t> for $t {
+            fn get<'a>(&'a self, _: &'a Context) -> &'a $t {
+                self
+            }
+        }
+    };
 }
 
 pub trait Res<T> {
     fn get<'a>(&'a self, cx: &'a Context) -> &'a T;
 }
 
-impl<T,L> Res<T> for Field<L>
+impl_res_simple!(i8);
+impl_res_simple!(i16);
+impl_res_simple!(i32);
+impl_res_simple!(i64);
+impl_res_simple!(i128);
+impl_res_simple!(isize);
+impl_res_simple!(u8);
+impl_res_simple!(u16);
+impl_res_simple!(u32);
+impl_res_simple!(u64);
+impl_res_simple!(u128);
+impl_res_simple!(usize);
+impl_res_simple!(char);
+impl_res_simple!(bool);
+impl_res_simple!(f32);
+impl_res_simple!(f64);
+
+impl<T, L> Res<T> for Field<L>
 where
     L: Lens<Target = T>,
 {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a T
-    {
+    fn get<'a>(&'a self, cx: &'a Context) -> &'a T {
         self.get(cx)
     }
 }
 
 impl Res<Color> for Color {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a Color {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a Color {
         self
     }
 }
 
 impl Res<Units> for Units {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a Units {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a Units {
         self
     }
 }
 
 impl Res<Visibility> for Visibility {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a Visibility {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a Visibility {
         self
     }
 }
 
 impl Res<Display> for Display {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a Display {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a Display {
         self
     }
 }
 
 impl Res<LayoutType> for LayoutType {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a LayoutType {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a LayoutType {
         self
     }
 }
 
 impl Res<PositionType> for PositionType {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a PositionType {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a PositionType {
         self
     }
 }
 
-impl Res<usize> for usize {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a usize {
+impl<T> Res<(T, T)> for (T, T) {
+    fn get<'a>(&'a self, _: &'a Context) -> &'a (T, T) {
         self
     }
 }
-
-impl<T> Res<(T,T)> for (T,T) {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a (T,T) {
-        self
-    }
-}
-
-// #[derive(Clone, Copy)]
-// pub struct Item<L,T> {
-//     pub lens: L,
-//     pub index: usize,
-//     pub p: PhantomData<T>,
-// }
-
-// impl<L: Lens,T> Item<L,T>
-// where
-//     <L as Lens>::Target: Index<usize, Output = T>,
-// {
-//     pub fn get<'a>(&self, cx: &'a Context) -> &'a T
-//     where
-//         <L as Lens>::Source: 'static,
-//         <L as Lens>::Target: 'static
-//     {
-//         &self.lens.view(&cx.data.model_data.get(&TypeId::of::<L::Source>()).unwrap().downcast_ref::<Store<L::Source>>().unwrap().data)[self.index]
-//     }
-// }
-
-// impl<L: Lens> View for Binding<L> {
-//     fn body<'a>(&mut self, cx: &'a mut Context) {
-//         if let Some(builder) = self.builder.take() {
-
-//             (builder)(cx, self.lens.view())
-//             self.builder = Some(builder);
-//         }
-//     }
-// }

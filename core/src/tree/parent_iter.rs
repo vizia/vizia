@@ -1,6 +1,6 @@
 use crate::{Entity, Tree};
 
-/// Iterator for iterating through the ancestors of an entity
+/// Iterator for iterating through the ancestors of an entity.
 pub struct ParentIterator<'a> {
     pub(crate) tree: &'a Tree,
     pub(crate) current: Option<Entity>,

@@ -6,7 +6,6 @@ impl Cache for CachedData {
     type Item = Entity;
 
     fn visible(&self, node: Self::Item) -> bool {
-        //self.visibility.get(node).cloned().map_or(true, |vis| vis == Visibility::Visible)
         self.display.get(node).cloned().map_or(true, |display| display == Display::Flex)
     }
 

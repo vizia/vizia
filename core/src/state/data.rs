@@ -53,6 +53,7 @@ impl_data_simple!(std::net::SocketAddrV6);
 impl_data_simple!(std::net::IpAddr);
 impl_data_simple!(std::net::SocketAddr);
 impl_data_simple!(std::ops::RangeFull);
+impl_data_simple!(std::path::PathBuf);
 
 impl_data_simple!(String);
 
@@ -252,6 +253,16 @@ impl<T: Data> Data for Vec<T> {
         }
 
         true
+    }
+}
+
+impl<T: std::hash::Hash + Eq + Data> Data for std::collections::HashSet<T> {
+    fn same(&self, other: &Self) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
+        *self == *other
     }
 }
 

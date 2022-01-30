@@ -1,7 +1,7 @@
 use crate::CursorIcon;
 use crate::Display;
 
-use super::LinearGradient;
+//use super::LinearGradient;
 use crate::Color;
 
 use crate::style::*;
@@ -63,14 +63,20 @@ pub(crate) enum Property {
     RowBetween(Units),
     ColBetween(Units),
 
-    // Border
+    // Border Radius
     BorderRadius(Units),
     BorderTopLeftRadius(Units),
     BorderTopRightRadius(Units),
     BorderBottomLeftRadius(Units),
     BorderBottomRightRadius(Units),
+
+    // Border Width
     BorderWidth(Units),
+
+    // Border Color
     BorderColor(Color),
+
+    // Border Shape
     BorderCornerShape(BorderCornerShape),
     BorderTopLeftShape(BorderCornerShape),
     BorderTopRightShape(BorderCornerShape),
@@ -80,12 +86,15 @@ pub(crate) enum Property {
     // Background
     BackgroundColor(Color),
     BackgroundImage(String),
-    BackgroundGradient(LinearGradient),
+    // TODO
+    //BackgroundGradient(LinearGradient),
 
+    // Font
     FontSize(f32),
     FontColor(Color),
     Font(String),
 
+    // Shadow
     OuterShadow(BoxShadow),
     OuterShadowHOffset(Units),
     OuterShadowVOffset(Units),
@@ -102,10 +111,10 @@ pub(crate) enum Property {
 
     ZIndex(i32),
 
-    Translate((f32, f32)),
-    Rotate(f32),
-    Scale((f32, f32)),
-
+    // TODO
+    // Translate((f32, f32)),
+    // Rotate(f32),
+    // Scale((f32, f32)),
     Cursor(CursorIcon),
 }
 

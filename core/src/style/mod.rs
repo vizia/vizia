@@ -42,9 +42,6 @@ pub use property::*;
 mod gradient;
 pub use gradient::*;
 
-mod layout;
-pub use layout::Overflow;
-
 mod shadow;
 use shadow::*;
 
@@ -491,10 +488,9 @@ impl Style {
                         todo!();
                     }
 
-                    Property::BackgroundGradient(value) => {
-                        self.background_gradient.insert_rule(rule_id, value);
-                    }
-
+                    // Property::BackgroundGradient(value) => {
+                    //     self.background_gradient.insert_rule(rule_id, value);
+                    // }
                     Property::PositionType(value) => {
                         self.position_type.insert_rule(rule_id, value);
                     }
@@ -733,6 +729,19 @@ impl Style {
                         self.cursor.insert_rule(rule_id, cursor);
                     }
 
+                    // TODO
+                    // Property::Translate(value) => {
+                    //     self.translate.insert_rule(rule_id, value);
+                    // }
+
+                    // Property::Rotate(value) => {
+                    //     self.rotate.insert_rule(rule_id, value);
+                    // }
+
+                    // Property::Scale(value) => {
+                    //     self.scale.insert_rule(rule_id, value.0);
+                    // }
+
                     // Transitions
                     Property::Transition(transitions) => {
                         for transition in transitions {
@@ -966,6 +975,10 @@ impl Style {
                                 _ => {}
                             }
                         }
+                    }
+
+                    Property::Unknown(s, _) => {
+                        println!("Unknown style property: {}", s)
                     }
 
                     _ => {}

@@ -27,6 +27,10 @@ name = "checkbox"
 path = "examples/controls/checkbox.rs"
 
 [[example]]
+name = "radiobutton"
+path = "examples/controls/radiobutton.rs"
+
+[[example]]
 name = "zstack"
 path = "examples/controls/zstack.rs"
 
@@ -42,8 +46,34 @@ path = "examples/controls/popup.rs"
 name = "dropdown"
 path = "examples/controls/dropdown.rs"
 
+[[example]]
+name = "textbox"
+path = "examples/controls/textbox.rs"
+
+[[example]]
+name = "list"
+path = "examples/lists/list.rs"
+
+[[example]]
+name = "selectable_list"
+path = "examples/lists/selectable_list.rs"
+
+[[example]]
+name = "editable_list"
+path = "examples/lists/editable_list.rs"
+
+[[example]]
+name = "multiselectable_list"
+path = "examples/lists/multiselectable_list.rs"
+
+[[example]]
+name = "static_list"
+path = "examples/lists/static_list.rs"
+
+
 [features]
-default = ["glutin"]
+default = ["glutin", "clipboard"]
+clipboard = ["vizia_core/clipboard"]
 glutin = ["vizia_glutin"]
 baseview = ["vizia_baseview"]
 meadowlark = ["glutin", "vizia_core/meadowlark"]
@@ -56,3 +86,4 @@ vizia_baseview = { version = "0.1.0", path = "baseview", optional = true }
 
 [dev-dependencies]
 english-numbers = "0.3.3"
+lazy_static = "1.4.0"

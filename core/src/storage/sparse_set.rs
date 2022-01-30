@@ -66,7 +66,7 @@ where
             if dense_idx.index() < self.dense.len() {
                 //let entry = &self.dense[dense_idx.index()];
                 //if entry.key == sparse_idx {
-                    return Some(dense_idx);
+                return Some(dense_idx);
                 //}
             }
         }
@@ -322,7 +322,7 @@ mod tests {
         let ret = sparse_set.remove(Entity::new(12, 0));
         assert_eq!(ret, Some(69));
 
-        sparse_set.insert(Entity::new(12, 1), 77);
+        sparse_set.insert(Entity::new(12, 1), 77).unwrap();
         println!("{:?}", sparse_set);
     }
 }

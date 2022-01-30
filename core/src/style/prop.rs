@@ -94,7 +94,7 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     fn restyle(&self, cx: &mut Context) {
         cx.event_queue.push_back(
-            Event::new(WindowEvent::Restyle).target(self.entity()).origin(self.entity()).unique(),
+            Event::new(WindowEvent::Restyle).target(self.entity()).origin(self.entity()),
         );
     }
 
@@ -108,7 +108,7 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     fn relayout(&self, cx: &mut Context) {
         cx.event_queue.push_back(
-            Event::new(WindowEvent::Relayout).target(self.entity()).origin(self.entity()).unique(),
+            Event::new(WindowEvent::Relayout).target(self.entity()).origin(self.entity()),
         );
     }
 
@@ -121,9 +121,8 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.redraw(cx);
     /// ```
     fn redraw(&self, cx: &mut Context) {
-        cx.event_queue.push_back(
-            Event::new(WindowEvent::Redraw).target(self.entity()).origin(self.entity()).unique(),
-        );
+        cx.event_queue
+            .push_back(Event::new(WindowEvent::Redraw).target(self.entity()).origin(self.entity()));
     }
 
     // TODO
@@ -162,7 +161,6 @@ pub trait PropSet: AsEntity + Sized {
             let mut class_list = HashSet::new();
             class_list.insert(class_name.to_string());
             cx.style
-                
                 .classes
                 .insert(self.entity(), class_list)
                 .expect("Failed to insert class name");
@@ -226,9 +224,13 @@ pub trait PropSet: AsEntity + Sized {
     /// ```compile_fail
     /// entity.set_checked(cx, true);
     /// ```
-    fn set_checked(self, cx: &mut Context, value: bool) -> Entity {
+    fn set_checked(self, cx: &mut Context, state: bool) -> Entity {
         if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self.entity()) {
-            pseudo_classes.set(PseudoClass::CHECKED, value);
+            pseudo_classes.set(PseudoClass::CHECKED, state);
+        } else {
+            let mut pseudoclass = PseudoClass::empty();
+            pseudoclass.set(PseudoClass::CHECKED, state);
+            cx.style.pseudo_classes.insert(self.entity(), pseudoclass).unwrap();
         }
 
         cx.style.needs_restyle = true;
@@ -540,7 +542,7 @@ pub trait PropSet: AsEntity + Sized {
     /// Center the entity horizontally by adding stretch space to the left and right sides.
     /// ```
     /// # use vizia_core::*;
-    /// # let mut context = Context::default();
+    /// # let mut context = Context::new();
     /// # let cx = &mut context;
     /// # let entity = Entity::root();
     /// entity.set_left(cx, Stretch(1.0)).set_right(cx, Stretch(1.0));
@@ -846,11 +848,7 @@ pub trait PropSet: AsEntity + Sized {
 
     // Tooltip
     fn set_tooltip(self, cx: &mut Context, text: &str) -> Entity {
-        cx.style
-            
-            .tooltip
-            .insert(self.entity(), text.to_owned())
-            .expect("Failed to set tooltip");
+        cx.style.tooltip.insert(self.entity(), text.to_owned()).expect("Failed to set tooltip");
 
         cx.style.needs_redraw = true;
 
@@ -872,7 +870,7 @@ pub trait PropSet: AsEntity + Sized {
     /// Set the background color of the entity with individual red, green, and blue components:
     /// ```
     /// # use vizia_core::*;
-    /// # let mut context = Context::default();
+    /// # let mut context = Context::new();
     /// # let cx = &mut context;
     /// # let entity = Entity::root();
     /// entity.set_background_color(cx, Color::rgb(255, 50, 50));
@@ -1099,11 +1097,7 @@ pub trait PropSet: AsEntity + Sized {
 
     // Clipping
     fn set_clip_widget(self, cx: &mut Context, value: Entity) -> Entity {
-        cx.style
-            
-            .clip_widget
-            .insert(self.entity(), value)
-            .expect("Failed to set clip widget");
+        cx.style.clip_widget.insert(self.entity(), value).expect("Failed to set clip widget");
 
         cx.style.needs_redraw = true;
 
@@ -1123,7 +1117,6 @@ pub trait PropSet: AsEntity + Sized {
             entity.next = value;
         } else {
             cx.style
-                
                 .focus_order
                 .insert(self.entity(), FocusOrder { next: value, ..Default::default() })
                 .expect("Failed to set next focus");
@@ -1137,7 +1130,6 @@ pub trait PropSet: AsEntity + Sized {
             focus_order.prev = value;
         } else {
             cx.style
-                
                 .focus_order
                 .insert(self.entity(), FocusOrder { prev: value, ..Default::default() })
                 .expect("Failed to set previous focus");
@@ -1152,7 +1144,6 @@ pub trait PropSet: AsEntity + Sized {
             focus_order.next = next;
         } else {
             cx.style
-                
                 .focus_order
                 .insert(self.entity(), FocusOrder { prev, next })
                 .expect("Failed to set focus order");
@@ -1170,7 +1161,7 @@ pub trait PropSet: AsEntity + Sized {
     /// Position children into a vertical stack:
     /// ```
     /// # use vizia_core::*;
-    /// # let mut context = Context::default();
+    /// # let mut context = Context::new();
     /// # let cx = &mut context;
     /// # let entity = Entity::root();
     /// entity.set_layout_type(cx, LayoutType::Column);
@@ -1315,193 +1306,194 @@ pub trait PropSet: AsEntity + Sized {
 // Implement PropSet for all types which implement AsEntity
 impl<T: AsEntity> PropSet for T {}
 pub trait PropGet: Sized + AsEntity {
-    fn name(&self, cx: &mut Context) -> String {
+    fn name(&self, cx: &Context) -> String {
         cx.style.name.get(self.entity()).cloned().unwrap_or_default()
     }
 
-    fn element(&self, cx: &mut Context) -> String {
+    fn element(&self, cx: &Context) -> String {
         cx.style.elements.get(self.entity()).cloned().unwrap_or_default()
     }
 
-    fn is_disabled(self, cx: &mut Context) -> bool;
-    fn is_checked(self, cx: &mut Context) -> bool;
-    fn is_over(self, cx: &mut Context) -> bool;
-    fn is_active(self, cx: &mut Context) -> bool;
-    fn is_focused(self, cx: &mut Context) -> bool;
-    fn is_selected(self, cx: &mut Context) -> bool;
-    fn is_hovered(self, cx: &mut Context) -> bool;
+    fn is_disabled(self, cx: &Context) -> bool;
+    fn is_checked(self, cx: &Context) -> bool;
+    fn is_over(self, cx: &Context) -> bool;
+    fn is_active(self, cx: &Context) -> bool;
+    fn is_focused(self, cx: &Context) -> bool;
+    fn is_selected(self, cx: &Context) -> bool;
+    fn is_hovered(self, cx: &Context) -> bool;
 
-    // fn is_hoverable(self, cx: &mut Context) -> bool {
+    // fn is_hoverable(self, cx: &Context) -> bool {
     //     cx.cache.get_hoverable(self.entity())
     // }
-    // fn is_focusable(self, cx: &mut Context) -> bool {
+    // fn is_focusable(self, cx: &Context) -> bool {
     //     cx.cache.get_focusable(self.entity())
     // }
-    // fn is_checkable(self, cx: &mut Context) -> bool {
+    // fn is_checkable(self, cx: &Context) -> bool {
     //     cx.cache.get_checkable(self.entity())
     // }
-    // fn is_selectable(self, cx: &mut Context) -> bool {
+    // fn is_selectable(self, cx: &Context) -> bool {
     //     cx.cache.get_selectable(self.entity())
     // }
 
-    fn is_visible(self, cx: &mut Context) -> bool {
+    fn is_visible(self, cx: &Context) -> bool {
         cx.cache.get_visibility(self.entity()) == Visibility::Visible
     }
 
     //
-    fn get_overflow(&self, cx: &mut Context) -> Overflow;
+    fn get_overflow(&self, cx: &Context) -> Overflow;
 
     // Display
-    fn get_display(&self, cx: &mut Context) -> Display;
+    fn get_display(&self, cx: &Context) -> Display;
 
-    fn get_layout_type(&self, cx: &mut Context) -> LayoutType {
+    fn get_layout_type(&self, cx: &Context) -> LayoutType {
         cx.style.layout_type.get(self.entity()).cloned().unwrap_or_default()
     }
 
     // Background Color
-    fn get_background_color(&self, cx: &mut Context) -> Color {
+    fn get_background_color(&self, cx: &Context) -> Color {
         cx.style.background_color.get(self.entity()).cloned().unwrap_or_default()
     }
 
     // Position
-    fn get_left(&self, cx: &mut Context) -> Units;
-    fn get_right(&self, cx: &mut Context) -> Units;
-    fn get_top(&self, cx: &mut Context) -> Units;
-    fn get_bottom(&self, cx: &mut Context) -> Units;
+    fn get_left(&self, cx: &Context) -> Units;
+    fn get_right(&self, cx: &Context) -> Units;
+    fn get_top(&self, cx: &Context) -> Units;
+    fn get_bottom(&self, cx: &Context) -> Units;
 
     // Size
-    fn get_width(&self, cx: &mut Context) -> Units;
-    fn get_height(&self, cx: &mut Context) -> Units;
+    fn get_width(&self, cx: &Context) -> Units;
+    fn get_height(&self, cx: &Context) -> Units;
 
     // Size Constraints
-    fn get_min_width(&self, cx: &mut Context) -> Units;
-    fn get_max_width(&self, cx: &mut Context) -> Units;
-    fn get_min_height(&self, cx: &mut Context) -> Units;
-    fn get_max_height(&self, cx: &mut Context) -> Units;
+    fn get_min_width(&self, cx: &Context) -> Units;
+    fn get_max_width(&self, cx: &Context) -> Units;
+    fn get_min_height(&self, cx: &Context) -> Units;
+    fn get_max_height(&self, cx: &Context) -> Units;
 
     // Border
-    fn get_border_width(&self, cx: &mut Context) -> Units;
+    fn get_border_width(&self, cx: &Context) -> Units;
 
     // Tooltip
-    fn get_tooltip(&self, cx: &mut Context) -> String;
+    fn get_tooltip(&self, cx: &Context) -> String;
 
     // Text
-    fn get_text(&self, cx: &mut Context) -> String;
-    fn get_font(&self, cx: &mut Context) -> String;
+    fn get_text(&self, cx: &Context) -> String;
+    fn get_font(&self, cx: &Context) -> String;
 }
 
 impl PropGet for Entity {
-    fn is_disabled(self, cx: &mut Context) -> bool {
+    fn is_disabled(self, cx: &Context) -> bool {
         cx.style.disabled.get(self).cloned().unwrap_or_default()
     }
-    fn is_hovered(self, cx: &mut Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self) {
+    fn is_hovered(self, cx: &Context) -> bool {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::HOVER)
         } else {
             false
         }
     }
-    fn is_selected(self, cx: &mut Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self) {
+    fn is_selected(self, cx: &Context) -> bool {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::SELECTED)
         } else {
             false
         }
     }
-    fn is_checked(self, cx: &mut Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self) {
+    fn is_checked(self, cx: &Context) -> bool {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::CHECKED)
         } else {
             false
         }
     }
-    fn is_over(self, cx: &mut Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self) {
+    fn is_over(self, cx: &Context) -> bool {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::OVER)
         } else {
             false
         }
     }
-    fn is_active(self, cx: &mut Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self) {
+    fn is_active(self, cx: &Context) -> bool {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::ACTIVE)
         } else {
             false
         }
     }
-    fn is_focused(self, cx: &mut Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self) {
+
+    fn is_focused(self, cx: &Context) -> bool {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::FOCUS)
         } else {
             false
         }
     }
 
-    fn get_overflow(&self, cx: &mut Context) -> Overflow {
+    fn get_overflow(&self, cx: &Context) -> Overflow {
         cx.style.overflow.get(*self).cloned().unwrap_or_default()
     }
 
     // Display
-    fn get_display(&self, cx: &mut Context) -> Display {
+    fn get_display(&self, cx: &Context) -> Display {
         cx.style.display.get(*self).cloned().unwrap_or_default()
     }
 
     // Position
-    fn get_left(&self, cx: &mut Context) -> Units {
+    fn get_left(&self, cx: &Context) -> Units {
         cx.style.left.get(*self).cloned().unwrap_or_default()
     }
-    fn get_right(&self, cx: &mut Context) -> Units {
+    fn get_right(&self, cx: &Context) -> Units {
         cx.style.right.get(*self).cloned().unwrap_or_default()
     }
-    fn get_top(&self, cx: &mut Context) -> Units {
+    fn get_top(&self, cx: &Context) -> Units {
         cx.style.top.get(*self).cloned().unwrap_or_default()
     }
-    fn get_bottom(&self, cx: &mut Context) -> Units {
+    fn get_bottom(&self, cx: &Context) -> Units {
         cx.style.bottom.get(*self).cloned().unwrap_or_default()
     }
 
     // Size
-    fn get_width(&self, cx: &mut Context) -> Units {
+    fn get_width(&self, cx: &Context) -> Units {
         cx.style.width.get(*self).cloned().unwrap_or_default()
     }
 
-    fn get_height(&self, cx: &mut Context) -> Units {
+    fn get_height(&self, cx: &Context) -> Units {
         cx.style.height.get(*self).cloned().unwrap_or_default()
     }
 
     // Size Constraints
-    fn get_min_width(&self, cx: &mut Context) -> Units {
+    fn get_min_width(&self, cx: &Context) -> Units {
         cx.style.min_width.get(*self).cloned().unwrap_or_default()
     }
 
-    fn get_max_width(&self, cx: &mut Context) -> Units {
+    fn get_max_width(&self, cx: &Context) -> Units {
         cx.style.max_width.get(*self).cloned().unwrap_or_default()
     }
 
-    fn get_min_height(&self, cx: &mut Context) -> Units {
+    fn get_min_height(&self, cx: &Context) -> Units {
         cx.style.min_height.get(*self).cloned().unwrap_or_default()
     }
 
-    fn get_max_height(&self, cx: &mut Context) -> Units {
+    fn get_max_height(&self, cx: &Context) -> Units {
         cx.style.max_height.get(*self).cloned().unwrap_or_default()
     }
 
     // Border
-    fn get_border_width(&self, cx: &mut Context) -> Units {
+    fn get_border_width(&self, cx: &Context) -> Units {
         cx.style.border_width.get(*self).cloned().unwrap_or_default()
     }
 
     // Tooltip
-    fn get_tooltip(&self, cx: &mut Context) -> String {
+    fn get_tooltip(&self, cx: &Context) -> String {
         cx.style.tooltip.get(*self).cloned().unwrap_or_default()
     }
 
     // Text
-    fn get_text(&self, cx: &mut Context) -> String {
+    fn get_text(&self, cx: &Context) -> String {
         cx.style.text.get(*self).cloned().unwrap_or_default()
     }
 
-    fn get_font(&self, cx: &mut Context) -> String {
+    fn get_font(&self, cx: &Context) -> String {
         cx.style.font.get(*self).cloned().unwrap_or_default()
     }
 }

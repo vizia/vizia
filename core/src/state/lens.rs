@@ -1,4 +1,6 @@
 use crate::Model;
+use std::any::TypeId;
+use std::fmt::{Debug, Formatter};
 
 /// A Lens allows the construction of a reference to a field of a struct.
 ///
@@ -90,37 +92,6 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
     }
 }
 
-// pub struct And<A,B> {
-//     a: A,
-//     b: B,
-// }
-
-// impl<A,B> And<A,B> {
-//     pub fn new(a: A, b: B) -> Self
-//     where
-//         A: Lens,
-//         B: Lens,
-//     {
-//         Self {
-//             a,
-//             b,
-//         }
-//     }
-// }
-
-// impl<A,B> Lens for And<A,B>
-// where
-//     A: Lens,
-//     B: Lens<Source = A::Source>,
-// {
-//     type Source = A::Source;
-//     type Target = (A::Target, B::Target);
-
-//     fn view<'a>(&self, data: &'a Self::Source) -> &Self::Target {
-//         &(self.a.view(data), self.b.view(data))
-//     }
-// }
-
 // pub struct Index<T,I> {
 //     index: I,
 //     output: PhantomData<T>,
@@ -149,3 +120,38 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
 //         &data[self.index.clone()]
 //     }
 // }
+
+pub struct StaticLens<T: 'static> {
+    data: &'static T,
+}
+
+impl<T> Clone for StaticLens<T> {
+    fn clone(&self) -> Self {
+        StaticLens { data: self.data }
+    }
+}
+
+impl<T> Copy for StaticLens<T> {}
+
+impl<T> Debug for StaticLens<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Static Lens: ")?;
+        TypeId::of::<T>().fmt(f)?;
+        Ok(())
+    }
+}
+
+impl<T> Lens for StaticLens<T> {
+    type Source = ();
+    type Target = T;
+
+    fn view<'a>(&self, _source: &'a Self::Source) -> &'a Self::Target {
+        self.data
+    }
+}
+
+impl<T> StaticLens<T> {
+    pub fn new(data: &'static T) -> Self {
+        StaticLens { data }
+    }
+}

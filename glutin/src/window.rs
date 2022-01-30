@@ -35,6 +35,7 @@ impl Window {
                 window_description.min_inner_size.width,
                 window_description.min_inner_size.height,
             ))
+            .with_always_on_top(window_description.always_on_top)
             .with_window_icon(if let Some(icon) = &window_description.icon {
                 Some(
                     glutin::window::Icon::from_rgba(
@@ -56,6 +57,7 @@ impl Window {
 
         let handle = unsafe { handle.make_current().unwrap() };
 
+        #[allow(deprecated)]
         let renderer = OpenGl::new(|s| handle.context().get_proc_address(s) as *const _)
             .expect("Cannot create renderer");
 

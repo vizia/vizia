@@ -8,7 +8,7 @@ mod button;
 pub use button::Button;
 
 mod list;
-pub use list::{DataHandle, ItemPtr, List, ListData, ListEvent};
+pub use list::{DataHandle, ItemPtr, List};
 
 mod table;
 pub use table::Table;
@@ -25,8 +25,8 @@ pub use element::Element;
 mod for_each;
 pub use for_each::ForEach;
 
-mod slider2;
-pub use slider2::{Orientation, Slider, SliderData, SliderEvent};
+mod slider;
+pub use slider::{Orientation, Slider, SliderData, SliderEvent};
 
 mod knob;
 pub use knob::{ArcTrack, Knob};
@@ -42,3 +42,6 @@ pub use popup::*;
 
 mod scrollview;
 pub use scrollview::*;
+
+mod radio_buttons;
+pub use radio_buttons::*;

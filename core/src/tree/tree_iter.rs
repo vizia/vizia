@@ -1,14 +1,13 @@
 use crate::{Entity, GenerationalId, Tree};
 
-/// Iterator for iterating through the tree from top to bottom in depth first order
+/// Iterator for iterating through the tree in depth first order.
 pub struct TreeIterator<'a> {
     pub tree: &'a Tree,
     pub current_node: Option<Entity>,
-    //current_back: Option<Entity>,
 }
 
 impl<'a> TreeIterator<'a> {
-    /// Skip to next branch
+    // Skip to next branch
     pub fn next_branch(&mut self) -> Option<Entity> {
         let r = self.current_node;
         if let Some(current) = self.current_node {

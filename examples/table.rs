@@ -4,7 +4,7 @@ fn main() {
     Application::new(WindowDescription::new().with_title("Table"), |cx| {
         TableData { table_data: (0..100).collect() }.build(cx);
 
-        Table::new(cx, 10, TableData::table_data, |cx, width, item| {
+        Table::new(cx, 10, TableData::table_data, |cx, _, item| {
             // VStack::new(cx, move |cx|{
             //     Label::new(cx, &format!("{}, {}", item.row(), item.col())).width(Stretch(1.0)).height(Stretch(1.0));
             // }).width(Stretch(1.0)).height(Stretch(1.0));

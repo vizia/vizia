@@ -5,7 +5,7 @@ use super::child_iter::ChildIterator;
 use super::parent_iter::ParentIterator;
 use super::tree_iter::TreeIterator;
 
-/// Trait which provides methods for qerying the tree.
+/// Trait which provides methods for querying the tree.
 pub trait TreeExt {
     fn parent(&self, tree: &Tree) -> Option<Entity>;
     fn is_sibling(&self, tree: &Tree, entity: Entity) -> bool;

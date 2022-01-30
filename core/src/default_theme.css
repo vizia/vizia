@@ -1,4 +1,7 @@
-
+/* * {
+    border-width: 1px;
+    border-color: red;
+} */
 
 button {
     background-color: #2000AA;
@@ -51,6 +54,36 @@ label.icon {
 }
 
 
+textbox {
+    width: auto;
+    height: auto;
+    overflow: hidden;
+    color: black;
+    border-width: 1px;
+    border-color: #9e9e9e;
+    child-top: 1s;
+    child-bottom: 1s;
+    height: 30px;
+    border-radius: 3px;
+}
+
+textbox:over {
+    border-color: black;
+}
+
+textbox:checked {
+    border-color: #4c00ff;
+}
+
+textbox .caret {
+    background-color: #ff0000;
+}
+
+textbox .selection {
+    background-color: #6464c888;
+}
+
+
 label {
     width: auto;
     height: auto;
@@ -74,13 +107,11 @@ checkbox {
 hstack {
     width: 1s;
     height: 1s;
-    /* child-space: 1s; */
 }
 
 vstack {
     width: 1s;
     height: 1s;
-    /* child-space: 1s; */
 }
 
 zstack>* {
@@ -99,10 +130,28 @@ checkbox:disabled {
     border-color: gray;
 }
 
+radiobutton {
+    width: 20px;
+    height: 20px;
+    border-width: 6%;
+    right: 4px;
+    color: black;
+    border-color: black;
+}
+
 dropdown .title {
     background-color: white;
     border-width: 1px;
     border-color: black;
+}
+
+radiobutton:checked {
+    color: #003080;
+    border-color: #003080;
+}
+
+dropdown .title {
+    background-color: #FFFFFF;
     height: 30px;
     width: 100px;
     child-space: 1s;
@@ -110,26 +159,18 @@ dropdown .title {
 }
 
 dropdown>popup {
-    background-color: white;
-    border-width: 1px;
-    border-color: black;
-    top: -2px;
+    background-color: #AAAAAA;
+    outer-shadow: 0 3 5 #00000055;
 }
 
-dropdown button {
+dropdown>popup>list {
+    width: 1s;
+}
+
+dropdown list label {
     width: 1s;
     height: 30px;
-    border-radius: 0px;
-}
-
-dropdown label {
-    width: auto;
-    height: 30px;
-    color: black;
-}
-
-dropdown button label {
-    child-left: 0px;
+    child-left: 6px;
 }
 
 dropdown vstack {
@@ -169,4 +210,8 @@ slider .thumb {
     border-width: 1px;
     width: 40px;
     height: 40px;
+}
+list {
+    width: auto;
+    height: auto;
 }

@@ -3,7 +3,6 @@ use std::hash::{Hash, Hasher};
 
 use std::cmp::{Eq, PartialEq};
 use std::collections::HashSet;
-use std::string::ToString;
 
 use super::Specificity;
 
@@ -115,30 +114,30 @@ impl std::fmt::Display for Selector {
 }
 
 impl Selector {
-    pub fn new() -> Self {
-        Selector {
-            id: None,
-            element: None,
-            classes: HashSet::new(),
-            pseudo_classes: PseudoClass::empty(),
-            relation: SelectorRelation::None,
-            asterisk: false,
-        }
-    }
+    // pub fn new() -> Self {
+    //     Selector {
+    //         id: None,
+    //         element: None,
+    //         classes: HashSet::new(),
+    //         pseudo_classes: PseudoClass::empty(),
+    //         relation: SelectorRelation::None,
+    //         asterisk: false,
+    //     }
+    // }
 
-    pub fn element(element: &str) -> Self {
-        //let mut s = DefaultHasher::new();
-        //element.hash(&mut s);
+    // pub fn element(element: &str) -> Self {
+    //     //let mut s = DefaultHasher::new();
+    //     //element.hash(&mut s);
 
-        Selector {
-            id: None,
-            element: Some(element.to_owned()),
-            classes: HashSet::new(),
-            pseudo_classes: PseudoClass::empty(),
-            relation: SelectorRelation::None,
-            asterisk: false,
-        }
-    }
+    //     Selector {
+    //         id: None,
+    //         element: Some(element.to_owned()),
+    //         classes: HashSet::new(),
+    //         pseudo_classes: PseudoClass::empty(),
+    //         relation: SelectorRelation::None,
+    //         asterisk: false,
+    //     }
+    // }
 
     pub fn matches(&self, entity_selector: &Selector) -> bool {
         // Universal selector always matches
@@ -188,24 +187,24 @@ impl Selector {
         ])
     }
 
-    pub fn id(mut self, id: &str) -> Self {
-        let mut s = DefaultHasher::new();
-        id.hash(&mut s);
-        self.id = Some(s.finish());
-        self
-    }
+    // pub fn id(mut self, id: &str) -> Self {
+    //     let mut s = DefaultHasher::new();
+    //     id.hash(&mut s);
+    //     self.id = Some(s.finish());
+    //     self
+    // }
 
-    pub fn class(mut self, class: &str) -> Self {
-        self.classes.insert(class.to_string());
-        self
-    }
+    // pub fn class(mut self, class: &str) -> Self {
+    //     self.classes.insert(class.to_string());
+    //     self
+    // }
 
-    pub fn replace_class(&mut self, old: &str, new: &str) -> &mut Self {
-        self.classes.remove(old);
-        self.classes.insert(new.to_string());
+    // pub fn replace_class(&mut self, old: &str, new: &str) -> &mut Self {
+    //     self.classes.remove(old);
+    //     self.classes.insert(new.to_string());
 
-        self
-    }
+    //     self
+    // }
 
     pub fn set_id(&mut self, id: &str) -> &mut Self {
         let mut s = DefaultHasher::new();

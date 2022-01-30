@@ -4,7 +4,7 @@ use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
-use vizia_core::{TreeExt, apply_inline_inheritance, apply_shared_inheritance};
+use vizia_core::{apply_inline_inheritance, apply_shared_inheritance, TreeExt};
 use vizia_core::{MouseButton, MouseButtonState};
 //use vizia_core::WindowWidget;
 use vizia_core::{
@@ -133,27 +133,21 @@ impl ApplicationRunner {
         let icon_font = include_bytes!("../../fonts/entypo.ttf");
         let emoji_font = include_bytes!("../../fonts/OpenSansEmoji.ttf");
         let arabic_font = include_bytes!("../../fonts/amiri-regular.ttf");
+        let material_font = include_bytes!("../../fonts/MaterialIcons-Regular.ttf");
 
         context.add_font_mem("roboto", regular_font);
         context.add_font_mem("roboto-bold", bold_font);
-        context.add_font_mem("icon", icon_font);
+        context.add_font_mem("icons", icon_font);
         context.add_font_mem("emoji", emoji_font);
         context.add_font_mem("arabic", arabic_font);
+        context.add_font_mem("material", material_font);
 
         context.style.default_font = "roboto".to_string();
 
         //canvas.scale(scale as f32, scale as f32);
 
-        context
-            .style
-            
-            .width
-            .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
-        context
-            .style
-            
-            .height
-            .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
+        context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
+        context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
         context.style.disabled.insert(Entity::root(), false);
 
@@ -265,9 +259,7 @@ impl ApplicationRunner {
 
         // Data Updates
         let mut observers: Vec<Entity> = Vec::new();
-        for model_store in
-            self.context.data.model_data.dense.iter_mut().map(|entry| &mut entry.value)
-        {
+        for model_store in self.context.data.dense.iter_mut().map(|entry| &mut entry.value) {
             for (_, lens) in model_store.lenses.iter_mut() {
                 for (_, _) in model_store.data.iter() {
                     //if lens.update(model) {
@@ -334,10 +326,6 @@ impl ApplicationRunner {
     }
 
     pub fn render(&mut self) {
-        //let tree = self.context.tree.clone();
-        //vizia_core::apply_clipping(&mut self.context, &tree);
-        //self.event_manager.draw(&mut self.context, &mut self.canvas);
-
         // TODO
         let dpi_factor = 1.0;
 
@@ -348,7 +336,6 @@ impl ApplicationRunner {
         let clear_color = self
             .context
             .style
-            
             .background_color
             .get(Entity::root())
             .cloned()
@@ -397,7 +384,7 @@ impl ApplicationRunner {
 
             if let Some(view) = self.context.views.remove(&entity) {
                 self.context.current = entity;
-                view.draw(&self.context, &mut self.canvas);
+                view.draw(&mut self.context, &mut self.canvas);
 
                 self.context.views.insert(entity, view);
             }
@@ -797,12 +784,10 @@ impl ApplicationRunner {
 
                     self.context
                         .style
-                        
                         .width
                         .insert(Entity::root(), Units::Pixels(logical_size.0 as f32));
                     self.context
                         .style
-                        
                         .height
                         .insert(Entity::root(), Units::Pixels(logical_size.1 as f32));
 

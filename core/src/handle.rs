@@ -3,7 +3,8 @@ use std::marker::PhantomData;
 use morphorm::{LayoutType, PositionType, Units};
 
 use crate::{
-    style::Overflow, Abilities, Color, CursorIcon, Display, Entity, PseudoClass, Visibility, Context, Res, BorderCornerShape,
+    style::Overflow, Abilities, BorderCornerShape, Color, Context, CursorIcon, Display, Entity,
+    PseudoClass, Res, Visibility,
 };
 
 macro_rules! set_style {
@@ -23,11 +24,10 @@ macro_rules! set_style {
 pub struct Handle<'a, T> {
     pub entity: Entity,
     pub p: PhantomData<T>,
-    pub cx: &'a mut Context, 
+    pub cx: &'a mut Context,
 }
 
-impl<'a,T> Handle<'a,T> {
-
+impl<'a, T> Handle<'a, T> {
     pub fn entity(&self) -> Entity {
         self.entity
     }
@@ -58,22 +58,22 @@ impl<'a,T> Handle<'a,T> {
         self
     }
 
-    pub fn checked(self, state: bool) -> Self {
+    pub fn checked(self, state: impl Res<bool>) -> Self {
+        let state = state.get(self.cx).clone();
         if let Some(pseudo_classes) = self.cx.style.pseudo_classes.get_mut(self.entity) {
             pseudo_classes.set(PseudoClass::CHECKED, state);
         } else {
             let mut pseudoclass = PseudoClass::empty();
             pseudoclass.set(PseudoClass::CHECKED, state);
-            self.cx.style.pseudo_classes.insert(self.entity, pseudoclass);
+            self.cx.style.pseudo_classes.insert(self.entity, pseudoclass).unwrap();
         }
-        
+
         self.cx.style.needs_restyle = true;
 
         self
     }
 
     pub fn disabled(self, state: bool) -> Self {
-
         self.cx.style.disabled.insert(self.entity, state);
         self.cx.style.needs_restyle = true;
 
@@ -81,6 +81,12 @@ impl<'a,T> Handle<'a,T> {
     }
 
     pub fn text(self, value: &str) -> Self {
+        if let Some(prev_data) = self.cx.style.text.get(self.entity) {
+            if prev_data == value {
+                return self;
+            }
+        }
+
         self.cx.style.text.insert(self.entity, value.to_owned());
 
         self.cx.style.needs_redraw = true;
@@ -99,6 +105,15 @@ impl<'a,T> Handle<'a,T> {
     pub fn overflow(self, value: Overflow) -> Self {
         self.cx.style.overflow.insert(self.entity, value);
 
+        self.cx.style.needs_redraw = true;
+
+        self
+    }
+
+    pub fn display<U: Clone + Into<Display>>(self, value: impl Res<U>) -> Self {
+        self.cx.style.display.insert(self.entity, value.get(self.cx).clone().into());
+
+        self.cx.style.needs_relayout = true;
         self.cx.style.needs_redraw = true;
 
         self
@@ -238,10 +253,8 @@ impl<'a,T> Handle<'a,T> {
 
     set_style!(font_size, f32);
 
-    set_style!(display, Display);
+    //set_style!(display, Display);
     //set_style!(visibility, Visibility);
-
-
 
     set_style!(rotate, f32);
     set_style!(translate, (f32, f32));
@@ -255,6 +268,4 @@ impl<'a,T> Handle<'a,T> {
     set_style!(border_radius_top_right, Units);
     set_style!(border_radius_bottom_left, Units);
     set_style!(border_radius_bottom_right, Units);
-
-
 }

@@ -1,7 +1,7 @@
 use crate::Entity;
 
 /// A mouse button.
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum MouseButton {
     Left,
     Right,
@@ -10,14 +10,14 @@ pub enum MouseButton {
 }
 
 /// The state of a mouse button.
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum MouseButtonState {
     Pressed,
     Released,
 }
 
 /// Data which describes the current state of a mouse button.
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct MouseButtonData {
     pub state: MouseButtonState,
     pub pos_down: (f32, f32),
@@ -39,7 +39,7 @@ impl Default for MouseButtonData {
 }
 
 /// The current state of the mouse cursor and buttons.
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct MouseState {
     pub cursorx: f32,
     pub cursory: f32,

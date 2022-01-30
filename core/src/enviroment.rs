@@ -1,8 +1,6 @@
 pub struct Enviroment {
-    // Signifies whether the app should be rebuilt
-    // Changing an enviroment variable requires a rebuild of the app
+    // Signifies whether the app should be rebuilt.
     pub needs_rebuild: bool,
-    //pub bundle: FluentBundle<FluentResource>,
     pub include_default_theme: bool,
 }
 

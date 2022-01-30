@@ -102,7 +102,8 @@ fn main() {
                     Label::new(cx, "Option 3");
                 })
                 .col_between(Pixels(5.0));
-            });
+            })
+            .child_space(Stretch(1.0));
 
             // Exclusive checkboxes with labels
             // Only one checkbox can be checked at a time and cannot be unchecked
@@ -147,8 +148,10 @@ fn main() {
                     Label::new(cx, "Option 3");
                 })
                 .col_between(Pixels(5.0));
-            });
-        });
+            })
+            .child_space(Stretch(1.0));
+        })
+        .child_space(Stretch(1.0));
 
         style_dropdown(cx)
             .position_type(PositionType::SelfDirected)

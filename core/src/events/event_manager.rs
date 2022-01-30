@@ -28,10 +28,9 @@ impl EventManager {
         // Move events from state to event manager
         self.event_queue.extend(context.event_queue.drain(0..));
 
-        // Sort the events by order
-        //self.event_queue.sort_by_cached_key(|event| event.order);
-
-        self.tree = context.tree.clone();
+        if context.tree.changed {
+            self.tree = context.tree.clone();
+        }
 
         // Loop over the events in the event queue
         'events: for event in self.event_queue.iter_mut() {
@@ -72,17 +71,13 @@ impl EventManager {
                 context.views.insert(event.target, view);
             }
 
-            if let Some(mut model_list) = context.data.model_data.remove(event.target) {
+            if let Some(mut model_list) = context.data.remove(event.target) {
                 for (_, model) in model_list.data.iter_mut() {
                     context.current = event.target;
                     model.event(context, event);
                 }
 
-                context
-                    .data
-                    .model_data
-                    .insert(event.target, model_list)
-                    .expect("Failed to insert data");
+                context.data.insert(event.target, model_list).expect("Failed to insert data");
             }
 
             if event.consumed {
@@ -112,7 +107,7 @@ impl EventManager {
                         context.views.insert(entity, view);
                     }
 
-                    if let Some(mut model_list) = context.data.model_data.remove(entity) {
+                    if let Some(mut model_list) = context.data.remove(entity) {
                         for (_, model) in model_list.data.iter_mut() {
                             // if event.trace {
                             //     println!("Event: {:?} -> Model {:?}", event, ty);
@@ -121,11 +116,7 @@ impl EventManager {
                             model.event(context, event);
                         }
 
-                        context
-                            .data
-                            .model_data
-                            .insert(entity, model_list)
-                            .expect("Failed to insert data");
+                        context.data.insert(entity, model_list).expect("Failed to insert data");
                     }
 
                     // Skip to the next event if the current event is consumed

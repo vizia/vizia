@@ -2,11 +2,9 @@ use femtovg::{Align, Baseline, Paint};
 use morphorm::Units;
 
 use crate::{
-    style::{Overflow, Selector, SelectorRelation},
-    BoundingBox, Context, Display, Entity, FontOrId, Rule, Tree, TreeExt, Visibility, PseudoClass,
+    style::{Overflow, PropGet, Selector, SelectorRelation},
+    BoundingBox, Context, Display, Entity, FontOrId, PseudoClass, Rule, Tree, TreeExt, Visibility,
 };
-
-// use crate::{BoundingBox, Display, Entity, Overflow, PropGet, PropSet, Property, SelectorRelation, Rule, Selector, Cx, Tree, TreeExt, Visibility};
 
 pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
@@ -134,7 +132,12 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
-        if cx.style.text.get(entity).is_some() {
+        let desired_width = cx.style.width.get(entity).cloned().unwrap_or_default();
+        let desired_height = cx.style.height.get(entity).cloned().unwrap_or_default();
+
+        if cx.style.text.get(entity).is_some()
+            && (desired_width == Units::Auto || desired_height == Units::Auto)
+        {
             let font = cx.style.font.get(entity).cloned().unwrap_or_default();
 
             // TODO - This should probably be cached in cx to save look-up time
@@ -168,19 +171,17 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
             let parent_width = cx.cache.get_width(parent);
 
-            let border_width =
-                match cx.style.border_width.get(entity).cloned().unwrap_or_default() {
-                    Units::Pixels(val) => val,
-                    Units::Percentage(val) => parent_width * val,
-                    _ => 0.0,
-                };
+            let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
+            {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => parent_width * val,
+                _ => 0.0,
+            };
 
             let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
-            let child_right =
-                cx.style.child_right.get(entity).cloned().unwrap_or_default();
+            let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();
             let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
-            let child_bottom =
-                cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
+            let child_bottom = cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
 
             // TODO - should auto size use text height or font height?
             let _font_metrics =
@@ -248,27 +249,28 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             paint.set_text_align(align);
             paint.set_text_baseline(baseline);
 
-            let text = cx.style.text.get(entity).cloned().unwrap();
-
-            if let Ok(text_metrics) = cx.text_context.measure_text(x, y, text, paint) {
-                let text_width = text_metrics.width().round();
-                let text_height = text_metrics.height().round();
-
-                if cx.style.width.get(entity) == Some(&Units::Auto) {
+            if let Some(text) = cx.style.text.get(entity) {
+                if let Ok(text_metrics) = cx.text_context.measure_text(x, y, text, paint) {
                     // Add an extra pixel to account to AA
-                    cx.style.min_width.insert(entity, Units::Pixels(text_width + 1.0));
-                    cx.style.needs_relayout = true;
-                    cx.style.needs_redraw = true;
-                }
+                    let text_width = text_metrics.width().round() + 1.0;
+                    let text_height = text_metrics.height().round() + 1.0;
 
-                if cx.style.height.get(entity) == Some(&Units::Auto) {
-                    // Add an extra pixel to account for AA
-                    cx.style
-                        
-                        .min_height
-                        .insert(entity, Units::Pixels(text_height + 1.0));
-                    cx.style.needs_relayout = true;
-                    cx.style.needs_redraw = true;
+                    if cx.style.width.get(entity) == Some(&Units::Auto) {
+                        //let previous_min_width = entity.get_min_width(cx).value_or(0.0, 0.0);
+                        if entity.get_min_width(cx) != Units::Pixels(text_width) {
+                            cx.style.min_width.insert(entity, Units::Pixels(text_width));
+                            cx.style.needs_relayout = true;
+                            cx.style.needs_redraw = true;
+                        }
+                    }
+
+                    if cx.style.height.get(entity) == Some(&Units::Auto) {
+                        if entity.get_min_height(cx) != Units::Pixels(text_height) {
+                            cx.style.min_height.insert(entity, Units::Pixels(text_height));
+                            cx.style.needs_relayout = true;
+                            cx.style.needs_redraw = true;
+                        }
+                    }
                 }
             }
         }
@@ -278,10 +280,11 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
         if let Some(parent) = entity.parent(tree) {
-
             cx.style.disabled.inherit_inline(entity, parent);
-            
+
             cx.style.font_color.inherit_inline(entity, parent);
+            cx.style.font_size.inherit_inline(entity, parent);
+            cx.style.font.inherit_inline(entity, parent);
         }
     }
 }
@@ -290,11 +293,11 @@ pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
         if let Some(parent) = entity.parent(tree) {
             cx.style.font_color.inherit_shared(entity, parent);
+            cx.style.font_size.inherit_shared(entity, parent);
+            cx.style.font.inherit_shared(entity, parent);
         }
     }
 }
-
-
 
 // pub fn apply_abilities(cx: &mut Context, tree: &Tree) {
 //     let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
@@ -370,7 +373,8 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
 
     // Disabled needs to be handled separately because it can be inherited
     if let Some(disabled) = cx.style.disabled.get(entity) {
-        if !selector.pseudo_classes.is_empty() && *disabled != selector.pseudo_classes.contains(PseudoClass::DISABLED)
+        if !selector.pseudo_classes.is_empty()
+            && *disabled != selector.pseudo_classes.contains(PseudoClass::DISABLED)
         {
             return false;
         }
@@ -380,7 +384,7 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     if let Some(pseudo_classes) = cx.style.pseudo_classes.get(entity) {
         let mut selector_pseudo_classes = selector.pseudo_classes;
         selector_pseudo_classes.set(PseudoClass::DISABLED, false);
-        
+
         if !selector_pseudo_classes.is_empty()
             && !selector_pseudo_classes.intersects(*pseudo_classes)
         {
@@ -481,7 +485,6 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
 
         if cx.style.z_order.link(entity, &matched_rules) {
             //println!("3");
-            should_relayout = true;
             should_redraw = true;
         }
 
@@ -492,7 +495,6 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
         // Opacity
         if cx.style.opacity.link(entity, &matched_rules) {
             //println!("4");
-            should_relayout = true;
             should_redraw = true;
         }
 
@@ -728,36 +730,5 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
         if should_redraw {
             cx.style.needs_redraw = true;
         }
-
-        // for rule_id in matched_rules.iter() {
-        //     // TODO - remove cloned
-        //     if let Some(rule_index) = cx.style.rules.iter().position(|rule| rule.id == *rule_id) {
-        //         if let Some(rule) = cx.style.rules.get(rule_index).cloned() {
-        //             for property in rule.properties.iter() {
-        //                 match property {
-        //                     Property::Unknown(ident, prop) => {
-        //                         if let Some(mut event_handler) = cx.event_handlers.remove(&entity) {
-        //                             event_handler.on_style(cx, entity, (ident.clone(), prop.clone()));
-
-        //                             cx.event_handlers.insert(entity, event_handler);
-        //                         }
-        //                     }
-
-        //                     _=> {}
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-
-        // if should_relayout {
-        //     Entity::root().relayout(cx);
-        //     //cx.needs_relayout = true;
-        // }
-
-        // if should_redraw {
-        //     Entity::root().redraw(cx);
-        //     //cx.needs_redraw = true;
-        // }
     }
 }
