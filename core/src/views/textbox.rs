@@ -981,10 +981,19 @@ where
                         #[cfg(feature = "clipboard")]
                         if self.edit {
                             if cx.modifiers.contains(Modifiers::CTRL) {
-                                if let Some(text) = self.get_text(cx).cloned() {
-                                    cx.clipboard
-                                        .set_contents(text.as_str().to_owned())
-                                        .expect("Failed to add text to clipboard");
+                                if let Some(text_data) = cx.data::<TextboxData>().cloned() {
+                                    if let Some(text) = self.get_text(cx).cloned() {
+                                        let string = if !text_data.selection.is_caret() {
+                                            text.as_str().get(text_data.selection.range())
+                                        } else {
+                                            Some(text.as_str())
+                                        };
+                                        if let Some(string) = string {
+                                            cx.clipboard
+                                                .set_contents(string.to_owned())
+                                                .expect("Failed to add text to clipboard");
+                                        }
+                                    }
                                 }
                             }
                         }
