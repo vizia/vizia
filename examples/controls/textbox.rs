@@ -28,8 +28,8 @@ fn main() {
         AppData { text: "This text is editable!".to_string() }.build(cx);
 
         HStack::new(cx, |cx| {
-            Textbox::new(cx, AppData::text)
-                .on_edit(|cx, range, text| cx.emit(AppEvent::EditRange(range, text)))
+            Textbox::new(cx, "Some text".to_string())
+                //.on_edit(|cx, range, text| cx.emit(AppEvent::EditRange(range, text)))
                 .width(Pixels(200.0))
                 .child_left(Pixels(5.0));
 
