@@ -136,7 +136,7 @@ Application::new(WindowDescription::new(), |cx|{
 		});
 
 		// The action will be called when the button is pressed
-		Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx|{
+		Button::new(cx, |cx| cx.emit(AppEvent::Decrement), |cx|{
 			Label::new(cx, "Decrement")
 		});
 
