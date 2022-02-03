@@ -16,6 +16,9 @@ pub use table::Table;
 mod textbox;
 pub use textbox::Textbox;
 
+mod codeview;
+pub use codeview::CodeView;
+
 mod checkbox;
 pub use checkbox::Checkbox;
 

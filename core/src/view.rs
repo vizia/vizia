@@ -56,36 +56,41 @@ pub trait View: 'static + Sized {
         F: 'static + FnOnce(&mut Self, &mut Context),
     {
         // Add the instance to context unless it already exists
-        let (id, flag) = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
-            (id, true)
+        let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
+            id
         } else {
             let id = cx.entity_manager.create();
             cx.tree.add(id, cx.current).expect("Failed to add to tree");
             cx.cache.add(id).expect("Failed to add to cache");
             cx.style.add(id);
-            //cx.views.insert(id, Box::new(self));
-            (id, false)
+            cx.views.insert(id, Box::new(self));
+            id
         };
 
         cx.count += 1;
 
-        // ...and this part
-        let prev = cx.current;
-        let prev_count = cx.count;
-        cx.current = id;
-        cx.count = 0;
+        let handle = Handle { entity: id, p: Default::default(), cx };
 
-        (builder)(&mut self, cx);
+        // ...and this part
+        let prev = handle.cx.current;
+        let prev_count = handle.cx.count;
+        handle.cx.current = handle.entity;
+        handle.cx.count = 0;
+
+        if let Some(mut view_handler) = handle.cx.views.remove(&handle.entity) {
+            if let Some(view) = view_handler.downcast_mut::<Self>() {
+                (builder)(view, handle.cx);
+            }
+
+            handle.cx.views.insert(handle.entity, view_handler);
+        }
+        
 
         // This part will also be moved somewhere else
-        cx.current = prev;
-        cx.count = prev_count;
+        handle.cx.current = prev;
+        handle.cx.count = prev_count;
 
-        if !flag {
-            cx.views.insert(id, Box::new(self));
-        }
-
-        Handle { entity: id, p: Default::default(), cx }
+        handle
     }
 
     fn update<F>(self, cx: &mut Context, builder: F) -> Handle<Self>
@@ -749,21 +754,6 @@ pub trait View: 'static + Sized {
 
             canvas.fill_text(x, y, &text_string, paint).unwrap();
         }
-
-        // let bounds = cx.cache.get_bounds(entity);
-        // let mut path = Path::new();
-        // path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-
-        // let background_color: femtovg::Color = cx.style.background_color.get(entity).cloned().unwrap_or_default().into();
-        // canvas.fill_path(&mut path, Paint::color(background_color));
-
-        // if let Some(text) = cx.style.text.get(entity) {
-        //     let mut paint = Paint::color(femtovg::Color::black());
-        //     paint.set_font(&cx.fonts);
-        //     paint.set_text_align(Align::Center);
-        //     paint.set_text_baseline(Baseline::Middle);
-        //     canvas.fill_text(bounds.x + bounds.w / 2.0, bounds.y + bounds.h / 2.0, text, paint);
-        // }
     }
 }
 

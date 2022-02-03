@@ -17,11 +17,8 @@ use crate::{
 use crate::text::Direction;
 
 
-pub struct Textbox<T>
-where
-    T: EditableText,
-{
-    //text_data: TextData,
+
+pub struct TextboxData<T: EditableText> {
     text: T,
     selection: Selection,
     caret_entity: Entity,
@@ -29,67 +26,21 @@ where
     edit: bool,
     hitx: f32,
     dragx: f32,
-    on_edit: Option<Box<dyn Fn(&mut Context, String)>>,
-    //on_submit: Option<Box<dyn Fn(&mut Context, &Self)>>,
 }
 
-impl<T> Textbox<T>
-where
-    T: 'static + EditableText,
-{
-    pub fn new<'a>(cx: &'a mut Context, text: T) -> Handle<'a, Self> {
-        // let selection = if let Some(source) = cx.data::<L::Source>() {
-        //     let text = lens.view(source);
-        //     Selection::new(0, text.len())
-        // } else {
-        //     Selection::caret(0)
-        // };
+impl<T: EditableText> TextboxData<T> {
 
-        //let text_length = cx.data::<L::Source>().and_then(|source| Some(lens.view(source))).unwrap().len();
-
-        let text_length = text.len();
+    pub fn new(text: T) -> Self {
+        let text_length = text.as_str().len();
         Self {
-            // text_data: TextData {
-            //     //text: placeholder.to_string(),
-            //     // selection: Selection::new(0, placeholder.len()),
-            //     selection: Selection::new(0, placeholder.len()),
-            // },
-            text,
+            text: text.clone(),
             selection: Selection::new(0, text_length),
             caret_entity: Entity::null(),
             selection_entity: Entity::null(),
             edit: false,
             hitx: -1.0,
             dragx: -1.0,
-            on_edit: None,
-            //on_submit: None,
         }
-        .build3(cx, move |textbox, cx| {
-
-
-            cx.current.set_text(cx, &textbox.text.as_str());
-
-            // Selection
-            textbox.selection_entity = Element::new(cx)
-                .left(Pixels(0.0))
-                .width(Pixels(0.0))
-                .class("selection")
-                //.background_color(Color::rgba(100, 100, 200, 120))
-                .position_type(PositionType::SelfDirected)
-                .visibility(false)
-                .entity();
-
-            // Caret
-            textbox.caret_entity = Element::new(cx)
-                .left(Pixels(0.0))
-                .class("caret")
-                //.background_color(Color::rgba(255, 0, 0, 255))
-                .position_type(PositionType::SelfDirected)
-                .width(Pixels(1.0))
-                .visibility(false)
-                .entity();
-        })
-        //.text(text.as_str())
     }
 
     fn set_caret(&mut self, cx: &mut Context, entity: Entity) {
@@ -367,15 +318,15 @@ where
         }
     }
 
-    pub fn insert_text(&mut self, cx: &mut Context, text: String) {
+    pub fn insert_text(&mut self, cx: &mut Context, text: &str) {
         let text_length = text.len();
         self.text.edit(self.selection.range(), text);
         // Send event to edit text
-        if let Some(callback) = self.on_edit.take() {
-            (callback)(cx, self.text.as_str().to_owned());
+        // if let Some(callback) = self.on_edit.take() {
+        //     (callback)(cx, self.text.as_str().to_owned());
 
-            self.on_edit = Some(callback);
-        }
+        //     self.on_edit = Some(callback);
+        // }
         
         //cx.emit(TextEvent::SetCaret(text_data.selection.min() + text_length));
         self.selection = Selection::caret(self.selection.min() + text_length);
@@ -387,11 +338,11 @@ where
         // If selection is a range - delete the selection
         if !self.selection.is_caret() {
             self.text.edit(self.selection.range(), "");
-            if let Some(callback) = self.on_edit.take() {
-                (callback)(cx, self.text.as_str().to_owned());
+            // if let Some(callback) = self.on_edit.take() {
+            //     (callback)(cx, self.text.as_str().to_owned());
     
-                self.on_edit = Some(callback);
-            }
+            //     self.on_edit = Some(callback);
+            // }
             self.selection = Selection::caret(self.selection.min());
             //cx.emit(TextEvent::SetCaret(text_data.selection.min()))
             //println!("Selection: {:?}", self.selection);
@@ -402,11 +353,11 @@ where
                         self.text.prev_grapheme_offset(self.selection.active)
                     {
                         self.text.edit(offset..self.selection.active, "");
-                        if let Some(callback) = self.on_edit.take() {
-                            (callback)(cx, self.text.as_str().to_owned());
+                        // if let Some(callback) = self.on_edit.take() {
+                        //     (callback)(cx, self.text.as_str().to_owned());
                 
-                            self.on_edit = Some(callback);
-                        }
+                        //     self.on_edit = Some(callback);
+                        // }
                         self.selection = Selection::caret(offset);
                         //cx.emit(TextEvent::SetCaret(offset));
                     }
@@ -417,11 +368,11 @@ where
                         self.text.next_grapheme_offset(self.selection.active)
                     {
                         self.text.edit(self.selection.active..offset, "");
-                        if let Some(callback) = self.on_edit.take() {
-                            (callback)(cx, self.text.as_str().to_owned());
+                        // if let Some(callback) = self.on_edit.take() {
+                        //     (callback)(cx, self.text.as_str().to_owned());
                 
-                            self.on_edit = Some(callback);
-                        }
+                        //     self.on_edit = Some(callback);
+                        // }
                         self.selection = Selection::caret(self.selection.active);
                         //cx.emit(TextEvent::SetCaret(text_data.selection.active));
                     }
@@ -431,11 +382,11 @@ where
                     if let Some(offset) = self.text.prev_word_offset(self.selection.active)
                     {
                         self.text.edit(offset..self.selection.active, "");
-                        if let Some(callback) = self.on_edit.take() {
-                            (callback)(cx, self.text.as_str().to_owned());
+                        // if let Some(callback) = self.on_edit.take() {
+                        //     (callback)(cx, self.text.as_str().to_owned());
                 
-                            self.on_edit = Some(callback);
-                        }
+                        //     self.on_edit = Some(callback);
+                        // }
                         self.selection = Selection::caret(offset);
                         //cx.emit(TextEvent::SetCaret(offset));
                     }
@@ -445,11 +396,11 @@ where
                     if let Some(offset) = self.text.next_word_offset(self.selection.active)
                     {
                         self.text.edit(self.selection.active..offset, "");
-                        if let Some(callback) = self.on_edit.take() {
-                            (callback)(cx, self.text.as_str().to_owned());
+                        // if let Some(callback) = self.on_edit.take() {
+                        //     (callback)(cx, self.text.as_str().to_owned());
                 
-                            self.on_edit = Some(callback);
-                        }
+                        //     self.on_edit = Some(callback);
+                        // }
                         self.selection = Selection::caret(self.selection.active);
                         //cx.emit(TextEvent::SetCaret(text_data.selection.active));
                     }
@@ -539,6 +490,113 @@ where
 
     pub fn select_all(&mut self, cx: &mut Context) {
         self.selection = Selection::new(0, self.text.len());
+    }
+}
+
+#[derive(Debug)]
+pub enum TextEvent {
+    InsertText(String),
+    DeleteText(Movement),
+    MoveCursor(Movement, bool),
+}
+
+
+impl<T: 'static + EditableText> Model for TextboxData<T> {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        if let Some(textbox_event) = event.message.downcast() {
+            match textbox_event {
+                TextEvent::InsertText(text) => {
+                    self.insert_text(cx, text);
+                }
+
+                TextEvent::DeleteText(movement) => {
+                    self.delete_text(cx, *movement);
+                }
+
+                TextEvent::MoveCursor(movement, selection) => {
+                    self.move_cursor(cx, *movement, *selection);
+                }
+            }
+        }
+    }
+}
+
+
+pub struct Textbox<T>
+where
+    T: EditableText,
+{
+    //text_data: TextData,
+    // text: T,
+    // selection: Selection,
+    // caret_entity: Entity,
+    // selection_entity: Entity,
+    // edit: bool,
+    // hitx: f32,
+    // dragx: f32,
+    on_edit: Option<Box<dyn Fn(&mut Context, String)>>,
+    //on_submit: Option<Box<dyn Fn(&mut Context, &Self)>>,
+}
+
+impl<T> Textbox<T>
+where
+    T: 'static + EditableText,
+{
+    pub fn new<'a>(cx: &'a mut Context, text: T) -> Handle<'a, Self> {
+        // let selection = if let Some(source) = cx.data::<L::Source>() {
+        //     let text = lens.view(source);
+        //     Selection::new(0, text.len())
+        // } else {
+        //     Selection::caret(0)
+        // };
+
+        //let text_length = cx.data::<L::Source>().and_then(|source| Some(lens.view(source))).unwrap().len();
+
+        let text_length = text.len();
+        Self {
+            // text_data: TextData {
+            //     //text: placeholder.to_string(),
+            //     // selection: Selection::new(0, placeholder.len()),
+            //     selection: Selection::new(0, placeholder.len()),
+            // },
+            // text: text.clone(),
+            // selection: Selection::new(0, text_length),
+            // caret_entity: Entity::null(),
+            // selection_entity: Entity::null(),
+            // edit: false,
+            // hitx: -1.0,
+            // dragx: -1.0,
+            on_edit: None,
+            //on_submit: None,
+        }
+        .build3(cx, move |textbox, cx| {
+
+            if !textbox.edit {
+                textbox.text = text;
+            }
+            cx.current.set_text(cx, &textbox.text.as_str());
+
+            // Selection
+            textbox.selection_entity = Element::new(cx)
+                .left(Pixels(0.0))
+                .width(Pixels(0.0))
+                .class("selection")
+                //.background_color(Color::rgba(100, 100, 200, 120))
+                .position_type(PositionType::SelfDirected)
+                .visibility(false)
+                .entity();
+
+            // Caret
+            textbox.caret_entity = Element::new(cx)
+                .left(Pixels(0.0))
+                .class("caret")
+                //.background_color(Color::rgba(255, 0, 0, 255))
+                .position_type(PositionType::SelfDirected)
+                .width(Pixels(1.0))
+                .visibility(false)
+                .entity();
+        })
+        //.text(text.as_str())
     }
 }
 
