@@ -42,3 +42,6 @@ pub use popup::*;
 
 mod radio_buttons;
 pub use radio_buttons::*;
+
+mod rearrangable;
+pub use rearrangable::*;
