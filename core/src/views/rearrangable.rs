@@ -30,7 +30,9 @@ impl Rearrangable {
     {
         Self { }
             .build2(cx, move |cx| {
-                RearrangeState { held: None }.build(cx);
+                if cx.data::<RearrangeState>().is_none() {
+                    RearrangeState { held: None }.build(cx);
+                }
                 Binding::new(cx, RearrangeState::held, move |cx, held| {
                     let builder = builder.clone();
                     let swapper = swapper.clone();
