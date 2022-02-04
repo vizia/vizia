@@ -183,9 +183,10 @@ fn load_renderer(window: &Window) -> (Renderer, raw_gl_context::GlContext) {
 
     context.make_current();
 
-    #[allow(deprecated)]
-    let renderer = femtovg::renderer::OpenGl::new(|s| context.get_proc_address(s) as *const _)
-        .expect("Cannot create renderer");
+    let renderer = unsafe {
+        femtovg::renderer::OpenGl::new_from_function(|s| context.get_proc_address(s) as *const _)
+            .expect("Cannot create renderer")
+    };
 
     context.make_not_current();
 

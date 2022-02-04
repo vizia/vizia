@@ -1,3 +1,4 @@
+use femtovg::renderer;
 use glutin::event_loop::EventLoop;
 use glutin::window::WindowBuilder;
 use glutin::ContextBuilder;
@@ -57,9 +58,7 @@ impl Window {
 
         let handle = unsafe { handle.make_current().unwrap() };
 
-        #[allow(deprecated)]
-        let renderer = OpenGl::new(|s| handle.context().get_proc_address(s) as *const _)
-            .expect("Cannot create renderer");
+        let renderer = OpenGl::new_from_glutin_context(&handle).expect("Cannot create renderer");
 
         let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
 
