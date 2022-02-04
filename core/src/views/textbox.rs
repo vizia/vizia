@@ -1,4 +1,5 @@
 use std::ops::Range;
+use std::rc::Rc;
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
@@ -11,7 +12,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::style::PropGet;
 use crate::{
     Binding, Context, CursorIcon, Data, EditableText, Element, Entity, Event, FontOrId, Handle,
-    Lens, Model, Modifiers, MouseButton, Movement, PropSet, Selection, Units::*, View, WindowEvent, Visibility,
+    Lens, Model, Modifiers, MouseButton, Movement, PropSet, Selection, Units::*, View, WindowEvent, Visibility, Res,
 };
 
 use crate::text::Direction;
@@ -26,6 +27,7 @@ pub struct TextboxData<T: EditableText> {
     edit: bool,
     hitx: f32,
     dragx: f32,
+    on_edit: Option<Rc<dyn Fn(&mut Context, String)>>,
 }
 
 impl<T: EditableText> TextboxData<T> {
@@ -40,13 +42,16 @@ impl<T: EditableText> TextboxData<T> {
             edit: false,
             hitx: -1.0,
             dragx: -1.0,
+            on_edit: None,
         }
     }
 
-    fn set_caret(&mut self, cx: &mut Context, entity: Entity) {
+    fn set_caret(&mut self, cx: &mut Context) {
         // TODO - replace this with something better
         //let selection = cx.tree.get_child(entity, 0).unwrap();
         //let caret = cx.tree.get_child(entity, 1).unwrap();
+
+        let entity = cx.current;
 
         let posx = cx.cache.get_posx(entity);
         let posy = cx.cache.get_posy(entity);
@@ -493,11 +498,21 @@ impl<T: EditableText> TextboxData<T> {
     }
 }
 
-#[derive(Debug)]
+
 pub enum TextEvent {
     InsertText(String),
     DeleteText(Movement),
     MoveCursor(Movement, bool),
+    SelectAll,
+    StartEdit,
+    EndEdit,
+    SetHitX(f32),
+    SetDragX(f32),
+
+    // Helpers
+    SetSelectionEntity(Entity),
+    SetCaretEntity(Entity),
+    SetOnEdit(Option<Rc<dyn Fn(&mut Context, String)>>),
 }
 
 
@@ -506,15 +521,71 @@ impl<T: 'static + EditableText> Model for TextboxData<T> {
         if let Some(textbox_event) = event.message.downcast() {
             match textbox_event {
                 TextEvent::InsertText(text) => {
-                    self.insert_text(cx, text);
+                    if self.edit {
+                        self.insert_text(cx, text);
+                        self.set_caret(cx);
+                         
+                        if let Some(callback) = self.on_edit.take() {
+                            (callback)(cx, self.text.as_str().to_owned());
+
+                            self.on_edit = Some(callback);
+                        }
+                    }
                 }
 
                 TextEvent::DeleteText(movement) => {
-                    self.delete_text(cx, *movement);
+                    if self.edit {
+                        self.delete_text(cx, *movement);
+                        self.set_caret(cx);
+
+                        if let Some(callback) = self.on_edit.take() {
+                            (callback)(cx, self.text.as_str().to_owned());
+
+                            self.on_edit = Some(callback);
+                        }
+                    }
                 }
 
                 TextEvent::MoveCursor(movement, selection) => {
-                    self.move_cursor(cx, *movement, *selection);
+                    if self.edit {
+                        self.move_cursor(cx, *movement, *selection);
+                        self.set_caret(cx);
+                    }
+                }
+
+                TextEvent::StartEdit => {
+                    self.edit = true;
+                }
+
+                TextEvent::EndEdit => {
+                    self.edit = false;
+                }
+
+                TextEvent::SelectAll => {
+                    self.select_all(cx);
+                    self.set_caret(cx);
+                }
+
+                TextEvent::SetHitX(val) => {
+                    self.hitx = *val;
+                    self.set_caret(cx);
+                }
+
+                TextEvent::SetDragX(val) => {
+                    self.dragx = *val;
+                    self.set_caret(cx);
+                }
+
+                TextEvent::SetSelectionEntity(entity) => {
+                    self.selection_entity = *entity;
+                }
+
+                TextEvent::SetCaretEntity(entity) => {
+                    self.caret_entity = *entity;
+                }
+
+                TextEvent::SetOnEdit(on_edit) => {
+                    self.on_edit = on_edit.clone();
                 }
             }
         }
@@ -522,10 +593,7 @@ impl<T: 'static + EditableText> Model for TextboxData<T> {
 }
 
 
-pub struct Textbox<T>
-where
-    T: EditableText,
-{
+pub struct Textbox<L: Lens> {
     //text_data: TextData,
     // text: T,
     // selection: Selection,
@@ -534,15 +602,16 @@ where
     // edit: bool,
     // hitx: f32,
     // dragx: f32,
+    lens: L,
     on_edit: Option<Box<dyn Fn(&mut Context, String)>>,
     //on_submit: Option<Box<dyn Fn(&mut Context, &Self)>>,
 }
 
-impl<T> Textbox<T>
-where
-    T: 'static + EditableText,
+impl<L: Lens> Textbox<L> 
+where 
+    <L as Lens>::Target: Data + EditableText,
 {
-    pub fn new<'a>(cx: &'a mut Context, text: T) -> Handle<'a, Self> {
+    pub fn new<'a>(cx: &'a mut Context, lens: L) -> Handle<'a, Self> {
         // let selection = if let Some(source) = cx.data::<L::Source>() {
         //     let text = lens.view(source);
         //     Selection::new(0, text.len())
@@ -552,7 +621,7 @@ where
 
         //let text_length = cx.data::<L::Source>().and_then(|source| Some(lens.view(source))).unwrap().len();
 
-        let text_length = text.len();
+        //let text_length = text.len();
         Self {
             // text_data: TextData {
             //     //text: placeholder.to_string(),
@@ -566,62 +635,72 @@ where
             // edit: false,
             // hitx: -1.0,
             // dragx: -1.0,
+            lens,
             on_edit: None,
             //on_submit: None,
         }
-        .build3(cx, move |textbox, cx| {
+        .build2(cx, move |cx| {
 
-            if !textbox.edit {
-                textbox.text = text;
-            }
-            cx.current.set_text(cx, &textbox.text.as_str());
+            Binding::new(cx, lens.clone(), |cx, text|{
+                if let Some(text_data) = cx.data::<TextboxData<L::Target>>() {
+                    if !text_data.edit {
+                        TextboxData::new(text.get(cx).clone()).build(cx);
+                        cx.current.set_text(cx, text.get(cx).clone().as_str());
+                    }
+                } else {
+                    TextboxData::new(text.get(cx).clone()).build(cx);
+                    cx.current.set_text(cx, text.get(cx).clone().as_str());
+                }
+            });
+            
+            
 
             // Selection
-            textbox.selection_entity = Element::new(cx)
+            let selection_entity = Element::new(cx)
                 .left(Pixels(0.0))
                 .width(Pixels(0.0))
                 .class("selection")
                 //.background_color(Color::rgba(100, 100, 200, 120))
                 .position_type(PositionType::SelfDirected)
-                .visibility(false)
+                .visibility(true)
                 .entity();
 
+            cx.emit(TextEvent::SetSelectionEntity(selection_entity));
+
             // Caret
-            textbox.caret_entity = Element::new(cx)
+            let caret_entity = Element::new(cx)
                 .left(Pixels(0.0))
                 .class("caret")
                 //.background_color(Color::rgba(255, 0, 0, 255))
                 .position_type(PositionType::SelfDirected)
                 .width(Pixels(1.0))
-                .visibility(false)
+                .visibility(true)
                 .entity();
+
+            cx.emit(TextEvent::SetCaretEntity(caret_entity));
         })
         //.text(text.as_str())
     }
 }
 
-impl<'a, T> Handle<'a, Textbox<T>>
-where
-    T: 'static + EditableText,
-{
+impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     pub fn on_edit<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut Context, String),
     {
-        if let Some(view) = self.cx.views.get_mut(&self.entity) {
-            if let Some(textbox) = view.downcast_mut::<Textbox<T>>() {
-                textbox.on_edit = Some(Box::new(callback));
-            }
-        }
+        // if let Some(view) = self.cx.views.get_mut(&self.entity) {
+        //     if let Some(textbox) = view.downcast_mut::<Textbox<L>>() {
+        //         textbox.on_edit = Some(Box::new(callback));
+        //     }
+        // }
+
+        self.cx.emit_to(self.entity, TextEvent::SetOnEdit(Some(Rc::new(callback))));
 
         self
     }
 }
 
-impl<T: 'static> View for Textbox<T>
-where
-    T: EditableText,
-{
+impl<L: Lens> View for Textbox<L> {
     fn element(&self) -> Option<String> {
         Some("textbox".to_string())
     }
@@ -635,25 +714,29 @@ where
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                     if cx.current.is_over(cx) {
-                        if !self.edit {
-                            self.edit = true;
-                            self.selection_entity.set_visibility(cx, Visibility::Visible);
-                            self.caret_entity.set_visibility(cx, Visibility::Visible);
+                        //if !self.edit {
+                            // self.edit = true;
+                            cx.emit(TextEvent::StartEdit);
+                            //self.selection_entity.set_visibility(cx, Visibility::Visible);
+                            //self.caret_entity.set_visibility(cx, Visibility::Visible);
                             cx.focused = cx.current;
                             cx.captured = cx.current;
                             cx.current.set_checked(cx, true);
-                        }
+                        //}
 
                         // Hit test
-                        if self.edit {
-                            self.hitx = cx.mouse.cursorx;
-                            self.dragx = cx.mouse.cursorx;
-                        }
-                        self.set_caret(cx, cx.current);
+                        //if self.edit {
+                            // self.hitx = cx.mouse.cursorx;
+                            // self.dragx = cx.mouse.cursorx;
+                            cx.emit(TextEvent::SetHitX(cx.mouse.cursorx));
+                            cx.emit(TextEvent::SetDragX(cx.mouse.cursorx));
+                        //}
+                        //self.set_caret(cx, cx.current);
                     } else {
                         cx.captured = Entity::null();
                         cx.current.set_checked(cx, false);
-                        self.edit = false;
+                        //self.edit = false;
+                        cx.emit(TextEvent::EndEdit);
                         //cx.emit(TextEvent::SetEditing(false));
                         // Forward event to hovered
                         cx.event_queue.push_back(
@@ -664,16 +747,18 @@ where
                 }
 
                 WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
-                    self.hitx = -1.0;
-                    self.set_caret(cx, cx.current);
+                    //self.hitx = -1.0;
+                    //self.set_caret(cx, cx.current);
+                    cx.emit(TextEvent::SetHitX(-1.0));
                 }
 
                 WindowEvent::MouseMove(x, _) => {
-                    if self.hitx != -1.0 {
-                        self.dragx = *x;
+                    // if self.hitx != -1.0 {
+                    //     self.dragx = *x;
 
-                        self.set_caret(cx, cx.current);
-                    }
+                    //     self.set_caret(cx, cx.current);
+                    // }
+                    cx.emit(TextEvent::SetDragX(*x));
                 }
 
                 WindowEvent::MouseOver => {
@@ -685,56 +770,62 @@ where
                 }
 
                 WindowEvent::CharInput(c) => {
-                    if self.edit {
+                    //if self.edit {
                         if *c != '\u{1b}' && // Escape
                             *c != '\u{8}' && // Backspace
                             *c != '\u{7f}' && // Delete
                             !cx.modifiers.contains(Modifiers::CTRL)
                         {
-                            self.insert_text(cx, String::from(*c));
+                            //self.insert_text(cx, String::from(*c));
+                            cx.emit(TextEvent::InsertText(String::from(*c)));
                             //cx.style.text.insert(cx.current, self.text_data.text.clone());
                         }
 
-                        self.set_caret(cx, cx.current);
-                    }
+                        //self.set_caret(cx, cx.current);
+                    //}
                 }
 
                 WindowEvent::KeyDown(code, _) => match code {
                     Code::Enter => {
                         // Finish editing
-                        self.edit = false;
-                        //cx.emit(TextEvent::SetEditing(false));
-                        self.selection_entity.set_visibility(cx, Visibility::Invisible);
-                        self.caret_entity.set_visibility(cx, Visibility::Invisible);
+                        // self.edit = false;
+                        cx.emit(TextEvent::EndEdit);
+                        //self.selection_entity.set_visibility(cx, Visibility::Invisible);
+                        //self.caret_entity.set_visibility(cx, Visibility::Invisible);
                         cx.current.set_checked(cx, false);
                     }
 
                     Code::ArrowLeft => {
-                        if self.edit {
+                        //if self.edit {
                             let movement = if cx.modifiers.contains(Modifiers::CTRL) {
                                 Movement::Word(Direction::Upstream)
                             } else {
                                 Movement::Grapheme(Direction::Upstream)
                             };
 
-                            self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
+                            cx.emit(TextEvent::MoveCursor(movement, cx.modifiers.contains(Modifiers::SHIFT)));
 
-                            self.set_caret(cx, cx.current);
-                        }
+                            //self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
+
+                            //self.set_caret(cx, cx.current);
+                        //}
                     }
 
                     Code::ArrowRight => {
-                        if self.edit {
+                        //if self.edit {
                             let movement = if cx.modifiers.contains(Modifiers::CTRL) {
                                 Movement::Word(Direction::Downstream)
                             } else {
                                 Movement::Grapheme(Direction::Downstream)
                             };
 
-                            self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
+                            cx.emit(TextEvent::MoveCursor(movement, cx.modifiers.contains(Modifiers::SHIFT)));
 
-                            self.set_caret(cx, cx.current);
-                        }
+
+                            // self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
+
+                            // self.set_caret(cx, cx.current);
+                        //}
                     }
 
                     // TODO
@@ -744,31 +835,33 @@ where
                     Code::ArrowDown => {}
 
                     Code::Backspace => {
-                        if self.edit {
-                            if cx.modifiers.contains(Modifiers::CTRL) {
-                                self.delete_text(cx, Movement::Word(Direction::Upstream));
-                            } else {
-                                self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
-                            }
-
-                            self.set_caret(cx, cx.current);
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            //self.delete_text(cx, Movement::Word(Direction::Upstream));
+                            cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
+                        } else {
+                            //self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
+                            cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Upstream)));
                         }
+
+                        //self.set_caret(cx, cx.current);
                     }
 
                     Code::Delete => {
-                        if self.edit {
+                        //if self.edit {
                             if cx.modifiers.contains(Modifiers::CTRL) {
-                                self.delete_text(cx, Movement::Word(Direction::Downstream));
+                                //self.delete_text(cx, Movement::Word(Direction::Downstream));
+                                cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
                             } else {
-                                self.delete_text(cx, Movement::Grapheme(Direction::Downstream));
+                                //self.delete_text(cx, Movement::Grapheme(Direction::Downstream));
+                                cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Downstream)));
                             }
-                            self.set_caret(cx, cx.current);
-                        }
+                            //self.set_caret(cx, cx.current);
+                        //}
                     }
 
                     Code::Escape => {
-                        self.edit = false;
-                        //cx.emit(TextEvent::SetEditing(false));
+                        //self.edit = false;
+                        cx.emit(TextEvent::StartEdit);
                         cx.current.set_checked(cx, false);
                     }
 
@@ -785,40 +878,41 @@ where
                     Code::PageDown => {}
 
                     Code::KeyA => {
-                        if self.edit {
+                        //if self.edit {
                             if cx.modifiers.contains(Modifiers::CTRL) {
-                                self.select_all(cx);
+                                // self.select_all(cx);
+                                cx.emit(TextEvent::SelectAll);
                             }
-                        }
+                        //}
                     }
 
-                    Code::KeyC =>
-                    {
-                        #[cfg(feature = "clipboard")]
-                        if self.edit {
-                            if cx.modifiers.contains(Modifiers::CTRL) {
-                                let selected_text = &self.text.as_str()[self.selection.range()];
-                                if selected_text.len() > 0 {
-                                    cx.clipboard
-                                        .set_contents(selected_text.to_owned())
-                                        .expect("Failed to add text to clipboard");
-                                }
-                            }
-                        }
-                    }
+                    // Code::KeyC =>
+                    // {
+                    //     #[cfg(feature = "clipboard")]
+                    //     if self.edit {
+                    //         if cx.modifiers.contains(Modifiers::CTRL) {
+                    //             let selected_text = &self.text.as_str()[self.selection.range()];
+                    //             if selected_text.len() > 0 {
+                    //                 cx.clipboard
+                    //                     .set_contents(selected_text.to_owned())
+                    //                     .expect("Failed to add text to clipboard");
+                    //             }
+                    //         }
+                    //     }
+                    // }
 
-                    Code::KeyV =>
-                    {
-                        #[cfg(feature = "clipboard")]
-                        if self.edit {
-                            if cx.modifiers.contains(Modifiers::CTRL) {
-                                if let Ok(text) = cx.clipboard.get_contents() {
-                                    self.insert_text(cx, text);
-                                    self.set_caret(cx, cx.current);
-                                }
-                            }
-                        }
-                    }
+                    // Code::KeyV =>
+                    // {
+                    //     #[cfg(feature = "clipboard")]
+                    //     if self.edit {
+                    //         if cx.modifiers.contains(Modifiers::CTRL) {
+                    //             if let Ok(text) = cx.clipboard.get_contents() {
+                    //                 self.insert_text(cx, text);
+                    //                 self.set_caret(cx, cx.current);
+                    //             }
+                    //         }
+                    //     }
+                    // }
 
                     _ => {}
                 },

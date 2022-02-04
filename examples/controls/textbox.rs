@@ -7,15 +7,15 @@ pub struct AppData {
 
 #[derive(Debug)]
 pub enum AppEvent {
-    EditRange(std::ops::Range<usize>, String),
+    SetText(String),
 }
 
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
         if let Some(app_event) = event.message.downcast() {
             match app_event {
-                AppEvent::EditRange(range, text) => {
-                    self.text.replace_range(range.clone(), &*text);
+                AppEvent::SetText(text) => {
+                    self.text = text.clone();
                 }
             }
         }
@@ -28,8 +28,8 @@ fn main() {
         AppData { text: "This text is editable!".to_string() }.build(cx);
 
         HStack::new(cx, |cx| {
-            Textbox::new(cx, "Some text".to_string())
-                //.on_edit(|cx, range, text| cx.emit(AppEvent::EditRange(range, text)))
+            Textbox::new(cx, AppData::text)
+                .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
                 .width(Pixels(200.0))
                 .child_left(Pixels(5.0));
 

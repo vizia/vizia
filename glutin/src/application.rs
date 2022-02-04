@@ -308,7 +308,7 @@ impl Application {
                     geometry_changed(&mut context, &tree);
 
                     if !context.event_queue.is_empty() {
-                        event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
+                        event_loop_proxy.send_event(Event::new(()));
                     }
 
                     apply_transform(&mut context, &tree);
@@ -332,7 +332,7 @@ impl Application {
                         (idle_callback)(&mut context);
 
                         if !context.event_queue.is_empty() {
-                            event_loop_proxy.send_event(Event::new(())).unwrap();
+                            event_loop_proxy.send_event(Event::new(()));
                         }
                     }
                 }
