@@ -99,21 +99,13 @@ pub struct Index<L, O> {
 
 impl<L, O> Index<L, O> {
     pub fn new(input: L, index: usize) -> Self {
-        Self {
-            index,
-            input,
-            output: PhantomData::default(),
-        }
+        Self { index, input, output: PhantomData::default() }
     }
 }
 
 impl<L: Clone, O> Clone for Index<L, O> {
     fn clone(&self) -> Self {
-        Self {
-            index: self.index.clone(),
-            input: self.input.clone(),
-            output: Default::default(),
-        }
+        Self { index: self.index.clone(), input: self.input.clone(), output: Default::default() }
     }
 }
 
@@ -121,10 +113,7 @@ impl<L: Copy, O> Copy for Index<L, O> {}
 
 impl<L: Debug, O> Debug for Index<L, O> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Index")
-            .field("index", &self.index)
-            .field("input", &self.input)
-            .finish()
+        f.debug_struct("Index").field("index", &self.index).field("input", &self.input).finish()
     }
 }
 

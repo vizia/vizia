@@ -36,14 +36,17 @@ where
     {
         Self::new(cx, lens, move |cx, field| {
             let some = field.get_fallible(cx).is_some();
-            let (stored_some, stored_count) = cx.data
+            let (stored_some, stored_count) = cx
+                .data
                 .get(cx.current)
                 .and_then(|store| store.data.get(&TypeId::of::<FallibleMarker>()))
                 .and_then(|dat| dat.downcast_ref::<FallibleMarker>())
                 .map(|dat| (dat.0, dat.1))
                 .unwrap_or((false, 0));
             if some != stored_some {
-                for child in cx.current.child_iter(&cx.tree)
+                for child in cx
+                    .current
+                    .child_iter(&cx.tree)
                     .enumerate()
                     .filter(|(idx, _)| *idx >= cx.count && *idx < cx.count + stored_count)
                     .map(|(_, e)| e)
