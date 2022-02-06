@@ -1,4 +1,5 @@
 use std::collections::{HashMap, VecDeque};
+use std::fmt::{Debug, Display, Formatter};
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardContext;
@@ -269,10 +270,24 @@ pub struct ContextProxy {
     pub event_proxy: Option<Box<dyn EventProxy>>,
 }
 
+#[derive(Debug)]
 pub enum ProxyEmitError {
     Unsupported,
     EventLoopClosed,
 }
+
+impl Display for ProxyEmitError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ProxyEmitError::Unsupported =>
+                f.write_str("The current runtime does not support proxying events"),
+            ProxyEmitError::EventLoopClosed =>
+                f.write_str("Sending an event to an event loop which has been closed")
+        }
+    }
+}
+
+impl std::error::Error for ProxyEmitError {}
 
 impl ContextProxy {
     pub fn emit<M: Message>(&mut self, message: M) -> Result<(), ProxyEmitError> {
