@@ -22,7 +22,7 @@ where
 impl<L> Binding<L>
 where
     L: 'static + Lens,
-    <L as Lens>::Source: 'static,
+    <L as Lens>::Source: 'static + Model,
     <L as Lens>::Target: Data,
 {
     pub fn new<F>(cx: &mut Context, lens: L, builder: F)
