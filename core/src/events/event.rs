@@ -17,7 +17,7 @@ pub enum Propagation {
 }
 
 /// A message can be any static type.
-pub trait Message: Any {
+pub trait Message: Any + Send {
     // An &Any can be cast to a reference to a concrete type.
     fn as_any(&self) -> &dyn Any;
 }
@@ -49,7 +49,7 @@ impl dyn Message {
 }
 
 // Implements message for any static type that implements Clone
-impl<S: 'static> Message for S {
+impl<S: 'static + Send> Message for S {
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -74,6 +74,12 @@ pub struct Event {
 
     // The event message
     pub message: Box<dyn Message>,
+}
+
+impl Debug for Event {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Ok(())
+    }
 }
 
 // // Allows events to be compared for equality

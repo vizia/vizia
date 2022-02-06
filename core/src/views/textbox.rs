@@ -1,5 +1,4 @@
-use std::ops::Range;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
@@ -27,7 +26,7 @@ pub struct TextboxData<T: EditableText> {
     edit: bool,
     hitx: f32,
     dragx: f32,
-    on_edit: Option<Rc<dyn Fn(&mut Context, String)>>,
+    on_edit: Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>,
 }
 
 impl<T: EditableText> TextboxData<T> {
@@ -508,11 +507,13 @@ pub enum TextEvent {
     EndEdit,
     SetHitX(f32),
     SetDragX(f32),
+    Copy,
+    Paste,
 
     // Helpers
     SetSelectionEntity(Entity),
     SetCaretEntity(Entity),
-    SetOnEdit(Option<Rc<dyn Fn(&mut Context, String)>>),
+    SetOnEdit(Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>),
 }
 
 
@@ -555,10 +556,14 @@ impl<T: 'static + EditableText> Model for TextboxData<T> {
 
                 TextEvent::StartEdit => {
                     self.edit = true;
+                    self.selection_entity.set_visibility(cx, Visibility::Visible);
+                    self.caret_entity.set_visibility(cx, Visibility::Visible);
                 }
 
                 TextEvent::EndEdit => {
                     self.edit = false;
+                    self.selection_entity.set_visibility(cx, Visibility::Invisible);
+                    self.caret_entity.set_visibility(cx, Visibility::Invisible);
                 }
 
                 TextEvent::SelectAll => {
@@ -574,6 +579,31 @@ impl<T: 'static + EditableText> Model for TextboxData<T> {
                 TextEvent::SetDragX(val) => {
                     self.dragx = *val;
                     self.set_caret(cx);
+                }
+
+                TextEvent::Copy => {
+                    #[cfg(feature = "clipboard")]
+                    if self.edit {
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            let selected_text = &self.text.as_str()[self.selection.range()];
+                            if selected_text.len() > 0 {
+                                cx.clipboard
+                                    .set_contents(selected_text.to_owned())
+                                    .expect("Failed to add text to clipboard");
+                            }
+                        }
+                    }
+                }
+
+                TextEvent::Paste => {
+                    #[cfg(feature = "clipboard")]
+                    if self.edit {
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            if let Ok(text) = cx.clipboard.get_contents() {
+                                cx.emit(TextEvent::InsertText(text));
+                            }
+                        }
+                    }
                 }
 
                 TextEvent::SetSelectionEntity(entity) => {
@@ -644,7 +674,16 @@ where
             Binding::new(cx, lens.clone(), |cx, text|{
                 if let Some(text_data) = cx.data::<TextboxData<L::Target>>() {
                     if !text_data.edit {
-                        TextboxData::new(text.get(cx).clone()).build(cx);
+                        TextboxData {
+                            text: text.get(cx).clone(),
+                            selection: text_data.selection,
+                            caret_entity: text_data.caret_entity,
+                            selection_entity: text_data.selection_entity,
+                            edit: text_data.edit,
+                            hitx: -1.0,
+                            dragx: -1.0,
+                            on_edit: text_data.on_edit.clone(),
+                        }.build(cx);
                         cx.current.set_text(cx, text.get(cx).clone().as_str());
                     }
                 } else {
@@ -662,7 +701,7 @@ where
                 .class("selection")
                 //.background_color(Color::rgba(100, 100, 200, 120))
                 .position_type(PositionType::SelfDirected)
-                .visibility(true)
+                .visibility(false)
                 .entity();
 
             cx.emit(TextEvent::SetSelectionEntity(selection_entity));
@@ -674,7 +713,7 @@ where
                 //.background_color(Color::rgba(255, 0, 0, 255))
                 .position_type(PositionType::SelfDirected)
                 .width(Pixels(1.0))
-                .visibility(true)
+                .visibility(false)
                 .entity();
 
             cx.emit(TextEvent::SetCaretEntity(caret_entity));
@@ -686,7 +725,7 @@ where
 impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     pub fn on_edit<F>(self, callback: F) -> Self
     where
-        F: 'static + Fn(&mut Context, String),
+        F: 'static + Fn(&mut Context, String) + Send + Sync,
     {
         // if let Some(view) = self.cx.views.get_mut(&self.entity) {
         //     if let Some(textbox) = view.downcast_mut::<Textbox<L>>() {
@@ -694,13 +733,16 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
         //     }
         // }
 
-        self.cx.emit_to(self.entity, TextEvent::SetOnEdit(Some(Rc::new(callback))));
+        self.cx.emit_to(self.entity, TextEvent::SetOnEdit(Some(Arc::new(callback))));
 
         self
     }
 }
 
-impl<L: Lens> View for Textbox<L> {
+impl<L: Lens> View for Textbox<L> 
+where 
+    <L as Lens>::Target: Data + EditableText,
+{
     fn element(&self) -> Option<String> {
         Some("textbox".to_string())
     }
@@ -717,8 +759,7 @@ impl<L: Lens> View for Textbox<L> {
                         //if !self.edit {
                             // self.edit = true;
                             cx.emit(TextEvent::StartEdit);
-                            //self.selection_entity.set_visibility(cx, Visibility::Visible);
-                            //self.caret_entity.set_visibility(cx, Visibility::Visible);
+                            
                             cx.focused = cx.current;
                             cx.captured = cx.current;
                             cx.current.set_checked(cx, true);
@@ -789,7 +830,19 @@ impl<L: Lens> View for Textbox<L> {
                     Code::Enter => {
                         // Finish editing
                         // self.edit = false;
+                        
+                        if let Some(source) = cx.data::<L::Source>() {
+                            let text_data = self.lens.view(source);
+                            let text = text_data.as_str().to_owned();
+                            println!("Text: {}", text);
+
+                            cx.emit(TextEvent::SelectAll);
+                            cx.emit(TextEvent::InsertText(text));
+
+                        };
                         cx.emit(TextEvent::EndEdit);
+
+                        
                         //self.selection_entity.set_visibility(cx, Visibility::Invisible);
                         //self.caret_entity.set_visibility(cx, Visibility::Invisible);
                         cx.current.set_checked(cx, false);
@@ -886,33 +939,15 @@ impl<L: Lens> View for Textbox<L> {
                         //}
                     }
 
-                    // Code::KeyC =>
-                    // {
-                    //     #[cfg(feature = "clipboard")]
-                    //     if self.edit {
-                    //         if cx.modifiers.contains(Modifiers::CTRL) {
-                    //             let selected_text = &self.text.as_str()[self.selection.range()];
-                    //             if selected_text.len() > 0 {
-                    //                 cx.clipboard
-                    //                     .set_contents(selected_text.to_owned())
-                    //                     .expect("Failed to add text to clipboard");
-                    //             }
-                    //         }
-                    //     }
-                    // }
+                    Code::KeyC =>
+                    {
+                        cx.emit(TextEvent::Copy);
+                    }
 
-                    // Code::KeyV =>
-                    // {
-                    //     #[cfg(feature = "clipboard")]
-                    //     if self.edit {
-                    //         if cx.modifiers.contains(Modifiers::CTRL) {
-                    //             if let Ok(text) = cx.clipboard.get_contents() {
-                    //                 self.insert_text(cx, text);
-                    //                 self.set_caret(cx, cx.current);
-                    //             }
-                    //         }
-                    //     }
-                    // }
+                    Code::KeyV =>
+                    {
+                        cx.emit(TextEvent::Paste);
+                    }
 
                     _ => {}
                 },
