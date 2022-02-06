@@ -29,7 +29,7 @@ pub trait LensExt: Lens {
     /// ```
     fn then<Other>(self, other: Other) -> Then<Self, Other>
     where
-        Other: Lens + Sized,
+        Other: Lens<Source = Self::Target> + Sized,
         Self: Sized,
     {
         Then::new(self, other)
