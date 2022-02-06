@@ -56,6 +56,7 @@ impl_data_simple!(std::ops::RangeFull);
 impl_data_simple!(std::path::PathBuf);
 
 impl_data_simple!(String);
+impl_data_simple!(std::path::PathBuf);
 
 impl Data for &'static str {
     fn same(&self, other: &Self) -> bool {
