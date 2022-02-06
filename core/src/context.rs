@@ -252,10 +252,13 @@ impl Context {
         Ok(())
     }
 
-    pub fn spawn<F>(&self, target: F) where F: 'static + Send + Fn(&mut ContextProxy) {
+    pub fn spawn<F>(&self, target: F)
+    where
+        F: 'static + Send + Fn(&mut ContextProxy),
+    {
         let mut cxp = ContextProxy {
             current: self.current,
-            event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone())
+            event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
         };
 
         std::thread::spawn(move || target(&mut cxp));
@@ -279,10 +282,12 @@ pub enum ProxyEmitError {
 impl Display for ProxyEmitError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ProxyEmitError::Unsupported =>
-                f.write_str("The current runtime does not support proxying events"),
-            ProxyEmitError::EventLoopClosed =>
+            ProxyEmitError::Unsupported => {
+                f.write_str("The current runtime does not support proxying events")
+            }
+            ProxyEmitError::EventLoopClosed => {
                 f.write_str("Sending an event to an event loop which has been closed")
+            }
         }
     }
 }
@@ -303,7 +308,11 @@ impl ContextProxy {
         }
     }
 
-    pub fn emit_to<M: Message>(&mut self, target: Entity, message: M) -> Result<(), ProxyEmitError> {
+    pub fn emit_to<M: Message>(
+        &mut self,
+        target: Entity,
+        message: M,
+    ) -> Result<(), ProxyEmitError> {
         if let Some(proxy) = &self.event_proxy {
             let event = Event::new(message)
                 .target(target)
