@@ -1,4 +1,5 @@
 use std::collections::{HashMap, VecDeque};
+use std::fmt::{Debug, Display, Formatter};
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardContext;
@@ -39,6 +40,8 @@ pub struct Context {
 
     pub text_context: TextContext,
 
+    pub event_proxy: Option<Box<dyn EventProxy>>,
+
     #[cfg(feature = "clipboard")]
     pub clipboard: ClipboardContext,
 }
@@ -67,6 +70,8 @@ impl Context {
             focused: Entity::root(),
             resource_manager: ResourceManager::new(),
             text_context: TextContext::default(),
+
+            event_proxy: None,
 
             #[cfg(feature = "clipboard")]
             clipboard: ClipboardContext::new().expect("Failed to init clipboard"),
@@ -246,4 +251,82 @@ impl Context {
 
         Ok(())
     }
+
+    pub fn spawn<F>(&self, target: F)
+    where
+        F: 'static + Send + Fn(&mut ContextProxy),
+    {
+        let mut cxp = ContextProxy {
+            current: self.current,
+            event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
+        };
+
+        std::thread::spawn(move || target(&mut cxp));
+    }
+}
+
+/// A bundle of data representing a snapshot of the context when a thread was spawned. It supports
+/// a small subset of context operations. You will get one of these passed to you when you create a
+/// new thread with `cx.spawn()`.
+pub struct ContextProxy {
+    pub current: Entity,
+    pub event_proxy: Option<Box<dyn EventProxy>>,
+}
+
+#[derive(Debug)]
+pub enum ProxyEmitError {
+    Unsupported,
+    EventLoopClosed,
+}
+
+impl Display for ProxyEmitError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ProxyEmitError::Unsupported => {
+                f.write_str("The current runtime does not support proxying events")
+            }
+            ProxyEmitError::EventLoopClosed => {
+                f.write_str("Sending an event to an event loop which has been closed")
+            }
+        }
+    }
+}
+
+impl std::error::Error for ProxyEmitError {}
+
+impl ContextProxy {
+    pub fn emit<M: Message>(&mut self, message: M) -> Result<(), ProxyEmitError> {
+        if let Some(proxy) = &self.event_proxy {
+            let event = Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up);
+
+            proxy.send(event).map_err(|_| ProxyEmitError::EventLoopClosed)
+        } else {
+            Err(ProxyEmitError::Unsupported)
+        }
+    }
+
+    pub fn emit_to<M: Message>(
+        &mut self,
+        target: Entity,
+        message: M,
+    ) -> Result<(), ProxyEmitError> {
+        if let Some(proxy) = &self.event_proxy {
+            let event = Event::new(message)
+                .target(target)
+                .origin(self.current)
+                .propagate(Propagation::Direct);
+
+            proxy.send(event).map_err(|_| ProxyEmitError::EventLoopClosed)
+        } else {
+            Err(ProxyEmitError::Unsupported)
+        }
+    }
+}
+
+pub trait EventProxy: Send {
+    fn send(&self, event: Event) -> Result<(), ()>;
+    fn make_clone(&self) -> Box<dyn EventProxy>;
 }

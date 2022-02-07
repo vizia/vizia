@@ -1,7 +1,7 @@
 use vizia::*;
 
 const STYLE: &str = r#"
-    botton {
+    button {
         width: 100px;
         height: 30px;
     }
