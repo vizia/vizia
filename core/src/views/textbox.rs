@@ -11,15 +11,14 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::style::PropGet;
 use crate::{
     Binding, Context, CursorIcon, Data, EditableText, Element, Entity, Event, FontOrId, Handle,
-    Lens, Model, Modifiers, MouseButton, Movement, PropSet, Selection, Units::*, View, WindowEvent, Visibility, Res,
+    Lens, Model, Modifiers, MouseButton, Movement, PropSet, Selection, Units::*, View, Visibility,
+    WindowEvent,
 };
 
 use crate::text::Direction;
 
-
-
-pub struct TextboxData<T: EditableText> {
-    text: T,
+pub struct TextboxData {
+    text: String,
     selection: Selection,
     caret_entity: Entity,
     selection_entity: Entity,
@@ -29,9 +28,8 @@ pub struct TextboxData<T: EditableText> {
     on_edit: Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>,
 }
 
-impl<T: EditableText> TextboxData<T> {
-
-    pub fn new(text: T) -> Self {
+impl TextboxData {
+    pub fn new(text: String) -> Self {
         let text_length = text.as_str().len();
         Self {
             text: text.clone(),
@@ -46,10 +44,6 @@ impl<T: EditableText> TextboxData<T> {
     }
 
     fn set_caret(&mut self, cx: &mut Context) {
-        // TODO - replace this with something better
-        //let selection = cx.tree.get_child(entity, 0).unwrap();
-        //let caret = cx.tree.get_child(entity, 1).unwrap();
-
         let entity = cx.current;
 
         let posx = cx.cache.get_posx(entity);
@@ -60,7 +54,6 @@ impl<T: EditableText> TextboxData<T> {
         if let Some(text) = cx.style.text.get(entity).cloned() {
             let font = cx.style.font.get(entity).cloned().unwrap_or_default();
 
-            // TODO - This should probably be cached in cx to save look-up time
             let default_font = cx
                 .resource_manager
                 .fonts
@@ -99,14 +92,13 @@ impl<T: EditableText> TextboxData<T> {
 
             let parent_width = cx.cache.get_width(parent);
 
-            let border_width =
-                match cx.style.border_width.get(entity).cloned().unwrap_or_default() {
-                    Units::Pixels(val) => val,
-                    Units::Percentage(val) => parent_width * val,
-                    _ => 0.0,
-                };
+            let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
+            {
+                Units::Pixels(val) => val,
+                Units::Percentage(val) => parent_width * val,
+                _ => 0.0,
+            };
 
-            // TODO - Move this to a text layout system and include constraints
             let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
             let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();
             let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
@@ -182,29 +174,23 @@ impl<T: EditableText> TextboxData<T> {
                     } else {
                         0.0
                     };
-                    //let startx = x - text_width / 2.0;
+
                     let endx = startx + text_width;
 
                     if self.hitx != -1.0 {
-                        //let endx = res.glyphs.last().unwrap().x + res.glyphs.last().unwrap().w;
-
                         selectx = if self.hitx < startx + text_width / 2.0 {
                             self.selection.anchor = 0;
-                            //cx.emit(TextEvent::SetAnchor(0));
                             startx
                         } else {
                             self.selection.anchor = text.len();
-                            //cx.emit(TextEvent::SetAnchor(text.len()));
                             endx
                         };
 
                         caretx = if self.dragx < startx + text_width / 2.0 {
                             self.selection.active = 0;
-                            //cx.emit(TextEvent::SetActive(0));
                             startx
                         } else {
                             self.selection.active = text.len();
-                            //cx.emit(TextEvent::SetActive(text.len()));
                             endx
                         };
 
@@ -217,40 +203,16 @@ impl<T: EditableText> TextboxData<T> {
                             let right_edge = left_edge + glyph.width;
                             let gx = left_edge * 0.3 + right_edge * 0.7;
 
-                            //println!("{} {} {}", self.hitx, left_edge, right_edge);
-
-                            // if n == 0 && self.hitx <= glyph.x {
-                            //     selectx = left_edge;
-                            //     self.select_pos = 0;
-                            // }
-
-                            // if n == res.glyphs.len() as u32 && self.hitx >= glyph.x + glyph.width {
-                            //     selectx = right_edge;
-                            //     self.select_pos = n;
-                            // }
-
-                            // if n == 0 && self.dragx <= glyph.x {
-                            //     caretx = left_edge;
-                            //     self.cursor_pos = 0;
-                            // }
-
-                            // if n == res.glyphs.len() as u32 && self.hitx >= glyph.x + glyph.width {
-                            //     caretx = right_edge;
-                            //     self.cursor_pos = n;
-                            // }
-
                             if self.hitx >= px && self.hitx < gx {
                                 selectx = left_edge;
 
                                 self.selection.anchor = index;
-                                //cx.emit(TextEvent::SetAnchor(index));
                             }
 
                             if self.dragx >= px && self.dragx < gx {
                                 caretx = left_edge;
 
                                 self.selection.active = index;
-                                //cx.emit(TextEvent::SetActive(index));
                             }
 
                             px = gx;
@@ -268,36 +230,20 @@ impl<T: EditableText> TextboxData<T> {
                             }
                         }
 
-                        if self.selection.active as usize == text.len() && text.len() != 0
-                        {
+                        if self.selection.active as usize == text.len() && text.len() != 0 {
                             caretx = endx;
                         }
 
-                        if self.selection.anchor as usize == text.len() && text.len() != 0
-                        {
+                        if self.selection.anchor as usize == text.len() && text.len() != 0 {
                             selectx = endx;
                         }
                     }
 
                     //Draw selection
-                    // let select_width = (caretx - selectx).abs();
-                    // if selectx > caretx {
-                    //     let mut path = Path::new();
-                    //     path.rect(caretx, sy, select_width, font_metrics.height());
-                    //     canvas.fill_path(&mut path, Paint::color(Color::rgba(0, 0, 0, 64)));
-                    // } else if caretx > selectx {
-                    //     let mut path = Path::new();
-                    //     path.rect(selectx, sy, select_width, font_metrics.height());
-                    //     canvas.fill_path(&mut path, Paint::color(Color::rgba(0, 0, 0, 64)));
-                    // }
-
-                    //Draw selection
                     let select_width = (caretx - selectx).abs();
                     if selectx > caretx {
-                        //path.rect(caretx, sy, select_width, font_metrics.height());
                         self.selection_entity.set_left(cx, Pixels(caretx.floor() - posx - 1.0));
                     } else if caretx > selectx {
-                        //path.rect(selectx, sy, select_width, font_metrics.height());
                         self.selection_entity.set_left(cx, Pixels(selectx.floor() - posx - 1.0));
                     }
 
@@ -305,11 +251,6 @@ impl<T: EditableText> TextboxData<T> {
                     self.selection_entity.set_height(cx, Pixels(font_metrics.height()));
                     self.selection_entity.set_top(cx, Stretch(1.0));
                     self.selection_entity.set_bottom(cx, Stretch(1.0));
-
-                    // // Draw Caret
-                    // let mut path = Path::new();
-                    // path.rect(caretx.floor(), sy, 1.0, font_metrics.height());
-                    // canvas.fill_path(&mut path, Paint::color(Color::rgba(247, 76, 0, 255)));
 
                     let caret_left = (caretx.floor() - posx - 1.0).max(0.0);
 
@@ -325,88 +266,44 @@ impl<T: EditableText> TextboxData<T> {
     pub fn insert_text(&mut self, cx: &mut Context, text: &str) {
         let text_length = text.len();
         self.text.edit(self.selection.range(), text);
-        // Send event to edit text
-        // if let Some(callback) = self.on_edit.take() {
-        //     (callback)(cx, self.text.as_str().to_owned());
 
-        //     self.on_edit = Some(callback);
-        // }
-        
-        //cx.emit(TextEvent::SetCaret(text_data.selection.min() + text_length));
         self.selection = Selection::caret(self.selection.min() + text_length);
 
         cx.current.set_text(cx, self.text.as_str());
     }
 
     pub fn delete_text(&mut self, cx: &mut Context, movement: Movement) {
-        // If selection is a range - delete the selection
         if !self.selection.is_caret() {
             self.text.edit(self.selection.range(), "");
-            // if let Some(callback) = self.on_edit.take() {
-            //     (callback)(cx, self.text.as_str().to_owned());
-    
-            //     self.on_edit = Some(callback);
-            // }
+
             self.selection = Selection::caret(self.selection.min());
-            //cx.emit(TextEvent::SetCaret(text_data.selection.min()))
-            //println!("Selection: {:?}", self.selection);
         } else {
             match movement {
                 Movement::Grapheme(Direction::Upstream) => {
-                    if let Some(offset) =
-                        self.text.prev_grapheme_offset(self.selection.active)
-                    {
+                    if let Some(offset) = self.text.prev_grapheme_offset(self.selection.active) {
                         self.text.edit(offset..self.selection.active, "");
-                        // if let Some(callback) = self.on_edit.take() {
-                        //     (callback)(cx, self.text.as_str().to_owned());
-                
-                        //     self.on_edit = Some(callback);
-                        // }
                         self.selection = Selection::caret(offset);
-                        //cx.emit(TextEvent::SetCaret(offset));
                     }
                 }
 
                 Movement::Grapheme(Direction::Downstream) => {
-                    if let Some(offset) =
-                        self.text.next_grapheme_offset(self.selection.active)
-                    {
+                    if let Some(offset) = self.text.next_grapheme_offset(self.selection.active) {
                         self.text.edit(self.selection.active..offset, "");
-                        // if let Some(callback) = self.on_edit.take() {
-                        //     (callback)(cx, self.text.as_str().to_owned());
-                
-                        //     self.on_edit = Some(callback);
-                        // }
                         self.selection = Selection::caret(self.selection.active);
-                        //cx.emit(TextEvent::SetCaret(text_data.selection.active));
                     }
                 }
 
                 Movement::Word(Direction::Upstream) => {
-                    if let Some(offset) = self.text.prev_word_offset(self.selection.active)
-                    {
+                    if let Some(offset) = self.text.prev_word_offset(self.selection.active) {
                         self.text.edit(offset..self.selection.active, "");
-                        // if let Some(callback) = self.on_edit.take() {
-                        //     (callback)(cx, self.text.as_str().to_owned());
-                
-                        //     self.on_edit = Some(callback);
-                        // }
                         self.selection = Selection::caret(offset);
-                        //cx.emit(TextEvent::SetCaret(offset));
                     }
                 }
 
                 Movement::Word(Direction::Downstream) => {
-                    if let Some(offset) = self.text.next_word_offset(self.selection.active)
-                    {
+                    if let Some(offset) = self.text.next_word_offset(self.selection.active) {
                         self.text.edit(self.selection.active..offset, "");
-                        // if let Some(callback) = self.on_edit.take() {
-                        //     (callback)(cx, self.text.as_str().to_owned());
-                
-                        //     self.on_edit = Some(callback);
-                        // }
                         self.selection = Selection::caret(self.selection.active);
-                        //cx.emit(TextEvent::SetCaret(text_data.selection.active));
                     }
                 }
 
@@ -417,14 +314,11 @@ impl<T: EditableText> TextboxData<T> {
         cx.current.set_text(cx, self.text.as_str());
     }
 
-    pub fn move_cursor(&mut self, cx: &mut Context, movement: Movement, selection: bool) {
+    pub fn move_cursor(&mut self, _: &mut Context, movement: Movement, selection: bool) {
         match movement {
             Movement::Grapheme(Direction::Upstream) => {
-                let active = if let Some(offset) =
-                    self.text.prev_grapheme_offset(self.selection.active)
-                {
+                if let Some(offset) = self.text.prev_grapheme_offset(self.selection.active) {
                     self.selection.active = offset;
-                    //cx.emit(TextEvent::SetActive(offset));
                     offset
                 } else {
                     self.selection.active
@@ -432,16 +326,12 @@ impl<T: EditableText> TextboxData<T> {
 
                 if !selection {
                     self.selection.anchor = self.selection.active;
-                    //cx.emit(TextEvent::SetAnchor(active));
                 }
             }
 
             Movement::Grapheme(Direction::Downstream) => {
-                let active = if let Some(offset) =
-                    self.text.next_grapheme_offset(self.selection.active)
-                {
+                if let Some(offset) = self.text.next_grapheme_offset(self.selection.active) {
                     self.selection.active = offset;
-                    //cx.emit(TextEvent::SetActive(offset));
                     offset
                 } else {
                     self.selection.active
@@ -449,16 +339,12 @@ impl<T: EditableText> TextboxData<T> {
 
                 if !selection {
                     self.selection.anchor = self.selection.active;
-                    //cx.emit(TextEvent::SetAnchor(active));
                 }
             }
 
             Movement::Word(Direction::Upstream) => {
-                let active = if let Some(offset) =
-                    self.text.prev_word_offset(self.selection.active)
-                {
+                if let Some(offset) = self.text.prev_word_offset(self.selection.active) {
                     self.selection.active = offset;
-                    //cx.emit(TextEvent::SetActive(offset));
                     offset
                 } else {
                     self.selection.active
@@ -466,16 +352,12 @@ impl<T: EditableText> TextboxData<T> {
 
                 if !selection {
                     self.selection.anchor = self.selection.active;
-                    //cx.emit(TextEvent::SetAnchor(active));
                 }
             }
 
             Movement::Word(Direction::Downstream) => {
-                let active = if let Some(offset) =
-                    self.text.next_word_offset(self.selection.active)
-                {
+                if let Some(offset) = self.text.next_word_offset(self.selection.active) {
                     self.selection.active = offset;
-                    //cx.emit(TextEvent::SetActive(offset));
                     offset
                 } else {
                     self.selection.active
@@ -483,20 +365,17 @@ impl<T: EditableText> TextboxData<T> {
 
                 if !selection {
                     self.selection.anchor = self.selection.active;
-                    //cx.emit(TextEvent::SetAnchor(active));
                 }
             }
 
             _ => {}
         }
-            
     }
 
-    pub fn select_all(&mut self, cx: &mut Context) {
+    pub fn select_all(&mut self, _: &mut Context) {
         self.selection = Selection::new(0, self.text.len());
     }
 }
-
 
 pub enum TextEvent {
     InsertText(String),
@@ -516,8 +395,7 @@ pub enum TextEvent {
     SetOnEdit(Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>),
 }
 
-
-impl<T: 'static + EditableText> Model for TextboxData<T> {
+impl Model for TextboxData {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(textbox_event) = event.message.downcast() {
             match textbox_event {
@@ -525,7 +403,7 @@ impl<T: 'static + EditableText> Model for TextboxData<T> {
                     if self.edit {
                         self.insert_text(cx, text);
                         self.set_caret(cx);
-                         
+
                         if let Some(callback) = self.on_edit.take() {
                             (callback)(cx, self.text.as_str().to_owned());
 
@@ -581,7 +459,8 @@ impl<T: 'static + EditableText> Model for TextboxData<T> {
                     self.set_caret(cx);
                 }
 
-                TextEvent::Copy => {
+                TextEvent::Copy =>
+                {
                     #[cfg(feature = "clipboard")]
                     if self.edit {
                         if cx.modifiers.contains(Modifiers::CTRL) {
@@ -595,7 +474,8 @@ impl<T: 'static + EditableText> Model for TextboxData<T> {
                     }
                 }
 
-                TextEvent::Paste => {
+                TextEvent::Paste =>
+                {
                     #[cfg(feature = "clipboard")]
                     if self.edit {
                         if cx.modifiers.contains(Modifiers::CTRL) {
@@ -622,60 +502,21 @@ impl<T: 'static + EditableText> Model for TextboxData<T> {
     }
 }
 
-
 pub struct Textbox<L: Lens> {
-    //text_data: TextData,
-    // text: T,
-    // selection: Selection,
-    // caret_entity: Entity,
-    // selection_entity: Entity,
-    // edit: bool,
-    // hitx: f32,
-    // dragx: f32,
     lens: L,
-    on_edit: Option<Box<dyn Fn(&mut Context, String)>>,
-    //on_submit: Option<Box<dyn Fn(&mut Context, &Self)>>,
 }
 
-impl<L: Lens> Textbox<L> 
-where 
-    <L as Lens>::Target: Data + EditableText,
+impl<L: Lens> Textbox<L>
+where
+    <L as Lens>::Target: Data + ToString,
 {
     pub fn new<'a>(cx: &'a mut Context, lens: L) -> Handle<'a, Self> {
-        // let selection = if let Some(source) = cx.data::<L::Source>() {
-        //     let text = lens.view(source);
-        //     Selection::new(0, text.len())
-        // } else {
-        //     Selection::caret(0)
-        // };
-
-        //let text_length = cx.data::<L::Source>().and_then(|source| Some(lens.view(source))).unwrap().len();
-
-        //let text_length = text.len();
-        Self {
-            // text_data: TextData {
-            //     //text: placeholder.to_string(),
-            //     // selection: Selection::new(0, placeholder.len()),
-            //     selection: Selection::new(0, placeholder.len()),
-            // },
-            // text: text.clone(),
-            // selection: Selection::new(0, text_length),
-            // caret_entity: Entity::null(),
-            // selection_entity: Entity::null(),
-            // edit: false,
-            // hitx: -1.0,
-            // dragx: -1.0,
-            lens,
-            on_edit: None,
-            //on_submit: None,
-        }
-        .build2(cx, move |cx| {
-
-            Binding::new(cx, lens.clone(), |cx, text|{
-                if let Some(text_data) = cx.data::<TextboxData<L::Target>>() {
+        Self { lens }.build2(cx, move |cx| {
+            Binding::new(cx, lens.clone(), |cx, text| {
+                if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
                         TextboxData {
-                            text: text.get(cx).clone(),
+                            text: text.get(cx).to_string(),
                             selection: text_data.selection,
                             caret_entity: text_data.caret_entity,
                             selection_entity: text_data.selection_entity,
@@ -683,23 +524,21 @@ where
                             hitx: -1.0,
                             dragx: -1.0,
                             on_edit: text_data.on_edit.clone(),
-                        }.build(cx);
-                        cx.current.set_text(cx, text.get(cx).clone().as_str());
+                        }
+                        .build(cx);
+                        cx.current.set_text(cx, &text.get(cx).to_string());
                     }
                 } else {
-                    TextboxData::new(text.get(cx).clone()).build(cx);
-                    cx.current.set_text(cx, text.get(cx).clone().as_str());
+                    TextboxData::new(text.get(cx).to_string()).build(cx);
+                    cx.current.set_text(cx, &text.get(cx).to_string());
                 }
             });
-            
-            
 
             // Selection
             let selection_entity = Element::new(cx)
                 .left(Pixels(0.0))
                 .width(Pixels(0.0))
                 .class("selection")
-                //.background_color(Color::rgba(100, 100, 200, 120))
                 .position_type(PositionType::SelfDirected)
                 .visibility(false)
                 .entity();
@@ -710,7 +549,6 @@ where
             let caret_entity = Element::new(cx)
                 .left(Pixels(0.0))
                 .class("caret")
-                //.background_color(Color::rgba(255, 0, 0, 255))
                 .position_type(PositionType::SelfDirected)
                 .width(Pixels(1.0))
                 .visibility(false)
@@ -718,7 +556,6 @@ where
 
             cx.emit(TextEvent::SetCaretEntity(caret_entity));
         })
-        //.text(text.as_str())
     }
 }
 
@@ -739,16 +576,15 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     }
 }
 
-impl<L: Lens> View for Textbox<L> 
-where 
-    <L as Lens>::Target: Data + EditableText,
+impl<L: Lens> View for Textbox<L>
+where
+    <L as Lens>::Target: Data + ToString,
 {
     fn element(&self) -> Option<String> {
         Some("textbox".to_string())
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
-
         //let selection = cx.tree.get_child(cx.current, 0).unwrap();
         //let caret = cx.tree.get_child(cx.current, 1).unwrap();
 
@@ -757,20 +593,20 @@ where
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                     if cx.current.is_over(cx) {
                         //if !self.edit {
-                            // self.edit = true;
-                            cx.emit(TextEvent::StartEdit);
-                            
-                            cx.focused = cx.current;
-                            cx.captured = cx.current;
-                            cx.current.set_checked(cx, true);
+                        // self.edit = true;
+                        cx.emit(TextEvent::StartEdit);
+
+                        cx.focused = cx.current;
+                        cx.captured = cx.current;
+                        cx.current.set_checked(cx, true);
                         //}
 
                         // Hit test
                         //if self.edit {
-                            // self.hitx = cx.mouse.cursorx;
-                            // self.dragx = cx.mouse.cursorx;
-                            cx.emit(TextEvent::SetHitX(cx.mouse.cursorx));
-                            cx.emit(TextEvent::SetDragX(cx.mouse.cursorx));
+                        // self.hitx = cx.mouse.cursorx;
+                        // self.dragx = cx.mouse.cursorx;
+                        cx.emit(TextEvent::SetHitX(cx.mouse.cursorx));
+                        cx.emit(TextEvent::SetDragX(cx.mouse.cursorx));
                         //}
                         //self.set_caret(cx, cx.current);
                     } else {
@@ -812,17 +648,17 @@ where
 
                 WindowEvent::CharInput(c) => {
                     //if self.edit {
-                        if *c != '\u{1b}' && // Escape
+                    if *c != '\u{1b}' && // Escape
                             *c != '\u{8}' && // Backspace
                             *c != '\u{7f}' && // Delete
                             !cx.modifiers.contains(Modifiers::CTRL)
-                        {
-                            //self.insert_text(cx, String::from(*c));
-                            cx.emit(TextEvent::InsertText(String::from(*c)));
-                            //cx.style.text.insert(cx.current, self.text_data.text.clone());
-                        }
+                    {
+                        //self.insert_text(cx, String::from(*c));
+                        cx.emit(TextEvent::InsertText(String::from(*c)));
+                        //cx.style.text.insert(cx.current, self.text_data.text.clone());
+                    }
 
-                        //self.set_caret(cx, cx.current);
+                    //self.set_caret(cx, cx.current);
                     //}
                 }
 
@@ -830,19 +666,16 @@ where
                     Code::Enter => {
                         // Finish editing
                         // self.edit = false;
-                        
+
                         if let Some(source) = cx.data::<L::Source>() {
                             let text_data = self.lens.view(source);
-                            let text = text_data.as_str().to_owned();
-                            println!("Text: {}", text);
+                            let text = text_data.to_string();
 
                             cx.emit(TextEvent::SelectAll);
                             cx.emit(TextEvent::InsertText(text));
-
                         };
                         cx.emit(TextEvent::EndEdit);
 
-                        
                         //self.selection_entity.set_visibility(cx, Visibility::Invisible);
                         //self.caret_entity.set_visibility(cx, Visibility::Invisible);
                         cx.current.set_checked(cx, false);
@@ -850,34 +683,39 @@ where
 
                     Code::ArrowLeft => {
                         //if self.edit {
-                            let movement = if cx.modifiers.contains(Modifiers::CTRL) {
-                                Movement::Word(Direction::Upstream)
-                            } else {
-                                Movement::Grapheme(Direction::Upstream)
-                            };
+                        let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                            Movement::Word(Direction::Upstream)
+                        } else {
+                            Movement::Grapheme(Direction::Upstream)
+                        };
 
-                            cx.emit(TextEvent::MoveCursor(movement, cx.modifiers.contains(Modifiers::SHIFT)));
+                        cx.emit(TextEvent::MoveCursor(
+                            movement,
+                            cx.modifiers.contains(Modifiers::SHIFT),
+                        ));
 
-                            //self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
+                        //self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
 
-                            //self.set_caret(cx, cx.current);
+                        //self.set_caret(cx, cx.current);
                         //}
                     }
 
                     Code::ArrowRight => {
                         //if self.edit {
-                            let movement = if cx.modifiers.contains(Modifiers::CTRL) {
-                                Movement::Word(Direction::Downstream)
-                            } else {
-                                Movement::Grapheme(Direction::Downstream)
-                            };
+                        let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                            Movement::Word(Direction::Downstream)
+                        } else {
+                            Movement::Grapheme(Direction::Downstream)
+                        };
 
-                            cx.emit(TextEvent::MoveCursor(movement, cx.modifiers.contains(Modifiers::SHIFT)));
+                        cx.emit(TextEvent::MoveCursor(
+                            movement,
+                            cx.modifiers.contains(Modifiers::SHIFT),
+                        ));
 
+                        // self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
 
-                            // self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
-
-                            // self.set_caret(cx, cx.current);
+                        // self.set_caret(cx, cx.current);
                         //}
                     }
 
@@ -901,14 +739,16 @@ where
 
                     Code::Delete => {
                         //if self.edit {
-                            if cx.modifiers.contains(Modifiers::CTRL) {
-                                //self.delete_text(cx, Movement::Word(Direction::Downstream));
-                                cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
-                            } else {
-                                //self.delete_text(cx, Movement::Grapheme(Direction::Downstream));
-                                cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Downstream)));
-                            }
-                            //self.set_caret(cx, cx.current);
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            //self.delete_text(cx, Movement::Word(Direction::Downstream));
+                            cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
+                        } else {
+                            //self.delete_text(cx, Movement::Grapheme(Direction::Downstream));
+                            cx.emit(TextEvent::DeleteText(Movement::Grapheme(
+                                Direction::Downstream,
+                            )));
+                        }
+                        //self.set_caret(cx, cx.current);
                         //}
                     }
 
@@ -932,20 +772,18 @@ where
 
                     Code::KeyA => {
                         //if self.edit {
-                            if cx.modifiers.contains(Modifiers::CTRL) {
-                                // self.select_all(cx);
-                                cx.emit(TextEvent::SelectAll);
-                            }
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            // self.select_all(cx);
+                            cx.emit(TextEvent::SelectAll);
+                        }
                         //}
                     }
 
-                    Code::KeyC =>
-                    {
+                    Code::KeyC => {
                         cx.emit(TextEvent::Copy);
                     }
 
-                    Code::KeyV =>
-                    {
+                    Code::KeyV => {
                         cx.emit(TextEvent::Paste);
                     }
 

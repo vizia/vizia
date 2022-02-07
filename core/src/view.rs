@@ -51,48 +51,6 @@ pub trait View: 'static + Sized {
         handle
     }
 
-    fn build3<F>(mut self, cx: &mut Context, builder: F) -> Handle<Self>
-    where
-        F: 'static + FnOnce(&mut Self, &mut Context),
-    {
-        // Add the instance to context unless it already exists
-        let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
-            id
-        } else {
-            let id = cx.entity_manager.create();
-            cx.tree.add(id, cx.current).expect("Failed to add to tree");
-            cx.cache.add(id).expect("Failed to add to cache");
-            cx.style.add(id);
-            cx.views.insert(id, Box::new(self));
-            id
-        };
-
-        cx.count += 1;
-
-        let handle = Handle { entity: id, p: Default::default(), cx };
-
-        // ...and this part
-        let prev = handle.cx.current;
-        let prev_count = handle.cx.count;
-        handle.cx.current = handle.entity;
-        handle.cx.count = 0;
-
-        if let Some(mut view_handler) = handle.cx.views.remove(&handle.entity) {
-            if let Some(view) = view_handler.downcast_mut::<Self>() {
-                (builder)(view, handle.cx);
-            }
-
-            handle.cx.views.insert(handle.entity, view_handler);
-        }
-        
-
-        // This part will also be moved somewhere else
-        handle.cx.current = prev;
-        handle.cx.count = prev_count;
-
-        handle
-    }
-
     fn update<F>(self, cx: &mut Context, builder: F) -> Handle<Self>
     where
         F: 'static + FnOnce(&mut Context),

@@ -28,19 +28,14 @@ fn main() {
         AppData { number: 5 }.build(cx);
 
         HStack::new(cx, |cx| {
-            //Binding::new(cx, AppData::number, |cx, text| {
-                Textbox::new(cx, AppData::number)
-                    .on_edit(|cx, text|{
-                        if let Ok(valid_number) = text.parse::<i32>() {
-                            cx.emit(AppEvent::SetNumber(valid_number));
-                            //cx.current.set_checked(cx, false);
-                        } else {
-                            //cx.current.set_checked(cx, true);
-                        }
-                    })
-                    .width(Pixels(200.0))
-                    .child_left(Pixels(5.0));
-            //});
+            Textbox::new(cx, AppData::number)
+                .on_edit(|cx, text| {
+                    if let Ok(valid_number) = text.parse::<i32>() {
+                        cx.emit(AppEvent::SetNumber(valid_number));
+                    }
+                })
+                .width(Pixels(200.0))
+                .child_left(Pixels(5.0));
 
             Binding::new(cx, AppData::number, |cx, text| {
                 Label::new(cx, &text.get(cx).to_string())
