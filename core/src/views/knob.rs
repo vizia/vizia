@@ -239,6 +239,204 @@ impl View for Knob {
     }
 }
 
+// TODO: better name?
+/// Adds tickmarks to a knob to show the steps that a knob can be set to.
+/// When added to a knob, the knob should be made smaller (depending on span),
+/// so the knob doesn't overlap with the tick marks
+pub struct Ticks {
+    angle_start: f32,
+    angle_end: f32,
+    radius: Units,
+    span: Units,
+    steps: u32,
+}
+impl Ticks {
+    pub fn new(
+        cx: &mut Context,
+        radius: Units,
+        span: Units,
+        arc_len: f32,
+        steps: u32,
+    ) -> Handle<Self> {
+        Self {
+            // angle_start: -150.0,
+            // angle_end: 150.0,
+            angle_start: -arc_len / 2.,
+            angle_end: arc_len / 2.,
+            radius,
+            span,
+
+            steps,
+        }
+        .build(cx)
+    }
+}
+impl View for Ticks {
+    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+        let opacity = cx.cache.get_opacity(cx.current);
+
+        //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
+        // background_color.set_alphaf(background_color.a * opacity);
+
+        let mut foreground_color: femtovg::Color =
+            cx.style.background_color.get(cx.current).cloned().unwrap_or_default().into();
+        foreground_color.set_alphaf(foreground_color.a * opacity);
+
+        // let background_color = femtovg::Color::rgb(54, 54, 54);
+        //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
+
+        let posx = cx.cache.get_posx(cx.current);
+        let posy = cx.cache.get_posy(cx.current);
+        let width = cx.cache.get_width(cx.current);
+        let height = cx.cache.get_height(cx.current);
+
+        // Clalculate arc center
+        let centerx = posx + 0.5 * width;
+        let centery = posy + 0.5 * height;
+
+        // Convert start and end angles to radians and rotate origin direction to be upwards instead of to the right
+        let start = self.angle_start.to_radians() - PI / 2.0;
+        let end = self.angle_end.to_radians() - PI / 2.0;
+
+        //let parent = cx.current.get_parent(cx).unwrap();
+
+        let parent = cx.tree.parent(cx.current).unwrap();
+
+        let parent_width = cx.cache.get_width(parent);
+
+        // Convert radius and span into screen coordinates
+        let radius = self.radius.value_or(parent_width, 0.0);
+        // default value of span is 15 % of radius. Original span value was 16.667%
+        let span = self.span.value_or(radius, 0.0);
+        // TODO: Maybe find a better line_width here?
+        let line_width = radius * 0.15;
+        // Draw ticks
+        let mut path = Path::new();
+        for n in 0..self.steps {
+            let a = n as f32 / (self.steps - 1) as f32;
+            let angle = start + (end - start) * a;
+            // TODO: is - span a good start val?
+            // Idea is radius is max, but then the knob between the ticks
+            // will need to be shrunk
+            path.move_to(
+                centerx + angle.cos() * (radius - span),
+                centery + angle.sin() * (radius - span),
+            );
+            path.line_to(centerx + angle.cos() * (radius - line_width/2.), centery + angle.sin() * (radius - line_width/2.));
+        }
+        let mut paint = Paint::color(foreground_color);
+        paint.set_line_width(line_width);
+        paint.set_line_cap(LineCap::Round);
+        canvas.stroke_path(&mut path, paint);
+    }
+}
+pub struct TickKnob {
+    angle_start: f32,
+    angle_end: f32,
+    radius: Units,
+    tick_width: Units,
+    normalized_value: f32,
+    steps: u32,
+}
+
+/// Makes a round knob with a tick to show the current value
+impl TickKnob {
+    pub fn new(
+        cx: &mut Context,
+        value: f32,
+        radius: Units,
+        tick_width: Units,
+        arc_len: f32,
+        steps: u32,
+    ) -> Handle<Self> {
+        Self {
+            // angle_start: -150.0,
+            // angle_end: 150.0,
+            angle_start: -arc_len / 2.,
+            angle_end: arc_len / 2.,
+            radius,
+            tick_width,
+
+            normalized_value: value,
+            steps,
+        }
+        .build(cx)
+    }
+}
+impl View for TickKnob {
+    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+        let opacity = cx.cache.get_opacity(cx.current);
+
+        //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
+        // background_color.set_alphaf(background_color.a * opacity);
+
+        let mut foreground_color: femtovg::Color =
+            cx.style.background_color.get(cx.current).cloned().unwrap_or_default().into();
+        foreground_color.set_alphaf(foreground_color.a * opacity);
+
+        let background_color = femtovg::Color::rgb(54, 54, 54);
+        //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
+
+        let posx = cx.cache.get_posx(cx.current);
+        let posy = cx.cache.get_posy(cx.current);
+        let width = cx.cache.get_width(cx.current);
+        let height = cx.cache.get_height(cx.current);
+
+        // Clalculate arc center
+        let centerx = posx + 0.5 * width;
+        let centery = posy + 0.5 * height;
+
+        // Convert start and end angles to radians and rotate origin direction to be upwards instead of to the right
+        let start = self.angle_start.to_radians() - PI / 2.0;
+        let end = self.angle_end.to_radians() - PI / 2.0;
+
+        //let parent = cx.current.get_parent(cx).unwrap();
+
+        let parent = cx.tree.parent(cx.current).unwrap();
+
+        let parent_width = cx.cache.get_width(parent);
+
+        // Convert radius and span into screen coordinates
+        let radius = self.radius.value_or(parent_width, 0.0);
+        // default value of span is 15 % of radius. Original span value was 16.667%
+        let span = self.tick_width.value_or(radius, 0.0);
+
+        // Draw the circle
+        let mut path = Path::new();
+        path.circle(centerx, centery, radius);
+        // path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
+        let mut paint = Paint::color(background_color);
+        paint.set_line_width(span);
+        paint.set_line_cap(LineCap::Round);
+        canvas.fill_path(&mut path, paint);
+
+        // Draw the tick
+        let mut path = Path::new();
+        let angle = if self.steps < 2 {
+            start + (end - start) * self.normalized_value
+        }
+        // snapping
+        else {
+            start
+                + (end - start) * (self.normalized_value * (self.steps - 1) as f32).floor()
+                    / (self.steps - 1) as f32
+        };
+        // TODO: Does radius * 0.75 give a good tick length?
+        // Should it maybe be customizable?
+        path.move_to(
+            centerx + angle.cos() * (radius * 0.75),
+            centery + angle.sin() * (radius * 0.75),
+        );
+        // TODO: current line_cap means this sticks out a bit
+        path.line_to(centerx + angle.cos() * (radius - span/2.), centery + angle.sin() * (radius - span/2.));
+
+        let mut paint = Paint::color(foreground_color);
+        paint.set_line_width(span);
+        paint.set_line_cap(LineCap::Round);
+        canvas.stroke_path(&mut path, paint);
+    }
+}
+/// Makes a knob that represents the current value with an arc
 pub struct ArcTrack {
     angle_start: f32,
     angle_end: f32,

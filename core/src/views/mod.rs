@@ -29,7 +29,7 @@ mod slider;
 pub use slider::{Orientation, Slider, SliderData, SliderEvent};
 
 mod knob;
-pub use knob::{ArcTrack, Knob};
+pub use knob::{ArcTrack, Knob, TickKnob, Ticks};
 
 mod normalized_map;
 pub use normalized_map::*;
