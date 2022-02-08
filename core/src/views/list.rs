@@ -20,30 +20,35 @@ use crate::{Binding, Context, Data, Handle, Lens, Model, MouseButton, TreeExt, V
 #[derive(Debug)]
 pub struct ItemPtr<L, T>
 where
-    L: Lens<Target = Vec<T>>,
+    L: Lens,
+    L::Target: ListIter<T>,
 {
     lens: L,
     index: usize,
     row: usize,
     col: usize,
+    p: PhantomData<T>,
 }
 
 // Manual implementations of Clone and Copy or else the compiler complains about a Clone bound on T which isn't actually required
-impl<L, T> Copy for ItemPtr<L, T> where L: Lens<Target = Vec<T>> {}
+impl<L, T> Copy for ItemPtr<L, T> where L: Lens, L::Target: ListIter<T> {}
 
-impl<L: Lens<Target = Vec<T>>, T> Clone for ItemPtr<L, T> {
+impl<L: Lens, T> Clone for ItemPtr<L, T> 
+where L::Target: ListIter<T>,
+{
     fn clone(&self) -> Self {
-        Self { lens: self.lens.clone(), index: self.index, row: self.row, col: self.col }
+        Self { lens: self.lens.clone(), index: self.index, row: self.row, col: self.col, p: PhantomData::default() }
     }
 }
 
 impl<L, T> ItemPtr<L, T>
 where
-    L: Lens<Target = Vec<T>>,
+    L: Lens,
+    L::Target: ListIter<T>,
 {
     /// Constructs a new ItemPtr from a lens and index.
     pub fn new(lens: L, index: usize, row: usize, col: usize) -> Self {
-        Self { lens, index, row, col }
+        Self { lens, index, row, col, p: PhantomData::default() }
     }
 
     /// Returns the list index the ItemPtr refers to.
@@ -65,7 +70,7 @@ where
     {
         self.lens
             .view(cx.data().expect("Failed to get data"))
-            .get(self.index)
+            .get_value(self.index)
             .expect(&format!("Failed to get item: {}", self.index))
     }
 }
@@ -77,7 +82,8 @@ pub trait DataHandle: Clone + Copy {
 
 impl<L, T> DataHandle for ItemPtr<L, T>
 where
-    L: Lens<Target = Vec<T>>,
+    L: Lens,
+    L::Target: ListIter<T>,
 {
     type Data = T;
     fn get<'a>(&self, cx: &'a Context) -> &'a Self::Data {
@@ -88,25 +94,32 @@ where
 /// A view for creating a list of items from a binding to a Vec<T>
 pub struct List<L, T: 'static>
 where
-    L: Lens<Target = Vec<T>>,
+    L: Lens,
+    L::Target: ListIter<T>,
     T: Data,
 {
     p: PhantomData<L>,
+    p2: PhantomData<T>,
     increment_callback: Option<Box<dyn Fn(&mut Context)>>,
     decrement_callback: Option<Box<dyn Fn(&mut Context)>>,
     clear_callback: Option<Box<dyn Fn(&mut Context)>>,
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
+impl<L: 'static + Lens, T: Data> List<L, T> 
+where
+    L::Target: ListIter<T>,
+{
     /// Creates a new ListView with a binding to the given lens and a template for constructing the list items
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context, ItemPtr<L, T>),
         <L as Lens>::Source: Model,
+        <L as Lens>::Target: Data,
     {
         //let item_template = Rc::new(item);
         List {
             p: PhantomData::default(),
+            p2: PhantomData::default(),
             increment_callback: None,
             decrement_callback: None,
             clear_callback: None,
@@ -130,16 +143,28 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
                     }
                 }
 
+                // list.get(cx).for_each(|it, index|{
+                //     let ptr = ItemPtr::new(lens.clone(), index, index, 0);
+                //     (item)(cx, ptr);
+                // });
+
                 for index in 0..list_len {
                     let ptr = ItemPtr::new(lens.clone(), index, index, 0);
                     (item)(cx, ptr);
                 }
+
+                // for index in 0..list_len {
+                //     let ptr = ItemPtr::new(lens.clone(), index, index, 0);
+                //     (item)(cx, ptr);
+                // }
             });
         })
     }
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
+impl<L: 'static + Lens, T: Data> View for List<L, T> 
+where L::Target: ListIter<T>,
+{
     fn element(&self) -> Option<String> {
         Some("list".to_string())
     }
@@ -184,7 +209,9 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
     }
 }
 
-impl<L: Lens<Target = Vec<T>>, T: Data> Handle<'_, List<L, T>> {
+impl<L: Lens, T: Data> Handle<'_, List<L, T>> 
+where L::Target: ListIter<T>,
+{
     pub fn on_increment<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut Context),
@@ -223,4 +250,27 @@ impl<L: Lens<Target = Vec<T>>, T: Data> Handle<'_, List<L, T>> {
 
         self
     }
+}
+
+
+pub trait ListIter<T> {
+    //fn for_each(&self, each: impl FnMut(&T, usize));
+    fn len(&self) -> usize;
+    fn get_value(&self, index: usize) -> Option<&T>;
+}
+
+impl<T> ListIter<T> for Vec<T> {
+    // fn for_each(&self, mut each: impl FnMut(&T, usize)) {
+    //     for (index, item) in self.iter().enumerate() {
+    //         each(item, index);
+    //     }
+    // }
+
+    fn len(&self) -> usize {
+        self.len()
+    }
+
+    fn get_value(&self, index: usize) -> Option<&T> {
+        self.get(index)
+    } 
 }

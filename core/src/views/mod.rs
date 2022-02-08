@@ -8,7 +8,7 @@ mod button;
 pub use button::Button;
 
 mod list;
-pub use list::{DataHandle, ItemPtr, List};
+pub use list::{DataHandle, ItemPtr, List, ListIter};
 
 mod table;
 pub use table::Table;
