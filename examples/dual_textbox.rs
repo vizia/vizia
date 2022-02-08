@@ -5,7 +5,6 @@ pub struct AppData {
     text: String,
 }
 
-#[derive(Debug)]
 pub enum AppEvent {
     SetText(String),
 }
@@ -28,6 +27,11 @@ fn main() {
         AppData { text: "This text is editable!".to_string() }.build(cx);
 
         HStack::new(cx, |cx| {
+            Textbox::new(cx, AppData::text)
+                .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
+                .width(Pixels(200.0))
+                .child_left(Pixels(5.0));
+
             Textbox::new(cx, AppData::text)
                 .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
                 .width(Pixels(200.0))

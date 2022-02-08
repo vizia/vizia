@@ -17,14 +17,14 @@ pub enum Propagation {
 }
 
 /// A message can be any static type.
-pub trait Message: Any + Debug + Send {
+pub trait Message: Any + Send {
     // An &Any can be cast to a reference to a concrete type.
     fn as_any(&self) -> &dyn Any;
 }
 
 impl dyn Message {
     // Check if a message is a certain type
-    pub fn is<T: Message + Debug>(&self) -> bool {
+    pub fn is<T: Message>(&self) -> bool {
         // Get TypeId of the type this function is instantiated with
         let t = TypeId::of::<T>();
 
@@ -38,7 +38,7 @@ impl dyn Message {
     // Casts a message to the specified type if the message is of that type
     pub fn downcast<T>(&mut self) -> Option<&mut T>
     where
-        T: Message + Debug,
+        T: Message,
     {
         if self.is::<T>() {
             unsafe { Some(&mut *(self as *mut dyn Message as *mut T)) }
@@ -49,14 +49,13 @@ impl dyn Message {
 }
 
 // Implements message for any static type that implements Clone
-impl<S: Debug + 'static + Send> Message for S {
+impl<S: 'static + Send> Message for S {
     fn as_any(&self) -> &dyn Any {
         self
     }
 }
 
 /// An event is a wrapper around a message and provides metadata on how the event should be propagated through the tree
-#[derive(Debug)]
 pub struct Event {
     // The entity that produced the event. Entity::null() for OS events or unspecified.
     pub origin: Entity,
@@ -75,6 +74,12 @@ pub struct Event {
 
     // The event message
     pub message: Box<dyn Message>,
+}
+
+impl Debug for Event {
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Ok(())
+    }
 }
 
 // // Allows events to be compared for equality

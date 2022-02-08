@@ -2,7 +2,7 @@ use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 use std::ops::Range;
 
-pub trait EditableText {
+pub trait EditableText: Clone {
     fn as_str(&self) -> &str;
     /// Replace range with new text
     fn edit(&mut self, range: Range<usize>, txt: impl Into<String>);

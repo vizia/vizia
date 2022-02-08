@@ -83,6 +83,35 @@ textbox .selection {
     background-color: #6464c888;
 }
 
+codeview {
+    width: auto;
+    height: auto;
+    overflow: hidden;
+    color: black;
+    border-width: 1px;
+    border-color: #9e9e9e;
+    child-top: 1s;
+    child-bottom: 1s;
+    height: 30px;
+    border-radius: 3px;
+}
+
+codeview:over {
+    border-color: black;
+}
+
+codeview:checked {
+    border-color: #4c00ff;
+}
+
+codeview .caret {
+    background-color: #ff0000;
+}
+
+codeview .selection {
+    background-color: #6464c888;
+}
+
 
 label {
     width: auto;

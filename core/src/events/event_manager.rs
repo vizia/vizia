@@ -34,9 +34,9 @@ impl EventManager {
 
         // Loop over the events in the event queue
         'events: for event in self.event_queue.iter_mut() {
-            if event.trace {
-                println!("Event: {:?}", event);
-            }
+            // if event.trace {
+            //     println!("Event: {:?}", event);
+            // }
 
             // Send events to any listeners
             let listeners =
