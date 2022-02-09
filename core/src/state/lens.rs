@@ -50,6 +50,15 @@ pub trait LensExt: Lens {
     {
         Index::new(self, index)
     }
+
+    fn index_with_lens<O, L>(self, index: L) -> IndexWithLens<Self, L>
+    where
+        Self::Target: Deref<Target = [O]>,
+        L: Lens<Source = <Self as Lens>::Source, Target = usize>,
+        O: 'static,
+    {
+        IndexWithLens::new(self, index)
+    }
 }
 
 // Implement LensExt for all types which implement Lens
@@ -129,6 +138,35 @@ where
 
     fn view<'a>(&self, data: &'a Self::Source) -> Option<&'a Self::Target> {
         self.input.view(data).and_then(|x| x.get(self.index))
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct IndexWithLens<L1, L2> {
+    indexable: L1,
+    index: L2,
+}
+
+impl<L1, L2> IndexWithLens<L1, L2> {
+    pub fn new(indexable: L1, index: L2) -> Self {
+        IndexWithLens { indexable, index }
+    }
+}
+
+impl<L1, L2, I, M, O> Lens for IndexWithLens<L1, L2>
+where
+    L1: Lens<Source = I, Target = M>,
+    L2: Lens<Source = I, Target = usize>,
+    M: 'static + Deref<Target = [O]>,
+    O: 'static,
+{
+    type Source = I;
+    type Target = O;
+
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<&'a Self::Target> {
+        self.indexable.view(source)
+            .and_then(|indexable| self.index.view(source)
+                .and_then(|index| indexable.get(*index)))
     }
 }
 
