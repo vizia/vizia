@@ -17,7 +17,8 @@ fn main() {
         List::new(cx, AppData::list, |cx, item| {
             let item_text = item.get(cx).to_string();
             Label::new(cx, &item_text);
-        }); // Center the list view in the window
+        })
+        .space(Stretch(1.0));
     })
     .run();
 }

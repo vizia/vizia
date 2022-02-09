@@ -38,7 +38,7 @@ fn main() {
                 .child_left(Pixels(5.0));
 
             Binding::new(cx, AppData::number, |cx, text| {
-                Label::new(cx, &text.get(cx).to_string())
+                Label::new(cx, text)
                     .width(Pixels(200.0))
                     .height(Pixels(30.0))
                     .child_left(Pixels(5.0));

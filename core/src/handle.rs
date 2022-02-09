@@ -10,7 +10,7 @@ use crate::{
 macro_rules! set_style {
     ($name:ident, $t:ty) => {
         pub fn $name(self, value: impl Res<$t>) -> Self {
-            self.cx.style.$name.insert(self.entity, value.get(self.cx).clone().into());
+            self.cx.style.$name.insert(self.entity, value.get_ref(self.cx).clone().into());
 
             // TODO - Split this out
             self.cx.style.needs_relayout = true;
@@ -59,7 +59,7 @@ impl<'a, T> Handle<'a, T> {
     }
 
     pub fn checked(self, state: impl Res<bool>) -> Self {
-        let state = state.get(self.cx).clone();
+        let state = state.get_ref(self.cx).clone();
         if let Some(pseudo_classes) = self.cx.style.pseudo_classes.get_mut(self.entity) {
             pseudo_classes.set(PseudoClass::CHECKED, state);
         } else {
@@ -111,7 +111,7 @@ impl<'a, T> Handle<'a, T> {
     }
 
     pub fn display<U: Clone + Into<Display>>(self, value: impl Res<U>) -> Self {
-        self.cx.style.display.insert(self.entity, value.get(self.cx).clone().into());
+        self.cx.style.display.insert(self.entity, value.get_ref(self.cx).clone().into());
 
         self.cx.style.needs_relayout = true;
         self.cx.style.needs_redraw = true;
@@ -120,7 +120,7 @@ impl<'a, T> Handle<'a, T> {
     }
 
     pub fn visibility<U: Clone + Into<Visibility>>(self, value: impl Res<U>) -> Self {
-        self.cx.style.visibility.insert(self.entity, value.get(self.cx).clone().into());
+        self.cx.style.visibility.insert(self.entity, value.get_ref(self.cx).clone().into());
 
         self.cx.style.needs_redraw = true;
 

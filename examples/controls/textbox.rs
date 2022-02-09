@@ -30,11 +30,10 @@ fn main() {
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::text)
                 .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
-                .width(Pixels(200.0))
-                .child_left(Pixels(5.0));
+                .width(Pixels(200.0));
 
             Binding::new(cx, AppData::text, |cx, text| {
-                Label::new(cx, &text.get(cx).clone())
+                Label::new(cx, text)
                     .width(Pixels(200.0))
                     .height(Pixels(30.0))
                     .child_left(Pixels(5.0));

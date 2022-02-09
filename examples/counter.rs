@@ -65,7 +65,7 @@ fn main() {
 
             // Label bound to the counter value
             Binding::new(cx, CounterData::count, |cx, count| {
-                Label::new(cx, &count.get(cx).to_string());
+                Label::new(cx, count);
             });
 
             // Label bound to the counter value displaying the value as english text

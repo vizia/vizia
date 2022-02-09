@@ -63,6 +63,7 @@ textbox {
     border-color: #9e9e9e;
     child-top: 1s;
     child-bottom: 1s;
+    child-left: 5px;
     height: 30px;
     border-radius: 3px;
 }

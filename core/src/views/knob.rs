@@ -2,8 +2,8 @@ use femtovg::{LineCap, Paint, Path, Solidity};
 use morphorm::{Hierarchy, Units};
 
 use crate::{
-    Binding, Context, Entity, Handle, Model, Modifiers, MouseButton, SliderData, SliderEvent,
-    Units::*, View, WindowEvent, ZStack,
+    Binding, Context, Entity, Handle, LensExt, Model, Modifiers, MouseButton, Res, SliderData,
+    SliderEvent, Units::*, View, WindowEvent, ZStack,
 };
 
 static DEFAULT_DRAG_SCALAR: f32 = 0.0042;
@@ -30,13 +30,15 @@ pub struct Knob {
 impl Knob {
     pub fn new(
         cx: &mut Context,
-        normalized_default: f32,
-        normalized_value: f32,
+        normalized_default: impl Res<f32>,
+        normalized_value: impl Res<f32>,
         centered: bool,
     ) -> Handle<Self> {
+        let normalized_value = *normalized_value.get_ref(cx);
+
         Self {
             normalized_value,
-            default_normal: normalized_default,
+            default_normal: *normalized_default.get_ref(cx),
 
             is_dragging: false,
             prev_drag_y: 0.0,

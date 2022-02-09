@@ -11,12 +11,13 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::style::PropGet;
 use crate::{
     Binding, Context, CursorIcon, Data, EditableText, Element, Entity, Event, FontOrId, Handle,
-    Lens, Model, Modifiers, MouseButton, Movement, PropSet, Selection, Units::*, View, Visibility,
-    WindowEvent,
+    Lens, LensExt, Model, Modifiers, MouseButton, Movement, PropSet, Selection, Units::*, View,
+    Visibility, WindowEvent,
 };
 
 use crate::text::Direction;
 
+#[derive(Lens)]
 pub struct TextboxData {
     text: String,
     selection: Selection,
@@ -529,32 +530,34 @@ where
                         cx.current.set_text(cx, &text.get(cx).to_string());
                     }
                 } else {
-                    TextboxData::new(text.get(cx).to_string()).build(cx);
+                    let mut td = TextboxData::new(text.get(cx).to_string());
+                    td.set_caret(cx);
+                    td.build(cx);
                     cx.current.set_text(cx, &text.get(cx).to_string());
                 }
             });
 
-            // Selection
-            let selection_entity = Element::new(cx)
-                .left(Pixels(0.0))
-                .width(Pixels(0.0))
-                .class("selection")
-                .position_type(PositionType::SelfDirected)
-                .visibility(false)
-                .entity();
+            Binding::new(cx, TextboxData::edit, |cx, edit| {
+                // Selection
+                let selection_entity = Element::new(cx)
+                    .width(Pixels(0.0))
+                    .class("selection")
+                    .position_type(PositionType::SelfDirected)
+                    .visibility(edit)
+                    .entity();
 
-            cx.emit(TextEvent::SetSelectionEntity(selection_entity));
+                cx.emit(TextEvent::SetSelectionEntity(selection_entity));
 
-            // Caret
-            let caret_entity = Element::new(cx)
-                .left(Pixels(0.0))
-                .class("caret")
-                .position_type(PositionType::SelfDirected)
-                .width(Pixels(1.0))
-                .visibility(false)
-                .entity();
+                // Caret
+                let caret_entity = Element::new(cx)
+                    .class("caret")
+                    .position_type(PositionType::SelfDirected)
+                    .width(Pixels(1.0))
+                    .visibility(edit)
+                    .entity();
 
-            cx.emit(TextEvent::SetCaretEntity(caret_entity));
+                cx.emit(TextEvent::SetCaretEntity(caret_entity));
+            });
         })
     }
 }
@@ -657,7 +660,6 @@ where
                         cx.emit(TextEvent::InsertText(String::from(*c)));
                         //cx.style.text.insert(cx.current, self.text_data.text.clone());
                     }
-
                     //self.set_caret(cx, cx.current);
                     //}
                 }
