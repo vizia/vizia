@@ -41,7 +41,7 @@ fn main() {
 
         List::new(cx, AppData::list, |cx, item| {
             let item_text = item.get(cx).to_string();
-            let item_index = item.index();
+            let item_index = item.idx();
             // This vstack shouldn't be necessary but because of how bindings work it's required
             VStack::new(cx, move |cx| {
                 Binding::new(cx, AppData::selected, move |cx, selected| {

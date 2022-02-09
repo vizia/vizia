@@ -8,10 +8,10 @@ mod button;
 pub use button::Button;
 
 mod list;
-pub use list::{DataHandle, ItemPtr, List};
+pub use list::List;
 
 mod table;
-pub use table::Table;
+pub use table::{Table, TableColumn};
 
 mod textbox;
 pub use textbox::Textbox;

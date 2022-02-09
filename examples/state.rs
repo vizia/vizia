@@ -34,12 +34,12 @@ fn main() {
 
         Binding::new(cx, Data::something, |cx, something| {
             println!("Rebuild something");
-            Label::new(cx, &format!("{}", *something.get(cx)));
+            Label::new(cx, something);
         });
 
         Binding::new(cx, Data::other, |cx, other| {
             println!("Rebuild other");
-            Label::new(cx, &format!("{}", *other.get(cx)));
+            Label::new(cx, other);
         });
 
         Button::new(

@@ -1,8 +1,8 @@
 use morphorm::PositionType;
 
 use crate::{
-    style::PropGet, Binding, Code, Context, Data, Handle, Lens, Model, PropSet, View, Visibility,
-    WindowEvent,
+    style::PropGet, Binding, Code, Context, Data, Handle, Lens, LensExt, Model, PropSet, View,
+    Visibility, WindowEvent,
 };
 
 #[derive(Debug, Default, Data, Lens, Clone)]

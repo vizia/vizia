@@ -71,6 +71,10 @@ name = "multiselectable_list"
 path = "examples/lists/multiselectable_list.rs"
 
 [[example]]
+name = "sortable_list"
+path = "examples/lists/sortable_list.rs"
+
+[[example]]
 name = "static_list"
 path = "examples/lists/static_list.rs"
 
