@@ -40,15 +40,6 @@ pub enum TourDirection {
     Leaving,
 }
 
-impl TourDirection {
-    pub fn opposite(self) -> Self {
-        match self {
-            TourDirection::Entering => TourDirection::Leaving,
-            TourDirection::Leaving => TourDirection::Entering,
-        }
-    }
-}
-
 /// Where to go next after entering or leaving a node.
 #[non_exhaustive]
 pub enum TourStep {
@@ -175,7 +166,7 @@ impl DoubleEndedTreeTour {
         self.forward.next_with(tree, |current, direction| {
             let (item, action) = cb(current, direction);
             if self.backward.current == Some(current)
-                && self.backward.direction == direction.opposite()
+                && self.backward.direction != direction
             {
                 self.backward.current = None;
                 (item, TourStep::Break)
@@ -192,7 +183,7 @@ impl DoubleEndedTreeTour {
         self.backward.next_with(tree, |current, direction| {
             let (item, action) = cb(current, direction);
             if self.forward.current == Some(current)
-                && self.forward.direction == direction.opposite()
+                && self.forward.direction != direction
             {
                 self.forward.current = None;
                 (item, TourStep::Break)
