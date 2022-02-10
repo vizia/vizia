@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::rc::Rc;
 
-use crate::{Binding, Data, Index, LensExt, List, Then, VStack};
+use crate::{Binding, Data, Index, LensExt, List, Then, Units::*, VStack};
 use crate::{Context, HStack, Handle, Lens, Model, View};
 
 // TODO
@@ -65,7 +65,10 @@ where
         Label: 'static + Fn(&mut Context),
     {
         Self { p1: PhantomData::default(), p2: PhantomData::default() }.build2(cx, move |cx| {
+            //VStack::new(cx, move |cx|{
             (label)(cx);
+            //    Element::new(cx).height(Pixels(1.0)).background_color(Color::black());
+            //}).height(Pixels(30.0));
 
             let content = Rc::new(content);
             List::new(cx, list, move |cx, it| {
@@ -75,7 +78,8 @@ where
                         (content)(cx, it.idx(), l);
                     });
                 });
-            });
+            })
+            .width(Stretch(1.0));
         })
     }
 }
