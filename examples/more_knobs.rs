@@ -33,48 +33,53 @@ fn main() {
                     let radius = 50.0;
                     // default knob
                     VStack::new(cx, move |cx| {
+                        Label::new(cx, "Default knob");
                         Knob::new(cx, 0.5, knobs.get(cx)[0], false)
                             .on_changing(move |knob, cx| {
                                 cx.emit(KnobChangeEvent::SetKnob(0, knob.normalized_value))
                             })
                             .color(Color::red());
-                        Label::new(cx, "Default knob");
+                        Label::new(cx, &format!("{:.3}", knobs.get(cx)[0]));
                     })
+                    .row_between(Pixels(10.))
                     .child_space(Stretch(1.));
                     // simple tick knob
                     VStack::new(cx, move |cx| {
+                        Label::new(cx, "Tick knob");
                         Knob::custom(cx, 0.5, knobs.get(cx)[1], move |cx, val| {
                             // FIXME: Using this for radius resulted in a memory leak??
                             // let height = cx.cache.get_height(cx.current);
                             // let width = cx.cache.get_width(cx.current);
                             // let radius = height.min(width) / 2.;
-                            TickKnob::new(cx, val, Pixels(radius), Percentage(25.), 300., 0)
+                            TickKnob::new(cx, val, Pixels(radius), Percentage(25.), 300., KnobMode::Continuous)
                                 .class("track")
                         })
                         .on_changing(move |knob, cx| {
                             cx.emit(KnobChangeEvent::SetKnob(1, knob.normalized_value))
                         });
-                        Label::new(cx, "Tick knob");
+                        Label::new(cx, &format!("{:.3}", knobs.get(cx)[1]));
                     })
+                    .row_between(Pixels(10.))
                     .child_space(Stretch(1.));
                     // steppy knob
                     VStack::new(cx, move |cx| {
+                        Label::new(cx, "Steppy knob");
                         Knob::custom(cx, 0.5, knobs.get(cx)[2], move |cx, val| {
                             // FIXME: Using this for radius resulted in a memory leak??
                             // let height = cx.cache.get_height(cx.current);
                             // let width = cx.cache.get_width(cx.current);
                             // let radius = height.min(width) / 2.;
-                            let steps = 5;
+                            let mode = KnobMode::Discrete(5);
                             TickKnob::new(
                                 cx,
                                 val,
                                 Pixels(radius * 0.60),
                                 Percentage(15.0),
                                 300.,
-                                steps,
+                                mode,
                             )
                             .class("track");
-                            Ticks::new(cx, Pixels(radius), Percentage(25.), 300., steps)
+                            Ticks::new(cx, Pixels(radius), Percentage(25.), 300., mode)
                                 .class("track")
                             // TODO: cyan is yellow?
                             // .background_color(Color::cyan())
@@ -82,11 +87,13 @@ fn main() {
                         .on_changing(move |knob, cx| {
                             cx.emit(KnobChangeEvent::SetKnob(2, knob.normalized_value))
                         });
-                        Label::new(cx, "Steppy knob");
+                        Label::new(cx, &format!("{:.3}", knobs.get(cx)[2]));
                     })
+                    .row_between(Pixels(10.))
                     .child_space(Stretch(1.));
                     // Arc+tick knob knob
                     VStack::new(cx, move |cx| {
+                        Label::new(cx, "Arc knob");
                         Knob::custom(cx, 0.5, knobs.get(cx)[3], move |cx, val| {
                             // FIXME: Using this for radius resulted in a memory leak??
                             // let height = cx.cache.get_height(cx.current);
@@ -98,7 +105,7 @@ fn main() {
                                 Pixels(radius * 0.9),
                                 Percentage(0.0),
                                 300.,
-                                0,
+                                KnobMode::Continuous,
                             )
                             .class("track");
                             Slider::new(cx, 0.5, Orientation::Horizontal).height(Pixels(50.)).width(Pixels(50.));
@@ -115,11 +122,13 @@ fn main() {
                         .on_changing(move |knob, cx| {
                             cx.emit(KnobChangeEvent::SetKnob(3, knob.normalized_value))
                         });
-                        Label::new(cx, "Arc knob");
+                        Label::new(cx, &format!("{:.3}", knobs.get(cx)[3]));
                     })
+                    .row_between(Pixels(10.))
                     .child_space(Stretch(1.));
                     // drag-able label
                     VStack::new(cx, move |cx| {
+                        Label::new(cx, "Label \"knob\"");
                         Knob::custom(cx, 0.5, knobs.get(cx)[4], move |cx, val| {
                             HStack::new(cx, move |cx| {
                                 Label::new(cx, "val:")
@@ -133,15 +142,15 @@ fn main() {
                         .on_changing(move |knob, cx| {
                             cx.emit(KnobChangeEvent::SetKnob(4, knob.normalized_value))
                         });
-                        Label::new(cx, "Label \"knob\"");
+                        Label::new(cx, &format!("{:.3}", knobs.get(cx)[4]));
+
                     })
+                    .row_between(Pixels(10.))
                     .child_space(Stretch(1.));
                     // TODO: Add a hidden value knob?
                 });
             })
             .col_between(Pixels(10.))
-            .width(Pixels(500.))
-            .height(Pixels(200.))
             .background_color(Color::from("#191919"));
         },
     )

@@ -248,7 +248,8 @@ pub struct Ticks {
     angle_end: f32,
     radius: Units,
     span: Units,
-    steps: u32,
+    // steps: u32,
+    mode: KnobMode
 }
 impl Ticks {
     pub fn new(
@@ -256,7 +257,7 @@ impl Ticks {
         radius: Units,
         span: Units,
         arc_len: f32,
-        steps: u32,
+        mode: KnobMode,
     ) -> Handle<Self> {
         Self {
             // angle_start: -150.0,
@@ -266,7 +267,7 @@ impl Ticks {
             radius,
             span,
 
-            steps,
+            mode,
         }
         .build(cx)
     }
@@ -312,17 +313,23 @@ impl View for Ticks {
         let line_width = radius * 0.15;
         // Draw ticks
         let mut path = Path::new();
-        for n in 0..self.steps {
-            let a = n as f32 / (self.steps - 1) as f32;
-            let angle = start + (end - start) * a;
-            // TODO: is - span a good start val?
-            // Idea is radius is max, but then the knob between the ticks
-            // will need to be shrunk
-            path.move_to(
-                centerx + angle.cos() * (radius - span),
-                centery + angle.sin() * (radius - span),
-            );
-            path.line_to(centerx + angle.cos() * (radius - line_width/2.), centery + angle.sin() * (radius - line_width/2.));
+        match self.mode {
+            // can't really make ticks for a continuous knob
+            KnobMode::Continuous => return,
+            KnobMode::Discrete(steps) => {
+                for n in 0..steps {
+                    let a = n as f32 / (steps - 1) as f32;
+                    let angle = start + (end - start) * a;
+                    // TODO: is - span a good start val?
+                    // Idea is radius is max, but then the knob between the ticks
+                    // will need to be shrunk
+                    path.move_to(
+                        centerx + angle.cos() * (radius - span),
+                        centery + angle.sin() * (radius - span),
+                    );
+                    path.line_to(centerx + angle.cos() * (radius - line_width/2.), centery + angle.sin() * (radius - line_width/2.));
+                }
+            },
         }
         let mut paint = Paint::color(foreground_color);
         paint.set_line_width(line_width);
@@ -336,7 +343,8 @@ pub struct TickKnob {
     radius: Units,
     tick_width: Units,
     normalized_value: f32,
-    steps: u32,
+    // steps: u32,
+    mode: KnobMode
 }
 
 /// Makes a round knob with a tick to show the current value
@@ -347,7 +355,8 @@ impl TickKnob {
         radius: Units,
         tick_width: Units,
         arc_len: f32,
-        steps: u32,
+        // steps: u32,
+        mode: KnobMode
     ) -> Handle<Self> {
         Self {
             // angle_start: -150.0,
@@ -358,7 +367,7 @@ impl TickKnob {
             tick_width,
 
             normalized_value: value,
-            steps,
+            mode,
         }
         .build(cx)
     }
@@ -412,15 +421,15 @@ impl View for TickKnob {
 
         // Draw the tick
         let mut path = Path::new();
-        let angle = if self.steps < 2 {
-            start + (end - start) * self.normalized_value
-        }
-        // snapping
-        else {
-            start
-                + (end - start) * (self.normalized_value * (self.steps - 1) as f32).floor()
-                    / (self.steps - 1) as f32
+
+        let angle = match self.mode {
+            KnobMode::Continuous => start + (end - start) * self.normalized_value,
+            // snapping
+            KnobMode::Discrete(steps) => start
+                + (end - start) * (self.normalized_value * (steps - 1) as f32).floor()
+                    / (steps - 1) as f32,
         };
+
         // TODO: Does radius * 0.75 give a good tick length?
         // Should it maybe be customizable?
         path.move_to(
@@ -540,5 +549,16 @@ impl View for ArcTrack {
         paint.set_line_width(span);
         paint.set_line_cap(LineCap::Round);
         canvas.stroke_path(&mut path, paint);
+    }
+}
+// TODO: better name?
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum KnobMode {
+    Discrete(usize),
+    Continuous,
+}
+impl Default for KnobMode {
+    fn default() -> Self {
+        KnobMode::Continuous
     }
 }
