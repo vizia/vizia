@@ -7,24 +7,19 @@ use std::iter::Rev;
 impl<'a> Hierarchy<'a> for crate::Tree {
     type Item = Entity;
     type DownIter = TreeIterator<'a>;
-    type UpIter = Rev<std::vec::IntoIter<Entity>>;
+    type UpIter = Rev<TreeIterator<'a>>;
     type ChildIter = ChildIterator<'a>;
 
     fn down_iter(&'a self) -> Self::DownIter {
-        TreeIterator { tree: self, current_node: Some(Entity::root()) }
+        TreeIterator::full(self)
     }
 
     fn up_iter(&'a self) -> Self::UpIter {
-        let iterator = TreeIterator { tree: self, current_node: Some(Entity::root()) };
-        iterator.collect::<Vec<_>>().into_iter().rev()
+        TreeIterator::full(self).rev()
     }
 
     fn child_iter(&'a self, node: Self::Item) -> Self::ChildIter {
-        ChildIterator {
-            tree: self,
-            current_forward: self.get_first_child(node),
-            current_backward: self.get_last_child(node),
-        }
+        ChildIterator::new(self, node)
     }
 
     fn is_first_child(&self, node: Self::Item) -> bool {

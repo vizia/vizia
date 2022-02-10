@@ -477,6 +477,6 @@ impl<'a> IntoIterator for &'a Tree {
     type IntoIter = TreeIterator<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
-        TreeIterator { tree: self, current_node: Some(Entity::root()) }
+        TreeIterator::full(self)
     }
 }

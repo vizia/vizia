@@ -1,56 +1,36 @@
-use crate::{Entity, GenerationalId, Tree};
+use crate::{DoubleEndedTreeTour, Entity, TourDirection, TourStep, Tree};
 
-/// Iterator for iterating through the tree in depth first order.
+/// Iterator for iterating through the tree in depth first preorder.
 pub struct TreeIterator<'a> {
-    pub tree: &'a Tree,
-    pub current_node: Option<Entity>,
+    tree: &'a Tree,
+    tours: DoubleEndedTreeTour,
 }
 
 impl<'a> TreeIterator<'a> {
-    // Skip to next branch
-    pub fn next_branch(&mut self) -> Option<Entity> {
-        let r = self.current_node;
-        if let Some(current) = self.current_node {
-            let mut temp = Some(current);
-            while temp.is_some() {
-                if let Some(sibling) = self.tree.next_sibling[temp.unwrap().index()] {
-                    self.current_node = Some(sibling);
-                    return r;
-                } else {
-                    temp = self.tree.parent[temp.unwrap().index()];
-                }
-            }
-        } else {
-            self.current_node = None;
-        }
+    pub fn full(tree: &'a Tree) -> Self {
+        Self::subtree(tree, Entity::root())
+    }
 
-        return None;
+    pub fn subtree(tree: &'a Tree, root: Entity) -> Self {
+        Self { tree, tours: DoubleEndedTreeTour::new_same(Some(root)) }
     }
 }
 
 impl<'a> Iterator for TreeIterator<'a> {
     type Item = Entity;
     fn next(&mut self) -> Option<Entity> {
-        let r = self.current_node;
+        self.tours.next_with(self.tree, |node, direction| match direction {
+            TourDirection::Entering => (Some(node), TourStep::EnterFirstChild),
+            TourDirection::Leaving => (None, TourStep::EnterNextSibling),
+        })
+    }
+}
 
-        if let Some(current) = self.current_node {
-            if let Some(child) = self.tree.first_child[current.index()] {
-                self.current_node = Some(child);
-            } else {
-                let mut temp = Some(current);
-                while temp.is_some() {
-                    if let Some(sibling) = self.tree.next_sibling[temp.unwrap().index()] {
-                        self.current_node = Some(sibling);
-                        return r;
-                    } else {
-                        temp = self.tree.parent[temp.unwrap().index()];
-                    }
-                }
-
-                self.current_node = None;
-            }
-        }
-
-        return r;
+impl<'a> DoubleEndedIterator for TreeIterator<'a> {
+    fn next_back(&mut self) -> Option<Entity> {
+        self.tours.next_back_with(self.tree, |node, direction| match direction {
+            TourDirection::Entering => (None, TourStep::EnterLastChild),
+            TourDirection::Leaving => (Some(node), TourStep::EnterPrevSibling),
+        })
     }
 }
