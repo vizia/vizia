@@ -19,6 +19,18 @@ pub struct Application {
     should_poll: bool,
 }
 
+pub struct GlutinEventProxy(EventLoopProxy<Event>);
+
+impl EventProxy for GlutinEventProxy {
+    fn send(&self, event: Event) -> Result<(), ()> {
+        self.0.send_event(event).map_err(|_| ())
+    }
+
+    fn make_clone(&self) -> Box<dyn EventProxy> {
+        Box::new(GlutinEventProxy(self.0.clone()))
+    }
+}
+
 impl Application {
     pub fn new<F>(window_description: WindowDescription, builder: F) -> Self
     where
@@ -30,9 +42,13 @@ impl Application {
 
         context.add_theme(DEFAULT_THEME);
 
+        let event_loop = EventLoop::with_user_event();
+        let event_proxy_obj = event_loop.create_proxy();
+        context.event_proxy = Some(Box::new(GlutinEventProxy(event_proxy_obj)));
+
         Self {
             context,
-            event_loop: EventLoop::with_user_event(),
+            event_loop,
             builder: Some(Box::new(builder)),
             on_idle: None,
             window_description,
@@ -332,7 +348,7 @@ impl Application {
                         (idle_callback)(&mut context);
 
                         if !context.event_queue.is_empty() {
-                            event_loop_proxy.send_event(Event::new(())).unwrap();
+                            event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
                         }
                     }
                 }

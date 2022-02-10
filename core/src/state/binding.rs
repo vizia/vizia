@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use morphorm::{LayoutType, PositionType};
 
 use crate::{
-    Color, Context, Display, Entity, Handle, StateStore, TreeExt, Units, View, Visibility,
+    Color, Context, Display, Entity, Handle, LensExt, StateStore, TreeExt, Units, View, Visibility,
 };
 
 use crate::{Data, Lens, Model};
@@ -16,7 +16,7 @@ where
     lens: L,
     parent: Entity,
     count: usize,
-    builder: Option<Box<dyn Fn(&mut Context, Field<L>)>>,
+    builder: Option<Box<dyn Fn(&mut Context, L)>>,
 }
 
 impl<L> Binding<L>
@@ -27,7 +27,7 @@ where
 {
     pub fn new<F>(cx: &mut Context, lens: L, builder: F)
     where
-        F: 'static + Fn(&mut Context, Field<L>),
+        F: 'static + Fn(&mut Context, L),
         <L as Lens>::Source: Model,
     {
         let parent = cx.current;
@@ -99,7 +99,7 @@ impl<L: 'static + Lens> View for Binding<L> {
             //let count = cx.count;
             cx.current = self.parent;
             cx.count = self.count;
-            (builder)(cx, Field { lens: self.lens.clone() });
+            (builder)(cx, self.lens.clone());
             //cx.current = prev;
             //cx.count = count;
             self.builder = Some(builder);
@@ -107,27 +107,27 @@ impl<L: 'static + Lens> View for Binding<L> {
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct Field<L> {
-    lens: L,
-}
+// #[derive(Clone, Copy)]
+// pub struct Field<L> {
+//     lens: L,
+// }
 
-impl<L: Lens> Field<L>
-where
-    <L as Lens>::Source: 'static,
-{
-    pub fn get<'a>(&self, cx: &'a Context) -> &'a L::Target {
-        self.lens.view(cx.data().expect(&format!(
-            "Failed to get {:?} for entity: {:?}. Is the data in the tree?",
-            self.lens, cx.current
-        )))
-    }
-}
+// impl<L: Lens> Field<L>
+// where
+//     <L as Lens>::Source: 'static,
+// {
+//     pub fn get<'a>(&self, cx: &'a Context) -> &'a L::Target {
+//         self.lens.view(cx.data().expect(&format!(
+//             "Failed to get {:?} for entity: {:?}. Is the data in the tree?",
+//             self.lens, cx.current
+//         )))
+//     }
+// }
 
 macro_rules! impl_res_simple {
     ($t:ty) => {
         impl Res<$t> for $t {
-            fn get<'a>(&'a self, _: &'a Context) -> &'a $t {
+            fn get_ref<'a>(&'a self, _: &'a Context) -> &'a $t {
                 self
             }
         }
@@ -135,7 +135,7 @@ macro_rules! impl_res_simple {
 }
 
 pub trait Res<T> {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a T;
+    fn get_ref<'a>(&'a self, cx: &'a Context) -> &'a T;
 }
 
 impl_res_simple!(i8);
@@ -155,53 +155,65 @@ impl_res_simple!(bool);
 impl_res_simple!(f32);
 impl_res_simple!(f64);
 
-impl<T, L> Res<T> for Field<L>
+impl<T, L> Res<T> for L
 where
     L: Lens<Target = T>,
 {
-    fn get<'a>(&'a self, cx: &'a Context) -> &'a T {
+    fn get_ref<'a>(&'a self, cx: &'a Context) -> &'a L::Target {
         self.get(cx)
     }
 }
 
+impl<'s> Res<&'s str> for &'s str {
+    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a &'s str {
+        self
+    }
+}
+
+impl<'s> Res<&'s String> for &'s String {
+    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a &'s String {
+        self
+    }
+}
+
 impl Res<Color> for Color {
-    fn get<'a>(&'a self, _: &'a Context) -> &'a Color {
+    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a Color {
         self
     }
 }
 
 impl Res<Units> for Units {
-    fn get<'a>(&'a self, _: &'a Context) -> &'a Units {
+    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a Units {
         self
     }
 }
 
 impl Res<Visibility> for Visibility {
-    fn get<'a>(&'a self, _: &'a Context) -> &'a Visibility {
+    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a Visibility {
         self
     }
 }
 
 impl Res<Display> for Display {
-    fn get<'a>(&'a self, _: &'a Context) -> &'a Display {
+    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a Display {
         self
     }
 }
 
 impl Res<LayoutType> for LayoutType {
-    fn get<'a>(&'a self, _: &'a Context) -> &'a LayoutType {
+    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a LayoutType {
         self
     }
 }
 
 impl Res<PositionType> for PositionType {
-    fn get<'a>(&'a self, _: &'a Context) -> &'a PositionType {
+    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a PositionType {
         self
     }
 }
 
 impl<T> Res<(T, T)> for (T, T) {
-    fn get<'a>(&'a self, _: &'a Context) -> &'a (T, T) {
+    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a (T, T) {
         self
     }
 }

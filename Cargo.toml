@@ -51,6 +51,10 @@ name = "textbox"
 path = "examples/controls/textbox.rs"
 
 [[example]]
+name = "number_input"
+path = "examples/controls/number_input.rs"
+
+[[example]]
 name = "list"
 path = "examples/lists/list.rs"
 
@@ -65,6 +69,10 @@ path = "examples/lists/editable_list.rs"
 [[example]]
 name = "multiselectable_list"
 path = "examples/lists/multiselectable_list.rs"
+
+[[example]]
+name = "sortable_list"
+path = "examples/lists/sortable_list.rs"
 
 [[example]]
 name = "static_list"

@@ -712,21 +712,6 @@ pub trait View: 'static + Sized {
 
             canvas.fill_text(x, y, &text_string, paint).unwrap();
         }
-
-        // let bounds = cx.cache.get_bounds(entity);
-        // let mut path = Path::new();
-        // path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-
-        // let background_color: femtovg::Color = cx.style.background_color.get(entity).cloned().unwrap_or_default().into();
-        // canvas.fill_path(&mut path, Paint::color(background_color));
-
-        // if let Some(text) = cx.style.text.get(entity) {
-        //     let mut paint = Paint::color(femtovg::Color::black());
-        //     paint.set_font(&cx.fonts);
-        //     paint.set_text_align(Align::Center);
-        //     paint.set_text_baseline(Baseline::Middle);
-        //     canvas.fill_text(bounds.x + bounds.w / 2.0, bounds.y + bounds.h / 2.0, text, paint);
-        // }
     }
 }
 

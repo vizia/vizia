@@ -1,3 +1,4 @@
+#[derive(Debug, Clone, Copy)]
 pub enum Direction {
     Left,
     Right,
@@ -5,6 +6,7 @@ pub enum Direction {
     Downstream,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum Movement {
     Grapheme(Direction),
     Word(Direction),
@@ -14,6 +16,7 @@ pub enum Movement {
     Vertical(VerticalMovement),
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum VerticalMovement {
     LineUp,
     LineDown,

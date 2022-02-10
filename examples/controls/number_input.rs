@@ -2,20 +2,20 @@ use vizia::*;
 
 #[derive(Lens)]
 pub struct AppData {
-    text: String,
+    number: i32,
 }
 
 #[derive(Debug)]
 pub enum AppEvent {
-    SetText(String),
+    SetNumber(i32),
 }
 
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
         if let Some(app_event) = event.message.downcast() {
             match app_event {
-                AppEvent::SetText(text) => {
-                    self.text = text.clone();
+                AppEvent::SetNumber(num) => {
+                    self.number = *num;
                 }
             }
         }
@@ -25,14 +25,19 @@ impl Model for AppData {
 fn main() {
     let window_description = WindowDescription::new().with_title("Textbox");
     Application::new(window_description, |cx| {
-        AppData { text: "This text is editable!".to_string() }.build(cx);
+        AppData { number: 5 }.build(cx);
 
         HStack::new(cx, |cx| {
-            Textbox::new(cx, AppData::text)
-                .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
-                .width(Pixels(200.0));
+            Textbox::new(cx, AppData::number)
+                .on_edit(|cx, text| {
+                    if let Ok(valid_number) = text.parse::<i32>() {
+                        cx.emit(AppEvent::SetNumber(valid_number));
+                    }
+                })
+                .width(Pixels(200.0))
+                .child_left(Pixels(5.0));
 
-            Binding::new(cx, AppData::text, |cx, text| {
+            Binding::new(cx, AppData::number, |cx, text| {
                 Label::new(cx, text)
                     .width(Pixels(200.0))
                     .height(Pixels(30.0))

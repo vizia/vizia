@@ -2,8 +2,8 @@ use std::marker::PhantomData;
 
 use crate::Units::*;
 use crate::{
-    Actions, Binding, Button, Color, Context, Data, Field, Handle, Label, Lens, Model, Overflow,
-    Popup, PopupData, PopupEvent, View,
+    Actions, Binding, Button, Color, Context, Data, Handle, Label, Lens, Model, Overflow, Popup,
+    PopupData, PopupEvent, View,
 };
 
 pub struct Picker<L>
@@ -21,7 +21,7 @@ where
 {
     pub fn new<F>(cx: &mut Context, lens: L, builder: F) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, Field<L>),
+        F: 'static + Fn(&mut Context, L),
     {
         Self { lens: PhantomData::default() }
             .build2(cx, move |cx| {

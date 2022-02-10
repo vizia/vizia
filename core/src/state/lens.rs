@@ -1,6 +1,8 @@
-use crate::Model;
+use crate::{Context, Model};
 use std::any::TypeId;
 use std::fmt::{Debug, Formatter};
+use std::marker::PhantomData;
+use std::ops::Deref;
 
 /// A Lens allows the construction of a reference to a field of a struct.
 ///
@@ -16,6 +18,12 @@ pub trait Lens: 'static + Clone + Copy + std::fmt::Debug {
 
 /// Helpers for constructing more complex `Lens`es.
 pub trait LensExt: Lens {
+    fn get<'a>(&self, cx: &'a Context) -> &'a Self::Target {
+        self.view(
+            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
+        )
+    }
+
     /// Used to construct a lens to some data contained within some other lensed data.
     ///
     /// # Example
@@ -42,15 +50,13 @@ pub trait LensExt: Lens {
     // }
 
     // TODO
-    // fn index<I: 'static>(self, index: I) -> Then<Self, Index<Self::Target, I>>
-    // where
-    //     Self: Sized,
-    //     I: Clone,
-    //     Self::Target: std::ops::Index<I> + Sized,
-    //     <<Self as Lens>::Target as std::ops::Index<I>>::Output: Sized + Clone,
-    // {
-    //     Then::new(self, Index::new(index))
-    // }
+    fn index<O>(self, index: usize) -> Index<Self, O>
+    where
+        Self::Target: Deref<Target = [O]>,
+        O: 'static,
+    {
+        Index::new(self, index)
+    }
 }
 
 // Implement LensExt for all types which implement Lens
@@ -92,34 +98,50 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
     }
 }
 
-// pub struct Index<T,I> {
-//     index: I,
-//     output: PhantomData<T>,
-// }
+pub struct Index<L, O> {
+    index: usize,
+    input: L,
+    output: PhantomData<O>,
+}
 
-// impl<T,I> Index<T,I> {
-//     pub fn new(index: I) -> Self {
-//         Self {
-//             index,
-//             output: PhantomData::default(),
-//         }
-//     }
-// }
+impl<L, O> Index<L, O> {
+    pub fn new(input: L, index: usize) -> Self {
+        Self { input, index, output: PhantomData::default() }
+    }
 
-// impl<T,I> Lens for Index<T,I>
-// where
+    pub fn idx(&self) -> usize {
+        self.index
+    }
+}
 
-//     T: 'static + std::ops::Index<I> + Sized,
-//     I: 'static + Clone,
-//     <T as std::ops::Index<I>>::Output: Sized + Clone,
-// {
-//     type Source = T;
-//     type Target = <T as std::ops::Index<I>>::Output;
+impl<L: Clone, O> Clone for Index<L, O> {
+    fn clone(&self) -> Self {
+        Self { index: self.index.clone(), input: self.input.clone(), output: Default::default() }
+    }
+}
 
-//     fn view<'a>(&self, data: &'a Self::Source) -> &'a Self::Target {
-//         &data[self.index.clone()]
-//     }
-// }
+impl<L: Copy, O> Copy for Index<L, O> {}
+
+impl<L: Debug, O> Debug for Index<L, O> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Index").field("index", &self.index).field("input", &self.input).finish()
+    }
+}
+
+impl<L, I, M, O> Lens for Index<L, O>
+where
+    L: Lens<Source = I, Target = M>,
+    M: 'static + Deref<Target = [O]>,
+    O: 'static,
+    I: Model,
+{
+    type Source = I;
+    type Target = O;
+
+    fn view<'a>(&self, data: &'a Self::Source) -> &'a Self::Target {
+        &self.input.view(data)[self.index]
+    }
+}
 
 pub struct StaticLens<T: 'static> {
     data: &'static T,

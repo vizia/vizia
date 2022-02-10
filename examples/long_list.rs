@@ -56,7 +56,7 @@ fn main() {
                 List::new(cx, AppData::list, move |cx, item| {
                     //println!("Do This");
                     let item_text = item.get(cx).to_string();
-                    let item_index = item.index();
+                    let item_index = item.idx();
                     VStack::new(cx, move |cx| {
                         Binding::new(cx, AppData::selected, move |cx, selected| {
                             //println!("Select");
