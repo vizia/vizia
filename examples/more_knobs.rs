@@ -51,8 +51,15 @@ fn main() {
                             // let height = cx.cache.get_height(cx.current);
                             // let width = cx.cache.get_width(cx.current);
                             // let radius = height.min(width) / 2.;
-                            TickKnob::new(cx, val, Pixels(radius), Percentage(25.), 300., KnobMode::Continuous)
-                                .class("track")
+                            TickKnob::new(
+                                cx,
+                                val,
+                                Pixels(radius),
+                                Percentage(25.),
+                                300.,
+                                KnobMode::Continuous,
+                            )
+                            .class("track")
                         })
                         .on_changing(move |knob, cx| {
                             cx.emit(KnobChangeEvent::SetKnob(1, knob.normalized_value))
@@ -108,16 +115,11 @@ fn main() {
                                 KnobMode::Continuous,
                             )
                             .class("track");
-                            Slider::new(cx, 0.5, Orientation::Horizontal).height(Pixels(50.)).width(Pixels(50.));
-                            ArcTrack::new(
-                                cx,
-                                val,
-                                false,
-                                Pixels(radius),
-                                Percentage(10.),
-                                300.,
-                            )
-                            .class("track")
+                            Slider::new(cx, 0.5, Orientation::Horizontal)
+                                .height(Pixels(50.))
+                                .width(Pixels(50.));
+                            ArcTrack::new(cx, val, false, Pixels(radius), Percentage(10.), 300.)
+                                .class("track")
                         })
                         .on_changing(move |knob, cx| {
                             cx.emit(KnobChangeEvent::SetKnob(3, knob.normalized_value))
@@ -143,7 +145,6 @@ fn main() {
                             cx.emit(KnobChangeEvent::SetKnob(4, knob.normalized_value))
                         });
                         Label::new(cx, &format!("{:.3}", knobs.get(cx)[4]));
-
                     })
                     .row_between(Pixels(10.))
                     .child_space(Stretch(1.));

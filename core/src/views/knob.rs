@@ -249,7 +249,7 @@ pub struct Ticks {
     radius: Units,
     span: Units,
     // steps: u32,
-    mode: KnobMode
+    mode: KnobMode,
 }
 impl Ticks {
     pub fn new(
@@ -327,9 +327,12 @@ impl View for Ticks {
                         centerx + angle.cos() * (radius - span),
                         centery + angle.sin() * (radius - span),
                     );
-                    path.line_to(centerx + angle.cos() * (radius - line_width/2.), centery + angle.sin() * (radius - line_width/2.));
+                    path.line_to(
+                        centerx + angle.cos() * (radius - line_width / 2.),
+                        centery + angle.sin() * (radius - line_width / 2.),
+                    );
                 }
-            },
+            }
         }
         let mut paint = Paint::color(foreground_color);
         paint.set_line_width(line_width);
@@ -344,7 +347,7 @@ pub struct TickKnob {
     tick_width: Units,
     normalized_value: f32,
     // steps: u32,
-    mode: KnobMode
+    mode: KnobMode,
 }
 
 /// Makes a round knob with a tick to show the current value
@@ -356,7 +359,7 @@ impl TickKnob {
         tick_width: Units,
         arc_len: f32,
         // steps: u32,
-        mode: KnobMode
+        mode: KnobMode,
     ) -> Handle<Self> {
         Self {
             // angle_start: -150.0,
@@ -425,9 +428,11 @@ impl View for TickKnob {
         let angle = match self.mode {
             KnobMode::Continuous => start + (end - start) * self.normalized_value,
             // snapping
-            KnobMode::Discrete(steps) => start
-                + (end - start) * (self.normalized_value * (steps - 1) as f32).floor()
-                    / (steps - 1) as f32,
+            KnobMode::Discrete(steps) => {
+                start
+                    + (end - start) * (self.normalized_value * (steps - 1) as f32).floor()
+                        / (steps - 1) as f32
+            }
         };
 
         // TODO: Does radius * 0.75 give a good tick length?
@@ -437,7 +442,10 @@ impl View for TickKnob {
             centery + angle.sin() * (radius * 0.75),
         );
         // TODO: current line_cap means this sticks out a bit
-        path.line_to(centerx + angle.cos() * (radius - span/2.), centery + angle.sin() * (radius - span/2.));
+        path.line_to(
+            centerx + angle.cos() * (radius - span / 2.),
+            centery + angle.sin() * (radius - span / 2.),
+        );
 
         let mut paint = Paint::color(foreground_color);
         paint.set_line_width(span);
