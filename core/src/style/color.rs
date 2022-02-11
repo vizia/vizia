@@ -195,11 +195,11 @@ impl Color {
     }
 
     pub const fn yellow() -> Self {
-        Self { data: 0x00FFFFFF }
+        Self { data: 0xFFFF00FF }
     }
 
     pub const fn cyan() -> Self {
-        Self { data: 0xFFFF00FF }
+        Self { data: 0x00FFFFFF }
     }
 
     pub const fn magenta() -> Self {
