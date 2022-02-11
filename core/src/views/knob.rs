@@ -53,17 +53,13 @@ impl Knob {
 
             ZStack::new(cx, move |cx| {
                 Binding::new(cx, SliderData::value, move |cx, value| {
-                    //println!("{}", value.get(cx));
-                    let height = cx.cache.get_height(cx.current);
-                    let width = cx.cache.get_width(cx.current);
-                    let radius = height.min(width) / 2.;
                     ArcTrack::new(
                         cx,
                         *value.get(cx),
                         centered,
-                        Pixels(radius),
-                        Percentage(15.),
-                        300.,
+                        Percentage(100.0),
+                        Percentage(15.0),
+                        300.0,
                     )
                     .width(Stretch(1.0))
                     .height(Stretch(1.0))
@@ -310,7 +306,7 @@ impl View for Ticks {
         let parent_width = cx.cache.get_width(parent);
 
         // Convert radius and span into screen coordinates
-        let radius = self.radius.value_or(parent_width, 0.0);
+        let radius = self.radius.value_or(parent_width / 2.0, 0.0);
         // default value of span is 15 % of radius. Original span value was 16.667%
         let tick_len = self.tick_len.value_or(radius, 0.0);
         let line_width = self.tick_width.value_or(radius, 0.0);
@@ -408,7 +404,7 @@ impl View for TickKnob {
         let parent_width = cx.cache.get_width(parent);
 
         // Convert radius and span into screen coordinates
-        let radius = self.radius.value_or(parent_width, 0.0);
+        let radius = self.radius.value_or(parent_width / 2.0, 0.0);
 
         let tick_width = self.tick_width.value_or(radius, 0.0);
 
@@ -521,7 +517,7 @@ impl View for ArcTrack {
         let parent_width = cx.cache.get_width(parent);
 
         // Convert radius and span into screen coordinates
-        let radius = self.radius.value_or(parent_width, 0.0);
+        let radius = self.radius.value_or(parent_width / 2.0, 0.0);
         // default value of span is 15 % of radius. Original span value was 16.667%
         let span = self.span.value_or(radius, 0.0);
 

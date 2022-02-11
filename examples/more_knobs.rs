@@ -30,7 +30,6 @@ fn main() {
 
             HStack::new(cx, |cx| {
                 Binding::new(cx, KnobData::knobs, move |cx, knobs| {
-                    let radius = 50.0;
                     // default knob
                     VStack::new(cx, move |cx| {
                         Label::new(cx, "Default knob");
@@ -54,7 +53,7 @@ fn main() {
                             TickKnob::new(
                                 cx,
                                 val,
-                                Pixels(radius),
+                                Percentage(100.0),
                                 Percentage(25.0),
                                 300.0,
                                 KnobMode::Continuous,
@@ -77,18 +76,11 @@ fn main() {
                             // let width = cx.cache.get_width(cx.current);
                             // let radius = height.min(width) / 2.;
                             let mode = KnobMode::Discrete(5);
-                            TickKnob::new(
-                                cx,
-                                val,
-                                Pixels(radius * 0.60),
-                                Percentage(15.0),
-                                300.0,
-                                mode,
-                            )
-                            .class("track");
+                            TickKnob::new(cx, val, Percentage(60.0), Percentage(15.0), 300.0, mode)
+                                .class("track");
                             Ticks::new(
                                 cx,
-                                Pixels(radius),
+                                Percentage(100.0),
                                 Percentage(25.0),
                                 Pixels(5.0),
                                 300.0,
@@ -116,14 +108,14 @@ fn main() {
                             TickKnob::new(
                                 cx,
                                 val,
-                                Pixels(radius * 0.9),
+                                Percentage(90.0),
                                 // setting tick_width to 0 to make the tick invisible
                                 Percentage(0.0),
                                 300.0,
                                 KnobMode::Continuous,
                             )
                             .class("track");
-                            ArcTrack::new(cx, val, false, Pixels(radius), Percentage(10.), 300.)
+                            ArcTrack::new(cx, val, false, Percentage(100.0), Percentage(10.), 300.)
                                 .class("track")
                         })
                         .on_changing(move |knob, cx| {
@@ -138,10 +130,8 @@ fn main() {
                         Label::new(cx, "Label \"knob\"");
                         Knob::custom(cx, 0.5, knobs.get(cx)[4], move |cx, val| {
                             HStack::new(cx, move |cx| {
-                                Label::new(cx, "val:")
-                                    .width(Pixels(radius - 10.0))
-                                    .right(Stretch(1.));
-                                Label::new(cx, &format!("{:.2}", val)).width(Pixels(radius - 10.));
+                                Label::new(cx, "val:");
+                                Label::new(cx, &format!("{:.2}", val));
                             })
                             .class("label_knob")
                         })
