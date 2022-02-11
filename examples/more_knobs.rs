@@ -41,8 +41,8 @@ fn main() {
                             .color(Color::red());
                         Label::new(cx, &format!("{:.3}", knobs.get(cx)[0]));
                     })
-                    .row_between(Pixels(10.))
-                    .child_space(Stretch(1.));
+                    .row_between(Pixels(10.0))
+                    .child_space(Stretch(1.0));
                     // simple tick knob
                     VStack::new(cx, move |cx| {
                         Label::new(cx, "Tick knob");
@@ -55,8 +55,8 @@ fn main() {
                                 cx,
                                 val,
                                 Pixels(radius),
-                                Percentage(25.),
-                                300.,
+                                Percentage(25.0),
+                                300.0,
                                 KnobMode::Continuous,
                             )
                             .class("track")
@@ -82,19 +82,26 @@ fn main() {
                                 val,
                                 Pixels(radius * 0.60),
                                 Percentage(15.0),
-                                300.,
+                                300.0,
                                 mode,
                             )
                             .class("track");
-                            Ticks::new(cx, Pixels(radius), Percentage(25.), 300., mode)
-                                .class("track")
+                            Ticks::new(
+                                cx,
+                                Pixels(radius),
+                                Percentage(25.0),
+                                Pixels(5.0),
+                                300.0,
+                                mode,
+                            )
+                            .class("track")
                             // TODO: cyan is yellow?
                             // .background_color(Color::cyan())
                         })
                         .on_changing(move |knob, cx| {
                             cx.emit(KnobChangeEvent::SetKnob(2, knob.normalized_value))
                         });
-                        Label::new(cx, &format!("{:.3}", knobs.get(cx)[2]));
+                        Label::new(cx, &format!("{:.3}", (knobs.get(cx)[2] * 4.0).floor() / 4.0));
                     })
                     .row_between(Pixels(10.))
                     .child_space(Stretch(1.));
@@ -110,14 +117,12 @@ fn main() {
                                 cx,
                                 val,
                                 Pixels(radius * 0.9),
+                                // setting tick_width to 0 to make the tick invisible
                                 Percentage(0.0),
-                                300.,
+                                300.0,
                                 KnobMode::Continuous,
                             )
                             .class("track");
-                            Slider::new(cx, 0.5, Orientation::Horizontal)
-                                .height(Pixels(50.))
-                                .width(Pixels(50.));
                             ArcTrack::new(cx, val, false, Pixels(radius), Percentage(10.), 300.)
                                 .class("track")
                         })
@@ -134,9 +139,8 @@ fn main() {
                         Knob::custom(cx, 0.5, knobs.get(cx)[4], move |cx, val| {
                             HStack::new(cx, move |cx| {
                                 Label::new(cx, "val:")
-                                    .width(Pixels(radius - 10.))
+                                    .width(Pixels(radius - 10.0))
                                     .right(Stretch(1.));
-                                //     .class("blue_label");
                                 Label::new(cx, &format!("{:.2}", val)).width(Pixels(radius - 10.));
                             })
                             .class("label_knob")
@@ -148,7 +152,6 @@ fn main() {
                     })
                     .row_between(Pixels(10.))
                     .child_space(Stretch(1.));
-                    // TODO: Add a hidden value knob?
                 });
             })
             .col_between(Pixels(10.))
