@@ -2,7 +2,7 @@
 
 use std::rc::Rc;
 
-use crate::{Context, View, Handle, VStack, Model, Lens, Binding, Data, Color, Units::*, WindowEvent, PropSet};
+use crate::{Context, View, Handle, VStack, Model, Lens, Binding, Data, Color, Units::*, WindowEvent, PropSet, LensExt};
 
 
 
@@ -12,6 +12,7 @@ pub struct ScrollData {
     pub container_height: f32,
     pub width_ratio: f32,
     pub container_width: f32,
+    pub scroll_height: f32,
 }
 
 #[derive(Debug)]
@@ -20,6 +21,8 @@ pub enum ScrollEvent {
     SetWidthRatio(f32),
     SetContainerHeight(f32),
     SetContainerWidth(f32),
+
+    SetScrollHeight(f32),
 }
 
 impl Model for ScrollData {
@@ -40,6 +43,10 @@ impl Model for ScrollData {
 
                 ScrollEvent::SetContainerWidth(value) => {
                     self.container_width = *value;
+                }
+
+                ScrollEvent::SetScrollHeight(value) => {
+                    self.scroll_height = *value;
                 }
             }
         }
@@ -73,7 +80,7 @@ impl ScrollView {
                 let width_ratio = scroll_data.get(cx).width_ratio;
                 let h = (container_height - height) * height_ratio;
                 let w = (container_width - width) * width_ratio;
-                println!("{} {}", height, container_height);
+                //println!("{} {}", height, container_height);
                 let content = content.clone();
                 VStack::new(cx, move |cx|{
                     (content)(cx);
@@ -97,6 +104,7 @@ impl View for ScrollView {
                         //println!("entity: {} container: {} {}", cx.cache.get_height(cx.current), container, cx.cache.get_height(container));
                         let scroll_size = cx.cache.get_height(cx.current) / cx.cache.get_height(container);
                         //println!("Scroll Size: {}", scroll_size);
+                        cx.emit(ScrollEvent::SetScrollHeight(scroll_size));
                         let container_height = cx.cache.get_height(container);
                         let container_width = cx.cache.get_width(container);
                         cx.emit(ScrollEvent::SetContainerHeight(container_height));
@@ -105,34 +113,24 @@ impl View for ScrollView {
                     }
                 }
 
-                WindowEvent::MouseScroll(_, y) => {
+                WindowEvent::MouseScroll(x, y) => {
                     let container = cx.tree.get_child(cx.current, 1).unwrap();
+                    if let Some(scroll_data) = cx.data::<ScrollData>().cloned() {
+                        let valx = *x;
+                        let valy = *y;
+                        let mut new_ratio = scroll_data.height_ratio + 0.05 * -valy;
+                        new_ratio = new_ratio.clamp(0.0, 1.0);
+                        cx.emit(ScrollEvent::SetHeightRatio(new_ratio));
 
+                        let mut new_ratio = scroll_data.width_ratio + 0.05 * valx;
+                        new_ratio = new_ratio.clamp(0.0, 1.0);
+                        cx.emit(ScrollEvent::SetWidthRatio(new_ratio));
+
+                    }
                 }
 
                 _=> {}
             }
         }
-    }
-}
-
-
-pub struct ScrollBar {
-    is_dragging: bool,
-}
-
-impl ScrollBar {
-    pub fn new(cx: &mut Context) -> Handle<Self> {
-        Self {
-            is_dragging: false,
-        }.build2(cx, |cx|{
-            
-        })
-    }
-}
-
-impl View for ScrollBar {
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
-        
     }
 }

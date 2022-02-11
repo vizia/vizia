@@ -43,5 +43,8 @@ pub use popup::*;
 mod scrollview;
 pub use scrollview::*;
 
+mod scrollbar;
+pub use scrollbar::*;
+
 mod radio_buttons;
 pub use radio_buttons::*;
