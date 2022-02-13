@@ -28,13 +28,8 @@ where
 
     fn update(&mut self, model: &Box<dyn ModelData>) -> bool {
         if let Some(data) = model.downcast_ref::<L::Source>() {
-            let result = self.lens.view(data, |t| {
-                if t.same(&self.old) {
-                    None
-                } else {
-                    Some(t.clone())
-                }
-            });
+            let result =
+                self.lens.view(data, |t| if t.same(&self.old) { None } else { Some(t.clone()) });
             if let Some(new_data) = result {
                 self.old = new_data;
                 return true;

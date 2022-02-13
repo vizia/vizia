@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use vizia::*;
 
-use chrono::{Duration, Local, NaiveDate, ParseError};
+use chrono::{NaiveDate, ParseError};
 
 const ICON_DOWN_OPEN: &str = "\u{e75c}";
 
@@ -55,7 +55,7 @@ pub enum AppEvent {
 }
 
 impl Model for AppData {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut Context, event: &mut Event) {
         if let Some(app_event) = event.message.downcast() {
             match app_event {
                 AppEvent::SetChoice(choice) => {
@@ -97,10 +97,11 @@ fn main() {
                     Label::new(cx, ICON_DOWN_OPEN).font("icons").left(Pixels(5.0)).right(Pixels(5.0));
                 }).width(Stretch(1.0)),
                 move |cx|{
-                List::new(cx, AppData::options, |cx, index, item|{
+                List::new(cx, AppData::options, |cx, _, item|{
                     VStack::new(cx, move |cx|{
                         Binding::new(cx, AppData::choice, move |cx, choice|{
                             let selected = *item.get(cx) == *choice.get(cx);
+                            let item = item.clone();
                             Label::new(cx, item.clone())
                                 .width(Stretch(1.0))
                                 .background_color(if selected {Color::from("#f8ac14")} else {Color::white()})
@@ -122,18 +123,17 @@ fn main() {
                 .width(Pixels(150.0));
 
             Binding::new(cx, AppData::choice, |cx, choice|{
-                let disabled = choice.get(cx) == "one-way flight";
+                let disabled = *choice.get(cx) == "one-way flight";
                 Textbox::new(cx, AppData::end_date)
                     .width(Pixels(150.0))
                     .disabled(disabled);
             });
 
-            Button::new(cx, |_|{}, |cx|{ 
+            Button::new(cx, |_|{}, |cx|{
                 Label::new(cx, "Book")
                     .width(Stretch(1.0))
             })
             .width(Pixels(150.0));
-            
         })
         .row_between(Pixels(10.0))
         .child_space(Stretch(1.0));

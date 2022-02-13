@@ -82,10 +82,11 @@ pub fn style_dropdown(cx: &mut Context) -> Handle<ZStack> {
                     }),
                     move |cx|{
                     // List of options
-                    List::new(cx, ThemeData::list, |cx, item|{
+                    List::new(cx, ThemeData::list, |cx, _, item|{
                         VStack::new(cx, move |cx|{
                             Binding::new(cx, ThemeData::choice, move |cx, choice|{
                                 let selected = *item.get(cx) == *choice.get(cx);
+                                let item = item.clone();
                                 Label::new(cx, &item.get(cx).to_string())
                                     .width(Stretch(1.0))
                                     .background_color(if selected {Color::from("#f8ac14")} else {Color::white()})

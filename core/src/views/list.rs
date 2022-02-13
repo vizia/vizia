@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use keyboard_types::Code;
 
 use crate::{
-    Binding, Context, Data, Handle, Index, Lens, LensExt, Model, TreeExt, View, WindowEvent, Then,
+    Binding, Context, Data, Handle, Index, Lens, LensExt, Model, Then, TreeExt, View, WindowEvent,
 };
 
 /// A view for creating a list of items from a binding to a Vec<T>
@@ -22,7 +22,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
     /// Creates a new ListView with a binding to the given lens and a template for constructing the list items
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, usize, Then<L,Index<Vec<T>, usize>>),
+        F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, usize>>),
         <L as Lens>::Source: Model,
     {
         //let item_template = Rc::new(item);
