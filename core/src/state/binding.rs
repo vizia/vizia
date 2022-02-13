@@ -60,7 +60,7 @@ where
 
                         let model = model_data.downcast_ref::<L::Source>().unwrap();
 
-                        let old = lens.view(model, |t| t);
+                        let old = lens.view(model, |t| t.clone());
 
                         model_data_store.lenses.insert(
                             TypeId::of::<L>(),
@@ -157,6 +157,7 @@ impl_res_simple!(f64);
 impl<T, L> Res<T> for L
 where
     L: Lens<Target = T>,
+    T: Clone,
 {
     fn get_ref<'a>(&'a self, cx: &'a Context) -> &'a L::Target {
         self.get(cx)

@@ -511,7 +511,7 @@ pub struct Textbox<L: Lens> {
 
 impl<L: Lens> Textbox<L>
 where
-    <L as Lens>::Target: Data + ToString,
+    <L as Lens>::Target: Data + Clone + ToString,
 {
     pub fn new<'a>(cx: &'a mut Context, lens: L) -> Handle<'a, Self> {
         Self { lens: lens.clone() }.build2(cx, move |cx| {
@@ -672,8 +672,8 @@ where
                         // self.edit = false;
 
                         if let Some(source) = cx.data::<L::Source>() {
-                            let text_data = self.lens.view(source, |t| t);
-                            let text = text_data.to_string();
+                            let mut text = String::new();
+                            self.lens.view(source, |t| text = t.to_string());
 
                             cx.emit(TextEvent::SelectAll);
                             cx.emit(TextEvent::InsertText(text));

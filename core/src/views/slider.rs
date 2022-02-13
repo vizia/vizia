@@ -129,7 +129,7 @@ impl Slider {
                         ZStack::new(cx, move |cx| {
                             let thumb_size = slider_data_internal.get(cx).thumb_size;
 
-                            let val = value.get(cx);
+                            let val = *value.get(cx);
                             let size = slider_data_internal.get(cx).size;
                             let min = thumb_size / size;
                             let max = 1.0;
