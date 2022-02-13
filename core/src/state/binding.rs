@@ -28,11 +28,10 @@ where
     pub fn new<F>(cx: &mut Context, lens: L, builder: F)
     where
         F: 'static + Fn(&mut Context, L),
-        <L as Lens>::Source: Model,
     {
         let parent = cx.current;
 
-        let binding = Self { lens, parent, count: cx.count + 1, builder: Some(Box::new(builder)) };
+        let binding = Self { lens: lens.clone(), parent, count: cx.count + 1, builder: Some(Box::new(builder)) };
 
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
             id
@@ -61,7 +60,7 @@ where
 
                         let model = model_data.downcast_ref::<L::Source>().unwrap();
 
-                        let old = lens.view(model);
+                        let old = lens.view(model, |t| t);
 
                         model_data_store.lenses.insert(
                             TypeId::of::<L>(),

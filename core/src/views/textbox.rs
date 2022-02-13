@@ -514,7 +514,7 @@ where
     <L as Lens>::Target: Data + ToString,
 {
     pub fn new<'a>(cx: &'a mut Context, lens: L) -> Handle<'a, Self> {
-        Self { lens }.build2(cx, move |cx| {
+        Self { lens: lens.clone() }.build2(cx, move |cx| {
             Binding::new(cx, lens.clone(), |cx, text| {
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
@@ -672,7 +672,7 @@ where
                         // self.edit = false;
 
                         if let Some(source) = cx.data::<L::Source>() {
-                            let text_data = self.lens.view(source);
+                            let text_data = self.lens.view(source, |t| t);
                             let text = text_data.to_string();
 
                             cx.emit(TextEvent::SelectAll);

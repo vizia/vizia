@@ -39,9 +39,8 @@ fn main() {
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list, selected: HashSet::new() }.build(cx);
 
-        List::new(cx, AppData::list, |cx, item| {
+        List::new(cx, AppData::list, |cx, index, item| {
             let item_text = item.get(cx).to_string();
-            let item_index = item.idx();
             // This vstack shouldn't be necessary but because of how bindings work it's required
             VStack::new(cx, move |cx| {
                 Binding::new(cx, AppData::selected, move |cx, selected| {
@@ -49,9 +48,9 @@ fn main() {
 
                     Label::new(cx, &item_text)
                         // Set the checked state based on whether this item is selected
-                        .checked(selected.contains(&item_index))
+                        .checked(selected.contains(&index))
                         // Set the selected item to this one if pressed
-                        .on_press(move |cx| cx.emit(AppEvent::Select(item_index)));
+                        .on_press(move |cx| cx.emit(AppEvent::Select(index)));
                 });
             });
         })

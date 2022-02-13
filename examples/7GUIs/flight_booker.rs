@@ -97,11 +97,11 @@ fn main() {
                     Label::new(cx, ICON_DOWN_OPEN).font("icons").left(Pixels(5.0)).right(Pixels(5.0));
                 }).width(Stretch(1.0)),
                 move |cx|{
-                List::new(cx, AppData::options, |cx, item|{
+                List::new(cx, AppData::options, |cx, index, item|{
                     VStack::new(cx, move |cx|{
                         Binding::new(cx, AppData::choice, move |cx, choice|{
                             let selected = *item.get(cx) == *choice.get(cx);
-                            Label::new(cx, item)
+                            Label::new(cx, item.clone())
                                 .width(Stretch(1.0))
                                 .background_color(if selected {Color::from("#f8ac14")} else {Color::white()})
                                 .on_press(move |cx| {
