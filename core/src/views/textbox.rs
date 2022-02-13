@@ -434,9 +434,11 @@ impl Model for TextboxData {
                 }
 
                 TextEvent::StartEdit => {
-                    self.edit = true;
-                    self.selection_entity.set_visibility(cx, Visibility::Visible);
-                    self.caret_entity.set_visibility(cx, Visibility::Visible);
+                    if !cx.current.is_disabled(cx) {
+                        self.edit = true;
+                        self.selection_entity.set_visibility(cx, Visibility::Visible);
+                        self.caret_entity.set_visibility(cx, Visibility::Visible);
+                    }
                 }
 
                 TextEvent::EndEdit => {
@@ -641,11 +643,11 @@ where
                     cx.emit(TextEvent::SetDragX(*x));
                 }
 
-                WindowEvent::MouseOver => {
+                WindowEvent::MouseEnter => {
                     cx.emit(WindowEvent::SetCursor(CursorIcon::Text));
                 }
 
-                WindowEvent::MouseOut => {
+                WindowEvent::MouseLeave => {
                     cx.emit(WindowEvent::SetCursor(CursorIcon::Default));
                 }
 

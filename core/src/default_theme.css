@@ -68,7 +68,7 @@ textbox {
     border-radius: 3px;
 }
 
-textbox:over {
+textbox:hover {
     border-color: black;
 }
 
@@ -82,6 +82,11 @@ textbox .caret {
 
 textbox .selection {
     background-color: #6464c888;
+}
+
+textbox:disabled {
+    color: gray;
+    border-color: gray;
 }
 
 codeview {
