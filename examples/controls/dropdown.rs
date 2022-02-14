@@ -74,7 +74,7 @@ fn main() {
                         Label::new(cx, ICON_DOWN_OPEN).font("icons").left(Stretch(1.0)).right(Pixels(5.0));
                     }),
                     move |cx|{
-                    List::new(cx, AppData::list, |cx, item|{
+                    List::new(cx, AppData::list, |cx, _, item|{
                         VStack::new(cx, move |cx|{
                             Binding::new(cx, AppData::choice, move |cx, choice|{
                                 let selected = *item.get(cx) == *choice.get(cx);
@@ -82,7 +82,7 @@ fn main() {
                                     .width(Stretch(1.0))
                                     .background_color(if selected {Color::from("#f8ac14")} else {Color::white()})
                                     .on_press(move |cx| {
-                                        cx.emit(AppEvent::SetChoice(item.get(cx).clone()));
+                                        cx.emit(AppEvent::SetChoice(item.get_val(cx)));
                                         cx.emit(PopupEvent::Close);
                                     });
                             });

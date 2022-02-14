@@ -7,7 +7,7 @@ use crate::{
     Color, Context, Display, Entity, Handle, LensExt, StateStore, TreeExt, Units, View, Visibility,
 };
 
-use crate::{Data, Lens, Model};
+use crate::{Data, Lens};
 
 pub struct Binding<L>
 where
@@ -31,7 +31,12 @@ where
     {
         let parent = cx.current;
 
-        let binding = Self { lens: lens.clone(), parent, count: cx.count + 1, builder: Some(Box::new(builder)) };
+        let binding = Self {
+            lens: lens.clone(),
+            parent,
+            count: cx.count + 1,
+            builder: Some(Box::new(builder)),
+        };
 
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
             id
@@ -60,7 +65,7 @@ where
 
                         let model = model_data.downcast_ref::<L::Source>().unwrap();
 
-                        let old = lens.view(model, |t| t);
+                        let old = lens.view(model, |t| t.clone());
 
                         model_data_store.lenses.insert(
                             TypeId::of::<L>(),
@@ -126,15 +131,15 @@ impl<L: 'static + Lens> View for Binding<L> {
 macro_rules! impl_res_simple {
     ($t:ty) => {
         impl Res<$t> for $t {
-            fn get_ref<'a>(&'a self, _: &'a Context) -> &'a $t {
-                self
+            fn get_val(&self, _: &Context) -> $t {
+                *self
             }
         }
     };
 }
 
 pub trait Res<T> {
-    fn get_ref<'a>(&'a self, cx: &'a Context) -> &'a T;
+    fn get_val(&self, cx: &Context) -> T;
 }
 
 impl_res_simple!(i8);
@@ -157,62 +162,63 @@ impl_res_simple!(f64);
 impl<T, L> Res<T> for L
 where
     L: Lens<Target = T>,
+    T: Clone,
 {
-    fn get_ref<'a>(&'a self, cx: &'a Context) -> &'a L::Target {
-        self.get(cx)
+    fn get_val(&self, cx: &Context) -> T {
+        (*self.get(cx)).clone()
     }
 }
 
 impl<'s> Res<&'s str> for &'s str {
-    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a &'s str {
+    fn get_val(&self, _: &Context) -> &'s str {
         self
     }
 }
 
 impl<'s> Res<&'s String> for &'s String {
-    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a &'s String {
+    fn get_val(&self, _: &Context) -> &'s String {
         self
     }
 }
 
 impl Res<Color> for Color {
-    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a Color {
-        self
+    fn get_val(&self, _: &Context) -> Color {
+        *self
     }
 }
 
 impl Res<Units> for Units {
-    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a Units {
-        self
+    fn get_val(&self, _: &Context) -> Units {
+        *self
     }
 }
 
 impl Res<Visibility> for Visibility {
-    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a Visibility {
-        self
+    fn get_val(&self, _: &Context) -> Visibility {
+        *self
     }
 }
 
 impl Res<Display> for Display {
-    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a Display {
-        self
+    fn get_val(&self, _: &Context) -> Display {
+        *self
     }
 }
 
 impl Res<LayoutType> for LayoutType {
-    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a LayoutType {
-        self
+    fn get_val(&self, _: &Context) -> LayoutType {
+        *self
     }
 }
 
 impl Res<PositionType> for PositionType {
-    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a PositionType {
-        self
+    fn get_val(&self, _: &Context) -> PositionType {
+        *self
     }
 }
 
-impl<T> Res<(T, T)> for (T, T) {
-    fn get_ref<'a>(&'a self, _: &'a Context) -> &'a (T, T) {
-        self
+impl<T: Copy> Res<(T, T)> for (T, T) {
+    fn get_val(&self, _: &Context) -> (T, T) {
+        *self
     }
 }

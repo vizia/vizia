@@ -10,7 +10,7 @@ fn main() {
         VStack::new(cx, |cx| {
             Binding::new(cx, CustomData::value, |cx, data| {
                 Binding::new(cx, OtherData::value, move |cx, other| {
-                    Label::new(cx, &format!("{} {}", data.get(cx), other.get(cx)));
+                    Label::new(cx, &format!("{} {}", *data.get(cx), *other.get(cx)));
                 });
             });
         });

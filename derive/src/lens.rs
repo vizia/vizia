@@ -154,7 +154,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                 type Source = #struct_type#ty_generics;
                 type Target = #field_ty;
 
-                fn view<'a,O,F: FnOnce(&'a Self::Target) -> O>(&self, data: &'a#struct_type#ty_generics, map: F) -> O {
+                fn view<O, F: FnOnce(&Self::Target) -> O>(&self, data: &#struct_type#ty_generics, map: F) -> O {
                     map(&data.#field_name)
                 }
             }
@@ -193,7 +193,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             type Source = #struct_type#ty_generics;
             type Target = #struct_type#ty_generics;
 
-            fn view<'a,O,F: FnOnce(&'a Self::Target) -> O>(&self, source: &'a Self::Source, map: F) -> O {
+            fn view<O, F: FnOnce(&Self::Target) -> O>(&self, source: &Self::Source, map: F) -> O {
                 map(source)
             }
         }

@@ -1,9 +1,25 @@
-use crate::{Context, Model};
+use crate::Context;
 use std::any::TypeId;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
 use std::rc::Rc;
+
+pub struct DerefContainer<T>(T);
+
+impl<T> Deref for DerefContainer<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> AsRef<T> for DerefContainer<T> {
+    fn as_ref(&self) -> &T {
+        &self.0
+    }
+}
 
 /// A Lens allows the construction of a reference to a field of a struct.
 ///
@@ -14,13 +30,19 @@ pub trait Lens: 'static + Clone {
     type Source;
     type Target;
 
-    fn view<'a, O, F: FnOnce(&'a Self::Target) -> O>(&self, source: &'a Self::Source, map: F) -> O;
+    fn view<O, F: FnOnce(&Self::Target) -> O>(&self, source: &Self::Source, map: F) -> O;
 }
 
 /// Helpers for constructing more complex `Lens`es.
 pub trait LensExt: Lens {
-    fn get<'a>(&self, cx: &'a Context) -> &'a Self::Target {
-        self.view(cx.data().expect("Failed to get data from context. Has it been built into the tree?"), |target| target)
+    fn get(&self, cx: &Context) -> DerefContainer<Self::Target>
+    where
+        Self::Target: Clone,
+    {
+        self.view(
+            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
+            |t| DerefContainer(t.clone()),
+        )
     }
 
     /// Used to construct a lens to some data contained within some other lensed data.
@@ -48,8 +70,7 @@ pub trait LensExt: Lens {
     //     And::new(self, other)
     // }
 
-    // TODO
-    fn index<A,I>(self, index: I) -> Then<Self,Index<A,I>>
+    fn index<A, I>(self, index: I) -> Then<Self, Index<A, I>>
     where
         A: 'static + std::ops::Index<I>,
         I: 'static + Clone,
@@ -58,54 +79,48 @@ pub trait LensExt: Lens {
         self.then(Index::new(index))
     }
 
-    fn map<L,G,B: Clone>(self, get: G) -> Map<Self,B>
+    fn map<G, B: Clone + 'static>(self, get: G) -> Then<Self, Map<Self::Target, B>>
     where
         G: 'static + Fn(&Self::Target) -> B,
     {
-        Map::new(self, get)
+        self.then(Map::new(get))
     }
 }
 
 // Implement LensExt for all types which implement Lens
 impl<T: Lens> LensExt for T {}
 
-#[derive(Clone)]
-pub struct Map<L: Lens, B> {
-    get: Rc<dyn Fn(&L::Target) -> B>,
-    lens: L,
-    p: PhantomData<B>,
+pub struct Map<I, O> {
+    get: Rc<dyn Fn(&I) -> O>,
 }
 
-impl<L: Lens, B> Map<L,B> {
-    pub fn new<F>(lens: L, get: F) -> Self 
-    where
-        F: 'static + Fn(&L::Target) -> B,
-    {
-        Self {
-            get: Rc::new(get),
-            lens,
-            p: PhantomData::default(),
-        }
+impl<I, O> Clone for Map<I, O> {
+    fn clone(&self) -> Self {
+        Map { get: self.get.clone() }
     }
 }
 
-impl<L: Lens, B: 'static + Clone> Lens for Map<L,B>
-where
-    L: Lens,
-    <L as Lens>::Target: Clone,
-{
+impl<I, O> Map<I, O> {
+    pub fn new<F>(get: F) -> Self
+    where
+        F: 'static + Fn(&I) -> O,
+    {
+        Self { get: Rc::new(get) }
+    }
+}
 
-    type Source = L::Source;
-    type Target = B;
+impl<I: 'static, O: 'static> Lens for Map<I, O> {
+    // TODO can we get rid of these static bounds?
+    type Source = I;
+    type Target = O;
 
-    fn view<'a, O, F: FnOnce(&'a Self::Target) -> O>(&self, source: &'a Self::Source, map: F) -> O {
-        
-        map(&(self.get)(self.lens.view(source, |t| t)))
+    fn view<VO, F: FnOnce(&Self::Target) -> VO>(&self, source: &Self::Source, map: F) -> VO {
+        let data = (self.get)(source);
+        map(&data)
     }
 }
 
 /// `Lens` composed of two lenses joined together
-#[derive(Debug, Copy)]
 pub struct Then<A, B> {
     a: A,
     b: B,
@@ -129,8 +144,8 @@ where
     type Source = A::Source;
     type Target = B::Target;
 
-    fn view<'a,O,F: FnOnce(&'a Self::Target) -> O>(&self, data: &'a Self::Source, map: F) -> O{
-        self.a.view(data, |t| self.b.view(t, map))
+    fn view<O, F: FnOnce(&Self::Target) -> O>(&self, source: &Self::Source, map: F) -> O {
+        self.a.view(source, |t| self.b.view(t, map))
     }
 }
 
@@ -140,30 +155,33 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
     }
 }
 
-pub struct Index<A,I> {
+impl<T: Copy, U: Copy> Copy for Then<T, U> {}
+
+pub struct Index<A, I> {
     index: I,
     p: PhantomData<A>,
 }
 
-impl<A,I> Index<A,I> {
+impl<A, I> Index<A, I> {
     pub fn new(index: I) -> Self {
         Self { index, p: PhantomData::default() }
     }
 
-    pub fn idx(&self) -> I 
-    where I: Clone,
+    pub fn idx(&self) -> I
+    where
+        I: Clone,
     {
         self.index.clone()
     }
 }
 
-impl<A,I: Clone> Clone for Index<A,I> {
+impl<A, I: Clone> Clone for Index<A, I> {
     fn clone(&self) -> Self {
         Self { index: self.index.clone(), p: PhantomData::default() }
     }
 }
 
-// impl<A,I> Copy for Index<A,I> {}
+impl<A, I: Copy> Copy for Index<A,I> {}
 
 // impl<A,I> Debug for Index<A,I> {
 //     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -171,7 +189,7 @@ impl<A,I: Clone> Clone for Index<A,I> {
 //     }
 // }
 
-impl<A,I> Lens for Index<A,I>
+impl<A, I> Lens for Index<A, I>
 where
     A: 'static + std::ops::Index<I>,
     I: 'static + Clone,
@@ -180,10 +198,10 @@ where
     type Source = A;
     type Target = A::Output;
 
-    fn view<'a,O,F: FnOnce(&'a Self::Target) -> O>(&self, data: &'a Self::Source, map: F) -> O {
+    fn view<O, F: FnOnce(&Self::Target) -> O>(&self, source: &Self::Source, map: F) -> O {
         // &self.input.view(data)[self.index]
-        map(&data[self.index.clone()])
-
+        let data = &source[self.index.clone()];
+        map(data)
     }
 }
 
@@ -211,7 +229,7 @@ impl<T> Lens for StaticLens<T> {
     type Source = ();
     type Target = T;
 
-    fn view<'a,O,F: FnOnce(&'a Self::Target) -> O>(&self, _source: &'a Self::Source, map: F) -> O {
+    fn view<O, F: FnOnce(&Self::Target) -> O>(&self, _: &Self::Source, map: F) -> O {
         map(self.data)
     }
 }
