@@ -165,9 +165,7 @@ impl DoubleEndedTreeTour {
     {
         self.forward.next_with(tree, |current, direction| {
             let (item, action) = cb(current, direction);
-            if self.backward.current == Some(current)
-                && self.backward.direction != direction
-            {
+            if self.backward.current == Some(current) && self.backward.direction != direction {
                 self.backward.current = None;
                 (item, TourStep::Break)
             } else {
@@ -182,9 +180,7 @@ impl DoubleEndedTreeTour {
     {
         self.backward.next_with(tree, |current, direction| {
             let (item, action) = cb(current, direction);
-            if self.forward.current == Some(current)
-                && self.forward.direction != direction
-            {
+            if self.forward.current == Some(current) && self.forward.direction != direction {
                 self.forward.current = None;
                 (item, TourStep::Break)
             } else {
