@@ -121,7 +121,6 @@ impl<I: 'static, O: 'static> Lens for Map<I, O> {
 }
 
 /// `Lens` composed of two lenses joined together
-#[derive(Debug, Copy)]
 pub struct Then<A, B> {
     a: A,
     b: B,
@@ -156,6 +155,8 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
     }
 }
 
+impl<T: Copy, U: Copy> Copy for Then<T, U> {}
+
 pub struct Index<A, I> {
     index: I,
     p: PhantomData<A>,
@@ -180,7 +181,7 @@ impl<A, I: Clone> Clone for Index<A, I> {
     }
 }
 
-// impl<A,I> Copy for Index<A,I> {}
+impl<A, I: Copy> Copy for Index<A,I> {}
 
 // impl<A,I> Debug for Index<A,I> {
 //     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

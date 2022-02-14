@@ -15,8 +15,7 @@ fn main() {
         AppData { list }.build(cx);
 
         List::new(cx, AppData::list, |cx, _, item| {
-            let item_text = item.get(cx).to_string();
-            Label::new(cx, &item_text);
+            Label::new(cx, item);
         })
         .space(Stretch(1.0));
     })

@@ -84,11 +84,10 @@ fn main() {
             );
 
             List::new(cx, AppData::list, move |cx, index, item| {
-                let item_text = item.get(cx).to_string();
                 Binding::new(cx, AppData::selected, move |cx, selected| {
                     let selected = *selected.get(cx);
 
-                    Label::new(cx, &item_text)
+                    Label::new(cx, item)
                         .width(Pixels(100.0))
                         .height(Pixels(30.0))
                         .border_color(Color::black())

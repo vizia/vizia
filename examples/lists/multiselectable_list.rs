@@ -40,15 +40,14 @@ fn main() {
         AppData { list, selected: HashSet::new() }.build(cx);
 
         List::new(cx, AppData::list, |cx, index, item| {
-            let item_text = item.get(cx).to_string();
             // This vstack shouldn't be necessary but because of how bindings work it's required
             VStack::new(cx, move |cx| {
                 Binding::new(cx, AppData::selected, move |cx, selected| {
-                    let selected = selected.get(cx).clone();
+                    let selected = selected.get(cx).contains(&index);
 
-                    Label::new(cx, &item_text)
+                    Label::new(cx, item)
                         // Set the checked state based on whether this item is selected
-                        .checked(selected.contains(&index))
+                        .checked(selected)
                         // Set the selected item to this one if pressed
                         .on_press(move |cx| cx.emit(AppEvent::Select(index)));
                 });
