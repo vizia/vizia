@@ -55,6 +55,10 @@ name = "number_input"
 path = "examples/controls/number_input.rs"
 
 [[example]]
+name = "widget_gallery"
+path = "examples/controls/widget_gallery.rs"
+
+[[example]]
 name = "list"
 path = "examples/lists/list.rs"
 
@@ -79,6 +83,22 @@ name = "static_list"
 path = "examples/lists/static_list.rs"
 
 
+[[example]]
+name = "7guis_counter"
+path = "examples/7GUIs/counter.rs"
+
+[[example]]
+name = "7guis_temperature_converter"
+path = "examples/7GUIs/temperature_converter.rs"
+
+[[example]]
+name = "7guis_flight_booker"
+path = "examples/7GUIs/flight_booker.rs"
+
+[[example]]
+name = "7guis_crud"
+path = "examples/7GUIs/crud.rs"
+
 [features]
 default = ["glutin", "clipboard"]
 clipboard = ["vizia_core/clipboard"]
@@ -95,3 +115,4 @@ vizia_baseview = { version = "0.1.0", path = "baseview", optional = true }
 [dev-dependencies]
 english-numbers = "0.3.3"
 lazy_static = "1.4.0"
+chrono = "0.4.19"

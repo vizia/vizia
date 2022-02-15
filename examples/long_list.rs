@@ -53,19 +53,18 @@ fn main() {
                 Checkbox::new(cx, *visible.get(cx))
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleVisible));
 
-                List::new(cx, AppData::list, move |cx, item| {
+                List::new(cx, AppData::list, move |cx, index, item| {
                     //println!("Do This");
                     let item_text = item.get(cx).to_string();
-                    let item_index = item.idx();
                     VStack::new(cx, move |cx| {
                         Binding::new(cx, AppData::selected, move |cx, selected| {
                             //println!("Select");
                             let selected = *selected.get(cx);
                             Label::new(cx, &item_text)
                                 // Set the checked state based on whether this item is selected
-                                .checked(if selected == item_index { true } else { false })
+                                .checked(if selected == index { true } else { false })
                                 // Set the selected item to this one if pressed
-                                .on_press(move |cx| cx.emit(AppEvent::Select(item_index)));
+                                .on_press(move |cx| cx.emit(AppEvent::Select(index)));
                         });
                     });
                 })
@@ -75,7 +74,7 @@ fn main() {
             });
 
             Binding::new(cx, AppData::selected, move |cx, selected_item| {
-                Label::new(cx, &format!("You have selected: {}", selected_item.get(cx)));
+                Label::new(cx, &format!("You have selected: {}", *selected_item.get(cx)));
             });
         })
         .class("container");

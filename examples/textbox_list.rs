@@ -34,12 +34,12 @@ fn main() {
         }
         .build(cx);
 
-        List::new(cx, AppData::text_list, |cx, text_item| {
+        List::new(cx, AppData::text_list, |cx, index, text_item| {
             HStack::new(cx, move |cx| {
-                Binding::new(cx, text_item, move |cx, it| {
+                Binding::new(cx, text_item.clone(), move |cx, it| {
                     Textbox::new(cx, it)
                         .on_edit(move |cx, text| {
-                            cx.emit(AppEvent::SetText(text_item.idx(), text));
+                            cx.emit(AppEvent::SetText(index, text));
                         })
                         .width(Pixels(200.0))
                         .height(Pixels(30.0));

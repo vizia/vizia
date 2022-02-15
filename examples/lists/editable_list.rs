@@ -83,21 +83,19 @@ fn main() {
                 |cx| Label::new(cx, "Remove Selected"),
             );
 
-            List::new(cx, AppData::list, move |cx, item| {
-                let item_text = item.get(cx).to_string();
-                let item_index = item.idx();
+            List::new(cx, AppData::list, move |cx, index, item| {
                 Binding::new(cx, AppData::selected, move |cx, selected| {
                     let selected = *selected.get(cx);
 
-                    Label::new(cx, &item_text)
+                    Label::new(cx, item)
                         .width(Pixels(100.0))
                         .height(Pixels(30.0))
                         .border_color(Color::black())
                         .border_width(Pixels(1.0))
                         // Set the checked state based on whether this item is selected
-                        .checked(if selected == item_index { true } else { false })
+                        .checked(if selected == index { true } else { false })
                         // Set the selected item to this one if pressed
-                        .on_press(move |cx| cx.emit(AppEvent::Select(item_index)));
+                        .on_press(move |cx| cx.emit(AppEvent::Select(index)));
                 });
             })
             .row_between(Pixels(5.0))

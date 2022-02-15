@@ -434,9 +434,11 @@ impl Model for TextboxData {
                 }
 
                 TextEvent::StartEdit => {
-                    self.edit = true;
-                    self.selection_entity.set_visibility(cx, Visibility::Visible);
-                    self.caret_entity.set_visibility(cx, Visibility::Visible);
+                    if !cx.current.is_disabled(cx) {
+                        self.edit = true;
+                        self.selection_entity.set_visibility(cx, Visibility::Visible);
+                        self.caret_entity.set_visibility(cx, Visibility::Visible);
+                    }
                 }
 
                 TextEvent::EndEdit => {
@@ -509,10 +511,10 @@ pub struct Textbox<L: Lens> {
 
 impl<L: Lens> Textbox<L>
 where
-    <L as Lens>::Target: Data + ToString,
+    <L as Lens>::Target: Data + Clone + ToString,
 {
     pub fn new<'a>(cx: &'a mut Context, lens: L) -> Handle<'a, Self> {
-        Self { lens }.build2(cx, move |cx| {
+        Self { lens: lens.clone() }.build2(cx, move |cx| {
             Binding::new(cx, lens.clone(), |cx, text| {
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
@@ -641,11 +643,11 @@ where
                     cx.emit(TextEvent::SetDragX(*x));
                 }
 
-                WindowEvent::MouseOver => {
+                WindowEvent::MouseEnter => {
                     cx.emit(WindowEvent::SetCursor(CursorIcon::Text));
                 }
 
-                WindowEvent::MouseOut => {
+                WindowEvent::MouseLeave => {
                     cx.emit(WindowEvent::SetCursor(CursorIcon::Default));
                 }
 
@@ -670,8 +672,8 @@ where
                         // self.edit = false;
 
                         if let Some(source) = cx.data::<L::Source>() {
-                            let text_data = self.lens.view(source);
-                            let text = text_data.to_string();
+                            let mut text = String::new();
+                            self.lens.view(source, |t| text = t.to_string());
 
                             cx.emit(TextEvent::SelectAll);
                             cx.emit(TextEvent::InsertText(text));

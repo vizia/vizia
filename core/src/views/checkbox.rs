@@ -1,4 +1,4 @@
-use crate::{Context, Handle, MouseButton, Res, Units::*, View, WindowEvent};
+use crate::{Context, Handle, MouseButton, Res, View, WindowEvent};
 
 const ICON_CHECK: &str = "\u{2713}";
 
@@ -38,11 +38,9 @@ pub struct Checkbox {
 
 impl Checkbox {
     pub fn new(cx: &mut Context, checked: impl Res<bool>) -> Handle<Self> {
-        let checked = *checked.get_ref(cx);
+        let checked = checked.get_val(cx);
         Self { on_toggle: None }
             .build2(cx, |_| {})
-            .width(Pixels(20.0))
-            .height(Pixels(20.0))
             .text(if checked { ICON_CHECK } else { "" })
             .checked(checked)
     }

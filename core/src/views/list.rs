@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use keyboard_types::Code;
 
 use crate::{
-    Binding, Context, Data, Handle, Index, Lens, LensExt, Model, TreeExt, View, WindowEvent,
+    Binding, Context, Data, Handle, Index, Lens, LensExt, Model, Then, TreeExt, View, WindowEvent,
 };
 
 /// A view for creating a list of items from a binding to a Vec<T>
@@ -22,7 +22,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
     /// Creates a new ListView with a binding to the given lens and a template for constructing the list items
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, Index<L, T>),
+        F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, usize>>),
         <L as Lens>::Source: Model,
     {
         //let item_template = Rc::new(item);
@@ -33,6 +33,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
             clear_callback: None,
         }
         .build2(cx, move |cx| {
+            //let list_lens = lens.clone();
             // Bind to the list data
             Binding::new(cx, lens.clone(), move |cx, list| {
                 // If the number of list items is different to the number of children of the ListView
@@ -53,8 +54,8 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
                 }
 
                 for index in 0..list_len {
-                    let ptr = Index::new(lens.clone(), index);
-                    (item)(cx, ptr);
+                    let ptr = list.clone().index(index);
+                    (item)(cx, index, ptr);
                 }
             });
         })

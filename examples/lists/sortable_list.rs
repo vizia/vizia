@@ -42,7 +42,7 @@ fn main() {
         VStack::new(cx, |cx| {
             Button::new(cx, |cx| cx.emit(AppEvent::Sort), |cx| Label::new(cx, "Sort"));
 
-            List::new(cx, AppData::list, move |cx, item| {
+            List::new(cx, AppData::list, move |cx, _, item| {
                 Label::new(cx, item)
                     .width(Pixels(100.0))
                     .height(Pixels(30.0))

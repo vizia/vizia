@@ -34,11 +34,11 @@ impl Knob {
         normalized_value: impl Res<f32>,
         centered: bool,
     ) -> Handle<Self> {
-        let normalized_value = *normalized_value.get_ref(cx);
+        let normalized_value = normalized_value.get_val(cx);
 
         Self {
             normalized_value,
-            default_normal: *normalized_default.get_ref(cx),
+            default_normal: normalized_default.get_val(cx),
 
             is_dragging: false,
             prev_drag_y: 0.0,
