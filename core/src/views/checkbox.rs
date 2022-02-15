@@ -1,4 +1,4 @@
-use crate::{Context, Handle, MouseButton, Res, Units::*, View, WindowEvent};
+use crate::{Context, Handle, MouseButton, Res, View, WindowEvent};
 
 const ICON_CHECK: &str = "\u{2713}";
 

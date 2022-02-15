@@ -13,11 +13,12 @@ button {
     child-right: 5px;
     border-width: 1px;
     border-color: #e5e5e5;
-    /* outer-shadow: 0 1 1 #00000055; */
+    outer-shadow: 0 1 1 #00000055;
+    overflow: visible;
 }
 
 button label {
-    color: black;
+    color: #1a1a1a;
     background-color: #00000000;
     child-space: 1s;
 }
@@ -26,30 +27,53 @@ button:over {
     background-color: #f6f6f6;
 }
 
-button.outlined {
-    background-color: #00000000;
-    border-color: #2000AA;
-    border-width: 1px;
+button:active {
+    /* outer-shadow: 0 0 0 #00000055; */
+    overflow: hidden;
 }
 
-button.outlined label {
-    color: #2000AA;
+button:active label {
+    color: #5d5d5d;
 }
 
-button.outlined:over {
-    background-color: #202000AA;
+button.accent {
+    background-color: #005a9e;
+    border-width: 0px;
+    /* border-color: #3076ae */
+    border-color: #3076ae;
+    outer-shadow: 0 1 0 #00365f;
 }
 
-button.text {
-    background-color: #00000000;
+button.accent label {
+    color: white;
 }
 
-button.text label {
-    color: #2000AA;
+button.accent:over {
+    background-color: #1969a7;
 }
 
-button.text:over {
-    background-color: #202000AA;
+button.accent:active {
+    background-color: #3178af;
+}
+
+button.accent:active label {
+    color: #c2d7e7;
+}
+
+checkbox {
+    width: 25px;
+    height: 25px;
+    border-radius: 5px;
+    border-color: #838383;
+}
+
+checkbox:hover {
+    background-color: #e5e5e5;
+}
+
+checkbox:active {
+    border-color: #b6b6b6;
+    background-color: #dcdcdc;
 }
 
 label.icon {
