@@ -41,8 +41,6 @@ impl Checkbox {
         let checked = checked.get_val(cx);
         Self { on_toggle: None }
             .build2(cx, |_| {})
-            .width(Pixels(20.0))
-            .height(Pixels(20.0))
             .text(if checked { ICON_CHECK } else { "" })
             .checked(checked)
     }

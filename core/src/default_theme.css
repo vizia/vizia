@@ -4,23 +4,26 @@
 } */
 
 button {
-    background-color: #2000AA;
+    background-color: white;
     width: auto;
     height: 30px;
     border-radius: 3px;
     child-space: 1s;
     child-left: 5px;
     child-right: 5px;
+    border-width: 1px;
+    border-color: #e5e5e5;
+    /* outer-shadow: 0 1 1 #00000055; */
 }
 
 button label {
-    color: white;
+    color: black;
     background-color: #00000000;
     child-space: 1s;
 }
 
 button:over {
-    background-color: #2000DD;
+    background-color: #f6f6f6;
 }
 
 button.outlined {
@@ -50,7 +53,7 @@ button.text:over {
 }
 
 label.icon {
-    font: "icon";
+    font: "icons";
 }
 
 
@@ -137,6 +140,8 @@ label:disabled {
 
 checkbox {
     /* color: black; */
+    width: 20px;
+    height: 20px;
 }
 
 hstack {

@@ -181,7 +181,7 @@ impl<A, I: Clone> Clone for Index<A, I> {
     }
 }
 
-impl<A, I: Copy> Copy for Index<A,I> {}
+impl<A, I: Copy> Copy for Index<A, I> {}
 
 // impl<A,I> Debug for Index<A,I> {
 //     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

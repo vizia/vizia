@@ -55,6 +55,10 @@ name = "number_input"
 path = "examples/controls/number_input.rs"
 
 [[example]]
+name = "widget_gallery"
+path = "examples/controls/widget_gallery.rs"
+
+[[example]]
 name = "list"
 path = "examples/lists/list.rs"
 

@@ -1,7 +1,6 @@
 use vizia::*;
 
 const ICON_PLUS: &str = "\u{2b}";
-// const ICON_CHECK: &str = "\u{2713}";
 
 fn no_action(_: &mut Context) {}
 
@@ -10,11 +9,13 @@ fn main() {
         WindowDescription::new().with_title("Button").with_inner_size(1280, 720);
 
     Application::new(window_description, |cx| {
+        cx.add_stylesheet("examples/test_style.css").unwrap();
+
         HStack::new(cx, |cx| {
             // Filled button
             Button::new(cx, no_action, |cx| Label::new(cx, "Button"));
             // Outline button
-            Button::new(cx, no_action, |cx| Label::new(cx, "Another Button")).class("outlined");
+            Button::new(cx, no_action, |cx| Label::new(cx, "Another Button")).class("accent");
             // Text button
             Button::new(cx, no_action, |cx| Label::new(cx, "Yet Another Button")).class("text");
 
