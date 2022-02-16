@@ -1,7 +1,10 @@
 use femtovg::{LineCap, Paint, Path, Solidity};
 use morphorm::{Hierarchy, Units};
 
-use crate::{Binding, Context, Entity, Handle, Lens, LensExt, Model, Modifiers, MouseButton, Res, Units::*, View, WindowEvent, ZStack};
+use crate::{
+    Binding, Context, Entity, Handle, Lens, LensExt, Modifiers, MouseButton, Res, Units::*,
+    View, WindowEvent, ZStack,
+};
 
 static DEFAULT_DRAG_SCALAR: f32 = 0.0042;
 static DEFAULT_WHEEL_SCALAR: f32 = 0.005;
@@ -47,17 +50,11 @@ impl<L: Lens<Target = f32>> Knob<L> {
         }
         .build2(cx, move |cx| {
             ZStack::new(cx, move |cx| {
-                ArcTrack::new(
-                    cx,
-                    centered,
-                    Percentage(50.),
-                    Percentage(15.),
-                    300.,
-                )
-                .value(lens)
-                .width(Stretch(1.0))
-                .height(Stretch(1.0))
-                .class("track");
+                ArcTrack::new(cx, centered, Percentage(50.), Percentage(15.), 300.)
+                    .value(lens)
+                    .width(Stretch(1.0))
+                    .height(Stretch(1.0))
+                    .class("track");
 
                 // TODO
                 // Element::new(cx)

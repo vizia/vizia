@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use morphorm::GeometryChanged;
 
 use crate::{
@@ -69,7 +71,7 @@ impl Default for Orientation {
 
 pub struct Slider<L> {
     is_dragging: bool,
-    lens: L,
+    p: PhantomData<L>,
 
     // Event sent when the slider value has changed
     on_change: Option<Box<dyn Fn(&mut Context, f32)>>,
@@ -83,119 +85,119 @@ pub struct Slider<L> {
 
 impl<L> Slider<L>
 where
-    L: Lens<Target = f32>
+    L: Lens<Target = f32>,
 {
     pub fn new(cx: &mut Context, lens: L, orientation: Orientation) -> Handle<Self> {
         Self {
-            lens: lens.clone(),
+            p: PhantomData::default(),
             is_dragging: false,
             on_change: None,
             on_changing: None,
             on_min: None,
-            on_max: None
+            on_max: None,
         }
-            .build2(cx, move |cx| {
-                // Only create this if it doesn't already exist otherwise it resets the thumb_width
-                // This causes a very subtle bug:
-                //      When the slider is updated the style data doesn't change, which means the size doesn't change
-                //      and after layout the GeometryChanged event is never sent.
-                //      If this internal data is recreated with thumb_width == 0.0, then the calculation for thumb position
-                //      becomes NaN and the thumb size is never updated due to the lack of GeometryChanged event.
-                //      The solution is to only create this if it doesn't already exist. This wouldn't be a problem if
-                //      it were possible to bind directly to style properties.
-                if cx.data::<SliderDataInternal>().is_none() {
-                    // Create some internal slider data (not exposed to the user)
-                    SliderDataInternal { size: 0.0, thumb_size: 0.0, orientation }.build(cx);
-                }
+        .build2(cx, move |cx| {
+            // Only create this if it doesn't already exist otherwise it resets the thumb_width
+            // This causes a very subtle bug:
+            //      When the slider is updated the style data doesn't change, which means the size doesn't change
+            //      and after layout the GeometryChanged event is never sent.
+            //      If this internal data is recreated with thumb_width == 0.0, then the calculation for thumb position
+            //      becomes NaN and the thumb size is never updated due to the lack of GeometryChanged event.
+            //      The solution is to only create this if it doesn't already exist. This wouldn't be a problem if
+            //      it were possible to bind directly to style properties.
+            if cx.data::<SliderDataInternal>().is_none() {
+                // Create some internal slider data (not exposed to the user)
+                SliderDataInternal { size: 0.0, thumb_size: 0.0, orientation }.build(cx);
+            }
 
-                // Add the various slider components using bindings to the slider data
-                Binding::new(cx, SliderDataInternal::root, move |cx, slider_data_internal| {
-                    let lens = lens.clone();
-                    ZStack::new(cx, move |cx| {
-                        let thumb_size = slider_data_internal.get(cx).thumb_size;
-                        let orientation = slider_data_internal.get(cx).orientation;
-                        let size = slider_data_internal.get(cx).size;
+            // Add the various slider components using bindings to the slider data
+            Binding::new(cx, SliderDataInternal::root, move |cx, slider_data_internal| {
+                let lens = lens.clone();
+                ZStack::new(cx, move |cx| {
+                    let thumb_size = slider_data_internal.get(cx).thumb_size;
+                    let orientation = slider_data_internal.get(cx).orientation;
+                    let size = slider_data_internal.get(cx).size;
 
-                        match orientation {
-                            Orientation::Horizontal => {
-                                //(Percentage(dx * 100.0), Stretch(1.0))
-                                Element::new(cx)
-                                    .height(Stretch(1.0))
-                                    .left(Pixels(0.0))
-                                    .right(Stretch(1.0))
-                                    .class("active")
-                                    .bind(lens.clone(), move |handle, value| {
-                                        let val = *value.get(handle.cx);
-                                        let min = thumb_size / size;
-                                        let max = 1.0;
-                                        let dx = min + val * (max - min);
+                    match orientation {
+                        Orientation::Horizontal => {
+                            //(Percentage(dx * 100.0), Stretch(1.0))
+                            Element::new(cx)
+                                .height(Stretch(1.0))
+                                .left(Pixels(0.0))
+                                .right(Stretch(1.0))
+                                .class("active")
+                                .bind(lens.clone(), move |handle, value| {
+                                    let val = *value.get(handle.cx);
+                                    let min = thumb_size / size;
+                                    let max = 1.0;
+                                    let dx = min + val * (max - min);
 
-                                        handle.width(Percentage(dx * 100.0));
-                                    });
+                                    handle.width(Percentage(dx * 100.0));
+                                });
 
-                                Element::new(cx)
-                                    .right(Stretch(1.0))
-                                    .top(Stretch(1.0))
-                                    .bottom(Stretch(1.0))
-                                    .overflow(Overflow::Visible)
-                                    .class("thumb")
-                                    .on_geo_changed(|cx, geo| {
-                                        if geo.contains(GeometryChanged::WIDTH_CHANGED) {
-                                            cx.emit(SliderEventInternal::SetThumbSize(
-                                                cx.cache.get_width(cx.current),
-                                                cx.cache.get_height(cx.current),
-                                            ));
-                                        }
-                                    })
-                                    .bind(lens.clone(), move |handle, value| {
-                                        let val = *value.get(handle.cx);
-                                        let px = val * (1.0 - (thumb_size / size));
+                            Element::new(cx)
+                                .right(Stretch(1.0))
+                                .top(Stretch(1.0))
+                                .bottom(Stretch(1.0))
+                                .overflow(Overflow::Visible)
+                                .class("thumb")
+                                .on_geo_changed(|cx, geo| {
+                                    if geo.contains(GeometryChanged::WIDTH_CHANGED) {
+                                        cx.emit(SliderEventInternal::SetThumbSize(
+                                            cx.cache.get_width(cx.current),
+                                            cx.cache.get_height(cx.current),
+                                        ));
+                                    }
+                                })
+                                .bind(lens.clone(), move |handle, value| {
+                                    let val = *value.get(handle.cx);
+                                    let px = val * (1.0 - (thumb_size / size));
 
-                                        handle.left(Percentage(100.0 * px));
-                                    });
-                            }
+                                    handle.left(Percentage(100.0 * px));
+                                });
+                        }
 
-                            Orientation::Vertical => {
-                                //(Stretch(1.0), Percentage(dx * 100.0))
-                                Element::new(cx)
-                                    .width(Stretch(1.0))
-                                    .top(Stretch(1.0))
-                                    .bottom(Pixels(0.0))
-                                    .class("active")
-                                    .bind(lens.clone(), move |handle, value| {
-                                        let val = *value.get(handle.cx);
-                                        let min = thumb_size / size;
-                                        let max = 1.0;
-                                        let dx = min + val * (max - min);
+                        Orientation::Vertical => {
+                            //(Stretch(1.0), Percentage(dx * 100.0))
+                            Element::new(cx)
+                                .width(Stretch(1.0))
+                                .top(Stretch(1.0))
+                                .bottom(Pixels(0.0))
+                                .class("active")
+                                .bind(lens.clone(), move |handle, value| {
+                                    let val = *value.get(handle.cx);
+                                    let min = thumb_size / size;
+                                    let max = 1.0;
+                                    let dx = min + val * (max - min);
 
-                                        handle.height(Percentage(dx * 100.0));
-                                    });
+                                    handle.height(Percentage(dx * 100.0));
+                                });
 
-                                Element::new(cx)
-                                    .top(Stretch(1.0))
-                                    .left(Stretch(1.0))
-                                    .right(Stretch(1.0))
-                                    .overflow(Overflow::Visible)
-                                    .class("thumb")
-                                    .on_geo_changed(|cx, geo| {
-                                        if geo.contains(GeometryChanged::HEIGHT_CHANGED) {
-                                            cx.emit(SliderEventInternal::SetThumbSize(
-                                                cx.cache.get_width(cx.current),
-                                                cx.cache.get_height(cx.current),
-                                            ));
-                                        }
-                                    })
-                                    .bind(lens.clone(), move |handle, value| {
-                                        let val = *value.get(handle.cx);
-                                        let px = val * (1.0 - (thumb_size / size));
+                            Element::new(cx)
+                                .top(Stretch(1.0))
+                                .left(Stretch(1.0))
+                                .right(Stretch(1.0))
+                                .overflow(Overflow::Visible)
+                                .class("thumb")
+                                .on_geo_changed(|cx, geo| {
+                                    if geo.contains(GeometryChanged::HEIGHT_CHANGED) {
+                                        cx.emit(SliderEventInternal::SetThumbSize(
+                                            cx.cache.get_width(cx.current),
+                                            cx.cache.get_height(cx.current),
+                                        ));
+                                    }
+                                })
+                                .bind(lens.clone(), move |handle, value| {
+                                    let val = *value.get(handle.cx);
+                                    let px = val * (1.0 - (thumb_size / size));
 
-                                        handle.bottom(Percentage(100.0 * px));
-                                    });
-                            }
-                        };
-                    });
+                                    handle.bottom(Percentage(100.0 * px));
+                                });
+                        }
+                    };
                 });
-            })
+            });
+        })
     }
 }
 
