@@ -12,6 +12,10 @@ pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
+        if tree.is_ignored(entity) {
+            continue;
+        }
+
         let parent = tree.get_layout_parent(entity).unwrap();
 
         if let Some(z_order) = cx.style.z_order.get(entity) {
@@ -27,6 +31,10 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
     //println!("Apply Clipping");
     for entity in tree.into_iter() {
         if entity == Entity::root() {
+            continue;
+        }
+
+        if tree.is_ignored(entity) {
             continue;
         }
 
@@ -92,6 +100,10 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
+        if tree.is_ignored(entity) {
+            continue;
+        }
+
         let parent = tree.get_layout_parent(entity).unwrap();
 
         if cx.cache.get_visibility(parent) == Visibility::Invisible {
@@ -124,11 +136,16 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
 
 // Apply this before layout
 pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
+    //println!("Apply text constraints");
     let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 
     for entity in draw_tree.into_iter() {
         if entity == Entity::root() {
+            continue;
+        }
+
+        if tree.is_ignored(entity) {
             continue;
         }
 
@@ -254,6 +271,8 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                     // Add an extra pixel to account to AA
                     let text_width = text_metrics.width().round() + 1.0;
                     let text_height = text_metrics.height().round() + 1.0;
+
+                    //println!("{} {} {} {}", entity, text, text_width, text_height);
 
                     if cx.style.width.get(entity) == Some(&Units::Auto) {
                         //let previous_min_width = entity.get_min_width(cx).value_or(0.0, 0.0);

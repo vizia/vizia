@@ -550,9 +550,10 @@ where
                 .width(Pixels(0.0))
                 .class("selection")
                 .position_type(PositionType::SelfDirected)
-                .bind(TextboxData::edit, |handle, edit| {
-                    handle.visibility(edit);
-                })
+                .visibility(TextboxData::edit)
+                // .bind(TextboxData::edit, |handle, edit| {
+                //     handle.visibility(edit);
+                // })
                 .entity();
 
             cx.emit(TextEvent::SetSelectionEntity(selection_entity));
@@ -562,9 +563,10 @@ where
                 .class("caret")
                 .position_type(PositionType::SelfDirected)
                 .width(Pixels(1.0))
-                .bind(TextboxData::edit, |handle, edit| {
-                    handle.visibility(edit);
-                })
+                .visibility(TextboxData::edit)
+                // .bind(TextboxData::edit, |handle, edit| {
+                //     handle.visibility(edit);
+                // })
                 .entity();
 
             cx.emit(TextEvent::SetCaretEntity(caret_entity));

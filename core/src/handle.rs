@@ -10,11 +10,19 @@ use crate::{
 macro_rules! set_style {
     ($name:ident, $t:ty) => {
         pub fn $name(self, value: impl Res<$t>) -> Self {
-            self.cx.style.$name.insert(self.entity, value.get_val(self.cx).clone().into());
+            value.set_or_bind(self.cx, self.entity, |cx, entity, v| {
+                cx.style.$name.insert(entity, v.into());
 
-            // TODO - Split this out
-            self.cx.style.needs_relayout = true;
-            self.cx.style.needs_redraw = true;
+                // TODO - Split this out
+                cx.style.needs_relayout = true;
+                cx.style.needs_redraw = true;
+            });
+
+            // self.cx.style.$name.insert(self.entity, value.get_val(self.cx).into());
+
+            // // TODO - Split this out
+            // self.cx.style.needs_relayout = true;
+            // self.cx.style.needs_redraw = true;
 
             self
         }
@@ -37,20 +45,20 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
-    pub fn bind<L, F>(self, lens: L, closure: F) -> Self
-    where
-        L: Lens,
-        <L as Lens>::Target: Data,
-        F: 'static + Fn(Handle<'_, T>, L),
-    {
-        let entity = self.entity();
-        Binding::new(self.cx, lens, move |cx, data| {
-            let new_handle = Handle { entity, p: Default::default(), cx };
+    // pub fn bind<L, F>(self, lens: L, closure: F) -> Self
+    // where
+    //     L: Lens,
+    //     <L as Lens>::Target: Data,
+    //     F: 'static + Fn(Handle<'_, T>, L),
+    // {
+    //     let entity = self.entity();
+    //     Binding::new(self.cx, lens, move |cx, data| {
+    //         let new_handle = Handle { entity, p: Default::default(), cx };
 
-            (closure)(new_handle, data);
-        });
-        self
-    }
+    //         (closure)(new_handle, data);
+    //     });
+    //     self
+    // }
 
     pub fn cursor(self, cursor_icon: CursorIcon) -> Self {
         self.cx.style.cursor.insert(self.entity, cursor_icon);
@@ -79,16 +87,29 @@ impl<'a, T> Handle<'a, T> {
     }
 
     pub fn checked(self, state: impl Res<bool>) -> Self {
-        let state = state.get_val(self.cx);
-        if let Some(pseudo_classes) = self.cx.style.pseudo_classes.get_mut(self.entity) {
-            pseudo_classes.set(PseudoClass::CHECKED, state);
-        } else {
-            let mut pseudoclass = PseudoClass::empty();
-            pseudoclass.set(PseudoClass::CHECKED, state);
-            self.cx.style.pseudo_classes.insert(self.entity, pseudoclass).unwrap();
-        }
+        state.set_or_bind(self.cx, self.entity, |cx, entity, val| {
+            println!("Do this!: {} {}", entity, val);
+            if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
+                pseudo_classes.set(PseudoClass::CHECKED, val);
+            } else {
+                let mut pseudoclass = PseudoClass::empty();
+                pseudoclass.set(PseudoClass::CHECKED, val);
+                cx.style.pseudo_classes.insert(entity, pseudoclass).unwrap();
+            }
 
-        self.cx.style.needs_restyle = true;
+            cx.style.needs_restyle = true;
+        });
+
+        // let state = state.get_val(self.cx);
+        // if let Some(pseudo_classes) = self.cx.style.pseudo_classes.get_mut(self.entity) {
+        //     pseudo_classes.set(PseudoClass::CHECKED, state);
+        // } else {
+        //     let mut pseudoclass = PseudoClass::empty();
+        //     pseudoclass.set(PseudoClass::CHECKED, state);
+        //     self.cx.style.pseudo_classes.insert(self.entity, pseudoclass).unwrap();
+        // }
+
+        // self.cx.style.needs_restyle = true;
 
         self
     }
@@ -100,16 +121,20 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
-    pub fn text(self, value: &str) -> Self {
-        if let Some(prev_data) = self.cx.style.text.get(self.entity) {
-            if prev_data == value {
-                return self;
+    pub fn text<U: ToString>(self, value: impl Res<U>) -> Self {
+        value.set_or_bind(self.cx, self.entity, |cx, entity, val| {
+            if let Some(prev_data) = cx.style.text.get(entity) {
+                if prev_data != &val.to_string() {
+                    cx.style.text.insert(entity, val.to_string());
+
+                    cx.style.needs_redraw = true;
+                }
+            } else {
+                cx.style.text.insert(entity, val.to_string());
+
+                cx.style.needs_redraw = true;
             }
-        }
-
-        self.cx.style.text.insert(self.entity, value.to_owned());
-
-        self.cx.style.needs_redraw = true;
+        });
 
         self
     }
@@ -131,18 +156,22 @@ impl<'a, T> Handle<'a, T> {
     }
 
     pub fn display<U: Clone + Into<Display>>(self, value: impl Res<U>) -> Self {
-        self.cx.style.display.insert(self.entity, value.get_val(self.cx).into());
+        value.set_or_bind(self.cx, self.entity, |cx, entity, val| {
+            cx.style.display.insert(entity, val.into());
 
-        self.cx.style.needs_relayout = true;
-        self.cx.style.needs_redraw = true;
+            cx.style.needs_relayout = true;
+            cx.style.needs_redraw = true;
+        });
 
         self
     }
 
     pub fn visibility<U: Clone + Into<Visibility>>(self, value: impl Res<U>) -> Self {
-        self.cx.style.visibility.insert(self.entity, value.get_val(self.cx).into());
+        value.set_or_bind(self.cx, self.entity, move |cx, entity, v| {
+            cx.style.visibility.insert(entity, v.into());
 
-        self.cx.style.needs_redraw = true;
+            cx.style.needs_redraw = true;
+        });
 
         self
     }
