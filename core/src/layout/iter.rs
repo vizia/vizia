@@ -101,6 +101,7 @@ impl<'a> DoubleEndedIterator for LayoutChildIterator<'a> {
     }
 }
 
+#[cfg(test)]
 mod test {
     use crate::{Entity, IdManager, LayoutChildIterator, Tree};
 
@@ -116,21 +117,21 @@ mod test {
         let c = mgr.create();
         let baa = mgr.create();
 
-        tree.add(a, Entity::root());
-        tree.add(b, Entity::root());
-        tree.add(ba, b);
-        tree.add(baa, ba);
-        tree.add(bb, b);
-        tree.add(c, Entity::root());
+        tree.add(a, Entity::root()).unwrap();
+        tree.add(b, Entity::root()).unwrap();
+        tree.add(ba, b).unwrap();
+        tree.add(baa, ba).unwrap();
+        tree.add(bb, b).unwrap();
+        tree.add(c, Entity::root()).unwrap();
         tree.set_ignored(b, true);
         tree.set_ignored(ba, true);
 
-        let mut iter = LayoutChildIterator::new(&mut tree, Entity::root());
+        let iter = LayoutChildIterator::new(&mut tree, Entity::root());
         let mut ground = vec![a, baa, bb, c];
         let vec: Vec<Entity> = iter.collect();
         assert_eq!(vec, ground);
 
-        let mut iter = LayoutChildIterator::new(&mut tree, Entity::root()).rev();
+        let iter = LayoutChildIterator::new(&mut tree, Entity::root()).rev();
         ground.reverse();
         let vec: Vec<Entity> = iter.collect();
         assert_eq!(vec, ground);
