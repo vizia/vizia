@@ -4,6 +4,7 @@ use std::fmt::{Debug, Display, Formatter};
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardContext;
 use femtovg::TextContext;
+use fnv::FnvHashMap;
 // use fluent_bundle::{FluentBundle, FluentResource};
 // use unic_langid::LanguageIdentifier;
 
@@ -20,7 +21,9 @@ pub struct Context {
     pub tree: Tree,
     pub current: Entity,
     pub count: usize,
-    pub views: HashMap<Entity, Box<dyn ViewHandler>>,
+    //pub views: HashMap<Entity, Box<dyn ViewHandler>>,
+    pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    //pub views: SparseSet<Box<dyn ViewHandler>>,
     pub data: SparseSet<ModelDataStore>,
     pub event_queue: VecDeque<Event>,
     pub listeners: HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
@@ -56,7 +59,7 @@ impl Context {
             tree: Tree::new(),
             current: Entity::root(),
             count: 0,
-            views: HashMap::new(),
+            views: FnvHashMap::default(),
             data: SparseSet::new(),
             style: Style::default(),
             cache,
@@ -85,6 +88,13 @@ impl Context {
         }
     }
 
+    /// Remove any extra children that were cached in the tree but are no longer required
+    pub fn remove_trailing_children(&mut self) {
+        while let Some(child) = self.tree.get_child(self.current, self.count) {
+            self.remove(child);
+        }
+    }
+
     pub fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
@@ -103,13 +113,16 @@ impl Context {
                 }
             }
 
-            //println!("Removing: {}", entity);
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.style.remove(*entity);
             self.data.remove(*entity);
             self.entity_manager.destroy(*entity);
             self.views.remove(entity);
+
+            if self.captured == *entity {
+                self.captured = Entity::null();
+            }
         }
     }
 

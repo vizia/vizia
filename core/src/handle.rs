@@ -3,8 +3,8 @@ use std::marker::PhantomData;
 use morphorm::{LayoutType, PositionType, Units};
 
 use crate::{
-    style::Overflow, Abilities, BorderCornerShape, Color, Context, CursorIcon, Display, Entity,
-    PseudoClass, Res, Visibility,
+    style::Overflow, Abilities, Binding, BorderCornerShape, Color, Context, CursorIcon, Data,
+    Display, Entity, Lens, PseudoClass, Res, Visibility,
 };
 
 macro_rules! set_style {
@@ -30,6 +30,21 @@ pub struct Handle<'a, T> {
 impl<'a, T> Handle<'a, T> {
     pub fn entity(&self) -> Entity {
         self.entity
+    }
+
+    pub fn bind<L, F>(self, lens: L, closure: F) -> Self
+    where
+        L: Lens,
+        <L as Lens>::Target: Data,
+        F: 'static + Fn(Handle<'_, T>, L),
+    {
+        let entity = self.entity();
+        Binding::new(self.cx, lens, move |cx, data| {
+            let new_handle = Handle { entity, p: Default::default(), cx };
+
+            (closure)(new_handle, data);
+        });
+        self
     }
 
     pub fn cursor(self, cursor_icon: CursorIcon) -> Self {

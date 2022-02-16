@@ -2,9 +2,7 @@ use std::marker::PhantomData;
 
 use keyboard_types::Code;
 
-use crate::{
-    Binding, Context, Data, Handle, Index, Lens, LensExt, Model, Then, TreeExt, View, WindowEvent,
-};
+use crate::{Binding, Context, Data, Handle, Index, Lens, LensExt, Model, Then, View, WindowEvent};
 
 /// A view for creating a list of items from a binding to a Vec<T>
 pub struct List<L, T: 'static>
@@ -22,7 +20,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
     /// Creates a new ListView with a binding to the given lens and a template for constructing the list items
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, usize>>),
+        F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, T>>),
         <L as Lens>::Source: Model,
     {
         //let item_template = Rc::new(item);
@@ -38,20 +36,8 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
             Binding::new(cx, lens.clone(), move |cx, list| {
                 // If the number of list items is different to the number of children of the ListView
                 // then remove and rebuild all the children
-                let list_len = list.get(cx).len();
-                let children = cx
-                    .current
-                    .child_iter(&cx.tree)
-                    .enumerate()
-                    .filter(|(child, _)| *child != 0)
-                    .collect::<Vec<_>>();
-                if children.len() != list_len {
-                    //println!("Remove children");
-                    //cx.remove_children(cx.current);
-                    for (_, child) in children {
-                        cx.remove(child);
-                    }
-                }
+                let list_len =
+                    list.view(cx.data().unwrap(), |lst| lst.map(|lst| lst.len()).unwrap_or(0));
 
                 for index in 0..list_len {
                     let ptr = list.clone().index(index);

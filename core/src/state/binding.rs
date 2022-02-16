@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use morphorm::{LayoutType, PositionType};
 
 use crate::{
-    Color, Context, Display, Entity, Handle, LensExt, StateStore, TreeExt, Units, View, Visibility,
+    Color, Context, Display, Handle, LensExt, StateStore, TreeExt, Units, View, Visibility,
 };
 
 use crate::{Data, Lens};
@@ -14,8 +14,8 @@ where
     L: Lens,
 {
     lens: L,
-    parent: Entity,
-    count: usize,
+    // parent: Entity,
+    // count: usize,
     builder: Option<Box<dyn Fn(&mut Context, L)>>,
 }
 
@@ -29,14 +29,7 @@ where
     where
         F: 'static + Fn(&mut Context, L),
     {
-        let parent = cx.current;
-
-        let binding = Self {
-            lens: lens.clone(),
-            parent,
-            count: cx.count + 1,
-            builder: Some(Box::new(builder)),
-        };
+        let binding = Self { lens: lens.clone(), builder: Some(Box::new(builder)) };
 
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
             id
@@ -48,7 +41,7 @@ where
             id
         };
 
-        let ancestors = parent.parent_iter(&cx.tree).collect::<HashSet<_>>();
+        let ancestors = cx.current.parent_iter(&cx.tree).collect::<HashSet<_>>();
 
         for entity in id.parent_iter(&cx.tree) {
             if let Some(model_data_store) = cx.data.get_mut(entity) {
@@ -65,11 +58,11 @@ where
 
                         let model = model_data.downcast_ref::<L::Source>().unwrap();
 
-                        let old = lens.view(model, |t| t.clone());
+                        let old = lens.view(model, |t| t.cloned());
 
                         model_data_store.lenses.insert(
                             TypeId::of::<L>(),
-                            Box::new(StateStore { entity: id, lens, old: old.clone(), observers }),
+                            Box::new(StateStore { entity: id, lens, old, observers }),
                         );
                     }
 
@@ -82,27 +75,35 @@ where
 
         cx.count += 1;
 
+        let prev = cx.current;
+        let prev_count = cx.count;
+        cx.current = id;
+        cx.count = 0;
         // Call the body of the binding
         if let Some(mut view_handler) = cx.views.remove(&id) {
             view_handler.body(cx);
             cx.views.insert(id, view_handler);
         }
+        cx.current = prev;
+        cx.count = prev_count;
 
         let _: Handle<Self> = Handle { entity: id, p: Default::default(), cx }
             .width(Units::Stretch(1.0))
             .height(Units::Stretch(1.0))
-            .background_color(Color::blue())
-            .display(Display::None);
+            .display(Display::Contents);
+        //.background_color(Color::blue());
+        //.display(Display::None);
     }
 }
 
 impl<L: 'static + Lens> View for Binding<L> {
     fn body<'a>(&mut self, cx: &'a mut Context) {
+        cx.remove_trailing_children();
         if let Some(builder) = self.builder.take() {
             //let prev = cx.current;
             //let count = cx.count;
-            cx.current = self.parent;
-            cx.count = self.count;
+            //cx.current = self.parent;
+            //cx.count = self.count;
             (builder)(cx, self.lens.clone());
             //cx.current = prev;
             //cx.count = count;

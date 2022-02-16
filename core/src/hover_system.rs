@@ -25,8 +25,12 @@ pub fn apply_hover(cx: &mut Context) {
         }
 
         // Skip non-displayed widgets
-        if cx.cache.get_display(entity) == Display::None {
-            continue;
+        match cx.cache.get_display(entity) {
+            Display::None | Display::Contents => {
+                continue;
+            }
+
+            _ => {}
         }
 
         // Skip non-hoverable widgets

@@ -13,7 +13,7 @@ pub struct StateStore<L: Lens, T> {
     // The entity which declared the binding
     pub entity: Entity,
     pub lens: L,
-    pub old: T,
+    pub old: Option<T>,
     pub observers: HashSet<Entity>,
 }
 
@@ -28,8 +28,11 @@ where
 
     fn update(&mut self, model: &Box<dyn ModelData>) -> bool {
         if let Some(data) = model.downcast_ref::<L::Source>() {
-            let result =
-                self.lens.view(data, |t| if t.same(&self.old) { None } else { Some(t.clone()) });
+            let result = self.lens.view(data, |t| match (&self.old, t) {
+                (Some(a), Some(b)) if a.same(b) => None,
+                (None, None) => None,
+                _ => Some(t.cloned()),
+            });
             if let Some(new_data) = result {
                 self.old = new_data;
                 return true;

@@ -17,6 +17,7 @@ femtovg = {version = "0.3.0", default-features = false}
 morphorm = {git = "https://github.com/geom3trik/morphorm", features = ["rounding"]}
 # morphorm = {path = "../../morphorm", features = ["rounding"]}
 bitflags = "1.3.2"
+fnv = "1.0.7"
 keyboard-types = { version = "0.5.0", default-features = false }
 # fluent-bundle = "0.15.2"
 # fluent-langneg = "0.13"
