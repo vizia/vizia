@@ -11,6 +11,9 @@ pub(crate) mod node;
 
 pub(crate) mod hierarchy;
 
+pub(crate) mod iter;
+pub(crate) use iter::{LayoutChildIterator, LayoutTreeIterator};
+
 use crate::{Context, Event, Propagation, Tree, WindowEvent};
 
 pub fn geometry_changed(cx: &mut Context, tree: &Tree) {

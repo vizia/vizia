@@ -908,6 +908,7 @@ fn parse_display<'i, 't>(
         Token::Ident(name) => match name.as_ref() {
             "none" => Display::None,
             "flex" => Display::Flex,
+            "contents" => Display::Contents,
 
             _ => {
                 return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());

@@ -25,6 +25,7 @@ pub struct Tree {
     pub first_child: Vec<Option<Entity>>,
     pub next_sibling: Vec<Option<Entity>>,
     pub prev_sibling: Vec<Option<Entity>>,
+    pub ignored: Vec<bool>,
     pub changed: bool,
 }
 
@@ -36,6 +37,7 @@ impl Tree {
             first_child: vec![None],
             next_sibling: vec![None],
             prev_sibling: vec![None],
+            ignored: vec![false],
             changed: true,
         }
     }
@@ -103,6 +105,11 @@ impl Tree {
         }
 
         Some(r)
+    }
+
+    /// Returns true if the node should be skipped by layout
+    pub fn is_ignored(&self, entity: Entity) -> bool {
+        self.ignored.get(entity.index()).map_or_else(|| false, |ignored| *ignored)
     }
 
     /// Returns the parent of an entity.
@@ -216,6 +223,7 @@ impl Tree {
         self.next_sibling[entity_index] = None;
         self.prev_sibling[entity_index] = None;
         self.parent[entity_index] = None;
+        self.ignored[entity_index] = false;
 
         // Set the changed flag
         self.changed = true;
@@ -422,6 +430,10 @@ impl Tree {
         self.changed = true;
     }
 
+    pub fn set_ignored(&mut self, entity: Entity, flag: bool) {
+        self.ignored.get_mut(entity.index()).and_then(|ignored| Some(*ignored = flag));
+    }
+
     /// Adds an entity to the tree with the specified parent.
     pub fn add(&mut self, entity: Entity, parent: Entity) -> Result<(), TreeError> {
         if entity == Entity::null() || parent == Entity::null() {
@@ -441,12 +453,14 @@ impl Tree {
             self.first_child.resize(entity_index + 1, None);
             self.next_sibling.resize(entity_index + 1, None);
             self.prev_sibling.resize(entity_index + 1, None);
+            self.ignored.resize(entity_index + 1, false);
         }
 
         self.parent[entity_index] = Some(parent);
         self.first_child[entity_index] = None;
         self.next_sibling[entity_index] = None;
         self.prev_sibling[entity_index] = None;
+        self.ignored[entity_index] = false;
 
         // If the parent has no first child then this entity is the first child
         if self.first_child[parent_index] == None {
@@ -477,6 +491,6 @@ impl<'a> IntoIterator for &'a Tree {
     type IntoIter = TreeIterator<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
-        TreeIterator { tree: self, current_node: Some(Entity::root()) }
+        TreeIterator::full(self)
     }
 }

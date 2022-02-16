@@ -391,8 +391,12 @@ impl Application {
                                 }
 
                                 // Skip non-displayed widgets
-                                if context.cache.get_display(entity) == Display::None {
-                                    continue;
+                                match context.cache.get_display(entity) {
+                                    Display::None | Display::Contents => {
+                                        continue;
+                                    }
+
+                                    _=> {}
                                 }
 
                                 // Skip widgets that have 0 opacity

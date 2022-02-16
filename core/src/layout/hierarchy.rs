@@ -1,30 +1,25 @@
 use morphorm::Hierarchy;
 
-use crate::{ChildIterator, Entity, TreeIterator};
+use crate::{Entity, LayoutChildIterator, LayoutTreeIterator};
 
 use std::iter::Rev;
 
 impl<'a> Hierarchy<'a> for crate::Tree {
     type Item = Entity;
-    type DownIter = TreeIterator<'a>;
-    type UpIter = Rev<std::vec::IntoIter<Entity>>;
-    type ChildIter = ChildIterator<'a>;
+    type DownIter = LayoutTreeIterator<'a>;
+    type UpIter = Rev<LayoutTreeIterator<'a>>;
+    type ChildIter = LayoutChildIterator<'a>;
 
     fn down_iter(&'a self) -> Self::DownIter {
-        TreeIterator { tree: self, current_node: Some(Entity::root()) }
+        LayoutTreeIterator::full(self)
     }
 
     fn up_iter(&'a self) -> Self::UpIter {
-        let iterator = TreeIterator { tree: self, current_node: Some(Entity::root()) };
-        iterator.collect::<Vec<_>>().into_iter().rev()
+        LayoutTreeIterator::full(self).rev()
     }
 
     fn child_iter(&'a self, node: Self::Item) -> Self::ChildIter {
-        ChildIterator {
-            tree: self,
-            current_forward: self.get_first_child(node),
-            current_backward: self.get_last_child(node),
-        }
+        LayoutChildIterator::new(self, node)
     }
 
     fn is_first_child(&self, node: Self::Item) -> bool {
