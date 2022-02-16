@@ -7,6 +7,7 @@ use crate::Interpolator;
 pub enum Display {
     None,
     Flex,
+    Contents,
 }
 
 impl Default for Display {

@@ -119,6 +119,8 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
         let opacity = cx.style.opacity.get(entity).cloned().unwrap_or_default();
 
         cx.cache.set_opacity(entity, opacity.0 * parent_opacity);
+
+        cx.tree.set_ignored(entity, cx.cache.get_display(entity) == Display::Contents);
     }
 }
 

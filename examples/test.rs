@@ -1,43 +1,26 @@
 use vizia::*;
 
 const STYLE: &str = r#"
-
-"#;
-
-#[derive(Default, Lens)]
-pub struct AppData {
-    value: bool,
-}
-
-impl Model for AppData {
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.message.downcast() {
-            match app_event {
-                AppEvent::ToggleValue => {
-                    self.value ^= true;
-                }
-            }
-        }
+    .test {
+        display: contents;
     }
-}
-
-#[derive(Debug)]
-pub enum AppEvent {
-    ToggleValue,
-}
+"#;
 
 fn main() {
     Application::new(WindowDescription::new().with_title("Test"), |cx| {
         cx.add_theme(STYLE);
 
-        AppData::default().build(cx);
         HStack::new(cx, |cx| {
-            Label::new(cx, "\u{e88a}");
+            HStack::new(cx, |cx| {
+                HStack::new(cx, |_| {}).size(Stretch(1.0)).background_color(Color::blue());
+            })
+            .class("test")
+            //.display(Display::Contents)
+            .size(Pixels(80.0))
+            .background_color(Color::green());
         })
-        .font_size(50.0)
-        .font("material");
+        .size(Pixels(100.0))
+        .background_color(Color::red());
     })
     .run();
 }
-
-// .border_shape_top_left(BorderCornerShape::Bevel)
