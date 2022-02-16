@@ -49,10 +49,11 @@ impl Popup {
     {
         Self {}
             .build2(cx, |cx| {
+                let entity = cx.current;
                 Binding::new(cx, PopupData::is_open, move |cx, flag| {
                     let is_open = *flag.get(cx);
 
-                    cx.current.set_visibility(
+                    entity.set_visibility(
                         cx,
                         if is_open { Visibility::Visible } else { Visibility::Invisible },
                     );
@@ -89,6 +90,8 @@ impl Popup {
                     }
                 });
             })
+            // This line breaks it
+            //.visibility(PopupData::is_open)
             .position_type(PositionType::SelfDirected)
             .z_order(100)
     }
