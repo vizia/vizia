@@ -47,14 +47,11 @@ fn main() {
             AppData { value: 0.2 }.build(cx);
         }
 
-        Binding::new(cx, AppData::value, |cx, value| {
-            //let val = *value.get(cx);
-            Knob::new(cx, 0.5, value, false).on_changing(|knob, cx| {
-                cx.emit(AppEvent::SetValue(knob.normalized_value));
-            });
-            Knob::new(cx, 0.5, value, true).on_changing(|knob, cx| {
-                cx.emit(AppEvent::SetValue(knob.normalized_value));
-            });
+        Knob::new(cx, 0.5, AppData::value, false).on_changing(|cx, val| {
+            cx.emit(AppEvent::SetValue(val));
+        });
+        Knob::new(cx, 0.5, AppData::value, true).on_changing(|cx, val| {
+            cx.emit(AppEvent::SetValue(val));
         });
 
         //ArcTrack::new(cx).width(Pixels(50.0)).height(Pixels(50.0)).space(Pixels(20.0));

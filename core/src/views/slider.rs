@@ -5,23 +5,6 @@ use crate::{
     Overflow, Units::*, View, WindowEvent, ZStack,
 };
 
-#[derive(Debug, Default, Lens)]
-pub struct SliderData {
-    pub value: f32,
-}
-
-impl Model for SliderData {
-    fn event(&mut self, _: &mut Context, event: &mut crate::Event) {
-        if let Some(slider_event) = event.message.downcast() {
-            match slider_event {
-                SliderEvent::SetValue(value) => {
-                    self.value = *value;
-                }
-            }
-        }
-    }
-}
-
 #[derive(Debug)]
 enum SliderEventInternal {
     SetThumbSize(f32, f32),
@@ -72,11 +55,6 @@ impl Model for SliderDataInternal {
     }
 }
 
-#[derive(Debug)]
-pub enum SliderEvent {
-    SetValue(f32),
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Data)]
 pub enum Orientation {
     Horizontal,
@@ -89,8 +67,9 @@ impl Default for Orientation {
     }
 }
 
-pub struct Slider {
+pub struct Slider<L> {
     is_dragging: bool,
+    lens: L,
 
     // Event sent when the slider value has changed
     on_change: Option<Box<dyn Fn(&mut Context, f32)>>,
@@ -102,13 +81,20 @@ pub struct Slider {
     on_max: Option<Box<dyn Fn(&mut Context)>>,
 }
 
-impl Slider {
-    pub fn new(cx: &mut Context, init: f32, orientation: Orientation) -> Handle<Self> {
-        Self { is_dragging: false, on_change: None, on_changing: None, on_min: None, on_max: None }
+impl<L> Slider<L>
+where
+    L: Lens<Target = f32>
+{
+    pub fn new(cx: &mut Context, lens: L, orientation: Orientation) -> Handle<Self> {
+        Self {
+            lens: lens.clone(),
+            is_dragging: false,
+            on_change: None,
+            on_changing: None,
+            on_min: None,
+            on_max: None
+        }
             .build2(cx, move |cx| {
-                // Create some slider data
-                SliderData { value: init.clamp(0.0, 1.0) }.build(cx);
-
                 // Only create this if it doesn't already exist otherwise it resets the thumb_width
                 // This causes a very subtle bug:
                 //      When the slider is updated the style data doesn't change, which means the size doesn't change
@@ -123,82 +109,97 @@ impl Slider {
                 }
 
                 // Add the various slider components using bindings to the slider data
-                Binding::new(cx, SliderData::value, |cx, value| {
-                    Binding::new(cx, SliderDataInternal::root, move |cx, slider_data_internal| {
-                        let value = value.clone();
-                        ZStack::new(cx, move |cx| {
-                            let thumb_size = slider_data_internal.get(cx).thumb_size;
+                Binding::new(cx, SliderDataInternal::root, move |cx, slider_data_internal| {
+                    let lens = lens.clone();
+                    ZStack::new(cx, move |cx| {
+                        let thumb_size = slider_data_internal.get(cx).thumb_size;
+                        let orientation = slider_data_internal.get(cx).orientation;
+                        let size = slider_data_internal.get(cx).size;
 
-                            let val = *value.get(cx);
-                            let size = slider_data_internal.get(cx).size;
-                            let min = thumb_size / size;
-                            let max = 1.0;
-                            let dx = min + val * (max - min);
-                            let px = val * (1.0 - (thumb_size / size));
+                        match orientation {
+                            Orientation::Horizontal => {
+                                //(Percentage(dx * 100.0), Stretch(1.0))
+                                Element::new(cx)
+                                    .height(Stretch(1.0))
+                                    .left(Pixels(0.0))
+                                    .right(Stretch(1.0))
+                                    .class("active")
+                                    .bind(lens.clone(), move |handle, value| {
+                                        let val = *value.get(handle.cx);
+                                        let min = thumb_size / size;
+                                        let max = 1.0;
+                                        let dx = min + val * (max - min);
 
-                            let orientation = slider_data_internal.get(cx).orientation;
+                                        handle.width(Percentage(dx * 100.0));
+                                    });
 
-                            match orientation {
-                                Orientation::Horizontal => {
-                                    //(Percentage(dx * 100.0), Stretch(1.0))
-                                    Element::new(cx)
-                                        .width(Percentage(dx * 100.0))
-                                        .height(Stretch(1.0))
-                                        .left(Pixels(0.0))
-                                        .right(Stretch(1.0))
-                                        .class("active");
+                                Element::new(cx)
+                                    .right(Stretch(1.0))
+                                    .top(Stretch(1.0))
+                                    .bottom(Stretch(1.0))
+                                    .overflow(Overflow::Visible)
+                                    .class("thumb")
+                                    .on_geo_changed(|cx, geo| {
+                                        if geo.contains(GeometryChanged::WIDTH_CHANGED) {
+                                            cx.emit(SliderEventInternal::SetThumbSize(
+                                                cx.cache.get_width(cx.current),
+                                                cx.cache.get_height(cx.current),
+                                            ));
+                                        }
+                                    })
+                                    .bind(lens.clone(), move |handle, value| {
+                                        let val = *value.get(handle.cx);
+                                        let px = val * (1.0 - (thumb_size / size));
 
-                                    Element::new(cx)
-                                        .left(Percentage(100.0 * px))
-                                        .right(Stretch(1.0))
-                                        .top(Stretch(1.0))
-                                        .bottom(Stretch(1.0))
-                                        .overflow(Overflow::Visible)
-                                        .class("thumb")
-                                        .on_geo_changed(|cx, geo| {
-                                            if geo.contains(GeometryChanged::WIDTH_CHANGED) {
-                                                cx.emit(SliderEventInternal::SetThumbSize(
-                                                    cx.cache.get_width(cx.current),
-                                                    cx.cache.get_height(cx.current),
-                                                ));
-                                            }
-                                        });
-                                }
+                                        handle.left(Percentage(100.0 * px));
+                                    });
+                            }
 
-                                Orientation::Vertical => {
-                                    //(Stretch(1.0), Percentage(dx * 100.0))
-                                    Element::new(cx)
-                                        .height(Percentage(dx * 100.0))
-                                        .width(Stretch(1.0))
-                                        .top(Stretch(1.0))
-                                        .bottom(Pixels(0.0))
-                                        .class("active");
+                            Orientation::Vertical => {
+                                //(Stretch(1.0), Percentage(dx * 100.0))
+                                Element::new(cx)
+                                    .width(Stretch(1.0))
+                                    .top(Stretch(1.0))
+                                    .bottom(Pixels(0.0))
+                                    .class("active")
+                                    .bind(lens.clone(), move |handle, value| {
+                                        let val = *value.get(handle.cx);
+                                        let min = thumb_size / size;
+                                        let max = 1.0;
+                                        let dx = min + val * (max - min);
 
-                                    Element::new(cx)
-                                        .bottom(Percentage(100.0 * px))
-                                        .top(Stretch(1.0))
-                                        .left(Stretch(1.0))
-                                        .right(Stretch(1.0))
-                                        .overflow(Overflow::Visible)
-                                        .class("thumb")
-                                        .on_geo_changed(|cx, geo| {
-                                            if geo.contains(GeometryChanged::HEIGHT_CHANGED) {
-                                                cx.emit(SliderEventInternal::SetThumbSize(
-                                                    cx.cache.get_width(cx.current),
-                                                    cx.cache.get_height(cx.current),
-                                                ));
-                                            }
-                                        });
-                                }
-                            };
-                        });
+                                        handle.height(Percentage(dx * 100.0));
+                                    });
+
+                                Element::new(cx)
+                                    .top(Stretch(1.0))
+                                    .left(Stretch(1.0))
+                                    .right(Stretch(1.0))
+                                    .overflow(Overflow::Visible)
+                                    .class("thumb")
+                                    .on_geo_changed(|cx, geo| {
+                                        if geo.contains(GeometryChanged::HEIGHT_CHANGED) {
+                                            cx.emit(SliderEventInternal::SetThumbSize(
+                                                cx.cache.get_width(cx.current),
+                                                cx.cache.get_height(cx.current),
+                                            ));
+                                        }
+                                    })
+                                    .bind(lens.clone(), move |handle, value| {
+                                        let val = *value.get(handle.cx);
+                                        let px = val * (1.0 - (thumb_size / size));
+
+                                        handle.bottom(Percentage(100.0 * px));
+                                    });
+                            }
+                        };
                     });
                 });
             })
     }
 }
 
-impl View for Slider {
+impl<L: 'static> View for Slider<L> {
     fn element(&self) -> Option<String> {
         Some("slider".to_string())
     }
@@ -230,7 +231,12 @@ impl View for Slider {
                         };
 
                         dx = dx.clamp(0.0, 1.0);
-                        cx.emit(SliderEvent::SetValue(dx));
+
+                        if let Some(callback) = self.on_changing.take() {
+                            (callback)(cx, dx);
+
+                            self.on_changing = Some(callback);
+                        }
                     }
                 }
 
@@ -265,8 +271,6 @@ impl View for Slider {
 
                                 self.on_changing = Some(callback);
                             }
-
-                            cx.emit(SliderEvent::SetValue(dx));
                         }
                     }
                 }
@@ -277,7 +281,7 @@ impl View for Slider {
     }
 }
 
-impl<'a> Handle<'a, Slider> {
+impl<'a, L: 'static> Handle<'a, Slider<L>> {
     /// Set the callback triggered when the slider value has changed.
     ///
     /// Takes a closure which provides the current value and returns an event to be sent when the slider
@@ -297,7 +301,7 @@ impl<'a> Handle<'a, Slider> {
         F: 'static + Fn(&mut Context, f32),
     {
         if let Some(slider) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider<L>>())
         {
             slider.on_change = Some(Box::new(callback));
         }
@@ -323,7 +327,7 @@ impl<'a> Handle<'a, Slider> {
         F: 'static + Fn(&mut Context, f32),
     {
         if let Some(slider) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider<L>>())
         {
             slider.on_changing = Some(Box::new(callback));
         }
@@ -350,7 +354,7 @@ impl<'a> Handle<'a, Slider> {
         F: 'static + Fn(&mut Context),
     {
         if let Some(slider) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider<L>>())
         {
             slider.on_min = Some(Box::new(callback));
         }
@@ -377,7 +381,7 @@ impl<'a> Handle<'a, Slider> {
         F: 'static + Fn(&mut Context),
     {
         if let Some(slider) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider<L>>())
         {
             slider.on_max = Some(Box::new(callback));
         }

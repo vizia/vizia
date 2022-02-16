@@ -45,20 +45,20 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
-    // pub fn bind<L, F>(self, lens: L, closure: F) -> Self
-    // where
-    //     L: Lens,
-    //     <L as Lens>::Target: Data,
-    //     F: 'static + Fn(Handle<'_, T>, L),
-    // {
-    //     let entity = self.entity();
-    //     Binding::new(self.cx, lens, move |cx, data| {
-    //         let new_handle = Handle { entity, p: Default::default(), cx };
+    pub fn bind<L, F>(self, lens: L, closure: F) -> Self
+    where
+        L: Lens,
+        <L as Lens>::Target: Data,
+        F: 'static + Fn(Handle<'_, T>, L),
+    {
+        let entity = self.entity();
+        Binding::new(self.cx, lens, move |cx, data| {
+            let new_handle = Handle { entity, p: Default::default(), cx };
 
-    //         (closure)(new_handle, data);
-    //     });
-    //     self
-    // }
+            (closure)(new_handle, data);
+        });
+        self
+    }
 
     pub fn cursor(self, cursor_icon: CursorIcon) -> Self {
         self.cx.style.cursor.insert(self.entity, cursor_icon);
