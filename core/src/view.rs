@@ -133,7 +133,7 @@ pub trait View: 'static + Sized {
 
         let parent = cx
             .tree
-            .get_parent(entity)
+            .get_layout_parent(entity)
             .expect(&format!("Failed to find parent somehow: {}", entity));
 
         let parent_width = cx.cache.get_width(parent);

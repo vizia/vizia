@@ -31,6 +31,6 @@ impl<'a> Hierarchy<'a> for crate::Tree {
     }
 
     fn parent(&self, node: Self::Item) -> Option<Self::Item> {
-        self.get_parent(node)
+        self.get_layout_parent(node)
     }
 }
