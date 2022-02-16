@@ -12,7 +12,7 @@ pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
-        let parent = tree.get_parent(entity).unwrap();
+        let parent = tree.get_layout_parent(entity).unwrap();
 
         if let Some(z_order) = cx.style.z_order.get(entity) {
             cx.cache.set_z_index(entity, *z_order);
@@ -30,7 +30,7 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
-        let parent = tree.get_parent(entity).unwrap();
+        let parent = tree.get_layout_parent(entity).unwrap();
 
         let parent_clip_region = cx.cache.get_clip_region(parent);
         //let parent_border_width = cx.style.border_width.get(parent).cloned().unwrap_or_default().value_or(0.0, 0.0);
@@ -92,7 +92,7 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
-        let parent = entity.parent(tree).unwrap();
+        let parent = tree.get_layout_parent(entity).unwrap();
 
         if cx.cache.get_visibility(parent) == Visibility::Invisible {
             cx.cache.set_visibility(entity, Visibility::Invisible);
@@ -119,8 +119,6 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
         let opacity = cx.style.opacity.get(entity).cloned().unwrap_or_default();
 
         cx.cache.set_opacity(entity, opacity.0 * parent_opacity);
-
-        cx.tree.set_ignored(entity, cx.cache.get_display(entity) == Display::Contents);
     }
 }
 
@@ -169,7 +167,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             paint.set_font_size(font_size);
             paint.set_font(&[font_id.clone()]);
 
-            let parent = cx.tree.get_parent(entity).expect("Failed to find parent somehow");
+            let parent = cx.tree.get_layout_parent(entity).expect("Failed to find parent somehow");
 
             let parent_width = cx.cache.get_width(parent);
 
@@ -281,7 +279,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
 pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
-        if let Some(parent) = entity.parent(tree) {
+        if let Some(parent) = tree.get_layout_parent(entity) {
             cx.style.disabled.inherit_inline(entity, parent);
 
             cx.style.font_color.inherit_inline(entity, parent);
@@ -293,7 +291,7 @@ pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
 
 pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
-        if let Some(parent) = entity.parent(tree) {
+        if let Some(parent) = tree.get_layout_parent(entity) {
             cx.style.font_color.inherit_shared(entity, parent);
             cx.style.font_size.inherit_shared(entity, parent);
             cx.style.font.inherit_shared(entity, parent);
@@ -427,7 +425,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
                         // Get the parent
                         // Contrust the selector for the parent
                         // Check if the parent selector matches the rule_seletor
-                        if let Some(parent) = relation_entity.parent(tree) {
+                        if let Some(parent) = tree.get_layout_parent(relation_entity) {
                             if !check_match(cx, parent, rule_selector) {
                                 continue 'rule_loop;
                             }
@@ -445,6 +443,9 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
                         // If none of them do, move on to the next rule
                         for ancestor in relation_entity.parent_iter(tree) {
                             if ancestor == relation_entity {
+                                continue;
+                            }
+                            if tree.is_ignored(ancestor) {
                                 continue;
                             }
 

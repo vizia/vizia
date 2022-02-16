@@ -32,6 +32,11 @@ impl<'a, T> Handle<'a, T> {
         self.entity
     }
 
+    pub fn ignore(self) -> Self {
+        self.cx.tree.set_ignored(self.entity, true);
+        self
+    }
+
     pub fn bind<L, F>(self, lens: L, closure: F) -> Self
     where
         L: Lens,
