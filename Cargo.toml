@@ -82,6 +82,10 @@ path = "examples/lists/sortable_list.rs"
 name = "static_list"
 path = "examples/lists/static_list.rs"
 
+[[example]]
+name = "rearrangable"
+path = "examples/controls/rearrangable.rs"
+
 
 [[example]]
 name = "7guis_counter"
