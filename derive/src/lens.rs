@@ -355,7 +355,5 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
         }
     };
 
-    println!("{}", expanded);
-
     Ok(expanded)
 }
