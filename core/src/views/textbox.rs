@@ -516,10 +516,11 @@ where
     pub fn new<'a>(cx: &'a mut Context, lens: L) -> Handle<'a, Self> {
         Self { lens: lens.clone() }.build2(cx, move |cx| {
             Binding::new(cx, lens.clone(), |cx, text| {
+                let text = text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
                         let td = TextboxData {
-                            text: text.get(cx).to_string(),
+                            text: text.clone(),
                             selection: text_data.selection,
                             caret_entity: text_data.caret_entity,
                             selection_entity: text_data.selection_entity,
@@ -531,16 +532,16 @@ where
                         let real_current = cx.current;
                         cx.current = cx.current.parent(&cx.tree).unwrap();
                         td.build(cx);
-                        cx.current.set_text(cx, &text.get(cx).to_string());
+                        cx.current.set_text(cx, &text);
                         cx.current = real_current;
                     }
                 } else {
-                    let mut td = TextboxData::new(text.get(cx).to_string());
+                    let mut td = TextboxData::new(text.clone());
                     td.set_caret(cx);
                     let real_current = cx.current;
                     cx.current = cx.current.parent(&cx.tree).unwrap();
                     td.build(cx);
-                    cx.current.set_text(cx, &text.get(cx).to_string());
+                    cx.current.set_text(cx, &text);
                     cx.current = real_current;
                 }
             });

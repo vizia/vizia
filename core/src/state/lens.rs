@@ -21,6 +21,12 @@ impl<T> AsRef<T> for DerefContainer<T> {
     }
 }
 
+impl<T> DerefContainer<T> {
+    pub fn take(self) -> T {
+        self.0
+    }
+}
+
 /// A Lens allows the construction of a reference to a field of a struct.
 ///
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.

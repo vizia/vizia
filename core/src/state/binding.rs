@@ -148,6 +148,9 @@ macro_rules! impl_res_simple {
 
 pub trait Res<T> {
     fn get_val(&self, cx: &Context) -> T;
+    fn get_val_fallible(&self, cx: &Context) -> Option<T> {
+        Some(self.get_val(cx))
+    }
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
         F: 'static + Fn(&mut Context, Entity, T);
@@ -172,11 +175,15 @@ impl_res_simple!(f64);
 
 impl<T, L> Res<T> for L
 where
-    L: Lens<Target = T>,
+    L: Lens<Target = T> + LensExt,
     T: Clone + Data,
 {
     fn get_val(&self, cx: &Context) -> T {
-        (*self.get(cx)).clone()
+        self.get(cx).take()
+    }
+
+    fn get_val_fallible(&self, cx: &Context) -> Option<T> {
+        self.get_fallible(cx).map(|x| x.take())
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -188,8 +195,9 @@ where
         cx.current = entity;
         cx.count = 0;
         Binding::new(cx, self.clone(), move |cx, val| {
-            let v = val.get_val(cx);
-            (closure)(cx, entity, v);
+            if let Some(v) = val.get_val_fallible(cx) {
+                (closure)(cx, entity, v);
+            }
         });
         cx.current = prev_current;
         cx.count = prev_count;
