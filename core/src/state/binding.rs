@@ -14,8 +14,6 @@ where
     L: Lens,
 {
     lens: L,
-    // parent: Entity,
-    // count: usize,
     builder: Option<Box<dyn Fn(&mut Context, L)>>,
 }
 
@@ -79,6 +77,7 @@ where
         let prev_count = cx.count;
         cx.current = id;
         cx.count = 0;
+
         // Call the body of the binding
         if let Some(mut view_handler) = cx.views.remove(&id) {
             view_handler.body(cx);
@@ -91,43 +90,22 @@ where
             .width(Units::Stretch(1.0))
             .height(Units::Stretch(1.0))
             .ignore();
-        //.background_color(Color::blue());
-        //.display(Display::None);
     }
 }
 
 impl<L: 'static + Lens> View for Binding<L> {
+    fn element(&self) -> Option<String> {
+        Some("binding".to_string())
+    }
+
     fn body<'a>(&mut self, cx: &'a mut Context) {
         cx.remove_trailing_children();
         if let Some(builder) = self.builder.take() {
-            //let prev = cx.current;
-            //let count = cx.count;
-            //cx.current = self.parent;
-            //cx.count = self.count;
             (builder)(cx, self.lens.clone());
-            //cx.current = prev;
-            //cx.count = count;
             self.builder = Some(builder);
         }
     }
 }
-
-// #[derive(Clone, Copy)]
-// pub struct Field<L> {
-//     lens: L,
-// }
-
-// impl<L: Lens> Field<L>
-// where
-//     <L as Lens>::Source: 'static,
-// {
-//     pub fn get<'a>(&self, cx: &'a Context) -> &'a L::Target {
-//         self.lens.view(cx.data().expect(&format!(
-//             "Failed to get {:?} for entity: {:?}. Is the data in the tree?",
-//             self.lens, cx.current
-//         )))
-//     }
-// }
 
 macro_rules! impl_res_simple {
     ($t:ty) => {

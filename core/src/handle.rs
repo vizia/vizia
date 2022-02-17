@@ -88,7 +88,6 @@ impl<'a, T> Handle<'a, T> {
 
     pub fn checked(self, state: impl Res<bool>) -> Self {
         state.set_or_bind(self.cx, self.entity, |cx, entity, val| {
-            println!("Do this!: {} {}", entity, val);
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClass::CHECKED, val);
             } else {

@@ -21,3 +21,6 @@ pub use tree_iter::TreeIterator;
 
 mod tree_ext;
 pub use tree_ext::*;
+
+mod debug_iter;
+pub use debug_iter::TreeDepthIterator;

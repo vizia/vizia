@@ -1514,7 +1514,8 @@ impl Style {
         self.elements.remove(entity);
         self.classes.remove(entity);
         self.pseudo_classes.remove(entity);
-
+        //self.disabled.remove(entity);
+        //self.abilities.remove(entity);
         // Display
         self.display.remove(entity);
         // Visibility
@@ -1531,14 +1532,11 @@ impl Style {
         self.rotate.remove(entity);
         self.scale.remove(entity);
 
-        // Background
-        self.background_color.remove(entity);
-        self.background_gradient.remove(entity);
-        self.background_image.remove(entity);
+        self.overflow.remove(entity);
 
         // Border
-        self.border_color.remove(entity);
         self.border_width.remove(entity);
+        self.border_color.remove(entity);
 
         // Border Shape
         self.border_shape_bottom_left.remove(entity);
@@ -1551,6 +1549,23 @@ impl Style {
         self.border_radius_bottom_right.remove(entity);
         self.border_radius_top_left.remove(entity);
         self.border_radius_bottom_right.remove(entity);
+
+        self.focus_order.remove(entity);
+
+        // Background
+        self.background_color.remove(entity);
+        self.background_image.remove(entity);
+        self.background_gradient.remove(entity);
+
+        self.outer_shadow_h_offset.remove(entity);
+        self.outer_shadow_v_offset.remove(entity);
+        self.outer_shadow_blur.remove(entity);
+        self.outer_shadow_color.remove(entity);
+
+        self.inner_shadow_h_offset.remove(entity);
+        self.inner_shadow_v_offset.remove(entity);
+        self.inner_shadow_blur.remove(entity);
+        self.inner_shadow_color.remove(entity);
 
         self.layout_type.remove(entity);
         self.position_type.remove(entity);

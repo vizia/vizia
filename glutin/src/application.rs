@@ -1,3 +1,4 @@
+// use femtovg::{Path, Paint};
 use glutin::{
     event::{ElementState, VirtualKeyCode},
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
@@ -355,8 +356,6 @@ impl Application {
 
                 glutin::event::Event::RedrawRequested(_) => {
                     // Redraw here
-                    //println!("Redraw");
-
                     if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_mut::<Window>() {
 
@@ -394,6 +393,7 @@ impl Application {
                                 if context.cache.get_display(entity) == Display::None {
                                     continue;
                                 }
+
                                 if context.tree.is_ignored(entity) {
                                     continue;
                                 }
@@ -432,6 +432,14 @@ impl Application {
                                 }
 
                                 window.canvas.restore();
+
+                                // Uncomment this for debug outlines
+                                // TODO - Hook this up to a key in debug mode
+                                // let mut path = Path::new();
+                                // path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+                                // let mut paint = Paint::color(femtovg::Color::rgb(255, 0, 0));
+                                // paint.set_line_width(1.0);
+                                // window.canvas.stroke_path(&mut path, paint);
                             }
 
                             window.canvas.flush();
@@ -623,7 +631,17 @@ impl Application {
                             #[cfg(debug_assertions)]
                             if input.virtual_keycode == Some(VirtualKeyCode::H) && input.state == ElementState::Pressed {
                                 for entity in context.tree.into_iter() {
-                                    println!("Entity: {} Parent: {:?} posx: {} posy: {} width: {} height: {} scissor: {:?}", entity, entity.parent(&context.tree), context.cache.get_posx(entity), context.cache.get_posy(entity), context.cache.get_width(entity), context.cache.get_height(entity), context.cache.get_clip_region(entity));
+                                    println!("Entity: {} Parent: {:?} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&context.tree), context.cache.get_posx(entity), context.cache.get_posy(entity), context.cache.get_width(entity), context.cache.get_height(entity));
+                                }
+                            }
+
+                            #[cfg(debug_assertions)]
+                            if input.virtual_keycode == Some(VirtualKeyCode::I) && input.state == ElementState::Pressed {
+                                let iter = TreeDepthIterator::full(&context.tree);
+                                for (entity, level) in iter {
+                                    if let Some(element_name) = context.views.get(&entity).unwrap().element() {
+                                        println!("{:indent$} {} {} {:?} {:?} {:?} {:?}", "", entity,  element_name, context.cache.get_visibility(entity), context.cache.get_display(entity), context.cache.get_bounds(entity), context.cache.get_clip_region(entity), indent=level);
+                                    }
                                 }
                             }
 

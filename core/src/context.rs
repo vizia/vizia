@@ -117,8 +117,8 @@ impl Context {
             self.cache.remove(*entity);
             self.style.remove(*entity);
             self.data.remove(*entity);
-            self.entity_manager.destroy(*entity);
             self.views.remove(entity);
+            self.entity_manager.destroy(*entity);
 
             if self.captured == *entity {
                 self.captured = Entity::null();
