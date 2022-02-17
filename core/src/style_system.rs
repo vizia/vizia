@@ -201,7 +201,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             let child_bottom = cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
 
             // TODO - should auto size use text height or font height?
-            let _font_metrics =
+            let font_metrics =
                 cx.text_context.measure_font(paint).expect("Failed to read font metrics");
 
             let mut x = cx.cache.get_posx(entity);
@@ -270,7 +270,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                 if let Ok(text_metrics) = cx.text_context.measure_text(x, y, text, paint) {
                     // Add an extra pixel to account to AA
                     let text_width = text_metrics.width().round() + 1.0;
-                    let text_height = text_metrics.height().round() + 1.0;
+                    let text_height = font_metrics.height().round() + 1.0;
 
                     //println!("{} {} {} {}", entity, text, text_width, text_height);
 
