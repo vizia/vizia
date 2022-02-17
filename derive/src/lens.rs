@@ -266,18 +266,18 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
         panic!("I don't know what this case being triggered means. Please open an issue!")
     };
 
-    let usable_variants = variants.iter().filter_map(|v| {
-        match &v.fields {
+    let usable_variants = variants
+        .iter()
+        .filter_map(|v| match &v.fields {
             syn::Fields::Unnamed(f) => {
                 if f.unnamed.len() == 1 {
                     Some((&v.ident, &f.unnamed.first().unwrap().ty))
                 } else {
                     None
                 }
-            },
+            }
             _ => None,
-        }
-    })
+        })
         .collect::<Vec<_>>();
     if usable_variants.len() == 0 {
         panic!("This enum has no variants which can have Lenses built. A valid variant has exactly one unnamed field. If you think this is unreasonable, please work on https://github.com/rust-lang/rfcs/pull/2593")

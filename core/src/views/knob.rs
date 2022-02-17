@@ -2,8 +2,8 @@ use femtovg::{LineCap, Paint, Path, Solidity};
 use morphorm::{Hierarchy, Units};
 
 use crate::{
-    Binding, Context, Entity, Handle, Lens, LensExt, Modifiers, MouseButton, Res, Units::*,
-    View, WindowEvent, ZStack,
+    Binding, Context, Entity, Handle, Lens, LensExt, Modifiers, MouseButton, Res, Units::*, View,
+    WindowEvent, ZStack,
 };
 
 static DEFAULT_DRAG_SCALAR: f32 = 0.0042;

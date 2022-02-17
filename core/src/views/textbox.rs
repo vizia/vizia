@@ -516,7 +516,8 @@ where
     pub fn new<'a>(cx: &'a mut Context, lens: L) -> Handle<'a, Self> {
         Self { lens: lens.clone() }.build2(cx, move |cx| {
             Binding::new(cx, lens.clone(), |cx, text| {
-                let text = text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
+                let text =
+                    text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
                         let td = TextboxData {
