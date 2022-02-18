@@ -27,6 +27,12 @@ impl<T> DerefContainer<T> {
     }
 }
 
+impl<T: std::fmt::Debug> std::fmt::Debug for DerefContainer<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 /// A Lens allows the construction of a reference to a field of a struct.
 ///
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.

@@ -81,8 +81,10 @@ impl Model for AppData {
                 }
 
                 AppEvent::Create => {
-                    self.list.push((self.name.clone(), self.surname.clone()));
-                    self.selected = Some(self.list.len() - 1);
+                    if !self.name.is_empty() && !self.surname.is_empty() {
+                        self.list.push((self.name.clone(), self.surname.clone()));
+                        self.selected = Some(self.list.len() - 1);
+                    }
                 }
 
                 AppEvent::Update => {

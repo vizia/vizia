@@ -276,14 +276,15 @@ impl Application {
 
                     for model_store in context.data.dense.iter_mut().map(|entry| &mut entry.value) {
                         for (_, model) in model_store.data.iter() {
-                            for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                                if lens.update(model) {
-                                    observers.extend(lens.observers().iter());
-                                }
-                            }
                             for lens in model_store.lenses_dup.iter_mut() {
                                 if lens.update(model) {
                                     observers.extend(lens.observers().iter())
+                                }
+                            }
+
+                            for (_, lens) in model_store.lenses_dedup.iter_mut() {
+                                if lens.update(model) {
+                                    observers.extend(lens.observers().iter());
                                 }
                             }
                         }
