@@ -171,7 +171,7 @@ where
         let prev_current = cx.current;
         let prev_count = cx.count;
         cx.current = entity;
-        cx.count = 0;
+        cx.count = cx.tree.get_num_children(entity).unwrap() as usize;
         Binding::new(cx, self.clone(), move |cx, val| {
             if let Some(v) = val.get_val_fallible(cx) {
                 (closure)(cx, entity, v);

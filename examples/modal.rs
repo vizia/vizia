@@ -33,28 +33,24 @@ fn main() {
         Button::new(cx, |cx| cx.emit(AppEvent::ShowModal), |cx| Label::new(cx, "Show Modal"))
             .space(Pixels(50.0));
 
-        Binding::new(cx, AppData::show_modal, |cx, show| {
-            ZStack::new(cx, |cx| {
-                VStack::new(cx, |cx| {
-                    Label::new(cx, "This is a message").width(Stretch(1.0));
-                    HStack::new(cx, |cx| {
-                        Button::new(
-                            cx,
-                            |cx| cx.emit(AppEvent::HideModal),
-                            |cx| Label::new(cx, "Cancel"),
-                        );
-                        Button::new(
-                            cx,
-                            |cx| cx.emit(AppEvent::HideModal),
-                            |cx| Label::new(cx, "Ok"),
-                        );
-                    });
+        //Binding::new(cx, AppData::show_modal, |cx, show| {
+        ZStack::new(cx, |cx| {
+            VStack::new(cx, |cx| {
+                Label::new(cx, "This is a message").width(Stretch(1.0));
+                HStack::new(cx, |cx| {
+                    Button::new(
+                        cx,
+                        |cx| cx.emit(AppEvent::HideModal),
+                        |cx| Label::new(cx, "Cancel"),
+                    );
+                    Button::new(cx, |cx| cx.emit(AppEvent::HideModal), |cx| Label::new(cx, "Ok"));
                 });
-            })
-            .width(Pixels(300.0))
-            .height(Pixels(100.0))
-            .visibility(show);
-        });
+            });
+        })
+        .width(Pixels(300.0))
+        .height(Pixels(100.0))
+        .visibility(AppData::show_modal);
+        //});
     })
     .run();
 }
@@ -75,10 +71,12 @@ impl Model for AppData {
         if let Some(app_event) = event.message.downcast() {
             match app_event {
                 AppEvent::ShowModal => {
+                    println!("Show Modal");
                     self.show_modal = true;
                 }
 
                 AppEvent::HideModal => {
+                    println!("Hide Modal");
                     self.show_modal = false;
                 }
             }
