@@ -44,7 +44,7 @@ where
         for entity in id.parent_iter(&cx.tree) {
             if let Some(model_data_store) = cx.data.get_mut(entity) {
                 if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
-                    if let Some(lens_wrap) = model_data_store.lenses.get_mut(&TypeId::of::<L>()) {
+                    if let Some(lens_wrap) = lens.cache_key().and_then(|key| model_data_store.lenses_dedup.get_mut(&key)) {
                         let observers = lens_wrap.observers();
 
                         if ancestors.intersection(observers).next().is_none() {
@@ -58,10 +58,13 @@ where
 
                         let old = lens.view(model, |t| t.cloned());
 
-                        model_data_store.lenses.insert(
-                            TypeId::of::<L>(),
-                            Box::new(StateStore { entity: id, lens, old, observers }),
-                        );
+                        let state = Box::new(StateStore { entity: id, lens, old, observers });
+
+                        if let Some(key) = state.lens.cache_key() {
+                            model_data_store.lenses_dedup.insert(key, state);
+                        } else {
+                            model_data_store.lenses_dup.push(state);
+                        }
                     }
 
                     break;

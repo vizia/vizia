@@ -37,6 +37,14 @@ pub trait Lens: 'static + Clone {
     type Target;
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O;
+
+    fn cache_key(&self) -> Option<TypeId> {
+        if std::mem::size_of::<Self>() == 0 {
+            Some(TypeId::of::<Self>())
+        } else {
+            None
+        }
+    }
 }
 
 /// Helpers for constructing more complex `Lens`es.
