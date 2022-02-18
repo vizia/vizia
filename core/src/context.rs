@@ -105,12 +105,16 @@ impl Context {
         }
 
         for entity in delete_list.iter().rev() {
-            // Remove from observers
-            for entry in self.data.dense.iter_mut() {
-                let model_list = &mut entry.value;
-                for (_, model) in model_list.data.iter_mut() {
-                    model.remove_observer(*entity);
+            for model_store in self.data.dense.iter_mut().map(|entry| &mut entry.value) {
+                for (_, lens) in model_store.lenses_dedup.iter_mut() {
+                    lens.remove_observer(entity);
                 }
+                for lens in model_store.lenses_dup.iter_mut() {
+                    lens.remove_observer(entity);
+                }
+
+                model_store.lenses_dedup.retain(|_, lenswrap| lenswrap.num_observers() != 0);
+                model_store.lenses_dup.retain(|lenswrap| lenswrap.num_observers() != 0);
             }
 
             self.tree.remove(*entity).expect("");

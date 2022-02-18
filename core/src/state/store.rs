@@ -6,6 +6,8 @@ pub trait LensWrap {
     fn update(&mut self, model: &Box<dyn ModelData>) -> bool;
     fn observers(&self) -> &HashSet<Entity>;
     fn add_observer(&mut self, observer: Entity);
+    fn remove_observer(&mut self, observer: &Entity);
+    fn num_observers(&self) -> usize;
     fn entity(&self) -> Entity;
 }
 
@@ -48,5 +50,13 @@ where
 
     fn add_observer(&mut self, observer: Entity) {
         self.observers.insert(observer);
+    }
+
+    fn remove_observer(&mut self, observer: &Entity) {
+        self.observers.remove(observer);
+    }
+
+    fn num_observers(&self) -> usize {
+        self.observers.len()
     }
 }

@@ -44,7 +44,9 @@ where
         for entity in id.parent_iter(&cx.tree) {
             if let Some(model_data_store) = cx.data.get_mut(entity) {
                 if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
-                    if let Some(lens_wrap) = lens.cache_key().and_then(|key| model_data_store.lenses_dedup.get_mut(&key)) {
+                    if let Some(lens_wrap) =
+                        lens.cache_key().and_then(|key| model_data_store.lenses_dedup.get_mut(&key))
+                    {
                         let observers = lens_wrap.observers();
 
                         if ancestors.intersection(observers).next().is_none() {
