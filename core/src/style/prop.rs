@@ -8,8 +8,6 @@ use crate::tree::TreeExt;
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use std::rc::Rc;
-
 /// To be replaced by [PropSet2]
 pub trait PropSet: AsEntity + Sized {
     /// Helper method for sending an event to self with upward propagation
@@ -895,7 +893,7 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     // TODO
-    fn set_background_image(self, cx: &mut Context, value: Rc<()>) -> Entity {
+    fn set_background_image(self, cx: &mut Context, value: String) -> Entity {
         cx.style.background_image.insert(self.entity(), value);
 
         cx.style.needs_redraw = true;

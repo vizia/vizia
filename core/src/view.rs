@@ -493,18 +493,6 @@ pub trait View: 'static + Sized {
         // Fill with background color
         let mut paint = Paint::color(background_color);
 
-        // if let Some(background_image) = cx.style.background_image.get(entity) {
-        //     if let Some(image_id) = cx.resource_manager.image_ids.get(background_image) {
-        //         match image_id {
-        //             crate::ImageOrId::Id(id) => {
-        //                 paint = Paint::image(*id, 0.0, 0.0, 100.0, 100.0, 0.0, 1.0);
-        //             }
-
-        //             _ => {}
-        //         }
-        //     }
-        // }
-
         // Gradient overrides background color
         if let Some(background_gradient) = cx.style.background_gradient.get(entity) {
             let (_, _, end_x, end_y, parent_length) = match background_gradient.direction {
@@ -528,6 +516,17 @@ pub trait View: 'static + Sized {
                     .collect::<Vec<_>>()
                     .as_slice(),
             );
+        }
+
+        // background-image overrides gradient
+        // TODO should we draw image on top of colors?
+        if let Some(background_image) = cx.style.background_image.get(entity) {
+            let background_image = background_image.clone(); // not ideal
+            let img = cx.get_image(&background_image);
+
+            let dim = img.dimensions();
+            let id = img.id(canvas);
+            paint = Paint::image(id, bounds.x, bounds.y, dim.0 as f32, dim.1 as f32, 0.0, 1.0);
         }
 
         //canvas.global_composite_blend_func(BlendFactor::DstColor, BlendFactor::OneMinusSrcAlpha);

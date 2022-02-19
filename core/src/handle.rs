@@ -258,6 +258,7 @@ impl<'a, T> Handle<'a, T> {
     }
 
     set_style!(background_color, Color);
+    set_style!(background_image, String);
 
     set_style!(layout_type, LayoutType);
     set_style!(position_type, PositionType);

@@ -13,7 +13,8 @@ clipboard = ["copypasta"]
 
 [dependencies]
 vizia_derive = {version = "0.1.0", path = "../derive"}
-femtovg = {version = "0.3.0", default-features = false}
+femtovg = { version = "0.3.0", default-features = false, features = ["image-loading"] }
+image = { version = "0.24.0", default-features = false, features = ["png"] } # inherited from femtovg
 morphorm = {git = "https://github.com/geom3trik/morphorm", features = ["rounding"]}
 # morphorm = {path = "../../morphorm", features = ["rounding"]}
 bitflags = "1.3.2"

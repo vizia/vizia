@@ -4,7 +4,9 @@ use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
-use vizia_core::{apply_inline_inheritance, apply_shared_inheritance, TreeExt};
+use vizia_core::{
+    apply_inline_inheritance, apply_shared_inheritance, ImageRetentionPolicy, TreeExt,
+};
 use vizia_core::{MouseButton, MouseButtonState};
 //use vizia_core::WindowWidget;
 use vizia_core::{
@@ -273,6 +275,12 @@ impl ApplicationRunner {
                 }
             }
         }
+        for img in self.context.resource_manager.images.values_mut() {
+            if img.dirty {
+                observers.extend(img.observers.iter());
+                img.dirty = false;
+            }
+        }
 
         for observer in observers.iter() {
             if let Some(mut view) = self.context.views.remove(observer) {
@@ -351,6 +359,8 @@ impl ApplicationRunner {
         let mut draw_tree: Vec<Entity> = self.context.tree.into_iter().collect();
         draw_tree.sort_by_cached_key(|entity| self.context.cache.get_z_index(*entity));
 
+        self.context.resource_manager.mark_images_unused();
+
         for entity in draw_tree.into_iter() {
             // Skip window
             if entity == Entity::root() {
@@ -398,6 +408,7 @@ impl ApplicationRunner {
         }
 
         self.canvas.flush();
+        self.context.resource_manager.evict_unused_images();
 
         self.should_redraw = false;
     }
