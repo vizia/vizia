@@ -3,18 +3,6 @@
 use vizia::*;
 
 const DIFFERENT: &str = r#"
-    checkbox {
-        background-color: white;
-        border-color: blue;
-        border-width: 1px;
-        border-radius: 2px;
-    }
-
-    checkbox:checked {
-        background-color: blue;
-        border-width: 0px;
-        color: white;
-    }
 
     radiobutton {
         background-color: white;

@@ -227,6 +227,14 @@ impl Context {
         Ok(())
     }
 
+    pub fn apply_animations(&mut self) -> bool {
+        let time = std::time::Instant::now();
+        self.style.background_color.tick(time);
+        self.style.font_color.tick(time);
+
+        self.style.background_color.has_animations() | self.style.font_color.has_animations()
+    }
+
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
         if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
             return Ok(());

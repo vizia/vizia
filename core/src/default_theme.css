@@ -28,7 +28,6 @@ button:over {
 }
 
 button:active {
-    /* outer-shadow: 0 0 0 #00000055; */
     overflow: hidden;
 }
 
@@ -39,7 +38,6 @@ button:active label {
 button.accent {
     background-color: #005a9e;
     border-width: 0px;
-    /* border-color: #3076ae */
     border-color: #3076ae;
     outer-shadow: 0 1 0 #00365f;
 }
@@ -64,16 +62,31 @@ checkbox {
     width: 25px;
     height: 25px;
     border-radius: 5px;
+    border-width: 1px;
     border-color: #838383;
+    color: #f5f5f500;
+    background-color: #e5e5e500;
+    child-space: 1s;
+    transition: background-color 0.1 0.0;
+    transition: color 0.1 0.0;
 }
 
 checkbox:hover {
     background-color: #e5e5e5;
+    transition: background-color 0.1 0.0;
 }
 
 checkbox:active {
     border-color: #b6b6b6;
     background-color: #dcdcdc;
+    transition: background-color 0.1 0.0;
+}
+
+checkbox:checked {
+    background-color: #005a9e;
+    color: #f5f5f5;
+    transition: background-color 0.1 0.0;
+    transition: color 0.1 0.0;
 }
 
 label.icon {
@@ -162,12 +175,6 @@ label:disabled {
     color: gray;
 }
 
-checkbox {
-    /* color: black; */
-    width: 20px;
-    height: 20px;
-}
-
 hstack {
     width: 1s;
     height: 1s;
@@ -180,18 +187,6 @@ vstack {
 
 zstack>* {
     position-type: self-directed;
-}
-
-checkbox {
-    border-width: 1px;
-    border-color: black;
-    font: icons;
-    child-space: 1s;
-}
-
-checkbox:disabled {
-    color: gray;
-    border-color: gray;
 }
 
 radiobutton {

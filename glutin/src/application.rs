@@ -303,6 +303,31 @@ impl Application {
                         }
                     }
 
+
+                    if context.apply_animations() {
+
+                        *control_flow = ControlFlow::Poll;
+
+                        //context.insert_event(Event::new(WindowEvent::Relayout).target(Entity::root()));
+
+                        event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();
+                        //window.handle.window().request_redraw();
+                        if let Some(mut window_event_handler) = context.views.remove(&Entity::root()) {
+                            if let Some(window) = window_event_handler.downcast_ref::<Window>() {
+                                window.handle.window().request_redraw();
+                            }
+
+                            context.views.insert(Entity::root(), window_event_handler);
+                        }
+                    } else {
+                        if should_poll {
+                            *control_flow = ControlFlow::Poll;
+                        } else {
+                            *control_flow = ControlFlow::Wait;
+                        }
+                    }
+
+
                     // Not ideal
                     let tree = context.tree.clone();
 
