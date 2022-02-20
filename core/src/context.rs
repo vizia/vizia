@@ -119,6 +119,11 @@ impl Context {
                 model_store.lenses_dup.retain(|lenswrap| lenswrap.num_observers() != 0);
             }
 
+            for image in self.resource_manager.images.values_mut() {
+                // no need to drop them here. garbage collection happens after draw (policy based)
+                image.observers.remove(entity);
+            }
+
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.style.remove(*entity);
@@ -349,10 +354,12 @@ impl Context {
                 });
             }
         }
+        self.style.needs_redraw = true;
     }
 
     pub fn evict_image(&mut self, path: &str) {
         self.resource_manager.images.remove(path);
+        self.style.needs_redraw = true;
     }
 
     pub fn spawn<F>(&self, target: F)
