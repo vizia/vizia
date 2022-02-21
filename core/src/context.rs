@@ -355,11 +355,13 @@ impl Context {
             }
         }
         self.style.needs_redraw = true;
+        self.style.needs_relayout = true;
     }
 
     pub fn evict_image(&mut self, path: &str) {
         self.resource_manager.images.remove(path);
         self.style.needs_redraw = true;
+        self.style.needs_relayout = true;
     }
 
     pub fn spawn<F>(&self, target: F)

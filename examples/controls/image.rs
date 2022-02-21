@@ -3,17 +3,8 @@ use vizia::*;
 const STYLE: &'static str = r#"
 element {
     background-image: "sample.png";
-    color: #ff00ff;
     width: 1s;
     height: 1s;
-}
-
-image {
-    space: 1s;
-}
-
-label {
-    height: auto;
 }
 "#;
 
@@ -32,7 +23,7 @@ fn main() {
                             image::guess_format(&data).unwrap(),
                         )
                         .unwrap(),
-                        ImageRetentionPolicy::DropWhenNoObservers,
+                        ImageRetentionPolicy::DropWhenUnusedForOneFrame,
                     )
                     .unwrap();
                 });
@@ -44,18 +35,15 @@ fn main() {
                         image::ImageFormat::Png,
                     )
                     .unwrap(),
-                    ImageRetentionPolicy::DropWhenNoObservers,
+                    ImageRetentionPolicy::DropWhenUnusedForOneFrame,
                 );
             } else {
                 panic!();
             }
         });
 
-        //Checkbox::new(cx, true);
         Element::new(cx);
-        VStack::new(cx, move |cx| {
-            Image::new(cx, "https://download.samplelib.com/png/sample-bumblebee-400x300.png");
-        });
+        Image::new(cx, "https://download.samplelib.com/png/sample-bumblebee-400x300.png");
         Label::new(cx, "Wait for the image to load :)");
     })
     .run()

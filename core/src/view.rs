@@ -569,38 +569,12 @@ pub trait View: 'static + Sized {
         // );
         // canvas.fill_path(&mut path, paint);
 
-        // Draw text
-        if let Some(text) = cx.style.text.get(entity) {
-            let font = cx.style.font.get(entity).cloned().unwrap_or_default();
-
-            // TODO - This should probably be cached in cx to save look-up time
-            let default_font = cx
-                .resource_manager
-                .fonts
-                .get(&cx.style.default_font)
-                .and_then(|font| match font {
-                    FontOrId::Id(id) => Some(id),
-                    _ => None,
-                })
-                .expect("Failed to find default font");
-
-            let font_id = cx
-                .resource_manager
-                .fonts
-                .get(&font)
-                .and_then(|font| match font {
-                    FontOrId::Id(id) => Some(id),
-                    _ => None,
-                })
-                .unwrap_or(default_font);
-
-            // let mut x = posx + (border_width / 2.0);
-            // let mut y = posy + (border_width / 2.0);
-
+        // Draw text and image
+        if cx.style.text.get(entity).is_some() || cx.style.image.get(entity).is_some() {
             let mut x = bounds.x;
             let mut y = bounds.y;
-
-            let text_string = text.to_owned();
+            let mut w = bounds.w;
+            let mut h = bounds.h;
 
             // TODO - Move this to a text layout system and include constraints
             let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
@@ -612,6 +586,7 @@ pub trait View: 'static + Sized {
                 Units::Pixels(val) => match child_right {
                     Units::Stretch(_) | Units::Auto => {
                         x += val + border_width;
+                        w -= val + border_width;
                         Align::Left
                     }
 
@@ -621,11 +596,13 @@ pub trait View: 'static + Sized {
                 Units::Stretch(_) => match child_right {
                     Units::Pixels(val) => {
                         x += bounds.w - val - border_width;
+                        w -= val - border_width;
                         Align::Right
                     }
 
                     Units::Stretch(_) => {
                         x += 0.5 * bounds.w;
+                        w -= 0.5 * bounds.w;
                         Align::Center
                     }
 
@@ -639,6 +616,7 @@ pub trait View: 'static + Sized {
                 Units::Pixels(val) => match child_bottom {
                     Units::Stretch(_) | Units::Auto => {
                         y += val + border_width;
+                        h -= val + border_width;
                         Baseline::Top
                     }
 
@@ -648,11 +626,13 @@ pub trait View: 'static + Sized {
                 Units::Stretch(_) => match child_bottom {
                     Units::Pixels(val) => {
                         y += bounds.h - val - border_width;
+                        h -= val - border_width;
                         Baseline::Bottom
                     }
 
                     Units::Stretch(_) => {
                         y += 0.5 * bounds.h;
+                        h -= 0.5 * bounds.h;
                         Baseline::Middle
                     }
 
@@ -662,19 +642,68 @@ pub trait View: 'static + Sized {
                 _ => Baseline::Top,
             };
 
-            let mut font_color: femtovg::Color = font_color.into();
-            font_color.set_alphaf(font_color.a * opacity);
+            // Draw image
+            if let Some(image) = cx.style.image.get(entity).cloned() {
+                let image = cx.get_image(&image);
+                let x = match align {
+                    Align::Left => x,
+                    Align::Center => x - w * 0.5,
+                    Align::Right => x - w,
+                };
+                let y = match baseline {
+                    Baseline::Top => y,
+                    Baseline::Middle => y - h * 0.5,
+                    Baseline::Alphabetic | Baseline::Bottom => y - h,
+                };
 
-            let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
+                let mut path = Path::new();
+                path.rect(x, y, w, h);
 
-            let mut paint = Paint::color(font_color);
-            paint.set_font_size(font_size);
-            paint.set_font(&[font_id.clone()]);
-            paint.set_text_align(align);
-            paint.set_text_baseline(baseline);
-            paint.set_anti_alias(false);
+                let paint = Paint::image(image.id(canvas), x, y, w, h, 0.0, 1.0);
+                canvas.fill_path(&mut path, paint);
+            }
 
-            canvas.fill_text(x, y, &text_string, paint).unwrap();
+            if let Some(text) = cx.style.text.get(entity).cloned() {
+                let font = cx.style.font.get(entity).cloned().unwrap_or_default();
+
+                // TODO - This should probably be cached in cx to save look-up time
+                let default_font = cx
+                    .resource_manager
+                    .fonts
+                    .get(&cx.style.default_font)
+                    .and_then(|font| match font {
+                        FontOrId::Id(id) => Some(id),
+                        _ => None,
+                    })
+                    .expect("Failed to find default font");
+
+                let font_id = cx
+                    .resource_manager
+                    .fonts
+                    .get(&font)
+                    .and_then(|font| match font {
+                        FontOrId::Id(id) => Some(id),
+                        _ => None,
+                    })
+                    .unwrap_or(default_font);
+
+                // let mut x = posx + (border_width / 2.0);
+                // let mut y = posy + (border_width / 2.0);
+
+                let mut font_color: femtovg::Color = font_color.into();
+                font_color.set_alphaf(font_color.a * opacity);
+
+                let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
+
+                let mut paint = Paint::color(font_color);
+                paint.set_font_size(font_size);
+                paint.set_font(&[font_id.clone()]);
+                paint.set_text_align(align);
+                paint.set_text_baseline(baseline);
+                paint.set_anti_alias(false);
+
+                canvas.fill_text(x, y, &text, paint).unwrap();
+            }
         }
     }
 }

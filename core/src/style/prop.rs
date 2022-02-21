@@ -779,6 +779,7 @@ pub trait PropSet: AsEntity + Sized {
         cx.style.text.insert(self.entity(), text.to_owned());
 
         cx.style.needs_redraw = true;
+        cx.style.needs_relayout = true;
 
         self.entity()
     }
@@ -840,6 +841,21 @@ pub trait PropSet: AsEntity + Sized {
         cx.style.font_color.insert(self.entity(), value);
 
         cx.style.needs_redraw = true;
+
+        self.entity()
+    }
+
+    /// Sets the image of the entity.
+    ///
+    /// An image is a kind of content, similar to text. It can be positioned with the `child-space`
+    /// properties, and will stretch itself to fit the computed width and height. If width or height
+    /// are auto, and min-width and min-height and max-width and max-height do not apply, the view
+    /// will size itself to the image.
+    fn set_image(self, cx: &mut Context, text: &str) -> Entity {
+        cx.style.image.insert(self.entity(), text.to_owned());
+
+        cx.style.needs_redraw = true;
+        cx.style.needs_relayout = true;
 
         self.entity()
     }

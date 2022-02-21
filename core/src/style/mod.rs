@@ -335,11 +335,14 @@ pub struct Style {
     pub inner_shadow_blur: AnimatableSet<Units>,
     pub inner_shadow_color: AnimatableSet<Color>,
 
-    //Text & Font
+    // Text & Font
     pub text: StyleSet<String>,
     pub font: StyleSet<String>,
     pub font_color: AnimatableSet<Color>,
     pub font_size: AnimatableSet<f32>,
+
+    // Image
+    pub image: StyleSet<String>,
 
     pub tooltip: SparseSet<String>,
 
@@ -366,6 +369,8 @@ pub struct Style {
     pub max_height: AnimatableSet<Units>,
     pub min_width: AnimatableSet<Units>,
     pub min_height: AnimatableSet<Units>,
+    pub content_width: StyleSet<f32>,
+    pub content_height: StyleSet<f32>,
 
     // Spacing Constraints
     pub min_left: AnimatableSet<Units>,
@@ -1591,6 +1596,8 @@ impl Style {
         self.max_width.remove(entity);
         self.min_height.remove(entity);
         self.max_height.remove(entity);
+        self.content_width.remove(entity);
+        self.content_height.remove(entity);
 
         // Child Space
         self.child_left.remove(entity);
@@ -1613,6 +1620,8 @@ impl Style {
         self.font.remove(entity);
         self.font_color.remove(entity);
         self.font_size.remove(entity);
+
+        self.image.remove(entity);
     }
 
     pub fn remove_all(&mut self) {

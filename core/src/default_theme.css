@@ -162,6 +162,11 @@ label:disabled {
     color: gray;
 }
 
+image {
+    width: auto;
+    height: auto;
+}
+
 checkbox {
     /* color: black; */
     width: 20px;

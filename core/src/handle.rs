@@ -138,6 +138,25 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
+    pub fn image<U: ToString>(self, value: impl Res<U>) -> Self {
+        value.set_or_bind(self.cx, self.entity, |cx, entity, val| {
+            let val = val.to_string();
+            if let Some(prev_data) = cx.style.image.get(entity) {
+                if prev_data != &val {
+                    cx.style.image.insert(entity, val);
+
+                    cx.style.needs_redraw = true;
+                }
+            } else {
+                cx.style.image.insert(entity, val);
+
+                cx.style.needs_redraw = true;
+            }
+        });
+
+        self
+    }
+
     pub fn z_order(self, value: i32) -> Self {
         self.cx.style.z_order.insert(self.entity, value);
 
