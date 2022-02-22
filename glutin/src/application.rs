@@ -304,6 +304,19 @@ impl Application {
                     }
 
 
+                    // Not ideal
+                    let tree = context.tree.clone();
+
+                    apply_inline_inheritance(&mut context, &tree);
+
+                    if context.style.needs_restyle {
+                        apply_styles(&mut context, &tree);
+                        context.style.needs_restyle = false;
+                    }
+
+                    apply_shared_inheritance(&mut context, &tree);
+
+
                     if context.apply_animations() {
 
                         *control_flow = ControlFlow::Poll;
@@ -312,7 +325,7 @@ impl Application {
 
                         event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();
                         //window.handle.window().request_redraw();
-                        if let Some(mut window_event_handler) = context.views.remove(&Entity::root()) {
+                        if let Some(window_event_handler) = context.views.remove(&Entity::root()) {
                             if let Some(window) = window_event_handler.downcast_ref::<Window>() {
                                 window.handle.window().request_redraw();
                             }
@@ -327,18 +340,6 @@ impl Application {
                         }
                     }
 
-
-                    // Not ideal
-                    let tree = context.tree.clone();
-
-                    apply_inline_inheritance(&mut context, &tree);
-
-                    if context.style.needs_restyle {
-                        apply_styles(&mut context, &tree);
-                        context.style.needs_restyle = false;
-                    }
-
-                    apply_shared_inheritance(&mut context, &tree);
 
                     apply_z_ordering(&mut context, &tree);
 

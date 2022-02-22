@@ -111,40 +111,23 @@ fn main() {
                 Label::new(cx, "Exclusive Check Boxes").class("h1");
 
                 HStack::new(cx, |cx| {
-                    Binding::new(
-                        cx,
-                        AppData::exclusive_options.then(Options::option1),
-                        |cx, option1| {
-                            Checkbox::new(cx, option1)
-                                .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(0)));
-                        },
-                    );
+                    Checkbox::new(cx, AppData::exclusive_options.then(Options::option1))
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(0)));
+
                     Label::new(cx, "Option 1");
                 })
                 .col_between(Pixels(5.0));
 
                 HStack::new(cx, |cx| {
-                    Binding::new(
-                        cx,
-                        AppData::exclusive_options.then(Options::option2),
-                        |cx, option2| {
-                            Checkbox::new(cx, option2)
-                                .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(1)));
-                        },
-                    );
+                    Checkbox::new(cx, AppData::exclusive_options.then(Options::option2))
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(1)));
                     Label::new(cx, "Option 2");
                 })
                 .col_between(Pixels(5.0));
 
                 HStack::new(cx, |cx| {
-                    Binding::new(
-                        cx,
-                        AppData::exclusive_options.then(Options::option3),
-                        |cx, option3| {
-                            Checkbox::new(cx, option3)
-                                .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(2)));
-                        },
-                    );
+                    Checkbox::new(cx, AppData::exclusive_options.then(Options::option3))
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(2)));
                     Label::new(cx, "Option 3");
                 })
                 .col_between(Pixels(5.0));
