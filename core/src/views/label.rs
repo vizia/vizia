@@ -11,8 +11,7 @@ impl Label {
     where
         T: ToString,
     {
-        let txt = text.get_val(cx).to_string();
-        Self {}.build2(cx, |_| {}).text(&txt)
+        Self {}.build2(cx, |_| {}).text(text)
     }
 }
 

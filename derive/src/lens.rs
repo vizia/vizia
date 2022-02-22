@@ -26,10 +26,7 @@ pub(crate) fn derive_lens_impl(
 ) -> Result<proc_macro2::TokenStream, syn::Error> {
     match &input.data {
         Data::Struct(_) => derive_struct(&input),
-        Data::Enum(e) => Err(syn::Error::new(
-            e.enum_token.span(),
-            "Lens implementations cannot be derived from enums",
-        )),
+        Data::Enum(_) => derive_enum(&input),
         Data::Union(u) => Err(syn::Error::new(
             u.union_token.span(),
             "Lens implementations cannot be derived from unions",
@@ -154,8 +151,8 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                 type Source = #struct_type#ty_generics;
                 type Target = #field_ty;
 
-                fn view<O, F: FnOnce(&Self::Target) -> O>(&self, data: &#struct_type#ty_generics, map: F) -> O {
-                    map(&data.#field_name)
+                fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &#struct_type#ty_generics, map: F) -> O {
+                    map(Some(&source.#field_name))
                 }
             }
         }
@@ -193,8 +190,8 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             type Source = #struct_type#ty_generics;
             type Target = #struct_type#ty_generics;
 
-            fn view<O, F: FnOnce(&Self::Target) -> O>(&self, source: &Self::Source, map: F) -> O {
-                map(source)
+            fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
+                map(Some(source))
             }
         }
 
@@ -258,4 +255,105 @@ fn to_snake_case(mut str: &str) -> String {
         words.push(buf);
     }
     words.join("_")
+}
+
+fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn::Error> {
+    let enum_type = &input.ident;
+
+    let variants = if let syn::Data::Enum(syn::DataEnum { variants, .. }) = &input.data {
+        variants
+    } else {
+        panic!("I don't know what this case being triggered means. Please open an issue!")
+    };
+
+    let usable_variants = variants
+        .iter()
+        .filter_map(|v| match &v.fields {
+            syn::Fields::Unnamed(f) => {
+                if f.unnamed.len() == 1 {
+                    Some((&v.ident, &f.unnamed.first().unwrap().ty))
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    if usable_variants.len() == 0 {
+        panic!("This enum has no variants which can have Lenses built. A valid variant has exactly one unnamed field. If you think this is unreasonable, please work on https://github.com/rust-lang/rfcs/pull/2593")
+    }
+
+    let twizzled_name = if is_camel_case(&enum_type.to_string()) {
+        let temp_name = format!("{}_derived_lenses", to_snake_case(&enum_type.to_string()));
+        proc_macro2::Ident::new(&temp_name, proc_macro2::Span::call_site())
+    } else {
+        return Err(syn::Error::new(
+            enum_type.span(),
+            "Lens implementations can only be derived from CamelCase types",
+        ));
+    };
+
+    if input.generics.params.len() != 0 {
+        panic!("Lens implementations can only be derived from non-generic enums (for now)");
+    }
+
+    let defs = usable_variants.iter().map(|(variant_name, _)| {
+        quote! {
+            #[allow(non_camel_case_types)]
+            #[derive(Copy, Clone, Hash, PartialEq, Eq)]
+            pub struct #variant_name();
+
+            impl #variant_name {
+                pub const fn new() -> Self {
+                    Self()
+                }
+            }
+
+            impl std::fmt::Debug for #variant_name {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f,"{}:{}",stringify!(#enum_type), stringify!(#variant_name))
+                }
+            }
+        }
+    });
+
+    let impls = usable_variants.iter().map(|(variant_name, variant_type)| {
+        quote! {
+            impl Lens for #twizzled_name::#variant_name {
+                type Source = #enum_type;
+                type Target = #variant_type;
+
+                fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &#enum_type, map: F) -> O {
+                    map(if let #enum_type::#variant_name(inner_value) = source {
+                        Some(inner_value)
+                    } else {
+                        None
+                    })
+                }
+            }
+        }
+    });
+
+    let associated_items = usable_variants.iter().map(|(variant_name, _)| {
+        let variant_const_name = to_snake_case(&variant_name.to_string());
+        let variant_const_name = proc_macro2::Ident::new(&variant_const_name, proc_macro2::Span::call_site());
+        quote! {
+            pub const #variant_const_name: #twizzled_name::#variant_name = #twizzled_name::#variant_name::new();
+        }
+    });
+
+    let expanded = quote! {
+        pub mod #twizzled_name {
+            #(#defs)*
+        }
+
+        #(#impls)*
+
+        #[allow(non_upper_case_globals)]
+        impl #enum_type {
+            #(#associated_items)*
+        }
+    };
+
+    Ok(expanded)
 }

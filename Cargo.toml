@@ -82,6 +82,10 @@ path = "examples/lists/sortable_list.rs"
 name = "static_list"
 path = "examples/lists/static_list.rs"
 
+[[example]]
+name = "image"
+path = "examples/controls/image.rs"
+
 
 [[example]]
 name = "7guis_counter"
@@ -116,3 +120,5 @@ vizia_baseview = { version = "0.1.0", path = "baseview", optional = true }
 english-numbers = "0.3.3"
 lazy_static = "1.4.0"
 chrono = "0.4.19"
+image = { version = "0.24.0", default-features = false, features = ["png"] }
+reqwest = { version = "0.11.9", features = ["blocking"] }

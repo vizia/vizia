@@ -1,4 +1,4 @@
-use std::{collections::HashSet, rc::Rc};
+use std::collections::HashSet;
 
 use morphorm::{LayoutType, PositionType, Units};
 
@@ -320,7 +320,7 @@ pub struct Style {
 
     // Background
     pub background_color: AnimatableSet<Color>,
-    pub background_image: StyleSet<Rc<()>>,
+    pub background_image: StyleSet<String>,
     pub background_gradient: StyleSet<LinearGradient>,
 
     // Outer Shadow
@@ -335,11 +335,14 @@ pub struct Style {
     pub inner_shadow_blur: AnimatableSet<Units>,
     pub inner_shadow_color: AnimatableSet<Color>,
 
-    //Text & Font
+    // Text & Font
     pub text: StyleSet<String>,
     pub font: StyleSet<String>,
     pub font_color: AnimatableSet<Color>,
     pub font_size: AnimatableSet<f32>,
+
+    // Image
+    pub image: StyleSet<String>,
 
     pub tooltip: SparseSet<String>,
 
@@ -366,6 +369,8 @@ pub struct Style {
     pub max_height: AnimatableSet<Units>,
     pub min_width: AnimatableSet<Units>,
     pub min_height: AnimatableSet<Units>,
+    pub content_width: StyleSet<f32>,
+    pub content_height: StyleSet<f32>,
 
     // Spacing Constraints
     pub min_left: AnimatableSet<Units>,
@@ -482,10 +487,6 @@ impl Style {
 
                     Property::Overflow(value) => {
                         self.overflow.insert_rule(rule_id, value);
-                    }
-
-                    Property::BackgroundImage(_value) => {
-                        todo!();
                     }
 
                     // Property::BackgroundGradient(value) => {
@@ -658,9 +659,9 @@ impl Style {
                         self.background_color.insert_rule(rule_id, value);
                     }
 
-                    // Property::BackgroundImage(value) => {
-                    //     self.background_image.insert_rule(rule_id, value);
-                    // }
+                    Property::BackgroundImage(value) => {
+                        self.background_image.insert_rule(rule_id, value);
+                    }
 
                     // Layout
                     Property::LayoutType(value) => {
@@ -1514,7 +1515,8 @@ impl Style {
         self.elements.remove(entity);
         self.classes.remove(entity);
         self.pseudo_classes.remove(entity);
-
+        //self.disabled.remove(entity);
+        //self.abilities.remove(entity);
         // Display
         self.display.remove(entity);
         // Visibility
@@ -1531,14 +1533,11 @@ impl Style {
         self.rotate.remove(entity);
         self.scale.remove(entity);
 
-        // Background
-        self.background_color.remove(entity);
-        self.background_gradient.remove(entity);
-        self.background_image.remove(entity);
+        self.overflow.remove(entity);
 
         // Border
-        self.border_color.remove(entity);
         self.border_width.remove(entity);
+        self.border_color.remove(entity);
 
         // Border Shape
         self.border_shape_bottom_left.remove(entity);
@@ -1551,6 +1550,23 @@ impl Style {
         self.border_radius_bottom_right.remove(entity);
         self.border_radius_top_left.remove(entity);
         self.border_radius_bottom_right.remove(entity);
+
+        self.focus_order.remove(entity);
+
+        // Background
+        self.background_color.remove(entity);
+        self.background_image.remove(entity);
+        self.background_gradient.remove(entity);
+
+        self.outer_shadow_h_offset.remove(entity);
+        self.outer_shadow_v_offset.remove(entity);
+        self.outer_shadow_blur.remove(entity);
+        self.outer_shadow_color.remove(entity);
+
+        self.inner_shadow_h_offset.remove(entity);
+        self.inner_shadow_v_offset.remove(entity);
+        self.inner_shadow_blur.remove(entity);
+        self.inner_shadow_color.remove(entity);
 
         self.layout_type.remove(entity);
         self.position_type.remove(entity);
@@ -1580,6 +1596,8 @@ impl Style {
         self.max_width.remove(entity);
         self.min_height.remove(entity);
         self.max_height.remove(entity);
+        self.content_width.remove(entity);
+        self.content_height.remove(entity);
 
         // Child Space
         self.child_left.remove(entity);
@@ -1602,6 +1620,8 @@ impl Style {
         self.font.remove(entity);
         self.font_color.remove(entity);
         self.font_size.remove(entity);
+
+        self.image.remove(entity);
     }
 
     pub fn remove_all(&mut self) {

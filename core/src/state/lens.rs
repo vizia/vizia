@@ -21,6 +21,18 @@ impl<T> AsRef<T> for DerefContainer<T> {
     }
 }
 
+impl<T> DerefContainer<T> {
+    pub fn take(self) -> T {
+        self.0
+    }
+}
+
+impl<T: std::fmt::Debug> std::fmt::Debug for DerefContainer<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 /// A Lens allows the construction of a reference to a field of a struct.
 ///
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.
@@ -30,7 +42,15 @@ pub trait Lens: 'static + Clone {
     type Source;
     type Target;
 
-    fn view<O, F: FnOnce(&Self::Target) -> O>(&self, source: &Self::Source, map: F) -> O;
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O;
+
+    fn cache_key(&self) -> Option<TypeId> {
+        if std::mem::size_of::<Self>() == 0 {
+            Some(TypeId::of::<Self>())
+        } else {
+            None
+        }
+    }
 }
 
 /// Helpers for constructing more complex `Lens`es.
@@ -41,7 +61,22 @@ pub trait LensExt: Lens {
     {
         self.view(
             cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| DerefContainer(t.clone()),
+            |t| {
+                DerefContainer(
+                    t.expect("Lens failed to resolve. Do you want to use LensExt::get_fallible?")
+                        .clone(),
+                )
+            },
+        )
+    }
+
+    fn get_fallible(&self, cx: &Context) -> Option<DerefContainer<Self::Target>>
+    where
+        Self::Target: Clone,
+    {
+        self.view(
+            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
+            |t| t.cloned().map(|v| DerefContainer(v)),
         )
     }
 
@@ -56,7 +91,7 @@ pub trait LensExt: Lens {
     /// ```
     fn then<Other>(self, other: Other) -> Then<Self, Other>
     where
-        Other: Lens + Sized,
+        Other: Lens<Source = Self::Target> + Sized,
         Self: Sized,
     {
         Then::new(self, other)
@@ -70,11 +105,10 @@ pub trait LensExt: Lens {
     //     And::new(self, other)
     // }
 
-    fn index<A, I>(self, index: I) -> Then<Self, Index<A, I>>
+    fn index<T>(self, index: usize) -> Then<Self, Index<Self::Target, T>>
     where
-        A: 'static + std::ops::Index<I>,
-        I: 'static + Clone,
-        <A as std::ops::Index<I>>::Output: Sized,
+        T: 'static,
+        Self::Target: Deref<Target = [T]>,
     {
         self.then(Index::new(index))
     }
@@ -84,6 +118,13 @@ pub trait LensExt: Lens {
         G: 'static + Fn(&Self::Target) -> B,
     {
         self.then(Map::new(get))
+    }
+
+    fn unwrap<T: 'static>(self) -> Then<Self, UnwrapLens<T>>
+    where
+        Self: Lens<Target = Option<T>>,
+    {
+        self.then(UnwrapLens::new())
     }
 }
 
@@ -114,9 +155,13 @@ impl<I: 'static, O: 'static> Lens for Map<I, O> {
     type Source = I;
     type Target = O;
 
-    fn view<VO, F: FnOnce(&Self::Target) -> VO>(&self, source: &Self::Source, map: F) -> VO {
+    fn view<VO, F: FnOnce(Option<&Self::Target>) -> VO>(
+        &self,
+        source: &Self::Source,
+        map: F,
+    ) -> VO {
         let data = (self.get)(source);
-        map(&data)
+        map(Some(&data))
     }
 }
 
@@ -144,8 +189,8 @@ where
     type Source = A::Source;
     type Target = B::Target;
 
-    fn view<O, F: FnOnce(&Self::Target) -> O>(&self, source: &Self::Source, map: F) -> O {
-        self.a.view(source, |t| self.b.view(t, map))
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
+        self.a.view(source, |t| if let Some(t) = t { self.b.view(t, map) } else { map(None) })
     }
 }
 
@@ -157,31 +202,29 @@ impl<T: Clone, U: Clone> Clone for Then<T, U> {
 
 impl<T: Copy, U: Copy> Copy for Then<T, U> {}
 
-pub struct Index<A, I> {
-    index: I,
-    p: PhantomData<A>,
+pub struct Index<A, T> {
+    index: usize,
+    pa: PhantomData<A>,
+    pt: PhantomData<T>,
 }
 
-impl<A, I> Index<A, I> {
-    pub fn new(index: I) -> Self {
-        Self { index, p: PhantomData::default() }
+impl<A, T> Index<A, T> {
+    pub fn new(index: usize) -> Self {
+        Self { index, pa: PhantomData::default(), pt: PhantomData::default() }
     }
 
-    pub fn idx(&self) -> I
-    where
-        I: Clone,
-    {
+    pub fn idx(&self) -> usize {
         self.index.clone()
     }
 }
 
-impl<A, I: Clone> Clone for Index<A, I> {
+impl<A, T> Clone for Index<A, T> {
     fn clone(&self) -> Self {
-        Self { index: self.index.clone(), p: PhantomData::default() }
+        Self { index: self.index.clone(), pa: PhantomData::default(), pt: PhantomData::default() }
     }
 }
 
-impl<A, I: Copy> Copy for Index<A, I> {}
+impl<A, T> Copy for Index<A, T> {}
 
 // impl<A,I> Debug for Index<A,I> {
 //     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -189,18 +232,16 @@ impl<A, I: Copy> Copy for Index<A, I> {}
 //     }
 // }
 
-impl<A, I> Lens for Index<A, I>
+impl<A, T: 'static> Lens for Index<A, T>
 where
-    A: 'static + std::ops::Index<I>,
-    I: 'static + Clone,
-    <A as std::ops::Index<I>>::Output: Sized,
+    A: 'static + std::ops::Deref<Target = [T]>,
+    T: Sized,
 {
     type Source = A;
-    type Target = A::Output;
+    type Target = T;
 
-    fn view<O, F: FnOnce(&Self::Target) -> O>(&self, source: &Self::Source, map: F) -> O {
-        // &self.input.view(data)[self.index]
-        let data = &source[self.index.clone()];
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
+        let data = source.get(self.index.clone());
         map(data)
     }
 }
@@ -229,13 +270,40 @@ impl<T> Lens for StaticLens<T> {
     type Source = ();
     type Target = T;
 
-    fn view<O, F: FnOnce(&Self::Target) -> O>(&self, _: &Self::Source, map: F) -> O {
-        map(self.data)
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, _: &Self::Source, map: F) -> O {
+        map(Some(self.data))
     }
 }
 
 impl<T> StaticLens<T> {
     pub fn new(data: &'static T) -> Self {
         StaticLens { data }
+    }
+}
+
+pub struct UnwrapLens<T> {
+    t: PhantomData<T>,
+}
+
+impl<T> Clone for UnwrapLens<T> {
+    fn clone(&self) -> Self {
+        UnwrapLens::new()
+    }
+}
+
+impl<T> UnwrapLens<T> {
+    pub fn new() -> Self {
+        Self { t: PhantomData::default() }
+    }
+}
+
+impl<T> Copy for UnwrapLens<T> {}
+
+impl<T: 'static> Lens for UnwrapLens<T> {
+    type Source = Option<T>;
+    type Target = T;
+
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
+        map(source.as_ref())
     }
 }

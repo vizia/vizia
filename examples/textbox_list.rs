@@ -36,14 +36,12 @@ fn main() {
 
         List::new(cx, AppData::text_list, |cx, index, text_item| {
             HStack::new(cx, move |cx| {
-                Binding::new(cx, text_item.clone(), move |cx, it| {
-                    Textbox::new(cx, it)
-                        .on_edit(move |cx, text| {
-                            cx.emit(AppEvent::SetText(index, text));
-                        })
-                        .width(Pixels(200.0))
-                        .height(Pixels(30.0));
-                });
+                Textbox::new(cx, text_item)
+                    .on_edit(move |cx, text| {
+                        cx.emit(AppEvent::SetText(index, text));
+                    })
+                    .width(Pixels(200.0))
+                    .height(Pixels(30.0));
 
                 Label::new(cx, text_item)
                     .width(Pixels(200.0))

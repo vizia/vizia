@@ -73,6 +73,14 @@ impl<'w> Node<'w> for Entity {
         store.max_width.get(*self).cloned()
     }
 
+    fn content_width(&self, store: &Self::Data) -> Option<f32> {
+        store.content_width.get(*self).cloned()
+    }
+
+    fn content_height(&self, store: &Self::Data) -> Option<f32> {
+        store.content_height.get(*self).cloned()
+    }
+
     fn height(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.height.get(*self).cloned()
     }

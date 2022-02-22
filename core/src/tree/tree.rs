@@ -112,6 +112,19 @@ impl Tree {
         self.ignored.get(entity.index()).map_or_else(|| false, |ignored| *ignored)
     }
 
+    /// Returns the first ancestor of an entity which is not ignored
+    pub fn get_layout_parent(&self, entity: Entity) -> Option<Entity> {
+        let mut i = self.get_parent(entity);
+        while let Some(parent) = i {
+            if !self.is_ignored(parent) {
+                return Some(parent);
+            }
+
+            i = self.get_parent(parent);
+        }
+        None
+    }
+
     /// Returns the parent of an entity.
     pub fn get_parent(&self, entity: Entity) -> Option<Entity> {
         self.parent.get(entity.index()).map_or(None, |&parent| parent)

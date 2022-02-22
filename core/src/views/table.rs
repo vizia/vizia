@@ -61,7 +61,7 @@ where
         content: F,
     ) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, usize, Then<Then<R, Index<Vec<T>, usize>>, L>),
+        F: 'static + Fn(&mut Context, usize, Then<Then<R, Index<<R as Lens>::Target, T>>, L>),
         Label: 'static + Fn(&mut Context),
         <R as Lens>::Source: Model,
     {

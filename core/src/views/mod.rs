@@ -26,7 +26,7 @@ mod for_each;
 pub use for_each::ForEach;
 
 mod slider;
-pub use slider::{Orientation, Slider, SliderData, SliderEvent};
+pub use slider::{Orientation, Slider};
 
 mod knob;
 pub use knob::{ArcTrack, Knob};
@@ -42,3 +42,6 @@ pub use popup::*;
 
 mod radio_buttons;
 pub use radio_buttons::*;
+
+mod image;
+pub use self::image::*;

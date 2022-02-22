@@ -1,9 +1,6 @@
 use morphorm::PositionType;
 
-use crate::{
-    style::PropGet, Binding, Code, Context, Data, Handle, Lens, LensExt, Model, PropSet, View,
-    Visibility, WindowEvent,
-};
+use crate::{style::PropGet, Binding, Code, Context, Data, Handle, Lens, Model, View, WindowEvent};
 
 #[derive(Debug, Default, Data, Lens, Clone)]
 pub struct PopupData {
@@ -49,14 +46,7 @@ impl Popup {
     {
         Self {}
             .build2(cx, |cx| {
-                Binding::new(cx, PopupData::is_open, move |cx, flag| {
-                    let is_open = *flag.get(cx);
-
-                    cx.current.set_visibility(
-                        cx,
-                        if is_open { Visibility::Visible } else { Visibility::Invisible },
-                    );
-
+                Binding::new(cx, PopupData::is_open, move |cx, _| {
                     (builder)(cx);
                 });
 
@@ -89,6 +79,7 @@ impl Popup {
                     }
                 });
             })
+            .visibility(PopupData::is_open)
             .position_type(PositionType::SelfDirected)
             .z_order(100)
     }

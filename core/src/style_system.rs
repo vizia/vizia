@@ -2,7 +2,7 @@ use femtovg::{Align, Baseline, Paint};
 use morphorm::Units;
 
 use crate::{
-    style::{Overflow, PropGet, Selector, SelectorRelation},
+    style::{Overflow, Selector, SelectorRelation},
     BoundingBox, Context, Display, Entity, FontOrId, PseudoClass, Rule, Tree, TreeExt, Visibility,
 };
 
@@ -12,7 +12,11 @@ pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
-        let parent = tree.get_parent(entity).unwrap();
+        if tree.is_ignored(entity) {
+            continue;
+        }
+
+        let parent = tree.get_layout_parent(entity).unwrap();
 
         if let Some(z_order) = cx.style.z_order.get(entity) {
             cx.cache.set_z_index(entity, *z_order);
@@ -30,7 +34,11 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
-        let parent = tree.get_parent(entity).unwrap();
+        if tree.is_ignored(entity) {
+            continue;
+        }
+
+        let parent = tree.get_layout_parent(entity).unwrap();
 
         let parent_clip_region = cx.cache.get_clip_region(parent);
         //let parent_border_width = cx.style.border_width.get(parent).cloned().unwrap_or_default().value_or(0.0, 0.0);
@@ -92,7 +100,11 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
-        let parent = entity.parent(tree).unwrap();
+        if tree.is_ignored(entity) {
+            continue;
+        }
+
+        let parent = tree.get_layout_parent(entity).unwrap();
 
         if cx.cache.get_visibility(parent) == Visibility::Invisible {
             cx.cache.set_visibility(entity, Visibility::Invisible);
@@ -119,13 +131,13 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
         let opacity = cx.style.opacity.get(entity).cloned().unwrap_or_default();
 
         cx.cache.set_opacity(entity, opacity.0 * parent_opacity);
-
-        cx.tree.set_ignored(entity, cx.cache.get_display(entity) == Display::Contents);
     }
 }
 
 // Apply this before layout
+// THE GOAL OF THIS FUNCTION: set content-width and content-height
 pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
+    //println!("Apply text constraints");
     let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 
@@ -134,43 +146,19 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
+        if tree.is_ignored(entity) {
+            continue;
+        }
+
         let desired_width = cx.style.width.get(entity).cloned().unwrap_or_default();
         let desired_height = cx.style.height.get(entity).cloned().unwrap_or_default();
+        let text = cx.style.text.get(entity);
+        let image = cx.style.image.get(entity);
 
-        if cx.style.text.get(entity).is_some()
+        if (text.is_some() || image.is_some())
             && (desired_width == Units::Auto || desired_height == Units::Auto)
         {
-            let font = cx.style.font.get(entity).cloned().unwrap_or_default();
-
-            // TODO - This should probably be cached in cx to save look-up time
-            let default_font = cx
-                .resource_manager
-                .fonts
-                .get(&cx.style.default_font)
-                .and_then(|font| match font {
-                    FontOrId::Id(id) => Some(id),
-                    _ => None,
-                })
-                .expect("Failed to find default font");
-
-            let font_id = cx
-                .resource_manager
-                .fonts
-                .get(&font)
-                .and_then(|font| match font {
-                    FontOrId::Id(id) => Some(id),
-                    _ => None,
-                })
-                .unwrap_or(default_font);
-
-            let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
-
-            let mut paint = Paint::default();
-            paint.set_font_size(font_size);
-            paint.set_font(&[font_id.clone()]);
-
-            let parent = cx.tree.get_parent(entity).expect("Failed to find parent somehow");
-
+            let parent = cx.tree.get_layout_parent(entity).expect("Failed to find parent somehow");
             let parent_width = cx.cache.get_width(parent);
 
             let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
@@ -184,10 +172,6 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();
             let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
             let child_bottom = cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
-
-            // TODO - should auto size use text height or font height?
-            let _font_metrics =
-                cx.text_context.measure_font(paint).expect("Failed to read font metrics");
 
             let mut x = cx.cache.get_posx(entity);
             let mut y = cx.cache.get_posy(entity);
@@ -248,40 +232,83 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                 _ => Baseline::Top,
             };
 
-            paint.set_text_align(align);
-            paint.set_text_baseline(baseline);
+            let mut content_width = 0.0;
+            let mut content_height = 0.0;
 
             if let Some(text) = cx.style.text.get(entity) {
+                let font = cx.style.font.get(entity).cloned().unwrap_or_default();
+
+                // TODO - This should probably be cached in cx to save look-up time
+                let default_font = cx
+                    .resource_manager
+                    .fonts
+                    .get(&cx.style.default_font)
+                    .and_then(|font| match font {
+                        FontOrId::Id(id) => Some(id),
+                        _ => None,
+                    })
+                    .expect("Failed to find default font");
+
+                let font_id = cx
+                    .resource_manager
+                    .fonts
+                    .get(&font)
+                    .and_then(|font| match font {
+                        FontOrId::Id(id) => Some(id),
+                        _ => None,
+                    })
+                    .unwrap_or(default_font);
+
+                let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
+
+                let mut paint = Paint::default();
+                paint.set_font_size(font_size);
+                paint.set_font(&[font_id.clone()]);
+
+                // TODO - should auto size use text height or font height?
+                let font_metrics =
+                    cx.text_context.measure_font(paint).expect("Failed to read font metrics");
+
+                paint.set_text_align(align);
+                paint.set_text_baseline(baseline);
+
                 if let Ok(text_metrics) = cx.text_context.measure_text(x, y, text, paint) {
-                    // Add an extra pixel to account to AA
+                    // Add an extra pixel to account for AA
                     let text_width = text_metrics.width().round() + 1.0;
-                    let text_height = text_metrics.height().round() + 1.0;
+                    let text_height = font_metrics.height().round() + 1.0;
 
-                    if cx.style.width.get(entity) == Some(&Units::Auto) {
-                        //let previous_min_width = entity.get_min_width(cx).value_or(0.0, 0.0);
-                        if entity.get_min_width(cx) != Units::Pixels(text_width) {
-                            cx.style.min_width.insert(entity, Units::Pixels(text_width));
-                            cx.style.needs_relayout = true;
-                            cx.style.needs_redraw = true;
-                        }
+                    if content_width < text_width {
+                        content_width = text_width;
                     }
-
-                    if cx.style.height.get(entity) == Some(&Units::Auto) {
-                        if entity.get_min_height(cx) != Units::Pixels(text_height) {
-                            cx.style.min_height.insert(entity, Units::Pixels(text_height));
-                            cx.style.needs_relayout = true;
-                            cx.style.needs_redraw = true;
-                        }
+                    if content_height < text_height {
+                        content_height = text_height;
                     }
                 }
             }
+
+            if let Some(image) = cx.style.image.get(entity) {
+                let image = image.clone(); // ew
+                let (image_width, image_height) = cx.get_image(&image).dimensions();
+                let image_width = image_width as f32;
+                let image_height = image_height as f32;
+
+                if content_width < image_width {
+                    content_width = image_width;
+                }
+                if content_height < image_height {
+                    content_height = image_height;
+                }
+            }
+
+            cx.style.content_width.insert(entity, content_width);
+            cx.style.content_height.insert(entity, content_height);
         }
     }
 }
 
 pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
-        if let Some(parent) = entity.parent(tree) {
+        if let Some(parent) = tree.get_layout_parent(entity) {
             cx.style.disabled.inherit_inline(entity, parent);
 
             cx.style.font_color.inherit_inline(entity, parent);
@@ -293,7 +320,7 @@ pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
 
 pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
-        if let Some(parent) = entity.parent(tree) {
+        if let Some(parent) = tree.get_layout_parent(entity) {
             cx.style.font_color.inherit_shared(entity, parent);
             cx.style.font_size.inherit_shared(entity, parent);
             cx.style.font.inherit_shared(entity, parent);
@@ -427,7 +454,7 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
                         // Get the parent
                         // Contrust the selector for the parent
                         // Check if the parent selector matches the rule_seletor
-                        if let Some(parent) = relation_entity.parent(tree) {
+                        if let Some(parent) = tree.get_layout_parent(relation_entity) {
                             if !check_match(cx, parent, rule_selector) {
                                 continue 'rule_loop;
                             }
@@ -445,6 +472,9 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
                         // If none of them do, move on to the next rule
                         for ancestor in relation_entity.parent_iter(tree) {
                             if ancestor == relation_entity {
+                                continue;
+                            }
+                            if tree.is_ignored(ancestor) {
                                 continue;
                             }
 

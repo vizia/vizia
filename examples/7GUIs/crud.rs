@@ -81,8 +81,10 @@ impl Model for AppData {
                 }
 
                 AppEvent::Create => {
-                    self.list.push((self.name.clone(), self.surname.clone()));
-                    self.selected = Some(self.list.len() - 1);
+                    if !self.name.is_empty() && !self.surname.is_empty() {
+                        self.list.push((self.name.clone(), self.surname.clone()));
+                        self.selected = Some(self.list.len() - 1);
+                    }
                 }
 
                 AppEvent::Update => {
@@ -132,18 +134,20 @@ fn main() {
                     });
 
                     List::new(cx, AppData::list, |cx, index, item| {
-                        let (name, surname) = item.get(cx).clone();
                         Binding::new(cx, AppData::selected, move |cx, selected| {
                             let is_selected = if let Some(selected) = selected.get_val(cx) {
                                 selected == index
                             } else {
                                 false
                             };
-                            Label::new(cx, &format!("{}, {}", surname, name))
-                                .on_press(move |cx| {
-                                    cx.emit(AppEvent::SetSelected(index));
-                                })
-                                .checked(is_selected);
+                            Binding::new(cx, item, move |cx, item| {
+                                let (name, surname) = item.get(cx).clone();
+                                Label::new(cx, &format!("{}, {}", surname, name))
+                                    .on_press(move |cx| {
+                                        cx.emit(AppEvent::SetSelected(index));
+                                    })
+                                    .checked(is_selected);
+                            });
                         });
                     });
                 });
