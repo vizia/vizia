@@ -1353,6 +1353,8 @@ pub trait PropGet: Sized + AsEntity {
         cx.cache.get_visibility(self.entity()) == Visibility::Visible
     }
 
+    fn has_class(&self, cx: &Context, class: &str) -> bool;
+
     //
     fn get_overflow(&self, cx: &Context) -> Overflow;
 
@@ -1438,6 +1440,14 @@ impl PropGet for Entity {
     fn is_focused(self, cx: &Context) -> bool {
         if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::FOCUS)
+        } else {
+            false
+        }
+    }
+
+    fn has_class(&self, cx: &Context, class: &str) -> bool {
+        if let Some(classes) = cx.style.classes.get(*self) {
+            classes.contains(class)
         } else {
             false
         }

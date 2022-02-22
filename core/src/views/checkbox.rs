@@ -1,6 +1,6 @@
 use crate::{Context, Handle, Lens, MouseButton, Res, View, WindowEvent};
 
-const ICON_CHECK: &str = "\u{2713}";
+pub const ICON_CHECK: &str = "\u{2713}";
 
 /// A checkbox widget.
 ///

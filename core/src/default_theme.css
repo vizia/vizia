@@ -250,3 +250,68 @@ list {
     width: auto;
     height: auto;
 }
+
+menu:checked {
+    background-color: #00264f;
+    color: white;
+}
+
+menu {
+    overflow: visible;
+    child-space: 3px;
+}
+
+menubutton {
+    child-space: 3px;
+}
+
+menubutton:checked {
+    background-color: #00264f;
+    color: white;
+}
+
+menustack.vertical {
+    layout-type: column;
+}
+
+menustack.horizontal {
+    layout-type: row;
+}
+
+menu>menustack {
+    position-type: self-directed;
+    display: none;
+}
+
+menustack.vertical>menu>menustack {
+    left: 100%;
+}
+
+menustack.horizontal>menu>menustack {
+    top: 100%;
+}
+
+menu:checked>menustack {
+    display: flex;
+}
+
+menustack {
+    background-color: white;
+    color: black;
+    border-color: #a0a0a0;
+    border-width: 1px;
+    width: auto;
+    height: auto;
+}
+
+.menu_arrow {
+    display: none;
+}
+
+menustack.vertical>menu>hstack>.menu_arrow {
+    display: flex;
+    font: "material";
+    left: 1s;
+    top: 1s;
+    bottom: 1s;
+}
