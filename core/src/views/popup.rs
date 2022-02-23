@@ -79,7 +79,7 @@ impl Popup {
                     }
                 });
             })
-            .visibility(PopupData::is_open)
+            .checked(PopupData::is_open)
             .position_type(PositionType::SelfDirected)
             .z_order(100)
     }

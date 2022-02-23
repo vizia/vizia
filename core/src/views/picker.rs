@@ -84,9 +84,9 @@ impl Dropdown {
     {
         Self {}
             .build2(cx, move |cx| {
-                if cx.data::<PopupData>().is_none() {
+                //if cx.data::<PopupData>().is_none() {
                     PopupData::default().build(cx);
-                }
+                //}
 
                 (label)(cx).class("title").on_press(|cx| cx.emit(PopupEvent::Switch));
 

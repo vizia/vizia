@@ -2,30 +2,6 @@ use vizia::*;
 
 const ICON_DOWN_OPEN: &str = "\u{e75c}";
 
-const STYLE: &str = r#"
-    dropdown .title {
-        background-color: #FFFFFF;
-        height: 30px;
-        width: 100px;
-        child-space: 1s;
-        child-left: 5px;
-    }
-
-    dropdown>popup {
-        background-color: #FFFFFF;
-    }
-
-    dropdown>popup>list {
-        width: 1s;
-    }
-
-    dropdown list label {
-        width: 1s;
-        height: 30px;
-        child-left: 6px;
-    }
-"#;
-
 #[derive(Lens)]
 pub struct AppData {
     list: Vec<String>,
@@ -52,8 +28,6 @@ impl Model for AppData {
 fn main() {
     let window_description = WindowDescription::new();
     Application::new(window_description, |cx|{
-
-        cx.add_theme(STYLE);
 
         AppData {
             list: vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()],

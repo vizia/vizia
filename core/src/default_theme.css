@@ -240,3 +240,14 @@ list {
     width: auto;
     height: auto;
 }
+
+popup {
+    display: none;
+    opacity: 0.0;
+}
+
+popup:checked {
+    display: flex;
+    opacity: 1.0;
+    transition: opacity 0.2 0.0;
+}

@@ -745,7 +745,6 @@ impl Style {
                     // Transitions
                     Property::Transition(transitions) => {
                         for transition in transitions {
-                            //println!("{:?}", transition);
                             match transition.property.as_ref() {
                                 "background-color" => {
                                     let animation = self.animation_manager.create();

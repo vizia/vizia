@@ -231,8 +231,11 @@ impl Context {
         let time = std::time::Instant::now();
         self.style.background_color.tick(time);
         self.style.font_color.tick(time);
+        self.style.opacity.tick(time);
 
-        self.style.background_color.has_animations() | self.style.font_color.has_animations()
+        self.style.background_color.has_animations() | 
+        self.style.font_color.has_animations() | 
+        self.style.opacity.has_animations()
     }
 
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {

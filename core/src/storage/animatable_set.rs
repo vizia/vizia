@@ -293,6 +293,7 @@ where
     }
 
     pub fn play_animation(&mut self, entity: Entity, animation: Animation) {
+        // println!("Play Animation: {:?}", animation);
         let entity_index = entity.index();
 
         if !self.animations.contains(animation) {
@@ -572,11 +573,12 @@ where
                     }
                 } else {
                     if rule_animation.index() < self.animations.dense.len() {
+                        // let transition_state =
+                        //     &mut self.animations.dense[rule_animation.index()].value;
                         let transition_state =
-                            &mut self.animations.dense[rule_animation.index()].value;
+                            self.animations.get_mut(rule_animation).unwrap();
                         // Safe to unwrap because already checked that the rule exists
                         let end = self.shared_data.get(*rule).unwrap();
-                        //println!("End: {:?}", end);
 
                         let entity_data_index = self.inline_data.sparse[entity_index].data_index;
 
