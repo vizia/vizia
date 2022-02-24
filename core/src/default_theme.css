@@ -251,9 +251,20 @@ list {
     height: auto;
 }
 
-menu:checked {
-    background-color: #00264f;
-    color: white;
+menucontroller {
+    width: 0px;
+    height: 0px;
+    overflow: visible;
+}
+
+menustack {
+    width: auto;
+    height: auto;
+    background-color: #dddddd;
+    border-color: #aaaaaa;
+    border-width: 1px;
+    color: black;
+    overflow: visible;
 }
 
 menu {
@@ -265,7 +276,12 @@ menubutton {
     child-space: 3px;
 }
 
-menubutton:checked {
+menu:selected {
+    background-color: #00264f;
+    color: white;
+}
+
+menubutton:selected {
     background-color: #00264f;
     color: white;
 }
@@ -283,25 +299,16 @@ menu>menustack {
     display: none;
 }
 
+menu:selected>menustack {
+    display: flex;
+}
+
 menustack.vertical>menu>menustack {
     left: 100%;
 }
 
 menustack.horizontal>menu>menustack {
     top: 100%;
-}
-
-menu:checked>menustack {
-    display: flex;
-}
-
-menustack {
-    background-color: white;
-    color: black;
-    border-color: #a0a0a0;
-    border-width: 1px;
-    width: auto;
-    height: auto;
 }
 
 .menu_arrow {

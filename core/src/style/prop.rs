@@ -292,6 +292,20 @@ pub trait PropSet: AsEntity + Sized {
         self.entity()
     }
 
+    fn set_selected(self, cx: &mut Context, value: bool) -> Entity {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self.entity()) {
+            pseudo_classes.set(PseudoClass::SELECTED, value);
+        }
+
+        cx.style.needs_restyle = true;
+        cx.style.needs_relayout = true;
+        cx.style.needs_redraw = true;
+
+        //flag_geo_change(cx, self.entity());
+
+        self.entity()
+    }
+
     // Style
 
     // TODO

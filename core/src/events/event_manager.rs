@@ -76,21 +76,7 @@ impl EventManager {
             let target = event.target;
 
             // Send event to target
-            if let Some(mut view) = context.views.remove(&event.target) {
-                context.current = event.target;
-                view.event(context, event);
-
-                context.views.insert(event.target, view);
-            }
-
-            if let Some(mut model_list) = context.data.remove(event.target) {
-                for (_, model) in model_list.data.iter_mut() {
-                    context.current = event.target;
-                    model.event(context, event);
-                }
-
-                context.data.insert(event.target, model_list).expect("Failed to insert data");
-            }
+            visit_entity(context, target, event);
 
             if event.consumed {
                 continue 'events;
@@ -110,26 +96,24 @@ impl EventManager {
                     }
 
                     // Send event to all entities before the target
-                    if let Some(mut view) = context.views.remove(&entity) {
-                        let prev = context.current;
-                        context.current = entity;
-                        view.event(context, event);
-                        context.current = prev;
+                    visit_entity(context, entity, event);
 
-                        context.views.insert(entity, view);
+                    // Skip to the next event if the current event is consumed
+                    if event.consumed {
+                        continue 'events;
+                    }
+                }
+            }
+
+            if event.propagation == Propagation::Subtree {
+                for entity in target.branch_iter(&self.tree) {
+                    // Skip the target entity
+                    if entity == event.target {
+                        continue;
                     }
 
-                    if let Some(mut model_list) = context.data.remove(entity) {
-                        for (_, model) in model_list.data.iter_mut() {
-                            // if event.trace {
-                            //     println!("Event: {:?} -> Model {:?}", event, ty);
-                            // }
-                            context.current = entity;
-                            model.event(context, event);
-                        }
-
-                        context.data.insert(entity, model_list).expect("Failed to insert data");
-                    }
+                    // Send event to all entities before the target
+                    visit_entity(context, entity, event);
 
                     // Skip to the next event if the current event is consumed
                     if event.consumed {
@@ -138,5 +122,28 @@ impl EventManager {
                 }
             }
         }
+    }
+}
+
+fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
+    if let Some(mut view) = context.views.remove(&entity) {
+        let prev = context.current;
+        context.current = entity;
+        view.event(context, event);
+        context.current = prev;
+
+        context.views.insert(entity, view);
+    }
+
+    if let Some(mut model_list) = context.data.remove(entity) {
+        for (_, model) in model_list.data.iter_mut() {
+            // if event.trace {
+            //     println!("Event: {:?} -> Model {:?}", event, ty);
+            // }
+            context.current = entity;
+            model.event(context, event);
+        }
+
+        context.data.insert(entity, model_list).expect("Failed to insert data");
     }
 }
