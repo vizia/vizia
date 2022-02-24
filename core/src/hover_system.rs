@@ -110,9 +110,10 @@ pub fn apply_hover(cx: &mut Context) {
 
         #[cfg(debug_assertions)]
         println!(
-            "Hover changed to {:?} parent: {:?}, posx: {}, posy: {} width: {} height: {}",
+            "Hover changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
             hovered_widget,
             cx.tree.get_parent(hovered_widget),
+            cx.views.get(&hovered_widget).map_or("<None>".to_owned(), |view| view.element().unwrap_or("<Unnamed>".to_owned())),
             cx.cache.get_posx(hovered_widget),
             cx.cache.get_posy(hovered_widget),
             cx.cache.get_width(hovered_widget),

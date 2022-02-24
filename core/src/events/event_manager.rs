@@ -140,8 +140,10 @@ fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
             // if event.trace {
             //     println!("Event: {:?} -> Model {:?}", event, ty);
             // }
+            let prev = context.current;
             context.current = entity;
             model.event(context, event);
+            context.current = prev;
         }
 
         context.data.insert(entity, model_list).expect("Failed to insert data");

@@ -53,6 +53,7 @@ impl Model for MenuData {
         if let Some(msg) = event.message.downcast() {
             match msg {
                 MenuEvent::SetSelected(sel) => {
+                    println!("selecting {:?}", sel);
                     self.selected = *sel;
                     event.consume();
                 },
@@ -154,8 +155,10 @@ pub struct MenuStack {}
 
 impl MenuStack {
     fn new<F: FnOnce(&mut Context)>(cx: &mut Context, builder: F) -> Handle<'_, Self> {
-        MenuData { selected: None, counter: RefCell::new(0) }.build(cx);
-        Self {}.build2(cx, builder)
+        Self {}.build2(cx, move |cx| {
+            MenuData { selected: None, counter: RefCell::new(0) }.build(cx);
+            builder(cx);
+        })
     }
 
     pub fn new_vertical<F: FnOnce(&mut Context)>(cx: &mut Context, builder: F) -> Handle<'_, Self> {
@@ -287,7 +290,8 @@ impl View for MenuButton {
         if let Some(WindowEvent::MouseDown(MouseButton::Left)) = event.message.downcast() {
             if let Some(callback) = self.action.take() {
                 callback(cx);
-                //cx.emit(MenuEvent::Close);
+                cx.emit(MenuEvent::Close);
+                event.consume();
                 self.action = Some(callback);
             }
         }
