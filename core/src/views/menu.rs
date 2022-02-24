@@ -2,9 +2,8 @@ use std::cell::RefCell;
 
 use crate::views::checkbox::ICON_CHECK;
 use crate::{
-    Actions, Canvas, Context, Entity, Event, HStack, Handle, Label, Lens, LensExt, Model,
-    MouseButton, Over, Popup, PopupData, PopupEvent, PropSet, Propagation, Res, TreeExt, Units,
-    VStack, View, WindowEvent,
+    Actions, Context, Entity, Event, HStack, Handle, Label, Lens, LensExt, Model, MouseButton,
+    Over, PropSet, Propagation, Res, TreeExt, Units, View, WindowEvent,
 };
 
 pub const ICON_ARROW: &str = "\u{E315}";
@@ -223,15 +222,24 @@ impl Menu {
         F1: 'static + FnOnce(&mut Context) -> Handle<'_, Lbl>,
         F2: 'static + FnOnce(&mut Context),
     {
+        let result = Self {}.build2(cx, move |cx| {
+            HStack::new(cx, move |cx| {
+                label(cx);
+                Label::new(cx, ICON_ARROW).class("menu_arrow");
+            });
+            MenuStack::new_vertical(cx, items);
+        });
+        let entity = result.entity;
         setup_menu_entry(
-            Self {}.build2(cx, move |cx| {
-                HStack::new(cx, move |cx| {
-                    label(cx);
-                    Label::new(cx, ICON_ARROW).class("menu_arrow");
-                });
-                MenuStack::new_vertical(cx, items);
-            }),
-            |_| {},
+            result,
+            move |cx| {
+                cx.event_queue.push_back(
+                    Event::new(MenuEvent::Close)
+                        .target(entity)
+                        .propagate(Propagation::Subtree)
+                        .origin(cx.current),
+                );
+            },
             |_| {},
         )
     }
