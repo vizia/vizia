@@ -1,11 +1,24 @@
 use std::cell::RefCell;
 
 use crate::views::checkbox::ICON_CHECK;
-use crate::{Units, Context, Entity, Event, HStack, Handle, Label, Lens, LensExt, MouseButton, PropSet, Propagation, Res, TreeExt, View, WindowEvent, VStack, Model, Actions, Popup, PopupData, PopupEvent, Move, Canvas};
+use crate::{
+    Actions, Canvas, Context, Entity, Event, HStack, Handle, Label, Lens, LensExt, Model,
+    MouseButton, Over, Popup, PopupData, PopupEvent, PropSet, Propagation, Res, TreeExt, Units,
+    VStack, View, WindowEvent,
+};
 
 pub const ICON_ARROW: &str = "\u{E315}";
 
-pub fn setup_menu_entry<T, F1, F2>(handle: Handle<'_, T>, on_select: F1, on_deselect: F2) -> Handle<'_, Move<T>>
+/// A helper function which sets up the necessary attributes on a view to be a menu entry.
+/// Call this with a handle to an object you would like to be considered a menu entry.
+/// It adds an on_over event handler updating the current selected menu entry and binds to
+/// said selection, updating the `selected` pseudo-class accordingly and calling the `on_select`
+/// and `on_deselect` callbacks appropriately.
+pub fn setup_menu_entry<T, F1, F2>(
+    handle: Handle<'_, T>,
+    on_select: F1,
+    on_deselect: F2,
+) -> Handle<'_, Over<T>>
 where
     T: View,
     F1: 'static + Fn(&mut Context),
@@ -14,34 +27,39 @@ where
     if let Some(data) = handle.cx.data::<MenuData>() {
         let i = *data.counter.borrow();
         *data.counter.borrow_mut() += 1;
-        handle.bind(MenuData::selected, move |handle, selected| {
-            let selected = *selected.get(handle.cx) == Some(i);
-            handle.entity.set_selected(handle.cx, selected);
-            if selected {
-                on_select(handle.cx);
-            } else {
-                on_deselect(handle.cx);
-            }
-        }).on_move(move |cx, _, _| {
-            if cx.data::<MenuControllerData>().unwrap().active {
-                cx.emit(MenuEvent::SetSelected(Some(i)));
-            }
-        })
+        handle
+            .bind(MenuData::selected, move |handle, selected| {
+                let selected = *selected.get(handle.cx) == Some(i);
+                handle.entity.set_selected(handle.cx, selected);
+                if selected {
+                    on_select(handle.cx);
+                } else {
+                    on_deselect(handle.cx);
+                }
+            })
+            .on_over(move |cx| {
+                if cx.data::<MenuControllerData>().unwrap().active {
+                    cx.emit(MenuEvent::SetSelected(Some(i)));
+                }
+            })
     } else {
         panic!("Using a menu entry outside of a menu")
     }
 }
 
-#[derive(Lens)]
+/// The data storage for the current selected index of a menu
+/// This is automatically created when you construct a MenuStack.
+#[derive(Lens, Default)]
 pub struct MenuData {
-    pub selected: Option<usize>,
-    pub counter: RefCell<usize>,
+    selected: Option<usize>,
+    counter: RefCell<usize>,
 }
 
-pub struct MenuControllerData {
-    pub active: bool,
+struct MenuControllerData {
+    active: bool,
 }
 
+/// Menu control events.
 pub enum MenuEvent {
     SetSelected(Option<usize>),
     Close,
@@ -53,10 +71,9 @@ impl Model for MenuData {
         if let Some(msg) = event.message.downcast() {
             match msg {
                 MenuEvent::SetSelected(sel) => {
-                    println!("selecting {:?}", sel);
                     self.selected = *sel;
                     event.consume();
-                },
+                }
                 MenuEvent::Close => self.selected = None,
                 MenuEvent::Activate => {}
             }
@@ -71,7 +88,7 @@ impl Model for MenuControllerData {
                 MenuEvent::Close => {
                     self.active = false;
                     cx.captured = Entity::null();
-                },
+                }
                 MenuEvent::Activate => self.active = true,
                 _ => {}
             }
@@ -84,7 +101,11 @@ pub struct MenuController {}
 /// A MenuController is a container object which holds a menu. It is responsible for managing
 /// the focus of the menu, i.e. grabbing click events until the menu is closed.
 impl MenuController {
-    pub fn new<F: FnOnce(&mut Context)>(cx: &mut Context, active: bool, builder: F) -> Handle<'_, Self> {
+    pub fn new<F: FnOnce(&mut Context)>(
+        cx: &mut Context,
+        active: bool,
+        builder: F,
+    ) -> Handle<'_, Self> {
         if cx.data::<MenuControllerData>().is_some() {
             panic!("Building a MenuController inside a MenuController. This is illegal.")
         }
@@ -112,10 +133,19 @@ impl View for MenuController {
                 let is_child = cx.hovered.is_descendant_of(&cx.tree, cx.current);
                 // we capture focus in order to see clicks outside the menus, but we don't want
                 // to deprive our children of their events.
-                // We also want mouse scroll events to be seen as normal
+                // We also want mouse scroll events to be seen by everyone
                 if event.propagation == Propagation::Direct {
-                    if (is_child && matches!(msg, WindowEvent::MouseMove(_, _) | WindowEvent::MouseDown(_) | WindowEvent::MouseUp(_) | WindowEvent::MouseScroll(_, _) | WindowEvent::MouseDoubleClick(_))) ||
-                        (!is_child && matches!(msg, WindowEvent::MouseScroll(_, _))) {
+                    if (is_child
+                        && matches!(
+                            msg,
+                            WindowEvent::MouseMove(_, _)
+                                | WindowEvent::MouseDown(_)
+                                | WindowEvent::MouseUp(_)
+                                | WindowEvent::MouseScroll(_, _)
+                                | WindowEvent::MouseDoubleClick(_)
+                        ))
+                        || (!is_child && matches!(msg, WindowEvent::MouseScroll(_, _)))
+                    {
                         cx.event_queue.push_back(
                             Event::new(msg.clone())
                                 .propagate(Propagation::Up)
@@ -129,7 +159,7 @@ impl View for MenuController {
                             Event::new(MenuEvent::Close)
                                 .propagate(Propagation::Subtree)
                                 .target(cx.current)
-                                .origin(cx.current)
+                                .origin(cx.current),
                         );
                     }
                 }
@@ -138,12 +168,12 @@ impl View for MenuController {
                     // capture focus on click
                     cx.captured = cx.current;
                     cx.emit(MenuEvent::Activate);
-                    // send a hover event to highlight whatever we're hovered on
+                    // send an over event to highlight whatever we're hovered on
                     cx.event_queue.push_back(
-                        Event::new(WindowEvent::MouseMove(0.0, 0.0))
+                        Event::new(WindowEvent::MouseOver)
                             .propagate(Propagation::Up)
                             .target(cx.hovered)
-                            .origin(cx.current)
+                            .origin(cx.current),
                     );
                 }
             }
@@ -151,12 +181,14 @@ impl View for MenuController {
     }
 }
 
+/// A MenuStack is a stack of views which can be menu entries. The only interesting thing about it
+/// is that it builds a MenuData into itself.
 pub struct MenuStack {}
 
 impl MenuStack {
     fn new<F: FnOnce(&mut Context)>(cx: &mut Context, builder: F) -> Handle<'_, Self> {
         Self {}.build2(cx, move |cx| {
-            MenuData { selected: None, counter: RefCell::new(0) }.build(cx);
+            MenuData::default().build(cx);
             builder(cx);
         })
     }
@@ -165,7 +197,10 @@ impl MenuStack {
         Self::new(cx, builder).class("vertical")
     }
 
-    pub fn new_horizontal<F: FnOnce(&mut Context)>(cx: &mut Context, builder: F) -> Handle<'_, Self> {
+    pub fn new_horizontal<F: FnOnce(&mut Context)>(
+        cx: &mut Context,
+        builder: F,
+    ) -> Handle<'_, Self> {
         Self::new(cx, builder).class("horizontal")
     }
 }
@@ -183,18 +218,22 @@ impl Menu {
     /// Construct a new menu. The first closure is the label/stack/etc that will be displayed
     /// while the menu is closed, and the second closure will be passed to a vertical MenuStack
     /// to be constructed and then displayed when the menu is opened
-    pub fn new<F1, F2, Lbl>(cx: &mut Context, label: F1, items: F2) -> Handle<'_, Move<Self>>
-        where
-            F1: 'static + FnOnce(&mut Context) -> Handle<'_, Lbl>,
-            F2: 'static + FnOnce(&mut Context),
+    pub fn new<F1, F2, Lbl>(cx: &mut Context, label: F1, items: F2) -> Handle<'_, Over<Self>>
+    where
+        F1: 'static + FnOnce(&mut Context) -> Handle<'_, Lbl>,
+        F2: 'static + FnOnce(&mut Context),
     {
-        setup_menu_entry(Self {}.build2(cx, move |cx| {
-            HStack::new(cx, move |cx| {
-                label(cx);
-                Label::new(cx, ICON_ARROW).class("menu_arrow");
-            });
-            MenuStack::new_vertical(cx, items);
-        }), |_| {}, |_| {})
+        setup_menu_entry(
+            Self {}.build2(cx, move |cx| {
+                HStack::new(cx, move |cx| {
+                    label(cx);
+                    Label::new(cx, ICON_ARROW).class("menu_arrow");
+                });
+                MenuStack::new_vertical(cx, items);
+            }),
+            |_| {},
+            |_| {},
+        )
     }
 }
 
@@ -204,7 +243,6 @@ impl View for Menu {
     }
 }
 
-
 /// A MenuButton is an entry in a menu that can be clicked to perform some action. It has various
 /// constructors depending on whether you want to make this button show a check icon conditionally.
 pub struct MenuButton {
@@ -212,21 +250,25 @@ pub struct MenuButton {
 }
 
 impl MenuButton {
-    pub fn new<F, A>(cx: &mut Context, contents: F, action: A) -> Handle<'_, Move<Self>>
+    pub fn new<F, A>(cx: &mut Context, contents: F, action: A) -> Handle<'_, Over<Self>>
     where
         F: 'static + FnOnce(&mut Context),
         A: 'static + Fn(&mut Context),
     {
-        setup_menu_entry(Self { action: Some(Box::new(action)) }.build2(cx, move |cx| {
-            contents(cx);
-        }), |_| {}, |_| {})
+        setup_menu_entry(
+            Self { action: Some(Box::new(action)) }.build2(cx, move |cx| {
+                contents(cx);
+            }),
+            |_| {},
+            |_| {},
+        )
     }
 
     pub fn new_simple<U: ToString, A>(
         cx: &mut Context,
         text: impl 'static + Res<U>,
         action: A,
-    ) -> Handle<'_, Move<Self>>
+    ) -> Handle<'_, Over<Self>>
     where
         A: 'static + Fn(&mut Context),
     {
@@ -239,7 +281,12 @@ impl MenuButton {
         )
     }
 
-    pub fn new_check<F, A, L>(cx: &mut Context, builder: F, action: A, lens: L) -> Handle<'_, Move<Self>>
+    pub fn new_check<F, A, L>(
+        cx: &mut Context,
+        builder: F,
+        action: A,
+        lens: L,
+    ) -> Handle<'_, Over<Self>>
     where
         F: 'static + FnOnce(&mut Context),
         A: 'static + Fn(&mut Context),
@@ -265,7 +312,7 @@ impl MenuButton {
         text: impl 'static + Res<U>,
         action: A,
         lens: L,
-    ) -> Handle<'_, Move<Self>>
+    ) -> Handle<'_, Over<Self>>
     where
         A: 'static + Fn(&mut Context),
         L: 'static + Lens<Target = bool>,

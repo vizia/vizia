@@ -24,8 +24,18 @@ fn main() {
                             cx,
                             |cx| Label::new(cx, "menu 1a"),
                             |cx| {
-                                MenuButton::new_check_simple(cx, "option 1", |_| {}, AppData::check1);
-                                MenuButton::new_check_simple(cx, "option 2", |_| {}, AppData::check2);
+                                MenuButton::new_check_simple(
+                                    cx,
+                                    "option 1",
+                                    |_| {},
+                                    AppData::check1,
+                                );
+                                MenuButton::new_check_simple(
+                                    cx,
+                                    "option 2",
+                                    |_| {},
+                                    AppData::check2,
+                                );
                                 MenuButton::new_simple(cx, "loooooooooooooooooooooooooong", |_| {});
                             },
                         );
@@ -41,8 +51,18 @@ fn main() {
                             cx,
                             |cx| Label::new(cx, "menu 2a"),
                             |cx| {
-                                MenuButton::new_check_simple(cx, "option 1", |_| {}, AppData::check1);
-                                MenuButton::new_check_simple(cx, "option 2", |_| {}, AppData::check2);
+                                MenuButton::new_check_simple(
+                                    cx,
+                                    "option 1",
+                                    |_| {},
+                                    AppData::check1,
+                                );
+                                MenuButton::new_check_simple(
+                                    cx,
+                                    "option 2",
+                                    |_| {},
+                                    AppData::check2,
+                                );
                                 MenuButton::new_simple(cx, "loooooooooooooooooooooooooong", |_| {});
                             },
                         );
