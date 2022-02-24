@@ -1,31 +1,62 @@
-use crate::{Entity, GenerationalId, Tree};
+use crate::{DoubleEndedTreeTour, Entity, GenerationalId, TourDirection, TourStep, Tree};
 
 /// Iterator for iterating the children of an entity.
 pub struct ChildIterator<'a> {
-    pub tree: &'a Tree,
-    pub current_forward: Option<Entity>,
-    pub current_backward: Option<Entity>,
+    tree: &'a Tree,
+    tours: DoubleEndedTreeTour,
+}
+
+impl<'a> ChildIterator<'a> {
+    pub fn new(tree: &'a Tree, node: Entity) -> Self {
+        Self {
+            tree,
+            tours: DoubleEndedTreeTour::new(
+                tree.first_child[node.index()],
+                tree.get_last_child(node),
+            ),
+        }
+    }
 }
 
 impl<'a> Iterator for ChildIterator<'a> {
     type Item = Entity;
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(entity) = self.current_forward {
-            self.current_forward = self.tree.get_next_sibling(entity);
-            return Some(entity);
-        }
-
-        None
+        self.tours.next_with(self.tree, |node, direction| match direction {
+            TourDirection::Entering => {
+                if
+                /* self.tree.ignored(node) */
+                false {
+                    (None, TourStep::EnterFirstChild)
+                } else {
+                    (Some(node), TourStep::LeaveCurrent)
+                }
+            }
+            TourDirection::Leaving => (None, TourStep::EnterNextSibling),
+        })
     }
 }
 
 impl<'a> DoubleEndedIterator for ChildIterator<'a> {
     fn next_back(&mut self) -> Option<Entity> {
-        if let Some(entity) = self.current_backward {
-            self.current_backward = self.tree.prev_sibling[entity.index()];
-            return Some(entity);
-        }
-
-        None
+        self.tours.next_back_with(self.tree, |node, direction| match direction {
+            TourDirection::Entering => {
+                if
+                /* self.tree.ignored(node) */
+                false {
+                    (None, TourStep::EnterLastChild)
+                } else {
+                    (None, TourStep::LeaveCurrent)
+                }
+            }
+            TourDirection::Leaving => {
+                if
+                /* self.tree.ignored(node) */
+                false {
+                    (None, TourStep::EnterPrevSibling)
+                } else {
+                    (Some(node), TourStep::EnterPrevSibling)
+                }
+            }
+        })
     }
 }

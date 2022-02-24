@@ -72,8 +72,8 @@ pub use vizia_derive::{Data, Lens};
 mod view;
 pub use view::{Canvas, View};
 
-mod extention;
-pub use extention::*;
+mod modifiers;
+pub use modifiers::*;
 
 mod enviroment;
 pub use enviroment::*;

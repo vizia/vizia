@@ -4,7 +4,9 @@ use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
-use vizia_core::{apply_inline_inheritance, apply_shared_inheritance, TreeExt};
+use vizia_core::{
+    apply_inline_inheritance, apply_shared_inheritance, ImageRetentionPolicy, TreeExt,
+};
 use vizia_core::{MouseButton, MouseButtonState};
 //use vizia_core::WindowWidget;
 use vizia_core::{
@@ -133,12 +135,14 @@ impl ApplicationRunner {
         let icon_font = include_bytes!("../../fonts/entypo.ttf");
         let emoji_font = include_bytes!("../../fonts/OpenSansEmoji.ttf");
         let arabic_font = include_bytes!("../../fonts/amiri-regular.ttf");
+        let material_font = include_bytes!("../../fonts/MaterialIcons-Regular.ttf");
 
         context.add_font_mem("roboto", regular_font);
         context.add_font_mem("roboto-bold", bold_font);
-        context.add_font_mem("icon", icon_font);
+        context.add_font_mem("icons", icon_font);
         context.add_font_mem("emoji", emoji_font);
         context.add_font_mem("arabic", arabic_font);
+        context.add_font_mem("material", material_font);
 
         context.style.default_font = "roboto".to_string();
 
@@ -258,12 +262,23 @@ impl ApplicationRunner {
         // Data Updates
         let mut observers: Vec<Entity> = Vec::new();
         for model_store in self.context.data.dense.iter_mut().map(|entry| &mut entry.value) {
-            for (_, lens) in model_store.lenses.iter_mut() {
-                for (_, _) in model_store.data.iter() {
-                    //if lens.update(model) {
-                    observers.extend(lens.observers().iter());
-                    //}
+            for (_, model) in model_store.data.iter() {
+                for lens in model_store.lenses_dup.iter_mut() {
+                    if lens.update(model) {
+                        observers.extend(lens.observers().iter());
+                    }
                 }
+                for (_, lens) in model_store.lenses_dedup.iter_mut() {
+                    if lens.update(model) {
+                        observers.extend(lens.observers().iter());
+                    }
+                }
+            }
+        }
+        for img in self.context.resource_manager.images.values_mut() {
+            if img.dirty {
+                observers.extend(img.observers.iter());
+                img.dirty = false;
             }
         }
 
@@ -344,6 +359,8 @@ impl ApplicationRunner {
         let mut draw_tree: Vec<Entity> = self.context.tree.into_iter().collect();
         draw_tree.sort_by_cached_key(|entity| self.context.cache.get_z_index(*entity));
 
+        self.context.resource_manager.mark_images_unused();
+
         for entity in draw_tree.into_iter() {
             // Skip window
             if entity == Entity::root() {
@@ -391,6 +408,7 @@ impl ApplicationRunner {
         }
 
         self.canvas.flush();
+        self.context.resource_manager.evict_unused_images();
 
         self.should_redraw = false;
     }

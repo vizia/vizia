@@ -1,50 +1,26 @@
 use vizia::*;
 
 const STYLE: &str = r#"
-    hstack {
-        color: green;
+    .test {
+        display: contents;
     }
 "#;
-
-#[derive(Default, Lens)]
-pub struct AppData {
-    value: bool,
-}
-
-impl Model for AppData {
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.message.downcast() {
-            match app_event {
-                AppEvent::ToggleValue => {
-                    self.value ^= true;
-                }
-            }
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum AppEvent {
-    ToggleValue,
-}
 
 fn main() {
     Application::new(WindowDescription::new().with_title("Test"), |cx| {
         cx.add_theme(STYLE);
 
-        AppData::default().build(cx);
-
         HStack::new(cx, |cx| {
-            Binding::new(cx, AppData::value, |cx, value| {
-                Checkbox::new(cx, *value.get(cx)).on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
-            });
-            Label::new(cx, "Press Me");
+            HStack::new(cx, |cx| {
+                HStack::new(cx, |_| {}).size(Stretch(1.0)).background_color(Color::blue());
+            })
+            .class("test")
+            //.display(Display::Contents)
+            .size(Pixels(80.0))
+            .background_color(Color::green());
         })
-        .col_between(Pixels(5.0))
-        .color(Color::red())
-        .disabled(true);
+        .size(Pixels(100.0))
+        .background_color(Color::red());
     })
     .run();
 }
-
-// .border_shape_top_left(BorderCornerShape::Bevel)

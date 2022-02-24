@@ -10,7 +10,7 @@ pub struct VStack {}
 impl VStack {
     pub fn new<'a, F>(cx: &'a mut Context, content: F) -> Handle<Self>
     where
-        F: 'static + FnOnce(&mut Context),
+        F: FnOnce(&mut Context),
     {
         Self {}.build2(cx, |cx| {
             (content)(cx);
@@ -30,7 +30,7 @@ pub struct HStack {}
 impl HStack {
     pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
-        F: 'static + FnOnce(&mut Context),
+        F: FnOnce(&mut Context),
     {
         Self {}
             .build2(cx, |cx| {
@@ -52,7 +52,7 @@ pub struct ZStack {}
 impl ZStack {
     pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
-        F: 'static + FnOnce(&mut Context),
+        F: FnOnce(&mut Context),
     {
         Self {}.build2(cx, |cx| {
             (content)(cx);

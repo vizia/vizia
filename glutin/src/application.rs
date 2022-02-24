@@ -1,3 +1,4 @@
+// use femtovg::{Path, Paint};
 use glutin::{
     event::{ElementState, VirtualKeyCode},
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
@@ -19,6 +20,18 @@ pub struct Application {
     should_poll: bool,
 }
 
+pub struct GlutinEventProxy(EventLoopProxy<Event>);
+
+impl EventProxy for GlutinEventProxy {
+    fn send(&self, event: Event) -> Result<(), ()> {
+        self.0.send_event(event).map_err(|_| ())
+    }
+
+    fn make_clone(&self) -> Box<dyn EventProxy> {
+        Box::new(GlutinEventProxy(self.0.clone()))
+    }
+}
+
 impl Application {
     pub fn new<F>(window_description: WindowDescription, builder: F) -> Self
     where
@@ -30,9 +43,13 @@ impl Application {
 
         context.add_theme(DEFAULT_THEME);
 
+        let event_loop = EventLoop::with_user_event();
+        let event_proxy_obj = event_loop.create_proxy();
+        context.event_proxy = Some(Box::new(GlutinEventProxy(event_proxy_obj)));
+
         Self {
             context,
-            event_loop: EventLoop::with_user_event(),
+            event_loop,
             builder: Some(Box::new(builder)),
             on_idle: None,
             window_description,
@@ -114,12 +131,14 @@ impl Application {
         let icon_font = include_bytes!("../../fonts/entypo.ttf");
         let emoji_font = include_bytes!("../../fonts/OpenSansEmoji.ttf");
         let arabic_font = include_bytes!("../../fonts/amiri-regular.ttf");
+        let material_font = include_bytes!("../../fonts/MaterialIcons-Regular.ttf");
 
         context.add_font_mem("roboto", regular_font);
         context.add_font_mem("roboto-bold", bold_font);
-        context.add_font_mem("icon", icon_font);
+        context.add_font_mem("icons", icon_font);
         context.add_font_mem("emoji", emoji_font);
         context.add_font_mem("arabic", arabic_font);
+        context.add_font_mem("material", material_font);
 
         context.style.default_font = "roboto".to_string();
 
@@ -213,6 +232,7 @@ impl Application {
 
                 glutin::event::Event::MainEventsCleared => {
 
+                    // Rebuild application if required
                     if context.enviroment.needs_rebuild {
                         context.current = Entity::root();
                         context.count = 0;
@@ -224,7 +244,6 @@ impl Application {
 
                     if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_mut::<Window>() {
-
 
                             // Load resources
                             for (name, font) in context.resource_manager.fonts.iter_mut() {
@@ -256,12 +275,24 @@ impl Application {
                     let mut observers: Vec<Entity> = Vec::new();
 
                     for model_store in context.data.dense.iter_mut().map(|entry| &mut entry.value) {
-                        for (_, lens) in model_store.lenses.iter_mut() {
-                            for (_, model) in model_store.data.iter() {
+                        for (_, model) in model_store.data.iter() {
+                            for lens in model_store.lenses_dup.iter_mut() {
+                                if lens.update(model) {
+                                    observers.extend(lens.observers().iter())
+                                }
+                            }
+
+                            for (_, lens) in model_store.lenses_dedup.iter_mut() {
                                 if lens.update(model) {
                                     observers.extend(lens.observers().iter());
                                 }
                             }
+                        }
+                    }
+                    for img in context.resource_manager.images.values_mut() {
+                        if img.dirty {
+                            observers.extend(img.observers.iter());
+                            img.dirty = false;
                         }
                     }
 
@@ -283,7 +314,10 @@ impl Application {
 
                     apply_inline_inheritance(&mut context, &tree);
 
-                    apply_styles(&mut context, &tree);
+                    if context.style.needs_restyle {
+                        apply_styles(&mut context, &tree);
+                        context.style.needs_restyle = false;
+                    }
 
                     apply_shared_inheritance(&mut context, &tree);
 
@@ -321,23 +355,19 @@ impl Application {
                         }
                     }
 
-
-
                     if let Some(idle_callback) = &on_idle {
                         context.current = Entity::root();
                         context.count = 0;
                         (idle_callback)(&mut context);
 
                         if !context.event_queue.is_empty() {
-                            event_loop_proxy.send_event(Event::new(())).unwrap();
+                            event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
                         }
                     }
                 }
 
                 glutin::event::Event::RedrawRequested(_) => {
                     // Redraw here
-                    //println!("Redraw");
-
                     if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_mut::<Window>() {
 
@@ -358,6 +388,8 @@ impl Application {
                             let mut draw_tree: Vec<Entity> = context.tree.into_iter().collect();
                             draw_tree.sort_by_cached_key(|entity| context.cache.get_z_index(*entity));
 
+                            context.resource_manager.mark_images_unused();
+
                             for entity in draw_tree.into_iter() {
 
 
@@ -371,12 +403,23 @@ impl Application {
                                     continue;
                                 }
 
+                                // Skip non-displayed widgets
                                 if context.cache.get_display(entity) == Display::None {
+                                    continue;
+                                }
+
+                                if context.tree.is_ignored(entity) {
                                     continue;
                                 }
 
                                 // Skip widgets that have 0 opacity
                                 if context.cache.get_opacity(entity) == 0.0 {
+                                    continue;
+                                }
+
+                                let bounds = context.cache.get_bounds(entity);
+
+                                if bounds.x > window_width || bounds.y > window_height {
                                     continue;
                                 }
 
@@ -403,10 +446,20 @@ impl Application {
                                 }
 
                                 window.canvas.restore();
+
+                                // Uncomment this for debug outlines
+                                // TODO - Hook this up to a key in debug mode
+                                // let mut path = Path::new();
+                                // path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+                                // let mut paint = Paint::color(femtovg::Color::rgb(255, 0, 0));
+                                // paint.set_line_width(1.0);
+                                // window.canvas.stroke_path(&mut path, paint);
                             }
 
                             window.canvas.flush();
                             window.handle.swap_buffers().expect("Failed to swap buffers");
+
+                            context.resource_manager.evict_unused_images();
                         }
 
                         context.views.insert(Entity::root(), window_view);
@@ -594,7 +647,17 @@ impl Application {
                             #[cfg(debug_assertions)]
                             if input.virtual_keycode == Some(VirtualKeyCode::H) && input.state == ElementState::Pressed {
                                 for entity in context.tree.into_iter() {
-                                    println!("Entity: {} Parent: {:?} posx: {} posy: {} width: {} height: {} scissor: {:?}", entity, entity.parent(&context.tree), context.cache.get_posx(entity), context.cache.get_posy(entity), context.cache.get_width(entity), context.cache.get_height(entity), context.cache.get_clip_region(entity));
+                                    println!("Entity: {} Parent: {:?} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&context.tree), context.cache.get_posx(entity), context.cache.get_posy(entity), context.cache.get_width(entity), context.cache.get_height(entity));
+                                }
+                            }
+
+                            #[cfg(debug_assertions)]
+                            if input.virtual_keycode == Some(VirtualKeyCode::I) && input.state == ElementState::Pressed {
+                                let iter = TreeDepthIterator::full(&context.tree);
+                                for (entity, level) in iter {
+                                    if let Some(element_name) = context.views.get(&entity).unwrap().element() {
+                                        println!("{:indent$} {} {} {:?} {:?} {:?} {:?}", "", entity,  element_name, context.cache.get_visibility(entity), context.cache.get_display(entity), context.cache.get_bounds(entity), context.cache.get_clip_region(entity), indent=level);
+                                    }
                                 }
                             }
 

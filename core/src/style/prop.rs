@@ -8,8 +8,6 @@ use crate::tree::TreeExt;
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use std::rc::Rc;
-
 /// To be replaced by [PropSet2]
 pub trait PropSet: AsEntity + Sized {
     /// Helper method for sending an event to self with upward propagation
@@ -781,6 +779,7 @@ pub trait PropSet: AsEntity + Sized {
         cx.style.text.insert(self.entity(), text.to_owned());
 
         cx.style.needs_redraw = true;
+        cx.style.needs_relayout = true;
 
         self.entity()
     }
@@ -846,6 +845,21 @@ pub trait PropSet: AsEntity + Sized {
         self.entity()
     }
 
+    /// Sets the image of the entity.
+    ///
+    /// An image is a kind of content, similar to text. It can be positioned with the `child-space`
+    /// properties, and will stretch itself to fit the computed width and height. If width or height
+    /// are auto, and min-width and min-height and max-width and max-height do not apply, the view
+    /// will size itself to the image.
+    fn set_image(self, cx: &mut Context, text: &str) -> Entity {
+        cx.style.image.insert(self.entity(), text.to_owned());
+
+        cx.style.needs_redraw = true;
+        cx.style.needs_relayout = true;
+
+        self.entity()
+    }
+
     // Tooltip
     fn set_tooltip(self, cx: &mut Context, text: &str) -> Entity {
         cx.style.tooltip.insert(self.entity(), text.to_owned()).expect("Failed to set tooltip");
@@ -895,7 +909,7 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     // TODO
-    fn set_background_image(self, cx: &mut Context, value: Rc<()>) -> Entity {
+    fn set_background_image(self, cx: &mut Context, value: String) -> Entity {
         cx.style.background_image.insert(self.entity(), value);
 
         cx.style.needs_redraw = true;

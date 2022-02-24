@@ -1,4 +1,4 @@
-use crate::{Context, Entity, Event, Propagation, Tree, TreeExt};
+use crate::{Context, Entity, Event, InternalEvent, Propagation, Tree, TreeExt};
 
 /// Dispatches events to views.
 ///
@@ -34,9 +34,21 @@ impl EventManager {
 
         // Loop over the events in the event queue
         'events: for event in self.event_queue.iter_mut() {
-            if event.trace {
-                println!("Event: {:?}", event);
+            // handle internal events
+            if let Some(msg) = event.message.downcast() {
+                match msg {
+                    InternalEvent::Redraw => context.style.needs_redraw = true,
+                    InternalEvent::LoadImage { path, image, policy } => {
+                        if let Some(image) = image.lock().unwrap().take() {
+                            context.load_image(path.clone(), image, *policy);
+                        }
+                    }
+                }
             }
+
+            // if event.trace {
+            //     println!("Event: {:?}", event);
+            // }
 
             // Send events to any listeners
             let listeners =

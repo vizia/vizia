@@ -14,10 +14,10 @@ fn main() {
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list }.build(cx);
 
-        List::new(cx, AppData::list, |cx, item| {
-            let item_text = item.get(cx).to_string();
-            Label::new(cx, &item_text);
-        }); // Center the list view in the window
+        List::new(cx, AppData::list, |cx, _, item| {
+            Label::new(cx, item);
+        })
+        .space(Stretch(1.0));
     })
     .run();
 }

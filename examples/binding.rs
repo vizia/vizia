@@ -1,18 +1,5 @@
 use vizia::*;
 
-fn main() {
-    Application::new(WindowDescription::new().with_title("Binding"), |cx| {
-        CustomData::new().build(cx);
-
-        VStack::new(cx, |cx| {
-            Binding::new(cx, CustomData::value, |cx, data| {
-                Label::new(cx, &data.get(cx).to_string());
-            });
-        });
-    })
-    .run();
-}
-
 #[derive(Lens)]
 pub struct CustomData {
     value: String,
@@ -25,3 +12,16 @@ impl CustomData {
 }
 
 impl Model for CustomData {}
+
+fn main() {
+    Application::new(WindowDescription::new().with_title("Binding"), |cx| {
+        CustomData::new().build(cx);
+
+        VStack::new(cx, |cx| {
+            Binding::new(cx, CustomData::value, |cx, value| {
+                Label::new(cx, value);
+            });
+        });
+    })
+    .run();
+}

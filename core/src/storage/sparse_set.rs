@@ -32,11 +32,23 @@ pub struct Entry<T> {
     pub value: T,
 }
 
+impl<T: Clone> Clone for Entry<T> {
+    fn clone(&self) -> Self {
+        Self { key: self.key, value: self.value.clone() }
+    }
+}
+
 /// A sparse set
 #[derive(Default, Debug)]
 pub struct SparseSetGeneric<T, D: DenseIndex> {
     pub sparse: Vec<D>,
     pub dense: Vec<Entry<T>>,
+}
+
+impl<T: Clone, D: DenseIndex> Clone for SparseSetGeneric<T, D> {
+    fn clone(&self) -> Self {
+        Self { sparse: self.sparse.clone(), dense: self.dense.clone() }
+    }
 }
 
 impl<T, D: DenseIndex> SparseSetGeneric<T, D>

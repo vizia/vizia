@@ -28,6 +28,9 @@ pub fn apply_hover(cx: &mut Context) {
         if cx.cache.get_display(entity) == Display::None {
             continue;
         }
+        if cx.tree.is_ignored(entity) {
+            continue;
+        }
 
         // Skip non-hoverable widgets
         // if cx.cache.get_hoverable(entity) != true {
@@ -135,5 +138,7 @@ pub fn apply_hover(cx: &mut Context) {
         cx.event_queue.push_back(Event::new(WindowEvent::MouseLeave).target(cx.hovered));
 
         cx.hovered = hovered_widget;
+
+        cx.style.needs_restyle = true;
     }
 }

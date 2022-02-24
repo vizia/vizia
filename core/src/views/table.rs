@@ -1,80 +1,96 @@
+use std::marker::PhantomData;
 use std::rc::Rc;
 
-use morphorm::LayoutType;
-
-use crate::Units::*;
-use crate::{Context, HStack, Handle, ItemPtr, Lens, Model, TreeExt, View};
+use crate::{Binding, Data, Index, LensExt, List, Then, Units::*, VStack};
+use crate::{Context, HStack, Handle, Lens, Model, View};
 
 // TODO
 
 pub struct Table<L, T: 'static>
 where
     L: Lens<Target = Vec<T>>,
+    T: Data,
 {
-    width: usize,
-    lens: L,
-    builder: Option<Rc<dyn Fn(&mut Context, usize, ItemPtr<L, T>)>>,
+    p: PhantomData<L>,
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T> Table<L, T> {
-    pub fn new<F>(cx: &mut Context, width: usize, lens: L, builder: F) -> Handle<Self>
+impl<L: 'static + Lens<Target = Vec<T>>, T: Data> Table<L, T> {
+    pub fn new<'a, F>(cx: &'a mut Context, lens: L, list_builder: F) -> Handle<'a, Self>
     where
-        F: 'static + Fn(&mut Context, usize, ItemPtr<L, T>),
+        F: 'static + Fn(&mut Context, L),
         <L as Lens>::Source: Model,
     {
-        Self { lens, width, builder: Some(Rc::new(builder)) }
-            .build(cx)
-            .layout_type(LayoutType::Grid)
-            .row_between(Pixels(1.0))
-            .col_between(Pixels(1.0))
+        Self { p: PhantomData::default() }.build2(cx, move |cx| {
+            HStack::new(cx, move |cx| {
+                (list_builder)(cx, lens);
+            });
+        })
     }
 }
 
-impl<L, T> View for Table<L, T>
+impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for Table<L, T>
 where
     L: 'static + Lens<Target = Vec<T>>,
 {
-    fn body(&mut self, cx: &mut Context) {
-        for child in cx.current.child_iter(&cx.tree.clone()) {
-            cx.remove(child);
-        }
-
-        let builder = self.builder.take().unwrap();
-
-        let mut found_data = None;
-
-        'tree: for entity in cx.current.parent_iter(&cx.tree.clone()) {
-            if let Some(model_list) = cx.data.get(entity) {
-                for (_, model) in model_list.data.iter() {
-                    if let Some(data) = model.downcast_ref::<L::Source>() {
-                        found_data = Some(data);
-                        break 'tree;
-                    }
-                }
-            }
-        }
-
-        if let Some(data) = found_data {
-            let len = self.lens.view(data).len();
-
-            assert!(len / self.width == self.width, "Only square tables supported at the moment");
-
-            cx.style.grid_rows.insert(cx.current, vec![Stretch(1.0); self.width]);
-            cx.style.grid_cols.insert(cx.current, vec![Stretch(1.0); self.width]);
-
-            for row in 0..len / self.width {
-                for col in 0..self.width {
-                    let ptr = ItemPtr::new(self.lens.clone(), row * self.width + col, row, col);
-                    let width = self.width;
-                    let builder = builder.clone();
-                    HStack::new(cx, move |cx| {
-                        (builder)(cx, width, ptr.clone());
-                    })
-                    .row_index(row)
-                    .col_index(col);
-                    cx.count += 1;
-                }
-            }
-        }
+    fn element(&self) -> Option<String> {
+        Some("table".to_string())
     }
+}
+
+pub struct TableColumn<R, L, T, U>
+where
+    R: Lens<Target = Vec<T>>,
+    L: Lens<Source = T, Target = U>,
+    T: Data,
+    U: Data,
+{
+    p1: PhantomData<R>,
+    p2: PhantomData<L>,
+}
+
+impl<R, L, T: Data, U: Data> TableColumn<R, L, T, U>
+where
+    R: Lens<Target = Vec<T>>,
+    L: Lens<Source = T, Target = U>,
+{
+    pub fn new<F, Label>(
+        cx: &mut Context,
+        list: R,
+        item: L,
+        label: Label,
+        content: F,
+    ) -> Handle<Self>
+    where
+        F: 'static + Fn(&mut Context, usize, Then<Then<R, Index<<R as Lens>::Target, T>>, L>),
+        Label: 'static + Fn(&mut Context),
+        <R as Lens>::Source: Model,
+    {
+        Self { p1: PhantomData::default(), p2: PhantomData::default() }.build2(cx, move |cx| {
+            //VStack::new(cx, move |cx|{
+            (label)(cx);
+            //    Element::new(cx).height(Pixels(1.0)).background_color(Color::black());
+            //}).height(Pixels(30.0));
+
+            let content = Rc::new(content);
+            //let item = item.clone();
+            List::new(cx, list, move |cx, index, it| {
+                let content = content.clone();
+                let item = item.clone();
+                VStack::new(cx, move |cx| {
+                    //let item = item.clone();
+                    Binding::new(cx, it.then(item), move |cx, l| {
+                        (content)(cx, index, l.clone());
+                    });
+                });
+            })
+            .width(Stretch(1.0));
+        })
+    }
+}
+
+impl<R, L, T: Data, U: Data> View for TableColumn<R, L, T, U>
+where
+    R: Lens<Target = Vec<T>>,
+    L: Lens<Source = T, Target = U>,
+{
 }
