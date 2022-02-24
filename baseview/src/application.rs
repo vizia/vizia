@@ -262,16 +262,16 @@ impl ApplicationRunner {
         // Data Updates
         let mut observers: Vec<Entity> = Vec::new();
         for model_store in self.context.data.dense.iter_mut().map(|entry| &mut entry.value) {
-            for (_, _) in model_store.data.iter() {
-                for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                    //if lens.update(model) {
-                    observers.extend(lens.observers().iter());
-                    //}
-                }
+            for (_, model) in model_store.data.iter() {
                 for lens in model_store.lenses_dup.iter_mut() {
-                    //if lens.update(model) {
-                    observers.extend(lens.observers().iter());
-                    //}
+                    if lens.update(model) {
+                        observers.extend(lens.observers().iter());
+                    }
+                }
+                for (_, lens) in model_store.lenses_dedup.iter_mut() {
+                    if lens.update(model) {
+                        observers.extend(lens.observers().iter());
+                    }
                 }
             }
         }
