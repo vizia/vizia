@@ -78,16 +78,19 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
-    pub fn toggle_class(self, name: &str, applied: bool) -> Self {
-        if let Some(class_list) = self.cx.style.classes.get_mut(self.entity) {
-            if applied {
-                class_list.insert(name.to_string());
-            } else {
-                class_list.remove(name);
+    pub fn toggle_class(self, name: &str, applied: impl Res<bool>) -> Self {
+        let name = name.to_owned();
+        applied.set_or_bind(self.cx, self.entity, move |cx, entity, applied| {
+            if let Some(class_list) = cx.style.classes.get_mut(entity) {
+                if applied {
+                    class_list.insert(name.clone());
+                } else {
+                    class_list.remove(&name);
+                }
             }
-        }
 
-        self.cx.style.needs_restyle = true;
+            cx.style.needs_restyle = true;
+        });
 
         self
     }
