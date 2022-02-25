@@ -2,8 +2,8 @@ use femtovg::{LineCap, Paint, Path, Solidity};
 use morphorm::{Hierarchy, Units};
 
 use crate::{
-    Binding, Context, Entity, Handle, LensExt, Model, Modifiers, MouseButton, Res, SliderData,
-    SliderEvent, Units::*, View, WindowEvent, ZStack,
+    Binding, Context, Entity, Handle, Lens, LensExt, Modifiers, MouseButton, Res, Units::*, View,
+    WindowEvent, ZStack,
 };
 
 static DEFAULT_DRAG_SCALAR: f32 = 0.0042;
@@ -12,8 +12,8 @@ static DEFAULT_MODIFIER_SCALAR: f32 = 0.04;
 
 use std::f32::consts::PI;
 
-pub struct Knob {
-    pub normalized_value: f32,
+pub struct Knob<L> {
+    lens: L,
     default_normal: f32,
 
     is_dragging: bool,
@@ -24,25 +24,23 @@ pub struct Knob {
     wheel_scalar: f32,
     modifier_scalar: f32,
 
-    on_changing: Option<Box<dyn Fn(&mut Self, &mut Context)>>,
+    on_changing: Option<Box<dyn Fn(&mut Context, f32)>>,
 }
 
-impl Knob {
+impl<L: Lens<Target = f32>> Knob<L> {
     pub fn new(
         cx: &mut Context,
         normalized_default: impl Res<f32>,
-        normalized_value: impl Res<f32>,
+        lens: L,
         centered: bool,
     ) -> Handle<Self> {
-        let normalized_value = *normalized_value.get_ref(cx);
-
         Self {
-            normalized_value,
-            default_normal: *normalized_default.get_ref(cx),
+            lens: lens.clone(),
+            default_normal: normalized_default.get_val(cx),
 
             is_dragging: false,
             prev_drag_y: 0.0,
-            continuous_normal: normalized_value,
+            continuous_normal: *lens.get(cx),
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
@@ -51,26 +49,12 @@ impl Knob {
             on_changing: None,
         }
         .build2(cx, move |cx| {
-            SliderData { value: normalized_value.clamp(0.0, 1.0) }.build(cx);
-
             ZStack::new(cx, move |cx| {
-                Binding::new(cx, SliderData::value, move |cx, value| {
-                    //println!("{}", value.get(cx));
-                    let height = cx.cache.get_height(cx.current);
-                    let width = cx.cache.get_width(cx.current);
-                    let radius = height.min(width) / 2.;
-                    ArcTrack::new(
-                        cx,
-                        *value.get(cx),
-                        centered,
-                        Pixels(radius),
-                        Percentage(15.),
-                        300.,
-                    )
+                ArcTrack::new(cx, centered, Percentage(50.), Percentage(15.), 300.)
+                    .value(lens)
                     .width(Stretch(1.0))
                     .height(Stretch(1.0))
                     .class("track");
-                });
 
                 // TODO
                 // Element::new(cx)
@@ -83,22 +67,23 @@ impl Knob {
             });
         })
     }
-    pub fn custom<'a, F, T>(
-        cx: &'a mut Context,
-        normalized_default: f32,
-        normalized_value: f32,
+
+    pub fn custom<F, T>(
+        cx: &mut Context,
+        lens: L,
+        default_normal: f32,
         content: F,
-    ) -> Handle<Self>
+    ) -> Handle<'_, Self>
     where
         F: 'static + Fn(&mut Context, f32) -> Handle<T>,
     {
         Self {
-            normalized_value,
-            default_normal: normalized_default,
+            lens: lens.clone(),
+            default_normal,
 
             is_dragging: false,
             prev_drag_y: 0.0,
-            continuous_normal: normalized_value,
+            continuous_normal: *lens.get(cx),
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
@@ -107,10 +92,8 @@ impl Knob {
             on_changing: None,
         }
         .build2(cx, move |cx| {
-            SliderData { value: normalized_value.clamp(0.0, 1.0) }.build(cx);
-
             ZStack::new(cx, move |cx| {
-                Binding::new(cx, SliderData::value, move |cx, value| {
+                Binding::new(cx, lens, move |cx, value| {
                     (content)(cx, *value.get(cx))
                         .width(Percentage(100.0))
                         .height(Percentage(100.0));
@@ -120,13 +103,13 @@ impl Knob {
     }
 }
 
-impl<'a> Handle<'a, Knob> {
+impl<'a, L: Lens<Target = f32>> Handle<'a, Knob<L>> {
     pub fn on_changing<F>(self, callback: F) -> Self
     where
-        F: 'static + Fn(&mut Knob, &mut Context),
+        F: 'static + Fn(&mut Context, f32),
     {
         if let Some(view) = self.cx.views.get_mut(&self.entity) {
-            if let Some(knob) = view.downcast_mut::<Knob>() {
+            if let Some(knob) = view.downcast_mut::<Knob<L>>() {
                 knob.on_changing = Some(Box::new(callback));
             }
         }
@@ -135,7 +118,7 @@ impl<'a> Handle<'a, Knob> {
     }
 }
 
-impl View for Knob {
+impl<L: Lens<Target = f32>> View for Knob<L> {
     fn element(&self) -> Option<String> {
         Some("knob".to_string())
     }
@@ -144,20 +127,15 @@ impl View for Knob {
         let move_virtual_slider = |self_ref: &mut Self, cx: &mut Context, new_normal: f32| {
             self_ref.continuous_normal = new_normal.clamp(0.0, 1.0);
 
-            // This will cause the knob to "snap" when using an `IntMap`.
-            self_ref.normalized_value = self_ref.continuous_normal;
-
             // TODO - Remove when done
             //println!("Normalized: {}, Display: {}", self_ref.normalized_value, self_ref.map.normalized_to_display(self_ref.normalized_value));
 
             if let Some(callback) = self_ref.on_changing.take() {
-                (callback)(self_ref, cx);
+                (callback)(cx, self_ref.continuous_normal);
                 self_ref.on_changing = Some(callback);
             }
 
             //entity.emit(cx, SliderEvent::ValueChanged(self_ref.normalized_value));
-
-            cx.emit(SliderEvent::SetValue(self_ref.normalized_value));
 
             // if let Some(track) = cx.query::<ArcTrack>(self_ref.value_track) {
             //     track.normalized_value = self_ref.normalized_value;
@@ -175,9 +153,7 @@ impl View for Knob {
                     cx.captured = cx.current;
                     cx.focused = cx.current;
 
-                    if let Some(slider_data) = cx.data::<SliderData>() {
-                        self.continuous_normal = slider_data.value;
-                    }
+                    self.continuous_normal = *self.lens.get(cx);
 
                     // if let Some(callback) = self.on_press.take() {
                     //     (callback)(self, cx, cx.current);
@@ -189,9 +165,7 @@ impl View for Knob {
                     self.is_dragging = false;
                     //self.continuous_normal = self.normalized_value;
 
-                    if let Some(slider_data) = cx.data::<SliderData>() {
-                        self.continuous_normal = slider_data.value;
-                    }
+                    self.continuous_normal = *self.lens.get(cx);
 
                     cx.captured = Entity::null();
 
@@ -254,7 +228,6 @@ pub struct ArcTrack {
 impl ArcTrack {
     pub fn new(
         cx: &mut Context,
-        value: f32,
         center: bool,
         radius: Units,
         span: Units,
@@ -268,7 +241,7 @@ impl ArcTrack {
             radius,
             span,
 
-            normalized_value: value,
+            normalized_value: 0.5,
 
             center,
         }
@@ -295,7 +268,7 @@ impl View for ArcTrack {
         let width = cx.cache.get_width(cx.current);
         let height = cx.cache.get_height(cx.current);
 
-        // Clalculate arc center
+        // Calculate arc center
         let centerx = posx + 0.5 * width;
         let centery = posy + 0.5 * height;
 
@@ -344,5 +317,22 @@ impl View for ArcTrack {
         paint.set_line_width(span);
         paint.set_line_cap(LineCap::Round);
         canvas.stroke_path(&mut path, paint);
+    }
+}
+
+impl Handle<'_, ArcTrack> {
+    pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
+        let entity = self.entity;
+        Binding::new(self.cx, lens, move |cx, value| {
+            let value = *value.get(cx);
+            if let Some(view) = cx.views.get_mut(&entity) {
+                if let Some(knob) = view.downcast_mut::<ArcTrack>() {
+                    knob.normalized_value = value;
+                    cx.style.needs_redraw = true;
+                }
+            }
+        });
+
+        self
     }
 }

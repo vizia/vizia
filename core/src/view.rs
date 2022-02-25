@@ -18,10 +18,11 @@ pub trait View: 'static + Sized {
     fn body(&mut self, cx: &mut Context) {}
     fn build2<F>(self, cx: &mut Context, builder: F) -> Handle<Self>
     where
-        F: 'static + FnOnce(&mut Context),
+        F: FnOnce(&mut Context),
     {
-        // Add the instance to context unless it already exists
+        // Add the instance to context even if it already exists
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
+            cx.views.insert(id, Box::new(self));
             id
         } else {
             let id = cx.entity_manager.create();
@@ -41,42 +42,6 @@ pub trait View: 'static + Sized {
         let prev_count = handle.cx.count;
         handle.cx.current = handle.entity;
         handle.cx.count = 0;
-
-        (builder)(handle.cx);
-
-        // This part will also be moved somewhere else
-        handle.cx.current = prev;
-        handle.cx.count = prev_count;
-
-        handle
-    }
-
-    fn update<F>(self, cx: &mut Context, builder: F) -> Handle<Self>
-    where
-        F: 'static + FnOnce(&mut Context),
-    {
-        // Add the instance to context unless it already exists
-        let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
-            cx.views.insert(id, Box::new(self));
-            id
-        } else {
-            let id = cx.entity_manager.create();
-            cx.tree.add(id, cx.current).expect("Failed to add to tree");
-            cx.cache.add(id).expect("Failed to add to cache");
-            cx.style.add(id);
-            cx.views.insert(id, Box::new(self));
-            id
-        };
-
-        cx.count += 1;
-
-        // ...and this part
-        let prev = cx.current;
-        let prev_count = cx.count;
-        cx.current = id;
-        cx.count = 0;
-
-        let handle = Handle { entity: id, p: Default::default(), cx };
 
         (builder)(handle.cx);
 
@@ -168,7 +133,7 @@ pub trait View: 'static + Sized {
 
         let parent = cx
             .tree
-            .get_parent(entity)
+            .get_layout_parent(entity)
             .expect(&format!("Failed to find parent somehow: {}", entity));
 
         let parent_width = cx.cache.get_width(parent);
@@ -528,18 +493,6 @@ pub trait View: 'static + Sized {
         // Fill with background color
         let mut paint = Paint::color(background_color);
 
-        // if let Some(background_image) = cx.style.background_image.get(entity) {
-        //     if let Some(image_id) = cx.resource_manager.image_ids.get(background_image) {
-        //         match image_id {
-        //             crate::ImageOrId::Id(id) => {
-        //                 paint = Paint::image(*id, 0.0, 0.0, 100.0, 100.0, 0.0, 1.0);
-        //             }
-
-        //             _ => {}
-        //         }
-        //     }
-        // }
-
         // Gradient overrides background color
         if let Some(background_gradient) = cx.style.background_gradient.get(entity) {
             let (_, _, end_x, end_y, parent_length) = match background_gradient.direction {
@@ -563,6 +516,17 @@ pub trait View: 'static + Sized {
                     .collect::<Vec<_>>()
                     .as_slice(),
             );
+        }
+
+        // background-image overrides gradient
+        // TODO should we draw image on top of colors?
+        if let Some(background_image) = cx.style.background_image.get(entity) {
+            let background_image = background_image.clone(); // not ideal
+            let img = cx.get_image(&background_image);
+
+            let dim = img.dimensions();
+            let id = img.id(canvas);
+            paint = Paint::image(id, bounds.x, bounds.y, dim.0 as f32, dim.1 as f32, 0.0, 1.0);
         }
 
         //canvas.global_composite_blend_func(BlendFactor::DstColor, BlendFactor::OneMinusSrcAlpha);
@@ -605,38 +569,12 @@ pub trait View: 'static + Sized {
         // );
         // canvas.fill_path(&mut path, paint);
 
-        // Draw text
-        if let Some(text) = cx.style.text.get(entity) {
-            let font = cx.style.font.get(entity).cloned().unwrap_or_default();
-
-            // TODO - This should probably be cached in cx to save look-up time
-            let default_font = cx
-                .resource_manager
-                .fonts
-                .get(&cx.style.default_font)
-                .and_then(|font| match font {
-                    FontOrId::Id(id) => Some(id),
-                    _ => None,
-                })
-                .expect("Failed to find default font");
-
-            let font_id = cx
-                .resource_manager
-                .fonts
-                .get(&font)
-                .and_then(|font| match font {
-                    FontOrId::Id(id) => Some(id),
-                    _ => None,
-                })
-                .unwrap_or(default_font);
-
-            // let mut x = posx + (border_width / 2.0);
-            // let mut y = posy + (border_width / 2.0);
-
+        // Draw text and image
+        if cx.style.text.get(entity).is_some() || cx.style.image.get(entity).is_some() {
             let mut x = bounds.x;
             let mut y = bounds.y;
-
-            let text_string = text.to_owned();
+            let mut w = bounds.w;
+            let mut h = bounds.h;
 
             // TODO - Move this to a text layout system and include constraints
             let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
@@ -648,6 +586,7 @@ pub trait View: 'static + Sized {
                 Units::Pixels(val) => match child_right {
                     Units::Stretch(_) | Units::Auto => {
                         x += val + border_width;
+                        w -= val + border_width;
                         Align::Left
                     }
 
@@ -657,11 +596,13 @@ pub trait View: 'static + Sized {
                 Units::Stretch(_) => match child_right {
                     Units::Pixels(val) => {
                         x += bounds.w - val - border_width;
+                        w -= val - border_width;
                         Align::Right
                     }
 
                     Units::Stretch(_) => {
                         x += 0.5 * bounds.w;
+                        w -= 0.5 * bounds.w;
                         Align::Center
                     }
 
@@ -675,6 +616,7 @@ pub trait View: 'static + Sized {
                 Units::Pixels(val) => match child_bottom {
                     Units::Stretch(_) | Units::Auto => {
                         y += val + border_width;
+                        h -= val + border_width;
                         Baseline::Top
                     }
 
@@ -684,11 +626,13 @@ pub trait View: 'static + Sized {
                 Units::Stretch(_) => match child_bottom {
                     Units::Pixels(val) => {
                         y += bounds.h - val - border_width;
+                        h -= val - border_width;
                         Baseline::Bottom
                     }
 
                     Units::Stretch(_) => {
                         y += 0.5 * bounds.h;
+                        h -= 0.5 * bounds.h;
                         Baseline::Middle
                     }
 
@@ -698,19 +642,68 @@ pub trait View: 'static + Sized {
                 _ => Baseline::Top,
             };
 
-            let mut font_color: femtovg::Color = font_color.into();
-            font_color.set_alphaf(font_color.a * opacity);
+            // Draw image
+            if let Some(image) = cx.style.image.get(entity).cloned() {
+                let image = cx.get_image(&image);
+                let x = match align {
+                    Align::Left => x,
+                    Align::Center => x - w * 0.5,
+                    Align::Right => x - w,
+                };
+                let y = match baseline {
+                    Baseline::Top => y,
+                    Baseline::Middle => y - h * 0.5,
+                    Baseline::Alphabetic | Baseline::Bottom => y - h,
+                };
 
-            let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
+                let mut path = Path::new();
+                path.rect(x, y, w, h);
 
-            let mut paint = Paint::color(font_color);
-            paint.set_font_size(font_size);
-            paint.set_font(&[font_id.clone()]);
-            paint.set_text_align(align);
-            paint.set_text_baseline(baseline);
-            paint.set_anti_alias(false);
+                let paint = Paint::image(image.id(canvas), x, y, w, h, 0.0, 1.0);
+                canvas.fill_path(&mut path, paint);
+            }
 
-            canvas.fill_text(x, y, &text_string, paint).unwrap();
+            if let Some(text) = cx.style.text.get(entity).cloned() {
+                let font = cx.style.font.get(entity).cloned().unwrap_or_default();
+
+                // TODO - This should probably be cached in cx to save look-up time
+                let default_font = cx
+                    .resource_manager
+                    .fonts
+                    .get(&cx.style.default_font)
+                    .and_then(|font| match font {
+                        FontOrId::Id(id) => Some(id),
+                        _ => None,
+                    })
+                    .expect("Failed to find default font");
+
+                let font_id = cx
+                    .resource_manager
+                    .fonts
+                    .get(&font)
+                    .and_then(|font| match font {
+                        FontOrId::Id(id) => Some(id),
+                        _ => None,
+                    })
+                    .unwrap_or(default_font);
+
+                // let mut x = posx + (border_width / 2.0);
+                // let mut y = posy + (border_width / 2.0);
+
+                let mut font_color: femtovg::Color = font_color.into();
+                font_color.set_alphaf(font_color.a * opacity);
+
+                let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
+
+                let mut paint = Paint::color(font_color);
+                paint.set_font_size(font_size);
+                paint.set_font(&[font_id.clone()]);
+                paint.set_text_align(align);
+                paint.set_text_baseline(baseline);
+                paint.set_anti_alias(false);
+
+                canvas.fill_text(x, y, &text, paint).unwrap();
+            }
         }
     }
 }

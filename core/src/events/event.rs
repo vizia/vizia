@@ -144,4 +144,11 @@ impl Event {
     pub fn consume(&mut self) {
         self.consumed = true;
     }
+
+    pub fn try_mut<T>(&mut self) -> Option<&mut T>
+    where
+        T: Message,
+    {
+        self.message.downcast::<T>()
+    }
 }

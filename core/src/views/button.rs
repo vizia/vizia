@@ -1,4 +1,4 @@
-use crate::{Context, Event, View};
+use crate::{Context, Entity, Event, PropSet, View};
 use crate::{Handle, MouseButton, WindowEvent};
 
 /// A simple push button with an action and a label.
@@ -30,10 +30,19 @@ impl View for Button {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+                    cx.current.set_active(cx, true);
+                    cx.captured = cx.current;
                     if let Some(callback) = self.action.take() {
                         (callback)(cx);
 
                         self.action = Some(callback);
+                    }
+                }
+
+                WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+                    if event.target == cx.current {
+                        cx.captured = Entity::null();
+                        cx.current.set_active(cx, false);
                     }
                 }
 

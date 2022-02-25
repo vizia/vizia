@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
 };
 
-use crate::{Context, Entity, Event, LensWrap};
+use crate::{Context, Event, LensWrap};
 
 pub trait Model: 'static + Sized {
     fn build(self, cx: &mut Context) {
@@ -13,37 +13,25 @@ pub trait Model: 'static + Sized {
             let mut data_list: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
             data_list.insert(TypeId::of::<Self>(), Box::new(self));
             cx.data
-                .insert(cx.current, ModelDataStore { data: data_list, lenses: HashMap::default() })
+                .insert(
+                    cx.current,
+                    ModelDataStore {
+                        data: data_list,
+                        lenses_dedup: HashMap::default(),
+                        lenses_dup: vec![],
+                    },
+                )
                 .expect("Failed to add data");
         }
     }
 
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut Context, event: &mut Event) {}
-
-    #[allow(unused_variables)]
-    fn update(&mut self, cx: &mut Context) {}
 }
 
 pub trait ModelData: Any {
     #[allow(unused_variables)]
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        println!("Default");
-    }
-
-    fn update(&self) -> Vec<Entity> {
-        println!("Default");
-        Vec::new()
-    }
-
-    fn is_dirty(&self) -> bool {
-        false
-    }
-
-    fn reset(&mut self) {}
-
-    #[allow(unused_variables)]
-    fn remove_observer(&mut self, observer: Entity) {}
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {}
 }
 
 impl dyn ModelData {
@@ -107,7 +95,8 @@ impl<T: Model> ModelData for T {
 #[derive(Default)]
 pub struct ModelDataStore {
     pub data: HashMap<TypeId, Box<dyn ModelData>>,
-    pub lenses: HashMap<TypeId, Box<dyn LensWrap>>,
+    pub lenses_dedup: HashMap<TypeId, Box<dyn LensWrap>>,
+    pub lenses_dup: Vec<Box<dyn LensWrap>>,
 }
 
 impl Model for () {}

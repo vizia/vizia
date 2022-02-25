@@ -61,8 +61,9 @@ where
         content: F,
     ) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, usize, Then<Index<R, T>, L>),
+        F: 'static + Fn(&mut Context, usize, Then<Then<R, Index<<R as Lens>::Target, T>>, L>),
         Label: 'static + Fn(&mut Context),
+        <R as Lens>::Source: Model,
     {
         Self { p1: PhantomData::default(), p2: PhantomData::default() }.build2(cx, move |cx| {
             //VStack::new(cx, move |cx|{
@@ -71,11 +72,14 @@ where
             //}).height(Pixels(30.0));
 
             let content = Rc::new(content);
-            List::new(cx, list, move |cx, it| {
+            //let item = item.clone();
+            List::new(cx, list, move |cx, index, it| {
                 let content = content.clone();
+                let item = item.clone();
                 VStack::new(cx, move |cx| {
+                    //let item = item.clone();
                     Binding::new(cx, it.then(item), move |cx, l| {
-                        (content)(cx, it.idx(), l);
+                        (content)(cx, index, l.clone());
                     });
                 });
             })

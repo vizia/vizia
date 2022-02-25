@@ -1,16 +1,19 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::hash_map::Entry;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::{Debug, Display, Formatter};
+use std::sync::Mutex;
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardContext;
 use femtovg::TextContext;
+use fnv::FnvHashMap;
 // use fluent_bundle::{FluentBundle, FluentResource};
 // use unic_langid::LanguageIdentifier;
 
 use crate::{
     storage::sparse_set::SparseSet, CachedData, Entity, Enviroment, Event, FontOrId, IdManager,
-    Message, ModelDataStore, Modifiers, MouseState, Propagation, ResourceManager, Style, Tree,
-    TreeExt, View, ViewHandler,
+    ImageOrId, ImageRetentionPolicy, Message, ModelDataStore, Modifiers, MouseState, Propagation,
+    ResourceManager, StoredImage, Style, Tree, TreeExt, View, ViewHandler,
 };
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
@@ -20,7 +23,9 @@ pub struct Context {
     pub tree: Tree,
     pub current: Entity,
     pub count: usize,
-    pub views: HashMap<Entity, Box<dyn ViewHandler>>,
+    //pub views: HashMap<Entity, Box<dyn ViewHandler>>,
+    pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    //pub views: SparseSet<Box<dyn ViewHandler>>,
     pub data: SparseSet<ModelDataStore>,
     pub event_queue: VecDeque<Event>,
     pub listeners: HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
@@ -56,7 +61,7 @@ impl Context {
             tree: Tree::new(),
             current: Entity::root(),
             count: 0,
-            views: HashMap::new(),
+            views: FnvHashMap::default(),
             data: SparseSet::new(),
             style: Style::default(),
             cache,
@@ -85,6 +90,13 @@ impl Context {
         }
     }
 
+    /// Remove any extra children that were cached in the tree but are no longer required
+    pub fn remove_trailing_children(&mut self) {
+        while let Some(child) = self.tree.get_child(self.current, self.count) {
+            self.remove(child);
+        }
+    }
+
     pub fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
@@ -95,21 +107,33 @@ impl Context {
         }
 
         for entity in delete_list.iter().rev() {
-            // Remove from observers
-            for entry in self.data.dense.iter_mut() {
-                let model_list = &mut entry.value;
-                for (_, model) in model_list.data.iter_mut() {
-                    model.remove_observer(*entity);
+            for model_store in self.data.dense.iter_mut().map(|entry| &mut entry.value) {
+                for (_, lens) in model_store.lenses_dedup.iter_mut() {
+                    lens.remove_observer(entity);
                 }
+                for lens in model_store.lenses_dup.iter_mut() {
+                    lens.remove_observer(entity);
+                }
+
+                model_store.lenses_dedup.retain(|_, lenswrap| lenswrap.num_observers() != 0);
+                model_store.lenses_dup.retain(|lenswrap| lenswrap.num_observers() != 0);
             }
 
-            //println!("Removing: {}", entity);
+            for image in self.resource_manager.images.values_mut() {
+                // no need to drop them here. garbage collection happens after draw (policy based)
+                image.observers.remove(entity);
+            }
+
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.style.remove(*entity);
             self.data.remove(*entity);
-            self.entity_manager.destroy(*entity);
             self.views.remove(entity);
+            self.entity_manager.destroy(*entity);
+
+            if self.captured == *entity {
+                self.captured = Entity::null();
+            }
         }
     }
 
@@ -252,6 +276,94 @@ impl Context {
         Ok(())
     }
 
+    pub fn set_image_loader<F: 'static + Fn(&mut Context, &str)>(&mut self, loader: F) {
+        self.resource_manager.image_loader = Some(Box::new(loader));
+    }
+
+    fn get_image_internal(&mut self, path: &str) -> &mut StoredImage {
+        if let Some(img) = self.resource_manager.images.get_mut(path) {
+            img.used = true;
+            // borrow checker hack
+            return self.resource_manager.images.get_mut(path).unwrap();
+        }
+
+        if let Some(callback) = self.resource_manager.image_loader.take() {
+            callback(self, path);
+            self.resource_manager.image_loader = Some(callback);
+        }
+
+        if let Some(img) = self.resource_manager.images.get_mut(path) {
+            img.used = true;
+            // borrow checker hack
+            return self.resource_manager.images.get_mut(path).unwrap();
+        } else {
+            self.resource_manager.images.insert(
+                path.to_owned(),
+                StoredImage {
+                    image: ImageOrId::Image(
+                        image::load_from_memory_with_format(
+                            include_bytes!("../resources/broken_image.png"),
+                            image::ImageFormat::Png,
+                        )
+                        .unwrap(),
+                        femtovg::ImageFlags::NEAREST,
+                    ),
+                    retention_policy: ImageRetentionPolicy::Forever,
+                    used: true,
+                    dirty: false,
+                    observers: HashSet::new(),
+                },
+            );
+            self.resource_manager.images.get_mut(path).unwrap()
+        }
+    }
+
+    pub fn get_image(&mut self, path: &str) -> &mut ImageOrId {
+        &mut self.get_image_internal(path).image
+    }
+
+    pub fn add_image_observer(&mut self, path: &str, observer: Entity) {
+        self.get_image_internal(path).observers.insert(observer);
+    }
+
+    pub fn load_image(
+        &mut self,
+        path: String,
+        image: image::DynamicImage,
+        policy: ImageRetentionPolicy,
+    ) {
+        match self.resource_manager.images.entry(path) {
+            Entry::Occupied(mut occ) => {
+                occ.get_mut().image = ImageOrId::Image(
+                    image,
+                    femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
+                );
+                occ.get_mut().dirty = true;
+                occ.get_mut().retention_policy = policy;
+            }
+            Entry::Vacant(vac) => {
+                vac.insert(StoredImage {
+                    image: ImageOrId::Image(
+                        image,
+                        femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
+                    ),
+                    retention_policy: policy,
+                    used: true,
+                    dirty: false,
+                    observers: HashSet::new(),
+                });
+            }
+        }
+        self.style.needs_redraw = true;
+        self.style.needs_relayout = true;
+    }
+
+    pub fn evict_image(&mut self, path: &str) {
+        self.resource_manager.images.remove(path);
+        self.style.needs_redraw = true;
+        self.style.needs_relayout = true;
+    }
+
     pub fn spawn<F>(&self, target: F)
     where
         F: 'static + Send + Fn(&mut ContextProxy),
@@ -324,9 +436,31 @@ impl ContextProxy {
             Err(ProxyEmitError::Unsupported)
         }
     }
+
+    pub fn redraw(&mut self) -> Result<(), ProxyEmitError> {
+        self.emit(InternalEvent::Redraw)
+    }
+
+    pub fn load_image(
+        &mut self,
+        path: String,
+        image: image::DynamicImage,
+        policy: ImageRetentionPolicy,
+    ) -> Result<(), ProxyEmitError> {
+        self.emit(InternalEvent::LoadImage { path, image: Mutex::new(Some(image)), policy })
+    }
 }
 
 pub trait EventProxy: Send {
     fn send(&self, event: Event) -> Result<(), ()>;
     fn make_clone(&self) -> Box<dyn EventProxy>;
+}
+
+pub(crate) enum InternalEvent {
+    Redraw,
+    LoadImage {
+        path: String,
+        image: Mutex<Option<image::DynamicImage>>,
+        policy: ImageRetentionPolicy,
+    },
 }

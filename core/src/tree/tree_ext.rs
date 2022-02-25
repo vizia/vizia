@@ -1,6 +1,5 @@
 use crate::{Entity, Tree};
 
-use super::branch_iter::BranchIterator;
 use super::child_iter::ChildIterator;
 use super::parent_iter::ParentIterator;
 use super::tree_iter::TreeIterator;
@@ -15,7 +14,7 @@ pub trait TreeExt {
     fn parent_iter<'a>(&self, tree: &'a Tree) -> ParentIterator<'a>;
     fn child_iter<'a>(&self, tree: &'a Tree) -> ChildIterator<'a>;
     fn tree_iter<'a>(&self, tree: &'a Tree) -> TreeIterator<'a>;
-    fn branch_iter<'a>(&self, tree: &'a Tree) -> BranchIterator<'a>;
+    fn branch_iter<'a>(&self, tree: &'a Tree) -> TreeIterator<'a>;
 }
 
 impl TreeExt for Entity {
@@ -62,18 +61,17 @@ impl TreeExt for Entity {
     }
 
     fn child_iter<'a>(&self, tree: &'a Tree) -> ChildIterator<'a> {
-        ChildIterator {
-            tree,
-            current_forward: tree.get_first_child(*self),
-            current_backward: tree.get_last_child(*self),
-        }
+        ChildIterator::new(tree, *self)
     }
 
+    // XXX(ollpu): Why is this defined on Entity when self isn't used?
+    // The earlier behavior also seems illogical (start from the given entity but continue through
+    // the whole tree)
     fn tree_iter<'a>(&self, tree: &'a Tree) -> TreeIterator<'a> {
-        TreeIterator { tree, current_node: Some(*self) }
+        TreeIterator::full(tree)
     }
 
-    fn branch_iter<'a>(&self, tree: &'a Tree) -> BranchIterator<'a> {
-        BranchIterator { tree, start_node: *self, current_node: Some(*self) }
+    fn branch_iter<'a>(&self, tree: &'a Tree) -> TreeIterator<'a> {
+        TreeIterator::subtree(tree, *self)
     }
 }
