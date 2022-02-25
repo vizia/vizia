@@ -50,11 +50,18 @@ impl<L: Lens<Target = f32>> Knob<L> {
         }
         .build2(cx, move |cx| {
             ZStack::new(cx, move |cx| {
-                ArcTrack::new(cx, centered, Percentage(100.0), Percentage(15.0), 300.0)
-                    .value(lens)
-                    .width(Stretch(1.0))
-                    .height(Stretch(1.0))
-                    .class("track");
+                ArcTrack::new(
+                    cx,
+                    centered,
+                    Percentage(100.0),
+                    Percentage(15.0),
+                    300.0,
+                    KnobMode::Continuous,
+                )
+                .value(lens)
+                .width(Stretch(1.0))
+                .height(Stretch(1.0))
+                .class("track");
 
                 // TODO
                 // Element::new(cx)
@@ -70,12 +77,12 @@ impl<L: Lens<Target = f32>> Knob<L> {
 
     pub fn custom<F, T>(
         cx: &mut Context,
-        lens: L,
         default_normal: f32,
+        lens: L,
         content: F,
     ) -> Handle<'_, Self>
     where
-        F: 'static + Fn(&mut Context, f32) -> Handle<T>,
+        F: 'static + Fn(&mut Context, L) -> Handle<T>,
     {
         Self {
             lens: lens.clone(),
@@ -94,9 +101,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
         .build2(cx, move |cx| {
             ZStack::new(cx, move |cx| {
                 Binding::new(cx, lens, move |cx, value| {
-                    (content)(cx, *value.get(cx))
-                        .width(Percentage(100.0))
-                        .height(Percentage(100.0));
+                    (content)(cx, value).width(Percentage(100.0)).height(Percentage(100.0));
                 });
             });
         })
@@ -215,7 +220,6 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
     }
 }
 
-// TODO: better name?
 /// Adds tickmarks to a knob to show the steps that a knob can be set to.
 /// When added to a knob, the knob should be made smaller (depending on span),
 /// so the knob doesn't overlap with the tick marks
@@ -322,17 +326,17 @@ pub struct TickKnob {
     angle_end: f32,
     radius: Units,
     tick_width: Units,
+    tick_len: Units,
     normalized_value: f32,
-    // steps: u32,
     mode: KnobMode,
 }
 
 impl TickKnob {
     pub fn new(
         cx: &mut Context,
-        value: f32,
         radius: Units,
         tick_width: Units,
+        tick_len: Units,
         arc_len: f32,
         // steps: u32,
         mode: KnobMode,
@@ -344,7 +348,8 @@ impl TickKnob {
             angle_end: arc_len / 2.0,
             radius,
             tick_width,
-            normalized_value: value,
+            tick_len,
+            normalized_value: 0.5,
             mode,
         }
         .build(cx)
@@ -387,7 +392,7 @@ impl View for TickKnob {
         let radius = self.radius.value_or(parent_width / 2.0, 0.0);
 
         let tick_width = self.tick_width.value_or(radius, 0.0);
-
+        let tick_len = self.tick_len.value_or(radius, 0.0);
         // Draw the circle
         let mut path = Path::new();
         path.circle(centerx, centery, radius);
@@ -410,11 +415,10 @@ impl View for TickKnob {
             }
         };
 
-        // TODO: Does radius * 0.75 give a good tick length?
-        // Should it maybe be customizable?
         path.move_to(
-            centerx + angle.cos() * (radius * 0.70),
-            centery + angle.sin() * (radius * 0.70),
+            // centerx + angle.cos() * (radius * 0.70),
+            centerx + angle.cos() * (radius - tick_len),
+            centery + angle.sin() * (radius - tick_len),
         );
         path.line_to(
             centerx + angle.cos() * (radius - tick_width / 2.0),
@@ -427,6 +431,22 @@ impl View for TickKnob {
         canvas.stroke_path(&mut path, paint);
     }
 }
+impl Handle<'_, TickKnob> {
+    pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
+        let entity = self.entity;
+        Binding::new(self.cx, lens, move |cx, value| {
+            let value = *value.get(cx);
+            if let Some(view) = cx.views.get_mut(&entity) {
+                if let Some(knob) = view.downcast_mut::<TickKnob>() {
+                    knob.normalized_value = value;
+                    cx.style.needs_redraw = true;
+                }
+            }
+        });
+
+        self
+    }
+}
 /// Makes a knob that represents the current value with an arc
 pub struct ArcTrack {
     angle_start: f32,
@@ -436,6 +456,7 @@ pub struct ArcTrack {
     normalized_value: f32,
 
     center: bool,
+    mode: KnobMode,
 }
 
 impl ArcTrack {
@@ -445,6 +466,7 @@ impl ArcTrack {
         radius: Units,
         span: Units,
         arc_len: f32,
+        mode: KnobMode,
     ) -> Handle<Self> {
         Self {
             // angle_start: -150.0,
@@ -457,6 +479,7 @@ impl ArcTrack {
             normalized_value: 0.5,
 
             center,
+            mode,
         }
         .build(cx)
     }
@@ -511,18 +534,26 @@ impl View for ArcTrack {
         // Draw the active arc
         let mut path = Path::new();
 
+        let value = match self.mode {
+            KnobMode::Continuous => self.normalized_value,
+            // snapping
+            KnobMode::Discrete(steps) => {
+                (self.normalized_value * (steps - 1) as f32).floor() / (steps - 1) as f32
+            }
+        };
+
         if self.center {
             let center = -PI / 2.0;
 
-            if self.normalized_value <= 0.5 {
-                let current = self.normalized_value * 2.0 * (center - start) + start;
+            if value <= 0.5 {
+                let current = value * 2.0 * (center - start) + start;
                 path.arc(centerx, centery, radius - span / 2.0, center, current, Solidity::Solid);
             } else {
-                let current = (self.normalized_value * 2.0 - 1.0) * (end - center) + center;
+                let current = (value * 2.0 - 1.0) * (end - center) + center;
                 path.arc(centerx, centery, radius - span / 2.0, current, center, Solidity::Solid);
             }
         } else {
-            let current = self.normalized_value * (end - start) + start;
+            let current = value * (end - start) + start;
             path.arc(centerx, centery, radius - span / 2.0, current, start, Solidity::Solid);
         }
 
@@ -549,7 +580,6 @@ impl Handle<'_, ArcTrack> {
         self
     }
 }
-// TODO: better name?
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum KnobMode {
     Discrete(usize),

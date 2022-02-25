@@ -1,6 +1,8 @@
 use vizia::*;
 const STYLE: &str = r#"
     label {
+        width: 100px;
+        height: 30px;
         font-size: 20;
         color: #C2C2C2;
     }
@@ -29,55 +31,64 @@ fn main() {
             KnobData { knobs: vec![0.5; 5] }.build(cx);
 
             HStack::new(cx, |cx| {
-                Binding::new(cx, KnobData::knobs, move |cx, knobs| {
-                    // default knob
-                    VStack::new(cx, move |cx| {
-                        Label::new(cx, "Default knob");
-                        Knob::new(cx, 0.5, knobs.get(cx)[0], false)
-                            .on_changing(move |knob, cx| {
-                                cx.emit(KnobChangeEvent::SetKnob(0, knob.normalized_value))
-                            })
-                            .color(Color::red());
-                        Label::new(cx, &format!("{:.3}", knobs.get(cx)[0]));
-                    })
-                    .row_between(Pixels(10.0))
-                    .child_space(Stretch(1.0));
-                    // simple tick knob
-                    VStack::new(cx, move |cx| {
-                        Label::new(cx, "Tick knob");
-                        Knob::custom(cx, 0.5, knobs.get(cx)[1], move |cx, val| {
-                            // FIXME: Using this for radius resulted in a memory leak??
-                            // let height = cx.cache.get_height(cx.current);
-                            // let width = cx.cache.get_width(cx.current);
-                            // let radius = height.min(width) / 2.;
+                // default knob
+                VStack::new(cx, move |cx| {
+                    Label::new(cx, "Default knob").width(Pixels(30.)).height(Pixels(30.));
+
+                    Knob::new(cx, 0.5, KnobData::knobs.map(|knobs| knobs[0]), false)
+                        .on_changing(move |cx, val| cx.emit(KnobChangeEvent::SetKnob(0, val)))
+                        .color(Color::red());
+
+                    Label::new(cx, KnobData::knobs.map(|knobs| format!("{:.3}", knobs[0])));
+                })
+                .row_between(Pixels(10.0))
+                .child_space(Stretch(1.0));
+
+                // simple tick knob
+                VStack::new(cx, move |cx| {
+                    Label::new(cx, "Tick knob");
+                    Knob::custom(
+                        cx,
+                        0.5,
+                        KnobData::knobs.map(|knobs| knobs[1]),
+                        move |cx, lens| {
                             TickKnob::new(
                                 cx,
-                                val,
                                 Percentage(100.0),
-                                Percentage(25.0),
+                                Percentage(20.0),
+                                Percentage(50.0),
                                 300.0,
                                 KnobMode::Continuous,
                             )
+                            .value(lens)
                             .class("track")
-                        })
-                        .on_changing(move |knob, cx| {
-                            cx.emit(KnobChangeEvent::SetKnob(1, knob.normalized_value))
-                        });
-                        Label::new(cx, &format!("{:.3}", knobs.get(cx)[1]));
-                    })
-                    .row_between(Pixels(10.))
-                    .child_space(Stretch(1.));
-                    // steppy knob
-                    VStack::new(cx, move |cx| {
-                        Label::new(cx, "Steppy knob");
-                        Knob::custom(cx, 0.5, knobs.get(cx)[2], move |cx, val| {
-                            // FIXME: Using this for radius resulted in a memory leak??
-                            // let height = cx.cache.get_height(cx.current);
-                            // let width = cx.cache.get_width(cx.current);
-                            // let radius = height.min(width) / 2.;
+                        },
+                    )
+                    .on_changing(move |cx, val| cx.emit(KnobChangeEvent::SetKnob(1, val)));
+                    Label::new(cx, KnobData::knobs.map(|knobs| format!("{:.3}", knobs[1])));
+                })
+                .row_between(Pixels(10.0))
+                .child_space(Stretch(1.0));
+
+                // steppy knob
+                VStack::new(cx, move |cx| {
+                    Label::new(cx, "Steppy knob");
+                    Knob::custom(
+                        cx,
+                        0.5,
+                        KnobData::knobs.map(|knobs| knobs[2]),
+                        move |cx, lens| {
                             let mode = KnobMode::Discrete(5);
-                            TickKnob::new(cx, val, Percentage(60.0), Percentage(15.0), 300.0, mode)
-                                .class("track");
+                            TickKnob::new(
+                                cx,
+                                Percentage(60.0),
+                                Percentage(20.0),
+                                Percentage(50.0),
+                                300.0,
+                                mode,
+                            )
+                            .value(lens)
+                            .class("track");
                             Ticks::new(
                                 cx,
                                 Percentage(100.0),
@@ -87,64 +98,72 @@ fn main() {
                                 mode,
                             )
                             .class("track")
-                            // TODO: cyan is yellow?
-                            // .background_color(Color::cyan())
-                        })
-                        .on_changing(move |knob, cx| {
-                            cx.emit(KnobChangeEvent::SetKnob(2, knob.normalized_value))
-                        });
-                        Label::new(cx, &format!("{:.3}", (knobs.get(cx)[2] * 4.0).floor() / 4.0));
-                    })
-                    .row_between(Pixels(10.))
-                    .child_space(Stretch(1.));
-                    // Arc+tick knob knob
-                    VStack::new(cx, move |cx| {
-                        Label::new(cx, "Arc knob");
-                        Knob::custom(cx, 0.5, knobs.get(cx)[3], move |cx, val| {
-                            // FIXME: Using this for radius resulted in a memory leak??
-                            // let height = cx.cache.get_height(cx.current);
-                            // let width = cx.cache.get_width(cx.current);
-                            // let radius = height.min(width) / 2.;
+                        },
+                    )
+                    .on_changing(move |cx, val| cx.emit(KnobChangeEvent::SetKnob(2, val)));
+                    Label::new(
+                        cx,
+                        KnobData::knobs
+                            .map(|knobs| format!("{:.3}", (knobs[2] * 4.0).floor() / 4.0)),
+                    );
+                })
+                .row_between(Pixels(10.0))
+                .child_space(Stretch(1.0));
+
+                // Arc+tick knob knob
+                VStack::new(cx, move |cx| {
+                    Label::new(cx, "Arc knob");
+                    Knob::custom(
+                        cx,
+                        0.5,
+                        KnobData::knobs.map(|knobs| knobs[3]),
+                        move |cx, lens| {
                             TickKnob::new(
                                 cx,
-                                val,
                                 Percentage(90.0),
                                 // setting tick_width to 0 to make the tick invisible
+                                Percentage(0.0),
                                 Percentage(0.0),
                                 300.0,
                                 KnobMode::Continuous,
                             )
+                            .value(lens.clone())
                             .class("track");
-                            ArcTrack::new(cx, val, false, Percentage(100.0), Percentage(10.), 300.)
-                                .class("track")
+                            ArcTrack::new(
+                                cx,
+                                false,
+                                Percentage(100.0),
+                                Percentage(10.),
+                                300.,
+                                KnobMode::Continuous,
+                            )
+                            .value(lens)
+                            .class("track")
+                        },
+                    )
+                    .on_changing(move |cx, val| cx.emit(KnobChangeEvent::SetKnob(3, val)));
+                    Label::new(cx, KnobData::knobs.map(|knobs| format!("{:.3}", knobs[3])));
+                })
+                .row_between(Pixels(10.0))
+                .child_space(Stretch(1.0));
+
+                // drag-able label
+                VStack::new(cx, move |cx| {
+                    Label::new(cx, "Label \"knob\"");
+                    Knob::custom(cx, 0.5, KnobData::knobs.map(|knobs| knobs[4]), move |cx, val| {
+                        HStack::new(cx, move |cx| {
+                            Label::new(cx, "val:").width(Pixels(40.0));
+                            Label::new(cx, &format!("{:.2}", *val.get(cx))).width(Pixels(40.0));
                         })
-                        .on_changing(move |knob, cx| {
-                            cx.emit(KnobChangeEvent::SetKnob(3, knob.normalized_value))
-                        });
-                        Label::new(cx, &format!("{:.3}", knobs.get(cx)[3]));
+                        .class("label_knob")
                     })
-                    .row_between(Pixels(10.))
-                    .child_space(Stretch(1.));
-                    // drag-able label
-                    VStack::new(cx, move |cx| {
-                        Label::new(cx, "Label \"knob\"");
-                        Knob::custom(cx, 0.5, knobs.get(cx)[4], move |cx, val| {
-                            HStack::new(cx, move |cx| {
-                                Label::new(cx, "val:");
-                                Label::new(cx, &format!("{:.2}", val));
-                            })
-                            .class("label_knob")
-                        })
-                        .on_changing(move |knob, cx| {
-                            cx.emit(KnobChangeEvent::SetKnob(4, knob.normalized_value))
-                        });
-                        Label::new(cx, &format!("{:.3}", knobs.get(cx)[4]));
-                    })
-                    .row_between(Pixels(10.))
-                    .child_space(Stretch(1.));
-                });
+                    .on_changing(move |cx, val| cx.emit(KnobChangeEvent::SetKnob(4, val)));
+                    Label::new(cx, KnobData::knobs.map(|knobs| format!("{:.3}", knobs[4])));
+                })
+                .row_between(Pixels(10.0))
+                .child_space(Stretch(1.0));
             })
-            .col_between(Pixels(10.))
+            .col_between(Pixels(10.0))
             .background_color(Color::from("#191919"));
         },
     )
