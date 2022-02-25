@@ -4,9 +4,7 @@ use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
-use vizia_core::{
-    apply_inline_inheritance, apply_shared_inheritance, ImageRetentionPolicy, TreeExt,
-};
+use vizia_core::{apply_inline_inheritance, apply_shared_inheritance, TreeDepthIterator, TreeExt};
 use vizia_core::{MouseButton, MouseButtonState};
 //use vizia_core::WindowWidget;
 use vizia_core::{
@@ -670,10 +668,32 @@ impl ApplicationRunner {
                     self.context.reload_styles().unwrap();
                 }
 
+                #[cfg(debug_assertions)]
                 if event.code == Code::KeyH && s == MouseButtonState::Pressed {
                     println!("Tree");
                     for entity in self.context.tree.into_iter() {
                         println!("Entity: {} Parent: {:?} posx: {} posy: {} width: {} height: {} scissor: {:?}", entity, entity.parent(&self.context.tree), self.context.cache.get_posx(entity), self.context.cache.get_posy(entity), self.context.cache.get_width(entity), self.context.cache.get_height(entity), self.context.cache.get_clip_region(entity));
+                    }
+                }
+
+                #[cfg(debug_assertions)]
+                if event.code == Code::KeyI && s == MouseButtonState::Pressed {
+                    let iter = TreeDepthIterator::full(&self.context.tree);
+                    for (entity, level) in iter {
+                        if let Some(view) = self.context.views.get(&entity) {
+                            if let Some(element_name) = view.element() {
+                                println!(
+                                    "{:indent$} {} {} {:?} {:?} {:?}",
+                                    "",
+                                    entity,
+                                    element_name,
+                                    self.context.cache.get_visibility(entity),
+                                    self.context.cache.get_display(entity),
+                                    self.context.cache.get_bounds(entity),
+                                    indent = level
+                                );
+                            }
+                        }
                     }
                 }
 
