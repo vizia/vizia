@@ -11,7 +11,8 @@ fn main() {
         //     .on_checked(cx, |cx| cx.emit(PopupEvent::Open))
         //     .on_unchecked(cx, |cx| cx.emit(PopupEvent::Close));
 
-        Popup::new(cx, |_| {})
+        Popup::new(cx, PopupData::is_open, |_| {})
+            .something(|cx| cx.emit(PopupEvent::Close))
             .space(Pixels(100.0))
             .size(Pixels(200.0))
             .background_color(Color::red());
