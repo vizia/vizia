@@ -100,9 +100,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
         }
         .build2(cx, move |cx| {
             ZStack::new(cx, move |cx| {
-                Binding::new(cx, lens, move |cx, value| {
-                    (content)(cx, value).width(Percentage(100.0)).height(Percentage(100.0));
-                });
+                (content)(cx, lens).width(Percentage(100.0)).height(Percentage(100.0));
             });
         })
     }

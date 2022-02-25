@@ -153,7 +153,8 @@ fn main() {
                     Knob::custom(cx, 0.5, KnobData::knobs.map(|knobs| knobs[4]), move |cx, val| {
                         HStack::new(cx, move |cx| {
                             Label::new(cx, "val:").width(Pixels(40.0));
-                            Label::new(cx, &format!("{:.2}", *val.get(cx))).width(Pixels(40.0));
+                            Label::new(cx, val.map(|val| format!("{:.2}", val)))
+                                .width(Pixels(40.0));
                         })
                         .class("label_knob")
                     })
