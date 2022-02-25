@@ -171,6 +171,31 @@ pub trait PropSet: AsEntity + Sized {
         self.entity()
     }
 
+    fn toggle_class(self, cx: &mut Context, class_name: &str, applied: bool) -> Entity {
+        if let Some(class_list) = cx.style.classes.get_mut(self.entity()) {
+            if applied {
+                class_list.insert(class_name.to_string());
+            } else {
+                class_list.remove(class_name);
+            }
+        } else if applied {
+            let mut class_list = HashSet::new();
+            class_list.insert(class_name.to_string());
+            cx.style
+                .classes
+                .insert(self.entity(), class_list)
+                .expect("Failed to insert class name");
+        } else {
+            return self.entity();
+        }
+
+        cx.style.needs_restyle = true;
+        cx.style.needs_relayout = true;
+        cx.style.needs_redraw = true;
+
+        self.entity()
+    }
+
     // TODO move to PropGet
     fn get_parent(self, cx: &mut Context) -> Option<Entity> {
         self.entity().parent(&cx.tree)
