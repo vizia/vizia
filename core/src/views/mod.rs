@@ -32,7 +32,7 @@ mod slider;
 pub use slider::{Orientation, Slider};
 
 mod knob;
-pub use knob::{ArcTrack, Knob};
+pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 
 mod normalized_map;
 pub use normalized_map::*;
