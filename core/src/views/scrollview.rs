@@ -1,8 +1,8 @@
 use morphorm::{GeometryChanged, PositionType};
 
 use crate::{
-    Actions, Canvas, Context, Data, Event, HStack, Handle, Lens, LensExt, Model, Modifiers,
-    Orientation, Scrollbar, Units, VStack, View, WindowEvent,
+    Actions, Context, Data, Event, Handle, Lens, LensExt, Model, Modifiers, Orientation, Scrollbar,
+    Units, VStack, View, WindowEvent,
 };
 
 const SCROLL_SENSITIVITY: f32 = 35.0;
@@ -62,7 +62,7 @@ pub enum ScrollUpdate {
 }
 
 impl Model for ScrollData {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _cx: &mut Context, event: &mut Event) {
         if let Some(msg) = event.message.downcast() {
             match msg {
                 ScrollUpdate::ScrollX(f) => self.scroll_x = (self.scroll_x + *f).clamp(0.0, 1.0),
