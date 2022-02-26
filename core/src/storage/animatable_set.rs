@@ -575,8 +575,7 @@ where
                     if rule_animation.index() < self.animations.dense.len() {
                         // let transition_state =
                         //     &mut self.animations.dense[rule_animation.index()].value;
-                        let transition_state =
-                            self.animations.get_mut(rule_animation).unwrap();
+                        let transition_state = self.animations.get_mut(rule_animation).unwrap();
                         // Safe to unwrap because already checked that the rule exists
                         let end = self.shared_data.get(*rule).unwrap();
 

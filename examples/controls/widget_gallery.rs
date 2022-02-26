@@ -85,9 +85,7 @@ pub fn checkbox(cx: &mut Context) -> Handle<impl View> {
 
         Label::new(cx, "A simple 2-state checkbox").font_size(24.0).font("roboto-bold");
 
-       
         Checkbox::new(cx, CheckboxData::check).on_toggle(|cx| cx.emit(CheckboxEvent::Toggle));
-        
 
         Label::new(cx, "A simple 2-state checkbox with a text label")
             .font_size(24.0)
