@@ -1,7 +1,9 @@
 use femtovg::{Paint, Path};
 
-use crate::{Units, Context, Entity, Handle, Lens, MouseButton, View, WindowEvent, Orientation, LensExt, Canvas};
-
+use crate::{
+    Canvas, Context, Entity, Handle, Lens, LensExt, MouseButton, Orientation, Units, View,
+    WindowEvent,
+};
 
 pub struct Scrollbar<L1, L2> {
     value: L1,
@@ -19,18 +21,19 @@ impl<L1: Lens<Target = f32>, L2: Lens<Target = f32>> Scrollbar<L1, L2> {
         value: L1,
         ratio: L2,
         orientation: Orientation,
-        callback: F
+        callback: F,
     ) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context, f32),
     {
         let result = Self {
-            value, ratio,
+            value,
+            ratio,
             orientation,
             reference_points: None,
             on_changing: Some(Box::new(callback)),
         }
-            .build2(cx, move |_| {});
+        .build2(cx, move |_| {});
 
         match orientation {
             Orientation::Horizontal => result.class("horizontal"),
@@ -40,10 +43,18 @@ impl<L1: Lens<Target = f32>, L2: Lens<Target = f32>> Scrollbar<L1, L2> {
 
     fn container_and_thumb_size(&self, cx: &mut Context) -> (f32, f32) {
         let (size, min_size) = match &self.orientation {
-            Orientation::Horizontal => (cx.cache.get_width(cx.current), cx.style.min_width.get(cx.current)),
-            Orientation::Vertical => (cx.cache.get_height(cx.current), cx.style.min_height.get(cx.current)),
+            Orientation::Horizontal => {
+                (cx.cache.get_width(cx.current), cx.style.min_width.get(cx.current))
+            }
+            Orientation::Vertical => {
+                (cx.cache.get_height(cx.current), cx.style.min_height.get(cx.current))
+            }
         };
-        let min_size = if let Units::Pixels(p) = min_size.copied().unwrap_or_else(|| Units::Auto) { p } else { 14.0 };
+        let min_size = if let Units::Pixels(p) = min_size.copied().unwrap_or_else(|| Units::Auto) {
+            p
+        } else {
+            14.0
+        };
 
         let thumb_size = size * *self.ratio.get(cx);
         (size, thumb_size.clamp(min_size, f32::MAX))
@@ -62,10 +73,14 @@ impl<L1: Lens<Target = f32>, L2: Lens<Target = f32>> Scrollbar<L1, L2> {
 
         let (tx, tw) = match self.orientation {
             Orientation::Horizontal => (thumb_start, thumb_size),
-            Orientation::Vertical => (cx.cache.get_posx(cx.current), cx.cache.get_width(cx.current)),
+            Orientation::Vertical => {
+                (cx.cache.get_posx(cx.current), cx.cache.get_width(cx.current))
+            }
         };
         let (ty, th) = match self.orientation {
-            Orientation::Horizontal => (cx.cache.get_posy(cx.current), cx.cache.get_height(cx.current)),
+            Orientation::Horizontal => {
+                (cx.cache.get_posy(cx.current), cx.cache.get_height(cx.current))
+            }
             Orientation::Vertical => (thumb_start, thumb_size),
         };
 
@@ -94,7 +109,9 @@ impl<L1: Lens<Target = f32>, L2: Lens<Target = f32>> Scrollbar<L1, L2> {
     }
 }
 
-impl<L1: 'static + Lens<Target = f32>, L2: 'static + Lens<Target = f32>> View for Scrollbar<L1, L2> {
+impl<L1: 'static + Lens<Target = f32>, L2: 'static + Lens<Target = f32>> View
+    for Scrollbar<L1, L2>
+{
     fn element(&self) -> Option<String> {
         Some("scrollbar".to_string())
     }
@@ -108,11 +125,17 @@ impl<L1: 'static + Lens<Target = f32>, L2: 'static + Lens<Target = f32>> View fo
 
         let mut path = Path::new();
         path.rect(x, y, w, h);
-        canvas.fill_path(&mut path, Paint::color(cx.style.background_color.get(cx.current).unwrap().clone().into()));
+        canvas.fill_path(
+            &mut path,
+            Paint::color(cx.style.background_color.get(cx.current).unwrap().clone().into()),
+        );
 
         let mut path = Path::new();
         path.rect(tx, ty, tw, th);
-        canvas.fill_path(&mut path, Paint::color(cx.style.font_color.get(cx.current).unwrap().clone().into()));
+        canvas.fill_path(
+            &mut path,
+            Paint::color(cx.style.font_color.get(cx.current).unwrap().clone().into()),
+        );
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
@@ -124,7 +147,11 @@ impl<L1: 'static + Lens<Target = f32>, L2: 'static + Lens<Target = f32>> View fo
             match window_event {
                 WindowEvent::MouseDown(MouseButton::Left) => {
                     let (tx, ty, tw, th) = self.thumb_bounds(cx);
-                    if tx <= cx.mouse.cursorx && cx.mouse.cursorx < tx + tw && ty <= cx.mouse.cursory && cx.mouse.cursory < ty + th {
+                    if tx <= cx.mouse.cursorx
+                        && cx.mouse.cursorx < tx + tw
+                        && ty <= cx.mouse.cursory
+                        && cx.mouse.cursory < ty + th
+                    {
                         self.reference_points = Some((pos, *self.value.get(cx)));
                         cx.captured = cx.current;
                     } else {

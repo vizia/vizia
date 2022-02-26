@@ -150,7 +150,6 @@ label {
     width: auto;
     height: auto;
     child-space: 1s;
-    overflow: visible;
 }
 
 label.h1 {
@@ -287,6 +286,26 @@ scrollbar {
     border-radius: 7px;
     min-width: 14px;
     min-height: 14px;
+}
+
+scrollview>scrollbar.horizontal {
+    left: 0px;
+    width: 1s;
+    right: 14px;
+
+    top: 1s;
+    height: 14px;
+    bottom: 0px;
+}
+
+scrollview>scrollbar.vertical {
+    top: 0px;
+    height: 1s;
+    bottom: 0px;
+
+    left: 1s;
+    width: 14px;
+    right: 0px;
 }
 
 list {
