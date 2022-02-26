@@ -280,6 +280,15 @@ slider .thumb {
     width: 40px;
     height: 40px;
 }
+
+scrollbar {
+    color: #5d5d5d;
+    background-color: #9e9e9e;
+    border-radius: 7px;
+    min-width: 14px;
+    min-height: 14px;
+}
+
 list {
     width: auto;
     height: auto;

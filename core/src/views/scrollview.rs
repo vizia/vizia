@@ -2,7 +2,7 @@
 
 use std::rc::Rc;
 
-use crate::{Context, View, Handle, VStack, Model, Lens, Binding, Data, Color, Units::*, WindowEvent, PropSet, LensExt};
+use crate::{Context, View, Handle, VStack, Model, Lens, Binding, Data, Color, Units::*, WindowEvent, LensExt};
 
 
 
