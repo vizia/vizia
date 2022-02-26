@@ -15,19 +15,6 @@ impl Data for SimpleDate {
     }
 }
 
-// #[derive(Clone, Data)]
-// pub struct SimpleDate {
-//     day: i32,
-//     month: i32,
-//     year: i32,
-// }
-
-// impl SimpleDate {
-//     pub fn new(day: i32, month: i32, year: i32) -> Self {
-//         Self { day, month, year }
-//     }
-// }
-
 impl std::fmt::Display for SimpleDate {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0.format("%Y:%m:%d"))

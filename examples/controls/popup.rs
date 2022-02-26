@@ -11,12 +11,11 @@ fn main() {
         //     .on_checked(cx, |cx| cx.emit(PopupEvent::Open))
         //     .on_unchecked(cx, |cx| cx.emit(PopupEvent::Close));
 
-        Popup::new(cx, |cx| {
-            Label::new(cx, "Hello World");
-        })
-        .background_color(Color::red())
-        .space(Pixels(100.0))
-        .size(Pixels(200.0));
+        Popup::new(cx, PopupData::is_open, |_| {})
+            .something(|cx| cx.emit(PopupEvent::Close))
+            .space(Pixels(100.0))
+            .size(Pixels(200.0))
+            .background_color(Color::red());
     })
     .run();
 }

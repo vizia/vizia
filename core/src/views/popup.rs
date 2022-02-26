@@ -1,6 +1,6 @@
 use morphorm::PositionType;
 
-use crate::{style::PropGet, Binding, Code, Context, Data, Handle, Lens, Model, View, WindowEvent};
+use crate::{style::PropGet, Code, Context, Data, Handle, Lens, LensExt, Model, View, WindowEvent};
 
 #[derive(Debug, Default, Data, Lens, Clone)]
 pub struct PopupData {
@@ -37,55 +37,78 @@ pub enum PopupEvent {
     Switch,
 }
 
-pub struct Popup {}
+pub struct Popup<L> {
+    lens: L,
+}
 
-impl Popup {
-    pub fn new<F>(cx: &mut Context, builder: F) -> Handle<Self>
+impl<L> Popup<L>
+where
+    L: Lens<Target = bool>,
+{
+    pub fn new<F>(cx: &mut Context, lens: L, builder: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context),
     {
-        Self {}
+        Self { lens: lens.clone() }
             .build2(cx, |cx| {
-                Binding::new(cx, PopupData::is_open, move |cx, _| {
-                    (builder)(cx);
-                });
-
-                cx.add_listener(|_: &mut Self, cx, event| {
-                    if let Some(popup_data) = cx.data::<PopupData>() {
-                        if let Some(window_event) = event.message.downcast() {
-                            match window_event {
-                                WindowEvent::MouseDown(_) => {
-                                    if popup_data.is_open {
-                                        if event.origin != cx.current {
-                                            if !cx.current.is_over(cx) {
-                                                cx.emit(PopupEvent::Close);
-                                                event.consume();
-                                            }
-                                        }
-                                    }
-                                }
-
-                                WindowEvent::KeyDown(code, _) => {
-                                    if popup_data.is_open {
-                                        if *code == Code::Escape {
-                                            cx.emit(PopupEvent::Close);
-                                        }
-                                    }
-                                }
-
-                                _ => {}
-                            }
-                        }
-                    }
-                });
+                (builder)(cx);
             })
-            .checked(PopupData::is_open)
+            .checked(lens)
             .position_type(PositionType::SelfDirected)
             .z_order(100)
     }
 }
 
-impl View for Popup {
+impl<'a, L> Handle<'a, Popup<L>>
+where
+    L: Lens,
+    L::Target: Clone + Into<bool>,
+{
+    pub fn something<F>(self, f: F) -> Self
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        let focus_event = Box::new(f);
+        let prev = self.cx.current;
+        self.cx.current = self.entity;
+        self.cx.add_listener(move |popup: &mut Popup<L>, cx, event| {
+            let flag: bool = popup.lens.get(cx).clone().into();
+            if let Some(window_event) = event.message.downcast() {
+                match window_event {
+                    WindowEvent::MouseDown(_) => {
+                        if flag {
+                            if event.origin != cx.current {
+                                if !cx.current.is_over(cx) {
+                                    (focus_event)(cx);
+                                    event.consume();
+                                }
+                            }
+                        }
+                    }
+
+                    WindowEvent::KeyDown(code, _) => {
+                        if flag {
+                            if *code == Code::Escape {
+                                (focus_event)(cx);
+                            }
+                        }
+                    }
+
+                    _ => {}
+                }
+            }
+        });
+        self.cx.current = prev;
+
+        self
+    }
+}
+
+impl<L> View for Popup<L>
+where
+    L: Lens,
+    L::Target: Into<bool>,
+{
     fn element(&self) -> Option<String> {
         Some("popup".to_string())
     }

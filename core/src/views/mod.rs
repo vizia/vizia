@@ -19,6 +19,9 @@ pub use textbox::Textbox;
 mod checkbox;
 pub use checkbox::Checkbox;
 
+mod dropdown;
+pub use dropdown::*;
+
 mod element;
 pub use element::Element;
 
@@ -29,7 +32,7 @@ mod slider;
 pub use slider::{Orientation, Slider};
 
 mod knob;
-pub use knob::{ArcTrack, Knob};
+pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 
 mod normalized_map;
 pub use normalized_map::*;
@@ -42,3 +45,6 @@ pub use popup::*;
 
 mod radio_buttons;
 pub use radio_buttons::*;
+
+mod image;
+pub use self::image::*;

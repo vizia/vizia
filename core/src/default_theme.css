@@ -175,6 +175,11 @@ label:disabled {
     color: gray;
 }
 
+image {
+    width: auto;
+    height: auto;
+}
+
 hstack {
     width: 1s;
     height: 1s;
@@ -249,5 +254,5 @@ popup {
 popup:checked {
     display: flex;
     opacity: 1.0;
-    transition: opacity 0.2 0.0;
+    transition: opacity 0.1 0.0;
 }

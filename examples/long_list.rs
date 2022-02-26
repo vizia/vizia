@@ -49,29 +49,26 @@ fn main() {
         AppData { list, selected: 0, visible: true }.build(cx);
 
         VStack::new(cx, move |cx| {
-            Binding::new(cx, AppData::visible, |cx, visible| {
-                Checkbox::new(cx, *visible.get(cx))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleVisible));
+            Checkbox::new(cx, AppData::visible).on_toggle(|cx| cx.emit(AppEvent::ToggleVisible));
 
-                List::new(cx, AppData::list, move |cx, index, item| {
-                    //println!("Do This");
-                    let item_text = item.get(cx).to_string();
-                    VStack::new(cx, move |cx| {
-                        Binding::new(cx, AppData::selected, move |cx, selected| {
-                            //println!("Select");
-                            let selected = *selected.get(cx);
-                            Label::new(cx, &item_text)
-                                // Set the checked state based on whether this item is selected
-                                .checked(if selected == index { true } else { false })
-                                // Set the selected item to this one if pressed
-                                .on_press(move |cx| cx.emit(AppEvent::Select(index)));
-                        });
+            List::new(cx, AppData::list, move |cx, index, item| {
+                //println!("Do This");
+                let item_text = item.get(cx).to_string();
+                VStack::new(cx, move |cx| {
+                    Binding::new(cx, AppData::selected, move |cx, selected| {
+                        //println!("Select");
+                        let selected = *selected.get(cx);
+                        Label::new(cx, &item_text)
+                            // Set the checked state based on whether this item is selected
+                            .checked(if selected == index { true } else { false })
+                            // Set the selected item to this one if pressed
+                            .on_press(move |cx| cx.emit(AppEvent::Select(index)));
                     });
-                })
-                .on_increment(move |cx| cx.emit(AppEvent::IncrementSelection))
-                .on_decrement(move |cx| cx.emit(AppEvent::DecrementSelection))
-                .display(visible);
-            });
+                });
+            })
+            .on_increment(move |cx| cx.emit(AppEvent::IncrementSelection))
+            .on_decrement(move |cx| cx.emit(AppEvent::DecrementSelection))
+            .display(AppData::visible);
 
             Binding::new(cx, AppData::selected, move |cx, selected_item| {
                 Label::new(cx, &format!("You have selected: {}", *selected_item.get(cx)));

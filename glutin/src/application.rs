@@ -289,6 +289,12 @@ impl Application {
                             }
                         }
                     }
+                    for img in context.resource_manager.images.values_mut() {
+                        if img.dirty {
+                            observers.extend(img.observers.iter());
+                            img.dirty = false;
+                        }
+                    }
 
                     for observer in observers.iter() {
                         if let Some(mut view) = context.views.remove(observer) {
@@ -408,6 +414,8 @@ impl Application {
                             let mut draw_tree: Vec<Entity> = context.tree.into_iter().collect();
                             draw_tree.sort_by_cached_key(|entity| context.cache.get_z_index(*entity));
 
+                            context.resource_manager.mark_images_unused();
+
                             for entity in draw_tree.into_iter() {
 
 
@@ -476,6 +484,8 @@ impl Application {
 
                             window.canvas.flush();
                             window.handle.swap_buffers().expect("Failed to swap buffers");
+
+                            context.resource_manager.evict_unused_images();
                         }
 
                         context.views.insert(Entity::root(), window_view);
