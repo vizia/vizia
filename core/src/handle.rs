@@ -78,6 +78,23 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
+    pub fn toggle_class(self, name: &str, applied: impl Res<bool>) -> Self {
+        let name = name.to_owned();
+        applied.set_or_bind(self.cx, self.entity, move |cx, entity, applied| {
+            if let Some(class_list) = cx.style.classes.get_mut(entity) {
+                if applied {
+                    class_list.insert(name.clone());
+                } else {
+                    class_list.remove(&name);
+                }
+            }
+
+            cx.style.needs_restyle = true;
+        });
+
+        self
+    }
+
     pub fn font(self, font_name: &str) -> Self {
         self.cx.style.font.insert(self.entity, font_name.to_owned());
 
