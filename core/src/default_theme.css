@@ -164,7 +164,6 @@ label {
     width: auto;
     height: auto;
     child-space: 1s;
-    overflow: visible;
 }
 
 label.h1 {
@@ -247,6 +246,78 @@ dropdown list label {
 
 dropdown vstack {
     child-space: auto;
+}
+
+slider {
+    height: 10px;
+    top: 1s;
+    bottom: 1s;
+    width: 1s;
+    background-color: #dfdfdf;
+    border-radius: 4.5px;
+}
+
+slider.vertical {
+    top: auto;
+    bottom: auto;
+    height: 1s;
+    width: 10px;
+}
+
+slider track {
+}
+
+slider .active {
+    background-color: #f74c00;
+    border-radius: 4.5px;
+}
+
+slider .thumb {
+    background-color: white;
+    top: 1s;
+    bottom: 1s;
+    border-radius: 14.5px;
+    border-color: #757575;
+    border-width: 1px;
+    width: 40px;
+    height: 40px;
+}
+
+scrollbar {
+    background-color: #9e9e9e;
+    border-radius: 7px;
+    child-space: 2px;
+}
+
+scrollbar>.thumb {
+    background-color: #5d5d5d;
+    border-radius: 6px;
+    min-width: 12px;
+    min-height: 12px;
+}
+
+scrollview {
+    overflow: hidden;
+}
+
+scrollview>scrollbar.horizontal {
+    left: 0px;
+    width: 1s;
+    right: 14px;
+
+    top: 1s;
+    height: 14px;
+    bottom: 0px;
+}
+
+scrollview>scrollbar.vertical {
+    top: 0px;
+    height: 1s;
+    bottom: 0px;
+
+    left: 1s;
+    width: 14px;
+    right: 0px;
 }
 
 list {

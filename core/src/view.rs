@@ -290,7 +290,8 @@ pub trait View: 'static + Sized {
         //let start = std::time::Instant::now();
         let mut path = Path::new();
 
-        if border_radius_bottom_left == (bounds.w - 2.0 * border_width) / 2.0
+        if bounds.w == bounds.h
+            && border_radius_bottom_left == (bounds.w - 2.0 * border_width) / 2.0
             && border_radius_bottom_right == (bounds.w - 2.0 * border_width) / 2.0
             && border_radius_top_left == (bounds.w - 2.0 * border_width) / 2.0
             && border_radius_top_right == (bounds.w - 2.0 * border_width) / 2.0

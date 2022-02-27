@@ -8,15 +8,15 @@ use crate::{
 };
 
 #[derive(Debug)]
-enum SliderEventInternal {
+pub enum SliderEventInternal {
     SetThumbSize(f32, f32),
 }
 
 #[derive(Clone, Debug, Default, Lens, Data)]
 pub struct SliderDataInternal {
-    orientation: Orientation,
-    size: f32,
-    thumb_size: f32,
+    pub orientation: Orientation,
+    pub size: f32,
+    pub thumb_size: f32,
 }
 
 impl Model for SliderDataInternal {
