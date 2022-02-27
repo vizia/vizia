@@ -1,8 +1,10 @@
-use crate::{Context, Element, Entity, Handle, Lens, LensExt, MouseButton, Orientation, Units, View, WindowEvent};
+use crate::{
+    Context, Element, Entity, Handle, Lens, LensExt, MouseButton, Orientation, Units, View,
+    WindowEvent,
+};
 
-pub struct Scrollbar<L1, L2> {
+pub struct Scrollbar<L1> {
     value: L1,
-    ratio: L2,
     orientation: Orientation,
 
     reference_points: Option<(f32, f32)>,
@@ -10,8 +12,8 @@ pub struct Scrollbar<L1, L2> {
     on_changing: Option<Box<dyn Fn(&mut Context, f32)>>,
 }
 
-impl<L1: Lens<Target = f32>, L2: Lens<Target = f32>> Scrollbar<L1, L2> {
-    pub fn new<F>(
+impl<L1: Lens<Target = f32>> Scrollbar<L1> {
+    pub fn new<F, L2: Lens<Target = f32>>(
         cx: &mut Context,
         value: L1,
         ratio: L2,
@@ -23,7 +25,6 @@ impl<L1: Lens<Target = f32>, L2: Lens<Target = f32>> Scrollbar<L1, L2> {
     {
         let result = Self {
             value: value.clone(),
-            ratio: ratio.clone(),
             orientation,
             reference_points: None,
             on_changing: Some(Box::new(callback)),
@@ -34,8 +35,12 @@ impl<L1: Lens<Target = f32>, L2: Lens<Target = f32>> Scrollbar<L1, L2> {
                 .bind(value, move |handle, value| {
                     let value = *value.get(handle.cx);
                     match orientation {
-                        Orientation::Horizontal => handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value)),
-                        Orientation::Vertical => handle.top(Units::Stretch(value)).bottom(Units::Stretch(1.0 - value)),
+                        Orientation::Horizontal => {
+                            handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value))
+                        }
+                        Orientation::Vertical => {
+                            handle.top(Units::Stretch(value)).bottom(Units::Stretch(1.0 - value))
+                        }
                     };
                 })
                 .bind(ratio, move |handle, ratio| {
@@ -56,12 +61,8 @@ impl<L1: Lens<Target = f32>, L2: Lens<Target = f32>> Scrollbar<L1, L2> {
     fn container_and_thumb_size(&self, cx: &mut Context) -> (f32, f32) {
         let child = cx.tree.get_child(cx.current, 0).unwrap();
         match &self.orientation {
-            Orientation::Horizontal => {
-                (cx.cache.get_width(cx.current), cx.cache.get_width(child))
-            }
-            Orientation::Vertical => {
-                (cx.cache.get_height(cx.current), cx.cache.get_height(child))
-            }
+            Orientation::Horizontal => (cx.cache.get_width(cx.current), cx.cache.get_width(child)),
+            Orientation::Vertical => (cx.cache.get_height(cx.current), cx.cache.get_height(child)),
         }
     }
 
@@ -96,9 +97,7 @@ impl<L1: Lens<Target = f32>, L2: Lens<Target = f32>> Scrollbar<L1, L2> {
     }
 }
 
-impl<L1: 'static + Lens<Target = f32>, L2: 'static + Lens<Target = f32>> View
-    for Scrollbar<L1, L2>
-{
+impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
     fn element(&self) -> Option<String> {
         Some("scrollbar".to_string())
     }
@@ -137,7 +136,8 @@ impl<L1: 'static + Lens<Target = f32>, L2: 'static + Lens<Target = f32>> View
                                 }
                             }
                         };
-                        let changed = self.compute_new_value(cx, physical_delta, *self.value.get(cx));
+                        let changed =
+                            self.compute_new_value(cx, physical_delta, *self.value.get(cx));
                         self.change(cx, changed);
                     }
                 }

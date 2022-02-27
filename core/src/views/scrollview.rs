@@ -84,7 +84,7 @@ impl Model for ScrollData {
 }
 
 pub struct ScrollView<L> {
-    data: L
+    data: L,
 }
 
 impl ScrollView<scroll_data_derived_lenses::root> {
@@ -96,8 +96,8 @@ impl ScrollView<scroll_data_derived_lenses::root> {
         scroll_y: bool,
         content: F,
     ) -> Handle<Self>
-        where
-            F: 'static + Fn(&mut Context),
+    where
+        F: 'static + Fn(&mut Context),
     {
         Self { data: ScrollData::root }.build2(cx, move |cx| {
             ScrollData {
@@ -108,7 +108,7 @@ impl ScrollView<scroll_data_derived_lenses::root> {
                 parent_x: 0.0,
                 parent_y: 0.0,
             }
-                .build(cx);
+            .build(cx);
 
             Self::common_builder(cx, ScrollData::root, content, scroll_x, scroll_y);
         })
@@ -136,8 +136,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
     }
 
     fn common_builder<F>(cx: &mut Context, data: L, content: F, scroll_x: bool, scroll_y: bool)
-        where
-            F: 'static + Fn(&mut Context),
+    where
+        F: 'static + Fn(&mut Context),
     {
         VStack::new(cx, content)
             .size(Units::Auto)
@@ -168,7 +168,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                     cx.emit(ScrollUpdate::SetY(value));
                 },
             )
-                .position_type(PositionType::SelfDirected);
+            .position_type(PositionType::SelfDirected);
         }
         if scroll_x {
             Scrollbar::new(
@@ -180,7 +180,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                     cx.emit(ScrollUpdate::SetX(value));
                 },
             )
-                .position_type(PositionType::SelfDirected);
+            .position_type(PositionType::SelfDirected);
         }
     }
 }
