@@ -288,6 +288,10 @@ scrollbar {
     min-height: 14px;
 }
 
+scrollview {
+    overflow: hidden;
+}
+
 scrollview>scrollbar.horizontal {
     left: 0px;
     width: 1s;

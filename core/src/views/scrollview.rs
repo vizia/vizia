@@ -44,12 +44,12 @@ where
 
 #[derive(Lens, Data, Clone)]
 pub struct ScrollData {
-    scroll_x: f32,
-    scroll_y: f32,
-    child_x: f32,
-    child_y: f32,
-    parent_x: f32,
-    parent_y: f32,
+    pub scroll_x: f32,
+    pub scroll_y: f32,
+    pub child_x: f32,
+    pub child_y: f32,
+    pub parent_x: f32,
+    pub parent_y: f32,
 }
 
 pub enum ScrollUpdate {
@@ -83,9 +83,11 @@ impl Model for ScrollData {
     }
 }
 
-pub struct ScrollView {}
+pub struct ScrollView<L> {
+    data: L
+}
 
-impl ScrollView {
+impl ScrollView<scroll_data_derived_lenses::root> {
     pub fn new<F>(
         cx: &mut Context,
         initial_x: f32,
@@ -94,10 +96,10 @@ impl ScrollView {
         scroll_y: bool,
         content: F,
     ) -> Handle<Self>
-    where
-        F: 'static + Fn(&mut Context),
+        where
+            F: 'static + Fn(&mut Context),
     {
-        Self {}.build2(cx, move |cx| {
+        Self { data: ScrollData::root }.build2(cx, move |cx| {
             ScrollData {
                 scroll_x: initial_x,
                 scroll_y: initial_y,
@@ -106,56 +108,84 @@ impl ScrollView {
                 parent_x: 0.0,
                 parent_y: 0.0,
             }
-            .build(cx);
+                .build(cx);
 
-            VStack::new(cx, content)
-                .size(Units::Auto)
-                .position_type(PositionType::SelfDirected)
-                .bind(ScrollData::root, |handle, data| {
-                    let data = data.get(handle.cx);
-                    let left = (data.child_x - data.parent_x) * data.scroll_x;
-                    let top = (data.child_y - data.parent_y) * data.scroll_y;
-                    handle.left(Units::Pixels(-left)).top(Units::Pixels(-top));
-                })
-                .on_geo_changed(|cx, geo| {
-                    if geo.contains(GeometryChanged::HEIGHT_CHANGED)
-                        || geo.contains(GeometryChanged::WIDTH_CHANGED)
-                    {
-                        cx.emit(ScrollUpdate::ChildGeo(
-                            cx.cache.get_width(cx.current),
-                            cx.cache.get_height(cx.current),
-                        ));
-                    }
-                });
-            if scroll_y {
-                Scrollbar::new(
-                    cx,
-                    ScrollData::scroll_y,
-                    RatioLens::new(ScrollData::parent_y, ScrollData::child_y),
-                    Orientation::Vertical,
-                    |cx, value| {
-                        cx.emit(ScrollUpdate::SetY(value));
-                    },
-                )
-                .position_type(PositionType::SelfDirected);
-            }
-            if scroll_x {
-                Scrollbar::new(
-                    cx,
-                    ScrollData::scroll_x,
-                    RatioLens::new(ScrollData::parent_x, ScrollData::child_x),
-                    Orientation::Horizontal,
-                    |cx, value| {
-                        cx.emit(ScrollUpdate::SetX(value));
-                    },
-                )
-                .position_type(PositionType::SelfDirected);
-            }
+            Self::common_builder(cx, ScrollData::root, content, scroll_x, scroll_y);
         })
     }
 }
 
-impl View for ScrollView {
+impl<L: Lens<Target = ScrollData>> ScrollView<L> {
+    pub fn custom<F>(
+        cx: &mut Context,
+        scroll_x: bool,
+        scroll_y: bool,
+        data: L,
+        content: F,
+    ) -> Handle<Self>
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        if cx.data::<ScrollData>().is_none() {
+            panic!("ScrollView::custom requires a ScrollData to be built into a parent");
+        }
+
+        Self { data: data.clone() }.build2(cx, |cx| {
+            Self::common_builder(cx, data, content, scroll_x, scroll_y);
+        })
+    }
+
+    fn common_builder<F>(cx: &mut Context, data: L, content: F, scroll_x: bool, scroll_y: bool)
+        where
+            F: 'static + Fn(&mut Context),
+    {
+        VStack::new(cx, content)
+            .size(Units::Auto)
+            .position_type(PositionType::SelfDirected)
+            .bind(data.clone(), |handle, data| {
+                let data = data.get(handle.cx);
+                let left = (data.child_x - data.parent_x) * data.scroll_x;
+                let top = (data.child_y - data.parent_y) * data.scroll_y;
+                handle.left(Units::Pixels(-left)).top(Units::Pixels(-top));
+            })
+            .on_geo_changed(|cx, geo| {
+                if geo.contains(GeometryChanged::HEIGHT_CHANGED)
+                    || geo.contains(GeometryChanged::WIDTH_CHANGED)
+                {
+                    cx.emit(ScrollUpdate::ChildGeo(
+                        cx.cache.get_width(cx.current),
+                        cx.cache.get_height(cx.current),
+                    ));
+                }
+            });
+        if scroll_y {
+            Scrollbar::new(
+                cx,
+                data.clone().then(ScrollData::scroll_y),
+                data.clone().then(RatioLens::new(ScrollData::parent_y, ScrollData::child_y)),
+                Orientation::Vertical,
+                |cx, value| {
+                    cx.emit(ScrollUpdate::SetY(value));
+                },
+            )
+                .position_type(PositionType::SelfDirected);
+        }
+        if scroll_x {
+            Scrollbar::new(
+                cx,
+                data.clone().then(ScrollData::scroll_x),
+                data.clone().then(RatioLens::new(ScrollData::parent_x, ScrollData::child_x)),
+                Orientation::Horizontal,
+                |cx, value| {
+                    cx.emit(ScrollUpdate::SetX(value));
+                },
+            )
+                .position_type(PositionType::SelfDirected);
+        }
+    }
+}
+
+impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
     fn element(&self) -> Option<String> {
         Some("scrollview".to_owned())
     }
@@ -179,7 +209,7 @@ impl View for ScrollView {
                         if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, *x) } else { (*x, -*y) };
 
                     // what percentage of the negative space does this cross?
-                    let data = cx.data::<ScrollData>().unwrap();
+                    let data = self.data.get(cx);
                     if x != 0.0 {
                         let negative_space = data.child_x - data.parent_x;
                         let logical_delta = x * SCROLL_SENSITIVITY / negative_space;
