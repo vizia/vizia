@@ -281,11 +281,16 @@ slider .thumb {
 }
 
 scrollbar {
-    color: #5d5d5d;
     background-color: #9e9e9e;
     border-radius: 7px;
-    min-width: 14px;
-    min-height: 14px;
+    child-space: 2px;
+}
+
+scrollbar>.thumb {
+    background-color: #5d5d5d;
+    border-radius: 6px;
+    min-width: 12px;
+    min-height: 12px;
 }
 
 scrollview {

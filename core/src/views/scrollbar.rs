@@ -1,9 +1,4 @@
-use femtovg::{Paint, Path};
-
-use crate::{
-    Canvas, Context, Entity, Handle, Lens, LensExt, MouseButton, Orientation, Units, View,
-    WindowEvent,
-};
+use crate::{Context, Element, Entity, Handle, Lens, LensExt, MouseButton, Orientation, Units, View, WindowEvent};
 
 pub struct Scrollbar<L1, L2> {
     value: L1,
@@ -27,13 +22,30 @@ impl<L1: Lens<Target = f32>, L2: Lens<Target = f32>> Scrollbar<L1, L2> {
         F: 'static + Fn(&mut Context, f32),
     {
         let result = Self {
-            value,
-            ratio,
+            value: value.clone(),
+            ratio: ratio.clone(),
             orientation,
             reference_points: None,
             on_changing: Some(Box::new(callback)),
         }
-        .build2(cx, move |_| {});
+        .build2(cx, move |cx| {
+            Element::new(cx)
+                .class("thumb")
+                .bind(value, move |handle, value| {
+                    let value = *value.get(handle.cx);
+                    match orientation {
+                        Orientation::Horizontal => handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value)),
+                        Orientation::Vertical => handle.top(Units::Stretch(value)).bottom(Units::Stretch(1.0 - value)),
+                    };
+                })
+                .bind(ratio, move |handle, ratio| {
+                    let ratio = *ratio.get(handle.cx);
+                    match orientation {
+                        Orientation::Horizontal => handle.width(Units::Percentage(ratio * 100.0)),
+                        Orientation::Vertical => handle.height(Units::Percentage(ratio * 100.0)),
+                    };
+                });
+        });
 
         match orientation {
             Orientation::Horizontal => result.class("horizontal"),
@@ -42,49 +54,25 @@ impl<L1: Lens<Target = f32>, L2: Lens<Target = f32>> Scrollbar<L1, L2> {
     }
 
     fn container_and_thumb_size(&self, cx: &mut Context) -> (f32, f32) {
-        let (size, min_size) = match &self.orientation {
+        let child = cx.tree.get_child(cx.current, 0).unwrap();
+        match &self.orientation {
             Orientation::Horizontal => {
-                (cx.cache.get_width(cx.current), cx.style.min_width.get(cx.current))
+                (cx.cache.get_width(cx.current), cx.cache.get_width(child))
             }
             Orientation::Vertical => {
-                (cx.cache.get_height(cx.current), cx.style.min_height.get(cx.current))
+                (cx.cache.get_height(cx.current), cx.cache.get_height(child))
             }
-        };
-        let min_size = if let Units::Pixels(p) = min_size.copied().unwrap_or_else(|| Units::Auto) {
-            p
-        } else {
-            14.0
-        };
-
-        let thumb_size = size * *self.ratio.get(cx);
-        (size, thumb_size.clamp(min_size, f32::MAX))
+        }
     }
 
     fn thumb_bounds(&self, cx: &mut Context) -> (f32, f32, f32, f32) {
-        let start = match &self.orientation {
-            Orientation::Horizontal => cx.cache.get_posx(cx.current),
-            Orientation::Vertical => cx.cache.get_posy(cx.current),
-        };
-        let (size, thumb_size) = self.container_and_thumb_size(cx);
-
-        let progress = *self.value.get(cx);
-        let center = start + size * progress;
-        let thumb_start = center - thumb_size * progress;
-
-        let (tx, tw) = match self.orientation {
-            Orientation::Horizontal => (thumb_start, thumb_size),
-            Orientation::Vertical => {
-                (cx.cache.get_posx(cx.current), cx.cache.get_width(cx.current))
-            }
-        };
-        let (ty, th) = match self.orientation {
-            Orientation::Horizontal => {
-                (cx.cache.get_posy(cx.current), cx.cache.get_height(cx.current))
-            }
-            Orientation::Vertical => (thumb_start, thumb_size),
-        };
-
-        (tx, ty, tw, th)
+        let child = cx.tree.get_child(cx.current, 0).unwrap();
+        (
+            cx.cache.get_posx(child),
+            cx.cache.get_posy(child),
+            cx.cache.get_width(child),
+            cx.cache.get_height(child),
+        )
     }
 
     fn compute_new_value(&self, cx: &mut Context, physical_delta: f32, value_ref: f32) -> f32 {
@@ -103,7 +91,6 @@ impl<L1: Lens<Target = f32>, L2: Lens<Target = f32>> Scrollbar<L1, L2> {
     fn change(&mut self, cx: &mut Context, new_val: f32) {
         if let Some(callback) = self.on_changing.take() {
             callback(cx, new_val.clamp(0.0, 1.0));
-            cx.style.needs_redraw = true;
             self.on_changing = Some(callback);
         }
     }
@@ -116,28 +103,6 @@ impl<L1: 'static + Lens<Target = f32>, L2: 'static + Lens<Target = f32>> View
         Some("scrollbar".to_string())
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut Canvas) {
-        let x = cx.cache.get_posx(cx.current);
-        let y = cx.cache.get_posy(cx.current);
-        let w = cx.cache.get_width(cx.current);
-        let h = cx.cache.get_height(cx.current);
-        let (tx, ty, tw, th) = self.thumb_bounds(cx);
-
-        let mut path = Path::new();
-        path.rect(x, y, w, h);
-        canvas.fill_path(
-            &mut path,
-            Paint::color(cx.style.background_color.get(cx.current).unwrap().clone().into()),
-        );
-
-        let mut path = Path::new();
-        path.rect(tx, ty, tw, th);
-        canvas.fill_path(
-            &mut path,
-            Paint::color(cx.style.font_color.get(cx.current).unwrap().clone().into()),
-        );
-    }
-
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
         if let Some(window_event) = event.message.downcast() {
             let pos = match &self.orientation {
@@ -146,32 +111,34 @@ impl<L1: 'static + Lens<Target = f32>, L2: 'static + Lens<Target = f32>> View
             };
             match window_event {
                 WindowEvent::MouseDown(MouseButton::Left) => {
-                    let (tx, ty, tw, th) = self.thumb_bounds(cx);
-                    if tx <= cx.mouse.cursorx
-                        && cx.mouse.cursorx < tx + tw
-                        && ty <= cx.mouse.cursory
-                        && cx.mouse.cursory < ty + th
-                    {
+                    if event.target != cx.current {
                         self.reference_points = Some((pos, *self.value.get(cx)));
                         cx.captured = cx.current;
                     } else {
                         let (_, jump) = self.container_and_thumb_size(cx);
-                        match &self.orientation {
+                        let (tx, ty, tw, th) = self.thumb_bounds(cx);
+                        let physical_delta = match &self.orientation {
                             Orientation::Horizontal => {
                                 if cx.mouse.cursorx < tx {
-                                    self.change(cx, *self.value.get(cx) - jump);
+                                    -jump
                                 } else if cx.mouse.cursorx >= tx + tw {
-                                    self.change(cx, *self.value.get(cx) + jump);
+                                    jump
+                                } else {
+                                    return;
                                 }
                             }
                             Orientation::Vertical => {
                                 if cx.mouse.cursory < ty {
-                                    self.change(cx, *self.value.get(cx) - jump);
+                                    -jump
                                 } else if cx.mouse.cursory >= ty + th {
-                                    self.change(cx, *self.value.get(cx) + jump);
+                                    jump
+                                } else {
+                                    return;
                                 }
                             }
-                        }
+                        };
+                        let changed = self.compute_new_value(cx, physical_delta, *self.value.get(cx));
+                        self.change(cx, changed);
                     }
                 }
 
