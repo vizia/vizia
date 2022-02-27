@@ -553,6 +553,7 @@ where
                 .class("selection")
                 .position_type(PositionType::SelfDirected)
                 .visibility(TextboxData::edit)
+                .hoverable(false)
                 // .bind(TextboxData::edit, |handle, edit| {
                 //     handle.visibility(edit);
                 // })
@@ -566,6 +567,7 @@ where
                 .position_type(PositionType::SelfDirected)
                 .width(Pixels(1.0))
                 .visibility(TextboxData::edit)
+                .hoverable(false)
                 // .bind(TextboxData::edit, |handle, edit| {
                 //     handle.visibility(edit);
                 // })

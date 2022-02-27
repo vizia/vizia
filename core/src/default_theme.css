@@ -6,11 +6,11 @@
 button {
     background-color: white;
     width: auto;
-    height: 30px;
+    height: 40px;
     border-radius: 3px;
     child-space: 1s;
-    child-left: 5px;
-    child-right: 5px;
+    child-left: 10px;
+    child-right: 10px;
     border-width: 1px;
     border-color: #e5e5e5;
     outer-shadow: 0 1 1 #00000055;
@@ -100,7 +100,8 @@ textbox {
     overflow: hidden;
     color: black;
     border-width: 1px;
-    border-color: #9e9e9e;
+    border-color: #e5e5e5;
+    background-color: white;
     child-top: 1s;
     child-bottom: 1s;
     child-left: 5px;
@@ -109,7 +110,7 @@ textbox {
 }
 
 textbox:hover {
-    border-color: black;
+    background-color: #f6f6f6;
 }
 
 textbox:checked {
@@ -203,21 +204,28 @@ radiobutton {
     border-color: black;
 }
 
-dropdown .title {
-    background-color: white;
-    border-width: 1px;
-    border-color: black;
-}
-
 radiobutton:checked {
     color: #003080;
     border-color: #003080;
 }
 
-dropdown .title {
-    background-color: #FFFFFF;
+/* dropdown {
+    background-color: white;
+    width: auto;
     height: 30px;
-    width: 100px;
+    border-radius: 3px;
+    child-space: 1s;
+    child-left: 5px;
+    child-right: 5px;
+    border-width: 1px;
+    border-color: #e5e5e5;
+    outer-shadow: 0 1 1 #00000055;
+    overflow: visible;
+} */
+
+dropdown .title {
+    height: 1s;
+    width: 1s;
     child-space: 1s;
     child-left: 5px;
 }

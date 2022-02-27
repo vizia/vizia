@@ -293,7 +293,7 @@ where
     }
 
     pub fn play_animation(&mut self, entity: Entity, animation: Animation) {
-        // println!("Play Animation: {:?}", animation);
+        //println!("Play Animation: {:?}", animation);
         let entity_index = entity.index();
 
         if !self.animations.contains(animation) {
@@ -572,7 +572,8 @@ where
                         current_anim_state.start_time = std::time::Instant::now();
                     }
                 } else {
-                    if rule_animation.index() < self.animations.dense.len() {
+                    if let Some(transition_state) = self.animations.get_mut(rule_animation) {
+                        //if rule_animation.index() < self.animations.dense.len() {
                         // let transition_state =
                         //     &mut self.animations.dense[rule_animation.index()].value;
                         let transition_state = self.animations.get_mut(rule_animation).unwrap();
@@ -596,6 +597,7 @@ where
                             self.inline_data.sparse[entity_index].data_index.index();
                         transition_state.to_rule = shared_data_index.index();
                         self.play_animation(entity, rule_animation);
+                        //}
                     }
                 }
                 //}
@@ -629,10 +631,12 @@ where
 
     pub fn clear_rules(&mut self) {
         // Remove transitions (TODO)
-        for _index in self.shared_data.sparse.iter() {
-            //let anim_index = index.anim_index as usize;
+        for index in self.shared_data.sparse.iter() {
+            let animation = index.animation;
+            self.animations.remove(animation);
         }
-
+        self.animations.clear();
+        self.active_animations.clear();
         self.shared_data.clear();
 
         for index in self.inline_data.sparse.iter_mut() {

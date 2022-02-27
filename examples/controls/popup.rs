@@ -7,10 +7,6 @@ fn main() {
 
         Button::new(cx, |cx| cx.emit(PopupEvent::Switch), |cx| Label::new(cx, "Open"));
 
-        // Label::new(cx, "Press Me")
-        //     .on_checked(cx, |cx| cx.emit(PopupEvent::Open))
-        //     .on_unchecked(cx, |cx| cx.emit(PopupEvent::Close));
-
         Popup::new(cx, PopupData::is_open, |_| {})
             .something(|cx| cx.emit(PopupEvent::Close))
             .space(Pixels(100.0))

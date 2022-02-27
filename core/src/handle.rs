@@ -326,6 +326,7 @@ impl<'a, T> Handle<'a, T> {
 
     set_style!(rotate, f32);
     set_style!(translate, (f32, f32));
+    set_style!(scale, (f32, f32));
 
     set_style!(border_shape_top_left, BorderCornerShape);
     set_style!(border_shape_top_right, BorderCornerShape);

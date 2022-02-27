@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use morphorm::{LayoutType, PositionType, Units};
 
@@ -268,6 +268,8 @@ pub struct Style {
 
     pub(crate) rules: Vec<StyleRule>,
 
+    pub transitions: HashMap<Rule, Animation>,
+
     pub default_font: String,
 
     pub elements: SparseSet<String>,
@@ -293,8 +295,8 @@ pub struct Style {
 
     // Transform
     pub rotate: AnimatableSet<f32>,
-    pub translate: StyleSet<(f32, f32)>,
-    pub scale: AnimatableSet<f32>,
+    pub translate: AnimatableSet<(f32, f32)>,
+    pub scale: AnimatableSet<(f32, f32)>,
 
     pub overflow: StyleSet<Overflow>, // TODO
     //pub scroll: DenseStorage<Scroll>,     // TODO
@@ -422,6 +424,10 @@ impl Style {
     pub fn remove_rules(&mut self) {
         for rule in self.rules.iter() {
             self.rule_manager.destroy(rule.id);
+        }
+
+        for (_, animation) in self.transitions.iter() {
+            self.animation_manager.destroy(*animation);
         }
     }
 
@@ -554,13 +560,6 @@ impl Style {
 
                     // Size
                     Property::Width(value) => {
-                        match value {
-                            Percentage(val) => {
-                                println!("{:?} {}", rule, val);
-                            }
-
-                            _ => {}
-                        }
                         self.width.insert_rule(rule_id, value);
                     }
 
@@ -754,6 +753,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.background_color.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "left" => {
@@ -763,6 +763,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.left.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "top" => {
@@ -772,6 +773,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.top.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "right" => {
@@ -781,6 +783,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.right.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "bottom" => {
@@ -790,6 +793,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.bottom.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "min-left" => {
@@ -799,6 +803,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.min_left.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "max-left" => {
@@ -808,6 +813,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.max_left.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "min-right" => {
@@ -817,6 +823,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.min_right.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "max-right" => {
@@ -826,6 +833,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.max_right.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "min-top" => {
@@ -835,6 +843,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.min_top.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "max-top" => {
@@ -844,6 +853,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.max_top.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "min-bottom" => {
@@ -853,6 +863,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.min_bottom.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "max-bottom" => {
@@ -862,6 +873,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.max_bottom.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "width" => {
@@ -871,6 +883,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.width.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "height" => {
@@ -880,6 +893,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.height.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "min-width" => {
@@ -889,6 +903,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.min_width.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "max-width" => {
@@ -898,6 +913,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.max_width.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "min-height" => {
@@ -907,6 +923,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.min_height.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "max-height" => {
@@ -916,6 +933,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.max_height.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "child-left" => {
@@ -925,6 +943,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.child_left.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "child-right" => {
@@ -934,6 +953,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.child_right.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "child-top" => {
@@ -943,6 +963,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.child_top.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "child-bottom" => {
@@ -952,6 +973,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.child_bottom.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "opacity" => {
@@ -961,6 +983,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.opacity.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 "outer-shadow-color" => {
@@ -970,6 +993,7 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.outer_shadow_color.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
                                 }
 
                                 _ => {}
@@ -1624,31 +1648,69 @@ impl Style {
     }
 
     pub fn remove_all(&mut self) {
+        //self.disabled.clear_rules(entity);
+        //self.abilities.clear_rules(entity);
+        // Display
+        self.display.clear_rules();
+        // Visibility
+        self.visibility.clear_rules();
+        // Opacity
+        self.opacity.clear_rules();
+        // Z Order
         self.z_order.clear_rules();
-        self.rotate.clear_rules();
+
+        // Transform
         self.translate.clear_rules();
+        self.rotate.clear_rules();
         self.scale.clear_rules();
+
         self.overflow.clear_rules();
 
-        // Remove all non-inline style data
+        // Border
+        self.border_width.clear_rules();
+        self.border_color.clear_rules();
+
+        // Border Shape
+        self.border_shape_bottom_left.clear_rules();
+        self.border_shape_bottom_right.clear_rules();
+        self.border_shape_top_left.clear_rules();
+        self.border_shape_top_right.clear_rules();
+
+        // Border Radius
+        self.border_radius_bottom_left.clear_rules();
+        self.border_radius_bottom_right.clear_rules();
+        self.border_radius_top_left.clear_rules();
+        self.border_radius_bottom_right.clear_rules();
+
+        // Background
         self.background_color.clear_rules();
         self.background_image.clear_rules();
         self.background_gradient.clear_rules();
 
-        self.font_color.clear_rules();
-        self.font.clear_rules();
-        self.font_size.clear_rules();
+        self.outer_shadow_h_offset.clear_rules();
+        self.outer_shadow_v_offset.clear_rules();
+        self.outer_shadow_blur.clear_rules();
+        self.outer_shadow_color.clear_rules();
 
-        self.position_type.clear_rules();
+        self.inner_shadow_h_offset.clear_rules();
+        self.inner_shadow_v_offset.clear_rules();
+        self.inner_shadow_blur.clear_rules();
+        self.inner_shadow_color.clear_rules();
+
         self.layout_type.clear_rules();
+        self.position_type.clear_rules();
 
-        // Position
+        // Space
         self.left.clear_rules();
         self.right.clear_rules();
         self.top.clear_rules();
         self.bottom.clear_rules();
 
-        // Position Constraints
+        // Size
+        self.width.clear_rules();
+        self.height.clear_rules();
+
+        // Space Constraints
         self.min_left.clear_rules();
         self.max_left.clear_rules();
         self.min_right.clear_rules();
@@ -1658,62 +1720,36 @@ impl Style {
         self.min_bottom.clear_rules();
         self.max_bottom.clear_rules();
 
-        // Size
-        self.width.clear_rules();
-        self.height.clear_rules();
-
         // Size Constraints
         self.min_width.clear_rules();
         self.max_width.clear_rules();
         self.min_height.clear_rules();
         self.max_height.clear_rules();
+        self.content_width.clear_rules();
+        self.content_height.clear_rules();
 
-        //
+        // Child Space
         self.child_left.clear_rules();
         self.child_right.clear_rules();
         self.child_top.clear_rules();
         self.child_bottom.clear_rules();
-
-        // Border
-        self.border_width.clear_rules();
-        self.border_color.clear_rules();
-
-        // Border Radius
-        self.border_radius_top_left.clear_rules();
-        self.border_radius_top_right.clear_rules();
-        self.border_radius_bottom_left.clear_rules();
-        self.border_radius_bottom_right.clear_rules();
-
-        self.border_shape_top_left.clear_rules();
-        self.border_shape_top_right.clear_rules();
-        self.border_shape_bottom_left.clear_rules();
-        self.border_shape_bottom_right.clear_rules();
-
-        // Display
-        self.display.clear_rules();
-        self.visibility.clear_rules();
-        self.opacity.clear_rules();
-
-        // Inner Shadow
-        self.inner_shadow_h_offset.clear_rules();
-        self.inner_shadow_v_offset.clear_rules();
-        self.inner_shadow_blur.clear_rules();
-        self.inner_shadow_color.clear_rules();
-
-        // Outer Shadow
-        self.outer_shadow_h_offset.clear_rules();
-        self.outer_shadow_v_offset.clear_rules();
-        self.outer_shadow_blur.clear_rules();
-        self.outer_shadow_color.clear_rules();
-
-        self.grid_rows.clear_rules();
-        self.grid_cols.clear_rules();
-        self.row_between.clear_rules();
         self.col_between.clear_rules();
+        self.row_between.clear_rules();
 
-        self.row_index.clear_rules();
+        // Grid
+        self.grid_cols.clear_rules();
+        self.grid_rows.clear_rules();
         self.col_index.clear_rules();
-        self.row_span.clear_rules();
         self.col_span.clear_rules();
+        self.row_index.clear_rules();
+        self.row_span.clear_rules();
+
+        // Text and Font
+        self.text.clear_rules();
+        self.font.clear_rules();
+        self.font_color.clear_rules();
+        self.font_size.clear_rules();
+
+        self.image.clear_rules();
     }
 }

@@ -276,13 +276,7 @@ impl Context {
 
         self.style.parse_theme(&overall_theme);
 
-        // self.enviroment.needs_rebuild = true;
-
-        self.style.needs_restyle = true;
-
-        // Entity::root().restyle(self);
-        // Entity::root().relayout(self);
-        // Entity::root().redraw(self);
+        //self.enviroment.needs_rebuild = true;
 
         Ok(())
     }

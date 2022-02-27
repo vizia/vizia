@@ -1,5 +1,5 @@
 use crate::{
-    Actions, Context, Handle, Model, Overflow, Popup, PopupData, PopupEvent, Units::*, View,
+    Actions, Button, Context, Handle, Model, Overflow, Popup, PopupData, PopupEvent, Units::*, View,
 };
 
 pub struct Dropdown {}
@@ -17,7 +17,15 @@ impl Dropdown {
                     PopupData::default().build(cx);
                 }
 
-                (label)(cx).class("title").on_press(|cx| cx.emit(PopupEvent::Switch));
+                Button::new(
+                    cx,
+                    |cx| cx.emit(PopupEvent::Switch),
+                    move |cx| {
+                        (label)(cx).class("title")
+                        //.on_press(|cx| cx.emit(PopupEvent::Switch));
+                    },
+                )
+                .width(Stretch(1.0));
 
                 Popup::new(cx, PopupData::is_open, move |cx| {
                     (builder)(cx);

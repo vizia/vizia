@@ -2,20 +2,27 @@ use vizia::*;
 
 const STYLE: &str = r#"
 
-    zstack {
+    .modal {
         space: 1s;
-        background-color: #CCCCCC;
+        background-color: white;
         border-radius: 3px;
+        border-width: 1px;
+        border-color: #999999;
+        outer-shadow: 0 3 10 #00000055;
+        overflow: visible;
+        child-space: 10px;
     }
 
-    label {
+    modal>popup>label {
         width: auto;
-        height: 1s;
+        height: auto;
+        space: 5px;
         child-space: 1s;
     }
 
     button {
         border-radius: 3px;
+        child-space: 1s;
     }
 
     hstack {
@@ -31,26 +38,25 @@ fn main() {
         AppData { show_modal: false }.build(cx);
 
         Button::new(cx, |cx| cx.emit(AppEvent::ShowModal), |cx| Label::new(cx, "Show Modal"))
+            .width(Pixels(150.0))
             .space(Pixels(50.0));
 
-        //Binding::new(cx, AppData::show_modal, |cx, show| {
-        ZStack::new(cx, |cx| {
-            VStack::new(cx, |cx| {
-                Label::new(cx, "This is a message").width(Stretch(1.0));
-                HStack::new(cx, |cx| {
-                    Button::new(
-                        cx,
-                        |cx| cx.emit(AppEvent::HideModal),
-                        |cx| Label::new(cx, "Cancel"),
-                    );
-                    Button::new(cx, |cx| cx.emit(AppEvent::HideModal), |cx| Label::new(cx, "Ok"));
-                });
+        Popup::new(cx, AppData::show_modal, |cx| {
+            Label::new(cx, "This is a message").width(Stretch(1.0));
+            HStack::new(cx, |cx| {
+                Button::new(cx, |cx| cx.emit(AppEvent::HideModal), |cx| Label::new(cx, "Ok"))
+                    .width(Pixels(100.0))
+                    .class("accent");
+
+                Button::new(cx, |cx| cx.emit(AppEvent::HideModal), |cx| Label::new(cx, "Cancel"))
+                    .width(Pixels(100.0));
             });
         })
+        .something(|cx| cx.emit(AppEvent::HideModal))
         .width(Pixels(300.0))
-        .height(Pixels(100.0))
-        .visibility(AppData::show_modal);
-        //});
+        .height(Auto)
+        .row_between(Pixels(10.0))
+        .class("modal");
     })
     .run();
 }
@@ -71,12 +77,10 @@ impl Model for AppData {
         if let Some(app_event) = event.message.downcast() {
             match app_event {
                 AppEvent::ShowModal => {
-                    println!("Show Modal");
                     self.show_modal = true;
                 }
 
                 AppEvent::HideModal => {
-                    println!("Hide Modal");
                     self.show_modal = false;
                 }
             }
