@@ -335,7 +335,7 @@ impl Context {
 
         self.style.rules.clear();
 
-        self.style.remove_all();
+        self.style.clear_style_rules();
 
         let mut overall_theme = String::new();
 
