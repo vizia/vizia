@@ -281,49 +281,49 @@ impl Context {
         self.style.child_top.tick(time);
         self.style.child_bottom.tick(time);
 
-        self.style.display.has_animations() |
-        self.style.visibility.has_animations() |
-        self.style.opacity.has_animations() |
-        self.style.rotate.has_animations() |
-        self.style.translate.has_animations() |
-        self.style.scale.has_animations() |
-        self.style.border_width.has_animations() |
-        self.style.border_color.has_animations() |
-        self.style.border_radius_top_left.has_animations() |
-        self.style.border_radius_top_right.has_animations() |
-        self.style.border_radius_bottom_left.has_animations() |
-        self.style.border_radius_bottom_right.has_animations() |
-        self.style.background_color.has_animations() |
-        self.style.outer_shadow_h_offset.has_animations() |
-        self.style.outer_shadow_v_offset.has_animations() |
-        self.style.outer_shadow_blur.has_animations() |
-        self.style.outer_shadow_color.has_animations() |
-        self.style.font_color.has_animations() |
-        self.style.font_size.has_animations() |
-        self.style.left.has_animations() |
-        self.style.right.has_animations() |
-        self.style.top.has_animations() |
-        self.style.bottom.has_animations() |
-        self.style.width.has_animations() |
-        self.style.height.has_animations() |
-        self.style.max_width.has_animations() |
-        self.style.max_height.has_animations() |
-        self.style.min_width.has_animations() |
-        self.style.min_height.has_animations() |
-        self.style.min_left.has_animations() |
-        self.style.max_left.has_animations() |
-        self.style.min_right.has_animations() |
-        self.style.max_right.has_animations() |
-        self.style.min_top.has_animations() |
-        self.style.max_top.has_animations() |
-        self.style.min_bottom.has_animations() |
-        self.style.max_bottom.has_animations() |
-        self.style.row_between.has_animations() |
-        self.style.col_between.has_animations() |
-        self.style.child_left.has_animations() |
-        self.style.child_right.has_animations() |
-        self.style.child_top.has_animations() |
-        self.style.child_bottom.has_animations()
+        self.style.display.has_animations()
+            | self.style.visibility.has_animations()
+            | self.style.opacity.has_animations()
+            | self.style.rotate.has_animations()
+            | self.style.translate.has_animations()
+            | self.style.scale.has_animations()
+            | self.style.border_width.has_animations()
+            | self.style.border_color.has_animations()
+            | self.style.border_radius_top_left.has_animations()
+            | self.style.border_radius_top_right.has_animations()
+            | self.style.border_radius_bottom_left.has_animations()
+            | self.style.border_radius_bottom_right.has_animations()
+            | self.style.background_color.has_animations()
+            | self.style.outer_shadow_h_offset.has_animations()
+            | self.style.outer_shadow_v_offset.has_animations()
+            | self.style.outer_shadow_blur.has_animations()
+            | self.style.outer_shadow_color.has_animations()
+            | self.style.font_color.has_animations()
+            | self.style.font_size.has_animations()
+            | self.style.left.has_animations()
+            | self.style.right.has_animations()
+            | self.style.top.has_animations()
+            | self.style.bottom.has_animations()
+            | self.style.width.has_animations()
+            | self.style.height.has_animations()
+            | self.style.max_width.has_animations()
+            | self.style.max_height.has_animations()
+            | self.style.min_width.has_animations()
+            | self.style.min_height.has_animations()
+            | self.style.min_left.has_animations()
+            | self.style.max_left.has_animations()
+            | self.style.min_right.has_animations()
+            | self.style.max_right.has_animations()
+            | self.style.min_top.has_animations()
+            | self.style.max_top.has_animations()
+            | self.style.min_bottom.has_animations()
+            | self.style.max_bottom.has_animations()
+            | self.style.row_between.has_animations()
+            | self.style.col_between.has_animations()
+            | self.style.child_left.has_animations()
+            | self.style.child_right.has_animations()
+            | self.style.child_top.has_animations()
+            | self.style.child_bottom.has_animations()
     }
 
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
