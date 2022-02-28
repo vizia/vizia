@@ -97,7 +97,7 @@ impl ScrollView<scroll_data_derived_lenses::root> {
         content: F,
     ) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + FnOnce(&mut Context),
     {
         Self { data: ScrollData::root }.build2(cx, move |cx| {
             ScrollData {
@@ -124,7 +124,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         content: F,
     ) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + FnOnce(&mut Context),
     {
         if cx.data::<ScrollData>().is_none() {
             panic!("ScrollView::custom requires a ScrollData to be built into a parent");
@@ -137,11 +137,10 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
 
     fn common_builder<F>(cx: &mut Context, data: L, content: F, scroll_x: bool, scroll_y: bool)
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + FnOnce(&mut Context),
     {
         VStack::new(cx, content)
-            .size(Units::Auto)
-            .position_type(PositionType::SelfDirected)
+            .class("scroll_content")
             .bind(data.clone(), |handle, data| {
                 let data = data.get(handle.cx);
                 let left = (data.child_x - data.parent_x) * data.scroll_x;
