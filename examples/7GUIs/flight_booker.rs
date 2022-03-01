@@ -6,6 +6,12 @@ use chrono::{NaiveDate, ParseError};
 
 const ICON_DOWN_OPEN: &str = "\u{e75c}";
 
+const STYLE: &str = r#"
+    textbox.invalid {
+        background-color: #AA0000;
+    }
+"#;
+
 #[derive(Clone)]
 pub struct SimpleDate(NaiveDate);
 
@@ -39,6 +45,7 @@ pub struct AppData {
 pub enum AppEvent {
     SetChoice(String),
     SetStartDate(SimpleDate),
+    SetEndDate(SimpleDate),
 }
 
 impl Model for AppData {
@@ -51,6 +58,10 @@ impl Model for AppData {
 
                 AppEvent::SetStartDate(date) => {
                     self.start_date = date.clone();
+                }
+
+                AppEvent::SetEndDate(date) => {
+                    self.end_date = date.clone();
                 }
             }
         }
@@ -72,15 +83,14 @@ fn main() {
     let window_description =
         WindowDescription::new().with_title("Flight Booker").with_inner_size(250, 250);
     Application::new(window_description, |cx|{
+        cx.add_theme(STYLE);
         AppData::new().build(cx);
         VStack::new(cx, |cx|{
             Dropdown::new(cx, move |cx|
                 // A Label and an Icon
                 HStack::new(cx, move |cx|{
-                    Binding::new(cx, AppData::choice, |cx, choice|{
-                        Label::new(cx, choice)
-                            .width(Stretch(1.0));
-                    });
+                    Label::new(cx, AppData::choice)
+                        .width(Stretch(1.0));
                     Label::new(cx, ICON_DOWN_OPEN).font("icons").left(Pixels(5.0)).right(Pixels(5.0));
                 }).width(Stretch(1.0)),
                 move |cx|{
@@ -89,7 +99,7 @@ fn main() {
                         Binding::new(cx, AppData::choice, move |cx, choice|{
                             let selected = *item.get(cx) == *choice.get(cx);
                             let item = item.clone();
-                            Label::new(cx, item.clone())
+                            Label::new(cx, item)
                                 .width(Stretch(1.0))
                                 .background_color(if selected {Color::from("#f8ac14")} else {Color::white()})
                                 .on_press(move |cx| {
@@ -105,16 +115,24 @@ fn main() {
                 .on_edit(|cx, text|{
                     if let Ok(val) = text.parse::<SimpleDate>() {
                         cx.emit(AppEvent::SetStartDate(val));
+                        cx.current.toggle_class(cx, "invalid", false);
+                    } else {
+                        cx.current.toggle_class(cx, "invalid", true);
                     }
                 })
                 .width(Pixels(150.0));
 
-            Binding::new(cx, AppData::choice, |cx, choice|{
-                let disabled = *choice.get(cx) == "one-way flight";
-                Textbox::new(cx, AppData::end_date)
-                    .width(Pixels(150.0))
-                    .disabled(disabled);
-            });
+            Textbox::new(cx, AppData::end_date)
+                .on_edit(|cx, text|{
+                    if let Ok(val) = text.parse::<SimpleDate>() {
+                        cx.emit(AppEvent::SetEndDate(val));
+                        cx.current.toggle_class(cx, "invalid", false);
+                    } else {
+                        cx.current.toggle_class(cx, "invalid", true);
+                    }
+                })
+                .width(Pixels(150.0))
+                .disabled(AppData::choice.map(|choice| choice == "one-way flight"));
 
             Button::new(cx, |_|{}, |cx|{
                 Label::new(cx, "Book")

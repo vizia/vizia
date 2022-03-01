@@ -130,9 +130,11 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
-    pub fn disabled(self, state: bool) -> Self {
-        self.cx.style.disabled.insert(self.entity, state);
-        self.cx.style.needs_restyle = true;
+    pub fn disabled(self, state: impl Res<bool>) -> Self {
+        state.set_or_bind(self.cx, self.entity, |cx, entity, val| {
+            cx.style.disabled.insert(entity, val);
+            cx.style.needs_restyle = true;
+        });
 
         self
     }
