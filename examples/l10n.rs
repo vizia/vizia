@@ -25,6 +25,14 @@ fn main() {
         AppData { name: "Audrey".to_owned() }.build(cx);
 
         Label::new(cx, Localized::new("hello-world"));
+        HStack::new(cx, |cx| {
+            Label::new(cx, Localized::new("enter-name"));
+            Textbox::new(cx, AppData::name)
+                .width(Units::Pixels(300.0))
+                .on_edit(|cx, text| {
+                    cx.emit(AppEvent::SetName(text));
+                });
+        });
         Label::new(cx, Localized::new("intro").arg("name", AppData::name));
     }).run()
 }

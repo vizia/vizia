@@ -3,22 +3,6 @@ use fluent_bundle;
 use fluent_bundle::FluentArgs;
 use crate::{Binding, Context, Data, Entity, Lens, Res};
 
-pub trait LocalizedStringKey<'a> {
-    fn key(&self) -> &'a str;
-}
-
-impl<'a> LocalizedStringKey<'a> for &'a str {
-    fn key(&self) -> &'a str {
-        self
-    }
-}
-
-impl<'a> LocalizedStringKey<'a> for &'a String {
-    fn key(&self) -> &'a str {
-        self.as_str()
-    }
-}
-
 pub trait LensWrapSmallTrait {
     fn get_str(&self, cx: &Context) -> String;
     fn make_clone(&self) -> Box<dyn LensWrapSmallTrait>;
