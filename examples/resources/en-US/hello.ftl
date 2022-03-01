@@ -1,1 +1,2 @@
-hello-world = Hello World
+hello-world = Hello, world!
+intro = Welcome, { $name }.
