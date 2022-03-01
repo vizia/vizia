@@ -1,0 +1,1712 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'vizia'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "vizia",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'button'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=button",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "button",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'button'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=button",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "button",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'slider'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=slider",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "slider",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'slider'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=slider",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "slider",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'knob'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=knob",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "knob",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'knob'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=knob",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "knob",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'checkbox'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=checkbox",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "checkbox",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'checkbox'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=checkbox",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "checkbox",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'radiobutton'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=radiobutton",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "radiobutton",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'radiobutton'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=radiobutton",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "radiobutton",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'zstack'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=zstack",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "zstack",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'zstack'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=zstack",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "zstack",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'picker'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=picker",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "picker",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'picker'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=picker",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "picker",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'popup'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=popup",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "popup",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'popup'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=popup",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "popup",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'dropdown'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=dropdown",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "dropdown",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'dropdown'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=dropdown",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "dropdown",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'textbox'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=textbox",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "textbox",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'textbox'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=textbox",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "textbox",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'number_input'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=number_input",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "number_input",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'number_input'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=number_input",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "number_input",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'widget_gallery'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=widget_gallery",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "widget_gallery",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'widget_gallery'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=widget_gallery",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "widget_gallery",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'list'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'list'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'selectable_list'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=selectable_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "selectable_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'selectable_list'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=selectable_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "selectable_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'editable_list'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=editable_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "editable_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'editable_list'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=editable_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "editable_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'multiselectable_list'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=multiselectable_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "multiselectable_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'multiselectable_list'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=multiselectable_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "multiselectable_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'sortable_list'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=sortable_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "sortable_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'sortable_list'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=sortable_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "sortable_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'static_list'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=static_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "static_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'static_list'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=static_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "static_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'image'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=image",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "image",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'image'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=image",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "image",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example '7guis_counter'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=7guis_counter",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "7guis_counter",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example '7guis_counter'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=7guis_counter",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "7guis_counter",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example '7guis_temperature_converter'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=7guis_temperature_converter",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "7guis_temperature_converter",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example '7guis_temperature_converter'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=7guis_temperature_converter",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "7guis_temperature_converter",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example '7guis_flight_booker'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=7guis_flight_booker",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "7guis_flight_booker",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example '7guis_flight_booker'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=7guis_flight_booker",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "7guis_flight_booker",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example '7guis_crud'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=7guis_crud",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "7guis_crud",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example '7guis_crud'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=7guis_crud",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "7guis_crud",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'action_modifier'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=action_modifier",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "action_modifier",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'action_modifier'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=action_modifier",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "action_modifier",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'basic'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=basic",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "basic",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'basic'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=basic",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "basic",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'binding'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=binding",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "binding",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'binding'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=binding",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "binding",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'compose'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=compose",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "compose",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'compose'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=compose",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "compose",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'counter'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=counter",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "counter",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'counter'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=counter",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "counter",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'cursor_icon'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=cursor_icon",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "cursor_icon",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'cursor_icon'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=cursor_icon",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "cursor_icon",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'localization'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=localization",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "localization",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'localization'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=localization",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "localization",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'local_data'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=local_data",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "local_data",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'local_data'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=local_data",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "local_data",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'long_list'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=long_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "long_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'long_list'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=long_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "long_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'modal'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=modal",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "modal",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'modal'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=modal",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "modal",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'more_knobs'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=more_knobs",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "more_knobs",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'more_knobs'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=more_knobs",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "more_knobs",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'multiple_binding'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=multiple_binding",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "multiple_binding",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'multiple_binding'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=multiple_binding",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "multiple_binding",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'proxy'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=proxy",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "proxy",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'proxy'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=proxy",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "proxy",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'scrollview'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=scrollview",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "scrollview",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'scrollview'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=scrollview",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "scrollview",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'state'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=state",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "state",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'state'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=state",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "state",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'stylesheet'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=stylesheet",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "stylesheet",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'stylesheet'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=stylesheet",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "stylesheet",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'styling'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=styling",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "styling",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'styling'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=styling",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "styling",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'table'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=table",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "table",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'table'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=table",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "table",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'test'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=test",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "test",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'test'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=test",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "test",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'textbox_list'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=textbox_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "textbox_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'textbox_list'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=textbox_list",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "textbox_list",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'transform'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=transform",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "transform",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'transform'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=transform",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "transform",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'vizia_baseview'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=vizia_baseview"
+                ],
+                "filter": {
+                    "name": "vizia_baseview",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'vizia_core'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=vizia_core"
+                ],
+                "filter": {
+                    "name": "vizia_core",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'vizia_glutin'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=vizia_glutin"
+                ],
+                "filter": {
+                    "name": "vizia_glutin",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
