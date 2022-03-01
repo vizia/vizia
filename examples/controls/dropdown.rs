@@ -1,7 +1,5 @@
 use vizia::*;
 
-const ICON_DOWN_OPEN: &str = "\u{e75c}";
-
 const STYLE: &str = r#"
     dropdown .title {
         background-color: #FFFFFF;

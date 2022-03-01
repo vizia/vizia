@@ -2,6 +2,8 @@ use crate::{
     Actions, Context, Handle, Model, Overflow, Popup, PopupData, PopupEvent, Units::*, View,
 };
 
+pub const ICON_DOWN_OPEN: &str = "\u{e75c}";
+
 pub struct Dropdown {}
 
 impl Dropdown {
@@ -24,7 +26,6 @@ impl Dropdown {
                 })
                 .something(|cx| cx.emit(PopupEvent::Close))
                 .top(Percentage(100.0))
-                .width(Stretch(1.0))
                 .height(Auto)
                 .overflow(Overflow::Visible);
             })

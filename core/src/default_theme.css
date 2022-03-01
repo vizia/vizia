@@ -220,8 +220,6 @@ radiobutton:checked {
 
 dropdown .title {
     background-color: #FFFFFF;
-    height: 30px;
-    width: 100px;
     child-space: 1s;
     child-left: 5px;
 }
