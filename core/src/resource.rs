@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 
 use crate::{Canvas, Context, Entity};
+use fluent_bundle::{FluentBundle, FluentResource};
 use image::GenericImageView;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
+use unic_langid::LanguageIdentifier;
 
 pub struct StoredImage {
     pub image: ImageOrId,
@@ -61,6 +63,8 @@ pub struct ResourceManager {
     pub themes: Vec<String>,      // Themes are the string content stylesheets
     pub images: HashMap<String, StoredImage>,
     pub fonts: HashMap<String, FontOrId>,
+    pub translations: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
+    pub language: LanguageIdentifier,
 
     pub image_loader: Option<Box<dyn Fn(&mut Context, &str)>>,
 
@@ -74,9 +78,49 @@ impl ResourceManager {
             themes: Vec::new(),
             fonts: HashMap::new(),
             images: HashMap::new(),
+            translations: HashMap::from([(
+                LanguageIdentifier::default(),
+                FluentBundle::new(vec![LanguageIdentifier::default()]),
+            )]),
+            language: LanguageIdentifier::default(),
             image_loader: None,
             count: 0,
         }
+    }
+
+    fn renegotiate_language(&mut self) {
+        let locale = locale_config::Locale::current()
+            .to_string()
+            .parse()
+            .unwrap_or_else(|_| LanguageIdentifier::default());
+        let requested = [locale];
+        let available = self
+            .translations
+            .keys()
+            .filter(|x| x != &&LanguageIdentifier::default())
+            .collect::<Vec<_>>();
+        let default: LanguageIdentifier = "en-CA".parse().unwrap();
+        let default_ref = &default; // ???
+        let langs = fluent_langneg::negotiate::negotiate_languages(
+            &requested,
+            available.as_slice(),
+            Some(&default_ref),
+            fluent_langneg::NegotiationStrategy::Filtering,
+        );
+        self.language = (**langs.first().unwrap()).to_owned();
+    }
+
+    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
+        let res = fluent_bundle::FluentResource::try_new(ftl)
+            .expect("Failed to parse translation as FTL");
+        let bundle =
+            self.translations.entry(lang.clone()).or_insert_with(|| FluentBundle::new(vec![lang]));
+        bundle.add_resource(res).expect("Failed to add resource to bundle");
+        self.renegotiate_language();
+    }
+
+    pub fn current_translation(&self) -> &FluentBundle<FluentResource> {
+        self.translations.get(&self.language).unwrap()
     }
 
     pub(crate) fn add_font(&mut self, _name: &str, _path: &str) {}
