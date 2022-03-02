@@ -2,8 +2,8 @@ use crate::{DoubleEndedTreeTour, Entity, TourDirection, TourStep, Tree};
 
 /// Iterator for iterating through the tree in depth first preorder.
 pub struct TreeIterator<'a> {
-    tree: &'a Tree,
-    tours: DoubleEndedTreeTour,
+    pub(crate) tree: &'a Tree,
+    pub(crate) tours: DoubleEndedTreeTour,
 }
 
 impl<'a> TreeIterator<'a> {

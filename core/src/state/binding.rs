@@ -94,6 +94,7 @@ where
         let _: Handle<Self> = Handle { entity: id, p: Default::default(), cx }
             .width(Units::Stretch(1.0))
             .height(Units::Stretch(1.0))
+            .focusable(false)
             .ignore();
     }
 }

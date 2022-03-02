@@ -68,6 +68,10 @@ impl TreeTour {
         Self { current: start, direction: TourDirection::Entering }
     }
 
+    pub fn with_direction(start: Option<Entity>, direction: TourDirection) -> Self {
+        Self { current: start, direction }
+    }
+
     /// Traverse tree until next item is yielded, or iteration stops.
     ///
     /// The callback is called each time a node is "entered" or "left", as described by the second
@@ -157,6 +161,10 @@ impl DoubleEndedTreeTour {
 
     pub fn new_same(start_both: Option<Entity>) -> Self {
         Self { forward: TreeTour::new(start_both), backward: TreeTour::new(start_both) }
+    }
+
+    pub fn new_raw(forward: TreeTour, backward: TreeTour) -> Self {
+        Self { forward, backward }
     }
 
     pub fn next_with<O, F>(&mut self, tree: &Tree, mut cb: F) -> Option<O>

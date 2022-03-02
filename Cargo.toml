@@ -103,6 +103,10 @@ path = "examples/7GUIs/flight_booker.rs"
 name = "7guis_crud"
 path = "examples/7GUIs/crud.rs"
 
+[[example]]
+name = "focus_order"
+path = "examples/accessibility/focus_order.rs"
+
 [features]
 default = ["glutin", "clipboard"]
 clipboard = ["vizia_core/clipboard"]
