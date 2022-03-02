@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use crate::{Binding, Context, Data, Entity, Lens, Res};
 use fluent_bundle;
 use fluent_bundle::{FluentArgs, FluentValue};
-use crate::{Binding, Context, Data, Entity, Lens, Res};
+use std::collections::HashMap;
 
 pub trait LensWrapSmallTrait {
     fn get_val(&self, cx: &Context) -> FluentValue<'static>;
@@ -20,12 +20,13 @@ where
     <L as Lens>::Target: Into<FluentValue<'static>> + Data,
 {
     fn get_val(&self, cx: &Context) -> FluentValue<'static> {
-        self.lens.view(cx.data().expect("Failed to get data from context. Has it been built into the tree?"), |data| {
-            match data {
+        self.lens.view(
+            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
+            |data| match data {
                 Some(x) => x.clone().into(),
                 None => "".into(),
-            }
-        })
+            },
+        )
     }
 
     fn make_clone(&self) -> Box<dyn LensWrapSmallTrait> {
@@ -43,10 +44,7 @@ pub struct Localized {
 
 impl Clone for Localized {
     fn clone(&self) -> Self {
-        Self {
-            key: self.key,
-            args: self.args.iter().map(|(k, v)| (*k, v.make_clone())).collect()
-        }
+        Self { key: self.key, args: self.args.iter().map(|(k, v)| (*k, v.make_clone())).collect() }
     }
 }
 
@@ -60,10 +58,7 @@ impl Localized {
     }
 
     pub fn new(key: &'static str) -> Self {
-        Self {
-            key,
-            args: HashMap::new(),
-        }
+        Self { key, args: HashMap::new() }
     }
 
     pub fn arg<L>(mut self, key: &'static str, lens: L) -> Self
@@ -102,7 +97,10 @@ impl Res<String> for Localized {
         }
     }
 
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F) where F: 'static + Clone + Fn(&mut Context, Entity, String) {
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, String),
+    {
         let prev_current = cx.current;
         let prev_count = cx.count;
         cx.current = entity;
@@ -119,13 +117,16 @@ impl Res<String> for Localized {
 
 fn bind_recursive<F>(cx: &mut Context, lenses: &Vec<Box<dyn LensWrapSmallTrait>>, closure: F)
 where
-    F: 'static + Clone + Fn(&mut Context)
+    F: 'static + Clone + Fn(&mut Context),
 {
     if let Some((lens, rest)) = lenses.split_last() {
         let rest = rest.iter().map(|x| x.make_clone()).collect();
-        lens.bind(cx, Box::new(move |cx| {
-            bind_recursive(cx, &rest, closure.clone());
-        }));
+        lens.bind(
+            cx,
+            Box::new(move |cx| {
+                bind_recursive(cx, &rest, closure.clone());
+            }),
+        );
     } else {
         closure(cx);
     }

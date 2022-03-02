@@ -1,10 +1,10 @@
 #![allow(dead_code)]
 
 use crate::{Canvas, Context, Entity};
+use fluent_bundle::{FluentBundle, FluentResource};
 use image::GenericImageView;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
-use fluent_bundle::{FluentBundle, FluentResource};
 use unic_langid::LanguageIdentifier;
 
 pub struct StoredImage {
@@ -78,7 +78,10 @@ impl ResourceManager {
             themes: Vec::new(),
             fonts: HashMap::new(),
             images: HashMap::new(),
-            translations: HashMap::from([(LanguageIdentifier::default(), FluentBundle::new(vec![LanguageIdentifier::default()]))]),
+            translations: HashMap::from([(
+                LanguageIdentifier::default(),
+                FluentBundle::new(vec![LanguageIdentifier::default()]),
+            )]),
             language: LanguageIdentifier::default(),
             image_loader: None,
             count: 0,
@@ -86,9 +89,16 @@ impl ResourceManager {
     }
 
     fn renegotiate_language(&mut self) {
-        let locale = locale_config::Locale::current().to_string().parse().unwrap_or_else(|_| LanguageIdentifier::default());
+        let locale = locale_config::Locale::current()
+            .to_string()
+            .parse()
+            .unwrap_or_else(|_| LanguageIdentifier::default());
         let requested = [locale];
-        let available = self.translations.keys().filter(|x| x != &&LanguageIdentifier::default()).collect::<Vec<_>>();
+        let available = self
+            .translations
+            .keys()
+            .filter(|x| x != &&LanguageIdentifier::default())
+            .collect::<Vec<_>>();
         let default: LanguageIdentifier = "en-CA".parse().unwrap();
         let default_ref = &default; // ???
         let langs = fluent_langneg::negotiate::negotiate_languages(
@@ -101,8 +111,10 @@ impl ResourceManager {
     }
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
-        let res = fluent_bundle::FluentResource::try_new(ftl).expect("Failed to parse translation as FTL");
-        let bundle = self.translations.entry(lang.clone()).or_insert_with(|| FluentBundle::new(vec![lang]));
+        let res = fluent_bundle::FluentResource::try_new(ftl)
+            .expect("Failed to parse translation as FTL");
+        let bundle =
+            self.translations.entry(lang.clone()).or_insert_with(|| FluentBundle::new(vec![lang]));
         bundle.add_resource(res).expect("Failed to add resource to bundle");
         self.renegotiate_language();
     }
