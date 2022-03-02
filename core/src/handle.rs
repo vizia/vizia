@@ -145,11 +145,13 @@ impl<'a, T> Handle<'a, T> {
                 if prev_data != &val.to_string() {
                     cx.style.text.insert(entity, val.to_string());
 
+                    cx.style.needs_relayout = true;
                     cx.style.needs_redraw = true;
                 }
             } else {
                 cx.style.text.insert(entity, val.to_string());
 
+                cx.style.needs_relayout = true;
                 cx.style.needs_redraw = true;
             }
         });
