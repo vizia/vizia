@@ -209,13 +209,11 @@ radiobutton:checked {
 }
 
 dropdown .title {
-    background-color: #FFFFFF;
     child-space: 1s;
     child-left: 5px;
 }
 
 dropdown>popup {
-    background-color: #AAAAAA;
     outer-shadow: 0 3 5 #00000055;
 }
 

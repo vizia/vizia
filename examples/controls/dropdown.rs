@@ -1,7 +1,5 @@
 use vizia::*;
 
-const ICON_DOWN_OPEN: &str = "\u{e75c}";
-
 #[derive(Lens)]
 pub struct AppData {
     list: Vec<String>,
