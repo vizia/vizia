@@ -19,10 +19,11 @@ morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], 
 bitflags = "1.3.2"
 fnv = "1.0.7"
 keyboard-types = { version = "0.5.0", default-features = false }
-# fluent-bundle = "0.15.2"
-# fluent-langneg = "0.13"
-# fluent-syntax = "0.11.0"
-# unic-langid = "0.9"
+fluent-bundle = "0.15.2"
+fluent-langneg = "0.13"
+fluent-syntax = "0.11.0"
+unic-langid = "0.9"
+locale_config = "*"  # see https://github.com/rust-locale/locale_config for wildcard explanation
 cssparser = "0.27.2"
 unicode-segmentation = "1.8.0"
 copypasta = {version = "0.7.1", optional = true}

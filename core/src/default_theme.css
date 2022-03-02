@@ -208,23 +208,8 @@ radiobutton:checked {
     border-color: #003080;
 }
 
-/* dropdown {
-    background-color: white;
-    width: auto;
-    height: 30px;
-    border-radius: 3px;
-    child-space: 1s;
-    child-left: 5px;
-    child-right: 5px;
-    border-width: 1px;
-    border-color: #e5e5e5;
-    outer-shadow: 0 1 1 #00000055;
-    overflow: visible;
-} */
-
 dropdown .title {
-    height: 1s;
-    width: 1s;
+    background-color: #FFFFFF;
     child-space: 1s;
     child-left: 5px;
 }
@@ -298,6 +283,14 @@ scrollbar>.thumb {
 
 scrollview {
     overflow: hidden;
+}
+
+scrollview>.scroll_content {
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    position-type: self-directed;
 }
 
 scrollview>scrollbar.horizontal {

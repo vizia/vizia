@@ -7,6 +7,7 @@ use std::sync::Mutex;
 use copypasta::ClipboardContext;
 use femtovg::TextContext;
 use fnv::FnvHashMap;
+use unic_langid::LanguageIdentifier;
 // use fluent_bundle::{FluentBundle, FluentResource};
 // use unic_langid::LanguageIdentifier;
 
@@ -458,6 +459,10 @@ impl Context {
         self.resource_manager.images.remove(path);
         self.style.needs_redraw = true;
         self.style.needs_relayout = true;
+    }
+
+    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
+        self.resource_manager.add_translation(lang, ftl)
     }
 
     pub fn spawn<F>(&self, target: F)

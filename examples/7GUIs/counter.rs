@@ -30,9 +30,7 @@ fn main() {
         HStack::new(cx, |cx| {
             Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx| Label::new(cx, "Increment"));
 
-            Binding::new(cx, AppData::count, |cx, count| {
-                Label::new(cx, count).width(Pixels(50.0));
-            });
+            Label::new(cx, AppData::count).width(Pixels(50.0));
         })
         .child_space(Stretch(1.0))
         .col_between(Pixels(50.0));

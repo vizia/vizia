@@ -777,7 +777,7 @@ where
 
                     Code::Escape => {
                         //self.edit = false;
-                        cx.emit(TextEvent::StartEdit);
+                        cx.emit(TextEvent::EndEdit);
                         cx.current.set_checked(cx, false);
                     }
 

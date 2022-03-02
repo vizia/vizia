@@ -136,7 +136,7 @@ pub trait Res<T> {
     }
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, T);
+        F: 'static + Clone + Fn(&mut Context, Entity, T);
 }
 
 impl_res_simple!(i8);
