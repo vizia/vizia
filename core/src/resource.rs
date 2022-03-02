@@ -88,14 +88,14 @@ impl ResourceManager {
     fn renegotiate_language(&mut self) {
         let locale = locale_config::Locale::current().to_string().parse().unwrap_or_else(|_| LanguageIdentifier::default());
         let requested = [locale];
-        let available = self.translations.keys().collect::<Vec<_>>();
+        let available = self.translations.keys().filter(|x| x != &&LanguageIdentifier::default()).collect::<Vec<_>>();
         let default: LanguageIdentifier = "en-CA".parse().unwrap();
         let default_ref = &default; // ???
         let langs = fluent_langneg::negotiate::negotiate_languages(
             &requested,
             available.as_slice(),
             Some(&default_ref),
-            fluent_langneg::NegotiationStrategy::Matching
+            fluent_langneg::NegotiationStrategy::Filtering,
         );
         self.language = (**langs.first().unwrap()).to_owned();
     }

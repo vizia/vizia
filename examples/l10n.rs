@@ -22,6 +22,8 @@ impl Model for AppData {
 fn main() {
     Application::new(WindowDescription::new(), |cx| {
         cx.add_translation("en-US".parse().unwrap(), include_str!("resources/en-US/hello.ftl").to_owned());
+        cx.add_translation("fr".parse().unwrap(), include_str!("resources/fr/hello.ftl").to_owned());
+
         AppData { name: "Audrey".to_owned() }.build(cx);
 
         Label::new(cx, Localized::new("hello-world"));
