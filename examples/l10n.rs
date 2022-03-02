@@ -42,7 +42,11 @@ fn main() {
                 Textbox::new(cx, AppData::name).width(Units::Pixels(300.0)).on_edit(|cx, text| {
                     cx.emit(AppEvent::SetName(text));
                 });
-            });
+            })
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0))
+            .height(Auto)
+            .col_between(Pixels(5.0));
             Label::new(cx, Localized::new("intro").arg("name", AppData::name));
             Label::new(cx, Localized::new("emails").arg("unread_emails", AppData::emails));
             Button::new(
@@ -50,7 +54,9 @@ fn main() {
                 |cx| cx.emit(AppEvent::ReceiveEmail),
                 |cx| Label::new(cx, Localized::new("refresh")),
             );
-        });
+        })
+        .row_between(Pixels(10.0))
+        .space(Pixels(10.0));
     })
     .run()
 }
