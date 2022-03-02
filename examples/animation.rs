@@ -18,8 +18,20 @@ fn main() {
     let window_description = WindowDescription::new();
     Application::new(window_description, |cx| {
         cx.add_theme(STYLE);
-
+        // Transition
         Element::new(cx).class("test");
+
+        // Animation
+        let animation_id = cx
+            .add_animation(std::time::Duration::from_secs(1))
+            .add_keyframe(0.0, |keyframe| keyframe.set_background_color(Color::red()))
+            .add_keyframe(1.0, |keyframe| keyframe.set_background_color(Color::blue()))
+            .build();
+
+        Element::new(cx)
+            .size(Pixels(200.0))
+            .background_color(Color::red())
+            .on_press(move |cx| cx.play_animation(animation_id));
     })
     .run();
 }

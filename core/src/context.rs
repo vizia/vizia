@@ -15,6 +15,7 @@ use crate::{
     ImageOrId, ImageRetentionPolicy, Message, ModelDataStore, Modifiers, MouseState, Propagation,
     ResourceManager, StoredImage, Style, Tree, TreeExt, View, ViewHandler,
 };
+use crate::{AnimExt, Animation, AnimationBuilder};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 
@@ -324,6 +325,15 @@ impl Context {
             | self.style.child_right.has_animations()
             | self.style.child_top.has_animations()
             | self.style.child_bottom.has_animations()
+    }
+
+    pub fn add_animation(&mut self, duration: std::time::Duration) -> AnimationBuilder {
+        let id = self.style.animation_manager.create();
+        AnimationBuilder::new(id, self, duration)
+    }
+
+    pub fn play_animation(&mut self, animation: Animation) {
+        self.current.play_animation(self, animation);
     }
 
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
