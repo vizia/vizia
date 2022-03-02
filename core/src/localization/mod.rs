@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use fluent_bundle;
-use fluent_bundle::FluentArgs;
+use fluent_bundle::{FluentArgs, FluentValue};
 use crate::{Binding, Context, Data, Entity, Lens, Res};
 
 pub trait LensWrapSmallTrait {
-    fn get_str(&self, cx: &Context) -> String;
+    fn get_val(&self, cx: &Context) -> FluentValue<'static>;
     fn make_clone(&self) -> Box<dyn LensWrapSmallTrait>;
     fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>);
 }
@@ -17,13 +17,13 @@ pub struct LensWrapSmall<L> {
 impl<L> LensWrapSmallTrait for LensWrapSmall<L>
 where
     L: Lens,
-    <L as Lens>::Target: ToString + Data,
+    <L as Lens>::Target: Into<FluentValue<'static>> + Data,
 {
-    fn get_str(&self, cx: &Context) -> String {
+    fn get_val(&self, cx: &Context) -> FluentValue<'static> {
         self.lens.view(cx.data().expect("Failed to get data from context. Has it been built into the tree?"), |data| {
             match data {
-                Some(x) => x.to_string(),
-                None => "".to_string(),
+                Some(x) => x.clone().into(),
+                None => "".into(),
             }
         })
     }
@@ -54,7 +54,7 @@ impl Localized {
     fn get_args(&self, cx: &Context) -> FluentArgs {
         let mut res = FluentArgs::new();
         for (name, arg) in &self.args {
-            res.set(name.to_owned(), arg.get_str(cx));
+            res.set(name.to_owned(), arg.get_val(cx));
         }
         res
     }
@@ -69,7 +69,7 @@ impl Localized {
     pub fn arg<L>(mut self, key: &'static str, lens: L) -> Self
     where
         L: Lens,
-        <L as Lens>::Target: ToString + Data,
+        <L as Lens>::Target: Into<FluentValue<'static>> + Data,
     {
         self.args.insert(key, Box::new(LensWrapSmall { lens }));
         self
@@ -82,13 +82,13 @@ impl Res<String> for Localized {
         let message = if let Some(msg) = bundle.get_message(self.key) {
             msg
         } else {
-            return format!("{{MISSING(1): {}}}", self.key);
+            return format!("{{MISSING: {}}}", self.key);
         };
 
         let value = if let Some(value) = message.value() {
             value
         } else {
-            return format!("{{MISSING(2): {}}}", self.key);
+            return format!("{{MISSING: {}}}", self.key);
         };
 
         let mut err = vec![];
