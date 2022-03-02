@@ -232,7 +232,7 @@ impl Menu {
         let entity = result.entity;
         setup_menu_entry(
             result,
-            move |cx| {},
+            move |_| {},
             move |cx| {
                 cx.event_queue.push_back(
                     Event::new(MenuEvent::Close)
