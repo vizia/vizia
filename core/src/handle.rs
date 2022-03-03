@@ -226,6 +226,16 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
+    pub fn focusable(self, state: bool) -> Self {
+        if let Some(abilities) = self.cx.style.abilities.get_mut(self.entity) {
+            abilities.set(Abilities::FOCUSABLE, state);
+        }
+
+        self.cx.style.needs_restyle = true;
+
+        self
+    }
+
     pub fn child_space(self, value: Units) -> Self {
         self.cx.style.child_left.insert(self.entity, value);
         self.cx.style.child_right.insert(self.entity, value);

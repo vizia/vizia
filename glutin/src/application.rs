@@ -665,6 +665,39 @@ impl Application {
                                 context.reload_styles().unwrap();
                             }
 
+                            if input.virtual_keycode == Some(VirtualKeyCode::Tab) && input.state == ElementState::Pressed {
+                                context.focused.set_focus(&mut context, false);
+
+                                if context.modifiers.contains(Modifiers::SHIFT) {
+                                    let prev_focused = if let Some(prev_focused) = focus_backward(&context.tree, &context.style, context.focused) {
+                                        prev_focused
+                                    } else {
+                                        let last = TreeIterator::full(&context.tree).filter(|node| is_focusable(&context.style, *node)).next_back().unwrap_or(Entity::root());
+                                        last
+                                    };
+
+                                    if prev_focused != context.focused {
+                                        context.event_queue.push_back(Event::new(WindowEvent::FocusOut).target(context.focused));
+                                        context.event_queue.push_back(Event::new(WindowEvent::FocusIn).target(prev_focused));
+                                        context.focused = prev_focused;
+                                    }
+                                } else {
+                                    let next_focused = if let Some(next_focused) = focus_forward(&context.tree, &context.style, context.focused) {
+                                        next_focused
+                                    } else {
+                                        Entity::root()
+                                    };
+
+                                    if next_focused != context.focused {
+                                        context.event_queue.push_back(Event::new(WindowEvent::FocusOut).target(context.focused));
+                                        context.event_queue.push_back(Event::new(WindowEvent::FocusIn).target(next_focused));
+                                        context.focused = next_focused;
+                                    }
+                                }
+                                //println!("Focused: {}", context.focused);
+                                context.focused.set_focus(&mut context, true);
+                            }
+
                             let s = match input.state {
                                 glutin::event::ElementState::Pressed => MouseButtonState::Pressed,
                                 glutin::event::ElementState::Released => MouseButtonState::Released,
