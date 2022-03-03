@@ -86,6 +86,10 @@ path = "examples/lists/static_list.rs"
 name = "image"
 path = "examples/controls/image.rs"
 
+[[example]]
+name = "menu"
+path = "examples/controls/menu.rs"
+
 
 [[example]]
 name = "7guis_counter"

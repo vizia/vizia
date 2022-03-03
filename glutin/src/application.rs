@@ -647,7 +647,7 @@ impl Application {
                             #[cfg(debug_assertions)]
                             if input.virtual_keycode == Some(VirtualKeyCode::H) && input.state == ElementState::Pressed {
                                 for entity in context.tree.into_iter() {
-                                    println!("Entity: {} Parent: {:?} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&context.tree), context.cache.get_posx(entity), context.cache.get_posy(entity), context.cache.get_width(entity), context.cache.get_height(entity));
+                                    println!("Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&context.tree), context.views.get(&entity).map_or("<None>".to_owned(), |view| view.element().unwrap_or("<Unnamed>".to_owned())), context.cache.get_posx(entity), context.cache.get_posy(entity), context.cache.get_width(entity), context.cache.get_height(entity));
                                 }
                             }
 
