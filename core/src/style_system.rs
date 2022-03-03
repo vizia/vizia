@@ -154,6 +154,17 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
+        // content-size is only used if any dimension is auto
+        if cx.style.min_width.get(entity).copied().unwrap_or_default() != Units::Auto
+            && cx.style.min_height.get(entity).copied().unwrap_or_default() != Units::Auto
+            && cx.style.width.get(entity).copied().unwrap_or_default() != Units::Auto
+            && cx.style.height.get(entity).copied().unwrap_or_default() != Units::Auto
+            && cx.style.max_width.get(entity).map_or(true, |w| w != &Units::Auto)
+            && cx.style.max_height.get(entity).map_or(true, |h| h != &Units::Auto)
+        {
+            continue;
+        }
+
         let desired_width = cx.style.width.get(entity).cloned().unwrap_or_default();
         let desired_height = cx.style.height.get(entity).cloned().unwrap_or_default();
         let text = cx.style.text.get(entity);
