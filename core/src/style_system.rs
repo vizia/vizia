@@ -146,7 +146,22 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
+        if cx.cache.display.get(entity) == Some(&Display::None) {
+            continue;
+        }
+
         if tree.is_ignored(entity) {
+            continue;
+        }
+
+        // content-size is only used if any dimension is auto
+        if cx.style.min_width.get(entity).copied().unwrap_or_default() != Units::Auto
+            && cx.style.min_height.get(entity).copied().unwrap_or_default() != Units::Auto
+            && cx.style.width.get(entity).copied().unwrap_or_default() != Units::Auto
+            && cx.style.height.get(entity).copied().unwrap_or_default() != Units::Auto
+            && cx.style.max_width.get(entity).map_or(true, |w| w != &Units::Auto)
+            && cx.style.max_height.get(entity).map_or(true, |h| h != &Units::Auto)
+        {
             continue;
         }
 
