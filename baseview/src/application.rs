@@ -308,10 +308,10 @@ impl ApplicationRunner {
 
         apply_visibility(&mut self.context, &tree);
 
-        apply_text_constraints(&mut self.context, &tree);
-
         // Layout
         if self.context.style.needs_relayout {
+            apply_text_constraints(&mut self.context, &tree);
+
             vizia_core::apply_layout(
                 &mut self.context.cache,
                 &self.context.tree,

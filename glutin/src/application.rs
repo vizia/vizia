@@ -325,10 +325,10 @@ impl Application {
 
                     apply_visibility(&mut context, &tree);
 
-                    apply_text_constraints(&mut context, &tree);
-
                     // Layout
                     if context.style.needs_relayout {
+                        apply_text_constraints(&mut context, &tree);
+
                         vizia_core::apply_layout(&mut context.cache, &context.tree, &context.style);
                         context.style.needs_relayout = false;
                     }
