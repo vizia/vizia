@@ -146,6 +146,10 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
+        if cx.cache.display.get(entity) == Some(&Display::None) {
+            continue;
+        }
+
         if tree.is_ignored(entity) {
             continue;
         }
