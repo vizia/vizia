@@ -22,6 +22,18 @@ const STYLE: &str = r#"
         height: 30px;
         child-left: 6px;
     }
+
+    dropdown .item {
+        background-color: white;
+    }
+
+    dropdown .item:hover {
+        background-color: #CCCCCC;
+    }
+
+    dropdown .item:checked {
+        background-color: #f8ac14;
+    }
 "#;
 
 #[derive(Lens)]
@@ -66,9 +78,7 @@ fn main() {
                 Dropdown::new(cx, move |cx|
                     // A Label and an Icon
                     HStack::new(cx, move |cx|{
-                        Binding::new(cx, AppData::choice, |cx, choice|{
-                            Label::new(cx, choice);
-                        });
+                        Label::new(cx, AppData::choice);
                         Label::new(cx, ICON_DOWN_OPEN).font("icons").left(Stretch(1.0)).right(Pixels(5.0));
                     }),
                     move |cx|{
@@ -78,7 +88,8 @@ fn main() {
                                 let selected = *item.get(cx) == *choice.get(cx);
                                 Label::new(cx, item)
                                     .width(Stretch(1.0))
-                                    .background_color(if selected {Color::from("#f8ac14")} else {Color::white()})
+                                    .checked(selected)
+                                    .class("item")
                                     .on_press(move |cx| {
                                         cx.emit(AppEvent::SetChoice(item.get_val(cx)));
                                         cx.emit(PopupEvent::Close);
