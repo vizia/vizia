@@ -1,23 +1,22 @@
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Debug, Formatter};
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardContext;
 use femtovg::TextContext;
 use fnv::FnvHashMap;
+use keyboard_types::Code;
 use unic_langid::LanguageIdentifier;
 // use fluent_bundle::{FluentBundle, FluentResource};
 // use unic_langid::LanguageIdentifier;
 
-use crate::{
-    storage::sparse_set::SparseSet, CachedData, Entity, Enviroment, Event, FontOrId, IdManager,
-    ImageOrId, ImageRetentionPolicy, Message, ModelDataStore, Modifiers, MouseState, Propagation,
-    ResourceManager, StoredImage, Style, Tree, TreeExt, View, ViewHandler,
-};
+use crate::{storage::sparse_set::SparseSet, CachedData, Entity, Enviroment, Event, FontOrId, IdManager, ImageOrId, ImageRetentionPolicy, Message, ModelDataStore, Modifiers, MouseState, Propagation, ResourceManager, StoredImage, Style, Tree, TreeExt, View, ViewHandler, apply_inline_inheritance, apply_styles, apply_shared_inheritance, apply_z_ordering, apply_visibility, apply_text_constraints, geometry_changed, apply_transform, apply_hover, apply_clipping, Canvas, Color, Visibility, WindowEvent, MouseButton, MouseButtonState, TreeDepthIterator, PropSet, focus_backward, is_focusable, TreeIterator, focus_forward, apply_layout, Display};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
+const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
 pub struct Context {
     pub entity_manager: IdManager<Entity>,
@@ -50,6 +49,10 @@ pub struct Context {
 
     #[cfg(feature = "clipboard")]
     pub clipboard: ClipboardContext,
+
+    click_time: Instant,
+    double_click: bool,
+    click_pos: (f32, f32),
 }
 
 impl Context {
@@ -81,6 +84,10 @@ impl Context {
 
             #[cfg(feature = "clipboard")]
             clipboard: ClipboardContext::new().expect("Failed to init clipboard"),
+
+            click_time: Instant::now(),
+            double_click: false,
+            click_pos: (0.0, 0.0),
         }
     }
 
@@ -380,6 +387,333 @@ impl Context {
 
         std::thread::spawn(move || target(&mut cxp));
     }
+
+    /// For each binding or data observer, check if its data has changed, and if so, rerun its
+    /// builder/body.
+    pub fn process_data_updates(&mut self) {
+        let mut observers: Vec<Entity> = Vec::new();
+
+        for model_store in self.data.dense.iter_mut().map(|entry| &mut entry.value) {
+            for (_, model) in model_store.data.iter() {
+                for lens in model_store.lenses_dup.iter_mut() {
+                    if lens.update(model) {
+                        observers.extend(lens.observers().iter())
+                    }
+                }
+
+                for (_, lens) in model_store.lenses_dedup.iter_mut() {
+                    if lens.update(model) {
+                        observers.extend(lens.observers().iter());
+                    }
+                }
+            }
+        }
+        for img in self.resource_manager.images.values_mut() {
+            if img.dirty {
+                observers.extend(img.observers.iter());
+                img.dirty = false;
+            }
+        }
+
+        for observer in observers.iter() {
+            if let Some(mut view) = self.views.remove(observer) {
+                let prev = self.current;
+                let prev_count = self.count;
+                self.current = *observer;
+                self.count = 0;
+                view.body(self);
+                self.current = prev;
+                self.count = prev_count;
+                self.views.insert(*observer, view);
+            }
+        }
+
+    }
+
+    /// Massages the style system until everything is coherent
+    pub fn process_visual_updates(&mut self) {
+        // Not ideal
+        let tree = self.tree.clone();
+
+        apply_inline_inheritance(self, &tree);
+
+        if self.style.needs_restyle {
+            apply_styles(self, &tree);
+            self.style.needs_restyle = false;
+        }
+
+        apply_shared_inheritance(self, &tree);
+        apply_z_ordering(self, &tree);
+        apply_visibility(self, &tree);
+
+        // Layout
+        if self.style.needs_relayout {
+            apply_text_constraints(self, &tree);
+
+            apply_layout(&mut self.cache, &self.tree, &self.style);
+            self.style.needs_relayout = false;
+        }
+
+        apply_transform(self, &tree);
+        apply_hover(self);
+        apply_clipping(self, &tree);
+
+        // Emit any geometry changed events
+        geometry_changed(self, &tree);
+    }
+
+    pub fn draw(&mut self, canvas: &mut Canvas, dpi_factor: f32) {
+        self.resource_manager.mark_images_unused();
+
+        let window_width = self.cache.get_width(Entity::root());
+        let window_height = self.cache.get_height(Entity::root());
+
+        canvas.set_size(window_width as u32, window_height as u32, dpi_factor);
+        let clear_color = self.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
+        canvas.clear_rect(
+            0,
+            0,
+            window_width as u32,
+            window_height as u32,
+            clear_color.into(),
+        );
+
+        // filter for widgets that should be drawn
+        let tree_iter = self.tree.into_iter();
+        let mut draw_tree: Vec<Entity> = tree_iter.filter(|&entity|
+            entity != Entity::root() &&
+                self.cache.get_visibility(entity) != Visibility::Invisible &&
+                self.cache.get_display(entity) != Display::None &&
+                !self.tree.is_ignored(entity) &&
+                self.cache.get_opacity(entity) > 0.0 &&
+                {
+                    let bounds = self.cache.get_bounds(entity);
+                    !(bounds.x > window_width || bounds.y > window_height ||
+                        bounds.x + bounds.w <= 0.0 || bounds.y + bounds.h <= 0.0)
+                }
+        ).collect();
+
+        // Sort the tree by z order
+        draw_tree.sort_by_cached_key(|entity| self.cache.get_z_index(*entity));
+
+        for entity in draw_tree.into_iter() {
+            // Apply clipping
+            let clip_region = self.cache.get_clip_region(entity);
+            canvas.scissor(
+                clip_region.x,
+                clip_region.y,
+                clip_region.w,
+                clip_region.h,
+            );
+
+            // Apply transform
+            let transform = self.cache.get_transform(entity);
+            canvas.save();
+            canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+
+            if let Some(view) = self.views.remove(&entity) {
+
+                self.current = entity;
+                view.draw(self, canvas);
+
+                self.views.insert(entity, view);
+            }
+
+            canvas.restore();
+
+            // Uncomment this for debug outlines
+            // TODO - Hook this up to a key in debug mode
+            // let mut path = Path::new();
+            // path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+            // let mut paint = Paint::color(femtovg::Color::rgb(255, 0, 0));
+            // paint.set_line_width(1.0);
+            // canvas.stroke_path(&mut path, paint);
+        }
+
+        canvas.flush();
+
+        self.resource_manager.evict_unused_images();
+    }
+
+    /// This method is in charge of receiving raw WindowEvents and dispatching them to the
+    /// appropriate points in the tree.
+    pub fn dispatch_system_event(&mut self, event: WindowEvent) {
+        match &event {
+            WindowEvent::MouseMove(x, y) => {
+                self.mouse.cursorx = *x;
+                self.mouse.cursory = *y;
+
+                apply_hover(self);
+
+                self.dispatch_direct_or_hovered(event, self.captured, false);
+            }
+            WindowEvent::MouseDown(button) => {
+                match button {
+                    MouseButton::Left => self.mouse.left.state = MouseButtonState::Pressed,
+                    MouseButton::Right => self.mouse.right.state = MouseButtonState::Pressed,
+                    MouseButton::Middle => self.mouse.middle.state = MouseButtonState::Pressed,
+                    _ => {}
+                }
+
+                let new_click_time = Instant::now();
+                let click_duration = new_click_time - self.click_time;
+                let new_click_pos = (self.mouse.cursorx, self.mouse.cursory);
+
+                if click_duration <= DOUBLE_CLICK_INTERVAL && new_click_pos == self.click_pos {
+                    if !self.double_click {
+                        self.dispatch_direct_or_hovered(
+                            WindowEvent::MouseDoubleClick(*button),
+                            self.captured,
+                            true,
+                        );
+                        self.double_click = true;
+                    }
+                } else {
+                    self.double_click = false;
+                }
+
+                self.click_time = new_click_time;
+                self.click_pos = new_click_pos;
+
+                match button {
+                    MouseButton::Left => {
+                        self.mouse.left.pos_down = (self.mouse.cursorx, self.mouse.cursory);
+                        self.mouse.left.pressed = self.hovered;
+                    }
+                    MouseButton::Right => {
+                        self.mouse.right.pos_down = (self.mouse.cursorx, self.mouse.cursory);
+                        self.mouse.right.pressed = self.hovered;
+                    }
+                    MouseButton::Middle => {
+                        self.mouse.middle.pos_down = (self.mouse.cursorx, self.mouse.cursory);
+                        self.mouse.middle.pressed = self.hovered;
+                    }
+                    _=> {}
+                }
+
+                self.dispatch_direct_or_hovered(event, self.captured, true);
+            }
+            WindowEvent::MouseUp(button) => {
+                match button {
+                    MouseButton::Left => {
+                        self.mouse.left.pos_up = (self.mouse.cursorx, self.mouse.cursory);
+                        self.mouse.left.released = self.hovered;
+                    }
+                    MouseButton::Right => {
+                        self.mouse.right.pos_up = (self.mouse.cursorx, self.mouse.cursory);
+                        self.mouse.right.released = self.hovered;
+                    }
+                    MouseButton::Middle => {
+                        self.mouse.middle.pos_up = (self.mouse.cursorx, self.mouse.cursory);
+                        self.mouse.middle.released = self.hovered;
+                    }
+                    _=> {}
+                }
+                self.dispatch_direct_or_hovered(event, self.captured, true);
+            }
+            WindowEvent::MouseScroll(_, _) => {
+                self.event_queue.push_back(
+                    Event::new(event)
+                        .target(self.hovered)
+                        .propagate(Propagation::Up),
+                );
+            }
+            WindowEvent::KeyDown(code, _) => {
+                #[cfg(debug_assertions)]
+                if *code == Code::KeyH {
+                    for entity in self.tree.into_iter() {
+                        println!("Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&self.tree), self.views.get(&entity).map_or("<None>".to_owned(), |view| view.element().unwrap_or("<Unnamed>".to_owned())), self.cache.get_posx(entity), self.cache.get_posy(entity), self.cache.get_width(entity), self.cache.get_height(entity));
+                    }
+                }
+
+                #[cfg(debug_assertions)]
+                if *code == Code::KeyI {
+                    let iter = TreeDepthIterator::full(&self.tree);
+                    for (entity, level) in iter {
+                        if let Some(element_name) = self.views.get(&entity).unwrap().element() {
+                            println!("{:indent$} {} {} {:?} {:?} {:?} {:?}", "", entity,  element_name, self.cache.get_visibility(entity), self.cache.get_display(entity), self.cache.get_bounds(entity), self.cache.get_clip_region(entity), indent=level);
+                        }
+                    }
+                }
+
+                if *code == Code::F5 {
+                    self.reload_styles().unwrap();
+                }
+
+                if *code == Code::Tab {
+                    self.focused.set_focus(self, false);
+
+                    if self.modifiers.contains(Modifiers::SHIFT) {
+                        let prev_focused = if let Some(prev_focused) = focus_backward(
+                            &self.tree,
+                            &self.style,
+                            self.focused
+                        ) {
+                            prev_focused
+                        } else {
+                            TreeIterator::full(&self.tree).filter(|node|
+                                is_focusable(&self.style, *node)
+                            )
+                                .next_back()
+                                .unwrap_or(Entity::root())
+                        };
+
+                        if prev_focused != self.focused {
+                            self.event_queue.push_back(Event::new(WindowEvent::FocusOut).target(self.focused));
+                            self.event_queue.push_back(Event::new(WindowEvent::FocusIn).target(prev_focused));
+                            self.focused = prev_focused;
+                        }
+                    } else {
+                        let next_focused = if let Some(next_focused) = focus_forward(
+                            &self.tree,
+                            &self.style,
+                            self.focused
+                        ) {
+                            next_focused
+                        } else {
+                            Entity::root()
+                        };
+
+                        if next_focused != self.focused {
+                            self.event_queue.push_back(
+                                Event::new(WindowEvent::FocusOut)
+                                    .target(self.focused)
+                            );
+                            self.event_queue.push_back(
+                                Event::new(WindowEvent::FocusIn)
+                                    .target(next_focused)
+                            );
+                            self.focused = next_focused;
+                        }
+                    }
+                    self.focused.set_focus(self, true);
+                }
+
+
+                self.dispatch_direct_or_hovered(event, self.focused, true);
+            }
+            WindowEvent::KeyUp(_, _) | WindowEvent::CharInput(_) => {
+                self.dispatch_direct_or_hovered(event, self.focused, true);
+            }
+            _ => {}
+        }
+    }
+
+    fn dispatch_direct_or_hovered(&mut self, event: WindowEvent, target: Entity, root: bool) {
+        if target != Entity::null() {
+            self.event_queue.push_back(
+                Event::new(event)
+                    .target(target)
+                    .propagate(Propagation::Up),
+            );
+        } else if self.hovered != Entity::root() || root {
+            self.event_queue.push_back(
+                Event::new(event)
+                    .target(self.hovered)
+                    .propagate(Propagation::Up),
+            );
+        }
+    }
 }
 
 /// A bundle of data representing a snapshot of the context when a thread was spawned. It supports
@@ -396,7 +730,7 @@ pub enum ProxyEmitError {
     EventLoopClosed,
 }
 
-impl Display for ProxyEmitError {
+impl std::fmt::Display for ProxyEmitError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             ProxyEmitError::Unsupported => {

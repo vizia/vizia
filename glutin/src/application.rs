@@ -1,6 +1,6 @@
 // use femtovg::{Path, Paint};
 use glutin::{
-    event::{ElementState, VirtualKeyCode},
+    event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
 
@@ -211,11 +211,6 @@ impl Application {
 
         let should_poll = self.should_poll;
 
-        let mut click_time = std::time::Instant::now();
-        let double_click_interval = std::time::Duration::from_millis(500);
-        let mut double_click = false;
-        let mut click_pos = (0.0, 0.0);
-
         event_loop.run(move |event, _, control_flow|{
 
             if should_poll {
@@ -271,80 +266,8 @@ impl Application {
                         event_manager.flush_events(&mut context);
                     }
 
-                    // Data Updates
-                    let mut observers: Vec<Entity> = Vec::new();
-
-                    for model_store in context.data.dense.iter_mut().map(|entry| &mut entry.value) {
-                        for (_, model) in model_store.data.iter() {
-                            for lens in model_store.lenses_dup.iter_mut() {
-                                if lens.update(model) {
-                                    observers.extend(lens.observers().iter())
-                                }
-                            }
-
-                            for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                                if lens.update(model) {
-                                    observers.extend(lens.observers().iter());
-                                }
-                            }
-                        }
-                    }
-                    for img in context.resource_manager.images.values_mut() {
-                        if img.dirty {
-                            observers.extend(img.observers.iter());
-                            img.dirty = false;
-                        }
-                    }
-
-                    for observer in observers.iter() {
-                        if let Some(mut view) = context.views.remove(observer) {
-                            let prev = context.current;
-                            context.current = *observer;
-                            let prev_count = context.count;
-                            context.count = 0;
-                            view.body(&mut context);
-                            context.current = prev;
-                            context.count = prev_count;
-                            context.views.insert(*observer, view);
-                        }
-                    }
-
-                    // Not ideal
-                    let tree = context.tree.clone();
-
-                    apply_inline_inheritance(&mut context, &tree);
-
-                    if context.style.needs_restyle {
-                        apply_styles(&mut context, &tree);
-                        context.style.needs_restyle = false;
-                    }
-
-                    apply_shared_inheritance(&mut context, &tree);
-
-                    apply_z_ordering(&mut context, &tree);
-
-                    apply_visibility(&mut context, &tree);
-
-                    // Layout
-                    if context.style.needs_relayout {
-                        apply_text_constraints(&mut context, &tree);
-
-                        vizia_core::apply_layout(&mut context.cache, &context.tree, &context.style);
-                        context.style.needs_relayout = false;
-                    }
-
-                    // Emit any geometry changed events
-                    geometry_changed(&mut context, &tree);
-
-                    if !context.event_queue.is_empty() {
-                        event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
-                    }
-
-                    apply_transform(&mut context, &tree);
-
-                    apply_hover(&mut context);
-
-                    apply_clipping(&mut context, &tree);
+                    context.process_data_updates();
+                    context.process_visual_updates();
 
                     if let Some(window_view) = context.views.get(&Entity::root()) {
                         if let Some(window) = window_view.downcast_ref::<Window>() {
@@ -359,111 +282,16 @@ impl Application {
                         context.current = Entity::root();
                         context.count = 0;
                         (idle_callback)(&mut context);
+                    }
 
-                        if !context.event_queue.is_empty() {
-                            event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
-                        }
+                    if !context.event_queue.is_empty() {
+                        event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
                     }
                 }
 
                 glutin::event::Event::RedrawRequested(_) => {
                     // Redraw here
-                    if let Some(mut window_view) = context.views.remove(&Entity::root()) {
-                        if let Some(window) = window_view.downcast_mut::<Window>() {
-
-                            let window_width = context.cache.get_width(Entity::root());
-                            let window_height = context.cache.get_height(Entity::root());
-
-                            window.canvas.set_size(window_width as u32, window_height as u32, dpi_factor as f32);
-                            let clear_color = context.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
-                            window.canvas.clear_rect(
-                                0,
-                                0,
-                                window_width as u32,
-                                window_height as u32,
-                                clear_color.into(),
-                            );
-
-                            // Sort the tree by z order
-                            let mut draw_tree: Vec<Entity> = context.tree.into_iter().collect();
-                            draw_tree.sort_by_cached_key(|entity| context.cache.get_z_index(*entity));
-
-                            context.resource_manager.mark_images_unused();
-
-                            for entity in draw_tree.into_iter() {
-
-
-                                // Skip window
-                                if entity == Entity::root() {
-                                    continue;
-                                }
-
-                                // Skip invisible widgets
-                                if context.cache.get_visibility(entity) == Visibility::Invisible {
-                                    continue;
-                                }
-
-                                // Skip non-displayed widgets
-                                if context.cache.get_display(entity) == Display::None {
-                                    continue;
-                                }
-
-                                if context.tree.is_ignored(entity) {
-                                    continue;
-                                }
-
-                                // Skip widgets that have 0 opacity
-                                if context.cache.get_opacity(entity) == 0.0 {
-                                    continue;
-                                }
-
-                                let bounds = context.cache.get_bounds(entity);
-
-                                if bounds.x > window_width || bounds.y > window_height {
-                                    continue;
-                                }
-
-                                // Apply clipping
-                                let clip_region = context.cache.get_clip_region(entity);
-                                window.canvas.scissor(
-                                    clip_region.x,
-                                    clip_region.y,
-                                    clip_region.w,
-                                    clip_region.h,
-                                );
-
-                                // Apply transform
-                                let transform = context.cache.get_transform(entity);
-                                window.canvas.save();
-                                window.canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
-
-                                if let Some(view) = context.views.remove(&entity) {
-
-                                    context.current = entity;
-                                    view.draw(&mut context, &mut window.canvas);
-
-                                    context.views.insert(entity, view);
-                                }
-
-                                window.canvas.restore();
-
-                                // Uncomment this for debug outlines
-                                // TODO - Hook this up to a key in debug mode
-                                // let mut path = Path::new();
-                                // path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-                                // let mut paint = Paint::color(femtovg::Color::rgb(255, 0, 0));
-                                // paint.set_line_width(1.0);
-                                // window.canvas.stroke_path(&mut path, paint);
-                            }
-
-                            window.canvas.flush();
-                            window.handle.swap_buffers().expect("Failed to swap buffers");
-
-                            context.resource_manager.evict_unused_images();
-                        }
-
-                        context.views.insert(Entity::root(), window_view);
-                    }
+                    context_draw(&mut context);
                 }
 
                 glutin::event::Event::WindowEvent {
@@ -481,24 +309,10 @@ impl Application {
                             position,
                             modifiers: _
                         } => {
+                            context.dispatch_system_event(
+                                WindowEvent::MouseMove(position.x as f32, position.y as f32)
+                            );
 
-                            context.mouse.cursorx = position.x as f32;
-                            context.mouse.cursory = position.y as f32;
-
-                            apply_hover(&mut context);
-
-                            if context.captured != Entity::null() {
-                                context.event_queue.push_back(
-                                    Event::new(WindowEvent::MouseMove(context.mouse.cursorx, context.mouse.cursory))
-                                        .target(context.captured)
-                                        .propagate(Propagation::Direct),
-                                );
-                            } else if context.hovered != Entity::root() {
-                                context.event_queue.push_back(
-                                    Event::new(WindowEvent::MouseMove(context.mouse.cursorx, context.mouse.cursory))
-                                        .target(context.hovered),
-                                );
-                            }
                         }
 
                         #[allow(deprecated)]
@@ -515,110 +329,12 @@ impl Application {
                                 glutin::event::MouseButton::Other(val) => MouseButton::Other(val),
                             };
 
-                            let state = match state {
-                                glutin::event::ElementState::Pressed => MouseButtonState::Pressed,
-                                glutin::event::ElementState::Released => MouseButtonState::Released,
+                            let event = match state {
+                                glutin::event::ElementState::Pressed => WindowEvent::MouseDown(button),
+                                glutin::event::ElementState::Released => WindowEvent::MouseUp(button),
                             };
 
-                            match button {
-                                MouseButton::Left => {
-                                    context.mouse.left.state = state;
-                                }
-                                MouseButton::Right => {
-                                    context.mouse.right.state = state;
-                                }
-                                MouseButton::Middle => {
-                                    context.mouse.middle.state = state;
-                                }
-                                _=> {}
-                            }
-
-                            match state {
-                                MouseButtonState::Pressed => {
-                                    //context.event_queue.push_back(Event::new(WindowEvent::MouseDown(button)).target(context.hovered).propagate(Propagation::Up));
-
-                                    let new_click_time = std::time::Instant::now();
-                                    let click_duration = new_click_time - click_time;
-                                    let new_click_pos = (context.mouse.cursorx, context.mouse.cursory);
-
-                                    if click_duration <= double_click_interval && new_click_pos == click_pos{
-                                        if !double_click {
-                                            let _target = if context.captured != Entity::null() {
-                                                context.event_queue.push_back(
-                                                    Event::new(WindowEvent::MouseDoubleClick(button))
-                                                        .target(context.captured)
-                                                        .propagate(Propagation::Direct),
-                                                );
-                                                context.captured
-                                            } else {
-                                                context.event_queue.push_back(
-                                                    Event::new(WindowEvent::MouseDoubleClick(button))
-                                                        .target(context.hovered),
-                                                );
-                                                context.hovered
-                                            };
-                                            double_click = true;
-                                        }
-                                    } else {
-                                        double_click = false;
-                                    }
-
-                                    click_time = new_click_time;
-                                    click_pos = new_click_pos;
-
-                                    if context.captured != Entity::null() {
-                                        context.event_queue.push_back(
-                                            Event::new(WindowEvent::MouseDown(button))
-                                                .target(context.captured)
-                                                .propagate(Propagation::Direct),
-                                        );
-                                    } else {
-                                        context.event_queue.push_back(
-                                            Event::new(WindowEvent::MouseDown(button))
-                                                .target(context.hovered),
-                                        );
-                                    }
-
-                                    match button {
-                                        MouseButton::Left => {
-                                            context.mouse.left.pos_down =
-                                                (context.mouse.cursorx, context.mouse.cursory);
-                                            context.mouse.left.pressed = context.hovered;
-                                        }
-
-                                        MouseButton::Right => {
-                                            context.mouse.right.pos_down =
-                                                (context.mouse.cursorx, context.mouse.cursory);
-                                                context.mouse.right.pressed = context.hovered;
-                                        }
-
-                                        MouseButton::Middle => {
-                                            context.mouse.middle.pos_down =
-                                                (context.mouse.cursorx, context.mouse.cursory);
-                                                context.mouse.middle.pressed = context.hovered;
-                                        }
-
-                                        _=> {}
-                                    }
-                                }
-
-                                MouseButtonState::Released => {
-                                    //context.event_queue.push_back(Event::new(WindowEvent::MouseUp(button)).target(context.hovered).propagate(Propagation::Up));
-
-                                    if context.captured != Entity::null() {
-                                        context.event_queue.push_back(
-                                            Event::new(WindowEvent::MouseUp(button))
-                                                .target(context.captured)
-                                                .propagate(Propagation::Direct),
-                                        );
-                                    } else {
-                                        context.event_queue.push_back(
-                                            Event::new(WindowEvent::MouseUp(button))
-                                                .target(context.hovered),
-                                        );
-                                    }
-                                }
-                            }
+                            context.dispatch_system_event(event);
                         }
 
                         glutin::event::WindowEvent::MouseWheel {
@@ -632,11 +348,8 @@ impl Application {
                                     WindowEvent::MouseScroll(pos.x as f32, pos.y as f32)
                                 }
                             };
-                            context.event_queue.push_back(
-                                Event::new(out_event)
-                                    .target(context.hovered)
-                                    .propagate(Propagation::Up),
-                            );
+
+                            context.dispatch_system_event(out_event);
                         }
 
                         glutin::event::WindowEvent::KeyboardInput {
@@ -644,117 +357,26 @@ impl Application {
                             input,
                             is_synthetic: _,
                         } => {
-                            #[cfg(debug_assertions)]
-                            if input.virtual_keycode == Some(VirtualKeyCode::H) && input.state == ElementState::Pressed {
-                                for entity in context.tree.into_iter() {
-                                    println!("Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&context.tree), context.views.get(&entity).map_or("<None>".to_owned(), |view| view.element().unwrap_or("<Unnamed>".to_owned())), context.cache.get_posx(entity), context.cache.get_posy(entity), context.cache.get_width(entity), context.cache.get_height(entity));
-                                }
-                            }
-
-                            #[cfg(debug_assertions)]
-                            if input.virtual_keycode == Some(VirtualKeyCode::I) && input.state == ElementState::Pressed {
-                                let iter = TreeDepthIterator::full(&context.tree);
-                                for (entity, level) in iter {
-                                    if let Some(element_name) = context.views.get(&entity).unwrap().element() {
-                                        println!("{:indent$} {} {} {:?} {:?} {:?} {:?}", "", entity,  element_name, context.cache.get_visibility(entity), context.cache.get_display(entity), context.cache.get_bounds(entity), context.cache.get_clip_region(entity), indent=level);
-                                    }
-                                }
-                            }
-
-                            if input.virtual_keycode == Some(VirtualKeyCode::F5) && input.state == ElementState::Pressed {
-                                context.reload_styles().unwrap();
-                            }
-
-                            if input.virtual_keycode == Some(VirtualKeyCode::Tab) && input.state == ElementState::Pressed {
-                                context.focused.set_focus(&mut context, false);
-
-                                if context.modifiers.contains(Modifiers::SHIFT) {
-                                    let prev_focused = if let Some(prev_focused) = focus_backward(&context.tree, &context.style, context.focused) {
-                                        prev_focused
-                                    } else {
-                                        let last = TreeIterator::full(&context.tree).filter(|node| is_focusable(&context.style, *node)).next_back().unwrap_or(Entity::root());
-                                        last
-                                    };
-
-                                    if prev_focused != context.focused {
-                                        context.event_queue.push_back(Event::new(WindowEvent::FocusOut).target(context.focused));
-                                        context.event_queue.push_back(Event::new(WindowEvent::FocusIn).target(prev_focused));
-                                        context.focused = prev_focused;
-                                    }
-                                } else {
-                                    let next_focused = if let Some(next_focused) = focus_forward(&context.tree, &context.style, context.focused) {
-                                        next_focused
-                                    } else {
-                                        Entity::root()
-                                    };
-
-                                    if next_focused != context.focused {
-                                        context.event_queue.push_back(Event::new(WindowEvent::FocusOut).target(context.focused));
-                                        context.event_queue.push_back(Event::new(WindowEvent::FocusIn).target(next_focused));
-                                        context.focused = next_focused;
-                                    }
-                                }
-                                //println!("Focused: {}", context.focused);
-                                context.focused.set_focus(&mut context, true);
-                            }
-
-                            let s = match input.state {
-                                glutin::event::ElementState::Pressed => MouseButtonState::Pressed,
-                                glutin::event::ElementState::Released => MouseButtonState::Released,
+                            // Prefer virtual keycodes to scancodes, as scancodes aren't uniform between platforms
+                            let code = if let Some(vkey) = input.virtual_keycode {
+                                vcode_to_code(vkey)
+                            } else {
+                                scan_to_code(input.scancode)
                             };
-
-	                        // Prefer virtual keycodes to scancodes, as scancodes aren't uniform between platforms
-	                        let code = if let Some(vkey) = input.virtual_keycode {
-		                        vcode_to_code(vkey)
-	                        } else {
-		                        scan_to_code(input.scancode)
-	                        };
 
                             let key = vk_to_key(
                                 input.virtual_keycode.unwrap_or(VirtualKeyCode::NoConvert),
                             );
+                            let event = match input.state {
+                                glutin::event::ElementState::Pressed => WindowEvent::KeyDown(code, key),
+                                glutin::event::ElementState::Released => WindowEvent::KeyUp(code, key),
+                            };
 
-                            match s {
-                                MouseButtonState::Pressed => {
-                                    if context.focused != Entity::null() {
-                                        context.event_queue.push_back(
-                                            Event::new(WindowEvent::KeyDown(code, key))
-                                                .target(context.focused)
-                                                .propagate(Propagation::Up),
-                                        );
-                                    } else {
-                                        context.event_queue.push_back(
-                                            Event::new(WindowEvent::KeyDown(code, key))
-                                                .target(context.hovered)
-                                                .propagate(Propagation::Up),
-                                        );
-                                    }
-                                }
-
-                                MouseButtonState::Released => {
-                                    if context.focused != Entity::null() {
-                                        context.event_queue.push_back(
-                                            Event::new(WindowEvent::KeyUp(code, key))
-                                                .target(context.focused)
-                                                .propagate(Propagation::Up),
-                                        );
-                                    } else {
-                                        context.event_queue.push_back(
-                                            Event::new(WindowEvent::KeyUp(code, key))
-                                                .target(context.hovered)
-                                                .propagate(Propagation::Up),
-                                        );
-                                    }
-                                }
-                            }
+                            context.dispatch_system_event(event);
                         }
 
                         glutin::event::WindowEvent::ReceivedCharacter(character) => {
-                            context.event_queue.push_back(
-                                Event::new(WindowEvent::CharInput(character))
-                                    .target(context.focused)
-                                    .propagate(Propagation::Up),
-                            );
+                            context.dispatch_system_event(WindowEvent::CharInput(character));
                         }
 
                         glutin::event::WindowEvent::Resized(size) => {
@@ -838,3 +460,15 @@ impl Env for Application {
 //         "None".to_string()
 //     }
 // }
+
+fn context_draw(cx: &mut Context) {
+    if let Some(mut window_view) = cx.views.remove(&Entity::root()) {
+        if let Some(window) = window_view.downcast_mut::<Window>() {
+            let dpi_factor = window.handle.window().scale_factor();
+            cx.draw(&mut window.canvas, dpi_factor as f32);
+            window.handle.swap_buffers().expect("Failed to swap buffers");
+        }
+
+        cx.views.insert(Entity::root(), window_view);
+    }
+}
