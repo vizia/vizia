@@ -13,7 +13,15 @@ use unic_langid::LanguageIdentifier;
 // use fluent_bundle::{FluentBundle, FluentResource};
 // use unic_langid::LanguageIdentifier;
 
-use crate::{storage::sparse_set::SparseSet, CachedData, Entity, Enviroment, Event, FontOrId, IdManager, ImageOrId, ImageRetentionPolicy, Message, ModelDataStore, Modifiers, MouseState, Propagation, ResourceManager, StoredImage, Style, Tree, TreeExt, View, ViewHandler, apply_inline_inheritance, apply_styles, apply_shared_inheritance, apply_z_ordering, apply_visibility, apply_text_constraints, geometry_changed, apply_transform, apply_hover, apply_clipping, Canvas, Color, Visibility, WindowEvent, MouseButton, MouseButtonState, TreeDepthIterator, PropSet, focus_backward, is_focusable, TreeIterator, focus_forward, apply_layout, Display};
+use crate::{
+    apply_clipping, apply_hover, apply_inline_inheritance, apply_layout, apply_shared_inheritance,
+    apply_styles, apply_text_constraints, apply_transform, apply_visibility, apply_z_ordering,
+    focus_backward, focus_forward, geometry_changed, is_focusable, storage::sparse_set::SparseSet,
+    CachedData, Canvas, Color, Display, Entity, Enviroment, Event, FontOrId, IdManager, ImageOrId,
+    ImageRetentionPolicy, Message, ModelDataStore, Modifiers, MouseButton, MouseButtonState,
+    MouseState, PropSet, Propagation, ResourceManager, StoredImage, Style, Tree, TreeDepthIterator,
+    TreeExt, TreeIterator, View, ViewHandler, Visibility, WindowEvent,
+};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
@@ -427,7 +435,6 @@ impl Context {
                 self.views.insert(*observer, view);
             }
         }
-
     }
 
     /// Massages the style system until everything is coherent
@@ -469,29 +476,28 @@ impl Context {
         let window_height = self.cache.get_height(Entity::root());
 
         canvas.set_size(window_width as u32, window_height as u32, dpi_factor);
-        let clear_color = self.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
-        canvas.clear_rect(
-            0,
-            0,
-            window_width as u32,
-            window_height as u32,
-            clear_color.into(),
-        );
+        let clear_color =
+            self.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
+        canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
 
         // filter for widgets that should be drawn
         let tree_iter = self.tree.into_iter();
-        let mut draw_tree: Vec<Entity> = tree_iter.filter(|&entity|
-            entity != Entity::root() &&
-                self.cache.get_visibility(entity) != Visibility::Invisible &&
-                self.cache.get_display(entity) != Display::None &&
-                !self.tree.is_ignored(entity) &&
-                self.cache.get_opacity(entity) > 0.0 &&
-                {
-                    let bounds = self.cache.get_bounds(entity);
-                    !(bounds.x > window_width || bounds.y > window_height ||
-                        bounds.x + bounds.w <= 0.0 || bounds.y + bounds.h <= 0.0)
-                }
-        ).collect();
+        let mut draw_tree: Vec<Entity> = tree_iter
+            .filter(|&entity| {
+                entity != Entity::root()
+                    && self.cache.get_visibility(entity) != Visibility::Invisible
+                    && self.cache.get_display(entity) != Display::None
+                    && !self.tree.is_ignored(entity)
+                    && self.cache.get_opacity(entity) > 0.0
+                    && {
+                        let bounds = self.cache.get_bounds(entity);
+                        !(bounds.x > window_width
+                            || bounds.y > window_height
+                            || bounds.x + bounds.w <= 0.0
+                            || bounds.y + bounds.h <= 0.0)
+                    }
+            })
+            .collect();
 
         // Sort the tree by z order
         draw_tree.sort_by_cached_key(|entity| self.cache.get_z_index(*entity));
@@ -499,20 +505,21 @@ impl Context {
         for entity in draw_tree.into_iter() {
             // Apply clipping
             let clip_region = self.cache.get_clip_region(entity);
-            canvas.scissor(
-                clip_region.x,
-                clip_region.y,
-                clip_region.w,
-                clip_region.h,
-            );
+            canvas.scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
 
             // Apply transform
             let transform = self.cache.get_transform(entity);
             canvas.save();
-            canvas.set_transform(transform[0], transform[1], transform[2], transform[3], transform[4], transform[5]);
+            canvas.set_transform(
+                transform[0],
+                transform[1],
+                transform[2],
+                transform[3],
+                transform[4],
+                transform[5],
+            );
 
             if let Some(view) = self.views.remove(&entity) {
-
                 self.current = entity;
                 view.draw(self, canvas);
 
@@ -588,7 +595,7 @@ impl Context {
                         self.mouse.middle.pos_down = (self.mouse.cursorx, self.mouse.cursory);
                         self.mouse.middle.pressed = self.hovered;
                     }
-                    _=> {}
+                    _ => {}
                 }
 
                 self.dispatch_direct_or_hovered(event, self.captured, true);
@@ -607,16 +614,13 @@ impl Context {
                         self.mouse.middle.pos_up = (self.mouse.cursorx, self.mouse.cursory);
                         self.mouse.middle.released = self.hovered;
                     }
-                    _=> {}
+                    _ => {}
                 }
                 self.dispatch_direct_or_hovered(event, self.captured, true);
             }
             WindowEvent::MouseScroll(_, _) => {
-                self.event_queue.push_back(
-                    Event::new(event)
-                        .target(self.hovered)
-                        .propagate(Propagation::Up),
-                );
+                self.event_queue
+                    .push_back(Event::new(event).target(self.hovered).propagate(Propagation::Up));
             }
             WindowEvent::KeyDown(code, _) => {
                 #[cfg(debug_assertions)]
@@ -631,7 +635,17 @@ impl Context {
                     let iter = TreeDepthIterator::full(&self.tree);
                     for (entity, level) in iter {
                         if let Some(element_name) = self.views.get(&entity).unwrap().element() {
-                            println!("{:indent$} {} {} {:?} {:?} {:?} {:?}", "", entity,  element_name, self.cache.get_visibility(entity), self.cache.get_display(entity), self.cache.get_bounds(entity), self.cache.get_clip_region(entity), indent=level);
+                            println!(
+                                "{:indent$} {} {} {:?} {:?} {:?} {:?}",
+                                "",
+                                entity,
+                                element_name,
+                                self.cache.get_visibility(entity),
+                                self.cache.get_display(entity),
+                                self.cache.get_bounds(entity),
+                                self.cache.get_clip_region(entity),
+                                indent = level
+                            );
                         }
                     }
                 }
@@ -644,51 +658,43 @@ impl Context {
                     self.focused.set_focus(self, false);
 
                     if self.modifiers.contains(Modifiers::SHIFT) {
-                        let prev_focused = if let Some(prev_focused) = focus_backward(
-                            &self.tree,
-                            &self.style,
-                            self.focused
-                        ) {
+                        let prev_focused = if let Some(prev_focused) =
+                            focus_backward(&self.tree, &self.style, self.focused)
+                        {
                             prev_focused
                         } else {
-                            TreeIterator::full(&self.tree).filter(|node|
-                                is_focusable(&self.style, *node)
-                            )
+                            TreeIterator::full(&self.tree)
+                                .filter(|node| is_focusable(&self.style, *node))
                                 .next_back()
                                 .unwrap_or(Entity::root())
                         };
 
                         if prev_focused != self.focused {
-                            self.event_queue.push_back(Event::new(WindowEvent::FocusOut).target(self.focused));
-                            self.event_queue.push_back(Event::new(WindowEvent::FocusIn).target(prev_focused));
+                            self.event_queue
+                                .push_back(Event::new(WindowEvent::FocusOut).target(self.focused));
+                            self.event_queue
+                                .push_back(Event::new(WindowEvent::FocusIn).target(prev_focused));
                             self.focused = prev_focused;
                         }
                     } else {
-                        let next_focused = if let Some(next_focused) = focus_forward(
-                            &self.tree,
-                            &self.style,
-                            self.focused
-                        ) {
+                        let next_focused = if let Some(next_focused) =
+                            focus_forward(&self.tree, &self.style, self.focused)
+                        {
                             next_focused
                         } else {
                             Entity::root()
                         };
 
                         if next_focused != self.focused {
-                            self.event_queue.push_back(
-                                Event::new(WindowEvent::FocusOut)
-                                    .target(self.focused)
-                            );
-                            self.event_queue.push_back(
-                                Event::new(WindowEvent::FocusIn)
-                                    .target(next_focused)
-                            );
+                            self.event_queue
+                                .push_back(Event::new(WindowEvent::FocusOut).target(self.focused));
+                            self.event_queue
+                                .push_back(Event::new(WindowEvent::FocusIn).target(next_focused));
                             self.focused = next_focused;
                         }
                     }
                     self.focused.set_focus(self, true);
                 }
-
 
                 self.dispatch_direct_or_hovered(event, self.focused, true);
             }
@@ -701,17 +707,10 @@ impl Context {
 
     fn dispatch_direct_or_hovered(&mut self, event: WindowEvent, target: Entity, root: bool) {
         if target != Entity::null() {
-            self.event_queue.push_back(
-                Event::new(event)
-                    .target(target)
-                    .propagate(Propagation::Up),
-            );
+            self.event_queue.push_back(Event::new(event).target(target).propagate(Propagation::Up));
         } else if self.hovered != Entity::root() || root {
-            self.event_queue.push_back(
-                Event::new(event)
-                    .target(self.hovered)
-                    .propagate(Propagation::Up),
-            );
+            self.event_queue
+                .push_back(Event::new(event).target(self.hovered).propagate(Propagation::Up));
         }
     }
 }

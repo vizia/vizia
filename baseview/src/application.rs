@@ -333,7 +333,6 @@ impl ApplicationRunner {
                     _ => (),
                 }
 
-
                 match s {
                     MouseButtonState::Pressed => {
                         self.context.dispatch_system_event(WindowEvent::KeyDown(
