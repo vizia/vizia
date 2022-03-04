@@ -99,6 +99,12 @@ impl WindowDescription {
         self
     }
 
+    pub fn with_resizable(mut self, flag: bool) -> Self {
+        self.resizable = flag;
+
+        self
+    }
+
     pub fn with_icon(mut self, icon: Vec<u8>, width: u32, height: u32) -> Self {
         self.icon = Some(icon);
         self.icon_width = width;

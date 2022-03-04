@@ -7,7 +7,9 @@ const STYLE: &str = r#"
 "#;
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Test"), |cx| {
+    let mut window_description = WindowDescription::new();
+    window_description.resizable = false;
+    Application::new(window_description, |cx| {
         cx.add_theme(STYLE);
 
         HStack::new(cx, |cx| {
