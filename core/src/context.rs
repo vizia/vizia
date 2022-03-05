@@ -68,7 +68,7 @@ impl Context {
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
 
-        Self {
+        let mut result = Self {
             entity_manager: IdManager::new(),
             tree: Tree::new(),
             current: Entity::root(),
@@ -96,7 +96,12 @@ impl Context {
             click_time: Instant::now(),
             double_click: false,
             click_pos: (0.0, 0.0),
-        }
+        };
+
+        result.entity_manager.create();
+        result.add_theme(DEFAULT_THEME);
+
+        result
     }
 
     pub fn remove_children(&mut self, entity: Entity) {

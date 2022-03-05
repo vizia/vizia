@@ -1,30 +1,67 @@
-use glutin::event_loop::EventLoop;
-use glutin::window::WindowBuilder;
+use winit::event_loop::EventLoop;
+use winit::window::WindowBuilder;
+use winit::{dpi::*, window::WindowId};
+#[cfg(not(target_arch = "wasm32"))]
 use glutin::ContextBuilder;
-use glutin::{dpi::*, window::WindowId};
 
 use femtovg::{renderer::OpenGl, Canvas, Color};
 
-use vizia_core::{Context, CursorIcon, Event, View, WindowDescription, WindowEvent};
+use vizia_core::{Context, Event, View, WindowDescription, WindowEvent};
+use crate::cursor::translate_cursor;
 
 pub struct Window {
     pub id: WindowId,
-    pub handle: glutin::WindowedContext<glutin::PossiblyCurrent>,
     pub canvas: Canvas<OpenGl>,
-    //pub window_widget: WindowWidget,
+
+    #[cfg(not(target_arch = "wasm32"))]
+    handle: glutin::WindowedContext<glutin::PossiblyCurrent>,
+    #[cfg(target_arch = "wasm32")]
+    handle: winit::window::Window,
 }
 
 impl Window {
     pub fn new(events_loop: &EventLoop<Event>, window_description: &WindowDescription) -> Self {
+        let mut window_builder = WindowBuilder::new();
+
         //Windows COM doesn't play nicely with winit's drag and drop right now
         #[cfg(target_os = "windows")]
         let mut window_builder = {
-            use glutin::platform::windows::WindowBuilderExtWindows;
-            WindowBuilder::new().with_drag_and_drop(false)
+            use winit::platform::windows::WindowBuilderExtWindows;
+            window_builder.with_drag_and_drop(false)
         };
-        #[cfg(not(target_os = "windows"))]
-        let mut window_builder = WindowBuilder::new();
 
+        // For wasm, create or look up the canvas element we're drawing on
+        #[cfg(target_arch = "wasm32")]
+        let canvas_element = {
+            use wasm_bindgen::JsCast;
+
+            let document = web_sys::window().unwrap().document().unwrap();
+
+            if let Some(canvas_id) = &window_description.target_canvas {
+                document.get_element_by_id(canvas_id).unwrap()
+            } else {
+                let element = document.create_element("canvas").unwrap();
+                document.body().unwrap().insert_adjacent_element("afterbegin", &element).unwrap();
+                element
+            }
+                .dyn_into::<web_sys::HtmlCanvasElement>()
+                .unwrap()
+        };
+
+        // Build the femtovg renderer, PART 1/2, web edition
+        // these two parts have to be separated because they have conflicting requirements
+        // on use of the referenced passed to window builder
+        #[cfg(target_arch = "wasm32")]
+            let renderer = OpenGl::new_from_html_canvas(&canvas_element).unwrap();
+
+        // For wasm, tell winit about the above canvas
+        #[cfg(target_arch = "wasm32")]
+        let mut window_builder = {
+            use winit::platform::web::WindowBuilderExtWebSys;
+            window_builder.with_canvas(Some(canvas_element))
+        };
+
+        // Apply generic WindowBuilder properties
         window_builder = window_builder
             .with_title(&window_description.title)
             .with_inner_size(PhysicalSize::new(
@@ -39,7 +76,7 @@ impl Window {
             .with_resizable(window_description.resizable)
             .with_window_icon(if let Some(icon) = &window_description.icon {
                 Some(
-                    glutin::window::Icon::from_rgba(
+                    winit::window::Icon::from_rgba(
                         icon.clone(),
                         window_description.icon_width,
                         window_description.icon_height,
@@ -50,33 +87,60 @@ impl Window {
                 None
             });
 
-        let handle = ContextBuilder::new()
-            .with_vsync(true)
-            // .with_srgb(true)
-            .build_windowed(window_builder, &events_loop)
-            .expect("Window context creation failed!");
+        // Get the window handle. for glutin this is a ContextWrapper, and for web this is a
+        // winit::window::Window
+        #[cfg(not(target_arch = "wasm32"))]
+        let handle = {
+            let handle = ContextBuilder::new()
+                .with_vsync(true)
+                // .with_srgb(true)
+                .build_windowed(window_builder, &events_loop)
+                .expect("Window context creation failed!");
 
-        let handle = unsafe { handle.make_current().unwrap() };
+            unsafe { handle.make_current().unwrap() }
+        };
+        #[cfg(target_arch = "wasm32")]
+        let handle = window_builder.build(&events_loop).unwrap();
 
+
+        // Build the femtovg renderer, PART 2/2, glutin edition
+        #[cfg(not(target_arch = "wasm32"))]
         let renderer = OpenGl::new_from_glutin_context(&handle).expect("Cannot create renderer");
 
-        let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
-
-        let dpi_factor = handle.window().scale_factor();
-        let size = handle.window().inner_size();
-
-        canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
-        canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
-
-        // let height = size.height as f32;
-        // let width = size.width as f32;
-
-        Window {
+        // Build our result!
+        let mut result = Window {
+            #[cfg(not(target_arch = "wasm32"))]
             id: handle.window().id(),
+            #[cfg(target_arch = "wasm32")]
+            id: handle.id(),
             handle,
-            canvas,
-            //window_widget: WindowWidget::new(),
-        }
+            canvas: Canvas::new(renderer).expect("Cannot create canvas"),
+        };
+
+        // Set some initial properties on our result canvas
+        let dpi_factor = result.window().scale_factor();
+        let size = result.window().inner_size();
+        result.canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
+        result.canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
+
+        result
+    }
+
+    pub fn window(&self) -> &winit::window::Window {
+        #[cfg(not(target_arch = "wasm32"))]
+        { self.handle.window() }
+        #[cfg(target_arch = "wasm32")]
+        &self.handle
+    }
+
+    pub fn resize(&self, size: PhysicalSize<u32>) {
+        #[cfg(not(target_arch = "wasm32"))]
+        self.handle.resize(size);
+    }
+
+    pub fn swap_buffers(&self) {
+        #[cfg(not(target_arch = "wasm32"))]
+        self.handle.swap_buffers().expect("Failed to swap buffers");
     }
 }
 
@@ -86,13 +150,13 @@ impl View for Window {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::GrabCursor(flag) => {
-                    self.handle.window().set_cursor_grab(*flag).expect("Failed to set cursor grab");
+                    self.window().set_cursor_grab(*flag).expect("Failed to set cursor grab");
                 }
 
                 WindowEvent::SetCursorPosition(x, y) => {
-                    self.handle
+                    self
                         .window()
-                        .set_cursor_position(glutin::dpi::Position::Physical(
+                        .set_cursor_position(winit::dpi::Position::Physical(
                             PhysicalPosition::new(*x as i32, *y as i32),
                         ))
                         .expect("Failed to set cursor position");
@@ -100,235 +164,11 @@ impl View for Window {
 
                 WindowEvent::SetCursor(cursor) => {
                     //println!("Set The Cursor: {:?}", cursor);
-                    match *cursor {
-                        CursorIcon::Default => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::Default);
-                        }
-
-                        CursorIcon::Crosshair => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::Crosshair);
-                        }
-
-                        CursorIcon::Hand => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Hand);
-                        }
-
-                        CursorIcon::Arrow => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Arrow);
-                        }
-
-                        CursorIcon::Move => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Move);
-                        }
-
-                        CursorIcon::Text => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Text);
-                        }
-
-                        CursorIcon::Wait => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Wait);
-                        }
-
-                        CursorIcon::Help => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Help);
-                        }
-
-                        CursorIcon::Progress => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::Progress);
-                        }
-
-                        CursorIcon::NotAllowed => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::NotAllowed);
-                        }
-
-                        CursorIcon::ContextMenu => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::ContextMenu);
-                        }
-
-                        CursorIcon::Cell => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Cell);
-                        }
-
-                        CursorIcon::VerticalText => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::VerticalText);
-                        }
-
-                        CursorIcon::Alias => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Alias);
-                        }
-
-                        CursorIcon::Copy => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Copy);
-                        }
-
-                        CursorIcon::NoDrop => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::NoDrop);
-                        }
-
-                        CursorIcon::Grab => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle.window().set_cursor_icon(glutin::window::CursorIcon::Grab);
-                        }
-
-                        CursorIcon::Grabbing => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::Grabbing);
-                        }
-
-                        CursorIcon::AllScroll => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::AllScroll);
-                        }
-
-                        CursorIcon::ZoomIn => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::ZoomIn);
-                        }
-
-                        CursorIcon::ZoomOut => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::ZoomOut);
-                        }
-
-                        CursorIcon::EResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::EResize);
-                        }
-
-                        CursorIcon::NResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::NResize);
-                        }
-
-                        CursorIcon::NeResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::NeResize);
-                        }
-
-                        CursorIcon::NwResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::NwResize);
-                        }
-
-                        CursorIcon::SResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::SResize);
-                        }
-
-                        CursorIcon::SeResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::SeResize);
-                        }
-
-                        CursorIcon::SwResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::SwResize);
-                        }
-
-                        CursorIcon::WResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::WResize);
-                        }
-
-                        CursorIcon::EwResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::EwResize);
-                        }
-
-                        CursorIcon::NsResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::NsResize);
-                        }
-
-                        CursorIcon::NeswResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::NeswResize);
-                        }
-
-                        CursorIcon::NwseResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::NwseResize);
-                        }
-
-                        CursorIcon::ColResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::ColResize);
-                        }
-
-                        CursorIcon::RowResize => {
-                            self.handle.window().set_cursor_visible(true);
-                            self.handle
-                                .window()
-                                .set_cursor_icon(glutin::window::CursorIcon::RowResize);
-                        }
-
-                        CursorIcon::None => {
-                            self.handle.window().set_cursor_visible(false);
-                        }
+                    if let Some(icon) = translate_cursor(*cursor) {
+                        self.window().set_cursor_visible(true);
+                        self.window().set_cursor_icon(icon);
+                    } else {
+                        self.window().set_cursor_visible(false);
                     }
                 }
 

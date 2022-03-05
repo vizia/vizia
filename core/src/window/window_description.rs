@@ -42,7 +42,7 @@ pub struct WindowDescription {
     pub icon_height: u32,
 
     #[cfg(target_arch = "wasm32")]
-    target_canvas: Option<String>,
+    pub target_canvas: Option<String>,
 }
 
 impl Default for WindowDescription {
@@ -120,6 +120,7 @@ impl WindowDescription {
 
     #[cfg(target_arch = "wasm32")]
     pub fn with_canvas(mut self, canvas: &str) -> Self {
-        self.target_canvas = Some(canvas.to_owned())
+        self.target_canvas = Some(canvas.to_owned());
+        self
     }
 }

@@ -8,8 +8,17 @@ repository = "https://github.com/geom3trik/VIZIA"
 description = "Glutin backend for vizia"
 
 [dependencies]
-glutin = "0.28.0"
-femtovg = {version = "0.3.0", default-features = false, features = ["glutin"]}
+winit = "0.26.1"
+femtovg = { version = "0.3.0", default-features = false }
 keyboard-types = { version = "0.5.0", default-features = false }
 vizia_core = { path = "../core", version = "0.1" }
-fnv = "1.0.7"
+#fnv = "1.0.7"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+glutin = "0.28.0"
+femtovg = {version = "0.3.0", default-features = false, features = ["glutin"]}
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { version = "0.2" }
+web_sys = { version = "0.3", package = "web-sys", features=["console", "WebGlContextAttributes"] }
+console_error_panic_hook = "0.1.5"

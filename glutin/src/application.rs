@@ -1,5 +1,4 @@
-// use femtovg::{Path, Paint};
-use glutin::{
+use winit::{
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
@@ -8,8 +7,6 @@ use vizia_core::*;
 
 use crate::keyboard::{scan_to_code, vcode_to_code, vk_to_key};
 use crate::window::Window;
-
-static DEFAULT_THEME: &str = include_str!("../../core/src/default_theme.css");
 
 pub struct Application {
     context: Context,
@@ -20,15 +17,18 @@ pub struct Application {
     should_poll: bool,
 }
 
-pub struct GlutinEventProxy(EventLoopProxy<Event>);
+// TODO uhhhhhhhhhhhhhhhhhhhhhh I think it's a winit bug that EventLoopProxy isn't Send on web
+#[cfg(not(target_arch = "wasm32"))]
+pub struct WinitEventProxy(EventLoopProxy<Event>);
 
-impl EventProxy for GlutinEventProxy {
+#[cfg(not(target_arch = "wasm32"))]
+impl EventProxy for WinitEventProxy {
     fn send(&self, event: Event) -> Result<(), ()> {
         self.0.send_event(event).map_err(|_| ())
     }
 
     fn make_clone(&self) -> Box<dyn EventProxy> {
-        Box::new(GlutinEventProxy(self.0.clone()))
+        Box::new(WinitEventProxy(self.0.clone()))
     }
 }
 
@@ -37,15 +37,16 @@ impl Application {
     where
         F: 'static + Fn(&mut Context),
     {
+        // wasm + debug: send panics to console
+        #[cfg(all(debug_assertions, target_arch = "wasm32"))]
+        console_error_panic_hook::set_once();
+
         let mut context = Context::new();
-
-        context.entity_manager.create();
-
-        context.add_theme(DEFAULT_THEME);
 
         let event_loop = EventLoop::with_user_event();
         let event_proxy_obj = event_loop.create_proxy();
-        context.event_proxy = Some(Box::new(GlutinEventProxy(event_proxy_obj)));
+        #[cfg(not(target_arch = "wasm32"))]
+        { context.event_proxy = Some(Box::new(WinitEventProxy(event_proxy_obj))); }
 
         Self {
             context,
@@ -163,8 +164,8 @@ impl Application {
             }
         }
 
-        let dpi_factor = window.handle.window().scale_factor();
-        let size = window.handle.window().inner_size();
+        let dpi_factor = window.window().scale_factor();
+        let size = window.window().inner_size();
 
         let clear_color =
             context.style.background_color.get(Entity::root()).cloned().unwrap_or_default();
@@ -221,11 +222,11 @@ impl Application {
 
             match event {
 
-                glutin::event::Event::UserEvent(event) => {
+                winit::event::Event::UserEvent(event) => {
                     context.event_queue.push_back(event);
                 }
 
-                glutin::event::Event::MainEventsCleared => {
+                winit::event::Event::MainEventsCleared => {
 
                     // Rebuild application if required
                     if context.enviroment.needs_rebuild {
@@ -272,7 +273,7 @@ impl Application {
                     if let Some(window_view) = context.views.get(&Entity::root()) {
                         if let Some(window) = window_view.downcast_ref::<Window>() {
                             if context.style.needs_redraw {
-                                window.handle.window().request_redraw();
+                                window.window().request_redraw();
                                 context.style.needs_redraw = false;
                             }
                         }
@@ -289,22 +290,22 @@ impl Application {
                     }
                 }
 
-                glutin::event::Event::RedrawRequested(_) => {
+                winit::event::Event::RedrawRequested(_) => {
                     // Redraw here
                     context_draw(&mut context);
                 }
 
-                glutin::event::Event::WindowEvent {
+                winit::event::Event::WindowEvent {
                     window_id: _,
                     event,
                 } => {
                     match event {
-                        glutin::event::WindowEvent::CloseRequested => {
+                        winit::event::WindowEvent::CloseRequested => {
                             *control_flow = ControlFlow::Exit;
                         }
 
                         #[allow(deprecated)]
-                        glutin::event::WindowEvent::CursorMoved {
+                        winit::event::WindowEvent::CursorMoved {
                             device_id: _,
                             position,
                             modifiers: _
@@ -316,35 +317,35 @@ impl Application {
                         }
 
                         #[allow(deprecated)]
-                        glutin::event::WindowEvent::MouseInput {
+                        winit::event::WindowEvent::MouseInput {
                             device_id: _,
                             button,
                             state,
                             modifiers: _,
                         } => {
                             let button = match button {
-                                glutin::event::MouseButton::Left => MouseButton::Left,
-                                glutin::event::MouseButton::Right => MouseButton::Right,
-                                glutin::event::MouseButton::Middle => MouseButton::Middle,
-                                glutin::event::MouseButton::Other(val) => MouseButton::Other(val),
+                                winit::event::MouseButton::Left => MouseButton::Left,
+                                winit::event::MouseButton::Right => MouseButton::Right,
+                                winit::event::MouseButton::Middle => MouseButton::Middle,
+                                winit::event::MouseButton::Other(val) => MouseButton::Other(val),
                             };
 
                             let event = match state {
-                                glutin::event::ElementState::Pressed => WindowEvent::MouseDown(button),
-                                glutin::event::ElementState::Released => WindowEvent::MouseUp(button),
+                                winit::event::ElementState::Pressed => WindowEvent::MouseDown(button),
+                                winit::event::ElementState::Released => WindowEvent::MouseUp(button),
                             };
 
                             context.dispatch_system_event(event);
                         }
 
-                        glutin::event::WindowEvent::MouseWheel {
+                        winit::event::WindowEvent::MouseWheel {
                             delta, phase: _, ..
                         } => {
                             let out_event = match delta {
-                                glutin::event::MouseScrollDelta::LineDelta(x, y) => {
+                                winit::event::MouseScrollDelta::LineDelta(x, y) => {
                                     WindowEvent::MouseScroll(x, y)
                                 }
-                                glutin::event::MouseScrollDelta::PixelDelta(pos) => {
+                                winit::event::MouseScrollDelta::PixelDelta(pos) => {
                                     WindowEvent::MouseScroll(pos.x as f32, pos.y as f32)
                                 }
                             };
@@ -352,7 +353,7 @@ impl Application {
                             context.dispatch_system_event(out_event);
                         }
 
-                        glutin::event::WindowEvent::KeyboardInput {
+                        winit::event::WindowEvent::KeyboardInput {
                             device_id: _,
                             input,
                             is_synthetic: _,
@@ -368,23 +369,23 @@ impl Application {
                                 input.virtual_keycode.unwrap_or(VirtualKeyCode::NoConvert),
                             );
                             let event = match input.state {
-                                glutin::event::ElementState::Pressed => WindowEvent::KeyDown(code, key),
-                                glutin::event::ElementState::Released => WindowEvent::KeyUp(code, key),
+                                winit::event::ElementState::Pressed => WindowEvent::KeyDown(code, key),
+                                winit::event::ElementState::Released => WindowEvent::KeyUp(code, key),
                             };
 
                             context.dispatch_system_event(event);
                         }
 
-                        glutin::event::WindowEvent::ReceivedCharacter(character) => {
+                        winit::event::WindowEvent::ReceivedCharacter(character) => {
                             context.dispatch_system_event(WindowEvent::CharInput(character));
                         }
 
-                        glutin::event::WindowEvent::Resized(size) => {
+                        winit::event::WindowEvent::Resized(size) => {
                             //println!("Resized: {:?}", size);
 
                             if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                                 if let Some(window) = window_view.downcast_mut::<Window>() {
-                                    window.handle.resize(size);
+                                    window.resize(size);
                                 }
 
                                 context.views.insert(Entity::root(), window_view);
@@ -424,7 +425,7 @@ impl Application {
                             // context.cache.set_clip_region(Entity::root(), bounding_box);
                         }
 
-                        glutin::event::WindowEvent::ModifiersChanged(modifiers_state) => {
+                        winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
                             context.modifiers.set(Modifiers::SHIFT, modifiers_state.shift());
                             context.modifiers.set(Modifiers::ALT, modifiers_state.alt());
                             context.modifiers.set(Modifiers::CTRL, modifiers_state.ctrl());
@@ -464,9 +465,9 @@ impl Env for Application {
 fn context_draw(cx: &mut Context) {
     if let Some(mut window_view) = cx.views.remove(&Entity::root()) {
         if let Some(window) = window_view.downcast_mut::<Window>() {
-            let dpi_factor = window.handle.window().scale_factor();
+            let dpi_factor = window.window().scale_factor();
             cx.draw(&mut window.canvas, dpi_factor as f32);
-            window.handle.swap_buffers().expect("Failed to swap buffers");
+            window.swap_buffers();
         }
 
         cx.views.insert(Entity::root(), window_view);
