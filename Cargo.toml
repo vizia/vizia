@@ -113,11 +113,11 @@ name = "focus_order"
 path = "examples/accessibility/focus_order.rs"
 
 [features]
-default = ["glutin", "clipboard"]
+default = ["winit", "clipboard"]
 clipboard = ["vizia_core/clipboard"]
-glutin = ["vizia_winit"]
+winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
-meadowlark = ["glutin", "vizia_core/meadowlark"]
+meadowlark = ["winit", "vizia_core/meadowlark"]
 
 
 [dependencies]

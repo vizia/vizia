@@ -4,8 +4,8 @@ version = "0.1.0"
 authors = ["George Atkinson"]
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/geom3trik/VIZIA"
-description = "Glutin backend for vizia"
+repository = "https://github.com/vizia/vizia"
+description = "Winit backend for vizia"
 
 [dependencies]
 winit = "0.26.1"
