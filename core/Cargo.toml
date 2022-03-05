@@ -27,6 +27,7 @@ locale_config = "*"  # see https://github.com/rust-locale/locale_config for wild
 cssparser = "0.27.2"
 unicode-segmentation = "1.8.0"
 copypasta = {version = "0.7.1", optional = true}
+instant = "0.1.12"
 
 rusty-daw-core = {version = "0.7.4", optional = true}
 

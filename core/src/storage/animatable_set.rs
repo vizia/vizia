@@ -312,7 +312,7 @@ where
                     anim_state.t0 = 0.0;
                     anim_state.active = true;
                     anim_state.t = 0.0;
-                    anim_state.start_time = std::time::Instant::now();
+                    anim_state.start_time = instant::Instant::now();
                     anim_state.output = Some(
                         self.animations
                             .get(animation)
@@ -363,7 +363,7 @@ where
         }
     }
 
-    pub fn tick(&mut self, time: std::time::Instant) {
+    pub fn tick(&mut self, time: instant::Instant) {
         for state in self.active_animations.iter_mut() {
             // If the animation is already finished then return false
             if state.t0 == 1.0 {
@@ -568,7 +568,7 @@ where
                         *current_anim_state.keyframes.last_mut().unwrap() =
                             (1.0, self.shared_data.dense[current_anim_state.to_rule].value.clone());
                         current_anim_state.delay = current_anim_state.t - 1.0;
-                        current_anim_state.start_time = std::time::Instant::now();
+                        current_anim_state.start_time = instant::Instant::now();
                     }
                 } else {
                     if rule_animation.index() < self.animations.dense.len() {

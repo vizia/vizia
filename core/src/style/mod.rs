@@ -995,8 +995,8 @@ impl Style {
         transition: Transition,
     ) -> AnimationState<T> {
         AnimationState::new(Animation::null())
-            .with_duration(std::time::Duration::from_secs_f32(transition.duration))
-            .with_delay(std::time::Duration::from_secs_f32(transition.delay))
+            .with_duration(instant::Duration::from_secs_f32(transition.duration))
+            .with_delay(instant::Duration::from_secs_f32(transition.delay))
             .with_keyframe((0.0, Default::default()))
             .with_keyframe((1.0, Default::default()))
     }
@@ -1229,10 +1229,10 @@ impl Style {
                                     self.background_color.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1244,10 +1244,10 @@ impl Style {
                                     self.flex_basis.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1259,10 +1259,10 @@ impl Style {
                                     self.left.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1274,10 +1274,10 @@ impl Style {
                                     self.top.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1289,10 +1289,10 @@ impl Style {
                                     self.right.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1304,10 +1304,10 @@ impl Style {
                                     self.bottom.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1319,10 +1319,10 @@ impl Style {
                                     self.width.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1334,10 +1334,10 @@ impl Style {
                                     self.height.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1349,10 +1349,10 @@ impl Style {
                                     self.margin_bottom.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1364,10 +1364,10 @@ impl Style {
                                     self.margin_top.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1379,10 +1379,10 @@ impl Style {
                                     self.margin_left.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1394,10 +1394,10 @@ impl Style {
                                     self.margin_right.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1409,10 +1409,10 @@ impl Style {
                                     self.padding_left.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1424,10 +1424,10 @@ impl Style {
                                     self.padding_right.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1439,10 +1439,10 @@ impl Style {
                                     self.padding_top.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1454,10 +1454,10 @@ impl Style {
                                     self.padding_bottom.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))
@@ -1469,10 +1469,10 @@ impl Style {
                                     self.opacity.insert_transition(
                                         rule_id,
                                         AnimationState::new()
-                                            .with_duration(std::time::Duration::from_secs_f32(
+                                            .with_duration(instant::Duration::from_secs_f32(
                                                 transition.duration,
                                             ))
-                                            .with_delay(std::time::Duration::from_secs_f32(
+                                            .with_delay(instant::Duration::from_secs_f32(
                                                 transition.delay,
                                             ))
                                             .with_keyframe((0.0, Default::default()))

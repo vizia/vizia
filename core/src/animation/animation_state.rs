@@ -1,7 +1,7 @@
 use std::{
     collections::HashSet,
-    time::{Duration, Instant},
 };
+use instant::{Duration, Instant};
 
 use crate::{Animation, Entity, Interpolator};
 
@@ -122,7 +122,7 @@ where
         self.t0 = 0.0;
         self.active = true;
         self.t = 0.0;
-        self.start_time = std::time::Instant::now();
+        self.start_time = instant::Instant::now();
         self.entities.insert(entity);
     }
 }
