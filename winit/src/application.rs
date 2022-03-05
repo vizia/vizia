@@ -73,7 +73,7 @@ impl Application {
     /// # Example
     /// ```no_run
     /// # use vizia_core::*;
-    /// # use vizia_glutin::application::Application;
+    /// # use vizia_winit::application::Application;
     /// Application::new(WindowDescription::new(), |cx|{
     ///     // Build application here
     /// })

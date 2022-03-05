@@ -33,4 +33,4 @@ rusty-daw-core = {version = "0.7.4", optional = true}
 
 # Required so that doc tests will compile
 [dev-dependencies]
-vizia_glutin = {version = "0.1.0", path = "../glutin"}
+vizia_winit = {version = "0.1.0", path = "../winit" }

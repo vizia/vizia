@@ -1692,16 +1692,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'vizia_glutin'",
+            "name": "Debug unit tests in library 'vizia_winit'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=vizia_glutin"
+                    "--package=vizia_winit"
                 ],
                 "filter": {
-                    "name": "vizia_glutin",
+                    "name": "vizia_winit",
                     "kind": "lib"
                 }
             },
