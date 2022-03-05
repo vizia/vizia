@@ -271,6 +271,7 @@ pub struct Style {
     pub default_font: String,
 
     pub elements: SparseSet<String>,
+    pub ids: SparseSet<String>,
     pub classes: SparseSet<HashSet<String>>,
     pub pseudo_classes: SparseSet<PseudoClass>,
     pub disabled: StyleSet<bool>,
@@ -1513,6 +1514,7 @@ impl Style {
 
     pub fn remove(&mut self, entity: Entity) {
         self.elements.remove(entity);
+        self.ids.remove(entity);
         self.classes.remove(entity);
         self.pseudo_classes.remove(entity);
         //self.disabled.remove(entity);
