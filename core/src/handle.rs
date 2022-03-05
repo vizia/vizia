@@ -60,6 +60,13 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
+    pub fn id(self, id: &str) -> Self {
+        self.cx.style.ids.insert(self.entity, id.to_owned()).expect("Could not insert id");
+        self.cx.style.needs_restyle = true;
+
+        self
+    }
+
     pub fn cursor(self, cursor_icon: CursorIcon) -> Self {
         self.cx.style.cursor.insert(self.entity, cursor_icon);
 

@@ -390,10 +390,12 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
         }
     }
 
-    // Check for ID match TODO
-    // if selector.id.is_some() && selector.id != entity_selector.id {
-    //     return false;
-    // }
+    // If there's an id in the selector, it must match the entity's id
+    if let Some(id) = &selector.id {
+        if Some(id) != cx.style.ids.get(entity) {
+            return false;
+        }
+    }
 
     // Check for element name match
     if let Some(selector_element) = &selector.element {
