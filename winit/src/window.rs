@@ -1,13 +1,13 @@
+#[cfg(not(target_arch = "wasm32"))]
+use glutin::ContextBuilder;
 use winit::event_loop::EventLoop;
 use winit::window::WindowBuilder;
 use winit::{dpi::*, window::WindowId};
-#[cfg(not(target_arch = "wasm32"))]
-use glutin::ContextBuilder;
 
 use femtovg::{renderer::OpenGl, Canvas, Color};
 
-use vizia_core::{Context, Event, View, WindowDescription, WindowEvent};
 use crate::cursor::translate_cursor;
+use vizia_core::{Context, Event, View, WindowDescription, WindowEvent};
 
 pub struct Window {
     pub id: WindowId,
@@ -44,15 +44,15 @@ impl Window {
                 document.body().unwrap().insert_adjacent_element("afterbegin", &element).unwrap();
                 element
             }
-                .dyn_into::<web_sys::HtmlCanvasElement>()
-                .unwrap()
+            .dyn_into::<web_sys::HtmlCanvasElement>()
+            .unwrap()
         };
 
         // Build the femtovg renderer, PART 1/2, web edition
         // these two parts have to be separated because they have conflicting requirements
         // on use of the referenced passed to window builder
         #[cfg(target_arch = "wasm32")]
-            let renderer = OpenGl::new_from_html_canvas(&canvas_element).unwrap();
+        let renderer = OpenGl::new_from_html_canvas(&canvas_element).unwrap();
 
         // For wasm, tell winit about the above canvas
         #[cfg(target_arch = "wasm32")]
@@ -102,7 +102,6 @@ impl Window {
         #[cfg(target_arch = "wasm32")]
         let handle = window_builder.build(&events_loop).unwrap();
 
-
         // Build the femtovg renderer, PART 2/2, glutin edition
         #[cfg(not(target_arch = "wasm32"))]
         let renderer = OpenGl::new_from_glutin_context(&handle).expect("Cannot create renderer");
@@ -121,14 +120,22 @@ impl Window {
         let dpi_factor = result.window().scale_factor();
         let size = result.window().inner_size();
         result.canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
-        result.canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
+        result.canvas.clear_rect(
+            0,
+            0,
+            size.width as u32,
+            size.height as u32,
+            Color::rgb(255, 80, 80),
+        );
 
         result
     }
 
     pub fn window(&self) -> &winit::window::Window {
         #[cfg(not(target_arch = "wasm32"))]
-        { self.handle.window() }
+        {
+            self.handle.window()
+        }
         #[cfg(target_arch = "wasm32")]
         &self.handle
     }
@@ -154,11 +161,10 @@ impl View for Window {
                 }
 
                 WindowEvent::SetCursorPosition(x, y) => {
-                    self
-                        .window()
-                        .set_cursor_position(winit::dpi::Position::Physical(
-                            PhysicalPosition::new(*x as i32, *y as i32),
-                        ))
+                    self.window()
+                        .set_cursor_position(winit::dpi::Position::Physical(PhysicalPosition::new(
+                            *x as i32, *y as i32,
+                        )))
                         .expect("Failed to set cursor position");
                 }
 

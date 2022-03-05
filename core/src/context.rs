@@ -1,8 +1,8 @@
+use instant::{Duration, Instant};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::{Debug, Formatter};
 use std::sync::Mutex;
-use instant::{Duration, Instant};
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardContext;

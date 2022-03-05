@@ -46,7 +46,9 @@ impl Application {
         let event_loop = EventLoop::with_user_event();
         let event_proxy_obj = event_loop.create_proxy();
         #[cfg(not(target_arch = "wasm32"))]
-        { context.event_proxy = Some(Box::new(WinitEventProxy(event_proxy_obj))); }
+        {
+            context.event_proxy = Some(Box::new(WinitEventProxy(event_proxy_obj)));
+        }
 
         Self {
             context,

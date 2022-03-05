@@ -1,7 +1,5 @@
-use std::{
-    collections::HashSet,
-};
 use instant::{Duration, Instant};
+use std::collections::HashSet;
 
 use crate::{Animation, Entity, Interpolator};
 
