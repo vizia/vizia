@@ -707,7 +707,8 @@ impl Context {
 
     fn dispatch_direct_or_hovered(&mut self, event: WindowEvent, target: Entity, root: bool) {
         if target != Entity::null() {
-            self.event_queue.push_back(Event::new(event).target(target).propagate(Propagation::Up));
+            self.event_queue
+                .push_back(Event::new(event).target(target).propagate(Propagation::Direct));
         } else if self.hovered != Entity::root() || root {
             self.event_queue
                 .push_back(Event::new(event).target(self.hovered).propagate(Propagation::Up));
