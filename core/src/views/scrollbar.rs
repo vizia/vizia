@@ -112,7 +112,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                 WindowEvent::MouseDown(MouseButton::Left) => {
                     if event.target != cx.current {
                         self.reference_points = Some((pos, *self.value.get(cx)));
-                        cx.captured = cx.current;
+                        cx.capture();
                     } else {
                         let (_, jump) = self.container_and_thumb_size(cx);
                         let (tx, ty, tw, th) = self.thumb_bounds(cx);
@@ -144,7 +144,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
 
                 WindowEvent::MouseUp(MouseButton::Left) => {
                     self.reference_points = None;
-                    cx.captured = Entity::null();
+                    cx.release();
                 }
 
                 WindowEvent::MouseMove(_, _) => {

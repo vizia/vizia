@@ -31,7 +31,7 @@ impl View for Button {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                     cx.current.set_active(cx, true);
-                    cx.captured = cx.current;
+                    cx.capture();
                     if let Some(callback) = self.action.take() {
                         (callback)(cx);
 
@@ -41,7 +41,7 @@ impl View for Button {
 
                 WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                     if event.target == cx.current {
-                        cx.captured = Entity::null();
+                        cx.release();
                         cx.current.set_active(cx, false);
                     }
                 }

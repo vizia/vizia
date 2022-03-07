@@ -104,6 +104,16 @@ impl Context {
         result
     }
 
+    /// Causes mouse events to propagate to the current entity until released
+    pub fn capture(&mut self) {
+        self.captured = self.current;
+    }
+
+    /// Releases the mouse events capture
+    pub fn release(&mut self) {
+        self.captured = Entity::null();
+    }
+
     pub fn remove_children(&mut self, entity: Entity) {
         let children = entity.child_iter(&self.tree).collect::<Vec<_>>();
         for child in children.into_iter() {

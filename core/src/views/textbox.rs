@@ -614,7 +614,7 @@ where
                         cx.emit(TextEvent::StartEdit);
 
                         cx.focused = cx.current;
-                        cx.captured = cx.current;
+                        cx.capture();
                         cx.current.set_checked(cx, true);
                         //}
 
@@ -627,7 +627,7 @@ where
                         //}
                         //self.set_caret(cx, cx.current);
                     } else {
-                        cx.captured = Entity::null();
+                        cx.release();
                         cx.current.set_checked(cx, false);
                         //self.edit = false;
                         cx.emit(TextEvent::EndEdit);

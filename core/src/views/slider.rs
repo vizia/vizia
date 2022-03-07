@@ -211,7 +211,7 @@ impl<L: 'static> View for Slider<L> {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                     self.is_dragging = true;
-                    cx.captured = cx.current;
+                    cx.capture();
 
                     if let Some(slider_data_internal) = cx.data::<SliderDataInternal>() {
                         let thumb_size = slider_data_internal.thumb_size;
@@ -244,7 +244,7 @@ impl<L: 'static> View for Slider<L> {
 
                 WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                     self.is_dragging = false;
-                    cx.captured = Entity::null();
+                    cx.release();
                 }
 
                 WindowEvent::MouseMove(x, y) => {

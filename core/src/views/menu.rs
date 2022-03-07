@@ -86,7 +86,7 @@ impl Model for MenuControllerData {
             match msg {
                 MenuEvent::Close => {
                     self.active = false;
-                    cx.captured = Entity::null();
+                    cx.release();
                 }
                 MenuEvent::Activate => self.active = true,
                 _ => {}
@@ -112,7 +112,7 @@ impl MenuController {
         Self {}.build2(cx, move |cx| {
             MenuControllerData { active }.build(cx);
             if active {
-                cx.captured = cx.current;
+                cx.capture();
             }
             builder(cx);
         })
@@ -165,7 +165,7 @@ impl View for MenuController {
             } else {
                 if let WindowEvent::MouseDown(_) = msg {
                     // capture focus on click
-                    cx.captured = cx.current;
+                    cx.capture();
                     cx.emit(MenuEvent::Activate);
                     // send an over event to highlight whatever we're hovered on
                     cx.event_queue.push_back(
