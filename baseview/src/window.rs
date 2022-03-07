@@ -60,7 +60,7 @@ impl ViziaWindow {
             parent,
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut context = Context::new();
+                let context = Context::new();
                 ViziaWindow::new(context, win_desc, window, Some(Box::new(app)), on_idle)
             },
         )
@@ -91,7 +91,7 @@ impl ViziaWindow {
         Window::open_as_if_parented(
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut context = Context::new();
+                let context = Context::new();
                 ViziaWindow::new(context, win_desc, window, Some(Box::new(app)), on_idle)
             },
         )
@@ -121,7 +121,7 @@ impl ViziaWindow {
         Window::open_blocking(
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut context = Context::new();
+                let context = Context::new();
                 ViziaWindow::new(context, win_desc, window, Some(Box::new(app)), on_idle)
             },
         )
