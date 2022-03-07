@@ -21,7 +21,8 @@ pub struct Window {
 
 impl Window {
     pub fn new(events_loop: &EventLoop<Event>, window_description: &WindowDescription) -> Self {
-        let window_builder = WindowBuilder::new();
+        #[allow(unused_mut)]
+        let mut window_builder = WindowBuilder::new();
 
         //Windows COM doesn't play nicely with winit's drag and drop right now
         #[cfg(target_os = "windows")]
