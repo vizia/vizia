@@ -6,9 +6,7 @@ use raw_window_handle::HasRawWindowHandle;
 
 use vizia_core::*;
 
-static DEFAULT_THEME: &str = include_str!("../../core/src/default_theme.css");
-
-/// Handles an vizia_baseview application
+/// Handles a vizia_baseview application
 pub(crate) struct ViziaWindow {
     application: ApplicationRunner,
     context: raw_gl_context::GlContext,
@@ -62,12 +60,7 @@ impl ViziaWindow {
             parent,
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut context = Context::new();
-
-                context.entity_manager.create();
-
-                context.add_theme(DEFAULT_THEME);
-
+                let context = Context::new();
                 ViziaWindow::new(context, win_desc, window, Some(Box::new(app)), on_idle)
             },
         )
@@ -98,12 +91,7 @@ impl ViziaWindow {
         Window::open_as_if_parented(
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut context = Context::new();
-
-                context.entity_manager.create();
-
-                context.add_theme(DEFAULT_THEME);
-
+                let context = Context::new();
                 ViziaWindow::new(context, win_desc, window, Some(Box::new(app)), on_idle)
             },
         )
@@ -133,12 +121,7 @@ impl ViziaWindow {
         Window::open_blocking(
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let mut context = Context::new();
-
-                context.entity_manager.create();
-
-                context.add_theme(DEFAULT_THEME);
-
+                let context = Context::new();
                 ViziaWindow::new(context, win_desc, window, Some(Box::new(app)), on_idle)
             },
         )

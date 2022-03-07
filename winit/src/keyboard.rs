@@ -1,5 +1,5 @@
-use glutin::event::VirtualKeyCode;
 use keyboard_types::{Code, Key};
+use winit::event::VirtualKeyCode;
 
 pub fn vcode_to_code(code: VirtualKeyCode) -> Code {
     use Code::*;

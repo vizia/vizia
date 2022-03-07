@@ -1,0 +1,7 @@
+[package]
+name = "run-wasm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cargo-run-wasm = "0.1.0"

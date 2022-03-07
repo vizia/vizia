@@ -3,7 +3,7 @@ name = "vizia_core"
 version = "0.1.0"
 authors = ["George Atkinson"]
 license = "MIT"
-repository = "https://github.com/geom3trik/VIZIA"
+repository = "https://github.com/vizia/vizia"
 edition = "2021"
 description = "Core components of vizia"
 
@@ -27,9 +27,10 @@ locale_config = "*"  # see https://github.com/rust-locale/locale_config for wild
 cssparser = "0.27.2"
 unicode-segmentation = "1.8.0"
 copypasta = {version = "0.7.1", optional = true}
+instant = "0.1.12"
 
 rusty-daw-core = {version = "0.7.4", optional = true}
 
 # Required so that doc tests will compile
 [dev-dependencies]
-vizia_glutin = {version = "0.1.0", path = "../glutin"}
+vizia_winit = {version = "0.1.0", path = "../winit" }

@@ -1,5 +1,4 @@
 use vizia::*;
-use vizia_glutin::application::Application;
 
 #[derive(Lens)]
 pub struct AppData {

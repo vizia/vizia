@@ -9,7 +9,7 @@
 //! ## Example
 //! The following code creates an animation which will animate the `background-color` property from red to blue over 1 second:
 //! ```compile_fail
-//! let animation = state.create_animation(std::time::Duration::from_secs(1))
+//! let animation = state.create_animation(instant::Duration::from_secs(1))
 //!     .add_keyframe(0.0, |keyframe| keyframe.set_background_color(Color::red()))
 //!     .add_keyframe(1.0, |keyframe| keyframe.set_background_color(Color::blue()))
 //!     .build();
@@ -21,7 +21,7 @@
 //!
 //! ## Example
 //! ```compile_fail
-//! let animation_id = state.create_animation(std::time::Duration::from_secs(1))
+//! let animation_id = state.create_animation(instant::Duration::from_secs(1))
 //!     .add_keyframe(0.0, |keyframe|
 //!         keyframe
 //!             .set_background_color(Color::red())

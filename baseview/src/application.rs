@@ -4,15 +4,12 @@ use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
-use vizia_core::{apply_inline_inheritance, apply_shared_inheritance, TreeDepthIterator, TreeExt};
 use vizia_core::{MouseButton, MouseButtonState};
-//use vizia_core::WindowWidget;
+
+use vizia_core::{BoundingBox, Event, WindowDescription};
 use vizia_core::{
-    apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
-    apply_visibility, apply_z_ordering, geometry_changed, Context, Display, Entity, EventManager,
-    FontOrId, Modifiers, Units, Visibility, WindowEvent, WindowSize,
+    Context, Entity, EventManager, FontOrId, Modifiers, Units, WindowEvent, WindowSize,
 };
-use vizia_core::{BoundingBox, Event, Propagation, WindowDescription};
 
 pub struct Application<F>
 where

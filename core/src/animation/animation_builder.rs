@@ -3,8 +3,8 @@ use morphorm::Units;
 use crate::{Animation, AnimationState, Color, Opacity, State};
 
 pub(crate) struct AnimationDescription {
-    duration: std::time::Duration,
-    delay: std::time::Duration,
+    duration: instant::Duration,
+    delay: instant::Duration,
     persistent: bool,
 }
 
@@ -14,7 +14,7 @@ pub(crate) struct AnimationDescription {
 ///
 /// # Example
 /// ```
-/// let animation_id = state.create_animation(std::time::Duration::from_secs(1))
+/// let animation_id = state.create_animation(instant::Duration::from_secs(1))
 ///     .add_keyframe(0.0, |keyframe| 
 ///         keyframe
 ///             .set_background_color(Color::red())
@@ -33,13 +33,13 @@ pub struct AnimationBuilder<'a> {
 }
 
 impl<'a> AnimationBuilder<'a> {
-    pub fn new(id: Animation, state: &'a mut State, duration: std::time::Duration) -> Self {
+    pub fn new(id: Animation, state: &'a mut State, duration: instant::Duration) -> Self {
         Self {
             id, 
             state,
             animation_description: AnimationDescription {
                 duration,
-                delay: std::time::Duration::from_secs(0),
+                delay: instant::Duration::from_secs(0),
                 persistent: false,
             }
         }
@@ -49,7 +49,7 @@ impl<'a> AnimationBuilder<'a> {
     /// Sets the delay before the animation will play. 
     ///
     /// Needs to be called before setting keyframes.
-    pub fn with_delay(mut self, delay: std::time::Duration) -> Self {
+    pub fn with_delay(mut self, delay: instant::Duration) -> Self {
         self.animation_description.delay = delay;
 
         self
@@ -81,7 +81,7 @@ impl<'a> AnimationBuilder<'a> {
 /// 
 /// # Example
 /// ```
-/// let animation_id = state.create_animation(std::time::Duration::from_secs(1))
+/// let animation_id = state.create_animation(instant::Duration::from_secs(1))
 ///     .add_keyframe(0.0, |keyframe| 
 ///         keyframe
 ///             .set_background_color(Color::red())
