@@ -2,7 +2,7 @@ use femtovg::{LineCap, Paint, Path, Solidity};
 use morphorm::{Hierarchy, Units};
 
 use crate::{
-    Binding, Context, Entity, Handle, Lens, LensExt, Modifiers, MouseButton, Res, Units::*, View,
+    Binding, Context, Handle, Lens, LensExt, Modifiers, MouseButton, Res, Units::*, View,
     WindowEvent, ZStack,
 };
 

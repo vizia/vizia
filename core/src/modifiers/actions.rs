@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use morphorm::GeometryChanged;
 
-use crate::{Context, Entity, Event, Handle, MouseButton, View, ViewHandler, WindowEvent};
+use crate::{Context, Event, Handle, MouseButton, View, ViewHandler, WindowEvent};
 
 // Press
 pub struct Press<V: View> {

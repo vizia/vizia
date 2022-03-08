@@ -1,6 +1,5 @@
 use crate::{
-    Context, Element, Entity, Handle, Lens, LensExt, MouseButton, Orientation, Units, View,
-    WindowEvent,
+    Context, Element, Handle, Lens, LensExt, MouseButton, Orientation, Units, View, WindowEvent,
 };
 
 pub struct Scrollbar<L1> {
