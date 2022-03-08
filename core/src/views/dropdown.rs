@@ -9,7 +9,7 @@ pub struct Dropdown {}
 impl Dropdown {
     pub fn new<F, L, Label>(cx: &mut Context, label: L, builder: F) -> Handle<Self>
     where
-        L: 'static + Fn(&mut Context) -> Handle<Label>,
+        L: FnOnce(&mut Context) -> Handle<Label>,
         F: 'static + Fn(&mut Context),
         Label: 'static + View,
     {
