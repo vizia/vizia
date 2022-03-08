@@ -3,8 +3,8 @@ use std::marker::PhantomData;
 use morphorm::GeometryChanged;
 
 use crate::{
-    Actions, Binding, Context, Data, Element, Entity, Handle, Lens, LensExt, Model, MouseButton,
-    Overflow, Units::*, View, WindowEvent, ZStack,
+    Actions, Binding, Context, Data, Element, Handle, Lens, LensExt, Model, MouseButton, Overflow,
+    Units::*, View, WindowEvent, ZStack,
 };
 
 #[derive(Debug)]

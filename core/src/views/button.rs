@@ -1,4 +1,4 @@
-use crate::{Context, Entity, Event, PropSet, View};
+use crate::{Context, Event, PropSet, View};
 use crate::{Handle, MouseButton, WindowEvent};
 
 /// A simple push button with an action and a label.

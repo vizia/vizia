@@ -8,7 +8,6 @@ use crate::{Binding, Context, Data, Handle, Index, Lens, LensExt, Model, Then, V
 pub struct List<L, T: 'static>
 where
     L: Lens<Target = Vec<T>>,
-    T: Data,
 {
     p: PhantomData<L>,
     increment_callback: Option<Box<dyn Fn(&mut Context)>>,
@@ -16,7 +15,7 @@ where
     clear_callback: Option<Box<dyn Fn(&mut Context)>>,
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
+impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
     /// Creates a new ListView with a binding to the given lens and a template for constructing the list items
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
@@ -47,7 +46,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> List<L, T> {
     }
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for List<L, T> {
+impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
     fn element(&self) -> Option<String> {
         Some("list".to_string())
     }
