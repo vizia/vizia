@@ -1,4 +1,4 @@
-use crate::{Context, Res};
+use crate::Context;
 use std::any::TypeId;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
