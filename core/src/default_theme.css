@@ -373,6 +373,7 @@ menustack.horizontal {
 
 menu>menustack {
     position-type: self-directed;
+    z-index: 1000;
     display: none;
 }
 
