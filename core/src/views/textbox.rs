@@ -10,9 +10,9 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::style::PropGet;
 use crate::{
-    Binding, Context, CursorIcon, Data, EditableText, Element, Event, FontOrId, HStack, Handle,
-    Label, Lens, LensExt, Model, Modifiers, MouseButton, Movement, Overflow, PropSet, Selection,
-    TreeExt, Units::*, View, WindowEvent,
+    Binding, Context, CursorIcon, Data, EditableText, Element, Event, FontOrId, Handle, Lens,
+    LensExt, Model, Modifiers, MouseButton, Movement, Overflow, PropSet, Selection, TreeExt,
+    Units::*, View, WindowEvent,
 };
 
 use crate::text::Direction;
@@ -580,29 +580,30 @@ where
                     cx.current = real_current;
                 }
             });
-            HStack::new(cx, move |cx| {
-                Label::new(cx, TextboxData::text).class("textbox_content");
+            TextboxContent {}
+                .build2(cx, move |cx| {
+                    TextboxLabel {}.build(cx).text(TextboxData::text).class("textbox_content");
 
-                // Selection
-                Element::new(cx)
-                    .class("selection")
-                    .position_type(PositionType::SelfDirected)
-                    .visibility(TextboxData::edit)
-                    .height(TextboxData::line_height)
-                    .left(TextboxData::selection_x)
-                    .width(TextboxData::selection_width);
+                    // Selection
+                    Element::new(cx)
+                        .class("selection")
+                        .position_type(PositionType::SelfDirected)
+                        .visibility(TextboxData::edit)
+                        .height(TextboxData::line_height)
+                        .left(TextboxData::selection_x)
+                        .width(TextboxData::selection_width);
 
-                // Caret
-                Element::new(cx)
-                    .class("caret")
-                    .overflow(Overflow::Visible)
-                    .position_type(PositionType::SelfDirected)
-                    .width(Pixels(1.0))
-                    .visibility(TextboxData::edit)
-                    .height(TextboxData::line_height)
-                    .left(TextboxData::caret_x);
-            })
-            .translate(TextboxData::transform_x.map(|x| (*x, 0.0)));
+                    // Caret
+                    Element::new(cx)
+                        .class("caret")
+                        .overflow(Overflow::Visible)
+                        .position_type(PositionType::SelfDirected)
+                        .width(Pixels(1.0))
+                        .visibility(TextboxData::edit)
+                        .height(TextboxData::line_height)
+                        .left(TextboxData::caret_x);
+                })
+                .translate(TextboxData::transform_x.map(|x| (*x, 0.0)));
         })
     }
 }
@@ -859,3 +860,11 @@ where
         }
     }
 }
+
+// can't just be a stack because what if you've styled stacks
+pub struct TextboxContent {}
+impl View for TextboxContent {}
+
+// can't just be a label because above
+pub struct TextboxLabel {}
+impl View for TextboxLabel {}
