@@ -10,9 +10,9 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::style::PropGet;
 use crate::{
-    Binding, Context, CursorIcon, Data, EditableText, Element, Entity, Event, FontOrId, Handle,
-    Lens, LensExt, Model, Modifiers, MouseButton, Movement, PropSet, Selection, TreeExt, Units::*,
-    View, Visibility, WindowEvent,
+    Binding, Context, CursorIcon, Data, EditableText, Element, Event, FontOrId, HStack, Handle,
+    Label, Lens, LensExt, Model, Modifiers, MouseButton, Movement, Overflow, PropSet, Selection,
+    TreeExt, Units::*, View, WindowEvent,
 };
 
 use crate::text::Direction;
@@ -21,11 +21,14 @@ use crate::text::Direction;
 pub struct TextboxData {
     text: String,
     selection: Selection,
-    caret_entity: Entity,
-    selection_entity: Entity,
     edit: bool,
     hitx: f32,
     dragx: f32,
+    caret_x: f32,
+    selection_x: f32,
+    selection_width: f32,
+    transform_x: f32,
+    line_height: f32,
     on_edit: Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>,
     on_submit: Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>,
 }
@@ -36,11 +39,14 @@ impl TextboxData {
         Self {
             text: text.clone(),
             selection: Selection::new(0, text_length),
-            caret_entity: Entity::null(),
-            selection_entity: Entity::null(),
             edit: false,
             hitx: -1.0,
             dragx: -1.0,
+            caret_x: 0.0,
+            selection_x: 0.0,
+            selection_width: 0.0,
+            transform_x: 0.0,
+            line_height: 0.0,
             on_edit: None,
             on_submit: None,
         }
@@ -49,233 +55,240 @@ impl TextboxData {
     fn set_caret(&mut self, cx: &mut Context) {
         let entity = cx.current;
 
-        let posx = cx.cache.get_posx(entity);
-        let posy = cx.cache.get_posy(entity);
-        let width = cx.cache.get_width(entity);
-        let height = cx.cache.get_height(entity);
+        let box_x = cx.cache.get_posx(entity);
+        let box_y = cx.cache.get_posy(entity);
+        let box_width = cx.cache.get_width(entity);
+        let box_height = cx.cache.get_height(entity);
 
-        if let Some(text) = cx.style.text.get(entity).cloned() {
-            let font = cx.style.font.get(entity).cloned().unwrap_or_default();
+        let font = cx.style.font.get(entity).cloned().unwrap_or_default();
 
-            let default_font = cx
-                .resource_manager
-                .fonts
-                .get(&cx.style.default_font)
-                .and_then(|font| match font {
-                    FontOrId::Id(id) => Some(id),
-                    _ => None,
-                })
-                .expect("Failed to find default font");
+        let default_font = cx
+            .resource_manager
+            .fonts
+            .get(&cx.style.default_font)
+            .and_then(|font| match font {
+                FontOrId::Id(id) => Some(id),
+                _ => None,
+            })
+            .expect("Failed to find default font");
 
-            let font_id = cx
-                .resource_manager
-                .fonts
-                .get(&font)
-                .and_then(|font| match font {
-                    FontOrId::Id(id) => Some(id),
-                    _ => None,
-                })
-                .unwrap_or(default_font);
+        let font_id = cx
+            .resource_manager
+            .fonts
+            .get(&font)
+            .and_then(|font| match font {
+                FontOrId::Id(id) => Some(id),
+                _ => None,
+            })
+            .unwrap_or(default_font);
 
-            let mut x = posx;
-            let mut y = posy;
+        let mut origin_x = box_x;
+        let mut origin_y = box_y;
 
-            let text_string = text.to_owned();
+        let text_string = self.text.to_owned();
 
-            let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
+        let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
 
-            let mut paint = Paint::default();
-            paint.set_font_size(font_size);
-            paint.set_font(&[font_id.clone()]);
+        let mut paint = Paint::default();
+        paint.set_font_size(font_size);
+        paint.set_font(&[font_id.clone()]);
 
-            let font_metrics =
-                cx.text_context.measure_font(paint).expect("Failed to read font metrics");
+        let font_metrics =
+            cx.text_context.measure_font(paint).expect("Failed to read font metrics");
 
-            let parent = cx.tree.get_parent(entity).expect("Failed to find parent somehow");
+        let parent = cx.tree.get_parent(entity).expect("Failed to find parent somehow");
 
-            let parent_width = cx.cache.get_width(parent);
+        let parent_width = cx.cache.get_width(parent);
 
-            let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
-            {
-                Units::Pixels(val) => val,
-                Units::Percentage(val) => parent_width * val,
-                _ => 0.0,
-            };
+        let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default() {
+            Units::Pixels(val) => val,
+            Units::Percentage(val) => parent_width * val,
+            _ => 0.0,
+        };
 
-            let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
-            let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();
-            let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
-            let child_bottom = cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
+        // these are the x-coordinates of the bounds of the acceptable position of the cursor
+        let mut bounds_left = box_x + border_width;
+        let mut bounds_right = box_x + box_width - border_width;
 
-            let align = match child_left {
-                Units::Pixels(val) => match child_right {
-                    Units::Stretch(_) | Units::Auto => {
-                        x += val + border_width;
-                        Align::Left
-                    }
+        let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
+        let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();
+        let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
+        let child_bottom = cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
 
-                    _ => Align::Left,
-                },
+        bounds_left += match child_left {
+            Units::Pixels(val) => val,
+            _ => 5.0,
+        };
+        bounds_right -= match child_right {
+            Units::Pixels(val) => val,
+            _ => 5.0,
+        };
 
-                Units::Stretch(_) => match child_right {
-                    Units::Pixels(val) => {
-                        x += width - val - border_width;
-                        Align::Right
-                    }
-
-                    Units::Stretch(_) => {
-                        x += 0.5 * width;
-                        Align::Center
-                    }
-
-                    _ => Align::Right,
-                },
+        let align = match child_left {
+            Units::Pixels(val) => match child_right {
+                Units::Stretch(_) | Units::Auto | Units::Pixels(_) => {
+                    origin_x += val + border_width;
+                    Align::Left
+                }
 
                 _ => Align::Left,
-            };
+            },
 
-            let baseline = match child_top {
-                Units::Pixels(val) => match child_bottom {
-                    Units::Stretch(_) => {
-                        y += val + border_width;
-                        Baseline::Top
-                    }
+            Units::Stretch(_) => match child_right {
+                Units::Pixels(val) => {
+                    origin_x += box_width - val - border_width;
+                    Align::Right
+                }
 
-                    _ => Baseline::Top,
-                },
+                Units::Stretch(_) => {
+                    origin_x += 0.5 * box_width;
+                    Align::Center
+                }
 
-                Units::Stretch(_) => match child_bottom {
-                    Units::Pixels(val) => {
-                        y += height - val - border_width;
-                        Baseline::Bottom
-                    }
+                _ => Align::Right,
+            },
 
-                    Units::Stretch(_) => {
-                        y += 0.5 * height;
-                        Baseline::Middle
-                    }
+            _ => Align::Left,
+        };
 
-                    _ => Baseline::Top,
-                },
+        let baseline = match child_top {
+            Units::Pixels(val) => match child_bottom {
+                Units::Stretch(_) => {
+                    origin_y += val + border_width;
+                    Baseline::Top
+                }
 
                 _ => Baseline::Top,
-            };
+            },
 
-            paint.set_text_align(align);
-            paint.set_text_baseline(baseline);
+            Units::Stretch(_) => match child_bottom {
+                Units::Pixels(val) => {
+                    origin_y += box_height - val - border_width;
+                    Baseline::Bottom
+                }
 
-            if let Ok(res) = cx.text_context.measure_text(x, y, &text_string, paint) {
-                let text_width = res.width();
+                Units::Stretch(_) => {
+                    origin_y += 0.5 * box_height;
+                    Baseline::Middle
+                }
 
-                let mut caretx = x;
+                _ => Baseline::Top,
+            },
 
-                let mut selectx = caretx;
+            _ => Baseline::Top,
+        };
 
-                if self.edit {
-                    let startx = if let Some(first_glyph) = res.glyphs.first() {
-                        first_glyph.x
+        paint.set_text_align(align);
+        paint.set_text_baseline(baseline);
+
+        if let Ok(res) =
+            cx.text_context.measure_text(origin_x + self.transform_x, origin_y, &text_string, paint)
+        {
+            let text_width = res.width();
+
+            let mut caretx = origin_x;
+
+            let mut selectx = caretx;
+
+            if self.edit {
+                let startx =
+                    if let Some(first_glyph) = res.glyphs.first() { first_glyph.x } else { 0.0 };
+
+                let endx = startx + text_width;
+
+                if self.hitx != -1.0 {
+                    selectx = if self.hitx < startx + text_width / 2.0 {
+                        self.selection.anchor = 0;
+                        startx
                     } else {
-                        0.0
+                        self.selection.anchor = self.text.len();
+                        endx
                     };
 
-                    let endx = startx + text_width;
-
-                    if self.hitx != -1.0 {
-                        selectx = if self.hitx < startx + text_width / 2.0 {
-                            self.selection.anchor = 0;
-                            startx
-                        } else {
-                            self.selection.anchor = text.len();
-                            endx
-                        };
-
-                        caretx = if self.dragx < startx + text_width / 2.0 {
-                            self.selection.active = 0;
-                            startx
-                        } else {
-                            self.selection.active = text.len();
-                            endx
-                        };
-
-                        let mut px = x;
-
-                        for (glyph, (index, _)) in
-                            res.glyphs.iter().zip(text_string.grapheme_indices(true))
-                        {
-                            let left_edge = glyph.x;
-                            let right_edge = left_edge + glyph.width;
-                            let gx = left_edge * 0.3 + right_edge * 0.7;
-
-                            if self.hitx >= px && self.hitx < gx {
-                                selectx = left_edge;
-
-                                self.selection.anchor = index;
-                            }
-
-                            if self.dragx >= px && self.dragx < gx {
-                                caretx = left_edge;
-
-                                self.selection.active = index;
-                            }
-
-                            px = gx;
-                        }
+                    caretx = if self.dragx < startx + text_width / 2.0 {
+                        self.selection.active = 0;
+                        startx
                     } else {
-                        for (glyph, (index, _)) in
-                            res.glyphs.iter().zip(text_string.grapheme_indices(true))
-                        {
-                            if index == self.selection.active {
-                                caretx = glyph.x;
-                            }
+                        self.selection.active = self.text.len();
+                        endx
+                    };
 
-                            if index == self.selection.anchor {
-                                selectx = glyph.x;
-                            }
+                    let mut px = origin_x;
+
+                    for (glyph, (index, _)) in
+                        res.glyphs.iter().zip(text_string.grapheme_indices(true))
+                    {
+                        let left_edge = glyph.x;
+                        let right_edge = left_edge + glyph.width;
+                        let gx = left_edge * 0.3 + right_edge * 0.7;
+
+                        if self.hitx >= px && self.hitx < gx {
+                            selectx = left_edge;
+
+                            self.selection.anchor = index;
                         }
 
-                        if self.selection.active as usize == text.len() && text.len() != 0 {
-                            caretx = endx;
+                        if self.dragx >= px && self.dragx < gx {
+                            caretx = left_edge;
+
+                            self.selection.active = index;
                         }
 
-                        if self.selection.anchor as usize == text.len() && text.len() != 0 {
-                            selectx = endx;
+                        px = gx;
+                    }
+                } else {
+                    for (glyph, (index, _)) in
+                        res.glyphs.iter().zip(text_string.grapheme_indices(true))
+                    {
+                        if index == self.selection.active {
+                            caretx = glyph.x;
+                        }
+
+                        if index == self.selection.anchor {
+                            selectx = glyph.x;
                         }
                     }
 
-                    //Draw selection
-                    let select_width = (caretx - selectx).abs();
-                    if selectx > caretx {
-                        self.selection_entity.set_left(cx, Pixels(caretx.floor() - posx - 1.0));
-                    } else if caretx > selectx {
-                        self.selection_entity.set_left(cx, Pixels(selectx.floor() - posx - 1.0));
+                    if self.selection.active as usize == self.text.len() && self.text.len() != 0 {
+                        caretx = endx;
                     }
 
-                    self.selection_entity.set_width(cx, Pixels(select_width));
-                    self.selection_entity.set_height(cx, Pixels(font_metrics.height()));
-                    self.selection_entity.set_top(cx, Stretch(1.0));
-                    self.selection_entity.set_bottom(cx, Stretch(1.0));
-
-                    let caret_left = (caretx.floor() - posx - 1.0).max(0.0);
-
-                    self.caret_entity.set_left(cx, Pixels(caret_left));
-                    self.caret_entity.set_top(cx, Stretch(1.0));
-                    self.caret_entity.set_bottom(cx, Stretch(1.0));
-                    self.caret_entity.set_height(cx, Pixels(font_metrics.height()));
+                    if self.selection.anchor as usize == self.text.len() && self.text.len() != 0 {
+                        selectx = endx;
+                    }
                 }
+
+                //Draw selection
+                self.caret_x = caretx.floor() - res.x;
+                self.line_height = font_metrics.height();
+                self.selection_width = (caretx - selectx).abs();
+                self.selection_x =
+                    if selectx > caretx { self.caret_x } else { selectx.floor() - res.x };
+
+                // adjust transform
+                let res_right = res.x + res.width();
+                if caretx < bounds_left {
+                    self.transform_x += bounds_left - caretx;
+                } else if caretx >= bounds_right {
+                    self.transform_x -= caretx - bounds_right;
+                } else if res.x > bounds_left && res_right > bounds_right {
+                    self.transform_x -= (res.x - bounds_left).min(res_right - bounds_right);
+                } else if res.x < bounds_left && res_right < bounds_right {
+                    self.transform_x += (bounds_left - res.x).min(bounds_right - res_right);
+                }
+                self.transform_x = self.transform_x.round();
             }
         }
     }
 
-    pub fn insert_text(&mut self, cx: &mut Context, text: &str) {
+    pub fn insert_text(&mut self, _cx: &mut Context, text: &str) {
         let text_length = text.len();
         self.text.edit(self.selection.range(), text);
 
         self.selection = Selection::caret(self.selection.min() + text_length);
-
-        cx.current.set_text(cx, self.text.as_str());
     }
 
-    pub fn delete_text(&mut self, cx: &mut Context, movement: Movement) {
+    pub fn delete_text(&mut self, _cx: &mut Context, movement: Movement) {
         if !self.selection.is_caret() {
             self.text.edit(self.selection.range(), "");
 
@@ -313,8 +326,6 @@ impl TextboxData {
                 _ => {}
             }
         }
-
-        cx.current.set_text(cx, self.text.as_str());
     }
 
     pub fn move_cursor(&mut self, _: &mut Context, movement: Movement, selection: bool) {
@@ -412,8 +423,6 @@ pub enum TextEvent {
     Paste,
 
     // Helpers
-    SetSelectionEntity(Entity),
-    SetCaretEntity(Entity),
     SetOnEdit(Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>),
     SetOnSubmit(Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>),
 }
@@ -458,15 +467,11 @@ impl Model for TextboxData {
                 TextEvent::StartEdit => {
                     if !cx.current.is_disabled(cx) {
                         self.edit = true;
-                        self.selection_entity.set_visibility(cx, Visibility::Visible);
-                        self.caret_entity.set_visibility(cx, Visibility::Visible);
                     }
                 }
 
                 TextEvent::EndEdit => {
                     self.edit = false;
-                    self.selection_entity.set_visibility(cx, Visibility::Invisible);
-                    self.caret_entity.set_visibility(cx, Visibility::Invisible);
                 }
 
                 TextEvent::Submit => {
@@ -520,14 +525,6 @@ impl Model for TextboxData {
                     }
                 }
 
-                TextEvent::SetSelectionEntity(entity) => {
-                    self.selection_entity = *entity;
-                }
-
-                TextEvent::SetCaretEntity(entity) => {
-                    self.caret_entity = *entity;
-                }
-
                 TextEvent::SetOnEdit(on_edit) => {
                     self.on_edit = on_edit.clone();
                 }
@@ -558,18 +555,20 @@ where
                         let td = TextboxData {
                             text: text.clone(),
                             selection: text_data.selection,
-                            caret_entity: text_data.caret_entity,
-                            selection_entity: text_data.selection_entity,
                             edit: text_data.edit,
                             hitx: -1.0,
                             dragx: -1.0,
+                            caret_x: text_data.caret_x,
+                            selection_x: text_data.selection_x,
+                            selection_width: text_data.selection_width,
+                            transform_x: text_data.transform_x,
+                            line_height: text_data.line_height,
                             on_edit: text_data.on_edit.clone(),
                             on_submit: text_data.on_submit.clone(),
                         };
                         let real_current = cx.current;
                         cx.current = cx.current.parent(&cx.tree).unwrap();
                         td.build(cx);
-                        cx.current.set_text(cx, &text);
                         cx.current = real_current;
                     }
                 } else {
@@ -578,38 +577,32 @@ where
                     let real_current = cx.current;
                     cx.current = cx.current.parent(&cx.tree).unwrap();
                     td.build(cx);
-                    cx.current.set_text(cx, &text);
                     cx.current = real_current;
                 }
             });
+            HStack::new(cx, move |cx| {
+                Label::new(cx, TextboxData::text).class("textbox_content");
 
-            // Selection
-            let selection_entity = Element::new(cx)
-                .width(Pixels(0.0))
-                .class("selection")
-                .position_type(PositionType::SelfDirected)
-                .visibility(TextboxData::edit)
-                .hoverable(false)
-                // .bind(TextboxData::edit, |handle, edit| {
-                //     handle.visibility(edit);
-                // })
-                .entity();
+                // Selection
+                Element::new(cx)
+                    .class("selection")
+                    .position_type(PositionType::SelfDirected)
+                    .visibility(TextboxData::edit)
+                    .height(TextboxData::line_height)
+                    .left(TextboxData::selection_x)
+                    .width(TextboxData::selection_width);
 
-            cx.emit(TextEvent::SetSelectionEntity(selection_entity));
-
-            // Caret
-            let caret_entity = Element::new(cx)
-                .class("caret")
-                .position_type(PositionType::SelfDirected)
-                .width(Pixels(1.0))
-                .visibility(TextboxData::edit)
-                .hoverable(false)
-                // .bind(TextboxData::edit, |handle, edit| {
-                //     handle.visibility(edit);
-                // })
-                .entity();
-
-            cx.emit(TextEvent::SetCaretEntity(caret_entity));
+                // Caret
+                Element::new(cx)
+                    .class("caret")
+                    .overflow(Overflow::Visible)
+                    .position_type(PositionType::SelfDirected)
+                    .width(Pixels(1.0))
+                    .visibility(TextboxData::edit)
+                    .height(TextboxData::line_height)
+                    .left(TextboxData::caret_x);
+            })
+            .translate(TextboxData::transform_x.map(|x| (*x, 0.0)));
         })
     }
 }
@@ -741,8 +734,6 @@ where
                             cx.emit(TextEvent::InsertText(text));
                         };
 
-                        //self.selection_entity.set_visibility(cx, Visibility::Invisible);
-                        //self.caret_entity.set_visibility(cx, Visibility::Invisible);
                         cx.current.set_checked(cx, false);
                     }
 

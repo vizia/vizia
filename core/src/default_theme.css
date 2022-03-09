@@ -92,7 +92,8 @@ label.icon {
 
 textbox {
     width: auto;
-    height: auto;
+    min-width: 0px;
+    height: 30px;
     overflow: hidden;
     color: black;
     border-width: 1px;
@@ -101,7 +102,7 @@ textbox {
     child-top: 1s;
     child-bottom: 1s;
     child-left: 5px;
-    height: 30px;
+    child-right: 5px;
     border-radius: 3px;
 }
 
