@@ -589,9 +589,9 @@ where
                         .class("selection")
                         .position_type(PositionType::SelfDirected)
                         .visibility(TextboxData::edit)
-                        .height(TextboxData::line_height)
-                        .left(TextboxData::selection_x)
-                        .width(TextboxData::selection_width);
+                        .height(TextboxData::line_height.map(|x| Units::Pixels(*x)))
+                        .left(TextboxData::selection_x.map(|x| Units::Pixels(*x)))
+                        .width(TextboxData::selection_width.map(|x| Units::Pixels(*x)));
 
                     // Caret
                     Element::new(cx)
@@ -600,8 +600,8 @@ where
                         .position_type(PositionType::SelfDirected)
                         .width(Pixels(1.0))
                         .visibility(TextboxData::edit)
-                        .height(TextboxData::line_height)
-                        .left(TextboxData::caret_x);
+                        .height(TextboxData::line_height.map(|x| Units::Pixels(*x)))
+                        .left(TextboxData::caret_x.map(|x| Units::Pixels(*x)));
                 })
                 .translate(TextboxData::transform_x.map(|x| (*x, 0.0)));
         })
