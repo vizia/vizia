@@ -186,6 +186,9 @@ pub struct MenuStack {}
 
 impl MenuStack {
     fn new<F: FnOnce(&mut Context)>(cx: &mut Context, builder: F) -> Handle<'_, Self> {
+        if cx.data::<MenuControllerData>().is_none() {
+            panic!("MenuStacks must be built inside a MenuController");
+        }
         Self {}.build2(cx, move |cx| {
             MenuData::default().build(cx);
             builder(cx);
