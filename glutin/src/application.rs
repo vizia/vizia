@@ -322,13 +322,11 @@ impl Application {
 
                     apply_shared_inheritance(&mut context, &tree);
 
-
-                    if context.apply_animations() {
+                    if context.has_animations() {
 
                         *control_flow = ControlFlow::Poll;
 
                         //context.insert_event(Event::new(WindowEvent::Relayout).target(Entity::root()));
-
                         event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();
                         //window.handle.window().request_redraw();
                         if let Some(window_event_handler) = context.views.remove(&Entity::root()) {
@@ -346,6 +344,7 @@ impl Application {
                         }
                     }
 
+                    context.apply_animations();
 
                     apply_z_ordering(&mut context, &tree);
 

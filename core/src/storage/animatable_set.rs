@@ -393,6 +393,7 @@ where
                 state.output = Some(T::interpolate(&start.1, &end.1, 1.0));
 
                 if !state.persistent {
+                    //state.output = Some(T::interpolate(&start.1, &end.1, 0.0));
                     state.t = 1.0;
                     state.active = false;
                 } else {

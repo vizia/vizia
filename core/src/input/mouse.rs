@@ -52,8 +52,8 @@ pub struct MouseState {
 impl Default for MouseState {
     fn default() -> Self {
         MouseState {
-            cursorx: 0.0,
-            cursory: 0.0,
+            cursorx: -1.0,
+            cursory: -1.0,
             left: MouseButtonData::default(),
             right: MouseButtonData::default(),
             middle: MouseButtonData::default(),
