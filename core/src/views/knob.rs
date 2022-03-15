@@ -2,7 +2,7 @@ use femtovg::{LineCap, Paint, Path, Solidity};
 use morphorm::{Hierarchy, Units};
 
 use crate::{
-    Binding, Context, Entity, Handle, Lens, LensExt, Modifiers, MouseButton, Res, Units::*, View,
+    Binding, Context, Handle, Lens, LensExt, Modifiers, MouseButton, Res, Units::*, View,
     WindowEvent, ZStack,
 };
 
@@ -153,7 +153,7 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
                     self.is_dragging = true;
                     self.prev_drag_y = cx.mouse.left.pos_down.1;
 
-                    cx.captured = cx.current;
+                    cx.capture();
                     cx.focused = cx.current;
 
                     self.continuous_normal = *self.lens.get(cx);
@@ -170,7 +170,7 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
 
                     self.continuous_normal = *self.lens.get(cx);
 
-                    cx.captured = Entity::null();
+                    cx.release();
 
                     // if let Some(callback) = self.on_release.take() {
                     //     (callback)(self, cx, cx.current);

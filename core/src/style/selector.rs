@@ -1,5 +1,4 @@
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 
 use std::cmp::{Eq, PartialEq};
 use std::collections::HashSet;
@@ -66,7 +65,7 @@ pub enum SelectorRelation {
 /// A style selector.
 #[derive(Clone, Debug)]
 pub struct Selector {
-    pub id: Option<u64>,
+    pub id: Option<String>,
     pub element: Option<String>,
     pub classes: HashSet<String>,
     pub pseudo_classes: PseudoClass,
@@ -95,6 +94,10 @@ impl std::fmt::Display for Selector {
 
         if let Some(element) = &self.element {
             write!(f, "{}", element)?;
+        }
+
+        if let Some(id) = &self.id {
+            write!(f, "#{}", id)?;
         }
 
         for class_name in self.classes.iter() {
@@ -207,9 +210,7 @@ impl Selector {
     // }
 
     pub fn set_id(&mut self, id: &str) -> &mut Self {
-        let mut s = DefaultHasher::new();
-        id.hash(&mut s);
-        self.id = Some(s.finish());
+        self.id = Some(id.to_owned());
         self
     }
 

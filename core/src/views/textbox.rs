@@ -27,6 +27,7 @@ pub struct TextboxData {
     hitx: f32,
     dragx: f32,
     on_edit: Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>,
+    on_submit: Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>,
 }
 
 impl TextboxData {
@@ -41,6 +42,7 @@ impl TextboxData {
             hitx: -1.0,
             dragx: -1.0,
             on_edit: None,
+            on_submit: None,
         }
     }
 
@@ -385,6 +387,7 @@ pub enum TextEvent {
     SelectAll,
     StartEdit,
     EndEdit,
+    Submit,
     SetHitX(f32),
     SetDragX(f32),
     Copy,
@@ -394,6 +397,7 @@ pub enum TextEvent {
     SetSelectionEntity(Entity),
     SetCaretEntity(Entity),
     SetOnEdit(Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>),
+    SetOnSubmit(Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>),
 }
 
 impl Model for TextboxData {
@@ -445,6 +449,15 @@ impl Model for TextboxData {
                     self.edit = false;
                     self.selection_entity.set_visibility(cx, Visibility::Invisible);
                     self.caret_entity.set_visibility(cx, Visibility::Invisible);
+                }
+
+                TextEvent::Submit => {
+                    cx.emit(TextEvent::EndEdit);
+                    if let Some(callback) = self.on_submit.take() {
+                        (callback)(cx, self.text.as_str().to_owned());
+
+                        self.on_submit = Some(callback);
+                    }
                 }
 
                 TextEvent::SelectAll => {
@@ -500,6 +513,10 @@ impl Model for TextboxData {
                 TextEvent::SetOnEdit(on_edit) => {
                     self.on_edit = on_edit.clone();
                 }
+
+                TextEvent::SetOnSubmit(on_submit) => {
+                    self.on_submit = on_submit.clone();
+                }
             }
         }
     }
@@ -529,6 +546,7 @@ where
                             hitx: -1.0,
                             dragx: -1.0,
                             on_edit: text_data.on_edit.clone(),
+                            on_submit: text_data.on_submit.clone(),
                         };
                         let real_current = cx.current;
                         cx.current = cx.current.parent(&cx.tree).unwrap();
@@ -583,13 +601,16 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     where
         F: 'static + Fn(&mut Context, String) + Send + Sync,
     {
-        // if let Some(view) = self.cx.views.get_mut(&self.entity) {
-        //     if let Some(textbox) = view.downcast_mut::<Textbox<L>>() {
-        //         textbox.on_edit = Some(Box::new(callback));
-        //     }
-        // }
-
         self.cx.emit_to(self.entity, TextEvent::SetOnEdit(Some(Arc::new(callback))));
+
+        self
+    }
+
+    pub fn on_submit<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut Context, String) + Send + Sync,
+    {
+        self.cx.emit_to(self.entity, TextEvent::SetOnSubmit(Some(Arc::new(callback))));
 
         self
     }
@@ -616,7 +637,7 @@ where
                         cx.emit(TextEvent::StartEdit);
 
                         cx.focused = cx.current;
-                        cx.captured = cx.current;
+                        cx.capture();
                         cx.current.set_checked(cx, true);
                         //}
 
@@ -629,7 +650,7 @@ where
                         //}
                         //self.set_caret(cx, cx.current);
                     } else {
-                        cx.captured = Entity::null();
+                        cx.release();
                         cx.current.set_checked(cx, false);
                         //self.edit = false;
                         cx.emit(TextEvent::EndEdit);
@@ -685,6 +706,9 @@ where
                         // Finish editing
                         // self.edit = false;
 
+                        //cx.emit(TextEvent::EndEdit);
+                        cx.emit(TextEvent::Submit);
+
                         if let Some(source) = cx.data::<L::Source>() {
                             let text = self.lens.view(source, |t| {
                                 if let Some(t) = t {
@@ -697,7 +721,6 @@ where
                             cx.emit(TextEvent::SelectAll);
                             cx.emit(TextEvent::InsertText(text));
                         };
-                        cx.emit(TextEvent::EndEdit);
 
                         //self.selection_entity.set_visibility(cx, Visibility::Invisible);
                         //self.caret_entity.set_visibility(cx, Visibility::Invisible);

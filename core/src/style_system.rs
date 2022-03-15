@@ -146,7 +146,22 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             continue;
         }
 
+        if cx.cache.display.get(entity) == Some(&Display::None) {
+            continue;
+        }
+
         if tree.is_ignored(entity) {
+            continue;
+        }
+
+        // content-size is only used if any dimension is auto
+        if cx.style.min_width.get(entity).copied().unwrap_or_default() != Units::Auto
+            && cx.style.min_height.get(entity).copied().unwrap_or_default() != Units::Auto
+            && cx.style.width.get(entity).copied().unwrap_or_default() != Units::Auto
+            && cx.style.height.get(entity).copied().unwrap_or_default() != Units::Auto
+            && cx.style.max_width.get(entity).map_or(true, |w| w != &Units::Auto)
+            && cx.style.max_height.get(entity).map_or(true, |h| h != &Units::Auto)
+        {
             continue;
         }
 
@@ -375,10 +390,12 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
         }
     }
 
-    // Check for ID match TODO
-    // if selector.id.is_some() && selector.id != entity_selector.id {
-    //     return false;
-    // }
+    // If there's an id in the selector, it must match the entity's id
+    if let Some(id) = &selector.id {
+        if Some(id) != cx.style.ids.get(entity) {
+            return false;
+        }
+    }
 
     // Check for element name match
     if let Some(selector_element) = &selector.element {

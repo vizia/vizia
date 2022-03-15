@@ -3,8 +3,8 @@ use morphorm::Units;
 use crate::{style::Opacity, Animation, AnimationState, Color, Context};
 
 pub(crate) struct AnimationDescription {
-    duration: std::time::Duration,
-    delay: std::time::Duration,
+    duration: instant::Duration,
+    delay: instant::Duration,
     persistent: bool,
 }
 
@@ -39,7 +39,7 @@ impl<'a> AnimationBuilder<'a> {
             cx,
             animation_description: AnimationDescription {
                 duration,
-                delay: std::time::Duration::from_secs(0),
+                delay: instant::Duration::from_secs(0),
                 persistent: false,
             },
         }
@@ -48,7 +48,7 @@ impl<'a> AnimationBuilder<'a> {
     /// Sets the delay before the animation will play.
     ///
     /// Needs to be called before setting keyframes.
-    pub fn with_delay(mut self, delay: std::time::Duration) -> Self {
+    pub fn with_delay(mut self, delay: instant::Duration) -> Self {
         self.animation_description.delay = delay;
 
         self

@@ -326,3 +326,75 @@ popup:checked {
     opacity: 1.0;
     transition: opacity 0.1 0.0;
 }
+menucontroller {
+    width: 0px;
+    height: 0px;
+    overflow: visible;
+}
+
+menustack {
+    width: auto;
+    height: auto;
+    background-color: #dddddd;
+    border-color: #aaaaaa;
+    border-width: 1px;
+    color: black;
+    overflow: visible;
+}
+
+menu {
+    overflow: visible;
+    child-space: 3px;
+}
+
+menubutton {
+    child-space: 3px;
+}
+
+menu:selected {
+    background-color: #00264f;
+    color: white;
+}
+
+menubutton:selected {
+    background-color: #00264f;
+    color: white;
+}
+
+menustack.vertical {
+    layout-type: column;
+}
+
+menustack.horizontal {
+    layout-type: row;
+}
+
+menu>menustack {
+    position-type: self-directed;
+    z-index: 1000;
+    display: none;
+}
+
+menu:selected>menustack {
+    display: flex;
+}
+
+menustack.vertical>menu>menustack {
+    left: 100%;
+}
+
+menustack.horizontal>menu>menustack {
+    top: 100%;
+}
+
+.menu_arrow {
+    display: none;
+}
+
+menustack.vertical>menu>hstack>.menu_arrow {
+    display: flex;
+    font: "material";
+    left: 1s;
+    top: 1s;
+    bottom: 1s;
+}

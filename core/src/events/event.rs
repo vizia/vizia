@@ -12,6 +12,8 @@ pub enum Propagation {
     Up,
     // /// Events propagate down the tree to the target entity and then back up to the root
     // DownUp,
+    /// Events propagate starting at the target entity and visiting every entity that is a descendent of the target
+    Subtree,
     /// Events propagate directly to the target entity and to no others
     Direct,
 }

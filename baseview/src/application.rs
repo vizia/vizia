@@ -4,15 +4,12 @@ use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
-use vizia_core::{apply_inline_inheritance, apply_shared_inheritance, TreeDepthIterator, TreeExt};
 use vizia_core::{MouseButton, MouseButtonState};
-//use vizia_core::WindowWidget;
+
+use vizia_core::{BoundingBox, Event, WindowDescription};
 use vizia_core::{
-    apply_clipping, apply_hover, apply_styles, apply_text_constraints, apply_transform,
-    apply_visibility, apply_z_ordering, geometry_changed, Context, Display, Entity, EventManager,
-    FontOrId, Modifiers, Units, Visibility, WindowEvent, WindowSize,
+    Context, Entity, EventManager, FontOrId, Modifiers, Units, WindowEvent, WindowSize,
 };
-use vizia_core::{BoundingBox, Event, Propagation, WindowDescription};
 
 pub struct Application<F>
 where
@@ -96,11 +93,6 @@ pub(crate) struct ApplicationRunner {
     should_redraw: bool,
     scale_policy: WindowScalePolicy,
     scale_factor: f64,
-
-    click_time: std::time::Instant,
-    double_click_interval: std::time::Duration,
-    double_click: bool,
-    click_pos: (f32, f32),
 }
 
 impl ApplicationRunner {
@@ -168,11 +160,6 @@ impl ApplicationRunner {
             should_redraw: true,
             scale_policy,
             scale_factor: scale,
-
-            click_time: std::time::Instant::now(),
-            double_click_interval: std::time::Duration::from_millis(500),
-            double_click: false,
-            click_pos: (0.0, 0.0),
         }
     }
 
@@ -257,77 +244,28 @@ impl ApplicationRunner {
             self.event_manager.flush_events(&mut self.context);
         }
 
-        // Data Updates
-        let mut observers: Vec<Entity> = Vec::new();
-        for model_store in self.context.data.dense.iter_mut().map(|entry| &mut entry.value) {
-            for (_, model) in model_store.data.iter() {
-                for lens in model_store.lenses_dup.iter_mut() {
-                    if lens.update(model) {
-                        observers.extend(lens.observers().iter());
-                    }
-                }
-                for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                    if lens.update(model) {
-                        observers.extend(lens.observers().iter());
-                    }
-                }
-            }
-        }
-        for img in self.context.resource_manager.images.values_mut() {
-            if img.dirty {
-                observers.extend(img.observers.iter());
-                img.dirty = false;
-            }
-        }
+        self.context.process_data_updates();
+        self.context.process_style_updates();
 
-        for observer in observers.iter() {
-            if let Some(mut view) = self.context.views.remove(observer) {
-                let prev = self.context.current;
-                self.context.current = *observer;
-                let prev_count = self.context.count;
-                self.context.count = 0;
-                view.body(&mut self.context);
-                self.context.current = prev;
-                self.context.count = prev_count;
+        // if self.context.has_animations() {
+        //     if let Some(window_event_handler) = self.context.views.remove(&Entity::root()) {
+        //         if let Some(window) = window_event_handler.downcast_ref::<Window>() {
+        //             window.handle.window().request_redraw();
+        //         }
 
-                self.context.style.needs_redraw = true;
+        //         context.views.insert(Entity::root(), window_event_handler);
+        //     }
+        // } else {
+        //     if should_poll {
+        //         *control_flow = ControlFlow::Poll;
+        //     } else {
+        //         *control_flow = ControlFlow::Wait;
+        //     }
+        // }
 
-                self.context.views.insert(*observer, view);
-            }
-        }
+        self.context.apply_animations();
 
-        // Not ideal
-        let tree = self.context.tree.clone();
-
-        // Styling
-        apply_inline_inheritance(&mut self.context, &tree);
-        apply_styles(&mut self.context, &tree);
-        apply_shared_inheritance(&mut self.context, &tree);
-
-        apply_z_ordering(&mut self.context, &tree);
-
-        apply_visibility(&mut self.context, &tree);
-
-        apply_text_constraints(&mut self.context, &tree);
-
-        // Layout
-        if self.context.style.needs_relayout {
-            vizia_core::apply_layout(
-                &mut self.context.cache,
-                &self.context.tree,
-                &self.context.style,
-            );
-            self.context.style.needs_relayout = false;
-        }
-
-        // Emit any geometry changed events
-        geometry_changed(&mut self.context, &tree);
-
-        apply_transform(&mut self.context, &tree);
-
-        apply_hover(&mut self.context);
-
-        apply_clipping(&mut self.context, &tree);
+        self.context.process_visual_updates();
 
         if self.context.style.needs_redraw {
             //     // TODO - Move this to EventManager
@@ -337,77 +275,8 @@ impl ApplicationRunner {
     }
 
     pub fn render(&mut self) {
-        // TODO
-        let dpi_factor = 1.0;
-
-        let window_width = self.context.cache.get_width(Entity::root());
-        let window_height = self.context.cache.get_height(Entity::root());
-
-        self.canvas.set_size(window_width as u32, window_height as u32, dpi_factor as f32);
-        let clear_color = self
-            .context
-            .style
-            .background_color
-            .get(Entity::root())
-            .cloned()
-            .unwrap_or(vizia_core::Color::white());
-        self.canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
-
-        // Sort the tree by z order
-        let mut draw_tree: Vec<Entity> = self.context.tree.into_iter().collect();
-        draw_tree.sort_by_cached_key(|entity| self.context.cache.get_z_index(*entity));
-
-        self.context.resource_manager.mark_images_unused();
-
-        for entity in draw_tree.into_iter() {
-            // Skip window
-            if entity == Entity::root() {
-                continue;
-            }
-
-            // Skip invisible widgets
-            if self.context.cache.get_visibility(entity) == Visibility::Invisible {
-                continue;
-            }
-
-            if self.context.cache.get_display(entity) == Display::None {
-                continue;
-            }
-
-            // Skip widgets that have 0 opacity
-            if self.context.cache.get_opacity(entity) == 0.0 {
-                continue;
-            }
-
-            // Apply clipping
-            let clip_region = self.context.cache.get_clip_region(entity);
-            self.canvas.scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
-
-            // Apply transform
-            let transform = self.context.cache.get_transform(entity);
-            self.canvas.save();
-            self.canvas.set_transform(
-                transform[0],
-                transform[1],
-                transform[2],
-                transform[3],
-                transform[4],
-                transform[5],
-            );
-
-            if let Some(view) = self.context.views.remove(&entity) {
-                self.context.current = entity;
-                view.draw(&mut self.context, &mut self.canvas);
-
-                self.context.views.insert(entity, view);
-            }
-
-            self.canvas.restore();
-        }
-
-        self.canvas.flush();
-        self.context.resource_manager.evict_unused_images();
-
+        let dpi_factor = 1.0; // TODO
+        self.context.draw(&mut self.canvas, dpi_factor);
         self.should_redraw = false;
     }
 
@@ -422,187 +291,15 @@ impl ApplicationRunner {
                 baseview::MouseEvent::CursorMoved { position } => {
                     let cursorx = (position.x) as f32;
                     let cursory = (position.y) as f32;
-
-                    self.context.mouse.cursorx = cursorx;
-                    self.context.mouse.cursory = cursory;
-
-                    vizia_core::apply_hover(&mut self.context);
-
-                    if self.context.captured != Entity::null() {
-                        self.context.event_queue.push_back(
-                            Event::new(WindowEvent::MouseMove(cursorx, cursory))
-                                .target(self.context.captured)
-                                .propagate(Propagation::Direct),
-                        );
-                    } else if self.context.hovered != Entity::root() {
-                        self.context.event_queue.push_back(
-                            Event::new(WindowEvent::MouseMove(cursorx, cursory))
-                                .target(self.context.hovered),
-                        );
-                    }
+                    self.context.dispatch_system_event(WindowEvent::MouseMove(cursorx, cursory));
                 }
                 baseview::MouseEvent::ButtonPressed(button) => {
-                    let b = match button {
-                        baseview::MouseButton::Left => MouseButton::Left,
-                        baseview::MouseButton::Right => MouseButton::Right,
-                        baseview::MouseButton::Middle => MouseButton::Middle,
-                        baseview::MouseButton::Other(id) => MouseButton::Other(id as u16),
-                        baseview::MouseButton::Back => MouseButton::Other(4),
-                        baseview::MouseButton::Forward => MouseButton::Other(5),
-                    };
-
-                    match b {
-                        MouseButton::Left => {
-                            self.context.mouse.left.state = MouseButtonState::Pressed;
-                        }
-                        MouseButton::Right => {
-                            self.context.mouse.right.state = MouseButtonState::Pressed;
-                        }
-                        MouseButton::Middle => {
-                            self.context.mouse.middle.state = MouseButtonState::Pressed;
-                        }
-                        _ => {}
-                    };
-
-                    let new_click_time = std::time::Instant::now();
-                    let click_duration = new_click_time - self.click_time;
-                    let new_click_pos = (self.context.mouse.cursorx, self.context.mouse.cursory);
-
-                    if click_duration <= self.double_click_interval
-                        && new_click_pos == self.click_pos
-                    {
-                        if !self.double_click {
-                            let _target = if self.context.captured != Entity::null() {
-                                self.context.event_queue.push_back(
-                                    Event::new(WindowEvent::MouseDoubleClick(b))
-                                        .target(self.context.captured)
-                                        .propagate(Propagation::Direct),
-                                );
-                                self.context.captured
-                            } else {
-                                self.context.event_queue.push_back(
-                                    Event::new(WindowEvent::MouseDoubleClick(b))
-                                        .target(self.context.hovered),
-                                );
-                                self.context.hovered
-                            };
-                            self.double_click = true;
-                        }
-                    } else {
-                        self.double_click = false;
-                    }
-
-                    self.click_time = new_click_time;
-                    self.click_pos = new_click_pos;
-
-                    // if self.context.hovered != Entity::null()
-                    //     && self.context.active != self.context.hovered
-                    // {
-                    //     self.context.active = self.context.hovered;
-                    //     self.context.event_queue.push_back(Event::new(WindowEvent::Restyle).target(Entity::root()));
-                    //     self.context.needs_restyle = true;
-                    // }
-
-                    if self.context.captured != Entity::null() {
-                        self.context.event_queue.push_back(
-                            Event::new(WindowEvent::MouseDown(b))
-                                .target(self.context.captured)
-                                .propagate(Propagation::Direct),
-                        );
-                    } else {
-                        self.context.event_queue.push_back(
-                            Event::new(WindowEvent::MouseDown(b)).target(self.context.hovered),
-                        );
-                    };
-
-                    // if let Some(event_handler) = self.event_manager.event_handlers.get_mut(&target) {
-                    //     if let Some(callback) = self.event_manager.callbacks.get_mut(&target) {
-                    //         (callback)(event_handler, &mut self.context, target);
-                    //     }
-                    // }
-
-                    match b {
-                        MouseButton::Left => {
-                            self.context.mouse.left.pos_down =
-                                (self.context.mouse.cursorx, self.context.mouse.cursory);
-                            self.context.mouse.left.pressed = self.context.hovered;
-                        }
-
-                        MouseButton::Middle => {
-                            self.context.mouse.middle.pos_down =
-                                (self.context.mouse.cursorx, self.context.mouse.cursory);
-                            self.context.mouse.left.pressed = self.context.hovered;
-                        }
-
-                        MouseButton::Right => {
-                            self.context.mouse.right.pos_down =
-                                (self.context.mouse.cursorx, self.context.mouse.cursory);
-                            self.context.mouse.left.pressed = self.context.hovered;
-                        }
-
-                        _ => {}
-                    }
+                    let b = translate_mouse_button(button);
+                    self.context.dispatch_system_event(WindowEvent::MouseDown(b));
                 }
                 baseview::MouseEvent::ButtonReleased(button) => {
-                    let b = match button {
-                        baseview::MouseButton::Left => MouseButton::Left,
-                        baseview::MouseButton::Right => MouseButton::Right,
-                        baseview::MouseButton::Middle => MouseButton::Middle,
-                        baseview::MouseButton::Other(id) => MouseButton::Other(id as u16),
-                        baseview::MouseButton::Back => MouseButton::Other(4),
-                        baseview::MouseButton::Forward => MouseButton::Other(5),
-                    };
-
-                    match b {
-                        MouseButton::Left => {
-                            self.context.mouse.left.state = MouseButtonState::Released;
-                        }
-                        MouseButton::Right => {
-                            self.context.mouse.right.state = MouseButtonState::Released;
-                        }
-                        MouseButton::Middle => {
-                            self.context.mouse.middle.state = MouseButtonState::Released;
-                        }
-                        _ => {}
-                    };
-
-                    // self.context.active = Entity::null();
-                    // self.context.event_queue.push_back(Event::new(WindowEvent::Restyle).target(Entity::root()));
-                    // self.context.needs_restyle = true;
-
-                    if self.context.captured != Entity::null() {
-                        self.context.event_queue.push_back(
-                            Event::new(WindowEvent::MouseUp(b))
-                                .target(self.context.captured)
-                                .propagate(Propagation::Direct),
-                        );
-                    } else {
-                        self.context.event_queue.push_back(
-                            Event::new(WindowEvent::MouseUp(b)).target(self.context.hovered),
-                        );
-                    }
-
-                    match b {
-                        MouseButton::Left => {
-                            self.context.mouse.left.pos_up =
-                                (self.context.mouse.cursorx, self.context.mouse.cursory);
-                            self.context.mouse.left.released = self.context.hovered;
-                        }
-
-                        MouseButton::Middle => {
-                            self.context.mouse.middle.pos_up =
-                                (self.context.mouse.cursorx, self.context.mouse.cursory);
-                            self.context.mouse.left.released = self.context.hovered;
-                        }
-
-                        MouseButton::Right => {
-                            self.context.mouse.right.pos_up =
-                                (self.context.mouse.cursorx, self.context.mouse.cursory);
-                            self.context.mouse.left.released = self.context.hovered;
-                        }
-
-                        _ => {}
-                    }
+                    let b = translate_mouse_button(button);
+                    self.context.dispatch_system_event(WindowEvent::MouseUp(b));
                 }
                 baseview::MouseEvent::WheelScrolled(scroll_delta) => {
                     let (lines_x, lines_y) = match scroll_delta {
@@ -625,18 +322,7 @@ impl ApplicationRunner {
                         ),
                     };
 
-                    if self.context.captured != Entity::null() {
-                        self.context.event_queue.push_back(
-                            Event::new(WindowEvent::MouseScroll(lines_x, lines_y))
-                                .target(self.context.captured)
-                                .propagate(Propagation::Direct),
-                        );
-                    } else {
-                        self.context.event_queue.push_back(
-                            Event::new(WindowEvent::MouseScroll(lines_x, lines_y))
-                                .target(self.context.hovered),
-                        );
-                    }
+                    self.context.dispatch_system_event(WindowEvent::MouseScroll(lines_x, lines_y));
                 }
                 _ => {}
             },
@@ -664,135 +350,25 @@ impl ApplicationRunner {
                     _ => (),
                 }
 
-                if event.code == Code::F5 && s == MouseButtonState::Pressed {
-                    self.context.reload_styles().unwrap();
-                }
-
-                #[cfg(debug_assertions)]
-                if event.code == Code::KeyH && s == MouseButtonState::Pressed {
-                    println!("Tree");
-                    for entity in self.context.tree.into_iter() {
-                        println!("Entity: {} Parent: {:?} posx: {} posy: {} width: {} height: {} scissor: {:?}", entity, entity.parent(&self.context.tree), self.context.cache.get_posx(entity), self.context.cache.get_posy(entity), self.context.cache.get_width(entity), self.context.cache.get_height(entity), self.context.cache.get_clip_region(entity));
-                    }
-                }
-
-                #[cfg(debug_assertions)]
-                if event.code == Code::KeyI && s == MouseButtonState::Pressed {
-                    let iter = TreeDepthIterator::full(&self.context.tree);
-                    for (entity, level) in iter {
-                        if let Some(view) = self.context.views.get(&entity) {
-                            if let Some(element_name) = view.element() {
-                                println!(
-                                    "{:indent$} {} {} {:?} {:?} {:?}",
-                                    "",
-                                    entity,
-                                    element_name,
-                                    self.context.cache.get_visibility(entity),
-                                    self.context.cache.get_display(entity),
-                                    self.context.cache.get_bounds(entity),
-                                    indent = level
-                                );
-                            }
-                        }
-                    }
-                }
-
-                if event.code == Code::Tab && s == MouseButtonState::Pressed {
-                    // let next_focus = self
-                    //     .state
-                    //     .style
-                    //     .focus_order
-                    //     .get(self.context.focused)
-                    //     .cloned()
-                    //     .unwrap_or_default()
-                    //     .next;
-                    // let prev_focus = self
-                    //     .state
-                    //     .style
-                    //     .focus_order
-                    //     .get(self.context.focused)
-                    //     .cloned()
-                    //     .unwrap_or_default()
-                    //     .prev;
-
-                    // if self.context.modifiers.shift {
-                    //     if prev_focus != Entity::null() {
-                    //         self.context.focused.set_focus(&mut self.context, false);
-                    //         self.context.focused = prev_focus;
-                    //         self.context.focused.set_focus(&mut self.context, true);
-                    //     } else {
-                    //         // TODO impliment reverse iterator for tree
-                    //         // state.focused = match state.focused.into_iter(&state.tree).next() {
-                    //         //     Some(val) => val,
-                    //         //     None => Entity::root(),
-                    //         // };
-                    //     }
-                    // } else {
-                    //     if next_focus != Entity::null() {
-                    //         self.context.focused.set_focus(&mut self.context, false);
-                    //         self.context.focused = next_focus;
-                    //         self.context.focused.set_focus(&mut self.context, true);
-                    //     } else {
-                    //         self.context.focused.set_focus(&mut self.context, false);
-                    //         self.context.focused =
-                    //             match self.context.focused.tree_iter(&self.tree).next() {
-                    //                 Some(val) => val,
-                    //                 None => Entity::root(),
-                    //             };
-                    //         self.context.focused.set_focus(&mut self.context, true);
-                    //     }
-                    // }
-
-                    self.context.style.needs_restyle = true;
-                }
-
                 match s {
                     MouseButtonState::Pressed => {
-                        if self.context.focused != Entity::null() {
-                            self.context.event_queue.push_back(
-                                Event::new(WindowEvent::KeyDown(
-                                    event.code,
-                                    Some(event.key.clone()),
-                                ))
-                                .target(self.context.focused)
-                                .propagate(Propagation::Up),
-                            );
-                        } else {
-                            self.context.event_queue.push_back(
-                                Event::new(WindowEvent::KeyDown(
-                                    event.code,
-                                    Some(event.key.clone()),
-                                ))
-                                .target(self.context.hovered)
-                                .propagate(Propagation::Up),
-                            );
-                        }
+                        self.context.dispatch_system_event(WindowEvent::KeyDown(
+                            event.code,
+                            Some(event.key.clone()),
+                        ));
 
                         if let keyboard_types::Key::Character(written) = &event.key {
                             for chr in written.chars() {
-                                self.context.event_queue.push_back(
-                                    Event::new(WindowEvent::CharInput(chr))
-                                        .target(self.context.focused)
-                                        .propagate(Propagation::Up),
-                                );
+                                self.context.dispatch_system_event(WindowEvent::CharInput(chr));
                             }
                         }
                     }
 
                     MouseButtonState::Released => {
-                        if self.context.focused != Entity::null() {
-                            self.context.event_queue.push_back(
-                                Event::new(WindowEvent::KeyUp(event.code, Some(event.key)))
-                                    .target(self.context.focused)
-                                    .propagate(Propagation::Up),
-                            );
-                        } else {
-                            self.context.event_queue.push_back(
-                                Event::new(WindowEvent::KeyUp(event.code, Some(event.key)))
-                                    .target(self.context.hovered)
-                                    .propagate(Propagation::Up),
-                            );
-                        }
+                        self.context.dispatch_system_event(WindowEvent::KeyUp(
+                            event.code,
+                            Some(event.key.clone()),
+                        ));
                     }
                 }
             }
@@ -890,5 +466,16 @@ pub fn requests_exit(event: &baseview::Event) -> bool {
             false
         }
         _ => false,
+    }
+}
+
+fn translate_mouse_button(button: baseview::MouseButton) -> MouseButton {
+    match button {
+        baseview::MouseButton::Left => MouseButton::Left,
+        baseview::MouseButton::Right => MouseButton::Right,
+        baseview::MouseButton::Middle => MouseButton::Middle,
+        baseview::MouseButton::Other(id) => MouseButton::Other(id as u16),
+        baseview::MouseButton::Back => MouseButton::Other(4),
+        baseview::MouseButton::Forward => MouseButton::Other(5),
     }
 }

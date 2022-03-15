@@ -287,7 +287,7 @@ pub trait View: 'static + Sized {
 
         // canvas.fill_path(&mut path, paint);
 
-        //let start = std::time::Instant::now();
+        //let start = instant::Instant::now();
         let mut path = Path::new();
 
         if bounds.w == bounds.h

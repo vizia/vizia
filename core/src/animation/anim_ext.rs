@@ -10,7 +10,7 @@ pub trait AnimExt: AsEntity + Sized {
     /// Create an animation which animates the `left` property from 0 to 100 pixels in 5 seconds
     /// and play the animation on an entity:
     /// ```
-    /// let animation_id = cx.create_animation(std::time::Duration::from_secs(5))
+    /// let animation_id = cx.create_animation(instant::Duration::from_secs(5))
     ///     .add_keyframe(0.0, |keyframe| keyframe.set_left(Pixels(0.0)))
     ///     .add_keyframe(1.0, |keyframe| keyframe.set_left(Pixels(100.0)))
     ///     .build();

@@ -80,6 +80,7 @@ pub struct Style {
     pub default_font: String,
 
     pub elements: SparseSet<String>,
+    pub ids: SparseSet<String>,
     pub classes: SparseSet<HashSet<String>>,
     pub pseudo_classes: SparseSet<PseudoClass>,
     pub disabled: StyleSet<bool>,
@@ -825,8 +826,8 @@ impl Style {
         transition: Transition,
     ) -> AnimationState<T> {
         AnimationState::new(Animation::null())
-            .with_duration(std::time::Duration::from_secs_f32(transition.duration))
-            .with_delay(std::time::Duration::from_secs_f32(transition.delay))
+            .with_duration(instant::Duration::from_secs_f32(transition.duration))
+            .with_delay(instant::Duration::from_secs_f32(transition.delay))
             .with_keyframe((0.0, Default::default()))
             .with_keyframe((1.0, Default::default()))
     }
@@ -844,6 +845,7 @@ impl Style {
 
     pub fn remove(&mut self, entity: Entity) {
         self.elements.remove(entity);
+        self.ids.remove(entity);
         self.classes.remove(entity);
         self.pseudo_classes.remove(entity);
         //self.disabled.remove(entity);

@@ -335,7 +335,7 @@ where
             self.active_animations[animation_index].t0 = 0.0;
             self.active_animations[animation_index].active = true;
             self.active_animations[animation_index].t = 0.0;
-            self.active_animations[animation_index].start_time = std::time::Instant::now();
+            self.active_animations[animation_index].start_time = instant::Instant::now();
             self.active_animations[animation_index].duration = animation.duration;
             self.active_animations[animation_index].delay = animation.delay;
             self.active_animations[animation_index].keyframes = animation.keyframes.clone();
@@ -347,7 +347,7 @@ where
             animation.active = true;
             animation.t0 = 0.0;
             animation.t = 0.0;
-            animation.start_time = std::time::Instant::now();
+            animation.start_time = instant::Instant::now();
             animation.entities.insert(entity);
 
             animation.output = Some(animation.keyframes.first().unwrap().1.clone());
@@ -357,7 +357,7 @@ where
         
     }
 
-    pub fn animate(&mut self, current_time: std::time::Instant) {
+    pub fn animate(&mut self, current_time: instant::Instant) {
         for state in self.active_animations.iter_mut() {
             // If the animation is already finished then return false
             if state.t0 == 1.0 {
@@ -527,7 +527,7 @@ where
                 //transition.duration = transition.duration.mul_f32(transition.t);
                 transition.delay = transition.t - 1.0;
 
-                transition.start_time = std::time::Instant::now();
+                transition.start_time = instant::Instant::now();
             }
         } else {
             if rule_animation_id < self.animations.len() {

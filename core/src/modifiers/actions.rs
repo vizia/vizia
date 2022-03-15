@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use morphorm::GeometryChanged;
 
-use crate::{Context, Entity, Event, Handle, MouseButton, View, ViewHandler, WindowEvent};
+use crate::{Context, Event, Handle, MouseButton, View, ViewHandler, WindowEvent};
 
 // Press
 pub struct Press<V: View> {
@@ -45,15 +45,11 @@ impl<V: View> View for Press<V> {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    //if event.target == cx.current {
                     if let Some(action) = self.action.take() {
                         (action)(cx);
 
                         self.action = Some(action);
                     }
-
-                    //cx.captured = cx.current;
-                    //}
                 }
 
                 _ => {}
@@ -114,7 +110,7 @@ impl<V: View> View for Release<V> {
                             self.action = Some(action);
                         }
 
-                        cx.captured = Entity::null();
+                        cx.release();
                     }
                 }
 
@@ -364,6 +360,122 @@ impl<V: View> View for Move<V> {
     }
 }
 
+// FocusIn
+pub struct FocusIn<V: View> {
+    view: Box<dyn ViewHandler>,
+    action: Option<Box<dyn Fn(&mut Context)>>,
+
+    p: PhantomData<V>,
+}
+
+impl<V: View> FocusIn<V> {
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, FocusIn<V>>
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
+            if view.downcast_ref::<V>().is_some() {
+                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
+
+                handle.cx.views.insert(handle.entity, Box::new(item));
+            } else {
+                if let Some(view) = view.downcast_mut::<FocusIn<V>>() {
+                    view.action = Some(Box::new(action));
+                }
+                handle.cx.views.insert(handle.entity, view);
+            }
+        }
+
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
+    }
+}
+
+impl<V: View> View for FocusIn<V> {
+    fn element(&self) -> Option<String> {
+        self.view.element()
+    }
+
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        self.view.event(cx, event);
+
+        if let Some(window_event) = event.message.downcast() {
+            match window_event {
+                WindowEvent::FocusIn => {
+                    if let Some(action) = self.action.take() {
+                        (action)(cx);
+
+                        self.action = Some(action);
+                    }
+                }
+
+                _ => {}
+            }
+        }
+    }
+
+    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+        self.view.draw(cx, canvas);
+    }
+}
+
+// FocusOut
+pub struct FocusOut<V: View> {
+    view: Box<dyn ViewHandler>,
+    action: Option<Box<dyn Fn(&mut Context)>>,
+
+    p: PhantomData<V>,
+}
+
+impl<V: View> FocusOut<V> {
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, FocusOut<V>>
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
+            if view.downcast_ref::<V>().is_some() {
+                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
+
+                handle.cx.views.insert(handle.entity, Box::new(item));
+            } else {
+                if let Some(view) = view.downcast_mut::<FocusOut<V>>() {
+                    view.action = Some(Box::new(action));
+                }
+                handle.cx.views.insert(handle.entity, view);
+            }
+        }
+
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
+    }
+}
+
+impl<V: View> View for FocusOut<V> {
+    fn element(&self) -> Option<String> {
+        self.view.element()
+    }
+
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        self.view.event(cx, event);
+
+        if let Some(window_event) = event.message.downcast() {
+            match window_event {
+                WindowEvent::FocusOut => {
+                    if let Some(action) = self.action.take() {
+                        (action)(cx);
+
+                        self.action = Some(action);
+                    }
+                }
+
+                _ => {}
+            }
+        }
+    }
+
+    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+        self.view.draw(cx, canvas);
+    }
+}
+
 // Geo
 pub struct Geo<V: View> {
     view: Box<dyn ViewHandler>,
@@ -450,6 +562,14 @@ pub trait Actions<'a> {
     where
         F: 'static + Fn(&mut Context, f32, f32);
 
+    fn on_focus_in<F>(self, action: F) -> Handle<'a, FocusIn<Self::View>>
+    where
+        F: 'static + Fn(&mut Context);
+
+    fn on_focus_out<F>(self, action: F) -> Handle<'a, FocusOut<Self::View>>
+    where
+        F: 'static + Fn(&mut Context);
+
     fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<Self::View>>
     where
         F: 'static + Fn(&mut Context, GeometryChanged);
@@ -497,6 +617,20 @@ impl<'a, V: View> Actions<'a> for Handle<'a, V> {
         F: 'static + Fn(&mut Context, f32, f32),
     {
         Move::new(self, action)
+    }
+
+    fn on_focus_in<F>(self, action: F) -> Handle<'a, FocusIn<Self::View>>
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        FocusIn::new(self, action)
+    }
+
+    fn on_focus_out<F>(self, action: F) -> Handle<'a, FocusOut<Self::View>>
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        FocusOut::new(self, action)
     }
 
     fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<Self::View>>

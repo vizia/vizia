@@ -24,8 +24,9 @@ impl ImageOrId {
     pub fn id(&mut self, canvas: &mut Canvas) -> femtovg::ImageId {
         match self {
             ImageOrId::Image(image, flags) => {
+                let image_ref: &image::DynamicImage = image.borrow();
                 let res = canvas
-                    .create_image(femtovg::ImageSource::try_from(image.borrow()).unwrap(), *flags)
+                    .create_image(femtovg::ImageSource::try_from(image_ref).unwrap(), *flags)
                     .unwrap();
                 *self = ImageOrId::Id(res, image.dimensions());
                 res

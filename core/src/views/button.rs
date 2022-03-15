@@ -1,4 +1,4 @@
-use crate::{Context, Entity, Event, PropSet, View};
+use crate::{Context, Event, PropSet, View};
 use crate::{Handle, MouseButton, WindowEvent};
 
 /// A simple push button with an action and a label.
@@ -16,7 +16,7 @@ impl Button {
         Label: 'static + View,
     {
         Self { action: Some(Box::new(action)) }.build2(cx, move |cx| {
-            (label)(cx).hoverable(false);
+            (label)(cx).hoverable(false).focusable(false);
         })
     }
 }
@@ -31,7 +31,7 @@ impl View for Button {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                     cx.current.set_active(cx, true);
-                    cx.captured = cx.current;
+                    cx.capture();
                     if let Some(callback) = self.action.take() {
                         (callback)(cx);
 
@@ -41,7 +41,7 @@ impl View for Button {
 
                 WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                     if event.target == cx.current {
-                        cx.captured = Entity::null();
+                        cx.release();
                         cx.current.set_active(cx, false);
                     }
                 }
