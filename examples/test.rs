@@ -10,7 +10,7 @@ pub enum AppEvent {
 }
 
 impl Model for AppData {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _cx: &mut Context, event: &mut Event) {
         if let Some(app_event) = event.message.downcast() {
             match app_event {
                 AppEvent::SetValue(val) => {
