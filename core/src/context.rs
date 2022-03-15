@@ -566,7 +566,6 @@ impl Context {
 
     /// Massages the style system until everything is coherent
     pub fn process_visual_updates(&mut self) {
-
         // Not ideal
         let tree = self.tree.clone();
 
