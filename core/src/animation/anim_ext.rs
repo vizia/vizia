@@ -9,7 +9,7 @@ pub trait AnimExt: AsEntity + Sized {
     /// # Example
     /// Create an animation which animates the `left` property from 0 to 100 pixels in 5 seconds
     /// and play the animation on an entity:
-    /// ```
+    /// ```ignore
     /// let animation_id = cx.create_animation(instant::Duration::from_secs(5))
     ///     .add_keyframe(0.0, |keyframe| keyframe.set_left(Pixels(0.0)))
     ///     .add_keyframe(1.0, |keyframe| keyframe.set_left(Pixels(100.0)))
@@ -75,7 +75,7 @@ pub trait AnimExt: AsEntity + Sized {
     /// Returns true if there is an active animation with the given id.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// let test = entity.is_animation(animation_id);
     /// ```
     fn is_animating(self, cx: &mut Context, animation: Animation) -> bool {

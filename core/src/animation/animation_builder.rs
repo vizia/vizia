@@ -13,7 +13,7 @@ pub(crate) struct AnimationDescription {
 /// Returned from `cx.create_animation(duration)`.
 ///
 /// # Example
-/// ```
+/// ```ignore
 /// let animation_id = cx.create_animation(std::time::Duration::from_secs(1))
 ///     .add_keyframe(0.0, |keyframe|
 ///         keyframe
@@ -79,7 +79,7 @@ impl<'a> AnimationBuilder<'a> {
 /// A builder for constructing keyframes.
 ///
 /// # Example
-/// ```
+/// ```ignore
 /// let animation_id = cx.create_animation(std::time::Duration::from_secs(1))
 ///     .add_keyframe(0.0, |keyframe|
 ///         keyframe
@@ -125,7 +125,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// Adds a background-color property to the keyframe.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// .add_keyframe(0.0, |keyframe| keyframe.set_background_color(Color::red()))
     /// ```
     pub fn set_background_color(self, color: Color) -> Self {
@@ -147,7 +147,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// Adds a left property to the keyframe.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// .add_keyframe(0.0, |keyframe| keyframe.set_left(Pixels(50.0)))
     /// ```
     pub fn set_left(self, value: Units) -> Self {
@@ -169,7 +169,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// Adds a right property to the keyframe.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// .add_keyframe(0.0, |keyframe| keyframe.set_right(Pixels(50.0)))
     /// ```
     pub fn set_right(self, value: Units) -> Self {
@@ -191,7 +191,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// Adds a top property to the keyframe.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// .add_keyframe(0.0, |keyframe| keyframe.set_top(Pixels(50.0)))
     /// ```
     pub fn set_top(self, value: Units) -> Self {
@@ -213,7 +213,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// Adds a bottom property to the keyframe.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// .add_keyframe(0.0, |keyframe| keyframe.set_bottom(Pixels(50.0)))
     /// ```
     pub fn set_bottom(self, value: Units) -> Self {
@@ -235,7 +235,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// Adds a width property to the keyframe.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// .add_keyframe(0.0, |keyframe| keyframe.set_width(Pixels(50.0)))
     /// ```
     pub fn set_width(self, value: Units) -> Self {
@@ -257,7 +257,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// Adds a height property to the keyframe.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// .add_keyframe(0.0, |keyframe| keyframe.set_height(Pixels(50.0)))
     /// ```
     pub fn set_height(self, value: Units) -> Self {
@@ -279,7 +279,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// Adds a child-left property to the keyframe.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// .add_keyframe(0.0, |keyframe| keyframe.set_child_left(Pixels(50.0)))
     /// ```
     pub fn set_child_left(self, value: Units) -> Self {
@@ -301,7 +301,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// Adds a child-right property to the keyframe.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// .add_keyframe(0.0, |keyframe| keyframe.set_child_right(Pixels(50.0)))
     /// ```
     pub fn set_child_right(self, value: Units) -> Self {
@@ -323,7 +323,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// Adds a child-top property to the keyframe.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// .add_keyframe(0.0, |keyframe| keyframe.set_child_top(Pixels(50.0)))
     /// ```
     pub fn set_child_top(self, value: Units) -> Self {
@@ -345,7 +345,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// Adds a child-bottom property to the keyframe.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// .add_keyframe(0.0, |keyframe| keyframe.set_child_bottom(Pixels(50.0)))
     /// ```
     pub fn set_child_bottom(self, value: Units) -> Self {
@@ -367,7 +367,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// Adds a rotate transform property to the keyframe.
     ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// .add_keyframe(0.0, |keyframe| keyframe.set_rotate(Pixels(50.0)))
     /// ```
     pub fn set_rotate(self, value: f32) -> Self {

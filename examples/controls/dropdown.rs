@@ -71,8 +71,8 @@ fn main() {
                 )
                 .width(Pixels(100.0));
             })
-            .child_space(Stretch(1.0));
-            //.background_color(choice_to_color(&option))
+            .child_space(Stretch(1.0))
+            .background_color(choice_to_color(&option));
         });
     })
     .run();
