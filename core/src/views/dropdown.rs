@@ -1,5 +1,5 @@
 use crate::{
-    Actions, Button, Context, Handle, Model, Overflow, Popup, PopupData, PopupEvent, Units::*, View,
+    Button, Context, Handle, Model, Overflow, Popup, PopupData, PopupEvent, Units::*, View,
 };
 
 pub const ICON_DOWN_OPEN: &str = "\u{e75c}";
