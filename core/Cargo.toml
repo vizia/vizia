@@ -18,7 +18,7 @@ image = { version = "0.24.0", default-features = false, features = ["png"] } # i
 morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "8d955d2f1d5b698e4fd1dbdfe36b3f3d9adbd19a" }
 bitflags = "1.3.2"
 fnv = "1.0.7"
-keyboard-types = { version = "0.5.0", default-features = false }
+keyboard-types = { version = "0.6.2", default-features = false }
 fluent-bundle = "0.15.2"
 fluent-langneg = "0.13"
 fluent-syntax = "0.11.0"

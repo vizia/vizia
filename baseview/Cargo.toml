@@ -9,9 +9,8 @@ description = "Baseview backend for vizia"
 
 
 [dependencies]
-raw-gl-context = {git = "https://github.com/glowcoil/raw-gl-context", rev = "01f6251e7605e1d7de4bf1fead39693819398ef0"}
 vizia_core = { path = "../core" }
-baseview = { git = "https://github.com/RustAudio/baseview.git", rev = "f6e99e9aa6f5aeb6b721cb05e4d882a51d995909"}
-keyboard-types = { version = "0.5.0", default-features = false }
-raw-window-handle = "0.3"
+baseview = { git = "https://github.com/RustAudio/baseview.git", rev = "b3712638bacb3fdf2883cb5aa3f6caed0e91ac8c", features = ["opengl"] }
+keyboard-types = { version = "0.6.2", default-features = false }
+raw-window-handle = "0.4"
 femtovg = {version = "0.3.0", default-features = false}

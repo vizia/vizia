@@ -10,7 +10,7 @@ description = "Winit backend for vizia"
 [dependencies]
 winit = "0.26.1"
 femtovg = { version = "0.3.0", default-features = false }
-keyboard-types = { version = "0.5.0", default-features = false }
+keyboard-types = { version = "0.6.2", default-features = false }
 vizia_core = { path = "../core", version = "0.1" }
 #fnv = "1.0.7"
 
