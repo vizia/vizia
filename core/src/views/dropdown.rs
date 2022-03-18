@@ -1,5 +1,5 @@
 use crate::{
-    Actions, Context, Handle, Model, Overflow, Popup, PopupData, PopupEvent, Units::*, View,
+    Button, Context, Handle, Model, Overflow, Popup, PopupData, PopupEvent, Units::*, View,
 };
 
 pub const ICON_DOWN_OPEN: &str = "\u{e75c}";
@@ -9,7 +9,7 @@ pub struct Dropdown {}
 impl Dropdown {
     pub fn new<F, L, Label>(cx: &mut Context, label: L, builder: F) -> Handle<Self>
     where
-        L: FnOnce(&mut Context) -> Handle<Label>,
+        L: 'static + Fn(&mut Context) -> Handle<Label>,
         F: 'static + Fn(&mut Context),
         Label: 'static + View,
     {
@@ -19,7 +19,15 @@ impl Dropdown {
                     PopupData::default().build(cx);
                 }
 
-                (label)(cx).class("title").on_press(|cx| cx.emit(PopupEvent::Switch));
+                Button::new(
+                    cx,
+                    |cx| cx.emit(PopupEvent::Switch),
+                    move |cx| {
+                        (label)(cx).class("title")
+                        //.on_press(|cx| cx.emit(PopupEvent::Switch));
+                    },
+                )
+                .width(Stretch(1.0));
 
                 Popup::new(cx, PopupData::is_open, move |cx| {
                     (builder)(cx);

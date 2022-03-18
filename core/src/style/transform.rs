@@ -140,11 +140,11 @@ pub fn apply_transform(cx: &mut Context, tree: &Tree) {
         }
         //println!("End");
 
-        if let Some(scale) = cx.style.scale.get(entity) {
+        if let Some((scalex, scaley)) = cx.style.scale.get(entity) {
             let x = bounds.x + (bounds.w / 2.0);
             let y = bounds.y + (bounds.h / 2.0);
             cx.cache.set_translate(entity, (x, y));
-            cx.cache.set_scale(entity, *scale);
+            cx.cache.set_scale(entity, (*scalex, *scaley));
             cx.cache.set_translate(entity, (-x, -y));
         }
     }

@@ -1,41 +1,5 @@
 use vizia::*;
 
-const STYLE: &str = r#"
-    dropdown .title {
-        background-color: #FFFFFF;
-        height: 30px;
-        width: 100px;
-        child-space: 1s;
-        child-left: 5px;
-    }
-
-    dropdown>popup {
-        background-color: #FFFFFF;
-    }
-
-    dropdown>popup>list {
-        width: 1s;
-    }
-
-    dropdown list label {
-        width: 1s;
-        height: 30px;
-        child-left: 6px;
-    }
-
-    dropdown .item {
-        background-color: white;
-    }
-
-    dropdown .item:hover {
-        background-color: #CCCCCC;
-    }
-
-    dropdown .item:checked {
-        background-color: #f8ac14;
-    }
-"#;
-
 #[derive(Lens)]
 pub struct AppData {
     list: Vec<String>,
@@ -61,47 +25,57 @@ impl Model for AppData {
 
 fn main() {
     let window_description = WindowDescription::new();
-    Application::new(window_description, |cx|{
-
-        cx.add_theme(STYLE);
-
+    Application::new(window_description, |cx| {
         AppData {
             list: vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()],
             choice: "Red".to_string(),
-        }.build(cx);
+        }
+        .build(cx);
 
-
-        Binding::new(cx, AppData::choice, |cx, choice|{
+        Binding::new(cx, AppData::choice, |cx, choice| {
             let option = choice.get(cx).clone();
-            HStack::new(cx, move |cx|{
+            HStack::new(cx, move |cx| {
                 // Dropdown List
-                Dropdown::new(cx, move |cx|
+                Dropdown::new(
+                    cx,
+                    move |cx|
                     // A Label and an Icon
                     HStack::new(cx, move |cx|{
                         Label::new(cx, AppData::choice);
-                        Label::new(cx, ICON_DOWN_OPEN).font("icons").left(Stretch(1.0)).right(Pixels(5.0));
-                    }),
-                    move |cx|{
-                    List::new(cx, AppData::list, |cx, _, item|{
-                        VStack::new(cx, move |cx|{
-                            Binding::new(cx, AppData::choice, move |cx, choice|{
-                                let selected = *item.get(cx) == *choice.get(cx);
-                                Label::new(cx, item)
-                                    .width(Stretch(1.0))
-                                    .checked(selected)
-                                    .class("item")
-                                    .on_press(move |cx| {
-                                        cx.emit(AppEvent::SetChoice(item.get_val(cx)));
-                                        cx.emit(PopupEvent::Close);
-                                    });
-                            });
-                        }).height(Auto);
-                    });
-                }).width(Pixels(100.0));
-            }).background_color(choice_to_color(&option)).child_space(Stretch(1.0));
+                        Label::new(cx, ICON_DOWN_OPEN).font("icons");
+                    })
+                    .child_left(Pixels(5.0))
+                    .child_right(Pixels(5.0))
+                    .col_between(Stretch(1.0)),
+                    move |cx| {
+                        List::new(cx, AppData::list, |cx, _, item| {
+                            VStack::new(cx, move |cx| {
+                                Binding::new(cx, AppData::choice, move |cx, choice| {
+                                    let selected = *item.get(cx) == *choice.get(cx);
+                                    Label::new(cx, item)
+                                        .width(Stretch(1.0))
+                                        .background_color(if selected {
+                                            Color::from("#f8ac14")
+                                        } else {
+                                            Color::white()
+                                        })
+                                        .on_press(move |cx| {
+                                            cx.emit(AppEvent::SetChoice(item.get_val(cx)));
+                                            cx.emit(PopupEvent::Close);
+                                        });
+                                });
+                            })
+                            .height(Auto);
+                        });
+                    },
+                )
+                .width(Pixels(100.0));
+            })
+            .child_space(Stretch(1.0))
+            .background_color(choice_to_color(&option));
         });
-
-    }).run();
+    })
+    .run();
 }
 
 fn choice_to_color(name: &str) -> Color {

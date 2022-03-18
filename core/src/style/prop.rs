@@ -503,7 +503,7 @@ pub trait PropSet: AsEntity + Sized {
         self.entity()
     }
 
-    fn set_scale(self, cx: &mut Context, value: f32) -> Entity {
+    fn set_scale(self, cx: &mut Context, value: (f32, f32)) -> Entity {
         cx.style.scale.insert(self.entity(), value);
 
         cx.style.needs_redraw = true;

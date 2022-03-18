@@ -8,10 +8,10 @@ pub struct AppData {}
 fn main() {
     let window_description = WindowDescription::new();
     Application::new(window_description, |cx| {
-        cx.add_stylesheet("examples/test_style.css").unwrap();
+        //cx.add_stylesheet("examples/test_style.css").unwrap();
 
-        // buttons(cx)
-        //     .space(Pixels(30.0));
+        //buttons(cx)
+        //    .space(Pixels(30.0));
         checkbox(cx).space(Pixels(30.0));
         // label(cx);
     })
@@ -85,19 +85,14 @@ pub fn checkbox(cx: &mut Context) -> Handle<impl View> {
 
         Label::new(cx, "A simple 2-state checkbox").font_size(24.0).font("roboto-bold");
 
-        Binding::new(cx, CheckboxData::check, |cx, check| {
-            Checkbox::new(cx, check).on_toggle(|cx| cx.emit(CheckboxEvent::Toggle));
-        });
+        Checkbox::new(cx, CheckboxData::check).on_toggle(|cx| cx.emit(CheckboxEvent::Toggle));
 
         Label::new(cx, "A simple 2-state checkbox with a text label")
             .font_size(24.0)
             .font("roboto-bold");
 
         HStack::new(cx, |cx| {
-            Binding::new(cx, CheckboxData::check, |cx, check| {
-                Checkbox::new(cx, check);
-            });
-
+            Checkbox::new(cx, CheckboxData::check);
             Label::new(cx, "Two-state checkbox");
         })
         .size(Auto)

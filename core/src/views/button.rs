@@ -16,7 +16,7 @@ impl Button {
         Label: 'static + View,
     {
         Self { action: Some(Box::new(action)) }.build2(cx, move |cx| {
-            (label)(cx).focusable(false);
+            (label)(cx).hoverable(false).focusable(false);
         })
     }
 }

@@ -571,6 +571,7 @@ where
                 .class("selection")
                 .position_type(PositionType::SelfDirected)
                 .visibility(TextboxData::edit)
+                .hoverable(false)
                 // .bind(TextboxData::edit, |handle, edit| {
                 //     handle.visibility(edit);
                 // })
@@ -584,6 +585,7 @@ where
                 .position_type(PositionType::SelfDirected)
                 .width(Pixels(1.0))
                 .visibility(TextboxData::edit)
+                .hoverable(false)
                 // .bind(TextboxData::edit, |handle, edit| {
                 //     handle.visibility(edit);
                 // })
@@ -689,6 +691,7 @@ where
                     if *c != '\u{1b}' && // Escape
                             *c != '\u{8}' && // Backspace
                             *c != '\u{7f}' && // Delete
+                            *c != '\u{0d}' &&
                             !cx.modifiers.contains(Modifiers::CTRL)
                     {
                         //self.insert_text(cx, String::from(*c));

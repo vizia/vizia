@@ -7,7 +7,8 @@ fn main() {
             .size(Pixels(100.0))
             .background_color(Color::red())
             .overflow(Overflow::Visible)
-            .translate((50.0, 0.0));
+            .translate((50.0, 0.0))
+            .scale((1.0, 1.0));
     })
     .run();
 }

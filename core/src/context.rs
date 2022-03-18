@@ -22,6 +22,7 @@ use crate::{
     MouseState, PropSet, Propagation, ResourceManager, StoredImage, Style, Tree, TreeDepthIterator,
     TreeExt, TreeIterator, View, ViewHandler, Visibility, WindowEvent,
 };
+use crate::{AnimExt, Animation, AnimationBuilder};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
@@ -265,6 +266,111 @@ impl Context {
         Ok(())
     }
 
+    pub fn has_animations(&self) -> bool {
+        self.style.display.has_animations()
+            | self.style.visibility.has_animations()
+            | self.style.opacity.has_animations()
+            | self.style.rotate.has_animations()
+            | self.style.translate.has_animations()
+            | self.style.scale.has_animations()
+            | self.style.border_width.has_animations()
+            | self.style.border_color.has_animations()
+            | self.style.border_radius_top_left.has_animations()
+            | self.style.border_radius_top_right.has_animations()
+            | self.style.border_radius_bottom_left.has_animations()
+            | self.style.border_radius_bottom_right.has_animations()
+            | self.style.background_color.has_animations()
+            | self.style.outer_shadow_h_offset.has_animations()
+            | self.style.outer_shadow_v_offset.has_animations()
+            | self.style.outer_shadow_blur.has_animations()
+            | self.style.outer_shadow_color.has_animations()
+            | self.style.font_color.has_animations()
+            | self.style.font_size.has_animations()
+            | self.style.left.has_animations()
+            | self.style.right.has_animations()
+            | self.style.top.has_animations()
+            | self.style.bottom.has_animations()
+            | self.style.width.has_animations()
+            | self.style.height.has_animations()
+            | self.style.max_width.has_animations()
+            | self.style.max_height.has_animations()
+            | self.style.min_width.has_animations()
+            | self.style.min_height.has_animations()
+            | self.style.min_left.has_animations()
+            | self.style.max_left.has_animations()
+            | self.style.min_right.has_animations()
+            | self.style.max_right.has_animations()
+            | self.style.min_top.has_animations()
+            | self.style.max_top.has_animations()
+            | self.style.min_bottom.has_animations()
+            | self.style.max_bottom.has_animations()
+            | self.style.row_between.has_animations()
+            | self.style.col_between.has_animations()
+            | self.style.child_left.has_animations()
+            | self.style.child_right.has_animations()
+            | self.style.child_top.has_animations()
+            | self.style.child_bottom.has_animations()
+    }
+
+    pub fn apply_animations(&mut self) {
+        let time = std::time::Instant::now();
+
+        self.style.display.tick(time);
+        self.style.visibility.tick(time);
+        self.style.opacity.tick(time);
+        self.style.rotate.tick(time);
+        self.style.translate.tick(time);
+        self.style.scale.tick(time);
+        self.style.border_width.tick(time);
+        self.style.border_color.tick(time);
+        self.style.border_radius_top_left.tick(time);
+        self.style.border_radius_top_right.tick(time);
+        self.style.border_radius_bottom_left.tick(time);
+        self.style.border_radius_bottom_right.tick(time);
+        self.style.background_color.tick(time);
+        self.style.outer_shadow_h_offset.tick(time);
+        self.style.outer_shadow_v_offset.tick(time);
+        self.style.outer_shadow_blur.tick(time);
+        self.style.outer_shadow_color.tick(time);
+        self.style.font_color.tick(time);
+        self.style.font_size.tick(time);
+        self.style.left.tick(time);
+        self.style.right.tick(time);
+        self.style.top.tick(time);
+        self.style.bottom.tick(time);
+        self.style.width.tick(time);
+        self.style.height.tick(time);
+        self.style.max_width.tick(time);
+        self.style.max_height.tick(time);
+        self.style.min_width.tick(time);
+        self.style.min_height.tick(time);
+        self.style.min_left.tick(time);
+        self.style.max_left.tick(time);
+        self.style.min_right.tick(time);
+        self.style.max_right.tick(time);
+        self.style.min_top.tick(time);
+        self.style.max_top.tick(time);
+        self.style.min_bottom.tick(time);
+        self.style.max_bottom.tick(time);
+        self.style.row_between.tick(time);
+        self.style.col_between.tick(time);
+        self.style.child_left.tick(time);
+        self.style.child_right.tick(time);
+        self.style.child_top.tick(time);
+        self.style.child_bottom.tick(time);
+
+        self.style.needs_relayout = true;
+    }
+
+    pub fn add_animation(&mut self, duration: std::time::Duration) -> AnimationBuilder {
+        let id = self.style.animation_manager.create();
+        AnimationBuilder::new(id, self, duration)
+    }
+
+    pub fn play_animation(&mut self, animation: Animation) {
+        self.current.play_animation(self, animation);
+    }
+
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
         if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
             return Ok(());
@@ -274,7 +380,7 @@ impl Context {
 
         self.style.rules.clear();
 
-        self.style.remove_all();
+        self.style.clear_style_rules();
 
         let mut overall_theme = String::new();
 
@@ -296,13 +402,7 @@ impl Context {
 
         self.style.parse_theme(&overall_theme);
 
-        // self.enviroment.needs_rebuild = true;
-
-        self.style.needs_restyle = true;
-
-        // Entity::root().restyle(self);
-        // Entity::root().relayout(self);
-        // Entity::root().redraw(self);
+        //self.enviroment.needs_rebuild = true;
 
         Ok(())
     }
@@ -452,8 +552,7 @@ impl Context {
         }
     }
 
-    /// Massages the style system until everything is coherent
-    pub fn process_visual_updates(&mut self) {
+    pub fn process_style_updates(&mut self) {
         // Not ideal
         let tree = self.tree.clone();
 
@@ -465,6 +564,13 @@ impl Context {
         }
 
         apply_shared_inheritance(self, &tree);
+    }
+
+    /// Massages the style system until everything is coherent
+    pub fn process_visual_updates(&mut self) {
+        // Not ideal
+        let tree = self.tree.clone();
+
         apply_z_ordering(self, &tree);
         apply_visibility(self, &tree);
 

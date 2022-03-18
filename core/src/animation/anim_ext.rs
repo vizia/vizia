@@ -1,92 +1,87 @@
-use crate::{Animation, AsEntity, State};
+use crate::{Animation, AsEntity, Context};
 
 /// Trait which provides methods for entities to manipulate linked animations
 pub trait AnimExt: AsEntity + Sized {
-
     /// Play an animation on the entity.
     ///
     /// Internally this generates an active animation and links the entity to it for each animated property.
     ///
     /// # Example
-    /// Create an animation which animates the `left` property from 0 to 100 pixels in 5 seconds 
+    /// Create an animation which animates the `left` property from 0 to 100 pixels in 5 seconds
     /// and play the animation on an entity:
-    /// ```
-    /// let animation_id = state.create_animation(instant::Duration::from_secs(5))
+    /// ```ignore
+    /// let animation_id = cx.create_animation(instant::Duration::from_secs(5))
     ///     .add_keyframe(0.0, |keyframe| keyframe.set_left(Pixels(0.0)))
     ///     .add_keyframe(1.0, |keyframe| keyframe.set_left(Pixels(100.0)))
-    ///     .build(); 
+    ///     .build();
     ///
-    /// entity.play_animation(state, animation_id);
+    /// entity.play_animation(cx, animation_id);
     /// ```
-    fn play_animation(self, state: &mut State, animation: Animation) -> Self {
-
+    fn play_animation(self, cx: &mut Context, animation: Animation) -> Self {
         // Background
-        state.style.background_color.play_animation(self.entity(), animation);
+        cx.style.background_color.play_animation(self.entity(), animation);
 
         // Space
-        state.style.left.play_animation(self.entity(), animation);
-        state.style.right.play_animation(self.entity(), animation);
-        state.style.top.play_animation(self.entity(), animation);
-        state.style.bottom.play_animation(self.entity(), animation);
+        cx.style.left.play_animation(self.entity(), animation);
+        cx.style.right.play_animation(self.entity(), animation);
+        cx.style.top.play_animation(self.entity(), animation);
+        cx.style.bottom.play_animation(self.entity(), animation);
 
         // Min/Max Space
-        state.style.min_left.play_animation(self.entity(), animation);
-        state.style.min_right.play_animation(self.entity(), animation);
-        state.style.min_top.play_animation(self.entity(), animation);
-        state.style.min_bottom.play_animation(self.entity(), animation);
-        state.style.max_left.play_animation(self.entity(), animation);
-        state.style.max_right.play_animation(self.entity(), animation);
-        state.style.max_top.play_animation(self.entity(), animation);
-        state.style.max_bottom.play_animation(self.entity(), animation);
+        cx.style.min_left.play_animation(self.entity(), animation);
+        cx.style.min_right.play_animation(self.entity(), animation);
+        cx.style.min_top.play_animation(self.entity(), animation);
+        cx.style.min_bottom.play_animation(self.entity(), animation);
+        cx.style.max_left.play_animation(self.entity(), animation);
+        cx.style.max_right.play_animation(self.entity(), animation);
+        cx.style.max_top.play_animation(self.entity(), animation);
+        cx.style.max_bottom.play_animation(self.entity(), animation);
 
         // Child Space
-        state.style.child_left.play_animation(self.entity(), animation);
-        state.style.child_right.play_animation(self.entity(), animation);
-        state.style.child_top.play_animation(self.entity(), animation);
-        state.style.child_bottom.play_animation(self.entity(), animation);
+        cx.style.child_left.play_animation(self.entity(), animation);
+        cx.style.child_right.play_animation(self.entity(), animation);
+        cx.style.child_top.play_animation(self.entity(), animation);
+        cx.style.child_bottom.play_animation(self.entity(), animation);
 
         // Size
-        state.style.width.play_animation(self.entity(), animation);
-        state.style.height.play_animation(self.entity(), animation);
+        cx.style.width.play_animation(self.entity(), animation);
+        cx.style.height.play_animation(self.entity(), animation);
 
         // Min/Max Size
-        state.style.min_width.play_animation(self.entity(), animation);
-        state.style.min_height.play_animation(self.entity(), animation);
-        state.style.max_width.play_animation(self.entity(), animation);
-        state.style.max_height.play_animation(self.entity(), animation);
+        cx.style.min_width.play_animation(self.entity(), animation);
+        cx.style.min_height.play_animation(self.entity(), animation);
+        cx.style.max_width.play_animation(self.entity(), animation);
+        cx.style.max_height.play_animation(self.entity(), animation);
 
         // Border
-        state.style.border_color.play_animation(self.entity(), animation);
-        state.style.border_width.play_animation(self.entity(), animation);
-        state.style.border_radius_bottom_left.play_animation(self.entity(), animation);
-        state.style.border_radius_top_left.play_animation(self.entity(), animation);
-        state.style.border_radius_bottom_right.play_animation(self.entity(), animation);
-        state.style.border_radius_top_right.play_animation(self.entity(), animation);
+        cx.style.border_color.play_animation(self.entity(), animation);
+        cx.style.border_width.play_animation(self.entity(), animation);
+        cx.style.border_radius_bottom_left.play_animation(self.entity(), animation);
+        cx.style.border_radius_top_left.play_animation(self.entity(), animation);
+        cx.style.border_radius_bottom_right.play_animation(self.entity(), animation);
+        cx.style.border_radius_top_right.play_animation(self.entity(), animation);
 
         // Transform
-        state.style.rotate.play_animation(self.entity(), animation);
-        // state.style.translate.play_animation(self.entity(), animation);
-        state.style.scale.play_animation(self.entity(), animation);
+        cx.style.rotate.play_animation(self.entity(), animation);
+        // cx.style.translate.play_animation(self.entity(), animation);
+        cx.style.scale.play_animation(self.entity(), animation);
 
         // Display
-        state.style.opacity.play_animation(self.entity(), animation);
-
+        cx.style.opacity.play_animation(self.entity(), animation);
 
         self
     }
 
     /// Returns true if there is an active animation with the given id.
-    /// 
+    ///
     /// # Example
-    /// ```
+    /// ```ignore
     /// let test = entity.is_animation(animation_id);
     /// ```
-    fn is_animating(self, state: &mut State, animation: Animation) -> bool {
-        state.style.height.is_animating(self.entity(), animation) ||
-        state.style.width.is_animating(self.entity(), animation)
+    fn is_animating(self, cx: &mut Context, animation: Animation) -> bool {
+        cx.style.height.is_animating(self.entity(), animation)
+            || cx.style.width.is_animating(self.entity(), animation)
     }
 }
 
-impl<T: AsEntity> AnimExt for T {
-
-}
+impl<T: AsEntity> AnimExt for T {}

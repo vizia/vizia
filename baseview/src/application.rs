@@ -245,6 +245,26 @@ impl ApplicationRunner {
         }
 
         self.context.process_data_updates();
+        self.context.process_style_updates();
+
+        // if self.context.has_animations() {
+        //     if let Some(window_event_handler) = self.context.views.remove(&Entity::root()) {
+        //         if let Some(window) = window_event_handler.downcast_ref::<Window>() {
+        //             window.handle.window().request_redraw();
+        //         }
+
+        //         context.views.insert(Entity::root(), window_event_handler);
+        //     }
+        // } else {
+        //     if should_poll {
+        //         *control_flow = ControlFlow::Poll;
+        //     } else {
+        //         *control_flow = ControlFlow::Wait;
+        //     }
+        // }
+
+        self.context.apply_animations();
+
         self.context.process_visual_updates();
 
         if self.context.style.needs_redraw {

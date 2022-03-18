@@ -1,8 +1,5 @@
 use vizia::*;
 
-mod support;
-use support::*;
-
 #[derive(Debug, Default, Lens)]
 pub struct Options {
     pub option1: bool,
@@ -64,10 +61,10 @@ fn main() {
             Label::new(cx, "Radio Buttons").class("h1");
 
             HStack::new(cx, |cx| {
-                Binding::new(cx, AppData::options.then(Options::option1), |cx, option1| {
-                    RadioButton::new(cx, *option1.get(cx))
-                        .on_select(|cx| cx.emit(AppEvent::ToggleOption(0)));
-                });
+                //Binding::new(cx, AppData::options.then(Options::option1), |cx, option1| {
+                RadioButton::new(cx, AppData::options.then(Options::option1))
+                    .on_select(|cx| cx.emit(AppEvent::ToggleOption(0)));
+                //});
                 Label::new(cx, "Option 1");
             })
             .size(Auto)
@@ -76,10 +73,10 @@ fn main() {
             .col_between(Pixels(5.0));
 
             HStack::new(cx, |cx| {
-                Binding::new(cx, AppData::options.then(Options::option2), |cx, option2| {
-                    RadioButton::new(cx, *option2.get(cx))
-                        .on_select(|cx| cx.emit(AppEvent::ToggleOption(1)));
-                });
+                //Binding::new(cx, AppData::options.then(Options::option2), |cx, option2| {
+                RadioButton::new(cx, AppData::options.then(Options::option2))
+                    .on_select(|cx| cx.emit(AppEvent::ToggleOption(1)));
+                //});
                 Label::new(cx, "Option 2");
             })
             .size(Auto)
@@ -88,10 +85,10 @@ fn main() {
             .col_between(Pixels(5.0));
 
             HStack::new(cx, |cx| {
-                Binding::new(cx, AppData::options.then(Options::option3), |cx, option3| {
-                    RadioButton::new(cx, *option3.get(cx))
-                        .on_select(|cx| cx.emit(AppEvent::ToggleOption(2)));
-                });
+                //Binding::new(cx, AppData::options.then(Options::option3), |cx, option3| {
+                RadioButton::new(cx, AppData::options.then(Options::option3))
+                    .on_select(|cx| cx.emit(AppEvent::ToggleOption(2)));
+                //});
                 Label::new(cx, "Option 3");
             })
             .size(Auto)
@@ -101,11 +98,6 @@ fn main() {
         })
         .row_between(Pixels(5.0))
         .child_space(Stretch(1.0));
-
-        style_dropdown(cx)
-            .position_type(PositionType::SelfDirected)
-            .left(Pixels(10.0))
-            .top(Pixels(10.0));
     })
     .run();
 }

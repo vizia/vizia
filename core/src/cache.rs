@@ -793,10 +793,10 @@ impl CachedData {
         }
     }
 
-    pub(crate) fn set_scale(&mut self, entity: Entity, val: f32) {
+    pub(crate) fn set_scale(&mut self, entity: Entity, val: (f32, f32)) {
         if let Some(transform) = self.transform.get_mut(entity) {
             let mut t = Transform2D::identity();
-            t.scale(val, val);
+            t.scale(val.0, val.1);
             transform.premultiply(&t);
         }
     }

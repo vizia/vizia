@@ -9,8 +9,8 @@ button {
     height: 30px;
     border-radius: 3px;
     child-space: 1s;
-    child-left: 5px;
-    child-right: 5px;
+    child-left: 10px;
+    child-right: 10px;
     border-width: 1px;
     border-color: #e5e5e5;
     outer-shadow: 0 1 1 #00000055;
@@ -28,7 +28,6 @@ button:over {
 }
 
 button:active {
-    /* outer-shadow: 0 0 0 #00000055; */
     overflow: hidden;
 }
 
@@ -39,7 +38,6 @@ button:active label {
 button.accent {
     background-color: #005a9e;
     border-width: 0px;
-    /* border-color: #3076ae */
     border-color: #3076ae;
     outer-shadow: 0 1 0 #00365f;
 }
@@ -61,19 +59,36 @@ button.accent:active label {
 }
 
 checkbox {
-    width: 25px;
-    height: 25px;
-    border-radius: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    border-width: 1px;
     border-color: #838383;
+    color: #ffffff00;
+    background-color: #ffffff00;
+    child-space: 1s;
+    transition: background-color 0.1 0.0;
+    transition: color 0.1 0.0;
+    transition: color 0.1 0.0;
 }
 
 checkbox:hover {
     background-color: #e5e5e5;
+    transition: background-color 0.05 0.0;
 }
 
 checkbox:active {
     border-color: #b6b6b6;
     background-color: #dcdcdc;
+    transition: background-color 0.1 0.0;
+}
+
+checkbox:checked {
+    background-color: #005a9e;
+    border-color: #005a9e;
+    color: #f5f5f5;
+    transition: background-color 0.1 0.0;
+    transition: color 0.1 0.0;
 }
 
 label.icon {
@@ -87,7 +102,8 @@ textbox {
     overflow: hidden;
     color: black;
     border-width: 1px;
-    border-color: #9e9e9e;
+    border-color: #e5e5e5;
+    background-color: white;
     child-top: 1s;
     child-bottom: 1s;
     child-left: 5px;
@@ -96,7 +112,7 @@ textbox {
 }
 
 textbox:hover {
-    border-color: black;
+    background-color: #f6f6f6;
 }
 
 textbox:checked {
@@ -166,12 +182,6 @@ image {
     height: auto;
 }
 
-checkbox {
-    /* color: black; */
-    width: 20px;
-    height: 20px;
-}
-
 hstack {
     width: 1s;
     height: 1s;
@@ -186,46 +196,44 @@ zstack>* {
     position-type: self-directed;
 }
 
-checkbox {
-    border-width: 1px;
-    border-color: black;
-    font: icons;
-    child-space: 1s;
-}
-
-checkbox:disabled {
-    color: gray;
-    border-color: gray;
-}
-
 radiobutton {
     width: 20px;
     height: 20px;
-    border-width: 6%;
-    right: 4px;
-    color: black;
-    border-color: black;
-}
-
-dropdown .title {
-    background-color: white;
     border-width: 1px;
-    border-color: black;
+    border-radius: 50%;
+    border-color: #888888;
+    background-color: white;
+    child-space: 1s;
 }
 
 radiobutton:checked {
-    color: #003080;
-    border-color: #003080;
+    border-color: #005a9e;
+    background-color: #005a9e;
+    transition: background-color 0.1 0.0;
+}
+
+radiobutton .inner {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: white;
+    display: none;
+}
+
+radiobutton:checked .inner {
+    display: flex;
+    width: 12px;
+    height: 12px;
+    transition: width 0.1 0.0;
+    transition: height 0.1 0.0;
 }
 
 dropdown .title {
-    background-color: #FFFFFF;
     child-space: 1s;
     child-left: 5px;
 }
 
 dropdown>popup {
-    background-color: #AAAAAA;
     outer-shadow: 0 3 5 #00000055;
 }
 
@@ -244,12 +252,12 @@ dropdown vstack {
 }
 
 slider {
-    height: 10px;
+    height: 5px;
     top: 1s;
     bottom: 1s;
     width: 1s;
-    background-color: #dfdfdf;
-    border-radius: 4.5px;
+    background-color: #868686;
+    border-radius: 3px;
 }
 
 slider.vertical {
@@ -263,7 +271,7 @@ slider track {
 }
 
 slider .active {
-    background-color: #f74c00;
+    background-color: #005a9e;
     border-radius: 4.5px;
 }
 
@@ -272,10 +280,34 @@ slider .thumb {
     top: 1s;
     bottom: 1s;
     border-radius: 14.5px;
-    border-color: #757575;
+    border-color: #cccccc;
     border-width: 1px;
-    width: 40px;
-    height: 40px;
+    width: 26px;
+    height: 26px;
+    child-space: 1s;
+}
+
+slider .thumb>.inner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #005a9e;
+    transition: width 0.1 0.0;
+    transition: height 0.1 0.0;
+}
+
+slider .thumb:hover>.inner {
+    width: 18px;
+    height: 18px;
+    transition: width 0.1 0.0;
+    transition: height 0.1 0.0;
+}
+
+slider:active .thumb>.inner {
+    width: 10px;
+    height: 10px;
+    transition: width 0.1 0.0;
+    transition: height 0.1 0.0;
 }
 
 scrollbar {
@@ -328,6 +360,16 @@ list {
     height: auto;
 }
 
+popup {
+    display: none;
+    opacity: 0.0;
+}
+
+popup:checked {
+    display: flex;
+    opacity: 1.0;
+    transition: opacity 0.1 0.0;
+}
 menucontroller {
     width: 0px;
     height: 0px;

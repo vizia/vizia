@@ -288,6 +288,7 @@ where
     }
 
     pub fn play_animation(&mut self, entity: Entity, animation: Animation) {
+        //println!("Play Animation: {:?}", animation);
         let entity_index = entity.index();
 
         if !self.animations.contains(animation) {
@@ -387,6 +388,7 @@ where
                 state.output = Some(T::interpolate(&start.1, &end.1, 1.0));
 
                 if !state.persistent {
+                    //state.output = Some(T::interpolate(&start.1, &end.1, 0.0));
                     state.t = 1.0;
                     state.active = false;
                 } else {
@@ -551,9 +553,12 @@ where
                 //if let Some(transition_state) = self.animations.get_mut(rule_animation) {
                 let entity_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
                 if entity_anim_index < self.active_animations.len() {
+                    // Already animating
+                    let current_value = self.get(entity).cloned().unwrap_or_default();
                     let current_anim_state = &mut self.active_animations[entity_anim_index];
                     let rule_data_index = shared_data_index.data_index as usize;
                     if rule_data_index == current_anim_state.from_rule {
+                        // Transitioning back to previous rule
                         current_anim_state.from_rule = current_anim_state.to_rule;
                         current_anim_state.to_rule = rule_data_index;
                         *current_anim_state.keyframes.first_mut().unwrap() = (
@@ -564,14 +569,24 @@ where
                             (1.0, self.shared_data.dense[current_anim_state.to_rule].value.clone());
                         current_anim_state.delay = current_anim_state.t - 1.0;
                         current_anim_state.start_time = instant::Instant::now();
+                    } else {
+                        // Transitioning to new rule
+                        current_anim_state.to_rule = rule_data_index;
+                        *current_anim_state.keyframes.first_mut().unwrap() = (0.0, current_value);
+                        *current_anim_state.keyframes.last_mut().unwrap() =
+                            (1.0, self.shared_data.dense[current_anim_state.to_rule].value.clone());
+                        current_anim_state.t = 0.0;
+                        current_anim_state.t0 = 0.0;
+                        current_anim_state.start_time = instant::Instant::now();
                     }
                 } else {
-                    if rule_animation.index() < self.animations.dense.len() {
-                        let transition_state =
-                            &mut self.animations.dense[rule_animation.index()].value;
+                    if let Some(transition_state) = self.animations.get_mut(rule_animation) {
+                        //if rule_animation.index() < self.animations.dense.len() {
+                        // let transition_state =
+                        //     &mut self.animations.dense[rule_animation.index()].value;
+                        //let transition_state = self.animations.get_mut(rule_animation).unwrap();
                         // Safe to unwrap because already checked that the rule exists
                         let end = self.shared_data.get(*rule).unwrap();
-                        //println!("End: {:?}", end);
 
                         let entity_data_index = self.inline_data.sparse[entity_index].data_index;
 
@@ -589,8 +604,8 @@ where
                         transition_state.from_rule =
                             self.inline_data.sparse[entity_index].data_index.index();
                         transition_state.to_rule = shared_data_index.index();
-
                         self.play_animation(entity, rule_animation);
+                        //}
                     }
                 }
                 //}
@@ -624,10 +639,12 @@ where
 
     pub fn clear_rules(&mut self) {
         // Remove transitions (TODO)
-        for _index in self.shared_data.sparse.iter() {
-            //let anim_index = index.anim_index as usize;
+        for index in self.shared_data.sparse.iter() {
+            let animation = index.animation;
+            self.animations.remove(animation);
         }
-
+        self.animations.clear();
+        self.active_animations.clear();
         self.shared_data.clear();
 
         for index in self.inline_data.sparse.iter_mut() {

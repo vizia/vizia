@@ -1,8 +1,5 @@
 use vizia::*;
 
-mod support;
-use support::*;
-
 #[derive(Debug, Default, Lens)]
 pub struct Options {
     pub option1: bool,
@@ -77,28 +74,28 @@ fn main() {
                 Label::new(cx, "Check Boxes").class("h1");
 
                 HStack::new(cx, |cx| {
-                    Binding::new(cx, AppData::options.then(Options::option1), |cx, option1| {
-                        Checkbox::new(cx, option1)
-                            .on_toggle(|cx| cx.emit(AppEvent::ToggleOption(0)));
-                    });
+                    //Binding::new(cx, AppData::options.then(Options::option1), |cx, option1| {
+                    Checkbox::new(cx, AppData::options.then(Options::option1))
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleOption(0)));
+                    //});
                     Label::new(cx, "Option 1");
                 })
                 .col_between(Pixels(5.0));
 
                 HStack::new(cx, |cx| {
-                    Binding::new(cx, AppData::options.then(Options::option2), |cx, option2| {
-                        Checkbox::new(cx, option2)
-                            .on_toggle(|cx| cx.emit(AppEvent::ToggleOption(1)));
-                    });
+                    //Binding::new(cx, AppData::options.then(Options::option2), |cx, option2| {
+                    Checkbox::new(cx, AppData::options.then(Options::option2))
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleOption(1)));
+                    //});
                     Label::new(cx, "Option 2");
                 })
                 .col_between(Pixels(5.0));
 
                 HStack::new(cx, |cx| {
-                    Binding::new(cx, AppData::options.then(Options::option3), |cx, option3| {
-                        Checkbox::new(cx, option3)
-                            .on_toggle(|cx| cx.emit(AppEvent::ToggleOption(2)));
-                    });
+                    //Binding::new(cx, AppData::options.then(Options::option3), |cx, option3| {
+                    Checkbox::new(cx, AppData::options.then(Options::option3))
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleOption(2)));
+                    //});
                     Label::new(cx, "Option 3");
                 })
                 .col_between(Pixels(5.0));
@@ -111,40 +108,23 @@ fn main() {
                 Label::new(cx, "Exclusive Check Boxes").class("h1");
 
                 HStack::new(cx, |cx| {
-                    Binding::new(
-                        cx,
-                        AppData::exclusive_options.then(Options::option1),
-                        |cx, option1| {
-                            Checkbox::new(cx, option1)
-                                .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(0)));
-                        },
-                    );
+                    Checkbox::new(cx, AppData::exclusive_options.then(Options::option1))
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(0)));
+
                     Label::new(cx, "Option 1");
                 })
                 .col_between(Pixels(5.0));
 
                 HStack::new(cx, |cx| {
-                    Binding::new(
-                        cx,
-                        AppData::exclusive_options.then(Options::option2),
-                        |cx, option2| {
-                            Checkbox::new(cx, option2)
-                                .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(1)));
-                        },
-                    );
+                    Checkbox::new(cx, AppData::exclusive_options.then(Options::option2))
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(1)));
                     Label::new(cx, "Option 2");
                 })
                 .col_between(Pixels(5.0));
 
                 HStack::new(cx, |cx| {
-                    Binding::new(
-                        cx,
-                        AppData::exclusive_options.then(Options::option3),
-                        |cx, option3| {
-                            Checkbox::new(cx, option3)
-                                .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(2)));
-                        },
-                    );
+                    Checkbox::new(cx, AppData::exclusive_options.then(Options::option3))
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleExclusiveOption(2)));
                     Label::new(cx, "Option 3");
                 })
                 .col_between(Pixels(5.0));
@@ -152,11 +132,6 @@ fn main() {
             .child_space(Stretch(1.0));
         })
         .child_space(Stretch(1.0));
-
-        style_dropdown(cx)
-            .position_type(PositionType::SelfDirected)
-            .left(Pixels(10.0))
-            .top(Pixels(10.0));
     })
     .run();
 }

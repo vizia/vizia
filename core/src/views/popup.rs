@@ -43,8 +43,7 @@ pub struct Popup<L> {
 
 impl<L> Popup<L>
 where
-    L: Lens,
-    L::Target: Into<bool>,
+    L: Lens<Target = bool>,
 {
     pub fn new<F>(cx: &mut Context, lens: L, builder: F) -> Handle<Self>
     where
@@ -54,7 +53,7 @@ where
             .build2(cx, |cx| {
                 (builder)(cx);
             })
-            .visibility(PopupData::is_open)
+            .checked(lens)
             .position_type(PositionType::SelfDirected)
             .z_order(100)
     }
