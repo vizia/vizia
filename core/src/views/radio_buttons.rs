@@ -1,6 +1,5 @@
-use crate::style::PropGet;
-use crate::{Canvas, Context, Event, Handle, MouseButton, Units, View, WindowEvent, ZStack, Element, Lens};
-use femtovg::{Paint, Path};
+use crate::{Context, Element, Event, Handle, Lens, MouseButton, View, WindowEvent};
+
 use morphorm::PositionType;
 
 pub struct RadioButton {
@@ -9,9 +8,11 @@ pub struct RadioButton {
 
 impl RadioButton {
     pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
-        Self { on_select: None }.build2(cx, |cx| {
-            Element::new(cx).class("inner").position_type(PositionType::SelfDirected);  
-        }).checked(checked)
+        Self { on_select: None }
+            .build2(cx, |cx| {
+                Element::new(cx).class("inner").position_type(PositionType::SelfDirected);
+            })
+            .checked(checked)
     }
 }
 

@@ -3,8 +3,8 @@ use std::marker::PhantomData;
 use morphorm::GeometryChanged;
 
 use crate::{
-    Actions, Binding, Context, Data, Element, Handle, Lens, LensExt, Model, MouseButton, Overflow,
-    Units::*, View, WindowEvent, ZStack, HStack, PropSet,
+    Actions, Binding, Context, Data, Element, HStack, Handle, Lens, LensExt, Model, MouseButton,
+    Overflow, PropSet, Units::*, View, WindowEvent, ZStack,
 };
 
 #[derive(Debug)]
@@ -134,29 +134,32 @@ where
 
                                     handle.width(Percentage(dx * 100.0));
                                 });
-                            
-                            HStack::new(cx, |cx|{
+
+                            HStack::new(cx, |cx| {
                                 Element::new(cx).class("inner").hoverable(false);
                             })
-                                .right(Stretch(1.0))
-                                .top(Stretch(1.0))
-                                .bottom(Stretch(1.0))
-                                .overflow(Overflow::Visible)
-                                .class("thumb")
-                                .on_geo_changed(|cx, geo| {
-                                    if geo.contains(GeometryChanged::WIDTH_CHANGED) {
-                                        cx.emit(SliderEventInternal::SetThumbSize(
-                                            cx.cache.get_width(cx.current),
-                                            cx.cache.get_height(cx.current),
-                                        ));
-                                    }
-                                })
-                                .bind(lens.clone(), move |handle, value| {
+                            .right(Stretch(1.0))
+                            .top(Stretch(1.0))
+                            .bottom(Stretch(1.0))
+                            .overflow(Overflow::Visible)
+                            .class("thumb")
+                            .on_geo_changed(|cx, geo| {
+                                if geo.contains(GeometryChanged::WIDTH_CHANGED) {
+                                    cx.emit(SliderEventInternal::SetThumbSize(
+                                        cx.cache.get_width(cx.current),
+                                        cx.cache.get_height(cx.current),
+                                    ));
+                                }
+                            })
+                            .bind(
+                                lens.clone(),
+                                move |handle, value| {
                                     let val = *value.get(handle.cx);
                                     let px = val * (1.0 - (thumb_size / size));
 
                                     handle.left(Percentage(100.0 * px));
-                                });
+                                },
+                            );
                         }
 
                         Orientation::Vertical => {

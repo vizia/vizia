@@ -577,10 +577,7 @@ where
                     } else {
                         // Transitioning to new rule
                         current_anim_state.to_rule = rule_data_index;
-                        *current_anim_state.keyframes.first_mut().unwrap() = (
-                            0.0,
-                            current_value,
-                        );
+                        *current_anim_state.keyframes.first_mut().unwrap() = (0.0, current_value);
                         *current_anim_state.keyframes.last_mut().unwrap() =
                             (1.0, self.shared_data.dense[current_anim_state.to_rule].value.clone());
                         current_anim_state.t = 0.0;

@@ -62,8 +62,8 @@ fn main() {
 
             HStack::new(cx, |cx| {
                 //Binding::new(cx, AppData::options.then(Options::option1), |cx, option1| {
-                    RadioButton::new(cx, AppData::options.then(Options::option1))
-                        .on_select(|cx| cx.emit(AppEvent::ToggleOption(0)));
+                RadioButton::new(cx, AppData::options.then(Options::option1))
+                    .on_select(|cx| cx.emit(AppEvent::ToggleOption(0)));
                 //});
                 Label::new(cx, "Option 1");
             })
@@ -74,8 +74,8 @@ fn main() {
 
             HStack::new(cx, |cx| {
                 //Binding::new(cx, AppData::options.then(Options::option2), |cx, option2| {
-                    RadioButton::new(cx, AppData::options.then(Options::option2))
-                        .on_select(|cx| cx.emit(AppEvent::ToggleOption(1)));
+                RadioButton::new(cx, AppData::options.then(Options::option2))
+                    .on_select(|cx| cx.emit(AppEvent::ToggleOption(1)));
                 //});
                 Label::new(cx, "Option 2");
             })
@@ -86,8 +86,8 @@ fn main() {
 
             HStack::new(cx, |cx| {
                 //Binding::new(cx, AppData::options.then(Options::option3), |cx, option3| {
-                    RadioButton::new(cx, AppData::options.then(Options::option3))
-                        .on_select(|cx| cx.emit(AppEvent::ToggleOption(2)));
+                RadioButton::new(cx, AppData::options.then(Options::option3))
+                    .on_select(|cx| cx.emit(AppEvent::ToggleOption(2)));
                 //});
                 Label::new(cx, "Option 3");
             })

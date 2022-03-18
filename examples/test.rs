@@ -42,15 +42,18 @@ fn main() {
     let mut window_description = WindowDescription::new();
     window_description.resizable = false;
     Application::new(window_description, |cx| {
-
         cx.add_theme(STYLE);
 
         Entity::root().set_background_color(cx, Color::rgb(200, 200, 200));
 
         Element::new(cx)
             .size(Pixels(100.0))
-            .on_press(|cx| {cx.current.set_active(cx, true);})
-            .on_release(|cx| {cx.current.set_active(cx, false);});
+            .on_press(|cx| {
+                cx.current.set_active(cx, true);
+            })
+            .on_release(|cx| {
+                cx.current.set_active(cx, false);
+            });
         // AppData { val: 0.5 }.build(cx);
 
         // HStack::new(cx, |cx| {
