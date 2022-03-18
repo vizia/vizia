@@ -18,6 +18,7 @@ where
 {
     app: F,
     window_description: WindowDescription,
+    scale_policy: WindowScalePolicy,
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
 }
 
@@ -27,7 +28,19 @@ where
     F: 'static + Send,
 {
     pub fn new(window_description: WindowDescription, app: F) -> Self {
-        Self { app, window_description, on_idle: None }
+        Self {
+            app,
+            window_description,
+            scale_policy: WindowScalePolicy::SystemScaleFactor,
+            on_idle: None,
+        }
+    }
+
+    /// Change the window's scale policy. Not part of [`new()`][Self::new] to keep the same
+    /// signature as the winit backend.
+    pub fn with_scale_policy(mut self, scale_policy: WindowScalePolicy) -> Self {
+        self.scale_policy = scale_policy;
+        self
     }
 
     /// Open a new window that blocks the current thread until the window is destroyed.
@@ -37,7 +50,12 @@ where
     ///
     /// * `app` - The Tuix application builder.
     pub fn run(self) {
-        ViziaWindow::open_blocking(self.window_description, self.app, self.on_idle)
+        ViziaWindow::open_blocking(
+            self.window_description,
+            self.scale_policy,
+            self.app,
+            self.on_idle,
+        )
     }
 
     /// Open a new child window.
@@ -48,7 +66,13 @@ where
     /// * `parent` - The parent window.
     /// * `app` - The Tuix application builder.
     pub fn open_parented<P: HasRawWindowHandle>(self, parent: &P) -> WindowHandle {
-        ViziaWindow::open_parented(parent, self.window_description, self.app, self.on_idle)
+        ViziaWindow::open_parented(
+            parent,
+            self.window_description,
+            self.scale_policy,
+            self.app,
+            self.on_idle,
+        )
     }
 
     /// Open a new window as if it had a parent window.
@@ -58,7 +82,12 @@ where
     ///
     /// * `app` - The Tuix application builder.
     pub fn open_as_if_parented(self) -> WindowHandle {
-        ViziaWindow::open_as_if_parented(self.window_description, self.app, self.on_idle)
+        ViziaWindow::open_as_if_parented(
+            self.window_description,
+            self.scale_policy,
+            self.app,
+            self.on_idle,
+        )
     }
 
     /// Takes a closure which will be called at the end of every loop of the application.
@@ -96,21 +125,21 @@ pub(crate) struct ApplicationRunner {
 }
 
 impl ApplicationRunner {
-    pub fn new(mut context: Context, win_desc: WindowDescription, renderer: Renderer) -> Self {
+    pub fn new(
+        mut context: Context,
+        win_desc: WindowDescription,
+        scale_policy: WindowScalePolicy,
+        renderer: Renderer,
+    ) -> Self {
         let event_manager = EventManager::new();
 
         let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
 
-        // // TODO: Get scale policy from `win_desc`.
-        let scale_policy = WindowScalePolicy::SystemScaleFactor;
-
-        // // Assume scale for now until there is an event with a new one.
-        // let scale = match scale_policy {
-        //     WindowScalePolicy::ScaleFactor(scale) => scale,
-        //     WindowScalePolicy::SystemScaleFactor => 1.0,
-        // };
-
-        let scale = 1.0;
+        // Assume scale for now until there is an event with a new one.
+        let scale = match scale_policy {
+            WindowScalePolicy::ScaleFactor(scale) => scale,
+            WindowScalePolicy::SystemScaleFactor => 1.0,
+        };
 
         let logical_size = win_desc.inner_size;
         let physical_size = WindowSize {
@@ -136,7 +165,7 @@ impl ApplicationRunner {
 
         context.style.default_font = "roboto".to_string();
 
-        //canvas.scale(scale as f32, scale as f32);
+        canvas.scale(scale as f32, scale as f32);
 
         context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
         context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height as f32));
@@ -275,7 +304,7 @@ impl ApplicationRunner {
     }
 
     pub fn render(&mut self) {
-        let dpi_factor = 1.0; // TODO
+        let dpi_factor = self.scale_factor as f32;
         self.context.draw(&mut self.canvas, dpi_factor);
         self.should_redraw = false;
     }
@@ -383,8 +412,6 @@ impl ApplicationRunner {
                         WindowScalePolicy::ScaleFactor(scale) => scale,
                         WindowScalePolicy::SystemScaleFactor => window_info.scale(),
                     };
-
-                    self.scale_factor = 1.0;
 
                     let logical_size = (
                         (window_info.physical_size().width as f64 / self.scale_factor),

@@ -18,6 +18,7 @@ impl ViziaWindow {
     fn new(
         cx: Context,
         win_desc: WindowDescription,
+        scale_policy: WindowScalePolicy,
         window: &mut baseview::Window,
         builder: Option<Box<dyn Fn(&mut Context) + Send>>,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
@@ -26,7 +27,7 @@ impl ViziaWindow {
         let renderer = load_renderer(window);
 
         unsafe { context.make_current() };
-        let application = ApplicationRunner::new(cx, win_desc, renderer);
+        let application = ApplicationRunner::new(cx, win_desc, scale_policy, renderer);
         unsafe { context.make_not_current() };
 
         ViziaWindow { application, builder, on_idle }
@@ -39,6 +40,7 @@ impl ViziaWindow {
     pub fn open_parented<P, F>(
         parent: &P,
         win_desc: WindowDescription,
+        scale_policy: WindowScalePolicy,
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ) -> WindowHandle
@@ -53,8 +55,7 @@ impl ViziaWindow {
                 win_desc.inner_size.width as f64,
                 win_desc.inner_size.height as f64,
             ),
-            scale: WindowScalePolicy::ScaleFactor(1.0),
-            //scale: WindowScalePolicy::SystemScaleFactor,
+            scale: scale_policy,
             gl_config: Some(GlConfig { vsync: false, ..GlConfig::default() }),
         };
 
@@ -63,7 +64,14 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let context = Context::new();
-                ViziaWindow::new(context, win_desc, window, Some(Box::new(app)), on_idle)
+                ViziaWindow::new(
+                    context,
+                    win_desc,
+                    scale_policy,
+                    window,
+                    Some(Box::new(app)),
+                    on_idle,
+                )
             },
         )
     }
@@ -73,6 +81,7 @@ impl ViziaWindow {
     /// * `app` - The Tuix application builder.
     pub fn open_as_if_parented<F>(
         win_desc: WindowDescription,
+        scale_policy: WindowScalePolicy,
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ) -> WindowHandle
@@ -86,8 +95,7 @@ impl ViziaWindow {
                 win_desc.inner_size.width as f64,
                 win_desc.inner_size.height as f64,
             ),
-            scale: WindowScalePolicy::ScaleFactor(1.0),
-            //scale: WindowScalePolicy::SystemScaleFactor,
+            scale: scale_policy,
             gl_config: Some(GlConfig { vsync: false, ..GlConfig::default() }),
         };
 
@@ -95,7 +103,14 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let context = Context::new();
-                ViziaWindow::new(context, win_desc, window, Some(Box::new(app)), on_idle)
+                ViziaWindow::new(
+                    context,
+                    win_desc,
+                    scale_policy,
+                    window,
+                    Some(Box::new(app)),
+                    on_idle,
+                )
             },
         )
     }
@@ -105,6 +120,7 @@ impl ViziaWindow {
     /// * `app` - The Tuix application builder.
     pub fn open_blocking<F>(
         win_desc: WindowDescription,
+        scale_policy: WindowScalePolicy,
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ) where
@@ -117,8 +133,7 @@ impl ViziaWindow {
                 win_desc.inner_size.width as f64,
                 win_desc.inner_size.height as f64,
             ),
-            scale: WindowScalePolicy::ScaleFactor(1.0),
-            //scale: WindowScalePolicy::SystemScaleFactor,
+            scale: scale_policy,
             gl_config: Some(GlConfig { vsync: false, ..GlConfig::default() }),
         };
 
@@ -126,7 +141,14 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let context = Context::new();
-                ViziaWindow::new(context, win_desc, window, Some(Box::new(app)), on_idle)
+                ViziaWindow::new(
+                    context,
+                    win_desc,
+                    scale_policy,
+                    window,
+                    Some(Box::new(app)),
+                    on_idle,
+                )
             },
         )
     }
