@@ -300,20 +300,20 @@ impl Model for TableData {
                     match self.age_sorted {
                         Sorted::Forward => {
                             self.age_sorted = {
-                                self.people.sort_by_cached_key(|person| person.age.clone());
+                                self.people.sort_by_cached_key(|person| person.age);
                                 self.people.reverse();
                                 Sorted::Reverse
                             }
                         }
                         Sorted::Reverse => {
                             self.age_sorted = {
-                                self.people.sort_by_cached_key(|person| person.age.clone());
+                                self.people.sort_by_cached_key(|person| person.age);
                                 Sorted::Forward
                             }
                         }
                         Sorted::None => {
                             self.age_sorted = {
-                                self.people.sort_by_cached_key(|person| person.age.clone());
+                                self.people.sort_by_cached_key(|person| person.age);
                                 Sorted::Forward
                             }
                         }

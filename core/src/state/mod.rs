@@ -40,23 +40,19 @@
 //! ```
 //! This trait also allows data to be built into the [Tree]:
 //! ```compile_fail
-//! fn main() {
-//!     Application::new(WindowDescription::new(), |cx|{
-//!         AppData::default().build(cx);
-//!     }).run();  
-//! }
+//! Application::new(WindowDescription::new(), |cx|{
+//!     AppData::default().build(cx);
+//! }).run();  
 //! ```
 //! A [Binding] view allows the data to be used by widgets. A [Lens] is used to determine what data the binding should react to:
 //! ```compile_fail
-//! fn main() {
-//!     Application::new(WindowDescription::new(), |cx|{
-//!         AppData::default().build(cx);
+//! Application::new(WindowDescription::new(), |cx|{
+//!     AppData::default().build(cx);
 //!
-//!         Binding::new(cx, AppData::some_data, |cx, some_data|{
-//!             Label::new(cx, &some_data.get(cx).to_string());
-//!         });
-//!     }).run();
-//! }
+//!     Binding::new(cx, AppData::some_data, |cx, some_data|{
+//!         Label::new(cx, &some_data.get(cx).to_string());
+//!     });
+//! }).run();
 //! ```
 //! The second parameter to a [Binding] view is a [Lens] on the application data, allowing us to bind to some field of the application data.
 //! The third parameter is a closure which provides the context and a [Field] parameter which can be used to retrieve the bound data using the `.get()`
@@ -64,19 +60,17 @@
 //!
 //! Now when the data is modified by another widget, the label will update, for example:
 //! ```compile_fail
-//! fn main() {
-//!     Application::new(WindowDescription::new(), |cx|{
-//!         AppData::default().build(cx);
+//! Application::new(WindowDescription::new(), |cx|{
+//!     AppData::default().build(cx);
 //!
-//!         Binding::new(cx, AppData::some_data, |cx, some_data|{
-//!             Label::new(cx, &some_data.get(cx).to_string());
-//!         });
+//!     Binding::new(cx, AppData::some_data, |cx, some_data|{
+//!         Label::new(cx, &some_data.get(cx).to_string());
+//!     });
 //!
-//!         Checkbox::new(cx, false)
-//!             .on_checked(cx, |cx| cx.emit(AppEvent::SetTrue))
-//!             .on_unchecked(cx, |cx| cx.emit(AppEvent::SetFalse));
-//!     }).run();
-//! }
+//!     Checkbox::new(cx, false)
+//!         .on_checked(cx, |cx| cx.emit(AppEvent::SetTrue))
+//!         .on_unchecked(cx, |cx| cx.emit(AppEvent::SetFalse));
+//! }).run();
 //! ```
 //! Note, the checkbox does not need to be bound to the data to send an event to it. By default events will propagate up the tree.
 //!

@@ -75,18 +75,14 @@ impl Window {
             ))
             .with_always_on_top(window_description.always_on_top)
             .with_resizable(window_description.resizable)
-            .with_window_icon(if let Some(icon) = &window_description.icon {
-                Some(
-                    winit::window::Icon::from_rgba(
-                        icon.clone(),
-                        window_description.icon_width,
-                        window_description.icon_height,
-                    )
-                    .unwrap(),
+            .with_window_icon(window_description.icon.as_ref().map(|icon| {
+                winit::window::Icon::from_rgba(
+                    icon.clone(),
+                    window_description.icon_width,
+                    window_description.icon_height,
                 )
-            } else {
-                None
-            });
+                .unwrap()
+            }));
 
         // Get the window handle. for glutin this is a ContextWrapper, and for web this is a
         // winit::window::Window
@@ -95,7 +91,7 @@ impl Window {
             let handle = ContextBuilder::new()
                 .with_vsync(true)
                 // .with_srgb(true)
-                .build_windowed(window_builder, &events_loop)
+                .build_windowed(window_builder, events_loop)
                 .expect("Window context creation failed!");
 
             unsafe { handle.make_current().unwrap() }

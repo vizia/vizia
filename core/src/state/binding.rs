@@ -1,3 +1,5 @@
+#![allow(clippy::new_ret_no_self)]
+
 use std::any::TypeId;
 use std::collections::HashSet;
 
@@ -104,7 +106,7 @@ impl<L: 'static + Lens> View for Binding<L> {
         Some("binding".to_string())
     }
 
-    fn body<'a>(&mut self, cx: &'a mut Context) {
+    fn body(&mut self, cx: &mut Context) {
         cx.remove_trailing_children();
         if let Some(builder) = self.builder.take() {
             (builder)(cx, self.lens.clone());

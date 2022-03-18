@@ -29,6 +29,12 @@ pub struct Tree {
     pub changed: bool,
 }
 
+impl Default for Tree {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Tree {
     /// Creates a new tree with a root entity.
     pub fn new() -> Tree {
@@ -66,7 +72,7 @@ impl Tree {
                 f = self.next_sibling[f.unwrap().index()];
             }
 
-            return r;
+            r
         } else {
             None
         }
@@ -88,7 +94,7 @@ impl Tree {
             i += 1;
         }
 
-        return f;
+        f
     }
 
     /// Returns the number of children of an entity.
@@ -127,33 +133,29 @@ impl Tree {
 
     /// Returns the parent of an entity.
     pub fn get_parent(&self, entity: Entity) -> Option<Entity> {
-        self.parent.get(entity.index()).map_or(None, |&parent| parent)
+        self.parent.get(entity.index()).and_then(|&parent| parent)
     }
 
     /// Returns the first child of an entity or `None` if there isn't one.
     pub fn get_first_child(&self, entity: Entity) -> Option<Entity> {
-        self.first_child.get(entity.index()).map_or(None, |&first_child| first_child)
+        self.first_child.get(entity.index()).and_then(|&first_child| first_child)
     }
 
     /// Returns the next sibling of an entity or `None` if t here isn't one.
     pub fn get_next_sibling(&self, entity: Entity) -> Option<Entity> {
-        self.next_sibling.get(entity.index()).map_or(None, |&next_sibling| next_sibling)
+        self.next_sibling.get(entity.index()).and_then(|&next_sibling| next_sibling)
     }
 
     /// Returns the previous sibling of an entity or `None` if there isn't one.
     pub fn get_prev_sibling(&self, entity: Entity) -> Option<Entity> {
-        self.prev_sibling.get(entity.index()).map_or(None, |&prev_sibling| prev_sibling)
+        self.prev_sibling.get(entity.index()).and_then(|&prev_sibling| prev_sibling)
     }
 
     /// Returns true if the entity is the first child of its parent.
     pub fn is_first_child(&self, entity: Entity) -> bool {
         if let Some(parent) = self.get_parent(entity) {
             if let Some(first_child) = self.get_first_child(parent) {
-                if first_child == entity {
-                    return true;
-                } else {
-                    return false;
-                }
+                return first_child == entity;
             }
         }
 
@@ -444,7 +446,9 @@ impl Tree {
     }
 
     pub fn set_ignored(&mut self, entity: Entity, flag: bool) {
-        self.ignored.get_mut(entity.index()).and_then(|ignored| Some(*ignored = flag));
+        if let Some(ignored) = self.ignored.get_mut(entity.index()) {
+            *ignored = flag;
+        }
     }
 
     /// Adds an entity to the tree with the specified parent.

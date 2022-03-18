@@ -39,7 +39,7 @@ impl EventManager {
                 match msg {
                     InternalEvent::Redraw => context.style.needs_redraw = true,
                     InternalEvent::LoadImage { path, image, policy } => {
-                        if let Some(image) = image.lock().unwrap().take() {
+                        if let Some(image) = image.get_mut().unwrap().take() {
                             context.load_image(path.clone(), image, *policy);
                         }
                     }
@@ -122,6 +122,12 @@ impl EventManager {
                 }
             }
         }
+    }
+}
+
+impl Default for EventManager {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

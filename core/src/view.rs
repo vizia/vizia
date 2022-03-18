@@ -11,7 +11,7 @@ use morphorm::Units;
 pub type Canvas = femtovg::Canvas<OpenGl>;
 
 // Length proportional to radius of a cubic bezier handle for 90deg arcs.
-const KAPPA90: f32 = 0.5522847493;
+const KAPPA90: f32 = 0.552_284_8;
 
 pub trait View: 'static + Sized {
     #[allow(unused_variables)]
@@ -134,7 +134,7 @@ pub trait View: 'static + Sized {
         let parent = cx
             .tree
             .get_layout_parent(entity)
-            .expect(&format!("Failed to find parent somehow: {}", entity));
+            .unwrap_or_else(|| panic!("Failed to find parent somehow: {}", entity));
 
         let parent_width = cx.cache.get_width(parent);
         let parent_height = cx.cache.get_height(parent);
@@ -698,7 +698,7 @@ pub trait View: 'static + Sized {
 
                 let mut paint = Paint::color(font_color);
                 paint.set_font_size(font_size);
-                paint.set_font(&[font_id.clone()]);
+                paint.set_font(&[*font_id]);
                 paint.set_text_align(align);
                 paint.set_text_baseline(baseline);
                 paint.set_anti_alias(false);
@@ -714,7 +714,7 @@ where
     T: std::marker::Sized + View + 'static,
 {
     fn element(&self) -> Option<String> {
-        <T as View>::element(&self)
+        <T as View>::element(self)
     }
 
     fn body(&mut self, cx: &mut Context) {

@@ -78,7 +78,7 @@ pub trait AnimExt: AsEntity + Sized {
     /// ```ignore
     /// let test = entity.is_animation(animation_id);
     /// ```
-    fn is_animating(self, cx: &mut Context, animation: Animation) -> bool {
+    fn is_animating(&self, cx: &mut Context, animation: Animation) -> bool {
         cx.style.height.is_animating(self.entity(), animation)
             || cx.style.width.is_animating(self.entity(), animation)
     }

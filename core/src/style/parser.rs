@@ -194,9 +194,9 @@ fn parse_selectors<'i, 't>(
                     selector.relation = SelectorRelation::Ancestor;
                     selectors.push(selector);
                     selector = Selector::default();
-                    selector.set_element(&element_name.to_string());
+                    selector.set_element(element_name);
                 } else {
-                    selector.set_element(&element_name.to_string());
+                    selector.set_element(element_name);
                 }
 
                 whitespace = false;
@@ -218,7 +218,7 @@ fn parse_selectors<'i, 't>(
 
             // Id
             Token::IDHash(ref id_name) => {
-                selector.set_id(&id_name.to_string());
+                selector.set_id(id_name);
                 whitespace = false;
             }
 
@@ -250,7 +250,7 @@ fn parse_selectors<'i, 't>(
                 whitespace = false;
             }
 
-            Token::WhiteSpace(ref _ws) => {
+            Token::WhiteSpace(_ws) => {
                 whitespace = true;
             }
 
@@ -440,9 +440,7 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "inner-shadow-blur" => Property::InnerShadowBlur(parse_units(input)?),
             "inner-shadow-color" => Property::InnerShadowColor(parse_color(input)?),
 
-            "transition" => Property::Transition(
-                input.parse_comma_separated(|parser| parse_transition2(parser))?,
-            ),
+            "transition" => Property::Transition(input.parse_comma_separated(parse_transition2)?),
 
             "z-index" => Property::ZIndex(parse_z_index(input)?),
 
@@ -499,7 +497,7 @@ fn parse_unknown<'i, 't>(
     input: &mut Parser<'i, 't>,
 ) -> Result<PropType, ParseError<'i, CustomParseError>> {
     Ok(match input.next()? {
-        Token::QuotedString(s) => match css_string(&s) {
+        Token::QuotedString(s) => match css_string(s) {
             Some(string) => PropType::String(string),
             None => {
                 return Err(CustomParseError::InvalidStringName(s.to_owned().to_string()).into())
@@ -534,7 +532,7 @@ fn parse_string<'i, 't>(
     input: &mut Parser<'i, 't>,
 ) -> Result<String, ParseError<'i, CustomParseError>> {
     Ok(match input.next()? {
-        Token::QuotedString(s) => match css_string(&s) {
+        Token::QuotedString(s) => match css_string(s) {
             Some(string) => string,
             None => {
                 return Err(CustomParseError::InvalidStringName(s.to_owned().to_string()).into())
@@ -668,18 +666,14 @@ fn parse_box_shadow<'i, 't>(
                             box_shadow.blur_radius = units;
 
                             let next_token = input.next()?;
-                            match parse_color2(next_token) {
-                                Ok(color) => box_shadow.color = color,
-
-                                _ => {}
+                            if let Ok(color) = parse_color2(next_token) {
+                                box_shadow.color = color
                             }
                         }
                         _ => {
                             // Parse a color
-                            match parse_color2(next_token) {
-                                Ok(color) => box_shadow.color = color,
-
-                                _ => {}
+                            if let Ok(color) = parse_color2(next_token) {
+                                box_shadow.color = color
                             }
                         }
                     }
@@ -733,7 +727,7 @@ fn parse_length2<'i>(token: &Token<'i>) -> Result<Units, ParseError<'i, CustomPa
                 kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
                 location: SourceLocation { line: 0, column: 0 },
             };
-            return Err(basic_error.into());
+            Err(basic_error.into())
         }
     }
 }
@@ -1038,7 +1032,7 @@ fn parse_color<'i, 't>(
             //     }
             // }
 
-            match css_color(&name) {
+            match css_color(name) {
                 Some(color) => color,
                 None => {
                     return Err(CustomParseError::UnrecognisedColorName(
@@ -1070,13 +1064,10 @@ fn parse_color2<'i>(token: &Token<'i>) -> Result<Color, ParseError<'i, CustomPar
             //     }
             // }
 
-            match css_color(&name) {
+            match css_color(name) {
                 Some(color) => Ok(color),
                 None => {
-                    return Err(CustomParseError::UnrecognisedColorName(
-                        name.to_owned().to_string(),
-                    )
-                    .into());
+                    Err(CustomParseError::UnrecognisedColorName(name.to_owned().to_string()).into())
                 }
             }
         }
@@ -1088,7 +1079,8 @@ fn parse_color2<'i>(token: &Token<'i>) -> Result<Color, ParseError<'i, CustomPar
                 kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
                 location: SourceLocation { line: 0, column: 0 },
             };
-            return Err(basic_error.into());
+
+            Err(basic_error.into())
         }
     }
 }

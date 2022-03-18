@@ -1367,13 +1367,13 @@ pub trait PropGet: Sized + AsEntity {
         cx.style.elements.get(self.entity()).cloned().unwrap_or_default()
     }
 
-    fn is_disabled(self, cx: &Context) -> bool;
-    fn is_checked(self, cx: &Context) -> bool;
-    fn is_over(self, cx: &Context) -> bool;
-    fn is_active(self, cx: &Context) -> bool;
-    fn is_focused(self, cx: &Context) -> bool;
-    fn is_selected(self, cx: &Context) -> bool;
-    fn is_hovered(self, cx: &Context) -> bool;
+    fn is_disabled(&self, cx: &Context) -> bool;
+    fn is_checked(&self, cx: &Context) -> bool;
+    fn is_over(&self, cx: &Context) -> bool;
+    fn is_active(&self, cx: &Context) -> bool;
+    fn is_focused(&self, cx: &Context) -> bool;
+    fn is_selected(&self, cx: &Context) -> bool;
+    fn is_hovered(&self, cx: &Context) -> bool;
 
     // fn is_hoverable(self, cx: &Context) -> bool {
     //     cx.cache.get_hoverable(self.entity())
@@ -1388,7 +1388,7 @@ pub trait PropGet: Sized + AsEntity {
     //     cx.cache.get_selectable(self.entity())
     // }
 
-    fn is_visible(self, cx: &Context) -> bool {
+    fn is_visible(&self, cx: &Context) -> bool {
         cx.cache.get_visibility(self.entity()) == Visibility::Visible
     }
 
@@ -1437,47 +1437,47 @@ pub trait PropGet: Sized + AsEntity {
 }
 
 impl PropGet for Entity {
-    fn is_disabled(self, cx: &Context) -> bool {
-        cx.style.disabled.get(self).cloned().unwrap_or_default()
+    fn is_disabled(&self, cx: &Context) -> bool {
+        cx.style.disabled.get(*self).cloned().unwrap_or_default()
     }
-    fn is_hovered(self, cx: &Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
+    fn is_hovered(&self, cx: &Context) -> bool {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(*self) {
             pseudo_classes.contains(PseudoClass::HOVER)
         } else {
             false
         }
     }
-    fn is_selected(self, cx: &Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
+    fn is_selected(&self, cx: &Context) -> bool {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(*self) {
             pseudo_classes.contains(PseudoClass::SELECTED)
         } else {
             false
         }
     }
-    fn is_checked(self, cx: &Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
+    fn is_checked(&self, cx: &Context) -> bool {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(*self) {
             pseudo_classes.contains(PseudoClass::CHECKED)
         } else {
             false
         }
     }
-    fn is_over(self, cx: &Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
+    fn is_over(&self, cx: &Context) -> bool {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(*self) {
             pseudo_classes.contains(PseudoClass::OVER)
         } else {
             false
         }
     }
-    fn is_active(self, cx: &Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
+    fn is_active(&self, cx: &Context) -> bool {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(*self) {
             pseudo_classes.contains(PseudoClass::ACTIVE)
         } else {
             false
         }
     }
 
-    fn is_focused(self, cx: &Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
+    fn is_focused(&self, cx: &Context) -> bool {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(*self) {
             pseudo_classes.contains(PseudoClass::FOCUS)
         } else {
             false

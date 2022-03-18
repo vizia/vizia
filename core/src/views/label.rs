@@ -3,7 +3,7 @@ use crate::{Context, Handle, Res, View};
 pub struct Label;
 
 impl Label {
-    pub fn new<'a, T>(cx: &'a mut Context, text: impl Res<T>) -> Handle<'a, Self>
+    pub fn new<T>(cx: &mut Context, text: impl Res<T>) -> Handle<Self>
     where
         T: ToString,
     {

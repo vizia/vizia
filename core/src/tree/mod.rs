@@ -4,8 +4,8 @@
 //! are used to traverse the tree, which is used by nearly all systems, including for example, for calculating layout,
 //! propagating events, and rendering the UI.
 
-mod tree;
-pub use tree::*;
+mod tree_data;
+pub use tree_data::*;
 
 mod tree_tour;
 pub use tree_tour::*;

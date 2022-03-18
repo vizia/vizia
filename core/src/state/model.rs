@@ -72,13 +72,13 @@ impl dyn ModelData {
 }
 
 trait Downcast {
-    fn as_any(self: &'_ Self) -> &'_ dyn Any
+    fn as_any(&'_ self) -> &'_ dyn Any
     where
         Self: 'static;
 }
 
 impl<T: ModelData> Downcast for T {
-    fn as_any(self: &'_ Self) -> &'_ dyn Any
+    fn as_any(&'_ self) -> &'_ dyn Any
     where
         Self: 'static,
     {

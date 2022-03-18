@@ -149,7 +149,7 @@ impl View for MenuController {
                             Event::new(msg.clone())
                                 .propagate(Propagation::Up)
                                 .target(cx.hovered)
-                                .origin(event.origin.clone()),
+                                .origin(event.origin),
                         );
                     }
                     // if we click outside the menu, close everything
@@ -162,19 +162,17 @@ impl View for MenuController {
                         );
                     }
                 }
-            } else {
-                if let WindowEvent::MouseDown(_) = msg {
-                    // capture focus on click
-                    cx.capture();
-                    cx.emit(MenuEvent::Activate);
-                    // send an over event to highlight whatever we're hovered on
-                    cx.event_queue.push_back(
-                        Event::new(WindowEvent::MouseOver)
-                            .propagate(Propagation::Up)
-                            .target(cx.hovered)
-                            .origin(cx.current),
-                    );
-                }
+            } else if let WindowEvent::MouseDown(_) = msg {
+                // capture focus on click
+                cx.capture();
+                cx.emit(MenuEvent::Activate);
+                // send an over event to highlight whatever we're hovered on
+                cx.event_queue.push_back(
+                    Event::new(WindowEvent::MouseOver)
+                        .propagate(Propagation::Up)
+                        .target(cx.hovered)
+                        .origin(cx.current),
+                );
             }
         }
     }
