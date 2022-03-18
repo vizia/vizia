@@ -258,7 +258,7 @@ impl Context {
     }
 
     pub fn add_stylesheet(&mut self, path: &str) -> Result<(), std::io::Error> {
-        let style_string = std::fs::read_to_string(path.clone())?;
+        let style_string = std::fs::read_to_string(path)?;
         self.resource_manager.stylesheets.push(path.to_owned());
         self.style.parse_theme(&style_string);
 

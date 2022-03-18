@@ -5,29 +5,35 @@ pub struct ParentWindow(pub *mut ::std::ffi::c_void);
 #[cfg(target_os = "macos")]
 unsafe impl HasRawWindowHandle for ParentWindow {
     fn raw_window_handle(&self) -> RawWindowHandle {
-        use raw_window_handle::macos::MacOSHandle;
+        use raw_window_handle::AppKitHandle;
 
-        RawWindowHandle::MacOS(MacOSHandle {
-            ns_view: self.0 as *mut ::std::ffi::c_void,
-            ..MacOSHandle::empty()
-        })
+        let mut handle = AppKitHandle::empty();
+        handle.ns_view = self.0;
+
+        RawWindowHandle::AppKit(handle)
     }
 }
 
 #[cfg(target_os = "windows")]
 unsafe impl HasRawWindowHandle for ParentWindow {
     fn raw_window_handle(&self) -> RawWindowHandle {
-        use raw_window_handle::windows::WindowsHandle;
+        use raw_window_handle::Win32Handle;
 
-        RawWindowHandle::Windows(WindowsHandle { hwnd: self.0, ..WindowsHandle::empty() })
+        let mut handle = Win32Handle::empty();
+        handle.hwnd = self.0;
+
+        RawWindowHandle::Win32(handle)
     }
 }
 
 #[cfg(target_os = "linux")]
 unsafe impl HasRawWindowHandle for ParentWindow {
     fn raw_window_handle(&self) -> RawWindowHandle {
-        use raw_window_handle::unix::XcbHandle;
+        use raw_window_handle::XcbHandle;
 
-        RawWindowHandle::Xcb(XcbHandle { window: self.0 as u32, ..XcbHandle::empty() })
+        let mut handle = XcbHandle::empty();
+        handle.window = self.0 as u32;
+
+        RawWindowHandle::Xcb(handle)
     }
 }
