@@ -175,18 +175,18 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         pub mod #twizzled_name {
             #(#defs)*
             #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-            pub struct root;
+            pub struct root#lens_ty_generics(#(#phantom_decls),*);
 
-            impl root {
+            impl #lens_ty_generics root#lens_ty_generics{
                 pub const fn new()->Self{
-                    Self
+                    Self(#(#phantom_inits),*)
                 }
             }
         }
 
         #(#impls)*
 
-        impl Lens for #twizzled_name::root {
+        impl #impl_generics Lens for #twizzled_name::root#lens_ty_generics {
             type Source = #struct_type#ty_generics;
             type Target = #struct_type#ty_generics;
 
@@ -199,7 +199,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         impl #impl_generics #struct_type #ty_generics #where_clause {
             #(#associated_items)*
 
-            pub const root: #twizzled_name::root = #twizzled_name::root::new();
+            pub const root: #twizzled_name::root#lens_ty_generics = #twizzled_name::root::new();
         }
     };
 
