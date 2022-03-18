@@ -30,7 +30,7 @@ impl std::fmt::Display for SimpleDate {
 impl FromStr for SimpleDate {
     type Err = ParseError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        NaiveDate::parse_from_str(s, "%Y:%m:%d").map(|date| SimpleDate(date))
+        NaiveDate::parse_from_str(s, "%Y:%m:%d").map(SimpleDate)
     }
 }
 
@@ -98,12 +98,12 @@ fn main() {
                     VStack::new(cx, move |cx|{
                         Binding::new(cx, AppData::choice, move |cx, choice|{
                             let selected = *item.get(cx) == *choice.get(cx);
-                            let item = item.clone();
+                            let item = item;
                             Label::new(cx, item)
                                 .width(Stretch(1.0))
                                 .background_color(if selected {Color::from("#f8ac14")} else {Color::white()})
                                 .on_press(move |cx| {
-                                    cx.emit(AppEvent::SetChoice(item.get(cx).to_string().to_owned()));
+                                    cx.emit(AppEvent::SetChoice(item.get(cx).to_string()));
                                     cx.emit(PopupEvent::Close);
                                 });
                         });

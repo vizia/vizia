@@ -26,7 +26,7 @@ impl Model for AppData {
         if let Some(app_event) = event.message.downcast() {
             match app_event {
                 AppEvent::Sort => {
-                    self.list.sort();
+                    self.list.sort_unstable();
                 }
             }
         }

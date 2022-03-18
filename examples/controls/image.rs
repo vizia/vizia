@@ -1,6 +1,6 @@
 use vizia::*;
 
-const STYLE: &'static str = r#"
+const STYLE: &str = r#"
 element {
     background-image: "sample.png";
     width: 1s;

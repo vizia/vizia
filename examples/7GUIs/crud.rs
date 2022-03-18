@@ -158,7 +158,7 @@ fn main() {
 
                         Textbox::new(cx, AppData::name)
                             .on_edit(move |cx, text| {
-                                cx.emit(AppEvent::SetName(text.clone()));
+                                cx.emit(AppEvent::SetName(text));
                             })
                             .width(Pixels(120.0));
                     });
@@ -168,7 +168,7 @@ fn main() {
 
                         Textbox::new(cx, AppData::surname)
                             .on_edit(move |cx, text| {
-                                cx.emit(AppEvent::SetSurname(text.clone()));
+                                cx.emit(AppEvent::SetSurname(text));
                             })
                             .width(Pixels(120.0));
                     });

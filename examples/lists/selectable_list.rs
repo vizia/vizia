@@ -50,7 +50,7 @@ fn main() {
                         let selected = *selected.get(cx);
                         Label::new(cx, &item_text)
                             // Set the checked state based on whether this item is selected
-                            .checked(if selected == index { true } else { false })
+                            .checked(selected == index)
                             // Set the selected item to this one if pressed
                             .on_press(move |cx| cx.emit(AppEvent::Select(index)));
                     });
