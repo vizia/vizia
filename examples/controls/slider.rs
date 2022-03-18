@@ -48,7 +48,7 @@ const STYLE: &str = r#"
 
 fn main() {
     Application::new(WindowDescription::new().with_title("Slider"), |cx| {
-        cx.add_theme(STYLE);
+        //cx.add_theme(STYLE);
 
         AppData { value: 0.5 }.build(cx);
 

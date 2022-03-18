@@ -4,7 +4,7 @@ use morphorm::GeometryChanged;
 
 use crate::{
     Actions, Binding, Context, Data, Element, Handle, Lens, LensExt, Model, MouseButton, Overflow,
-    Units::*, View, WindowEvent, ZStack,
+    Units::*, View, WindowEvent, ZStack, HStack, PropSet,
 };
 
 #[derive(Debug)]
@@ -134,8 +134,10 @@ where
 
                                     handle.width(Percentage(dx * 100.0));
                                 });
-
-                            Element::new(cx)
+                            
+                            HStack::new(cx, |cx|{
+                                Element::new(cx).class("inner").hoverable(false);
+                            })
                                 .right(Stretch(1.0))
                                 .top(Stretch(1.0))
                                 .bottom(Stretch(1.0))
@@ -212,6 +214,7 @@ impl<L: 'static> View for Slider<L> {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                     self.is_dragging = true;
                     cx.capture();
+                    cx.current.set_active(cx, true);
 
                     if let Some(slider_data_internal) = cx.data::<SliderDataInternal>() {
                         let thumb_size = slider_data_internal.thumb_size;
@@ -245,6 +248,7 @@ impl<L: 'static> View for Slider<L> {
                 WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                     self.is_dragging = false;
                     cx.release();
+                    cx.current.set_active(cx, false);
                 }
 
                 WindowEvent::MouseMove(x, y) => {

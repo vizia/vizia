@@ -6,7 +6,7 @@
 button {
     background-color: white;
     width: auto;
-    height: 40px;
+    height: 30px;
     border-radius: 3px;
     child-space: 1s;
     child-left: 10px;
@@ -59,21 +59,22 @@ button.accent:active label {
 }
 
 checkbox {
-    width: 25px;
-    height: 25px;
-    border-radius: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
     border-width: 1px;
     border-color: #838383;
-    color: #f5f5f500;
-    background-color: #e5e5e500;
+    color: #ffffff00;
+    background-color: #ffffff00;
     child-space: 1s;
     transition: background-color 0.1 0.0;
+    transition: color 0.1 0.0;
     transition: color 0.1 0.0;
 }
 
 checkbox:hover {
     background-color: #e5e5e5;
-    transition: background-color 0.1 0.0;
+    transition: background-color 0.05 0.0;
 }
 
 checkbox:active {
@@ -84,6 +85,7 @@ checkbox:active {
 
 checkbox:checked {
     background-color: #005a9e;
+    border-color: #005a9e;
     color: #f5f5f5;
     transition: background-color 0.1 0.0;
     transition: color 0.1 0.0;
@@ -197,15 +199,33 @@ zstack>* {
 radiobutton {
     width: 20px;
     height: 20px;
-    border-width: 6%;
-    right: 4px;
-    color: black;
-    border-color: black;
+    border-width: 1px;
+    border-radius: 50%;
+    border-color: #888888;
+    background-color: white;
+    child-space: 1s;
 }
 
 radiobutton:checked {
-    color: #003080;
-    border-color: #003080;
+    border-color: #005a9e;
+    background-color: #005a9e;
+    transition: background-color 0.1 0.0;
+}
+
+radiobutton .inner {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: white;
+    display: none;
+}
+
+radiobutton:checked .inner {
+    display: flex;
+    width: 12px;
+    height: 12px;
+    transition: width 0.1 0.0;
+    transition: height 0.1 0.0;
 }
 
 dropdown .title {
@@ -232,12 +252,12 @@ dropdown vstack {
 }
 
 slider {
-    height: 10px;
+    height: 5px;
     top: 1s;
     bottom: 1s;
     width: 1s;
-    background-color: #dfdfdf;
-    border-radius: 4.5px;
+    background-color: #868686;
+    border-radius: 3px;
 }
 
 slider.vertical {
@@ -251,7 +271,7 @@ slider track {
 }
 
 slider .active {
-    background-color: #f74c00;
+    background-color: #005a9e;
     border-radius: 4.5px;
 }
 
@@ -260,10 +280,34 @@ slider .thumb {
     top: 1s;
     bottom: 1s;
     border-radius: 14.5px;
-    border-color: #757575;
+    border-color: #cccccc;
     border-width: 1px;
-    width: 40px;
-    height: 40px;
+    width: 26px;
+    height: 26px;
+    child-space: 1s;
+}
+
+slider .thumb>.inner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #005a9e;
+    transition: width 0.1 0.0;
+    transition: height 0.1 0.0;
+}
+
+slider .thumb:hover>.inner {
+    width: 18px;
+    height: 18px;
+    transition: width 0.1 0.0;
+    transition: height 0.1 0.0;
+}
+
+slider:active .thumb>.inner {
+    width: 10px;
+    height: 10px;
+    transition: width 0.1 0.0;
+    transition: height 0.1 0.0;
 }
 
 scrollbar {

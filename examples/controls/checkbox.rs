@@ -1,8 +1,5 @@
 use vizia::*;
 
-mod support;
-use support::*;
-
 #[derive(Debug, Default, Lens)]
 pub struct Options {
     pub option1: bool,
@@ -135,11 +132,6 @@ fn main() {
             .child_space(Stretch(1.0));
         })
         .child_space(Stretch(1.0));
-
-        style_dropdown(cx)
-            .position_type(PositionType::SelfDirected)
-            .left(Pixels(10.0))
-            .top(Pixels(10.0));
     })
     .run();
 }

@@ -358,6 +358,8 @@ impl Context {
         self.style.child_right.tick(time);
         self.style.child_top.tick(time);
         self.style.child_bottom.tick(time);
+
+        self.style.needs_relayout = true;
     }
 
     pub fn add_animation(&mut self, duration: std::time::Duration) -> AnimationBuilder {

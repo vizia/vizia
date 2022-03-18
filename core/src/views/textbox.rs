@@ -691,6 +691,7 @@ where
                     if *c != '\u{1b}' && // Escape
                             *c != '\u{8}' && // Backspace
                             *c != '\u{7f}' && // Delete
+                            *c != '\u{0d}' &&
                             !cx.modifiers.contains(Modifiers::CTRL)
                     {
                         //self.insert_text(cx, String::from(*c));
