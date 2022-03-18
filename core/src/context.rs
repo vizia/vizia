@@ -19,13 +19,19 @@ use crate::{
     focus_backward, focus_forward, geometry_changed, is_focusable, storage::sparse_set::SparseSet,
     CachedData, Canvas, Color, Display, Entity, Enviroment, Event, FontOrId, IdManager, ImageOrId,
     ImageRetentionPolicy, Message, ModelDataStore, Modifiers, MouseButton, MouseButtonState,
-    MouseState, PropSet, Propagation, ResourceManager, StoredImage, Style, Tree, TreeDepthIterator,
-    TreeExt, TreeIterator, View, ViewHandler, Visibility, WindowEvent,
+    MouseState, PropSet, Propagation, ResourceManager, StoredImage, Style, Tree, TreeExt,
+    TreeIterator, View, ViewHandler, Visibility, WindowEvent,
 };
+
+#[cfg(debug_assertions)]
+use crate::TreeDepthIterator;
+
 use crate::{AnimExt, Animation, AnimationBuilder};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
+
+type Listeners = HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>;
 
 pub struct Context {
     pub entity_manager: IdManager<Entity>,
@@ -37,7 +43,7 @@ pub struct Context {
     //pub views: SparseSet<Box<dyn ViewHandler>>,
     pub data: SparseSet<ModelDataStore>,
     pub event_queue: VecDeque<Event>,
-    pub listeners: HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
+    pub listeners: Listeners,
     pub style: Style,
     pub cache: CachedData,
 
@@ -62,6 +68,12 @@ pub struct Context {
     click_time: Instant,
     double_click: bool,
     click_pos: (f32, f32),
+}
+
+impl Default for Context {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Context {
@@ -519,13 +531,13 @@ impl Context {
         for model_store in self.data.dense.iter_mut().map(|entry| &mut entry.value) {
             for (_, model) in model_store.data.iter() {
                 for lens in model_store.lenses_dup.iter_mut() {
-                    if lens.update(model) {
+                    if lens.update(&**model) {
                         observers.extend(lens.observers().iter())
                     }
                 }
 
                 for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                    if lens.update(model) {
+                    if lens.update(&**model) {
                         observers.extend(lens.observers().iter());
                     }
                 }
@@ -747,7 +759,7 @@ impl Context {
                 #[cfg(debug_assertions)]
                 if *code == Code::KeyH {
                     for entity in self.tree.into_iter() {
-                        println!("Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&self.tree), self.views.get(&entity).map_or("<None>".to_owned(), |view| view.element().unwrap_or("<Unnamed>".to_owned())), self.cache.get_posx(entity), self.cache.get_posy(entity), self.cache.get_width(entity), self.cache.get_height(entity));
+                        println!("Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&self.tree), self.views.get(&entity).map_or("<None>".to_owned(), |view| view.element().unwrap_or_else(|| "<Unnamed>".to_owned())), self.cache.get_posx(entity), self.cache.get_posy(entity), self.cache.get_width(entity), self.cache.get_height(entity));
                     }
                 }
 
@@ -787,7 +799,7 @@ impl Context {
                             TreeIterator::full(&self.tree)
                                 .filter(|node| is_focusable(&self.style, *node))
                                 .next_back()
-                                .unwrap_or(Entity::root())
+                                .unwrap_or_else(Entity::root)
                         };
 
                         if prev_focused != self.focused {

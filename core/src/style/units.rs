@@ -15,7 +15,7 @@ impl Interpolator for Units {
             Units::Pixels(e) => Units::Pixels(f32::interpolate(s, e, t)),
             Units::Percentage(e) => Units::Percentage(f32::interpolate(s, e, t)),
             Units::Stretch(e) => Units::Stretch(f32::interpolate(s, e, t)),
-            Units::Auto => return *end,
+            Units::Auto => *end,
         }
     }
 }

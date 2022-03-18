@@ -21,23 +21,19 @@ pub struct SliderDataInternal {
 
 impl Model for SliderDataInternal {
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::GeometryChanged(geo) => match self.orientation {
-                    Orientation::Horizontal => {
-                        if geo.contains(GeometryChanged::WIDTH_CHANGED) {
-                            self.size = cx.cache.get_width(cx.current);
-                        }
+        if let Some(WindowEvent::GeometryChanged(geo)) = event.message.downcast() {
+            match self.orientation {
+                Orientation::Horizontal => {
+                    if geo.contains(GeometryChanged::WIDTH_CHANGED) {
+                        self.size = cx.cache.get_width(cx.current);
                     }
+                }
 
-                    Orientation::Vertical => {
-                        if geo.contains(GeometryChanged::HEIGHT_CHANGED) {
-                            self.size = cx.cache.get_height(cx.current);
-                        }
+                Orientation::Vertical => {
+                    if geo.contains(GeometryChanged::HEIGHT_CHANGED) {
+                        self.size = cx.cache.get_height(cx.current);
                     }
-                },
-
-                _ => {}
+                }
             }
         }
 
@@ -151,15 +147,12 @@ where
                                     ));
                                 }
                             })
-                            .bind(
-                                lens.clone(),
-                                move |handle, value| {
-                                    let val = *value.get(handle.cx);
-                                    let px = val * (1.0 - (thumb_size / size));
+                            .bind(lens, move |handle, value| {
+                                let val = *value.get(handle.cx);
+                                let px = val * (1.0 - (thumb_size / size));
 
-                                    handle.left(Percentage(100.0 * px));
-                                },
-                            );
+                                handle.left(Percentage(100.0 * px));
+                            });
                         }
 
                         Orientation::Vertical => {
@@ -192,7 +185,7 @@ where
                                         ));
                                     }
                                 })
-                                .bind(lens.clone(), move |handle, value| {
+                                .bind(lens, move |handle, value| {
                                     let val = *value.get(handle.cx);
                                     let px = val * (1.0 - (thumb_size / size));
 

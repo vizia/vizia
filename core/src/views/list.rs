@@ -52,32 +52,28 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::KeyDown(code, _) => match code {
-                    Code::ArrowDown => {
-                        if let Some(callback) = self.increment_callback.take() {
-                            (callback)(cx);
-                            self.increment_callback = Some(callback);
-                        }
+        if let Some(WindowEvent::KeyDown(code, _)) = event.message.downcast() {
+            match code {
+                Code::ArrowDown => {
+                    if let Some(callback) = self.increment_callback.take() {
+                        (callback)(cx);
+                        self.increment_callback = Some(callback);
                     }
+                }
 
-                    Code::ArrowUp => {
-                        if let Some(callback) = self.decrement_callback.take() {
-                            (callback)(cx);
-                            self.decrement_callback = Some(callback);
-                        }
+                Code::ArrowUp => {
+                    if let Some(callback) = self.decrement_callback.take() {
+                        (callback)(cx);
+                        self.decrement_callback = Some(callback);
                     }
+                }
 
-                    Code::Escape => {
-                        if let Some(callback) = self.clear_callback.take() {
-                            (callback)(cx);
-                            self.clear_callback = Some(callback);
-                        }
+                Code::Escape => {
+                    if let Some(callback) = self.clear_callback.take() {
+                        (callback)(cx);
+                        self.clear_callback = Some(callback);
                     }
-
-                    _ => {}
-                },
+                }
 
                 _ => {}
             }

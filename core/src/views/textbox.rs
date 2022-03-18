@@ -34,7 +34,7 @@ impl TextboxData {
     pub fn new(text: String) -> Self {
         let text_length = text.as_str().len();
         Self {
-            text: text.clone(),
+            text,
             selection: Selection::new(0, text_length),
             caret_entity: Entity::null(),
             selection_entity: Entity::null(),
@@ -86,7 +86,7 @@ impl TextboxData {
 
             let mut paint = Paint::default();
             paint.set_font_size(font_size);
-            paint.set_font(&[font_id.clone()]);
+            paint.set_font(&[*font_id]);
 
             let font_metrics =
                 cx.text_context.measure_font(paint).expect("Failed to read font metrics");
@@ -233,11 +233,11 @@ impl TextboxData {
                             }
                         }
 
-                        if self.selection.active as usize == text.len() && text.len() != 0 {
+                        if self.selection.active as usize == text.len() && !text.is_empty() {
                             caretx = endx;
                         }
 
-                        if self.selection.anchor as usize == text.len() && text.len() != 0 {
+                        if self.selection.anchor as usize == text.len() && !text.is_empty() {
                             selectx = endx;
                         }
                     }
@@ -478,14 +478,12 @@ impl Model for TextboxData {
                 TextEvent::Copy =>
                 {
                     #[cfg(feature = "clipboard")]
-                    if self.edit {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
-                            let selected_text = &self.text.as_str()[self.selection.range()];
-                            if selected_text.len() > 0 {
-                                cx.clipboard
-                                    .set_contents(selected_text.to_owned())
-                                    .expect("Failed to add text to clipboard");
-                            }
+                    if self.edit && cx.modifiers.contains(Modifiers::CTRL) {
+                        let selected_text = &self.text.as_str()[self.selection.range()];
+                        if !selected_text.is_empty() {
+                            cx.clipboard
+                                .set_contents(selected_text.to_owned())
+                                .expect("Failed to add text to clipboard");
                         }
                     }
                 }
@@ -493,11 +491,9 @@ impl Model for TextboxData {
                 TextEvent::Paste =>
                 {
                     #[cfg(feature = "clipboard")]
-                    if self.edit {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
-                            if let Ok(text) = cx.clipboard.get_contents() {
-                                cx.emit(TextEvent::InsertText(text));
-                            }
+                    if self.edit && cx.modifiers.contains(Modifiers::CTRL) {
+                        if let Ok(text) = cx.clipboard.get_contents() {
+                            cx.emit(TextEvent::InsertText(text));
                         }
                     }
                 }
@@ -530,9 +526,9 @@ impl<L: Lens> Textbox<L>
 where
     <L as Lens>::Target: Data + Clone + ToString,
 {
-    pub fn new<'a>(cx: &'a mut Context, lens: L) -> Handle<'a, Self> {
+    pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
         Self { lens: lens.clone() }.build2(cx, move |cx| {
-            Binding::new(cx, lens.clone(), |cx, text| {
+            Binding::new(cx, lens, |cx, text| {
                 let text =
                     text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
                 if let Some(text_data) = cx.data::<TextboxData>() {

@@ -2,11 +2,11 @@ use crate::{
     Abilities, DoubleEndedTreeTour, Entity, Style, TourDirection, Tree, TreeIterator, TreeTour,
 };
 
-pub fn is_focusable<'a>(style: &'a Style, node: Entity) -> bool {
+pub fn is_focusable(style: &Style, node: Entity) -> bool {
     style
         .abilities
         .get(node)
-        .and_then(|abilities| Some(abilities.contains(Abilities::FOCUSABLE)))
+        .map(|abilities| abilities.contains(Abilities::FOCUSABLE))
         .unwrap_or(true)
 }
 

@@ -8,7 +8,7 @@ use crate::{Context, Handle, View};
 pub struct VStack {}
 
 impl VStack {
-    pub fn new<'a, F>(cx: &'a mut Context, content: F) -> Handle<Self>
+    pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),
     {

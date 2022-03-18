@@ -76,21 +76,15 @@ where
             if let Some(window_event) = event.message.downcast() {
                 match window_event {
                     WindowEvent::MouseDown(_) => {
-                        if flag {
-                            if event.origin != cx.current {
-                                if !cx.current.is_over(cx) {
-                                    (focus_event)(cx);
-                                    event.consume();
-                                }
-                            }
+                        if flag && event.origin != cx.current && !cx.current.is_over(cx) {
+                            (focus_event)(cx);
+                            event.consume();
                         }
                     }
 
                     WindowEvent::KeyDown(code, _) => {
-                        if flag {
-                            if *code == Code::Escape {
-                                (focus_event)(cx);
-                            }
+                        if flag && *code == Code::Escape {
+                            (focus_event)(cx);
                         }
                     }
 

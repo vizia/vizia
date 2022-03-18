@@ -13,7 +13,7 @@ pub struct Press<V: View> {
 }
 
 impl<V: View> Press<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Press<V>>
+    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Press<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -71,7 +71,7 @@ pub struct Release<V: View> {
 }
 
 impl<V: View> Release<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Release<V>>
+    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Release<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -133,7 +133,7 @@ pub struct Hover<V: View> {
 }
 
 impl<V: View> Hover<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Hover<V>>
+    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Hover<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -162,19 +162,13 @@ impl<V: View> View for Hover<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseEnter => {
-                    if event.target == cx.current {
-                        if let Some(action) = self.action.take() {
-                            (action)(cx);
+        if let Some(WindowEvent::MouseEnter) = event.message.downcast() {
+            if event.target == cx.current {
+                if let Some(action) = self.action.take() {
+                    (action)(cx);
 
-                            self.action = Some(action);
-                        }
-                    }
+                    self.action = Some(action);
                 }
-
-                _ => {}
             }
         }
     }
@@ -193,7 +187,7 @@ pub struct Over<V: View> {
 }
 
 impl<V: View> Over<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Over<V>>
+    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Over<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -222,17 +216,11 @@ impl<V: View> View for Over<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseOver => {
-                    if let Some(action) = self.action.take() {
-                        (action)(cx);
+        if let Some(WindowEvent::MouseOver) = event.message.downcast() {
+            if let Some(action) = self.action.take() {
+                (action)(cx);
 
-                        self.action = Some(action);
-                    }
-                }
-
-                _ => {}
+                self.action = Some(action);
             }
         }
     }
@@ -251,7 +239,7 @@ pub struct Leave<V: View> {
 }
 
 impl<V: View> Leave<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Leave<V>>
+    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Leave<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -280,19 +268,13 @@ impl<V: View> View for Leave<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseLeave => {
-                    if event.target == cx.current {
-                        if let Some(action) = self.action.take() {
-                            (action)(cx);
+        if let Some(WindowEvent::MouseLeave) = event.message.downcast() {
+            if event.target == cx.current {
+                if let Some(action) = self.action.take() {
+                    (action)(cx);
 
-                            self.action = Some(action);
-                        }
-                    }
+                    self.action = Some(action);
                 }
-
-                _ => {}
             }
         }
     }
@@ -302,16 +284,18 @@ impl<V: View> View for Leave<V> {
     }
 }
 
+type MoveAction = Option<Box<dyn Fn(&mut Context, f32, f32)>>;
+
 // Move
 pub struct Move<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context, f32, f32)>>,
+    action: MoveAction,
 
     p: PhantomData<V>,
 }
 
 impl<V: View> Move<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Move<V>>
+    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Move<V>>
     where
         F: 'static + Fn(&mut Context, f32, f32),
     {
@@ -340,17 +324,11 @@ impl<V: View> View for Move<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseMove(x, y) => {
-                    if let Some(action) = self.action.take() {
-                        (action)(cx, *x, *y);
+        if let Some(WindowEvent::MouseMove(x, y)) = event.message.downcast() {
+            if let Some(action) = self.action.take() {
+                (action)(cx, *x, *y);
 
-                        self.action = Some(action);
-                    }
-                }
-
-                _ => {}
+                self.action = Some(action);
             }
         }
     }
@@ -369,7 +347,7 @@ pub struct FocusIn<V: View> {
 }
 
 impl<V: View> FocusIn<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, FocusIn<V>>
+    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<FocusIn<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -398,17 +376,11 @@ impl<V: View> View for FocusIn<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::FocusIn => {
-                    if let Some(action) = self.action.take() {
-                        (action)(cx);
+        if let Some(WindowEvent::FocusIn) = event.message.downcast() {
+            if let Some(action) = self.action.take() {
+                (action)(cx);
 
-                        self.action = Some(action);
-                    }
-                }
-
-                _ => {}
+                self.action = Some(action);
             }
         }
     }
@@ -427,7 +399,7 @@ pub struct FocusOut<V: View> {
 }
 
 impl<V: View> FocusOut<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, FocusOut<V>>
+    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<FocusOut<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -456,17 +428,11 @@ impl<V: View> View for FocusOut<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::FocusOut => {
-                    if let Some(action) = self.action.take() {
-                        (action)(cx);
+        if let Some(WindowEvent::FocusOut) = event.message.downcast() {
+            if let Some(action) = self.action.take() {
+                (action)(cx);
 
-                        self.action = Some(action);
-                    }
-                }
-
-                _ => {}
+                self.action = Some(action);
             }
         }
     }
@@ -485,7 +451,7 @@ pub struct Geo<V: View> {
 }
 
 impl<V: View> Geo<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Geo<V>>
+    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Geo<V>>
     where
         F: 'static + Fn(&mut Context, GeometryChanged),
     {
@@ -514,19 +480,13 @@ impl<V: View> View for Geo<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::GeometryChanged(geo) => {
-                    if event.target == cx.current {
-                        if let Some(action) = self.action.take() {
-                            (action)(cx, *geo);
+        if let Some(WindowEvent::GeometryChanged(geo)) = event.message.downcast() {
+            if event.target == cx.current {
+                if let Some(action) = self.action.take() {
+                    (action)(cx, *geo);
 
-                            self.action = Some(action);
-                        }
-                    }
+                    self.action = Some(action);
                 }
-
-                _ => {}
             }
         }
     }

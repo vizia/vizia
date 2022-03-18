@@ -1,5 +1,4 @@
 use crate::{Binding, Context, Data, Entity, Lens, Res};
-use fluent_bundle;
 use fluent_bundle::{FluentArgs, FluentValue};
 use std::collections::HashMap;
 
@@ -105,7 +104,7 @@ impl Res<String> for Localized {
         let prev_count = cx.count;
         cx.current = entity;
         cx.count = cx.tree.get_num_children(entity).unwrap() as usize;
-        let lenses = self.args.values().map(|x| x.make_clone()).collect();
+        let lenses = self.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
         let self2 = self.clone();
         bind_recursive(cx, &lenses, move |cx| {
             closure(cx, entity, self2.get_val(cx));
@@ -115,12 +114,12 @@ impl Res<String> for Localized {
     }
 }
 
-fn bind_recursive<F>(cx: &mut Context, lenses: &Vec<Box<dyn LensWrapSmallTrait>>, closure: F)
+fn bind_recursive<F>(cx: &mut Context, lenses: &[Box<dyn LensWrapSmallTrait>], closure: F)
 where
     F: 'static + Clone + Fn(&mut Context),
 {
     if let Some((lens, rest)) = lenses.split_last() {
-        let rest = rest.iter().map(|x| x.make_clone()).collect();
+        let rest = rest.iter().map(|x| x.make_clone()).collect::<Vec<_>>();
         lens.bind(
             cx,
             Box::new(move |cx| {

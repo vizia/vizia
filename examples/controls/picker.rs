@@ -90,10 +90,6 @@ fn main() {
 }
 
 pub fn picker_item(cx: &mut Context, text: &'static str, option: Options, current: Options) {
-    Button::new(
-        cx,
-        move |cx| cx.emit(AppEvent::SetOption(option)),
-        move |cx| Label::new(cx, text),
-    )
-    .background_color(if current == option { Color::red() } else { Color::blue() });
+    Button::new(cx, move |cx| cx.emit(AppEvent::SetOption(option)), move |cx| Label::new(cx, text))
+        .background_color(if current == option { Color::red() } else { Color::blue() });
 }

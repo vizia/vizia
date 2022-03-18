@@ -108,22 +108,18 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
 
         if cx.cache.get_visibility(parent) == Visibility::Invisible {
             cx.cache.set_visibility(entity, Visibility::Invisible);
+        } else if let Some(visibility) = cx.style.visibility.get(entity) {
+            cx.cache.set_visibility(entity, *visibility);
         } else {
-            if let Some(visibility) = cx.style.visibility.get(entity) {
-                cx.cache.set_visibility(entity, *visibility);
-            } else {
-                cx.cache.set_visibility(entity, Visibility::Visible);
-            }
+            cx.cache.set_visibility(entity, Visibility::Visible);
         }
 
         if cx.cache.get_display(parent) == Display::None {
             cx.cache.set_display(entity, Display::None);
+        } else if let Some(display) = cx.style.display.get(entity) {
+            cx.cache.set_display(entity, *display);
         } else {
-            if let Some(display) = cx.style.display.get(entity) {
-                cx.cache.set_display(entity, *display);
-            } else {
-                cx.cache.set_display(entity, Display::Flex);
-            }
+            cx.cache.set_display(entity, Display::Flex);
         }
 
         let parent_opacity = cx.cache.get_opacity(parent);
@@ -278,7 +274,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
                 let mut paint = Paint::default();
                 paint.set_font_size(font_size);
-                paint.set_font(&[font_id.clone()]);
+                paint.set_font(&[*font_id]);
 
                 // TODO - should auto size use text height or font height?
                 let font_metrics =
@@ -380,11 +376,7 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     // Universal selector always matches
     if selector.asterisk {
         if let Some(pseudo_classes) = cx.style.pseudo_classes.get(entity) {
-            if !pseudo_classes.is_empty() && !pseudo_classes.intersects(*pseudo_classes) {
-                return false;
-            } else {
-                return true;
-            }
+            return !(!pseudo_classes.is_empty() && !pseudo_classes.intersects(*pseudo_classes));
         } else {
             return true;
         }
@@ -438,7 +430,7 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
         }
     }
 
-    return true;
+    true
 }
 
 pub fn apply_styles(cx: &mut Context, tree: &Tree) {

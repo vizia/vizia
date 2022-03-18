@@ -147,22 +147,16 @@ impl Application {
 
         // Load resources
         for (name, font) in context.resource_manager.fonts.iter_mut() {
-            match font {
-                FontOrId::Font(data) => {
-                    let id1 = window
-                        .canvas
-                        .add_font_mem(&data.clone())
-                        .expect(&format!("Failed to load font file for: {}", name));
-                    let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
-                    if id1 != id2 {
-                        panic!(
-                            "Fonts in canvas must have the same id as fonts in the text context"
-                        );
-                    }
-                    *font = FontOrId::Id(id1);
+            if let FontOrId::Font(data) = font {
+                let id1 = window
+                    .canvas
+                    .add_font_mem(&data.clone())
+                    .unwrap_or_else(|_| panic!("Failed to load font file for: {}", name));
+                let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
+                if id1 != id2 {
+                    panic!("Fonts in canvas must have the same id as fonts in the text context");
                 }
-
-                _ => {}
+                *font = FontOrId::Id(id1);
             }
         }
 
@@ -192,9 +186,8 @@ impl Application {
         context.style.pseudo_classes.insert(Entity::root(), PseudoClass::default()).unwrap();
         context.style.disabled.insert(Entity::root(), false);
 
-        let mut bounding_box = BoundingBox::default();
-        bounding_box.w = size.width as f32;
-        bounding_box.h = size.height as f32;
+        let bounding_box =
+            BoundingBox { x: 0.0, y: 0.0, w: size.width as f32, h: size.height as f32 };
 
         context.cache.set_clip_region(Entity::root(), bounding_box);
 
@@ -245,17 +238,13 @@ impl Application {
 
                             // Load resources
                             for (name, font) in context.resource_manager.fonts.iter_mut() {
-                                match font {
-                                    FontOrId::Font(data) => {
-                                        let id1 = window.canvas.add_font_mem(&data.clone()).expect(&format!("Failed to load font file for: {}", name));
-                                        let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
-                                        if id1 != id2 {
-                                            panic!("Fonts in canvas must have the same id as fonts in the text context");
-                                        }
-                                        *font = FontOrId::Id(id1);
+                                if let FontOrId::Font(data) = font {
+                                    let id1 = window.canvas.add_font_mem(&data.clone()).unwrap_or_else(|_| panic!("Failed to load font file for: {}", name));      
+                                    let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
+                                    if id1 != id2 {
+                                        panic!("Fonts in canvas must have the same id as fonts in the text context");
                                     }
-
-                                    _=> {}
+                                    *font = FontOrId::Id(id1);
                                 }
                             }
 
@@ -286,12 +275,10 @@ impl Application {
 
                             context.views.insert(Entity::root(), window_event_handler);
                         }
+                    } else if should_poll {
+                        *control_flow = ControlFlow::Poll;
                     } else {
-                        if should_poll {
-                            *control_flow = ControlFlow::Poll;
-                        } else {
-                            *control_flow = ControlFlow::Wait;
-                        }
+                        *control_flow = ControlFlow::Wait;
                     }
 
                     context.apply_animations();
@@ -436,9 +423,12 @@ impl Application {
                                 .cache
                                 .set_height(Entity::root(), size.height as f32);
 
-                            let mut bounding_box = BoundingBox::default();
-                            bounding_box.w = size.width as f32;
-                            bounding_box.h = size.height as f32;
+                            let bounding_box = BoundingBox {
+                                x: 0.0,
+                                y: 0.0,
+                                w: size.width as f32,
+                                h: size.height as f32,
+                            };
 
                             context.cache.set_clip_region(Entity::root(), bounding_box);
 
