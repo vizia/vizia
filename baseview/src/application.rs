@@ -306,8 +306,7 @@ impl ApplicationRunner {
     }
 
     pub fn render(&mut self) {
-        let dpi_factor = self.scale_factor as f32;
-        self.context.draw(&mut self.canvas, dpi_factor);
+        self.context.draw(&mut self.canvas);
         self.should_redraw = false;
     }
 

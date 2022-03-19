@@ -668,7 +668,6 @@ pub trait View: 'static + Sized {
                 paint.set_font(&[font_id.clone()]);
                 paint.set_text_align(align);
                 paint.set_text_baseline(baseline);
-                paint.set_anti_alias(false);
 
                 let font_metrics =
                     cx.text_context.measure_font(paint).expect("Failed to read font metrics");
