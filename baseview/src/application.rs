@@ -141,6 +141,8 @@ impl ApplicationRunner {
             WindowScalePolicy::SystemScaleFactor => 1.0,
         };
 
+        context.style.dpi_factor = scale;
+
         let logical_size = win_desc.inner_size;
         let physical_size = WindowSize {
             width: (logical_size.width as f64 * scale).round() as u32,
@@ -165,7 +167,7 @@ impl ApplicationRunner {
 
         context.style.default_font = "roboto".to_string();
 
-        canvas.scale(scale as f32, scale as f32);
+        //canvas.scale(scale as f32, scale as f32);
 
         context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
         context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height as f32));
@@ -177,8 +179,8 @@ impl ApplicationRunner {
         context.cache.set_opacity(Entity::root(), 1.0);
 
         let mut bounding_box = BoundingBox::default();
-        bounding_box.w = logical_size.width as f32;
-        bounding_box.h = logical_size.height as f32;
+        bounding_box.w = physical_size.width as f32;
+        bounding_box.h = physical_size.height as f32;
 
         context.cache.set_clip_region(Entity::root(), bounding_box);
 
@@ -318,8 +320,10 @@ impl ApplicationRunner {
         match event {
             baseview::Event::Mouse(event) => match event {
                 baseview::MouseEvent::CursorMoved { position } => {
-                    let cursorx = (position.x) as f32;
-                    let cursory = (position.y) as f32;
+                    let physical_posx = position.x * self.context.style.dpi_factor;
+                    let physical_posy = position.y * self.context.style.dpi_factor;
+                    let cursorx = (physical_posx) as f32;
+                    let cursory = (physical_posy) as f32;
                     self.context.dispatch_system_event(WindowEvent::MouseMove(cursorx, cursory));
                 }
                 baseview::MouseEvent::ButtonPressed(button) => {
@@ -412,6 +416,8 @@ impl ApplicationRunner {
                         WindowScalePolicy::ScaleFactor(scale) => scale,
                         WindowScalePolicy::SystemScaleFactor => window_info.scale(),
                     };
+
+                    self.context.style.dpi_factor = self.scale_factor;
 
                     let logical_size = (
                         (window_info.physical_size().width as f64 / self.scale_factor),

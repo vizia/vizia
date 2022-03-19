@@ -7,6 +7,12 @@ use chrono::{NaiveDate, ParseError};
 const ICON_DOWN_OPEN: &str = "\u{e75c}";
 
 const STYLE: &str = r#"
+ 
+    * {
+        border-width: 1px;
+        border-color: red;
+    }
+
     textbox.invalid {
         background-color: #AA0000;
     }
