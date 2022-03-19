@@ -220,6 +220,8 @@ pub struct Style {
     pub needs_restyle: bool,
     pub needs_relayout: bool,
     pub needs_redraw: bool,
+
+    pub dpi_factor: f64,
 }
 
 impl Style {

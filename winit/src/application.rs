@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use winit::{
+    dpi::LogicalSize,
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
@@ -163,34 +164,39 @@ impl Application {
         }
 
         let dpi_factor = window.window().scale_factor();
-        let size = window.window().inner_size();
+
+        let physical_size = window.window().inner_size();
 
         let clear_color =
             context.style.background_color.get(Entity::root()).cloned().unwrap_or_default();
 
-        window.canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
-        window.canvas.clear_rect(0, 0, size.width as u32, size.height as u32, clear_color.into());
+        window.canvas.set_size(physical_size.width as u32, physical_size.height as u32, 1.0);
+        window.canvas.clear_rect(
+            0,
+            0,
+            physical_size.width as u32,
+            physical_size.height as u32,
+            clear_color.into(),
+        );
+
+        context.style.dpi_factor = window.window().scale_factor();
 
         context.views.insert(Entity::root(), Box::new(window));
 
-        context.cache.set_width(Entity::root(), self.window_description.inner_size.width as f32);
-        context.cache.set_height(Entity::root(), self.window_description.inner_size.height as f32);
+        let logical_size: LogicalSize<f32> = physical_size.to_logical(dpi_factor);
 
-        context
-            .style
-            .width
-            .insert(Entity::root(), Units::Pixels(self.window_description.inner_size.width as f32));
-        context.style.height.insert(
-            Entity::root(),
-            Units::Pixels(self.window_description.inner_size.height as f32),
-        );
+        context.cache.set_width(Entity::root(), physical_size.width as f32);
+        context.cache.set_height(Entity::root(), physical_size.height as f32);
+
+        context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width));
+        context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height));
 
         context.style.pseudo_classes.insert(Entity::root(), PseudoClass::default()).unwrap();
         context.style.disabled.insert(Entity::root(), false);
 
         let mut bounding_box = BoundingBox::default();
-        bounding_box.w = size.width as f32;
-        bounding_box.h = size.height as f32;
+        bounding_box.w = physical_size.width as f32;
+        bounding_box.h = physical_size.height as f32;
 
         context.cache.set_clip_region(Entity::root(), bounding_box);
 
@@ -320,6 +326,27 @@ impl Application {
                             *stored_control_flow.borrow_mut() = ControlFlow::Exit;
                         }
 
+                        winit::event::WindowEvent::ScaleFactorChanged {
+                            scale_factor,
+                            new_inner_size,
+                        } => {
+                            context.style.dpi_factor = scale_factor;
+                            context.cache.set_width(Entity::root(), new_inner_size.width as f32);
+                            context.cache.set_height(Entity::root(), new_inner_size.height as f32);
+
+                            let logical_size: LogicalSize<f32> = new_inner_size.to_logical(context.style.dpi_factor);
+
+                            context
+                                .style
+                                .width
+                                .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
+
+                            context
+                                .style
+                                .height
+                                .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
+                        }
+
                         #[allow(deprecated)]
                         winit::event::WindowEvent::CursorMoved {
                             device_id: _,
@@ -396,37 +423,39 @@ impl Application {
                             context.dispatch_system_event(WindowEvent::CharInput(character));
                         }
 
-                        winit::event::WindowEvent::Resized(size) => {
+                        winit::event::WindowEvent::Resized(physical_size) => {
                             //println!("Resized: {:?}", size);
 
                             if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                                 if let Some(window) = window_view.downcast_mut::<Window>() {
-                                    window.resize(size);
+                                    window.resize(physical_size);
                                 }
 
                                 context.views.insert(Entity::root(), window_view);
                             }
 
+                            let logical_size: LogicalSize<f32> = physical_size.to_logical(context.style.dpi_factor);
+
                             context
                                 .style
                                 .width
-                                .insert(Entity::root(), Units::Pixels(size.width as f32));
+                                .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
 
                             context
                                 .style
                                 .height
-                                .insert(Entity::root(), Units::Pixels(size.height as f32));
+                                .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
                             context
                                 .cache
-                                .set_width(Entity::root(), size.width as f32);
+                                .set_width(Entity::root(), physical_size.width as f32);
                             context
                                 .cache
-                                .set_height(Entity::root(), size.height as f32);
+                                .set_height(Entity::root(), physical_size.height as f32);
 
                             let mut bounding_box = BoundingBox::default();
-                            bounding_box.w = size.width as f32;
-                            bounding_box.h = size.height as f32;
+                            bounding_box.w = physical_size.width as f32;
+                            bounding_box.h = physical_size.height as f32;
 
                             context.cache.set_clip_region(Entity::root(), bounding_box);
 
@@ -483,8 +512,7 @@ impl Env for Application {
 fn context_draw(cx: &mut Context) {
     if let Some(mut window_view) = cx.views.remove(&Entity::root()) {
         if let Some(window) = window_view.downcast_mut::<Window>() {
-            let dpi_factor = window.window().scale_factor();
-            cx.draw(&mut window.canvas, dpi_factor as f32);
+            cx.draw(&mut window.canvas, 1.0);
             window.swap_buffers();
         }
 
