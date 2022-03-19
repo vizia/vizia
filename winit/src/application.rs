@@ -512,7 +512,7 @@ impl Env for Application {
 fn context_draw(cx: &mut Context) {
     if let Some(mut window_view) = cx.views.remove(&Entity::root()) {
         if let Some(window) = window_view.downcast_mut::<Window>() {
-            cx.draw(&mut window.canvas, 1.0);
+            cx.draw(&mut window.canvas);
             window.swap_buffers();
         }
 

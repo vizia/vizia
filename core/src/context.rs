@@ -625,13 +625,13 @@ impl Context {
         geometry_changed(self, &tree);
     }
 
-    pub fn draw(&mut self, canvas: &mut Canvas, dpi_factor: f32) {
+    pub fn draw(&mut self, canvas: &mut Canvas) {
         self.resource_manager.mark_images_unused();
 
         let window_width = self.cache.get_width(Entity::root());
         let window_height = self.cache.get_height(Entity::root());
 
-        canvas.set_size(window_width as u32, window_height as u32, dpi_factor);
+        canvas.set_size(window_width as u32, window_height as u32, 1.0);
         let clear_color =
             self.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
         canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());

@@ -15,6 +15,8 @@ fn main() {
     Application::new(window_description, |cx| {
         cx.add_theme(STYLE);
 
+        Entity::root().set_background_color(cx, Color::rgb(200, 200, 200));
+
         HStack::new(cx, |cx| {
             VStack::new(cx, |cx| {
                 Label::new(cx, LOREM_IPSUM);
