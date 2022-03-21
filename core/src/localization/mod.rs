@@ -102,16 +102,13 @@ impl Res<String> for Localized {
         F: 'static + Clone + Fn(&mut Context, Entity, String),
     {
         let prev_current = cx.current;
-        let prev_count = cx.count;
         cx.current = entity;
-        cx.count = cx.tree.get_num_children(entity).unwrap() as usize;
         let lenses = self.args.values().map(|x| x.make_clone()).collect();
         let self2 = self.clone();
         bind_recursive(cx, &lenses, move |cx| {
             closure(cx, entity, self2.get_val(cx));
         });
         cx.current = prev_current;
-        cx.count = prev_count;
     }
 }
 

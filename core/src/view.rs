@@ -21,67 +21,37 @@ pub trait View: 'static + Sized {
         F: FnOnce(&mut Context),
     {
         // Add the instance to context even if it already exists
-        let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
-            cx.views.insert(id, Box::new(self));
-            id
-        } else {
-            let id = cx.entity_manager.create();
-            cx.tree.add(id, cx.current).expect("Failed to add to tree");
-            cx.cache.add(id).expect("Failed to add to cache");
-            cx.style.add(id);
-            cx.views.insert(id, Box::new(self));
-            id
-        };
 
-        cx.count += 1;
+        let id = cx.entity_manager.create();
+        cx.tree.add(id, cx.current).expect("Failed to add to tree");
+        cx.cache.add(id).expect("Failed to add to cache");
+        cx.style.add(id);
+        cx.views.insert(id, Box::new(self));
 
         let handle = Handle { entity: id, p: Default::default(), cx };
 
         // ...and this part
         let prev = handle.cx.current;
-        let prev_count = handle.cx.count;
         handle.cx.current = handle.entity;
-        handle.cx.count = 0;
 
         (builder)(handle.cx);
 
         // This part will also be moved somewhere else
         handle.cx.current = prev;
-        handle.cx.count = prev_count;
 
         handle
     }
 
     fn build(mut self, cx: &mut Context) -> Handle<Self> {
-        let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
-            let prev = cx.current;
-            cx.current = id;
-            let prev_count = cx.count;
-            cx.count = 0;
-            self.body(cx);
-            cx.current = prev;
-            cx.count = prev_count;
-
-            cx.views.insert(id, Box::new(self));
-
-            id
-        } else {
-            let id = cx.entity_manager.create();
-            cx.tree.add(id, cx.current).expect("Failed to add to tree");
-            cx.cache.add(id).expect("Failed to add to cache");
-            cx.style.add(id);
-            let prev = cx.current;
-            cx.current = id;
-            let prev_count = cx.count;
-            cx.count = 0;
-            self.body(cx);
-            cx.current = prev;
-            cx.count = prev_count;
-            cx.views.insert(id, Box::new(self));
-            id
-        };
-
-        cx.count += 1;
+        let id = cx.entity_manager.create();
+        cx.tree.add(id, cx.current).expect("Failed to add to tree");
+        cx.cache.add(id).expect("Failed to add to cache");
+        cx.style.add(id);
+        let prev = cx.current;
+        cx.current = id;
+        self.body(cx);
+        cx.current = prev;
+        cx.views.insert(id, Box::new(self));
 
         Handle { entity: id, p: Default::default(), cx }
     }

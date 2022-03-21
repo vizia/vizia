@@ -38,16 +38,10 @@ where
     {
         let binding = Self { lens: lens.clone(), builder: Some(Box::new(builder)) };
 
-        let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
-            println!("Do this");
-            id
-        } else {
-            let id = cx.entity_manager.create();
-            cx.tree.add(id, cx.current).expect("Failed to add to tree");
-            cx.cache.add(id).expect("Failed to add to cache");
-            cx.style.add(id);
-            id
-        };
+        let id = cx.entity_manager.create();
+        cx.tree.add(id, cx.current).expect("Failed to add to tree");
+        cx.cache.add(id).expect("Failed to add to cache");
+        cx.style.add(id);
 
         let ancestors = cx.current.parent_iter(&cx.tree).collect::<HashSet<_>>();
 
@@ -86,12 +80,8 @@ where
 
         cx.views.insert(id, Box::new(binding));
 
-        cx.count += 1;
-
         let prev = cx.current;
-        let prev_count = cx.count;
         cx.current = id;
-        cx.count = 0;
 
         // Call the body of the binding
         if let Some(mut view_handler) = cx.views.remove(&id) {
@@ -99,7 +89,6 @@ where
             cx.views.insert(id, view_handler);
         }
         cx.current = prev;
-        cx.count = prev_count;
 
         let _: Handle<Self> = Handle { entity: id, p: Default::default(), cx }
             .width(Units::Stretch(1.0))
@@ -115,7 +104,7 @@ impl<L: 'static + Lens> View for Binding<L> {
     }
 
     fn body<'a>(&mut self, cx: &'a mut Context) {
-        cx.remove_trailing_children();
+        cx.remove_children(cx.current);
         if let Some(builder) = self.builder.take() {
             (builder)(cx, self.lens.clone());
             self.builder = Some(builder);

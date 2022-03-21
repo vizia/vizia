@@ -31,7 +31,6 @@ pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
     pub tree: Tree,
     pub current: Entity,
-    pub count: usize,
     //pub views: HashMap<Entity, Box<dyn ViewHandler>>,
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
     //pub views: SparseSet<Box<dyn ViewHandler>>,
@@ -73,7 +72,6 @@ impl Context {
             entity_manager: IdManager::new(),
             tree: Tree::new(),
             current: Entity::root(),
-            count: 0,
             views: FnvHashMap::default(),
             data: SparseSet::new(),
             style: Style::default(),
@@ -118,13 +116,6 @@ impl Context {
     pub fn remove_children(&mut self, entity: Entity) {
         let children = entity.child_iter(&self.tree).collect::<Vec<_>>();
         for child in children.into_iter() {
-            self.remove(child);
-        }
-    }
-
-    /// Remove any extra children that were cached in the tree but are no longer required
-    pub fn remove_trailing_children(&mut self) {
-        while let Some(child) = self.tree.get_child(self.current, self.count) {
             self.remove(child);
         }
     }
@@ -549,12 +540,9 @@ impl Context {
         for observer in observers.iter() {
             if let Some(mut view) = self.views.remove(observer) {
                 let prev = self.current;
-                let prev_count = self.count;
                 self.current = *observer;
-                self.count = 0;
                 view.body(self);
                 self.current = prev;
-                self.count = prev_count;
                 self.views.insert(*observer, view);
             }
         }

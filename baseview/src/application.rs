@@ -454,7 +454,6 @@ impl ApplicationRunner {
     pub fn rebuild(&mut self, builder: &Option<Box<dyn Fn(&mut Context) + Send>>) {
         if self.context.enviroment.needs_rebuild {
             self.context.current = Entity::root();
-            self.context.count = 0;
             if let Some(builder) = &builder {
                 (builder)(&mut self.context);
             }
@@ -469,7 +468,6 @@ impl ApplicationRunner {
 
         if let Some(idle_callback) = on_idle {
             self.context.current = Entity::root();
-            self.context.count = 0;
             (idle_callback)(&mut self.context);
         }
     }

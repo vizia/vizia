@@ -16,12 +16,9 @@ impl ForEach {
                 cx.style.needs_redraw = true;
             }
 
-            let prev_count = cx.count;
-            cx.count = 0;
             for i in range {
                 (template)(cx, i);
             }
-            cx.count = prev_count;
         })
     }
 }
