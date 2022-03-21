@@ -28,14 +28,14 @@ static DEFAULT_THEME: &str = include_str!("default_theme.css");
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
 pub struct Context {
-    pub entity_manager: IdManager<Entity>,
+    pub(crate) entity_manager: IdManager<Entity>,
     pub tree: Tree,
     pub current: Entity,
     pub count: usize,
     //pub views: HashMap<Entity, Box<dyn ViewHandler>>,
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
     //pub views: SparseSet<Box<dyn ViewHandler>>,
-    pub data: SparseSet<ModelDataStore>,
+    pub(crate) data: SparseSet<ModelDataStore>,
     pub event_queue: VecDeque<Event>,
     pub listeners: HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
     pub style: Style,
@@ -190,6 +190,7 @@ impl Context {
         None
     }
 
+    /// Send an event containing a message up the tree from the current entity.
     pub fn emit<M: Message>(&mut self, message: M) {
         self.event_queue.push_back(
             Event::new(message)
@@ -199,12 +200,18 @@ impl Context {
         );
     }
 
+    /// Send an event containing a message directly to a specified entity.
     pub fn emit_to<M: Message>(&mut self, target: Entity, message: M) {
         self.event_queue.push_back(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
         );
     }
 
+    /// Add a listener to an entity.
+    ///
+    /// A listener can be used to handle events which would not normally propagate to the entity.
+    /// For example, mouse events when a different entity has captured them. Useful for things like
+    /// closing a popup when clicking outside of its bounding box.
     pub fn add_listener<F, W>(&mut self, listener: F)
     where
         W: View,
@@ -220,17 +227,7 @@ impl Context {
         );
     }
 
-    pub fn emit_trace<M: Message>(&mut self, message: M) {
-        self.event_queue.push_back(
-            Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up)
-                .trace(),
-        );
-    }
-
-    /// Add a font from memory to the application
+    /// Add a font from memory to the application.
     pub fn add_font_mem(&mut self, name: &str, data: &[u8]) {
         // TODO - return error
         if self.resource_manager.fonts.contains_key(name) {
@@ -241,7 +238,7 @@ impl Context {
         self.resource_manager.fonts.insert(name.to_owned(), FontOrId::Font(data.to_vec()));
     }
 
-    /// Sets the global default font for the application
+    /// Sets the global default font for the application.
     pub fn set_default_font(&mut self, name: &str) {
         self.style.default_font = name.to_string();
     }
@@ -362,6 +359,17 @@ impl Context {
         self.style.needs_relayout = true;
     }
 
+    /// Adds a new property animation returning an animation builder
+    ///
+    /// # Example
+    /// Create an animation which animates the `left` property from 0 to 100 pixels in 5 seconds
+    /// and play the animation on an entity:
+    /// ```ignore
+    /// let animation_id = cx.add_animation(instant::Duration::from_secs(5))
+    ///     .add_keyframe(0.0, |keyframe| keyframe.set_left(Pixels(0.0)))
+    ///     .add_keyframe(1.0, |keyframe| keyframe.set_left(Pixels(100.0)))
+    ///     .build();
+    /// ```
     pub fn add_animation(&mut self, duration: std::time::Duration) -> AnimationBuilder {
         let id = self.style.animation_manager.create();
         AnimationBuilder::new(id, self, duration)

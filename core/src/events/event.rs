@@ -4,7 +4,7 @@ use std::any::{Any, TypeId};
 use std::fmt::Debug;
 
 /// Determines how the event propagates through the tree
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Propagation {
     // /// Events propagate down the tree to the target entity, e.g. from grand-parent to parent to child (target)
     // Down,
@@ -71,9 +71,6 @@ pub struct Event {
     pub(crate) consumed: bool,
     // Specifies an order index which is used to sort the event queue
     pub order: i32,
-
-    pub trace: bool,
-
     // The event message
     pub message: Box<dyn Message>,
 }
@@ -106,14 +103,8 @@ impl Event {
             consumable: true,
             consumed: false,
             order: 0,
-            trace: false,
             message: Box::new(message),
         }
-    }
-
-    pub fn trace(mut self) -> Self {
-        self.trace = true;
-        self
     }
 
     /// Sets the target of the event

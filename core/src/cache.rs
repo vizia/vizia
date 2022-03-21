@@ -473,7 +473,7 @@ impl CachedData {
 
     /// Returns the Z index of the entity.
     ///
-    /// Entities can specify a z-index with `entity.set_z_index(state, value)`.
+    /// Entities can specify a z-index with `entity.set_z_index(cx, value)`.
     /// The z_order_system then determines the z-index of child entities based on their parent and any specified z-index.
     pub fn get_z_index(&self, entity: Entity) -> i32 {
         self.z_index.get(entity).cloned().unwrap()

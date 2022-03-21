@@ -33,7 +33,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for DerefContainer<T> {
     }
 }
 
-/// A Lens allows the construction of a reference to a field of a struct.
+/// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
 ///
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.
 /// The `view()` method takes a reference to the struct type as input and outputs a reference to the field.
@@ -43,7 +43,9 @@ pub trait Lens: 'static + Clone {
     type Target;
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O;
+}
 
+pub(crate) trait LensCache: Lens {
     fn cache_key(&self) -> Option<TypeId> {
         if std::mem::size_of::<Self>() == 0 {
             Some(TypeId::of::<Self>())
@@ -53,8 +55,18 @@ pub trait Lens: 'static + Clone {
     }
 }
 
+impl<T: Lens> LensCache for T {}
+
 /// Helpers for constructing more complex `Lens`es.
 pub trait LensExt: Lens {
+    /// Retrieve a `DerefContainer` to the lensed data from context.
+    ///
+    /// The value can be retrieved by de-referencing the container.  
+    ///
+    /// Example
+    /// ```ignore
+    /// let value = lens.get(cx);
+    /// ```
     fn get(&self, cx: &Context) -> DerefContainer<Self::Target>
     where
         Self::Target: Clone,
@@ -91,19 +103,11 @@ pub trait LensExt: Lens {
     /// ```
     fn then<Other>(self, other: Other) -> Then<Self, Other>
     where
-        Other: Lens<Source = Self::Target> + Sized,
+        Other: Lens<Source = Self::Target>,
         Self: Sized,
     {
         Then::new(self, other)
     }
-
-    // fn and<Other>(self, other: Other) -> And<Self, Other>
-    // where
-    //     Other: Lens + Sized,
-    //     Self: Sized,
-    // {
-    //     And::new(self, other)
-    // }
 
     fn index<T>(self, index: usize) -> Then<Self, Index<Self::Target, T>>
     where
@@ -113,7 +117,7 @@ pub trait LensExt: Lens {
         self.then(Index::new(index))
     }
 
-    fn map<G, B: Clone + 'static>(self, get: G) -> Then<Self, Map<Self::Target, B>>
+    fn map<G, B: 'static>(self, get: G) -> Then<Self, Map<Self::Target, B>>
     where
         G: 'static + Fn(&Self::Target) -> B,
     {

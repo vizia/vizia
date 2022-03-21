@@ -5,37 +5,38 @@ use crate::{Animation, Entity, Interpolator};
 
 #[derive(Clone, Debug)]
 pub struct AnimationState<Prop: Interpolator> {
-    // ID of the animation description
+    /// ID of the animation description.
     pub id: Animation,
-    // List of property indices that this animation applies to
+    /// List of property indices that this animation applies to.
     pub indices: Vec<usize>,
-    // The start time of the animation
+    /// The start time of the animation.
     pub start_time: Instant,
-    // The duration of the animation
+    /// The duration of the animation.
     pub duration: Duration,
-    //
+    /// The delay before the animation starts.
     pub delay: f32,
-    // Animation keyframes (time, value)
+    /// List of animation keyframes as (normalized time, value).
     pub keyframes: Vec<(f32, Prop)>,
-    // The output of the animation
+    /// The output of value of the animation.
     pub output: Option<Prop>,
-    // A flag used to check if the animation is finished
+    /// Whether the animation should persist after finishing.
     pub persistent: bool,
+
     pub t0: f32,
-    // How far through the animation between 0.0 and 1.0 (used for transitions)
+    /// How far through the animation between 0.0 and 1.0.
     pub t: f32,
 
     pub active: bool,
 
-    // For transitions. The starting rule for this transition.
+    /// For transitions. The starting rule for this transition.
     pub from_rule: usize,
-    // For tansitions. The ending rule for this transition.
+    /// For tansitions. The ending rule for this transition.
     pub to_rule: usize,
 
-    // The number of entities linked to this animation when playing
+    /// The number of entities linked to this animation when playing
     pub count: usize,
 
-    // List of entities connected to this animation (used when animation is removed from active list)
+    /// List of entities connected to this animation (used when animation is removed from active list)
     pub entities: HashSet<Entity>,
 }
 

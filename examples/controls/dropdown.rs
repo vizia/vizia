@@ -60,7 +60,7 @@ fn main() {
                                             Color::white()
                                         })
                                         .on_press(move |cx| {
-                                            cx.emit(AppEvent::SetChoice(item.get_val(cx)));
+                                            cx.emit(AppEvent::SetChoice(item.get(cx).clone()));
                                             cx.emit(PopupEvent::Close);
                                         });
                                 });

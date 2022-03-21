@@ -135,7 +135,7 @@ fn main() {
 
                     List::new(cx, AppData::list, |cx, index, item| {
                         Binding::new(cx, AppData::selected, move |cx, selected| {
-                            let is_selected = if let Some(selected) = selected.get_val(cx) {
+                            let is_selected = if let Some(selected) = *selected.get(cx) {
                                 selected == index
                             } else {
                                 false

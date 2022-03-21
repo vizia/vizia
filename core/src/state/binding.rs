@@ -1,14 +1,11 @@
 use std::any::TypeId;
 use std::collections::HashSet;
 
-use morphorm::{LayoutType, PositionType};
-
-use crate::{
-    Color, Context, Display, Entity, Handle, LensExt, StateStore, TreeExt, Units, View, Visibility,
-};
+use crate::{Context, Handle, LensCache, StateStore, TreeExt, Units, View};
 
 use crate::{Data, Lens};
 
+/// A binding view which rebuilds its contents when its observed data changes.
 pub struct Binding<L>
 where
     L: Lens,
@@ -23,6 +20,18 @@ where
     <L as Lens>::Source: 'static,
     <L as Lens>::Target: Data,
 {
+    /// Creates a new binding view.
+    ///
+    /// A binding view observes application data through a lens and rebuilds its contents if the data changes.
+    ///
+    /// Example
+    /// When the value of `AppData::some_data` changes, the label inside of the binding will be rebuilt.
+    /// ```ignore
+    /// Binding::new(cx, AppData::some_data, |cx, lens|{
+    ///     // Retrieve the data from context
+    ///     let value = *lens.get(cx);
+    ///     Label::new(cx, value.to_string());
+    /// });
     pub fn new<F>(cx: &mut Context, lens: L, builder: F)
     where
         F: 'static + Fn(&mut Context, L),
@@ -30,6 +39,7 @@ where
         let binding = Self { lens: lens.clone(), builder: Some(Box::new(builder)) };
 
         let id = if let Some(id) = cx.tree.get_child(cx.current, cx.count) {
+            println!("Do this");
             id
         } else {
             let id = cx.entity_manager.create();
@@ -110,197 +120,5 @@ impl<L: 'static + Lens> View for Binding<L> {
             (builder)(cx, self.lens.clone());
             self.builder = Some(builder);
         }
-    }
-}
-
-macro_rules! impl_res_simple {
-    ($t:ty) => {
-        impl Res<$t> for $t {
-            fn get_val(&self, _: &Context) -> $t {
-                *self
-            }
-
-            fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-            where
-                F: 'static + Fn(&mut Context, Entity, Self),
-            {
-                (closure)(cx, entity, *self);
-            }
-        }
-    };
-}
-
-pub trait Res<T> {
-    fn get_val(&self, cx: &Context) -> T;
-    fn get_val_fallible(&self, cx: &Context) -> Option<T> {
-        Some(self.get_val(cx))
-    }
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Clone + Fn(&mut Context, Entity, T);
-}
-
-impl_res_simple!(i8);
-impl_res_simple!(i16);
-impl_res_simple!(i32);
-impl_res_simple!(i64);
-impl_res_simple!(i128);
-impl_res_simple!(isize);
-impl_res_simple!(u8);
-impl_res_simple!(u16);
-impl_res_simple!(u32);
-impl_res_simple!(u64);
-impl_res_simple!(u128);
-impl_res_simple!(usize);
-impl_res_simple!(char);
-impl_res_simple!(bool);
-impl_res_simple!(f32);
-impl_res_simple!(f64);
-
-impl<T, L> Res<T> for L
-where
-    L: Lens<Target = T> + LensExt,
-    T: Clone + Data,
-{
-    fn get_val(&self, cx: &Context) -> T {
-        self.get(cx).take()
-    }
-
-    fn get_val_fallible(&self, cx: &Context) -> Option<T> {
-        self.get_fallible(cx).map(|x| x.take())
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, T),
-    {
-        let prev_current = cx.current;
-        let prev_count = cx.count;
-        cx.current = entity;
-        cx.count = cx.tree.get_num_children(entity).unwrap() as usize;
-        Binding::new(cx, self.clone(), move |cx, val| {
-            if let Some(v) = val.get_val_fallible(cx) {
-                (closure)(cx, entity, v);
-            }
-        });
-        cx.current = prev_current;
-        cx.count = prev_count;
-    }
-}
-
-impl<'s> Res<&'s str> for &'s str {
-    fn get_val(&self, _: &Context) -> &'s str {
-        self
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, Self),
-    {
-        (closure)(cx, entity, self);
-    }
-}
-
-impl<'s> Res<&'s String> for &'s String {
-    fn get_val(&self, _: &Context) -> &'s String {
-        self
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, Self),
-    {
-        (closure)(cx, entity, self);
-    }
-}
-
-impl Res<Color> for Color {
-    fn get_val(&self, _: &Context) -> Color {
-        *self
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, Self),
-    {
-        (closure)(cx, entity, *self);
-    }
-}
-
-impl Res<Units> for Units {
-    fn get_val(&self, _: &Context) -> Units {
-        *self
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, Self),
-    {
-        (closure)(cx, entity, *self);
-    }
-}
-
-impl Res<Visibility> for Visibility {
-    fn get_val(&self, _: &Context) -> Visibility {
-        *self
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, Self),
-    {
-        (closure)(cx, entity, *self);
-    }
-}
-
-impl Res<Display> for Display {
-    fn get_val(&self, _: &Context) -> Display {
-        *self
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, Self),
-    {
-        (closure)(cx, entity, *self);
-    }
-}
-
-impl Res<LayoutType> for LayoutType {
-    fn get_val(&self, _: &Context) -> LayoutType {
-        *self
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, Self),
-    {
-        (closure)(cx, entity, *self);
-    }
-}
-
-impl Res<PositionType> for PositionType {
-    fn get_val(&self, _: &Context) -> PositionType {
-        *self
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, Self),
-    {
-        (closure)(cx, entity, *self);
-    }
-}
-
-impl<T: Copy> Res<(T, T)> for (T, T) {
-    fn get_val(&self, _: &Context) -> (T, T) {
-        *self
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, Self),
-    {
-        (closure)(cx, entity, *self);
     }
 }

@@ -56,7 +56,7 @@ pub use resource::*;
 mod window;
 pub use window::*;
 
-mod state;
+pub mod state;
 pub use state::*;
 
 mod hover_system;

@@ -32,7 +32,7 @@ fn main() {
                                 .height(Stretch(1.0))
                                 .font("roboto-bold");
                             Binding::new(cx, TableData::first_name_sorted, |cx, sorted| {
-                                let visible = match sorted.get_val(cx) {
+                                let visible = match *sorted.get(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
@@ -93,7 +93,7 @@ fn main() {
                                 .height(Stretch(1.0))
                                 .font("roboto-bold");
                             Binding::new(cx, TableData::last_name_sorted, |cx, sorted| {
-                                let visible = match sorted.get_val(cx) {
+                                let visible = match *sorted.get(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
@@ -152,7 +152,7 @@ fn main() {
                                 .font("roboto-bold");
 
                             Binding::new(cx, TableData::age_sorted, |cx, sorted| {
-                                let visible = match sorted.get_val(cx) {
+                                let visible = match *sorted.get(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };

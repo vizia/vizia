@@ -1,5 +1,5 @@
 mod id_manager;
-pub use id_manager::IdManager;
+pub(crate) use id_manager::IdManager;
 
 /// Trait implemented by any generational ID
 ///

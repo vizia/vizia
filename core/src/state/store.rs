@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::{Data, Entity, Lens, ModelData};
 
-pub trait LensWrap {
+pub(crate) trait LensWrap {
     fn update(&mut self, model: &Box<dyn ModelData>) -> bool;
     fn observers(&self) -> &HashSet<Entity>;
     fn add_observer(&mut self, observer: Entity);
@@ -11,7 +11,7 @@ pub trait LensWrap {
     fn entity(&self) -> Entity;
 }
 
-pub struct StateStore<L: Lens, T> {
+pub(crate) struct StateStore<L: Lens, T> {
     // The entity which declared the binding
     pub entity: Entity,
     pub lens: L,

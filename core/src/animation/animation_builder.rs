@@ -10,7 +10,7 @@ pub(crate) struct AnimationDescription {
 
 /// A builder for constructing animations.
 ///
-/// Returned from `cx.create_animation(duration)`.
+/// Returned from `cx.add_animation(duration)`.
 ///
 /// # Example
 /// ```ignore
@@ -33,7 +33,8 @@ pub struct AnimationBuilder<'a> {
 }
 
 impl<'a> AnimationBuilder<'a> {
-    pub fn new(id: Animation, cx: &'a mut Context, duration: std::time::Duration) -> Self {
+    /// Creates a new animation builder with the specified duration.
+    pub(crate) fn new(id: Animation, cx: &'a mut Context, duration: std::time::Duration) -> Self {
         Self {
             id,
             cx,
@@ -47,7 +48,7 @@ impl<'a> AnimationBuilder<'a> {
 
     /// Sets the delay before the animation will play.
     ///
-    /// Needs to be called before setting keyframes.
+    ///
     pub fn with_delay(mut self, delay: instant::Duration) -> Self {
         self.animation_description.delay = delay;
 
@@ -112,6 +113,13 @@ impl<'a> KeyframeBuilder<'a> {
     /// Finish building the animation, returning an [Animation] id.
     pub fn build(self) -> Animation {
         self.id
+    }
+
+    /// Sets the delay before the animation will play.
+    pub fn with_delay(mut self, delay: instant::Duration) -> Self {
+        self.animation_description.delay = delay;
+
+        self
     }
 
     /// Add another keyframe to the animation.

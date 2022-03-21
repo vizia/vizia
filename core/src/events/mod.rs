@@ -3,7 +3,7 @@
 //! Views communicate with each other and model data via events. An [Event] contains a [Message], as well as metadata to describe how events
 //! should propagate through the tree. By default events will propagate up the tree from the target.
 //!
-//! A [Message] is any static type and is usually an enum. For example:
+//! A [Message] can be any static type but is usually an enum. For example:
 //! ```
 //! enum MyEvent {
 //!     ReadDocs,

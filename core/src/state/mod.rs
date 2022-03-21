@@ -1,6 +1,6 @@
 //! # Data Binding
 //!
-//! Binding provides a way to add reactivity to a vizia application. Rather than sending events back and forth between widgets
+//! Binding provides reactivity to a vizia application. Rather than sending events back and forth between widgets
 //! to update local widget data, widgets can instead `bind` to application data.
 //!
 //! # Example
@@ -13,14 +13,14 @@
 //!
 //! ```
 //! Next we'll declare some events which will be sent by widgets to modify the app data. Data binding in vizia is one-way, events are sent up the tree
-//! to the app data to mutate it and updated values are sent to observer [Binding] views.
+//! to the app data to mutate it and updated values are sent to observers, such as a [`Binding`] view.
 //! ```
 //! enum AppEvent {
 //!     SetTrue,
 //!     SetFalse,
 //! }
 //! ```
-//! Next we implement the [Model] trait on our app data, which allows us to modify the data in response to an [Event]:
+//! Next we implement the [`Model`] trait on our app data, which allows us to modify the data in response to an `Event`:
 //! ```compile_fail
 //! impl Model for AppData {
 //!     fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
@@ -46,7 +46,7 @@
 //!     }).run();  
 //! }
 //! ```
-//! A [Binding] view allows the data to be used by widgets. A [Lens] is used to determine what data the binding should react to:
+//! A [`Binding`] view is one way in which data can be used by widgets. A [`Lens`] is used to determine what data the binding should react to:
 //! ```compile_fail
 //! fn main() {
 //!     Application::new(WindowDescription::new(), |cx|{
@@ -58,8 +58,8 @@
 //!     }).run();
 //! }
 //! ```
-//! The second parameter to a [Binding] view is a [Lens] on the application data, allowing us to bind to some field of the application data.
-//! The third parameter is a closure which provides the context and a [Field] parameter which can be used to retrieve the bound data using the `.get()`
+//! The second parameter to the [Binding] view is a [Lens], allowing us to bind to some field of the application data.
+//! The third parameter is a closure which provides the context and the lens, which can be used to retrieve the bound data using the `.get()`
 //! method, which takes the [Context] as an argument.
 //!
 //! Now when the data is modified by another widget, the label will update, for example:
@@ -87,10 +87,13 @@ mod model;
 pub use model::*;
 
 mod store;
-pub use store::*;
+pub(crate) use store::*;
 
 mod data;
 pub use data::*;
 
 mod binding;
 pub use binding::*;
+
+mod res;
+pub(crate) use res::*;

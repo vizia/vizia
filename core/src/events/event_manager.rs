@@ -19,6 +19,7 @@ impl EventManager {
         EventManager { event_queue: Vec::new(), tree: Tree::new() }
     }
 
+    /// Flush the event queue, dispatching events to their targets.
     pub fn flush_events(&mut self, context: &mut Context) {
         // Clear the event queue in the event manager
         self.event_queue.clear();

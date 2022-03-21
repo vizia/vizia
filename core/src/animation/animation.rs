@@ -9,10 +9,10 @@ const ANIMATION_INDEX_MASK: u32 = (1 << ANIMATION_INDEX_BITS) - 1;
 const ANIMATION_GENERATION_BITS: u32 = 8;
 const ANIMATION_GENERATION_MASK: u32 = (1 << ANIMATION_GENERATION_BITS) - 1;
 
-/// An id used to reference style animations stored in state.
+/// An id used to reference style animations stored in context.
 ///
-/// An animation id is returned by `state.create_animation()` and can be used to configure animations
-/// as well as to play, pause, and stop aimations on entities (see [AnimExt]).
+/// An animation id is returned by `cx.add_animation()` and can be used to configure animations
+/// as well as to play, pause, and stop animations on entities (see [`AnimExt`]).
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Animation(u32);
 
@@ -59,7 +59,7 @@ impl GenerationalId for Animation {
 
     /// Returns the index of the animation.
     ///
-    /// This is used to retrieve animation data from the style storages in state.
+    /// This is used to retrieve animation data from the style storages in the context.
     fn index(&self) -> usize {
         (self.0 & ANIMATION_INDEX_MASK) as usize
     }

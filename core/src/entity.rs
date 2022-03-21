@@ -9,7 +9,7 @@ const ENTITY_INDEX_MASK: u32 = (1 << ENTITY_INDEX_BITS) - 1;
 const ENTITY_GENERATION_BITS: u32 = 8;
 const ENTITY_GENERATION_MASK: u32 = (1 << ENTITY_GENERATION_BITS) - 1;
 
-/// An entity is an id used to reference to get/set properties in State.
+/// An entity is an id used to reference to get/set properties in the context.
 ///
 /// Rather than having widgets own their data, all state is stored in a single database and
 /// is stored and loaded using entities.

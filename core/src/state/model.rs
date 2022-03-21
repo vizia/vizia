@@ -5,7 +5,46 @@ use std::{
 
 use crate::{Context, Event, LensWrap};
 
+/// A trait implemented by application data in order to mutate in response to events.
+///
+/// Example
+/// ```ignore
+/// pub struct AppData {
+///     some_data: bool,
+/// }
+///
+/// enum AppEvent {
+///     SetTrue,
+///     SetFalse,
+/// }
+///
+/// impl Model for AppData {
+///     fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
+///         if let Some(app_event) = event.message.downcast() {
+///             match app_event {
+///                 AppEvent::SetTrue => {
+///                     self.some_data = true;
+///                 }
+///
+///                 AppEvent::SetFalse => {
+///                     self.some_data = false;
+///                 }
+///             }   
+///         }
+///     }
+/// }
+/// ```
 pub trait Model: 'static + Sized {
+    /// Build the model data into the application tree.
+    ///
+    /// Example
+    /// ```ignore
+    /// fn main() {
+    ///     Application::new(WindowDescription::new(), |cx|{
+    ///         AppData::default().build(cx);
+    ///     }).run();  
+    /// }
+    /// ```
     fn build(self, cx: &mut Context) {
         if let Some(data_list) = cx.data.get_mut(cx.current) {
             data_list.data.insert(TypeId::of::<Self>(), Box::new(self));
@@ -25,11 +64,31 @@ pub trait Model: 'static + Sized {
         }
     }
 
+    /// Respond to events in order to mutate the model data.
+    ///
+    /// Example
+    /// ```ignore
+    /// impl Model for AppData {
+    ///     fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
+    ///         if let Some(app_event) = event.message.downcast() {
+    ///             match app_event {
+    ///                 AppEvent::SetTrue => {
+    ///                     self.some_data = true;
+    ///                 }
+    ///
+    ///                 AppEvent::SetFalse => {
+    ///                     self.some_data = false;
+    ///                 }
+    ///             }   
+    ///         }
+    ///     }
+    /// }
+    /// ```
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut Context, event: &mut Event) {}
 }
 
-pub trait ModelData: Any {
+pub(crate) trait ModelData: Any {
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut Context, event: &mut Event) {}
 }
@@ -45,18 +104,6 @@ impl dyn ModelData {
 
         // Compare both TypeIds on equality
         t == concrete
-    }
-
-    // Casts a message to the specified type if the message is of that type
-    pub fn downcast<T>(&mut self) -> Option<&mut T>
-    where
-        T: ModelData + 'static,
-    {
-        if self.is::<T>() {
-            unsafe { Some(&mut *(self as *mut dyn ModelData as *mut T)) }
-        } else {
-            None
-        }
     }
 
     pub fn downcast_ref<T>(&self) -> Option<&T>
@@ -93,7 +140,7 @@ impl<T: Model> ModelData for T {
 }
 
 #[derive(Default)]
-pub struct ModelDataStore {
+pub(crate) struct ModelDataStore {
     pub data: HashMap<TypeId, Box<dyn ModelData>>,
     pub lenses_dedup: HashMap<TypeId, Box<dyn LensWrap>>,
     pub lenses_dup: Vec<Box<dyn LensWrap>>,
