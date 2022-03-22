@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::ops::Range;
 
 use crate::style::Display;
 use crate::Abilities;
@@ -234,6 +235,20 @@ impl BoundingBox {
             self.bottom() + amount,
         )
     }
+
+    pub fn intersects(&self, other: &Self) -> bool {
+        let x_hit = (self.x >= other.x && self.x < other.x + other.w) ||
+            (other.x >= self.x && other.x < self.x + self.w);
+        let y_hit = (self.y >= other.y && self.y < other.y + other.h) ||
+            (other.y >= self.y && other.y < self.y + self.h);
+        x_hit && y_hit
+    }
+
+    pub fn contains(&self, other: &Self) -> bool {
+        let x_hit = other.x >= self.x && other.x < self.x + self.w;
+        let y_hit = other.y >= self.y && other.y < self.y + self.h;
+        x_hit && y_hit
+    }
 }
 
 /// Stores data which can be cached between system runs.
@@ -283,6 +298,8 @@ pub struct CachedData {
     pub(crate) geometry_changed: SparseSet<GeometryChanged>,
 
     pub(crate) shadow_image: HashMap<Entity, (ImageId, ImageId)>,
+
+    pub(crate) text_lines: SparseSet<Vec<(Range<usize>, femtovg::TextMetrics)>>,
 }
 
 impl CachedData {
@@ -357,6 +374,8 @@ impl CachedData {
         self.geometry_changed.remove(entity);
 
         self.abilities.remove(entity);
+
+        self.text_lines.remove(entity);
     }
 
     // For getters and setters it's safe to use unwrap because every entity must have a position and size.

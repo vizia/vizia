@@ -93,6 +93,8 @@ pub(crate) enum Property {
     FontSize(f32),
     FontColor(Color),
     Font(String),
+    SelectionColor(Color),
+    CaretColor(Color),
 
     // Shadow
     OuterShadow(BoxShadow),

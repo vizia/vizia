@@ -9,14 +9,15 @@ description = "Winit backend for vizia"
 
 [dependencies]
 winit = "0.26.1"
-femtovg = { version = "0.3.0", default-features = false }
+femtovg = { path = "../../femtovg", default-features = false }
+#femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "d4e1941a30cf79eab264463e887ff6d7d8495bcb", default-features = false }
 keyboard-types = { version = "0.6.2", default-features = false }
 vizia_core = { path = "../core", version = "0.1" }
-#fnv = "1.0.7"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 glutin = "0.28.0"
-femtovg = {version = "0.3.0", default-features = false, features = ["glutin"]}
+femtovg = { path = "../../femtovg", default-features = false, features = ["glutin"] }
+#femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "d4e1941a30cf79eab264463e887ff6d7d8495bcb", default-features = false, features = ["glutin"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2" }

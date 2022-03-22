@@ -404,6 +404,8 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "col-between" => Property::ColBetween(parse_units(input)?),
             "font-size" => Property::FontSize(parse_font_size(input)?),
             "font" => Property::Font(parse_string(input)?),
+            "selection-color" => Property::SelectionColor(parse_color(input)?),
+            "caret-color" => Property::CaretColor(parse_color(input)?),
 
             // Border
             "border-width" => Property::BorderWidth(parse_units(input)?),

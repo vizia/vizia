@@ -1,10 +1,7 @@
-use femtovg::{Align, Baseline, Paint};
+use femtovg::{Align, Baseline, Paint, TextMetrics};
 use morphorm::Units;
 
-use crate::{
-    style::{Overflow, Selector, SelectorRelation},
-    BoundingBox, Context, Display, Entity, FontOrId, PseudoClass, Rule, Tree, TreeExt, Visibility,
-};
+use crate::{style::{Overflow, Selector, SelectorRelation}, BoundingBox, Context, Display, Entity, FontOrId, PseudoClass, Rule, Tree, TreeExt, Visibility, text_layout, text_paint, measure_text_lines};
 
 pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
@@ -242,46 +239,21 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             let mut content_height = 0.0;
 
             if let Some(text) = cx.style.text.get(entity) {
-                let font = cx.style.font.get(entity).cloned().unwrap_or_default();
-
-                // TODO - This should probably be cached in cx to save look-up time
-                let default_font = cx
-                    .resource_manager
-                    .fonts
-                    .get(&cx.style.default_font)
-                    .and_then(|font| match font {
-                        FontOrId::Id(id) => Some(id),
-                        _ => None,
-                    })
-                    .expect("Failed to find default font");
-
-                let font_id = cx
-                    .resource_manager
-                    .fonts
-                    .get(&font)
-                    .and_then(|font| match font {
-                        FontOrId::Id(id) => Some(id),
-                        _ => None,
-                    })
-                    .unwrap_or(default_font);
-
-                let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
-
-                let mut paint = Paint::default();
-                paint.set_font_size(font_size);
-                paint.set_font(&[font_id.clone()]);
-
-                // TODO - should auto size use text height or font height?
-                let font_metrics =
-                    cx.text_context.measure_font(paint).expect("Failed to read font metrics");
-
+                let mut paint = text_paint(&cx.style, &cx.resource_manager, entity);
                 paint.set_text_align(align);
                 paint.set_text_baseline(baseline);
 
-                if let Ok(text_metrics) = cx.text_context.measure_text(x, y, text, paint) {
+                let font_metrics =
+                    cx.text_context.measure_font(paint).expect("Failed to read font metrics");
+
+                if let Ok(mut lines) = text_layout(f32::MAX, text, paint, &cx.text_context) {
+                    let mut metrics = measure_text_lines(text, paint, &lines, x, y, &cx.text_context);
+                    let text_width = metrics.iter().map(|m| m.width()).reduce(|a, b| a.max(b)).unwrap_or_default();
+                    let text_height = font_metrics.height().round() * metrics.len() as f32;
+
                     // Add an extra pixel to account for AA
-                    let text_width = text_metrics.width().round() + 1.0;
-                    let text_height = font_metrics.height().round() + 1.0;
+                    let text_width = text_width.round() + 1.0;
+                    let text_height = text_height.round() + 1.0;
 
                     if content_width < text_width {
                         content_width = text_width;
@@ -684,6 +656,14 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
 
         if cx.style.font.link(entity, &matched_rules) {
             //println!("44");
+            should_redraw = true;
+        }
+
+        if cx.style.selection_color.link(entity, &matched_rules) {
+            should_redraw = true;
+        }
+
+        if cx.style.caret_color.link(entity, &matched_rules) {
             should_redraw = true;
         }
 
