@@ -35,13 +35,11 @@ fn main() {
                 Textbox::new(cx, AppData::text)
                     .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
                     .width(Pixels(200.0))
-                    .child_left(Units::Stretch(1.0))
-                    .child_right(Units::Pixels(5.0));
+                    .class("align_right");
                 Textbox::new(cx, AppData::text)
                     .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
                     .width(Pixels(200.0))
-                    .child_left(Units::Stretch(1.0))
-                    .child_right(Units::Stretch(1.0));
+                    .class("align_center");
                 Textbox::new_multiline(cx, AppData::text, false)
                     .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
                     .width(Pixels(200.0))

@@ -50,42 +50,9 @@ impl TextboxData {
         }
         let parent = cx.tree.parent(entity).unwrap();
 
-        // calculate visible area for content - parent bounds minus border minus padding
+        // calculate visible area for content and container
         let mut bounds = cx.cache.bounds.get(entity).unwrap().clone();
         let mut parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
-        let border = match cx.style.border_width.get(parent).copied().unwrap_or_default() {
-            Pixels(p) => p,
-            _ => 0.0,
-        }; parent_bounds.x += border;
-        parent_bounds.y += border;
-        parent_bounds.w -= border * 2.0;
-        parent_bounds.h -= border * 2.0;
-        match cx.style.child_left.get(parent).copied().unwrap_or_default() {
-            Pixels(p) => {
-                parent_bounds.x += p;
-                parent_bounds.w -= p;
-            }
-            _ => {}
-        }
-        match cx.style.child_right.get(parent).copied().unwrap_or_default() {
-            Pixels(p) => {
-                parent_bounds.w -= p;
-            }
-            _ => {}
-        }
-        match cx.style.child_top.get(parent).copied().unwrap_or_default() {
-            Pixels(p) => {
-                parent_bounds.y += p;
-                parent_bounds.h -= p;
-            }
-            _ => {}
-        }
-        match cx.style.child_bottom.get(parent).copied().unwrap_or_default() {
-            Pixels(p) => {
-                parent_bounds.h -= p;
-            }
-            _ => {}
-        }
 
         // calculate line height - we'll need this
         let paint = text_paint(&cx.style, &cx.resource_manager, entity);
@@ -94,7 +61,7 @@ impl TextboxData {
 
         // we can't just access cache.text_lines because the text could be just-updated
         let render_width = match self.kind {
-            TextboxKind::MultiLineWrapped => parent_bounds.h,
+            TextboxKind::MultiLineWrapped => parent_bounds.w,
             _ => f32::MAX,
         };
         let ranges = text_layout(render_width, &self.text, paint, &cx.text_context).unwrap();
@@ -118,6 +85,15 @@ impl TextboxData {
         }
         if text_box.w < parent_bounds.w {
             tx = 0.0;
+        }
+        if text_box.y < parent_bounds.y && text_box.y + text_box.h < parent_bounds.y + parent_bounds.h {
+            ty += parent_bounds.y - text_box.y;
+        }
+        if text_box.y > parent_bounds.y && text_box.y + text_box.h > parent_bounds.y + parent_bounds.h {
+            ty -= (text_box.y + text_box.h) - (parent_bounds.y + parent_bounds.h);
+        }
+        if text_box.h < parent_bounds.h {
+            ty = 0.0;
         }
         let caret_box = BoundingBox {
             x: x + tx,
@@ -472,16 +448,19 @@ where
                     cx.current = real_current;
                 }
             });
-            let lbl = TextboxLabel {}
-                .build(cx)
-                .class("textbox_content")
-                .text(TextboxData::text)
-                .text_selection(TextboxData::selection)
-                .translate(TextboxData::transform)
-                .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
-                .entity;
+            TextboxContainer {}.build2(cx, move |cx| {
+                let lbl = TextboxLabel {}
+                    .build(cx)
+                    .class("textbox_content")
+                    .text(TextboxData::text)
+                    .text_selection(TextboxData::selection)
+                    .translate(TextboxData::transform)
+                    .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
+                    .entity;
 
-            cx.emit(TextEvent::InitContent(lbl, kind));
+                cx.emit(TextEvent::InitContent(lbl, kind));
+            })
+                .class("textbox_container");
         });
 
         result.class(match kind {
@@ -724,6 +703,10 @@ where
         }
     }
 }
+
+// can't just be a stack because what if you've styled stacks
+pub struct TextboxContainer {}
+impl View for TextboxContainer {}
 
 // can't just be a label because what if you've styled labels
 pub struct TextboxLabel {}
