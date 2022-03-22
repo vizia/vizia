@@ -250,8 +250,16 @@ fn parse_selectors<'i, 't>(
                 whitespace = false;
             }
 
-            Token::WhiteSpace(ref _ws) => {
-                whitespace = true;
+            Token::WhiteSpace(_ws) => {
+                // Parent relations can (and in almost every style guide, do) have whitespace
+                // surrounding the `>`. In those cases we should treat this as if there were no
+                // whitespace since the rest of this parser uses whitespace strictly to indicate
+                // regular nesting. Bit of a hack, but I didn't dare touching the rest of the
+                // parser.
+                whitespace = !matches!(
+                    selectors.last(),
+                    Some(Selector { relation: SelectorRelation::Parent, .. })
+                );
             }
 
             // Pseudo-class
