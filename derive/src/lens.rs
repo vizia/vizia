@@ -42,35 +42,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     // then the generated structs within the new module should be visible only to the module the
     // original struct was in.
     let module_vis = &input.vis;
-    let struct_vis = match module_vis {
-        // Private structs are promoted to `pub(super)`
-        vis @ Visibility::Inherited => Visibility::Restricted(VisRestricted {
-            pub_token: Token![pub](vis.span()),
-            paren_token: syn::token::Paren(vis.span()),
-            in_token: None,
-            path: Box::new(syn::Path::from(Token![super](vis.span()))),
-        }),
-        // `pub(super(::...))` should be promoted to `pub(super::super(:...))`. Checking for this
-        // looks a bit funky.
-        Visibility::Restricted(vis @ VisRestricted { path, .. })
-            if path.segments.first().map(|segment| &segment.ident)
-                == Some(&Ident::from(Token![super](vis.span()))) =>
-        {
-            let mut new_path = syn::Path::from(Token![super](vis.span()));
-            for segment in &path.segments {
-                new_path.segments.push(segment.clone());
-            }
-
-            Visibility::Restricted(VisRestricted {
-                path: Box::new(new_path),
-                // Anything other than `crate` or `super` always needs to be prefixed with `in`
-                in_token: Some(Token![in](vis.span())),
-                ..*vis
-            })
-        }
-        // Everything else stays the same
-        vis => vis.clone(),
-    };
+    let struct_vis = increase_visibility(module_vis);
 
     let fields = if let syn::Data::Struct(syn::DataStruct { fields, .. }) = &input.data {
         Fields::<LensAttrs>::parse_ast(fields)?
@@ -295,32 +267,9 @@ fn to_snake_case(mut str: &str) -> String {
 fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn::Error> {
     let enum_type = &input.ident;
 
-    // See `derive_struct` for an annotated version of this
+    // See `derive_struct`
     let module_vis = &input.vis;
-    let struct_vis = match module_vis {
-        vis @ Visibility::Inherited => Visibility::Restricted(VisRestricted {
-            pub_token: Token![pub](vis.span()),
-            paren_token: syn::token::Paren(vis.span()),
-            in_token: None,
-            path: Box::new(syn::Path::from(Token![super](vis.span()))),
-        }),
-        Visibility::Restricted(vis @ VisRestricted { path, .. })
-            if path.segments.first().map(|segment| &segment.ident)
-                == Some(&Ident::from(Token![super](vis.span()))) =>
-        {
-            let mut new_path = syn::Path::from(Token![super](vis.span()));
-            for segment in &path.segments {
-                new_path.segments.push(segment.clone());
-            }
-
-            Visibility::Restricted(VisRestricted {
-                path: Box::new(new_path),
-                in_token: Some(Token![in](vis.span())),
-                ..*vis
-            })
-        }
-        vis => vis.clone(),
-    };
+    let struct_vis = increase_visibility(module_vis);
 
     let variants = if let syn::Data::Enum(syn::DataEnum { variants, .. }) = &input.data {
         variants
@@ -418,4 +367,38 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
     };
 
     Ok(expanded)
+}
+
+/// Increase privite/inherited visiblity to `pub(super)`, `pub(super)` or anything else relative to
+/// `super` to one module higher than that, and leave everything else as is.
+fn increase_visibility(vis: &Visibility) -> Visibility {
+    match vis {
+        // Private structs are promoted to `pub(super)`
+        Visibility::Inherited => Visibility::Restricted(VisRestricted {
+            pub_token: Token![pub](vis.span()),
+            paren_token: syn::token::Paren(vis.span()),
+            in_token: None,
+            path: Box::new(syn::Path::from(Token![super](vis.span()))),
+        }),
+        // `pub(super(::...))` should be promoted to `pub(super::super(:...))`. Checking for this
+        // looks a bit funky.
+        Visibility::Restricted(vis @ VisRestricted { path, .. })
+            if path.segments.first().map(|segment| &segment.ident)
+                == Some(&Ident::from(Token![super](vis.span()))) =>
+        {
+            let mut new_path = syn::Path::from(Token![super](vis.span()));
+            for segment in &path.segments {
+                new_path.segments.push(segment.clone());
+            }
+
+            Visibility::Restricted(VisRestricted {
+                path: Box::new(new_path),
+                // Anything other than `crate` or `super` always needs to be prefixed with `in`
+                in_token: Some(Token![in](vis.span())),
+                ..*vis
+            })
+        }
+        // Everything else stays the same
+        vis => vis.clone(),
+    }
 }
