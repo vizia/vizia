@@ -17,7 +17,8 @@
 // use proc_macro2::{Ident, Span};
 use quote::quote;
 // use std::collections::HashSet;
-use syn::{spanned::Spanned, Data, GenericParam, TypeParam};
+use syn::spanned::Spanned;
+use syn::{Data, GenericParam, Ident, Token, TypeParam, VisRestricted, Visibility};
 
 use super::attr::{FieldKind, Fields, LensAttrs};
 
@@ -36,6 +37,40 @@ pub(crate) fn derive_lens_impl(
 
 fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn::Error> {
     let struct_type = &input.ident;
+
+    // The generated module should have the same visibilty as the struct. If the struct is private
+    // then the generated structs within the new module should be visible only to the module the
+    // original struct was in.
+    let module_vis = &input.vis;
+    let struct_vis = match module_vis {
+        // Private structs are promoted to `pub(super)`
+        vis @ Visibility::Inherited => Visibility::Restricted(VisRestricted {
+            pub_token: Token![pub](vis.span()),
+            paren_token: syn::token::Paren(vis.span()),
+            in_token: None,
+            path: Box::new(syn::Path::from(Token![super](vis.span()))),
+        }),
+        // `pub(super(::...))` should be promoted to `pub(super::super(:...))`. Checking for this
+        // looks a bit funky.
+        Visibility::Restricted(vis @ VisRestricted { path, .. })
+            if path.segments.first().map(|segment| &segment.ident)
+                == Some(&Ident::from(Token![super](vis.span()))) =>
+        {
+            let mut new_path = syn::Path::from(Token![super](vis.span()));
+            for segment in &path.segments {
+                new_path.segments.push(segment.clone());
+            }
+
+            Visibility::Restricted(VisRestricted {
+                path: Box::new(new_path),
+                // Anything other than `crate` or `super` always needs to be prefixed with `in`
+                in_token: Some(Token![in](vis.span())),
+                ..*vis
+            })
+        }
+        // Everything else stays the same
+        vis => vis.clone(),
+    };
 
     let fields = if let syn::Data::Struct(syn::DataStruct { fields, .. }) = &input.data {
         Fields::<LensAttrs>::parse_ast(fields)?
@@ -100,7 +135,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             #[doc = #struct_docs]
             #[allow(non_camel_case_types)]
             #[derive(Copy, Clone, Hash, PartialEq, Eq)]
-            pub struct #field_name#lens_ty_generics(#(#phantom_decls),*);
+            #struct_vis struct #field_name#lens_ty_generics(#(#phantom_decls),*);
 
             impl #lens_ty_generics #field_name#lens_ty_generics{
                 #[doc = #fn_docs]
@@ -172,10 +207,10 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
     let expanded = quote! {
         #[doc = #mod_docs]
-        pub mod #twizzled_name {
+        #module_vis mod #twizzled_name {
             #(#defs)*
             #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-            pub struct root#lens_ty_generics(#(#phantom_decls),*);
+            #struct_vis struct root#lens_ty_generics(#(#phantom_decls),*);
 
             impl #lens_ty_generics root#lens_ty_generics{
                 pub const fn new()->Self{
@@ -260,6 +295,33 @@ fn to_snake_case(mut str: &str) -> String {
 fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn::Error> {
     let enum_type = &input.ident;
 
+    // See `derive_struct` for an annotated version of this
+    let module_vis = &input.vis;
+    let struct_vis = match module_vis {
+        vis @ Visibility::Inherited => Visibility::Restricted(VisRestricted {
+            pub_token: Token![pub](vis.span()),
+            paren_token: syn::token::Paren(vis.span()),
+            in_token: None,
+            path: Box::new(syn::Path::from(Token![super](vis.span()))),
+        }),
+        Visibility::Restricted(vis @ VisRestricted { path, .. })
+            if path.segments.first().map(|segment| &segment.ident)
+                == Some(&Ident::from(Token![super](vis.span()))) =>
+        {
+            let mut new_path = syn::Path::from(Token![super](vis.span()));
+            for segment in &path.segments {
+                new_path.segments.push(segment.clone());
+            }
+
+            Visibility::Restricted(VisRestricted {
+                path: Box::new(new_path),
+                in_token: Some(Token![in](vis.span())),
+                ..*vis
+            })
+        }
+        vis => vis.clone(),
+    };
+
     let variants = if let syn::Data::Enum(syn::DataEnum { variants, .. }) = &input.data {
         variants
     } else {
@@ -301,7 +363,7 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
         quote! {
             #[allow(non_camel_case_types)]
             #[derive(Copy, Clone, Hash, PartialEq, Eq)]
-            pub struct #variant_name();
+            #struct_vis struct #variant_name();
 
             impl #variant_name {
                 pub const fn new() -> Self {
@@ -343,7 +405,7 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
     });
 
     let expanded = quote! {
-        pub mod #twizzled_name {
+        #module_vis mod #twizzled_name {
             #(#defs)*
         }
 
