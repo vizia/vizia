@@ -314,6 +314,18 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
+    pub fn grid_rows(self, rows: Vec<Units>) -> Self {
+        self.cx.style.grid_rows.insert(self.entity, rows);
+
+        self
+    }
+
+    pub fn grid_cols(self, cols: Vec<Units>) -> Self {
+        self.cx.style.grid_cols.insert(self.entity, cols);
+
+        self
+    }
+
     set_style!(background_color, Color);
     set_style!(background_image, String);
 
@@ -351,8 +363,6 @@ impl<'a, T> Handle<'a, T> {
     set_style!(row_span, usize);
     set_style!(col_index, usize);
     set_style!(col_span, usize);
-    set_style!(grid_rows, Vec<Units>);
-    set_style!(grid_cols, Vec<Units>);
 
     set_style!(border_width, Units);
     set_style!(border_color, Color);
