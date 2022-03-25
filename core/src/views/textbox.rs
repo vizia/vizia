@@ -371,6 +371,24 @@ impl TextboxData {
                 }
             }
 
+            Movement::ParagraphStart => {
+                if selection {
+                    self.selection.active = 0;
+                } else {
+                    self.selection.active = 0;
+                    self.selection.anchor = 0;
+                }
+            }
+
+            Movement::ParagraphEnd => {
+                if selection {
+                    self.selection.active = self.text.len();
+                } else {
+                    self.selection.active = self.text.len();
+                    self.selection.anchor = self.text.len();
+                }
+            }
+
             _ => {}
         }
     }
@@ -384,6 +402,8 @@ pub enum TextEvent {
     InsertText(String),
     DeleteText(Movement),
     MoveCursor(Movement, bool),
+    MoveCursorStart,
+    MoveCursorEnd,
     SelectAll,
     StartEdit,
     EndEdit,
@@ -435,6 +455,14 @@ impl Model for TextboxData {
                         self.move_cursor(cx, *movement, *selection);
                         self.set_caret(cx);
                     }
+                }
+
+                TextEvent::MoveCursorStart => {
+                    self.move_cursor(cx, Movement::ParagraphStart, false);
+                }
+
+                TextEvent::MoveCursorEnd => {
+                    self.move_cursor(cx, Movement::ParagraphEnd, false);
                 }
 
                 TextEvent::StartEdit => {
@@ -805,11 +833,19 @@ where
                         cx.current.set_checked(cx, false);
                     }
 
-                    // TODO
-                    Code::Home => {}
+                    Code::Home => {
+                        cx.emit(TextEvent::MoveCursor(
+                            Movement::ParagraphStart,
+                            cx.modifiers.contains(Modifiers::SHIFT),
+                        ));
+                    }
 
-                    // TODO
-                    Code::End => {}
+                    Code::End => {
+                        cx.emit(TextEvent::MoveCursor(
+                            Movement::ParagraphEnd,
+                            cx.modifiers.contains(Modifiers::SHIFT),
+                        ));
+                    }
 
                     // TODO
                     Code::PageUp => {}
