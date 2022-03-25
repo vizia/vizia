@@ -96,11 +96,13 @@ impl TextboxData {
             ty = 0.0;
         }
         let caret_box = BoundingBox {
-            x: x + tx,
+            x: x.round() + tx,
             y: bounds.y + line as f32 * line_height + ty,
             w: 1.0,
             h: line_height,
         };
+        parent_bounds.x -= 1.0;
+        parent_bounds.w += 2.0;
         if caret_box.x < parent_bounds.x {
             tx += parent_bounds.x - caret_box.x;
         }

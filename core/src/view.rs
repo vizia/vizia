@@ -728,8 +728,8 @@ pub trait View: 'static + Sized {
                                 } else {
                                     x + 10.0
                                 };
-                                let min_x = first_x.min(last_x);
-                                let max_x = first_x.max(last_x);
+                                let min_x = first_x.min(last_x).round();
+                                let max_x = first_x.max(last_x).round();
                                 let mut path = Path::new();
                                 path.rect(min_x, min_y, max_x - min_x, font_metrics.height());
                                 canvas.fill_path(&mut path, Paint::color(color.clone().into()));
@@ -738,7 +738,8 @@ pub trait View: 'static + Sized {
                         // should we draw the cursor?
                         if let Some(color) = cursor_color {
                             if line == active.0 {
-                                let (x, y) = active.1;
+                                let (x, _) = active.1;
+                                let x = x.round();
                                 let mut path = Path::new();
                                 path.rect(x, min_y, 1.0, font_metrics.height());
                                 canvas.fill_path(&mut path, Paint::color(color.clone().into()));

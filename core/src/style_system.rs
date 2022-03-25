@@ -180,15 +180,20 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             let mut y = cx.cache.get_posy(entity);
             let width = cx.cache.get_width(entity);
             let height = cx.cache.get_height(entity);
+            let mut child_space_x = 0.0;
+            let mut child_space_y = 0.0;
 
             let align = match child_left {
-                Units::Pixels(val) => match child_right {
-                    Units::Stretch(_) => {
-                        x += val + border_width;
-                        Align::Left
-                    }
+                Units::Pixels(val) => {
+                    child_space_x += val;
+                    match child_right {
+                        Units::Stretch(_) => {
+                            x += val + border_width;
+                            Align::Left
+                        }
 
-                    _ => Align::Left,
+                        _ => Align::Left,
+                    }
                 },
 
                 Units::Stretch(_) => match child_right {
@@ -207,15 +212,22 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
                 _ => Align::Left,
             };
+            match child_right {
+                Units::Pixels(px) => child_space_x += px,
+                _ => {}
+            }
 
             let baseline = match child_top {
-                Units::Pixels(val) => match child_bottom {
-                    Units::Stretch(_) => {
-                        y += val + border_width;
-                        Baseline::Top
-                    }
+                Units::Pixels(val) => {
+                    child_space_y += val;
+                    match child_bottom {
+                        Units::Stretch(_) => {
+                            y += val + border_width;
+                            Baseline::Top
+                        }
 
-                    _ => Baseline::Top,
+                        _ => Baseline::Top,
+                    }
                 },
 
                 Units::Stretch(_) => match child_bottom {
@@ -234,6 +246,10 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
                 _ => Baseline::Top,
             };
+            match child_bottom {
+                Units::Pixels(px) => child_space_y += px,
+                _ => {}
+            }
 
             let mut content_width = 0.0;
             let mut content_height = 0.0;
@@ -252,8 +268,8 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                     let text_height = font_metrics.height().round() * metrics.len() as f32;
 
                     // Add an extra pixel to account for AA
-                    let text_width = text_width.round() + 1.0;
-                    let text_height = text_height.round() + 1.0;
+                    let text_width = text_width.round() + 1.0 + child_space_x;
+                    let text_height = text_height.round() + 1.0 + child_space_y;
 
                     if content_width < text_width {
                         content_width = text_width;

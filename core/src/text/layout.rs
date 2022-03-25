@@ -98,6 +98,9 @@ pub fn measure_text_lines(text: &str, paint: Paint, lines: &[Range<usize>], x: f
 }
 
 // returns (line_no, (x_pos, y_pos))
+// TODO affinity
+// TODO neither this nor the next function are correct for rtl. we probably need to explicitly do
+// bidi analysis the same way femtovg does
 pub fn idx_to_pos<'a>(
     byte_idx: usize,
     metrics: impl Iterator<Item = &'a (Range<usize>, TextMetrics)>
@@ -137,6 +140,8 @@ pub fn idx_to_pos<'a>(
 
     (result_line, (result_xpos - 1.0, result_ypos))
 }
+
+// TODO see above
 pub fn pos_to_idx<'a>(
     x: f32,
     y: f32,
@@ -148,7 +153,6 @@ pub fn pos_to_idx<'a>(
         if y < line_metrics.y + line_metrics.height() {
             // it's me!
             for glyph in line_metrics.glyphs.iter() {
-                // TODO is this RTL-compatible?
                 if x < glyph.x + glyph.advance_x / 2.0 {
                     return glyph.byte_index;
                 }
