@@ -120,6 +120,7 @@ textbox .textbox_content {
     width: auto;
     height: auto;
     min-width: 0px;
+    overflow: visible;
     /*
     border-width: 1px;
     border-color: green;
@@ -132,6 +133,7 @@ textbox .textbox_container {
     min-width: 0px;
     child-right: 1s;
     child-bottom: 1s;
+    overflow: visible;
 }
 
 textbox.align_right .textbox_container {
