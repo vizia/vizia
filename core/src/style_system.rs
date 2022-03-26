@@ -1,5 +1,5 @@
 use femtovg::{Align, Baseline, Paint};
-use morphorm::Units;
+use morphorm::{PositionType, Units};
 
 use crate::{
     style::{Overflow, Selector, SelectorRelation},
@@ -41,22 +41,15 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
         let parent = tree.get_layout_parent(entity).unwrap();
 
         let parent_clip_region = cx.cache.get_clip_region(parent);
-        //let parent_border_width = cx.style.border_width.get(parent).cloned().unwrap_or_default().value_or(0.0, 0.0);
-
-        //println!("Parent border width: {}", parent_border_width);
-        // parent_clip_region.x;
-        // parent_clip_region.y;
-        // parent_clip_region.w;
-        // parent_clip_region.h;
 
         let root_clip_region = cx.cache.get_clip_region(Entity::root());
 
         let overflow = cx.style.overflow.get(entity).cloned().unwrap_or_default();
+        let position_type = cx.style.position_type.get(entity).cloned().unwrap_or_default();
 
-        if overflow == Overflow::Hidden {
+        let clip_region = if overflow == Overflow::Hidden {
             let clip_widget = cx.style.clip_widget.get(entity).cloned().unwrap_or(entity);
-            //if let Some(clip_widget) = cx.style.clip_widget.get(entity).cloned() {
-            //let clip_widget_border_width = cx.style.border_width.get(clip_widget).cloned().unwrap_or_default().value_or(0.0, 0.0);
+
             let clip_x = cx.cache.get_posx(clip_widget);
             let clip_y = cx.cache.get_posy(clip_widget);
             let clip_w = cx.cache.get_width(clip_widget);
@@ -78,16 +71,17 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
                 parent_clip_region.y + parent_clip_region.h - intersection.y
             };
 
-            cx.cache.set_clip_region(entity, intersection);
-            //} else {
-            //    cx.cache.set_clip_region(entity, parent_clip_region);
-            //}
+            intersection
         } else {
-            cx.cache.set_clip_region(entity, root_clip_region);
-        }
+            parent_clip_region
+        };
 
-        //let clip_region = cx.cache.get_clip_region(entity);
-        //println!("Entity: {}  Clip Region: {:?}", entity, clip_region);
+        // Absolute positioned nodes ignore overflow hidden
+        if position_type == PositionType::SelfDirected {
+            cx.cache.set_clip_region(entity, root_clip_region);
+        } else {
+            cx.cache.set_clip_region(entity, clip_region);
+        }
     }
 }
 

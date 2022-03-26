@@ -402,8 +402,6 @@ pub enum TextEvent {
     InsertText(String),
     DeleteText(Movement),
     MoveCursor(Movement, bool),
-    MoveCursorStart,
-    MoveCursorEnd,
     SelectAll,
     StartEdit,
     EndEdit,
@@ -455,14 +453,6 @@ impl Model for TextboxData {
                         self.move_cursor(cx, *movement, *selection);
                         self.set_caret(cx);
                     }
-                }
-
-                TextEvent::MoveCursorStart => {
-                    self.move_cursor(cx, Movement::ParagraphStart, false);
-                }
-
-                TextEvent::MoveCursorEnd => {
-                    self.move_cursor(cx, Movement::ParagraphEnd, false);
                 }
 
                 TextEvent::StartEdit => {
@@ -719,7 +709,7 @@ where
                     if *c != '\u{1b}' && // Escape
                             *c != '\u{8}' && // Backspace
                             *c != '\u{7f}' && // Delete
-                            *c != '\u{0d}' &&
+                            *c != '\u{0d}' && // Return
                             !cx.modifiers.contains(Modifiers::CTRL)
                     {
                         //self.insert_text(cx, String::from(*c));
