@@ -1,7 +1,7 @@
-* {
+/* * {
     border-width: 1px;
     border-color: red;
-}
+} */
 
 button {
     background-color: white;
@@ -115,7 +115,6 @@ textbox:checked {
 }
 
 textbox .textbox_content {
-    selection-color: #6464c888;
     layout-type: row;
     width: auto;
     height: auto;
@@ -157,6 +156,7 @@ textbox.align_center .textbox_content {
 
 textbox:checked .textbox_content {
     caret-color: #ff0000;
+    selection-color: #6464c888;
 }
 
 textbox.multi_line_wrapped .textbox_content {

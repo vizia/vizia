@@ -17,6 +17,7 @@ pub struct TextboxData {
     text: String,
     selection: Selection,
     sel_x: f32,
+    re_sel_x: bool,
     edit: bool,
     transform: (f32, f32),
     line_height: f32,
@@ -33,6 +34,7 @@ impl TextboxData {
             text: text.clone(),
             selection: Selection::new(0, text_length),
             sel_x: -1.0,
+            re_sel_x: false,
             edit: false,
             transform: (0.0, 0.0),
             line_height: 0.0,
@@ -68,6 +70,10 @@ impl TextboxData {
         let metrics = measure_text_lines(&self.text, paint, &ranges, bounds.x, bounds.y, &cx.text_context);
         let ranges_metrics = ranges.into_iter().zip(metrics.into_iter()).collect::<Vec<_>>();
         let (line, (x, _)) = idx_to_pos(self.selection.active, ranges_metrics.iter());
+        if self.re_sel_x {
+            self.re_sel_x = false;
+            self.sel_x = x;
+        }
 
         // do the computation
         let (mut tx, mut ty) = self.transform;
@@ -165,57 +171,69 @@ impl TextboxData {
         }
     }
 
-    pub fn move_cursor(&mut self, _: &mut Context, movement: Movement, selection: bool) {
+    pub fn move_cursor(&mut self, cx: &mut Context, movement: Movement, selection: bool) {
         match movement {
             Movement::Grapheme(Direction::Upstream) => {
+                self.re_sel_x = true;
                 if let Some(offset) = self.text.prev_grapheme_offset(self.selection.active) {
                     self.selection.active = offset;
                     offset
                 } else {
                     self.selection.active
                 };
-
-                if !selection {
-                    self.selection.anchor = self.selection.active;
-                }
             }
 
             Movement::Grapheme(Direction::Downstream) => {
+                self.re_sel_x = true;
                 if let Some(offset) = self.text.next_grapheme_offset(self.selection.active) {
                     self.selection.active = offset;
                     offset
                 } else {
                     self.selection.active
                 };
-
-                if !selection {
-                    self.selection.anchor = self.selection.active;
-                }
             }
 
             Movement::Word(Direction::Upstream) => {
+                self.re_sel_x = true;
                 if let Some(offset) = self.text.prev_word_offset(self.selection.active) {
                     self.selection.active = offset;
                     offset
                 } else {
                     self.selection.active
                 };
-
-                if !selection {
-                    self.selection.anchor = self.selection.active;
-                }
             }
 
             Movement::Word(Direction::Downstream) => {
+                self.re_sel_x = true;
                 if let Some(offset) = self.text.next_word_offset(self.selection.active) {
                     self.selection.active = offset;
                     offset
                 } else {
                     self.selection.active
                 };
+            }
 
-                if !selection {
-                    self.selection.anchor = self.selection.active;
+            Movement::Line(dir) => {
+                let entity = self.content_entity;
+                let paint = text_paint(&cx.style, &cx.resource_manager, entity);
+                let font_metrics = cx.text_context.measure_font(paint).unwrap();
+                let line_height = font_metrics.height();
+
+                let default = vec![];
+                let lines = cx.cache.text_lines.get(entity).unwrap_or(&default);
+                let (line, (_, y)) = idx_to_pos(self.selection.active, lines.iter());
+
+                if line == 0 && matches!(dir, Direction::Upstream) {
+                    self.selection.active = 0;
+                } else {
+                    let new_y = y + line_height * match dir {
+                        Direction::Upstream => -1.0,
+                        Direction::Downstream => 1.0,
+                        Direction::Left => 0.0,
+                        Direction::Right => 0.0,
+                    };
+
+                    self.selection.active = pos_to_idx(self.sel_x, new_y, lines.iter());
                 }
             }
 
@@ -238,6 +256,10 @@ impl TextboxData {
             }
 
             _ => {}
+        }
+
+        if !selection {
+            self.selection.anchor = self.selection.active;
         }
     }
 
@@ -429,6 +451,7 @@ where
                             selection: text_data.selection,
                             edit: text_data.edit,
                             sel_x: text_data.sel_x,
+                            re_sel_x: text_data.re_sel_x,
                             transform: text_data.transform,
                             line_height: text_data.line_height,
                             on_edit: text_data.on_edit.clone(),
@@ -618,11 +641,19 @@ where
                         //}
                     }
 
-                    // TODO
-                    Code::ArrowUp => {}
+                    Code::ArrowUp => {
+                        cx.emit(TextEvent::MoveCursor(
+                            Movement::Line(Direction::Upstream),
+                            cx.modifiers.contains(Modifiers::SHIFT),
+                        ));
+                    }
 
-                    // TODO
-                    Code::ArrowDown => {}
+                    Code::ArrowDown => {
+                        cx.emit(TextEvent::MoveCursor(
+                            Movement::Line(Direction::Downstream),
+                            cx.modifiers.contains(Modifiers::SHIFT),
+                        ));
+                    }
 
                     Code::Backspace => {
                         if cx.modifiers.contains(Modifiers::CTRL) {
