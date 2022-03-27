@@ -1,8 +1,8 @@
 use unicode_bidi::{bidi_class, BidiClass};
 
-use std::ops::Range;
-use femtovg::{ErrorKind, Paint, TextContext, TextMetrics};
 use crate::{Entity, FontOrId, ResourceManager, Style};
+use femtovg::{ErrorKind, Paint, TextContext, TextMetrics};
+use std::ops::Range;
 
 pub fn text_paint(style: &Style, resource_manager: &ResourceManager, entity: Entity) -> Paint {
     let font = style.font.get(entity).cloned().unwrap_or_default();
@@ -35,7 +35,12 @@ pub fn text_paint(style: &Style, resource_manager: &ResourceManager, entity: Ent
     paint
 }
 
-pub fn text_layout(width: f32, text: &str, paint: Paint, text_context: &TextContext) -> Result<Vec<Range<usize>>, ErrorKind> {
+pub fn text_layout(
+    width: f32,
+    text: &str,
+    paint: Paint,
+    text_context: &TextContext,
+) -> Result<Vec<Range<usize>>, ErrorKind> {
     let mut lines = text_context.break_text_vec(width, text, paint)?;
     if lines.len() == 0 {
         lines.push(0..0)
@@ -78,7 +83,14 @@ pub fn text_layout(width: f32, text: &str, paint: Paint, text_context: &TextCont
     Ok(lines)
 }
 
-pub fn measure_text_lines(text: &str, paint: Paint, lines: &[Range<usize>], x: f32, y: f32, text_context: &TextContext) -> Vec<TextMetrics> {
+pub fn measure_text_lines(
+    text: &str,
+    paint: Paint,
+    lines: &[Range<usize>],
+    x: f32,
+    y: f32,
+    text_context: &TextContext,
+) -> Vec<TextMetrics> {
     let mut metrics = vec![];
     let line_height = text_context.measure_font(paint).unwrap().height();
 
@@ -103,7 +115,7 @@ pub fn measure_text_lines(text: &str, paint: Paint, lines: &[Range<usize>], x: f
 // bidi analysis the same way femtovg does
 pub fn idx_to_pos<'a>(
     byte_idx: usize,
-    metrics: impl Iterator<Item = &'a (Range<usize>, TextMetrics)>
+    metrics: impl Iterator<Item = &'a (Range<usize>, TextMetrics)>,
 ) -> (usize, (f32, f32)) {
     let mut uninit = true;
     let mut result_line = 0;
@@ -145,7 +157,7 @@ pub fn idx_to_pos<'a>(
 pub fn pos_to_idx<'a>(
     x: f32,
     y: f32,
-    cache: impl Iterator<Item = &'a (Range<usize>, TextMetrics)>
+    cache: impl Iterator<Item = &'a (Range<usize>, TextMetrics)>,
 ) -> usize {
     let mut last = 0;
     // first: what line is it?

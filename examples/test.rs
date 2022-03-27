@@ -20,16 +20,16 @@ fn main() {
                 Label::new(cx, LOREM_IPSUM);
                 Label::new(cx, LOREM_IPSUM);
             })
-                .min_width(Units::Pixels(0.0))
-                .width(Units::Stretch(1.0));
+            .min_width(Units::Pixels(0.0))
+            .width(Units::Stretch(1.0));
             VStack::new(cx, |cx| {
                 Label::new(cx, LOREM_IPSUM);
                 Label::new(cx, LOREM_IPSUM);
             })
-                .min_width(Units::Pixels(0.0))
-                .width(Units::Stretch(2.0));
+            .min_width(Units::Pixels(0.0))
+            .width(Units::Stretch(2.0));
         })
-            .height(Units::Auto);
+        .height(Units::Auto);
     })
     .run();
 }

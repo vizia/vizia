@@ -4,7 +4,10 @@ use morphorm::{LayoutType, PositionType, Units};
 
 use cssparser::{Parser, ParserInput};
 
-use crate::{storage::{animatable_set::AnimatableSet, sparse_set::SparseSet, style_set::StyleSet}, Animation, AnimationState, CursorIcon, Entity, IdManager, Interpolator, Transition, Selection};
+use crate::{
+    storage::{animatable_set::AnimatableSet, sparse_set::SparseSet, style_set::StyleSet},
+    Animation, AnimationState, CursorIcon, Entity, IdManager, Interpolator, Selection, Transition,
+};
 
 mod color;
 pub use color::Color;

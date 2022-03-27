@@ -2,7 +2,10 @@ use std::marker::PhantomData;
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{style::Overflow, Abilities, Binding, BorderCornerShape, Color, Context, CursorIcon, Data, Display, Entity, Lens, PseudoClass, Res, Visibility, Selection};
+use crate::{
+    style::Overflow, Abilities, Binding, BorderCornerShape, Color, Context, CursorIcon, Data,
+    Display, Entity, Lens, PseudoClass, Res, Selection, Visibility,
+};
 
 macro_rules! set_style {
     ($name:ident, $t:ty) => {

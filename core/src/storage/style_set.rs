@@ -103,10 +103,7 @@ pub struct StyleSet<T> {
 
 impl<T> Default for StyleSet<T> {
     fn default() -> Self {
-        Self {
-            shared_data: Default::default(),
-            inline_data: Default::default(),
-        }
+        Self { shared_data: Default::default(), inline_data: Default::default() }
     }
 }
 

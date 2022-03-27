@@ -1,6 +1,13 @@
-use crate::{style::{BorderCornerShape, GradientDirection}, Context, Event, FontOrId, Handle, ViewHandler, text_layout, idx_to_pos, measure_text_lines};
+use crate::{
+    idx_to_pos, measure_text_lines,
+    style::{BorderCornerShape, GradientDirection},
+    text_layout, Context, Event, FontOrId, Handle, ViewHandler,
+};
 
-use femtovg::{renderer::OpenGl, Align, Baseline, ImageFlags, Paint, Path, PixelFormat, RenderTarget, TextMetrics};
+use femtovg::{
+    renderer::OpenGl, Align, Baseline, ImageFlags, Paint, Path, PixelFormat, RenderTarget,
+    TextMetrics,
+};
 use morphorm::Units;
 
 pub type Canvas = femtovg::Canvas<OpenGl>;
@@ -677,8 +684,10 @@ pub trait View: 'static + Sized {
                         Baseline::Middle => y - delta_height / 2.0,
                         Baseline::Alphabetic | Baseline::Bottom => y - delta_height,
                     };
-                    let metrics = measure_text_lines(&text, paint, &lines, x, first_line_y, &cx.text_context);
-                    let cached: Vec<(std::ops::Range<usize>, TextMetrics)> = lines.into_iter().zip(metrics.into_iter()).collect();
+                    let metrics =
+                        measure_text_lines(&text, paint, &lines, x, first_line_y, &cx.text_context);
+                    let cached: Vec<(std::ops::Range<usize>, TextMetrics)> =
+                        lines.into_iter().zip(metrics.into_iter()).collect();
                     let selection = cx.style.text_selection.get(entity);
                     let (anchor, active) = if let Some(cursor) = &selection {
                         (
@@ -686,10 +695,7 @@ pub trait View: 'static + Sized {
                             idx_to_pos(cursor.active, cached.iter()),
                         )
                     } else {
-                        (
-                            (usize::MAX, (f32::MAX, f32::MAX)),
-                            (usize::MAX, (f32::MAX, f32::MAX)),
-                        )
+                        ((usize::MAX, (f32::MAX, f32::MAX)), (usize::MAX, (f32::MAX, f32::MAX)))
                     };
                     let (first, last) = if let Some(cursor) = &selection {
                         if cursor.anchor < cursor.active {
@@ -713,14 +719,14 @@ pub trait View: 'static + Sized {
                         if let Some(color) = selection_color {
                             if line >= first.0 && line <= last.0 && first != last {
                                 let first_x = if line == first.0 {
-                                    first.1.0
+                                    first.1 .0
                                 } else if let Some(glyph) = metrics.glyphs.first() {
                                     glyph.x
                                 } else {
                                     x
                                 };
                                 let last_x = if line == last.0 {
-                                    last.1.0
+                                    last.1 .0
                                 } else if let Some(glyph) = metrics.glyphs.last() {
                                     glyph.x + glyph.advance_x
                                 } else {
@@ -743,12 +749,7 @@ pub trait View: 'static + Sized {
                                 canvas.fill_path(&mut path, Paint::color(color.clone().into()));
                             }
                         }
-                        canvas.fill_text(
-                            x,
-                            y,
-                            &text[range.clone()],
-                            paint,
-                        ).ok();
+                        canvas.fill_text(x, y, &text[range.clone()], paint).ok();
                     }
 
                     cx.cache.text_lines.insert(entity, cached).unwrap();

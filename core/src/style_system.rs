@@ -1,7 +1,12 @@
 use femtovg::{Align, Baseline};
 use morphorm::Units;
 
-use crate::{style::{Overflow, Selector, SelectorRelation}, BoundingBox, Context, Display, Entity, PseudoClass, Rule, Tree, TreeExt, Visibility, text_layout, text_paint, measure_text_lines};
+use crate::{
+    measure_text_lines,
+    style::{Overflow, Selector, SelectorRelation},
+    text_layout, text_paint, BoundingBox, Context, Display, Entity, PseudoClass, Rule, Tree,
+    TreeExt, Visibility,
+};
 
 pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
@@ -194,7 +199,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
                         _ => Align::Left,
                     }
-                },
+                }
 
                 Units::Stretch(_) => match child_right {
                     Units::Pixels(val) => {
@@ -228,7 +233,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
                         _ => Baseline::Top,
                     }
-                },
+                }
 
                 Units::Stretch(_) => match child_bottom {
                     Units::Pixels(val) => {
@@ -264,7 +269,11 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
                 if let Ok(lines) = text_layout(f32::MAX, text, paint, &cx.text_context) {
                     let metrics = measure_text_lines(text, paint, &lines, x, y, &cx.text_context);
-                    let text_width = metrics.iter().map(|m| m.width()).reduce(|a, b| a.max(b)).unwrap_or_default();
+                    let text_width = metrics
+                        .iter()
+                        .map(|m| m.width())
+                        .reduce(|a, b| a.max(b))
+                        .unwrap_or_default();
                     let text_height = font_metrics.height().round() * metrics.len() as f32;
 
                     // Add an extra pixel to account for AA

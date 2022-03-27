@@ -1,7 +1,7 @@
 use femtovg::TextContext;
 use morphorm::{Node, Units};
 
-use crate::{Entity, ResourceManager, Style, text_layout, text_paint};
+use crate::{text_layout, text_paint, Entity, ResourceManager, Style};
 
 impl<'w> Node<'w> for Entity {
     type Data = (Style, TextContext, ResourceManager);
@@ -90,8 +90,7 @@ impl<'w> Node<'w> for Entity {
         if let Some(text) = store.0.text.get(*self) {
             let paint = text_paint(&store.0, &store.2, *self);
 
-            let font_metrics =
-                store.1.measure_font(paint).expect("Failed to read font metrics");
+            let font_metrics = store.1.measure_font(paint).expect("Failed to read font metrics");
             let mut child_space_x = 0.0;
             if let Some(Units::Pixels(val)) = store.0.child_left.get(*self) {
                 child_space_x += *val;

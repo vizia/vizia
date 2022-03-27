@@ -6,7 +6,12 @@ use copypasta::ClipboardProvider;
 use keyboard_types::Code;
 
 use crate::style::PropGet;
-use crate::{Actions, Binding, BoundingBox, Context, CursorIcon, Data, EditableText, Entity, Event, Handle, idx_to_pos, Lens, LensExt, measure_text_lines, Model, Modifiers, MouseButton, MouseButtonState, Movement, pos_to_idx, PropSet, Selection, text_layout, text_paint, TreeExt, View, WindowEvent};
+use crate::{
+    idx_to_pos, measure_text_lines, pos_to_idx, text_layout, text_paint, Actions, Binding,
+    BoundingBox, Context, CursorIcon, Data, EditableText, Entity, Event, Handle, Lens, LensExt,
+    Model, Modifiers, MouseButton, MouseButtonState, Movement, PropSet, Selection, TreeExt, View,
+    WindowEvent,
+};
 
 use crate::text::Direction;
 
@@ -65,7 +70,8 @@ impl TextboxData {
             _ => f32::MAX,
         };
         let ranges = text_layout(render_width, &self.text, paint, &cx.text_context).unwrap();
-        let metrics = measure_text_lines(&self.text, paint, &ranges, bounds.x, bounds.y, &cx.text_context);
+        let metrics =
+            measure_text_lines(&self.text, paint, &ranges, bounds.x, bounds.y, &cx.text_context);
         let ranges_metrics = ranges.into_iter().zip(metrics.into_iter()).collect::<Vec<_>>();
         let (line, (x, _)) = idx_to_pos(self.selection.active, ranges_metrics.iter());
         if self.re_sel_x {
@@ -75,25 +81,28 @@ impl TextboxData {
 
         // do the computation
         let (mut tx, mut ty) = self.transform;
-        let text_box = BoundingBox {
-            x: bounds.x + tx,
-            y: bounds.y + ty,
-            w: bounds.w,
-            h: bounds.h,
-        };
-        if text_box.x < parent_bounds.x && text_box.x + text_box.w < parent_bounds.x + parent_bounds.w {
+        let text_box = BoundingBox { x: bounds.x + tx, y: bounds.y + ty, w: bounds.w, h: bounds.h };
+        if text_box.x < parent_bounds.x
+            && text_box.x + text_box.w < parent_bounds.x + parent_bounds.w
+        {
             tx += parent_bounds.x - text_box.x;
         }
-        if text_box.x > parent_bounds.x && text_box.x + text_box.w > parent_bounds.x + parent_bounds.w {
+        if text_box.x > parent_bounds.x
+            && text_box.x + text_box.w > parent_bounds.x + parent_bounds.w
+        {
             tx -= (text_box.x + text_box.w) - (parent_bounds.x + parent_bounds.w);
         }
         if text_box.w < parent_bounds.w {
             tx = 0.0;
         }
-        if text_box.y < parent_bounds.y && text_box.y + text_box.h < parent_bounds.y + parent_bounds.h {
+        if text_box.y < parent_bounds.y
+            && text_box.y + text_box.h < parent_bounds.y + parent_bounds.h
+        {
             ty += parent_bounds.y - text_box.y;
         }
-        if text_box.y > parent_bounds.y && text_box.y + text_box.h > parent_bounds.y + parent_bounds.h {
+        if text_box.y > parent_bounds.y
+            && text_box.y + text_box.h > parent_bounds.y + parent_bounds.h
+        {
             ty -= (text_box.y + text_box.h) - (parent_bounds.y + parent_bounds.h);
         }
         if text_box.h < parent_bounds.h {
@@ -224,12 +233,13 @@ impl TextboxData {
                 if line == 0 && matches!(dir, Direction::Upstream) {
                     self.selection.active = 0;
                 } else {
-                    let new_y = y + line_height * match dir {
-                        Direction::Upstream => -1.0,
-                        Direction::Downstream => 1.0,
-                        Direction::Left => 0.0,
-                        Direction::Right => 0.0,
-                    };
+                    let new_y = y + line_height
+                        * match dir {
+                            Direction::Upstream => -1.0,
+                            Direction::Downstream => 1.0,
+                            Direction::Left => 0.0,
+                            Direction::Right => 0.0,
+                        };
 
                     self.selection.active = pos_to_idx(self.sel_x, new_y, lines.iter());
                 }
@@ -350,7 +360,11 @@ impl Model for TextboxData {
                 TextEvent::Hit(posx, posy) => {
                     let posx = *posx - self.transform.0;
                     let posy = *posy - self.transform.1;
-                    let idx = pos_to_idx(posx, posy, cx.cache.text_lines.get(self.content_entity).unwrap().iter());
+                    let idx = pos_to_idx(
+                        posx,
+                        posy,
+                        cx.cache.text_lines.get(self.content_entity).unwrap().iter(),
+                    );
                     self.selection = Selection::new(idx, idx);
                     self.sel_x = posx;
                     self.set_caret(cx);
@@ -359,7 +373,11 @@ impl Model for TextboxData {
                 TextEvent::Drag(posx, posy) => {
                     let posx = *posx - self.transform.0;
                     let posy = *posy - self.transform.1;
-                    let idx = pos_to_idx(posx, posy, cx.cache.text_lines.get(self.content_entity).unwrap().iter());
+                    let idx = pos_to_idx(
+                        posx,
+                        posy,
+                        cx.cache.text_lines.get(self.content_entity).unwrap().iter(),
+                    );
                     self.selection = Selection::new(self.selection.anchor, idx);
                     self.sel_x = posx;
                     self.set_caret(cx);
@@ -434,7 +452,11 @@ where
     }
 
     pub fn new_multiline(cx: &mut Context, lens: L, wrap: bool) -> Handle<Self> {
-        Self::new_core(cx, lens, if wrap { TextboxKind::MultiLineWrapped } else { TextboxKind::MultiLineUnwrapped })
+        Self::new_core(
+            cx,
+            lens,
+            if wrap { TextboxKind::MultiLineWrapped } else { TextboxKind::MultiLineUnwrapped },
+        )
     }
 
     fn new_core(cx: &mut Context, lens: L, kind: TextboxKind) -> Handle<Self> {
@@ -471,19 +493,20 @@ where
                     cx.current = real_current;
                 }
             });
-            TextboxContainer {}.build2(cx, move |cx| {
-                let lbl = TextboxLabel {}
-                    .build(cx)
-                    .hoverable(false)
-                    .class("textbox_content")
-                    .text(TextboxData::text)
-                    .text_selection(TextboxData::selection)
-                    .translate(TextboxData::transform)
-                    .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
-                    .entity;
+            TextboxContainer {}
+                .build2(cx, move |cx| {
+                    let lbl = TextboxLabel {}
+                        .build(cx)
+                        .hoverable(false)
+                        .class("textbox_content")
+                        .text(TextboxData::text)
+                        .text_selection(TextboxData::selection)
+                        .translate(TextboxData::transform)
+                        .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
+                        .entity;
 
-                cx.emit(TextEvent::InitContent(lbl, kind));
-            })
+                    cx.emit(TextEvent::InitContent(lbl, kind));
+                })
                 .hoverable(false)
                 .class("textbox_container");
         });

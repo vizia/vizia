@@ -47,10 +47,7 @@ pub struct SparseSetGeneric<T, D: DenseIndex> {
 
 impl<T, D: DenseIndex> Default for SparseSetGeneric<T, D> {
     fn default() -> Self {
-        Self {
-            sparse: vec![],
-            dense: vec![],
-        }
+        Self { sparse: vec![], dense: vec![] }
     }
 }
 

@@ -50,12 +50,10 @@ fn main() {
                     .height(Pixels(100.0));
             });
 
-            Label::new(cx, AppData::text)
-                .width(Pixels(200.0))
-                .child_left(Pixels(5.0));
+            Label::new(cx, AppData::text).width(Pixels(200.0)).child_left(Pixels(5.0));
         })
-            .space(Stretch(1.0))
-            .col_between(Pixels(10.0));
+        .space(Stretch(1.0))
+        .col_between(Pixels(10.0));
     })
     .run();
 }

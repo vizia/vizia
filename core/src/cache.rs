@@ -237,10 +237,10 @@ impl BoundingBox {
     }
 
     pub fn intersects(&self, other: &Self) -> bool {
-        let x_hit = (self.x >= other.x && self.x < other.x + other.w) ||
-            (other.x >= self.x && other.x < self.x + self.w);
-        let y_hit = (self.y >= other.y && self.y < other.y + other.h) ||
-            (other.y >= self.y && other.y < self.y + self.h);
+        let x_hit = (self.x >= other.x && self.x < other.x + other.w)
+            || (other.x >= self.x && other.x < self.x + self.w);
+        let y_hit = (self.y >= other.y && self.y < other.y + other.h)
+            || (other.y >= self.y && other.y < self.y + self.h);
         x_hit && y_hit
     }
 
