@@ -1,5 +1,5 @@
 use femtovg::{Align, Baseline, Paint};
-use morphorm::{PositionType, Units};
+use morphorm::Units;
 
 use crate::{
     style::{Overflow, Selector, SelectorRelation},
@@ -42,10 +42,7 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
 
         let parent_clip_region = cx.cache.get_clip_region(parent);
 
-        let root_clip_region = cx.cache.get_clip_region(Entity::root());
-
         let overflow = cx.style.overflow.get(entity).cloned().unwrap_or_default();
-        let position_type = cx.style.position_type.get(entity).cloned().unwrap_or_default();
 
         let clip_region = if overflow == Overflow::Hidden {
             let clip_widget = cx.style.clip_widget.get(entity).cloned().unwrap_or(entity);
@@ -77,11 +74,11 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
         };
 
         // Absolute positioned nodes ignore overflow hidden
-        if position_type == PositionType::SelfDirected {
-            cx.cache.set_clip_region(entity, root_clip_region);
-        } else {
-            cx.cache.set_clip_region(entity, clip_region);
-        }
+        //if position_type == PositionType::SelfDirected {
+        //    cx.cache.set_clip_region(entity, root_clip_region);
+        //} else {
+        cx.cache.set_clip_region(entity, clip_region);
+        //}
     }
 }
 

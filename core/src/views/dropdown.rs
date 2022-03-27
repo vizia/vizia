@@ -37,6 +37,7 @@ impl Dropdown {
                 .height(Auto)
                 .overflow(Overflow::Visible);
             })
+            .overflow(Overflow::Visible)
             .size(Auto)
     }
 }
