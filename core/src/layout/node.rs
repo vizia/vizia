@@ -82,7 +82,7 @@ impl<'w> Node<'w> for Entity {
         store.0.content_height.get(*self).cloned()
     }
 
-    fn content_width_secondary(&self, store: &Self::Data, height: f32) -> Option<f32> {
+    fn content_width_secondary(&self, store: &Self::Data, _height: f32) -> Option<f32> {
         store.0.content_width.get(*self).cloned()
     }
 

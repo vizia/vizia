@@ -530,13 +530,10 @@ where
                 }
 
                 WindowEvent::MouseMove(_, _) => {
+                    cx.emit(WindowEvent::SetCursor(CursorIcon::Text));
                     if cx.mouse.left.state == MouseButtonState::Pressed {
                         cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
                     }
-                }
-
-                WindowEvent::MouseEnter => {
-                    cx.emit(WindowEvent::SetCursor(CursorIcon::Text));
                 }
 
                 WindowEvent::MouseLeave => {

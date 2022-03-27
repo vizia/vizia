@@ -568,7 +568,6 @@ pub trait View: 'static + Sized {
 
                     Units::Stretch(_) => {
                         x += 0.5 * bounds.w;
-                        w -= 0.5 * bounds.w;
                         Align::Center
                     }
 
@@ -598,7 +597,6 @@ pub trait View: 'static + Sized {
 
                     Units::Stretch(_) => {
                         y += 0.5 * bounds.h;
-                        h -= 0.5 * bounds.h;
                         Baseline::Middle
                     }
 

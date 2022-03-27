@@ -1,7 +1,7 @@
-/* * {
+* {
     border-width: 1px;
     border-color: red;
-} */
+}
 
 button {
     background-color: white;
@@ -141,7 +141,17 @@ textbox.align_right .textbox_container {
     child-left: 1s;
 }
 
+textbox.align_right .textbox_content {
+    child-right: 0px;
+    child-left: 1s;
+}
+
 textbox.align_center .textbox_container {
+    child-left: 1s;
+}
+
+textbox.align_center .textbox_content {
+    child-right: 1s;
     child-left: 1s;
 }
 
