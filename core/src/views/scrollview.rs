@@ -143,8 +143,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             .class("scroll_content")
             .bind(data.clone(), |handle, data| {
                 let data = data.get(handle.cx);
-                let left = (data.child_x - data.parent_x) * data.scroll_x;
-                let top = (data.child_y - data.parent_y) * data.scroll_y;
+                let left = ((data.child_x - data.parent_x) * data.scroll_x).round();
+                let top = ((data.child_y - data.parent_y) * data.scroll_y).round();
                 handle.left(Units::Pixels(-left)).top(Units::Pixels(-top));
             })
             .on_geo_changed(|cx, geo| {
