@@ -669,7 +669,7 @@ pub trait View: 'static + Sized {
                 let font_metrics =
                     cx.text_context.measure_font(paint).expect("Failed to read font metrics");
 
-                if let Ok(mut lines) = text_layout(w, &text, paint, &cx.text_context) {
+                if let Ok(lines) = text_layout(w, &text, paint, &cx.text_context) {
                     // difference between first line and last line
                     let delta_height = font_metrics.height() * (lines.len() - 1) as f32;
                     let first_line_y = match baseline {
@@ -677,7 +677,7 @@ pub trait View: 'static + Sized {
                         Baseline::Middle => y - delta_height / 2.0,
                         Baseline::Alphabetic | Baseline::Bottom => y - delta_height,
                     };
-                    let mut metrics = measure_text_lines(&text, paint, &lines, x, first_line_y, &cx.text_context);
+                    let metrics = measure_text_lines(&text, paint, &lines, x, first_line_y, &cx.text_context);
                     let cached: Vec<(std::ops::Range<usize>, TextMetrics)> = lines.into_iter().zip(metrics.into_iter()).collect();
                     let selection = cx.style.text_selection.get(entity);
                     let (anchor, active) = if let Some(cursor) = &selection {
@@ -751,7 +751,7 @@ pub trait View: 'static + Sized {
                         ).ok();
                     }
 
-                    cx.cache.text_lines.insert(entity, cached);
+                    cx.cache.text_lines.insert(entity, cached).unwrap();
                 }
             }
         }

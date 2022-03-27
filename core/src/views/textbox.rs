@@ -4,11 +4,9 @@ use std::sync::Arc;
 use copypasta::ClipboardProvider;
 
 use keyboard_types::Code;
-use morphorm::{Hierarchy, PositionType, Units};
-use unicode_segmentation::UnicodeSegmentation;
 
 use crate::style::PropGet;
-use crate::{Actions, Binding, BoundingBox, Context, CursorIcon, Data, EditableText, Element, Entity, Event, FontOrId, Handle, idx_to_pos, Lens, LensExt, measure_text_lines, Model, Modifiers, MouseButton, MouseButtonState, Movement, Overflow, pos_to_idx, PropSet, Selection, text_layout, text_paint, TreeExt, Units::*, View, WindowEvent};
+use crate::{Actions, Binding, BoundingBox, Context, CursorIcon, Data, EditableText, Entity, Event, Handle, idx_to_pos, Lens, LensExt, measure_text_lines, Model, Modifiers, MouseButton, MouseButtonState, Movement, pos_to_idx, PropSet, Selection, text_layout, text_paint, TreeExt, View, WindowEvent};
 
 use crate::text::Direction;
 
@@ -50,10 +48,10 @@ impl TextboxData {
         if entity == Entity::null() {
             return;
         }
-        let parent = cx.tree.parent(entity).unwrap();
+        let parent = entity.parent(&cx.tree).unwrap();
 
         // calculate visible area for content and container
-        let mut bounds = cx.cache.bounds.get(entity).unwrap().clone();
+        let bounds = cx.cache.bounds.get(entity).unwrap().clone();
         let mut parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
 
         // calculate line height - we'll need this
@@ -476,6 +474,7 @@ where
             TextboxContainer {}.build2(cx, move |cx| {
                 let lbl = TextboxLabel {}
                     .build(cx)
+                    .hoverable(false)
                     .class("textbox_content")
                     .text(TextboxData::text)
                     .text_selection(TextboxData::selection)
@@ -485,6 +484,7 @@ where
 
                 cx.emit(TextEvent::InitContent(lbl, kind));
             })
+                .hoverable(false)
                 .class("textbox_container");
         });
 

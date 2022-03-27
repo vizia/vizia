@@ -2,7 +2,7 @@ use unicode_bidi::{bidi_class, BidiClass};
 
 use std::ops::Range;
 use femtovg::{ErrorKind, Paint, TextContext, TextMetrics};
-use crate::{Context, Entity, FontOrId, ResourceManager, Style};
+use crate::{Entity, FontOrId, ResourceManager, Style};
 
 pub fn text_paint(style: &Style, resource_manager: &ResourceManager, entity: Entity) -> Paint {
     let font = style.font.get(entity).cloned().unwrap_or_default();

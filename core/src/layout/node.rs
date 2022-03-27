@@ -1,7 +1,7 @@
 use femtovg::TextContext;
 use morphorm::{Node, Units};
 
-use crate::{Context, Entity, ResourceManager, Style, text_layout, text_paint};
+use crate::{Entity, ResourceManager, Style, text_layout, text_paint};
 
 impl<'w> Node<'w> for Entity {
     type Data = (Style, TextContext, ResourceManager);
@@ -99,7 +99,7 @@ impl<'w> Node<'w> for Entity {
             if let Some(Units::Pixels(val)) = store.0.child_right.get(*self) {
                 child_space_x += *val;
             }
-            let mut child_width = (width - child_space_x).max(0.0);
+            let child_width = (width - child_space_x).max(0.0);
 
             if let Ok(lines) = text_layout(child_width, text, paint, &store.1) {
                 Some(font_metrics.height() * lines.len() as f32)

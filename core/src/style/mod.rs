@@ -147,7 +147,7 @@ pub struct Style {
     pub font: StyleSet<String>,
     pub font_color: AnimatableSet<Color>,
     pub font_size: AnimatableSet<f32>,
-    pub text_selection: SparseSet<Selection>,
+    pub text_selection: StyleSet<Selection>,
     pub caret_color: AnimatableSet<Color>,
     pub selection_color: AnimatableSet<Color>,
 
