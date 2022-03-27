@@ -603,7 +603,6 @@ where
                         // self.edit = false;
 
                         //cx.emit(TextEvent::EndEdit);
-                        cx.emit(TextEvent::Submit);
 
                         if matches!(self.kind, TextboxKind::SingleLine) {
                             if let Some(source) = cx.data::<L::Source>() {
@@ -619,6 +618,7 @@ where
                                 cx.emit(TextEvent::InsertText(text));
                             };
                             cx.emit(TextEvent::EndEdit);
+                            cx.emit(TextEvent::Submit);
 
                             cx.current.set_checked(cx, false);
                         } else {
