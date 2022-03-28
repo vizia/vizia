@@ -622,6 +622,13 @@ impl Context {
         for entity in draw_tree.into_iter() {
             // Apply clipping
             let clip_region = self.cache.get_clip_region(entity);
+
+            // Skips drawing views with zero-sized clip regions
+            // This skips calling the `draw` method of the view
+            if clip_region.height() == 0.0 || clip_region.width() == 0.0 {
+                continue;
+            }
+
             canvas.scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
 
             // Apply transform

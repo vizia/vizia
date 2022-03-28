@@ -68,6 +68,9 @@ pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
                 parent_clip_region.y + parent_clip_region.h - intersection.y
             };
 
+            intersection.w = intersection.w.max(0.0);
+            intersection.h = intersection.h.max(0.0);
+
             intersection
         } else {
             parent_clip_region
