@@ -125,7 +125,6 @@ pub struct Style {
     pub border_radius_bottom_left: AnimatableSet<Units>,
     pub border_radius_bottom_right: AnimatableSet<Units>,
 
-
     // Focus Order
     pub focus_order: SparseSet<FocusOrder>,
 
