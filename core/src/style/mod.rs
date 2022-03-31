@@ -125,6 +125,7 @@ pub struct Style {
     pub border_radius_bottom_left: AnimatableSet<Units>,
     pub border_radius_bottom_right: AnimatableSet<Units>,
 
+
     // Focus Order
     pub focus_order: SparseSet<FocusOrder>,
 
@@ -147,6 +148,7 @@ pub struct Style {
 
     // Text & Font
     pub text: StyleSet<String>,
+    pub text_wrap: StyleSet<bool>,
     pub font: StyleSet<String>,
     pub font_color: AnimatableSet<Color>,
     pub font_size: AnimatableSet<f32>,
@@ -462,6 +464,10 @@ impl Style {
 
                     Property::Font(value) => {
                         self.font.insert_rule(rule_id, value);
+                    }
+
+                    Property::TextWrap(value) => {
+                        self.text_wrap.insert_rule(rule_id, value);
                     }
 
                     Property::SelectionColor(value) => {

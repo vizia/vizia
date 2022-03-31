@@ -665,6 +665,7 @@ pub trait View: 'static + Sized {
                 font_color.set_alphaf(font_color.a * opacity);
 
                 let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
+                let text_wrap = cx.style.text_wrap.get(entity).cloned().unwrap_or(true);
 
                 let mut paint = Paint::color(font_color);
                 paint.set_font_size(font_size);
@@ -676,7 +677,9 @@ pub trait View: 'static + Sized {
                 let font_metrics =
                     cx.text_context.measure_font(paint).expect("Failed to read font metrics");
 
-                if let Ok(lines) = text_layout(w, &text, paint, &cx.text_context) {
+                let text_width = if text_wrap { w } else { f32::MAX };
+
+                if let Ok(lines) = text_layout(text_width, &text, paint, &cx.text_context) {
                     // difference between first line and last line
                     let delta_height = font_metrics.height() * (lines.len() - 1) as f32;
                     let first_line_y = match baseline {

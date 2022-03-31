@@ -95,6 +95,7 @@ pub(crate) enum Property {
     Font(String),
     SelectionColor(Color),
     CaretColor(Color),
+    TextWrap(bool),
 
     // Shadow
     OuterShadow(BoxShadow),

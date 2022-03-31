@@ -677,11 +677,17 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
         if cx.style.font_size.link(entity, &matched_rules) {
             //println!("44");
             should_redraw = true;
+            should_relayout = true;
         }
 
         if cx.style.font.link(entity, &matched_rules) {
             //println!("44");
             should_redraw = true;
+        }
+
+        if cx.style.text_wrap.link(entity, &matched_rules) {
+            should_redraw = true;
+            should_relayout = true;
         }
 
         if cx.style.selection_color.link(entity, &matched_rules) {

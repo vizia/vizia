@@ -87,6 +87,10 @@ impl<'w> Node<'w> for Entity {
     }
 
     fn content_height_secondary(&self, store: &Self::Data, width: f32) -> Option<f32> {
+        if !store.0.text_wrap.get(*self).copied().unwrap_or(true) {
+            return None;
+        }
+
         if let Some(text) = store.0.text.get(*self) {
             let paint = text_paint(&store.0, &store.2, *self);
 
