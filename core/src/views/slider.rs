@@ -127,7 +127,7 @@ where
                                 .right(Stretch(1.0))
                                 .class("active")
                                 .bind(lens.clone(), move |handle, value| {
-                                    let val = *value.get(handle.cx);
+                                    let val = value.get(handle.cx);
                                     let min = thumb_size / size;
                                     let max = 1.0;
                                     let dx = min + val * (max - min);
@@ -154,7 +154,7 @@ where
                             .bind(
                                 lens.clone(),
                                 move |handle, value| {
-                                    let val = *value.get(handle.cx);
+                                    let val = value.get(handle.cx);
                                     let px = val * (1.0 - (thumb_size / size));
 
                                     handle.left(Percentage(100.0 * px));
@@ -170,7 +170,7 @@ where
                                 .bottom(Pixels(0.0))
                                 .class("active")
                                 .bind(lens.clone(), move |handle, value| {
-                                    let val = *value.get(handle.cx);
+                                    let val = value.get(handle.cx);
                                     let min = thumb_size / size;
                                     let max = 1.0;
                                     let dx = min + val * (max - min);
@@ -193,7 +193,7 @@ where
                                     }
                                 })
                                 .bind(lens.clone(), move |handle, value| {
-                                    let val = *value.get(handle.cx);
+                                    let val = value.get(handle.cx);
                                     let px = val * (1.0 - (thumb_size / size));
 
                                     handle.bottom(Percentage(100.0 * px));

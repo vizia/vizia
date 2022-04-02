@@ -36,10 +36,6 @@ name = "zstack"
 path = "examples/controls/zstack.rs"
 
 [[example]]
-name = "picker"
-path = "examples/controls/picker.rs"
-
-[[example]]
 name = "popup"
 path = "examples/controls/popup.rs"
 

@@ -25,9 +25,6 @@ pub use dropdown::*;
 mod element;
 pub use element::Element;
 
-mod for_each;
-pub use for_each::ForEach;
-
 mod slider;
 pub use slider::{Orientation, Slider};
 

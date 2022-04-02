@@ -85,7 +85,7 @@ fn main() {
 
             List::new(cx, AppData::list, move |cx, index, item| {
                 Binding::new(cx, AppData::selected, move |cx, selected| {
-                    let selected = *selected.get(cx);
+                    let selected = selected.get(cx);
 
                     Label::new(cx, item)
                         .width(Pixels(100.0))
