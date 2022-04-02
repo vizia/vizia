@@ -371,6 +371,7 @@ impl<'a, T> Handle<'a, T> {
     set_style!(text_selection, Selection);
     set_style!(caret_color, Color);
     set_style!(selection_color, Color);
+    set_style!(text_wrap, bool);
 
     //set_style!(display, Display);
     //set_style!(visibility, Visibility);
