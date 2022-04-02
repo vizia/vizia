@@ -483,6 +483,9 @@ where
                         cx.current = cx.current.parent(&cx.tree).unwrap();
                         td.build(cx);
                         cx.current = real_current;
+                        // push an event into the queue to force an update because the textbox data
+                        // may have already been observed this update cycle
+                        cx.emit_to(cx.current, ());
                     }
                 } else {
                     let mut td = TextboxData::new(text.clone());
@@ -491,6 +494,7 @@ where
                     cx.current = cx.current.parent(&cx.tree).unwrap();
                     td.build(cx);
                     cx.current = real_current;
+                    cx.emit_to(cx.current, ());
                 }
             });
             TextboxContainer {}
