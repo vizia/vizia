@@ -176,6 +176,12 @@ impl Context {
                     }
                 }
             }
+
+            if let Some(view_handler) = self.views.get(&entity) {
+                if let Some(data) = view_handler.downcast_ref::<T>() {
+                    return Some(data);
+                }
+            }
         }
 
         None
@@ -515,21 +521,40 @@ impl Context {
     pub fn process_data_updates(&mut self) {
         let mut observers: Vec<Entity> = Vec::new();
 
-        for model_store in self.data.dense.iter_mut().map(|entry| &mut entry.value) {
-            for (_, model) in model_store.data.iter() {
+        for entity in self.tree.into_iter() {
+            if let Some(model_store) = self.data.get_mut(entity) {
+                for (_, model) in model_store.data.iter() {
+                    for lens in model_store.lenses_dup.iter_mut() {
+                        if lens.update(model) {
+                            observers.extend(lens.observers().iter())
+                        }
+                    }
+
+                    for (_, lens) in model_store.lenses_dedup.iter_mut() {
+                        if lens.update(model) {
+                            observers.extend(lens.observers().iter());
+                        }
+                    }
+                }
+
                 for lens in model_store.lenses_dup.iter_mut() {
-                    if lens.update(model) {
-                        observers.extend(lens.observers().iter())
+                    if let Some(view_handler) = self.views.get(&entity) {
+                        if lens.update_view(view_handler) {
+                            observers.extend(lens.observers().iter())
+                        }
                     }
                 }
 
                 for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                    if lens.update(model) {
-                        observers.extend(lens.observers().iter());
+                    if let Some(view_handler) = self.views.get(&entity) {
+                        if lens.update_view(view_handler) {
+                            observers.extend(lens.observers().iter())
+                        }
                     }
                 }
             }
         }
+
         for img in self.resource_manager.images.values_mut() {
             if img.dirty {
                 observers.extend(img.observers.iter());

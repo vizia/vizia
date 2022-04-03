@@ -16,7 +16,7 @@ pub trait ViewHandler: Any {
 
 impl dyn ViewHandler {
     /// Check if a view handler is a certain type.
-    pub fn is<T: ViewHandler + 'static>(&self) -> bool {
+    pub fn is<T: Any>(&self) -> bool {
         // Get TypeId of the type this function is instantiated with
         let t = TypeId::of::<T>();
 
@@ -30,7 +30,7 @@ impl dyn ViewHandler {
     /// Attempt to cast a view handler to a mutable reference to the specified type.
     pub fn downcast_mut<T>(&mut self) -> Option<&mut T>
     where
-        T: ViewHandler + 'static,
+        T: Any,
     {
         if self.is::<T>() {
             unsafe { Some(&mut *(self as *mut dyn ViewHandler as *mut T)) }
@@ -42,7 +42,7 @@ impl dyn ViewHandler {
     /// Attempt to cast a view handler to an immutable reference to the specified type.
     pub fn downcast_ref<T>(&self) -> Option<&T>
     where
-        T: ViewHandler + 'static,
+        T: Any,
     {
         if self.is::<T>() {
             unsafe { Some(&*(self as *const dyn ViewHandler as *const T)) }
