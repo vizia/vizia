@@ -16,7 +16,7 @@ pub trait ViewHandler: Any {
 
 impl dyn ViewHandler {
     /// Check if a view handler is a certain type.
-    pub fn is<T: Any + 'static>(&self) -> bool {
+    pub fn is<T: Any>(&self) -> bool {
         // Get TypeId of the type this function is instantiated with
         let t = TypeId::of::<T>();
 
