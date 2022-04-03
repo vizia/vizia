@@ -3,8 +3,8 @@ use std::marker::PhantomData;
 use morphorm::GeometryChanged;
 
 use crate::{
-    Actions, Binding, Context, Data, Element, HStack, Handle, Lens, LensExt, Model, MouseButton,
-    Overflow, PropSet, Units::*, View, WindowEvent, ZStack,
+    Actions, Binding, Context, Data, Element, Handle, Lens, LensExt, Model, MouseButton, Overflow,
+    PropSet, Units::*, View, WindowEvent, ZStack,
 };
 
 #[derive(Debug)]
@@ -139,7 +139,7 @@ where
                                     }
                                 })
                                 .bind(lens.clone(), move |handle, value| {
-                                    let val = *value.get(handle.cx);
+                                    let val = value.get(handle.cx);
                                     let px = val * (1.0 - (thumb_size / size));
 
                                     handle.left(Percentage(100.0 * px));
