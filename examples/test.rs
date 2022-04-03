@@ -1,76 +1,35 @@
 use vizia::*;
 
-#[derive(Lens)]
-pub struct AppData {
-    val: f32,
-}
-
-pub enum AppEvent {
-    SetValue(f32),
-}
-
-impl Model for AppData {
-    fn event(&mut self, _cx: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.message.downcast() {
-            match app_event {
-                AppEvent::SetValue(val) => {
-                    self.val = *val;
-                }
-            }
-        }
-    }
-}
+const LOREM_IPSUM: &str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Orci a scelerisque purus semper eget duis. Commodo elit at imperdiet dui accumsan sit amet nulla. Sit amet est placerat in egestas erat imperdiet sed. Elementum eu facilisis sed odio morbi quis commodo odio. Nullam non nisi est sit amet facilisis. Egestas integer eget aliquet nibh praesent tristique. Dui faucibus in ornare quam viverra orci. Gravida dictum fusce ut placerat orci nulla pellentesque dignissim enim. Nibh praesent tristique magna sit amet purus gravida. Est pellentesque elit ullamcorper dignissim cras tincidunt lobortis feugiat. Semper viverra nam libero justo laoreet sit amet cursus. Enim ut sem viverra aliquet eget sit.";
 
 const STYLE: &str = r#"
-    element {
-        background-color: red;
-        transition: background-color 1.0 0.0;
-    }
-
-    element:hover {
-        background-color: blue;
-        transition: background-color 1.0 0.0;
-    }
-
-    element:active {
-        background-color: green;
-        transition: background-color 1.0 0.0;
-    }
+label {
+    border-width: 1px;
+    border-color: red;
+}
 "#;
 
 fn main() {
     let mut window_description = WindowDescription::new();
-    window_description.resizable = false;
+    window_description.resizable = true;
     Application::new(window_description, |cx| {
         cx.add_theme(STYLE);
 
-        Entity::root().set_background_color(cx, Color::rgb(200, 200, 200));
-
-        Element::new(cx)
-            .size(Pixels(100.0))
-            .on_press(|cx| {
-                cx.current.set_active(cx, true);
+        HStack::new(cx, |cx| {
+            VStack::new(cx, |cx| {
+                Label::new(cx, LOREM_IPSUM);
+                Label::new(cx, LOREM_IPSUM);
             })
-            .on_release(|cx| {
-                cx.current.set_active(cx, false);
-            });
-        // AppData { val: 0.5 }.build(cx);
-
-        // HStack::new(cx, |cx| {
-        //     Slider::new(cx, AppData::val, Orientation::Horizontal)
-        //         .on_changing(|cx, val| cx.emit(AppEvent::SetValue(val)));
-        //     Textbox::new(cx, AppData::val.map(|val| format!("{:.2}", val)))
-        //         .on_submit(|cx, txt| {
-        //             if let Ok(val) = txt.parse::<f32>() {
-        //                 let val = val.clamp(0.0, 1.0);
-        //                 cx.emit(AppEvent::SetValue(val));
-        //             }
-        //         })
-        //         .width(Pixels(100.0));
-        // })
-        // .height(Auto)
-        // .col_between(Pixels(20.0))
-        // .child_space(Pixels(20.0));
+            .min_width(Units::Pixels(0.0))
+            .width(Units::Stretch(1.0));
+            VStack::new(cx, |cx| {
+                Label::new(cx, LOREM_IPSUM);
+                Label::new(cx, LOREM_IPSUM);
+            })
+            .min_width(Units::Pixels(0.0))
+            .width(Units::Stretch(2.0));
+        })
+        .height(Units::Auto);
     })
     .run();
 }

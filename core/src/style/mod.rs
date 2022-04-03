@@ -6,7 +6,7 @@ use cssparser::{Parser, ParserInput};
 
 use crate::{
     storage::{animatable_set::AnimatableSet, sparse_set::SparseSet, style_set::StyleSet},
-    Animation, AnimationState, CursorIcon, Entity, IdManager, Interpolator, Transition,
+    Animation, AnimationState, CursorIcon, Entity, IdManager, Interpolator, Selection, Transition,
 };
 
 mod color;
@@ -147,9 +147,13 @@ pub struct Style {
 
     // Text & Font
     pub text: StyleSet<String>,
+    pub text_wrap: StyleSet<bool>,
     pub font: StyleSet<String>,
     pub font_color: AnimatableSet<Color>,
     pub font_size: AnimatableSet<f32>,
+    pub text_selection: StyleSet<Selection>,
+    pub caret_color: AnimatableSet<Color>,
+    pub selection_color: AnimatableSet<Color>,
 
     // Image
     pub image: StyleSet<String>,
@@ -459,6 +463,18 @@ impl Style {
 
                     Property::Font(value) => {
                         self.font.insert_rule(rule_id, value);
+                    }
+
+                    Property::TextWrap(value) => {
+                        self.text_wrap.insert_rule(rule_id, value);
+                    }
+
+                    Property::SelectionColor(value) => {
+                        self.selection_color.insert_rule(rule_id, value);
+                    }
+
+                    Property::CaretColor(value) => {
+                        self.caret_color.insert_rule(rule_id, value);
                     }
 
                     // Background
@@ -953,6 +969,9 @@ impl Style {
         self.font.remove(entity);
         self.font_color.remove(entity);
         self.font_size.remove(entity);
+        self.text_selection.remove(entity);
+        self.selection_color.remove(entity);
+        self.caret_color.remove(entity);
 
         self.image.remove(entity);
     }
@@ -1001,6 +1020,8 @@ impl Style {
         self.outer_shadow_v_offset.clear_rules();
         self.outer_shadow_blur.clear_rules();
         self.outer_shadow_color.clear_rules();
+        self.selection_color.clear_rules();
+        self.caret_color.clear_rules();
 
         self.inner_shadow_h_offset.clear_rules();
         self.inner_shadow_v_offset.clear_rules();

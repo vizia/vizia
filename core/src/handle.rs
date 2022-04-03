@@ -4,7 +4,7 @@ use morphorm::{LayoutType, PositionType, Units};
 
 use crate::{
     style::Overflow, Abilities, Binding, BorderCornerShape, Color, Context, CursorIcon, Data,
-    Display, Entity, Lens, PseudoClass, Res, Visibility,
+    Display, Entity, Lens, PseudoClass, Res, Selection, Visibility,
 };
 
 macro_rules! set_style {
@@ -368,6 +368,10 @@ impl<'a, T> Handle<'a, T> {
     set_style!(border_color, Color);
 
     set_style!(font_size, f32);
+    set_style!(text_selection, Selection);
+    set_style!(caret_color, Color);
+    set_style!(selection_color, Color);
+    set_style!(text_wrap, bool);
 
     //set_style!(display, Display);
     //set_style!(visibility, Visibility);

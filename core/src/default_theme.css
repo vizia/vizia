@@ -93,15 +93,16 @@ label.icon {
 textbox {
     width: auto;
     height: auto;
+    min-width: 0px;
     overflow: hidden;
     color: black;
     border-width: 1px;
     border-color: #e5e5e5;
     background-color: white;
-    child-top: 1s;
-    child-bottom: 1s;
     child-left: 5px;
-    height: 30px;
+    child-right: 5px;
+    child-top: 2px;
+    child-bottom: 2px;
     border-radius: 3px;
 }
 
@@ -113,12 +114,53 @@ textbox:checked {
     border-color: #4c00ff;
 }
 
-textbox .caret {
-    background-color: #ff0000;
+textbox .textbox_content {
+    layout-type: row;
+    width: auto;
+    height: auto;
+    min-width: 0px;
+    overflow: visible;
+    /*
+    border-width: 1px;
+    border-color: green;
+     */
 }
 
-textbox .selection {
-    background-color: #6464c888;
+textbox .textbox_container {
+    width: 1s;
+    height: 1s;
+    min-width: 0px;
+    child-right: 1s;
+    child-bottom: 1s;
+    overflow: visible;
+}
+
+textbox.align_right .textbox_container {
+    child-right: 0px;
+    child-left: 1s;
+}
+
+textbox.align_right .textbox_content {
+    child-right: 0px;
+    child-left: 1s;
+}
+
+textbox.align_center .textbox_container {
+    child-left: 1s;
+}
+
+textbox.align_center .textbox_content {
+    child-right: 1s;
+    child-left: 1s;
+}
+
+textbox:checked .textbox_content {
+    caret-color: #ff0000;
+    selection-color: #6464c888;
+}
+
+textbox.multi_line_wrapped .textbox_content {
+    max-width: 100%;
 }
 
 textbox:disabled {
@@ -126,40 +168,14 @@ textbox:disabled {
     border-color: gray;
 }
 
-codeview {
-    width: auto;
-    height: auto;
-    overflow: hidden;
-    color: black;
-    border-width: 1px;
-    border-color: #9e9e9e;
-    child-top: 1s;
-    child-bottom: 1s;
-    height: 30px;
-    border-radius: 3px;
-}
-
-codeview:over {
-    border-color: black;
-}
-
-codeview:checked {
-    border-color: #4c00ff;
-}
-
-codeview .caret {
-    background-color: #ff0000;
-}
-
-codeview .selection {
-    background-color: #6464c888;
-}
-
-
 label {
     width: auto;
     height: auto;
-    child-space: 1s;
+    max-width: 100%;
+    min-width: 0px;
+    child-space: 0px;
+    selection-color: #6464c888;
+    layout-type: row;
 }
 
 label.h1 {

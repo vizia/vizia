@@ -39,10 +39,16 @@ impl<T: Clone> Clone for Entry<T> {
 }
 
 /// A sparse set
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct SparseSetGeneric<T, D: DenseIndex> {
     pub sparse: Vec<D>,
     pub dense: Vec<Entry<T>>,
+}
+
+impl<T, D: DenseIndex> Default for SparseSetGeneric<T, D> {
+    fn default() -> Self {
+        Self { sparse: vec![], dense: vec![] }
+    }
 }
 
 impl<T: Clone, D: DenseIndex> Clone for SparseSetGeneric<T, D> {
@@ -51,10 +57,7 @@ impl<T: Clone, D: DenseIndex> Clone for SparseSetGeneric<T, D> {
     }
 }
 
-impl<T, D: DenseIndex> SparseSetGeneric<T, D>
-where
-    T: Default,
-{
+impl<T, D: DenseIndex> SparseSetGeneric<T, D> {
     /// Create a new empty sparse set
     pub fn new() -> Self {
         Self { sparse: Vec::new(), dense: Vec::new() }

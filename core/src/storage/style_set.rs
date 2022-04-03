@@ -94,7 +94,6 @@ impl DenseIndex for Index {
 ///
 /// Animations are moved from animations to active_animations when played. This allows the active
 /// animations to be quickly iterated to update the value.
-#[derive(Default)]
 pub struct StyleSet<T> {
     /// Shared data determined by style rules
     shared_data: SparseSetGeneric<T, Index>,
@@ -102,9 +101,15 @@ pub struct StyleSet<T> {
     inline_data: SparseSetGeneric<T, Index>,
 }
 
+impl<T> Default for StyleSet<T> {
+    fn default() -> Self {
+        Self { shared_data: Default::default(), inline_data: Default::default() }
+    }
+}
+
 impl<T> StyleSet<T>
 where
-    T: 'static + Default + std::fmt::Debug,
+    T: 'static + std::fmt::Debug,
 {
     /// Create a new empty styleset.
     pub fn new() -> Self {

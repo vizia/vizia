@@ -13,9 +13,9 @@ clipboard = ["copypasta"]
 
 [dependencies]
 vizia_derive = {version = "0.1.0", path = "../derive"}
-femtovg = { version = "0.3.0", default-features = false, features = ["image-loading"] }
+femtovg = { git = "https://github.com/femtovg/femtovg", rev = "87fe627794f3f793d8e3a338c838a2f8e8a8aa9d", default-features = false, features = ["image-loading"] }
 image = { version = "0.24.0", default-features = false, features = ["png"] } # inherited from femtovg
-morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "07a8ba20b16660f93b551ad89873d4b382536b54" }
+morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "c14e888b1d66719fc3f13ccdb1ea01a10368ef9e" }
 bitflags = "1.3.2"
 fnv = "1.0.7"
 keyboard-types = { version = "0.6.2", default-features = false }
@@ -26,6 +26,7 @@ unic-langid = "0.9"
 locale_config = "*"  # see https://github.com/rust-locale/locale_config for wildcard explanation
 cssparser = "0.27.2"
 unicode-segmentation = "1.8.0"
+unicode-bidi = "0.3.7"
 copypasta = {version = "0.7.1", optional = true}
 instant = "0.1.12"
 
