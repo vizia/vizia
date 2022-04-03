@@ -53,11 +53,11 @@ where
     T: Clone + Data,
 {
     fn get_val(&self, cx: &Context) -> T {
-        self.get(cx).take()
+        self.get(cx)
     }
 
     fn get_val_fallible(&self, cx: &Context) -> Option<T> {
-        self.get_fallible(cx).map(|x| x.take())
+        self.get_fallible(cx).map(|x| x)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)

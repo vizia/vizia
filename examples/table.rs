@@ -32,11 +32,11 @@ fn main() {
                                 .height(Stretch(1.0))
                                 .font("roboto-bold");
                             Binding::new(cx, TableData::first_name_sorted, |cx, sorted| {
-                                let visible = match *sorted.get(cx) {
+                                let visible = match sorted.get(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
-                                let icon = if *sorted.get(cx) == Sorted::Forward {
+                                let icon = if sorted.get(cx) == Sorted::Forward {
                                     "\u{e75c}"
                                 } else {
                                     "\u{e75f}"
@@ -93,11 +93,11 @@ fn main() {
                                 .height(Stretch(1.0))
                                 .font("roboto-bold");
                             Binding::new(cx, TableData::last_name_sorted, |cx, sorted| {
-                                let visible = match *sorted.get(cx) {
+                                let visible = match sorted.get(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
-                                let icon = if *sorted.get(cx) == Sorted::Forward {
+                                let icon = if sorted.get(cx) == Sorted::Forward {
                                     "\u{e75c}"
                                 } else {
                                     "\u{e75f}"
@@ -152,11 +152,11 @@ fn main() {
                                 .font("roboto-bold");
 
                             Binding::new(cx, TableData::age_sorted, |cx, sorted| {
-                                let visible = match *sorted.get(cx) {
+                                let visible = match sorted.get(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
-                                let icon = if *sorted.get(cx) == Sorted::Forward {
+                                let icon = if sorted.get(cx) == Sorted::Forward {
                                     "\u{e75c}"
                                 } else {
                                     "\u{e75f}"

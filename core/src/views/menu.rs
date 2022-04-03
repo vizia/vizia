@@ -28,7 +28,7 @@ where
         *data.counter.borrow_mut() += 1;
         handle
             .bind(MenuData::selected, move |handle, selected| {
-                let selected = *selected.get(handle.cx) == Some(i);
+                let selected = selected.get(handle.cx) == Some(i);
                 handle.entity.set_selected(handle.cx, selected);
                 if selected {
                     on_select(handle.cx);
@@ -310,7 +310,7 @@ impl MenuButton {
                     builder(cx);
                     Label::new(cx, "").left(Units::Stretch(1.0)).bind(lens, move |handle, lens| {
                         let val = lens.get_fallible(handle.cx);
-                        handle.text(if val.as_deref() == Some(&true) { ICON_CHECK } else { "" });
+                        handle.text(if val == Some(true) { ICON_CHECK } else { "" });
                     });
                 });
             },

@@ -70,7 +70,7 @@ fn main() {
 
             // Label bound to the counter value displaying the value as english text
             Binding::new(cx, CounterData::count, |cx, count| {
-                Label::new(cx, &english_numbers::convert_all_fmt(*count.get(cx) as i64));
+                Label::new(cx, &english_numbers::convert_all_fmt(count.get(cx) as i64));
             });
         })
         .child_space(Stretch(1.0))

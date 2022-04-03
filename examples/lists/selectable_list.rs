@@ -47,7 +47,7 @@ fn main() {
                 //let item_index = item.idx();
                 VStack::new(cx, move |cx| {
                     Binding::new(cx, AppData::selected, move |cx, selected| {
-                        let selected = *selected.get(cx);
+                        let selected = selected.get(cx);
                         Label::new(cx, &item_text)
                             // Set the checked state based on whether this item is selected
                             .checked(if selected == index { true } else { false })
@@ -60,7 +60,7 @@ fn main() {
             .on_decrement(move |cx| cx.emit(AppEvent::DecrementSelection));
 
             Binding::new(cx, AppData::selected, move |cx, selected_item| {
-                Label::new(cx, &format!("You have selected: {}", *selected_item.get(cx),));
+                Label::new(cx, &format!("You have selected: {}", selected_item.get(cx),));
             });
         })
         .class("container");
