@@ -30,7 +30,7 @@ impl dyn ViewHandler {
     /// Attempt to cast a view handler to a mutable reference to the specified type.
     pub fn downcast_mut<T>(&mut self) -> Option<&mut T>
     where
-        T: Any + 'static,
+        T: Any,
     {
         if self.is::<T>() {
             unsafe { Some(&mut *(self as *mut dyn ViewHandler as *mut T)) }
