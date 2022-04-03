@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     idx_to_pos, measure_text_lines,
     style::{BorderCornerShape, GradientDirection},
-    text_layout, Context, Event, FontOrId, Handle, ViewHandler,
+    text_layout, Context, Event, FontOrId, Handle, ViewHandler, ModelDataStore,
 };
 
 use femtovg::{
