@@ -42,7 +42,7 @@ impl dyn ViewHandler {
     /// Attempt to cast a view handler to an immutable reference to the specified type.
     pub fn downcast_ref<T>(&self) -> Option<&T>
     where
-        T: Any + 'static,
+        T: Any,
     {
         if self.is::<T>() {
             unsafe { Some(&*(self as *const dyn ViewHandler as *const T)) }
