@@ -97,18 +97,7 @@ where
             on_max: None,
         }
         .build2(cx, move |cx| {
-            // Only create this if it doesn't already exist otherwise it resets the thumb_width
-            // This causes a very subtle bug:
-            //      When the slider is updated the style data doesn't change, which means the size doesn't change
-            //      and after layout the GeometryChanged event is never sent.
-            //      If this internal data is recreated with thumb_width == 0.0, then the calculation for thumb position
-            //      becomes NaN and the thumb size is never updated due to the lack of GeometryChanged event.
-            //      The solution is to only create this if it doesn't already exist. This wouldn't be a problem if
-            //      it were possible to bind directly to style properties.
-            if cx.data::<SliderDataInternal>().is_none() {
-                // Create some internal slider data (not exposed to the user)
-                SliderDataInternal { size: 0.0, thumb_size: 0.0, orientation }.build(cx);
-            }
+            SliderDataInternal { size: 0.0, thumb_size: 0.0, orientation }.build(cx);
 
             // Add the various slider components using bindings to the slider data
             Binding::new(cx, SliderDataInternal::root, move |cx, slider_data_internal| {
@@ -135,31 +124,26 @@ where
                                     handle.width(Percentage(dx * 100.0));
                                 });
 
-                            HStack::new(cx, |cx| {
-                                Element::new(cx).class("inner").hoverable(false);
-                            })
-                            .right(Stretch(1.0))
-                            .top(Stretch(1.0))
-                            .bottom(Stretch(1.0))
-                            .overflow(Overflow::Visible)
-                            .class("thumb")
-                            .on_geo_changed(|cx, geo| {
-                                if geo.contains(GeometryChanged::WIDTH_CHANGED) {
-                                    cx.emit(SliderEventInternal::SetThumbSize(
-                                        cx.cache.get_width(cx.current),
-                                        cx.cache.get_height(cx.current),
-                                    ));
-                                }
-                            })
-                            .bind(
-                                lens.clone(),
-                                move |handle, value| {
+                            Element::new(cx)
+                                .right(Stretch(1.0))
+                                .top(Stretch(1.0))
+                                .bottom(Stretch(1.0))
+                                .overflow(Overflow::Visible)
+                                .class("thumb")
+                                .on_geo_changed(|cx, geo| {
+                                    if geo.contains(GeometryChanged::WIDTH_CHANGED) {
+                                        cx.emit(SliderEventInternal::SetThumbSize(
+                                            cx.cache.get_width(cx.current),
+                                            cx.cache.get_height(cx.current),
+                                        ));
+                                    }
+                                })
+                                .bind(lens.clone(), move |handle, value| {
                                     let val = *value.get(handle.cx);
                                     let px = val * (1.0 - (thumb_size / size));
 
                                     handle.left(Percentage(100.0 * px));
-                                },
-                            );
+                                });
                         }
 
                         Orientation::Vertical => {
@@ -200,9 +184,11 @@ where
                                 });
                         }
                     };
-                });
+                })
+                .overflow(Overflow::Visible);
             });
         })
+        .overflow(Overflow::Visible)
     }
 }
 
