@@ -98,6 +98,13 @@ pub trait LensExt: Lens {
     {
         self.then(UnwrapLens::new())
     }
+
+    fn into_lens<T: 'static>(self) -> Then<Self, IntoLens<Self::Target, T>>
+    where
+        Self::Target: Clone + Into<T>,
+    {
+        self.then(IntoLens::new())
+    }
 }
 
 // Implement LensExt for all types which implement Lens
@@ -277,5 +284,35 @@ impl<T: 'static> Lens for UnwrapLens<T> {
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
         map(source.as_ref())
+    }
+}
+
+#[derive(Debug)]
+pub struct IntoLens<T, U> {
+    t: PhantomData<T>,
+    u: PhantomData<U>,
+}
+
+impl<T, U> IntoLens<T, U> {
+    pub fn new() -> Self {
+        Self { t: Default::default(), u: Default::default() }
+    }
+}
+
+impl<T, U> Clone for IntoLens<T, U> {
+    fn clone(&self) -> Self {
+        Self::new()
+    }
+}
+
+impl<T, U> Copy for IntoLens<T, U> {}
+
+impl<T: 'static + Clone + TryInto<U>, U: 'static> Lens for IntoLens<T, U> {
+    type Source = T;
+    type Target = U;
+
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
+        let converted = source.clone().try_into().ok();
+        map(converted.as_ref())
     }
 }

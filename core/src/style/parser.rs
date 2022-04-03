@@ -389,7 +389,6 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "height" => Property::Height(parse_units(input)?),
 
             // Size Constraints
-            //TODO - Are percentages supported?
             "min-width" => Property::MinWidth(parse_units(input)?),
             "min-height" => Property::MinHeight(parse_units(input)?),
             "max-width" => Property::MaxWidth(parse_units(input)?),
@@ -404,6 +403,9 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "col-between" => Property::ColBetween(parse_units(input)?),
             "font-size" => Property::FontSize(parse_font_size(input)?),
             "font" => Property::Font(parse_string(input)?),
+            "text-wrap" => Property::TextWrap(parse_bool(input)?),
+            "selection-color" => Property::SelectionColor(parse_color(input)?),
+            "caret-color" => Property::CaretColor(parse_color(input)?),
 
             // Border
             "border-width" => Property::BorderWidth(parse_units(input)?),
@@ -916,6 +918,36 @@ fn parse_display<'i, 't>(
         Token::Ident(name) => match name.as_ref() {
             "none" => Display::None,
             "flex" => Display::Flex,
+
+            _ => {
+                return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());
+            }
+        },
+
+        t => {
+            let basic_error = BasicParseError {
+                kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
+                location,
+            };
+            return Err(basic_error.into());
+        }
+    })
+}
+
+fn parse_bool<'i, 't>(
+    input: &mut Parser<'i, 't>,
+) -> Result<bool, ParseError<'i, CustomParseError>> {
+    let location = input.current_source_location();
+
+    Ok(match input.next()? {
+        Token::Ident(name) => match name.as_ref() {
+            "on" => true,
+            "off" => false,
+            "true" => true,
+            "false" => false,
+            "yes" => true,
+            "no" => false,
+            "maybe" => ((parse_bool as *const u8 as usize >> 16) & 1) != 0,
 
             _ => {
                 return Err(CustomParseError::InvalidStringName(name.to_owned().to_string()).into());

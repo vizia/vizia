@@ -28,16 +28,29 @@ fn main() {
         AppData { text: "This text is editable!".to_string() }.build(cx);
 
         HStack::new(cx, |cx| {
-            Textbox::new(cx, AppData::text)
-                .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
-                .width(Pixels(200.0));
-
-            Binding::new(cx, AppData::text, |cx, text| {
-                Label::new(cx, text)
+            VStack::new(cx, |cx| {
+                Textbox::new(cx, AppData::text)
+                    .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
+                    .width(Pixels(200.0));
+                Textbox::new(cx, AppData::text)
+                    .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
                     .width(Pixels(200.0))
-                    .height(Pixels(30.0))
-                    .child_left(Pixels(5.0));
+                    .class("align_right");
+                Textbox::new(cx, AppData::text)
+                    .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
+                    .width(Pixels(200.0))
+                    .class("align_center");
+                Textbox::new_multiline(cx, AppData::text, false)
+                    .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
+                    .width(Pixels(200.0))
+                    .height(Pixels(100.0));
+                Textbox::new_multiline(cx, AppData::text, true)
+                    .on_edit(|cx, text| cx.emit(AppEvent::SetText(text)))
+                    .width(Pixels(200.0))
+                    .height(Pixels(100.0));
             });
+
+            Label::new(cx, AppData::text).width(Pixels(200.0)).child_left(Pixels(5.0));
         })
         .space(Stretch(1.0))
         .col_between(Pixels(10.0));

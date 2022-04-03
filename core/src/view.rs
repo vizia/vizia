@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
 use crate::{
+    idx_to_pos, measure_text_lines,
     style::{BorderCornerShape, GradientDirection},
-    Context, Event, FontOrId, Handle, ModelDataStore, ViewHandler,
+    text_layout, Context, Event, FontOrId, Handle, ViewHandler,
 };
 
 use femtovg::{
     renderer::OpenGl, Align, Baseline, ImageFlags, Paint, Path, PixelFormat, RenderTarget,
+    TextMetrics,
 };
 use morphorm::Units;
 
@@ -586,7 +588,6 @@ pub trait View: 'static + Sized {
 
                     Units::Stretch(_) => {
                         x += 0.5 * bounds.w;
-                        w -= 0.5 * bounds.w;
                         Align::Center
                     }
 
@@ -616,7 +617,6 @@ pub trait View: 'static + Sized {
 
                     Units::Stretch(_) => {
                         y += 0.5 * bounds.h;
-                        h -= 0.5 * bounds.h;
                         Baseline::Middle
                     }
 
@@ -678,6 +678,7 @@ pub trait View: 'static + Sized {
                 font_color.set_alphaf(font_color.a * opacity);
 
                 let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0);
+                let text_wrap = cx.style.text_wrap.get(entity).cloned().unwrap_or(true);
 
                 let mut paint = Paint::color(font_color);
                 paint.set_font_size(font_size);
@@ -686,7 +687,89 @@ pub trait View: 'static + Sized {
                 paint.set_text_baseline(baseline);
                 paint.set_anti_alias(false);
 
-                canvas.fill_text(x, y, &text, paint).unwrap();
+                let font_metrics =
+                    cx.text_context.measure_font(paint).expect("Failed to read font metrics");
+
+                let text_width = if text_wrap { w } else { f32::MAX };
+
+                if let Ok(lines) = text_layout(text_width, &text, paint, &cx.text_context) {
+                    // difference between first line and last line
+                    let delta_height = font_metrics.height() * (lines.len() - 1) as f32;
+                    let first_line_y = match baseline {
+                        Baseline::Top => y,
+                        Baseline::Middle => y - delta_height / 2.0,
+                        Baseline::Alphabetic | Baseline::Bottom => y - delta_height,
+                    };
+                    let metrics =
+                        measure_text_lines(&text, paint, &lines, x, first_line_y, &cx.text_context);
+                    let cached: Vec<(std::ops::Range<usize>, TextMetrics)> =
+                        lines.into_iter().zip(metrics.into_iter()).collect();
+                    let selection = cx.style.text_selection.get(entity);
+                    let (anchor, active) = if let Some(cursor) = &selection {
+                        (
+                            idx_to_pos(cursor.anchor, cached.iter()),
+                            idx_to_pos(cursor.active, cached.iter()),
+                        )
+                    } else {
+                        ((usize::MAX, (f32::MAX, f32::MAX)), (usize::MAX, (f32::MAX, f32::MAX)))
+                    };
+                    let (first, last) = if let Some(cursor) = &selection {
+                        if cursor.anchor < cursor.active {
+                            (anchor, active)
+                        } else {
+                            (active, anchor)
+                        }
+                    } else {
+                        (anchor, active)
+                    };
+                    let selection_color = cx.style.selection_color.get(entity);
+                    let cursor_color = cx.style.caret_color.get(entity);
+                    for (line, (range, metrics)) in cached.iter().enumerate() {
+                        let y = first_line_y + line as f32 * font_metrics.height();
+                        let min_y = match baseline {
+                            Baseline::Top => y,
+                            Baseline::Middle => y - font_metrics.height() / 2.0,
+                            Baseline::Alphabetic | Baseline::Bottom => y - font_metrics.height(),
+                        };
+                        // should we draw part of the selection?
+                        if let Some(color) = selection_color {
+                            if line >= first.0 && line <= last.0 && first != last {
+                                let first_x = if line == first.0 {
+                                    first.1 .0
+                                } else if let Some(glyph) = metrics.glyphs.first() {
+                                    glyph.x
+                                } else {
+                                    x
+                                };
+                                let last_x = if line == last.0 {
+                                    last.1 .0
+                                } else if let Some(glyph) = metrics.glyphs.last() {
+                                    glyph.x + glyph.advance_x
+                                } else {
+                                    x + 10.0
+                                };
+                                let min_x = first_x.min(last_x).round();
+                                let max_x = first_x.max(last_x).round();
+                                let mut path = Path::new();
+                                path.rect(min_x, min_y, max_x - min_x, font_metrics.height());
+                                canvas.fill_path(&mut path, Paint::color(color.clone().into()));
+                            }
+                        }
+                        // should we draw the cursor?
+                        if let Some(color) = cursor_color {
+                            if line == active.0 {
+                                let (x, _) = active.1;
+                                let x = x.round();
+                                let mut path = Path::new();
+                                path.rect(x, min_y, 1.0, font_metrics.height());
+                                canvas.fill_path(&mut path, Paint::color(color.clone().into()));
+                            }
+                        }
+                        canvas.fill_text(x, y, &text[range.clone()], paint).ok();
+                    }
+
+                    cx.cache.text_lines.insert(entity, cached).unwrap();
+                }
             }
         }
     }
