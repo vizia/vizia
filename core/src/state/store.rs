@@ -1,9 +1,10 @@
 use std::collections::HashSet;
 
-use crate::{Data, Entity, Lens, ModelData};
+use crate::{Data, Entity, Lens, ModelData, ViewHandler};
 
 pub(crate) trait LensWrap {
     fn update(&mut self, model: &Box<dyn ModelData>) -> bool;
+    fn update_view(&mut self, model: &Box<dyn ViewHandler>) -> bool;
     fn observers(&self) -> &HashSet<Entity>;
     fn add_observer(&mut self, observer: Entity);
     fn remove_observer(&mut self, observer: &Entity);
@@ -30,6 +31,22 @@ where
 
     fn update(&mut self, model: &Box<dyn ModelData>) -> bool {
         if let Some(data) = model.downcast_ref::<L::Source>() {
+            let result = self.lens.view(data, |t| match (&self.old, t) {
+                (Some(a), Some(b)) if a.same(b) => None,
+                (None, None) => None,
+                _ => Some(t.cloned()),
+            });
+            if let Some(new_data) = result {
+                self.old = new_data;
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn update_view(&mut self, view: &Box<dyn ViewHandler>) -> bool {
+        if let Some(data) = view.downcast_ref::<L::Source>() {
             let result = self.lens.view(data, |t| match (&self.old, t) {
                 (Some(a), Some(b)) if a.same(b) => None,
                 (None, None) => None,

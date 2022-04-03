@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use crate::{
     style::{BorderCornerShape, GradientDirection},
-    Context, Event, FontOrId, Handle, ViewHandler,
+    Context, Event, FontOrId, Handle, ModelDataStore, ViewHandler,
 };
 
 use femtovg::{
@@ -27,6 +29,15 @@ pub trait View: 'static + Sized {
         cx.cache.add(id).expect("Failed to add to cache");
         cx.style.add(id);
         cx.views.insert(id, Box::new(self));
+
+        cx.data.insert(
+            id,
+            ModelDataStore {
+                data: HashMap::default(),
+                lenses_dedup: HashMap::default(),
+                lenses_dup: vec![],
+            },
+        );
 
         let handle = Handle { entity: id, p: Default::default(), cx };
 
