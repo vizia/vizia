@@ -96,4 +96,4 @@ mod binding;
 pub use binding::*;
 
 mod res;
-pub(crate) use res::*;
+pub use res::*;
