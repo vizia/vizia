@@ -38,7 +38,7 @@
 //!     }
 //! }
 //! ```
-//! This trait also allows data to be built into the [Tree]:
+//! This trait also allows data to be built into the [Tree](crate::Tree):
 //! ```compile_fail
 //! fn main() {
 //!     Application::new(WindowDescription::new(), |cx|{
@@ -60,7 +60,7 @@
 //! ```
 //! The second parameter to the [Binding] view is a [Lens], allowing us to bind to some field of the application data.
 //! The third parameter is a closure which provides the context and the lens, which can be used to retrieve the bound data using the `.get()`
-//! method, which takes the [Context] as an argument.
+//! method, which takes the [Context](crate::Context) as an argument.
 //!
 //! Now when the data is modified by another widget, the label will update, for example:
 //! ```compile_fail
