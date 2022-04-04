@@ -6,28 +6,30 @@ fn main() {
 
         AppData { value: 0.5 }.build(cx);
 
-        for _ in 0..5 {
+        HStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                Slider::new(cx, AppData::value, Orientation::Horizontal)
+                Slider::new(cx, AppData::value)
                     .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
                 Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)));
             })
             .height(Pixels(50.0))
-            .child_space(Pixels(50.0))
-            .col_between(Pixels(50.0));
-        }
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0))
+            .col_between(Pixels(10.0));
 
-        // HStack::new(cx, |cx| {
-        //     Binding::new(cx, SliderData::value, |cx, value| {
-        //         Slider::new(cx, *value.get(cx), Orientation::Vertical)
-        //             .class("vertical")
-        //             .on_press(cx, |_| println!("Press"));
-        //         let value = *value.get(cx);
-        //         Label::new(cx, &format!("{:.*}", 2, value));
-        //     });
-        // })
-        // .child_space(Pixels(50.0))
-        // .col_between(Pixels(50.0));
+            VStack::new(cx, |cx| {
+                Slider::new(cx, AppData::value)
+                    .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)))
+                    .class("vertical");
+                Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)));
+            })
+            .width(Pixels(50.0))
+            .child_left(Stretch(1.0))
+            .child_right(Stretch(1.0))
+            .row_between(Pixels(10.0));
+        })
+        .child_space(Pixels(50.0))
+        .col_between(Pixels(50.0));
     })
     .run();
 }

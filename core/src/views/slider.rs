@@ -1,60 +1,20 @@
 use std::marker::PhantomData;
 
-use morphorm::GeometryChanged;
-
 use crate::{
-    Actions, Binding, Context, Data, Element, Handle, Lens, LensExt, Model, MouseButton, Overflow,
-    PropSet, Units::*, View, WindowEvent, ZStack,
+    Actions, Binding, Context, Data, Element, GeometryChanged, Handle, Lens, LensExt, MouseButton,
+    Overflow, PropSet, Units::*, View, WindowEvent, ZStack,
 };
 
 #[derive(Debug)]
-pub enum SliderEventInternal {
+enum SliderEventInternal {
     SetThumbSize(f32, f32),
 }
 
-#[derive(Clone, Debug, Default, Lens, Data)]
+#[derive(Clone, Debug, Default, Data)]
 pub struct SliderDataInternal {
     pub orientation: Orientation,
     pub size: f32,
     pub thumb_size: f32,
-}
-
-impl Model for SliderDataInternal {
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::GeometryChanged(geo) => match self.orientation {
-                    Orientation::Horizontal => {
-                        if geo.contains(GeometryChanged::WIDTH_CHANGED) {
-                            self.size = cx.cache.get_width(cx.current);
-                        }
-                    }
-
-                    Orientation::Vertical => {
-                        if geo.contains(GeometryChanged::HEIGHT_CHANGED) {
-                            self.size = cx.cache.get_height(cx.current);
-                        }
-                    }
-                },
-
-                _ => {}
-            }
-        }
-
-        if let Some(slider_event_internal) = event.message.downcast() {
-            match slider_event_internal {
-                SliderEventInternal::SetThumbSize(width, height) => match self.orientation {
-                    Orientation::Horizontal => {
-                        self.thumb_size = *width;
-                    }
-
-                    Orientation::Vertical => {
-                        self.thumb_size = *height;
-                    }
-                },
-            }
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Data)]
@@ -69,121 +29,89 @@ impl Default for Orientation {
     }
 }
 
-pub struct Slider<L> {
-    is_dragging: bool,
+#[derive(Lens)]
+pub struct Slider<L: Lens> {
     p: PhantomData<L>,
-
-    // Event sent when the slider value has changed
-    on_change: Option<Box<dyn Fn(&mut Context, f32)>>,
-    // event sent when the slider value is changing
+    is_dragging: bool,
+    internal: SliderDataInternal,
     on_changing: Option<Box<dyn Fn(&mut Context, f32)>>,
-    // Event sent when the slider reaches the minimum value
-    on_min: Option<Box<dyn Fn(&mut Context)>>,
-    // Event sent when the slider reaches the maximum value
-    on_max: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl<L> Slider<L>
 where
     L: Lens<Target = f32>,
 {
-    pub fn new(cx: &mut Context, lens: L, orientation: Orientation) -> Handle<Self> {
+    pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
         Self {
             p: PhantomData::default(),
             is_dragging: false,
-            on_change: None,
+
+            internal: SliderDataInternal {
+                orientation: Orientation::Horizontal,
+                thumb_size: 0.0,
+                size: 0.0,
+            },
+
             on_changing: None,
-            on_min: None,
-            on_max: None,
         }
         .build2(cx, move |cx| {
-            SliderDataInternal { size: 0.0, thumb_size: 0.0, orientation }.build(cx);
-
-            // Add the various slider components using bindings to the slider data
-            Binding::new(cx, SliderDataInternal::root, move |cx, slider_data_internal| {
+            Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
                 let lens = lens.clone();
                 ZStack::new(cx, move |cx| {
-                    let thumb_size = slider_data_internal.get(cx).thumb_size;
-                    let orientation = slider_data_internal.get(cx).orientation;
-                    let size = slider_data_internal.get(cx).size;
+                    let thumb_size = slider_data.get(cx).thumb_size;
+                    let orientation = slider_data.get(cx).orientation;
+                    let size = slider_data.get(cx).size;
 
-                    match orientation {
-                        Orientation::Horizontal => {
-                            //(Percentage(dx * 100.0), Stretch(1.0))
-                            Element::new(cx)
+                    // Active track
+                    Element::new(cx).class("active").bind(lens.clone(), move |handle, value| {
+                        let val = value.get(handle.cx);
+                        let min = thumb_size / size;
+                        let max = 1.0;
+                        let dx = min + val * (max - min);
+
+                        if orientation == Orientation::Horizontal {
+                            handle
                                 .height(Stretch(1.0))
                                 .left(Pixels(0.0))
                                 .right(Stretch(1.0))
-                                .class("active")
-                                .bind(lens.clone(), move |handle, value| {
-                                    let val = value.get(handle.cx);
-                                    let min = thumb_size / size;
-                                    let max = 1.0;
-                                    let dx = min + val * (max - min);
-
-                                    handle.width(Percentage(dx * 100.0));
-                                });
-
-                            Element::new(cx)
-                                .right(Stretch(1.0))
-                                .top(Stretch(1.0))
-                                .bottom(Stretch(1.0))
-                                .overflow(Overflow::Visible)
-                                .class("thumb")
-                                .on_geo_changed(|cx, geo| {
-                                    if geo.contains(GeometryChanged::WIDTH_CHANGED) {
-                                        cx.emit(SliderEventInternal::SetThumbSize(
-                                            cx.cache.get_width(cx.current),
-                                            cx.cache.get_height(cx.current),
-                                        ));
-                                    }
-                                })
-                                .bind(lens.clone(), move |handle, value| {
-                                    let val = value.get(handle.cx);
-                                    let px = val * (1.0 - (thumb_size / size));
-
-                                    handle.left(Percentage(100.0 * px));
-                                });
-                        }
-
-                        Orientation::Vertical => {
-                            //(Stretch(1.0), Percentage(dx * 100.0))
-                            Element::new(cx)
+                                .width(Percentage(dx * 100.0));
+                        } else {
+                            handle
                                 .width(Stretch(1.0))
                                 .top(Stretch(1.0))
                                 .bottom(Pixels(0.0))
-                                .class("active")
-                                .bind(lens.clone(), move |handle, value| {
-                                    let val = value.get(handle.cx);
-                                    let min = thumb_size / size;
-                                    let max = 1.0;
-                                    let dx = min + val * (max - min);
-
-                                    handle.height(Percentage(dx * 100.0));
-                                });
-
-                            Element::new(cx)
-                                .top(Stretch(1.0))
-                                .left(Stretch(1.0))
-                                .right(Stretch(1.0))
-                                .overflow(Overflow::Visible)
-                                .class("thumb")
-                                .on_geo_changed(|cx, geo| {
-                                    if geo.contains(GeometryChanged::HEIGHT_CHANGED) {
-                                        cx.emit(SliderEventInternal::SetThumbSize(
-                                            cx.cache.get_width(cx.current),
-                                            cx.cache.get_height(cx.current),
-                                        ));
-                                    }
-                                })
-                                .bind(lens.clone(), move |handle, value| {
-                                    let val = value.get(handle.cx);
-                                    let px = val * (1.0 - (thumb_size / size));
-
-                                    handle.bottom(Percentage(100.0 * px));
-                                });
+                                .height(Percentage(dx * 100.0));
                         }
-                    };
+                    });
+
+                    // Thumb
+                    Element::new(cx)
+                        .class("thumb")
+                        .on_geo_changed(|cx, geo| {
+                            if geo.contains(GeometryChanged::WIDTH_CHANGED) {
+                                cx.emit(SliderEventInternal::SetThumbSize(
+                                    cx.cache.get_width(cx.current),
+                                    cx.cache.get_height(cx.current),
+                                ));
+                            }
+                        })
+                        .bind(lens.clone(), move |handle, value| {
+                            let val = value.get(handle.cx);
+                            let px = val * (1.0 - (thumb_size / size));
+                            if orientation == Orientation::Horizontal {
+                                handle
+                                    .right(Stretch(1.0))
+                                    .top(Stretch(1.0))
+                                    .bottom(Stretch(1.0))
+                                    .left(Percentage(100.0 * px));
+                            } else {
+                                handle
+                                    .top(Stretch(1.0))
+                                    .left(Stretch(1.0))
+                                    .right(Stretch(1.0))
+                                    .bottom(Percentage(100.0 * px));
+                            }
+                        });
                 })
                 .overflow(Overflow::Visible);
             });
@@ -192,33 +120,93 @@ where
     }
 }
 
-impl<L: 'static> View for Slider<L> {
+impl<L: Lens> View for Slider<L> {
     fn element(&self) -> Option<String> {
         Some("slider".to_string())
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
+        if let Some(slider_event_internal) = event.message.downcast() {
+            match slider_event_internal {
+                SliderEventInternal::SetThumbSize(width, height) => match self.internal.orientation
+                {
+                    Orientation::Horizontal => {
+                        self.internal.thumb_size = *width;
+                    }
+
+                    Orientation::Vertical => {
+                        self.internal.thumb_size = *height;
+                    }
+                },
+            }
+        }
+
         if let Some(window_event) = event.message.downcast() {
             match window_event {
+                WindowEvent::GeometryChanged(_) => {
+                    let width = cx.cache.get_width(cx.current);
+                    let height = cx.cache.get_height(cx.current);
+
+                    if width >= height {
+                        self.internal.orientation = Orientation::Horizontal;
+                        self.internal.size = width;
+                    } else {
+                        self.internal.orientation = Orientation::Vertical;
+                        self.internal.size = height;
+                    }
+                }
+
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                     self.is_dragging = true;
                     cx.capture();
                     cx.current.set_active(cx, true);
 
-                    if let Some(slider_data_internal) = cx.data::<SliderDataInternal>() {
-                        let thumb_size = slider_data_internal.thumb_size;
+                    let thumb_size = self.internal.thumb_size;
 
-                        let mut dx = match slider_data_internal.orientation {
+                    let mut dx = match self.internal.orientation {
+                        Orientation::Horizontal => {
+                            (cx.mouse.left.pos_down.0
+                                - cx.cache.get_posx(cx.current)
+                                - thumb_size / 2.0)
+                                / (cx.cache.get_width(cx.current) - thumb_size)
+                        }
+
+                        Orientation::Vertical => {
+                            (cx.cache.get_height(cx.current)
+                                - (cx.mouse.left.pos_down.1 - cx.cache.get_posy(cx.current))
+                                - thumb_size / 2.0)
+                                / (cx.cache.get_height(cx.current) - thumb_size)
+                        }
+                    };
+
+                    dx = dx.clamp(0.0, 1.0);
+
+                    if let Some(callback) = self.on_changing.take() {
+                        (callback)(cx, dx);
+
+                        self.on_changing = Some(callback);
+                    }
+                }
+
+                WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+                    self.is_dragging = false;
+                    cx.release();
+                    cx.current.set_active(cx, false);
+                }
+
+                WindowEvent::MouseMove(x, y) => {
+                    if self.is_dragging {
+                        let thumb_size = self.internal.thumb_size;
+
+                        let mut dx = match self.internal.orientation {
                             Orientation::Horizontal => {
-                                (cx.mouse.left.pos_down.0
-                                    - cx.cache.get_posx(cx.current)
-                                    - thumb_size / 2.0)
+                                (*x - cx.cache.get_posx(cx.current) - thumb_size / 2.0)
                                     / (cx.cache.get_width(cx.current) - thumb_size)
                             }
 
                             Orientation::Vertical => {
                                 (cx.cache.get_height(cx.current)
-                                    - (cx.mouse.left.pos_down.1 - cx.cache.get_posy(cx.current))
+                                    - (*y - cx.cache.get_posy(cx.current))
                                     - thumb_size / 2.0)
                                     / (cx.cache.get_height(cx.current) - thumb_size)
                             }
@@ -234,76 +222,13 @@ impl<L: 'static> View for Slider<L> {
                     }
                 }
 
-                WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
-                    self.is_dragging = false;
-                    cx.release();
-                    cx.current.set_active(cx, false);
-                }
-
-                WindowEvent::MouseMove(x, y) => {
-                    if self.is_dragging {
-                        if let Some(slider_data_internal) = cx.data::<SliderDataInternal>() {
-                            let thumb_size = slider_data_internal.thumb_size;
-
-                            let mut dx = match slider_data_internal.orientation {
-                                Orientation::Horizontal => {
-                                    (*x - cx.cache.get_posx(cx.current) - thumb_size / 2.0)
-                                        / (cx.cache.get_width(cx.current) - thumb_size)
-                                }
-
-                                Orientation::Vertical => {
-                                    (cx.cache.get_height(cx.current)
-                                        - (*y - cx.cache.get_posy(cx.current))
-                                        - thumb_size / 2.0)
-                                        / (cx.cache.get_height(cx.current) - thumb_size)
-                                }
-                            };
-
-                            dx = dx.clamp(0.0, 1.0);
-
-                            if let Some(callback) = self.on_changing.take() {
-                                (callback)(cx, dx);
-
-                                self.on_changing = Some(callback);
-                            }
-                        }
-                    }
-                }
-
                 _ => {}
             }
         }
     }
 }
 
-impl<'a, L: 'static> Handle<'a, Slider<L>> {
-    /// Set the callback triggered when the slider value has changed.
-    ///
-    /// Takes a closure which provides the current value and returns an event to be sent when the slider
-    /// value has changed after releasing the slider. If the slider thumb is pressed but not moved, and thus
-    /// the value is not changed, then the event will not be sent.
-    ///
-    /// # Example
-    ///
-    /// ```compile_fail
-    /// Slider::new(cx, 0.0, Orientation::Horizontal)
-    ///     .on_change(cx, |cx, value| {
-    ///         cx.emit(WindowEvent::Debug(format!("Slider on_change: {}", value)));
-    ///     });
-    /// ```
-    pub fn on_change<F>(self, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut Context, f32),
-    {
-        if let Some(slider) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider<L>>())
-        {
-            slider.on_change = Some(Box::new(callback));
-        }
-
-        self
-    }
-
+impl<'a, L: Lens> Handle<'a, Slider<L>> {
     /// Set the callback triggered when the slider value is changing (dragging).
     ///
     /// Takes a closure which triggers when the slider value is changing,
@@ -325,60 +250,6 @@ impl<'a, L: 'static> Handle<'a, Slider<L>> {
             self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider<L>>())
         {
             slider.on_changing = Some(Box::new(callback));
-        }
-
-        self
-    }
-
-    /// Set the callback triggered when the slider value reaches the minimum.
-    ///
-    /// Takes a closure which triggers when the slider reaches the minimum value,
-    /// either by pressing the track at the start or dragging the thumb to the start
-    /// of the track. The event is sent once for each time the value reaches the minimum.
-    ///
-    /// # Example
-    ///
-    /// ```compile_fail
-    /// Slider::new(cx, 0.0, Orientation::Horizontal)
-    ///     .on_min(cx, |cx| {
-    ///         cx.emit(WindowEvent::Debug(format!("Slider on_min")));
-    ///     });
-    /// ```
-    pub fn on_min<F>(self, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        if let Some(slider) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider<L>>())
-        {
-            slider.on_min = Some(Box::new(callback));
-        }
-
-        self
-    }
-
-    /// Set the callback triggered when the slider value reaches the maximum.
-    ///
-    /// Takes a closure which triggers when the slider reaches the maximum value,
-    /// either by pressing the track at the end or dragging the thumb to the end
-    /// of the track. The event is sent once for each time the value reaches the maximum.
-    ///
-    /// # Example
-    ///
-    /// ```compile_fail
-    /// Slider::new(cx, 0.0, Orientation::Horizontal)
-    ///     .on_max(|cx| {
-    ///         cx.emit(WindowEvent::Debug(format!("Slider on_max")));
-    ///     });
-    /// ```
-    pub fn on_max<F>(self, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        if let Some(slider) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider<L>>())
-        {
-            slider.on_max = Some(Box::new(callback));
         }
 
         self
