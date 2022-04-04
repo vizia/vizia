@@ -93,7 +93,7 @@ impl Window {
         #[cfg(not(target_arch = "wasm32"))]
         let handle = {
             let handle = ContextBuilder::new()
-                .with_vsync(true)
+                .with_vsync(window_description.vsync)
                 // .with_srgb(true)
                 .build_windowed(window_builder, &events_loop)
                 .expect("Window context creation failed!");
