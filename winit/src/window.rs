@@ -9,11 +9,6 @@ use femtovg::{renderer::OpenGl, Canvas, Color};
 use crate::cursor::translate_cursor;
 use vizia_core::{Context, Event, View, WindowDescription, WindowEvent};
 
-#[cfg(feature = "vsync")]
-const VSYNC: bool = true;
-#[cfg(not(feature = "vsync"))]
-const VSYNC: bool = false;
-
 pub struct Window {
     pub id: WindowId,
     pub canvas: Canvas<OpenGl>,
@@ -98,7 +93,7 @@ impl Window {
         #[cfg(not(target_arch = "wasm32"))]
         let handle = {
             let handle = ContextBuilder::new()
-                .with_vsync(VSYNC)
+                .with_vsync(true)
                 // .with_srgb(true)
                 .build_windowed(window_builder, &events_loop)
                 .expect("Window context creation failed!");

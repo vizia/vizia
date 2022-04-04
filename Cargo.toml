@@ -114,7 +114,7 @@ clipboard = ["vizia_core/clipboard"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
 meadowlark = ["winit", "vizia_core/meadowlark"]
-winit_vsync = ["vizia_winit/vsync"]
+
 
 [dependencies]
 vizia_core = { version = "0.1.0", path = "core"}
