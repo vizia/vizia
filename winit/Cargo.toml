@@ -7,6 +7,9 @@ license = "MIT"
 repository = "https://github.com/vizia/vizia"
 description = "Winit backend for vizia"
 
+[features]
+vsync = []
+
 [dependencies]
 winit = "0.26.1"
 femtovg = { git = "https://github.com/femtovg/femtovg", rev = "87fe627794f3f793d8e3a338c838a2f8e8a8aa9d", default-features = false }
