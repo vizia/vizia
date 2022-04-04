@@ -8,7 +8,7 @@ use crate::tree::TreeExt;
 
 use morphorm::{LayoutType, PositionType, Units};
 
-/// To be replaced by [PropSet2]
+/// To be replaced by `PropSet2`
 pub trait PropSet: AsEntity + Sized {
     /// Helper method for sending an event to self with upward propagation
     ///
