@@ -168,10 +168,11 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     let associated_items = fields.iter().filter(|f| !f.attrs.ignore).map(|f| {
         let field_name = &f.ident.unwrap_named();
         let lens_field_name = f.attrs.lens_name_override.as_ref().unwrap_or(field_name);
+        let field_vis = &f.vis;
 
         quote! {
             /// Lens for the corresponding field.
-            pub const #lens_field_name: #twizzled_name::#field_name#lens_ty_generics = #twizzled_name::#field_name::new();
+            #field_vis const #lens_field_name: #twizzled_name::#field_name#lens_ty_generics = #twizzled_name::#field_name::new();
         }
     });
 

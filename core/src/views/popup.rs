@@ -4,7 +4,7 @@ use crate::{style::PropGet, Code, Context, Data, Handle, Lens, LensExt, Model, V
 
 #[derive(Debug, Default, Data, Lens, Clone)]
 pub struct PopupData {
-    is_open: bool,
+    pub is_open: bool,
 }
 
 impl Model for PopupData {
