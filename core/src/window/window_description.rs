@@ -35,6 +35,7 @@ pub struct WindowDescription {
     pub transparent: bool,
     pub decorations: bool,
     pub always_on_top: bool,
+    pub vsync: bool,
 
     // Change this to resource id when the resource manager is working
     pub icon: Option<Vec<u8>>,
@@ -59,6 +60,7 @@ impl Default for WindowDescription {
             transparent: false,
             decorations: true,
             always_on_top: false,
+            vsync: false,
 
             icon: None,
             icon_width: 0,
@@ -77,6 +79,12 @@ impl WindowDescription {
 
     pub fn with_title(mut self, title: &str) -> Self {
         self.title = title.to_string();
+
+        self
+    }
+
+    pub fn with_vsync(mut self, vsync: bool) -> Self {
+        self.vsync = vsync;
 
         self
     }
