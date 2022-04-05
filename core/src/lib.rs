@@ -78,6 +78,12 @@ pub use modifiers::*;
 mod enviroment;
 pub use enviroment::*;
 
-pub mod vg;
+// Re-export femtovg through a vg module
+pub mod vg {
+    pub use femtovg;
+}
+
+// Re-export the image crate
+pub use image;
 
 pub use keyboard_types::{Code, Key};
