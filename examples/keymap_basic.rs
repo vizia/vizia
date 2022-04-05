@@ -1,6 +1,6 @@
 //! This example showcases how to use a keymap.
 //!
-//! Keybindings:
+//! Key chords:
 //! `A`                     => `Action::OnA`
 //! `B`                     => `Action::OnB`
 //! `C`                     => `Action::OnC`
@@ -18,24 +18,24 @@ fn main() {
     Application::new(WindowDescription::new().with_title("Keymap - Basic"), |cx| {
         // Build the keymap
         Keymap::new()
-            .insert(Action::OnA, KeyBinding::new(Modifiers::empty(), Code::KeyA))
-            .insert(Action::OnB, KeyBinding::new(Modifiers::empty(), Code::KeyB))
-            .insert(Action::OnC, KeyBinding::new(Modifiers::empty(), Code::KeyC))
-            .insert(Action::OnCtrlA, KeyBinding::new(Modifiers::CTRL, Code::KeyA))
-            .insert(Action::OnAltA, KeyBinding::new(Modifiers::ALT, Code::KeyA))
-            .insert(Action::OnShiftA, KeyBinding::new(Modifiers::SHIFT, Code::KeyA))
-            .insert(Action::OnLogoA, KeyBinding::new(Modifiers::LOGO, Code::KeyA))
+            .insert(Action::OnA, KeyChord::new(Modifiers::empty(), Code::KeyA))
+            .insert(Action::OnB, KeyChord::new(Modifiers::empty(), Code::KeyB))
+            .insert(Action::OnC, KeyChord::new(Modifiers::empty(), Code::KeyC))
+            .insert(Action::OnCtrlA, KeyChord::new(Modifiers::CTRL, Code::KeyA))
+            .insert(Action::OnAltA, KeyChord::new(Modifiers::ALT, Code::KeyA))
+            .insert(Action::OnShiftA, KeyChord::new(Modifiers::SHIFT, Code::KeyA))
+            .insert(Action::OnLogoA, KeyChord::new(Modifiers::LOGO, Code::KeyA))
             .insert(
                 Action::OnAltShiftX,
-                KeyBinding::new(Modifiers::ALT | Modifiers::SHIFT, Code::KeyX),
+                KeyChord::new(Modifiers::ALT | Modifiers::SHIFT, Code::KeyX),
             )
             .insert(
                 Action::OnCtrlAltShiftY,
-                KeyBinding::new(Modifiers::CTRL | Modifiers::ALT | Modifiers::SHIFT, Code::KeyY),
+                KeyChord::new(Modifiers::CTRL | Modifiers::ALT | Modifiers::SHIFT, Code::KeyY),
             )
             .insert(
                 Action::OnCtrlAltShiftLogoZ,
-                KeyBinding::new(
+                KeyChord::new(
                     Modifiers::CTRL | Modifiers::ALT | Modifiers::SHIFT | Modifiers::LOGO,
                     Code::KeyZ,
                 ),
@@ -61,7 +61,7 @@ impl View for CustomView {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::KeyDown(code, _) => {
-                    // Retrieve our keymap data containing all of our keybindings.
+                    // Retrieve our keymap data containing all of our key chords.
                     if let Some(keymap_data) = cx.data::<Keymap<Action>>() {
                         // Loop through every action in our `Action` enum.
                         for action in ACTIONS {
@@ -78,7 +78,7 @@ impl View for CustomView {
     }
 }
 
-// The actions that are associated with the keybinding.
+// The actions that are associated with the key chords.
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 enum Action {
     OnA,
