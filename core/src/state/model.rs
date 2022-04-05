@@ -1,9 +1,10 @@
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
+    marker::PhantomData,
 };
 
-use crate::{Context, Event, LensWrap};
+use crate::{Binding, Context, Data, Entity, Event, Lens, LensWrap};
 
 /// A trait implemented by application data in order to mutate in response to events.
 ///
@@ -45,7 +46,7 @@ pub trait Model: 'static + Sized {
     ///     }).run();  
     /// }
     /// ```
-    fn build(self, cx: &mut Context) {
+    fn build(self, cx: &mut Context) -> DataHandle<'_, Self> {
         if let Some(data_list) = cx.data.get_mut(cx.current) {
             data_list.data.insert(TypeId::of::<Self>(), Box::new(self));
         } else {
@@ -62,6 +63,8 @@ pub trait Model: 'static + Sized {
                 )
                 .expect("Failed to add data");
         }
+
+        DataHandle { entity: cx.current, p: PhantomData::default(), cx }
     }
 
     /// Respond to events in order to mutate the model data.
@@ -116,6 +119,17 @@ impl dyn ModelData {
             None
         }
     }
+
+    pub fn downcast_mut<T>(&mut self) -> Option<&mut T>
+    where
+        T: Any,
+    {
+        if self.is::<T>() {
+            unsafe { Some(&mut *(self as *mut dyn ModelData as *mut T)) }
+        } else {
+            None
+        }
+    }
 }
 
 trait Downcast {
@@ -147,3 +161,33 @@ pub(crate) struct ModelDataStore {
 }
 
 impl Model for () {}
+
+pub struct DataHandle<'a, T> {
+    pub entity: Entity,
+    pub p: PhantomData<T>,
+    pub cx: &'a mut Context,
+}
+
+impl<'a, T: 'static> DataHandle<'a, T> {
+    pub fn bind<L, F>(self, lens: L, closure: F)
+    where
+        L: Lens,
+        <L as Lens>::Target: Data,
+        F: 'static + Fn(&mut Context, &mut T, L),
+    {
+        let entity = self.entity;
+        Binding::new(self.cx, lens, move |cx, lens| {
+            if let Some(mut store) = cx.data.remove(entity) {
+                if let Some(mut model_data) = store.data.remove(&TypeId::of::<T>()) {
+                    if let Some(data) = model_data.downcast_mut::<T>() {
+                        (closure)(cx, data, lens);
+                    }
+
+                    store.data.insert(TypeId::of::<T>(), model_data);
+                }
+
+                cx.data.insert(entity, store);
+            }
+        });
+    }
+}

@@ -1,35 +1,53 @@
 use vizia::*;
 
-const LOREM_IPSUM: &str = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Orci a scelerisque purus semper eget duis. Commodo elit at imperdiet dui accumsan sit amet nulla. Sit amet est placerat in egestas erat imperdiet sed. Elementum eu facilisis sed odio morbi quis commodo odio. Nullam non nisi est sit amet facilisis. Egestas integer eget aliquet nibh praesent tristique. Dui faucibus in ornare quam viverra orci. Gravida dictum fusce ut placerat orci nulla pellentesque dignissim enim. Nibh praesent tristique magna sit amet purus gravida. Est pellentesque elit ullamcorper dignissim cras tincidunt lobortis feugiat. Semper viverra nam libero justo laoreet sit amet cursus. Enim ut sem viverra aliquet eget sit.";
-
-const STYLE: &str = r#"
-label {
-    border-width: 1px;
-    border-color: red;
+#[derive(Lens)]
+pub struct ParentData {
+    parent_data: String,
 }
-"#;
+
+pub enum ParentEvent {
+    UpdateData,
+}
+
+impl Model for ParentData {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        if let Some(parent_event) = event.message.downcast() {
+            match parent_event {
+                ParentEvent::UpdateData => {
+                    self.parent_data = String::from("Goodbye ");
+                }
+            }
+        }
+    }
+}
+
+#[derive(Lens)]
+pub struct DerivedData {
+    derived_data: String,
+}
+
+impl Model for DerivedData {}
 
 fn main() {
     let mut window_description = WindowDescription::new();
-    window_description.resizable = true;
-    Application::new(window_description, |cx| {
-        cx.add_theme(STYLE);
 
+    Application::new(window_description, |cx| {
         HStack::new(cx, |cx| {
-            VStack::new(cx, |cx| {
-                Label::new(cx, LOREM_IPSUM);
-                Label::new(cx, LOREM_IPSUM);
-            })
-            .min_width(Units::Pixels(0.0))
-            .width(Units::Stretch(1.0));
-            VStack::new(cx, |cx| {
-                Label::new(cx, LOREM_IPSUM);
-                Label::new(cx, LOREM_IPSUM);
-            })
-            .min_width(Units::Pixels(0.0))
-            .width(Units::Stretch(2.0));
-        })
-        .height(Units::Auto);
+            ParentData { parent_data: String::from("Hello ") }.build(cx);
+
+            HStack::new(cx, |cx| {
+                DerivedData { derived_data: String::from("TEST") }.build(cx).bind(
+                    ParentData::parent_data,
+                    |cx, derived, parent_data| {
+                        derived.derived_data = parent_data.get(cx) + "World";
+                    },
+                );
+
+                Label::new(cx, DerivedData::derived_data)
+                    .space(Pixels(20.0))
+                    .on_press(|cx| cx.emit(ParentEvent::UpdateData));
+            });
+        });
     })
     .run();
 }
