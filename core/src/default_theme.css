@@ -271,11 +271,9 @@ slider.vertical {
     top: auto;
     bottom: auto;
     height: 1s;
-    width: 10px;
+    width: 5px;
 }
 
-slider track {
-}
 
 slider .active {
     background-color: #005a9e;
@@ -288,27 +286,10 @@ slider .thumb {
     bottom: 1s;
     border-radius: 14.5px;
     border-color: #cccccc;
-    border-width: 1px;
+    border-width: 2px;
     width: 26px;
     height: 26px;
     child-space: 1s;
-}
-
-slider .thumb>.inner {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background-color: #005a9e;
-}
-
-slider .thumb:hover>.inner {
-    width: 18px;
-    height: 18px;
-}
-
-slider:active .thumb>.inner {
-    width: 10px;
-    height: 10px;
 }
 
 scrollbar {

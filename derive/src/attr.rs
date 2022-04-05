@@ -64,7 +64,7 @@ impl FieldIdent {
 pub struct Field<Attrs> {
     pub ident: FieldIdent,
     pub ty: syn::Type,
-
+    pub vis: syn::Visibility,
     pub attrs: Attrs,
 }
 
@@ -136,6 +136,8 @@ impl Field<DataAttr> {
 
         let ty = field.ty.clone();
 
+        let vis = field.vis.clone();
+
         let mut data_attr = DataAttr::Empty;
         for attr in field.attrs.iter() {
             if attr.path.is_ident(BASE_DRUID_DEPRECATED_ATTR_PATH) {
@@ -178,7 +180,7 @@ impl Field<DataAttr> {
                 }
             }
         }
-        Ok(Field { ident, ty, attrs: data_attr })
+        Ok(Field { ident, ty, vis, attrs: data_attr })
     }
 
     /// The tokens to be used as the function for 'same'.
@@ -204,6 +206,8 @@ impl Field<LensAttrs> {
         };
 
         let ty = field.ty.clone();
+
+        let vis = field.vis.clone();
 
         let mut ignore = false;
         let mut lens_name_override = None;
@@ -253,7 +257,7 @@ impl Field<LensAttrs> {
                 }
             }
         }
-        Ok(Field { ident, ty, attrs: LensAttrs { ignore, lens_name_override } })
+        Ok(Field { ident, ty, vis, attrs: LensAttrs { ignore, lens_name_override } })
     }
 }
 
