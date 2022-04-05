@@ -28,7 +28,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
             reference_points: None,
             on_changing: Some(Box::new(callback)),
         }
-        .build2(cx, move |cx| {
+        .build(cx, move |cx| {
             Element::new(cx)
                 .class("thumb")
                 .bind(value, move |handle, value| {

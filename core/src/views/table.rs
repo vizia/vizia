@@ -20,7 +20,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> Table<L, T> {
         F: 'static + Fn(&mut Context, L),
         <L as Lens>::Source: Model,
     {
-        Self { p: PhantomData::default() }.build2(cx, move |cx| {
+        Self { p: PhantomData::default() }.build(cx, move |cx| {
             HStack::new(cx, move |cx| {
                 (list_builder)(cx, lens);
             });
@@ -65,7 +65,7 @@ where
         Label: 'static + Fn(&mut Context),
         <R as Lens>::Source: Model,
     {
-        Self { p1: PhantomData::default(), p2: PhantomData::default() }.build2(cx, move |cx| {
+        Self { p1: PhantomData::default(), p2: PhantomData::default() }.build(cx, move |cx| {
             //VStack::new(cx, move |cx|{
             (label)(cx);
             //    Element::new(cx).height(Pixels(1.0)).background_color(Color::black());

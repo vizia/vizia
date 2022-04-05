@@ -20,7 +20,7 @@ const KAPPA90: f32 = 0.5522847493;
 pub trait View: 'static + Sized {
     #[allow(unused_variables)]
     fn body(&mut self, cx: &mut Context) {}
-    fn build2<F>(self, cx: &mut Context, builder: F) -> Handle<Self>
+    fn build<F>(self, cx: &mut Context, builder: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),
     {
@@ -55,20 +55,6 @@ pub trait View: 'static + Sized {
         handle.cx.current = prev;
 
         handle
-    }
-
-    fn build(mut self, cx: &mut Context) -> Handle<Self> {
-        let id = cx.entity_manager.create();
-        cx.tree.add(id, cx.current).expect("Failed to add to tree");
-        cx.cache.add(id).expect("Failed to add to cache");
-        cx.style.add(id);
-        let prev = cx.current;
-        cx.current = id;
-        self.body(cx);
-        cx.current = prev;
-        cx.views.insert(id, Box::new(self));
-
-        Handle { entity: id, p: Default::default(), cx }
     }
 
     fn element(&self) -> Option<String> {

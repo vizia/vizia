@@ -15,7 +15,7 @@ impl Button {
         L: 'static + Fn(&mut Context) -> Handle<Label>,
         Label: 'static + View,
     {
-        Self { action: Some(Box::new(action)) }.build2(cx, move |cx| {
+        Self { action: Some(Box::new(action)) }.build(cx, move |cx| {
             (label)(cx).hoverable(false).focusable(false);
         })
     }

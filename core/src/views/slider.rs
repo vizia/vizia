@@ -96,7 +96,7 @@ where
             on_min: None,
             on_max: None,
         }
-        .build2(cx, move |cx| {
+        .build(cx, move |cx| {
             SliderDataInternal { size: 0.0, thumb_size: 0.0, orientation }.build(cx);
 
             // Add the various slider components using bindings to the slider data

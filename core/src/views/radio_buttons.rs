@@ -9,7 +9,7 @@ pub struct RadioButton {
 impl RadioButton {
     pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
         Self { on_select: None }
-            .build2(cx, |cx| {
+            .build(cx, |cx| {
                 Element::new(cx).class("inner").position_type(PositionType::SelfDirected);
             })
             .checked(checked)

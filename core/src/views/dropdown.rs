@@ -14,7 +14,7 @@ impl Dropdown {
         Label: 'static + View,
     {
         Self {}
-            .build2(cx, move |cx| {
+            .build(cx, move |cx| {
                 if cx.data::<PopupData>().is_none() {
                     PopupData::default().build(cx);
                 }

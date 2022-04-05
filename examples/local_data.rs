@@ -2,7 +2,7 @@ use vizia::*;
 
 fn main() {
     Application::new(WindowDescription::new().with_title("Local Data"), |cx| {
-        CustomView::new().set_value(3.14).build(cx);
+        CustomView::new().set_value(3.14).build(cx, |_| {});
     })
     .run();
 }
