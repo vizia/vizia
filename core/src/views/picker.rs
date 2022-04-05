@@ -21,7 +21,7 @@ where
         F: 'static + Fn(&mut Context, L),
     {
         Self { lens: PhantomData::default() }
-            .build2(cx, move |cx| {
+            .build(cx, move |cx| {
                 Binding::new(cx, lens, move |cx, option| {
                     (builder)(cx, option);
                 });
@@ -51,7 +51,7 @@ impl PickerItem {
         value: T,
     ) -> Handle<'a, Self> {
         Self {}
-            .build2(cx, move |cx| {
+            .build(cx, move |cx| {
                 let opt = option.clone();
                 Button::new(
                     cx,

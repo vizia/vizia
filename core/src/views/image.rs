@@ -4,7 +4,7 @@ pub struct Image {}
 
 impl Image {
     pub fn new<T: ToString>(cx: &mut Context, img: impl Res<T>) -> Handle<'_, Self> {
-        Self {}.build2(cx, |_| {}).image(img)
+        Self {}.build(cx, |_| {}).image(img)
     }
 }
 

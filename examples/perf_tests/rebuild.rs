@@ -11,7 +11,7 @@ impl View for BranchingView { }
 
 impl BranchingView {
     pub fn new(cx: &mut Context, depth: usize) -> Handle<'_, Self> {
-        Self {}.build2(cx, move |cx| {
+        Self {}.build(cx, move |cx| {
             if depth > 0 {
                 Self::new(cx, depth - 1);
                 Self::new(cx, depth - 1);

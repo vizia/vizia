@@ -99,7 +99,7 @@ impl ScrollView<scroll_data_derived_lenses::root> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        Self { data: ScrollData::root }.build2(cx, move |cx| {
+        Self { data: ScrollData::root }.build(cx, move |cx| {
             ScrollData {
                 scroll_x: initial_x,
                 scroll_y: initial_y,
@@ -130,7 +130,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             panic!("ScrollView::custom requires a ScrollData to be built into a parent");
         }
 
-        Self { data: data.clone() }.build2(cx, |cx| {
+        Self { data: data.clone() }.build(cx, |cx| {
             Self::common_builder(cx, data, content, scroll_x, scroll_y);
         })
     }

@@ -7,7 +7,7 @@ impl Label {
     where
         T: ToString,
     {
-        Self {}.build2(cx, |_| {}).text(text)
+        Self {}.build(cx, |_| {}).text(text)
     }
 }
 

@@ -50,7 +50,7 @@ where
         F: 'static + Fn(&mut Context),
     {
         Self { lens: lens.clone() }
-            .build2(cx, |cx| {
+            .build(cx, |cx| {
                 (builder)(cx);
             })
             .checked(lens)

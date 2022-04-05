@@ -118,7 +118,7 @@ where
 
             on_changing: None,
         }
-        .build2(cx, move |cx| {
+        .build(cx, move |cx| {
             Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
                 let lens = lens.clone();
                 ZStack::new(cx, move |cx| {

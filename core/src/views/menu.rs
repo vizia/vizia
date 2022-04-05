@@ -109,7 +109,7 @@ impl MenuController {
             panic!("Building a MenuController inside a MenuController. This is illegal.")
         }
 
-        Self {}.build2(cx, move |cx| {
+        Self {}.build(cx, move |cx| {
             MenuControllerData { active }.build(cx);
             if active {
                 cx.capture();
@@ -189,7 +189,7 @@ impl MenuStack {
         if cx.data::<MenuControllerData>().is_none() {
             panic!("MenuStacks must be built inside a MenuController");
         }
-        Self {}.build2(cx, move |cx| {
+        Self {}.build(cx, move |cx| {
             MenuData::default().build(cx);
             builder(cx);
         })
@@ -225,7 +225,7 @@ impl Menu {
         F1: 'static + FnOnce(&mut Context) -> Handle<'_, Lbl>,
         F2: 'static + FnOnce(&mut Context),
     {
-        let result = Self {}.build2(cx, move |cx| {
+        let result = Self {}.build(cx, move |cx| {
             HStack::new(cx, move |cx| {
                 label(cx);
                 Label::new(cx, ICON_ARROW).class("menu_arrow");
@@ -267,7 +267,7 @@ impl MenuButton {
         A: 'static + Fn(&mut Context),
     {
         setup_menu_entry(
-            Self { action: Some(Box::new(action)) }.build2(cx, move |cx| {
+            Self { action: Some(Box::new(action)) }.build(cx, move |cx| {
                 contents(cx);
             }),
             |_| {},

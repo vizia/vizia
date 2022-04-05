@@ -13,7 +13,7 @@ impl VStack {
         F: FnOnce(&mut Context),
     {
         Self {}
-            .build2(cx, |cx| {
+            .build(cx, |cx| {
                 (content)(cx);
             })
             .focusable(false)
@@ -35,7 +35,7 @@ impl HStack {
         F: FnOnce(&mut Context),
     {
         Self {}
-            .build2(cx, |cx| {
+            .build(cx, |cx| {
                 (content)(cx);
             })
             .layout_type(LayoutType::Row)
@@ -58,7 +58,7 @@ impl ZStack {
         F: FnOnce(&mut Context),
     {
         Self {}
-            .build2(cx, |cx| {
+            .build(cx, |cx| {
                 (content)(cx);
             })
             .focusable(false)

@@ -39,7 +39,7 @@ pub struct Checkbox {
 impl Checkbox {
     pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
         //let checked = checked.get_val_fallible(cx).unwrap_or(false);
-        Self { on_toggle: None }.build2(cx, |_| {}).bind(checked, |handle, checked| {
+        Self { on_toggle: None }.build(cx, |_| {}).bind(checked, |handle, checked| {
             if let Some(flag) = checked.get_val_fallible(handle.cx) {
                 handle.text(if flag { ICON_CHECK } else { "" }).checked(flag);
             }

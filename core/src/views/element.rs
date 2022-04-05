@@ -7,7 +7,7 @@ pub struct Element {}
 
 impl Element {
     pub fn new(cx: &mut Context) -> Handle<Self> {
-        Self {}.build(cx)
+        Self {}.build(cx, |_| {})
     }
 }
 

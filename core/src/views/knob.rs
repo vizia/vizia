@@ -48,7 +48,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
 
             on_changing: None,
         }
-        .build2(cx, move |cx| {
+        .build(cx, move |cx| {
             ZStack::new(cx, move |cx| {
                 ArcTrack::new(
                     cx,
@@ -98,7 +98,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
 
             on_changing: None,
         }
-        .build2(cx, move |cx| {
+        .build(cx, move |cx| {
             ZStack::new(cx, move |cx| {
                 (content)(cx, lens).width(Percentage(100.0)).height(Percentage(100.0));
             });
@@ -251,7 +251,7 @@ impl Ticks {
 
             mode,
         }
-        .build(cx)
+        .build(cx, |_| {})
     }
 }
 impl View for Ticks {
@@ -350,7 +350,7 @@ impl TickKnob {
             normalized_value: 0.5,
             mode,
         }
-        .build(cx)
+        .build(cx, |_| {})
     }
 }
 impl View for TickKnob {
@@ -479,7 +479,7 @@ impl ArcTrack {
             center,
             mode,
         }
-        .build(cx)
+        .build(cx, |_| {})
     }
 }
 

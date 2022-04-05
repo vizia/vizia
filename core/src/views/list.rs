@@ -29,7 +29,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
             decrement_callback: None,
             clear_callback: None,
         }
-        .build2(cx, move |cx| {
+        .build(cx, move |cx| {
             //let list_lens = lens.clone();
             // Bind to the list data
             Binding::new(cx, lens.clone().map(|lst| lst.len()), move |cx, list_len| {

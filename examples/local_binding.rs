@@ -7,7 +7,7 @@ pub struct CustomView {
 
 impl CustomView {
     pub fn new<'a>(cx: &'a mut Context, txt: &str) -> Handle<'a, Self> {
-        Self { some_data: txt.to_owned() }.build2(cx, |cx| {
+        Self { some_data: txt.to_owned() }.build(cx, |cx| {
             Label::new(cx, CustomView::some_data).on_press(|cx| cx.emit(CustomEvent::ChangeData));
         })
     }
