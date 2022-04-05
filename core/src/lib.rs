@@ -78,4 +78,6 @@ pub use modifiers::*;
 mod enviroment;
 pub use enviroment::*;
 
+pub mod vg;
+
 pub use keyboard_types::{Code, Key};
