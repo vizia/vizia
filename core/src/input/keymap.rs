@@ -1,10 +1,10 @@
-use crate::{Code, Context, KeyBinding, Model};
+use crate::{Code, Context, KeyChord, Model};
 use std::collections::HashMap;
 use std::hash::Hash;
 
-/// A keymap that associates keybindings with actions.
+/// A keymap that associates key chords with actions.
 ///
-/// This is useful if you have an application that lets the user configure their keybindings.
+/// This is useful if you have an application that lets the user configure their key chords.
 /// It allows you to check if a particular action is pressed rather than the actual keys.
 ///
 /// # Examples
@@ -21,9 +21,9 @@ use std::hash::Hash;
 /// }
 /// ```
 ///
-/// Now we can create a new keymap inside of our application and configure our keybindings.
-/// We will bind `Action::One` to the keybinding `A`, `Action::Two` to the keybinding `CTRL+B`
-/// and `Action::Three` to the keybinding `CTRL+SHIFT+C`.
+/// Now we can create a new keymap inside of our application and configure our key chords.
+/// We will bind `Action::One` to the key chord `A`, `Action::Two` to the key chord `CTRL+B`
+/// and `Action::Three` to the key chord `CTRL+SHIFT+C`.
 ///
 /// ```
 /// # use vizia_core::*;
@@ -37,12 +37,12 @@ use std::hash::Hash;
 /// # }
 /// #
 /// let keymap = Keymap::new()
-///     .insert(Action::One, KeyBinding::new(Modifiers::empty(), Code::KeyA))
-///     .insert(Action::Two, KeyBinding::new(Modifiers::CTRL, Code::KeyB))
-///     .insert(Action::Three, KeyBinding::new(Modifiers::CTRL | Modifiers::SHIFT, Code::KeyC));
+///     .insert(Action::One, KeyChord::new(Modifiers::empty(), Code::KeyA))
+///     .insert(Action::Two, KeyChord::new(Modifiers::CTRL, Code::KeyB))
+///     .insert(Action::Three, KeyChord::new(Modifiers::CTRL | Modifiers::SHIFT, Code::KeyC));
 /// ```
 ///
-/// After we've defined our keybindings we can now use them inside of a custom view. Here we check if the
+/// After we've defined our key chords we can now use them inside of a custom view. Here we check if the
 /// action `Action::One` is being pressed. If it is we just print a simple message to the console,
 /// but here you could do whatever you want to.
 ///
@@ -80,7 +80,7 @@ pub struct Keymap<T>
 where
     T: 'static + Eq + Hash + Send + Sync + Copy + Clone,
 {
-    bindings: HashMap<T, KeyBinding>,
+    chords: HashMap<T, KeyChord>,
 }
 
 impl<T> Keymap<T>
@@ -105,10 +105,10 @@ where
     /// let keymap = Keymap::<Action>::new();
     /// ```
     pub fn new() -> Self {
-        Self { bindings: HashMap::new() }
+        Self { chords: HashMap::new() }
     }
 
-    /// Inserts or overwrites a keybinding of the keymap.
+    /// Inserts or overwrites a key chord of the keymap.
     ///
     /// # Examples
     ///
@@ -121,14 +121,14 @@ where
     /// # }
     /// #
     /// let keymap = Keymap::new()
-    ///     .insert(Action::One, KeyBinding::new(Modifiers::CTRL, Code::KeyA));
+    ///     .insert(Action::One, KeyChord::new(Modifiers::CTRL, Code::KeyA));
     /// ```
-    pub fn insert(mut self, key: T, binding: KeyBinding) -> Self {
-        self.bindings.insert(key, binding);
+    pub fn insert(mut self, key: T, chord: KeyChord) -> Self {
+        self.chords.insert(key, chord);
         self
     }
 
-    /// Removes a keybinding of the keymap if it exists.
+    /// Removes a key chord of the keymap if it exists.
     ///
     /// # Examples
     ///
@@ -143,7 +143,7 @@ where
     /// let keymap = Keymap::new().remove(&Action::One);
     /// ```
     pub fn remove(mut self, key: &T) -> Self {
-        self.bindings.remove(key);
+        self.chords.remove(key);
         self
     }
 
@@ -167,9 +167,9 @@ where
     /// }
     /// ```
     pub fn pressed(&self, cx: &Context, action: &T, button: Code) -> bool {
-        self.bindings
+        self.chords
             .get(action)
-            .map(|binding| binding.modifiers == cx.modifiers && binding.button == button)
+            .map(|chord| chord.modifiers == cx.modifiers && chord.button == button)
             .unwrap_or(false)
     }
 }
@@ -181,10 +181,8 @@ where
     fn event(&mut self, _: &mut Context, event: &mut crate::Event) {
         if let Some(keymap_event) = event.message.downcast() {
             match keymap_event {
-                KeymapEvent::InsertBinding(action, binding) => {
-                    self.bindings.insert(*action, *binding)
-                }
-                KeymapEvent::RemoveBinding(action) => self.bindings.remove(action),
+                KeymapEvent::InsertChord(action, chord) => self.chords.insert(*action, *chord),
+                KeymapEvent::RemoveChord(action) => self.chords.remove(action),
             };
         }
     }
@@ -195,7 +193,7 @@ pub enum KeymapEvent<T>
 where
     T: 'static + Eq + Hash + Send + Sync + Copy + Clone,
 {
-    /// Inserts a keybinding into the [`Keymap`].
+    /// Inserts a key chord into the [`Keymap`].
     ///
     /// # Examples
     ///
@@ -211,11 +209,11 @@ where
     /// #
     /// cx.emit(KeymapEvent::InsertBinding(
     ///     Action::One,
-    ///     KeyBinding::new(Modifiers::empty(), Code::KeyA),
+    ///     KeyChord::new(Modifiers::empty(), Code::KeyA),
     /// ));
     /// ```
-    InsertBinding(T, KeyBinding),
-    /// Removes a keybinding from the [`Keymap`].
+    InsertChord(T, KeyChord),
+    /// Removes a key chord from the [`Keymap`].
     ///
     /// # Examples
     ///
@@ -231,5 +229,5 @@ where
     /// #
     /// cx.emit(KeymapEvent::RemoveBinding(Action::One));
     /// ```
-    RemoveBinding(T),
+    RemoveChord(T),
 }

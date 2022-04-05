@@ -1,5 +1,5 @@
-mod binding;
-pub use binding::*;
+mod chord;
+pub use chord::*;
 
 mod keymap;
 pub use keymap::*;
