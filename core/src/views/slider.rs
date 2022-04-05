@@ -36,11 +36,22 @@ impl Default for Orientation {
 /// The slider control consists of three main parts, a **thumb** element which can be moved between the extremes of a linear **track**,
 /// and an **active** element which fills the slider to indicate the current value.
 ///
-/// # Example
+/// The slider orientation is determined by its dimensions. If the slider width is greater than the height then the thumb
+/// moves horizontally, whereas if the slider height is greater than the width the thumb moves vertically.
 ///
+/// # Examples
+///
+/// ## Basic Slider
 /// In the following example, a slider is bound to a value. The `on_changing` callback is used to send an event to mutate the
-/// bound value when the slider thumb is moved or the track is clicked on.
-/// ```compile_fail
+/// bound value when the slider thumb is moved, or if the track is clicked on.
+/// ```
+/// # use vizia_core;
+/// # use vizia_derive;
+/// # let mut cx = &mut Context::new();
+/// # #[derive(Lens)]
+/// # pub struct AppData {
+/// #     value: f32,
+/// # }
 /// Slider::new(cx, AppData::value)
 ///     .on_changing(|cx, value| {
 ///         cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
@@ -48,7 +59,14 @@ impl Default for Orientation {
 /// ```
 ///
 /// ## Slider with Label
-/// ```compile_fail
+/// ```
+/// # use vizia_core;
+/// # use vizia_derive;
+/// # let mut cx = &mut Context::new();
+/// # #[derive(Lens)]
+/// # pub struct AppData {
+/// #     value: f32,
+/// # }
 /// HStack::new(cx, |cx|{
 ///     Slider::new(cx, AppData::value)
 ///         .on_changing(|cx, value| {
@@ -58,9 +76,6 @@ impl Default for Orientation {
 ///     Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)));
 /// });
 /// ```
-///
-/// The slider orientation is determined by its dimensions. If the slider width is greater than the height then the thumb
-/// moves horizontally, whereas if the slider height is greater than the width the thumb moves vertically.
 #[derive(Lens)]
 pub struct Slider<L: Lens> {
     p: PhantomData<L>,
@@ -73,6 +88,22 @@ impl<L> Slider<L>
 where
     L: Lens<Target = f32>,
 {
+    /// Creates a new slider bound to the value targeted by the lens.
+    ///
+    /// # Example
+    /// ```
+    /// # use vizia_core;
+    /// # use vizia_derive;
+    /// # let mut cx = &mut Context::new();
+    /// # #[derive(Lens)]
+    /// # pub struct AppData {
+    /// #     value: f32,
+    /// # }
+    /// Slider::new(cx, AppData::value)
+    ///     .on_changing(|cx, value| {
+    ///         cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
+    ///     });
+    /// ```
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
         Self {
             p: PhantomData::default(),
@@ -279,14 +310,21 @@ impl<L: Lens> View for Slider<L> {
 }
 
 impl<'a, L: Lens> Handle<'a, Slider<L>> {
-    /// Set the callback triggered when the slider value is changing (dragging).
+    /// Sets the callback triggered when the slider value is changing (dragging).
     ///
     /// Takes a closure which triggers when the slider value is changing,
     /// either by pressing the track or dragging the thumb along the track.
     ///
     /// # Example
     ///
-    /// ```compile_fail
+    /// ```
+    /// # use vizia_core;
+    /// # use vizia_derive;
+    /// # let mut cx = &mut Context::new();
+    /// # #[derive(Lens)]
+    /// # pub struct AppData {
+    /// #     value: f32,
+    /// # }
     /// Slider::new(cx, AppData::value)
     ///     .on_changing(|cx, value| {
     ///         cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
@@ -305,6 +343,25 @@ impl<'a, L: Lens> Handle<'a, Slider<L>> {
         self
     }
 
+    /// Sets the range of the slider.
+    ///
+    /// If the bound data is outside of the range then the slider will clip to min/max of the range.
+    ///
+    /// # Example
+    /// ```
+    /// # use vizia_core;
+    /// # use vizia_derive;
+    /// # let mut cx = &mut Context::new();
+    /// # #[derive(Lens)]
+    /// # pub struct AppData {
+    /// #     value: f32,
+    /// # }
+    /// Slider::new(cx, AppData::value)
+    ///     .range(-20.0..50.0)
+    ///     .on_changing(|cx, value| {
+    ///         cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
+    ///     });
+    /// ```
     pub fn range(self, range: Range<f32>) -> Self {
         self.entity.emit(self.cx, SliderEventInternal::SetRange(range));
 
