@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, ops::Range};
 
 use crate::{
     Actions, Binding, Context, Data, Element, GeometryChanged, Handle, Lens, LensExt, MouseButton,
@@ -8,6 +8,7 @@ use crate::{
 #[derive(Debug)]
 enum SliderEventInternal {
     SetThumbSize(f32, f32),
+    SetRange(Range<f32>),
 }
 
 #[derive(Clone, Debug, Default, Data)]
@@ -15,6 +16,7 @@ pub struct SliderDataInternal {
     pub orientation: Orientation,
     pub size: f32,
     pub thumb_size: f32,
+    pub range: Range<f32>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Data)]
@@ -80,6 +82,7 @@ where
                 orientation: Orientation::Horizontal,
                 thumb_size: 0.0,
                 size: 0.0,
+                range: 0.0..1.0,
             },
 
             on_changing: None,
@@ -88,16 +91,19 @@ where
             Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
                 let lens = lens.clone();
                 ZStack::new(cx, move |cx| {
-                    let thumb_size = slider_data.get(cx).thumb_size;
-                    let orientation = slider_data.get(cx).orientation;
-                    let size = slider_data.get(cx).size;
+                    let slider_data = slider_data.get(cx);
+                    let thumb_size = slider_data.thumb_size;
+                    let orientation = slider_data.orientation;
+                    let size = slider_data.size;
+                    let range = slider_data.range;
 
                     // Active track
                     Element::new(cx).class("active").bind(lens.clone(), move |handle, value| {
                         let val = value.get(handle.cx);
+                        let normal_val = (val - range.start) / (range.end - range.start);
                         let min = thumb_size / size;
                         let max = 1.0;
-                        let dx = min + val * (max - min);
+                        let dx = min + normal_val * (max - min);
 
                         if orientation == Orientation::Horizontal {
                             handle
@@ -127,7 +133,8 @@ where
                         })
                         .bind(lens.clone(), move |handle, value| {
                             let val = value.get(handle.cx);
-                            let px = val * (1.0 - (thumb_size / size));
+                            let normal_val = (val - range.start) / (range.end - range.start);
+                            let px = normal_val * (1.0 - (thumb_size / size));
                             if orientation == Orientation::Horizontal {
                                 handle
                                     .right(Stretch(1.0))
@@ -168,6 +175,10 @@ impl<L: Lens> View for Slider<L> {
                         self.internal.thumb_size = *height;
                     }
                 },
+
+                SliderEventInternal::SetRange(range) => {
+                    self.internal.range = range.clone();
+                }
             }
         }
 
@@ -192,6 +203,8 @@ impl<L: Lens> View for Slider<L> {
                     cx.current.set_active(cx, true);
 
                     let thumb_size = self.internal.thumb_size;
+                    let min = self.internal.range.start;
+                    let max = self.internal.range.end;
 
                     let mut dx = match self.internal.orientation {
                         Orientation::Horizontal => {
@@ -211,8 +224,10 @@ impl<L: Lens> View for Slider<L> {
 
                     dx = dx.clamp(0.0, 1.0);
 
+                    let val = min + dx * (max - min);
+
                     if let Some(callback) = self.on_changing.take() {
-                        (callback)(cx, dx);
+                        (callback)(cx, val);
 
                         self.on_changing = Some(callback);
                     }
@@ -227,6 +242,9 @@ impl<L: Lens> View for Slider<L> {
                 WindowEvent::MouseMove(x, y) => {
                     if self.is_dragging {
                         let thumb_size = self.internal.thumb_size;
+
+                        let min = self.internal.range.start;
+                        let max = self.internal.range.end;
 
                         let mut dx = match self.internal.orientation {
                             Orientation::Horizontal => {
@@ -244,8 +262,10 @@ impl<L: Lens> View for Slider<L> {
 
                         dx = dx.clamp(0.0, 1.0);
 
+                        let val = min + dx * (max - min);
+
                         if let Some(callback) = self.on_changing.take() {
-                            (callback)(cx, dx);
+                            (callback)(cx, val);
 
                             self.on_changing = Some(callback);
                         }
@@ -281,6 +301,12 @@ impl<'a, L: Lens> Handle<'a, Slider<L>> {
         {
             slider.on_changing = Some(Box::new(callback));
         }
+
+        self
+    }
+
+    pub fn range(self, range: Range<f32>) -> Self {
+        self.entity.emit(self.cx, SliderEventInternal::SetRange(range));
 
         self
     }
