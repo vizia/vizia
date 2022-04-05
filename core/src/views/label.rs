@@ -16,6 +16,59 @@ use crate::{Context, Handle, Res, View};
 /// Label::new(cx, "Text");
 /// ```
 ///
+/// ## Label bound to data
+///
+/// A label can be bound to data using a lens which automatically updates the text whenever the underlying data changes.
+///
+/// ```
+/// # use vizia_core::*;
+/// # use vizia_winit::application::Application;
+/// #
+/// #[derive(Lens)]
+/// struct AppData {
+///     text: String,
+/// }
+///
+/// impl Model for AppData {}
+///
+/// Application::new(WindowDescription::new(), |cx| {
+///     AppData {
+///         text: String::from("Text"),
+///     }
+///     .build(cx);
+///     Label::new(cx, AppData::text);
+/// });
+/// ```
+///
+/// ## Label with text wrapping
+///
+/// A label automatically wraps the text if it doesn't fit inside of the width of the label.
+///
+/// ```
+/// # use vizia_core::*;
+/// #
+/// Label::new(
+///     cx,
+///     "This is a really long text to showcase the text wrapping support of a label.",
+/// )
+/// .width(Pixels(100.0));
+/// ```
+///
+/// ## Label without text wrapping
+///
+/// A label can also be configured to never wrap the text by using the [`text_wrap`](crate::Handle::text_wrap) method.
+///
+/// ```
+/// # use vizia_core::*;
+/// #
+/// Label::new(
+///     cx,
+///     "This is a really long text to showcase disabled text wrapping of a label.",
+/// )
+/// .width(Pixels(100.0))
+/// .text_wrap(false);
+/// ```
+///
 /// ## Label for a button
 ///
 /// A label can also be used inside of a button to be able to add text to it.
