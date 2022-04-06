@@ -3,7 +3,7 @@ use vizia::*;
 fn main() {
     let app =
         Application::new(WindowDescription::new().with_title("Proxy"), |_| {}).on_idle(|_| {
-            println!("On Idle: {:?}", std::time::Instant::now());
+            println!("On Idle: {:?}", instant::Instant::now());
         });
 
     let proxy = app.get_proxy();

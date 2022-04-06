@@ -310,7 +310,7 @@ impl Context {
     }
 
     pub fn apply_animations(&mut self) {
-        let time = std::time::Instant::now();
+        let time = instant::Instant::now();
 
         self.style.display.tick(time);
         self.style.visibility.tick(time);
