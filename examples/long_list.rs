@@ -43,7 +43,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(WindowDescription::new().with_title("List"), |cx| {
-        cx.add_stylesheet("examples/lists/list_style.css").unwrap();
+        cx.add_theme(include_str!("lists/list_style.css"));
 
         let list: Vec<u32> = (1..10000u32).collect();
         AppData { list, selected: 0, visible: true }.build(cx);
@@ -55,15 +55,14 @@ fn main() {
                 //println!("Do This");
                 let item_text = item.get(cx).to_string();
                 VStack::new(cx, move |cx| {
-                    Binding::new(cx, AppData::selected, move |cx, selected| {
-                        //println!("Select");
-                        let selected = selected.get(cx);
-                        Label::new(cx, &item_text)
-                            // Set the checked state based on whether this item is selected
-                            .checked(if selected == index { true } else { false })
-                            // Set the selected item to this one if pressed
-                            .on_press(move |cx| cx.emit(AppEvent::Select(index)));
-                    });
+                    Label::new(cx, &item_text)
+                        // Set the selected item to this one if pressed
+                        .on_press(move |cx| cx.emit(AppEvent::Select(index)))
+                        // Set the checked state based on whether this item is selected
+                        .bind(AppData::selected, move |handle, selected| {
+                            let selected = selected.get(handle.cx);
+                            handle.checked(selected == index);
+                        });
                 });
             })
             .on_increment(move |cx| cx.emit(AppEvent::IncrementSelection))

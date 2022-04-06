@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use winit::{
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
@@ -97,12 +98,6 @@ impl Application {
 
     pub fn background_color(mut self, color: Color) -> Self {
         self.context.style.background_color.insert(Entity::root(), color);
-
-        self
-    }
-
-    pub fn locale(mut self, id: &str) -> Self {
-        self.context.enviroment.set_locale(id);
 
         self
     }
@@ -212,16 +207,10 @@ impl Application {
 
         let event_loop_proxy = event_loop.create_proxy();
 
-        let should_poll = self.should_poll;
+        let default_should_poll = self.should_poll;
+        let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
         event_loop.run(move |event, _, control_flow|{
-
-            if should_poll {
-                *control_flow = ControlFlow::Poll;
-            } else {
-                *control_flow = ControlFlow::Wait;
-            }
-
             match event {
 
                 winit::event::Event::UserEvent(event) => {
@@ -229,6 +218,11 @@ impl Application {
                 }
 
                 winit::event::Event::MainEventsCleared => {
+                    *stored_control_flow.borrow_mut() = if default_should_poll {
+                        ControlFlow::Poll
+                    } else {
+                        ControlFlow::Wait
+                    };
 
                     // Rebuild application if required
                     if context.enviroment.needs_rebuild {
@@ -273,7 +267,7 @@ impl Application {
 
                     if context.has_animations() {
 
-                        *control_flow = ControlFlow::Poll;
+                        *stored_control_flow.borrow_mut() = ControlFlow::Poll;
 
                         //context.insert_event(Event::new(WindowEvent::Relayout).target(Entity::root()));
                         event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();
@@ -284,12 +278,6 @@ impl Application {
                             }
 
                             context.views.insert(Entity::root(), window_event_handler);
-                        }
-                    } else {
-                        if should_poll {
-                            *control_flow = ControlFlow::Poll;
-                        } else {
-                            *control_flow = ControlFlow::Wait;
                         }
                     }
 
@@ -312,6 +300,7 @@ impl Application {
                     }
 
                     if !context.event_queue.is_empty() {
+                        *stored_control_flow.borrow_mut() = ControlFlow::Poll;
                         event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
                     }
                 }
@@ -327,7 +316,7 @@ impl Application {
                 } => {
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
-                            *control_flow = ControlFlow::Exit;
+                            *stored_control_flow.borrow_mut() = ControlFlow::Exit;
                         }
 
                         #[allow(deprecated)]
@@ -369,9 +358,11 @@ impl Application {
                         } => {
                             let out_event = match delta {
                                 winit::event::MouseScrollDelta::LineDelta(x, y) => {
+                                    log(&format!("Line {} {}", x, y));
                                     WindowEvent::MouseScroll(x, y)
                                 }
                                 winit::event::MouseScrollDelta::PixelDelta(pos) => {
+                                    log(&format!("Pixel {} {}", pos.x, pos.y));
                                     WindowEvent::MouseScroll(pos.x as f32, pos.y as f32)
                                 }
                             };
@@ -464,6 +455,8 @@ impl Application {
 
                 _=> {}
             }
+
+            *control_flow = *stored_control_flow.borrow();
         });
     }
 }

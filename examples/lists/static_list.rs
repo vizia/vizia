@@ -41,7 +41,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(WindowDescription::new().with_title("List"), |cx| {
-        cx.add_stylesheet("examples/lists/list_style.css").unwrap();
+        cx.add_theme(include_str!("list_style.css"));
 
         AppData { selected: 0 }.build(cx);
 
