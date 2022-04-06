@@ -5,7 +5,7 @@ use std::fmt::{Debug, Formatter};
 use std::sync::Mutex;
 
 #[cfg(feature = "clipboard")]
-use copypasta::ClipboardContext;
+use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardProvider};
 use femtovg::TextContext;
 use fnv::FnvHashMap;
 use keyboard_types::Code;
@@ -56,7 +56,7 @@ pub struct Context {
     pub event_proxy: Option<Box<dyn EventProxy>>,
 
     #[cfg(feature = "clipboard")]
-    pub clipboard: ClipboardContext,
+    pub clipboard: Box<dyn ClipboardProvider>,
 
     click_time: Instant,
     double_click: bool,
@@ -90,8 +90,11 @@ impl Context {
             event_proxy: None,
 
             #[cfg(feature = "clipboard")]
-            clipboard: ClipboardContext::new().expect("Failed to init clipboard"),
-
+            clipboard: if let Ok(context) = ClipboardContext::new() {
+                Box::new(context)
+            } else {
+                Box::new(NopClipboardContext::new().unwrap())
+            },
             click_time: Instant::now(),
             double_click: false,
             click_pos: (0.0, 0.0),
