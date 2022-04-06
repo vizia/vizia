@@ -29,6 +29,7 @@ unicode-segmentation = "1.8.0"
 unicode-bidi = "0.3.7"
 copypasta = {version = "0.7.1", optional = true}
 instant = "0.1.12"
+web-sys = "*"
 
 rusty-daw-core = {version = "0.7.4", optional = true}
 

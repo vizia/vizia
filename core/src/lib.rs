@@ -87,3 +87,12 @@ pub mod vg {
 pub use image;
 
 pub use keyboard_types::{Code, Key};
+
+#[cfg(target_arch = "wasm32")]
+pub fn log(text: &str) {
+    web_sys::console::log_1(&text.into());
+}
+#[cfg(not(target_arch = "wasm32"))]
+pub fn log(text: &str) {
+    println!("{}", text);
+}

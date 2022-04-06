@@ -34,7 +34,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(WindowDescription::new().with_title("List"), |cx| {
-        cx.add_stylesheet("examples/lists/list_style.css").unwrap();
+        cx.add_theme(include_str!("list_style.css"));
 
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list, selected: HashSet::new() }.build(cx);

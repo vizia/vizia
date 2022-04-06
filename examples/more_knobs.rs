@@ -1,8 +1,9 @@
 use vizia::*;
 const STYLE: &str = r#"
     label {
-        width: 100px;
+        width: 200px;
         height: 30px;
+        child-space: 1s;
         font-size: 20;
         color: #C2C2C2;
     }
@@ -25,7 +26,7 @@ const STYLE: &str = r#"
 "#;
 fn main() {
     Application::new(
-        WindowDescription::new().with_title("More Knobs").with_inner_size(1000, 200),
+        WindowDescription::new().with_title("More Knobs").with_inner_size(1200, 200),
         |cx| {
             cx.add_theme(STYLE);
             KnobData { knobs: vec![0.5; 5] }.build(cx);
@@ -33,7 +34,7 @@ fn main() {
             HStack::new(cx, |cx| {
                 // default knob
                 VStack::new(cx, move |cx| {
-                    Label::new(cx, "Default knob").width(Pixels(30.)).height(Pixels(30.));
+                    Label::new(cx, "Default knob").height(Pixels(30.));
 
                     Knob::new(cx, 0.5, KnobData::knobs.map(|knobs| knobs[0]), false)
                         .on_changing(move |cx, val| cx.emit(KnobChangeEvent::SetKnob(0, val)))

@@ -8,6 +8,9 @@ element {
 }
 "#;
 
+#[cfg(target_arch = "wasm32")]
+compile_error!("This example uses image loading that does not work on the web");
+
 fn main() {
     Application::new(WindowDescription::default(), |cx| {
         cx.add_theme(STYLE);

@@ -1,5 +1,8 @@
 use vizia::*;
 
+#[cfg(target_arch = "wasm32")]
+compile_error!("This example does not work on wasm - threads are experimental");
+
 fn main() {
     let app =
         Application::new(WindowDescription::new().with_title("Proxy"), |_| {}).on_idle(|_| {

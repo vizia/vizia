@@ -90,25 +90,24 @@ impl ResourceManager {
     }
 
     fn renegotiate_language(&mut self) {
-        let locale = locale_config::Locale::current()
-            .to_string()
-            .parse()
-            .unwrap_or_else(|_| LanguageIdentifier::default());
-        let requested = [locale];
         let available = self
             .translations
             .keys()
-            .filter(|x| x != &&LanguageIdentifier::default())
+            .filter(|&x| x != &LanguageIdentifier::default())
             .collect::<Vec<_>>();
-        let default: LanguageIdentifier = "en-CA".parse().unwrap();
+        let locale = locale_config::Locale::current()
+            .to_string()
+            .parse()
+            .unwrap_or_else(|_| available.first().copied().cloned().unwrap_or_default());
+        let default = LanguageIdentifier::default();
         let default_ref = &default; // ???
         let langs = fluent_langneg::negotiate::negotiate_languages(
-            &requested,
+            &[locale],
             available.as_slice(),
             Some(&default_ref),
             fluent_langneg::NegotiationStrategy::Filtering,
         );
-        self.language = (**langs.first().unwrap()).to_owned();
+        self.language = (**langs.first().unwrap()).clone();
     }
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
