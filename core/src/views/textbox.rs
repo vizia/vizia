@@ -1,8 +1,5 @@
 use std::sync::Arc;
 
-#[cfg(feature = "clipboard")]
-use copypasta::ClipboardProvider;
-
 use keyboard_types::Code;
 
 use crate::style::PropGet;
