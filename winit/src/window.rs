@@ -19,20 +19,12 @@ pub struct Window {
     handle: winit::window::Window,
 }
 
+#[cfg(target_arch = "wasm32")]
 impl Window {
     pub fn new(events_loop: &EventLoop<Event>, window_description: &WindowDescription) -> Self {
-        #[allow(unused_mut)]
-        let mut window_builder = WindowBuilder::new();
-
-        //Windows COM doesn't play nicely with winit's drag and drop right now
-        #[cfg(target_os = "windows")]
-        let mut window_builder = {
-            use winit::platform::windows::WindowBuilderExtWindows;
-            window_builder.with_drag_and_drop(false)
-        };
+        let window_builder = WindowBuilder::new();
 
         // For wasm, create or look up the canvas element we're drawing on
-        #[cfg(target_arch = "wasm32")]
         let canvas_element = {
             use wasm_bindgen::JsCast;
 
@@ -45,52 +37,66 @@ impl Window {
                 document.body().unwrap().insert_adjacent_element("afterbegin", &element).unwrap();
                 element
             }
-            .dyn_into::<web_sys::HtmlCanvasElement>()
-            .unwrap()
+                .dyn_into::<web_sys::HtmlCanvasElement>()
+                .unwrap()
         };
 
-        // Build the femtovg renderer, PART 1/2, web edition
-        // these two parts have to be separated because they have conflicting requirements
-        // on use of the referenced passed to window builder
-        #[cfg(target_arch = "wasm32")]
+        // Build the femtovg renderer
         let renderer = OpenGl::new_from_html_canvas(&canvas_element).unwrap();
 
-        // For wasm, tell winit about the above canvas
-        #[cfg(target_arch = "wasm32")]
-        let mut window_builder = {
+        // tell winit about the above canvas
+        let window_builder = {
             use winit::platform::web::WindowBuilderExtWebSys;
             window_builder.with_canvas(Some(canvas_element))
         };
 
         // Apply generic WindowBuilder properties
-        window_builder = window_builder
-            .with_title(&window_description.title)
-            .with_inner_size(PhysicalSize::new(
-                window_description.inner_size.width,
-                window_description.inner_size.height,
-            ))
-            .with_min_inner_size(PhysicalSize::new(
-                window_description.min_inner_size.width,
-                window_description.min_inner_size.height,
-            ))
-            .with_always_on_top(window_description.always_on_top)
-            .with_resizable(window_description.resizable)
-            .with_window_icon(if let Some(icon) = &window_description.icon {
-                Some(
-                    winit::window::Icon::from_rgba(
-                        icon.clone(),
-                        window_description.icon_width,
-                        window_description.icon_height,
-                    )
-                    .unwrap(),
-                )
-            } else {
-                None
-            });
+        let window_builder = apply_window_description(window_builder, &window_description);
 
-        // Get the window handle. for glutin this is a ContextWrapper, and for web this is a
-        // winit::window::Window
-        #[cfg(not(target_arch = "wasm32"))]
+        // Get the window handle. this is a winit::window::Window
+        let handle = window_builder.build(&events_loop).unwrap();
+
+        // Build our result!
+        let mut result = Window {
+            id: handle.id(),
+            handle,
+            canvas: Canvas::new(renderer).expect("Cannot create canvas"),
+        };
+
+        setup_canvas(&mut result);
+        result
+    }
+
+    pub fn window(&self) -> &winit::window::Window {
+        &self.handle
+    }
+
+    pub fn resize(&self, _size: PhysicalSize<u32>) {
+        // TODO?
+    }
+
+    pub fn swap_buffers(&self) {
+        // Intentional no-op
+    }
+}
+
+
+#[cfg(not(target_arch = "wasm32"))]
+impl Window {
+    pub fn new(events_loop: &EventLoop<Event>, window_description: &WindowDescription) -> Self {
+        let window_builder = WindowBuilder::new();
+
+        //Windows COM doesn't play nicely with winit's drag and drop right now
+        #[cfg(target_os = "windows")]
+        let window_builder = {
+            use winit::platform::windows::WindowBuilderExtWindows;
+            window_builder.with_drag_and_drop(false)
+        };
+
+        // Apply generic WindowBuilder properties
+        let window_builder = apply_window_description(window_builder, &window_description);
+
+        // Get the window handle. this is a ContextWrapper
         let handle = {
             let handle = ContextBuilder::new()
                 .with_vsync(window_description.vsync)
@@ -100,54 +106,30 @@ impl Window {
 
             unsafe { handle.make_current().unwrap() }
         };
-        #[cfg(target_arch = "wasm32")]
-        let handle = window_builder.build(&events_loop).unwrap();
 
-        // Build the femtovg renderer, PART 2/2, glutin edition
-        #[cfg(not(target_arch = "wasm32"))]
+        // Build the femtovg renderer
         let renderer = OpenGl::new_from_glutin_context(&handle).expect("Cannot create renderer");
 
         // Build our result!
         let mut result = Window {
-            #[cfg(not(target_arch = "wasm32"))]
             id: handle.window().id(),
-            #[cfg(target_arch = "wasm32")]
-            id: handle.id(),
             handle,
             canvas: Canvas::new(renderer).expect("Cannot create canvas"),
         };
 
-        // Set some initial properties on our result canvas
-        let dpi_factor = result.window().scale_factor();
-        let size = result.window().inner_size();
-        result.canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
-        result.canvas.clear_rect(
-            0,
-            0,
-            size.width as u32,
-            size.height as u32,
-            Color::rgb(255, 80, 80),
-        );
-
+        setup_canvas(&mut result);
         result
     }
 
     pub fn window(&self) -> &winit::window::Window {
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            self.handle.window()
-        }
-        #[cfg(target_arch = "wasm32")]
-        &self.handle
+        self.handle.window()
     }
 
     pub fn resize(&self, size: PhysicalSize<u32>) {
-        #[cfg(not(target_arch = "wasm32"))]
         self.handle.resize(size);
     }
 
     pub fn swap_buffers(&self) {
-        #[cfg(not(target_arch = "wasm32"))]
         self.handle.swap_buffers().expect("Failed to swap buffers");
     }
 }
@@ -183,4 +165,45 @@ impl View for Window {
             }
         }
     }
+}
+
+fn apply_window_description(builder: WindowBuilder, description: &WindowDescription) -> WindowBuilder {
+    builder
+        .with_title(&description.title)
+        .with_inner_size(PhysicalSize::new(
+            description.inner_size.width,
+            description.inner_size.height,
+        ))
+        .with_min_inner_size(PhysicalSize::new(
+            description.min_inner_size.width,
+            description.min_inner_size.height,
+        ))
+        .with_always_on_top(description.always_on_top)
+        .with_resizable(description.resizable)
+        .with_window_icon(if let Some(icon) = &description.icon {
+            Some(
+                winit::window::Icon::from_rgba(
+                    icon.clone(),
+                    description.icon_width,
+                    description.icon_height,
+                )
+                    .unwrap(),
+            )
+        } else {
+            None
+        })
+}
+
+fn setup_canvas(result: &mut Window) {
+    // Set some initial properties on our result canvas
+    let dpi_factor = result.window().scale_factor();
+    let size = result.window().inner_size();
+    result.canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
+    result.canvas.clear_rect(
+        0,
+        0,
+        size.width as u32,
+        size.height as u32,
+        Color::rgb(255, 80, 80),
+    );
 }
