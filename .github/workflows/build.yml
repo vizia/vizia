@@ -36,6 +36,12 @@ jobs:
       with:
         toolchain: stable
         override: true
+    - name: Install wasm toolchain
+      if: "matrix.wasm != ''"
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: wasm32-unknown-unknown
     - name: Check Format
       run: cargo fmt -- --check
     - name: Build
