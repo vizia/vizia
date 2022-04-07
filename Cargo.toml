@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 description = "A Rust GUI Framework"
+autoexamples = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,9 +12,101 @@ description = "A Rust GUI Framework"
 members = ["core", "winit", "baseview", "derive", "run-wasm"]
 
 [[example]]
+name = "action_modifier"
+path = "examples/action_modifier.rs"
+
+[[example]]
+name = "animation"
+path = "examples/animation.rs"
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
+[[example]]
+name = "binding"
+path = "examples/binding.rs"
+
+[[example]]
+name = "compose"
+path = "examples/compose.rs"
+
+[[example]]
+name = "counter"
+path = "examples/counter.rs"
+
+[[example]]
+name = "cursor_icon"
+path = "examples/cursor_icon.rs"
+
+[[example]]
+name = "l10n"
+path = "examples/l10n.rs"
+
+[[example]]
+name = "local_binding"
+path = "examples/local_binding.rs"
+
+[[example]]
+name = "local_data"
+path = "examples/local_data.rs"
+
+[[example]]
+name = "long_list"
+path = "examples/long_list.rs"
+
+[[example]]
+name = "modal"
+path = "examples/modal.rs"
+
+[[example]]
+name = "more_knobs"
+path = "examples/more_knobs.rs"
+
+[[example]]
+name = "multiple_binding"
+path = "examples/multiple_binding.rs"
+
+[[example]]
+name = "overflow"
+path = "examples/overflow.rs"
+
+[[example]]
+name = "proxy"
+path = "examples/proxy.rs"
+
+[[example]]
+name = "scrollview"
+path = "examples/scrollview.rs"
+
+[[example]]
+name = "state"
+path = "examples/state.rs"
+
+[[example]]
+name = "stylesheet"
+path = "examples/stylesheet.rs"
+
+[[example]]
+name = "styling"
+path = "examples/styling.rs"
+
+[[example]]
+name = "table"
+path = "examples/table.rs"
+
+[[example]]
+name = "textbox_list"
+path = "examples/textbox_list.rs"
+
+[[example]]
+name = "transform"
+path = "examples/transform.rs"
+
+
+[[example]]
 name = "button"
 path = "examples/controls/button.rs"
-
 
 [[example]]
 name = "slider"

@@ -45,34 +45,37 @@ impl Default for Orientation {
 /// In the following example, a slider is bound to a value. The `on_changing` callback is used to send an event to mutate the
 /// bound value when the slider thumb is moved, or if the track is clicked on.
 /// ```
-/// # use vizia_core;
-/// # use vizia_derive;
+/// # use vizia_core::*;
+/// # use vizia_derive::*;
 /// # let mut cx = &mut Context::new();
-/// # #[derive(Lens)]
+/// # #[derive(Lens, Default)]
 /// # pub struct AppData {
 /// #     value: f32,
 /// # }
+/// # impl Model for AppData {}
+/// # AppData::default().build(cx);
 /// Slider::new(cx, AppData::value)
 ///     .on_changing(|cx, value| {
-///         cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
+///         println!("Slider on_changing: {}", value);
 ///     });
 /// ```
 ///
 /// ## Slider with Label
 /// ```
-/// # use vizia_core;
-/// # use vizia_derive;
+/// # use vizia_core::*;
+/// # use vizia_derive::*;
 /// # let mut cx = &mut Context::new();
-/// # #[derive(Lens)]
+/// # #[derive(Lens, Default)]
 /// # pub struct AppData {
 /// #     value: f32,
 /// # }
+/// # impl Model for AppData {}
+/// # AppData::default().build(cx);
 /// HStack::new(cx, |cx|{
 ///     Slider::new(cx, AppData::value)
 ///         .on_changing(|cx, value| {
-///             cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
-///         });///
-///     });
+///             println!("Slider on_changing: {}", value);
+///         });
 ///     Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)));
 /// });
 /// ```
@@ -92,16 +95,18 @@ where
     ///
     /// # Example
     /// ```
-    /// # use vizia_core;
-    /// # use vizia_derive;
+    /// # use vizia_core::*;
+    /// # use vizia_derive::*;
     /// # let mut cx = &mut Context::new();
-    /// # #[derive(Lens)]
+    /// # #[derive(Lens, Default)]
     /// # pub struct AppData {
     /// #     value: f32,
     /// # }
+    /// # impl Model for AppData {}
+    /// # AppData::default().build(cx);
     /// Slider::new(cx, AppData::value)
     ///     .on_changing(|cx, value| {
-    ///         cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
+    ///         println!("Slider on_changing: {}", value);
     ///     });
     /// ```
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
@@ -318,16 +323,18 @@ impl<'a, L: Lens> Handle<'a, Slider<L>> {
     /// # Example
     ///
     /// ```
-    /// # use vizia_core;
-    /// # use vizia_derive;
+    /// # use vizia_core::*;
+    /// # use vizia_derive::*;
     /// # let mut cx = &mut Context::new();
-    /// # #[derive(Lens)]
+    /// # #[derive(Lens, Default)]
     /// # pub struct AppData {
     /// #     value: f32,
     /// # }
+    /// # impl Model for AppData {}
+    /// # AppData::default().build(cx);
     /// Slider::new(cx, AppData::value)
     ///     .on_changing(|cx, value| {
-    ///         cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
+    ///         println!("Slider on_changing: {}", value);
     ///     });
     /// ```
     pub fn on_changing<F>(self, callback: F) -> Self
@@ -349,17 +356,19 @@ impl<'a, L: Lens> Handle<'a, Slider<L>> {
     ///
     /// # Example
     /// ```
-    /// # use vizia_core;
-    /// # use vizia_derive;
+    /// # use vizia_core::*;
+    /// # use vizia_derive::*;
     /// # let mut cx = &mut Context::new();
-    /// # #[derive(Lens)]
+    /// # #[derive(Lens, Default)]
     /// # pub struct AppData {
     /// #     value: f32,
     /// # }
+    /// # impl Model for AppData {}
+    /// # AppData::default().build(cx);
     /// Slider::new(cx, AppData::value)
     ///     .range(-20.0..50.0)
     ///     .on_changing(|cx, value| {
-    ///         cx.emit(WindowEvent::Debug(format!("Slider on_changing: {}", value)));
+    ///         println!("Slider on_changing: {}", value);
     ///     });
     /// ```
     pub fn range(self, range: Range<f32>) -> Self {
