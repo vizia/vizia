@@ -69,9 +69,11 @@ fn main() {
         }
 
         HStack::new(cx, |cx| {
+            // A checkbox
+            Checkbox::new(cx, AppData::options.then(Options::option1));
             // Checkboxes with labels
             VStack::new(cx, |cx| {
-                Label::new(cx, "Check Boxes").class("h1");
+                Label::new(cx, "Checkboxes with labels").class("h1");
 
                 HStack::new(cx, |cx| {
                     //Binding::new(cx, AppData::options.then(Options::option1), |cx, option1| {

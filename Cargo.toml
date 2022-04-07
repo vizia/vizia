@@ -12,48 +12,58 @@ members = ["core", "winit", "baseview", "derive", "run-wasm"]
 
 [[example]]
 name = "button"
-path = "examples/controls/button.rs"
-
-
-[[example]]
-name = "slider"
-path = "examples/controls/slider.rs"
-
-[[example]]
-name = "knob"
-path = "examples/controls/knob.rs"
+path = "examples/views/button.rs"
 
 [[example]]
 name = "checkbox"
-path = "examples/controls/checkbox.rs"
-
-[[example]]
-name = "radiobutton"
-path = "examples/controls/radiobutton.rs"
-
-[[example]]
-name = "zstack"
-path = "examples/controls/zstack.rs"
-
-[[example]]
-name = "popup"
-path = "examples/controls/popup.rs"
+path = "examples/views/checkbox.rs"
 
 [[example]]
 name = "dropdown"
-path = "examples/controls/dropdown.rs"
+path = "examples/views/dropdown.rs"
+
+[[example]]
+name = "image"
+path = "examples/controls/image.rs"
+
+[[example]]
+name = "knob"
+path = "examples/views/knob.rs"
+
+[[example]]
+name = "label"
+path = "examples/views/label.rs"
+
+[[example]]
+name = "slider"
+path = "examples/views/slider.rs"
+
+
+[[example]]
+name = "radiobutton"
+path = "examples/views/radiobutton.rs"
+
+[[example]]
+name = "zstack"
+path = "examples/views/zstack.rs"
+
+[[example]]
+name = "popup"
+path = "examples/views/popup.rs"
+
+
 
 [[example]]
 name = "textbox"
-path = "examples/controls/textbox.rs"
+path = "examples/views/textbox.rs"
 
 [[example]]
 name = "number_input"
-path = "examples/controls/number_input.rs"
+path = "examples/views/number_input.rs"
 
 [[example]]
 name = "widget_gallery"
-path = "examples/controls/widget_gallery.rs"
+path = "examples/views/widget_gallery.rs"
 
 [[example]]
 name = "list"
@@ -79,9 +89,7 @@ path = "examples/lists/sortable_list.rs"
 name = "static_list"
 path = "examples/lists/static_list.rs"
 
-[[example]]
-name = "image"
-path = "examples/controls/image.rs"
+
 
 [[example]]
 name = "menu"

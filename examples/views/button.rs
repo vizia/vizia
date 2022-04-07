@@ -12,7 +12,7 @@ fn main() {
         //cx.add_stylesheet("examples/test_style.css").unwrap();
 
         HStack::new(cx, |cx| {
-            // Outline button
+            // Button
             Button::new(cx, no_action, |cx| Label::new(cx, "Button"));
             // Filled button
             Button::new(cx, no_action, |cx| Label::new(cx, "Another Button")).class("accent");
