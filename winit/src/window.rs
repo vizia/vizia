@@ -37,8 +37,8 @@ impl Window {
                 document.body().unwrap().insert_adjacent_element("afterbegin", &element).unwrap();
                 element
             }
-                .dyn_into::<web_sys::HtmlCanvasElement>()
-                .unwrap()
+            .dyn_into::<web_sys::HtmlCanvasElement>()
+            .unwrap()
         };
 
         // Build the femtovg renderer
@@ -79,7 +79,6 @@ impl Window {
         // Intentional no-op
     }
 }
-
 
 #[cfg(not(target_arch = "wasm32"))]
 impl Window {
@@ -167,7 +166,10 @@ impl View for Window {
     }
 }
 
-fn apply_window_description(builder: WindowBuilder, description: &WindowDescription) -> WindowBuilder {
+fn apply_window_description(
+    builder: WindowBuilder,
+    description: &WindowDescription,
+) -> WindowBuilder {
     builder
         .with_title(&description.title)
         .with_inner_size(PhysicalSize::new(
@@ -187,7 +189,7 @@ fn apply_window_description(builder: WindowBuilder, description: &WindowDescript
                     description.icon_width,
                     description.icon_height,
                 )
-                    .unwrap(),
+                .unwrap(),
             )
         } else {
             None
@@ -199,11 +201,5 @@ fn setup_canvas(result: &mut Window) {
     let dpi_factor = result.window().scale_factor();
     let size = result.window().inner_size();
     result.canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
-    result.canvas.clear_rect(
-        0,
-        0,
-        size.width as u32,
-        size.height as u32,
-        Color::rgb(255, 80, 80),
-    );
+    result.canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
 }
