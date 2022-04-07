@@ -358,12 +358,10 @@ impl Application {
                         } => {
                             let out_event = match delta {
                                 winit::event::MouseScrollDelta::LineDelta(x, y) => {
-                                    log(&format!("Line {} {}", x, y));
                                     WindowEvent::MouseScroll(x, y)
                                 }
                                 winit::event::MouseScrollDelta::PixelDelta(pos) => {
-                                    log(&format!("Pixel {} {}", pos.x, pos.y));
-                                    WindowEvent::MouseScroll(pos.x as f32, pos.y as f32)
+                                    WindowEvent::MouseScroll(pos.x as f32 / 20.0, pos.y as f32 / 114.0)
                                 }
                             };
 
