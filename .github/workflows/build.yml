@@ -41,5 +41,5 @@ jobs:
     - name: Build
       run: cargo build --verbose --all-targets ${{ matrix.wasm }} --no-default-features --features clipboard,${{ matrix.backend }}
     - name: Run Tests
-      if: 'matrix.wasm == ""'
+      if: "matrix.wasm == ''"
       run: cargo test --verbose --no-default-features --features clipboard,${{ matrix.backend }}
