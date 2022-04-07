@@ -80,7 +80,7 @@ pub use enviroment::*;
 
 // Re-export femtovg through a vg module
 pub mod vg {
-    pub use femtovg;
+    pub use femtovg::*;
 }
 
 // Re-export the image crate
