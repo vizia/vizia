@@ -22,7 +22,7 @@ use crate::{Context, Handle, Res, View};
 ///
 /// ```
 /// # use vizia_core::*;
-/// # use vizia_winit::application::Application;
+/// # let cx = &mut Context::new();
 /// #
 /// #[derive(Lens)]
 /// struct AppData {
@@ -31,13 +31,12 @@ use crate::{Context, Handle, Res, View};
 ///
 /// impl Model for AppData {}
 ///
-/// Application::new(WindowDescription::new(), |cx| {
-///     AppData {
-///         text: String::from("Text"),
-///     }
-///     .build(cx);
-///     Label::new(cx, AppData::text);
-/// });
+/// AppData {
+///     text: String::from("Text"),
+/// }
+/// .build(cx);
+///
+/// Label::new(cx, AppData::text);
 /// ```
 ///
 /// ## Label with text wrapping
