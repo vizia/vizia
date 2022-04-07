@@ -15,7 +15,7 @@ fn main() {
         checkbox(cx).space(Pixels(30.0));
         // label(cx);
     })
-    .background_color(Color::rgb(249, 249, 249))
+    //.background_color(Color::rgb(249, 249, 249))
     .run();
 }
 

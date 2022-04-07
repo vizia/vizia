@@ -46,6 +46,7 @@ use crate::{Context, Handle, Res, View};
 ///
 /// ```
 /// # use vizia_core::*;
+/// # let mut cx = &mut Context::new();
 /// #
 /// Label::new(
 ///     cx,
@@ -60,6 +61,7 @@ use crate::{Context, Handle, Res, View};
 ///
 /// ```
 /// # use vizia_core::*;
+/// # let mut cx = &mut Context::new();
 /// #
 /// Label::new(
 ///     cx,
@@ -75,7 +77,6 @@ use crate::{Context, Handle, Res, View};
 ///
 /// ```
 /// # use vizia_core::*;
-/// #
 /// # let cx = &mut Context::new();
 /// #
 /// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
@@ -89,7 +90,6 @@ impl Label {
     ///
     /// ```
     /// # use vizia_core::*;
-    /// #
     /// # let cx = &mut Context::new();
     /// #
     /// let label = Label::new(cx, "Text");
