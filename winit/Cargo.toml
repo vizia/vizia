@@ -6,15 +6,21 @@ edition = "2021"
 license = "MIT"
 repository = "https://github.com/vizia/vizia"
 description = "Winit backend for vizia"
+rust-version = "1.60"
+
+[features]
+x11 = ["winit/x11", "glutin?/x11"]
+wayland = ["winit/wayland", "winit/wayland-dlopen", "glutin?/wayland", "glutin?/wayland-dlopen"]
 
 [dependencies]
-winit = "0.26.1"
+winit = { version = "0.26.1", default-features = false }
 femtovg = { git = "https://github.com/femtovg/femtovg", rev = "87fe627794f3f793d8e3a338c838a2f8e8a8aa9d", default-features = false }
 keyboard-types = { version = "0.6.2", default-features = false }
 vizia_core = { path = "../core", version = "0.1" }
+glutin = { version = "0.28.0", default-features = false, optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-glutin = "0.28.0"
+glutin = { version = "0.28.0", default-features = false }
 femtovg = { git = "https://github.com/femtovg/femtovg", rev = "87fe627794f3f793d8e3a338c838a2f8e8a8aa9d", default-features = false, features = ["glutin"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
