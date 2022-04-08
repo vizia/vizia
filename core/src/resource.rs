@@ -95,10 +95,9 @@ impl ResourceManager {
             .keys()
             .filter(|&x| x != &LanguageIdentifier::default())
             .collect::<Vec<_>>();
-        let locale = locale_config::Locale::current()
-            .to_string()
-            .parse()
-            .unwrap_or_else(|_| available.first().copied().cloned().unwrap_or_default());
+        let locale = sys_locale::get_locale()
+            .map(|l| l.parse().unwrap())
+            .unwrap_or_else(|| available.first().copied().cloned().unwrap_or_default());
         let default = LanguageIdentifier::default();
         let default_ref = &default; // ???
         let langs = fluent_langneg::negotiate::negotiate_languages(
