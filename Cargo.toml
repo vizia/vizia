@@ -5,6 +5,7 @@ edition = "2021"
 license = "MIT"
 description = "A Rust GUI Framework"
 autoexamples = false
+rust-version = "1.60"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -182,12 +183,13 @@ name = "window_modifiers"
 path = "examples/window_modifiers.rs"
 
 [features]
-default = ["winit", "clipboard"]
+default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
 meadowlark = ["winit", "vizia_core/meadowlark"]
-
+x11 = ["vizia_winit?/x11", "vizia_core/x11"]
+wayland = ["vizia_winit?/wayland", "vizia_core/wayland"]
 
 [dependencies]
 vizia_core = { version = "0.1.0", path = "core"}
