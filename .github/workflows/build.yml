@@ -45,7 +45,7 @@ jobs:
     - name: Check Format
       run: cargo fmt -- --check
     - name: Build
-      run: cargo build --verbose --all-targets ${{ matrix.wasm }} --no-default-features --features clipboard,${{ matrix.backend }}
+      run: cargo build --verbose --all-targets ${{ matrix.wasm }} --no-default-features --features x11,wayland,clipboard,${{ matrix.backend }}
     - name: Run Tests
       if: "matrix.wasm == ''"
-      run: cargo test --verbose --no-default-features --features clipboard,${{ matrix.backend }} --workspace
+      run: cargo test --verbose --no-default-features --features x11,wayland,clipboard,${{ matrix.backend }} --workspace
