@@ -1,11 +1,11 @@
-use crate::{Code, Context, KeyChord, Model};
+use crate::{Code, Context, Event, KeyChord, Model};
 use std::collections::HashMap;
-use std::hash::Hash;
 
 /// A keymap that associates key chords with actions.
 ///
 /// This is useful if you have an application that lets the user configure their key chords.
 /// It allows you to check if a particular action is pressed rather than the actual keys.
+/// The relationship between a key chord and an action is a many-to-many relationship.
 ///
 /// # Examples
 ///
@@ -13,7 +13,7 @@ use std::hash::Hash;
 /// This is usually an enum.
 ///
 /// ```
-/// #[derive(PartialEq, Eq, Hash, Copy, Clone)]
+/// #[derive(PartialEq, Copy, Clone)]
 /// enum Action {
 ///     One,
 ///     Two,
@@ -27,19 +27,19 @@ use std::hash::Hash;
 ///
 /// ```
 /// # use vizia_core::*;
-/// # use std::hash::Hash;
 /// #
-/// # #[derive(PartialEq, Eq, Hash, Copy, Clone)]
+/// # #[derive(PartialEq, Copy, Clone)]
 /// # enum Action {
 /// #     One,
 /// #     Two,
 /// #     Three,
 /// # }
 /// #
-/// let keymap = Keymap::new()
-///     .insert(Action::One, KeyChord::new(Modifiers::empty(), Code::KeyA))
-///     .insert(Action::Two, KeyChord::new(Modifiers::CTRL, Code::KeyB))
-///     .insert(Action::Three, KeyChord::new(Modifiers::CTRL | Modifiers::SHIFT, Code::KeyC));
+/// let keymap = Keymap::from(vec![
+///     (Action::One, KeyChord::new(Modifiers::empty(), Code::KeyA)),
+///     (Action::Two, KeyChord::new(Modifiers::CTRL, Code::KeyB)),
+///     (Action::Three, KeyChord::new(Modifiers::CTRL | Modifiers::SHIFT, Code::KeyC)),
+/// ]);
 /// ```
 ///
 /// After we've defined our key chords we can now use them inside of a custom view. Here we check if the
@@ -49,7 +49,7 @@ use std::hash::Hash;
 /// ```
 /// # use vizia_core::*;
 /// #
-/// # #[derive(PartialEq, Eq, Hash, Copy, Clone)]
+/// # #[derive(Debug, PartialEq, Copy, Clone)]
 /// # enum Action {
 /// #     One,
 /// #     Two,
@@ -64,8 +64,10 @@ use std::hash::Hash;
 ///             match window_event {
 ///                 WindowEvent::KeyDown(code, _) => {
 ///                     if let Some(keymap_data) = cx.data::<Keymap<Action>>() {
-///                         if keymap_data.pressed(cx, &Action::One, *code) {
-///                             println!("The action One is pressed");
+///                         if let Some(actions) = keymap_data.pressed_actions(cx, *code) {
+///                             for action in actions {
+///                                 println!("The action {:?} is being pressed!", action);
+///                             }
 ///                         }
 ///                     }
 ///                 }
@@ -78,14 +80,14 @@ use std::hash::Hash;
 #[derive(Debug)]
 pub struct Keymap<T>
 where
-    T: 'static + Eq + Hash + Send + Sync + Copy + Clone,
+    T: 'static + PartialEq + Send + Sync + Copy + Clone,
 {
-    chords: HashMap<T, KeyChord>,
+    actions: HashMap<KeyChord, Vec<T>>,
 }
 
 impl<T> Keymap<T>
 where
-    T: 'static + Eq + Hash + Send + Sync + Copy + Clone,
+    T: 'static + PartialEq + Send + Sync + Copy + Clone,
 {
     /// Creates a new keymap.
     ///
@@ -93,9 +95,8 @@ where
     ///
     /// ```
     /// # use vizia_core::*;
-    /// # use std::hash::Hash;
     /// #
-    /// # #[derive(PartialEq, Eq, Hash, Copy, Clone)]
+    /// # #[derive(Debug, PartialEq, Copy, Clone)]
     /// # enum Action {
     /// #     One,
     /// #     Two,
@@ -105,129 +106,174 @@ where
     /// let keymap = Keymap::<Action>::new();
     /// ```
     pub fn new() -> Self {
-        Self { chords: HashMap::new() }
+        Self { actions: HashMap::new() }
     }
 
-    /// Inserts or overwrites a key chord of the keymap.
+    /// Inserts an entry into the keymap.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use vizia_core::*;
-    /// #
-    /// # #[derive(PartialEq, Eq, Hash, Copy, Clone)]
-    /// # enum Action {
-    /// #     One,
-    /// # }
-    /// #
-    /// let keymap = Keymap::new()
-    ///     .insert(Action::One, KeyChord::new(Modifiers::CTRL, Code::KeyA));
-    /// ```
-    pub fn insert(mut self, key: T, chord: KeyChord) -> Self {
-        self.chords.insert(key, chord);
+    /// This method is for internal use only.
+    /// To insert an entry into the keymap at runtime use the [`KeymapEvent::InsertAction`] event.
+    fn insert(&mut self, action: T, chord: KeyChord) -> &mut Self {
+        if let Some(actions) = self.actions.get_mut(&chord) {
+            if !actions.contains(&action) {
+                actions.push(action);
+            }
+        } else {
+            self.actions.insert(chord, vec![action]);
+        }
         self
     }
 
-    /// Removes a key chord of the keymap if it exists.
+    /// Removes an entry of the keymap.
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use vizia_core::*;
-    /// #
-    /// # #[derive(PartialEq, Eq, Hash, Copy, Clone)]
-    /// # enum Action {
-    /// #     One,
-    /// # }
-    /// #
-    /// let keymap = Keymap::new().remove(&Action::One);
-    /// ```
-    pub fn remove(mut self, key: &T) -> Self {
-        self.chords.remove(key);
+    /// This method is for internal use only.
+    /// To remove an entry of the keymap at runtime use the [`KeymapEvent::RemoveAction`] event.
+    fn remove(&mut self, action: &T, chord: &KeyChord) -> &mut Self {
+        if let Some(actions) = self.actions.get_mut(chord) {
+            if let Some(index) = actions.iter().position(|x| x == action) {
+                if actions.len() == 1 {
+                    self.actions.remove(chord);
+                } else {
+                    actions.swap_remove(index);
+                }
+            }
+        }
         self
     }
 
-    /// Returns `true` if the `action` is pressed.
+    /// Returns an iterator over every pressed action or `None` if there are no actions for that key chord.
     ///
     /// # Examples
     ///
     /// ```
     /// # use vizia_core::*;
     /// #
-    /// # #[derive(PartialEq, Eq, Hash, Copy, Clone)]
+    /// # #[derive(Debug, PartialEq, Copy, Clone)]
     /// # enum Action {
     /// #     One,
     /// # }
     /// #
     /// # let cx = &Context::new();
-    /// # let keymap = Keymap::new();
+    /// # let keymap = Keymap::<Action>::new();
     /// #
-    /// if keymap.pressed(cx, &Action::One, Code::KeyA) {
-    ///     println!("Action is pressed");
+    /// if let Some(actions) = keymap.pressed_actions(cx, Code::KeyA) {
+    ///     for action in actions {
+    ///         println!("The action {:?} is being pressed!", action);
+    ///     }
+    /// };
+    /// ```
+    pub fn pressed_actions(&self, cx: &Context, code: Code) -> Option<impl Iterator<Item = &T>> {
+        if let Some(actions) = self.actions.get(&KeyChord::new(cx.modifiers, code)) {
+            Some(actions.iter())
+        } else {
+            None
+        }
+    }
+
+    /// Exports all actions and their associated key chords.
+    ///
+    /// This is useful if you want to have a settings window and need every to access every key chord
+    /// and action of a keymap.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::*;
+    /// #
+    /// # #[derive(Debug, PartialEq, Copy, Clone)]
+    /// # enum Action {
+    /// #     One,
+    /// # }
+    /// #
+    /// # let keymap = Keymap::<Action>::new();
+    /// #
+    /// let actions_chords = keymap.export();
+    ///
+    /// for (action, chord) in actions_chords {
+    ///     println!("The key chord {:?} triggers the action {:?}!", chord, action);
     /// }
     /// ```
-    pub fn pressed(&self, cx: &Context, action: &T, button: Code) -> bool {
-        self.chords
-            .get(action)
-            .map(|chord| chord.modifiers == cx.modifiers && chord.button == button)
-            .unwrap_or(false)
+    pub fn export(&self) -> Vec<(T, KeyChord)> {
+        let mut vec = Vec::new();
+        for (chord, actions) in self.actions.iter() {
+            for action in actions {
+                vec.push((*action, *chord));
+            }
+        }
+        vec
     }
 }
 
 impl<T> Model for Keymap<T>
 where
-    T: 'static + Eq + Hash + Send + Sync + Copy + Clone,
+    T: 'static + PartialEq + Send + Sync + Copy + Clone,
 {
-    fn event(&mut self, _: &mut Context, event: &mut crate::Event) {
-        if let Some(keymap_event) = event.message.downcast() {
+    fn event(&mut self, _: &mut Context, event: &mut Event) {
+        if let Some(keymap_event) = event.message.downcast::<KeymapEvent<T>>() {
             match keymap_event {
-                KeymapEvent::InsertChord(action, chord) => self.chords.insert(*action, *chord),
-                KeymapEvent::RemoveChord(action) => self.chords.remove(action),
+                KeymapEvent::InsertAction(action, chord) => self.insert(*action, *chord),
+                KeymapEvent::RemoveAction(action, chord) => self.remove(action, chord),
             };
         }
+    }
+}
+
+impl<T> From<Vec<(T, KeyChord)>> for Keymap<T>
+where
+    T: 'static + PartialEq + Send + Sync + Copy + Clone,
+{
+    fn from(vec: Vec<(T, KeyChord)>) -> Self {
+        let mut keymap = Self::new();
+        for (action, chord) in vec {
+            keymap.insert(action, chord);
+        }
+        keymap
     }
 }
 
 /// An event used to interact with a [`Keymap`] at runtime.
 pub enum KeymapEvent<T>
 where
-    T: 'static + Eq + Hash + Send + Sync + Copy + Clone,
+    T: 'static + PartialEq + Send + Sync + Copy + Clone,
 {
-    /// Inserts a key chord into the [`Keymap`].
+    /// Inserts an entry into the [`Keymap`].
     ///
     /// # Examples
     ///
     /// ```
     /// # use vizia_core::*;
     /// #
-    /// # #[derive(PartialEq, Eq, Hash, Copy, Clone)]
+    /// # #[derive(PartialEq, Copy, Clone)]
     /// # enum Action {
     /// #     One,
     /// # }
     /// #
     /// # let cx = &mut Context::new();
     /// #
-    /// cx.emit(KeymapEvent::InsertBinding(
+    /// cx.emit(KeymapEvent::InsertAction(
     ///     Action::One,
     ///     KeyChord::new(Modifiers::empty(), Code::KeyA),
     /// ));
     /// ```
-    InsertChord(T, KeyChord),
-    /// Removes a key chord from the [`Keymap`].
+    InsertAction(T, KeyChord),
+    /// Removes an entry from the [`Keymap`].
     ///
     /// # Examples
     ///
     /// ```
     /// # use vizia_core::*;
     /// #
-    /// # #[derive(PartialEq, Eq, Hash, Copy, Clone)]
+    /// # #[derive(PartialEq, Copy, Clone)]
     /// # enum Action {
     /// #     One,
     /// # }
     /// #
     /// # let cx = &mut Context::new();
     /// #
-    /// cx.emit(KeymapEvent::RemoveBinding(Action::One));
+    /// cx.emit(KeymapEvent::RemoveAction(
+    ///     Action::One,
+    ///     KeyChord::new(Modifiers::empty(), Code::KeyA),
+    /// ));
     /// ```
-    RemoveChord(T),
+    RemoveAction(T, KeyChord),
 }

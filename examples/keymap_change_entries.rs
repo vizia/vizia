@@ -1,4 +1,4 @@
-//! This example showcases how to change the key chords of a keymap at runtime.
+//! This example showcases how to change the entries of a keymap at runtime.
 //!
 //! Key chords before pressing the button:
 //! `A` => `Action::One`
@@ -6,6 +6,7 @@
 //! `C` => `Action::Three`
 //!
 //! Key chords after pressing the button:
+//! `A` => `Action::One`
 //! `X` => `Action::One`
 //! `Z` => `Action::Three`
 
@@ -13,28 +14,38 @@ use vizia::*;
 
 fn main() {
     Application::new(WindowDescription::new().with_title("Keymap - Change Key Chords"), |cx| {
-        // Build the keymap
-        Keymap::new()
-            .insert(Action::One, KeyChord::new(Modifiers::empty(), Code::KeyA))
-            .insert(Action::Two, KeyChord::new(Modifiers::empty(), Code::KeyB))
-            .insert(Action::Three, KeyChord::new(Modifiers::empty(), Code::KeyC))
-            .build(cx);
+        // Build the keymap.
+        Keymap::from(vec![
+            (Action::One, KeyChord::new(Modifiers::empty(), Code::KeyA)),
+            (Action::Two, KeyChord::new(Modifiers::empty(), Code::KeyB)),
+            (Action::Three, KeyChord::new(Modifiers::empty(), Code::KeyC)),
+        ])
+        .build(cx);
 
         // Create a new button that changes our key chords.
         Button::new(
             cx,
             |cx| {
-                // Change the first chord to trigger when pressing `X` instead of `A`.
-                cx.emit(KeymapEvent::InsertChord(
+                // Insert `Action::One` that triggers on `Code::KeyX`.
+                cx.emit(KeymapEvent::InsertAction(
                     Action::One,
                     KeyChord::new(Modifiers::empty(), Code::KeyX),
                 ));
 
-                // Remove the second chord.
-                cx.emit(KeymapEvent::RemoveChord(Action::Two));
+                // Remove `Action::Two` that triggers on `Code::KeyB`.
+                cx.emit(KeymapEvent::RemoveAction(
+                    Action::Two,
+                    KeyChord::new(Modifiers::empty(), Code::KeyB),
+                ));
 
-                // Change the third chord to trigger when pressing `Z` instead of `C`.
-                cx.emit(KeymapEvent::InsertChord(
+                // Remove `Action::Three` that triggers on `Code::KeyC`.
+                cx.emit(KeymapEvent::RemoveAction(
+                    Action::Three,
+                    KeyChord::new(Modifiers::empty(), Code::KeyC),
+                ));
+
+                // Insert `Action::Three` that triggers on `Code::KeyZ`.
+                cx.emit(KeymapEvent::InsertAction(
                     Action::Three,
                     KeyChord::new(Modifiers::empty(), Code::KeyZ),
                 ))
@@ -63,10 +74,10 @@ impl View for CustomView {
                 WindowEvent::KeyDown(code, _) => {
                     // Retrieve our keymap data containing all of our key chords.
                     if let Some(keymap_data) = cx.data::<Keymap<Action>>() {
-                        // Loop through every action in our `Action` enum.
-                        for action in ACTIONS {
-                            // Check if the action is being pressed.
-                            if keymap_data.pressed(cx, &action, *code) {
+                        // Retrieve the pressed actions.
+                        if let Some(actions) = keymap_data.pressed_actions(cx, *code) {
+                            // Loop through every action that is being pressed.
+                            for action in actions {
                                 println!("The action {:?} is being pressed!", action);
                             }
                         }
@@ -79,11 +90,9 @@ impl View for CustomView {
 }
 
 // The actions that are associated with the key chords.
-#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 enum Action {
     One,
     Two,
     Three,
 }
-
-const ACTIONS: [Action; 3] = [Action::One, Action::Two, Action::Three];
