@@ -1,4 +1,5 @@
 use instant::{Duration, Instant};
+use std::any::Any;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::{Debug, Formatter};
@@ -166,7 +167,7 @@ impl Context {
     /// Get stored data from the context.
     pub fn data<T: 'static>(&self) -> Option<&T> {
         // return data for the static model
-        if let Some(t) = ().as_any().downcast_ref::<T>() {
+        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);
         }
 
