@@ -170,30 +170,30 @@ fn apply_window_description(
     builder: WindowBuilder,
     description: &WindowDescription,
 ) -> WindowBuilder {
-    builder = window_builder
-        .with_title(&window_description.title)
+    builder
+        .with_title(&description.title)
         .with_inner_size(LogicalSize::new(
-            window_description.inner_size.width,
-            window_description.inner_size.height,
+            description.inner_size.width,
+            description.inner_size.height,
         ))
         .with_min_inner_size(LogicalSize::new(
-            window_description.min_inner_size.width,
-            window_description.min_inner_size.height,
+            description.min_inner_size.width,
+            description.min_inner_size.height,
         ))
-        .with_always_on_top(window_description.always_on_top)
-        .with_resizable(window_description.resizable)
-        .with_window_icon(if let Some(icon) = &window_description.icon {
+        .with_always_on_top(description.always_on_top)
+        .with_resizable(description.resizable)
+        .with_window_icon(if let Some(icon) = &description.icon {
             Some(
                 winit::window::Icon::from_rgba(
                     icon.clone(),
-                    window_description.icon_width,
-                    window_description.icon_height,
+                    description.icon_width,
+                    description.icon_height,
                 )
                 .unwrap(),
             )
         } else {
             None
-        });
+        })
 }
 
 fn setup_canvas(result: &mut Window) {
