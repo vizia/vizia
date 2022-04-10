@@ -14,3 +14,4 @@ baseview = { git = "https://github.com/RustAudio/baseview.git", rev = "b3712638b
 keyboard-types = { version = "0.6.2", default-features = false }
 raw-window-handle = "0.4"
 femtovg = { git = "https://github.com/femtovg/femtovg", rev = "87fe627794f3f793d8e3a338c838a2f8e8a8aa9d", default-features = false }
+lazy_static = "1.4.0"
