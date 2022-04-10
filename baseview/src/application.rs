@@ -8,6 +8,7 @@ use vizia_core::cache::BoundingBox;
 use vizia_core::events::EventManager;
 use vizia_core::fonts;
 use vizia_core::prelude::*;
+use crate::proxy::queue_get;
 
 pub struct Application<F>
 where
@@ -249,6 +250,10 @@ impl ApplicationRunner {
     // }
 
     pub fn on_frame_update(&mut self) {
+        while let Some(event) = queue_get() {
+            self.context.emit_custom(event);
+        }
+
         //if let Some(mut window_view) = context.views.remove(&Entity::root()) {
         //if let Some(window) = window_view.downcast_mut::<Window>() {
 
@@ -454,10 +459,6 @@ impl ApplicationRunner {
     }
 
     pub fn handle_idle(&mut self, on_idle: &Option<Box<dyn Fn(&mut Context) + Send>>) {
-        // if let Some(idle_callback) = on_idle {
-        //     (idle_callback)(&mut self.context);
-        // }
-
         if let Some(idle_callback) = on_idle {
             self.context.set_current(Entity::root());
             (idle_callback)(&mut self.context);
