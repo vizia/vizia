@@ -148,35 +148,38 @@ pub trait View: 'static + Sized {
 
         let opacity = cx.cache.get_opacity(entity);
 
+        let dpi_factor = cx.style.dpi_factor as f32;
+
         let mut background_color: femtovg::Color = background_color.into();
         background_color.set_alphaf(background_color.a * opacity);
 
         let mut border_color: femtovg::Color = border_color.into();
         border_color.set_alphaf(border_color.a * opacity);
 
-        let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default() {
-            Units::Pixels(val) => val,
+        let mut border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
+        {
+            Units::Pixels(val) => val * dpi_factor,
             Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
             _ => 0.0,
         };
 
         let outer_shadow_h_offset =
             match cx.style.outer_shadow_h_offset.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val,
+                Units::Pixels(val) => val * dpi_factor,
                 Units::Percentage(val) => bounds.w * (val / 100.0),
                 _ => 0.0,
             };
 
         let outer_shadow_v_offset =
             match cx.style.outer_shadow_v_offset.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val,
+                Units::Pixels(val) => val * dpi_factor,
                 Units::Percentage(val) => bounds.w * (val / 100.0),
                 _ => 0.0,
             };
 
         let outer_shadow_blur =
             match cx.style.outer_shadow_blur.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val,
+                Units::Pixels(val) => val * dpi_factor,
                 Units::Percentage(val) => bounds.w * (val / 100.0),
                 _ => 0.0,
             };
