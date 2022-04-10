@@ -29,6 +29,7 @@ use crate::{
 use crate::{AnimExt, Animation, AnimationBuilder};
 
 static DEFAULT_THEME: &str = include_str!("../default_theme.css");
+static DEFAULT_LAYOUT: &str = include_str!("../default_layout.css");
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
 pub struct Context {
@@ -105,6 +106,7 @@ impl Context {
         };
 
         result.entity_manager.create();
+        result.add_theme(DEFAULT_LAYOUT);
         result.add_theme(DEFAULT_THEME);
 
         result
@@ -229,6 +231,7 @@ impl Context {
     pub fn remove_user_themes(&mut self) {
         self.resource_manager.themes.clear();
 
+        self.add_theme(DEFAULT_LAYOUT);
         self.add_theme(DEFAULT_THEME);
     }
 
@@ -371,7 +374,7 @@ impl Context {
 
         // Reload the stored themes
         for (index, theme) in self.resource_manager.themes.iter().enumerate() {
-            if !self.enviroment.include_default_theme && index == 0 {
+            if !self.enviroment.include_default_theme && index == 1 {
                 continue;
             }
 
