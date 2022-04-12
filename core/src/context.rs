@@ -22,13 +22,13 @@ use crate::{
     MouseState, PropSet, Propagation, ResourceManager, StoredImage, Style, Tree, TreeDepthIterator,
     TreeExt, TreeIterator, View, ViewHandler, Visibility, WindowEvent,
 };
-use crate::{AnimExt, Animation, AnimationBuilder};
+use crate::{AnimExt, Animation, AnimationBuilder, WindowDescription};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
 pub struct Context {
-    pub(crate) entity_manager: IdManager<Entity>,
+    pub entity_manager: IdManager<Entity>,
     pub tree: Tree,
     pub current: Entity,
     //pub views: HashMap<Entity, Box<dyn ViewHandler>>,
@@ -61,6 +61,9 @@ pub struct Context {
     click_time: Instant,
     double_click: bool,
     click_pos: (f32, f32),
+
+    // For winit only
+    pub sub_windows: Vec<(Option<Entity>, WindowDescription)>,
 }
 
 impl Context {
@@ -98,12 +101,18 @@ impl Context {
             click_time: Instant::now(),
             double_click: false,
             click_pos: (0.0, 0.0),
+
+            sub_windows: Vec::new(),
         };
 
         result.entity_manager.create();
         result.add_theme(DEFAULT_THEME);
 
         result
+    }
+
+    pub fn add_window(&mut self, window_description: &WindowDescription) {
+        // Add window to context
     }
 
     /// Causes mouse events to propagate to the current entity until released

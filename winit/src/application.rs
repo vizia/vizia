@@ -1,4 +1,5 @@
-use std::cell::RefCell;
+use glutin::window::WindowId;
+use std::{cell::RefCell, collections::HashMap};
 use winit::{
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
@@ -108,22 +109,9 @@ impl Application {
 
         let event_loop = self.event_loop;
 
-        // let handle = ContextBuilder::new()
-        //     .with_vsync(true)
-        //     .build_windowed(WindowBuilder::new(), &event_loop)
-        //     .expect("Failed to build windowed context");
-
-        // let handle = unsafe { handle.make_current().unwrap() };
-
-        // let renderer = OpenGl::new(|s| handle.context().get_proc_address(s) as *const _)
-        //     .expect("Cannot create renderer");
-        // let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
-
         let mut window = Window::new(&event_loop, &self.window_description);
-
-        // let font = canvas.add_font_mem(FONT).expect("Failed to load font");
-
-        // context.fonts = vec![font];
+        let root_window_id = window.id;
+        context.sub_windows.push((Some(Entity::root()), self.window_description.clone()));
 
         let regular_font = include_bytes!("../../fonts/Roboto-Regular.ttf");
         let bold_font = include_bytes!("../../fonts/Roboto-Bold.ttf");
@@ -211,7 +199,11 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
-        event_loop.run(move |event, _, control_flow|{
+        // Multiwindow
+        let mut windows: HashMap<WindowId, Entity> = HashMap::new();
+        windows.insert(root_window_id, Entity::root());
+
+        event_loop.run(move |event, event_loop_window_target, control_flow|{
             match event {
 
                 winit::event::Event::UserEvent(event) => {
@@ -234,29 +226,43 @@ impl Application {
                         context.enviroment.needs_rebuild = false;
                     }
 
-                    if let Some(mut window_view) = context.views.remove(&Entity::root()) {
-                        if let Some(window) = window_view.downcast_mut::<Window>() {
+                    // Build any windows which were added
+                    if context.sub_windows.len() != windows.len() {
+                        for (win_entity, window_description) in context.sub_windows.iter_mut().filter(|(entity, _)| entity.is_none()) {
+                            let window = Window::new(event_loop_window_target, &window_description);
+                            let window_id = window.id;
+                            let id = context.entity_manager.create();
+                            context.tree.add(id, Entity::root()).expect("Failed to add to tree");
+                            context.cache.add(id).expect("Failed to add to cache");
+                            context.style.add(id);
+                            context.views.insert(id, Box::new(window));
+                            windows.insert(window_id, id);
+                            *win_entity = Some(id);
+                        }
+                    }
 
-                            // Load resources
-                            for (name, font) in context.resource_manager.fonts.iter_mut() {
-                                match font {
-                                    FontOrId::Font(data) => {
-                                        let id1 = window.canvas.add_font_mem(&data.clone()).expect(&format!("Failed to load font file for: {}", name));
-                                        let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
-                                        if id1 != id2 {
-                                            panic!("Fonts in canvas must have the same id as fonts in the text context");
+                    for (_, window_entity) in windows.iter() {
+                        if let Some(mut window_view) = context.views.remove(window_entity) {
+                            if let Some(window) = window_view.downcast_mut::<Window>() {
+                                // Load resources
+                                for (name, font) in context.resource_manager.fonts.iter_mut() {
+                                    match font {
+                                        FontOrId::Font(data) => {
+                                            let id1 = window.canvas.add_font_mem(&data.clone()).expect(&format!("Failed to load font file for: {}", name));
+                                            let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
+                                            if id1 != id2 {
+                                                panic!("Fonts in canvas must have the same id as fonts in the text context");
+                                            }
+                                            *font = FontOrId::Id(id1);
                                         }
-                                        *font = FontOrId::Id(id1);
+                                        _=> {}
                                     }
-
-                                    _=> {}
                                 }
                             }
-
+                            context.views.insert(*window_entity, window_view);
                         }
-
-                        context.views.insert(Entity::root(), window_view);
                     }
+
 
                     // Events
                     while !context.event_queue.is_empty() {
@@ -273,12 +279,14 @@ impl Application {
                         //context.insert_event(Event::new(WindowEvent::Relayout).target(Entity::root()));
                         event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();
                         //window.handle.window().request_redraw();
-                        if let Some(window_event_handler) = context.views.remove(&Entity::root()) {
-                            if let Some(window) = window_event_handler.downcast_ref::<Window>() {
-                                window.window().request_redraw();
-                            }
+                        for (_, window_entity) in windows.iter() {
+                            if let Some(window_event_handler) = context.views.remove(window_entity) {
+                                if let Some(window) = window_event_handler.downcast_ref::<Window>() {
+                                    window.window().request_redraw();
+                                }
 
-                            context.views.insert(Entity::root(), window_event_handler);
+                                context.views.insert(*window_entity, window_event_handler);
+                            }
                         }
                     }
 
@@ -286,11 +294,13 @@ impl Application {
 
                     context.process_visual_updates();
 
-                    if let Some(window_view) = context.views.get(&Entity::root()) {
-                        if let Some(window) = window_view.downcast_ref::<Window>() {
-                            if context.style.needs_redraw {
-                                window.window().request_redraw();
-                                context.style.needs_redraw = false;
+                    for (_, window_entity) in windows.iter() {
+                        if let Some(window_view) = context.views.get(window_entity) {
+                            if let Some(window) = window_view.downcast_ref::<Window>() {
+                                if context.style.needs_redraw {
+                                    window.window().request_redraw();
+                                    context.style.needs_redraw = false;
+                                }
                             }
                         }
                     }
@@ -306,18 +316,34 @@ impl Application {
                     }
                 }
 
-                winit::event::Event::RedrawRequested(_) => {
-                    // Redraw here
-                    context_draw(&mut context);
+                winit::event::Event::RedrawRequested(window_id) => {
+                    if let Some(window_entity) = windows.get(&window_id) {
+
+                        // Redraw here
+                        context_draw(&mut context, *window_entity);
+                    }
                 }
 
                 winit::event::Event::WindowEvent {
-                    window_id: _,
+                    window_id,
                     event,
                 } => {
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
-                            *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                            if let Some(window_entity) = windows.get(&window_id) {
+                                if *window_entity == Entity::root() {
+                                    *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                                } else {
+                                    context.remove(*window_entity);
+                                    let (index, (_, _)) = context.sub_windows.iter().enumerate().find(|(_, (entity, _))| entity == &Some(*window_entity)).unwrap();
+                                    context.sub_windows.remove(index);
+                                    windows.remove(&window_id);
+                                }
+                            }
+
+                            if windows.is_empty() {
+                                *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                            }
                         }
 
                         #[allow(deprecated)]
@@ -480,14 +506,14 @@ impl Env for Application {
 //     }
 // }
 
-fn context_draw(cx: &mut Context) {
-    if let Some(mut window_view) = cx.views.remove(&Entity::root()) {
+fn context_draw(cx: &mut Context, window_entity: Entity) {
+    if let Some(mut window_view) = cx.views.remove(&window_entity) {
         if let Some(window) = window_view.downcast_mut::<Window>() {
             let dpi_factor = window.window().scale_factor();
             cx.draw(&mut window.canvas, dpi_factor as f32);
             window.swap_buffers();
         }
 
-        cx.views.insert(Entity::root(), window_view);
+        cx.views.insert(window_entity, window_view);
     }
 }

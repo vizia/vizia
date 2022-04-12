@@ -1,3 +1,4 @@
+use glutin::event_loop::EventLoopWindowTarget;
 #[cfg(not(target_arch = "wasm32"))]
 use glutin::ContextBuilder;
 use winit::event_loop::EventLoop;
@@ -14,9 +15,9 @@ pub struct Window {
     pub canvas: Canvas<OpenGl>,
 
     #[cfg(not(target_arch = "wasm32"))]
-    handle: glutin::WindowedContext<glutin::PossiblyCurrent>,
+    pub handle: glutin::WindowedContext<glutin::PossiblyCurrent>,
     #[cfg(target_arch = "wasm32")]
-    handle: winit::window::Window,
+    pub handle: winit::window::Window,
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -82,7 +83,10 @@ impl Window {
 
 #[cfg(not(target_arch = "wasm32"))]
 impl Window {
-    pub fn new(events_loop: &EventLoop<Event>, window_description: &WindowDescription) -> Self {
+    pub fn new(
+        events_loop: &EventLoopWindowTarget<Event>,
+        window_description: &WindowDescription,
+    ) -> Self {
         let window_builder = WindowBuilder::new();
 
         //Windows COM doesn't play nicely with winit's drag and drop right now
@@ -117,7 +121,16 @@ impl Window {
         };
 
         setup_canvas(&mut result);
+
         result
+    }
+
+    pub fn new2(
+        cx: &mut Context,
+        window_description: WindowDescription,
+        content: impl Fn(&mut Context),
+    ) {
+        cx.sub_windows.push((None, window_description));
     }
 
     pub fn window(&self) -> &winit::window::Window {

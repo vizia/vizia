@@ -26,6 +26,7 @@ pub struct Tree {
     pub next_sibling: Vec<Option<Entity>>,
     pub prev_sibling: Vec<Option<Entity>>,
     pub ignored: Vec<bool>,
+    pub window: Vec<bool>,
     pub changed: bool,
 }
 
@@ -38,6 +39,7 @@ impl Tree {
             next_sibling: vec![None],
             prev_sibling: vec![None],
             ignored: vec![false],
+            window: vec![false],
             changed: true,
         }
     }
@@ -110,6 +112,11 @@ impl Tree {
     /// Returns true if the node should be skipped by layout
     pub fn is_ignored(&self, entity: Entity) -> bool {
         self.ignored.get(entity.index()).map_or_else(|| false, |ignored| *ignored)
+    }
+
+    /// Returns true if the node should be skipped by layout
+    pub fn is_window(&self, entity: Entity) -> bool {
+        self.window.get(entity.index()).map_or_else(|| false, |window| *window)
     }
 
     /// Returns the first ancestor of an entity which is not ignored
@@ -237,6 +244,7 @@ impl Tree {
         self.prev_sibling[entity_index] = None;
         self.parent[entity_index] = None;
         self.ignored[entity_index] = false;
+        self.window[entity_index] = false;
 
         // Set the changed flag
         self.changed = true;
@@ -447,6 +455,10 @@ impl Tree {
         self.ignored.get_mut(entity.index()).and_then(|ignored| Some(*ignored = flag));
     }
 
+    pub fn set_window(&mut self, entity: Entity, flag: bool) {
+        self.window.get_mut(entity.index()).and_then(|window| Some(*window = flag));
+    }
+
     /// Adds an entity to the tree with the specified parent.
     pub fn add(&mut self, entity: Entity, parent: Entity) -> Result<(), TreeError> {
         if entity == Entity::null() || parent == Entity::null() {
@@ -467,6 +479,7 @@ impl Tree {
             self.next_sibling.resize(entity_index + 1, None);
             self.prev_sibling.resize(entity_index + 1, None);
             self.ignored.resize(entity_index + 1, false);
+            self.window.resize(entity_index + 1, false);
         }
 
         self.parent[entity_index] = Some(parent);
@@ -474,6 +487,7 @@ impl Tree {
         self.next_sibling[entity_index] = None;
         self.prev_sibling[entity_index] = None;
         self.ignored[entity_index] = false;
+        self.window[entity_index] = false;
 
         // If the parent has no first child then this entity is the first child
         if self.first_child[parent_index] == None {
