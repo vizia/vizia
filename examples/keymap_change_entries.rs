@@ -74,12 +74,9 @@ impl View for CustomView {
                 WindowEvent::KeyDown(code, _) => {
                     // Retrieve our keymap data containing all of our key chords.
                     if let Some(keymap_data) = cx.data::<Keymap<Action>>() {
-                        // Retrieve the pressed actions.
-                        if let Some(actions) = keymap_data.pressed_actions(cx, *code) {
-                            // Loop through every action that is being pressed.
-                            for action in actions {
-                                println!("The action {:?} is being pressed!", action);
-                            }
+                        // Loop through every action that is being pressed.
+                        for action in keymap_data.pressed_actions(cx, *code) {
+                            println!("The action {:?} is being pressed!", action);
                         }
                     }
                 }
