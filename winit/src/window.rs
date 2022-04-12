@@ -1,7 +1,6 @@
 use glutin::event_loop::EventLoopWindowTarget;
 #[cfg(not(target_arch = "wasm32"))]
 use glutin::ContextBuilder;
-use winit::event_loop::EventLoop;
 use winit::window::WindowBuilder;
 use winit::{dpi::*, window::WindowId};
 

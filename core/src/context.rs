@@ -111,10 +111,6 @@ impl Context {
         result
     }
 
-    pub fn add_window(&mut self, window_description: &WindowDescription) {
-        // Add window to context
-    }
-
     /// Causes mouse events to propagate to the current entity until released
     pub fn capture(&mut self) {
         self.captured = self.current;

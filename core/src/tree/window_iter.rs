@@ -1,4 +1,4 @@
-use crate::{DoubleEndedTreeTour, Entity, GenerationalId, TourDirection, TourStep, Tree};
+use crate::{DoubleEndedTreeTour, Entity, TourDirection, TourStep, Tree};
 
 /// Iterator for iterating through the tree in depth first preorder.
 pub struct WindowTreeIterator<'a> {
