@@ -64,10 +64,8 @@ use std::collections::HashMap;
 ///             match window_event {
 ///                 WindowEvent::KeyDown(code, _) => {
 ///                     if let Some(keymap_data) = cx.data::<Keymap<Action>>() {
-///                         if let Some(actions) = keymap_data.pressed_actions(cx, *code) {
-///                             for action in actions {
-///                                 println!("The action {:?} is being pressed!", action);
-///                             }
+///                         for action in keymap_data.pressed_actions(cx, *code) {
+///                             println!("The action {:?} is being pressed!", action);
 ///                         }
 ///                     }
 ///                 }
@@ -156,17 +154,15 @@ where
     /// # let cx = &Context::new();
     /// # let keymap = Keymap::<Action>::new();
     /// #
-    /// if let Some(actions) = keymap.pressed_actions(cx, Code::KeyA) {
-    ///     for action in actions {
-    ///         println!("The action {:?} is being pressed!", action);
-    ///     }
+    /// for action in keymap.pressed_actions(cx, Code::KeyA) {
+    ///     println!("The action {:?} is being pressed!", action);
     /// };
     /// ```
-    pub fn pressed_actions(&self, cx: &Context, code: Code) -> Option<impl Iterator<Item = &T>> {
+    pub fn pressed_actions(&self, cx: &Context, code: Code) -> impl Iterator<Item = &T> {
         if let Some(actions) = self.actions.get(&KeyChord::new(cx.modifiers, code)) {
-            Some(actions.iter())
+            actions.iter()
         } else {
-            None
+            [].iter()
         }
     }
 
