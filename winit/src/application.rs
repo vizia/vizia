@@ -125,13 +125,13 @@ impl Application {
         // let font = canvas.add_font_mem(FONT).expect("Failed to load font");
 
         // context.fonts = vec![font];
-
-        let regular_font = include_bytes!("../../fonts/Roboto-Regular.ttf");
-        let bold_font = include_bytes!("../../fonts/Roboto-Bold.ttf");
-        let icon_font = include_bytes!("../../fonts/entypo.ttf");
-        let emoji_font = include_bytes!("../../fonts/OpenSansEmoji.ttf");
-        let arabic_font = include_bytes!("../../fonts/amiri-regular.ttf");
-        let material_font = include_bytes!("../../fonts/MaterialIcons-Regular.ttf");
+        
+        let regular_font = fonts::ROBOTO_REGULAR;
+        let bold_font = fonts::ROBOTO_BOLD;
+        let icon_font = fonts::ENTYPO;
+        let emoji_font = fonts::OPEN_SANS_EMOJI;
+        let arabic_font = fonts::AMIRI_REGULAR;
+        let material_font = fonts::MATERIAL_ICONS_REGULAR;
 
         context.add_font_mem("roboto", regular_font);
         context.add_font_mem("roboto-bold", bold_font);
