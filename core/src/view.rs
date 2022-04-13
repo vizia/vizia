@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{any::Any, collections::HashMap};
 
 use crate::{
     idx_to_pos, measure_text_lines,
@@ -775,5 +775,13 @@ where
 
     fn draw(&self, cx: &mut Context, canvas: &mut Canvas) {
         <T as View>::draw(self, cx, canvas);
+    }
+
+    fn as_any_ref(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }

@@ -77,7 +77,7 @@ where
                 }
 
                 if let Some(view_handler) = cx.views.get(&entity) {
-                    if view_handler.is::<L::Source>() {
+                    if view_handler.as_any_ref().is::<L::Source>() {
                         if let Some(lens_wrap) = lens
                             .cache_key()
                             .and_then(|key| model_data_store.lenses_dedup.get_mut(&key))
