@@ -2,6 +2,7 @@ use instant::{Duration, Instant};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::{Debug, Formatter};
+use std::hash::Hash;
 use std::sync::Mutex;
 
 #[cfg(feature = "clipboard")]
@@ -22,7 +23,7 @@ use crate::{
     MouseState, PropSet, Propagation, ResourceManager, StoredImage, Style, Tree, TreeDepthIterator,
     TreeExt, TreeIterator, View, ViewHandler, Visibility, WindowEvent,
 };
-use crate::{AnimExt, Animation, AnimationBuilder, WindowDescription};
+use crate::{AnimExt, Animation, AnimationBuilder, WindowDescription, WindowTreeIterator};
 
 static DEFAULT_THEME: &str = include_str!("default_theme.css");
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
@@ -63,7 +64,7 @@ pub struct Context {
     click_pos: (f32, f32),
 
     // For winit only
-    pub sub_windows: Vec<(Option<Entity>, WindowDescription)>,
+    pub sub_windows: HashMap<Entity, WindowDescription>,
 }
 
 impl Context {
@@ -102,7 +103,7 @@ impl Context {
             double_click: false,
             click_pos: (0.0, 0.0),
 
-            sub_windows: Vec::new(),
+            sub_windows: HashMap::new(),
         };
 
         result.entity_manager.create();
@@ -629,22 +630,23 @@ impl Context {
         geometry_changed(self, &tree);
     }
 
-    pub fn draw(&mut self, canvas: &mut Canvas, dpi_factor: f32) {
+    pub fn draw(&mut self, canvas: &mut Canvas, dpi_factor: f32, window_entity: Entity) {
         self.resource_manager.mark_images_unused();
 
-        let window_width = self.cache.get_width(Entity::root());
-        let window_height = self.cache.get_height(Entity::root());
+        let window_width = self.cache.get_width(window_entity);
+        let window_height = self.cache.get_height(window_entity);
 
         canvas.set_size(window_width as u32, window_height as u32, dpi_factor);
         let clear_color =
-            self.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
+            self.style.background_color.get(window_entity).cloned().unwrap_or(Color::white());
         canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
 
         // filter for widgets that should be drawn
-        let tree_iter = self.tree.into_iter();
+        //let tree_iter = self.tree.into_iter();
+        let tree_iter = WindowTreeIterator::subtree(&self.tree, window_entity);
         let mut draw_tree: Vec<Entity> = tree_iter
             .filter(|&entity| {
-                entity != Entity::root()
+                entity != window_entity
                     && self.cache.get_visibility(entity) != Visibility::Invisible
                     && self.cache.get_display(entity) != Display::None
                     && !self.tree.is_ignored(entity)
