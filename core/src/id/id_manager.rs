@@ -9,7 +9,7 @@ const IDX_MAX: u32 = std::u32::MAX >> 8;
 /// The IdManager is responsible for allocating generational IDs.
 ///
 /// The IdManager is generic on ID type, requiring only that the ID type implements [GenerationalId].
-pub(crate) struct IdManager<I> {
+pub struct IdManager<I> {
     generation: Vec<u8>,
     free_list: VecDeque<u32>,
 
