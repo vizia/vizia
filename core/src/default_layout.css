@@ -24,6 +24,7 @@ textbox .textbox_container {
     width: 1s;
     height: 1s;
     min-width: 0px;
+    min-height: 0px;
     child-right: 1s;
     child-bottom: 1s;
     overflow: visible;
