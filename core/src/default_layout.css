@@ -53,6 +53,22 @@ textbox.multi_line_wrapped .textbox_content {
     max-width: 100%;
 }
 
+textbox.single_line .textbox_container {
+    min-height: auto;
+}
+
+textbox.single_line {
+    min-height: auto;
+}
+
+textbox.multi_line_wrapped {
+    min-height: 28px;
+}
+
+textbox.multi_line_unwrapped {
+    min-height: 28px;
+}
+
 label {
     width: auto;
     height: auto;
