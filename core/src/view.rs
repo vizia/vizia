@@ -3,7 +3,7 @@ use std::{any::Any, collections::HashMap};
 use crate::{
     idx_to_pos, measure_text_lines,
     style::{BorderCornerShape, GradientDirection},
-    text_layout, Context, Event, FontOrId, Handle, ModelDataStore, ViewHandler,
+    text_layout, Context, DrawContext, Event, FontOrId, Handle, ModelDataStore, ViewHandler,
 };
 
 use femtovg::{
@@ -60,95 +60,61 @@ pub trait View: 'static + Sized {
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut Context, event: &mut Event) {}
 
-    fn draw(&self, cx: &mut Context, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         //println!("{}", debug(&mut context, entity));
-        let entity = cx.current;
+        let entity = cx.current();
 
-        let bounds = cx.cache.get_bounds(entity);
+        let bounds = cx.cache().get_bounds(entity);
 
         //Skip widgets with no width or no height
         if bounds.w == 0.0 || bounds.h == 0.0 {
             return;
         }
 
-        let _padding_left = match cx.style.child_left.get(entity).unwrap_or(&Units::Auto) {
-            Units::Pixels(val) => val,
-            _ => &0.0,
-        };
+        let background_color = cx.background_color(entity).cloned().unwrap_or_default();
 
-        let _padding_right = match cx.style.child_right.get(entity).unwrap_or(&Units::Auto) {
-            Units::Pixels(val) => val,
-            _ => &0.0,
-        };
+        let font_color = cx.font_color(entity).cloned().unwrap_or(crate::Color::rgb(0, 0, 0));
 
-        let _padding_top = match cx.style.child_top.get(entity).unwrap_or(&Units::Auto) {
-            Units::Pixels(val) => val,
-            _ => &0.0,
-        };
-
-        let _padding_bottom = match cx.style.child_bottom.get(entity).unwrap_or(&Units::Auto) {
-            Units::Pixels(val) => val,
-            _ => &0.0,
-        };
-
-        let background_color = cx.style.background_color.get(entity).cloned().unwrap_or_default();
-
-        let font_color =
-            cx.style.font_color.get(entity).cloned().unwrap_or(crate::Color::rgb(0, 0, 0));
-
-        let border_color = cx.style.border_color.get(entity).cloned().unwrap_or_default();
+        let border_color = cx.border_color(entity).cloned().unwrap_or_default();
 
         let parent = cx
-            .tree
+            .tree()
             .get_layout_parent(entity)
             .expect(&format!("Failed to find parent somehow: {}", entity));
 
-        let parent_width = cx.cache.get_width(parent);
-        let parent_height = cx.cache.get_height(parent);
+        let parent_width = cx.cache().get_width(parent);
+        let parent_height = cx.cache().get_height(parent);
 
-        let border_shape_top_left =
-            cx.style.border_shape_top_left.get(entity).cloned().unwrap_or_default();
+        let border_shape_top_left = cx.border_shape_top_left(entity).cloned().unwrap_or_default();
 
-        let border_shape_top_right =
-            cx.style.border_shape_top_right.get(entity).cloned().unwrap_or_default();
+        let border_shape_top_right = cx.border_shape_top_right(entity).cloned().unwrap_or_default();
 
         let border_shape_bottom_left =
-            cx.style.border_shape_bottom_left.get(entity).cloned().unwrap_or_default();
+            cx.border_shape_bottom_left(entity).cloned().unwrap_or_default();
 
         let border_shape_bottom_right =
-            cx.style.border_shape_bottom_right.get(entity).cloned().unwrap_or_default();
+            cx.border_shape_bottom_right(entity).cloned().unwrap_or_default();
 
-        let border_radius_top_left =
-            match cx.style.border_radius_top_left.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val,
-                Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
-                _ => 0.0,
-            };
+        let border_radius_top_left = cx
+            .border_radius_top_left(entity)
+            .unwrap_or_default()
+            .value_or(bounds.w.min(bounds.h), 0.0);
 
-        let border_radius_top_right =
-            match cx.style.border_radius_top_right.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val,
-                Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
-                _ => 0.0,
-            };
+        let border_radius_top_right = cx
+            .border_radius_top_right(entity)
+            .unwrap_or_default()
+            .value_or(bounds.w.min(bounds.h), 0.0);
 
-        let border_radius_bottom_left =
-            match cx.style.border_radius_bottom_left.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val,
-                Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
-                _ => 0.0,
-            };
+        let border_radius_bottom_left = cx
+            .border_radius_bottom_left(entity)
+            .unwrap_or_default()
+            .value_or(bounds.w.min(bounds.h), 0.0);
+        let border_radius_bottom_right = cx
+            .border_radius_bottom_right(entity)
+            .unwrap_or_default()
+            .value_or(bounds.w.min(bounds.h), 0.0);
 
-        let border_radius_bottom_right =
-            match cx.style.border_radius_bottom_right.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val,
-                Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
-                _ => 0.0,
-            };
-
-        let opacity = cx.cache.get_opacity(entity);
-
-        let dpi_factor = cx.style.dpi_factor as f32;
+        let opacity = cx.cache().get_opacity(entity);
 
         let mut background_color: femtovg::Color = background_color.into();
         background_color.set_alphaf(background_color.a * opacity);
@@ -156,63 +122,31 @@ pub trait View: 'static + Sized {
         let mut border_color: femtovg::Color = border_color.into();
         border_color.set_alphaf(border_color.a * opacity);
 
-        let mut border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
-        {
-            Units::Pixels(val) => val * dpi_factor,
-            Units::Percentage(val) => bounds.w.min(bounds.h) * (val / 100.0),
-            _ => 0.0,
-        };
+        let border_width =
+            cx.border_width(entity).unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
 
         let outer_shadow_h_offset =
-            match cx.style.outer_shadow_h_offset.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val * dpi_factor,
-                Units::Percentage(val) => bounds.w * (val / 100.0),
-                _ => 0.0,
-            };
-
+            cx.outer_shadow_h_offset(entity).unwrap_or_default().value_or(bounds.w, 0.0);
         let outer_shadow_v_offset =
-            match cx.style.outer_shadow_v_offset.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val * dpi_factor,
-                Units::Percentage(val) => bounds.w * (val / 100.0),
-                _ => 0.0,
-            };
-
+            cx.outer_shadow_v_offset(entity).unwrap_or_default().value_or(bounds.w, 0.0);
         let outer_shadow_blur =
-            match cx.style.outer_shadow_blur.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val * dpi_factor,
-                Units::Percentage(val) => bounds.w * (val / 100.0),
-                _ => 0.0,
-            };
+            cx.outer_shadow_blur(entity).unwrap_or_default().value_or(bounds.w, 0.0);
 
-        let outer_shadow_color =
-            cx.style.outer_shadow_color.get(entity).cloned().unwrap_or_default();
+        let outer_shadow_color = cx.outer_shadow_color(entity).cloned().unwrap_or_default();
 
         let mut outer_shadow_color: femtovg::Color = outer_shadow_color.into();
         outer_shadow_color.set_alphaf(outer_shadow_color.a * opacity);
 
         let _inner_shadow_h_offset =
-            match cx.style.inner_shadow_h_offset.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val,
-                Units::Percentage(val) => bounds.w * (val / 100.0),
-                _ => 0.0,
-            };
+            cx.inner_shadow_h_offset(entity).unwrap_or_default().value_or(bounds.w, 0.0);
 
         let _inner_shadow_v_offset =
-            match cx.style.inner_shadow_v_offset.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val,
-                Units::Percentage(val) => bounds.w * (val / 100.0),
-                _ => 0.0,
-            };
+            cx.inner_shadow_v_offset(entity).unwrap_or_default().value_or(bounds.w, 0.0);
 
         let _inner_shadow_blur =
-            match cx.style.inner_shadow_blur.get(entity).cloned().unwrap_or_default() {
-                Units::Pixels(val) => val,
-                Units::Percentage(val) => bounds.w * (val / 100.0),
-                _ => 0.0,
-            };
+            cx.inner_shadow_blur(entity).unwrap_or_default().value_or(bounds.w, 0.0);
 
-        let inner_shadow_color =
-            cx.style.inner_shadow_color.get(entity).cloned().unwrap_or_default();
+        let inner_shadow_color = cx.inner_shadow_color(entity).cloned().unwrap_or_default();
 
         let mut inner_shadow_color: femtovg::Color = inner_shadow_color.into();
         inner_shadow_color.set_alphaf(inner_shadow_color.a * opacity);
@@ -364,11 +298,11 @@ pub trait View: 'static + Sized {
 
         // Draw outer shadow
 
-        if cx.style.outer_shadow_color.get(entity).is_some() {
+        if cx.outer_shadow_color(entity).is_some() {
             let sigma = outer_shadow_blur / 2.0;
             let d = (sigma * 5.0).ceil();
 
-            let shadow_image = cx.cache.shadow_image.get(&entity).cloned().unwrap_or_else(|| {
+            let shadow_image = cx.cache().shadow_image.get(&entity).cloned().unwrap_or_else(|| {
                 (
                     canvas
                         .create_image_empty(
@@ -420,7 +354,7 @@ pub trait View: 'static + Sized {
                     (shadow_image.0, shadow_image.1)
                 };
 
-            cx.cache.shadow_image.insert(entity, (source, target));
+            cx.cache().shadow_image.insert(entity, (source, target));
 
             canvas.set_render_target(RenderTarget::Image(source));
             canvas.clear_rect(0, 0, size.0 as u32, size.1 as u32, femtovg::Color::rgba(0, 0, 0, 0));
@@ -465,7 +399,7 @@ pub trait View: 'static + Sized {
         let mut paint = Paint::color(background_color);
 
         // Gradient overrides background color
-        if let Some(background_gradient) = cx.style.background_gradient.get(entity) {
+        if let Some(background_gradient) = cx.background_gradient(entity) {
             let (_, _, end_x, end_y, parent_length) = match background_gradient.direction {
                 GradientDirection::LeftToRight => (0.0, 0.0, bounds.w, 0.0, parent_width),
                 GradientDirection::TopToBottom => (0.0, 0.0, 0.0, bounds.h, parent_height),
@@ -491,7 +425,7 @@ pub trait View: 'static + Sized {
 
         // background-image overrides gradient
         // TODO should we draw image on top of colors?
-        if let Some(background_image) = cx.style.background_image.get(entity) {
+        if let Some(background_image) = cx.background_image(entity) {
             let background_image = background_image.clone(); // not ideal
             let img = cx.get_image(&background_image);
 
@@ -541,17 +475,17 @@ pub trait View: 'static + Sized {
         // canvas.fill_path(&mut path, paint);
 
         // Draw text and image
-        if cx.style.text.get(entity).is_some() || cx.style.image.get(entity).is_some() {
+        if cx.text(entity).is_some() || cx.image(entity).is_some() {
             let mut x = bounds.x;
             let mut y = bounds.y;
             let mut w = bounds.w;
             let mut h = bounds.h;
 
             // TODO - Move this to a text layout system and include constraints
-            let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
-            let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();
-            let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
-            let child_bottom = cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
+            let child_left = cx.child_left(entity).unwrap_or_default();
+            let child_right = cx.child_right(entity).unwrap_or_default();
+            let child_top = cx.child_top(entity).unwrap_or_default();
+            let child_bottom = cx.child_bottom(entity).unwrap_or_default();
 
             let align = match child_left {
                 Units::Pixels(val) => match child_right {
@@ -612,7 +546,7 @@ pub trait View: 'static + Sized {
             };
 
             // Draw image
-            if let Some(image) = cx.style.image.get(entity).cloned() {
+            if let Some(image) = cx.image(entity).cloned() {
                 let image = cx.get_image(&image);
                 let x = match align {
                     Align::Left => x,
@@ -632,14 +566,14 @@ pub trait View: 'static + Sized {
                 canvas.fill_path(&mut path, paint);
             }
 
-            if let Some(text) = cx.style.text.get(entity).cloned() {
-                let font = cx.style.font.get(entity).cloned().unwrap_or_default();
+            if let Some(text) = cx.text(entity).cloned() {
+                let font = cx.font(entity).cloned().unwrap_or_default();
 
                 // TODO - This should probably be cached in cx to save look-up time
                 let default_font = cx
-                    .resource_manager
+                    .resource_manager()
                     .fonts
-                    .get(&cx.style.default_font)
+                    .get(cx.default_font())
                     .and_then(|font| match font {
                         FontOrId::Id(id) => Some(id),
                         _ => None,
@@ -647,7 +581,7 @@ pub trait View: 'static + Sized {
                     .expect("Failed to find default font");
 
                 let font_id = cx
-                    .resource_manager
+                    .resource_manager()
                     .fonts
                     .get(&font)
                     .and_then(|font| match font {
@@ -662,9 +596,8 @@ pub trait View: 'static + Sized {
                 let mut font_color: femtovg::Color = font_color.into();
                 font_color.set_alphaf(font_color.a * opacity);
 
-                let font_size = cx.style.font_size.get(entity).cloned().unwrap_or(16.0)
-                    * cx.style.dpi_factor as f32;
-                let text_wrap = cx.style.text_wrap.get(entity).cloned().unwrap_or(true);
+                let font_size = cx.font_size(entity).unwrap_or(16.0);
+                let text_wrap = cx.text_wrap(entity).cloned().unwrap_or(true);
 
                 let mut paint = Paint::color(font_color);
                 paint.set_font_size(font_size);
@@ -673,11 +606,11 @@ pub trait View: 'static + Sized {
                 paint.set_text_baseline(baseline);
 
                 let font_metrics =
-                    cx.text_context.measure_font(paint).expect("Failed to read font metrics");
+                    cx.text_context().measure_font(paint).expect("Failed to read font metrics");
 
                 let text_width = if text_wrap { w } else { f32::MAX };
 
-                if let Ok(lines) = text_layout(text_width, &text, paint, &cx.text_context) {
+                if let Ok(lines) = text_layout(text_width, &text, paint, cx.text_context()) {
                     // difference between first line and last line
                     let delta_height = font_metrics.height() * (lines.len() - 1) as f32;
                     let first_line_y = match baseline {
@@ -685,12 +618,18 @@ pub trait View: 'static + Sized {
                         Baseline::Middle => y - delta_height / 2.0,
                         Baseline::Alphabetic | Baseline::Bottom => y - delta_height,
                     };
-                    let metrics =
-                        measure_text_lines(&text, paint, &lines, x, first_line_y, &cx.text_context);
+                    let metrics = measure_text_lines(
+                        &text,
+                        paint,
+                        &lines,
+                        x,
+                        first_line_y,
+                        cx.text_context(),
+                    );
                     let cached: Vec<(std::ops::Range<usize>, TextMetrics)> =
                         lines.into_iter().zip(metrics.into_iter()).collect();
-                    let selection = cx.style.text_selection.get(entity);
-                    let (anchor, active) = if let Some(cursor) = &selection {
+                    let selection = cx.text_selection(entity);
+                    let (anchor, active) = if let Some(cursor) = selection {
                         (
                             idx_to_pos(cursor.anchor, cached.iter()),
                             idx_to_pos(cursor.active, cached.iter()),
@@ -707,8 +646,8 @@ pub trait View: 'static + Sized {
                     } else {
                         (anchor, active)
                     };
-                    let selection_color = cx.style.selection_color.get(entity);
-                    let cursor_color = cx.style.caret_color.get(entity);
+                    let selection_color = cx.selection_color(entity);
+                    let cursor_color = cx.caret_color(entity);
                     for (line, (range, metrics)) in cached.iter().enumerate() {
                         let y = first_line_y + line as f32 * font_metrics.height();
                         let min_y = match baseline {
@@ -753,7 +692,7 @@ pub trait View: 'static + Sized {
                         canvas.fill_text(x, y, &text[range.clone()], paint).ok();
                     }
 
-                    cx.cache.text_lines.insert(entity, cached).unwrap();
+                    cx.cache().text_lines.insert(entity, cached).unwrap();
                 }
             }
         }
@@ -776,7 +715,7 @@ where
         <T as View>::event(self, cx, event);
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         <T as View>::draw(self, cx, canvas);
     }
 
