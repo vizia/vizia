@@ -1,12 +1,7 @@
 use femtovg::{Align, Baseline};
 use morphorm::Units;
 
-use crate::{
-    measure_text_lines,
-    style::{Overflow, Selector, SelectorRelation},
-    text_layout, text_paint, BoundingBox, Context, Display, Entity, PseudoClass, Rule, Tree,
-    TreeExt, Visibility,
-};
+use crate::{measure_text_lines, style::{Overflow, Selector, SelectorRelation}, text_layout, BoundingBox, Context, Display, Entity, PseudoClass, Rule, Tree, TreeExt, Visibility, text_paint_general};
 
 pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
@@ -263,7 +258,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             let mut content_height = 0.0;
 
             if let Some(text) = cx.style.text.get(entity) {
-                let mut paint = text_paint(&cx.style, &cx.resource_manager, entity);
+                let mut paint = text_paint_general(cx, entity);
                 paint.set_text_align(align);
                 paint.set_text_baseline(baseline);
 

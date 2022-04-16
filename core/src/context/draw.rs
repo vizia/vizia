@@ -18,14 +18,6 @@ macro_rules! style_getter_units {
     };
 }
 
-macro_rules! style_getter_f32 {
-    ($name:ident) => {
-        pub fn $name(&self, entity: Entity) -> Option<f32> {
-            self.0.style.$name.get(entity).map(|f| *f * self.0.style.dpi_factor as f32)
-        }
-    };
-}
-
 macro_rules! style_getter_untranslated {
     ($ty:ty, $name:ident) => {
         pub fn $name(&self, entity: Entity) -> Option<&$ty> {
@@ -79,6 +71,10 @@ impl<'a> DrawContext<'a> {
         &self.0.style.default_font
     }
 
+    pub fn font_size(&self, entity: Entity) -> f32 {
+        self.0.style.font_size.get(entity).copied().unwrap_or(16.0) * self.0.style.dpi_factor as f32
+    }
+
     style_getter_units!(border_width);
     style_getter_units!(border_radius_top_right);
     style_getter_units!(border_radius_top_left);
@@ -94,7 +90,6 @@ impl<'a> DrawContext<'a> {
     style_getter_units!(child_right);
     style_getter_units!(child_top);
     style_getter_units!(child_bottom);
-    style_getter_f32!(font_size);
     style_getter_untranslated!(Color, background_color);
     style_getter_untranslated!(Color, font_color);
     style_getter_untranslated!(Color, border_color);
