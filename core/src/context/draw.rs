@@ -1,7 +1,7 @@
 use crate::style::LinearGradient;
 use crate::{
     BorderCornerShape, CachedData, Color, Context, DataContext, Entity, ImageOrId, Modifiers,
-    MouseState, ResourceManager, Selection, Tree,
+    MouseState, PseudoClass, ResourceManager, Selection, Tree,
 };
 use femtovg::TextContext;
 use morphorm::Units;
@@ -72,6 +72,10 @@ impl<'a> DrawContext<'a> {
 
     pub fn font_size(&self, entity: Entity) -> f32 {
         self.0.style.font_size.get(entity).copied().unwrap_or(16.0) * self.0.style.dpi_factor as f32
+    }
+
+    pub fn has_pseudo_class(&self, entity: Entity, cls: PseudoClass) -> bool {
+        self.0.style.pseudo_classes.get(entity).unwrap_or_default().contains(cls)
     }
 
     style_getter_units!(border_width);
