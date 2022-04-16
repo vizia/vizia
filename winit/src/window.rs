@@ -160,6 +160,10 @@ impl View for Window {
                     }
                 }
 
+                WindowEvent::SetTitle(title) => {
+                    self.window().set_title(title);
+                }
+
                 _ => {}
             }
         }

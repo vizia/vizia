@@ -4,7 +4,7 @@ use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
-use vizia_core::{MouseButton, MouseButtonState};
+use vizia_core::{MouseButton, MouseButtonState, WindowModifiers};
 
 use vizia_core::{BoundingBox, Event, WindowDescription};
 use vizia_core::{
@@ -13,13 +13,13 @@ use vizia_core::{
 
 pub struct Application<F>
 where
-    F: Fn(&mut Context),
-    F: 'static + Send,
+    F: Fn(&mut Context) + Send + 'static,
 {
     app: F,
     window_description: WindowDescription,
     scale_policy: WindowScalePolicy,
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+    context: Context,
 }
 
 impl<F> Application<F>
@@ -33,6 +33,7 @@ where
             window_description,
             scale_policy: WindowScalePolicy::SystemScaleFactor,
             on_idle: None,
+            context: Context::new(),
         }
     }
 
@@ -51,6 +52,7 @@ where
     /// * `app` - The Tuix application builder.
     pub fn run(self) {
         ViziaWindow::open_blocking(
+            self.context,
             self.window_description,
             self.scale_policy,
             self.app,
@@ -502,5 +504,23 @@ fn translate_mouse_button(button: baseview::MouseButton) -> MouseButton {
         baseview::MouseButton::Other(id) => MouseButton::Other(id as u16),
         baseview::MouseButton::Back => MouseButton::Other(4),
         baseview::MouseButton::Forward => MouseButton::Other(5),
+    }
+}
+
+impl<F> WindowModifiers for Application<F> 
+where
+    F: Fn(&mut Context) + Send + 'static,
+{
+    fn title<T: ToString>(mut self, title: impl vizia_core::Res<T>) -> Self {
+        let context = &mut Context::new();
+        self.window_description.title = title.get_val(context).to_string();
+
+        self
+    }
+
+    fn inner_size(mut self, width: u32, height: u32) -> Self {
+        self.window_description.inner_size = WindowSize::new(width, height);
+
+        self
     }
 }

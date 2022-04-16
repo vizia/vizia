@@ -22,9 +22,8 @@ impl Model for AppData {
 }
 
 fn main() {
-    let window_description =
-        WindowDescription::new().with_title("Counter").with_inner_size(400, 100);
-    Application::new(window_description, |cx| {
+    Application::new(|cx| {
+        
         AppData { count: 0 }.build(cx);
 
         HStack::new(cx, |cx| {
@@ -35,5 +34,7 @@ fn main() {
         .child_space(Stretch(1.0))
         .col_between(Pixels(50.0));
     })
+    .title(AppData::count.map(|val| format!("Counter: {}", val)))
+    .inner_size(400, 100)
     .run();
 }

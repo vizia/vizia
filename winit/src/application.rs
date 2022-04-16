@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+// use glutin::event::WindowEvent;
 use winit::{
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
@@ -34,7 +35,7 @@ impl EventProxy for WinitEventProxy {
 }
 
 impl Application {
-    pub fn new<F>(window_description: WindowDescription, builder: F) -> Self
+    pub fn new<F>(content: F) -> Self
     where
         F: 'static + Fn(&mut Context),
     {
@@ -52,15 +53,21 @@ impl Application {
             context.event_proxy = Some(Box::new(WinitEventProxy(event_proxy_obj)));
         }
 
+        context.current = Entity::root();
+
+        (content)(&mut context);
+
         Self {
             context,
             event_loop,
-            builder: Some(Box::new(builder)),
+            builder: Some(Box::new(content)),
             on_idle: None,
-            window_description,
+            window_description: WindowDescription::new(),
             should_poll: false,
         }
     }
+
+
 
     pub fn should_poll(mut self) -> Self {
         self.should_poll = true;
@@ -457,6 +464,23 @@ impl Application {
 
             *control_flow = *stored_control_flow.borrow();
         });
+    }
+}
+
+impl WindowModifiers for Application {
+    fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
+        self.window_description.title = title.get_val(&mut self.context).to_string();
+        title.set_or_bind(&mut self.context, Entity::root(), |cx, _, val|{
+            cx.emit(WindowEvent::SetTitle(val.to_string()));
+        });
+
+        self
+    }
+
+    fn inner_size(mut self, width: u32, height: u32) -> Self {
+        self.window_description.inner_size = WindowSize::new(width, height);
+
+        self
     }
 }
 

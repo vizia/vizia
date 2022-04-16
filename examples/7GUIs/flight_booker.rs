@@ -80,9 +80,7 @@ impl AppData {
 }
 
 fn main() {
-    let window_description =
-        WindowDescription::new().with_title("Flight Booker").with_inner_size(250, 250);
-    Application::new(window_description, |cx|{
+    Application::new(|cx|{
         cx.add_theme(STYLE);
         AppData::new().build(cx);
         VStack::new(cx, |cx|{
@@ -142,5 +140,8 @@ fn main() {
         })
         .row_between(Pixels(10.0))
         .child_space(Stretch(1.0));
-    }).run();
+    })
+    .title("Flight Booker")
+    .inner_size(250, 250)
+    .run();
 }
