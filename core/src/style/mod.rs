@@ -857,6 +857,9 @@ impl Style {
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
         self.visibility.insert(entity, Default::default());
         self.focus_order.insert(entity, Default::default()).unwrap();
+        self.needs_restyle = true;
+        self.needs_relayout = true;
+        self.needs_redraw = true;
     }
 
     pub fn remove(&mut self, entity: Entity) {

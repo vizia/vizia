@@ -1,5 +1,7 @@
+#[allow(unused)]
 use vizia::*;
 
+#[allow(unused)]
 const STYLE: &'static str = r#"
 element {
     background-image: "sample.png";
@@ -9,8 +11,11 @@ element {
 "#;
 
 #[cfg(target_arch = "wasm32")]
-compile_error!("This example uses image loading that does not work on the web");
+fn main() {
+    panic!("This example is not supported on wasm - threads are experimental");
+}
 
+#[cfg(not(target_arch = "wasm32"))]
 fn main() {
     Application::new(WindowDescription::default(), |cx| {
         cx.add_theme(STYLE);

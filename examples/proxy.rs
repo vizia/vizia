@@ -1,8 +1,17 @@
+#[allow(unused)]
 use vizia::*;
 
 #[cfg(target_arch = "wasm32")]
-compile_error!("This example does not work on wasm - threads are experimental");
+fn main() {
+    panic!("This example is not supported on wasm - threads are experimental");
+}
 
+#[cfg(feature = "baseview")]
+fn main() {
+    panic!("This example is not supported on baseview - proxies are winit only");
+}
+
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "baseview")))]
 fn main() {
     let app =
         Application::new(WindowDescription::new().with_title("Proxy"), |_| {}).on_idle(|_| {

@@ -42,12 +42,13 @@ impl Application {
         #[cfg(all(debug_assertions, target_arch = "wasm32"))]
         console_error_panic_hook::set_once();
 
+        #[allow(unused_mut)]
         let mut context = Context::new();
 
         let event_loop = EventLoop::with_user_event();
-        let event_proxy_obj = event_loop.create_proxy();
         #[cfg(not(target_arch = "wasm32"))]
         {
+            let event_proxy_obj = event_loop.create_proxy();
             context.event_proxy = Some(Box::new(WinitEventProxy(event_proxy_obj)));
         }
 

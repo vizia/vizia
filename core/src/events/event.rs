@@ -1,6 +1,6 @@
 use crate::Entity;
 
-use std::any::{Any, TypeId};
+use std::any::Any;
 use std::fmt::Debug;
 
 /// Determines how the event propagates through the tree
@@ -20,39 +20,20 @@ pub enum Propagation {
 
 /// A message can be any static type.
 pub trait Message: Any + Send {
-    // An &Any can be cast to a reference to a concrete type.
-    fn as_any(&self) -> &dyn Any;
+    /// An &Any can be cast to a reference to a concrete type.
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
 impl dyn Message {
-    // Check if a message is a certain type
-    pub fn is<T: Message>(&self) -> bool {
-        // Get TypeId of the type this function is instantiated with
-        let t = TypeId::of::<T>();
-
-        // Get TypeId of the type in the trait object
-        let concrete = self.type_id();
-
-        // Compare both TypeIds on equality
-        t == concrete
-    }
-
-    // Casts a message to the specified type if the message is of that type
-    pub fn downcast<T>(&mut self) -> Option<&mut T>
-    where
-        T: Message,
-    {
-        if self.is::<T>() {
-            unsafe { Some(&mut *(self as *mut dyn Message as *mut T)) }
-        } else {
-            None
-        }
+    /// Casts a message to the specified type if the message is of that type
+    pub fn downcast<T: Message>(&mut self) -> Option<&mut T> {
+        self.as_any_mut().downcast_mut()
     }
 }
 
 // Implements message for any static type that implements Clone
 impl<S: 'static + Send> Message for S {
-    fn as_any(&self) -> &dyn Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 }

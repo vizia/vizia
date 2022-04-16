@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{any::Any, collections::HashMap};
 
 use crate::{
     idx_to_pos, measure_text_lines,
@@ -24,8 +24,6 @@ pub trait View: 'static + Sized {
     where
         F: FnOnce(&mut Context),
     {
-        // Add the instance to context even if it already exists
-
         let id = cx.entity_manager.create();
         cx.tree.add(id, cx.current).expect("Failed to add to tree");
         cx.cache.add(id).expect("Failed to add to cache");
@@ -45,13 +43,11 @@ pub trait View: 'static + Sized {
 
         let handle = Handle { entity: id, p: Default::default(), cx };
 
-        // ...and this part
         let prev = handle.cx.current;
         handle.cx.current = handle.entity;
 
         (builder)(handle.cx);
 
-        // This part will also be moved somewhere else
         handle.cx.current = prev;
 
         handle
@@ -779,5 +775,13 @@ where
 
     fn draw(&self, cx: &mut Context, canvas: &mut Canvas) {
         <T as View>::draw(self, cx, canvas);
+    }
+
+    fn as_any_ref(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }
