@@ -200,11 +200,5 @@ fn setup_canvas(result: &mut Window) {
     // Set some initial properties on our result canvas
     let size = result.window().inner_size();
     result.canvas.set_size(size.width as u32, size.height as u32, 1.0);
-    result.canvas.clear_rect(
-        0,
-        0,
-        size.width as u32,
-        size.height as u32,
-        Color::rgb(255, 80, 80),
-    );
+    result.canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
 }

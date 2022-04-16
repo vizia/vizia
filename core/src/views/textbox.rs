@@ -3,7 +3,12 @@ use std::sync::Arc;
 use keyboard_types::Code;
 
 use crate::style::PropGet;
-use crate::{idx_to_pos, measure_text_lines, pos_to_idx, text_layout, Actions, Binding, BoundingBox, Context, CursorIcon, Data, EditableText, Entity, Event, Handle, Lens, LensExt, Model, Modifiers, MouseButton, MouseButtonState, Movement, PropSet, Selection, TreeExt, View, WindowEvent, text_paint_general};
+use crate::{
+    idx_to_pos, measure_text_lines, pos_to_idx, text_layout, text_paint_general, Actions, Binding,
+    BoundingBox, Context, CursorIcon, Data, DataContext, EditableText, Entity, Event, Handle, Lens,
+    LensExt, Model, Modifiers, MouseButton, MouseButtonState, Movement, PropSet, Selection,
+    TreeExt, View, WindowEvent,
+};
 
 use crate::text::Direction;
 

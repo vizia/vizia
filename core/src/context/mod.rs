@@ -167,33 +167,6 @@ impl Context {
         }
     }
 
-    /// Get stored data from the context.
-    pub fn data<T: 'static>(&self) -> Option<&T> {
-        // return data for the static model
-        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
-            return Some(t);
-        }
-
-        for entity in self.current.parent_iter(&self.tree) {
-            //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
-            if let Some(data_list) = self.data.get(entity) {
-                for (_, model) in data_list.data.iter() {
-                    if let Some(data) = model.downcast_ref::<T>() {
-                        return Some(data);
-                    }
-                }
-            }
-
-            if let Some(view_handler) = self.views.get(&entity) {
-                if let Some(data) = view_handler.downcast_ref::<T>() {
-                    return Some(data);
-                }
-            }
-        }
-
-        None
-    }
-
     /// Send an event containing a message up the tree from the current entity.
     pub fn emit<M: Message>(&mut self, message: M) {
         self.event_queue.push_back(
@@ -892,4 +865,37 @@ pub(crate) enum InternalEvent {
         image: Mutex<Option<image::DynamicImage>>,
         policy: ImageRetentionPolicy,
     },
+}
+
+pub trait DataContext {
+    /// Get stored data from the context.
+    fn data<T: 'static>(&self) -> Option<&T>;
+}
+
+impl DataContext for Context {
+    fn data<T: 'static>(&self) -> Option<&T> {
+        // return data for the static model
+        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
+            return Some(t);
+        }
+
+        for entity in self.current.parent_iter(&self.tree) {
+            //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
+            if let Some(data_list) = self.data.get(entity) {
+                for (_, model) in data_list.data.iter() {
+                    if let Some(data) = model.downcast_ref::<T>() {
+                        return Some(data);
+                    }
+                }
+            }
+
+            if let Some(view_handler) = self.views.get(&entity) {
+                if let Some(data) = view_handler.downcast_ref::<T>() {
+                    return Some(data);
+                }
+            }
+        }
+
+        None
+    }
 }

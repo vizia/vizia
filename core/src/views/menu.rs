@@ -2,8 +2,8 @@ use std::cell::RefCell;
 
 use crate::views::checkbox::ICON_CHECK;
 use crate::{
-    Actions, Context, Event, HStack, Handle, Label, Lens, LensExt, Model, MouseButton, Over,
-    PropSet, Propagation, Res, TreeExt, Units, View, WindowEvent,
+    Actions, Context, DataContext, Event, HStack, Handle, Label, Lens, LensExt, Model, MouseButton,
+    Over, PropSet, Propagation, Res, TreeExt, Units, View, WindowEvent,
 };
 
 pub const ICON_ARROW: &str = "\u{E315}";
