@@ -1,7 +1,7 @@
 use femtovg::TextContext;
 use morphorm::{Node, Units};
 
-use crate::{text_layout, text_paint, Entity, ResourceManager, Style};
+use crate::{text_layout, Entity, ResourceManager, Style, text_paint_layout};
 
 impl<'w> Node<'w> for Entity {
     type Data = (Style, TextContext, ResourceManager);
@@ -137,7 +137,7 @@ impl<'w> Node<'w> for Entity {
         }
 
         if let Some(text) = store.0.text.get(*self) {
-            let paint = text_paint(&store.0, &store.2, *self);
+            let paint = text_paint_layout(&store.0, &store.2, *self);
 
             let font_metrics = store.1.measure_font(paint).expect("Failed to read font metrics");
             let mut child_space_x = 0.0;
@@ -160,22 +160,22 @@ impl<'w> Node<'w> for Entity {
     }
 
     fn height(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.height.get(*self).cloned().map(|h| match h {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+        store.0.height.get(*self).cloned().map(|h| match h {
+            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
             t => t,
         })
     }
 
     fn min_height(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.min_height.get(*self).cloned().map(|h| match h {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+        store.0.min_height.get(*self).cloned().map(|h| match h {
+            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
             t => t,
         })
     }
 
     fn max_height(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.max_height.get(*self).cloned().map(|h| match h {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+        store.0.max_height.get(*self).cloned().map(|h| match h {
+            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
             t => t,
         })
     }

@@ -596,7 +596,7 @@ pub trait View: 'static + Sized {
                 let mut font_color: femtovg::Color = font_color.into();
                 font_color.set_alphaf(font_color.a * opacity);
 
-                let font_size = cx.font_size(entity).unwrap_or(16.0);
+                let font_size = cx.font_size(entity);
                 let text_wrap = cx.text_wrap(entity).cloned().unwrap_or(true);
 
                 let mut paint = Paint::color(font_color);
