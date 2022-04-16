@@ -1,7 +1,7 @@
 use femtovg::TextContext;
 use morphorm::{Node, Units};
 
-use crate::{text_layout, Entity, ResourceManager, Style, text_paint_layout};
+use crate::{text_layout, text_paint_layout, Entity, ResourceManager, Style};
 
 impl<'w> Node<'w> for Entity {
     type Data = (Style, TextContext, ResourceManager);

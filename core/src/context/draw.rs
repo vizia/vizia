@@ -1,5 +1,8 @@
 use crate::style::LinearGradient;
-use crate::{BorderCornerShape, CachedData, Color, Context, Entity, ImageOrId, Modifiers, MouseState, ResourceManager, Selection, Tree};
+use crate::{
+    BorderCornerShape, CachedData, Color, Context, DataContext, Entity, ImageOrId, Modifiers,
+    MouseState, ResourceManager, Selection, Tree,
+};
 use femtovg::TextContext;
 use morphorm::Units;
 
@@ -59,10 +62,6 @@ impl<'a> DrawContext<'a> {
         &self.0.modifiers
     }
 
-    pub fn data<T: 'static>(&self) -> Option<&T> {
-        self.0.data()
-    }
-
     pub fn get_image(&mut self, path: &str) -> &mut ImageOrId {
         self.0.get_image(path)
     }
@@ -108,4 +107,10 @@ impl<'a> DrawContext<'a> {
     style_getter_untranslated!(String, font);
     style_getter_untranslated!(bool, text_wrap);
     style_getter_untranslated!(Selection, text_selection);
+}
+
+impl<'a> DataContext for DrawContext<'a> {
+    fn data<T: 'static>(&self) -> Option<&T> {
+        self.0.data()
+    }
 }

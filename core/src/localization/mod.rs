@@ -1,4 +1,4 @@
-use crate::{Binding, Context, Data, Entity, Lens, Res};
+use crate::{Binding, Context, Data, DataContext, Entity, Lens, Res};
 use fluent_bundle;
 use fluent_bundle::{FluentArgs, FluentValue};
 use std::collections::HashMap;

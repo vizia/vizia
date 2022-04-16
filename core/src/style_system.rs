@@ -1,7 +1,12 @@
 use femtovg::{Align, Baseline};
 use morphorm::Units;
 
-use crate::{measure_text_lines, style::{Overflow, Selector, SelectorRelation}, text_layout, BoundingBox, Context, Display, Entity, PseudoClass, Rule, Tree, TreeExt, Visibility, text_paint_general};
+use crate::{
+    measure_text_lines,
+    style::{Overflow, Selector, SelectorRelation},
+    text_layout, text_paint_general, BoundingBox, Context, Display, Entity, PseudoClass, Rule,
+    Tree, TreeExt, Visibility,
+};
 
 pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
