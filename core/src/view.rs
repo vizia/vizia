@@ -3,7 +3,7 @@ use std::{any::Any, collections::HashMap};
 use crate::{
     idx_to_pos, measure_text_lines,
     style::{BorderCornerShape, GradientDirection},
-    text_layout, Context, DrawContext, Event, FontOrId, Handle, ModelDataStore, ViewHandler,
+    text_layout, text_paint_draw, Context, DrawContext, Event, Handle, ModelDataStore, ViewHandler,
 };
 
 use femtovg::{
@@ -567,41 +567,16 @@ pub trait View: 'static + Sized {
             }
 
             if let Some(text) = cx.text(entity).cloned() {
-                let font = cx.font(entity).cloned().unwrap_or_default();
-
-                // TODO - This should probably be cached in cx to save look-up time
-                let default_font = cx
-                    .resource_manager()
-                    .fonts
-                    .get(cx.default_font())
-                    .and_then(|font| match font {
-                        FontOrId::Id(id) => Some(id),
-                        _ => None,
-                    })
-                    .expect("Failed to find default font");
-
-                let font_id = cx
-                    .resource_manager()
-                    .fonts
-                    .get(&font)
-                    .and_then(|font| match font {
-                        FontOrId::Id(id) => Some(id),
-                        _ => None,
-                    })
-                    .unwrap_or(default_font);
-
                 // let mut x = posx + (border_width / 2.0);
                 // let mut y = posy + (border_width / 2.0);
 
                 let mut font_color: femtovg::Color = font_color.into();
                 font_color.set_alphaf(font_color.a * opacity);
 
-                let font_size = cx.font_size(entity);
                 let text_wrap = cx.text_wrap(entity).cloned().unwrap_or(true);
 
-                let mut paint = Paint::color(font_color);
-                paint.set_font_size(font_size);
-                paint.set_font(&[font_id.clone()]);
+                let mut paint = text_paint_draw(cx, entity);
+                paint.set_color(font_color);
                 paint.set_text_align(align);
                 paint.set_text_baseline(baseline);
 
@@ -685,7 +660,12 @@ pub trait View: 'static + Sized {
                                 let (x, _) = active.1;
                                 let x = x.round();
                                 let mut path = Path::new();
-                                path.rect(x, min_y, 1.0, font_metrics.height());
+                                path.rect(
+                                    x,
+                                    min_y,
+                                    cx.logical_to_physical(1.0),
+                                    font_metrics.height(),
+                                );
                                 canvas.fill_path(&mut path, Paint::color(color.clone().into()));
                             }
                         }

@@ -51,20 +51,13 @@ impl TextboxData {
             return;
         }
         let parent = entity.parent(&cx.tree).unwrap();
-        // this computation is done in logical space
+        // this is a weird situation - layout and drawing must be done in physical space, but our
+        // output (translate) must be in logical space.
         let scale = cx.style.dpi_factor as f32;
 
         // calculate visible area for content and container
-        let mut bounds = cx.cache.bounds.get(entity).unwrap().clone();
-        bounds.x /= scale;
-        bounds.y /= scale;
-        bounds.w /= scale;
-        bounds.h /= scale;
+        let bounds = cx.cache.bounds.get(entity).unwrap().clone();
         let mut parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
-        parent_bounds.x /= scale;
-        parent_bounds.y /= scale;
-        parent_bounds.w /= scale;
-        parent_bounds.h /= scale;
 
         // calculate line height - we'll need this
         let paint = text_paint_general(cx, entity);
@@ -135,7 +128,7 @@ impl TextboxData {
         if caret_box.y + caret_box.h >= parent_bounds.y + parent_bounds.h {
             ty -= caret_box.y + caret_box.h - (parent_bounds.y + parent_bounds.h);
         }
-        self.transform = (tx.round(), ty.round());
+        self.transform = (tx.round() / scale, ty.round() / scale);
     }
 
     pub fn insert_text(&mut self, _cx: &mut Context, text: &str) {

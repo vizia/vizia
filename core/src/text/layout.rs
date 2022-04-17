@@ -32,7 +32,7 @@ pub fn text_paint_general(cx: &Context, entity: Entity) -> Paint {
     text_paint(font, &cx.style.default_font, &cx.resource_manager, font_size)
 }
 
-pub fn text_paint(
+fn text_paint(
     font: &str,
     default_font: &str,
     resource_manager: &ResourceManager,

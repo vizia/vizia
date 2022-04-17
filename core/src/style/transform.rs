@@ -127,8 +127,9 @@ pub fn apply_transform(cx: &mut Context, tree: &Tree) {
 
         //state.data.set_origin(entity, parent_origin);
 
-        if let Some(translate) = cx.style.translate.get(entity) {
-            cx.cache.set_translate(entity, *translate);
+        if let Some((tx, ty)) = cx.style.translate.get(entity) {
+            let scale = cx.style.dpi_factor as f32;
+            cx.cache.set_translate(entity, (*tx * scale, *ty * scale));
         }
 
         if let Some(rotate) = cx.style.rotate.get(entity) {
