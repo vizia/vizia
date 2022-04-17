@@ -13,7 +13,7 @@ macro_rules! style_getter_units {
         pub fn $name(&self, entity: Entity) -> Option<Units> {
             let result = self.0.style.$name.get(entity);
             if let Some(Units::Pixels(p)) = result {
-                Some(Units::Pixels(*p * self.0.style.dpi_factor as f32))
+                Some(Units::Pixels(self.logical_to_physical(*p)))
             } else {
                 result.copied()
             }
@@ -71,11 +71,15 @@ impl<'a> DrawContext<'a> {
     }
 
     pub fn font_size(&self, entity: Entity) -> f32 {
-        self.0.style.font_size.get(entity).copied().unwrap_or(16.0) * self.0.style.dpi_factor as f32
+        self.logical_to_physical(self.0.style.font_size.get(entity).copied().unwrap_or(16.0))
     }
 
     pub fn has_pseudo_class(&self, entity: Entity, cls: PseudoClass) -> bool {
         self.0.style.pseudo_classes.get(entity).copied().unwrap_or_default().contains(cls)
+    }
+
+    pub fn logical_to_physical(&self, logical: f32) -> f32 {
+        logical * self.0.style.dpi_factor as f32
     }
 
     style_getter_units!(border_width);

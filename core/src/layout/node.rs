@@ -142,10 +142,10 @@ impl<'w> Node<'w> for Entity {
             let font_metrics = store.1.measure_font(paint).expect("Failed to read font metrics");
             let mut child_space_x = 0.0;
             if let Some(Units::Pixels(val)) = store.0.child_left.get(*self) {
-                child_space_x += *val;
+                child_space_x += *val * store.0.dpi_factor as f32;
             }
             if let Some(Units::Pixels(val)) = store.0.child_right.get(*self) {
-                child_space_x += *val;
+                child_space_x += *val * store.0.dpi_factor as f32;
             }
             let child_width = (width - child_space_x).max(0.0);
 
