@@ -6,11 +6,10 @@ use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
 use vizia_core::{MouseButton, MouseButtonState};
 
-use vizia_core::{BoundingBox, Event, WindowDescription};
 use vizia_core::{
-    Context, Entity, EventManager, FontOrId, Modifiers, Units, WindowEvent, WindowSize,
-    fonts,
+    fonts, Context, Entity, EventManager, FontOrId, Modifiers, Units, WindowEvent, WindowSize,
 };
+use vizia_core::{BoundingBox, Event, WindowDescription};
 
 pub struct Application<F>
 where

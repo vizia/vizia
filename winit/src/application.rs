@@ -125,7 +125,7 @@ impl Application {
         // let font = canvas.add_font_mem(FONT).expect("Failed to load font");
 
         // context.fonts = vec![font];
-        
+
         let regular_font = fonts::ROBOTO_REGULAR;
         let bold_font = fonts::ROBOTO_BOLD;
         let icon_font = fonts::ENTYPO;
