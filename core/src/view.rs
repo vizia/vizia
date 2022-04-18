@@ -324,7 +324,7 @@ pub trait View: 'static + Sized {
             });
 
             canvas.save();
-
+            canvas.reset_scissor();
             let size = canvas.image_size(shadow_image.0).expect("Failed to get image");
 
             let (source, target) =
