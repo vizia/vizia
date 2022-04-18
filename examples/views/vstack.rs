@@ -17,7 +17,8 @@ fn main() {
                     .background_color(COLORS[i]);
             }
         })
-        .space(Pixels(10.0));
+        .left(Pixels(10.0))
+        .top(Pixels(50.0));
     })
     .run();
 }
