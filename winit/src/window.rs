@@ -172,11 +172,11 @@ fn apply_window_description(
 ) -> WindowBuilder {
     builder
         .with_title(&description.title)
-        .with_inner_size(PhysicalSize::new(
+        .with_inner_size(LogicalSize::new(
             description.inner_size.width,
             description.inner_size.height,
         ))
-        .with_min_inner_size(PhysicalSize::new(
+        .with_min_inner_size(LogicalSize::new(
             description.min_inner_size.width,
             description.min_inner_size.height,
         ))
@@ -198,8 +198,7 @@ fn apply_window_description(
 
 fn setup_canvas(result: &mut Window) {
     // Set some initial properties on our result canvas
-    let dpi_factor = result.window().scale_factor();
     let size = result.window().inner_size();
-    result.canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
+    result.canvas.set_size(size.width as u32, size.height as u32, 1.0);
     result.canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
 }

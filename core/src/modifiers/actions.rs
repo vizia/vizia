@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use morphorm::GeometryChanged;
 
-use crate::{Context, Event, Handle, MouseButton, View, ViewHandler, WindowEvent};
+use crate::{Context, DrawContext, Event, Handle, MouseButton, View, ViewHandler, WindowEvent};
 
 // Press
 pub struct Press<V: View> {
@@ -57,7 +57,7 @@ impl<V: View> View for Press<V> {
         }
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -119,7 +119,7 @@ impl<V: View> View for Release<V> {
         }
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -179,7 +179,7 @@ impl<V: View> View for Hover<V> {
         }
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -237,7 +237,7 @@ impl<V: View> View for Over<V> {
         }
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -297,7 +297,7 @@ impl<V: View> View for Leave<V> {
         }
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -355,7 +355,7 @@ impl<V: View> View for Move<V> {
         }
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -413,7 +413,7 @@ impl<V: View> View for FocusIn<V> {
         }
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -471,7 +471,7 @@ impl<V: View> View for FocusOut<V> {
         }
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -531,7 +531,7 @@ impl<V: View> View for Geo<V> {
         }
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }

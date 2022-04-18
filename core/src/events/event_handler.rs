@@ -1,4 +1,4 @@
-use crate::{Canvas, Context, Event};
+use crate::{Canvas, Context, DrawContext, Event};
 
 use std::any::Any;
 
@@ -11,7 +11,7 @@ pub trait ViewHandler: Any {
 
     fn event(&mut self, cx: &mut Context, event: &mut Event);
 
-    fn draw(&self, cx: &mut Context, canvas: &mut Canvas);
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas);
 
     fn as_any_ref(&self) -> &dyn Any;
 
