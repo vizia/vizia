@@ -56,7 +56,7 @@ fn main() {
                         List::new(cx, AppData::list, |cx, _, item| {
                             Label::new(cx, item)
                                 .width(Stretch(1.0))
-                                .bind(AppData::choice, move |handle, selected|{
+                                .bind(AppData::choice, move |handle, selected| {
                                     if item.get(handle.cx) == selected.get(handle.cx) {
                                         handle.background_color(Color::from("#f8ac14"));
                                     } else {

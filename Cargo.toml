@@ -20,18 +20,6 @@ name = "animation"
 path = "examples/animation.rs"
 
 [[example]]
-name = "basic"
-path = "examples/basic.rs"
-
-[[example]]
-name = "binding"
-path = "examples/binding.rs"
-
-[[example]]
-name = "compose"
-path = "examples/compose.rs"
-
-[[example]]
 name = "cursor_icon"
 path = "examples/cursor_icon.rs"
 
@@ -66,11 +54,6 @@ path = "examples/views/table.rs"
 [[example]]
 name = "textbox_list"
 path = "examples/textbox_list.rs"
-
-[[example]]
-name = "transform"
-path = "examples/transform.rs"
-
 
 [[example]]
 name = "button"
@@ -137,7 +120,7 @@ path = "examples/widget_gallery.rs"
 
 [[example]]
 name = "list"
-path = "examples/lists/list.rs"
+path = "examples/views/list.rs"
 
 [[example]]
 name = "selectable_list"

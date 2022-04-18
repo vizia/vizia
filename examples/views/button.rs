@@ -5,8 +5,7 @@ const ICON_PLUS: &str = "\u{2b}";
 fn no_action(_: &mut Context) {}
 
 fn main() {
-    let window_description =
-        WindowDescription::new().with_title("Button");
+    let window_description = WindowDescription::new().with_title("Button");
 
     Application::new(window_description, |cx| {
 
