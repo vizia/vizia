@@ -6,17 +6,21 @@ fn no_action(_: &mut Context) {}
 
 fn main() {
     let window_description =
-        WindowDescription::new().with_title("Button").with_inner_size(1280, 720);
+        WindowDescription::new().with_title("Button");
 
     Application::new(window_description, |cx| {
-        //cx.add_stylesheet("examples/test_style.css").unwrap();
+
+        Label::new(cx, "A button triggers an action when pressed and contains a view which describes its function, e.g. a Label.")
+            .width(Stretch(1.0))
+            .position_type(PositionType::SelfDirected)
+            .space(Pixels(10.0));
 
         HStack::new(cx, |cx| {
-            // Button
+            // Basic Button
             Button::new(cx, no_action, |cx| Label::new(cx, "Button"));
-            // Filled button
+            // Accent button
             Button::new(cx, no_action, |cx| Label::new(cx, "Another Button")).class("accent");
-            // Button with icon
+            // Button with Icon
             Button::new(cx, no_action, |cx| {
                 HStack::new(cx, |cx| {
                     Label::new(cx, ICON_PLUS).class("icon");

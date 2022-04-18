@@ -32,6 +32,11 @@ fn main() {
         }
         .build(cx);
 
+        Label::new(cx, "A Dropdown can be used to select from a list of options.")
+            .width(Stretch(1.0))
+            .position_type(PositionType::SelfDirected)
+            .space(Pixels(10.0));
+
         Binding::new(cx, AppData::choice, |cx, choice| {
             let option = choice.get(cx).clone();
             HStack::new(cx, move |cx| {
@@ -49,23 +54,19 @@ fn main() {
                     .col_between(Stretch(1.0)),
                     move |cx| {
                         List::new(cx, AppData::list, |cx, _, item| {
-                            VStack::new(cx, move |cx| {
-                                Binding::new(cx, AppData::choice, move |cx, choice| {
-                                    let selected = *item.get(cx) == *choice.get(cx);
-                                    Label::new(cx, item)
-                                        .width(Stretch(1.0))
-                                        .background_color(if selected {
-                                            Color::from("#f8ac14")
-                                        } else {
-                                            Color::white()
-                                        })
-                                        .on_press(move |cx| {
-                                            cx.emit(AppEvent::SetChoice(item.get(cx).clone()));
-                                            cx.emit(PopupEvent::Close);
-                                        });
+                            Label::new(cx, item)
+                                .width(Stretch(1.0))
+                                .bind(AppData::choice, move |handle, selected|{
+                                    if item.get(handle.cx) == selected.get(handle.cx) {
+                                        handle.background_color(Color::from("#f8ac14"));
+                                    } else {
+                                        handle.background_color(Color::white());
+                                    }
+                                })
+                                .on_press(move |cx| {
+                                    cx.emit(AppEvent::SetChoice(item.get(cx).clone()));
+                                    cx.emit(PopupEvent::Close);
                                 });
-                            })
-                            .height(Auto);
                         });
                     },
                 )
