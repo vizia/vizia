@@ -242,11 +242,13 @@ where
                         return true;
                     }
                 } else {
-                    self.inline_data.sparse[entity_index] = InlineIndex {
-                        data_index: DataIndex::shared(parent_sparse_index.data_index.index())
-                            .inherited(),
-                        anim_index: std::u32::MAX,
-                    };
+                    if !entity_sparse_index.data_index.is_inline() {
+                        self.inline_data.sparse[entity_index] = InlineIndex {
+                            data_index: DataIndex::shared(parent_sparse_index.data_index.index())
+                                .inherited(),
+                            anim_index: std::u32::MAX,
+                        };
+                    }
                     return true;
                 }
             }
