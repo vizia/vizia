@@ -201,6 +201,7 @@ path = "examples/7GUIs/crud.rs"
 name = "focus_order"
 path = "examples/accessibility/focus_order.rs"
 
+path = "examples/test.rs"
 [features]
 default = ["winit", "clipboard"]
 clipboard = ["vizia_core/clipboard"]

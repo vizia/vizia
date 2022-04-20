@@ -164,8 +164,9 @@ impl WindowHandler for ViziaWindow {
 
         unsafe { context.make_current() };
 
-        self.application.render();
-        context.swap_buffers();
+        if self.application.render() {
+            context.swap_buffers();
+        }
 
         unsafe { context.make_not_current() };
     }

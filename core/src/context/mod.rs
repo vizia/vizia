@@ -333,7 +333,8 @@ impl Context {
         self.style.child_top.tick(time);
         self.style.child_bottom.tick(time);
 
-        self.style.needs_relayout = true;
+        // Why was this here?
+        //self.style.needs_relayout = true;
     }
 
     /// Adds a new property animation returning an animation builder
