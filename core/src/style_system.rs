@@ -320,6 +320,8 @@ pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
             cx.style.font_color.inherit_inline(entity, parent);
             cx.style.font_size.inherit_inline(entity, parent);
             cx.style.font.inherit_inline(entity, parent);
+            cx.style.caret_color.inherit_inline(entity, parent);
+            cx.style.selection_color.inherit_inline(entity, parent);
         }
     }
 }
@@ -330,6 +332,8 @@ pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
             cx.style.font_color.inherit_shared(entity, parent);
             cx.style.font_size.inherit_shared(entity, parent);
             cx.style.font.inherit_shared(entity, parent);
+            cx.style.caret_color.inherit_shared(entity, parent);
+            cx.style.selection_color.inherit_shared(entity, parent);
         }
     }
 }
