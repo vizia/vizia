@@ -83,7 +83,7 @@ impl Application {
     ///     // Build application here
     /// })
     /// .on_idle(|cx|{
-    ///     // Code here runs at the end of every event loop after OS and tuix events have been handled
+    ///     // Code here runs at the end of every event loop after OS and vizia events have been handled
     /// })
     /// .run();
     /// ```

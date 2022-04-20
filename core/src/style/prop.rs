@@ -213,7 +213,7 @@ pub trait PropSet: AsEntity + Sized {
     /// }
     /// ```
     /// This style rule will apply a red background to any disabled buttons.
-    /// While css has an `enabled` pseudoclass, this is not used in tuix.
+    /// While css has an `enabled` pseudoclass, this is not used in vizia.
     ///
     /// # Example
     /// Sets the entity to disabled:
