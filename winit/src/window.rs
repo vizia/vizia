@@ -1,13 +1,11 @@
+use crate::convert::cursor_icon_to_cursor_icon;
+use femtovg::{renderer::OpenGl, Canvas, Color};
 #[cfg(not(target_arch = "wasm32"))]
 use glutin::ContextBuilder;
+use vizia_core::{Context, Event, View, WindowDescription, WindowEvent};
 use winit::event_loop::EventLoop;
 use winit::window::WindowBuilder;
 use winit::{dpi::*, window::WindowId};
-
-use femtovg::{renderer::OpenGl, Canvas, Color};
-
-use crate::cursor::translate_cursor;
-use vizia_core::{Context, Event, View, WindowDescription, WindowEvent};
 
 pub struct Window {
     pub id: WindowId,
@@ -152,7 +150,7 @@ impl View for Window {
 
                 WindowEvent::SetCursor(cursor) => {
                     //println!("Set The Cursor: {:?}", cursor);
-                    if let Some(icon) = translate_cursor(*cursor) {
+                    if let Some(icon) = cursor_icon_to_cursor_icon(*cursor) {
                         self.window().set_cursor_visible(true);
                         self.window().set_cursor_icon(icon);
                     } else {

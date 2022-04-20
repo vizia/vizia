@@ -7,7 +7,7 @@ use winit::{
 
 use vizia_core::*;
 
-use crate::keyboard::{scan_to_code, vcode_to_code, vk_to_key};
+use crate::convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key};
 use crate::window::Window;
 
 pub struct Application {
@@ -403,12 +403,12 @@ impl Application {
                         } => {
                             // Prefer virtual keycodes to scancodes, as scancodes aren't uniform between platforms
                             let code = if let Some(vkey) = input.virtual_keycode {
-                                vcode_to_code(vkey)
+                                virtual_key_code_to_code(vkey)
                             } else {
-                                scan_to_code(input.scancode)
+                                scan_code_to_code(input.scancode)
                             };
 
-                            let key = vk_to_key(
+                            let key = virtual_key_code_to_key(
                                 input.virtual_keycode.unwrap_or(VirtualKeyCode::NoConvert),
                             );
                             let event = match input.state {
