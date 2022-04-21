@@ -1,13 +1,11 @@
+use crate::convert::cursor_icon_to_cursor_icon;
+use femtovg::{renderer::OpenGl, Canvas, Color};
 #[cfg(not(target_arch = "wasm32"))]
 use glutin::ContextBuilder;
+use vizia_core::{Context, Event, View, WindowDescription, WindowEvent};
 use winit::event_loop::EventLoop;
 use winit::window::WindowBuilder;
 use winit::{dpi::*, window::WindowId};
-
-use femtovg::{renderer::OpenGl, Canvas, Color};
-
-use crate::cursor::translate_cursor;
-use vizia_core::{Context, Event, View, WindowDescription, WindowEvent};
 
 pub struct Window {
     pub id: WindowId,
@@ -56,15 +54,15 @@ impl Window {
         // Get the window handle. this is a winit::window::Window
         let handle = window_builder.build(&events_loop).unwrap();
 
-        // Build our result!
-        let mut result = Window {
+        // Build our window
+        let mut window = Window {
             id: handle.id(),
             handle,
             canvas: Canvas::new(renderer).expect("Cannot create canvas"),
         };
 
-        setup_canvas(&mut result);
-        result
+        setup_canvas(&mut window);
+        window
     }
 
     pub fn window(&self) -> &winit::window::Window {
@@ -109,15 +107,15 @@ impl Window {
         // Build the femtovg renderer
         let renderer = OpenGl::new_from_glutin_context(&handle).expect("Cannot create renderer");
 
-        // Build our result!
-        let mut result = Window {
+        // Build our window
+        let mut window = Window {
             id: handle.window().id(),
             handle,
             canvas: Canvas::new(renderer).expect("Cannot create canvas"),
         };
 
-        setup_canvas(&mut result);
-        result
+        setup_canvas(&mut window);
+        window
     }
 
     pub fn window(&self) -> &winit::window::Window {
@@ -151,8 +149,7 @@ impl View for Window {
                 }
 
                 WindowEvent::SetCursor(cursor) => {
-                    //println!("Set The Cursor: {:?}", cursor);
-                    if let Some(icon) = translate_cursor(*cursor) {
+                    if let Some(icon) = cursor_icon_to_cursor_icon(*cursor) {
                         self.window().set_cursor_visible(true);
                         self.window().set_cursor_icon(icon);
                     } else {
