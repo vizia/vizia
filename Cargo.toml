@@ -169,6 +169,14 @@ path = "examples/7GUIs/crud.rs"
 name = "focus_order"
 path = "examples/accessibility/focus_order.rs"
 
+[[example]]
+name = "keymap_basic"
+path = "examples/keymap_basic.rs"
+
+[[example]]
+name = "keymap_change_entries"
+path = "examples/keymap_change_entries.rs"
+
 [features]
 default = ["winit", "clipboard"]
 clipboard = ["vizia_core/clipboard"]

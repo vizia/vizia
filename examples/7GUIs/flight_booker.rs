@@ -7,11 +7,13 @@ use chrono::{NaiveDate, ParseError};
 const ICON_DOWN_OPEN: &str = "\u{e75c}";
 
 const STYLE: &str = r#"
- 
+    /*
     * {
         border-width: 1px;
         border-color: red;
     }
+    */ 
+    
 
     textbox.invalid {
         background-color: #AA0000;
@@ -96,24 +98,25 @@ fn main() {
                 // A Label and an Icon
                 HStack::new(cx, move |cx|{
                     Label::new(cx, AppData::choice)
-                        .width(Stretch(1.0));
+                        .width(Stretch(1.0))
+                        .text_wrap(false);
                     Label::new(cx, ICON_DOWN_OPEN).font("icons").left(Pixels(5.0)).right(Pixels(5.0));
                 }).width(Stretch(1.0)),
+                // List of options
                 move |cx|{
                 List::new(cx, AppData::options, |cx, _, item|{
-                    VStack::new(cx, move |cx|{
-                        Binding::new(cx, AppData::choice, move |cx, choice|{
-                            let selected = *item.get(cx) == *choice.get(cx);
-                            let item = item.clone();
-                            Label::new(cx, item)
-                                .width(Stretch(1.0))
-                                .background_color(if selected {Color::from("#f8ac14")} else {Color::white()})
-                                .on_press(move |cx| {
-                                    cx.emit(AppEvent::SetChoice(item.get(cx).to_string().to_owned()));
-                                    cx.emit(PopupEvent::Close);
-                                });
+                    Label::new(cx, item)
+                        .width(Stretch(1.0))
+                        .child_top(Stretch(1.0))
+                        .child_bottom(Stretch(1.0))
+                        .bind(AppData::choice, move |handle, choice|{
+                            let selected = item.get(handle.cx) == choice.get(handle.cx);
+                            handle.background_color(if selected {Color::from("#f8ac14")} else {Color::white()});
+                        })
+                        .on_press(move |cx| {
+                            cx.emit(AppEvent::SetChoice(item.get(cx).to_string().to_owned()));
+                            cx.emit(PopupEvent::Close);
                         });
-                    }).height(Auto);
                 });
             }).width(Pixels(150.0));
 

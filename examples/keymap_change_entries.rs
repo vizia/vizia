@@ -51,7 +51,8 @@ fn main() {
                 ))
             },
             |cx| Label::new(cx, "Change key chords"),
-        );
+        )
+        .space(Pixels(10.0));
 
         // Create a custom view that prints a message every time one of our actions is pressed.
         CustomView::new(cx);
@@ -63,7 +64,9 @@ struct CustomView;
 
 impl CustomView {
     fn new(cx: &mut Context) -> Handle<Self> {
-        Self.build2(cx, |_| {})
+        Self.build(cx, |cx| {
+            cx.focused = cx.current;
+        })
     }
 }
 

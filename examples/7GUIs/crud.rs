@@ -1,9 +1,12 @@
 use vizia::*;
 
 const STYLE: &str = r#"
+
     textbox {
         width: 1s;
         height: 30px;
+        child-top: 1s;
+        child-bottom: 1s;
     }
 
     hstack {
@@ -26,6 +29,8 @@ const STYLE: &str = r#"
         width: 1s;
         height: 30px;
         child-left: 5px;
+        child-top: 1s;
+        child-bottom: 1s;
     }
 
     label:checked {
