@@ -75,7 +75,8 @@ label {
     max-width: 100%;
     min-width: 0px;
     layout-type: row;
-    child-space: 0px;
+    child-space: auto;
+    child-left: 0px;
 }
 
 image {

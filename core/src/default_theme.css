@@ -169,9 +169,22 @@ radiobutton:checked .inner {
     height: 12px;
 }
 
-dropdown .title {
+/* dropdown .title {
     child-space: 1s;
     child-left: 5px;
+} */
+
+dropdown .title {
+    background-color: white;
+    width: auto;
+    height: 30px;
+    border-radius: 3px;
+    child-space: 1s;
+    child-left: 5px;
+    border-width: 1px;
+    border-color: #e5e5e5;
+    outer-shadow: 0 1 1 #00000055;
+    overflow: visible;
 }
 
 dropdown>popup {

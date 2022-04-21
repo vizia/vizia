@@ -86,7 +86,7 @@ pub enum Overflow {
 
 impl Default for Overflow {
     fn default() -> Self {
-        Overflow::Hidden
+        Overflow::Visible
     }
 }
 

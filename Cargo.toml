@@ -20,40 +20,12 @@ name = "animation"
 path = "examples/animation.rs"
 
 [[example]]
-name = "basic"
-path = "examples/basic.rs"
-
-[[example]]
-name = "binding"
-path = "examples/binding.rs"
-
-[[example]]
-name = "compose"
-path = "examples/compose.rs"
-
-[[example]]
-name = "counter"
-path = "examples/counter.rs"
-
-[[example]]
 name = "cursor_icon"
 path = "examples/cursor_icon.rs"
 
 [[example]]
 name = "l10n"
-path = "examples/l10n.rs"
-
-[[example]]
-name = "local_binding"
-path = "examples/local_binding.rs"
-
-[[example]]
-name = "local_data"
-path = "examples/local_data.rs"
-
-[[example]]
-name = "long_list"
-path = "examples/long_list.rs"
+path = "examples/localization/l10n.rs"
 
 [[example]]
 name = "modal"
@@ -64,93 +36,91 @@ name = "more_knobs"
 path = "examples/more_knobs.rs"
 
 [[example]]
-name = "multiple_binding"
-path = "examples/multiple_binding.rs"
-
-[[example]]
-name = "overflow"
-path = "examples/overflow.rs"
-
-[[example]]
 name = "proxy"
 path = "examples/proxy.rs"
 
 [[example]]
 name = "scrollview"
-path = "examples/scrollview.rs"
-
-[[example]]
-name = "state"
-path = "examples/state.rs"
+path = "examples/views/scrollview.rs"
 
 [[example]]
 name = "stylesheet"
 path = "examples/stylesheet.rs"
 
 [[example]]
-name = "styling"
-path = "examples/styling.rs"
-
-[[example]]
 name = "table"
-path = "examples/table.rs"
+path = "examples/views/table.rs"
 
 [[example]]
 name = "textbox_list"
 path = "examples/textbox_list.rs"
 
 [[example]]
-name = "transform"
-path = "examples/transform.rs"
-
-
-[[example]]
 name = "button"
-path = "examples/controls/button.rs"
-
-[[example]]
-name = "slider"
-path = "examples/controls/slider.rs"
-
-[[example]]
-name = "knob"
-path = "examples/controls/knob.rs"
+path = "examples/views/button.rs"
 
 [[example]]
 name = "checkbox"
-path = "examples/controls/checkbox.rs"
-
-[[example]]
-name = "radiobutton"
-path = "examples/controls/radiobutton.rs"
-
-[[example]]
-name = "zstack"
-path = "examples/controls/zstack.rs"
-
-[[example]]
-name = "popup"
-path = "examples/controls/popup.rs"
+path = "examples/views/checkbox.rs"
 
 [[example]]
 name = "dropdown"
-path = "examples/controls/dropdown.rs"
+path = "examples/views/dropdown.rs"
+
+[[example]]
+name = "image"
+path = "examples/views/image.rs"
+
+[[example]]
+name = "knob"
+path = "examples/views/knob.rs"
+
+[[example]]
+name = "label"
+path = "examples/views/label.rs"
+
+[[example]]
+name = "slider"
+path = "examples/views/slider.rs"
+
+
+[[example]]
+name = "radiobutton"
+path = "examples/views/radiobutton.rs"
+
+[[example]]
+name = "zstack"
+path = "examples/views/zstack.rs"
+
+[[example]]
+name = "hstack"
+path = "examples/views/hstack.rs"
+
+[[example]]
+name = "vstack"
+path = "examples/views/vstack.rs"
+
+[[example]]
+name = "popup"
+path = "examples/views/popup.rs"
+
+
 
 [[example]]
 name = "textbox"
-path = "examples/controls/textbox.rs"
+path = "examples/views/textbox.rs"
 
 [[example]]
 name = "number_input"
-path = "examples/controls/number_input.rs"
+path = "examples/number_input.rs"
 
 [[example]]
 name = "widget_gallery"
-path = "examples/controls/widget_gallery.rs"
+path = "examples/widget_gallery.rs"
 
 [[example]]
 name = "list"
-path = "examples/lists/list.rs"
+path = "examples/views/list.rs"
 
 [[example]]
 name = "selectable_list"
@@ -172,34 +142,40 @@ path = "examples/lists/sortable_list.rs"
 name = "static_list"
 path = "examples/lists/static_list.rs"
 
-[[example]]
-name = "image"
-path = "examples/controls/image.rs"
+
 
 [[example]]
 name = "menu"
-path = "examples/controls/menu.rs"
+path = "examples/views/menu.rs"
 
 
 [[example]]
-name = "7guis_counter"
+name = "counter"
 path = "examples/7GUIs/counter.rs"
 
 [[example]]
-name = "7guis_temperature_converter"
+name = "temperature_converter"
 path = "examples/7GUIs/temperature_converter.rs"
 
 [[example]]
-name = "7guis_flight_booker"
+name = "flight_booker"
 path = "examples/7GUIs/flight_booker.rs"
 
 [[example]]
-name = "7guis_crud"
+name = "crud"
 path = "examples/7GUIs/crud.rs"
 
 [[example]]
 name = "focus_order"
 path = "examples/accessibility/focus_order.rs"
+
+[[example]]
+name = "keymap_basic"
+path = "examples/keymap_basic.rs"
+
+[[example]]
+name = "keymap_change_entries"
+path = "examples/keymap_change_entries.rs"
 
 [features]
 default = ["winit", "clipboard"]

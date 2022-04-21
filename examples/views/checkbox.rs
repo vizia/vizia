@@ -59,19 +59,25 @@ impl Model for AppData {
 
 fn main() {
     Application::new(WindowDescription::new().with_title("Checkbox"), |cx| {
-        if cx.data::<AppData>().is_none() {
-            AppData {
-                options: Options { option1: true, option2: false, option3: false },
+        AppData {
+            options: Options { option1: true, option2: false, option3: false },
 
-                exclusive_options: Options { option1: true, option2: false, option3: false },
-            }
-            .build(cx);
+            exclusive_options: Options { option1: true, option2: false, option3: false },
         }
+        .build(cx);
+
+        Label::new(
+            cx,
+            "A Checkbox represents a boolean state and can trigger an action when toggled.",
+        )
+        .width(Stretch(1.0))
+        .position_type(PositionType::SelfDirected)
+        .space(Pixels(10.0));
 
         HStack::new(cx, |cx| {
             // Checkboxes with labels
             VStack::new(cx, |cx| {
-                Label::new(cx, "Check Boxes").class("h1");
+                Label::new(cx, "Checkboxes with labels").class("h1");
 
                 HStack::new(cx, |cx| {
                     //Binding::new(cx, AppData::options.then(Options::option1), |cx, option1| {
