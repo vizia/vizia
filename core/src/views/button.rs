@@ -31,10 +31,6 @@ use crate::{Handle, MouseButton, WindowEvent};
 /// ```
 /// # use vizia_core::*;
 /// #
-/// # enum AppEvent {
-/// #     Action,
-/// # }
-/// #
 /// # let cx = &mut Context::new();
 /// #
 /// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
