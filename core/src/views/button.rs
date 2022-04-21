@@ -61,7 +61,6 @@ use crate::{Handle, MouseButton, WindowEvent};
 ///     },
 /// );
 /// ```
-///
 pub struct Button {
     action: Option<Box<dyn Fn(&mut Context)>>,
 }
