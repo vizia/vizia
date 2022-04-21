@@ -154,21 +154,21 @@ impl Application {
         }
 
         let dpi_factor = window.window().unwrap().scale_factor();
-        let size = window.window().unwrap().inner_size();
+        let physical_size = window.window().unwrap().inner_size();
 
         let clear_color =
             context.style.background_color.get(Entity::root()).cloned().unwrap_or_default();
 
         window.canvas.as_mut().unwrap().set_size(
-            size.width as u32,
-            size.height as u32,
+            physical_size.width as u32,
+            physical_size.height as u32,
             dpi_factor as f32,
         );
         window.canvas.as_mut().unwrap().clear_rect(
             0,
             0,
-            size.width as u32,
-            size.height as u32,
+            physical_size.width as u32,
+            physical_size.height as u32,
             clear_color.into(),
         );
 
