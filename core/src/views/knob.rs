@@ -55,7 +55,8 @@ impl<L: Lens<Target = f32>> Knob<L> {
                     centered,
                     Percentage(100.0),
                     Percentage(15.0),
-                    300.0,
+                    -150.,
+                    150.,
                     KnobMode::Continuous,
                 )
                 .value(lens)
@@ -461,14 +462,15 @@ impl ArcTrack {
         center: bool,
         radius: Units,
         span: Units,
-        arc_len: f32,
+        angle_start: f32,
+        angle_end: f32,
         mode: KnobMode,
     ) -> Handle<Self> {
         Self {
             // angle_start: -150.0,
             // angle_end: 150.0,
-            angle_start: -arc_len / 2.0,
-            angle_end: arc_len / 2.0,
+            angle_start,
+            angle_end,
             radius,
             span,
 

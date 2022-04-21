@@ -135,7 +135,8 @@ fn main() {
                                 false,
                                 Percentage(100.0),
                                 Percentage(10.),
-                                300.,
+                                -150.,
+                                150.,
                                 KnobMode::Continuous,
                             )
                             .value(lens)
