@@ -903,7 +903,7 @@ impl Style {
         self.border_radius_bottom_left.remove(entity);
         self.border_radius_bottom_right.remove(entity);
         self.border_radius_top_left.remove(entity);
-        self.border_radius_bottom_right.remove(entity);
+        self.border_radius_top_right.remove(entity);
 
         self.focus_order.remove(entity);
 
@@ -1014,7 +1014,7 @@ impl Style {
         self.border_radius_bottom_left.clear_rules();
         self.border_radius_bottom_right.clear_rules();
         self.border_radius_top_left.clear_rules();
-        self.border_radius_bottom_right.clear_rules();
+        self.border_radius_top_right.clear_rules();
 
         // Background
         self.background_color.clear_rules();
