@@ -1,14 +1,14 @@
+use crate::{
+    convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
+    window::Window,
+};
 use std::cell::RefCell;
+use vizia_core::*;
 use winit::{
     dpi::LogicalSize,
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
-
-use vizia_core::*;
-
-use crate::convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key};
-use crate::window::Window;
 
 pub struct Application {
     context: Context,
@@ -35,6 +35,7 @@ impl EventProxy for WinitEventProxy {
 }
 
 impl Application {
+    /// Creates a new application.
     pub fn new<F>(window_description: WindowDescription, builder: F) -> Self
     where
         F: 'static + Fn(&mut Context),
@@ -76,16 +77,17 @@ impl Application {
     /// push events into the queue every time the callback runs unless this is intended.
     ///
     /// # Example
-    /// ```no_run
+    ///
+    /// ```
     /// # use vizia_core::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(WindowDescription::new(), |cx|{
+    /// #
+    /// Application::new(WindowDescription::new(), |cx| {
     ///     // Build application here
     /// })
-    /// .on_idle(|cx|{
-    ///     // Code here runs at the end of every event loop after OS and tuix events have been handled
-    /// })
-    /// .run();
+    /// .on_idle(|cx| {
+    ///     // Code here runs at the end of every event loop after OS and vizia events have been handled
+    /// });
     /// ```
     pub fn on_idle<F: 'static + Fn(&mut Context)>(mut self, callback: F) -> Self {
         self.on_idle = Some(Box::new(callback));
@@ -98,15 +100,16 @@ impl Application {
         self.event_loop.create_proxy()
     }
 
+    /// Sets the background color of the window.
     pub fn background_color(mut self, color: Color) -> Self {
         self.context.style.background_color.insert(Entity::root(), color);
 
         self
     }
 
+    /// Starts the application and enters the main event loop.
     pub fn run(mut self) {
         let mut context = self.context;
-
         let event_loop = self.event_loop;
 
         // let handle = ContextBuilder::new()
@@ -424,8 +427,6 @@ impl Application {
                         }
 
                         winit::event::WindowEvent::Resized(physical_size) => {
-                            //println!("Resized: {:?}", size);
-
                             if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                                 if let Some(window) = window_view.downcast_mut::<Window>() {
                                     window.resize(physical_size);
