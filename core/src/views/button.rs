@@ -73,11 +73,11 @@ impl Button {
     /// #
     /// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
     /// ```
-    pub fn new<A, L, Label>(cx: &mut Context, action: A, label: L) -> Handle<Self>
+    pub fn new<A, L, V>(cx: &mut Context, action: A, label: L) -> Handle<Self>
     where
         A: 'static + Fn(&mut Context),
-        L: FnOnce(&mut Context) -> Handle<Label>,
-        Label: 'static + View,
+        L: FnOnce(&mut Context) -> Handle<V>,
+        V: 'static + View,
     {
         Self { action: Some(Box::new(action)) }.build(cx, move |cx| {
             (label)(cx).hoverable(false).focusable(false);
