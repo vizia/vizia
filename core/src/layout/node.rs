@@ -217,11 +217,17 @@ impl<'w> Node<'w> for Entity {
     }
 
     fn row_between(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.0.row_between.get(*self).cloned()
+        store.0.row_between.get(*self).cloned().map(|v| match v {
+            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+            t => t,
+        })
     }
 
     fn col_between(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.0.col_between.get(*self).cloned()
+        store.0.col_between.get(*self).cloned().map(|v| match v {
+            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+            t => t,
+        })
     }
 
     fn border_left(&self, store: &Self::Data) -> Option<morphorm::Units> {

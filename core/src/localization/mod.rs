@@ -1,6 +1,6 @@
 use crate::{Binding, Context, Data, DataContext, Entity, Lens, Res};
-use fluent_bundle;
-use fluent_bundle::{FluentArgs, FluentValue};
+use fluent_bundle::FluentArgs;
+pub use fluent_bundle::FluentValue;
 use std::collections::HashMap;
 
 pub trait LensWrapSmallTrait {
@@ -12,6 +12,11 @@ pub trait LensWrapSmallTrait {
 #[derive(Copy, Clone, Debug)]
 pub struct LensWrapSmall<L> {
     lens: L,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct ValWrapSmall<T> {
+    val: T,
 }
 
 impl<L> LensWrapSmallTrait for LensWrapSmall<L>
@@ -37,14 +42,39 @@ where
     }
 }
 
+impl<T> LensWrapSmallTrait for ValWrapSmall<T>
+where
+    T: 'static + Clone + Into<FluentValue<'static>>,
+{
+    fn get_val(&self, _cx: &Context) -> FluentValue<'static> {
+        self.val.clone().into()
+    }
+
+    fn make_clone(&self) -> Box<dyn LensWrapSmallTrait> {
+        Box::new(self.clone())
+    }
+
+    fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>) {
+        closure(cx);
+    }
+}
+
 pub struct Localized {
-    key: &'static str,
-    args: HashMap<&'static str, Box<dyn LensWrapSmallTrait>>,
+    key: String,
+    args: HashMap<String, Box<dyn LensWrapSmallTrait>>,
+}
+
+pub enum LocalizedArg {
+    Lens(Box<dyn LensWrapSmallTrait>),
+    Const(),
 }
 
 impl Clone for Localized {
     fn clone(&self) -> Self {
-        Self { key: self.key, args: self.args.iter().map(|(k, v)| (*k, v.make_clone())).collect() }
+        Self {
+            key: self.key.clone(),
+            args: self.args.iter().map(|(k, v)| (k.clone(), v.make_clone())).collect(),
+        }
     }
 }
 
@@ -57,16 +87,21 @@ impl Localized {
         res
     }
 
-    pub fn new(key: &'static str) -> Self {
-        Self { key, args: HashMap::new() }
+    pub fn new(key: &str) -> Self {
+        Self { key: key.to_owned(), args: HashMap::new() }
     }
 
-    pub fn arg<L>(mut self, key: &'static str, lens: L) -> Self
+    pub fn arg<L>(mut self, key: &str, lens: L) -> Self
     where
         L: Lens,
         <L as Lens>::Target: Into<FluentValue<'static>> + Data,
     {
-        self.args.insert(key, Box::new(LensWrapSmall { lens }));
+        self.args.insert(key.to_owned(), Box::new(LensWrapSmall { lens }));
+        self
+    }
+
+    pub fn arg_const<T: Into<FluentValue<'static>> + Data>(mut self, key: &str, val: T) -> Self {
+        self.args.insert(key.to_owned(), Box::new(ValWrapSmall { val }));
         self
     }
 }
@@ -74,7 +109,7 @@ impl Localized {
 impl Res<String> for Localized {
     fn get_val(&self, cx: &Context) -> String {
         let bundle = cx.resource_manager.current_translation();
-        let message = if let Some(msg) = bundle.get_message(self.key) {
+        let message = if let Some(msg) = bundle.get_message(&self.key) {
             msg
         } else {
             return format!("{{MISSING: {}}}", self.key);

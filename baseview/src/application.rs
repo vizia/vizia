@@ -6,10 +6,10 @@ use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
 use vizia_core::{MouseButton, MouseButtonState};
 
-use vizia_core::{BoundingBox, Event, WindowDescription};
 use vizia_core::{
-    Context, Entity, EventManager, FontOrId, Modifiers, Units, WindowEvent, WindowSize,
+    fonts, Context, Entity, EventManager, FontOrId, Modifiers, Units, WindowEvent, WindowSize,
 };
+use vizia_core::{BoundingBox, Event, WindowDescription};
 
 pub struct Application<F>
 where
@@ -48,7 +48,7 @@ where
     /// Do **not** use this in the context of audio plugins, unless it is compiled as a
     /// standalone application.
     ///
-    /// * `app` - The Tuix application builder.
+    /// * `app` - The Vizia application builder.
     pub fn run(self) {
         ViziaWindow::open_blocking(
             self.window_description,
@@ -64,7 +64,7 @@ where
     /// used in the context of audio plugins.
     ///
     /// * `parent` - The parent window.
-    /// * `app` - The Tuix application builder.
+    /// * `app` - The Vizia application builder.
     pub fn open_parented<P: HasRawWindowHandle>(self, parent: &P) -> WindowHandle {
         ViziaWindow::open_parented(
             parent,
@@ -80,7 +80,7 @@ where
     /// This function does **not** block the current thread. This is only to be
     /// used in the context of audio plugins.
     ///
-    /// * `app` - The Tuix application builder.
+    /// * `app` - The Vizia application builder.
     pub fn open_as_if_parented(self) -> WindowHandle {
         ViziaWindow::open_as_if_parented(
             self.window_description,
@@ -104,7 +104,7 @@ where
     ///     // Build application here
     /// })
     /// .on_idle(|cx|{
-    ///     // Code here runs at the end of every event loop after OS and tuix events have been handled
+    ///     // Code here runs at the end of every event loop after OS and vizia events have been handled
     /// })
     /// .run();
     /// ```
@@ -151,12 +151,12 @@ impl ApplicationRunner {
 
         canvas.set_size(physical_size.width, physical_size.height, 1.0);
 
-        let regular_font = include_bytes!("../../fonts/Roboto-Regular.ttf");
-        let bold_font = include_bytes!("../../fonts/Roboto-Bold.ttf");
-        let icon_font = include_bytes!("../../fonts/entypo.ttf");
-        let emoji_font = include_bytes!("../../fonts/OpenSansEmoji.ttf");
-        let arabic_font = include_bytes!("../../fonts/amiri-regular.ttf");
-        let material_font = include_bytes!("../../fonts/MaterialIcons-Regular.ttf");
+        let regular_font = fonts::ROBOTO_REGULAR;
+        let bold_font = fonts::ROBOTO_BOLD;
+        let icon_font = fonts::ENTYPO;
+        let emoji_font = fonts::OPEN_SANS_EMOJI;
+        let arabic_font = fonts::AMIRI_REGULAR;
+        let material_font = fonts::MATERIAL_ICONS_REGULAR;
 
         context.add_font_mem("roboto", regular_font);
         context.add_font_mem("roboto-bold", bold_font);
