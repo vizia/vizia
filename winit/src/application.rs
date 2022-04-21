@@ -78,7 +78,7 @@ impl Application {
     ///
     /// # Example
     ///
-    /// ```
+    /// ```no_run
     /// # use vizia_core::*;
     /// # use vizia_winit::application::Application;
     /// #
@@ -87,7 +87,8 @@ impl Application {
     /// })
     /// .on_idle(|cx| {
     ///     // Code here runs at the end of every event loop after OS and vizia events have been handled
-    /// });
+    /// })
+    /// .run();
     /// ```
     pub fn on_idle<F: 'static + Fn(&mut Context)>(mut self, callback: F) -> Self {
         self.on_idle = Some(Box::new(callback));
