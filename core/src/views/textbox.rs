@@ -4,10 +4,10 @@ use keyboard_types::Code;
 
 use crate::style::PropGet;
 use crate::{
-    idx_to_pos, measure_text_lines, pos_to_idx, text_layout, text_paint, Actions, Binding,
-    BoundingBox, Context, CursorIcon, Data, EditableText, Entity, Event, Handle, Lens, LensExt,
-    Model, Modifiers, MouseButton, MouseButtonState, Movement, PropSet, Selection, TreeExt, View,
-    WindowEvent,
+    idx_to_pos, measure_text_lines, pos_to_idx, text_layout, text_paint_general, Actions, Binding,
+    BoundingBox, Context, CursorIcon, Data, DataContext, EditableText, Entity, Event, Handle, Lens,
+    LensExt, Model, Modifiers, MouseButton, MouseButtonState, Movement, PropSet, Selection,
+    TreeExt, View, WindowEvent,
 };
 
 use crate::text::Direction;
@@ -51,13 +51,16 @@ impl TextboxData {
             return;
         }
         let parent = entity.parent(&cx.tree).unwrap();
+        // this is a weird situation - layout and drawing must be done in physical space, but our
+        // output (translate) must be in logical space.
+        let scale = cx.style.dpi_factor as f32;
 
         // calculate visible area for content and container
         let bounds = cx.cache.bounds.get(entity).unwrap().clone();
         let mut parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
 
         // calculate line height - we'll need this
-        let paint = text_paint(&cx.style, &cx.resource_manager, entity);
+        let paint = text_paint_general(cx, entity);
         let font_metrics = cx.text_context.measure_font(paint).unwrap();
         let line_height = font_metrics.height();
 
@@ -125,7 +128,7 @@ impl TextboxData {
         if caret_box.y + caret_box.h >= parent_bounds.y + parent_bounds.h {
             ty -= caret_box.y + caret_box.h - (parent_bounds.y + parent_bounds.h);
         }
-        self.transform = (tx.round(), ty.round());
+        self.transform = (tx.round() / scale, ty.round() / scale);
     }
 
     pub fn insert_text(&mut self, _cx: &mut Context, text: &str) {
@@ -219,8 +222,9 @@ impl TextboxData {
 
             Movement::Line(dir) => {
                 let entity = self.content_entity;
-                let paint = text_paint(&cx.style, &cx.resource_manager, entity);
+                let paint = text_paint_general(cx, entity);
                 let font_metrics = cx.text_context.measure_font(paint).unwrap();
+                // this computation happens in physical space
                 let line_height = font_metrics.height();
 
                 let default = vec![];

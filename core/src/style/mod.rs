@@ -220,6 +220,8 @@ pub struct Style {
     pub needs_restyle: bool,
     pub needs_relayout: bool,
     pub needs_redraw: bool,
+
+    pub dpi_factor: f64,
 }
 
 impl Style {
@@ -901,7 +903,7 @@ impl Style {
         self.border_radius_bottom_left.remove(entity);
         self.border_radius_bottom_right.remove(entity);
         self.border_radius_top_left.remove(entity);
-        self.border_radius_bottom_right.remove(entity);
+        self.border_radius_top_right.remove(entity);
 
         self.focus_order.remove(entity);
 
@@ -1012,7 +1014,7 @@ impl Style {
         self.border_radius_bottom_left.clear_rules();
         self.border_radius_bottom_right.clear_rules();
         self.border_radius_top_left.clear_rules();
-        self.border_radius_bottom_right.clear_rules();
+        self.border_radius_top_right.clear_rules();
 
         // Background
         self.background_color.clear_rules();

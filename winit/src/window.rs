@@ -205,11 +205,11 @@ fn apply_window_description(
 ) -> WindowBuilder {
     builder
         .with_title(&description.title)
-        .with_inner_size(PhysicalSize::new(
+        .with_inner_size(LogicalSize::new(
             description.inner_size.width,
             description.inner_size.height,
         ))
-        .with_min_inner_size(PhysicalSize::new(
+        .with_min_inner_size(LogicalSize::new(
             description.min_inner_size.width,
             description.min_inner_size.height,
         ))

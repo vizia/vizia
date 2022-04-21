@@ -91,51 +91,23 @@ pub trait Model: 'static + Sized {
 pub(crate) trait ModelData: Any {
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut Context, event: &mut Event) {}
+
+    fn as_any_ref(&self) -> &dyn Any;
 }
 
 impl dyn ModelData {
-    // Check if a message is a certain type
-    pub fn is<T: Any + 'static>(&self) -> bool {
-        // Get TypeId of the type this function is instantiated with
-        let t = TypeId::of::<T>();
-
-        // Get TypeId of the type in the trait object
-        let concrete = self.type_id();
-
-        // Compare both TypeIds on equality
-        t == concrete
-    }
-
-    pub fn downcast_ref<T>(&self) -> Option<&T>
-    where
-        T: Any + 'static,
-    {
-        if self.is::<T>() {
-            unsafe { Some(&*(self as *const dyn ModelData as *const T)) }
-        } else {
-            None
-        }
-    }
-}
-
-trait Downcast {
-    fn as_any(self: &'_ Self) -> &'_ dyn Any
-    where
-        Self: 'static;
-}
-
-impl<T: ModelData> Downcast for T {
-    fn as_any(self: &'_ Self) -> &'_ dyn Any
-    where
-        Self: 'static,
-    {
-        self
+    pub fn downcast_ref<T: Any>(&self) -> Option<&T> {
+        self.as_any_ref().downcast_ref()
     }
 }
 
 impl<T: Model> ModelData for T {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         <T as Model>::event(self, cx, event);
+    }
+
+    fn as_any_ref(&self) -> &dyn Any {
+        self
     }
 }
 

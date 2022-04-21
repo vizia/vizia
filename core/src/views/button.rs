@@ -12,7 +12,7 @@ impl Button {
     pub fn new<A, L, Label>(cx: &mut Context, action: A, label: L) -> Handle<Self>
     where
         A: 'static + Fn(&mut Context),
-        L: 'static + Fn(&mut Context) -> Handle<Label>,
+        L: FnOnce(&mut Context) -> Handle<Label>,
         Label: 'static + View,
     {
         Self { action: Some(Box::new(action)) }.build(cx, move |cx| {

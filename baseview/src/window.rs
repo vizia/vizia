@@ -36,7 +36,7 @@ impl ViziaWindow {
     /// Open a new child window.
     ///
     /// * `parent` - The parent window.
-    /// * `app` - The Tuix application builder.
+    /// * `app` - The Vizia application builder.
     pub fn open_parented<P, F>(
         parent: &P,
         win_desc: WindowDescription,
@@ -78,7 +78,7 @@ impl ViziaWindow {
 
     /// Open a new window as if it had a parent window.
     ///
-    /// * `app` - The Tuix application builder.
+    /// * `app` - The Vizia application builder.
     pub fn open_as_if_parented<F>(
         win_desc: WindowDescription,
         scale_policy: WindowScalePolicy,
@@ -117,7 +117,7 @@ impl ViziaWindow {
 
     /// Open a new window that blocks the current thread until the window is destroyed.
     ///
-    /// * `app` - The Tuix application builder.
+    /// * `app` - The Vizia application builder.
     pub fn open_blocking<F>(
         win_desc: WindowDescription,
         scale_policy: WindowScalePolicy,
