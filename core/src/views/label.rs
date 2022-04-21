@@ -89,9 +89,10 @@ impl Label {
     ///
     /// ```
     /// # use vizia_core::*;
+    /// #
     /// # let cx = &mut Context::new();
     /// #
-    /// let label = Label::new(cx, "Text");
+    /// Label::new(cx, "Text");
     /// ```
     pub fn new<'a, T>(cx: &'a mut Context, text: impl Res<T>) -> Handle<'a, Self>
     where
