@@ -2,41 +2,114 @@ use crate::{Context, Handle, Lens, MouseButton, Res, View, WindowEvent};
 
 pub const ICON_CHECK: &str = "\u{2713}";
 
-/// A checkbox widget.
-///
-/// The checkbox widget can be used to represent data which can be in a true or false state.
+/// A checkbox used to display and toggle boolean state.
 ///
 /// Clicking on the checkbox with the left mouse button triggers the `on_toggle` callback.
-/// The checkbox itself does not store its state, and instead must be bound to some app data.
+/// The checkbox cannot be used without being bound to some data, because it will not accept
+/// a raw bool as an argument.
 ///
+/// # Examples
 ///
-/// # Example
-/// The following creates a simple checkbox with an initial state of false.
-/// ```compile_fail
-/// Checkbox::new(cx, false);
+/// ## Checkbox with an action
+///
+/// A checkbox can be used to trigger a callback when toggled. Usually this is emitting an
+/// event responsible for changing the data the checkbox is bound to.
+///
+/// ```
+/// # use vizia_core::*;
+/// #
+/// # #[derive(Lens)]
+/// # struct AppData {
+/// #     value: bool,
+/// # }
+/// #
+/// # impl Model for AppData {}
+/// #
+/// # enum AppEvent {
+/// #     ToggleValue,
+/// # }
+/// #
+/// # let cx = &mut Context::new();
+/// #
+/// # AppData { value: false }.build(cx);
+/// #
+/// Checkbox::new(cx, AppData::value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
 /// ```
 ///
-/// To add a label, wrap the checkbox within a `HStack` view with a `Label`:
-/// ```compile_fail
-/// HStack::new(cx, |cx|{
-///     Checkbox::new(cx, false);
+/// ## Checkbox without an action
+///
+/// A checkbox can be used without a callback and therefore do nothing when pressed.
+/// This is useful for prototyping and testing out the different styling options of
+/// a checkbox without having to add a callback.
+///
+/// ```
+/// # use vizia_core::*;
+/// #
+/// # #[derive(Lens)]
+/// # struct AppData {
+/// #     value: bool,
+/// # }
+/// #
+/// # impl Model for AppData {}
+/// #
+/// # let cx = &mut Context::new();
+/// #
+/// # AppData { value: false }.build(cx);
+/// #
+/// Checkbox::new(cx, AppData::value);
+/// ```
+///
+/// ## Checkbox with a label
+///
+/// A checkbox is usually used with a label next to it describing what data the checkbox
+/// is bound to or what the checkbox does when pressed. This can for example be done by
+/// wrapping the checkbox in an [`HStack`](crate::HStack) and adding a [`Label`](crate::Label)
+/// to it.
+///
+/// ```
+/// # use vizia_core::*;
+/// #
+/// # #[derive(Lens)]
+/// # struct AppData {
+/// #     value: bool,
+/// # }
+/// #
+/// # impl Model for AppData {}
+/// #
+/// # let cx = &mut Context::new();
+/// #
+/// # AppData { value: false }.build(cx);
+/// #
+/// HStack::new(cx, |cx| {
+///     Checkbox::new(cx, AppData::value);
 ///     Label::new(cx, "Press me");
-/// }).col_between(Pixels(5.0));
+/// });
 /// ```
-///
-/// To use the checkbox, bind its value to some app data and use the `on_toggle` callback to mutate the data:
-/// ```compile_fail
-/// Binding::new(cx, AppData::value, |cx, value|{
-///     Checkbox::new(cx, *value.get(cx))
-///         .on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
-/// })
-/// ```
-///
 pub struct Checkbox {
     on_toggle: Option<Box<dyn Fn(&mut Context)>>,
 }
 
 impl Checkbox {
+    /// Creates a new checkbox.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::*;
+    /// #
+    /// # #[derive(Lens)]
+    /// # struct AppData {
+    /// #     value: bool,
+    /// # }
+    /// #
+    /// # impl Model for AppData {}
+    /// #
+    /// # let cx = &mut Context::new();
+    /// #
+    /// # AppData { value: false }.build(cx);
+    /// #
+    /// Checkbox::new(cx, AppData::value);
+    /// ```
     pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
         //let checked = checked.get_val_fallible(cx).unwrap_or(false);
         Self { on_toggle: None }.build(cx, |_| {}).bind(checked, |handle, checked| {
@@ -50,13 +123,27 @@ impl Checkbox {
 impl<'a> Handle<'a, Checkbox> {
     /// Set the callback triggered when the checkbox is pressed.
     ///
-    /// # Example
+    /// # Examples
     ///
-    /// ```compile_fail
-    /// Checkbox::new(cx, false)
-    ///     .on_toggle(cx, |cx| {
-    ///         cx.emit(WindowEvent::Debug(format!("Checkbox pressed!")));
-    ///     });
+    /// ```
+    /// # use vizia_core::*;
+    /// #
+    /// # #[derive(Lens)]
+    /// # struct AppData {
+    /// #     value: bool,
+    /// # }
+    /// #
+    /// # impl Model for AppData {}
+    /// #
+    /// # enum AppEvent {
+    /// #     ToggleValue,
+    /// # }
+    /// #
+    /// # let cx = &mut Context::new();
+    /// #
+    /// # AppData { value: false }.build(cx);
+    /// #
+    /// Checkbox::new(cx, AppData::value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
     /// ```
     pub fn on_toggle<F>(self, callback: F) -> Self
     where
@@ -74,7 +161,7 @@ impl<'a> Handle<'a, Checkbox> {
 
 impl View for Checkbox {
     fn element(&self) -> Option<String> {
-        Some("checkbox".to_string())
+        Some(String::from("checkbox"))
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
