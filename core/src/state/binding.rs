@@ -11,7 +11,7 @@ where
     L: Lens,
 {
     lens: L,
-    builder: Option<Box<dyn Fn(&mut Context, L)>>,
+    content: Option<Box<dyn Fn(&mut Context, L)>>,
 }
 
 impl<L> Binding<L>
@@ -24,7 +24,7 @@ where
     ///
     /// A binding view observes application data through a lens and rebuilds its contents if the data changes.
     ///
-    /// Example
+    /// # Example
     /// When the value of `AppData::some_data` changes, the label inside of the binding will be rebuilt.
     /// ```ignore
     /// Binding::new(cx, AppData::some_data, |cx, lens|{
@@ -36,7 +36,7 @@ where
     where
         F: 'static + Fn(&mut Context, L),
     {
-        let binding = Self { lens: lens.clone(), builder: Some(Box::new(builder)) };
+        let binding = Self { lens: lens.clone(), content: Some(Box::new(builder)) };
 
         let id = cx.entity_manager.create();
         cx.tree.add(id, cx.current).expect("Failed to add to tree");
@@ -137,9 +137,9 @@ impl<L: 'static + Lens> View for Binding<L> {
 
     fn body<'a>(&mut self, cx: &'a mut Context) {
         cx.remove_children(cx.current);
-        if let Some(builder) = self.builder.take() {
+        if let Some(builder) = self.content.take() {
             (builder)(cx, self.lens.clone());
-            self.builder = Some(builder);
+            self.content = Some(builder);
         }
     }
 }
