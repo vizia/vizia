@@ -50,6 +50,11 @@ fn main() {
             }
         });
 
+        Label::new(cx, "Any view can be styled with a background image. An Image view can be used to present a non-tiling background image.")
+            .width(Stretch(1.0))
+            .position_type(PositionType::SelfDirected)
+            .space(Pixels(10.0));
+
         Element::new(cx);
         Image::new(cx, "https://download.samplelib.com/png/sample-bumblebee-400x300.png");
         Label::new(cx, "Wait for the image to load :)");

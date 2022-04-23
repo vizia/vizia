@@ -85,16 +85,9 @@ checkbox:checked {
     color: #f5f5f5;
 }
 
-label.icon {
-    font: "icons";
-}
-
-
 textbox {
     width: auto;
     height: auto;
-    min-width: 0px;
-    overflow: hidden;
     color: black;
     border-width: 1px;
     border-color: #e5e5e5;
@@ -114,53 +107,9 @@ textbox:checked {
     border-color: #4c00ff;
 }
 
-textbox .textbox_content {
-    layout-type: row;
-    width: auto;
-    height: auto;
-    min-width: 0px;
-    overflow: visible;
-    /*
-    border-width: 1px;
-    border-color: green;
-     */
-}
-
-textbox .textbox_container {
-    width: 1s;
-    height: 1s;
-    min-width: 0px;
-    child-right: 1s;
-    child-bottom: 1s;
-    overflow: visible;
-}
-
-textbox.align_right .textbox_container {
-    child-right: 0px;
-    child-left: 1s;
-}
-
-textbox.align_right .textbox_content {
-    child-right: 0px;
-    child-left: 1s;
-}
-
-textbox.align_center .textbox_container {
-    child-left: 1s;
-}
-
-textbox.align_center .textbox_content {
-    child-right: 1s;
-    child-left: 1s;
-}
-
 textbox:checked .textbox_content {
     caret-color: #ff0000;
     selection-color: #6464c888;
-}
-
-textbox.multi_line_wrapped .textbox_content {
-    max-width: 100%;
 }
 
 textbox:disabled {
@@ -169,13 +118,7 @@ textbox:disabled {
 }
 
 label {
-    width: auto;
-    height: auto;
-    max-width: 100%;
-    min-width: 0px;
-    child-space: 0px;
     selection-color: #6464c888;
-    layout-type: row;
 }
 
 label.h1 {
@@ -187,11 +130,6 @@ label:disabled {
     color: gray;
 }
 
-image {
-    width: auto;
-    height: auto;
-}
-
 hstack {
     width: 1s;
     height: 1s;
@@ -200,10 +138,6 @@ hstack {
 vstack {
     width: 1s;
     height: 1s;
-}
-
-zstack>* {
-    position-type: self-directed;
 }
 
 radiobutton {
@@ -235,9 +169,22 @@ radiobutton:checked .inner {
     height: 12px;
 }
 
-dropdown .title {
+/* dropdown .title {
     child-space: 1s;
     child-left: 5px;
+} */
+
+dropdown .title {
+    background-color: white;
+    width: auto;
+    height: 30px;
+    border-radius: 3px;
+    child-space: 1s;
+    child-left: 5px;
+    border-width: 1px;
+    border-color: #e5e5e5;
+    outer-shadow: 0 1 1 #00000055;
+    overflow: visible;
 }
 
 dropdown>popup {
@@ -259,21 +206,9 @@ dropdown vstack {
 }
 
 slider {
-    height: 5px;
-    top: 1s;
-    bottom: 1s;
-    width: 1s;
     background-color: #868686;
     border-radius: 3px;
 }
-
-slider.vertical {
-    top: auto;
-    bottom: auto;
-    height: 1s;
-    width: 5px;
-}
-
 
 slider .active {
     background-color: #005a9e;
@@ -282,8 +217,6 @@ slider .active {
 
 slider .thumb {
     background-color: white;
-    top: 1s;
-    bottom: 1s;
     border-radius: 14.5px;
     border-color: #cccccc;
     border-width: 2px;
@@ -299,42 +232,9 @@ scrollbar {
 }
 
 scrollbar>.thumb {
-    background-color: #5d5d5d;
     border-radius: 6px;
     min-width: 12px;
     min-height: 12px;
-}
-
-scrollview {
-    overflow: hidden;
-}
-
-scrollview>.scroll_content {
-    min-width: 100%;
-    min-height: 100%;
-    width: auto;
-    height: auto;
-    position-type: self-directed;
-}
-
-scrollview>scrollbar.horizontal {
-    left: 0px;
-    width: 1s;
-    right: 14px;
-
-    top: 1s;
-    height: 14px;
-    bottom: 0px;
-}
-
-scrollview>scrollbar.vertical {
-    top: 0px;
-    height: 1s;
-    bottom: 0px;
-
-    left: 1s;
-    width: 14px;
-    right: 0px;
 }
 
 list {
@@ -342,34 +242,14 @@ list {
     height: auto;
 }
 
-popup {
-    display: none;
-    opacity: 0.0;
-}
-
-popup:checked {
-    display: flex;
-    opacity: 1.0;
-}
-
-menucontroller {
-    width: 0px;
-    height: 0px;
-    overflow: visible;
-}
-
 menustack {
-    width: auto;
-    height: auto;
     background-color: #dddddd;
     border-color: #aaaaaa;
     border-width: 1px;
     color: black;
-    overflow: visible;
 }
 
 menu {
-    overflow: visible;
     child-space: 3px;
 }
 
@@ -385,42 +265,4 @@ menu:selected {
 menubutton:selected {
     background-color: #00264f;
     color: white;
-}
-
-menustack.vertical {
-    layout-type: column;
-}
-
-menustack.horizontal {
-    layout-type: row;
-}
-
-menu>menustack {
-    position-type: self-directed;
-    z-index: 1000;
-    display: none;
-}
-
-menu:selected>menustack {
-    display: flex;
-}
-
-menustack.vertical>menu>menustack {
-    left: 100%;
-}
-
-menustack.horizontal>menu>menustack {
-    top: 100%;
-}
-
-.menu_arrow {
-    display: none;
-}
-
-menustack.vertical>menu>hstack>.menu_arrow {
-    display: flex;
-    font: "material";
-    left: 1s;
-    top: 1s;
-    bottom: 1s;
 }

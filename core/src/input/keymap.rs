@@ -60,18 +60,16 @@ use std::collections::HashMap;
 ///
 /// impl View for CustomView {
 ///     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-///         if let Some(window_event) = event.message.downcast() {
-///             match window_event {
-///                 WindowEvent::KeyDown(code, _) => {
-///                     if let Some(keymap_data) = cx.data::<Keymap<Action>>() {
-///                         for action in keymap_data.pressed_actions(cx, *code) {
-///                             println!("The action {:?} is being pressed!", action);
-///                         }
+///         event.map(|window_event, _| match window_event {
+///             WindowEvent::KeyDown(code, _) => {
+///                 if let Some(keymap_data) = cx.data::<Keymap<Action>>() {
+///                     for action in keymap_data.pressed_actions(cx, *code) {
+///                         println!("The action {:?} is being pressed!", action);
 ///                     }
 ///                 }
-///                 _ => {}
 ///             }
-///         }
+///             _ => {}
+///         });
 ///     }
 /// }
 /// ```
@@ -111,7 +109,7 @@ where
     ///
     /// This method is for internal use only.
     /// To insert an entry into the keymap at runtime use the [`KeymapEvent::InsertAction`] event.
-    fn insert(&mut self, action: T, chord: KeyChord) -> &mut Self {
+    fn insert(&mut self, action: T, chord: KeyChord) {
         if let Some(actions) = self.actions.get_mut(&chord) {
             if !actions.contains(&action) {
                 actions.push(action);
@@ -119,14 +117,13 @@ where
         } else {
             self.actions.insert(chord, vec![action]);
         }
-        self
     }
 
     /// Removes an entry of the keymap.
     ///
     /// This method is for internal use only.
     /// To remove an entry of the keymap at runtime use the [`KeymapEvent::RemoveAction`] event.
-    fn remove(&mut self, action: &T, chord: &KeyChord) -> &mut Self {
+    fn remove(&mut self, action: &T, chord: &KeyChord) {
         if let Some(actions) = self.actions.get_mut(chord) {
             if let Some(index) = actions.iter().position(|x| x == action) {
                 if actions.len() == 1 {
@@ -136,7 +133,6 @@ where
                 }
             }
         }
-        self
     }
 
     /// Returns an iterator over every pressed action or `None` if there are no actions for that key chord.
@@ -205,12 +201,10 @@ where
     T: 'static + PartialEq + Send + Sync + Copy + Clone,
 {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(keymap_event) = event.message.downcast::<KeymapEvent<T>>() {
-            match keymap_event {
-                KeymapEvent::InsertAction(action, chord) => self.insert(*action, *chord),
-                KeymapEvent::RemoveAction(action, chord) => self.remove(action, chord),
-            };
-        }
+        event.map(|keymap_event, _| match keymap_event {
+            KeymapEvent::InsertAction(action, chord) => self.insert(*action, *chord),
+            KeymapEvent::RemoveAction(action, chord) => self.remove(action, chord),
+        });
     }
 }
 

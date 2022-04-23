@@ -1,16 +1,47 @@
 use unicode_bidi::{bidi_class, BidiClass};
 
-use crate::{Entity, FontOrId, ResourceManager, Style};
+use crate::{Context, DrawContext, Entity, FontOrId, ResourceManager, Style};
 use femtovg::{ErrorKind, Paint, TextContext, TextMetrics};
 use std::ops::Range;
 
-pub fn text_paint(style: &Style, resource_manager: &ResourceManager, entity: Entity) -> Paint {
-    let font = style.font.get(entity).cloned().unwrap_or_default();
+pub fn text_paint_layout(
+    style: &Style,
+    resource_manager: &ResourceManager,
+    entity: Entity,
+) -> Paint {
+    let font = style.font.get(entity).map(|s| s.as_str()).unwrap_or("");
+    let font_size = style.font_size.get(entity).cloned().unwrap_or(16.0);
+    // drawing and layout are always in physical space
+    let font_size = font_size * style.dpi_factor as f32;
 
+    text_paint(font, &style.default_font, resource_manager, font_size)
+}
+
+pub fn text_paint_draw(cx: &DrawContext, entity: Entity) -> Paint {
+    let font = cx.font(entity).map(|s| s.as_str()).unwrap_or("");
+    let font_size = cx.font_size(entity);
+
+    text_paint(font, cx.default_font(), cx.resource_manager(), font_size)
+}
+
+pub fn text_paint_general(cx: &Context, entity: Entity) -> Paint {
+    let font = cx.style.font.get(entity).map(|s| s.as_str()).unwrap_or("");
+    let font_size =
+        cx.style.font_size.get(entity).copied().unwrap_or(16.0) * cx.style.dpi_factor as f32;
+
+    text_paint(font, &cx.style.default_font, &cx.resource_manager, font_size)
+}
+
+fn text_paint(
+    font: &str,
+    default_font: &str,
+    resource_manager: &ResourceManager,
+    font_size: f32,
+) -> Paint {
     // TODO - This should probably be cached in cx to save look-up time
     let default_font = resource_manager
         .fonts
-        .get(&style.default_font)
+        .get(default_font)
         .and_then(|font| match font {
             FontOrId::Id(id) => Some(id),
             _ => None,
@@ -19,14 +50,12 @@ pub fn text_paint(style: &Style, resource_manager: &ResourceManager, entity: Ent
 
     let font_id = resource_manager
         .fonts
-        .get(&font)
+        .get(font)
         .and_then(|font| match font {
             FontOrId::Id(id) => Some(id),
             _ => None,
         })
         .unwrap_or(default_font);
-
-    let font_size = style.font_size.get(entity).cloned().unwrap_or(16.0);
 
     let mut paint = Paint::default();
     paint.set_font_size(font_size);

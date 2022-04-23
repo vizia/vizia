@@ -1,8 +1,10 @@
+mod draw;
+mod proxy;
+
 use instant::{Duration, Instant};
 use std::any::Any;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::fmt::{Debug, Formatter};
 use std::sync::Mutex;
 
 #[cfg(feature = "clipboard")]
@@ -11,8 +13,9 @@ use femtovg::TextContext;
 use fnv::FnvHashMap;
 use keyboard_types::Code;
 use unic_langid::LanguageIdentifier;
-// use fluent_bundle::{FluentBundle, FluentResource};
-// use unic_langid::LanguageIdentifier;
+
+pub use draw::*;
+pub use proxy::*;
 
 use crate::{
     apply_clipping, apply_hover, apply_inline_inheritance, apply_layout, apply_shared_inheritance,
@@ -25,7 +28,8 @@ use crate::{
 };
 use crate::{AnimExt, Animation, AnimationBuilder};
 
-static DEFAULT_THEME: &str = include_str!("default_theme.css");
+static DEFAULT_THEME: &str = include_str!("../default_theme.css");
+static DEFAULT_LAYOUT: &str = include_str!("../default_layout.css");
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
 pub struct Context {
@@ -102,6 +106,7 @@ impl Context {
         };
 
         result.entity_manager.create();
+        result.add_theme(DEFAULT_LAYOUT);
         result.add_theme(DEFAULT_THEME);
 
         result
@@ -162,33 +167,6 @@ impl Context {
                 self.captured = Entity::null();
             }
         }
-    }
-
-    /// Get stored data from the context.
-    pub fn data<T: 'static>(&self) -> Option<&T> {
-        // return data for the static model
-        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
-            return Some(t);
-        }
-
-        for entity in self.current.parent_iter(&self.tree) {
-            //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
-            if let Some(data_list) = self.data.get(entity) {
-                for (_, model) in data_list.data.iter() {
-                    if let Some(data) = model.downcast_ref::<T>() {
-                        return Some(data);
-                    }
-                }
-            }
-
-            if let Some(view_handler) = self.views.get(&entity) {
-                if let Some(data) = view_handler.downcast_ref::<T>() {
-                    return Some(data);
-                }
-            }
-        }
-
-        None
     }
 
     /// Send an event containing a message up the tree from the current entity.
@@ -253,6 +231,7 @@ impl Context {
     pub fn remove_user_themes(&mut self) {
         self.resource_manager.themes.clear();
 
+        self.add_theme(DEFAULT_LAYOUT);
         self.add_theme(DEFAULT_THEME);
     }
 
@@ -395,7 +374,7 @@ impl Context {
 
         // Reload the stored themes
         for (index, theme) in self.resource_manager.themes.iter().enumerate() {
-            if !self.enviroment.include_default_theme && index == 0 {
+            if !self.enviroment.include_default_theme && index == 1 {
                 continue;
             }
 
@@ -442,7 +421,7 @@ impl Context {
                 StoredImage {
                     image: ImageOrId::Image(
                         image::load_from_memory_with_format(
-                            include_bytes!("../resources/broken_image.png"),
+                            include_bytes!("../../resources/broken_image.png"),
                             image::ImageFormat::Png,
                         )
                         .unwrap(),
@@ -625,13 +604,13 @@ impl Context {
         geometry_changed(self, &tree);
     }
 
-    pub fn draw(&mut self, canvas: &mut Canvas, dpi_factor: f32) {
+    pub fn draw(&mut self, canvas: &mut Canvas) {
         self.resource_manager.mark_images_unused();
 
         let window_width = self.cache.get_width(Entity::root());
         let window_height = self.cache.get_height(Entity::root());
 
-        canvas.set_size(window_width as u32, window_height as u32, dpi_factor);
+        canvas.set_size(window_width as u32, window_height as u32, 1.0);
         let clear_color =
             self.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
         canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
@@ -684,7 +663,7 @@ impl Context {
 
             if let Some(view) = self.views.remove(&entity) {
                 self.current = entity;
-                view.draw(self, canvas);
+                view.draw(&mut DrawContext::new(self), canvas);
 
                 self.views.insert(entity, view);
             }
@@ -882,85 +861,6 @@ impl Context {
     }
 }
 
-/// A bundle of data representing a snapshot of the context when a thread was spawned. It supports
-/// a small subset of context operations. You will get one of these passed to you when you create a
-/// new thread with `cx.spawn()`.
-pub struct ContextProxy {
-    pub current: Entity,
-    pub event_proxy: Option<Box<dyn EventProxy>>,
-}
-
-#[derive(Debug)]
-pub enum ProxyEmitError {
-    Unsupported,
-    EventLoopClosed,
-}
-
-impl std::fmt::Display for ProxyEmitError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ProxyEmitError::Unsupported => {
-                f.write_str("The current runtime does not support proxying events")
-            }
-            ProxyEmitError::EventLoopClosed => {
-                f.write_str("Sending an event to an event loop which has been closed")
-            }
-        }
-    }
-}
-
-impl std::error::Error for ProxyEmitError {}
-
-impl ContextProxy {
-    pub fn emit<M: Message>(&mut self, message: M) -> Result<(), ProxyEmitError> {
-        if let Some(proxy) = &self.event_proxy {
-            let event = Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up);
-
-            proxy.send(event).map_err(|_| ProxyEmitError::EventLoopClosed)
-        } else {
-            Err(ProxyEmitError::Unsupported)
-        }
-    }
-
-    pub fn emit_to<M: Message>(
-        &mut self,
-        target: Entity,
-        message: M,
-    ) -> Result<(), ProxyEmitError> {
-        if let Some(proxy) = &self.event_proxy {
-            let event = Event::new(message)
-                .target(target)
-                .origin(self.current)
-                .propagate(Propagation::Direct);
-
-            proxy.send(event).map_err(|_| ProxyEmitError::EventLoopClosed)
-        } else {
-            Err(ProxyEmitError::Unsupported)
-        }
-    }
-
-    pub fn redraw(&mut self) -> Result<(), ProxyEmitError> {
-        self.emit(InternalEvent::Redraw)
-    }
-
-    pub fn load_image(
-        &mut self,
-        path: String,
-        image: image::DynamicImage,
-        policy: ImageRetentionPolicy,
-    ) -> Result<(), ProxyEmitError> {
-        self.emit(InternalEvent::LoadImage { path, image: Mutex::new(Some(image)), policy })
-    }
-}
-
-pub trait EventProxy: Send {
-    fn send(&self, event: Event) -> Result<(), ()>;
-    fn make_clone(&self) -> Box<dyn EventProxy>;
-}
-
 pub(crate) enum InternalEvent {
     Redraw,
     LoadImage {
@@ -968,4 +868,37 @@ pub(crate) enum InternalEvent {
         image: Mutex<Option<image::DynamicImage>>,
         policy: ImageRetentionPolicy,
     },
+}
+
+pub trait DataContext {
+    /// Get stored data from the context.
+    fn data<T: 'static>(&self) -> Option<&T>;
+}
+
+impl DataContext for Context {
+    fn data<T: 'static>(&self) -> Option<&T> {
+        // return data for the static model
+        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
+            return Some(t);
+        }
+
+        for entity in self.current.parent_iter(&self.tree) {
+            //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
+            if let Some(data_list) = self.data.get(entity) {
+                for (_, model) in data_list.data.iter() {
+                    if let Some(data) = model.downcast_ref::<T>() {
+                        return Some(data);
+                    }
+                }
+            }
+
+            if let Some(view_handler) = self.views.get(&entity) {
+                if let Some(data) = view_handler.downcast_ref::<T>() {
+                    return Some(data);
+                }
+            }
+        }
+
+        None
+    }
 }

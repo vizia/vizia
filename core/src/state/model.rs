@@ -7,38 +7,51 @@ use crate::{Context, Event, LensWrap};
 
 /// A trait implemented by application data in order to mutate in response to events.
 ///
-/// Example
-/// ```ignore
+/// # Examples
+///
+/// ```
+/// # use vizia_core::*;
+/// #
 /// pub struct AppData {
-///     some_data: bool,
+///     count: i32,
 /// }
 ///
 /// enum AppEvent {
-///     SetTrue,
-///     SetFalse,
+///     Increment,
+///     Decrement,
 /// }
 ///
 /// impl Model for AppData {
-///     fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
-///         if let Some(app_event) = event.message.downcast() {
-///             match app_event {
-///                 AppEvent::SetTrue => {
-///                     self.some_data = true;
-///                 }
+///     fn event(&mut self, cx: &mut Context, event: &mut Event) {
+///         event.map(|app_event, _| match app_event {
+///             AppEvent::Increment => {
+///                 self.count += 1;
+///             }
 ///
-///                 AppEvent::SetFalse => {
-///                     self.some_data = false;
-///                 }
-///             }   
-///         }
+///             AppEvent::Decrement => {
+///                 self.count -= 1;
+///             }
+///         });
 ///     }
 /// }
 /// ```
 pub trait Model: 'static + Sized {
     /// Build the model data into the application tree.
     ///
-    /// Example
-    /// ```ignore
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use vizia_core::*;
+    /// # use vizia_derive::*;
+    /// # use vizia_winit::application::Application;
+    /// #
+    /// # #[derive(Default, Lens)]
+    /// # pub struct AppData {
+    /// #     count: i32,
+    /// # }
+    /// #
+    /// # impl Model for AppData {}
+    /// #
     /// fn main() {
     ///     Application::new(WindowDescription::new(), |cx|{
     ///         AppData::default().build(cx);
@@ -66,21 +79,34 @@ pub trait Model: 'static + Sized {
 
     /// Respond to events in order to mutate the model data.
     ///
-    /// Example
-    /// ```ignore
-    /// impl Model for AppData {
-    ///     fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
-    ///         if let Some(app_event) = event.message.downcast() {
-    ///             match app_event {
-    ///                 AppEvent::SetTrue => {
-    ///                     self.some_data = true;
-    ///                 }
+    /// # Examples
     ///
-    ///                 AppEvent::SetFalse => {
-    ///                     self.some_data = false;
-    ///                 }
-    ///             }   
-    ///         }
+    /// ```
+    /// # use vizia_core::*;
+    /// # use vizia_derive::*;
+    /// # use vizia_winit::application::Application;
+    /// #
+    /// # #[derive(Default, Lens)]
+    /// # pub struct AppData {
+    /// #     count: i32,
+    /// # }
+    /// #
+    /// # enum AppEvent {
+    /// #     Increment,
+    /// #     Decrement,
+    /// # }
+    /// #
+    /// impl Model for AppData {
+    ///     fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    ///         event.map(|app_event, _| match app_event {
+    ///             AppEvent::Increment => {
+    ///                 self.count += 1;
+    ///             }
+    ///
+    ///             AppEvent::Decrement => {
+    ///                 self.count -= 1;
+    ///             }
+    ///         });
     ///     }
     /// }
     /// ```

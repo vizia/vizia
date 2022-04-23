@@ -232,97 +232,95 @@ pub enum Sorted {
 
 impl Model for TableData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.message.downcast() {
-            match app_event {
-                AppEvent::SetAge(index, age) => {
-                    self.people[*index].last_name = age.clone();
-                }
-
-                AppEvent::Print => {
-                    println!("{:?}", self.people);
-                }
-
-                AppEvent::ToggleSortFirstName => {
-                    match self.first_name_sorted {
-                        Sorted::Forward => {
-                            self.first_name_sorted = {
-                                self.people.sort_by_cached_key(|person| person.first_name.clone());
-                                self.people.reverse();
-                                Sorted::Reverse
-                            }
-                        }
-                        Sorted::Reverse => {
-                            self.first_name_sorted = {
-                                self.people.sort_by_cached_key(|person| person.first_name.clone());
-                                Sorted::Forward
-                            }
-                        }
-                        Sorted::None => {
-                            self.first_name_sorted = {
-                                self.people.sort_by_cached_key(|person| person.first_name.clone());
-                                Sorted::Forward
-                            }
-                        }
-                    }
-
-                    self.last_name_sorted = Sorted::None;
-                    self.age_sorted = Sorted::None;
-                }
-
-                AppEvent::ToggleSortLastName => {
-                    match self.last_name_sorted {
-                        Sorted::Forward => {
-                            self.last_name_sorted = {
-                                self.people.sort_by_cached_key(|person| person.last_name.clone());
-                                self.people.reverse();
-                                Sorted::Reverse
-                            }
-                        }
-                        Sorted::Reverse => {
-                            self.last_name_sorted = {
-                                self.people.sort_by_cached_key(|person| person.last_name.clone());
-                                Sorted::Forward
-                            }
-                        }
-                        Sorted::None => {
-                            self.last_name_sorted = {
-                                self.people.sort_by_cached_key(|person| person.last_name.clone());
-                                Sorted::Forward
-                            }
-                        }
-                    }
-
-                    self.first_name_sorted = Sorted::None;
-                    self.age_sorted = Sorted::None;
-                }
-
-                AppEvent::ToggleSortAge => {
-                    match self.age_sorted {
-                        Sorted::Forward => {
-                            self.age_sorted = {
-                                self.people.sort_by_cached_key(|person| person.age.clone());
-                                self.people.reverse();
-                                Sorted::Reverse
-                            }
-                        }
-                        Sorted::Reverse => {
-                            self.age_sorted = {
-                                self.people.sort_by_cached_key(|person| person.age.clone());
-                                Sorted::Forward
-                            }
-                        }
-                        Sorted::None => {
-                            self.age_sorted = {
-                                self.people.sort_by_cached_key(|person| person.age.clone());
-                                Sorted::Forward
-                            }
-                        }
-                    }
-
-                    self.first_name_sorted = Sorted::None;
-                    self.last_name_sorted = Sorted::None;
-                }
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetAge(index, age) => {
+                self.people[*index].last_name = age.clone();
             }
-        }
+
+            AppEvent::Print => {
+                println!("{:?}", self.people);
+            }
+
+            AppEvent::ToggleSortFirstName => {
+                match self.first_name_sorted {
+                    Sorted::Forward => {
+                        self.first_name_sorted = {
+                            self.people.sort_by_cached_key(|person| person.first_name.clone());
+                            self.people.reverse();
+                            Sorted::Reverse
+                        }
+                    }
+                    Sorted::Reverse => {
+                        self.first_name_sorted = {
+                            self.people.sort_by_cached_key(|person| person.first_name.clone());
+                            Sorted::Forward
+                        }
+                    }
+                    Sorted::None => {
+                        self.first_name_sorted = {
+                            self.people.sort_by_cached_key(|person| person.first_name.clone());
+                            Sorted::Forward
+                        }
+                    }
+                }
+
+                self.last_name_sorted = Sorted::None;
+                self.age_sorted = Sorted::None;
+            }
+
+            AppEvent::ToggleSortLastName => {
+                match self.last_name_sorted {
+                    Sorted::Forward => {
+                        self.last_name_sorted = {
+                            self.people.sort_by_cached_key(|person| person.last_name.clone());
+                            self.people.reverse();
+                            Sorted::Reverse
+                        }
+                    }
+                    Sorted::Reverse => {
+                        self.last_name_sorted = {
+                            self.people.sort_by_cached_key(|person| person.last_name.clone());
+                            Sorted::Forward
+                        }
+                    }
+                    Sorted::None => {
+                        self.last_name_sorted = {
+                            self.people.sort_by_cached_key(|person| person.last_name.clone());
+                            Sorted::Forward
+                        }
+                    }
+                }
+
+                self.first_name_sorted = Sorted::None;
+                self.age_sorted = Sorted::None;
+            }
+
+            AppEvent::ToggleSortAge => {
+                match self.age_sorted {
+                    Sorted::Forward => {
+                        self.age_sorted = {
+                            self.people.sort_by_cached_key(|person| person.age.clone());
+                            self.people.reverse();
+                            Sorted::Reverse
+                        }
+                    }
+                    Sorted::Reverse => {
+                        self.age_sorted = {
+                            self.people.sort_by_cached_key(|person| person.age.clone());
+                            Sorted::Forward
+                        }
+                    }
+                    Sorted::None => {
+                        self.age_sorted = {
+                            self.people.sort_by_cached_key(|person| person.age.clone());
+                            Sorted::Forward
+                        }
+                    }
+                }
+
+                self.first_name_sorted = Sorted::None;
+                self.last_name_sorted = Sorted::None;
+            }
+        });
     }
 }

@@ -34,9 +34,6 @@ pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 mod normalized_map;
 pub use normalized_map::*;
 
-mod picker;
-pub use picker::*;
-
 mod popup;
 pub use popup::*;
 

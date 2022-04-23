@@ -96,3 +96,5 @@ pub fn log(text: &str) {
 pub fn log(text: &str) {
     println!("{}", text);
 }
+
+pub mod fonts;

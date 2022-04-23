@@ -67,13 +67,11 @@ pub enum CheckboxEvent {
 
 impl Model for CheckboxData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(checkbox_event) = event.message.downcast() {
-            match checkbox_event {
-                CheckboxEvent::Toggle => {
-                    self.check ^= true;
-                }
+        event.map(|checkbox_event, _| match checkbox_event {
+            CheckboxEvent::Toggle => {
+                self.check ^= true;
             }
-        }
+        });
     }
 }
 

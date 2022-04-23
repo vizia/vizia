@@ -1,13 +1,11 @@
+use crate::convert::cursor_icon_to_cursor_icon;
+use femtovg::{renderer::OpenGl, Canvas, Color};
 #[cfg(not(target_arch = "wasm32"))]
 use glutin::ContextBuilder;
+use vizia_core::{Context, Event, View, WindowDescription, WindowEvent};
 use winit::event_loop::EventLoop;
 use winit::window::WindowBuilder;
 use winit::{dpi::*, window::WindowId};
-
-use femtovg::{renderer::OpenGl, Canvas, Color};
-
-use crate::cursor::translate_cursor;
-use vizia_core::{Context, Event, View, WindowDescription, WindowEvent};
 
 pub struct Window {
     pub id: WindowId,
@@ -56,15 +54,15 @@ impl Window {
         // Get the window handle. this is a winit::window::Window
         let handle = window_builder.build(&events_loop).unwrap();
 
-        // Build our result!
-        let mut result = Window {
+        // Build our window
+        let mut window = Window {
             id: handle.id(),
             handle,
             canvas: Canvas::new(renderer).expect("Cannot create canvas"),
         };
 
-        setup_canvas(&mut result);
-        result
+        setup_canvas(&mut window);
+        window
     }
 
     pub fn window(&self) -> &winit::window::Window {
@@ -109,15 +107,15 @@ impl Window {
         // Build the femtovg renderer
         let renderer = OpenGl::new_from_glutin_context(&handle).expect("Cannot create renderer");
 
-        // Build our result!
-        let mut result = Window {
+        // Build our window
+        let mut window = Window {
             id: handle.window().id(),
             handle,
             canvas: Canvas::new(renderer).expect("Cannot create canvas"),
         };
 
-        setup_canvas(&mut result);
-        result
+        setup_canvas(&mut window);
+        window
     }
 
     pub fn window(&self) -> &winit::window::Window {
@@ -135,38 +133,30 @@ impl Window {
 
 impl View for Window {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        //self.window_widget.on_event(state, entity, event);
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::GrabCursor(flag) => {
-                    self.window().set_cursor_grab(*flag).expect("Failed to set cursor grab");
-                }
-
-                WindowEvent::SetCursorPosition(x, y) => {
-                    self.window()
-                        .set_cursor_position(winit::dpi::Position::Physical(PhysicalPosition::new(
-                            *x as i32, *y as i32,
-                        )))
-                        .expect("Failed to set cursor position");
-                }
-
-                WindowEvent::SetCursor(cursor) => {
-                    //println!("Set The Cursor: {:?}", cursor);
-                    if let Some(icon) = translate_cursor(*cursor) {
-                        self.window().set_cursor_visible(true);
-                        self.window().set_cursor_icon(icon);
-                    } else {
-                        self.window().set_cursor_visible(false);
-                    }
-                }
-
-                WindowEvent::SetTitle(title) => {
-                    self.window().set_title(title);
-                }
-
-                _ => {}
+        event.map(|window_event, _| match window_event {
+            WindowEvent::GrabCursor(flag) => {
+                self.window().set_cursor_grab(*flag).expect("Failed to set cursor grab");
             }
-        }
+
+            WindowEvent::SetCursorPosition(x, y) => {
+                self.window()
+                    .set_cursor_position(winit::dpi::Position::Physical(PhysicalPosition::new(
+                        *x as i32, *y as i32,
+                    )))
+                    .expect("Failed to set cursor position");
+            }
+
+            WindowEvent::SetCursor(cursor) => {
+                if let Some(icon) = cursor_icon_to_cursor_icon(*cursor) {
+                    self.window().set_cursor_visible(true);
+                    self.window().set_cursor_icon(icon);
+                } else {
+                    self.window().set_cursor_visible(false);
+                }
+            }
+
+            _ => {}
+        })
     }
 }
 
@@ -176,11 +166,11 @@ fn apply_window_description(
 ) -> WindowBuilder {
     builder
         .with_title(&description.title)
-        .with_inner_size(PhysicalSize::new(
+        .with_inner_size(LogicalSize::new(
             description.inner_size.width,
             description.inner_size.height,
         ))
-        .with_min_inner_size(PhysicalSize::new(
+        .with_min_inner_size(LogicalSize::new(
             description.min_inner_size.width,
             description.min_inner_size.height,
         ))
@@ -202,8 +192,7 @@ fn apply_window_description(
 
 fn setup_canvas(result: &mut Window) {
     // Set some initial properties on our result canvas
-    let dpi_factor = result.window().scale_factor();
     let size = result.window().inner_size();
-    result.canvas.set_size(size.width as u32, size.height as u32, dpi_factor as f32);
+    result.canvas.set_size(size.width as u32, size.height as u32, 1.0);
     result.canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
 }

@@ -4,8 +4,8 @@ use morphorm::Units;
 use crate::{
     measure_text_lines,
     style::{Overflow, Selector, SelectorRelation},
-    text_layout, text_paint, BoundingBox, Context, Display, Entity, PseudoClass, Rule, Tree,
-    TreeExt, Visibility,
+    text_layout, text_paint_general, BoundingBox, Context, Display, Entity, PseudoClass, Rule,
+    Tree, TreeExt, Visibility,
 };
 
 pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
@@ -263,7 +263,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             let mut content_height = 0.0;
 
             if let Some(text) = cx.style.text.get(entity) {
-                let mut paint = text_paint(&cx.style, &cx.resource_manager, entity);
+                let mut paint = text_paint_general(cx, entity);
                 paint.set_text_align(align);
                 paint.set_text_baseline(baseline);
 
@@ -320,6 +320,8 @@ pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
             cx.style.font_color.inherit_inline(entity, parent);
             cx.style.font_size.inherit_inline(entity, parent);
             cx.style.font.inherit_inline(entity, parent);
+            cx.style.caret_color.inherit_inline(entity, parent);
+            cx.style.selection_color.inherit_inline(entity, parent);
         }
     }
 }
@@ -330,6 +332,8 @@ pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
             cx.style.font_color.inherit_shared(entity, parent);
             cx.style.font_size.inherit_shared(entity, parent);
             cx.style.font.inherit_shared(entity, parent);
+            cx.style.caret_color.inherit_shared(entity, parent);
+            cx.style.selection_color.inherit_shared(entity, parent);
         }
     }
 }

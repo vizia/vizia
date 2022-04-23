@@ -23,55 +23,59 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, _cx: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.message.downcast() {
-            match app_event {
-                AppEvent::ToggleOption(index) => match *index {
-                    0 => self.options.option1 ^= true,
-                    1 => self.options.option2 ^= true,
-                    2 => self.options.option3 ^= true,
-                    _ => {}
-                },
+        event.map(|app_event, _| match app_event {
+            AppEvent::ToggleOption(index) => match *index {
+                0 => self.options.option1 ^= true,
+                1 => self.options.option2 ^= true,
+                2 => self.options.option3 ^= true,
+                _ => {}
+            },
 
-                AppEvent::ToggleExclusiveOption(index) => match *index {
-                    0 => {
-                        self.exclusive_options.option1 = true;
-                        self.exclusive_options.option2 = false;
-                        self.exclusive_options.option3 = false;
-                    }
+            AppEvent::ToggleExclusiveOption(index) => match *index {
+                0 => {
+                    self.exclusive_options.option1 = true;
+                    self.exclusive_options.option2 = false;
+                    self.exclusive_options.option3 = false;
+                }
 
-                    1 => {
-                        self.exclusive_options.option1 = false;
-                        self.exclusive_options.option2 = true;
-                        self.exclusive_options.option3 = false;
-                    }
+                1 => {
+                    self.exclusive_options.option1 = false;
+                    self.exclusive_options.option2 = true;
+                    self.exclusive_options.option3 = false;
+                }
 
-                    2 => {
-                        self.exclusive_options.option1 = false;
-                        self.exclusive_options.option2 = false;
-                        self.exclusive_options.option3 = true;
-                    }
-                    _ => {}
-                },
-            }
-        }
+                2 => {
+                    self.exclusive_options.option1 = false;
+                    self.exclusive_options.option2 = false;
+                    self.exclusive_options.option3 = true;
+                }
+                _ => {}
+            },
+        });
     }
 }
 
 fn main() {
     Application::new(WindowDescription::new().with_title("Checkbox"), |cx| {
-        if cx.data::<AppData>().is_none() {
-            AppData {
-                options: Options { option1: true, option2: false, option3: false },
+        AppData {
+            options: Options { option1: true, option2: false, option3: false },
 
-                exclusive_options: Options { option1: true, option2: false, option3: false },
-            }
-            .build(cx);
+            exclusive_options: Options { option1: true, option2: false, option3: false },
         }
+        .build(cx);
+
+        Label::new(
+            cx,
+            "A Checkbox represents a boolean state and can trigger an action when toggled.",
+        )
+        .width(Stretch(1.0))
+        .position_type(PositionType::SelfDirected)
+        .space(Pixels(10.0));
 
         HStack::new(cx, |cx| {
             // Checkboxes with labels
             VStack::new(cx, |cx| {
-                Label::new(cx, "Check Boxes").class("h1");
+                Label::new(cx, "Checkboxes with labels").class("h1");
 
                 HStack::new(cx, |cx| {
                     //Binding::new(cx, AppData::options.then(Options::option1), |cx, option1| {
