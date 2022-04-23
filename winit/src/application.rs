@@ -609,7 +609,9 @@ impl WindowModifiers for Application {
 
     #[cfg(target_arch = "wasm32")]
     fn canvas(self, canvas: &str) -> Self {
-        self.window_description.target_canvas = canvas.to_owned();
+        self.window_description.target_canvas = Some(canvas.to_owned());
+
+        self
     }
 }
 
