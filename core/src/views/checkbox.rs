@@ -1,4 +1,4 @@
-use crate::{Context, Handle, Lens, MouseButton, Res, View, WindowEvent};
+use crate::{Context, Event, Handle, Lens, MouseButton, Res, View, WindowEvent};
 
 pub const ICON_CHECK: &str = "\u{2713}";
 
@@ -164,21 +164,19 @@ impl View for Checkbox {
         Some(String::from("checkbox"))
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    if event.target == cx.current {
-                        if let Some(callback) = self.on_toggle.take() {
-                            (callback)(cx);
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseDown(MouseButton::Left) => {
+                if meta.target == cx.current {
+                    if let Some(callback) = self.on_toggle.take() {
+                        (callback)(cx);
 
-                            self.on_toggle = Some(callback);
-                        }
+                        self.on_toggle = Some(callback);
                     }
                 }
-
-                _ => {}
             }
-        }
+
+            _ => {}
+        });
     }
 }

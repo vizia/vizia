@@ -133,33 +133,30 @@ impl Window {
 
 impl View for Window {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        //self.window_widget.on_event(state, entity, event);
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::GrabCursor(flag) => {
-                    self.window().set_cursor_grab(*flag).expect("Failed to set cursor grab");
-                }
-
-                WindowEvent::SetCursorPosition(x, y) => {
-                    self.window()
-                        .set_cursor_position(winit::dpi::Position::Physical(PhysicalPosition::new(
-                            *x as i32, *y as i32,
-                        )))
-                        .expect("Failed to set cursor position");
-                }
-
-                WindowEvent::SetCursor(cursor) => {
-                    if let Some(icon) = cursor_icon_to_cursor_icon(*cursor) {
-                        self.window().set_cursor_visible(true);
-                        self.window().set_cursor_icon(icon);
-                    } else {
-                        self.window().set_cursor_visible(false);
-                    }
-                }
-
-                _ => {}
+        event.map(|window_event, _| match window_event {
+            WindowEvent::GrabCursor(flag) => {
+                self.window().set_cursor_grab(*flag).expect("Failed to set cursor grab");
             }
-        }
+
+            WindowEvent::SetCursorPosition(x, y) => {
+                self.window()
+                    .set_cursor_position(winit::dpi::Position::Physical(PhysicalPosition::new(
+                        *x as i32, *y as i32,
+                    )))
+                    .expect("Failed to set cursor position");
+            }
+
+            WindowEvent::SetCursor(cursor) => {
+                if let Some(icon) = cursor_icon_to_cursor_icon(*cursor) {
+                    self.window().set_cursor_visible(true);
+                    self.window().set_cursor_icon(icon);
+                } else {
+                    self.window().set_cursor_visible(false);
+                }
+            }
+
+            _ => {}
+        })
     }
 }
 

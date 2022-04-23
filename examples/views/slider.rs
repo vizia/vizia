@@ -65,12 +65,10 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(slider_event) = event.message.downcast() {
-            match slider_event {
-                AppEvent::SetValue(val) => {
-                    self.value = *val;
-                }
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetValue(val) => {
+                self.value = *val;
             }
-        }
+        });
     }
 }

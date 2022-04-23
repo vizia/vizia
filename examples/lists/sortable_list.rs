@@ -23,13 +23,11 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.message.downcast() {
-            match app_event {
-                AppEvent::Sort => {
-                    self.list.sort();
-                }
+        event.map(|app_event, _| match app_event {
+            AppEvent::Sort => {
+                self.list.sort();
             }
-        }
+        });
     }
 }
 

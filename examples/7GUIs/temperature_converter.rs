@@ -19,19 +19,17 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.try_mut() {
-            match app_event {
-                AppEvent::SetTemperatureCelcius(temp) => {
-                    self.temperature_celcius = *temp;
-                    self.temperature_fahrenheit = self.temperature_celcius * (9.0 / 5.0) + 32.0;
-                }
-
-                AppEvent::SetTemperatureFahrenheit(temp) => {
-                    self.temperature_fahrenheit = *temp;
-                    self.temperature_celcius = (self.temperature_fahrenheit - 32.0) * (5.0 / 9.0);
-                }
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetTemperatureCelcius(temp) => {
+                self.temperature_celcius = *temp;
+                self.temperature_fahrenheit = self.temperature_celcius * (9.0 / 5.0) + 32.0;
             }
-        }
+
+            AppEvent::SetTemperatureFahrenheit(temp) => {
+                self.temperature_fahrenheit = *temp;
+                self.temperature_celcius = (self.temperature_fahrenheit - 32.0) * (5.0 / 9.0);
+            }
+        });
     }
 }
 

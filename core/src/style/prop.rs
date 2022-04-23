@@ -57,15 +57,13 @@ pub trait PropSet: AsEntity + Sized {
     // Add a listener to a button which changes its background color to red when the mouse enters its bounds
     // ```
     // entity.add_listener(cx, |button: &mut Button, cx, entity, event|{
-    //     if let Some(window_event) = event.message.downcast() {
-    //         match window_event {
-    //             WindowEvent::MouseEnter => {
-    //                 entity.set_background_color(cx, Color::red());
-    //             }
-    //
-    //             _=> {}
+    //     event.map(|window_event, _| match window_event {
+    //         WindowEvent::MouseEnter => {
+    //             entity.set_background_color(cx, Color::red());
     //         }
-    //     }
+    //
+    //         _ => {}
+    //     });
     // });
     // ```
     // fn add_listener<F,W>(&self, cx: &mut Context, listener: F) -> Entity

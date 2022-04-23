@@ -36,17 +36,15 @@
 //! # }
 //! impl Model for AppData {
 //!     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-//!         if let Some(app_event) = event.message.downcast(){
-//!             match app_event {
-//!                 AppEvent::Increment => {
-//!                     self.count += 1;
-//!                 }
-//!
-//!                 AppEvent::Decrement => {
-//!                     self.count -= 1;
-//!                 }
+//!         event.map(|app_event, _| match app_event {
+//!             AppEvent::Increment => {
+//!                 self.count += 1;
 //!             }
-//!         }
+//!
+//!             AppEvent::Decrement => {
+//!                 self.count -= 1;
+//!             }
+//!         });
 //!     }
 //! }
 //! ```

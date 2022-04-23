@@ -22,13 +22,16 @@ impl View for RadioButton {
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        if let Some(WindowEvent::MouseDown(MouseButton::Left)) = event.message.downcast() {
-            if event.target == cx.current {
-                if let Some(callback) = &self.on_select {
-                    (callback)(cx);
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseDown(MouseButton::Left) => {
+                if meta.target == cx.current {
+                    if let Some(callback) = &self.on_select {
+                        (callback)(cx);
+                    }
                 }
             }
-        }
+            _ => {}
+        });
     }
 }
 
