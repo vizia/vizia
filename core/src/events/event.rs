@@ -41,7 +41,7 @@ pub struct Event {
     /// The meta data of the event.
     pub meta: EventMeta,
     /// The message of the event.
-    pub message: Box<dyn Message>,
+    message: Box<dyn Message>,
 }
 
 impl Debug for Event {
