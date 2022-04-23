@@ -21,8 +21,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    let window_description = WindowDescription::new().with_title("Textbox");
-    Application::new(window_description, |cx| {
+    Application::new(|cx| {
         AppData { text: "This text is editable!".to_string() }.build(cx);
 
         HStack::new(cx, |cx| {
@@ -53,5 +52,6 @@ fn main() {
         .space(Stretch(1.0))
         .col_between(Pixels(10.0));
     })
+    .title("Textbox")
     .run();
 }

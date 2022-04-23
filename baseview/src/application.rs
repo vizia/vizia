@@ -4,7 +4,7 @@ use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
-use vizia_core::{MouseButton, MouseButtonState, WindowModifiers};
+use vizia_core::{MouseButton, MouseButtonState};
 
 use vizia_core::{
     fonts, Context, Entity, EventManager, FontOrId, Modifiers, Units, WindowEvent, WindowSize,
@@ -19,7 +19,6 @@ where
     window_description: WindowDescription,
     scale_policy: WindowScalePolicy,
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
-    context: Context,
 }
 
 impl<F> Application<F>
@@ -27,13 +26,12 @@ where
     F: Fn(&mut Context),
     F: 'static + Send,
 {
-    pub fn new(window_description: WindowDescription, app: F) -> Self {
+    pub fn new(app: F) -> Self {
         Self {
             app,
-            window_description,
+            window_description: WindowDescription::new(),
             scale_policy: WindowScalePolicy::SystemScaleFactor,
             on_idle: None,
-            context: Context::new(),
         }
     }
 
@@ -41,6 +39,18 @@ where
     /// signature as the winit backend.
     pub fn with_scale_policy(mut self, scale_policy: WindowScalePolicy) -> Self {
         self.scale_policy = scale_policy;
+        self
+    }
+
+    pub fn title(mut self, title: &str) -> Self {
+        self.window_description.title = title.to_owned();
+
+        self
+    }
+
+    pub fn inner_size(mut self, width: u32, height: u32) -> Self {
+        self.window_description.inner_size = WindowSize::new(width, height);
+
         self
     }
 
@@ -52,7 +62,6 @@ where
     /// * `app` - The Vizia application builder.
     pub fn run(self) {
         ViziaWindow::open_blocking(
-            self.context,
             self.window_description,
             self.scale_policy,
             self.app,
@@ -102,7 +111,7 @@ where
     /// ```no_run
     /// # use vizia_core::*;
     /// # use vizia_baseview::Application;
-    /// Application::new(WindowDescription::new(), |cx|{
+    /// Application::new(|cx|{
     ///     // Build application here
     /// })
     /// .on_idle(|cx|{
@@ -509,23 +518,5 @@ fn translate_mouse_button(button: baseview::MouseButton) -> MouseButton {
         baseview::MouseButton::Other(id) => MouseButton::Other(id as u16),
         baseview::MouseButton::Back => MouseButton::Other(4),
         baseview::MouseButton::Forward => MouseButton::Other(5),
-    }
-}
-
-impl<F> WindowModifiers for Application<F> 
-where
-    F: Fn(&mut Context) + Send + 'static,
-{
-    fn title<T: ToString>(mut self, title: impl vizia_core::Res<T>) -> Self {
-        let context = &mut Context::new();
-        self.window_description.title = title.get_val(context).to_string();
-
-        self
-    }
-
-    fn inner_size(mut self, width: u32, height: u32) -> Self {
-        self.window_description.inner_size = WindowSize::new(width, height);
-
-        self
     }
 }

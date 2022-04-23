@@ -155,27 +155,85 @@ impl View for Window {
                 }
             }
 
+            WindowEvent::SetTitle(title) => {
+                self.window().set_title(title);
+            }
+
+            WindowEvent::SetSize(size) => {
+                self.window().set_inner_size(LogicalSize::new(size.width, size.height));
+            }
+
+            WindowEvent::SetMinSize(size) => {
+                self.window().set_min_inner_size(Some(LogicalSize::new(size.width, size.height)));
+            }
+
+            WindowEvent::SetMaxSize(size) => {
+                self.window().set_max_inner_size(Some(LogicalSize::new(size.width, size.height)));
+            }
+
+            WindowEvent::SetPosition(pos) => {
+                self.window().set_outer_position(LogicalPosition::new(pos.x, pos.y));
+            }
+
+            WindowEvent::SetResizable(flag) => {
+                self.window().set_resizable(*flag);
+            }
+
+            WindowEvent::SetMinimized(flag) => {
+                self.window().set_minimized(*flag);
+            }
+
+            WindowEvent::SetMaximized(flag) => {
+                self.window().set_maximized(*flag);
+            }
+
+            WindowEvent::SetVisible(flag) => {
+                self.window().set_visible(*flag);
+            }
+
+            WindowEvent::SetDecorations(flag) => {
+                self.window().set_decorations(*flag);
+            }
+
+            WindowEvent::SetAlwaysOnTop(flag) => {
+                self.window().set_always_on_top(*flag);
+            }
+
             _ => {}
         })
     }
 }
 
 fn apply_window_description(
-    builder: WindowBuilder,
+    mut builder: WindowBuilder,
     description: &WindowDescription,
 ) -> WindowBuilder {
+    builder = builder.with_title(&description.title).with_inner_size(LogicalSize::new(
+        description.inner_size.width,
+        description.inner_size.height,
+    ));
+
+    if let Some(min_inner_size) = description.min_inner_size {
+        builder = builder
+            .with_min_inner_size(LogicalSize::new(min_inner_size.width, min_inner_size.height))
+    }
+
+    if let Some(max_inner_size) = description.max_inner_size {
+        builder = builder
+            .with_max_inner_size(LogicalSize::new(max_inner_size.width, max_inner_size.height));
+    }
+
+    if let Some(position) = description.position {
+        builder = builder.with_position(LogicalPosition::new(position.x, position.y));
+    }
+
     builder
-        .with_title(&description.title)
-        .with_inner_size(LogicalSize::new(
-            description.inner_size.width,
-            description.inner_size.height,
-        ))
-        .with_min_inner_size(LogicalSize::new(
-            description.min_inner_size.width,
-            description.min_inner_size.height,
-        ))
-        .with_always_on_top(description.always_on_top)
         .with_resizable(description.resizable)
+        .with_maximized(description.maximized)
+        .with_visible(description.visible)
+        .with_transparent(description.transparent)
+        .with_decorations(description.decorations)
+        .with_always_on_top(description.always_on_top)
         .with_window_icon(if let Some(icon) = &description.icon {
             Some(
                 winit::window::Icon::from_rgba(

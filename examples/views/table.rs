@@ -1,7 +1,7 @@
 use vizia::*;
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Table"), |cx| {
+    Application::new(|cx| {
         let people = vec![
             Person { first_name: "Peter".to_string(), last_name: "Pan".to_string(), age: 14 },
             Person { first_name: "Mary".to_string(), last_name: "Poppins".to_string(), age: 32 },
@@ -195,6 +195,7 @@ fn main() {
         })
         .space(Stretch(1.0));
     })
+    .title("Table")
     .run();
 }
 

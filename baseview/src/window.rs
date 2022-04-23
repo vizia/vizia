@@ -119,7 +119,6 @@ impl ViziaWindow {
     ///
     /// * `app` - The Vizia application builder.
     pub fn open_blocking<F>(
-        context: Context,
         win_desc: WindowDescription,
         scale_policy: WindowScalePolicy,
         app: F,

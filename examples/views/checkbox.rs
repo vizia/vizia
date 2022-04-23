@@ -56,7 +56,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Checkbox"), |cx| {
+    Application::new(|cx| {
         AppData {
             options: Options { option1: true, option2: false, option3: false },
 
@@ -137,5 +137,6 @@ fn main() {
         })
         .child_space(Stretch(1.0));
     })
+    .title("Checkbox")
     .run();
 }

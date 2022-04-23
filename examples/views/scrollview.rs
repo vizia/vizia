@@ -1,7 +1,7 @@
 use vizia::*;
 
 fn main() {
-    Application::new(WindowDescription::new().with_inner_size(600, 614), |cx| {
+    Application::new(|cx| {
         ScrollView::new(cx, 0.0, 0.0, true, true, |cx| {
             Label::new(cx, "Label 1").width(Units::Pixels(1000.0)).background_color(Color::green());
             Label::new(cx, "Label 2").height(Units::Pixels(1000.0)).background_color(Color::blue());
@@ -42,5 +42,7 @@ fn main() {
         .width(Units::Pixels(600.0))
         .height(Units::Pixels(14.0));
     })
+    .title("Scrollview")
+    .inner_size((600, 614))
     .run();
 }

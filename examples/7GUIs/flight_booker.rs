@@ -149,6 +149,6 @@ fn main() {
         .child_space(Stretch(1.0));
     })
     .title("Flight Booker")
-    .inner_size(250, 250)
+    .inner_size((250, 250))
     .run();
 }

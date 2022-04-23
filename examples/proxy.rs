@@ -13,10 +13,11 @@ fn main() {
 
 #[cfg(all(not(target_arch = "wasm32"), not(feature = "baseview")))]
 fn main() {
-    let app =
-        Application::new(WindowDescription::new().with_title("Proxy"), |_| {}).on_idle(|_| {
+    let app = Application::new(|_| {})
+        .on_idle(|_| {
             println!("On Idle: {:?}", instant::Instant::now());
-        });
+        })
+        .title("Proxy");
 
     let proxy = app.get_proxy();
 

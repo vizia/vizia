@@ -15,8 +15,7 @@ const STYLE: &str = r#"
 "#;
 
 fn main() {
-    let window_description = WindowDescription::new();
-    Application::new(window_description, |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
         // Transition
         Element::new(cx).class("test");
@@ -45,5 +44,6 @@ fn main() {
             .background_color(Color::red())
             .on_press(move |cx| cx.play_animation(animation_persistent));
     })
+    .title("Animation")
     .run();
 }

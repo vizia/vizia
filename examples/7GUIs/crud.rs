@@ -190,6 +190,6 @@ fn main() {
         .child_space(Pixels(10.0));
     })
     .title("CRUD")
-    .inner_size(450, 200)
+    .inner_size((450, 200))
     .run();
 }

@@ -53,7 +53,7 @@ pub trait Model: 'static + Sized {
     /// # impl Model for AppData {}
     /// #
     /// fn main() {
-    ///     Application::new(WindowDescription::new(), |cx|{
+    ///     Application::new(|cx|{
     ///         AppData::default().build(cx);
     ///     }).run();  
     /// }

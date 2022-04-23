@@ -22,8 +22,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    let window_description = WindowDescription::new();
-    Application::new(window_description, |cx| {
+    Application::new(|cx| {
         AppData {
             list: vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()],
             choice: "Red".to_string(),
@@ -74,6 +73,7 @@ fn main() {
             .background_color(choice_to_color(&option));
         });
     })
+    .title("Dropdown")
     .run();
 }
 

@@ -344,12 +344,13 @@ impl Model for TextboxData {
             }
 
             TextEvent::Submit => {
-                cx.emit(TextEvent::EndEdit);
+                println!("{}", self.text);
                 if let Some(callback) = self.on_submit.take() {
                     (callback)(cx, self.text.as_str().to_owned());
 
                     self.on_submit = Some(callback);
                 }
+                cx.emit(TextEvent::EndEdit);
             }
 
             TextEvent::SelectAll => {
@@ -606,6 +607,7 @@ where
                     //cx.emit(TextEvent::EndEdit);
 
                     if matches!(self.kind, TextboxKind::SingleLine) {
+                        cx.emit(TextEvent::Submit);
                         if let Some(source) = cx.data::<L::Source>() {
                             let text = self.lens.view(source, |t| {
                                 if let Some(t) = t {
@@ -618,8 +620,6 @@ where
                             cx.emit(TextEvent::SelectAll);
                             cx.emit(TextEvent::InsertText(text));
                         };
-                        cx.emit(TextEvent::EndEdit);
-                        cx.emit(TextEvent::Submit);
 
                         cx.current.set_checked(cx, false);
                     } else {
