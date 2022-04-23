@@ -346,11 +346,10 @@ impl View for MenuButton {
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         if let Some(WindowEvent::MouseDown(MouseButton::Left)) = event.message.downcast() {
-            if let Some(callback) = self.action.take() {
+            if let Some(callback) = &self.action {
                 callback(cx);
                 cx.emit(MenuEvent::Close);
                 event.consume();
-                self.action = Some(callback);
             }
         }
     }

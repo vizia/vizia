@@ -124,7 +124,7 @@ impl<'a, L: Lens<Target = f32>> Handle<'a, Knob<L>> {
 
 impl<L: Lens<Target = f32>> View for Knob<L> {
     fn element(&self) -> Option<String> {
-        Some("knob".to_string())
+        Some(String::from("knob"))
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
@@ -134,9 +134,8 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
             // TODO - Remove when done
             //println!("Normalized: {}, Display: {}", self_ref.normalized_value, self_ref.map.normalized_to_display(self_ref.normalized_value));
 
-            if let Some(callback) = self_ref.on_changing.take() {
+            if let Some(callback) = &self_ref.on_changing {
                 (callback)(cx, self_ref.continuous_normal);
-                self_ref.on_changing = Some(callback);
             }
 
             //entity.emit(cx, SliderEvent::ValueChanged(self_ref.normalized_value));
@@ -158,11 +157,6 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
                     cx.focused = cx.current;
 
                     self.continuous_normal = self.lens.get(cx);
-
-                    // if let Some(callback) = self.on_press.take() {
-                    //     (callback)(self, cx, cx.current);
-                    //     self.on_press = Some(callback);
-                    // }
                 }
 
                 WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
@@ -172,11 +166,6 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
                     self.continuous_normal = self.lens.get(cx);
 
                     cx.release();
-
-                    // if let Some(callback) = self.on_release.take() {
-                    //     (callback)(self, cx, cx.current);
-                    //     self.on_release = Some(callback);
-                    // }
                 }
 
                 WindowEvent::MouseMove(_, y) => {

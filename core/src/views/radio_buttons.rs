@@ -18,7 +18,7 @@ impl RadioButton {
 
 impl View for RadioButton {
     fn element(&self) -> Option<String> {
-        Some("radiobutton".to_string())
+        Some(String::from("radiobutton"))
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
@@ -37,12 +37,6 @@ impl Handle<'_, RadioButton> {
     where
         F: 'static + Fn(&mut Context),
     {
-        if let Some(view) = self.cx.views.get_mut(&self.entity) {
-            if let Some(checkbox) = view.downcast_mut::<RadioButton>() {
-                checkbox.on_select = Some(Box::new(callback));
-            }
-        }
-
-        self
+        self.modify(|radiobutton| radiobutton.on_select = Some(Box::new(callback)))
     }
 }

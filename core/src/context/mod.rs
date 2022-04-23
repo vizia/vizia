@@ -147,8 +147,8 @@ impl Context {
                     lens.remove_observer(entity);
                 }
 
-                model_store.lenses_dedup.retain(|_, lenswrap| lenswrap.num_observers() != 0);
-                model_store.lenses_dup.retain(|lenswrap| lenswrap.num_observers() != 0);
+                model_store.lenses_dedup.retain(|_, store| store.num_observers() != 0);
+                model_store.lenses_dup.retain(|store| store.num_observers() != 0);
             }
 
             for image in self.resource_manager.images.values_mut() {

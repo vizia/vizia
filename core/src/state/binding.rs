@@ -1,7 +1,7 @@
 use std::any::TypeId;
 use std::collections::HashSet;
 
-use crate::{Context, Handle, LensCache, StateStore, TreeExt, Units, View};
+use crate::{Context, Handle, LensCache, State, TreeExt, Units, View};
 
 use crate::{Data, Lens};
 
@@ -64,7 +64,7 @@ where
 
                         let old = lens.view(model, |t| t.cloned());
 
-                        let state = Box::new(StateStore { entity: id, lens, old, observers });
+                        let state = Box::new(State { entity: id, lens, old, observers });
 
                         if let Some(key) = state.lens.cache_key() {
                             model_data_store.lenses_dedup.insert(key, state);
@@ -95,7 +95,7 @@ where
 
                             let old = lens.view(model, |t| t.cloned());
 
-                            let state = Box::new(StateStore { entity: id, lens, old, observers });
+                            let state = Box::new(State { entity: id, lens, old, observers });
 
                             if let Some(key) = state.lens.cache_key() {
                                 model_data_store.lenses_dedup.insert(key, state);
@@ -122,11 +122,7 @@ where
         }
         cx.current = prev;
 
-        let _: Handle<Self> = Handle { entity: id, p: Default::default(), cx }
-            .width(Units::Stretch(1.0))
-            .height(Units::Stretch(1.0))
-            .focusable(false)
-            .ignore();
+        let _: Handle<Self> = Handle { entity: id, p: Default::default(), cx }.ignore();
     }
 }
 
@@ -137,9 +133,8 @@ impl<L: 'static + Lens> View for Binding<L> {
 
     fn body<'a>(&mut self, cx: &'a mut Context) {
         cx.remove_children(cx.current);
-        if let Some(builder) = self.content.take() {
+        if let Some(builder) = &self.content {
             (builder)(cx, self.lens.clone());
-            self.content = Some(builder);
         }
     }
 }

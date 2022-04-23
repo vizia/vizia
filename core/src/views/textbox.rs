@@ -306,10 +306,8 @@ impl Model for TextboxData {
                         self.insert_text(cx, text);
                         self.set_caret(cx);
 
-                        if let Some(callback) = self.on_edit.take() {
+                        if let Some(callback) = &self.on_edit {
                             (callback)(cx, self.text.as_str().to_owned());
-
-                            self.on_edit = Some(callback);
                         }
                     }
                 }
@@ -319,10 +317,8 @@ impl Model for TextboxData {
                         self.delete_text(cx, *movement);
                         self.set_caret(cx);
 
-                        if let Some(callback) = self.on_edit.take() {
+                        if let Some(callback) = &self.on_edit {
                             (callback)(cx, self.text.as_str().to_owned());
-
-                            self.on_edit = Some(callback);
                         }
                     }
                 }
@@ -346,10 +342,8 @@ impl Model for TextboxData {
 
                 TextEvent::Submit => {
                     cx.emit(TextEvent::EndEdit);
-                    if let Some(callback) = self.on_submit.take() {
+                    if let Some(callback) = &self.on_submit {
                         (callback)(cx, self.text.as_str().to_owned());
-
-                        self.on_submit = Some(callback);
                     }
                 }
 

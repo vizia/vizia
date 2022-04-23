@@ -10,6 +10,6 @@ impl Image {
 
 impl View for Image {
     fn element(&self) -> Option<String> {
-        Some("image".to_owned())
+        Some(String::from("image"))
     }
 }

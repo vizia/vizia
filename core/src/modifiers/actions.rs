@@ -45,10 +45,8 @@ impl<V: View> View for Press<V> {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    if let Some(action) = self.action.take() {
+                    if let Some(action) = &self.action {
                         (action)(cx);
-
-                        self.action = Some(action);
                     }
                 }
 
@@ -104,10 +102,8 @@ impl<V: View> View for Release<V> {
             match window_event {
                 WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                     if event.target == cx.current {
-                        if let Some(action) = self.action.take() {
+                        if let Some(action) = &self.action {
                             (action)(cx);
-
-                            self.action = Some(action);
                         }
 
                         cx.release();
@@ -166,10 +162,8 @@ impl<V: View> View for Hover<V> {
             match window_event {
                 WindowEvent::MouseEnter => {
                     if event.target == cx.current {
-                        if let Some(action) = self.action.take() {
+                        if let Some(action) = &self.action {
                             (action)(cx);
-
-                            self.action = Some(action);
                         }
                     }
                 }
@@ -225,10 +219,8 @@ impl<V: View> View for Over<V> {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseOver => {
-                    if let Some(action) = self.action.take() {
+                    if let Some(action) = &self.action {
                         (action)(cx);
-
-                        self.action = Some(action);
                     }
                 }
 
@@ -284,10 +276,8 @@ impl<V: View> View for Leave<V> {
             match window_event {
                 WindowEvent::MouseLeave => {
                     if event.target == cx.current {
-                        if let Some(action) = self.action.take() {
+                        if let Some(action) = &self.action {
                             (action)(cx);
-
-                            self.action = Some(action);
                         }
                     }
                 }
@@ -343,10 +333,8 @@ impl<V: View> View for Move<V> {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::MouseMove(x, y) => {
-                    if let Some(action) = self.action.take() {
+                    if let Some(action) = &self.action {
                         (action)(cx, *x, *y);
-
-                        self.action = Some(action);
                     }
                 }
 
@@ -401,10 +389,8 @@ impl<V: View> View for FocusIn<V> {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::FocusIn => {
-                    if let Some(action) = self.action.take() {
+                    if let Some(action) = &self.action {
                         (action)(cx);
-
-                        self.action = Some(action);
                     }
                 }
 
@@ -459,10 +445,8 @@ impl<V: View> View for FocusOut<V> {
         if let Some(window_event) = event.message.downcast() {
             match window_event {
                 WindowEvent::FocusOut => {
-                    if let Some(action) = self.action.take() {
+                    if let Some(action) = &self.action {
                         (action)(cx);
-
-                        self.action = Some(action);
                     }
                 }
 
@@ -518,10 +502,8 @@ impl<V: View> View for Geo<V> {
             match window_event {
                 WindowEvent::GeometryChanged(geo) => {
                     if event.target == cx.current {
-                        if let Some(action) = self.action.take() {
+                        if let Some(action) = &self.action {
                             (action)(cx, *geo);
-
-                            self.action = Some(action);
                         }
                     }
                 }

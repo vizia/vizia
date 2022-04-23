@@ -73,14 +73,14 @@ impl Button {
     /// #
     /// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
     /// ```
-    pub fn new<A, L, V>(cx: &mut Context, action: A, label: L) -> Handle<Self>
+    pub fn new<A, F, V>(cx: &mut Context, action: A, content: F) -> Handle<Self>
     where
         A: 'static + Fn(&mut Context),
-        L: FnOnce(&mut Context) -> Handle<V>,
+        F: FnOnce(&mut Context) -> Handle<V>,
         V: 'static + View,
     {
         Self { action: Some(Box::new(action)) }.build(cx, move |cx| {
-            (label)(cx).hoverable(false).focusable(false);
+            (content)(cx).hoverable(false).focusable(false);
         })
     }
 }
@@ -96,10 +96,8 @@ impl View for Button {
                 WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                     cx.current.set_active(cx, true);
                     cx.capture();
-                    if let Some(callback) = self.action.take() {
+                    if let Some(callback) = &self.action {
                         (callback)(cx);
-
-                        self.action = Some(callback);
                     }
                 }
 
