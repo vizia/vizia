@@ -7,7 +7,8 @@ use crate::{Context, Event, LensWrap};
 
 /// A trait implemented by application data in order to mutate in response to events.
 ///
-/// Example
+/// # Examples
+///
 /// ```ignore
 /// pub struct AppData {
 ///     some_data: bool,
@@ -20,24 +21,23 @@ use crate::{Context, Event, LensWrap};
 ///
 /// impl Model for AppData {
 ///     fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
-///         if let Some(app_event) = event.message.downcast() {
-///             match app_event {
-///                 AppEvent::SetTrue => {
+///         event.map(|app_event, _| match app_event {
+///             AppEvent::SetTrue => {
 ///                     self.some_data = true;
-///                 }
+///             }
 ///
-///                 AppEvent::SetFalse => {
-///                     self.some_data = false;
-///                 }
-///             }   
-///         }
+///             AppEvent::SetFalse => {
+///                 self.some_data = false;
+///             }
+///         });
 ///     }
 /// }
 /// ```
 pub trait Model: 'static + Sized {
     /// Build the model data into the application tree.
     ///
-    /// Example
+    /// # Examples
+    ///
     /// ```ignore
     /// fn main() {
     ///     Application::new(WindowDescription::new(), |cx|{
@@ -70,17 +70,15 @@ pub trait Model: 'static + Sized {
     /// ```ignore
     /// impl Model for AppData {
     ///     fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
-    ///         if let Some(app_event) = event.message.downcast() {
-    ///             match app_event {
-    ///                 AppEvent::SetTrue => {
-    ///                     self.some_data = true;
-    ///                 }
+    ///         event.map(|app_event, _| match app_event {
+    ///             AppEvent::SetTrue => {
+    ///                 self.some_data = true;
+    ///             }
     ///
-    ///                 AppEvent::SetFalse => {
-    ///                     self.some_data = false;
-    ///                 }
-    ///             }   
-    ///         }
+    ///             AppEvent::SetFalse => {
+    ///                 self.some_data = false;
+    ///             }
+    ///         });
     ///     }
     /// }
     /// ```

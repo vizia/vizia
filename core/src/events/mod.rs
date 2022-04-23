@@ -23,17 +23,15 @@
 //! The event message must then be downcast to the right type:
 //! ```compile_fail
 //! fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
-//!     if let Some(my_event) = event.message.downcast() {
-//!         match my_event {
-//!             MyEvent::ReadDocs => {
-//!                 // Do something
-//!             }
-//!
-//!             MyEvent::CloseDocs => {
-//!                 // Do something else
-//!             }
+//!     event.map(|my_event, _| match my_event {
+//!         MyEvent::ReadDocs => {
+//!             // Do something
 //!         }
-//!     }
+//!
+//!         MyEvent::CloseDocs => {
+//!             // Do something else
+//!         }
+//!     });
 //! }
 //! ```
 

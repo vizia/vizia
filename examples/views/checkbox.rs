@@ -23,37 +23,35 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, _cx: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.message.downcast() {
-            match app_event {
-                AppEvent::ToggleOption(index) => match *index {
-                    0 => self.options.option1 ^= true,
-                    1 => self.options.option2 ^= true,
-                    2 => self.options.option3 ^= true,
-                    _ => {}
-                },
+        event.map(|app_event, _| match app_event {
+            AppEvent::ToggleOption(index) => match *index {
+                0 => self.options.option1 ^= true,
+                1 => self.options.option2 ^= true,
+                2 => self.options.option3 ^= true,
+                _ => {}
+            },
 
-                AppEvent::ToggleExclusiveOption(index) => match *index {
-                    0 => {
-                        self.exclusive_options.option1 = true;
-                        self.exclusive_options.option2 = false;
-                        self.exclusive_options.option3 = false;
-                    }
+            AppEvent::ToggleExclusiveOption(index) => match *index {
+                0 => {
+                    self.exclusive_options.option1 = true;
+                    self.exclusive_options.option2 = false;
+                    self.exclusive_options.option3 = false;
+                }
 
-                    1 => {
-                        self.exclusive_options.option1 = false;
-                        self.exclusive_options.option2 = true;
-                        self.exclusive_options.option3 = false;
-                    }
+                1 => {
+                    self.exclusive_options.option1 = false;
+                    self.exclusive_options.option2 = true;
+                    self.exclusive_options.option3 = false;
+                }
 
-                    2 => {
-                        self.exclusive_options.option1 = false;
-                        self.exclusive_options.option2 = false;
-                        self.exclusive_options.option3 = true;
-                    }
-                    _ => {}
-                },
-            }
-        }
+                2 => {
+                    self.exclusive_options.option1 = false;
+                    self.exclusive_options.option2 = false;
+                    self.exclusive_options.option3 = true;
+                }
+                _ => {}
+            },
+        });
     }
 }
 

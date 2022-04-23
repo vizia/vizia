@@ -24,17 +24,15 @@
 //! ```compile_fail
 //! impl Model for AppData {
 //!     fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
-//!         if let Some(app_event) = event.message.downcast() {
-//!             match app_event {
-//!                 AppEvent::SetTrue => {
-//!                     self.some_data = true;
-//!                 }
+//!         event.map(|app_event, _| match app_event {
+//!             AppEvent::SetTrue => {
+//!                 self.some_data = true;
+//!             }
 //!
-//!                 AppEvent::SetFalse => {
-//!                     self.some_data = false;
-//!                 }
-//!             }   
-//!         }
+//!             AppEvent::SetFalse => {
+//!                 self.some_data = false;
+//!             }
+//!         });
 //!     }
 //! }
 //! ```

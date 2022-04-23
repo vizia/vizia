@@ -184,12 +184,10 @@ pub enum KnobChangeEvent {
 }
 impl Model for KnobData {
     fn event(&mut self, _cx: &mut Context, event: &mut Event) {
-        if let Some(param_change_event) = event.message.downcast() {
-            match param_change_event {
-                KnobChangeEvent::SetKnob(idx, new_val) => {
-                    self.knobs[*idx] = *new_val;
-                }
+        event.map(|knob_change_event, _| match knob_change_event {
+            KnobChangeEvent::SetKnob(idx, new_val) => {
+                self.knobs[*idx] = *new_val;
             }
-        }
+        });
     }
 }

@@ -110,12 +110,10 @@ pub enum AppEvent {
 
 impl Model for AppData {
 	fn event(&mut self, cx: &mut Context, event: &mut MyEvent) {
-		if let Some(app_event) = event.message.downcast() {
-			match app_event {
+		event.map(|app_event, _| match app_event {
 				AppEvent::Increment => self.count += 1,	
 				AppEvent::Decrement => self.count -= 1,
-			}
-		}
+		})
 	}
 }
 ```

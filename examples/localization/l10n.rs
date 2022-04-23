@@ -13,12 +13,10 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, _cx: &mut Context, event: &mut Event) {
-        if let Some(msg) = event.message.downcast() {
-            match msg {
-                AppEvent::SetName(s) => self.name = s.clone(),
-                AppEvent::ReceiveEmail => self.emails += 1,
-            }
-        }
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetName(s) => self.name = s.clone(),
+            AppEvent::ReceiveEmail => self.emails += 1,
+        });
     }
 }
 

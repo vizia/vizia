@@ -299,136 +299,134 @@ pub enum TextEvent {
 
 impl Model for TextboxData {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        if let Some(textbox_event) = event.message.downcast() {
-            match textbox_event {
-                TextEvent::InsertText(text) => {
-                    if self.edit {
-                        self.insert_text(cx, text);
-                        self.set_caret(cx);
+        event.map(|text_event, _| match text_event {
+            TextEvent::InsertText(text) => {
+                if self.edit {
+                    self.insert_text(cx, text);
+                    self.set_caret(cx);
 
-                        if let Some(callback) = self.on_edit.take() {
-                            (callback)(cx, self.text.as_str().to_owned());
-
-                            self.on_edit = Some(callback);
-                        }
-                    }
-                }
-
-                TextEvent::DeleteText(movement) => {
-                    if self.edit {
-                        self.delete_text(cx, *movement);
-                        self.set_caret(cx);
-
-                        if let Some(callback) = self.on_edit.take() {
-                            (callback)(cx, self.text.as_str().to_owned());
-
-                            self.on_edit = Some(callback);
-                        }
-                    }
-                }
-
-                TextEvent::MoveCursor(movement, selection) => {
-                    if self.edit {
-                        self.move_cursor(cx, *movement, *selection);
-                        self.set_caret(cx);
-                    }
-                }
-
-                TextEvent::StartEdit => {
-                    if !cx.current.is_disabled(cx) {
-                        self.edit = true;
-                    }
-                }
-
-                TextEvent::EndEdit => {
-                    self.edit = false;
-                }
-
-                TextEvent::Submit => {
-                    cx.emit(TextEvent::EndEdit);
-                    if let Some(callback) = self.on_submit.take() {
+                    if let Some(callback) = self.on_edit.take() {
                         (callback)(cx, self.text.as_str().to_owned());
 
-                        self.on_submit = Some(callback);
+                        self.on_edit = Some(callback);
                     }
-                }
-
-                TextEvent::SelectAll => {
-                    self.select_all(cx);
-                    self.set_caret(cx);
-                }
-
-                TextEvent::Hit(posx, posy) => {
-                    let posx = *posx - self.transform.0;
-                    let posy = *posy - self.transform.1;
-                    let idx = pos_to_idx(
-                        posx,
-                        posy,
-                        cx.cache.text_lines.get(self.content_entity).unwrap().iter(),
-                    );
-                    self.selection = Selection::new(idx, idx);
-                    self.sel_x = posx;
-                    self.set_caret(cx);
-                }
-
-                TextEvent::Drag(posx, posy) => {
-                    let posx = *posx - self.transform.0;
-                    let posy = *posy - self.transform.1;
-                    let idx = pos_to_idx(
-                        posx,
-                        posy,
-                        cx.cache.text_lines.get(self.content_entity).unwrap().iter(),
-                    );
-                    self.selection = Selection::new(self.selection.anchor, idx);
-                    self.sel_x = posx;
-                    self.set_caret(cx);
-                }
-
-                TextEvent::Copy =>
-                {
-                    #[cfg(feature = "clipboard")]
-                    if self.edit {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
-                            let selected_text = &self.text.as_str()[self.selection.range()];
-                            if selected_text.len() > 0 {
-                                cx.clipboard
-                                    .set_contents(selected_text.to_owned())
-                                    .expect("Failed to add text to clipboard");
-                            }
-                        }
-                    }
-                }
-
-                TextEvent::Paste =>
-                {
-                    #[cfg(feature = "clipboard")]
-                    if self.edit {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
-                            if let Ok(text) = cx.clipboard.get_contents() {
-                                cx.emit(TextEvent::InsertText(text));
-                            }
-                        }
-                    }
-                }
-
-                TextEvent::SetOnEdit(on_edit) => {
-                    self.on_edit = on_edit.clone();
-                }
-
-                TextEvent::InitContent(content, kind) => {
-                    self.content_entity = *content;
-                    self.kind = *kind;
-                }
-
-                TextEvent::GeometryChanged => {
-                    self.set_caret(cx);
-                }
-
-                TextEvent::SetOnSubmit(on_submit) => {
-                    self.on_submit = on_submit.clone();
                 }
             }
-        }
+
+            TextEvent::DeleteText(movement) => {
+                if self.edit {
+                    self.delete_text(cx, *movement);
+                    self.set_caret(cx);
+
+                    if let Some(callback) = self.on_edit.take() {
+                        (callback)(cx, self.text.as_str().to_owned());
+
+                        self.on_edit = Some(callback);
+                    }
+                }
+            }
+
+            TextEvent::MoveCursor(movement, selection) => {
+                if self.edit {
+                    self.move_cursor(cx, *movement, *selection);
+                    self.set_caret(cx);
+                }
+            }
+
+            TextEvent::StartEdit => {
+                if !cx.current.is_disabled(cx) {
+                    self.edit = true;
+                }
+            }
+
+            TextEvent::EndEdit => {
+                self.edit = false;
+            }
+
+            TextEvent::Submit => {
+                cx.emit(TextEvent::EndEdit);
+                if let Some(callback) = self.on_submit.take() {
+                    (callback)(cx, self.text.as_str().to_owned());
+
+                    self.on_submit = Some(callback);
+                }
+            }
+
+            TextEvent::SelectAll => {
+                self.select_all(cx);
+                self.set_caret(cx);
+            }
+
+            TextEvent::Hit(posx, posy) => {
+                let posx = *posx - self.transform.0;
+                let posy = *posy - self.transform.1;
+                let idx = pos_to_idx(
+                    posx,
+                    posy,
+                    cx.cache.text_lines.get(self.content_entity).unwrap().iter(),
+                );
+                self.selection = Selection::new(idx, idx);
+                self.sel_x = posx;
+                self.set_caret(cx);
+            }
+
+            TextEvent::Drag(posx, posy) => {
+                let posx = *posx - self.transform.0;
+                let posy = *posy - self.transform.1;
+                let idx = pos_to_idx(
+                    posx,
+                    posy,
+                    cx.cache.text_lines.get(self.content_entity).unwrap().iter(),
+                );
+                self.selection = Selection::new(self.selection.anchor, idx);
+                self.sel_x = posx;
+                self.set_caret(cx);
+            }
+
+            TextEvent::Copy =>
+            {
+                #[cfg(feature = "clipboard")]
+                if self.edit {
+                    if cx.modifiers.contains(Modifiers::CTRL) {
+                        let selected_text = &self.text.as_str()[self.selection.range()];
+                        if selected_text.len() > 0 {
+                            cx.clipboard
+                                .set_contents(selected_text.to_owned())
+                                .expect("Failed to add text to clipboard");
+                        }
+                    }
+                }
+            }
+
+            TextEvent::Paste =>
+            {
+                #[cfg(feature = "clipboard")]
+                if self.edit {
+                    if cx.modifiers.contains(Modifiers::CTRL) {
+                        if let Ok(text) = cx.clipboard.get_contents() {
+                            cx.emit(TextEvent::InsertText(text));
+                        }
+                    }
+                }
+            }
+
+            TextEvent::SetOnEdit(on_edit) => {
+                self.on_edit = on_edit.clone();
+            }
+
+            TextEvent::InitContent(content, kind) => {
+                self.content_entity = *content;
+                self.kind = *kind;
+            }
+
+            TextEvent::GeometryChanged => {
+                self.set_caret(cx);
+            }
+
+            TextEvent::SetOnSubmit(on_submit) => {
+                self.on_submit = on_submit.clone();
+            }
+        });
     }
 }
 
@@ -556,209 +554,204 @@ where
         //let selection = cx.tree.get_child(cx.current, 0).unwrap();
         //let caret = cx.tree.get_child(cx.current, 1).unwrap();
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    if cx.current.is_over(cx) {
-                        cx.emit(TextEvent::StartEdit);
+        event.map(|window_event, _| match window_event {
+            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+                if cx.current.is_over(cx) {
+                    cx.emit(TextEvent::StartEdit);
 
-                        cx.focused = cx.current;
-                        cx.capture();
-                        cx.current.set_checked(cx, true);
+                    cx.focused = cx.current;
+                    cx.capture();
+                    cx.current.set_checked(cx, true);
 
-                        cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
-                    } else {
-                        cx.release();
-                        cx.current.set_checked(cx, false);
-                        cx.emit(TextEvent::EndEdit);
+                    cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
+                } else {
+                    cx.release();
+                    cx.current.set_checked(cx, false);
+                    cx.emit(TextEvent::EndEdit);
 
-                        // Forward event to hovered
-                        cx.event_queue.push_back(
-                            Event::new(WindowEvent::MouseDown(MouseButton::Left))
-                                .target(cx.hovered),
-                        );
-                    }
+                    // Forward event to hovered
+                    cx.event_queue.push_back(
+                        Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered),
+                    );
                 }
+            }
 
-                WindowEvent::MouseMove(_, _) => {
-                    cx.emit(WindowEvent::SetCursor(CursorIcon::Text));
-                    if cx.mouse.left.state == MouseButtonState::Pressed {
-                        cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
-                    }
+            WindowEvent::MouseMove(_, _) => {
+                cx.emit(WindowEvent::SetCursor(CursorIcon::Text));
+                if cx.mouse.left.state == MouseButtonState::Pressed {
+                    cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
                 }
+            }
 
-                WindowEvent::MouseLeave => {
-                    cx.emit(WindowEvent::SetCursor(CursorIcon::Default));
-                }
+            WindowEvent::MouseLeave => {
+                cx.emit(WindowEvent::SetCursor(CursorIcon::Default));
+            }
 
-                WindowEvent::CharInput(c) => {
-                    if *c != '\u{1b}' && // Escape
+            WindowEvent::CharInput(c) => {
+                if *c != '\u{1b}' && // Escape
                             *c != '\u{8}' && // Backspace
                             *c != '\u{7f}' && // Delete
                             *c != '\u{0d}' && // Carriage return
                             !cx.modifiers.contains(Modifiers::CTRL)
-                    {
-                        cx.emit(TextEvent::InsertText(String::from(*c)));
+                {
+                    cx.emit(TextEvent::InsertText(String::from(*c)));
+                }
+            }
+
+            WindowEvent::KeyDown(code, _) => match code {
+                Code::Enter => {
+                    // Finish editing
+                    // self.edit = false;
+
+                    //cx.emit(TextEvent::EndEdit);
+
+                    if matches!(self.kind, TextboxKind::SingleLine) {
+                        if let Some(source) = cx.data::<L::Source>() {
+                            let text = self.lens.view(source, |t| {
+                                if let Some(t) = t {
+                                    t.to_string()
+                                } else {
+                                    "".to_owned()
+                                }
+                            });
+
+                            cx.emit(TextEvent::SelectAll);
+                            cx.emit(TextEvent::InsertText(text));
+                        };
+                        cx.emit(TextEvent::EndEdit);
+                        cx.emit(TextEvent::Submit);
+
+                        cx.current.set_checked(cx, false);
+                    } else {
+                        cx.emit(TextEvent::InsertText("\n".to_owned()));
                     }
                 }
 
-                WindowEvent::KeyDown(code, _) => match code {
-                    Code::Enter => {
-                        // Finish editing
-                        // self.edit = false;
+                Code::ArrowLeft => {
+                    //if self.edit {
+                    let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                        Movement::Word(Direction::Upstream)
+                    } else {
+                        Movement::Grapheme(Direction::Upstream)
+                    };
 
-                        //cx.emit(TextEvent::EndEdit);
+                    cx.emit(TextEvent::MoveCursor(
+                        movement,
+                        cx.modifiers.contains(Modifiers::SHIFT),
+                    ));
 
-                        if matches!(self.kind, TextboxKind::SingleLine) {
-                            if let Some(source) = cx.data::<L::Source>() {
-                                let text = self.lens.view(source, |t| {
-                                    if let Some(t) = t {
-                                        t.to_string()
-                                    } else {
-                                        "".to_owned()
-                                    }
-                                });
+                    //self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
 
-                                cx.emit(TextEvent::SelectAll);
-                                cx.emit(TextEvent::InsertText(text));
-                            };
-                            cx.emit(TextEvent::EndEdit);
-                            cx.emit(TextEvent::Submit);
+                    //self.set_caret(cx, cx.current);
+                    //}
+                }
 
-                            cx.current.set_checked(cx, false);
-                        } else {
-                            cx.emit(TextEvent::InsertText("\n".to_owned()));
-                        }
+                Code::ArrowRight => {
+                    //if self.edit {
+                    let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                        Movement::Word(Direction::Downstream)
+                    } else {
+                        Movement::Grapheme(Direction::Downstream)
+                    };
+
+                    cx.emit(TextEvent::MoveCursor(
+                        movement,
+                        cx.modifiers.contains(Modifiers::SHIFT),
+                    ));
+
+                    // self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
+
+                    // self.set_caret(cx, cx.current);
+                    //}
+                }
+
+                Code::ArrowUp => {
+                    cx.emit(TextEvent::MoveCursor(
+                        Movement::Line(Direction::Upstream),
+                        cx.modifiers.contains(Modifiers::SHIFT),
+                    ));
+                }
+
+                Code::ArrowDown => {
+                    cx.emit(TextEvent::MoveCursor(
+                        Movement::Line(Direction::Downstream),
+                        cx.modifiers.contains(Modifiers::SHIFT),
+                    ));
+                }
+
+                Code::Backspace => {
+                    if cx.modifiers.contains(Modifiers::CTRL) {
+                        //self.delete_text(cx, Movement::Word(Direction::Upstream));
+                        cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
+                    } else {
+                        //self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
+                        cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Upstream)));
                     }
 
-                    Code::ArrowLeft => {
-                        //if self.edit {
-                        let movement = if cx.modifiers.contains(Modifiers::CTRL) {
-                            Movement::Word(Direction::Upstream)
-                        } else {
-                            Movement::Grapheme(Direction::Upstream)
-                        };
+                    //self.set_caret(cx, cx.current);
+                }
 
-                        cx.emit(TextEvent::MoveCursor(
-                            movement,
-                            cx.modifiers.contains(Modifiers::SHIFT),
-                        ));
-
-                        //self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
-
-                        //self.set_caret(cx, cx.current);
-                        //}
+                Code::Delete => {
+                    //if self.edit {
+                    if cx.modifiers.contains(Modifiers::CTRL) {
+                        //self.delete_text(cx, Movement::Word(Direction::Downstream));
+                        cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
+                    } else {
+                        //self.delete_text(cx, Movement::Grapheme(Direction::Downstream));
+                        cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Downstream)));
                     }
+                    //self.set_caret(cx, cx.current);
+                    //}
+                }
 
-                    Code::ArrowRight => {
-                        //if self.edit {
-                        let movement = if cx.modifiers.contains(Modifiers::CTRL) {
-                            Movement::Word(Direction::Downstream)
-                        } else {
-                            Movement::Grapheme(Direction::Downstream)
-                        };
+                Code::Escape => {
+                    //self.edit = false;
+                    cx.emit(TextEvent::EndEdit);
+                    cx.current.set_checked(cx, false);
+                }
 
-                        cx.emit(TextEvent::MoveCursor(
-                            movement,
-                            cx.modifiers.contains(Modifiers::SHIFT),
-                        ));
+                Code::Home => {
+                    cx.emit(TextEvent::MoveCursor(
+                        Movement::ParagraphStart,
+                        cx.modifiers.contains(Modifiers::SHIFT),
+                    ));
+                }
 
-                        // self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
+                Code::End => {
+                    cx.emit(TextEvent::MoveCursor(
+                        Movement::ParagraphEnd,
+                        cx.modifiers.contains(Modifiers::SHIFT),
+                    ));
+                }
 
-                        // self.set_caret(cx, cx.current);
-                        //}
+                // TODO
+                Code::PageUp => {}
+
+                // TODO
+                Code::PageDown => {}
+
+                Code::KeyA => {
+                    //if self.edit {
+                    if cx.modifiers.contains(Modifiers::CTRL) {
+                        // self.select_all(cx);
+                        cx.emit(TextEvent::SelectAll);
                     }
+                    //}
+                }
 
-                    Code::ArrowUp => {
-                        cx.emit(TextEvent::MoveCursor(
-                            Movement::Line(Direction::Upstream),
-                            cx.modifiers.contains(Modifiers::SHIFT),
-                        ));
-                    }
+                Code::KeyC => {
+                    cx.emit(TextEvent::Copy);
+                }
 
-                    Code::ArrowDown => {
-                        cx.emit(TextEvent::MoveCursor(
-                            Movement::Line(Direction::Downstream),
-                            cx.modifiers.contains(Modifiers::SHIFT),
-                        ));
-                    }
-
-                    Code::Backspace => {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
-                            //self.delete_text(cx, Movement::Word(Direction::Upstream));
-                            cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
-                        } else {
-                            //self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
-                            cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Upstream)));
-                        }
-
-                        //self.set_caret(cx, cx.current);
-                    }
-
-                    Code::Delete => {
-                        //if self.edit {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
-                            //self.delete_text(cx, Movement::Word(Direction::Downstream));
-                            cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
-                        } else {
-                            //self.delete_text(cx, Movement::Grapheme(Direction::Downstream));
-                            cx.emit(TextEvent::DeleteText(Movement::Grapheme(
-                                Direction::Downstream,
-                            )));
-                        }
-                        //self.set_caret(cx, cx.current);
-                        //}
-                    }
-
-                    Code::Escape => {
-                        //self.edit = false;
-                        cx.emit(TextEvent::EndEdit);
-                        cx.current.set_checked(cx, false);
-                    }
-
-                    Code::Home => {
-                        cx.emit(TextEvent::MoveCursor(
-                            Movement::ParagraphStart,
-                            cx.modifiers.contains(Modifiers::SHIFT),
-                        ));
-                    }
-
-                    Code::End => {
-                        cx.emit(TextEvent::MoveCursor(
-                            Movement::ParagraphEnd,
-                            cx.modifiers.contains(Modifiers::SHIFT),
-                        ));
-                    }
-
-                    // TODO
-                    Code::PageUp => {}
-
-                    // TODO
-                    Code::PageDown => {}
-
-                    Code::KeyA => {
-                        //if self.edit {
-                        if cx.modifiers.contains(Modifiers::CTRL) {
-                            // self.select_all(cx);
-                            cx.emit(TextEvent::SelectAll);
-                        }
-                        //}
-                    }
-
-                    Code::KeyC => {
-                        cx.emit(TextEvent::Copy);
-                    }
-
-                    Code::KeyV => {
-                        cx.emit(TextEvent::Paste);
-                    }
-
-                    _ => {}
-                },
+                Code::KeyV => {
+                    cx.emit(TextEvent::Paste);
+                }
 
                 _ => {}
-            }
-        }
+            },
+
+            _ => {}
+        });
     }
 }
 
