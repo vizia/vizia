@@ -147,64 +147,72 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
             //Entity::root().redraw(cx);
         };
 
-        if let Some(window_event) = event.message.downcast::<WindowEvent>() {
-            match window_event {
-                WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    self.is_dragging = true;
-                    self.prev_drag_y = cx.mouse.left.pos_down.1;
+        event.map(|window_event, _| match window_event {
+            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+                self.is_dragging = true;
+                self.prev_drag_y = cx.mouse.left.pos_down.1;
 
-                    cx.capture();
-                    cx.focused = cx.current;
+                cx.capture();
+                cx.focused = cx.current;
 
-                    self.continuous_normal = self.lens.get(cx);
-                }
+                self.continuous_normal = self.lens.get(cx);
 
-                WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
-                    self.is_dragging = false;
-                    //self.continuous_normal = self.normalized_value;
-
-                    self.continuous_normal = self.lens.get(cx);
-
-                    cx.release();
-                }
-
-                WindowEvent::MouseMove(_, y) => {
-                    //if event.target == cx.current {
-                    if self.is_dragging {
-                        let mut delta_normal = (*y - self.prev_drag_y) * self.drag_scalar;
-
-                        self.prev_drag_y = *y;
-
-                        if cx.modifiers.contains(Modifiers::SHIFT) {
-                            delta_normal *= self.modifier_scalar;
-                        }
-
-                        let new_normal = self.continuous_normal - delta_normal;
-
-                        move_virtual_slider(self, cx, new_normal);
-                    }
-                    //}
-                }
-
-                WindowEvent::MouseScroll(_, y) => {
-                    if *y != 0.0 {
-                        let delta_normal = -*y * self.wheel_scalar;
-
-                        let new_normal = self.continuous_normal - delta_normal;
-
-                        move_virtual_slider(self, cx, new_normal);
-                    }
-                }
-
-                WindowEvent::MouseDoubleClick(button) if *button == MouseButton::Left => {
-                    self.is_dragging = false;
-
-                    move_virtual_slider(self, cx, self.default_normal);
-                }
-
-                _ => {}
+                // if let Some(callback) = self.on_press.take() {
+                //     (callback)(self, cx, cx.current);
+                //     self.on_press = Some(callback);
+                // }
             }
-        }
+
+            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+                self.is_dragging = false;
+                //self.continuous_normal = self.normalized_value;
+
+                self.continuous_normal = self.lens.get(cx);
+
+                cx.release();
+
+                // if let Some(callback) = self.on_release.take() {
+                //     (callback)(self, cx, cx.current);
+                //     self.on_release = Some(callback);
+                // }
+            }
+
+            WindowEvent::MouseMove(_, y) => {
+                //if meta.target == cx.current {
+                if self.is_dragging {
+                    let mut delta_normal = (*y - self.prev_drag_y) * self.drag_scalar;
+
+                    self.prev_drag_y = *y;
+
+                    if cx.modifiers.contains(Modifiers::SHIFT) {
+                        delta_normal *= self.modifier_scalar;
+                    }
+
+                    let new_normal = self.continuous_normal - delta_normal;
+
+                    move_virtual_slider(self, cx, new_normal);
+                }
+                //}
+            }
+
+            WindowEvent::MouseScroll(_, y) => {
+                if *y != 0.0 {
+                    let delta_normal = -*y * self.wheel_scalar;
+
+                    let new_normal = self.continuous_normal - delta_normal;
+
+                    move_virtual_slider(self, cx, new_normal);
+                }
+            }
+
+            WindowEvent::MouseDoubleClick(button) if *button == MouseButton::Left => {
+                self.is_dragging = false;
+
+                move_virtual_slider(self, cx, self.default_normal);
+            }
+
+            _ => {}
+        });
     }
 }
 

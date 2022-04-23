@@ -67,31 +67,27 @@ pub enum MenuEvent {
 
 impl Model for MenuData {
     fn event(&mut self, _cx: &mut Context, event: &mut Event) {
-        if let Some(msg) = event.message.downcast() {
-            match msg {
-                MenuEvent::SetSelected(sel) => {
-                    self.selected = *sel;
-                    event.consume();
-                }
-                MenuEvent::Close => self.selected = None,
-                MenuEvent::Activate => {}
+        event.map(|menu_event, meta| match menu_event {
+            MenuEvent::SetSelected(sel) => {
+                self.selected = *sel;
+                meta.consume();
             }
-        }
+            MenuEvent::Close => self.selected = None,
+            MenuEvent::Activate => {}
+        });
     }
 }
 
 impl Model for MenuControllerData {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        if let Some(msg) = event.message.downcast() {
-            match msg {
-                MenuEvent::Close => {
-                    self.active = false;
-                    cx.release();
-                }
-                MenuEvent::Activate => self.active = true,
-                _ => {}
+        event.map(|menu_event, _| match menu_event {
+            MenuEvent::Close => {
+                self.active = false;
+                cx.release();
             }
-        }
+            MenuEvent::Activate => self.active = true,
+            _ => {}
+        });
     }
 }
 
@@ -127,33 +123,33 @@ impl View for MenuController {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         let active = cx.data::<MenuControllerData>().unwrap().active;
 
-        if let Some(msg) = event.message.downcast() {
+        event.map(|window_event, meta| {
             if active {
                 let is_child = cx.hovered.is_descendant_of(&cx.tree, cx.current);
                 // we capture focus in order to see clicks outside the menus, but we don't want
                 // to deprive our children of their events.
                 // We also want mouse scroll events to be seen by everyone
-                if event.propagation == Propagation::Direct {
+                if meta.propagation == Propagation::Direct {
                     if (is_child
                         && matches!(
-                            msg,
+                            window_event,
                             WindowEvent::MouseMove(_, _)
                                 | WindowEvent::MouseDown(_)
                                 | WindowEvent::MouseUp(_)
                                 | WindowEvent::MouseScroll(_, _)
                                 | WindowEvent::MouseDoubleClick(_)
                         ))
-                        || (!is_child && matches!(msg, WindowEvent::MouseScroll(_, _)))
+                        || (!is_child && matches!(window_event, WindowEvent::MouseScroll(_, _)))
                     {
                         cx.event_queue.push_back(
-                            Event::new(msg.clone())
+                            Event::new(window_event.clone())
                                 .propagate(Propagation::Up)
                                 .target(cx.hovered)
-                                .origin(event.origin.clone()),
+                                .origin(meta.origin.clone()),
                         );
                     }
                     // if we click outside the menu, close everything
-                    if matches!(msg, WindowEvent::MouseDown(_)) && !is_child {
+                    if matches!(window_event, WindowEvent::MouseDown(_)) && !is_child {
                         cx.event_queue.push_back(
                             Event::new(MenuEvent::Close)
                                 .propagate(Propagation::Subtree)
@@ -163,7 +159,7 @@ impl View for MenuController {
                     }
                 }
             } else {
-                if let WindowEvent::MouseDown(_) = msg {
+                if let WindowEvent::MouseDown(_) = window_event {
                     // capture focus on click
                     cx.capture();
                     cx.emit(MenuEvent::Activate);
@@ -176,7 +172,7 @@ impl View for MenuController {
                     );
                 }
             }
-        }
+        });
     }
 }
 
@@ -345,12 +341,15 @@ impl View for MenuButton {
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        if let Some(WindowEvent::MouseDown(MouseButton::Left)) = event.message.downcast() {
-            if let Some(callback) = &self.action {
-                callback(cx);
-                cx.emit(MenuEvent::Close);
-                event.consume();
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseDown(MouseButton::Left) => {
+                if let Some(callback) = &self.action {
+                    callback(cx);
+                    cx.emit(MenuEvent::Close);
+                    meta.consume();
+                }
             }
-        }
+            _ => {}
+        });
     }
 }

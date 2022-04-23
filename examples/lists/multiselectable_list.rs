@@ -16,19 +16,17 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(list_event) = event.message.downcast() {
-            match list_event {
-                AppEvent::Select(index) => {
-                    if !self.selected.insert(*index) {
-                        self.selected.remove(index);
-                    }
-                }
-
-                AppEvent::ClearSelection => {
-                    self.selected.clear();
+        event.map(|app_event, _| match app_event {
+            AppEvent::Select(index) => {
+                if !self.selected.insert(*index) {
+                    self.selected.remove(index);
                 }
             }
-        }
+
+            AppEvent::ClearSelection => {
+                self.selected.clear();
+            }
+        });
     }
 }
 

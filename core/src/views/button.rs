@@ -91,25 +91,23 @@ impl View for Button {
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    cx.current.set_active(cx, true);
-                    cx.capture();
-                    if let Some(callback) = &self.action {
-                        (callback)(cx);
-                    }
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+                cx.current.set_active(cx, true);
+                cx.capture();
+                if let Some(callback) = &self.action {
+                    (callback)(cx);
                 }
-
-                WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
-                    if event.target == cx.current {
-                        cx.release();
-                        cx.current.set_active(cx, false);
-                    }
-                }
-
-                _ => {}
             }
-        }
+
+            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+                if meta.target == cx.current {
+                    cx.release();
+                    cx.current.set_active(cx, false);
+                }
+            }
+
+            _ => {}
+        });
     }
 }

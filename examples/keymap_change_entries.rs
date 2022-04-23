@@ -72,20 +72,18 @@ impl CustomView {
 
 impl View for CustomView {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::KeyDown(code, _) => {
-                    // Retrieve our keymap data containing all of our key chords.
-                    if let Some(keymap_data) = cx.data::<Keymap<Action>>() {
-                        // Loop through every action that is being pressed.
-                        for action in keymap_data.pressed_actions(cx, *code) {
-                            println!("The action {:?} is being pressed!", action);
-                        }
+        event.map(|window_event, _| match window_event {
+            WindowEvent::KeyDown(code, _) => {
+                // Retrieve our keymap data containing all of our key chords.
+                if let Some(keymap_data) = cx.data::<Keymap<Action>>() {
+                    // Loop through every action that is being pressed.
+                    for action in keymap_data.pressed_actions(cx, *code) {
+                        println!("The action {:?} is being pressed!", action);
                     }
                 }
-                _ => {}
             }
-        }
+            _ => {}
+        });
     }
 }
 

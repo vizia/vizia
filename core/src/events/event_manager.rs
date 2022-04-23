@@ -35,16 +35,14 @@ impl EventManager {
         // Loop over the events in the event queue
         'events: for event in self.event_queue.iter_mut() {
             // handle internal events
-            if let Some(msg) = event.message.downcast() {
-                match msg {
-                    InternalEvent::Redraw => context.style.needs_redraw = true,
-                    InternalEvent::LoadImage { path, image, policy } => {
-                        if let Some(image) = image.lock().unwrap().take() {
-                            context.load_image(path.clone(), image, *policy);
-                        }
+            event.map(|internal_event, _| match internal_event {
+                InternalEvent::Redraw => context.style.needs_redraw = true,
+                InternalEvent::LoadImage { path, image, policy } => {
+                    if let Some(image) = image.lock().unwrap().take() {
+                        context.load_image(path.clone(), image, *policy);
                     }
                 }
-            }
+            });
 
             // if event.trace {
             //     println!("Event: {:?}", event);
@@ -67,18 +65,18 @@ impl EventManager {
                     context.listeners.insert(entity, listener);
                 }
 
-                if event.consumed {
+                if event.meta.consumed {
                     continue 'events;
                 }
             }
 
             // Define the target to prevent multiple mutable borrows error
-            let target = event.target;
+            let target = event.meta.target;
 
             // Send event to target
             visit_entity(context, target, event);
 
-            if event.consumed {
+            if event.meta.consumed {
                 continue 'events;
             }
 
@@ -87,11 +85,11 @@ impl EventManager {
             // }
 
             // Propagate up from target to root (not including target)
-            if event.propagation == Propagation::Up {
+            if event.meta.propagation == Propagation::Up {
                 // Walk up the tree from parent to parent
                 for entity in target.parent_iter(&self.tree) {
                     // Skip the target entity
-                    if entity == event.target {
+                    if entity == event.meta.target {
                         continue;
                     }
 
@@ -99,16 +97,16 @@ impl EventManager {
                     visit_entity(context, entity, event);
 
                     // Skip to the next event if the current event is consumed
-                    if event.consumed {
+                    if event.meta.consumed {
                         continue 'events;
                     }
                 }
             }
 
-            if event.propagation == Propagation::Subtree {
+            if event.meta.propagation == Propagation::Subtree {
                 for entity in target.branch_iter(&self.tree) {
                     // Skip the target entity
-                    if entity == event.target {
+                    if entity == event.meta.target {
                         continue;
                     }
 
@@ -116,7 +114,7 @@ impl EventManager {
                     visit_entity(context, entity, event);
 
                     // Skip to the next event if the current event is consumed
-                    if event.consumed {
+                    if event.meta.consumed {
                         continue 'events;
                     }
                 }

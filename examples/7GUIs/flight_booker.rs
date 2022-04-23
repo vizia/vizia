@@ -58,21 +58,19 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.message.downcast() {
-            match app_event {
-                AppEvent::SetChoice(choice) => {
-                    self.choice = choice.clone();
-                }
-
-                AppEvent::SetStartDate(date) => {
-                    self.start_date = date.clone();
-                }
-
-                AppEvent::SetEndDate(date) => {
-                    self.end_date = date.clone();
-                }
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetChoice(choice) => {
+                self.choice = choice.clone();
             }
-        }
+
+            AppEvent::SetStartDate(date) => {
+                self.start_date = date.clone();
+            }
+
+            AppEvent::SetEndDate(date) => {
+                self.end_date = date.clone();
+            }
+        });
     }
 }
 

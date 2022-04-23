@@ -197,60 +197,94 @@ impl<L: Lens> View for Slider<L> {
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
-        if let Some(slider_event_internal) = event.message.downcast() {
-            match slider_event_internal {
-                SliderEventInternal::SetThumbSize(width, height) => match self.internal.orientation
-                {
+        event.map(|slider_event_internal, _| match slider_event_internal {
+            SliderEventInternal::SetThumbSize(width, height) => match self.internal.orientation {
+                Orientation::Horizontal => {
+                    self.internal.thumb_size = *width;
+                }
+
+                Orientation::Vertical => {
+                    self.internal.thumb_size = *height;
+                }
+            },
+
+            SliderEventInternal::SetRange(range) => {
+                self.internal.range = range.clone();
+            }
+        });
+
+        event.map(|window_event, _| match window_event {
+            WindowEvent::GeometryChanged(_) => {
+                let width = cx.cache.get_width(cx.current);
+                let height = cx.cache.get_height(cx.current);
+
+                if width >= height {
+                    self.internal.orientation = Orientation::Horizontal;
+                    self.internal.size = width;
+                } else {
+                    self.internal.orientation = Orientation::Vertical;
+                    self.internal.size = height;
+                }
+            }
+
+            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+                self.is_dragging = true;
+                cx.capture();
+                cx.current.set_active(cx, true);
+
+                let thumb_size = self.internal.thumb_size;
+                let min = self.internal.range.start;
+                let max = self.internal.range.end;
+
+                let mut dx = match self.internal.orientation {
                     Orientation::Horizontal => {
-                        self.internal.thumb_size = *width;
+                        (cx.mouse.left.pos_down.0
+                            - cx.cache.get_posx(cx.current)
+                            - thumb_size / 2.0)
+                            / (cx.cache.get_width(cx.current) - thumb_size)
                     }
 
                     Orientation::Vertical => {
-                        self.internal.thumb_size = *height;
+                        (cx.cache.get_height(cx.current)
+                            - (cx.mouse.left.pos_down.1 - cx.cache.get_posy(cx.current))
+                            - thumb_size / 2.0)
+                            / (cx.cache.get_height(cx.current) - thumb_size)
                     }
-                },
+                };
 
-                SliderEventInternal::SetRange(range) => {
-                    self.internal.range = range.clone();
+                dx = dx.clamp(0.0, 1.0);
+
+                let val = min + dx * (max - min);
+
+                if let Some(callback) = self.on_changing.take() {
+                    (callback)(cx, val);
+
+                    self.on_changing = Some(callback);
                 }
             }
-        }
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::GeometryChanged(_) => {
-                    let width = cx.cache.get_width(cx.current);
-                    let height = cx.cache.get_height(cx.current);
+            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+                self.is_dragging = false;
+                cx.release();
+                cx.current.set_active(cx, false);
+            }
 
-                    if width >= height {
-                        self.internal.orientation = Orientation::Horizontal;
-                        self.internal.size = width;
-                    } else {
-                        self.internal.orientation = Orientation::Vertical;
-                        self.internal.size = height;
-                    }
-                }
-
-                WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    self.is_dragging = true;
-                    cx.capture();
-                    cx.current.set_active(cx, true);
-
+            WindowEvent::MouseMove(x, y) => {
+                if self.is_dragging {
                     let thumb_size = self.internal.thumb_size;
+
                     let min = self.internal.range.start;
                     let max = self.internal.range.end;
 
                     let mut dx = match self.internal.orientation {
                         Orientation::Horizontal => {
-                            (cx.mouse.left.pos_down.0
-                                - cx.cache.get_posx(cx.current)
-                                - thumb_size / 2.0)
+                            (*x - cx.cache.get_posx(cx.current) - thumb_size / 2.0)
                                 / (cx.cache.get_width(cx.current) - thumb_size)
                         }
 
                         Orientation::Vertical => {
                             (cx.cache.get_height(cx.current)
-                                - (cx.mouse.left.pos_down.1 - cx.cache.get_posy(cx.current))
+                                - (*y - cx.cache.get_posy(cx.current))
                                 - thumb_size / 2.0)
                                 / (cx.cache.get_height(cx.current) - thumb_size)
                         }
@@ -264,47 +298,10 @@ impl<L: Lens> View for Slider<L> {
                         (callback)(cx, val);
                     }
                 }
-
-                WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
-                    self.is_dragging = false;
-                    cx.release();
-                    cx.current.set_active(cx, false);
-                }
-
-                WindowEvent::MouseMove(x, y) => {
-                    if self.is_dragging {
-                        let thumb_size = self.internal.thumb_size;
-
-                        let min = self.internal.range.start;
-                        let max = self.internal.range.end;
-
-                        let mut dx = match self.internal.orientation {
-                            Orientation::Horizontal => {
-                                (*x - cx.cache.get_posx(cx.current) - thumb_size / 2.0)
-                                    / (cx.cache.get_width(cx.current) - thumb_size)
-                            }
-
-                            Orientation::Vertical => {
-                                (cx.cache.get_height(cx.current)
-                                    - (*y - cx.cache.get_posy(cx.current))
-                                    - thumb_size / 2.0)
-                                    / (cx.cache.get_height(cx.current) - thumb_size)
-                            }
-                        };
-
-                        dx = dx.clamp(0.0, 1.0);
-
-                        let val = min + dx * (max - min);
-
-                        if let Some(callback) = &self.on_changing {
-                            (callback)(cx, val);
-                        }
-                    }
-                }
-
-                _ => {}
             }
-        }
+
+            _ => {}
+        });
     }
 }
 

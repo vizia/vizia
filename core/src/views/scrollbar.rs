@@ -101,14 +101,14 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
-        if let Some(window_event) = event.message.downcast() {
+        event.map(|window_event, meta| {
             let pos = match &self.orientation {
                 Orientation::Horizontal => cx.mouse.cursorx,
                 Orientation::Vertical => cx.mouse.cursory,
             };
             match window_event {
                 WindowEvent::MouseDown(MouseButton::Left) => {
-                    if event.target != cx.current {
+                    if meta.target != cx.current {
                         self.reference_points = Some((pos, self.value.get(cx)));
                         cx.capture();
                     } else {
@@ -155,6 +155,6 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
 
                 _ => {}
             }
-        }
+        });
     }
 }
