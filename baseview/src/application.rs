@@ -48,8 +48,8 @@ where
         self
     }
 
-    pub fn inner_size(mut self, width: u32, height: u32) -> Self {
-        self.window_description.inner_size = WindowSize::new(width, height);
+    pub fn inner_size(mut self, size: impl Into<WindowSize>) -> Self {
+        self.window_description.inner_size = size.into();
 
         self
     }
