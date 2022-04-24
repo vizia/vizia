@@ -9,6 +9,7 @@ pub struct AppData {
 pub enum AppEvent {
     SetTitle(String),
     SetWidth(u32),
+    SetHeight(u32),
 }
 
 impl Model for AppData {
@@ -21,6 +22,10 @@ impl Model for AppData {
             AppEvent::SetWidth(width) => {
                 self.inner_size.0 = *width;
             }
+
+            AppEvent::SetHeight(height) => {
+                self.inner_size.1 = *height;
+            }
         });
     }
 }
@@ -31,14 +36,36 @@ fn main() {
 
         VStack::new(cx, |cx| {
             Textbox::new(cx, AppData::title).width(Pixels(200.0)).on_submit(|cx, txt| {
-                println!("Do This: {}", txt);
                 cx.emit(AppEvent::SetTitle(txt.clone()));
             });
 
-            Slider::new(cx, AppData::inner_size.map(|size| size.0 as f32))
-                .range(100.0..1000.0)
-                .on_changing(|cx, val| cx.emit(AppEvent::SetWidth(val as u32)))
-                .width(Pixels(200.0));
+            HStack::new(cx, |cx| {
+                Label::new(cx, "Width");
+
+                Slider::new(cx, AppData::inner_size.map(|size| size.0 as f32))
+                    .range(100.0..1000.0)
+                    .on_changing(|cx, val| cx.emit(AppEvent::SetWidth(val as u32)))
+                    .width(Pixels(200.0));
+            })
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0))
+            .height(Auto)
+            .col_between(Pixels(10.0));
+
+            HStack::new(cx, |cx| {
+                Label::new(cx, "Height");
+
+                Slider::new(cx, AppData::inner_size.map(|size| size.1 as f32))
+                    .range(100.0..1000.0)
+                    .on_changing(|cx, val| cx.emit(AppEvent::SetHeight(val as u32)))
+                    .width(Pixels(200.0));
+            })
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0))
+            .height(Auto)
+            .col_between(Pixels(10.0));
+
+
         })
         .row_between(Pixels(20.0))
         .child_space(Pixels(10.0));
