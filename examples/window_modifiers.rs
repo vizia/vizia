@@ -1,10 +1,5 @@
 use vizia::*;
 
-#[cfg(feature = "baseview")]
-fn main() {
-    panic!("This example is not supported on baseview");
-}
-
 #[derive(Lens)]
 pub struct AppData {
     title: String,
@@ -35,6 +30,12 @@ impl Model for AppData {
     }
 }
 
+#[cfg(feature = "baseview")]
+fn main() {
+    panic!("This example is not supported on baseview");
+}
+
+#[cfg(all(not(feature = "baseview")))]
 fn main() {
     Application::new(|cx| {
         AppData { title: "Window Modifiers".to_owned(), inner_size: (400, 400) }.build(cx);
