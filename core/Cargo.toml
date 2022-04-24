@@ -34,7 +34,7 @@ rusty-daw-core = {version = "0.7.4", optional = true}
 
 # Required so that doc tests will compile
 [dev-dependencies]
-vizia_winit = {version = "0.1.0", path = "../winit" }
+vizia_winit = {version = "0.1.0", path = "../backends/winit" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web_sys = { version = "0.3", package = "web-sys", features = ["console"] }

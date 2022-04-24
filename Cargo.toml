@@ -9,7 +9,7 @@ autoexamples = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
-members = ["core", "winit", "baseview", "derive", "run-wasm"]
+members = ["core", "backends/*", "derive", "run-wasm"]
 
 [[example]]
 name = "action_modifier"
@@ -187,8 +187,8 @@ meadowlark = ["winit", "vizia_core/meadowlark"]
 
 [dependencies]
 vizia_core = { version = "0.1.0", path = "core"}
-vizia_winit = { version = "0.1.0", path = "winit", optional = true }
-vizia_baseview = { version = "0.1.0", path = "baseview", optional = true }
+vizia_winit = { version = "0.1.0", path = "backends/winit", optional = true }
+vizia_baseview = { version = "0.1.0", path = "backends/baseview", optional = true }
 
 [dev-dependencies]
 english-numbers = "0.3.3"
