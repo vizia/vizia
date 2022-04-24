@@ -33,7 +33,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("List"), |cx| {
+    Application::new(|cx| {
         cx.add_theme(include_str!("list_style.css"));
 
         let list: Vec<u32> = (10..14u32).collect();
@@ -63,5 +63,6 @@ fn main() {
         })
         .class("container");
     })
+    .title("Selectable List")
     .run();
 }

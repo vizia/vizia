@@ -1,8 +1,7 @@
 use vizia::*;
 
 fn main() {
-    let window_description = WindowDescription::new();
-    Application::new(window_description, |cx| {
+    Application::new(|cx| {
         PopupData::default().build(cx);
 
         Button::new(cx, |cx| cx.emit(PopupEvent::Switch), |cx| Label::new(cx, "Open"));
@@ -13,5 +12,6 @@ fn main() {
             .size(Pixels(200.0))
             .background_color(Color::red());
     })
+    .title("Popup")
     .run();
 }

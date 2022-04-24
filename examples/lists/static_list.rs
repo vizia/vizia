@@ -38,7 +38,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("List"), |cx| {
+    Application::new(|cx| {
         cx.add_theme(include_str!("list_style.css"));
 
         AppData { selected: 0 }.build(cx);
@@ -66,5 +66,6 @@ fn main() {
         })
         .class("container");
     })
+    .title("Static List")
     .run();
 }

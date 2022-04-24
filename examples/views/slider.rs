@@ -1,7 +1,7 @@
 use vizia::*;
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Slider"), |cx| {
+    Application::new(|cx| {
         AppData { value: 0.0 }.build(cx);
 
         HStack::new(cx, |cx| {
@@ -51,6 +51,7 @@ fn main() {
         .child_space(Pixels(50.0))
         .col_between(Pixels(50.0));
     })
+    .title("Slider")
     .run();
 }
 

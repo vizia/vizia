@@ -61,7 +61,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("List"), |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
 
         let list: Vec<u32> = (10..14u32).collect();
@@ -106,5 +106,6 @@ fn main() {
         .top(Pixels(100.0))
         .child_space(Stretch(1.0));
     })
+    .title("List")
     .run();
 }

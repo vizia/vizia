@@ -13,8 +13,7 @@ use vizia_core::{BoundingBox, Event, WindowDescription};
 
 pub struct Application<F>
 where
-    F: Fn(&mut Context),
-    F: 'static + Send,
+    F: Fn(&mut Context) + Send + 'static,
 {
     app: F,
     window_description: WindowDescription,
@@ -27,10 +26,10 @@ where
     F: Fn(&mut Context),
     F: 'static + Send,
 {
-    pub fn new(window_description: WindowDescription, app: F) -> Self {
+    pub fn new(app: F) -> Self {
         Self {
             app,
-            window_description,
+            window_description: WindowDescription::new(),
             scale_policy: WindowScalePolicy::SystemScaleFactor,
             on_idle: None,
         }
@@ -40,6 +39,18 @@ where
     /// signature as the winit backend.
     pub fn with_scale_policy(mut self, scale_policy: WindowScalePolicy) -> Self {
         self.scale_policy = scale_policy;
+        self
+    }
+
+    pub fn title(mut self, title: &str) -> Self {
+        self.window_description.title = title.to_owned();
+
+        self
+    }
+
+    pub fn inner_size(mut self, size: impl Into<WindowSize>) -> Self {
+        self.window_description.inner_size = size.into();
+
         self
     }
 
@@ -100,7 +111,7 @@ where
     /// ```no_run
     /// # use vizia_core::*;
     /// # use vizia_baseview::Application;
-    /// Application::new(WindowDescription::new(), |cx|{
+    /// Application::new(|cx|{
     ///     // Build application here
     /// })
     /// .on_idle(|cx|{

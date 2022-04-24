@@ -12,7 +12,7 @@ impl Default for Enviroment {
 
 impl Enviroment {
     pub fn new() -> Self {
-        Self { needs_rebuild: true, include_default_theme: true }
+        Self { needs_rebuild: false, include_default_theme: true }
     }
 }
 

@@ -15,7 +15,7 @@
 use vizia::*;
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Keymap - Basic"), |cx| {
+    Application::new(|cx| {
         // Build the keymap.
         Keymap::from(vec![
             (Action::OnA, KeyChord::new(Modifiers::empty(), Code::KeyA)),
@@ -43,6 +43,7 @@ fn main() {
         // Create a custom view.
         CustomView::new(cx);
     })
+    .title("Keymap - Basic")
     .run();
 }
 

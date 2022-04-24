@@ -27,8 +27,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    let window_description = WindowDescription::new().with_title("Focus Order");
-    Application::new(window_description, |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
 
         AppData { text: "".to_string() }.build(cx);
@@ -53,5 +52,6 @@ fn main() {
         .child_space(Pixels(10.0))
         .row_between(Pixels(10.0));
     })
+    .title("Focus Order")
     .run();
 }
