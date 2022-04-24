@@ -47,7 +47,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Checkbox"), |cx| {
+    Application::new(|cx| {
         if cx.data::<AppData>().is_none() {
             AppData { options: Options { option1: true, option2: false, option3: false } }
                 .build(cx);
@@ -97,5 +97,6 @@ fn main() {
         .row_between(Pixels(5.0))
         .child_space(Stretch(1.0));
     })
+    .title("Checkbox")
     .run();
 }

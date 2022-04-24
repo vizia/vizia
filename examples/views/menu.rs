@@ -9,7 +9,7 @@ pub struct AppData {
 impl Model for AppData {}
 
 fn main() {
-    Application::new(WindowDescription::new(), |cx| {
+    Application::new(|cx| {
         AppData { check1: false, check2: true }.build(cx);
         MenuController::new(cx, false, |cx| {
             MenuStack::new_horizontal(cx, |cx| {
@@ -70,5 +70,6 @@ fn main() {
             });
         });
     })
+    .title("Menu")
     .run();
 }

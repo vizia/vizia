@@ -13,7 +13,7 @@
 use vizia::*;
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Keymap - Change Key Chords"), |cx| {
+    Application::new(|cx| {
         // Build the keymap.
         Keymap::from(vec![
             (Action::One, KeyChord::new(Modifiers::empty(), Code::KeyA)),
@@ -57,6 +57,7 @@ fn main() {
         // Create a custom view that prints a message every time one of our actions is pressed.
         CustomView::new(cx);
     })
+    .title("Keymap - Change Key Chords")
     .run();
 }
 

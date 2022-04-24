@@ -21,7 +21,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    Application::new(WindowDescription::new(), |cx| {
+    Application::new(|cx| {
         cx.add_translation(
             "en-US".parse().unwrap(),
             include_str!("../resources/en-US/hello.ftl").to_owned(),
@@ -56,5 +56,6 @@ fn main() {
         .row_between(Pixels(10.0))
         .space(Pixels(10.0));
     })
+    .title("Localization")
     .run()
 }

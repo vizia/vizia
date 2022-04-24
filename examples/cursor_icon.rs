@@ -18,7 +18,7 @@ macro_rules! cursor_label {
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Cursor Icon"), |cx| {
+    Application::new(|cx| {
         HStack::new(cx, |cx| {
             VStack::new(cx, |cx| {
                 cursor_label!(cx, Default);
@@ -73,5 +73,6 @@ fn main() {
         })
         .child_space(Stretch(1.0));
     })
+    .title("Cursor Icon")
     .run();
 }

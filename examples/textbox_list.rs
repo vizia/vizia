@@ -20,8 +20,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    let window_description = WindowDescription::new();
-    Application::new(window_description, |cx| {
+    Application::new(|cx| {
         AppData {
             text_list: vec![
                 "First".to_string(),
@@ -51,5 +50,6 @@ fn main() {
         .space(Stretch(1.0))
         .row_between(Pixels(10.0));
     })
+    .title("Textbox List")
     .run();
 }

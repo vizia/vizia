@@ -38,7 +38,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Knob"), |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
 
         AppData { value: 0.2 }.build(cx);
@@ -52,5 +52,6 @@ fn main() {
 
         //ArcTrack::new(cx).width(Pixels(50.0)).height(Pixels(50.0)).space(Pixels(20.0));
     })
+    .title("Knob")
     .run();
 }

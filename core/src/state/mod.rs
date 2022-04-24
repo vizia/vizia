@@ -59,7 +59,7 @@
 //! # }
 //! # impl Model for AppData {}
 //! fn main() {
-//!     Application::new(WindowDescription::new(), |cx|{
+//!     Application::new(|cx|{
 //!         AppData {
 //!             count: 0,
 //!         }.build(cx);
@@ -77,7 +77,7 @@
 //! # }
 //! # impl Model for AppData {}
 //! fn main() {
-//!     Application::new(WindowDescription::new(), |cx|{
+//!     Application::new(|cx|{
 //!         AppData {
 //!             count: 0,
 //!         }.build(cx);
@@ -107,7 +107,7 @@
 //! #     Decrement,
 //! # }
 //! fn main() {
-//!     Application::new(WindowDescription::new(), |cx|{
+//!     Application::new(|cx|{
 //!         AppData {
 //!             count: 0,
 //!         }.build(cx);

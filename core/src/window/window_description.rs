@@ -1,4 +1,5 @@
 // Represents the size of the application window.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WindowSize {
     pub width: u32,
     pub height: u32,
@@ -10,6 +11,13 @@ impl WindowSize {
     }
 }
 
+impl From<(u32, u32)> for WindowSize {
+    fn from(s: (u32, u32)) -> Self {
+        WindowSize::new(s.0, s.1)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Position {
     pub x: u32,
     pub y: u32,
@@ -25,11 +33,11 @@ impl Position {
 pub struct WindowDescription {
     pub title: String,
     pub inner_size: WindowSize,
-    pub min_inner_size: WindowSize,
+    pub min_inner_size: Option<WindowSize>,
     pub max_inner_size: Option<WindowSize>,
     pub position: Option<Position>,
     pub resizable: bool,
-    //pub fullscreen:
+    pub minimized: bool,
     pub maximized: bool,
     pub visible: bool,
     pub transparent: bool,
@@ -51,10 +59,11 @@ impl Default for WindowDescription {
         Self {
             title: "Vizia Application".to_string(),
             inner_size: WindowSize::new(800, 600),
-            min_inner_size: WindowSize::new(100, 100),
+            min_inner_size: Some(WindowSize::new(100, 100)),
             max_inner_size: None,
             position: None,
             resizable: true,
+            minimized: true,
             maximized: false,
             visible: true,
             transparent: false,
@@ -96,7 +105,7 @@ impl WindowDescription {
     }
 
     pub fn with_min_inner_size(mut self, width: u32, height: u32) -> Self {
-        self.min_inner_size = WindowSize::new(width, height);
+        self.min_inner_size = Some(WindowSize::new(width, height));
 
         self
     }

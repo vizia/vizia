@@ -3,6 +3,7 @@ use crate::{
     window::Window,
 };
 use std::cell::RefCell;
+// use glutin::event::WindowEvent;
 use vizia_core::*;
 use winit::{
     dpi::LogicalSize,
@@ -35,8 +36,7 @@ impl EventProxy for WinitEventProxy {
 }
 
 impl Application {
-    /// Creates a new application.
-    pub fn new<F>(window_description: WindowDescription, builder: F) -> Self
+    pub fn new<F>(content: F) -> Self
     where
         F: 'static + Fn(&mut Context),
     {
@@ -54,12 +54,16 @@ impl Application {
             context.event_proxy = Some(Box::new(WinitEventProxy(event_proxy_obj)));
         }
 
+        context.current = Entity::root();
+
+        (content)(&mut context);
+
         Self {
             context,
             event_loop,
-            builder: Some(Box::new(builder)),
+            builder: Some(Box::new(content)),
             on_idle: None,
-            window_description,
+            window_description: WindowDescription::new(),
             should_poll: false,
         }
     }
@@ -82,7 +86,7 @@ impl Application {
     /// # use vizia_core::*;
     /// # use vizia_winit::application::Application;
     /// #
-    /// Application::new(WindowDescription::new(), |cx| {
+    /// Application::new(|cx| {
     ///     // Build application here
     /// })
     /// .on_idle(|cx| {
@@ -488,6 +492,128 @@ impl Application {
 
             *control_flow = *stored_control_flow.borrow();
         });
+    }
+}
+
+impl WindowModifiers for Application {
+    fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
+        self.window_description.title = title.get_val(&mut self.context).to_string();
+        title.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
+            cx.emit(WindowEvent::SetTitle(val.to_string()));
+        });
+
+        self
+    }
+
+    fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
+        self.window_description.inner_size = size.get_val(&mut self.context).into();
+        size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
+            cx.emit(WindowEvent::SetSize(val.into()));
+        });
+
+        self
+    }
+
+    fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
+        self.window_description.min_inner_size =
+            size.get_val(&mut self.context).map(|size| size.into());
+        size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
+            cx.emit(WindowEvent::SetMinSize(val.map(|size| size.into())));
+        });
+
+        self
+    }
+
+    fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
+        self.window_description.max_inner_size =
+            size.get_val(&mut self.context).map(|size| size.into());
+        size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
+            cx.emit(WindowEvent::SetMaxSize(val.map(|size| size.into())));
+        });
+
+        self
+    }
+
+    fn position<P: Into<Position>>(mut self, position: impl Res<P>) -> Self {
+        self.window_description.position = Some(position.get_val(&mut self.context).into());
+        position.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
+            cx.emit(WindowEvent::SetPosition(val.into()));
+        });
+
+        self
+    }
+
+    fn resizable(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.resizable = flag.get_val(&mut self.context);
+        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
+            cx.emit(WindowEvent::SetResizable(val));
+        });
+
+        self
+    }
+
+    fn minimized(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.minimized = flag.get_val(&mut self.context);
+        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
+            cx.emit(WindowEvent::SetMinimized(val));
+        });
+
+        self
+    }
+
+    fn maximized(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.maximized = flag.get_val(&mut self.context);
+        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
+            cx.emit(WindowEvent::SetMaximized(val));
+        });
+
+        self
+    }
+
+    fn visible(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.visible = flag.get_val(&mut self.context);
+        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
+            cx.emit(WindowEvent::SetVisible(val));
+        });
+
+        self
+    }
+
+    fn transparent(mut self, flag: bool) -> Self {
+        self.window_description.transparent = flag;
+
+        self
+    }
+
+    fn decorations(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.decorations = flag.get_val(&mut self.context);
+        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
+            cx.emit(WindowEvent::SetDecorations(val));
+        });
+
+        self
+    }
+
+    fn always_on_top(mut self, flag: impl Res<bool>) -> Self {
+        self.window_description.always_on_top = flag.get_val(&mut self.context);
+        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
+            cx.emit(WindowEvent::SetAlwaysOnTop(val));
+        });
+
+        self
+    }
+
+    fn vsync(mut self, flag: bool) -> Self {
+        self.window_description.vsync = flag;
+
+        self
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn canvas(mut self, canvas: &str) -> Self {
+        self.window_description.target_canvas = Some(canvas.to_owned());
+
+        self
     }
 }
 

@@ -6,8 +6,7 @@ const ICON_PLUS: &str = "\u{2b}";
 pub struct AppData {}
 
 fn main() {
-    let window_description = WindowDescription::new();
-    Application::new(window_description, |cx| {
+    Application::new(|cx| {
         //cx.add_stylesheet("examples/test_style.css").unwrap();
 
         //buttons(cx)
@@ -15,6 +14,7 @@ fn main() {
         checkbox(cx).space(Pixels(30.0));
         // label(cx);
     })
+    .title("Widget Gallery")
     //.background_color(Color::rgb(249, 249, 249))
     .run();
 }
