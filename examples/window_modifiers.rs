@@ -64,8 +64,6 @@ fn main() {
             .child_bottom(Stretch(1.0))
             .height(Auto)
             .col_between(Pixels(10.0));
-
-
         })
         .row_between(Pixels(20.0))
         .child_space(Pixels(10.0));
