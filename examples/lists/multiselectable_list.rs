@@ -31,7 +31,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("List"), |cx| {
+    Application::new(|cx| {
         cx.add_theme(include_str!("list_style.css"));
 
         let list: Vec<u32> = (10..14u32).collect();
@@ -54,5 +54,6 @@ fn main() {
         .space(Stretch(1.0))
         .on_clear(|cx| cx.emit(AppEvent::ClearSelection));
     })
+    .title("Multiselectable List")
     .run();
 }

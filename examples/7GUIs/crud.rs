@@ -115,8 +115,7 @@ impl Model for AppData {
 }
 
 fn main() {
-    let window_description = WindowDescription::new().with_title("CRUD").with_inner_size(450, 200);
-    Application::new(window_description, |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
 
         AppData {
@@ -190,5 +189,7 @@ fn main() {
         })
         .child_space(Pixels(10.0));
     })
+    .title("CRUD")
+    .inner_size((450, 200))
     .run();
 }

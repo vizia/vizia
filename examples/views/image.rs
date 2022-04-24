@@ -17,7 +17,7 @@ fn main() {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    Application::new(WindowDescription::default(), |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
         cx.set_image_loader(|cx, path| {
             if path.starts_with("https://") {
@@ -59,5 +59,6 @@ fn main() {
         Image::new(cx, "https://download.samplelib.com/png/sample-bumblebee-400x300.png");
         Label::new(cx, "Wait for the image to load :)");
     })
+    .title("Image")
     .run()
 }

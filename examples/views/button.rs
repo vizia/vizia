@@ -5,9 +5,7 @@ const ICON_PLUS: &str = "\u{2b}";
 fn no_action(_: &mut Context) {}
 
 fn main() {
-    let window_description = WindowDescription::new().with_title("Button");
-
-    Application::new(window_description, |cx| {
+    Application::new(|cx| {
 
         Label::new(cx, "A button triggers an action when pressed and contains a view which describes its function, e.g. a Label.")
             .width(Stretch(1.0))
@@ -33,5 +31,6 @@ fn main() {
         .child_space(Stretch(1.0))
         .col_between(Pixels(10.0));
     })
+    .title("Button")
     .run();
 }

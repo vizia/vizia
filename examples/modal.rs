@@ -32,7 +32,7 @@ const STYLE: &str = r#"
 "#;
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Modal"), |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
 
         AppData { show_modal: false }.build(cx);
@@ -58,6 +58,7 @@ fn main() {
         .row_between(Pixels(10.0))
         .class("modal");
     })
+    .title("Modal")
     .run();
 }
 

@@ -177,6 +177,10 @@ path = "examples/keymap_basic.rs"
 name = "keymap_change_entries"
 path = "examples/keymap_change_entries.rs"
 
+[[example]]
+name = "window_modifiers"
+path = "examples/window_modifiers.rs"
+
 [features]
 default = ["winit", "clipboard"]
 clipboard = ["vizia_core/clipboard"]

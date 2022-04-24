@@ -19,7 +19,7 @@ Views form the basic building blocks of a GUI. A view could describe a widget li
 ### Composing Views
 Views can be easily composed to form a more complex GUI application:
 ```rust
-Application::new(WindowDescription::new(), |cx|{
+Application::new(|cx|{
 	HStack::new(cx, |cx|{
 		Label::new(cx, "Hello");
 		Label::new(cx, "World");
@@ -30,7 +30,7 @@ Application::new(WindowDescription::new(), |cx|{
 ### Layout and Styling
 Inline properties used for layout and styling can be set directly on views:
 ```rust
-Application::new(WindowDescription::new(), |cx|{
+Application::new(|cx|{
 	HStack::new(cx, |cx|{
 		Label::new(cx, "Hello")
 			.width(Pixels(200.0));
@@ -121,7 +121,7 @@ impl Model for AppData {
 ### Events and Callbacks
 Some views have a built-in action or can be modified to add an action. Actions are callbacks which can be used to send events:
 ```rust
-Application::new(WindowDescription::new(), |cx|{
+Application::new(|cx|{
 	
 	AppData{
 		count: 0,
