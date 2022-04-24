@@ -164,11 +164,13 @@ impl View for Window {
             }
 
             WindowEvent::SetMinSize(size) => {
-                self.window().set_min_inner_size(Some(LogicalSize::new(size.width, size.height)));
+                self.window()
+                    .set_min_inner_size(size.map(|size| LogicalSize::new(size.width, size.height)));
             }
 
             WindowEvent::SetMaxSize(size) => {
-                self.window().set_max_inner_size(Some(LogicalSize::new(size.width, size.height)));
+                self.window()
+                    .set_max_inner_size(size.map(|size| LogicalSize::new(size.width, size.height)));
             }
 
             WindowEvent::SetPosition(pos) => {

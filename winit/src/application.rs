@@ -514,19 +514,21 @@ impl WindowModifiers for Application {
         self
     }
 
-    fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
-        self.window_description.min_inner_size = Some(size.get_val(&mut self.context).into());
+    fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
+        self.window_description.min_inner_size =
+            size.get_val(&mut self.context).map(|size| size.into());
         size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMinSize(val.into()));
+            cx.emit(WindowEvent::SetMinSize(val.map(|size| size.into())));
         });
 
         self
     }
 
-    fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
-        self.window_description.max_inner_size = Some(size.get_val(&mut self.context).into());
+    fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
+        self.window_description.max_inner_size =
+            size.get_val(&mut self.context).map(|size| size.into());
         size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMaxSize(val.into()));
+            cx.emit(WindowEvent::SetMaxSize(val.map(|size| size.into())));
         });
 
         self
