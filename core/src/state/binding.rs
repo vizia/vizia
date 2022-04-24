@@ -1,7 +1,7 @@
 use std::any::TypeId;
 use std::collections::HashSet;
 
-use crate::{Context, Handle, LensCache, State, TreeExt, Units, View};
+use crate::{Context, Handle, LensCache, State, TreeExt, View};
 
 use crate::{Data, Lens};
 
