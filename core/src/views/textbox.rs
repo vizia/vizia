@@ -344,7 +344,6 @@ impl Model for TextboxData {
             }
 
             TextEvent::Submit => {
-                println!("{}", self.text);
                 if let Some(callback) = self.on_submit.take() {
                     (callback)(cx, self.text.as_str().to_owned());
 
