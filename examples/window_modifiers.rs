@@ -1,5 +1,9 @@
 use vizia::*;
 
+#[cfg(feature = "baseview")]
+    panic!("This example is not supported on baseview");
+}
+
 #[derive(Lens)]
 pub struct AppData {
     title: String,
