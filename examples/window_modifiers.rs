@@ -1,6 +1,7 @@
 use vizia::*;
 
 #[cfg(feature = "baseview")]
+fn main() {
     panic!("This example is not supported on baseview");
 }
 
