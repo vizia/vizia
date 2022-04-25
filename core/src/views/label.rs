@@ -22,6 +22,7 @@ use crate::prelude::*;
 ///
 /// ```
 /// # use vizia_core::prelude::*;
+/// #
 /// # let cx = &mut Context::new();
 /// #
 /// #[derive(Lens)]
@@ -45,6 +46,7 @@ use crate::prelude::*;
 ///
 /// ```
 /// # use vizia_core::prelude::*;
+/// #
 /// # let mut cx = &mut Context::new();
 /// #
 /// Label::new(
@@ -60,6 +62,7 @@ use crate::prelude::*;
 ///
 /// ```
 /// # use vizia_core::prelude::*;
+/// #
 /// # let mut cx = &mut Context::new();
 /// #
 /// Label::new(
