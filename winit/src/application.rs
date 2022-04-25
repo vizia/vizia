@@ -609,6 +609,14 @@ impl WindowModifiers for Application {
         self
     }
 
+    fn icon(mut self, image: Vec<u8>, width: u32, height: u32) -> Self {
+        self.window_description.icon = Some(image);
+        self.window_description.icon_width = width;
+        self.window_description.icon_height = height;
+
+        self
+    }
+
     #[cfg(target_arch = "wasm32")]
     fn canvas(mut self, canvas: &str) -> Self {
         self.window_description.target_canvas = Some(canvas.to_owned());
