@@ -242,6 +242,7 @@ impl Application {
                     // Rebuild application if required
                     if context.enviroment.needs_rebuild {
                         context.current = Entity::root();
+                        context.remove_children(Entity::root());
                         if let Some(builder) = &builder {
                             (builder)(&mut context);
                         }
