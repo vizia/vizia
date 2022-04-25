@@ -14,6 +14,7 @@ pub trait WindowModifiers {
     fn decorations(self, flag: impl Res<bool>) -> Self;
     fn always_on_top(self, flag: impl Res<bool>) -> Self;
     fn vsync(self, flag: bool) -> Self;
+    fn icon(self, image: Vec<u8>, width: u32, height: u32) -> Self;
     #[cfg(target_arch = "wasm32")]
     fn canvas(self, canvas: &str) -> Self;
 }
