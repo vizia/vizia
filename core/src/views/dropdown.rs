@@ -1,9 +1,64 @@
 use crate::prelude::*;
 use crate::views::popup::PopupData;
 
-pub struct Dropdown {}
+/// A dropdown used to display some state with the ability to open a popup with options to change that state.
+///
+/// Usually a dropdown is used in the context of a "combo box" or "list picker" to allow the user to select
+/// from one of several discrete options. The dropdown takes two closures, one which shows the current state
+/// regardless of whether the dropdown is open or closed, and one which shows the contents while it is open.
+///
+/// ## Basic dropdown
+///
+/// A basic dropdown displaying five options that the user can choose from.
+///
+/// ```
+/// # use vizia_core::*;
+/// #
+/// # #[derive(Lens)]
+/// # struct AppData {
+/// #     value: u8,
+/// # }
+/// #
+/// # impl Model for AppData {}
+/// #
+/// # enum AppEvent {
+/// #     SetValue(u8),
+/// # }
+/// #
+/// # let cx = &mut Context::new();
+/// #
+/// # AppData { value: 0 }.build(cx);
+/// #
+/// Dropdown::new(
+///     cx,
+///     |cx| Label::new(cx, AppData::value),
+///     |cx| {
+///         for i in 0..5 {
+///             Label::new(cx, i)
+///                 .on_press(move |cx| {
+///                     cx.emit(AppEvent::SetValue(i));
+///                     cx.emit(PopupEvent::Close); // close the popup
+///                 })
+///                 .width(Stretch(1.0));
+///         }
+///     },
+/// )
+/// .width(Pixels(100.0));
+/// ```
+pub struct Dropdown;
 
 impl Dropdown {
+    /// Creates a new dropdown.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::*;
+    /// #
+    /// # let cx = &mut Context::new();
+    /// #
+    /// Dropdown::new(cx, |cx| Label::new(cx, "Text"), |_| {});
+    /// ```
     pub fn new<F, L, V>(cx: &mut Context, label: L, content: F) -> Handle<Self>
     where
         L: 'static + Fn(&mut Context) -> Handle<V>,
