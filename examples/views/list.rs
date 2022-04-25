@@ -9,7 +9,7 @@ impl Model for AppData {}
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(include_str!("../lists/list_style.css"));
+        cx.add_theme(include_str!("../resources/list_style.css"));
 
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list }.build(cx);
