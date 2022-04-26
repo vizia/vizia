@@ -1,11 +1,5 @@
 use vizia::*;
 
-const STYLE: &str = r#"
-    textbox {
-        width: 100px;
-    }
-"#;
-
 #[derive(Lens)]
 pub struct AppData {
     temperature: f32,
@@ -27,8 +21,6 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        //cx.add_theme(STYLE);
-
         AppData { temperature: 5.0 }.build(cx);
 
         HStack::new(cx, |cx| {
