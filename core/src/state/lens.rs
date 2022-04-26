@@ -1,4 +1,4 @@
-use crate::Context;
+use crate::DataContext;
 use std::any::TypeId;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
@@ -37,7 +37,7 @@ pub trait LensExt: Lens {
     /// ```ignore
     /// let value = lens.get(cx);
     /// ```
-    fn get(&self, cx: &Context) -> Self::Target
+    fn get<C: DataContext>(&self, cx: &C) -> Self::Target
     where
         Self::Target: Clone,
     {
@@ -50,7 +50,7 @@ pub trait LensExt: Lens {
         )
     }
 
-    fn get_fallible(&self, cx: &Context) -> Option<Self::Target>
+    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Target>
     where
         Self::Target: Clone,
     {

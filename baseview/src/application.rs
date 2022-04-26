@@ -6,15 +6,14 @@ use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
 use vizia_core::{MouseButton, MouseButtonState};
 
-use vizia_core::{BoundingBox, Event, WindowDescription};
 use vizia_core::{
-    Context, Entity, EventManager, FontOrId, Modifiers, Units, WindowEvent, WindowSize,
+    fonts, Context, Entity, EventManager, FontOrId, Modifiers, Units, WindowEvent, WindowSize,
 };
+use vizia_core::{BoundingBox, Event, WindowDescription};
 
 pub struct Application<F>
 where
-    F: Fn(&mut Context),
-    F: 'static + Send,
+    F: Fn(&mut Context) + Send + 'static,
 {
     app: F,
     window_description: WindowDescription,
@@ -27,10 +26,10 @@ where
     F: Fn(&mut Context),
     F: 'static + Send,
 {
-    pub fn new(window_description: WindowDescription, app: F) -> Self {
+    pub fn new(app: F) -> Self {
         Self {
             app,
-            window_description,
+            window_description: WindowDescription::new(),
             scale_policy: WindowScalePolicy::SystemScaleFactor,
             on_idle: None,
         }
@@ -43,12 +42,24 @@ where
         self
     }
 
+    pub fn title(mut self, title: &str) -> Self {
+        self.window_description.title = title.to_owned();
+
+        self
+    }
+
+    pub fn inner_size(mut self, size: impl Into<WindowSize>) -> Self {
+        self.window_description.inner_size = size.into();
+
+        self
+    }
+
     /// Open a new window that blocks the current thread until the window is destroyed.
     ///
     /// Do **not** use this in the context of audio plugins, unless it is compiled as a
     /// standalone application.
     ///
-    /// * `app` - The Tuix application builder.
+    /// * `app` - The Vizia application builder.
     pub fn run(self) {
         ViziaWindow::open_blocking(
             self.window_description,
@@ -64,7 +75,7 @@ where
     /// used in the context of audio plugins.
     ///
     /// * `parent` - The parent window.
-    /// * `app` - The Tuix application builder.
+    /// * `app` - The Vizia application builder.
     pub fn open_parented<P: HasRawWindowHandle>(self, parent: &P) -> WindowHandle {
         ViziaWindow::open_parented(
             parent,
@@ -80,7 +91,7 @@ where
     /// This function does **not** block the current thread. This is only to be
     /// used in the context of audio plugins.
     ///
-    /// * `app` - The Tuix application builder.
+    /// * `app` - The Vizia application builder.
     pub fn open_as_if_parented(self) -> WindowHandle {
         ViziaWindow::open_as_if_parented(
             self.window_description,
@@ -100,11 +111,11 @@ where
     /// ```no_run
     /// # use vizia_core::*;
     /// # use vizia_baseview::Application;
-    /// Application::new(WindowDescription::new(), |cx|{
+    /// Application::new(|cx|{
     ///     // Build application here
     /// })
     /// .on_idle(|cx|{
-    ///     // Code here runs at the end of every event loop after OS and tuix events have been handled
+    ///     // Code here runs at the end of every event loop after OS and vizia events have been handled
     /// })
     /// .run();
     /// ```
@@ -141,6 +152,8 @@ impl ApplicationRunner {
             WindowScalePolicy::SystemScaleFactor => 1.0,
         };
 
+        context.style.dpi_factor = scale;
+
         let logical_size = win_desc.inner_size;
         let physical_size = WindowSize {
             width: (logical_size.width as f64 * scale).round() as u32,
@@ -149,12 +162,12 @@ impl ApplicationRunner {
 
         canvas.set_size(physical_size.width, physical_size.height, 1.0);
 
-        let regular_font = include_bytes!("../../fonts/Roboto-Regular.ttf");
-        let bold_font = include_bytes!("../../fonts/Roboto-Bold.ttf");
-        let icon_font = include_bytes!("../../fonts/entypo.ttf");
-        let emoji_font = include_bytes!("../../fonts/OpenSansEmoji.ttf");
-        let arabic_font = include_bytes!("../../fonts/amiri-regular.ttf");
-        let material_font = include_bytes!("../../fonts/MaterialIcons-Regular.ttf");
+        let regular_font = fonts::ROBOTO_REGULAR;
+        let bold_font = fonts::ROBOTO_BOLD;
+        let icon_font = fonts::ENTYPO;
+        let emoji_font = fonts::OPEN_SANS_EMOJI;
+        let arabic_font = fonts::AMIRI_REGULAR;
+        let material_font = fonts::MATERIAL_ICONS_REGULAR;
 
         context.add_font_mem("roboto", regular_font);
         context.add_font_mem("roboto-bold", bold_font);
@@ -165,7 +178,7 @@ impl ApplicationRunner {
 
         context.style.default_font = "roboto".to_string();
 
-        canvas.scale(scale as f32, scale as f32);
+        //canvas.scale(scale as f32, scale as f32);
 
         context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
         context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height as f32));
@@ -177,8 +190,8 @@ impl ApplicationRunner {
         context.cache.set_opacity(Entity::root(), 1.0);
 
         let mut bounding_box = BoundingBox::default();
-        bounding_box.w = logical_size.width as f32;
-        bounding_box.h = logical_size.height as f32;
+        bounding_box.w = physical_size.width as f32;
+        bounding_box.h = physical_size.height as f32;
 
         context.cache.set_clip_region(Entity::root(), bounding_box);
 
@@ -304,8 +317,7 @@ impl ApplicationRunner {
     }
 
     pub fn render(&mut self) {
-        let dpi_factor = self.scale_factor as f32;
-        self.context.draw(&mut self.canvas, dpi_factor);
+        self.context.draw(&mut self.canvas);
         self.should_redraw = false;
     }
 
@@ -318,8 +330,10 @@ impl ApplicationRunner {
         match event {
             baseview::Event::Mouse(event) => match event {
                 baseview::MouseEvent::CursorMoved { position } => {
-                    let cursorx = (position.x) as f32;
-                    let cursory = (position.y) as f32;
+                    let physical_posx = position.x * self.context.style.dpi_factor;
+                    let physical_posy = position.y * self.context.style.dpi_factor;
+                    let cursorx = (physical_posx) as f32;
+                    let cursory = (physical_posy) as f32;
                     self.context.dispatch_system_event(WindowEvent::MouseMove(cursorx, cursory));
                 }
                 baseview::MouseEvent::ButtonPressed(button) => {
@@ -413,6 +427,8 @@ impl ApplicationRunner {
                         WindowScalePolicy::SystemScaleFactor => window_info.scale(),
                     };
 
+                    self.context.style.dpi_factor = self.scale_factor;
+
                     let logical_size = (
                         (window_info.physical_size().width as f64 / self.scale_factor),
                         (window_info.physical_size().height as f64 / self.scale_factor),
@@ -454,6 +470,7 @@ impl ApplicationRunner {
     pub fn rebuild(&mut self, builder: &Option<Box<dyn Fn(&mut Context) + Send>>) {
         if self.context.enviroment.needs_rebuild {
             self.context.current = Entity::root();
+            self.context.remove_children(Entity::root());
             if let Some(builder) = &builder {
                 (builder)(&mut self.context);
             }

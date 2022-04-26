@@ -1,8 +1,8 @@
 use morphorm::{GeometryChanged, PositionType};
 
 use crate::{
-    Actions, Context, Data, Event, Handle, Lens, LensExt, Model, Modifiers, Orientation, Scrollbar,
-    Units, VStack, View, WindowEvent,
+    Actions, Context, Data, DataContext, Event, Handle, Lens, LensExt, Model, Modifiers,
+    Orientation, Scrollbar, Units, VStack, View, WindowEvent,
 };
 
 const SCROLL_SENSITIVITY: f32 = 35.0;
@@ -63,8 +63,8 @@ pub enum ScrollUpdate {
 
 impl Model for ScrollData {
     fn event(&mut self, _cx: &mut Context, event: &mut Event) {
-        if let Some(msg) = event.message.downcast() {
-            match msg {
+        event.map(|scroll_update, meta| {
+            match scroll_update {
                 ScrollUpdate::ScrollX(f) => self.scroll_x = (self.scroll_x + *f).clamp(0.0, 1.0),
                 ScrollUpdate::ScrollY(f) => self.scroll_y = (self.scroll_y + *f).clamp(0.0, 1.0),
                 ScrollUpdate::SetX(f) => self.scroll_x = *f,
@@ -78,8 +78,9 @@ impl Model for ScrollData {
                     self.parent_y = *y;
                 }
             }
-            event.consume();
-        }
+
+            meta.consume();
+        });
     }
 }
 
@@ -190,40 +191,38 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::GeometryChanged(geo) => {
-                    if geo.contains(GeometryChanged::HEIGHT_CHANGED)
-                        || geo.contains(GeometryChanged::WIDTH_CHANGED)
-                    {
-                        cx.emit(ScrollUpdate::ParentGeo(
-                            cx.cache.get_width(cx.current),
-                            cx.cache.get_height(cx.current),
-                        ));
-                    }
+        event.map(|window_event, _| match window_event {
+            WindowEvent::GeometryChanged(geo) => {
+                if geo.contains(GeometryChanged::HEIGHT_CHANGED)
+                    || geo.contains(GeometryChanged::WIDTH_CHANGED)
+                {
+                    cx.emit(ScrollUpdate::ParentGeo(
+                        cx.cache.get_width(cx.current),
+                        cx.cache.get_height(cx.current),
+                    ));
                 }
-
-                WindowEvent::MouseScroll(x, y) => {
-                    let (x, y) =
-                        if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, *x) } else { (*x, -*y) };
-
-                    // what percentage of the negative space does this cross?
-                    let data = self.data.get(cx);
-                    if x != 0.0 {
-                        let negative_space = data.child_x - data.parent_x;
-                        let logical_delta = x * SCROLL_SENSITIVITY / negative_space;
-                        cx.emit(ScrollUpdate::ScrollX(logical_delta));
-                    }
-                    let data = cx.data::<ScrollData>().unwrap();
-                    if y != 0.0 {
-                        let negative_space = data.child_y - data.parent_y;
-                        let logical_delta = y * SCROLL_SENSITIVITY / negative_space;
-                        cx.emit(ScrollUpdate::ScrollY(logical_delta));
-                    }
-                }
-
-                _ => {}
             }
-        }
+
+            WindowEvent::MouseScroll(x, y) => {
+                let (x, y) =
+                    if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, *x) } else { (*x, -*y) };
+
+                // what percentage of the negative space does this cross?
+                let data = self.data.get(cx);
+                if x != 0.0 {
+                    let negative_space = data.child_x - data.parent_x;
+                    let logical_delta = x * SCROLL_SENSITIVITY / negative_space;
+                    cx.emit(ScrollUpdate::ScrollX(logical_delta));
+                }
+                let data = cx.data::<ScrollData>().unwrap();
+                if y != 0.0 {
+                    let negative_space = data.child_y - data.parent_y;
+                    let logical_delta = y * SCROLL_SENSITIVITY / negative_space;
+                    cx.emit(ScrollUpdate::ScrollY(logical_delta));
+                }
+            }
+
+            _ => {}
+        });
     }
 }

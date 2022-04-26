@@ -1,9 +1,12 @@
 use vizia::*;
 
 const STYLE: &str = r#"
+
     textbox {
         width: 1s;
         height: 30px;
+        child-top: 1s;
+        child-bottom: 1s;
     }
 
     hstack {
@@ -26,6 +29,8 @@ const STYLE: &str = r#"
         width: 1s;
         height: 30px;
         child-left: 5px;
+        child-top: 1s;
+        child-bottom: 1s;
     }
 
     label:checked {
@@ -64,56 +69,53 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.try_mut() {
-            match app_event {
-                AppEvent::SetSelected(index) => {
-                    self.selected = Some(*index);
-                    self.name = self.list[*index].0.clone();
-                    self.surname = self.list[*index].1.clone();
-                }
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetSelected(index) => {
+                self.selected = Some(*index);
+                self.name = self.list[*index].0.clone();
+                self.surname = self.list[*index].1.clone();
+            }
 
-                AppEvent::SetName(name) => {
-                    self.name = name.clone();
-                }
+            AppEvent::SetName(name) => {
+                self.name = name.clone();
+            }
 
-                AppEvent::SetSurname(surname) => {
-                    self.surname = surname.clone();
-                }
+            AppEvent::SetSurname(surname) => {
+                self.surname = surname.clone();
+            }
 
-                AppEvent::Create => {
-                    if !self.name.is_empty() && !self.surname.is_empty() {
-                        self.list.push((self.name.clone(), self.surname.clone()));
-                        self.selected = Some(self.list.len() - 1);
-                    }
+            AppEvent::Create => {
+                if !self.name.is_empty() && !self.surname.is_empty() {
+                    self.list.push((self.name.clone(), self.surname.clone()));
+                    self.selected = Some(self.list.len() - 1);
                 }
+            }
 
-                AppEvent::Update => {
-                    if let Some(selected) = self.selected {
-                        self.list[selected].0 = self.name.clone();
-                        self.list[selected].1 = self.surname.clone();
-                    }
+            AppEvent::Update => {
+                if let Some(selected) = self.selected {
+                    self.list[selected].0 = self.name.clone();
+                    self.list[selected].1 = self.surname.clone();
                 }
+            }
 
-                AppEvent::Delete => {
-                    if let Some(selected) = self.selected {
-                        self.list.remove(selected);
-                        if self.list.is_empty() {
-                            self.selected = None;
-                            self.name = String::new();
-                            self.surname = String::new();
-                        } else {
-                            cx.emit(AppEvent::SetSelected(selected.saturating_sub(1)));
-                        }
+            AppEvent::Delete => {
+                if let Some(selected) = self.selected {
+                    self.list.remove(selected);
+                    if self.list.is_empty() {
+                        self.selected = None;
+                        self.name = String::new();
+                        self.surname = String::new();
+                    } else {
+                        cx.emit(AppEvent::SetSelected(selected.saturating_sub(1)));
                     }
                 }
             }
-        }
+        });
     }
 }
 
 fn main() {
-    let window_description = WindowDescription::new().with_title("CRUD").with_inner_size(450, 200);
-    Application::new(window_description, |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
 
         AppData {
@@ -187,5 +189,7 @@ fn main() {
         })
         .child_space(Pixels(10.0));
     })
+    .title("CRUD")
+    .inner_size((450, 200))
     .run();
 }

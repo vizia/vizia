@@ -1,3 +1,9 @@
+mod chord;
+pub use chord::*;
+
+mod keymap;
+pub use keymap::*;
+
 mod modifiers;
 pub use modifiers::*;
 

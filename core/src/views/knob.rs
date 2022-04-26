@@ -2,8 +2,8 @@ use femtovg::{LineCap, Paint, Path, Solidity};
 use morphorm::{Hierarchy, Units};
 
 use crate::{
-    Binding, Context, Handle, Lens, LensExt, Modifiers, MouseButton, Res, Units::*, View,
-    WindowEvent, ZStack,
+    Binding, Context, DrawContext, Handle, Lens, LensExt, Modifiers, MouseButton, Res, Units::*,
+    View, WindowEvent, ZStack,
 };
 
 static DEFAULT_DRAG_SCALAR: f32 = 0.0042;
@@ -55,7 +55,8 @@ impl<L: Lens<Target = f32>> Knob<L> {
                     centered,
                     Percentage(100.0),
                     Percentage(15.0),
-                    300.0,
+                    -150.,
+                    150.,
                     KnobMode::Continuous,
                 )
                 .value(lens)
@@ -147,74 +148,72 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
             //Entity::root().redraw(cx);
         };
 
-        if let Some(window_event) = event.message.downcast::<WindowEvent>() {
-            match window_event {
-                WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    self.is_dragging = true;
-                    self.prev_drag_y = cx.mouse.left.pos_down.1;
+        event.map(|window_event, _| match window_event {
+            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+                self.is_dragging = true;
+                self.prev_drag_y = cx.mouse.left.pos_down.1;
 
-                    cx.capture();
-                    cx.focused = cx.current;
+                cx.capture();
+                cx.focused = cx.current;
 
-                    self.continuous_normal = self.lens.get(cx);
+                self.continuous_normal = self.lens.get(cx);
 
-                    // if let Some(callback) = self.on_press.take() {
-                    //     (callback)(self, cx, cx.current);
-                    //     self.on_press = Some(callback);
-                    // }
-                }
-
-                WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
-                    self.is_dragging = false;
-                    //self.continuous_normal = self.normalized_value;
-
-                    self.continuous_normal = self.lens.get(cx);
-
-                    cx.release();
-
-                    // if let Some(callback) = self.on_release.take() {
-                    //     (callback)(self, cx, cx.current);
-                    //     self.on_release = Some(callback);
-                    // }
-                }
-
-                WindowEvent::MouseMove(_, y) => {
-                    //if event.target == cx.current {
-                    if self.is_dragging {
-                        let mut delta_normal = (*y - self.prev_drag_y) * self.drag_scalar;
-
-                        self.prev_drag_y = *y;
-
-                        if cx.modifiers.contains(Modifiers::SHIFT) {
-                            delta_normal *= self.modifier_scalar;
-                        }
-
-                        let new_normal = self.continuous_normal - delta_normal;
-
-                        move_virtual_slider(self, cx, new_normal);
-                    }
-                    //}
-                }
-
-                WindowEvent::MouseScroll(_, y) => {
-                    if *y != 0.0 {
-                        let delta_normal = -*y * self.wheel_scalar;
-
-                        let new_normal = self.continuous_normal - delta_normal;
-
-                        move_virtual_slider(self, cx, new_normal);
-                    }
-                }
-
-                WindowEvent::MouseDoubleClick(button) if *button == MouseButton::Left => {
-                    self.is_dragging = false;
-
-                    move_virtual_slider(self, cx, self.default_normal);
-                }
-
-                _ => {}
+                // if let Some(callback) = self.on_press.take() {
+                //     (callback)(self, cx, cx.current);
+                //     self.on_press = Some(callback);
+                // }
             }
-        }
+
+            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+                self.is_dragging = false;
+                //self.continuous_normal = self.normalized_value;
+
+                self.continuous_normal = self.lens.get(cx);
+
+                cx.release();
+
+                // if let Some(callback) = self.on_release.take() {
+                //     (callback)(self, cx, cx.current);
+                //     self.on_release = Some(callback);
+                // }
+            }
+
+            WindowEvent::MouseMove(_, y) => {
+                //if meta.target == cx.current {
+                if self.is_dragging {
+                    let mut delta_normal = (*y - self.prev_drag_y) * self.drag_scalar;
+
+                    self.prev_drag_y = *y;
+
+                    if cx.modifiers.contains(Modifiers::SHIFT) {
+                        delta_normal *= self.modifier_scalar;
+                    }
+
+                    let new_normal = self.continuous_normal - delta_normal;
+
+                    move_virtual_slider(self, cx, new_normal);
+                }
+                //}
+            }
+
+            WindowEvent::MouseScroll(_, y) => {
+                if *y != 0.0 {
+                    let delta_normal = -*y * self.wheel_scalar;
+
+                    let new_normal = self.continuous_normal - delta_normal;
+
+                    move_virtual_slider(self, cx, new_normal);
+                }
+            }
+
+            WindowEvent::MouseDoubleClick(button) if *button == MouseButton::Left => {
+                self.is_dragging = false;
+
+                move_virtual_slider(self, cx, self.default_normal);
+            }
+
+            _ => {}
+        });
     }
 }
 
@@ -255,23 +254,24 @@ impl Ticks {
     }
 }
 impl View for Ticks {
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
-        let opacity = cx.cache.get_opacity(cx.current);
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+        let current = cx.current();
+        let opacity = cx.cache().get_opacity(current);
 
         //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
         // background_color.set_alphaf(background_color.a * opacity);
 
         let mut foreground_color: femtovg::Color =
-            cx.style.background_color.get(cx.current).cloned().unwrap_or_default().into();
+            cx.background_color(current).cloned().unwrap_or_default().into();
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
         // let background_color = femtovg::Color::rgb(54, 54, 54);
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
 
-        let posx = cx.cache.get_posx(cx.current);
-        let posy = cx.cache.get_posy(cx.current);
-        let width = cx.cache.get_width(cx.current);
-        let height = cx.cache.get_height(cx.current);
+        let posx = cx.cache().get_posx(current);
+        let posy = cx.cache().get_posy(current);
+        let width = cx.cache().get_width(current);
+        let height = cx.cache().get_height(current);
 
         // Clalculate arc center
         let centerx = posx + 0.5 * width;
@@ -281,11 +281,9 @@ impl View for Ticks {
         let start = self.angle_start.to_radians() - PI / 2.0;
         let end = self.angle_end.to_radians() - PI / 2.0;
 
-        //let parent = cx.current.get_parent(cx).unwrap();
+        let parent = cx.tree().parent(current).unwrap();
 
-        let parent = cx.tree.parent(cx.current).unwrap();
-
-        let parent_width = cx.cache.get_width(parent);
+        let parent_width = cx.cache().get_width(parent);
 
         // Convert radius and span into screen coordinates
         let radius = self.radius.value_or(parent_width / 2.0, 0.0);
@@ -354,23 +352,24 @@ impl TickKnob {
     }
 }
 impl View for TickKnob {
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
-        let opacity = cx.cache.get_opacity(cx.current);
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+        let current = cx.current();
+        let opacity = cx.cache().get_opacity(current);
 
         //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
         // background_color.set_alphaf(background_color.a * opacity);
 
         let mut foreground_color: femtovg::Color =
-            cx.style.background_color.get(cx.current).cloned().unwrap_or_default().into();
+            cx.background_color(current).cloned().unwrap_or_default().into();
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
         let background_color = femtovg::Color::rgb(54, 54, 54);
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
 
-        let posx = cx.cache.get_posx(cx.current);
-        let posy = cx.cache.get_posy(cx.current);
-        let width = cx.cache.get_width(cx.current);
-        let height = cx.cache.get_height(cx.current);
+        let posx = cx.cache().get_posx(current);
+        let posy = cx.cache().get_posy(current);
+        let width = cx.cache().get_width(current);
+        let height = cx.cache().get_height(current);
 
         // Clalculate arc center
         let centerx = posx + 0.5 * width;
@@ -380,11 +379,9 @@ impl View for TickKnob {
         let start = self.angle_start.to_radians() - PI / 2.0;
         let end = self.angle_end.to_radians() - PI / 2.0;
 
-        //let parent = cx.current.get_parent(cx).unwrap();
+        let parent = cx.tree().parent(current).unwrap();
 
-        let parent = cx.tree.parent(cx.current).unwrap();
-
-        let parent_width = cx.cache.get_width(parent);
+        let parent_width = cx.cache().get_width(parent);
 
         // Convert radius and span into screen coordinates
         let radius = self.radius.value_or(parent_width / 2.0, 0.0);
@@ -463,14 +460,15 @@ impl ArcTrack {
         center: bool,
         radius: Units,
         span: Units,
-        arc_len: f32,
+        angle_start: f32,
+        angle_end: f32,
         mode: KnobMode,
     ) -> Handle<Self> {
         Self {
             // angle_start: -150.0,
             // angle_end: 150.0,
-            angle_start: -arc_len / 2.0,
-            angle_end: arc_len / 2.0,
+            angle_start,
+            angle_end,
             radius,
             span,
 
@@ -484,23 +482,24 @@ impl ArcTrack {
 }
 
 impl View for ArcTrack {
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
-        let opacity = cx.cache.get_opacity(cx.current);
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+        let current = cx.current();
+        let opacity = cx.cache().get_opacity(current);
 
         //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
         // background_color.set_alphaf(background_color.a * opacity);
 
         let mut foreground_color: femtovg::Color =
-            cx.style.background_color.get(cx.current).cloned().unwrap_or_default().into();
+            cx.background_color(current).cloned().unwrap_or_default().into();
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
         let background_color = femtovg::Color::rgb(54, 54, 54);
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
 
-        let posx = cx.cache.get_posx(cx.current);
-        let posy = cx.cache.get_posy(cx.current);
-        let width = cx.cache.get_width(cx.current);
-        let height = cx.cache.get_height(cx.current);
+        let posx = cx.cache().get_posx(current);
+        let posy = cx.cache().get_posy(current);
+        let width = cx.cache().get_width(current);
+        let height = cx.cache().get_height(current);
 
         // Calculate arc center
         let centerx = posx + 0.5 * width;
@@ -510,11 +509,9 @@ impl View for ArcTrack {
         let start = self.angle_start.to_radians() - PI / 2.0;
         let end = self.angle_end.to_radians() - PI / 2.0;
 
-        //let parent = cx.current.get_parent(cx).unwrap();
+        let parent = cx.tree().parent(current).unwrap();
 
-        let parent = cx.tree.parent(cx.current).unwrap();
-
-        let parent_width = cx.cache.get_width(parent);
+        let parent_width = cx.cache().get_width(parent);
 
         // Convert radius and span into screen coordinates
         let radius = self.radius.value_or(parent_width / 2.0, 0.0);

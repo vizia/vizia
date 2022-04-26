@@ -52,42 +52,43 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::KeyDown(code, _) => match code {
-                    Code::ArrowDown => {
-                        if let Some(callback) = self.increment_callback.take() {
-                            (callback)(cx);
-                            self.increment_callback = Some(callback);
-                        }
+        event.map(|window_event, _| match window_event {
+            WindowEvent::KeyDown(code, _) => match code {
+                Code::ArrowDown => {
+                    if let Some(callback) = self.increment_callback.take() {
+                        (callback)(cx);
+                        self.increment_callback = Some(callback);
                     }
+                }
 
-                    Code::ArrowUp => {
-                        if let Some(callback) = self.decrement_callback.take() {
-                            (callback)(cx);
-                            self.decrement_callback = Some(callback);
-                        }
+                Code::ArrowUp => {
+                    if let Some(callback) = self.decrement_callback.take() {
+                        (callback)(cx);
+                        self.decrement_callback = Some(callback);
                     }
+                }
 
-                    Code::Escape => {
-                        if let Some(callback) = self.clear_callback.take() {
-                            (callback)(cx);
-                            self.clear_callback = Some(callback);
-                        }
+                Code::Escape => {
+                    if let Some(callback) = self.clear_callback.take() {
+                        (callback)(cx);
+                        self.clear_callback = Some(callback);
                     }
-
-                    _ => {}
-                },
+                }
 
                 _ => {}
-            }
-        }
+            },
 
-        // if let Some(WindowEvent::MouseDown(MouseButton::Left)) = event.message.downcast() {
-        //     if !cx.focused.is_child_of(&cx.tree, cx.current) {
-        //         cx.focused = cx.current;
+            _ => {}
+        });
+
+        // event.map(|window_event, _| match window_event {
+        //     WindowEvent::MouseDown(MouseButton::Left) => {
+        //         if !cx.focused.is_child_of(&cx.tree, cx.current) {
+        //             cx.focused = cx.current;
+        //         }
         //     }
-        // }
+        //     _ => {}
+        // });
     }
 }
 

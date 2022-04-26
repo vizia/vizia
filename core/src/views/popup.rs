@@ -9,24 +9,22 @@ pub struct PopupData {
 
 impl Model for PopupData {
     fn event(&mut self, _: &mut Context, event: &mut crate::Event) {
-        if let Some(popup_event) = event.message.downcast() {
-            match popup_event {
-                PopupEvent::Open => {
-                    self.is_open = true;
-                    event.consume();
-                }
-
-                PopupEvent::Close => {
-                    self.is_open = false;
-                    event.consume();
-                }
-
-                PopupEvent::Switch => {
-                    self.is_open ^= true;
-                    event.consume();
-                }
+        event.map(|popup_event, meta| match popup_event {
+            PopupEvent::Open => {
+                self.is_open = true;
+                meta.consume();
             }
-        }
+
+            PopupEvent::Close => {
+                self.is_open = false;
+                meta.consume();
+            }
+
+            PopupEvent::Switch => {
+                self.is_open ^= true;
+                meta.consume();
+            }
+        });
     }
 }
 
@@ -73,30 +71,28 @@ where
         self.cx.current = self.entity;
         self.cx.add_listener(move |popup: &mut Popup<L>, cx, event| {
             let flag: bool = popup.lens.get(cx).clone().into();
-            if let Some(window_event) = event.message.downcast() {
-                match window_event {
-                    WindowEvent::MouseDown(_) => {
-                        if flag {
-                            if event.origin != cx.current {
-                                if !cx.current.is_over(cx) {
-                                    (focus_event)(cx);
-                                    event.consume();
-                                }
-                            }
-                        }
-                    }
-
-                    WindowEvent::KeyDown(code, _) => {
-                        if flag {
-                            if *code == Code::Escape {
+            event.map(|window_event, meta| match window_event {
+                WindowEvent::MouseDown(_) => {
+                    if flag {
+                        if meta.origin != cx.current {
+                            if !cx.current.is_over(cx) {
                                 (focus_event)(cx);
+                                meta.consume();
                             }
                         }
                     }
-
-                    _ => {}
                 }
-            }
+
+                WindowEvent::KeyDown(code, _) => {
+                    if flag {
+                        if *code == Code::Escape {
+                            (focus_event)(cx);
+                        }
+                    }
+                }
+
+                _ => {}
+            });
         });
         self.cx.current = prev;
 

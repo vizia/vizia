@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use morphorm::GeometryChanged;
 
-use crate::{Context, Event, Handle, MouseButton, View, ViewHandler, WindowEvent};
+use crate::{Context, DrawContext, Event, Handle, MouseButton, View, ViewHandler, WindowEvent};
 
 // Press
 pub struct Press<V: View> {
@@ -42,22 +42,20 @@ impl<V: View> View for Press<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                    if let Some(action) = self.action.take() {
-                        (action)(cx);
+        event.map(|window_event, _| match window_event {
+            WindowEvent::MouseDown(MouseButton::Left) => {
+                if let Some(action) = self.action.take() {
+                    (action)(cx);
 
-                        self.action = Some(action);
-                    }
+                    self.action = Some(action);
                 }
-
-                _ => {}
             }
-        }
+
+            _ => {}
+        });
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -100,26 +98,24 @@ impl<V: View> View for Release<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
-                    if event.target == cx.current {
-                        if let Some(action) = self.action.take() {
-                            (action)(cx);
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseUp(MouseButton::Left) => {
+                if meta.target == cx.current {
+                    if let Some(action) = self.action.take() {
+                        (action)(cx);
 
-                            self.action = Some(action);
-                        }
-
-                        cx.release();
+                        self.action = Some(action);
                     }
-                }
 
-                _ => {}
+                    cx.release();
+                }
             }
-        }
+
+            _ => {}
+        });
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -162,24 +158,22 @@ impl<V: View> View for Hover<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseEnter => {
-                    if event.target == cx.current {
-                        if let Some(action) = self.action.take() {
-                            (action)(cx);
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseEnter => {
+                if meta.target == cx.current {
+                    if let Some(action) = self.action.take() {
+                        (action)(cx);
 
-                            self.action = Some(action);
-                        }
+                        self.action = Some(action);
                     }
                 }
-
-                _ => {}
             }
-        }
+
+            _ => {}
+        });
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -222,22 +216,20 @@ impl<V: View> View for Over<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseOver => {
-                    if let Some(action) = self.action.take() {
-                        (action)(cx);
+        event.map(|window_event, _| match window_event {
+            WindowEvent::MouseOver => {
+                if let Some(action) = self.action.take() {
+                    (action)(cx);
 
-                        self.action = Some(action);
-                    }
+                    self.action = Some(action);
                 }
-
-                _ => {}
             }
-        }
+
+            _ => {}
+        });
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -280,24 +272,22 @@ impl<V: View> View for Leave<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseLeave => {
-                    if event.target == cx.current {
-                        if let Some(action) = self.action.take() {
-                            (action)(cx);
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseLeave => {
+                if meta.target == cx.current {
+                    if let Some(action) = self.action.take() {
+                        (action)(cx);
 
-                            self.action = Some(action);
-                        }
+                        self.action = Some(action);
                     }
                 }
-
-                _ => {}
             }
-        }
+
+            _ => {}
+        });
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -340,22 +330,20 @@ impl<V: View> View for Move<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::MouseMove(x, y) => {
-                    if let Some(action) = self.action.take() {
-                        (action)(cx, *x, *y);
+        event.map(|window_event, _| match window_event {
+            WindowEvent::MouseMove(x, y) => {
+                if let Some(action) = self.action.take() {
+                    (action)(cx, *x, *y);
 
-                        self.action = Some(action);
-                    }
+                    self.action = Some(action);
                 }
-
-                _ => {}
             }
-        }
+
+            _ => {}
+        });
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -398,22 +386,20 @@ impl<V: View> View for FocusIn<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::FocusIn => {
-                    if let Some(action) = self.action.take() {
-                        (action)(cx);
+        event.map(|window_event, _| match window_event {
+            WindowEvent::FocusIn => {
+                if let Some(action) = self.action.take() {
+                    (action)(cx);
 
-                        self.action = Some(action);
-                    }
+                    self.action = Some(action);
                 }
-
-                _ => {}
             }
-        }
+
+            _ => {}
+        });
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -456,22 +442,20 @@ impl<V: View> View for FocusOut<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::FocusOut => {
-                    if let Some(action) = self.action.take() {
-                        (action)(cx);
+        event.map(|window_event, _| match window_event {
+            WindowEvent::FocusOut => {
+                if let Some(action) = self.action.take() {
+                    (action)(cx);
 
-                        self.action = Some(action);
-                    }
+                    self.action = Some(action);
                 }
-
-                _ => {}
             }
-        }
+
+            _ => {}
+        });
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -514,24 +498,22 @@ impl<V: View> View for Geo<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        if let Some(window_event) = event.message.downcast() {
-            match window_event {
-                WindowEvent::GeometryChanged(geo) => {
-                    if event.target == cx.current {
-                        if let Some(action) = self.action.take() {
-                            (action)(cx, *geo);
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::GeometryChanged(geo) => {
+                if meta.target == cx.current {
+                    if let Some(action) = self.action.take() {
+                        (action)(cx, *geo);
 
-                            self.action = Some(action);
-                        }
+                        self.action = Some(action);
                     }
                 }
-
-                _ => {}
             }
-        }
+
+            _ => {}
+        });
     }
 
-    fn draw(&self, cx: &mut Context, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
         self.view.draw(cx, canvas);
     }
 }

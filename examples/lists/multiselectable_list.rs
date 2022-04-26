@@ -16,25 +16,23 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(list_event) = event.message.downcast() {
-            match list_event {
-                AppEvent::Select(index) => {
-                    if !self.selected.insert(*index) {
-                        self.selected.remove(index);
-                    }
-                }
-
-                AppEvent::ClearSelection => {
-                    self.selected.clear();
+        event.map(|app_event, _| match app_event {
+            AppEvent::Select(index) => {
+                if !self.selected.insert(*index) {
+                    self.selected.remove(index);
                 }
             }
-        }
+
+            AppEvent::ClearSelection => {
+                self.selected.clear();
+            }
+        });
     }
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("List"), |cx| {
-        cx.add_theme(include_str!("list_style.css"));
+    Application::new(|cx| {
+        cx.add_theme(include_str!("../resources/list_style.css"));
 
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list, selected: HashSet::new() }.build(cx);
@@ -56,5 +54,6 @@ fn main() {
         .space(Stretch(1.0))
         .on_clear(|cx| cx.emit(AppEvent::ClearSelection));
     })
+    .title("Multiselectable List")
     .run();
 }

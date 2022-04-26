@@ -1,4 +1,4 @@
-use crate::{CursorIcon, MouseButton};
+use crate::{CursorIcon, MouseButton, Position, WindowSize};
 
 use keyboard_types::{Code, Key};
 use morphorm::GeometryChanged;
@@ -46,6 +46,19 @@ pub enum WindowEvent {
     GrabCursor(bool),
     /// Sets the (x,y) position of the mouse cursor in window coordinates
     SetCursorPosition(u32, u32),
+
+    SetTitle(String),
+    SetSize(WindowSize),
+    SetPosition(Position),
+    SetMaxSize(Option<WindowSize>),
+    SetMinSize(Option<WindowSize>),
+    SetResizable(bool),
+    SetMinimized(bool),
+    SetMaximized(bool),
+    SetVisible(bool),
+    SetDecorations(bool),
+    SetAlwaysOnTop(bool),
+
     /// Emitted when mouse events have been captured
     MouseCaptureEvent,
     /// Emitted when mouse events have been released

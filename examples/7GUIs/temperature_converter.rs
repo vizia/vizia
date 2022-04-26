@@ -19,26 +19,22 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.try_mut() {
-            match app_event {
-                AppEvent::SetTemperatureCelcius(temp) => {
-                    self.temperature_celcius = *temp;
-                    self.temperature_fahrenheit = self.temperature_celcius * (9.0 / 5.0) + 32.0;
-                }
-
-                AppEvent::SetTemperatureFahrenheit(temp) => {
-                    self.temperature_fahrenheit = *temp;
-                    self.temperature_celcius = (self.temperature_fahrenheit - 32.0) * (5.0 / 9.0);
-                }
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetTemperatureCelcius(temp) => {
+                self.temperature_celcius = *temp;
+                self.temperature_fahrenheit = self.temperature_celcius * (9.0 / 5.0) + 32.0;
             }
-        }
+
+            AppEvent::SetTemperatureFahrenheit(temp) => {
+                self.temperature_fahrenheit = *temp;
+                self.temperature_celcius = (self.temperature_fahrenheit - 32.0) * (5.0 / 9.0);
+            }
+        });
     }
 }
 
 fn main() {
-    let window_description =
-        WindowDescription::new().with_title("Temperature Converter").with_inner_size(450, 100);
-    Application::new(window_description, |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
 
         AppData { temperature_celcius: 5.0, temperature_fahrenheit: 41.0 }.build(cx);
@@ -60,5 +56,7 @@ fn main() {
         .child_space(Stretch(1.0))
         .col_between(Pixels(20.0));
     })
+    .title("Temperature Converter")
+    .inner_size((450, 100))
     .run();
 }

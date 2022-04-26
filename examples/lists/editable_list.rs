@@ -28,42 +28,40 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.message.downcast() {
-            match app_event {
-                AppEvent::Add(value) => {
-                    self.list.push(*value);
+        event.map(|app_event, _| match app_event {
+            AppEvent::Add(value) => {
+                self.list.push(*value);
+                self.selected = self.selected.clamp(0, self.list.len() - 1);
+            }
+
+            AppEvent::RemoveSelected => {
+                if !self.list.is_empty() {
+                    self.list.remove(self.selected);
+                }
+                if !self.list.is_empty() {
                     self.selected = self.selected.clamp(0, self.list.len() - 1);
                 }
-
-                AppEvent::RemoveSelected => {
-                    if !self.list.is_empty() {
-                        self.list.remove(self.selected);
-                    }
-                    if !self.list.is_empty() {
-                        self.selected = self.selected.clamp(0, self.list.len() - 1);
-                    }
-                }
-
-                AppEvent::Select(idx) => {
-                    self.selected = *idx;
-                }
-
-                AppEvent::IncrementSelection => {
-                    cx.emit(AppEvent::Select(
-                        (self.selected + 1).min(self.list.len().saturating_sub(1)),
-                    ));
-                }
-
-                AppEvent::DecrementSelection => {
-                    cx.emit(AppEvent::Select(self.selected.saturating_sub(1)));
-                }
             }
-        }
+
+            AppEvent::Select(idx) => {
+                self.selected = *idx;
+            }
+
+            AppEvent::IncrementSelection => {
+                cx.emit(AppEvent::Select(
+                    (self.selected + 1).min(self.list.len().saturating_sub(1)),
+                ));
+            }
+
+            AppEvent::DecrementSelection => {
+                cx.emit(AppEvent::Select(self.selected.saturating_sub(1)));
+            }
+        });
     }
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("List"), |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
 
         let list: Vec<u32> = (10..14u32).collect();
@@ -108,5 +106,6 @@ fn main() {
         .top(Pixels(100.0))
         .child_space(Stretch(1.0));
     })
+    .title("List")
     .run();
 }

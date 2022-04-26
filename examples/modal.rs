@@ -32,7 +32,7 @@ const STYLE: &str = r#"
 "#;
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Modal"), |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
 
         AppData { show_modal: false }.build(cx);
@@ -58,6 +58,7 @@ fn main() {
         .row_between(Pixels(10.0))
         .class("modal");
     })
+    .title("Modal")
     .run();
 }
 
@@ -74,16 +75,13 @@ pub struct AppData {
 
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.message.downcast() {
-            match app_event {
-                AppEvent::ShowModal => {
-                    self.show_modal = true;
-                }
-
-                AppEvent::HideModal => {
-                    self.show_modal = false;
-                }
+        event.map(|app_event, _| match app_event {
+            AppEvent::ShowModal => {
+                self.show_modal = true;
             }
-        }
+            AppEvent::HideModal => {
+                self.show_modal = false;
+            }
+        });
     }
 }

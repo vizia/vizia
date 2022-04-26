@@ -36,7 +36,7 @@ impl ViziaWindow {
     /// Open a new child window.
     ///
     /// * `parent` - The parent window.
-    /// * `app` - The Tuix application builder.
+    /// * `app` - The Vizia application builder.
     pub fn open_parented<P, F>(
         parent: &P,
         win_desc: WindowDescription,
@@ -63,7 +63,8 @@ impl ViziaWindow {
             parent,
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let context = Context::new();
+                let mut context = Context::new();
+                context.enviroment.needs_rebuild = true;
                 ViziaWindow::new(
                     context,
                     win_desc,
@@ -78,7 +79,7 @@ impl ViziaWindow {
 
     /// Open a new window as if it had a parent window.
     ///
-    /// * `app` - The Tuix application builder.
+    /// * `app` - The Vizia application builder.
     pub fn open_as_if_parented<F>(
         win_desc: WindowDescription,
         scale_policy: WindowScalePolicy,
@@ -102,7 +103,8 @@ impl ViziaWindow {
         Window::open_as_if_parented(
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let context = Context::new();
+                let mut context = Context::new();
+                context.enviroment.needs_rebuild = true;
                 ViziaWindow::new(
                     context,
                     win_desc,
@@ -117,7 +119,7 @@ impl ViziaWindow {
 
     /// Open a new window that blocks the current thread until the window is destroyed.
     ///
-    /// * `app` - The Tuix application builder.
+    /// * `app` - The Vizia application builder.
     pub fn open_blocking<F>(
         win_desc: WindowDescription,
         scale_policy: WindowScalePolicy,
@@ -140,7 +142,8 @@ impl ViziaWindow {
         Window::open_blocking(
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
-                let context = Context::new();
+                let mut context = Context::new();
+                context.enviroment.needs_rebuild = true;
                 ViziaWindow::new(
                     context,
                     win_desc,

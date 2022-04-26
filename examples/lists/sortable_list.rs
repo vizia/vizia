@@ -23,18 +23,16 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.message.downcast() {
-            match app_event {
-                AppEvent::Sort => {
-                    self.list.sort();
-                }
+        event.map(|app_event, _| match app_event {
+            AppEvent::Sort => {
+                self.list.sort();
             }
-        }
+        });
     }
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("List"), |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
 
         AppData { list: vec![12, 5, 65, 31, 18, 7] }.build(cx);
@@ -57,5 +55,6 @@ fn main() {
         .top(Pixels(100.0))
         .child_space(Stretch(1.0));
     })
+    .title("Sortable List")
     .run();
 }

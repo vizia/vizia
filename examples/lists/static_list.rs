@@ -21,27 +21,25 @@ pub enum AppEvent {
 impl Model for AppData {
     // Intercept list events from the list view to modify the selected index in the model
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        if let Some(list_event) = event.message.downcast() {
-            match list_event {
-                AppEvent::Select(index) => {
-                    self.selected = *index;
-                }
-
-                AppEvent::IncrementSelection => {
-                    cx.emit(AppEvent::Select((self.selected + 1).min(STATIC_LIST.len() - 1)));
-                }
-
-                AppEvent::DecrementSelection => {
-                    cx.emit(AppEvent::Select(self.selected.saturating_sub(1)));
-                }
+        event.map(|app_event, _| match app_event {
+            AppEvent::Select(index) => {
+                self.selected = *index;
             }
-        }
+
+            AppEvent::IncrementSelection => {
+                cx.emit(AppEvent::Select((self.selected + 1).min(STATIC_LIST.len() - 1)));
+            }
+
+            AppEvent::DecrementSelection => {
+                cx.emit(AppEvent::Select(self.selected.saturating_sub(1)));
+            }
+        });
     }
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("List"), |cx| {
-        cx.add_theme(include_str!("list_style.css"));
+    Application::new(|cx| {
+        cx.add_theme(include_str!("../resources/list_style.css"));
 
         AppData { selected: 0 }.build(cx);
 
@@ -68,5 +66,6 @@ fn main() {
         })
         .class("container");
     })
+    .title("Static List")
     .run();
 }
