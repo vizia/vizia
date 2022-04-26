@@ -470,6 +470,7 @@ impl ApplicationRunner {
     pub fn rebuild(&mut self, builder: &Option<Box<dyn Fn(&mut Context) + Send>>) {
         if self.context.enviroment.needs_rebuild {
             self.context.current = Entity::root();
+            self.context.remove_children(Entity::root());
             if let Some(builder) = &builder {
                 (builder)(&mut self.context);
             }
