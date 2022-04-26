@@ -7,16 +7,19 @@ use crate::prelude::*;
 ///
 /// # Examples
 ///
-/// ## Element without styling
+/// ## Element without visible styling
 ///
-/// An element can be used without styling which displays nothing at all.
+/// An element can be used without visible styling which displays nothing at all. This is useful to
+/// create an invisible spacer between other views.
 ///
 /// ```
 /// # use vizia_core::*;
 /// #
 /// # let cx = &mut Context::new();
 /// #
-/// Element::new(cx);
+/// Element::new(cx)
+///     .width(Pixels(100.0))
+///     .height(Pixels(100.0));
 /// ```
 ///
 /// ## Element as a rectangle
@@ -53,7 +56,7 @@ use crate::prelude::*;
 ///
 /// An element can be used to display a circle like this black one with a diameter of 100 pixels.
 /// To create a perfect circle the width and height of the element have to be equal and the
-/// border radius has to be set to half of the width or height.
+/// border radius has to be set to fifty percent.
 ///
 /// ```
 /// # use vizia_core::*;
@@ -63,8 +66,34 @@ use crate::prelude::*;
 /// Element::new(cx)
 ///     .width(Pixels(100.0))
 ///     .height(Pixels(100.0))
-///     .border_radius(Pixels(50.0))
+///     .border_radius(Percentage(50.0))
 ///     .background_color(Color::black());
+/// ```
+///
+/// ## Element as an image
+///
+/// An element can be used to display an image like this 100 by 100 pixels one. The image can
+/// be set by using a stylesheet or by using a lens. The image has to be loaded manually by
+/// using the [`Context::load_image`](crate::Context::load_image) method.
+///
+/// ```
+/// # use vizia_core::*;
+/// #
+/// # #[derive(Lens)]
+/// # struct AppData {
+/// #     picture: String,
+/// # }
+/// #
+/// # impl Model for AppData {}
+/// #
+/// # let cx = &mut Context::new();
+/// #
+/// # AppData { picture: String::from("test.png") }.build(cx);
+/// #
+/// Element::new(cx)
+///     .width(Pixels(100.0))
+///     .height(Pixels(100.0))
+///     .background_image(AppData::picture);
 /// ```
 pub struct Element;
 
