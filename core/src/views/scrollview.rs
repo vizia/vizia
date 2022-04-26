@@ -63,21 +63,24 @@ pub enum ScrollUpdate {
 
 impl Model for ScrollData {
     fn event(&mut self, _cx: &mut Context, event: &mut Event) {
-        event.map(|scroll_update, _| match scroll_update {
-            ScrollUpdate::ScrollX(f) => self.scroll_x = (self.scroll_x + *f).clamp(0.0, 1.0),
-            ScrollUpdate::ScrollY(f) => self.scroll_y = (self.scroll_y + *f).clamp(0.0, 1.0),
-            ScrollUpdate::SetX(f) => self.scroll_x = *f,
-            ScrollUpdate::SetY(f) => self.scroll_y = *f,
-            ScrollUpdate::ChildGeo(x, y) => {
-                self.child_x = *x;
-                self.child_y = *y;
+        event.map(|scroll_update, meta| {
+            match scroll_update {
+                ScrollUpdate::ScrollX(f) => self.scroll_x = (self.scroll_x + *f).clamp(0.0, 1.0),
+                ScrollUpdate::ScrollY(f) => self.scroll_y = (self.scroll_y + *f).clamp(0.0, 1.0),
+                ScrollUpdate::SetX(f) => self.scroll_x = *f,
+                ScrollUpdate::SetY(f) => self.scroll_y = *f,
+                ScrollUpdate::ChildGeo(x, y) => {
+                    self.child_x = *x;
+                    self.child_y = *y;
+                }
+                ScrollUpdate::ParentGeo(x, y) => {
+                    self.parent_x = *x;
+                    self.parent_y = *y;
+                }
             }
-            ScrollUpdate::ParentGeo(x, y) => {
-                self.parent_x = *x;
-                self.parent_y = *y;
-            }
+
+            meta.consume();
         });
-        event.consume();
     }
 }
 
