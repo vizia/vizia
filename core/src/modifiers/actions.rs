@@ -44,10 +44,8 @@ impl<V: View> View for Press<V> {
 
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseDown(MouseButton::Left) => {
-                if let Some(action) = self.action.take() {
+                if let Some(action) = &self.action {
                     (action)(cx);
-
-                    self.action = Some(action);
                 }
             }
 
@@ -101,10 +99,8 @@ impl<V: View> View for Release<V> {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseUp(MouseButton::Left) => {
                 if meta.target == cx.current {
-                    if let Some(action) = self.action.take() {
+                    if let Some(action) = &self.action {
                         (action)(cx);
-
-                        self.action = Some(action);
                     }
 
                     cx.release();
@@ -161,10 +157,8 @@ impl<V: View> View for Hover<V> {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseEnter => {
                 if meta.target == cx.current {
-                    if let Some(action) = self.action.take() {
+                    if let Some(action) = &self.action {
                         (action)(cx);
-
-                        self.action = Some(action);
                     }
                 }
             }
@@ -218,10 +212,8 @@ impl<V: View> View for Over<V> {
 
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseOver => {
-                if let Some(action) = self.action.take() {
+                if let Some(action) = &self.action {
                     (action)(cx);
-
-                    self.action = Some(action);
                 }
             }
 
@@ -275,10 +267,8 @@ impl<V: View> View for Leave<V> {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseLeave => {
                 if meta.target == cx.current {
-                    if let Some(action) = self.action.take() {
+                    if let Some(action) = &self.action {
                         (action)(cx);
-
-                        self.action = Some(action);
                     }
                 }
             }
@@ -332,10 +322,8 @@ impl<V: View> View for Move<V> {
 
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseMove(x, y) => {
-                if let Some(action) = self.action.take() {
+                if let Some(action) = &self.action {
                     (action)(cx, *x, *y);
-
-                    self.action = Some(action);
                 }
             }
 
@@ -388,10 +376,8 @@ impl<V: View> View for FocusIn<V> {
 
         event.map(|window_event, _| match window_event {
             WindowEvent::FocusIn => {
-                if let Some(action) = self.action.take() {
+                if let Some(action) = &self.action {
                     (action)(cx);
-
-                    self.action = Some(action);
                 }
             }
 
@@ -444,10 +430,8 @@ impl<V: View> View for FocusOut<V> {
 
         event.map(|window_event, _| match window_event {
             WindowEvent::FocusOut => {
-                if let Some(action) = self.action.take() {
+                if let Some(action) = &self.action {
                     (action)(cx);
-
-                    self.action = Some(action);
                 }
             }
 
@@ -501,10 +485,8 @@ impl<V: View> View for Geo<V> {
         event.map(|window_event, meta| match window_event {
             WindowEvent::GeometryChanged(geo) => {
                 if meta.target == cx.current {
-                    if let Some(action) = self.action.take() {
+                    if let Some(action) = &self.action {
                         (action)(cx, *geo);
-
-                        self.action = Some(action);
                     }
                 }
             }

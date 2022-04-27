@@ -343,11 +343,10 @@ impl View for MenuButton {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseDown(MouseButton::Left) => {
-                if let Some(callback) = self.action.take() {
+                if let Some(callback) = &self.action {
                     callback(cx);
                     cx.emit(MenuEvent::Close);
                     meta.consume();
-                    self.action = Some(callback);
                 }
             }
             _ => {}

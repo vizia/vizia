@@ -42,6 +42,23 @@ impl<'a, T> Handle<'a, T> {
 
     pub fn ignore(self) -> Self {
         self.cx.tree.set_ignored(self.entity, true);
+        self.focusable(false)
+    }
+
+    pub fn modify<F>(self, f: F) -> Self
+    where
+        F: FnOnce(&mut T),
+        T: 'static,
+    {
+        if let Some(view) = self
+            .cx
+            .views
+            .get_mut(&self.entity)
+            .and_then(|view_handler| view_handler.downcast_mut::<T>())
+        {
+            (f)(view);
+        }
+
         self
     }
 

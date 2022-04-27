@@ -3,23 +3,23 @@ use fluent_bundle::FluentArgs;
 pub use fluent_bundle::FluentValue;
 use std::collections::HashMap;
 
-pub trait LensWrapSmallTrait {
+pub trait FluentStore {
     fn get_val(&self, cx: &Context) -> FluentValue<'static>;
-    fn make_clone(&self) -> Box<dyn LensWrapSmallTrait>;
+    fn make_clone(&self) -> Box<dyn FluentStore>;
     fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>);
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct LensWrapSmall<L> {
+pub struct LensState<L> {
     lens: L,
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct ValWrapSmall<T> {
+pub struct ValState<T> {
     val: T,
 }
 
-impl<L> LensWrapSmallTrait for LensWrapSmall<L>
+impl<L> FluentStore for LensState<L>
 where
     L: Lens,
     <L as Lens>::Target: Into<FluentValue<'static>> + Data,
@@ -34,7 +34,7 @@ where
         )
     }
 
-    fn make_clone(&self) -> Box<dyn LensWrapSmallTrait> {
+    fn make_clone(&self) -> Box<dyn FluentStore> {
         Box::new(self.clone())
     }
     fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>) {
@@ -42,7 +42,7 @@ where
     }
 }
 
-impl<T> LensWrapSmallTrait for ValWrapSmall<T>
+impl<T> FluentStore for ValState<T>
 where
     T: 'static + Clone + Into<FluentValue<'static>>,
 {
@@ -50,7 +50,7 @@ where
         self.val.clone().into()
     }
 
-    fn make_clone(&self) -> Box<dyn LensWrapSmallTrait> {
+    fn make_clone(&self) -> Box<dyn FluentStore> {
         Box::new(self.clone())
     }
 
@@ -61,11 +61,11 @@ where
 
 pub struct Localized {
     key: String,
-    args: HashMap<String, Box<dyn LensWrapSmallTrait>>,
+    args: HashMap<String, Box<dyn FluentStore>>,
 }
 
 pub enum LocalizedArg {
-    Lens(Box<dyn LensWrapSmallTrait>),
+    Lens(Box<dyn FluentStore>),
     Const(),
 }
 
@@ -96,12 +96,12 @@ impl Localized {
         L: Lens,
         <L as Lens>::Target: Into<FluentValue<'static>> + Data,
     {
-        self.args.insert(key.to_owned(), Box::new(LensWrapSmall { lens }));
+        self.args.insert(key.to_owned(), Box::new(LensState { lens }));
         self
     }
 
     pub fn arg_const<T: Into<FluentValue<'static>> + Data>(mut self, key: &str, val: T) -> Self {
-        self.args.insert(key.to_owned(), Box::new(ValWrapSmall { val }));
+        self.args.insert(key.to_owned(), Box::new(ValState { val }));
         self
     }
 }
@@ -147,7 +147,7 @@ impl Res<String> for Localized {
     }
 }
 
-fn bind_recursive<F>(cx: &mut Context, lenses: &Vec<Box<dyn LensWrapSmallTrait>>, closure: F)
+fn bind_recursive<F>(cx: &mut Context, lenses: &Vec<Box<dyn FluentStore>>, closure: F)
 where
     F: 'static + Clone + Fn(&mut Context),
 {

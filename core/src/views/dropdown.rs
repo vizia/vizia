@@ -1,24 +1,19 @@
-use crate::{
-    Actions, Context, DataContext, Handle, Model, Overflow, Popup, PopupData, PopupEvent, Units::*,
-    View,
-};
+use crate::{Actions, Context, Handle, Model, Popup, PopupData, PopupEvent, Units::*, View};
 
 pub const ICON_DOWN_OPEN: &str = "\u{e75c}";
 
 pub struct Dropdown {}
 
 impl Dropdown {
-    pub fn new<F, L, Label>(cx: &mut Context, label: L, builder: F) -> Handle<Self>
+    pub fn new<F, L, V>(cx: &mut Context, label: L, content: F) -> Handle<Self>
     where
-        L: 'static + Fn(&mut Context) -> Handle<Label>,
+        L: 'static + Fn(&mut Context) -> Handle<V>,
         F: 'static + Fn(&mut Context),
-        Label: 'static + View,
+        V: 'static + View,
     {
         Self {}
             .build(cx, move |cx| {
-                if cx.data::<PopupData>().is_none() {
-                    PopupData::default().build(cx);
-                }
+                PopupData::default().build(cx);
 
                 (label)(cx)
                     .class("title")
@@ -26,20 +21,18 @@ impl Dropdown {
                     .on_press(|cx| cx.emit(PopupEvent::Switch));
 
                 Popup::new(cx, PopupData::is_open, move |cx| {
-                    (builder)(cx);
+                    (content)(cx);
                 })
                 .something(|cx| cx.emit(PopupEvent::Close))
                 .top(Percentage(100.0))
-                .height(Auto)
-                .overflow(Overflow::Visible);
+                .height(Auto);
             })
-            .overflow(Overflow::Visible)
             .size(Auto)
     }
 }
 
 impl View for Dropdown {
     fn element(&self) -> Option<String> {
-        Some("dropdown".to_string())
+        Some(String::from("dropdown"))
     }
 }

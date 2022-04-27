@@ -120,7 +120,7 @@ impl Checkbox {
     }
 }
 
-impl<'a> Handle<'a, Checkbox> {
+impl Handle<'_, Checkbox> {
     /// Set the callback triggered when the checkbox is pressed.
     ///
     /// # Examples
@@ -149,13 +149,7 @@ impl<'a> Handle<'a, Checkbox> {
     where
         F: 'static + Fn(&mut Context),
     {
-        if let Some(view) = self.cx.views.get_mut(&self.entity) {
-            if let Some(checkbox) = view.downcast_mut::<Checkbox>() {
-                checkbox.on_toggle = Some(Box::new(callback));
-            }
-        }
-
-        self
+        self.modify(|checkbox| checkbox.on_toggle = Some(Box::new(callback)))
     }
 }
 
@@ -168,10 +162,8 @@ impl View for Checkbox {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseDown(MouseButton::Left) => {
                 if meta.target == cx.current {
-                    if let Some(callback) = self.on_toggle.take() {
+                    if let Some(callback) = &self.on_toggle {
                         (callback)(cx);
-
-                        self.on_toggle = Some(callback);
                     }
                 }
             }

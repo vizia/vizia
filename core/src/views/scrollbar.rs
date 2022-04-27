@@ -89,16 +89,15 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
     }
 
     fn change(&mut self, cx: &mut Context, new_val: f32) {
-        if let Some(callback) = self.on_changing.take() {
+        if let Some(callback) = &self.on_changing {
             callback(cx, new_val.clamp(0.0, 1.0));
-            self.on_changing = Some(callback);
         }
     }
 }
 
 impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
     fn element(&self) -> Option<String> {
-        Some("scrollbar".to_string())
+        Some(String::from("scrollbar"))
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {

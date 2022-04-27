@@ -2,7 +2,7 @@ use std::{marker::PhantomData, ops::Range};
 
 use crate::{
     Actions, Binding, Context, Data, Element, GeometryChanged, Handle, Lens, LensExt, MouseButton,
-    Overflow, PropSet, Units::*, View, WindowEvent, ZStack,
+    PropSet, Units::*, View, WindowEvent, ZStack,
 };
 
 #[derive(Debug)]
@@ -185,17 +185,15 @@ where
                                     .bottom(Percentage(100.0 * px));
                             }
                         });
-                })
-                .overflow(Overflow::Visible);
+                });
             });
         })
-        .overflow(Overflow::Visible)
     }
 }
 
 impl<L: Lens> View for Slider<L> {
     fn element(&self) -> Option<String> {
-        Some("slider".to_string())
+        Some(String::from("slider"))
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
@@ -296,10 +294,8 @@ impl<L: Lens> View for Slider<L> {
 
                     let val = min + dx * (max - min);
 
-                    if let Some(callback) = self.on_changing.take() {
+                    if let Some(callback) = &self.on_changing {
                         (callback)(cx, val);
-
-                        self.on_changing = Some(callback);
                     }
                 }
             }
@@ -309,7 +305,7 @@ impl<L: Lens> View for Slider<L> {
     }
 }
 
-impl<'a, L: Lens> Handle<'a, Slider<L>> {
+impl<L: Lens> Handle<'_, Slider<L>> {
     /// Sets the callback triggered when the slider value is changing (dragging).
     ///
     /// Takes a closure which triggers when the slider value is changing,
@@ -336,13 +332,7 @@ impl<'a, L: Lens> Handle<'a, Slider<L>> {
     where
         F: 'static + Fn(&mut Context, f32),
     {
-        if let Some(slider) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<Slider<L>>())
-        {
-            slider.on_changing = Some(Box::new(callback));
-        }
-
-        self
+        self.modify(|slider| slider.on_changing = Some(Box::new(callback)))
     }
 
     /// Sets the range of the slider.

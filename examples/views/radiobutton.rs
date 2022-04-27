@@ -1,102 +1,78 @@
 use vizia::*;
 
-#[derive(Debug, Default, Lens)]
-pub struct Options {
-    pub option1: bool,
-    pub option2: bool,
-    pub option3: bool,
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Options {
+    First,
+    Second,
+    Third,
 }
 
-impl Model for Options {}
+impl std::fmt::Display for Options {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match *self {
+            Options::First => "First",
+            Options::Second => "Second",
+            Options::Third => "Third",
+        };
+        write!(f, "{}", str)
+    }
+}
 
-#[derive(Debug, Default, Lens)]
+#[derive(Lens)]
 pub struct AppData {
-    pub options: Options,
+    pub option: Options,
 }
 
-#[derive(Debug)]
 pub enum AppEvent {
-    ToggleOption(u32),
+    ToggleOption(Options),
 }
 
 impl Model for AppData {
     fn event(&mut self, _cx: &mut Context, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::ToggleOption(index) => match *index {
-                0 => {
-                    self.options.option1 = true;
-                    self.options.option2 = false;
-                    self.options.option3 = false;
-                }
-
-                1 => {
-                    self.options.option1 = false;
-                    self.options.option2 = true;
-                    self.options.option3 = false;
-                }
-
-                2 => {
-                    self.options.option1 = false;
-                    self.options.option2 = false;
-                    self.options.option3 = true;
-                }
-                _ => {}
-            },
+            AppEvent::ToggleOption(option) => {
+                self.option = *option;
+            }
         });
     }
 }
 
 fn main() {
     Application::new(|cx| {
-        if cx.data::<AppData>().is_none() {
-            AppData { options: Options { option1: true, option2: false, option3: false } }
-                .build(cx);
-        }
+        AppData { option: Options::First }.build(cx);
 
         // Exclusive checkboxes (radio buttons) with labels
         // Only one checkbox can be checked at a time and cannot be unchecked
         VStack::new(cx, |cx| {
-            Label::new(cx, "Radio Buttons").class("h1");
-
-            HStack::new(cx, |cx| {
-                //Binding::new(cx, AppData::options.then(Options::option1), |cx, option1| {
-                RadioButton::new(cx, AppData::options.then(Options::option1))
-                    .on_select(|cx| cx.emit(AppEvent::ToggleOption(0)));
-                //});
-                Label::new(cx, "Option 1");
-            })
-            .size(Auto)
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
-            .col_between(Pixels(5.0));
-
-            HStack::new(cx, |cx| {
-                //Binding::new(cx, AppData::options.then(Options::option2), |cx, option2| {
-                RadioButton::new(cx, AppData::options.then(Options::option2))
-                    .on_select(|cx| cx.emit(AppEvent::ToggleOption(1)));
-                //});
-                Label::new(cx, "Option 2");
-            })
-            .size(Auto)
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
-            .col_between(Pixels(5.0));
-
-            HStack::new(cx, |cx| {
-                //Binding::new(cx, AppData::options.then(Options::option3), |cx, option3| {
-                RadioButton::new(cx, AppData::options.then(Options::option3))
-                    .on_select(|cx| cx.emit(AppEvent::ToggleOption(2)));
-                //});
-                Label::new(cx, "Option 3");
-            })
-            .size(Auto)
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
-            .col_between(Pixels(5.0));
+            for i in 0..3 {
+                let current_option = index_to_option(i);
+                HStack::new(cx, move |cx| {
+                    RadioButton::new(
+                        cx,
+                        AppData::option.map(move |option| *option == current_option),
+                    )
+                    .on_select(move |cx| cx.emit(AppEvent::ToggleOption(current_option)));
+                    Label::new(cx, &current_option.to_string());
+                })
+                .size(Auto)
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .col_between(Pixels(5.0));
+            }
         })
         .row_between(Pixels(5.0))
-        .child_space(Stretch(1.0));
+        .space(Stretch(1.0))
+        .size(Auto);
     })
-    .title("Checkbox")
+    .title("Radiobutton")
     .run();
+}
+
+fn index_to_option(index: usize) -> Options {
+    match index {
+        0 => Options::First,
+        1 => Options::Second,
+        2 => Options::Third,
+        _ => unreachable!(),
+    }
 }

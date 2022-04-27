@@ -20,7 +20,7 @@ const KAPPA90: f32 = 0.5522847493;
 pub trait View: 'static + Sized {
     #[allow(unused_variables)]
     fn body(&mut self, cx: &mut Context) {}
-    fn build<F>(self, cx: &mut Context, builder: F) -> Handle<Self>
+    fn build<F>(self, cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),
     {
@@ -46,7 +46,7 @@ pub trait View: 'static + Sized {
         let prev = handle.cx.current;
         handle.cx.current = handle.entity;
 
-        (builder)(handle.cx);
+        (content)(handle.cx);
 
         handle.cx.current = prev;
 

@@ -43,13 +43,13 @@ impl<L> Popup<L>
 where
     L: Lens<Target = bool>,
 {
-    pub fn new<F>(cx: &mut Context, lens: L, builder: F) -> Handle<Self>
+    pub fn new<F>(cx: &mut Context, lens: L, content: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context),
     {
         Self { lens: lens.clone() }
             .build(cx, |cx| {
-                (builder)(cx);
+                (content)(cx);
             })
             .checked(lens)
             .position_type(PositionType::SelfDirected)
@@ -106,6 +106,6 @@ where
     L::Target: Into<bool>,
 {
     fn element(&self) -> Option<String> {
-        Some("popup".to_string())
+        Some(String::from("popup"))
     }
 }

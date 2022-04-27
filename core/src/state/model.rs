@@ -3,7 +3,7 @@ use std::{
     collections::HashMap,
 };
 
-use crate::{Context, Event, LensWrap};
+use crate::{Context, Event, Store};
 
 /// A trait implemented by application data in order to mutate in response to events.
 ///
@@ -140,8 +140,8 @@ impl<T: Model> ModelData for T {
 #[derive(Default)]
 pub(crate) struct ModelDataStore {
     pub data: HashMap<TypeId, Box<dyn ModelData>>,
-    pub lenses_dedup: HashMap<TypeId, Box<dyn LensWrap>>,
-    pub lenses_dup: Vec<Box<dyn LensWrap>>,
+    pub lenses_dedup: HashMap<TypeId, Box<dyn Store>>,
+    pub lenses_dup: Vec<Box<dyn Store>>,
 }
 
 impl Model for () {}

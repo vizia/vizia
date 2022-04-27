@@ -16,7 +16,7 @@ where
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
-    /// Creates a new ListView with a binding to the given lens and a template for constructing the list items
+    /// Creates a new List view with a binding to the given lens and a template for constructing the list items
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, T>>),
@@ -48,30 +48,27 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
 
 impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
     fn element(&self) -> Option<String> {
-        Some("list".to_string())
+        Some(String::from("list"))
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::KeyDown(code, _) => match code {
                 Code::ArrowDown => {
-                    if let Some(callback) = self.increment_callback.take() {
+                    if let Some(callback) = &self.increment_callback {
                         (callback)(cx);
-                        self.increment_callback = Some(callback);
                     }
                 }
 
                 Code::ArrowUp => {
-                    if let Some(callback) = self.decrement_callback.take() {
+                    if let Some(callback) = &self.decrement_callback {
                         (callback)(cx);
-                        self.decrement_callback = Some(callback);
                     }
                 }
 
                 Code::Escape => {
-                    if let Some(callback) = self.clear_callback.take() {
+                    if let Some(callback) = &self.clear_callback {
                         (callback)(cx);
-                        self.clear_callback = Some(callback);
                     }
                 }
 
