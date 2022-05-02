@@ -65,14 +65,13 @@ where
     where
         F: 'static + Fn(&mut Context, Entity, T),
     {
-        let prev_current = cx.current;
-        cx.current = entity;
-        Binding::new(cx, self.clone(), move |cx, val| {
-            if let Some(v) = val.get_val_fallible(cx) {
-                (closure)(cx, entity, v);
-            }
+        cx.with_current(entity, |cx| {
+            Binding::new(cx, self.clone(), move |cx, val| {
+                if let Some(v) = val.get_val_fallible(cx) {
+                    (closure)(cx, entity, v);
+                }
+            });
         });
-        cx.current = prev_current;
     }
 }
 

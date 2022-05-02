@@ -22,55 +22,55 @@ pub trait AnimExt: AsEntity + Sized {
     /// ```
     fn play_animation(self, cx: &mut Context, animation: Animation) -> Self {
         // Background
-        cx.style.background_color.play_animation(self.entity(), animation);
+        cx.style().background_color.play_animation(self.entity(), animation);
 
         // Space
-        cx.style.left.play_animation(self.entity(), animation);
-        cx.style.right.play_animation(self.entity(), animation);
-        cx.style.top.play_animation(self.entity(), animation);
-        cx.style.bottom.play_animation(self.entity(), animation);
+        cx.style().left.play_animation(self.entity(), animation);
+        cx.style().right.play_animation(self.entity(), animation);
+        cx.style().top.play_animation(self.entity(), animation);
+        cx.style().bottom.play_animation(self.entity(), animation);
 
         // Min/Max Space
-        cx.style.min_left.play_animation(self.entity(), animation);
-        cx.style.min_right.play_animation(self.entity(), animation);
-        cx.style.min_top.play_animation(self.entity(), animation);
-        cx.style.min_bottom.play_animation(self.entity(), animation);
-        cx.style.max_left.play_animation(self.entity(), animation);
-        cx.style.max_right.play_animation(self.entity(), animation);
-        cx.style.max_top.play_animation(self.entity(), animation);
-        cx.style.max_bottom.play_animation(self.entity(), animation);
+        cx.style().min_left.play_animation(self.entity(), animation);
+        cx.style().min_right.play_animation(self.entity(), animation);
+        cx.style().min_top.play_animation(self.entity(), animation);
+        cx.style().min_bottom.play_animation(self.entity(), animation);
+        cx.style().max_left.play_animation(self.entity(), animation);
+        cx.style().max_right.play_animation(self.entity(), animation);
+        cx.style().max_top.play_animation(self.entity(), animation);
+        cx.style().max_bottom.play_animation(self.entity(), animation);
 
         // Child Space
-        cx.style.child_left.play_animation(self.entity(), animation);
-        cx.style.child_right.play_animation(self.entity(), animation);
-        cx.style.child_top.play_animation(self.entity(), animation);
-        cx.style.child_bottom.play_animation(self.entity(), animation);
+        cx.style().child_left.play_animation(self.entity(), animation);
+        cx.style().child_right.play_animation(self.entity(), animation);
+        cx.style().child_top.play_animation(self.entity(), animation);
+        cx.style().child_bottom.play_animation(self.entity(), animation);
 
         // Size
-        cx.style.width.play_animation(self.entity(), animation);
-        cx.style.height.play_animation(self.entity(), animation);
+        cx.style().width.play_animation(self.entity(), animation);
+        cx.style().height.play_animation(self.entity(), animation);
 
         // Min/Max Size
-        cx.style.min_width.play_animation(self.entity(), animation);
-        cx.style.min_height.play_animation(self.entity(), animation);
-        cx.style.max_width.play_animation(self.entity(), animation);
-        cx.style.max_height.play_animation(self.entity(), animation);
+        cx.style().min_width.play_animation(self.entity(), animation);
+        cx.style().min_height.play_animation(self.entity(), animation);
+        cx.style().max_width.play_animation(self.entity(), animation);
+        cx.style().max_height.play_animation(self.entity(), animation);
 
         // Border
-        cx.style.border_color.play_animation(self.entity(), animation);
-        cx.style.border_width.play_animation(self.entity(), animation);
-        cx.style.border_radius_bottom_left.play_animation(self.entity(), animation);
-        cx.style.border_radius_top_left.play_animation(self.entity(), animation);
-        cx.style.border_radius_bottom_right.play_animation(self.entity(), animation);
-        cx.style.border_radius_top_right.play_animation(self.entity(), animation);
+        cx.style().border_color.play_animation(self.entity(), animation);
+        cx.style().border_width.play_animation(self.entity(), animation);
+        cx.style().border_radius_bottom_left.play_animation(self.entity(), animation);
+        cx.style().border_radius_top_left.play_animation(self.entity(), animation);
+        cx.style().border_radius_bottom_right.play_animation(self.entity(), animation);
+        cx.style().border_radius_top_right.play_animation(self.entity(), animation);
 
         // Transform
-        cx.style.rotate.play_animation(self.entity(), animation);
+        cx.style().rotate.play_animation(self.entity(), animation);
         // cx.style.translate.play_animation(self.entity(), animation);
-        cx.style.scale.play_animation(self.entity(), animation);
+        cx.style().scale.play_animation(self.entity(), animation);
 
         // Display
-        cx.style.opacity.play_animation(self.entity(), animation);
+        cx.style().opacity.play_animation(self.entity(), animation);
 
         self
     }
@@ -82,8 +82,8 @@ pub trait AnimExt: AsEntity + Sized {
     /// let test = entity.is_animating(animation_id);
     /// ```
     fn is_animating(self, cx: &mut Context, animation: Animation) -> bool {
-        cx.style.height.is_animating(self.entity(), animation)
-            || cx.style.width.is_animating(self.entity(), animation)
+        cx.style().height.is_animating(self.entity(), animation)
+            || cx.style().width.is_animating(self.entity(), animation)
     }
 }
 

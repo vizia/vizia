@@ -61,14 +61,14 @@ pub trait Model: 'static + Sized {
     /// }
     /// ```
     fn build(self, cx: &mut Context) {
-        if let Some(data_list) = cx.data.get_mut(cx.current) {
+        if let Some(data_list) = cx.data.get_mut(cx.current()) {
             data_list.data.insert(TypeId::of::<Self>(), Box::new(self));
         } else {
             let mut data_list: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
             data_list.insert(TypeId::of::<Self>(), Box::new(self));
             cx.data
                 .insert(
-                    cx.current,
+                    cx.current(),
                     ModelDataStore {
                         data: data_list,
                         lenses_dedup: HashMap::default(),

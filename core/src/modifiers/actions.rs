@@ -99,7 +99,7 @@ impl<V: View> View for Release<V> {
 
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseUp(MouseButton::Left) => {
-                if meta.target == cx.current {
+                if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx);
                     }
@@ -157,7 +157,7 @@ impl<V: View> View for Hover<V> {
 
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseEnter => {
-                if meta.target == cx.current {
+                if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx);
                     }
@@ -267,7 +267,7 @@ impl<V: View> View for Leave<V> {
 
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseLeave => {
-                if meta.target == cx.current {
+                if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx);
                     }
@@ -485,7 +485,7 @@ impl<V: View> View for Geo<V> {
 
         event.map(|window_event, meta| match window_event {
             WindowEvent::GeometryChanged(geo) => {
-                if meta.target == cx.current {
+                if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx, *geo);
                     }

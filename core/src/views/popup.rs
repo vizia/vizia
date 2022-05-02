@@ -69,34 +69,33 @@ where
         F: 'static + Fn(&mut Context),
     {
         let focus_event = Box::new(f);
-        let prev = self.cx.current;
-        self.cx.current = self.entity;
-        self.cx.add_listener(move |popup: &mut Popup<L>, cx, event| {
-            let flag: bool = popup.lens.get(cx).clone().into();
-            event.map(|window_event, meta| match window_event {
-                WindowEvent::MouseDown(_) => {
-                    if flag {
-                        if meta.origin != cx.current {
-                            if !cx.current.is_over(cx) {
-                                (focus_event)(cx);
-                                meta.consume();
+        self.cx.with_current(self.entity, |cx| {
+            cx.add_listener(move |popup: &mut Popup<L>, cx, event| {
+                let flag: bool = popup.lens.get(cx).clone().into();
+                event.map(|window_event, meta| match window_event {
+                    WindowEvent::MouseDown(_) => {
+                        if flag {
+                            if meta.origin != cx.current() {
+                                if !cx.current().is_over(cx) {
+                                    (focus_event)(cx);
+                                    meta.consume();
+                                }
                             }
                         }
                     }
-                }
 
-                WindowEvent::KeyDown(code, _) => {
-                    if flag {
-                        if *code == Code::Escape {
-                            (focus_event)(cx);
+                    WindowEvent::KeyDown(code, _) => {
+                        if flag {
+                            if *code == Code::Escape {
+                                (focus_event)(cx);
+                            }
                         }
                     }
-                }
 
-                _ => {}
+                    _ => {}
+                });
             });
         });
-        self.cx.current = prev;
 
         self
     }

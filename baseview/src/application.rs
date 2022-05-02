@@ -1,4 +1,3 @@
-//use crate::event_manager::EventManager;
 use crate::window::ViziaWindow;
 use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
@@ -9,7 +8,6 @@ use vizia_core::cache::BoundingBox;
 use vizia_core::events::EventManager;
 use vizia_core::fonts;
 use vizia_core::prelude::*;
-use vizia_core::resource::FontOrId;
 
 pub struct Application<F>
 where
@@ -152,7 +150,7 @@ impl ApplicationRunner {
             WindowScalePolicy::SystemScaleFactor => 1.0,
         };
 
-        context.style.dpi_factor = scale;
+        context.style().dpi_factor = scale;
 
         let logical_size = win_desc.inner_size;
         let physical_size = WindowSize {
@@ -176,24 +174,24 @@ impl ApplicationRunner {
         context.add_font_mem("arabic", arabic_font);
         context.add_font_mem("material", material_font);
 
-        context.style.default_font = "roboto".to_string();
+        context.style().default_font = "roboto".to_string();
 
         //canvas.scale(scale as f32, scale as f32);
 
-        context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
-        context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height as f32));
+        context.style().width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
+        context.style().height.insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
-        context.style.disabled.insert(Entity::root(), false);
+        context.style().disabled.insert(Entity::root(), false);
 
-        context.cache.set_width(Entity::root(), physical_size.width as f32);
-        context.cache.set_height(Entity::root(), physical_size.height as f32);
-        context.cache.set_opacity(Entity::root(), 1.0);
+        context.cache().set_width(Entity::root(), physical_size.width as f32);
+        context.cache().set_height(Entity::root(), physical_size.height as f32);
+        context.cache().set_opacity(Entity::root(), 1.0);
 
         let mut bounding_box = BoundingBox::default();
         bounding_box.w = physical_size.width as f32;
         bounding_box.h = physical_size.height as f32;
 
-        context.cache.set_clip_region(Entity::root(), bounding_box);
+        context.cache().set_clip_region(Entity::root(), bounding_box);
 
         ApplicationRunner {
             event_manager,
@@ -255,26 +253,7 @@ impl ApplicationRunner {
         //if let Some(window) = window_view.downcast_mut::<Window>() {
 
         // Load resources
-        for (name, font) in self.context.resource_manager.fonts.iter_mut() {
-            match font {
-                FontOrId::Font(data) => {
-                    let id1 = self
-                        .canvas
-                        .add_font_mem(&data.clone())
-                        .expect(&format!("Failed to load font file for: {}", name));
-                    let id2 =
-                        self.context.text_context.add_font_mem(&data.clone()).expect("failed");
-                    if id1 != id2 {
-                        panic!(
-                            "Fonts in canvas must have the same id as fonts in the text context"
-                        );
-                    }
-                    *font = FontOrId::Id(id1);
-                }
-
-                _ => {}
-            }
-        }
+        self.context.synchronize_fonts(&mut self.canvas);
 
         //}
 
@@ -282,9 +261,7 @@ impl ApplicationRunner {
         //}
 
         // Events
-        while !self.context.event_queue.is_empty() {
-            self.event_manager.flush_events(&mut self.context);
-        }
+        while self.event_manager.flush_events(&mut self.context) {}
 
         self.context.process_data_updates();
         self.context.process_style_updates();
@@ -309,10 +286,10 @@ impl ApplicationRunner {
 
         self.context.process_visual_updates();
 
-        if self.context.style.needs_redraw {
+        if self.context.style().needs_redraw {
             //     // TODO - Move this to EventManager
             self.should_redraw = true;
-            self.context.style.needs_redraw = false;
+            self.context.style().needs_redraw = false;
         }
     }
 
@@ -323,15 +300,15 @@ impl ApplicationRunner {
 
     pub fn handle_event(&mut self, event: baseview::Event, should_quit: &mut bool) {
         if requests_exit(&event) {
-            self.context.event_queue.push_back(Event::new(WindowEvent::WindowClose));
+            self.context.emit_custom(Event::new(WindowEvent::WindowClose));
             *should_quit = true;
         }
 
         match event {
             baseview::Event::Mouse(event) => match event {
                 baseview::MouseEvent::CursorMoved { position } => {
-                    let physical_posx = position.x * self.context.style.dpi_factor;
-                    let physical_posy = position.y * self.context.style.dpi_factor;
+                    let physical_posx = position.x * self.context.style().dpi_factor;
+                    let physical_posy = position.y * self.context.style().dpi_factor;
                     let cursorx = (physical_posx) as f32;
                     let cursory = (physical_posy) as f32;
                     self.context.dispatch_system_event(WindowEvent::MouseMove(cursorx, cursory));
@@ -377,16 +354,16 @@ impl ApplicationRunner {
 
                 match event.code {
                     Code::ShiftLeft | Code::ShiftRight => {
-                        self.context.modifiers.set(Modifiers::SHIFT, pressed)
+                        self.context.modifiers().set(Modifiers::SHIFT, pressed)
                     }
                     Code::ControlLeft | Code::ControlRight => {
-                        self.context.modifiers.set(Modifiers::CTRL, pressed)
+                        self.context.modifiers().set(Modifiers::CTRL, pressed)
                     }
                     Code::AltLeft | Code::AltRight => {
-                        self.context.modifiers.set(Modifiers::ALT, pressed)
+                        self.context.modifiers().set(Modifiers::ALT, pressed)
                     }
                     Code::MetaLeft | Code::MetaRight => {
-                        self.context.modifiers.set(Modifiers::LOGO, pressed)
+                        self.context.modifiers().set(Modifiers::LOGO, pressed)
                     }
                     _ => (),
                 }
@@ -415,9 +392,9 @@ impl ApplicationRunner {
             }
             baseview::Event::Window(event) => match event {
                 baseview::WindowEvent::Focused => {
-                    self.context.style.needs_restyle = true;
-                    self.context.style.needs_relayout = true;
-                    self.context.style.needs_redraw = true;
+                    self.context.need_restyle();
+                    self.context.need_relayout();
+                    self.context.need_redraw();
                 }
                 baseview::WindowEvent::Resized(window_info) => {
                     self.scale_factor = match self.scale_policy {
@@ -425,7 +402,7 @@ impl ApplicationRunner {
                         WindowScalePolicy::SystemScaleFactor => window_info.scale(),
                     };
 
-                    self.context.style.dpi_factor = self.scale_factor;
+                    self.context.style().dpi_factor = self.scale_factor;
 
                     let logical_size = (
                         (window_info.physical_size().width as f64 / self.scale_factor),
@@ -436,29 +413,29 @@ impl ApplicationRunner {
                         (window_info.physical_size().width, window_info.physical_size().height);
 
                     self.context
-                        .style
+                        .style()
                         .width
                         .insert(Entity::root(), Units::Pixels(logical_size.0 as f32));
                     self.context
-                        .style
+                        .style()
                         .height
                         .insert(Entity::root(), Units::Pixels(logical_size.1 as f32));
 
-                    self.context.cache.set_width(Entity::root(), physical_size.0 as f32);
-                    self.context.cache.set_height(Entity::root(), physical_size.1 as f32);
+                    self.context.cache().set_width(Entity::root(), physical_size.0 as f32);
+                    self.context.cache().set_height(Entity::root(), physical_size.1 as f32);
 
                     let mut bounding_box = BoundingBox::default();
                     bounding_box.w = physical_size.0 as f32;
                     bounding_box.h = physical_size.1 as f32;
 
-                    self.context.cache.set_clip_region(Entity::root(), bounding_box);
+                    self.context.cache().set_clip_region(Entity::root(), bounding_box);
 
-                    self.context.style.needs_restyle = true;
-                    self.context.style.needs_relayout = true;
-                    self.context.style.needs_redraw = true;
+                    self.context.need_restyle();
+                    self.context.need_relayout();
+                    self.context.need_redraw();
                 }
                 baseview::WindowEvent::WillClose => {
-                    self.context.event_queue.push_back(Event::new(WindowEvent::WindowClose));
+                    self.context.emit_custom(Event::new(WindowEvent::WindowClose));
                 }
                 _ => {}
             },
@@ -466,13 +443,13 @@ impl ApplicationRunner {
     }
 
     pub fn rebuild(&mut self, builder: &Option<Box<dyn Fn(&mut Context) + Send>>) {
-        if self.context.environment.needs_rebuild {
-            self.context.current = Entity::root();
+        if self.context.environment().needs_rebuild {
+            self.context.set_current(Entity::root());
             self.context.remove_children(Entity::root());
             if let Some(builder) = &builder {
                 (builder)(&mut self.context);
             }
-            self.context.environment.needs_rebuild = false;
+            self.context.environment().needs_rebuild = false;
         }
     }
 
@@ -482,7 +459,7 @@ impl ApplicationRunner {
         // }
 
         if let Some(idle_callback) = on_idle {
-            self.context.current = Entity::root();
+            self.context.set_current(Entity::root());
             (idle_callback)(&mut self.context);
         }
     }

@@ -49,18 +49,18 @@ impl TextboxData {
         if entity == Entity::null() {
             return;
         }
-        let parent = entity.parent(&cx.tree).unwrap();
+        let parent = entity.parent(cx.tree()).unwrap();
         // this is a weird situation - layout and drawing must be done in physical space, but our
         // output (translate) must be in logical space.
-        let scale = cx.style.dpi_factor as f32;
+        let scale = cx.style().dpi_factor as f32;
 
         // calculate visible area for content and container
-        let bounds = cx.cache.bounds.get(entity).unwrap().clone();
-        let mut parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
+        let bounds = cx.cache().bounds.get(entity).unwrap().clone();
+        let mut parent_bounds = cx.cache().bounds.get(parent).unwrap().clone();
 
         // calculate line height - we'll need this
         let paint = text_paint_general(cx, entity);
-        let font_metrics = cx.text_context.measure_font(paint).unwrap();
+        let font_metrics = cx.text_context().measure_font(paint).unwrap();
         let line_height = font_metrics.height();
 
         // we can't just access cache.text_lines because the text could be just-updated
@@ -68,9 +68,9 @@ impl TextboxData {
             TextboxKind::MultiLineWrapped => parent_bounds.w,
             _ => f32::MAX,
         };
-        let ranges = text_layout(render_width, &self.text, paint, &cx.text_context).unwrap();
+        let ranges = text_layout(render_width, &self.text, paint, &cx.text_context()).unwrap();
         let metrics =
-            measure_text_lines(&self.text, paint, &ranges, bounds.x, bounds.y, &cx.text_context);
+            measure_text_lines(&self.text, paint, &ranges, bounds.x, bounds.y, &cx.text_context());
         let ranges_metrics = ranges.into_iter().zip(metrics.into_iter()).collect::<Vec<_>>();
         let (line, (x, _)) = idx_to_pos(self.selection.active, ranges_metrics.iter());
         if self.re_sel_x {
@@ -222,12 +222,12 @@ impl TextboxData {
             Movement::Line(dir) => {
                 let entity = self.content_entity;
                 let paint = text_paint_general(cx, entity);
-                let font_metrics = cx.text_context.measure_font(paint).unwrap();
+                let font_metrics = cx.text_context().measure_font(paint).unwrap();
                 // this computation happens in physical space
                 let line_height = font_metrics.height();
 
                 let default = vec![];
-                let lines = cx.cache.text_lines.get(entity).unwrap_or(&default);
+                let lines = cx.cache().text_lines.get(entity).unwrap_or(&default);
                 let (line, (_, y)) = idx_to_pos(self.selection.active, lines.iter());
 
                 if line == 0 && matches!(dir, Direction::Upstream) {
@@ -333,7 +333,7 @@ impl Model for TextboxData {
             }
 
             TextEvent::StartEdit => {
-                if !cx.current.is_disabled(cx) {
+                if !cx.current().is_disabled(cx) {
                     self.edit = true;
                 }
             }
@@ -362,7 +362,7 @@ impl Model for TextboxData {
                 let idx = pos_to_idx(
                     posx,
                     posy,
-                    cx.cache.text_lines.get(self.content_entity).unwrap().iter(),
+                    cx.cache().text_lines.get(self.content_entity).unwrap().iter(),
                 );
                 self.selection = Selection::new(idx, idx);
                 self.sel_x = posx;
@@ -375,7 +375,7 @@ impl Model for TextboxData {
                 let idx = pos_to_idx(
                     posx,
                     posy,
-                    cx.cache.text_lines.get(self.content_entity).unwrap().iter(),
+                    cx.cache().text_lines.get(self.content_entity).unwrap().iter(),
                 );
                 self.selection = Selection::new(self.selection.anchor, idx);
                 self.sel_x = posx;
@@ -386,11 +386,10 @@ impl Model for TextboxData {
             {
                 #[cfg(feature = "clipboard")]
                 if self.edit {
-                    if cx.modifiers.contains(Modifiers::CTRL) {
+                    if cx.modifiers().contains(Modifiers::CTRL) {
                         let selected_text = &self.text.as_str()[self.selection.range()];
                         if selected_text.len() > 0 {
-                            cx.clipboard
-                                .set_contents(selected_text.to_owned())
+                            cx.set_clipboard(selected_text.to_owned())
                                 .expect("Failed to add text to clipboard");
                         }
                     }
@@ -401,8 +400,8 @@ impl Model for TextboxData {
             {
                 #[cfg(feature = "clipboard")]
                 if self.edit {
-                    if cx.modifiers.contains(Modifiers::CTRL) {
-                        if let Ok(text) = cx.clipboard.get_contents() {
+                    if cx.modifiers().contains(Modifiers::CTRL) {
+                        if let Ok(text) = cx.get_clipboard() {
                             cx.emit(TextEvent::InsertText(text));
                         }
                     }
@@ -477,22 +476,18 @@ where
                             kind: text_data.kind,
                             on_submit: text_data.on_submit.clone(),
                         };
-                        let real_current = cx.current;
-                        cx.current = cx.current.parent(&cx.tree).unwrap();
-                        td.build(cx);
-                        cx.current = real_current;
+                        let parent = cx.current().parent(cx.tree()).unwrap();
+                        cx.with_current(parent, |cx| td.build(cx));
                         // push an event into the queue to force an update because the textbox data
                         // may have already been observed this update cycle
-                        cx.emit_to(cx.current, ());
+                        cx.emit_to(cx.current(), ());
                     }
                 } else {
                     let mut td = TextboxData::new(text.clone());
                     td.set_caret(cx);
-                    let real_current = cx.current;
-                    cx.current = cx.current.parent(&cx.tree).unwrap();
-                    td.build(cx);
-                    cx.current = real_current;
-                    cx.emit_to(cx.current, ());
+                    let parent = cx.current().parent(cx.tree()).unwrap();
+                    cx.with_current(parent, |cx| td.build(cx));
+                    cx.emit_to(cx.current(), ());
                 }
             });
             TextboxContainer {}
@@ -555,30 +550,30 @@ where
 
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                if cx.current.is_over(cx) {
+                if cx.current().is_over(cx) {
                     cx.emit(TextEvent::StartEdit);
 
-                    cx.focused = cx.current;
+                    cx.focus();
                     cx.capture();
-                    cx.current.set_checked(cx, true);
+                    cx.current().set_checked(cx, true);
 
-                    cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
+                    cx.emit(TextEvent::Hit(cx.mouse().cursorx, cx.mouse().cursory));
                 } else {
                     cx.release();
-                    cx.current.set_checked(cx, false);
+                    cx.current().set_checked(cx, false);
                     cx.emit(TextEvent::EndEdit);
 
                     // Forward event to hovered
                     cx.event_queue.push_back(
-                        Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered),
+                        Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered()),
                     );
                 }
             }
 
             WindowEvent::MouseMove(_, _) => {
                 cx.emit(WindowEvent::SetCursor(CursorIcon::Text));
-                if cx.mouse.left.state == MouseButtonState::Pressed {
-                    cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
+                if cx.mouse().left.state == MouseButtonState::Pressed {
+                    cx.emit(TextEvent::Drag(cx.mouse().cursorx, cx.mouse().cursory));
                 }
             }
 
@@ -591,7 +586,7 @@ where
                             *c != '\u{8}' && // Backspace
                             *c != '\u{7f}' && // Delete
                             *c != '\u{0d}' && // Carriage return
-                            !cx.modifiers.contains(Modifiers::CTRL)
+                            !cx.modifiers().contains(Modifiers::CTRL)
                 {
                     cx.emit(TextEvent::InsertText(String::from(*c)));
                 }
@@ -619,7 +614,7 @@ where
                             cx.emit(TextEvent::InsertText(text));
                         };
 
-                        cx.current.set_checked(cx, false);
+                        cx.current().set_checked(cx, false);
                     } else {
                         cx.emit(TextEvent::InsertText("\n".to_owned()));
                     }
@@ -627,7 +622,7 @@ where
 
                 Code::ArrowLeft => {
                     //if self.edit {
-                    let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                    let movement = if cx.modifiers().contains(Modifiers::CTRL) {
                         Movement::Word(Direction::Upstream)
                     } else {
                         Movement::Grapheme(Direction::Upstream)
@@ -635,7 +630,7 @@ where
 
                     cx.emit(TextEvent::MoveCursor(
                         movement,
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers().contains(Modifiers::SHIFT),
                     ));
 
                     //self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
@@ -646,7 +641,7 @@ where
 
                 Code::ArrowRight => {
                     //if self.edit {
-                    let movement = if cx.modifiers.contains(Modifiers::CTRL) {
+                    let movement = if cx.modifiers().contains(Modifiers::CTRL) {
                         Movement::Word(Direction::Downstream)
                     } else {
                         Movement::Grapheme(Direction::Downstream)
@@ -654,7 +649,7 @@ where
 
                     cx.emit(TextEvent::MoveCursor(
                         movement,
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers().contains(Modifiers::SHIFT),
                     ));
 
                     // self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
@@ -666,19 +661,19 @@ where
                 Code::ArrowUp => {
                     cx.emit(TextEvent::MoveCursor(
                         Movement::Line(Direction::Upstream),
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers().contains(Modifiers::SHIFT),
                     ));
                 }
 
                 Code::ArrowDown => {
                     cx.emit(TextEvent::MoveCursor(
                         Movement::Line(Direction::Downstream),
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers().contains(Modifiers::SHIFT),
                     ));
                 }
 
                 Code::Backspace => {
-                    if cx.modifiers.contains(Modifiers::CTRL) {
+                    if cx.modifiers().contains(Modifiers::CTRL) {
                         //self.delete_text(cx, Movement::Word(Direction::Upstream));
                         cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
                     } else {
@@ -691,7 +686,7 @@ where
 
                 Code::Delete => {
                     //if self.edit {
-                    if cx.modifiers.contains(Modifiers::CTRL) {
+                    if cx.modifiers().contains(Modifiers::CTRL) {
                         //self.delete_text(cx, Movement::Word(Direction::Downstream));
                         cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
                     } else {
@@ -705,20 +700,20 @@ where
                 Code::Escape => {
                     //self.edit = false;
                     cx.emit(TextEvent::EndEdit);
-                    cx.current.set_checked(cx, false);
+                    cx.current().set_checked(cx, false);
                 }
 
                 Code::Home => {
                     cx.emit(TextEvent::MoveCursor(
                         Movement::ParagraphStart,
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers().contains(Modifiers::SHIFT),
                     ));
                 }
 
                 Code::End => {
                     cx.emit(TextEvent::MoveCursor(
                         Movement::ParagraphEnd,
-                        cx.modifiers.contains(Modifiers::SHIFT),
+                        cx.modifiers().contains(Modifiers::SHIFT),
                     ));
                 }
 
@@ -730,7 +725,7 @@ where
 
                 Code::KeyA => {
                     //if self.edit {
-                    if cx.modifiers.contains(Modifiers::CTRL) {
+                    if cx.modifiers().contains(Modifiers::CTRL) {
                         // self.select_all(cx);
                         cx.emit(TextEvent::SelectAll);
                     }

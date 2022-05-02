@@ -57,20 +57,22 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
     }
 
     fn container_and_thumb_size(&self, cx: &mut Context) -> (f32, f32) {
-        let child = cx.tree.get_child(cx.current, 0).unwrap();
+        let current = cx.current();
+        let child = cx.tree().get_child(current, 0).unwrap();
         match &self.orientation {
-            Orientation::Horizontal => (cx.cache.get_width(cx.current), cx.cache.get_width(child)),
-            Orientation::Vertical => (cx.cache.get_height(cx.current), cx.cache.get_height(child)),
+            Orientation::Horizontal => (cx.cache().get_width(current), cx.cache().get_width(child)),
+            Orientation::Vertical => (cx.cache().get_height(current), cx.cache().get_height(child)),
         }
     }
 
     fn thumb_bounds(&self, cx: &mut Context) -> (f32, f32, f32, f32) {
-        let child = cx.tree.get_child(cx.current, 0).unwrap();
+        let current = cx.current();
+        let child = cx.tree().get_child(current, 0).unwrap();
         (
-            cx.cache.get_posx(child),
-            cx.cache.get_posy(child),
-            cx.cache.get_width(child),
-            cx.cache.get_height(child),
+            cx.cache().get_posx(child),
+            cx.cache().get_posy(child),
+            cx.cache().get_width(child),
+            cx.cache().get_height(child),
         )
     }
 
@@ -102,12 +104,12 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         event.map(|window_event, meta| {
             let pos = match &self.orientation {
-                Orientation::Horizontal => cx.mouse.cursorx,
-                Orientation::Vertical => cx.mouse.cursory,
+                Orientation::Horizontal => cx.mouse().cursorx,
+                Orientation::Vertical => cx.mouse().cursory,
             };
             match window_event {
                 WindowEvent::MouseDown(MouseButton::Left) => {
-                    if meta.target != cx.current {
+                    if meta.target != cx.current() {
                         self.reference_points = Some((pos, self.value.get(cx)));
                         cx.capture();
                     } else {
@@ -115,18 +117,18 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                         let (tx, ty, tw, th) = self.thumb_bounds(cx);
                         let physical_delta = match &self.orientation {
                             Orientation::Horizontal => {
-                                if cx.mouse.cursorx < tx {
+                                if cx.mouse().cursorx < tx {
                                     -jump
-                                } else if cx.mouse.cursorx >= tx + tw {
+                                } else if cx.mouse().cursorx >= tx + tw {
                                     jump
                                 } else {
                                     return;
                                 }
                             }
                             Orientation::Vertical => {
-                                if cx.mouse.cursory < ty {
+                                if cx.mouse().cursory < ty {
                                     -jump
-                                } else if cx.mouse.cursory >= ty + th {
+                                } else if cx.mouse().cursory >= ty + th {
                                     jump
                                 } else {
                                     return;

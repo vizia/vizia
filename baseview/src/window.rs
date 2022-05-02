@@ -64,7 +64,7 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.environment.needs_rebuild = true;
+                context.environment().needs_rebuild = true;
                 ViziaWindow::new(
                     context,
                     win_desc,
@@ -104,7 +104,7 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.environment.needs_rebuild = true;
+                context.environment().needs_rebuild = true;
                 ViziaWindow::new(
                     context,
                     win_desc,
@@ -143,7 +143,7 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.environment.needs_rebuild = true;
+                context.environment().needs_rebuild = true;
                 ViziaWindow::new(
                     context,
                     win_desc,

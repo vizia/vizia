@@ -52,7 +52,7 @@ struct CustomView;
 impl CustomView {
     fn new(cx: &mut Context) -> Handle<Self> {
         Self.build(cx, |cx| {
-            cx.focused = cx.current;
+            cx.focus();
         })
     }
 }

@@ -40,13 +40,15 @@ where
         let binding = Self { lens: lens.clone(), content: Some(Box::new(builder)) };
 
         let id = cx.entity_manager.create();
-        cx.tree.add(id, cx.current).expect("Failed to add to tree");
-        cx.cache.add(id).expect("Failed to add to cache");
-        cx.style.add(id);
+        let current = cx.current();
+        cx.tree().add(id, current).expect("Failed to add to tree");
+        cx.cache().add(id).expect("Failed to add to cache");
+        cx.style().add(id);
 
-        let ancestors = cx.current.parent_iter(&cx.tree).collect::<HashSet<_>>();
+        let ancestors = cx.current().parent_iter(cx.tree()).collect::<HashSet<_>>();
+        let new_ancestors = id.parent_iter(cx.tree()).collect::<Vec<_>>();
 
-        for entity in id.parent_iter(&cx.tree) {
+        for entity in new_ancestors {
             if let Some(model_data_store) = cx.data.get_mut(entity) {
                 if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
                     if let Some(lens_wrap) =
@@ -113,15 +115,13 @@ where
 
         cx.views.insert(id, Box::new(binding));
 
-        let prev = cx.current;
-        cx.current = id;
-
-        // Call the body of the binding
-        if let Some(mut view_handler) = cx.views.remove(&id) {
-            view_handler.body(cx);
-            cx.views.insert(id, view_handler);
-        }
-        cx.current = prev;
+        cx.with_current(id, |cx| {
+            // Call the body of the binding
+            if let Some(mut view_handler) = cx.views.remove(&id) {
+                view_handler.body(cx);
+                cx.views.insert(id, view_handler);
+            }
+        });
 
         let _: Handle<Self> = Handle { entity: id, p: Default::default(), cx }.ignore();
     }
@@ -133,7 +133,7 @@ impl<L: 'static + Lens> View for Binding<L> {
     }
 
     fn body<'a>(&mut self, cx: &'a mut Context) {
-        cx.remove_children(cx.current);
+        cx.remove_children(cx.current());
         if let Some(builder) = &self.content {
             (builder)(cx, self.lens.clone());
         }

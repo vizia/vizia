@@ -21,7 +21,8 @@ impl EventManager {
     }
 
     /// Flush the event queue, dispatching events to their targets.
-    pub fn flush_events(&mut self, context: &mut Context) {
+    /// Returns whether there are still more events to process, i.e. the event handlers sent events.
+    pub fn flush_events(&mut self, context: &mut Context) -> bool {
         // Clear the event queue in the event manager
         self.event_queue.clear();
 
@@ -30,15 +31,15 @@ impl EventManager {
         // Move events from state to event manager
         self.event_queue.extend(context.event_queue.drain(0..));
 
-        if context.tree.changed {
-            self.tree = context.tree.clone();
+        if context.tree().changed {
+            self.tree = context.tree().clone();
         }
 
         // Loop over the events in the event queue
         'events: for event in self.event_queue.iter_mut() {
             // handle internal events
             event.map(|internal_event, _| match internal_event {
-                InternalEvent::Redraw => context.style.needs_redraw = true,
+                InternalEvent::Redraw => context.need_redraw(),
                 InternalEvent::LoadImage { path, image, policy } => {
                     if let Some(image) = image.lock().unwrap().take() {
                         context.load_image(path.clone(), image, *policy);
@@ -56,10 +57,9 @@ impl EventManager {
             for entity in listeners {
                 if let Some(listener) = context.listeners.remove(&entity) {
                     if let Some(mut event_handler) = context.views.remove(&entity) {
-                        let prev = context.current;
-                        context.current = entity;
-                        (listener)(event_handler.as_mut(), context, event);
-                        context.current = prev;
+                        context.with_current(entity, |context| {
+                            (listener)(event_handler.as_mut(), context, event);
+                        });
 
                         context.views.insert(entity, event_handler);
                     }
@@ -122,15 +122,16 @@ impl EventManager {
                 }
             }
         }
+
+        !context.event_queue.is_empty()
     }
 }
 
 fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
     if let Some(mut view) = context.views.remove(&entity) {
-        let prev = context.current;
-        context.current = entity;
-        view.event(context, event);
-        context.current = prev;
+        context.with_current(entity, |context| {
+            view.event(context, event);
+        });
 
         context.views.insert(entity, view);
     }
@@ -140,10 +141,9 @@ fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
             // if event.trace {
             //     println!("Event: {:?} -> Model {:?}", event, ty);
             // }
-            let prev = context.current;
-            context.current = entity;
-            model.event(context, event);
-            context.current = prev;
+            context.with_current(entity, |cx| {
+                model.event(cx, event);
+            });
         }
 
         context.data.insert(entity, model_list).expect("Failed to insert data");

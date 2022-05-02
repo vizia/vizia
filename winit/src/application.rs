@@ -3,14 +3,12 @@ use crate::{
     window::Window,
 };
 use std::cell::RefCell;
-// use glutin::event::WindowEvent;
 use vizia_core::cache::BoundingBox;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
 use vizia_core::events::EventManager;
 use vizia_core::fonts;
 use vizia_core::prelude::*;
-use vizia_core::resource::FontOrId;
 use vizia_core::window::Position;
 use winit::{
     dpi::LogicalSize,
@@ -58,10 +56,10 @@ impl Application {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let event_proxy_obj = event_loop.create_proxy();
-            context.event_proxy = Some(Box::new(WinitEventProxy(event_proxy_obj)));
+            context.set_event_proxy(Box::new(WinitEventProxy(event_proxy_obj)));
         }
 
-        context.current = Entity::root();
+        context.set_current(Entity::root());
 
         (content)(&mut context);
 
@@ -114,7 +112,7 @@ impl Application {
 
     /// Sets the background color of the window.
     pub fn background_color(mut self, color: Color) -> Self {
-        self.context.style.background_color.insert(Entity::root(), color);
+        self.context.style().background_color.insert(Entity::root(), color);
 
         self
     }
@@ -155,35 +153,17 @@ impl Application {
         context.add_font_mem("arabic", arabic_font);
         context.add_font_mem("material", material_font);
 
-        context.style.default_font = "roboto".to_string();
+        context.style().default_font = "roboto".to_string();
 
         // Load resources
-        for (name, font) in context.resource_manager.fonts.iter_mut() {
-            match font {
-                FontOrId::Font(data) => {
-                    let id1 = window
-                        .canvas
-                        .add_font_mem(&data.clone())
-                        .expect(&format!("Failed to load font file for: {}", name));
-                    let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
-                    if id1 != id2 {
-                        panic!(
-                            "Fonts in canvas must have the same id as fonts in the text context"
-                        );
-                    }
-                    *font = FontOrId::Id(id1);
-                }
-
-                _ => {}
-            }
-        }
+        context.synchronize_fonts(&mut window.canvas);
 
         let dpi_factor = window.window().scale_factor();
 
         let physical_size = window.window().inner_size();
 
         let clear_color =
-            context.style.background_color.get(Entity::root()).cloned().unwrap_or_default();
+            context.style().background_color.get(Entity::root()).cloned().unwrap_or_default();
 
         window.canvas.set_size(physical_size.width as u32, physical_size.height as u32, 1.0);
         window.canvas.clear_rect(
@@ -194,26 +174,26 @@ impl Application {
             clear_color.into(),
         );
 
-        context.style.dpi_factor = window.window().scale_factor();
+        context.style().dpi_factor = window.window().scale_factor();
 
         context.views.insert(Entity::root(), Box::new(window));
 
         let logical_size: LogicalSize<f32> = physical_size.to_logical(dpi_factor);
 
-        context.cache.set_width(Entity::root(), physical_size.width as f32);
-        context.cache.set_height(Entity::root(), physical_size.height as f32);
+        context.cache().set_width(Entity::root(), physical_size.width as f32);
+        context.cache().set_height(Entity::root(), physical_size.height as f32);
 
-        context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width));
-        context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height));
+        context.style().width.insert(Entity::root(), Units::Pixels(logical_size.width));
+        context.style().height.insert(Entity::root(), Units::Pixels(logical_size.height));
 
-        context.style.pseudo_classes.insert(Entity::root(), PseudoClass::default()).unwrap();
-        context.style.disabled.insert(Entity::root(), false);
+        context.style().pseudo_classes.insert(Entity::root(), PseudoClass::default()).unwrap();
+        context.style().disabled.insert(Entity::root(), false);
 
         let mut bounding_box = BoundingBox::default();
         bounding_box.w = physical_size.width as f32;
         bounding_box.h = physical_size.height as f32;
 
-        context.cache.set_clip_region(Entity::root(), bounding_box);
+        context.cache().set_clip_region(Entity::root(), bounding_box);
 
         let mut event_manager = EventManager::new();
 
@@ -232,64 +212,41 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
-        event_loop.run(move |event, _, control_flow|{
+        event_loop.run(move |event, _, control_flow| {
             match event {
-
                 winit::event::Event::UserEvent(event) => {
-                    context.event_queue.push_back(event);
+                    context.emit_custom(event);
                 }
 
                 winit::event::Event::MainEventsCleared => {
-                    *stored_control_flow.borrow_mut() = if default_should_poll {
-                        ControlFlow::Poll
-                    } else {
-                        ControlFlow::Wait
-                    };
+                    *stored_control_flow.borrow_mut() =
+                        if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
 
                     // Rebuild application if required
-                    if context.environment.needs_rebuild {
-                        context.current = Entity::root();
+                    if context.environment().needs_rebuild {
+                        context.set_current(Entity::root());
                         context.remove_children(Entity::root());
                         if let Some(builder) = &builder {
                             (builder)(&mut context);
                         }
-                        context.environment.needs_rebuild = false;
+                        context.environment().needs_rebuild = false;
                     }
 
                     if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_mut::<Window>() {
-
-                            // Load resources
-                            for (name, font) in context.resource_manager.fonts.iter_mut() {
-                                match font {
-                                    FontOrId::Font(data) => {
-                                        let id1 = window.canvas.add_font_mem(&data.clone()).expect(&format!("Failed to load font file for: {}", name));
-                                        let id2 = context.text_context.add_font_mem(&data.clone()).expect("failed");
-                                        if id1 != id2 {
-                                            panic!("Fonts in canvas must have the same id as fonts in the text context");
-                                        }
-                                        *font = FontOrId::Id(id1);
-                                    }
-
-                                    _=> {}
-                                }
-                            }
-
+                            context.synchronize_fonts(&mut window.canvas);
                         }
 
                         context.views.insert(Entity::root(), window_view);
                     }
 
                     // Events
-                    while !context.event_queue.is_empty() {
-                        event_manager.flush_events(&mut context);
-                    }
+                    while event_manager.flush_events(&mut context) {}
 
                     context.process_data_updates();
                     context.process_style_updates();
 
                     if context.has_animations() {
-
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
 
                         //context.insert_event(Event::new(WindowEvent::Relayout).target(Entity::root()));
@@ -308,21 +265,23 @@ impl Application {
 
                     context.process_visual_updates();
 
-                    if let Some(window_view) = context.views.get(&Entity::root()) {
+                    if let Some(window_view) = context.views.remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_ref::<Window>() {
-                            if context.style.needs_redraw {
+                            if context.style().needs_redraw {
                                 window.window().request_redraw();
-                                context.style.needs_redraw = false;
+                                context.style().needs_redraw = false;
                             }
                         }
+
+                        context.views.insert(Entity::root(), window_view);
                     }
 
                     if let Some(idle_callback) = &on_idle {
-                        context.current = Entity::root();
+                        context.set_current(Entity::root());
                         (idle_callback)(&mut context);
                     }
 
-                    if !context.event_queue.is_empty() {
+                    if context.has_queued_events() {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
                         event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
                     }
@@ -333,10 +292,7 @@ impl Application {
                     context_draw(&mut context);
                 }
 
-                winit::event::Event::WindowEvent {
-                    window_id: _,
-                    event,
-                } => {
+                winit::event::Event::WindowEvent { window_id: _, event } => {
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
                             *stored_control_flow.borrow_mut() = ControlFlow::Exit;
@@ -346,19 +302,22 @@ impl Application {
                             scale_factor,
                             new_inner_size,
                         } => {
-                            context.style.dpi_factor = scale_factor;
-                            context.cache.set_width(Entity::root(), new_inner_size.width as f32);
-                            context.cache.set_height(Entity::root(), new_inner_size.height as f32);
+                            context.style().dpi_factor = scale_factor;
+                            context.cache().set_width(Entity::root(), new_inner_size.width as f32);
+                            context
+                                .cache()
+                                .set_height(Entity::root(), new_inner_size.height as f32);
 
-                            let logical_size: LogicalSize<f32> = new_inner_size.to_logical(context.style.dpi_factor);
+                            let logical_size: LogicalSize<f32> =
+                                new_inner_size.to_logical(context.style().dpi_factor);
 
                             context
-                                .style
+                                .style()
                                 .width
                                 .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
 
                             context
-                                .style
+                                .style()
                                 .height
                                 .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
                         }
@@ -367,12 +326,12 @@ impl Application {
                         winit::event::WindowEvent::CursorMoved {
                             device_id: _,
                             position,
-                            modifiers: _
+                            modifiers: _,
                         } => {
-                            context.dispatch_system_event(
-                                WindowEvent::MouseMove(position.x as f32, position.y as f32)
-                            );
-
+                            context.dispatch_system_event(WindowEvent::MouseMove(
+                                position.x as f32,
+                                position.y as f32,
+                            ));
                         }
 
                         #[allow(deprecated)]
@@ -390,22 +349,27 @@ impl Application {
                             };
 
                             let event = match state {
-                                winit::event::ElementState::Pressed => WindowEvent::MouseDown(button),
-                                winit::event::ElementState::Released => WindowEvent::MouseUp(button),
+                                winit::event::ElementState::Pressed => {
+                                    WindowEvent::MouseDown(button)
+                                }
+                                winit::event::ElementState::Released => {
+                                    WindowEvent::MouseUp(button)
+                                }
                             };
 
                             context.dispatch_system_event(event);
                         }
 
-                        winit::event::WindowEvent::MouseWheel {
-                            delta, phase: _, ..
-                        } => {
+                        winit::event::WindowEvent::MouseWheel { delta, phase: _, .. } => {
                             let out_event = match delta {
                                 winit::event::MouseScrollDelta::LineDelta(x, y) => {
                                     WindowEvent::MouseScroll(x, y)
                                 }
                                 winit::event::MouseScrollDelta::PixelDelta(pos) => {
-                                    WindowEvent::MouseScroll(pos.x as f32 / 20.0, pos.y as f32 / 114.0)
+                                    WindowEvent::MouseScroll(
+                                        pos.x as f32 / 20.0,
+                                        pos.y as f32 / 114.0,
+                                    )
                                 }
                             };
 
@@ -428,8 +392,12 @@ impl Application {
                                 input.virtual_keycode.unwrap_or(VirtualKeyCode::NoConvert),
                             );
                             let event = match input.state {
-                                winit::event::ElementState::Pressed => WindowEvent::KeyDown(code, key),
-                                winit::event::ElementState::Released => WindowEvent::KeyUp(code, key),
+                                winit::event::ElementState::Pressed => {
+                                    WindowEvent::KeyDown(code, key)
+                                }
+                                winit::event::ElementState::Released => {
+                                    WindowEvent::KeyUp(code, key)
+                                }
                             };
 
                             context.dispatch_system_event(event);
@@ -448,34 +416,31 @@ impl Application {
                                 context.views.insert(Entity::root(), window_view);
                             }
 
-                            let logical_size: LogicalSize<f32> = physical_size.to_logical(context.style.dpi_factor);
+                            let logical_size: LogicalSize<f32> =
+                                physical_size.to_logical(context.style().dpi_factor);
 
                             context
-                                .style
+                                .style()
                                 .width
                                 .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
 
                             context
-                                .style
+                                .style()
                                 .height
                                 .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
-                            context
-                                .cache
-                                .set_width(Entity::root(), physical_size.width as f32);
-                            context
-                                .cache
-                                .set_height(Entity::root(), physical_size.height as f32);
+                            context.cache().set_width(Entity::root(), physical_size.width as f32);
+                            context.cache().set_height(Entity::root(), physical_size.height as f32);
 
                             let mut bounding_box = BoundingBox::default();
                             bounding_box.w = physical_size.width as f32;
                             bounding_box.h = physical_size.height as f32;
 
-                            context.cache.set_clip_region(Entity::root(), bounding_box);
+                            context.cache().set_clip_region(Entity::root(), bounding_box);
 
-                            context.style.needs_restyle = true;
-                            context.style.needs_relayout = true;
-                            context.style.needs_redraw = true;
+                            context.need_restyle();
+                            context.need_relayout();
+                            context.need_redraw();
 
                             // let mut bounding_box = BoundingBox::default();
                             // bounding_box.w = size.width as f32;
@@ -485,17 +450,17 @@ impl Application {
                         }
 
                         winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
-                            context.modifiers.set(Modifiers::SHIFT, modifiers_state.shift());
-                            context.modifiers.set(Modifiers::ALT, modifiers_state.alt());
-                            context.modifiers.set(Modifiers::CTRL, modifiers_state.ctrl());
-                            context.modifiers.set(Modifiers::LOGO, modifiers_state.logo());
+                            context.modifiers().set(Modifiers::SHIFT, modifiers_state.shift());
+                            context.modifiers().set(Modifiers::ALT, modifiers_state.alt());
+                            context.modifiers().set(Modifiers::CTRL, modifiers_state.ctrl());
+                            context.modifiers().set(Modifiers::LOGO, modifiers_state.logo());
                         }
 
-                        _=> {}
+                        _ => {}
                     }
                 }
 
-                _=> {}
+                _ => {}
             }
 
             *control_flow = *stored_control_flow.borrow();
@@ -635,9 +600,9 @@ impl WindowModifiers for Application {
 
 impl Env for Application {
     fn ignore_default_styles(mut self) -> Self {
-        if self.context.environment.include_default_theme {
-            self.context.environment.include_default_theme = false;
-            self.context.environment.needs_rebuild = true;
+        if self.context.environment().include_default_theme {
+            self.context.environment().include_default_theme = false;
+            self.context.environment().needs_rebuild = true;
             self.context.reload_styles().expect("Failed to reload styles");
         }
 
