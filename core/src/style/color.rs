@@ -1,8 +1,9 @@
 use std::fmt;
+use crate::animation::Interpolator;
 
-use crate::Interpolator;
-
-/// Describes a color
+/// Describes a color.
+///
+/// This type is part of the prelude.
 #[derive(Copy, Clone)]
 pub struct Color {
     pub data: u32,
@@ -236,7 +237,7 @@ fn hue(mut h: f32, m1: f32, m2: f32) -> f32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::Color;
+    use super::Color;
 
     #[test]
     fn test_hex() {

@@ -1,6 +1,7 @@
 use lazy_static::lazy_static;
 
-use vizia::*;
+use vizia::prelude::*;
+use vizia_core::state::StaticLens;
 
 lazy_static! {
     pub static ref STATIC_LIST: Vec<u32> = (20..24).collect();

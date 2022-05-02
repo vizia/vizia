@@ -4,12 +4,18 @@ use crate::{
 };
 use std::cell::RefCell;
 // use glutin::event::WindowEvent;
-use vizia_core::*;
+use vizia_core::prelude::*;
 use winit::{
     dpi::LogicalSize,
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
+use vizia_core::cache::BoundingBox;
+use vizia_core::context::EventProxy;
+use vizia_core::events::EventManager;
+use vizia_core::fonts;
+use vizia_core::resource::FontOrId;
+use vizia_core::window::Position;
 
 pub struct Application {
     context: Context,
@@ -83,7 +89,7 @@ impl Application {
     /// # Example
     ///
     /// ```no_run
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
     /// #
     /// Application::new(|cx| {
@@ -240,13 +246,13 @@ impl Application {
                     };
 
                     // Rebuild application if required
-                    if context.enviroment.needs_rebuild {
+                    if context.environment.needs_rebuild {
                         context.current = Entity::root();
                         context.remove_children(Entity::root());
                         if let Some(builder) = &builder {
                             (builder)(&mut context);
                         }
-                        context.enviroment.needs_rebuild = false;
+                        context.environment.needs_rebuild = false;
                     }
 
                     if let Some(mut window_view) = context.views.remove(&Entity::root()) {
@@ -628,9 +634,9 @@ impl WindowModifiers for Application {
 
 impl Env for Application {
     fn ignore_default_styles(mut self) -> Self {
-        if self.context.enviroment.include_default_theme {
-            self.context.enviroment.include_default_theme = false;
-            self.context.enviroment.needs_rebuild = true;
+        if self.context.environment.include_default_theme {
+            self.context.environment.include_default_theme = false;
+            self.context.environment.needs_rebuild = true;
             self.context.reload_styles().expect("Failed to reload styles");
         }
 

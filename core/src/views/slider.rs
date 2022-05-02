@@ -1,9 +1,7 @@
 use std::{marker::PhantomData, ops::Range};
 
-use crate::{
-    Actions, Binding, Context, Data, Element, GeometryChanged, Handle, Lens, LensExt, MouseButton,
-    PropSet, Units::*, View, WindowEvent, ZStack,
-};
+use crate::prelude::*;
+use crate::views::Orientation;
 
 #[derive(Debug)]
 enum SliderEventInternal {
@@ -17,18 +15,6 @@ pub struct SliderDataInternal {
     pub size: f32,
     pub thumb_size: f32,
     pub range: Range<f32>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Data)]
-pub enum Orientation {
-    Horizontal,
-    Vertical,
-}
-
-impl Default for Orientation {
-    fn default() -> Self {
-        Orientation::Horizontal
-    }
 }
 
 /// The slider control can be used to select from a continuous set of values.
@@ -45,7 +31,7 @@ impl Default for Orientation {
 /// In the following example, a slider is bound to a value. The `on_changing` callback is used to send an event to mutate the
 /// bound value when the slider thumb is moved, or if the track is clicked on.
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// # use vizia_derive::*;
 /// # let mut cx = &mut Context::new();
 /// # #[derive(Lens, Default)]
@@ -62,7 +48,7 @@ impl Default for Orientation {
 ///
 /// ## Slider with Label
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// # use vizia_derive::*;
 /// # let mut cx = &mut Context::new();
 /// # #[derive(Lens, Default)]
@@ -95,7 +81,7 @@ where
     ///
     /// # Example
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// # use vizia_derive::*;
     /// # let mut cx = &mut Context::new();
     /// # #[derive(Lens, Default)]
@@ -196,7 +182,7 @@ impl<L: Lens> View for Slider<L> {
         Some(String::from("slider"))
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         event.map(|slider_event_internal, _| match slider_event_internal {
             SliderEventInternal::SetThumbSize(width, height) => match self.internal.orientation {
                 Orientation::Horizontal => {
@@ -314,7 +300,7 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     /// # Example
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// # use vizia_derive::*;
     /// # let mut cx = &mut Context::new();
     /// # #[derive(Lens, Default)]
@@ -341,7 +327,7 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     ///
     /// # Example
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// # use vizia_derive::*;
     /// # let mut cx = &mut Context::new();
     /// # #[derive(Lens, Default)]

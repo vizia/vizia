@@ -12,7 +12,7 @@
 //! `CTRL+ALT+SHIFT+Y`      => `Action::OnCtrlAltShiftY`
 //! `CTRL+ALT+SHIFT+LOGO+Z` => `Action::OnCtrlAltShiftLogoZ`
 
-use vizia::*;
+use vizia::prelude::*;
 
 fn main() {
     Application::new(|cx| {

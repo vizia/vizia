@@ -1,22 +1,27 @@
 use std::{any::Any, collections::HashMap};
 
-use crate::{
-    idx_to_pos, measure_text_lines,
-    style::{BorderCornerShape, GradientDirection},
-    text_layout, text_paint_draw, Context, DrawContext, Event, Handle, ModelDataStore, ViewHandler,
-};
+use crate::prelude::*;
 
 use femtovg::{
     renderer::OpenGl, Align, Baseline, ImageFlags, Paint, Path, PixelFormat, RenderTarget,
     TextMetrics,
 };
 use morphorm::Units;
+use crate::events::ViewHandler;
+use crate::state::ModelDataStore;
+use crate::text::{idx_to_pos, measure_text_lines, text_layout, text_paint_draw};
 
+/// The canvas we will be drawing to.
+///
+/// This type is part of the prelude.
 pub type Canvas = femtovg::Canvas<OpenGl>;
 
 // Length proportional to radius of a cubic bezier handle for 90deg arcs.
 const KAPPA90: f32 = 0.5522847493;
 
+/// A view is any object which can be displayed on the screen.
+///
+/// This trait is part of the prelude.
 pub trait View: 'static + Sized {
     #[allow(unused_variables)]
     fn body(&mut self, cx: &mut Context) {}
@@ -73,7 +78,7 @@ pub trait View: 'static + Sized {
 
         let background_color = cx.background_color(entity).cloned().unwrap_or_default();
 
-        let font_color = cx.font_color(entity).cloned().unwrap_or(crate::Color::rgb(0, 0, 0));
+        let font_color = cx.font_color(entity).cloned().unwrap_or(Color::rgb(0, 0, 0));
 
         let border_color = cx.border_color(entity).cloned().unwrap_or_default();
 

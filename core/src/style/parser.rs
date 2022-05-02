@@ -5,14 +5,11 @@ use cssparser::{
     ParseError, ParseErrorKind, Parser, ParserInput, SourceLocation, Token,
 };
 
+use crate::animation::Transition;
 use crate::style::property::Property;
 use crate::style::selector::{Selector, SelectorRelation};
-
 use crate::style::StyleRule;
-use crate::{CursorIcon, Transition};
-
 use crate::style::*;
-
 use crate::style::color::Color;
 
 #[derive(Clone)]

@@ -5,7 +5,7 @@ use baseview::{
 };
 use raw_window_handle::HasRawWindowHandle;
 
-use vizia_core::*;
+use vizia_core::prelude::*;
 
 /// Handles a vizia_baseview application
 pub(crate) struct ViziaWindow {
@@ -64,7 +64,7 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.enviroment.needs_rebuild = true;
+                context.environment.needs_rebuild = true;
                 ViziaWindow::new(
                     context,
                     win_desc,
@@ -104,7 +104,7 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.enviroment.needs_rebuild = true;
+                context.environment.needs_rebuild = true;
                 ViziaWindow::new(
                     context,
                     win_desc,
@@ -143,7 +143,7 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.enviroment.needs_rebuild = true;
+                context.environment.needs_rebuild = true;
                 ViziaWindow::new(
                     context,
                     win_desc,

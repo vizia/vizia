@@ -1,6 +1,5 @@
-use crate::{Context, Event, Handle, Lens, MouseButton, Res, View, WindowEvent};
-
-pub const ICON_CHECK: &str = "\u{2713}";
+use crate::fonts::unicode_names::CHECK;
+use crate::prelude::*;
 
 /// A checkbox used to display and toggle boolean state.
 ///
@@ -16,7 +15,7 @@ pub const ICON_CHECK: &str = "\u{2713}";
 /// event responsible for changing the data the checkbox is bound to.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # #[derive(Lens)]
 /// # struct AppData {
@@ -43,7 +42,7 @@ pub const ICON_CHECK: &str = "\u{2713}";
 /// a checkbox without having to add a callback.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # #[derive(Lens)]
 /// # struct AppData {
@@ -63,11 +62,11 @@ pub const ICON_CHECK: &str = "\u{2713}";
 ///
 /// A checkbox is usually used with a label next to it describing what data the checkbox
 /// is bound to or what the checkbox does when pressed. This can for example be done by
-/// wrapping the checkbox in an [`HStack`](crate::HStack) and adding a [`Label`](crate::Label)
+/// wrapping the checkbox in an [`HStack`](crate::prelude::HStack) and adding a [`Label`](crate::prelude::Label)
 /// to it.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # #[derive(Lens)]
 /// # struct AppData {
@@ -95,7 +94,7 @@ impl Checkbox {
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// #
     /// # #[derive(Lens)]
     /// # struct AppData {
@@ -114,7 +113,7 @@ impl Checkbox {
         //let checked = checked.get_val_fallible(cx).unwrap_or(false);
         Self { on_toggle: None }.build(cx, |_| {}).bind(checked, |handle, checked| {
             if let Some(flag) = checked.get_val_fallible(handle.cx) {
-                handle.text(if flag { ICON_CHECK } else { "" }).checked(flag);
+                handle.text(if flag { CHECK } else { "" }).checked(flag);
             }
         })
     }
@@ -126,7 +125,7 @@ impl Handle<'_, Checkbox> {
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// #
     /// # #[derive(Lens)]
     /// # struct AppData {

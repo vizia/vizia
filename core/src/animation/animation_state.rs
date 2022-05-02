@@ -1,7 +1,8 @@
 use instant::{Duration, Instant};
 use std::collections::HashSet;
+use crate::animation::Interpolator;
 
-use crate::{Animation, Entity, Interpolator};
+use crate::prelude::*;
 
 #[derive(Clone, Debug)]
 pub struct AnimationState<Prop: Interpolator> {
@@ -58,8 +59,8 @@ where
             t: 0.0,
             active: false,
             entities: HashSet::new(),
-            from_rule: std::usize::MAX,
-            to_rule: std::usize::MAX,
+            from_rule: usize::MAX,
+            to_rule: usize::MAX,
             count: 0,
         }
     }

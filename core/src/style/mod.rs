@@ -4,10 +4,7 @@ use morphorm::{LayoutType, PositionType, Units};
 
 use cssparser::{Parser, ParserInput};
 
-use crate::{
-    storage::{animatable_set::AnimatableSet, sparse_set::SparseSet, style_set::StyleSet},
-    Animation, AnimationState, CursorIcon, Entity, IdManager, Interpolator, Selection, Transition,
-};
+use crate::prelude::*;
 
 mod color;
 pub use color::Color;
@@ -49,8 +46,17 @@ mod prop;
 pub use prop::*;
 
 use bitflags::bitflags;
+use crate::animation::{AnimationState, Interpolator, Transition};
+use crate::id::IdManager;
+use crate::storage::animatable_set::AnimatableSet;
+use crate::storage::sparse_set::SparseSet;
+use crate::storage::style_set::StyleSet;
+use crate::text::Selection;
 
 bitflags! {
+    /// Describes the capabilities of a view with respect to user interaction.
+    ///
+    /// This type is part of the prelude.
     pub struct Abilities: u8 {
         const HOVERABLE = 1;
         const FOCUSABLE = 1 << 1;

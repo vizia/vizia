@@ -1,6 +1,6 @@
 use keyboard_types::Code as ViziaCode;
 use keyboard_types::Key as ViziaKey;
-use vizia_core::CursorIcon as ViziaCursorIcon;
+use vizia_core::prelude::CursorIcon as ViziaCursorIcon;
 use winit::event::VirtualKeyCode as WinitVirtualKeyCode;
 use winit::window::CursorIcon as WinitCursorIcon;
 

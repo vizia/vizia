@@ -4,12 +4,12 @@ use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
-use vizia_core::{MouseButton, MouseButtonState};
 
-use vizia_core::{
-    fonts, Context, Entity, EventManager, FontOrId, Modifiers, Units, WindowEvent, WindowSize,
-};
-use vizia_core::{BoundingBox, Event, WindowDescription};
+use vizia_core::prelude::*;
+use vizia_core::fonts;
+use vizia_core::cache::BoundingBox;
+use vizia_core::events::EventManager;
+use vizia_core::resource::FontOrId;
 
 pub struct Application<F>
 where
@@ -109,7 +109,7 @@ where
     ///
     /// # Example
     /// ```no_run
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// # use vizia_baseview::Application;
     /// Application::new(|cx|{
     ///     // Build application here
@@ -370,8 +370,6 @@ impl ApplicationRunner {
                 _ => {}
             },
             baseview::Event::Keyboard(event) => {
-                use keyboard_types::Code;
-
                 let (s, pressed) = match event.state {
                     keyboard_types::KeyState::Down => (MouseButtonState::Pressed, true),
                     keyboard_types::KeyState::Up => (MouseButtonState::Released, false),
@@ -468,13 +466,13 @@ impl ApplicationRunner {
     }
 
     pub fn rebuild(&mut self, builder: &Option<Box<dyn Fn(&mut Context) + Send>>) {
-        if self.context.enviroment.needs_rebuild {
+        if self.context.environment.needs_rebuild {
             self.context.current = Entity::root();
             self.context.remove_children(Entity::root());
             if let Some(builder) = &builder {
                 (builder)(&mut self.context);
             }
-            self.context.enviroment.needs_rebuild = false;
+            self.context.environment.needs_rebuild = false;
         }
     }
 

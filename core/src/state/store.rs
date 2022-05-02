@@ -1,6 +1,8 @@
 use std::collections::HashSet;
+use crate::events::ViewHandler;
 
-use crate::{Data, Entity, Lens, ModelData, ViewHandler};
+use crate::prelude::*;
+use crate::state::ModelData;
 
 pub(crate) trait Store {
     fn update(&mut self, model: &Box<dyn ModelData>) -> bool;

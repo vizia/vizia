@@ -1,8 +1,10 @@
-use crate::Entity;
-use crate::Interpolator;
+use crate::animation::Interpolator;
+use crate::entity::Entity;
 
 /// Display determines whether an entity will be rendered and acted on by the layout system.
 /// To make an entity invisible to rendering but still visible to layout, see [Visibility].
+///
+/// This type is part of the prelude.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Display {
     None,
@@ -34,6 +36,8 @@ impl Interpolator for Display {
 /// Visibility determines whether an entity will be rendered.
 /// An invisible entity will still be acted upon by the layout system.
 /// Use [Display] to hide an entity from both rendering and layout.
+///
+/// This type is part of the prelude.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Visibility {
     Visible,
@@ -62,6 +66,9 @@ impl Interpolator for Visibility {
     }
 }
 
+/// The opacity of a view, between 0.0 and 1.0.
+///
+/// This type is part of the prelude.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Opacity(pub f32);
 
@@ -77,7 +84,9 @@ impl Interpolator for Opacity {
     }
 }
 
-///  Determines whether content should be rendered outside of the bounding box of an element.
+/// Determines whether content should be rendered outside of the bounding box of an element.
+///
+/// This type is part of the prelude.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Overflow {
     Visible,
@@ -103,6 +112,10 @@ impl Default for FocusOrder {
     }
 }
 
+/// The shape the default view drawing algorithm should use for handling borders with a given
+/// radius.
+///
+/// This type is part of the prelude.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BorderCornerShape {
     Round,

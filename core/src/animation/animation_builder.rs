@@ -1,6 +1,7 @@
 use morphorm::Units;
+use crate::animation::AnimationState;
 
-use crate::{style::Opacity, Animation, AnimationState, Color, Context};
+use crate::prelude::*;
 
 pub(crate) struct AnimationDescription {
     duration: instant::Duration,
@@ -26,6 +27,8 @@ pub(crate) struct AnimationDescription {
 ///             .set_border_color(Color::red())
 ///     .build();
 /// ```
+///
+/// This type is part of the prelude.
 pub struct AnimationBuilder<'a> {
     id: Animation,
     cx: &'a mut Context,

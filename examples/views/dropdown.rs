@@ -1,4 +1,5 @@
-use vizia::*;
+use vizia::prelude::*;
+use vizia::fonts::icons_names::DOWN;
 
 #[derive(Lens)]
 pub struct AppData {
@@ -37,7 +38,7 @@ fn main() {
                 // A Label and an Icon
                 HStack::new(cx, move |cx|{
                     Label::new(cx, AppData::choice);
-                    Label::new(cx, ICON_DOWN_OPEN).font("icons");
+                    Label::new(cx, DOWN).font("icons");
                 })
                 .child_left(Pixels(5.0))
                 .child_right(Pixels(5.0))

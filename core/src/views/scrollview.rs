@@ -1,46 +1,10 @@
 use morphorm::{GeometryChanged, PositionType};
 
-use crate::{
-    Actions, Context, Data, DataContext, Event, Handle, Lens, LensExt, Model, Modifiers,
-    Orientation, Scrollbar, Units, VStack, View, WindowEvent,
-};
+use crate::prelude::*;
+use crate::state::RatioLens;
+use crate::views::Orientation;
 
 const SCROLL_SENSITIVITY: f32 = 35.0;
-
-#[derive(Copy, Clone, Debug)]
-pub struct RatioLens<L1, L2> {
-    numerator: L1,
-    denominator: L2,
-}
-
-impl<L1, L2> RatioLens<L1, L2> {
-    pub fn new(numerator: L1, denominator: L2) -> Self {
-        Self { numerator, denominator }
-    }
-}
-
-impl<L1, L2> Lens for RatioLens<L1, L2>
-where
-    L1: 'static + Clone + Lens<Target = f32>,
-    L2: 'static + Clone + Lens<Target = f32, Source = <L1 as Lens>::Source>,
-{
-    type Source = L1::Source;
-    type Target = f32;
-
-    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        let num = self.numerator.view(source, |num| num.copied());
-        if let Some(num) = num {
-            let den = self.denominator.view(source, |den| den.copied());
-            if let Some(den) = den {
-                map(Some(&(num / den)))
-            } else {
-                map(None)
-            }
-        } else {
-            map(None)
-        }
-    }
-}
 
 #[derive(Lens, Data, Clone)]
 pub struct ScrollData {
@@ -52,7 +16,7 @@ pub struct ScrollData {
     pub parent_y: f32,
 }
 
-pub enum ScrollUpdate {
+pub enum ScrollEvent {
     SetX(f32),
     SetY(f32),
     ScrollX(f32),
@@ -65,15 +29,15 @@ impl Model for ScrollData {
     fn event(&mut self, _cx: &mut Context, event: &mut Event) {
         event.map(|scroll_update, meta| {
             match scroll_update {
-                ScrollUpdate::ScrollX(f) => self.scroll_x = (self.scroll_x + *f).clamp(0.0, 1.0),
-                ScrollUpdate::ScrollY(f) => self.scroll_y = (self.scroll_y + *f).clamp(0.0, 1.0),
-                ScrollUpdate::SetX(f) => self.scroll_x = *f,
-                ScrollUpdate::SetY(f) => self.scroll_y = *f,
-                ScrollUpdate::ChildGeo(x, y) => {
+                ScrollEvent::ScrollX(f) => self.scroll_x = (self.scroll_x + *f).clamp(0.0, 1.0),
+                ScrollEvent::ScrollY(f) => self.scroll_y = (self.scroll_y + *f).clamp(0.0, 1.0),
+                ScrollEvent::SetX(f) => self.scroll_x = *f,
+                ScrollEvent::SetY(f) => self.scroll_y = *f,
+                ScrollEvent::ChildGeo(x, y) => {
                     self.child_x = *x;
                     self.child_y = *y;
                 }
-                ScrollUpdate::ParentGeo(x, y) => {
+                ScrollEvent::ParentGeo(x, y) => {
                     self.parent_x = *x;
                     self.parent_y = *y;
                 }
@@ -152,7 +116,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                 if geo.contains(GeometryChanged::HEIGHT_CHANGED)
                     || geo.contains(GeometryChanged::WIDTH_CHANGED)
                 {
-                    cx.emit(ScrollUpdate::ChildGeo(
+                    cx.emit(ScrollEvent::ChildGeo(
                         cx.cache.get_width(cx.current),
                         cx.cache.get_height(cx.current),
                     ));
@@ -165,7 +129,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                 data.clone().then(RatioLens::new(ScrollData::parent_y, ScrollData::child_y)),
                 Orientation::Vertical,
                 |cx, value| {
-                    cx.emit(ScrollUpdate::SetY(value));
+                    cx.emit(ScrollEvent::SetY(value));
                 },
             )
             .position_type(PositionType::SelfDirected);
@@ -177,7 +141,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                 data.clone().then(RatioLens::new(ScrollData::parent_x, ScrollData::child_x)),
                 Orientation::Horizontal,
                 |cx, value| {
-                    cx.emit(ScrollUpdate::SetX(value));
+                    cx.emit(ScrollEvent::SetX(value));
                 },
             )
             .position_type(PositionType::SelfDirected);
@@ -190,13 +154,13 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
         Some("scrollview".to_owned())
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::GeometryChanged(geo) => {
                 if geo.contains(GeometryChanged::HEIGHT_CHANGED)
                     || geo.contains(GeometryChanged::WIDTH_CHANGED)
                 {
-                    cx.emit(ScrollUpdate::ParentGeo(
+                    cx.emit(ScrollEvent::ParentGeo(
                         cx.cache.get_width(cx.current),
                         cx.cache.get_height(cx.current),
                     ));
@@ -212,13 +176,13 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
                 if x != 0.0 {
                     let negative_space = data.child_x - data.parent_x;
                     let logical_delta = x * SCROLL_SENSITIVITY / negative_space;
-                    cx.emit(ScrollUpdate::ScrollX(logical_delta));
+                    cx.emit(ScrollEvent::ScrollX(logical_delta));
                 }
                 let data = cx.data::<ScrollData>().unwrap();
                 if y != 0.0 {
                     let negative_space = data.child_y - data.parent_y;
                     let logical_delta = y * SCROLL_SENSITIVITY / negative_space;
-                    cx.emit(ScrollUpdate::ScrollY(logical_delta));
+                    cx.emit(ScrollEvent::ScrollY(logical_delta));
                 }
             }
 

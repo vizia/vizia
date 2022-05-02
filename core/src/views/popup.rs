@@ -1,6 +1,6 @@
 use morphorm::PositionType;
 
-use crate::{style::PropGet, Code, Context, Data, Handle, Lens, LensExt, Model, View, WindowEvent};
+use crate::prelude::*;
 
 #[derive(Debug, Default, Data, Lens, Clone)]
 pub struct PopupData {
@@ -8,7 +8,7 @@ pub struct PopupData {
 }
 
 impl Model for PopupData {
-    fn event(&mut self, _: &mut Context, event: &mut crate::Event) {
+    fn event(&mut self, _: &mut Context, event: &mut Event) {
         event.map(|popup_event, meta| match popup_event {
             PopupEvent::Open => {
                 self.is_open = true;

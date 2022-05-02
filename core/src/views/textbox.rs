@@ -1,16 +1,12 @@
 use std::sync::Arc;
 
 use keyboard_types::Code;
+use crate::cache::BoundingBox;
 
-use crate::style::PropGet;
-use crate::{
-    idx_to_pos, measure_text_lines, pos_to_idx, text_layout, text_paint_general, Actions, Binding,
-    BoundingBox, Context, CursorIcon, Data, DataContext, EditableText, Entity, Event, Handle, Lens,
-    LensExt, Model, Modifiers, MouseButton, MouseButtonState, Movement, PropSet, Selection,
-    TreeExt, View, WindowEvent,
-};
+use crate::prelude::*;
 
-use crate::text::Direction;
+use crate::text::{Direction, EditableText, idx_to_pos, measure_text_lines, Movement, pos_to_idx, Selection, text_layout, text_paint_general};
+use crate::tree::TreeExt;
 
 #[derive(Lens)]
 pub struct TextboxData {
@@ -550,7 +546,7 @@ where
         Some("textbox".to_string())
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         //let selection = cx.tree.get_child(cx.current, 0).unwrap();
         //let caret = cx.tree.get_child(cx.current, 1).unwrap();
 

@@ -1,6 +1,5 @@
-use vizia::*;
-
-const ICON_PLUS: &str = "\u{2b}";
+use vizia::prelude::*;
+use vizia::fonts::unicode_names::CHECK;
 
 fn main() {
     Application::new(|cx| {
@@ -15,7 +14,7 @@ fn main() {
                 |_| {},
                 |cx| {
                     HStack::new(cx, |cx| {
-                        Label::new(cx, ICON_PLUS).class("icon");
+                        Label::new(cx, CHECK).class("icon");
                         Label::new(cx, "Button");
                     })
                     .size(Auto)

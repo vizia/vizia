@@ -13,25 +13,33 @@ use femtovg::TextContext;
 use fnv::FnvHashMap;
 use keyboard_types::Code;
 use unic_langid::LanguageIdentifier;
+use morphorm::layout;
 
 pub use draw::*;
 pub use proxy::*;
 
-use crate::{
-    apply_clipping, apply_hover, apply_inline_inheritance, apply_layout, apply_shared_inheritance,
-    apply_styles, apply_text_constraints, apply_transform, apply_visibility, apply_z_ordering,
-    focus_backward, focus_forward, geometry_changed, is_focusable, storage::sparse_set::SparseSet,
-    CachedData, Canvas, Color, Display, Entity, Enviroment, Event, FontOrId, IdManager, ImageOrId,
-    ImageRetentionPolicy, Message, ModelDataStore, Modifiers, MouseButton, MouseButtonState,
-    MouseState, PropSet, Propagation, ResourceManager, StoredImage, Style, Tree, TreeDepthIterator,
-    TreeExt, TreeIterator, View, ViewHandler, Visibility, WindowEvent,
-};
-use crate::{AnimExt, Animation, AnimationBuilder};
+use crate::prelude::*;
+use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
+use crate::state::ModelDataStore;
+use crate::storage::sparse_set::SparseSet;
+use crate::style::{apply_transform, Style};
+use crate::style_system::{apply_clipping, apply_inline_inheritance, apply_shared_inheritance, apply_styles, apply_text_constraints, apply_visibility, apply_z_ordering};
+use crate::tree::{focus_backward, focus_forward, is_focusable, TreeDepthIterator, TreeExt, TreeIterator};
+use crate::cache::CachedData;
+use crate::environment::Environment;
+use crate::events::ViewHandler;
+use crate::hover_system::apply_hover;
+use crate::id::IdManager;
+use crate::input::{Modifiers, MouseState};
+use crate::layout::geometry_changed;
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
+/// The main storage and control object for a Vizia application.
+///
+/// This type is part of the prelude.
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
     pub tree: Tree,
@@ -45,7 +53,7 @@ pub struct Context {
     pub style: Style,
     pub cache: CachedData,
 
-    pub enviroment: Enviroment,
+    pub environment: Environment,
 
     pub mouse: MouseState,
     pub modifiers: Modifiers,
@@ -81,7 +89,7 @@ impl Context {
             data: SparseSet::new(),
             style: Style::default(),
             cache,
-            enviroment: Enviroment::new(),
+            environment: Environment::new(),
             event_queue: VecDeque::new(),
             listeners: HashMap::default(),
             mouse: MouseState::default(),
@@ -374,7 +382,7 @@ impl Context {
 
         // Reload the stored themes
         for (index, theme) in self.resource_manager.themes.iter().enumerate() {
-            if !self.enviroment.include_default_theme && index == 1 {
+            if !self.environment.include_default_theme && index == 1 {
                 continue;
             }
 
@@ -390,7 +398,7 @@ impl Context {
 
         self.style.parse_theme(&overall_theme);
 
-        //self.enviroment.needs_rebuild = true;
+        //self.environment.needs_rebuild = true;
 
         Ok(())
     }
@@ -588,7 +596,7 @@ impl Context {
             std::mem::swap(&mut store.1, &mut self.text_context);
             std::mem::swap(&mut store.2, &mut self.resource_manager);
 
-            apply_layout(&mut self.cache, &self.tree, &store);
+            layout(&mut self.cache, &self.tree, &store);
             std::mem::swap(&mut store.0, &mut self.style);
             std::mem::swap(&mut store.1, &mut self.text_context);
             std::mem::swap(&mut store.2, &mut self.resource_manager);
@@ -870,6 +878,11 @@ pub(crate) enum InternalEvent {
     },
 }
 
+/// A trait for any Context-like object that lets you access stored model data.
+///
+/// This lets e.g Lens::get be generic over any of these types.
+///
+/// This type is part of the prelude.
 pub trait DataContext {
     /// Get stored data from the context.
     fn data<T: 'static>(&self) -> Option<&T>;

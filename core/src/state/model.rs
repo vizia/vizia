@@ -3,14 +3,15 @@ use std::{
     collections::HashMap,
 };
 
-use crate::{Context, Event, Store};
+use crate::prelude::*;
+use crate::state::Store;
 
 /// A trait implemented by application data in order to mutate in response to events.
 ///
 /// # Examples
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// pub struct AppData {
 ///     count: i32,
@@ -35,14 +36,15 @@ use crate::{Context, Event, Store};
 ///     }
 /// }
 /// ```
+///
+/// This trait is part of the prelude.
 pub trait Model: 'static + Sized {
     /// Build the model data into the application tree.
     ///
     /// # Examples
     ///
     /// ```no_run
-    /// # use vizia_core::*;
-    /// # use vizia_derive::*;
+    /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
     /// #
     /// # #[derive(Default, Lens)]
@@ -82,7 +84,7 @@ pub trait Model: 'static + Sized {
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// # use vizia_derive::*;
     /// # use vizia_winit::application::Application;
     /// #

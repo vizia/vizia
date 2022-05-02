@@ -1,4 +1,4 @@
-use vizia::*;
+use vizia::prelude::*;
 
 const STYLE: &str = r#"
 

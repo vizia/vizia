@@ -2,10 +2,8 @@ use std::marker::PhantomData;
 
 use morphorm::{LayoutType, PositionType, Units};
 
-use crate::{
-    style::Overflow, Abilities, Binding, BorderCornerShape, Color, Context, CursorIcon, Data,
-    Display, Entity, Lens, PseudoClass, Res, Selection, Visibility,
-};
+use crate::prelude::*;
+use crate::text::Selection;
 
 macro_rules! set_style {
     ($name:ident, $t:ty) => {
@@ -29,6 +27,9 @@ macro_rules! set_style {
     };
 }
 
+/// A handle to a view which has been already built into the tree.
+///
+/// This type is part of the prelude.
 pub struct Handle<'a, T> {
     pub entity: Entity,
     pub p: PhantomData<T>,

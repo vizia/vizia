@@ -1,7 +1,9 @@
-use crate::Entity;
+use crate::entity::Entity;
 use std::{any::Any, fmt::Debug};
 
-/// Determines how the event propagates through the tree.
+/// Determines how an event propagates through the tree.
+///
+/// This type is part of the prelude.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Propagation {
     // /// Events propagate down the tree to the target entity, e.g. from grand-parent to parent to child (target)
@@ -16,7 +18,11 @@ pub enum Propagation {
     Direct,
 }
 
+/// The content of an event.
+///
 /// A message can be any static type.
+///
+/// This trait is part of the prelude.
 pub trait Message: Any + Send {
     /// A `&dyn Any` can be cast to a reference to a concrete type.
     fn as_any(&self) -> &dyn Any;
@@ -36,11 +42,13 @@ impl<S: 'static + Send> Message for S {
     }
 }
 
-/// An event is a wrapper around a message and provides metadata on how the event should be propagated through the tree
+/// A wrapper around a message, providing metadata on how the event travels through the tree.
+///
+/// This type is part of the prelude.
 pub struct Event {
-    /// The meta data of the event.
+    /// The meta data of the event
     pub meta: EventMeta,
-    /// The message of the event.
+    /// The message of the event
     message: Box<dyn Message>,
 }
 
@@ -129,14 +137,6 @@ pub struct EventMeta {
 
 impl EventMeta {
     /// Creates a new event meta.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use vizia_core::*;
-    /// #
-    /// EventMeta::new();
-    /// ```
     pub fn new() -> Self {
         Self::default()
     }

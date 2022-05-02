@@ -1,4 +1,4 @@
-use crate::GenerationalId;
+use crate::id::GenerationalId;
 
 pub trait DenseIndex: Copy + Clone {
     fn new(index: usize) -> Self;
@@ -12,7 +12,7 @@ impl DenseIndex for usize {
     }
 
     fn null() -> Self {
-        std::usize::MAX
+        usize::MAX
     }
 
     fn index(&self) -> usize {
@@ -155,7 +155,7 @@ pub type SparseSet<T> = SparseSetGeneric<T, usize>;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Entity;
+    use crate::entity::Entity;
 
     /// Test for creating a new sparse set
     #[test]
@@ -313,17 +313,17 @@ mod tests {
             sparse_set.sparse,
             [
                 0,
-                std::usize::MAX,
-                std::usize::MAX,
-                std::usize::MAX,
-                std::usize::MAX,
+                usize::MAX,
+                usize::MAX,
+                usize::MAX,
+                usize::MAX,
                 2,
-                std::usize::MAX,
-                std::usize::MAX,
-                std::usize::MAX,
-                std::usize::MAX,
-                std::usize::MAX,
-                std::usize::MAX,
+                usize::MAX,
+                usize::MAX,
+                usize::MAX,
+                usize::MAX,
+                usize::MAX,
+                usize::MAX,
                 1
             ]
         );

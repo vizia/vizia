@@ -1,4 +1,4 @@
-use crate::{Binding, Context, Data, DataContext, Entity, Lens, Res};
+use crate::prelude::*;
 use fluent_bundle::FluentArgs;
 pub use fluent_bundle::FluentValue;
 use std::collections::HashMap;
@@ -59,6 +59,10 @@ where
     }
 }
 
+/// A type implementing [`Res<String>`](crate::prelude::Res) which formats a localized message
+/// with any number of named arguments.
+///
+/// This type is part of the prelude.
 pub struct Localized {
     key: String,
     args: HashMap<String, Box<dyn FluentStore>>,

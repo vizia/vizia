@@ -1,4 +1,5 @@
-use crate::{Entity, GenerationalId, Tree};
+use crate::prelude::*;
+use crate::id::GenerationalId;
 
 /// Generic iterator based on [`TreeTour`].
 pub struct TreeTourIterator<'a, F> {

@@ -1,8 +1,11 @@
-use crate::{Animation, AnimationState, Entity, GenerationalId, Interpolator, Rule};
+use crate::animation::{AnimationState, Interpolator};
+use crate::prelude::*;
+use crate::style::Rule;
+use crate::id::GenerationalId;
 
 use super::sparse_set::{DenseIndex, SparseSet, SparseSetGeneric};
 
-const INDEX_MASK: u32 = std::u32::MAX / 4;
+const INDEX_MASK: u32 = u32::MAX / 4;
 const INLINE_MASK: u32 = 1 << 31;
 const INHERITED_MASK: u32 = 1 << 30;
 
@@ -57,7 +60,7 @@ impl DataIndex {
     ///
     /// A null data index is used to signify that the index refers to no data.
     pub fn null() -> Self {
-        Self(std::u32::MAX >> 1)
+        Self(u32::MAX >> 1)
     }
 }
 
@@ -80,13 +83,13 @@ pub(crate) struct InlineIndex {
 
 impl Default for InlineIndex {
     fn default() -> Self {
-        InlineIndex { data_index: DataIndex::null(), anim_index: std::u32::MAX }
+        InlineIndex { data_index: DataIndex::null(), anim_index: u32::MAX }
     }
 }
 
 impl DenseIndex for InlineIndex {
     fn new(index: usize) -> Self {
-        InlineIndex { data_index: DataIndex::inline(index), anim_index: std::u32::MAX }
+        InlineIndex { data_index: DataIndex::inline(index), anim_index: u32::MAX }
     }
 
     fn null() -> Self {
@@ -106,7 +109,7 @@ pub(crate) struct SharedIndex {
 
 impl Default for SharedIndex {
     fn default() -> Self {
-        SharedIndex { data_index: std::u32::MAX, animation: Animation::null() }
+        SharedIndex { data_index: u32::MAX, animation: Animation::null() }
     }
 }
 
@@ -196,7 +199,7 @@ where
                         self.inline_data.sparse[entity_index] = InlineIndex {
                             data_index: DataIndex::inline(parent_sparse_index.data_index.index())
                                 .inherited(),
-                            anim_index: std::u32::MAX,
+                            anim_index: u32::MAX,
                         };
                         return true;
                     }
@@ -204,7 +207,7 @@ where
                     self.inline_data.sparse[entity_index] = InlineIndex {
                         data_index: DataIndex::inline(parent_sparse_index.data_index.index())
                             .inherited(),
-                        anim_index: std::u32::MAX,
+                        anim_index: u32::MAX,
                     };
                     return true;
                 }
@@ -237,7 +240,7 @@ where
                         self.inline_data.sparse[entity_index] = InlineIndex {
                             data_index: DataIndex::shared(parent_sparse_index.data_index.index())
                                 .inherited(),
-                            anim_index: std::u32::MAX,
+                            anim_index: u32::MAX,
                         };
                         return true;
                     }
@@ -246,7 +249,7 @@ where
                         self.inline_data.sparse[entity_index] = InlineIndex {
                             data_index: DataIndex::shared(parent_sparse_index.data_index.index())
                                 .inherited(),
-                            anim_index: std::u32::MAX,
+                            anim_index: u32::MAX,
                         };
                     }
                     return true;
@@ -442,7 +445,7 @@ where
 
         for state in inactive.into_iter() {
             for entity in state.entities.iter() {
-                self.inline_data.sparse[entity.index()].anim_index = std::u32::MAX;
+                self.inline_data.sparse[entity.index()].anim_index = u32::MAX;
             }
         }
 
@@ -695,7 +698,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn invalid_shared() {
-        DataIndex::shared(std::usize::MAX);
+        DataIndex::shared(usize::MAX);
     }
 
     /// Test of the is_inline() method.

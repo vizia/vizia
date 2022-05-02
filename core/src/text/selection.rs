@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use crate::Data;
+use crate::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Selection {

@@ -1,6 +1,7 @@
-use crate::{Entity, GenerationalId, TreeExt};
-
+use crate::entity::Entity;
+use crate::tree::TreeExt;
 use super::tree_iter::TreeIterator;
+use crate::id::GenerationalId;
 
 #[derive(Debug, Clone, Copy)]
 pub enum TreeError {
@@ -19,6 +20,8 @@ pub enum TreeError {
 }
 
 /// The [Tree] describes the tree of entities.
+///
+/// This type is part of the prelude.
 #[derive(Debug, Clone)]
 pub struct Tree {
     pub parent: Vec<Option<Entity>>,

@@ -6,7 +6,7 @@
 //! # Example
 //! Fist we declare the data for our application. The [Lens] trait has been derived for the data, which allows us to bind to fields of the struct:
 //! ```
-//! # use vizia_core::*;
+//! # use vizia_core::prelude::*;
 //! # use vizia_derive::*;
 //! #[derive(Lens)]
 //! struct AppData {
@@ -24,7 +24,7 @@
 //! ```
 //! Next we implement the [`Model`] trait on our app data, which allows us to modify the data in response to an `Event`:
 //! ```
-//! # use vizia_core::*;
+//! # use vizia_core::prelude::*;
 //! # use vizia_derive::*;
 //! # #[derive(Lens)]
 //! # struct AppData {
@@ -48,9 +48,9 @@
 //!     }
 //! }
 //! ```
-//! This trait also allows data to be built into the application [Tree](crate::Tree):
+//! This trait also allows data to be built into the application [Tree](crate::prelude::Tree):
 //! ```no_run
-//! # use vizia_core::*;
+//! # use vizia_core::prelude::*;
 //! # use vizia_derive::*;
 //! # use vizia_winit::application::Application;
 //! # #[derive(Lens)]
@@ -68,7 +68,7 @@
 //! ```
 //! A [`Binding`] view is one way in which data can be used by widgets. A [`Lens`] is used to determine what data the binding should react to:
 //! ```no_run
-//! # use vizia_core::*;
+//! # use vizia_core::prelude::*;
 //! # use vizia_derive::*;
 //! # use vizia_winit::application::Application;
 //! # #[derive(Lens)]
@@ -90,11 +90,11 @@
 //! ```
 //! The second parameter to the [Binding] view is a [Lens], allowing us to bind to some field of the application data.
 //! The third parameter is a closure which provides the context and the lens, which can be used to retrieve the bound data using the `.get()`
-//! method, which takes the [Context](crate::Context) as an argument.
+//! method, which takes the [Context](crate::prelude::Context) as an argument.
 //!
 //! Now when the data is modified by another widget, the label will update, for example:
 //! ```no_run
-//! # use vizia_core::*;
+//! # use vizia_core::prelude::*;
 //! # use vizia_derive::*;
 //! # use vizia_winit::application::Application;
 //! # #[derive(Lens)]

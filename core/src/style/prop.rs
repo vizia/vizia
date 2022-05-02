@@ -1,14 +1,14 @@
-use crate::{style::*, AsEntity};
-use crate::{Context, Message};
-use crate::{Entity, Propagation};
-
-use crate::{Event, WindowEvent};
-
-use crate::tree::TreeExt;
-
+use std::collections::HashSet;
 use morphorm::{LayoutType, PositionType, Units};
 
+use crate::prelude::*;
+use crate::tree::TreeExt;
+use crate::entity::AsEntity;
+use crate::style::FocusOrder;
+
 /// To be replaced by `PropSet2`
+///
+/// This type is part of the prelude (???).
 pub trait PropSet: AsEntity + Sized {
     /// Helper method for sending an event to self with upward propagation
     ///
@@ -576,7 +576,7 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// Center the entity horizontally by adding stretch space to the left and right sides.
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// # let mut context = Context::new();
     /// # let cx = &mut context;
     /// # let entity = Entity::root();
@@ -920,7 +920,7 @@ pub trait PropSet: AsEntity + Sized {
     /// ```
     /// Set the background color of the entity with individual red, green, and blue components:
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// # let mut context = Context::new();
     /// # let cx = &mut context;
     /// # let entity = Entity::root();
@@ -1211,7 +1211,7 @@ pub trait PropSet: AsEntity + Sized {
     /// # Exmaples
     /// Position children into a vertical stack:
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// # let mut context = Context::new();
     /// # let cx = &mut context;
     /// # let entity = Entity::root();
@@ -1356,6 +1356,10 @@ pub trait PropSet: AsEntity + Sized {
 
 // Implement PropSet for all types which implement AsEntity
 impl<T: AsEntity> PropSet for T {}
+
+/// Methods for retrieving properties for an entity from the context.
+///
+/// This trait is part of the prelude.
 pub trait PropGet: Sized + AsEntity {
     fn name(&self, cx: &Context) -> String {
         cx.style.name.get(self.entity()).cloned().unwrap_or_default()

@@ -94,7 +94,7 @@ impl EditableText for String {
 
 #[cfg(test)]
 mod tests {
-    use crate::EditableText;
+    use crate::text::EditableText;
 
     #[test]
     fn prev_word_offset() {
