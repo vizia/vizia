@@ -1,4 +1,4 @@
-use vizia::*;
+use vizia::prelude::*;
 
 #[derive(Debug, Lens)]
 pub struct AppData {

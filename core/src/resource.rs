@@ -1,13 +1,15 @@
 #![allow(dead_code)]
 
-use crate::{Canvas, Context, Entity};
 use fluent_bundle::{FluentBundle, FluentResource};
 use image::GenericImageView;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 use unic_langid::LanguageIdentifier;
+use crate::context::Context;
+use crate::view::Canvas;
+use crate::entity::Entity;
 
-pub struct StoredImage {
+pub(crate) struct StoredImage {
     pub image: ImageOrId,
     pub retention_policy: ImageRetentionPolicy,
     pub used: bool,
@@ -60,9 +62,9 @@ pub enum FontOrId {
 
 #[derive(Default)]
 pub struct ResourceManager {
-    pub stylesheets: Vec<String>, // Stylesheets refer to a fiel path
+    pub stylesheets: Vec<String>, // Stylesheets refer to a file path
     pub themes: Vec<String>,      // Themes are the string content stylesheets
-    pub images: HashMap<String, StoredImage>,
+    pub(crate) images: HashMap<String, StoredImage>,
     pub fonts: HashMap<String, FontOrId>,
     pub translations: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
     pub language: LanguageIdentifier,

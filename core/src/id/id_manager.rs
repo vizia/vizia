@@ -80,7 +80,7 @@ impl<I: GenerationalId + Copy> IdManager<I> {
 mod tests {
 
     use super::*;
-    use crate::Entity;
+    use crate::entity::Entity;
 
     /// Test for creating a new IdManager
     #[test]

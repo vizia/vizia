@@ -1,6 +1,5 @@
-use crate::{
-    Context, Element, Handle, Lens, LensExt, MouseButton, Orientation, Units, View, WindowEvent,
-};
+use crate::prelude::*;
+use crate::views::Orientation;
 
 pub struct Scrollbar<L1> {
     value: L1,
@@ -100,7 +99,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
         Some(String::from("scrollbar"))
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         event.map(|window_event, meta| {
             let pos = match &self.orientation {
                 Orientation::Horizontal => cx.mouse.cursorx,

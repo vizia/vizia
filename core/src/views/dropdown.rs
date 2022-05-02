@@ -1,6 +1,5 @@
-use crate::{Actions, Context, Handle, Model, Popup, PopupData, PopupEvent, Units::*, View};
-
-pub const ICON_DOWN_OPEN: &str = "\u{e75c}";
+use crate::prelude::*;
+use crate::views::popup::PopupData;
 
 pub struct Dropdown {}
 

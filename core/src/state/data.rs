@@ -1,7 +1,11 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
-use crate::Color;
+use crate::prelude::*;
 
+/// A trait for any type which can be bound to, i.e. can be cached and compared against previous
+/// versions.
+///
+/// This type is part of the prelude.
 pub trait Data: 'static + Clone {
     fn same(&self, other: &Self) -> bool;
 }

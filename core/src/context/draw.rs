@@ -1,11 +1,17 @@
-use crate::style::LinearGradient;
-use crate::{
-    BorderCornerShape, CachedData, Color, Context, DataContext, Entity, ImageOrId, Modifiers,
-    MouseState, PseudoClass, ResourceManager, Selection, Tree,
-};
 use femtovg::TextContext;
 use morphorm::Units;
 
+use crate::prelude::*;
+use crate::resource::{ImageOrId, ResourceManager};
+use crate::style::LinearGradient;
+use crate::cache::CachedData;
+use crate::input::{Modifiers, MouseState};
+use crate::text::Selection;
+
+
+/// A restricted context used when drawing.
+///
+/// This type is part of the prelude.
 pub struct DrawContext<'a>(&'a mut Context);
 
 macro_rules! style_getter_units {
@@ -46,7 +52,7 @@ impl<'a> DrawContext<'a> {
         &self.0.tree
     }
 
-    pub fn resource_manager(&self) -> &ResourceManager {
+    pub(crate) fn resource_manager(&self) -> &ResourceManager {
         &self.0.resource_manager
     }
 

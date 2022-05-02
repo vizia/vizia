@@ -1,4 +1,4 @@
-use vizia::*;
+use vizia::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Options {

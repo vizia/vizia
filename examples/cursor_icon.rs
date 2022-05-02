@@ -1,4 +1,4 @@
-use vizia::*;
+use vizia::prelude::*;
 
 macro_rules! cursor_label {
     ($cx:ident, $name:ident) => {

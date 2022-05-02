@@ -1,4 +1,8 @@
-// Represents the size of the application window.
+/// The size of an application window.
+///
+/// TODO is this logical or physical?
+///
+/// This type is part of the prelude.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WindowSize {
     pub width: u32,
@@ -17,6 +21,9 @@ impl From<(u32, u32)> for WindowSize {
     }
 }
 
+/// The position of a window in screen coordinates.
+///
+/// TODO is this logical or physical?
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Position {
     pub x: u32,
@@ -30,6 +37,8 @@ impl Position {
 }
 
 /// Passed to the window to set initial window properties.
+///
+/// This type is part of the prelude.
 pub struct WindowDescription {
     pub title: String,
     pub inner_size: WindowSize,

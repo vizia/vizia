@@ -1,4 +1,4 @@
-use vizia::*;
+use vizia::prelude::*;
 
 fn main() {
     Application::new(|cx| {

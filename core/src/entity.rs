@@ -1,7 +1,6 @@
 use std::cmp::{Eq, PartialEq};
 use std::hash::Hash;
-
-use crate::GenerationalId;
+use crate::id::GenerationalId;
 
 const ENTITY_INDEX_BITS: u32 = 24;
 const ENTITY_INDEX_MASK: u32 = (1 << ENTITY_INDEX_BITS) - 1;
@@ -9,10 +8,12 @@ const ENTITY_INDEX_MASK: u32 = (1 << ENTITY_INDEX_BITS) - 1;
 const ENTITY_GENERATION_BITS: u32 = 8;
 const ENTITY_GENERATION_MASK: u32 = (1 << ENTITY_GENERATION_BITS) - 1;
 
-/// An entity is an id used to reference to get/set properties in the context.
+/// An entity is an identifier used to reference a view; to get/set properties in the context.
 ///
 /// Rather than having widgets own their data, all state is stored in a single database and
 /// is stored and loaded using entities.
+///
+/// This type is part of the prelude.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Entity(u32);
 
@@ -39,7 +40,7 @@ impl Entity {
     ///
     /// A null entity can be used as a placeholder within a widget struct but cannot be used to get/set properties
     pub fn null() -> Entity {
-        Entity(std::u32::MAX)
+        Entity(u32::MAX)
     }
 
     /// Creates a root entity
@@ -73,7 +74,7 @@ impl GenerationalId for Entity {
     }
 
     fn is_null(&self) -> bool {
-        self.0 == std::u32::MAX
+        self.0 == u32::MAX
     }
 }
 

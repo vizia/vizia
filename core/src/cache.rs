@@ -1,16 +1,15 @@
+//! The cache is a store for intermediate data produced while computing state, notably layout
+//! results. The main type here is CachedData, usually accessed via `cx.cache`.
+
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::ops::Range;
 
-use crate::style::Display;
-use crate::Abilities;
-use crate::Entity;
 use femtovg::ImageId;
 use morphorm::GeometryChanged;
 
+use crate::prelude::*;
 use crate::style::Transform2D;
-use crate::style::Visibility;
-
 use crate::storage::sparse_set::SparseSet;
 use crate::storage::sparse_set::SparseSetError;
 
@@ -57,12 +56,6 @@ pub(crate) struct Space {
     pub right: f32,
     pub top: f32,
     pub bottom: f32,
-}
-
-#[derive(Debug, Default, Clone, PartialEq)]
-pub(crate) struct Size {
-    pub width: f32,
-    pub height: f32,
 }
 
 impl Default for BoundingBox {
@@ -255,6 +248,12 @@ impl BoundingBox {
         let y_hit = other.y >= self.y && other.y < self.y + self.h;
         x_hit && y_hit
     }
+}
+
+#[derive(Debug, Default, Clone, PartialEq)]
+pub(crate) struct Size {
+    pub width: f32,
+    pub height: f32,
 }
 
 /// Stores data which can be cached between system runs.

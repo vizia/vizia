@@ -2,7 +2,7 @@ use crate::convert::cursor_icon_to_cursor_icon;
 use femtovg::{renderer::OpenGl, Canvas, Color};
 #[cfg(not(target_arch = "wasm32"))]
 use glutin::ContextBuilder;
-use vizia_core::{Context, Event, View, WindowDescription, WindowEvent};
+use vizia_core::prelude::*;
 use winit::event_loop::EventLoop;
 use winit::window::WindowBuilder;
 use winit::{dpi::*, window::WindowId};

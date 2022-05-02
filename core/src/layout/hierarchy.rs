@@ -1,10 +1,11 @@
 use morphorm::Hierarchy;
 
-use crate::{Entity, LayoutChildIterator, LayoutTreeIterator};
+use crate::prelude::*;
 
 use std::iter::Rev;
+use crate::layout::{LayoutChildIterator, LayoutTreeIterator};
 
-impl<'a> Hierarchy<'a> for crate::Tree {
+impl<'a> Hierarchy<'a> for Tree {
     type Item = Entity;
     type DownIter = LayoutTreeIterator<'a>;
     type UpIter = Rev<LayoutTreeIterator<'a>>;

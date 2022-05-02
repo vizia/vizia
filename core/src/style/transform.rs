@@ -2,7 +2,7 @@
 
 use std::ops::{Index, IndexMut};
 
-use crate::{Context, Entity, Tree};
+use crate::prelude::*;
 
 /// A 2D transform matrix.
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]

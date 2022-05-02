@@ -1,6 +1,6 @@
-use crate::{
-    Abilities, DoubleEndedTreeTour, Entity, Style, TourDirection, Tree, TreeIterator, TreeTour,
-};
+use crate::prelude::*;
+use crate::style::Style;
+use crate::tree::*;
 
 pub fn is_focusable<'a>(style: &'a Style, node: Entity) -> bool {
     style

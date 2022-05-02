@@ -2,7 +2,8 @@ use std::marker::PhantomData;
 
 use keyboard_types::Code;
 
-use crate::{Binding, Context, Data, Handle, Index, Lens, LensExt, Model, Then, View, WindowEvent};
+use crate::prelude::*;
+use crate::state::{Index, Then};
 
 /// A view for creating a list of items from a binding to a Vec<T>
 pub struct List<L, T: 'static>
@@ -51,7 +52,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
         Some(String::from("list"))
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::KeyDown(code, _) => match code {
                 Code::ArrowDown => {

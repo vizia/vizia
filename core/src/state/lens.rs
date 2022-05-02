@@ -1,15 +1,18 @@
-use crate::DataContext;
 use std::any::TypeId;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
 use std::rc::Rc;
 
+use crate::prelude::*;
+
 /// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
 ///
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.
 /// The `view()` method takes a reference to the struct type as input and outputs a reference to the field.
 /// This provides a way to specify a binding to a specific field of some application data.
+///
+/// This trait is part of the prelude.
 pub trait Lens: 'static + Clone {
     type Source;
     type Target;
@@ -30,6 +33,8 @@ pub(crate) trait LensCache: Lens {
 impl<T: Lens> LensCache for T {}
 
 /// Helpers for constructing more complex `Lens`es.
+///
+/// This trait is par tof the prelude.
 pub trait LensExt: Lens {
     /// Retrieve a copy of the lensed data from context.
     ///
@@ -314,5 +319,40 @@ impl<T: 'static + Clone + TryInto<U>, U: 'static> Lens for IntoLens<T, U> {
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
         let converted = source.clone().try_into().ok();
         map(converted.as_ref())
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct RatioLens<L1, L2> {
+    numerator: L1,
+    denominator: L2,
+}
+
+impl<L1, L2> RatioLens<L1, L2> {
+    pub fn new(numerator: L1, denominator: L2) -> Self {
+        Self { numerator, denominator }
+    }
+}
+
+impl<L1, L2> Lens for RatioLens<L1, L2>
+    where
+        L1: 'static + Clone + Lens<Target = f32>,
+        L2: 'static + Clone + Lens<Target = f32, Source = <L1 as Lens>::Source>,
+{
+    type Source = L1::Source;
+    type Target = f32;
+
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
+        let num = self.numerator.view(source, |num| num.copied());
+        if let Some(num) = num {
+            let den = self.denominator.view(source, |den| den.copied());
+            if let Some(den) = den {
+                map(Some(&(num / den)))
+            } else {
+                map(None)
+            }
+        } else {
+            map(None)
+        }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{Context, Handle, Res, View};
+use crate::prelude::*;
 
 /// A label used to display text to the screen.
 ///
@@ -9,7 +9,7 @@ use crate::{Context, Handle, Res, View};
 /// A label can be used to simply display some text on the screen.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::new();
 /// #
@@ -21,7 +21,7 @@ use crate::{Context, Handle, Res, View};
 /// A label can be bound to data using a lens which automatically updates the text whenever the underlying data changes.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// # let cx = &mut Context::new();
 /// #
 /// #[derive(Lens)]
@@ -44,7 +44,7 @@ use crate::{Context, Handle, Res, View};
 /// A label automatically wraps the text if it doesn't fit inside of the width of the label.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// # let mut cx = &mut Context::new();
 /// #
 /// Label::new(
@@ -56,10 +56,10 @@ use crate::{Context, Handle, Res, View};
 ///
 /// ## Label without text wrapping
 ///
-/// A label can also be configured to never wrap the text by using the [`text_wrap`](crate::Handle::text_wrap) method.
+/// A label can also be configured to never wrap the text by using the [`text_wrap`](crate::prelude::Handle::text_wrap) method.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// # let mut cx = &mut Context::new();
 /// #
 /// Label::new(
@@ -75,7 +75,7 @@ use crate::{Context, Handle, Res, View};
 /// A label can also be used inside of a button to be able to add text to it.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// # let cx = &mut Context::new();
 /// #
 /// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
@@ -88,7 +88,7 @@ impl Label {
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// #
     /// # let cx = &mut Context::new();
     /// #

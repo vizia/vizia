@@ -1,7 +1,4 @@
-use crate::{
-    Binding, Color, Context, Data, Display, Entity, LayoutType, Lens, LensExt, PositionType, Units,
-    Visibility,
-};
+use crate::prelude::*;
 
 macro_rules! impl_res_simple {
     ($t:ty) => {
@@ -20,6 +17,10 @@ macro_rules! impl_res_simple {
     };
 }
 
+/// A trait for types that can automatically resolve into other types, with or without consulting
+/// the Context.
+///
+/// This trait is part of the prelude.
 pub trait Res<T> {
     fn get_val(&self, cx: &Context) -> T;
     fn get_val_fallible(&self, cx: &Context) -> Option<T> {

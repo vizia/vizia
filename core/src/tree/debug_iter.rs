@@ -1,4 +1,5 @@
-use crate::{DoubleEndedTreeTour, Entity, TourDirection, TourStep, Tree};
+use crate::prelude::*;
+use crate::tree::*;
 
 pub struct TreeDepthIterator<'a> {
     tree: &'a Tree,

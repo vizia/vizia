@@ -1,5 +1,5 @@
 #[allow(unused)]
-use vizia::*;
+use vizia::prelude::*;
 
 #[cfg(target_arch = "wasm32")]
 fn main() {

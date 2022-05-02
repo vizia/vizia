@@ -1,11 +1,12 @@
 use std::any::TypeId;
 use std::collections::HashSet;
 
-use crate::{Context, Handle, LensCache, State, TreeExt, View};
-
-use crate::{Data, Lens};
+use crate::prelude::*;
+use crate::state::{LensCache, State};
 
 /// A binding view which rebuilds its contents when its observed data changes.
+///
+/// This type is part of the prelude.
 pub struct Binding<L>
 where
     L: Lens,

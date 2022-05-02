@@ -1,5 +1,4 @@
-use crate::{Context, Event, PropSet, View};
-use crate::{Handle, MouseButton, WindowEvent};
+use crate::prelude::*;
 
 /// A simple push button with an action and views inside of it.
 ///
@@ -11,7 +10,7 @@ use crate::{Handle, MouseButton, WindowEvent};
 /// event that is being emitted.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # enum AppEvent {
 /// #     Action,
@@ -29,7 +28,7 @@ use crate::{Handle, MouseButton, WindowEvent};
 /// a button without having to add an action.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::new();
 /// #
@@ -39,10 +38,10 @@ use crate::{Handle, MouseButton, WindowEvent};
 /// ## Button containing multiple views
 ///
 /// A button can contain more than just a single view or label inside of it. This can
-/// for example be done by using a [`HStack`](crate::HStack) or [`VStack`](crate::VStack).
+/// for example be done by using a [`HStack`](crate::prelude::HStack) or [`VStack`](crate::prelude::VStack).
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::new();
 /// #
@@ -67,7 +66,7 @@ impl Button {
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// #
     /// # let cx = &mut Context::new();
     /// #

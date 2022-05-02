@@ -1,6 +1,5 @@
-use crate::Interpolator;
-
 use morphorm::Units;
+use crate::animation::Interpolator;
 
 impl Interpolator for Units {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {

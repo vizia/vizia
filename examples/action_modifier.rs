@@ -1,4 +1,4 @@
-use vizia::*;
+use vizia::prelude::*;
 
 // Example of extending the behaviour of a view
 fn main() {

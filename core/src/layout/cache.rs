@@ -1,6 +1,7 @@
 use morphorm::{Cache, GeometryChanged};
+use crate::cache::CachedData;
 
-use crate::{CachedData, Display, Entity, Visibility};
+use crate::prelude::*;
 
 impl Cache for CachedData {
     type Item = Entity;

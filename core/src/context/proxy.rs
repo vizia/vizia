@@ -2,19 +2,29 @@ use std::fmt::Formatter;
 use std::sync::Mutex;
 
 use super::InternalEvent;
-use crate::{Entity, Event, ImageRetentionPolicy, Message, Propagation};
 
-/// A bundle of data representing a snapshot of the context when a thread was spawned. It supports
-/// a small subset of context operations. You will get one of these passed to you when you create a
-/// new thread with `cx.spawn()`.
+use crate::prelude::*;
+use crate::resource::ImageRetentionPolicy;
+
+/// A bundle of data representing a snapshot of the context when a thread was spawned.
+///
+/// It supports a small subset of context operations. You will get one of these passed to you when
+/// you create a new thread with `cx.spawn()`.
+///
+/// This type is part of the prelude.
 pub struct ContextProxy {
     pub current: Entity,
     pub event_proxy: Option<Box<dyn EventProxy>>,
 }
 
+/// Errors that might come up when emitting an event via a ContextProxy.
+///
+/// This type is part of the prelude.
 #[derive(Debug)]
 pub enum ProxyEmitError {
+    /// The current runtime does not support proxying events
     Unsupported,
+    /// The event loop has been closed; the application is exiting
     EventLoopClosed,
 }
 

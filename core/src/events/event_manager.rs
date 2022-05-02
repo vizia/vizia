@@ -1,4 +1,6 @@
-use crate::{Context, Entity, Event, InternalEvent, Propagation, Tree, TreeExt};
+use crate::context::InternalEvent;
+use crate::prelude::*;
+use crate::tree::TreeExt;
 
 /// Dispatches events to views and models.
 ///

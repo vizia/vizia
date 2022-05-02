@@ -1,5 +1,6 @@
 #[allow(unused)]
-use vizia::*;
+use vizia::prelude::*;
+use vizia_core::resource::ImageRetentionPolicy;
 
 #[allow(unused)]
 const STYLE: &'static str = r#"

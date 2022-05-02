@@ -1,5 +1,6 @@
-use crate::{Code, Context, Event, KeyChord, Model};
 use std::collections::HashMap;
+
+use crate::prelude::*;
 
 /// A keymap that associates key chords with actions.
 ///
@@ -26,7 +27,7 @@ use std::collections::HashMap;
 /// and `Action::Three` to the key chord `CTRL+SHIFT+C`.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # #[derive(PartialEq, Copy, Clone)]
 /// # enum Action {
@@ -47,7 +48,7 @@ use std::collections::HashMap;
 /// but here you could do whatever you want to.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # #[derive(Debug, PartialEq, Copy, Clone)]
 /// # enum Action {
@@ -73,6 +74,8 @@ use std::collections::HashMap;
 ///     }
 /// }
 /// ```
+///
+/// This type is part of the prelude.
 #[derive(Debug)]
 pub struct Keymap<T>
 where
@@ -90,7 +93,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// #
     /// # #[derive(Debug, PartialEq, Copy, Clone)]
     /// # enum Action {
@@ -140,7 +143,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// #
     /// # #[derive(Debug, PartialEq, Copy, Clone)]
     /// # enum Action {
@@ -170,7 +173,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// #
     /// # #[derive(Debug, PartialEq, Copy, Clone)]
     /// # enum Action {
@@ -222,6 +225,8 @@ where
 }
 
 /// An event used to interact with a [`Keymap`] at runtime.
+///
+/// This type is part of the prelude.
 pub enum KeymapEvent<T>
 where
     T: 'static + PartialEq + Send + Sync + Copy + Clone,
@@ -231,7 +236,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// #
     /// # #[derive(PartialEq, Copy, Clone)]
     /// # enum Action {
@@ -251,7 +256,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// #
     /// # #[derive(PartialEq, Copy, Clone)]
     /// # enum Action {

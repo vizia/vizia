@@ -1,8 +1,9 @@
 use std::marker::PhantomData;
 
 use morphorm::GeometryChanged;
+use crate::events::ViewHandler;
 
-use crate::{Context, DrawContext, Event, Handle, MouseButton, View, ViewHandler, WindowEvent};
+use crate::prelude::*;
 
 // Press
 pub struct Press<V: View> {
@@ -53,7 +54,7 @@ impl<V: View> View for Press<V> {
         });
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -111,7 +112,7 @@ impl<V: View> View for Release<V> {
         });
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -167,7 +168,7 @@ impl<V: View> View for Hover<V> {
         });
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -221,7 +222,7 @@ impl<V: View> View for Over<V> {
         });
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -277,7 +278,7 @@ impl<V: View> View for Leave<V> {
         });
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -331,7 +332,7 @@ impl<V: View> View for Move<V> {
         });
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -385,7 +386,7 @@ impl<V: View> View for FocusIn<V> {
         });
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -439,7 +440,7 @@ impl<V: View> View for FocusOut<V> {
         });
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         self.view.draw(cx, canvas);
     }
 }
@@ -495,11 +496,14 @@ impl<V: View> View for Geo<V> {
         });
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         self.view.draw(cx, canvas);
     }
 }
 
+/// Methods to add an event handler to a view.
+///
+/// This trait is part of the prelude.
 pub trait Actions<'a> {
     type View: View;
     fn on_press<F>(self, action: F) -> Handle<'a, Press<Self::View>>

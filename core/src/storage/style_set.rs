@@ -1,8 +1,10 @@
-use crate::{Entity, GenerationalId, Rule};
+use crate::prelude::*;
+use crate::style::Rule;
+use crate::id::GenerationalId;
 
 use super::sparse_set::{DenseIndex, SparseSetGeneric};
 
-const INDEX_MASK: u32 = std::u32::MAX / 4;
+const INDEX_MASK: u32 = u32::MAX / 4;
 const INLINE_MASK: u32 = 1 << 31;
 const INHERITED_MASK: u32 = 1 << 30;
 
@@ -57,7 +59,7 @@ impl DataIndex {
     ///
     /// A null data index is used to signify that the index refers to no data.
     pub fn null() -> Self {
-        Self(std::u32::MAX >> 1)
+        Self(u32::MAX >> 1)
     }
 }
 
@@ -70,13 +72,13 @@ struct Index {
 
 impl Default for Index {
     fn default() -> Self {
-        Index { data_index: DataIndex::null(), anim_index: std::u32::MAX }
+        Index { data_index: DataIndex::null(), anim_index: u32::MAX }
     }
 }
 
 impl DenseIndex for Index {
     fn new(index: usize) -> Self {
-        Index { data_index: DataIndex::inline(index), anim_index: std::u32::MAX }
+        Index { data_index: DataIndex::inline(index), anim_index: u32::MAX }
     }
 
     fn null() -> Self {
@@ -161,7 +163,7 @@ where
                         self.inline_data.sparse[entity_index] = Index {
                             data_index: DataIndex::inline(parent_sparse_index.data_index.index())
                                 .inherited(),
-                            anim_index: std::u32::MAX,
+                            anim_index: u32::MAX,
                         };
                         return true;
                     }
@@ -169,7 +171,7 @@ where
                     self.inline_data.sparse[entity_index] = Index {
                         data_index: DataIndex::inline(parent_sparse_index.data_index.index())
                             .inherited(),
-                        anim_index: std::u32::MAX,
+                        anim_index: u32::MAX,
                     };
                     return true;
                 }
@@ -202,7 +204,7 @@ where
                         self.inline_data.sparse[entity_index] = Index {
                             data_index: DataIndex::shared(parent_sparse_index.data_index.index())
                                 .inherited(),
-                            anim_index: std::u32::MAX,
+                            anim_index: u32::MAX,
                         };
                         return true;
                     }
@@ -211,7 +213,7 @@ where
                         self.inline_data.sparse[entity_index] = Index {
                             data_index: DataIndex::shared(parent_sparse_index.data_index.index())
                                 .inherited(),
-                            anim_index: std::u32::MAX,
+                            anim_index: u32::MAX,
                         };
                     }
                     return true;

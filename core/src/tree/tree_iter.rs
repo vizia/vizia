@@ -1,4 +1,5 @@
-use crate::{DoubleEndedTreeTour, Entity, TourDirection, TourStep, Tree};
+use crate::prelude::*;
+use crate::tree::*;
 
 /// Iterator for iterating through the tree in depth first preorder.
 pub struct TreeIterator<'a> {
@@ -38,7 +39,7 @@ impl<'a> DoubleEndedIterator for TreeIterator<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::TreeError;
+    use crate::tree::TreeError;
 
     #[test]
     fn simple_forward_backward() -> Result<(), TreeError> {

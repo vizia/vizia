@@ -1,4 +1,4 @@
-use vizia::*;
+use vizia::prelude::*;
 
 const COLORS: [Color; 3] = [Color::red(), Color::green(), Color::blue()];
 

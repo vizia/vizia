@@ -1,4 +1,4 @@
-use vizia::*;
+use vizia::prelude::*;
 
 const ICON_PLUS: &str = "\u{2b}";
 

@@ -1,10 +1,7 @@
 use femtovg::{LineCap, Paint, Path, Solidity};
 use morphorm::{Hierarchy, Units};
 
-use crate::{
-    Binding, Context, DrawContext, Handle, Lens, LensExt, Modifiers, MouseButton, Res, Units::*,
-    View, WindowEvent, ZStack,
-};
+use crate::prelude::*;
 
 static DEFAULT_DRAG_SCALAR: f32 = 0.0042;
 static DEFAULT_WHEEL_SCALAR: f32 = 0.005;
@@ -127,7 +124,7 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
         Some(String::from("knob"))
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut crate::Event) {
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
         let move_virtual_slider = |self_ref: &mut Self, cx: &mut Context, new_normal: f32| {
             self_ref.continuous_normal = new_normal.clamp(0.0, 1.0);
 
@@ -253,7 +250,7 @@ impl Ticks {
     }
 }
 impl View for Ticks {
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let current = cx.current();
         let opacity = cx.cache().get_opacity(current);
 
@@ -351,7 +348,7 @@ impl TickKnob {
     }
 }
 impl View for TickKnob {
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let current = cx.current();
         let opacity = cx.cache().get_opacity(current);
 
@@ -481,7 +478,7 @@ impl ArcTrack {
 }
 
 impl View for ArcTrack {
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut crate::Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let current = cx.current();
         let opacity = cx.cache().get_opacity(current);
 

@@ -1,12 +1,9 @@
 use std::cell::RefCell;
 
-use crate::views::checkbox::ICON_CHECK;
-use crate::{
-    Actions, Context, DataContext, Event, HStack, Handle, Label, Lens, LensExt, Model, MouseButton,
-    Over, PropSet, Propagation, Res, TreeExt, Units, View, WindowEvent,
-};
-
-pub const ICON_ARROW: &str = "\u{E315}";
+use crate::prelude::*;
+use crate::fonts::{material_names::RIGHT, unicode_names::CHECK};
+use crate::modifiers::Over;
+use crate::tree::TreeExt;
 
 /// A helper function which sets up the necessary attributes on a view to be a menu entry.
 /// Call this with a handle to an object you would like to be considered a menu entry.
@@ -49,7 +46,7 @@ where
 /// The data storage for the current selected index of a menu
 /// This is automatically created when you construct a MenuStack.
 #[derive(Lens, Default)]
-pub struct MenuData {
+struct MenuData {
     selected: Option<usize>,
     counter: RefCell<usize>,
 }
@@ -91,10 +88,10 @@ impl Model for MenuControllerData {
     }
 }
 
-pub struct MenuController {}
-
 /// A MenuController is a container object which holds a menu. It is responsible for managing
 /// the focus of the menu, i.e. grabbing click events until the menu is closed.
+pub struct MenuController {}
+
 impl MenuController {
     pub fn new<F: FnOnce(&mut Context)>(
         cx: &mut Context,
@@ -224,7 +221,7 @@ impl Menu {
         let result = Self {}.build(cx, move |cx| {
             HStack::new(cx, move |cx| {
                 label(cx);
-                Label::new(cx, ICON_ARROW).class("menu_arrow");
+                Label::new(cx, RIGHT).class("menu_arrow");
             });
             MenuStack::new_vertical(cx, items);
         });
@@ -306,7 +303,7 @@ impl MenuButton {
                     builder(cx);
                     Label::new(cx, "").left(Units::Stretch(1.0)).bind(lens, move |handle, lens| {
                         let val = lens.get_fallible(handle.cx);
-                        handle.text(if val == Some(true) { ICON_CHECK } else { "" });
+                        handle.text(if val == Some(true) { CHECK } else { "" });
                     });
                 });
             },

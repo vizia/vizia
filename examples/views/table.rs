@@ -1,4 +1,5 @@
-use vizia::*;
+use vizia::prelude::*;
+use vizia::fonts::icons_names::{DOWN, UP};
 
 fn main() {
     Application::new(|cx| {
@@ -37,9 +38,9 @@ fn main() {
                                     Sorted::None => false,
                                 };
                                 let icon = if sorted.get(cx) == Sorted::Forward {
-                                    "\u{e75c}"
+                                    DOWN
                                 } else {
-                                    "\u{e75f}"
+                                    UP
                                 };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
@@ -98,9 +99,9 @@ fn main() {
                                     Sorted::None => false,
                                 };
                                 let icon = if sorted.get(cx) == Sorted::Forward {
-                                    "\u{e75c}"
+                                    DOWN
                                 } else {
-                                    "\u{e75f}"
+                                    UP
                                 };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
@@ -157,9 +158,9 @@ fn main() {
                                     Sorted::None => false,
                                 };
                                 let icon = if sorted.get(cx) == Sorted::Forward {
-                                    "\u{e75c}"
+                                    DOWN
                                 } else {
-                                    "\u{e75f}"
+                                    UP
                                 };
                                 Element::new(cx)
                                     .width(Pixels(30.0))

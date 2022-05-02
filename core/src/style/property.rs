@@ -1,14 +1,8 @@
-use crate::CursorIcon;
-use crate::Display;
-
-//use super::LinearGradient;
-use crate::Color;
-
-use crate::style::*;
-
-use crate::Transition;
+use crate::prelude::*;
 
 use morphorm::{LayoutType, PositionType, Units};
+use crate::animation::Transition;
+use crate::style::shadow::BoxShadow;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum PropType {

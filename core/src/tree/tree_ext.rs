@@ -1,4 +1,4 @@
-use crate::{Entity, Tree};
+use crate::prelude::*;
 
 use super::child_iter::ChildIterator;
 use super::parent_iter::ParentIterator;

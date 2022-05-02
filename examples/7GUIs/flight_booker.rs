@@ -1,10 +1,9 @@
 use std::str::FromStr;
 
-use vizia::*;
+use vizia::prelude::*;
+use vizia::fonts::icons_names::DOWN;
 
 use chrono::{NaiveDate, ParseError};
-
-const ICON_DOWN_OPEN: &str = "\u{e75c}";
 
 const STYLE: &str = r#"
     /*
@@ -96,7 +95,7 @@ fn main() {
                     Label::new(cx, AppData::choice)
                         .width(Stretch(1.0))
                         .text_wrap(false);
-                    Label::new(cx, ICON_DOWN_OPEN).font("icons").left(Pixels(5.0)).right(Pixels(5.0));
+                    Label::new(cx, DOWN).font("icons").left(Pixels(5.0)).right(Pixels(5.0));
                 }).width(Stretch(1.0)),
                 // List of options
                 move |cx|{

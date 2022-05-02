@@ -10,7 +10,8 @@
 //! `X` => `Action::One`
 //! `Z` => `Action::Three`
 
-use vizia::*;
+use vizia::prelude::*;
+use vizia_core::input::KeymapEvent;
 
 fn main() {
     Application::new(|cx| {

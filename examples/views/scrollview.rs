@@ -1,4 +1,5 @@
-use vizia::*;
+use vizia::prelude::*;
+use vizia_core::state::RatioLens;
 
 fn main() {
     Application::new(|cx| {
@@ -36,7 +37,7 @@ fn main() {
             RatioLens::new(ScrollData::parent_x, ScrollData::child_x),
             Orientation::Horizontal,
             |cx, scroll| {
-                cx.emit(ScrollUpdate::SetX(scroll));
+                cx.emit(ScrollEvent::SetX(scroll));
             },
         )
         .width(Units::Pixels(600.0))
