@@ -42,8 +42,8 @@ pub use gradient::*;
 mod shadow;
 use shadow::*;
 
-mod prop;
-pub use prop::*;
+// mod prop;
+// pub use prop::*;
 
 use crate::animation::{AnimationState, Interpolator, Transition};
 use crate::id::IdManager;

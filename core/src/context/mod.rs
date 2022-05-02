@@ -233,6 +233,72 @@ impl Context {
         self.focused = self.current;
     }
 
+    /// Sets the active flag of the current entity
+    pub fn set_active(&mut self, flag: bool) {
+        let current = self.current();
+        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
+            pseudo_classes.set(PseudoClass::ACTIVE, flag);
+        }
+
+        self.style().needs_relayout = true;
+        self.style().needs_redraw = true;
+    }
+
+    /// Sets the checked flag of the current entity
+    pub fn set_checked(&mut self, flag: bool) {
+        let current = self.current();
+        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
+            pseudo_classes.set(PseudoClass::CHECKED, flag);
+        }
+
+        self.style().needs_relayout = true;
+        self.style().needs_redraw = true;
+    }
+
+    /// Sets the checked flag of the current entity
+    pub fn set_selected(&mut self, flag: bool) {
+        let current = self.current();
+        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
+            pseudo_classes.set(PseudoClass::SELECTED, flag);
+        }
+
+        self.style().needs_relayout = true;
+        self.style().needs_redraw = true;
+    }
+
+    pub fn toggle_class(&mut self, class_name: &str, applied: bool) {
+        let current = self.current();
+        if let Some(class_list) = self.style().classes.get_mut(current) {
+            if applied {
+                class_list.insert(class_name.to_string());
+            } else {
+                class_list.remove(class_name);
+            }
+        } else if applied {
+            let mut class_list = HashSet::new();
+            class_list.insert(class_name.to_string());
+            self.style().classes.insert(current, class_list).expect("Failed to insert class name");
+        }
+
+        self.need_restyle();
+        self.style().needs_relayout = true;
+        self.style().needs_redraw = true;
+    }
+
+    /// Returns true if the current entity is disabled
+    pub fn is_disabled(&self) -> bool {
+        self.style_ref().disabled.get(self.current()).cloned().unwrap_or_default()
+    }
+
+    /// Returns true if the mouse cursor is over the current entity
+    pub fn is_over(&self) -> bool {
+        if let Some(pseudo_classes) = self.style_ref().pseudo_classes.get(self.current) {
+            pseudo_classes.contains(PseudoClass::OVER)
+        } else {
+            false
+        }
+    }
+
     pub fn hovered(&self) -> Entity {
         self.hovered
     }
@@ -991,7 +1057,10 @@ impl Context {
                 }
 
                 if *code == Code::Tab {
-                    self.focused.set_focus(self, false);
+                    let focused = self.focused;
+                    if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(focused) {
+                        pseudo_classes.set(PseudoClass::FOCUS, false);
+                    }
 
                     if self.modifiers.contains(Modifiers::SHIFT) {
                         let prev_focused = if let Some(prev_focused) =
@@ -1029,7 +1098,14 @@ impl Context {
                             self.focused = next_focused;
                         }
                     }
-                    self.focused.set_focus(self, true);
+
+                    let focused = self.focused;
+                    if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(focused) {
+                        pseudo_classes.set(PseudoClass::FOCUS, true);
+                    }
+
+                    self.style().needs_relayout = true;
+                    self.style().needs_redraw = true;
                 }
 
                 self.dispatch_direct_or_hovered(event, self.focused, true);

@@ -76,7 +76,7 @@ where
                     WindowEvent::MouseDown(_) => {
                         if flag {
                             if meta.origin != cx.current() {
-                                if !cx.current().is_over(cx) {
+                                if !cx.is_over() {
                                     (focus_event)(cx);
                                     meta.consume();
                                 }

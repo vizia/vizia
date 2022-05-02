@@ -217,7 +217,7 @@ impl<L: Lens> View for Slider<L> {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 self.is_dragging = true;
                 cx.capture();
-                cx.current().set_active(cx, true);
+                cx.set_active(true);
 
                 let thumb_size = self.internal.thumb_size;
                 let min = self.internal.range.start;
@@ -255,7 +255,7 @@ impl<L: Lens> View for Slider<L> {
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
                 cx.release();
-                cx.current().set_active(cx, false);
+                cx.set_active(false);
             }
 
             WindowEvent::MouseMove(x, y) => {
@@ -348,7 +348,7 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     ///     });
     /// ```
     pub fn range(self, range: Range<f32>) -> Self {
-        self.entity.emit(self.cx, SliderEventInternal::SetRange(range));
+        self.cx.emit_to(self.entity, SliderEventInternal::SetRange(range));
 
         self
     }

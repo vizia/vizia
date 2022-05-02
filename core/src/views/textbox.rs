@@ -333,7 +333,7 @@ impl Model for TextboxData {
             }
 
             TextEvent::StartEdit => {
-                if !cx.current().is_disabled(cx) {
+                if !cx.is_disabled() {
                     self.edit = true;
                 }
             }
@@ -550,17 +550,17 @@ where
 
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                if cx.current().is_over(cx) {
+                if cx.is_over() {
                     cx.emit(TextEvent::StartEdit);
 
                     cx.focus();
                     cx.capture();
-                    cx.current().set_checked(cx, true);
+                    cx.set_checked(true);
 
                     cx.emit(TextEvent::Hit(cx.mouse().cursorx, cx.mouse().cursory));
                 } else {
                     cx.release();
-                    cx.current().set_checked(cx, false);
+                    cx.set_checked(false);
                     cx.emit(TextEvent::EndEdit);
 
                     // Forward event to hovered
@@ -614,7 +614,7 @@ where
                             cx.emit(TextEvent::InsertText(text));
                         };
 
-                        cx.current().set_checked(cx, false);
+                        cx.set_checked(false);
                     } else {
                         cx.emit(TextEvent::InsertText("\n".to_owned()));
                     }
@@ -700,7 +700,7 @@ where
                 Code::Escape => {
                     //self.edit = false;
                     cx.emit(TextEvent::EndEdit);
-                    cx.current().set_checked(cx, false);
+                    cx.set_checked(false);
                 }
 
                 Code::Home => {

@@ -26,7 +26,7 @@ where
         handle
             .bind(MenuData::selected, move |handle, selected| {
                 let selected = selected.get(handle.cx) == Some(i);
-                handle.entity.set_selected(handle.cx, selected);
+                handle.cx.set_selected(selected);
                 if selected {
                     on_select(handle.cx);
                 } else {

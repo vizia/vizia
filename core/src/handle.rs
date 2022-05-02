@@ -73,7 +73,10 @@ impl<'a, T> Handle<'a, T> {
         Binding::new(self.cx, lens, move |cx, data| {
             let new_handle = Handle { entity, p: Default::default(), cx };
 
+            let prev = new_handle.cx.current();
+            new_handle.cx.set_current(new_handle.entity);
             (closure)(new_handle, data);
+            //new_handle.cx.set_current(prev);
         });
         self
     }

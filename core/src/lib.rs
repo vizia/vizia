@@ -59,7 +59,7 @@ pub mod prelude {
 
     pub use super::style::{
         Abilities, BorderCornerShape, Color, Display, GradientDirection, GradientStop,
-        LinearGradient, Opacity, Overflow, PropGet, PropSet, PseudoClass, Visibility,
+        LinearGradient, Opacity, Overflow, PseudoClass, Visibility,
     };
 
     pub use keyboard_types::Code;
