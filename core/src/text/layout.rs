@@ -1,10 +1,10 @@
 use unicode_bidi::{bidi_class, BidiClass};
 
 use crate::prelude::*;
-use femtovg::{ErrorKind, Paint, TextContext, TextMetrics};
-use std::ops::Range;
 use crate::resource::{FontOrId, ResourceManager};
 use crate::style::Style;
+use femtovg::{ErrorKind, Paint, TextContext, TextMetrics};
+use std::ops::Range;
 
 pub(crate) fn text_paint_layout(
     style: &Style,

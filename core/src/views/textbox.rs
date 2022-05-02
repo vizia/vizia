@@ -1,11 +1,14 @@
 use std::sync::Arc;
 
-use keyboard_types::Code;
 use crate::cache::BoundingBox;
+use keyboard_types::Code;
 
 use crate::prelude::*;
 
-use crate::text::{Direction, EditableText, idx_to_pos, measure_text_lines, Movement, pos_to_idx, Selection, text_layout, text_paint_general};
+use crate::text::{
+    idx_to_pos, measure_text_lines, pos_to_idx, text_layout, text_paint_general, Direction,
+    EditableText, Movement, Selection,
+};
 use crate::tree::TreeExt;
 
 #[derive(Lens)]

@@ -4,18 +4,18 @@ use crate::{
 };
 use std::cell::RefCell;
 // use glutin::event::WindowEvent;
+use vizia_core::cache::BoundingBox;
+use vizia_core::context::EventProxy;
+use vizia_core::events::EventManager;
+use vizia_core::fonts;
 use vizia_core::prelude::*;
+use vizia_core::resource::FontOrId;
+use vizia_core::window::Position;
 use winit::{
     dpi::LogicalSize,
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
-use vizia_core::cache::BoundingBox;
-use vizia_core::context::EventProxy;
-use vizia_core::events::EventManager;
-use vizia_core::fonts;
-use vizia_core::resource::FontOrId;
-use vizia_core::window::Position;
 
 pub struct Application {
     context: Context,

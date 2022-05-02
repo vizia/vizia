@@ -1,5 +1,5 @@
-use vizia::prelude::*;
 use vizia::fonts::unicode_names::CHECK;
+use vizia::prelude::*;
 
 fn main() {
     Application::new(|cx| {

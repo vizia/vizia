@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
-use vizia::prelude::*;
 use vizia::fonts::icons_names::DOWN;
+use vizia::prelude::*;
 
 use chrono::{NaiveDate, ParseError};
 
@@ -85,11 +85,13 @@ impl AppData {
 }
 
 fn main() {
-    Application::new(|cx|{
+    Application::new(|cx| {
         cx.add_theme(STYLE);
         AppData::new().build(cx);
-        VStack::new(cx, |cx|{
-            Dropdown::new(cx, move |cx|
+        VStack::new(cx, |cx| {
+            Dropdown::new(
+                cx,
+                move |cx|
                 // A Label and an Icon
                 HStack::new(cx, move |cx|{
                     Label::new(cx, AppData::choice)
@@ -98,25 +100,31 @@ fn main() {
                     Label::new(cx, DOWN).font("icons").left(Pixels(5.0)).right(Pixels(5.0));
                 }).width(Stretch(1.0)),
                 // List of options
-                move |cx|{
-                List::new(cx, AppData::options, |cx, _, item|{
-                    Label::new(cx, item)
-                        .width(Stretch(1.0))
-                        .child_top(Stretch(1.0))
-                        .child_bottom(Stretch(1.0))
-                        .bind(AppData::choice, move |handle, choice|{
-                            let selected = item.get(handle.cx) == choice.get(handle.cx);
-                            handle.background_color(if selected {Color::from("#f8ac14")} else {Color::white()});
-                        })
-                        .on_press(move |cx| {
-                            cx.emit(AppEvent::SetChoice(item.get(cx).to_string().to_owned()));
-                            cx.emit(PopupEvent::Close);
-                        });
-                });
-            }).width(Pixels(150.0));
+                move |cx| {
+                    List::new(cx, AppData::options, |cx, _, item| {
+                        Label::new(cx, item)
+                            .width(Stretch(1.0))
+                            .child_top(Stretch(1.0))
+                            .child_bottom(Stretch(1.0))
+                            .bind(AppData::choice, move |handle, choice| {
+                                let selected = item.get(handle.cx) == choice.get(handle.cx);
+                                handle.background_color(if selected {
+                                    Color::from("#f8ac14")
+                                } else {
+                                    Color::white()
+                                });
+                            })
+                            .on_press(move |cx| {
+                                cx.emit(AppEvent::SetChoice(item.get(cx).to_string().to_owned()));
+                                cx.emit(PopupEvent::Close);
+                            });
+                    });
+                },
+            )
+            .width(Pixels(150.0));
 
             Textbox::new(cx, AppData::start_date)
-                .on_edit(|cx, text|{
+                .on_edit(|cx, text| {
                     if let Ok(val) = text.parse::<SimpleDate>() {
                         cx.emit(AppEvent::SetStartDate(val));
                         cx.current.toggle_class(cx, "invalid", false);
@@ -127,7 +135,7 @@ fn main() {
                 .width(Pixels(150.0));
 
             Textbox::new(cx, AppData::end_date)
-                .on_edit(|cx, text|{
+                .on_edit(|cx, text| {
                     if let Ok(val) = text.parse::<SimpleDate>() {
                         cx.emit(AppEvent::SetEndDate(val));
                         cx.current.toggle_class(cx, "invalid", false);
@@ -138,11 +146,8 @@ fn main() {
                 .width(Pixels(150.0))
                 .disabled(AppData::choice.map(|choice| choice == "one-way flight"));
 
-            Button::new(cx, |_|{}, |cx|{
-                Label::new(cx, "Book")
-                    .width(Stretch(1.0))
-            })
-            .width(Pixels(150.0));
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Book").width(Stretch(1.0)))
+                .width(Pixels(150.0));
         })
         .row_between(Pixels(10.0))
         .child_space(Stretch(1.0));

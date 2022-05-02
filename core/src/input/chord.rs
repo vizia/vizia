@@ -1,5 +1,5 @@
-use std::hash::Hash;
 use crate::prelude::*;
+use std::hash::Hash;
 
 /// A key chord used inside of a [`Keymap`](crate::prelude::Keymap).
 ///

@@ -1,13 +1,13 @@
 #![allow(dead_code)]
 
+use crate::context::Context;
+use crate::entity::Entity;
+use crate::view::Canvas;
 use fluent_bundle::{FluentBundle, FluentResource};
 use image::GenericImageView;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 use unic_langid::LanguageIdentifier;
-use crate::context::Context;
-use crate::view::Canvas;
-use crate::entity::Entity;
 
 pub(crate) struct StoredImage {
     pub image: ImageOrId,

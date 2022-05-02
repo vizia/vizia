@@ -45,13 +45,13 @@ use shadow::*;
 mod prop;
 pub use prop::*;
 
-use bitflags::bitflags;
 use crate::animation::{AnimationState, Interpolator, Transition};
 use crate::id::IdManager;
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::sparse_set::SparseSet;
 use crate::storage::style_set::StyleSet;
 use crate::text::Selection;
+use bitflags::bitflags;
 
 bitflags! {
     /// Describes the capabilities of a view with respect to user interaction.

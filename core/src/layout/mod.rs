@@ -3,14 +3,14 @@
 //!
 //! All layout calculations are handled by the Morphorm crate.
 pub(crate) mod cache;
-pub(crate) mod node;
 pub(crate) mod hierarchy;
 pub(crate) mod iter;
+pub(crate) mod node;
 
 use crate::prelude::*;
-use morphorm::{Cache, Hierarchy};
-pub use morphorm::GeometryChanged;
 pub(crate) use iter::{LayoutChildIterator, LayoutTreeIterator};
+pub use morphorm::GeometryChanged;
+use morphorm::{Cache, Hierarchy};
 
 pub(crate) fn geometry_changed(cx: &mut Context, tree: &Tree) {
     for node in tree.down_iter() {

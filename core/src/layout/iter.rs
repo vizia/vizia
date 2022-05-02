@@ -1,6 +1,6 @@
+use crate::id::GenerationalId;
 use crate::prelude::*;
 use crate::tree::*;
-use crate::id::GenerationalId;
 
 /// Iterator for iterating through the tree in depth first preorder.
 pub struct LayoutTreeIterator<'a> {
@@ -105,9 +105,9 @@ impl<'a> DoubleEndedIterator for LayoutChildIterator<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::prelude::*;
-    use crate::layout::LayoutChildIterator;
     use crate::id::IdManager;
+    use crate::layout::LayoutChildIterator;
+    use crate::prelude::*;
 
     #[test]
     fn test_child_iter() {

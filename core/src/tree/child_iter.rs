@@ -1,6 +1,6 @@
+use crate::id::GenerationalId;
 use crate::prelude::*;
 use crate::tree::*;
-use crate::id::GenerationalId;
 
 /// Iterator for iterating the children of an entity.
 pub struct ChildIterator<'a> {

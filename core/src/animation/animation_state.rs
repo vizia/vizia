@@ -1,6 +1,6 @@
+use crate::animation::Interpolator;
 use instant::{Duration, Instant};
 use std::collections::HashSet;
-use crate::animation::Interpolator;
 
 use crate::prelude::*;
 

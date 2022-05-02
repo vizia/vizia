@@ -1,5 +1,5 @@
-use vizia::prelude::*;
 use vizia::fonts::icons_names::DOWN;
+use vizia::prelude::*;
 
 #[derive(Lens)]
 pub struct AppData {

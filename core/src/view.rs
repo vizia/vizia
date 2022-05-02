@@ -2,14 +2,14 @@ use std::{any::Any, collections::HashMap};
 
 use crate::prelude::*;
 
+use crate::events::ViewHandler;
+use crate::state::ModelDataStore;
+use crate::text::{idx_to_pos, measure_text_lines, text_layout, text_paint_draw};
 use femtovg::{
     renderer::OpenGl, Align, Baseline, ImageFlags, Paint, Path, PixelFormat, RenderTarget,
     TextMetrics,
 };
 use morphorm::Units;
-use crate::events::ViewHandler;
-use crate::state::ModelDataStore;
-use crate::text::{idx_to_pos, measure_text_lines, text_layout, text_paint_draw};
 
 /// The canvas we will be drawing to.
 ///
