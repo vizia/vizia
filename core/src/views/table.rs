@@ -32,8 +32,8 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for Table<L, T>
 where
     L: 'static + Lens<Target = Vec<T>>,
 {
-    fn element(&self) -> Option<String> {
-        Some("table".to_string())
+    fn element(&self) -> Option<&'static str> {
+        Some("table")
     }
 }
 

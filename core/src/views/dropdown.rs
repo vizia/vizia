@@ -31,7 +31,7 @@ impl Dropdown {
 }
 
 impl View for Dropdown {
-    fn element(&self) -> Option<String> {
-        Some(String::from("dropdown"))
+    fn element(&self) -> Option<&'static str> {
+        Some("dropdown")
     }
 }

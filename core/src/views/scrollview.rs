@@ -150,8 +150,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
 }
 
 impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
-    fn element(&self) -> Option<String> {
-        Some("scrollview".to_owned())
+    fn element(&self) -> Option<&'static str> {
+        Some("scrollview")
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {

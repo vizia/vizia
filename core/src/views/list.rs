@@ -48,8 +48,8 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
-    fn element(&self) -> Option<String> {
-        Some(String::from("list"))
+    fn element(&self) -> Option<&'static str> {
+        Some("list")
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {

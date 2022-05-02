@@ -36,7 +36,7 @@ impl<V: View> Press<V> {
 }
 
 impl<V: View> View for Press<V> {
-    fn element(&self) -> Option<String> {
+    fn element(&self) -> Option<&'static str> {
         self.view.element()
     }
 
@@ -90,7 +90,7 @@ impl<V: View> Release<V> {
 }
 
 impl<V: View> View for Release<V> {
-    fn element(&self) -> Option<String> {
+    fn element(&self) -> Option<&'static str> {
         self.view.element()
     }
 
@@ -148,7 +148,7 @@ impl<V: View> Hover<V> {
 }
 
 impl<V: View> View for Hover<V> {
-    fn element(&self) -> Option<String> {
+    fn element(&self) -> Option<&'static str> {
         self.view.element()
     }
 
@@ -204,7 +204,7 @@ impl<V: View> Over<V> {
 }
 
 impl<V: View> View for Over<V> {
-    fn element(&self) -> Option<String> {
+    fn element(&self) -> Option<&'static str> {
         self.view.element()
     }
 
@@ -258,7 +258,7 @@ impl<V: View> Leave<V> {
 }
 
 impl<V: View> View for Leave<V> {
-    fn element(&self) -> Option<String> {
+    fn element(&self) -> Option<&'static str> {
         self.view.element()
     }
 
@@ -314,7 +314,7 @@ impl<V: View> Move<V> {
 }
 
 impl<V: View> View for Move<V> {
-    fn element(&self) -> Option<String> {
+    fn element(&self) -> Option<&'static str> {
         self.view.element()
     }
 
@@ -368,7 +368,7 @@ impl<V: View> FocusIn<V> {
 }
 
 impl<V: View> View for FocusIn<V> {
-    fn element(&self) -> Option<String> {
+    fn element(&self) -> Option<&'static str> {
         self.view.element()
     }
 
@@ -422,7 +422,7 @@ impl<V: View> FocusOut<V> {
 }
 
 impl<V: View> View for FocusOut<V> {
-    fn element(&self) -> Option<String> {
+    fn element(&self) -> Option<&'static str> {
         self.view.element()
     }
 
@@ -476,7 +476,7 @@ impl<V: View> Geo<V> {
 }
 
 impl<V: View> View for Geo<V> {
-    fn element(&self) -> Option<String> {
+    fn element(&self) -> Option<&'static str> {
         self.view.element()
     }
 

@@ -545,8 +545,8 @@ impl<L: Lens> View for Textbox<L>
 where
     <L as Lens>::Target: Data + ToString,
 {
-    fn element(&self) -> Option<String> {
-        Some("textbox".to_string())
+    fn element(&self) -> Option<&'static str> {
+        Some("textbox")
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {

@@ -17,8 +17,8 @@ impl RadioButton {
 }
 
 impl View for RadioButton {
-    fn element(&self) -> Option<String> {
-        Some(String::from("radiobutton"))
+    fn element(&self) -> Option<&'static str> {
+        Some("radiobutton")
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {

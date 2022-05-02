@@ -9,7 +9,7 @@ impl Image {
 }
 
 impl View for Image {
-    fn element(&self) -> Option<String> {
-        Some(String::from("image"))
+    fn element(&self) -> Option<&'static str> {
+        Some("image")
     }
 }

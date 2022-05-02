@@ -103,7 +103,7 @@ impl Label {
 }
 
 impl View for Label {
-    fn element(&self) -> Option<String> {
-        Some(String::from("label"))
+    fn element(&self) -> Option<&'static str> {
+        Some("label")
     }
 }

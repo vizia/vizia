@@ -58,7 +58,9 @@ pub trait View: 'static + Sized {
         handle
     }
 
-    fn element(&self) -> Option<String> {
+    /// The name of the view. This is used in css: to style every single one of a given view, you
+    /// specify the element name.
+    fn element(&self) -> Option<&'static str> {
         None
     }
 
@@ -688,7 +690,7 @@ impl<T: View> ViewHandler for T
 where
     T: std::marker::Sized + View + 'static,
 {
-    fn element(&self) -> Option<String> {
+    fn element(&self) -> Option<&'static str> {
         <T as View>::element(&self)
     }
 

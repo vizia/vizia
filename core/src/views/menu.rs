@@ -113,8 +113,8 @@ impl MenuController {
 }
 
 impl View for MenuController {
-    fn element(&self) -> Option<String> {
-        Some("menucontroller".to_owned())
+    fn element(&self) -> Option<&'static str> {
+        Some("menucontroller")
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
@@ -201,8 +201,8 @@ impl MenuStack {
 }
 
 impl View for MenuStack {
-    fn element(&self) -> Option<String> {
-        Some("menustack".to_owned())
+    fn element(&self) -> Option<&'static str> {
+        Some("menustack")
     }
 }
 
@@ -242,8 +242,8 @@ impl Menu {
 }
 
 impl View for Menu {
-    fn element(&self) -> Option<String> {
-        Some("menu".to_owned())
+    fn element(&self) -> Option<&'static str> {
+        Some("menu")
     }
 }
 
@@ -333,8 +333,8 @@ impl MenuButton {
 }
 
 impl View for MenuButton {
-    fn element(&self) -> Option<String> {
-        Some("menubutton".to_owned())
+    fn element(&self) -> Option<&'static str> {
+        Some("menubutton")
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {

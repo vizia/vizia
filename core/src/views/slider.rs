@@ -178,8 +178,8 @@ where
 }
 
 impl<L: Lens> View for Slider<L> {
-    fn element(&self) -> Option<String> {
-        Some(String::from("slider"))
+    fn element(&self) -> Option<&'static str> {
+        Some("slider")
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
