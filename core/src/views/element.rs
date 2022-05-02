@@ -12,7 +12,7 @@ impl Element {
 }
 
 impl View for Element {
-    fn element(&self) -> Option<String> {
-        Some(String::from("element"))
+    fn element(&self) -> Option<&'static str> {
+        Some("element")
     }
 }

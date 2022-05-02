@@ -85,8 +85,8 @@ impl Button {
 }
 
 impl View for Button {
-    fn element(&self) -> Option<String> {
-        Some(String::from("button"))
+    fn element(&self) -> Option<&'static str> {
+        Some("button")
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {

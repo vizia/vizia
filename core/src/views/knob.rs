@@ -120,8 +120,8 @@ impl<'a, L: Lens<Target = f32>> Handle<'a, Knob<L>> {
 }
 
 impl<L: Lens<Target = f32>> View for Knob<L> {
-    fn element(&self) -> Option<String> {
-        Some(String::from("knob"))
+    fn element(&self) -> Option<&'static str> {
+        Some("knob")
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {

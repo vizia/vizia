@@ -21,8 +21,8 @@ impl VStack {
 }
 
 impl View for VStack {
-    fn element(&self) -> Option<String> {
-        Some("vstack".to_string())
+    fn element(&self) -> Option<&'static str> {
+        Some("vstack")
     }
 }
 
@@ -44,8 +44,8 @@ impl HStack {
 }
 
 impl View for HStack {
-    fn element(&self) -> Option<String> {
-        Some("hstack".to_string())
+    fn element(&self) -> Option<&'static str> {
+        Some("hstack")
     }
 }
 
@@ -66,7 +66,7 @@ impl ZStack {
 }
 
 impl View for ZStack {
-    fn element(&self) -> Option<String> {
-        Some("zstack".to_string())
+    fn element(&self) -> Option<&'static str> {
+        Some("zstack")
     }
 }

@@ -153,8 +153,8 @@ impl Handle<'_, Checkbox> {
 }
 
 impl View for Checkbox {
-    fn element(&self) -> Option<String> {
-        Some(String::from("checkbox"))
+    fn element(&self) -> Option<&'static str> {
+        Some("checkbox")
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {

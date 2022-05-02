@@ -3,7 +3,7 @@ use crate::prelude::*;
 use std::any::Any;
 
 pub trait ViewHandler: Any {
-    fn element(&self) -> Option<String> {
+    fn element(&self) -> Option<&'static str> {
         None
     }
 

@@ -107,7 +107,7 @@ where
     L: Lens,
     L::Target: Into<bool>,
 {
-    fn element(&self) -> Option<String> {
-        Some(String::from("popup"))
+    fn element(&self) -> Option<&'static str> {
+        Some("popup")
     }
 }

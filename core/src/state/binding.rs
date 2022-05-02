@@ -128,8 +128,8 @@ where
 }
 
 impl<L: 'static + Lens> View for Binding<L> {
-    fn element(&self) -> Option<String> {
-        Some("binding".to_string())
+    fn element(&self) -> Option<&'static str> {
+        Some("binding")
     }
 
     fn body<'a>(&mut self, cx: &'a mut Context) {

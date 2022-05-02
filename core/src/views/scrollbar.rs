@@ -95,8 +95,8 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
 }
 
 impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
-    fn element(&self) -> Option<String> {
-        Some(String::from("scrollbar"))
+    fn element(&self) -> Option<&'static str> {
+        Some("scrollbar")
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
