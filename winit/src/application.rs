@@ -5,6 +5,7 @@ use crate::{
 use std::cell::RefCell;
 // use glutin::event::WindowEvent;
 use vizia_core::cache::BoundingBox;
+#[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
 use vizia_core::events::EventManager;
 use vizia_core::fonts;
