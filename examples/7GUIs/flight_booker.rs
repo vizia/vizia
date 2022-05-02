@@ -127,9 +127,9 @@ fn main() {
                 .on_edit(|cx, text| {
                     if let Ok(val) = text.parse::<SimpleDate>() {
                         cx.emit(AppEvent::SetStartDate(val));
-                        cx.current.toggle_class(cx, "invalid", false);
+                        cx.current().toggle_class(cx, "invalid", false);
                     } else {
-                        cx.current.toggle_class(cx, "invalid", true);
+                        cx.current().toggle_class(cx, "invalid", true);
                     }
                 })
                 .width(Pixels(150.0));
@@ -138,9 +138,9 @@ fn main() {
                 .on_edit(|cx, text| {
                     if let Ok(val) = text.parse::<SimpleDate>() {
                         cx.emit(AppEvent::SetEndDate(val));
-                        cx.current.toggle_class(cx, "invalid", false);
+                        cx.current().toggle_class(cx, "invalid", false);
                     } else {
-                        cx.current.toggle_class(cx, "invalid", true);
+                        cx.current().toggle_class(cx, "invalid", true);
                     }
                 })
                 .width(Pixels(150.0))

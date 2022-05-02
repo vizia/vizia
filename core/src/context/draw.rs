@@ -80,7 +80,7 @@ impl<'a> DrawContext<'a> {
     }
 
     pub fn has_pseudo_class(&self, entity: Entity, cls: PseudoClass) -> bool {
-        self.0.style.pseudo_classes.get(entity).copied().unwrap_or_default().contains(cls)
+        self.0.has_pseudo_class(entity, cls)
     }
 
     pub fn logical_to_physical(&self, logical: f32) -> f32 {

@@ -147,10 +147,10 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 self.is_dragging = true;
-                self.prev_drag_y = cx.mouse.left.pos_down.1;
+                self.prev_drag_y = cx.mouse().left.pos_down.1;
 
                 cx.capture();
-                cx.focused = cx.current;
+                cx.focus();
 
                 self.continuous_normal = self.lens.get(cx);
 
@@ -181,7 +181,7 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
 
                     self.prev_drag_y = *y;
 
-                    if cx.modifiers.contains(Modifiers::SHIFT) {
+                    if cx.modifiers().contains(Modifiers::SHIFT) {
                         delta_normal *= self.modifier_scalar;
                     }
 
@@ -430,7 +430,7 @@ impl Handle<'_, TickKnob> {
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<TickKnob>() {
                     knob.normalized_value = value;
-                    cx.style.needs_redraw = true;
+                    cx.style().needs_redraw = true;
                 }
             }
         });
@@ -563,7 +563,7 @@ impl Handle<'_, ArcTrack> {
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<ArcTrack>() {
                     knob.normalized_value = value;
-                    cx.style.needs_redraw = true;
+                    cx.style().needs_redraw = true;
                 }
             }
         });

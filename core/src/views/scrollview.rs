@@ -116,10 +116,10 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                 if geo.contains(GeometryChanged::HEIGHT_CHANGED)
                     || geo.contains(GeometryChanged::WIDTH_CHANGED)
                 {
-                    cx.emit(ScrollEvent::ChildGeo(
-                        cx.cache.get_width(cx.current),
-                        cx.cache.get_height(cx.current),
-                    ));
+                    let current = cx.current();
+                    let width = cx.cache().get_width(current);
+                    let height = cx.cache().get_height(current);
+                    cx.emit(ScrollEvent::ChildGeo(width, height));
                 }
             });
         if scroll_y {
@@ -160,16 +160,16 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
                 if geo.contains(GeometryChanged::HEIGHT_CHANGED)
                     || geo.contains(GeometryChanged::WIDTH_CHANGED)
                 {
-                    cx.emit(ScrollEvent::ParentGeo(
-                        cx.cache.get_width(cx.current),
-                        cx.cache.get_height(cx.current),
-                    ));
+                    let current = cx.current();
+                    let width = cx.cache().get_width(current);
+                    let height = cx.cache().get_height(current);
+                    cx.emit(ScrollEvent::ParentGeo(width, height));
                 }
             }
 
             WindowEvent::MouseScroll(x, y) => {
                 let (x, y) =
-                    if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, *x) } else { (*x, -*y) };
+                    if cx.modifiers().contains(Modifiers::SHIFT) { (-*y, *x) } else { (*x, -*y) };
 
                 // what percentage of the negative space does this cross?
                 let data = self.data.get(cx);

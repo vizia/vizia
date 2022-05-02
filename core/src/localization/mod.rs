@@ -112,7 +112,7 @@ impl Localized {
 
 impl Res<String> for Localized {
     fn get_val(&self, cx: &Context) -> String {
-        let bundle = cx.resource_manager.current_translation();
+        let bundle = cx.resource_manager_ref().current_translation();
         let message = if let Some(msg) = bundle.get_message(&self.key) {
             msg
         } else {
@@ -140,14 +140,13 @@ impl Res<String> for Localized {
     where
         F: 'static + Clone + Fn(&mut Context, Entity, String),
     {
-        let prev_current = cx.current;
-        cx.current = entity;
-        let lenses = self.args.values().map(|x| x.make_clone()).collect();
-        let self2 = self.clone();
-        bind_recursive(cx, &lenses, move |cx| {
-            closure(cx, entity, self2.get_val(cx));
+        cx.with_current(entity, |cx| {
+            let lenses = self.args.values().map(|x| x.make_clone()).collect();
+            let self2 = self.clone();
+            bind_recursive(cx, &lenses, move |cx| {
+                closure(cx, entity, self2.get_val(cx));
+            });
         });
-        cx.current = prev_current;
     }
 }
 

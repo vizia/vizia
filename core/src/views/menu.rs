@@ -122,7 +122,8 @@ impl View for MenuController {
 
         event.map(|window_event, meta| {
             if active {
-                let is_child = cx.hovered.is_descendant_of(&cx.tree, cx.current);
+                let current = cx.current();
+                let is_child = cx.hovered().is_descendant_of(cx.tree(), current);
                 // we capture focus in order to see clicks outside the menus, but we don't want
                 // to deprive our children of their events.
                 // We also want mouse scroll events to be seen by everyone
@@ -141,7 +142,7 @@ impl View for MenuController {
                         cx.event_queue.push_back(
                             Event::new(window_event.clone())
                                 .propagate(Propagation::Up)
-                                .target(cx.hovered)
+                                .target(cx.hovered())
                                 .origin(meta.origin.clone()),
                         );
                     }
@@ -150,8 +151,8 @@ impl View for MenuController {
                         cx.event_queue.push_back(
                             Event::new(MenuEvent::Close)
                                 .propagate(Propagation::Subtree)
-                                .target(cx.current)
-                                .origin(cx.current),
+                                .target(cx.current())
+                                .origin(cx.current()),
                         );
                     }
                 }
@@ -164,8 +165,8 @@ impl View for MenuController {
                     cx.event_queue.push_back(
                         Event::new(WindowEvent::MouseOver)
                             .propagate(Propagation::Up)
-                            .target(cx.hovered)
-                            .origin(cx.current),
+                            .target(cx.hovered())
+                            .origin(cx.current()),
                     );
                 }
             }
@@ -234,7 +235,7 @@ impl Menu {
                     Event::new(MenuEvent::Close)
                         .target(entity)
                         .propagate(Propagation::Subtree)
-                        .origin(cx.current),
+                        .origin(cx.current()),
                 );
             },
         )

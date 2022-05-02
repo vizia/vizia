@@ -30,9 +30,10 @@ pub trait View: 'static + Sized {
         F: FnOnce(&mut Context),
     {
         let id = cx.entity_manager.create();
-        cx.tree.add(id, cx.current).expect("Failed to add to tree");
-        cx.cache.add(id).expect("Failed to add to cache");
-        cx.style.add(id);
+        let current = cx.current();
+        cx.tree().add(id, current).expect("Failed to add to tree");
+        cx.cache().add(id).expect("Failed to add to cache");
+        cx.style().add(id);
         cx.views.insert(id, Box::new(self));
 
         cx.data
@@ -48,12 +49,7 @@ pub trait View: 'static + Sized {
 
         let handle = Handle { entity: id, p: Default::default(), cx };
 
-        let prev = handle.cx.current;
-        handle.cx.current = handle.entity;
-
-        (content)(handle.cx);
-
-        handle.cx.current = prev;
+        handle.cx.with_current(handle.entity, content);
 
         handle
     }

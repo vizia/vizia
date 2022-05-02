@@ -5,6 +5,7 @@ use instant::{Duration, Instant};
 use std::any::Any;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::error::Error;
 use std::sync::Mutex;
 
 #[cfg(feature = "clipboard")]
@@ -47,34 +48,34 @@ const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 /// This type is part of the prelude.
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
-    pub tree: Tree,
-    pub current: Entity,
-    //pub views: HashMap<Entity, Box<dyn ViewHandler>>,
+    tree: Tree,
+    current: Entity,
+    /// TODO make this private when there's no longer a need to mutate views after building
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
-    //pub views: SparseSet<Box<dyn ViewHandler>>,
     pub(crate) data: SparseSet<ModelDataStore>,
-    pub event_queue: VecDeque<Event>,
-    pub listeners: HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
-    pub style: Style,
-    pub cache: CachedData,
+    pub(crate) event_queue: VecDeque<Event>,
+    pub(crate) listeners:
+        HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
+    style: Style,
+    cache: CachedData,
 
-    pub environment: Environment,
+    environment: Environment,
 
-    pub mouse: MouseState,
-    pub modifiers: Modifiers,
+    mouse: MouseState,
+    modifiers: Modifiers,
 
-    pub captured: Entity,
-    pub hovered: Entity,
-    pub focused: Entity,
+    captured: Entity,
+    pub(crate) hovered: Entity,
+    focused: Entity,
 
-    pub resource_manager: ResourceManager,
+    resource_manager: ResourceManager,
 
-    pub text_context: TextContext,
+    text_context: TextContext,
 
-    pub event_proxy: Option<Box<dyn EventProxy>>,
+    event_proxy: Option<Box<dyn EventProxy>>,
 
     #[cfg(feature = "clipboard")]
-    pub clipboard: Box<dyn ClipboardProvider>,
+    clipboard: Box<dyn ClipboardProvider>,
 
     click_time: Instant,
     double_click: bool,
@@ -125,6 +126,98 @@ impl Context {
         result
     }
 
+    /// Access to the tree of entities
+    pub fn tree(&mut self) -> &mut Tree {
+        &mut self.tree
+    }
+
+    pub fn tree_ref(&self) -> &Tree {
+        &self.tree
+    }
+
+    /// The "current" entity, generally the entity which is currently being built or the entity
+    /// which is currently having an event dispatched to it.
+    pub fn current(&self) -> Entity {
+        self.current
+    }
+
+    /// Set the current entity. This is useful in user code when you're performing black magic and
+    /// want to trick other parts of the code into thinking you're processing some other part of the
+    /// tree.
+    pub fn set_current(&mut self, e: Entity) {
+        self.current = e;
+    }
+
+    /// Makes the above black magic more explicit
+    pub(crate) fn with_current(&mut self, e: Entity, f: impl FnOnce(&mut Context)) {
+        let prev = self.current;
+        self.current = e;
+        f(self);
+        self.current = prev;
+    }
+
+    /// The style storage for the application. Used to get properties set through inline style
+    /// attributes or CSS.
+    pub fn style(&mut self) -> &mut Style {
+        &mut self.style
+    }
+
+    pub fn style_ref(&self) -> &Style {
+        &self.style
+    }
+
+    /// The cache storage for the application. Used to get intermediate data computed during the
+    /// layout and rendering processes.
+    pub fn cache(&mut self) -> &mut CachedData {
+        &mut self.cache
+    }
+
+    pub fn cache_ref(&self) -> &CachedData {
+        &self.cache
+    }
+
+    pub fn environment(&mut self) -> &mut Environment {
+        &mut self.environment
+    }
+
+    /// The current femtovg text context. Useful when measuring or rendering fonts.
+    pub fn text_context(&mut self) -> &mut TextContext {
+        &mut self.text_context
+    }
+
+    /// The current mouse state, i.e. the button and motion information.
+    pub fn mouse(&self) -> &MouseState {
+        &self.mouse
+    }
+
+    pub fn resource_manager(&mut self) -> &mut ResourceManager {
+        &mut self.resource_manager
+    }
+
+    pub fn resource_manager_ref(&self) -> &ResourceManager {
+        &self.resource_manager
+    }
+
+    /// The current keyboard modifiers state.
+    pub fn modifiers(&self) -> Modifiers {
+        self.modifiers
+    }
+
+    /// Mark the application as needing to rerun the draw method
+    pub fn need_redraw(&mut self) {
+        self.style.needs_redraw = true;
+    }
+
+    /// Mark the application as needing to recompute view styles
+    pub fn need_restyle(&mut self) {
+        self.style.needs_restyle = true;
+    }
+
+    /// Mark the application as needing to rerun layout computations
+    pub fn need_relayout(&mut self) {
+        self.style.needs_relayout = true;
+    }
+
     /// Causes mouse events to propagate to the current entity until released
     pub fn capture(&mut self) {
         self.captured = self.current;
@@ -133,6 +226,59 @@ impl Context {
     /// Releases the mouse events capture
     pub fn release(&mut self) {
         self.captured = Entity::null();
+    }
+
+    /// Sets application focus to the current entity
+    pub fn focus(&mut self) {
+        self.focused = self.current;
+    }
+
+    pub fn hovered(&self) -> Entity {
+        self.hovered
+    }
+
+    pub fn captured(&self) -> Entity {
+        self.captured
+    }
+
+    /// You should not call this method unless you are writing a windowing backend, in which case
+    /// you should consult the existing windowing backends for usage information.
+    pub fn set_event_proxy(&mut self, proxy: Box<dyn EventProxy>) {
+        if self.event_proxy.is_some() {
+            panic!("Set the event proxy twice. This should never happen.");
+        }
+
+        self.event_proxy = Some(proxy);
+    }
+
+    /// You should not call this method unless you are writing a windowing backend, in which case
+    /// you should consult the existing windowing backends for usage information.
+    #[cfg(feature = "clipboard")]
+    pub fn set_clipboard_provider(&mut self, clipboard: Box<dyn ClipboardProvider>) {
+        self.clipboard = clipboard;
+    }
+
+    /// Get the contents of the system clipboard. This may fail for a variety of backend-specific
+    /// reasons.
+    #[cfg(feature = "clipboard")]
+    pub fn get_clipboard(&mut self) -> Result<String, Box<dyn Error + Send + Sync + 'static>> {
+        self.clipboard.get_contents()
+    }
+
+    /// Set the contents of the system clipboard. This may fail for a variety of backend-specific
+    /// reasons.
+    #[cfg(feature = "clipboard")]
+    pub fn set_clipboard(
+        &mut self,
+        text: String,
+    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+        self.clipboard.set_contents(text)
+    }
+
+    /// Check whether an entity has a given pseudoclass, e.g. detecting if it's checked, selected,
+    /// etc.
+    pub fn has_pseudo_class(&self, entity: Entity, cls: PseudoClass) -> bool {
+        self.style.pseudo_classes.get(entity).copied().unwrap_or_default().contains(cls)
     }
 
     pub fn remove_children(&mut self, entity: Entity) {
@@ -199,6 +345,16 @@ impl Context {
         );
     }
 
+    /// Send an event with custom origin and propagation information.
+    pub fn emit_custom(&mut self, event: Event) {
+        self.event_queue.push_back(event);
+    }
+
+    /// Check whether there are any events in the queue waiting for the next event dispatch cycle.
+    pub fn has_queued_events(&self) -> bool {
+        !self.event_queue.is_empty()
+    }
+
     /// Add a listener to an entity.
     ///
     /// A listener can be used to handle events which would not normally propagate to the entity.
@@ -233,6 +389,28 @@ impl Context {
     /// Sets the global default font for the application.
     pub fn set_default_font(&mut self, name: &str) {
         self.style.default_font = name.to_string();
+    }
+
+    /// Ensure all FontOrId entires are loaded into the contexts and become Ids.
+    pub fn synchronize_fonts(&mut self, canvas: &mut Canvas) {
+        for (name, font) in self.resource_manager.fonts.iter_mut() {
+            match font {
+                FontOrId::Font(data) => {
+                    let id1 = canvas
+                        .add_font_mem(&data.clone())
+                        .expect(&format!("Failed to load font file for: {}", name));
+                    let id2 = self.text_context.add_font_mem(&data.clone()).expect("failed");
+                    if id1 != id2 {
+                        panic!(
+                            "Fonts in canvas must have the same id as fonts in the text context"
+                        );
+                    }
+                    *font = FontOrId::Id(id1);
+                }
+
+                _ => {}
+            }
+        }
     }
 
     pub fn add_theme(&mut self, theme: &str) {

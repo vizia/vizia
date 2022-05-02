@@ -158,7 +158,7 @@ where
     /// };
     /// ```
     pub fn pressed_actions(&self, cx: &Context, code: Code) -> impl Iterator<Item = &T> {
-        if let Some(actions) = self.actions.get(&KeyChord::new(cx.modifiers, code)) {
+        if let Some(actions) = self.actions.get(&KeyChord::new(cx.modifiers(), code)) {
             actions.iter()
         } else {
             [].iter()

@@ -147,10 +147,10 @@ where
                         .class("thumb")
                         .on_geo_changed(|cx, geo| {
                             if geo.contains(GeometryChanged::WIDTH_CHANGED) {
-                                cx.emit(SliderEventInternal::SetThumbSize(
-                                    cx.cache.get_width(cx.current),
-                                    cx.cache.get_height(cx.current),
-                                ));
+                                let current = cx.current();
+                                let width = cx.cache().get_width(current);
+                                let height = cx.cache().get_height(current);
+                                cx.emit(SliderEventInternal::SetThumbSize(width, height));
                             }
                         })
                         .bind(lens.clone(), move |handle, value| {
@@ -201,8 +201,9 @@ impl<L: Lens> View for Slider<L> {
 
         event.map(|window_event, _| match window_event {
             WindowEvent::GeometryChanged(_) => {
-                let width = cx.cache.get_width(cx.current);
-                let height = cx.cache.get_height(cx.current);
+                let current = cx.current();
+                let width = cx.cache().get_width(current);
+                let height = cx.cache().get_height(current);
 
                 if width >= height {
                     self.internal.orientation = Orientation::Horizontal;
@@ -216,25 +217,27 @@ impl<L: Lens> View for Slider<L> {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 self.is_dragging = true;
                 cx.capture();
-                cx.current.set_active(cx, true);
+                cx.current().set_active(cx, true);
 
                 let thumb_size = self.internal.thumb_size;
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
 
+                let current = cx.current();
+                let width = cx.cache().get_width(current);
+                let height = cx.cache().get_height(current);
+                let posx = cx.cache().get_posx(current);
+                let posy = cx.cache().get_posy(current);
+
                 let mut dx = match self.internal.orientation {
                     Orientation::Horizontal => {
-                        (cx.mouse.left.pos_down.0
-                            - cx.cache.get_posx(cx.current)
-                            - thumb_size / 2.0)
-                            / (cx.cache.get_width(cx.current) - thumb_size)
+                        (cx.mouse().left.pos_down.0 - posx - thumb_size / 2.0)
+                            / (width - thumb_size)
                     }
 
                     Orientation::Vertical => {
-                        (cx.cache.get_height(cx.current)
-                            - (cx.mouse.left.pos_down.1 - cx.cache.get_posy(cx.current))
-                            - thumb_size / 2.0)
-                            / (cx.cache.get_height(cx.current) - thumb_size)
+                        (height - (cx.mouse().left.pos_down.1 - posy) - thumb_size / 2.0)
+                            / (height - thumb_size)
                     }
                 };
 
@@ -252,7 +255,7 @@ impl<L: Lens> View for Slider<L> {
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
                 cx.release();
-                cx.current.set_active(cx, false);
+                cx.current().set_active(cx, false);
             }
 
             WindowEvent::MouseMove(x, y) => {
@@ -262,17 +265,19 @@ impl<L: Lens> View for Slider<L> {
                     let min = self.internal.range.start;
                     let max = self.internal.range.end;
 
+                    let current = cx.current();
+                    let width = cx.cache().get_width(current);
+                    let height = cx.cache().get_height(current);
+                    let posx = cx.cache().get_posx(current);
+                    let posy = cx.cache().get_posy(current);
+
                     let mut dx = match self.internal.orientation {
                         Orientation::Horizontal => {
-                            (*x - cx.cache.get_posx(cx.current) - thumb_size / 2.0)
-                                / (cx.cache.get_width(cx.current) - thumb_size)
+                            (*x - posx - thumb_size / 2.0) / (width - thumb_size)
                         }
 
                         Orientation::Vertical => {
-                            (cx.cache.get_height(cx.current)
-                                - (*y - cx.cache.get_posy(cx.current))
-                                - thumb_size / 2.0)
-                                / (cx.cache.get_height(cx.current) - thumb_size)
+                            (height - (*y - posy) - thumb_size / 2.0) / (height - thumb_size)
                         }
                     };
 

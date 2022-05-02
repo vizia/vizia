@@ -123,7 +123,7 @@ pub trait PropSet: AsEntity + Sized {
 
     // TODO
     fn set_name(self, cx: &mut Context, name: &str) -> Entity {
-        cx.style.name.insert(self.entity(), name.to_string());
+        cx.style().name.insert(self.entity(), name.to_string());
 
         self.entity()
     }
@@ -151,26 +151,26 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.class(cx, "foo").class(cx, "bar");
     /// ```
     fn class(self, cx: &mut Context, class_name: &str) -> Entity {
-        if let Some(class_list) = cx.style.classes.get_mut(self.entity()) {
+        if let Some(class_list) = cx.style().classes.get_mut(self.entity()) {
             class_list.insert(class_name.to_string());
         } else {
             let mut class_list = HashSet::new();
             class_list.insert(class_name.to_string());
-            cx.style
+            cx.style()
                 .classes
                 .insert(self.entity(), class_list)
                 .expect("Failed to insert class name");
         }
 
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn toggle_class(self, cx: &mut Context, class_name: &str, applied: bool) -> Entity {
-        if let Some(class_list) = cx.style.classes.get_mut(self.entity()) {
+        if let Some(class_list) = cx.style().classes.get_mut(self.entity()) {
             if applied {
                 class_list.insert(class_name.to_string());
             } else {
@@ -179,7 +179,7 @@ pub trait PropSet: AsEntity + Sized {
         } else if applied {
             let mut class_list = HashSet::new();
             class_list.insert(class_name.to_string());
-            cx.style
+            cx.style()
                 .classes
                 .insert(self.entity(), class_list)
                 .expect("Failed to insert class name");
@@ -187,16 +187,16 @@ pub trait PropSet: AsEntity + Sized {
             return self.entity();
         }
 
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     // TODO move to PropGet
     fn get_parent(self, cx: &mut Context) -> Option<Entity> {
-        self.entity().parent(&cx.tree)
+        self.entity().parent(cx.tree())
     }
 
     // Pseudoclass
@@ -219,10 +219,10 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.set_disabled(cx, true);
     /// ```
     fn set_disabled(self, cx: &mut Context, value: bool) -> Entity {
-        cx.style.disabled.insert(self.entity(), value);
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().disabled.insert(self.entity(), value);
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         ////flag_geo_change(cx, self.entity());
 
@@ -246,41 +246,41 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.set_checked(cx, true);
     /// ```
     fn set_checked(self, cx: &mut Context, state: bool) -> Entity {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self.entity()) {
+        if let Some(pseudo_classes) = cx.style().pseudo_classes.get_mut(self.entity()) {
             pseudo_classes.set(PseudoClass::CHECKED, state);
         } else {
             let mut pseudoclass = PseudoClass::empty();
             pseudoclass.set(PseudoClass::CHECKED, state);
-            cx.style.pseudo_classes.insert(self.entity(), pseudoclass).unwrap();
+            cx.style().pseudo_classes.insert(self.entity(), pseudoclass).unwrap();
         }
 
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_over(self, cx: &mut Context, value: bool) -> Entity {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self.entity()) {
+        if let Some(pseudo_classes) = cx.style().pseudo_classes.get_mut(self.entity()) {
             pseudo_classes.set(PseudoClass::OVER, value);
         }
 
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_active(self, cx: &mut Context, value: bool) -> Entity {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self.entity()) {
+        if let Some(pseudo_classes) = cx.style().pseudo_classes.get_mut(self.entity()) {
             pseudo_classes.set(PseudoClass::ACTIVE, value);
         }
 
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -288,13 +288,13 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     fn set_hover(self, cx: &mut Context, value: bool) -> Entity {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self.entity()) {
+        if let Some(pseudo_classes) = cx.style().pseudo_classes.get_mut(self.entity()) {
             pseudo_classes.set(PseudoClass::HOVER, value);
         }
 
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -302,13 +302,13 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     fn set_focus(self, cx: &mut Context, value: bool) -> Entity {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self.entity()) {
+        if let Some(pseudo_classes) = cx.style().pseudo_classes.get_mut(self.entity()) {
             pseudo_classes.set(PseudoClass::FOCUS, value);
         }
 
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -316,13 +316,13 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     fn set_selected(self, cx: &mut Context, value: bool) -> Entity {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(self.entity()) {
+        if let Some(pseudo_classes) = cx.style().pseudo_classes.get_mut(self.entity()) {
             pseudo_classes.set(PseudoClass::SELECTED, value);
         }
 
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -348,11 +348,11 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.set_visibility(cx, Visibility::Invisible);
     /// ```
     fn set_visibility(self, cx: &mut Context, value: Visibility) -> Entity {
-        cx.style.visibility.insert(self.entity(), value);
+        cx.style().visibility.insert(self.entity(), value);
 
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -435,11 +435,11 @@ pub trait PropSet: AsEntity + Sized {
     // Overflow
     // TODO
     fn set_overflow(self, cx: &mut Context, value: Overflow) -> Entity {
-        cx.style.overflow.insert(self.entity(), value);
+        cx.style().overflow.insert(self.entity(), value);
 
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -456,11 +456,11 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.set_display(cx, Display::None);
     /// ```
     fn set_display(self, cx: &mut Context, value: Display) -> Entity {
-        cx.style.display.insert(self.entity(), value);
+        cx.style().display.insert(self.entity(), value);
 
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
         //flag_geo_change(cx, self.entity());
 
         self.entity()
@@ -470,11 +470,11 @@ pub trait PropSet: AsEntity + Sized {
     ///
     ///
     fn set_opacity(self, cx: &mut Context, value: f32) -> Entity {
-        cx.style.opacity.insert(self.entity(), Opacity(value));
+        cx.style().opacity.insert(self.entity(), Opacity(value));
 
-        cx.style.needs_restyle = true;
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.need_restyle();
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -483,9 +483,9 @@ pub trait PropSet: AsEntity + Sized {
     ///
     ///
     fn set_rotate(self, cx: &mut Context, value: f32) -> Entity {
-        cx.style.rotate.insert(self.entity(), value);
+        cx.style().rotate.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -494,17 +494,17 @@ pub trait PropSet: AsEntity + Sized {
     ///
     /// To position an entity, use the layout properties.
     fn set_translate(self, cx: &mut Context, value: (f32, f32)) -> Entity {
-        cx.style.translate.insert(self.entity(), value);
+        cx.style().translate.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_scale(self, cx: &mut Context, value: (f32, f32)) -> Entity {
-        cx.style.scale.insert(self.entity(), value);
+        cx.style().scale.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -526,10 +526,10 @@ pub trait PropSet: AsEntity + Sized {
     /// position-type: parent-directed (default) | self-directed  
     /// ```
     fn set_position_type(self, cx: &mut Context, value: PositionType) -> Entity {
-        cx.style.position_type.insert(self.entity(), value);
+        cx.style().position_type.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -552,13 +552,13 @@ pub trait PropSet: AsEntity + Sized {
     /// space: {}px | {}% | {}s | auto
     /// ```
     fn set_space(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.left.insert(self.entity(), value);
-        cx.style.right.insert(self.entity(), value);
-        cx.style.top.insert(self.entity(), value);
-        cx.style.bottom.insert(self.entity(), value);
+        cx.style().left.insert(self.entity(), value);
+        cx.style().right.insert(self.entity(), value);
+        cx.style().top.insert(self.entity(), value);
+        cx.style().bottom.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
         self.entity()
@@ -583,10 +583,10 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.set_left(cx, Stretch(1.0)).set_right(cx, Stretch(1.0));
     /// ```
     fn set_left(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.left.insert(self.entity(), value);
+        cx.style().left.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -608,10 +608,10 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.set_left(cx, Stretch(1.0)).set_right(cx, Stretch(1.0));
     /// ```
     fn set_right(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.right.insert(self.entity(), value);
+        cx.style().right.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -619,19 +619,19 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     fn set_top(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.top.insert(self.entity(), value);
+        cx.style().top.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_bottom(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.bottom.insert(self.entity(), value);
+        cx.style().bottom.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -640,10 +640,10 @@ pub trait PropSet: AsEntity + Sized {
 
     /// Set the minimum space to the left of an entity.
     fn set_min_left(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.min_left.insert(self.entity(), value);
+        cx.style().min_left.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -652,10 +652,10 @@ pub trait PropSet: AsEntity + Sized {
 
     /// Set the maximum space to the left of the entity.
     fn set_max_left(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.max_left.insert(self.entity(), value);
+        cx.style().max_left.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -664,10 +664,10 @@ pub trait PropSet: AsEntity + Sized {
 
     /// Set the mimimum space to the right of the entity.
     fn set_min_right(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.min_right.insert(self.entity(), value);
+        cx.style().min_right.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -676,10 +676,10 @@ pub trait PropSet: AsEntity + Sized {
 
     /// Set the maximum space to the right of the entity.
     fn set_max_right(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.max_right.insert(self.entity(), value);
+        cx.style().max_right.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -688,10 +688,10 @@ pub trait PropSet: AsEntity + Sized {
 
     /// Set the mimimum space above the entity.
     fn set_min_top(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.min_top.insert(self.entity(), value);
+        cx.style().min_top.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -700,10 +700,10 @@ pub trait PropSet: AsEntity + Sized {
 
     /// Set the maximum space above the entity.
     fn set_max_top(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.max_top.insert(self.entity(), value);
+        cx.style().max_top.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -712,10 +712,10 @@ pub trait PropSet: AsEntity + Sized {
 
     /// Set the minimum space below the entity.
     fn set_min_bottom(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.min_bottom.insert(self.entity(), value);
+        cx.style().min_bottom.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -724,10 +724,10 @@ pub trait PropSet: AsEntity + Sized {
 
     /// Set the maximum space below the entity.
     fn set_max_bottom(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.max_bottom.insert(self.entity(), value);
+        cx.style().max_bottom.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -738,10 +738,10 @@ pub trait PropSet: AsEntity + Sized {
     ///
     ///
     fn set_width(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.width.insert(self.entity(), value);
+        cx.style().width.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -750,20 +750,20 @@ pub trait PropSet: AsEntity + Sized {
     ///
     ///
     fn set_height(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.height.insert(self.entity(), value);
+        cx.style().height.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     // Size Constraints
     fn set_min_width(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.min_width.insert(self.entity(), value);
+        cx.style().min_width.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -771,10 +771,10 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     fn set_max_width(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.max_width.insert(self.entity(), value);
+        cx.style().max_width.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -782,10 +782,10 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     fn set_min_height(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.min_height.insert(self.entity(), value);
+        cx.style().min_height.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -793,10 +793,10 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     fn set_max_height(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.max_height.insert(self.entity(), value);
+        cx.style().max_height.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -813,10 +813,10 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.set_text(cx, "Hello World");
     /// ```
     fn set_text(self, cx: &mut Context, text: &str) -> Entity {
-        cx.style.text.insert(self.entity(), text.to_owned());
+        cx.style().text.insert(self.entity(), text.to_owned());
 
-        cx.style.needs_redraw = true;
-        cx.style.needs_relayout = true;
+        cx.style().needs_redraw = true;
+        cx.style().needs_relayout = true;
 
         self.entity()
     }
@@ -835,9 +835,9 @@ pub trait PropSet: AsEntity + Sized {
     /// entity.set_font(cx, "icon");
     /// ```
     fn set_font(self, cx: &mut Context, font: &str) -> Entity {
-        cx.style.font.insert(self.entity(), font.to_owned());
+        cx.style().font.insert(self.entity(), font.to_owned());
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -854,10 +854,10 @@ pub trait PropSet: AsEntity + Sized {
     /// font-size: {} | {}px | {}% | xx-small | x-small | small | medium | large | x-large | xx-large
     /// ```
     fn set_font_size(self, cx: &mut Context, value: f32) -> Entity {
-        cx.style.font_size.insert(self.entity(), value);
+        cx.style().font_size.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -875,9 +875,9 @@ pub trait PropSet: AsEntity + Sized {
     /// color: color_name | #hex_code
     /// ```
     fn set_color(self, cx: &mut Context, value: Color) -> Entity {
-        cx.style.font_color.insert(self.entity(), value);
+        cx.style().font_color.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -889,19 +889,19 @@ pub trait PropSet: AsEntity + Sized {
     /// are auto, and min-width and min-height and max-width and max-height do not apply, the view
     /// will size itself to the image.
     fn set_image(self, cx: &mut Context, text: &str) -> Entity {
-        cx.style.image.insert(self.entity(), text.to_owned());
+        cx.style().image.insert(self.entity(), text.to_owned());
 
-        cx.style.needs_redraw = true;
-        cx.style.needs_relayout = true;
+        cx.style().needs_redraw = true;
+        cx.style().needs_relayout = true;
 
         self.entity()
     }
 
     // Tooltip
     fn set_tooltip(self, cx: &mut Context, text: &str) -> Entity {
-        cx.style.tooltip.insert(self.entity(), text.to_owned()).expect("Failed to set tooltip");
+        cx.style().tooltip.insert(self.entity(), text.to_owned()).expect("Failed to set tooltip");
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -932,24 +932,24 @@ pub trait PropSet: AsEntity + Sized {
     /// background-color: color_name | #hex_code
     /// ```
     fn set_background_color(self, cx: &mut Context, value: Color) -> Entity {
-        cx.style.background_color.insert(self.entity(), value);
+        cx.style().background_color.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_background_gradient(self, cx: &mut Context, value: LinearGradient) -> Entity {
-        cx.style.background_gradient.insert(self.entity(), value);
+        cx.style().background_gradient.insert(self.entity(), value);
 
         self.entity()
     }
 
     // TODO
     fn set_background_image(self, cx: &mut Context, value: String) -> Entity {
-        cx.style.background_image.insert(self.entity(), value);
+        cx.style().background_image.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -972,9 +972,9 @@ pub trait PropSet: AsEntity + Sized {
     /// border-width: {}px | {}%
     /// ```
     fn set_border_width(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.border_width.insert(self.entity(), value);
+        cx.style().border_width.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -994,9 +994,9 @@ pub trait PropSet: AsEntity + Sized {
     /// border-color: color_name | #hex_code
     /// ```
     fn set_border_color(self, cx: &mut Context, value: Color) -> Entity {
-        cx.style.border_color.insert(self.entity(), value);
+        cx.style().border_color.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -1017,12 +1017,12 @@ pub trait PropSet: AsEntity + Sized {
     /// border-corner-shape: round | bevel
     /// ```
     fn set_border_corner_shape(self, cx: &mut Context, value: BorderCornerShape) -> Entity {
-        cx.style.border_shape_top_left.insert(self.entity(), value);
-        cx.style.border_shape_top_right.insert(self.entity(), value);
-        cx.style.border_shape_bottom_left.insert(self.entity(), value);
-        cx.style.border_shape_bottom_right.insert(self.entity(), value);
+        cx.style().border_shape_top_left.insert(self.entity(), value);
+        cx.style().border_shape_top_right.insert(self.entity(), value);
+        cx.style().border_shape_bottom_left.insert(self.entity(), value);
+        cx.style().border_shape_bottom_right.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -1030,9 +1030,9 @@ pub trait PropSet: AsEntity + Sized {
     /// Set the border corner shape for the top left corner of the entity.
     ///
     fn set_border_top_left_shape(self, cx: &mut Context, value: BorderCornerShape) -> Entity {
-        cx.style.border_shape_top_left.insert(self.entity(), value);
+        cx.style().border_shape_top_left.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -1040,9 +1040,9 @@ pub trait PropSet: AsEntity + Sized {
     /// Set the border corner shape for the top right corner of the entity.
     ///
     fn set_border_top_right_shape(self, cx: &mut Context, value: BorderCornerShape) -> Entity {
-        cx.style.border_shape_top_right.insert(self.entity(), value);
+        cx.style().border_shape_top_right.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -1050,9 +1050,9 @@ pub trait PropSet: AsEntity + Sized {
     /// Set the border corner shape for the bottom left corner of the entity.
     ///
     fn set_border_bottom_left_shape(self, cx: &mut Context, value: BorderCornerShape) -> Entity {
-        cx.style.border_shape_bottom_left.insert(self.entity(), value);
+        cx.style().border_shape_bottom_left.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -1060,9 +1060,9 @@ pub trait PropSet: AsEntity + Sized {
     /// Set the border corner shape for the bottom right corner of the entity.
     ///
     fn set_border_bottom_right_shape(self, cx: &mut Context, value: BorderCornerShape) -> Entity {
-        cx.style.border_shape_bottom_right.insert(self.entity(), value);
+        cx.style().border_shape_bottom_right.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -1071,44 +1071,44 @@ pub trait PropSet: AsEntity + Sized {
     ///
     ///
     fn set_border_radius(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.border_radius_top_left.insert(self.entity(), value);
-        cx.style.border_radius_top_right.insert(self.entity(), value);
-        cx.style.border_radius_bottom_left.insert(self.entity(), value);
-        cx.style.border_radius_bottom_right.insert(self.entity(), value);
+        cx.style().border_radius_top_left.insert(self.entity(), value);
+        cx.style().border_radius_top_right.insert(self.entity(), value);
+        cx.style().border_radius_bottom_left.insert(self.entity(), value);
+        cx.style().border_radius_bottom_right.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_border_radius_top_left(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.border_radius_top_left.insert(self.entity(), value);
+        cx.style().border_radius_top_left.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_border_radius_top_right(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.border_radius_top_right.insert(self.entity(), value);
+        cx.style().border_radius_top_right.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_border_radius_bottom_left(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.border_radius_bottom_left.insert(self.entity(), value);
+        cx.style().border_radius_bottom_left.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_border_radius_bottom_right(self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.border_radius_bottom_right.insert(self.entity(), value);
+        cx.style().border_radius_bottom_right.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
@@ -1135,39 +1135,39 @@ pub trait PropSet: AsEntity + Sized {
     // }
 
     fn set_outer_shadow_color(self, cx: &mut Context, value: Color) -> Self {
-        cx.style.outer_shadow_color.insert(self.entity(), value);
+        cx.style().outer_shadow_color.insert(self.entity(), value);
 
         self
     }
 
     fn set_outer_shadow_blur(self, cx: &mut Context, value: Units) -> Self {
-        cx.style.outer_shadow_blur.insert(self.entity(), value);
+        cx.style().outer_shadow_blur.insert(self.entity(), value);
 
         self
     }
 
     // Clipping
     fn set_clip_widget(self, cx: &mut Context, value: Entity) -> Entity {
-        cx.style.clip_widget.insert(self.entity(), value).expect("Failed to set clip widget");
+        cx.style().clip_widget.insert(self.entity(), value).expect("Failed to set clip widget");
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_z_order(self, cx: &mut Context, value: i32) -> Entity {
-        cx.style.z_order.insert(self.entity(), value);
+        cx.style().z_order.insert(self.entity(), value);
 
-        cx.style.needs_redraw = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_next_focus(self, cx: &mut Context, value: Entity) -> Entity {
-        if let Some(entity) = cx.style.focus_order.get_mut(self.entity()) {
+        if let Some(entity) = cx.style().focus_order.get_mut(self.entity()) {
             entity.next = value;
         } else {
-            cx.style
+            cx.style()
                 .focus_order
                 .insert(self.entity(), FocusOrder { next: value, ..Default::default() })
                 .expect("Failed to set next focus");
@@ -1177,10 +1177,10 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     fn set_prev_focus(self, cx: &mut Context, value: Entity) -> Entity {
-        if let Some(focus_order) = cx.style.focus_order.get_mut(self.entity()) {
+        if let Some(focus_order) = cx.style().focus_order.get_mut(self.entity()) {
             focus_order.prev = value;
         } else {
-            cx.style
+            cx.style()
                 .focus_order
                 .insert(self.entity(), FocusOrder { prev: value, ..Default::default() })
                 .expect("Failed to set previous focus");
@@ -1190,11 +1190,11 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     fn set_focus_order(self, cx: &mut Context, prev: Entity, next: Entity) -> Entity {
-        if let Some(focus_order) = cx.style.focus_order.get_mut(self.entity()) {
+        if let Some(focus_order) = cx.style().focus_order.get_mut(self.entity()) {
             focus_order.prev = prev;
             focus_order.next = next;
         } else {
-            cx.style
+            cx.style()
                 .focus_order
                 .insert(self.entity(), FocusOrder { prev, next })
                 .expect("Failed to set focus order");
@@ -1223,10 +1223,10 @@ pub trait PropSet: AsEntity + Sized {
     /// layout-type: row | column | grid
     /// ```
     fn set_layout_type(&self, cx: &mut Context, value: LayoutType) -> Entity {
-        cx.style.layout_type.insert(self.entity(), value);
+        cx.style().layout_type.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         //flag_geo_change(cx, self.entity());
 
@@ -1234,121 +1234,121 @@ pub trait PropSet: AsEntity + Sized {
     }
 
     fn set_child_space(&self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.child_left.insert(self.entity(), value);
-        cx.style.child_right.insert(self.entity(), value);
-        cx.style.child_top.insert(self.entity(), value);
-        cx.style.child_bottom.insert(self.entity(), value);
+        cx.style().child_left.insert(self.entity(), value);
+        cx.style().child_right.insert(self.entity(), value);
+        cx.style().child_top.insert(self.entity(), value);
+        cx.style().child_bottom.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_child_left(&self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.child_left.insert(self.entity(), value);
+        cx.style().child_left.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_row_between(&self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.row_between.insert(self.entity(), value);
+        cx.style().row_between.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_col_between(&self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.col_between.insert(self.entity(), value);
+        cx.style().col_between.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_child_right(&self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.child_right.insert(self.entity(), value);
+        cx.style().child_right.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_child_top(&self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.child_top.insert(self.entity(), value);
+        cx.style().child_top.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_child_bottom(&self, cx: &mut Context, value: Units) -> Entity {
-        cx.style.child_bottom.insert(self.entity(), value);
+        cx.style().child_bottom.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_grid_rows(&self, cx: &mut Context, value: Vec<Units>) -> Entity {
-        cx.style.grid_rows.insert(self.entity(), value);
+        cx.style().grid_rows.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_grid_cols(&self, cx: &mut Context, value: Vec<Units>) -> Entity {
-        cx.style.grid_cols.insert(self.entity(), value);
+        cx.style().grid_cols.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_row_index(&self, cx: &mut Context, value: usize) -> Entity {
-        cx.style.row_index.insert(self.entity(), value);
+        cx.style().row_index.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_col_index(&self, cx: &mut Context, value: usize) -> Entity {
-        cx.style.col_index.insert(self.entity(), value);
+        cx.style().col_index.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_row_span(&self, cx: &mut Context, value: usize) -> Entity {
-        cx.style.row_span.insert(self.entity(), value);
+        cx.style().row_span.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self.entity()
     }
 
     fn set_col_span(self, cx: &mut Context, value: usize) -> Self {
-        cx.style.col_span.insert(self.entity(), value);
+        cx.style().col_span.insert(self.entity(), value);
 
-        cx.style.needs_relayout = true;
-        cx.style.needs_redraw = true;
+        cx.style().needs_relayout = true;
+        cx.style().needs_redraw = true;
 
         self
     }
@@ -1362,11 +1362,11 @@ impl<T: AsEntity> PropSet for T {}
 /// This trait is part of the prelude.
 pub trait PropGet: Sized + AsEntity {
     fn name(&self, cx: &Context) -> String {
-        cx.style.name.get(self.entity()).cloned().unwrap_or_default()
+        cx.style_ref().name.get(self.entity()).cloned().unwrap_or_default()
     }
 
     fn element(&self, cx: &Context) -> String {
-        cx.style.elements.get(self.entity()).cloned().unwrap_or_default()
+        cx.style_ref().elements.get(self.entity()).cloned().unwrap_or_default()
     }
 
     fn is_disabled(self, cx: &Context) -> bool;
@@ -1391,7 +1391,7 @@ pub trait PropGet: Sized + AsEntity {
     // }
 
     fn is_visible(self, cx: &Context) -> bool {
-        cx.cache.get_visibility(self.entity()) == Visibility::Visible
+        cx.cache_ref().get_visibility(self.entity()) == Visibility::Visible
     }
 
     fn has_class(&self, cx: &Context, class: &str) -> bool;
@@ -1403,12 +1403,12 @@ pub trait PropGet: Sized + AsEntity {
     fn get_display(&self, cx: &Context) -> Display;
 
     fn get_layout_type(&self, cx: &Context) -> LayoutType {
-        cx.style.layout_type.get(self.entity()).cloned().unwrap_or_default()
+        cx.style_ref().layout_type.get(self.entity()).cloned().unwrap_or_default()
     }
 
     // Background Color
     fn get_background_color(&self, cx: &Context) -> Color {
-        cx.style.background_color.get(self.entity()).cloned().unwrap_or_default()
+        cx.style_ref().background_color.get(self.entity()).cloned().unwrap_or_default()
     }
 
     // Position
@@ -1440,38 +1440,38 @@ pub trait PropGet: Sized + AsEntity {
 
 impl PropGet for Entity {
     fn is_disabled(self, cx: &Context) -> bool {
-        cx.style.disabled.get(self).cloned().unwrap_or_default()
+        cx.style_ref().disabled.get(self).cloned().unwrap_or_default()
     }
     fn is_hovered(self, cx: &Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
+        if let Some(pseudo_classes) = cx.style_ref().pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::HOVER)
         } else {
             false
         }
     }
     fn is_selected(self, cx: &Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
+        if let Some(pseudo_classes) = cx.style_ref().pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::SELECTED)
         } else {
             false
         }
     }
     fn is_checked(self, cx: &Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
+        if let Some(pseudo_classes) = cx.style_ref().pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::CHECKED)
         } else {
             false
         }
     }
     fn is_over(self, cx: &Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
+        if let Some(pseudo_classes) = cx.style_ref().pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::OVER)
         } else {
             false
         }
     }
     fn is_active(self, cx: &Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
+        if let Some(pseudo_classes) = cx.style_ref().pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::ACTIVE)
         } else {
             false
@@ -1479,7 +1479,7 @@ impl PropGet for Entity {
     }
 
     fn is_focused(self, cx: &Context) -> bool {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get(self) {
+        if let Some(pseudo_classes) = cx.style_ref().pseudo_classes.get(self) {
             pseudo_classes.contains(PseudoClass::FOCUS)
         } else {
             false
@@ -1487,7 +1487,7 @@ impl PropGet for Entity {
     }
 
     fn has_class(&self, cx: &Context, class: &str) -> bool {
-        if let Some(classes) = cx.style.classes.get(*self) {
+        if let Some(classes) = cx.style_ref().classes.get(*self) {
             classes.contains(class)
         } else {
             false
@@ -1495,70 +1495,70 @@ impl PropGet for Entity {
     }
 
     fn get_overflow(&self, cx: &Context) -> Overflow {
-        cx.style.overflow.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().overflow.get(*self).cloned().unwrap_or_default()
     }
 
     // Display
     fn get_display(&self, cx: &Context) -> Display {
-        cx.style.display.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().display.get(*self).cloned().unwrap_or_default()
     }
 
     // Position
     fn get_left(&self, cx: &Context) -> Units {
-        cx.style.left.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().left.get(*self).cloned().unwrap_or_default()
     }
     fn get_right(&self, cx: &Context) -> Units {
-        cx.style.right.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().right.get(*self).cloned().unwrap_or_default()
     }
     fn get_top(&self, cx: &Context) -> Units {
-        cx.style.top.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().top.get(*self).cloned().unwrap_or_default()
     }
     fn get_bottom(&self, cx: &Context) -> Units {
-        cx.style.bottom.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().bottom.get(*self).cloned().unwrap_or_default()
     }
 
     // Size
     fn get_width(&self, cx: &Context) -> Units {
-        cx.style.width.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().width.get(*self).cloned().unwrap_or_default()
     }
 
     fn get_height(&self, cx: &Context) -> Units {
-        cx.style.height.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().height.get(*self).cloned().unwrap_or_default()
     }
 
     // Size Constraints
     fn get_min_width(&self, cx: &Context) -> Units {
-        cx.style.min_width.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().min_width.get(*self).cloned().unwrap_or_default()
     }
 
     fn get_max_width(&self, cx: &Context) -> Units {
-        cx.style.max_width.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().max_width.get(*self).cloned().unwrap_or_default()
     }
 
     fn get_min_height(&self, cx: &Context) -> Units {
-        cx.style.min_height.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().min_height.get(*self).cloned().unwrap_or_default()
     }
 
     fn get_max_height(&self, cx: &Context) -> Units {
-        cx.style.max_height.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().max_height.get(*self).cloned().unwrap_or_default()
     }
 
     // Border
     fn get_border_width(&self, cx: &Context) -> Units {
-        cx.style.border_width.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().border_width.get(*self).cloned().unwrap_or_default()
     }
 
     // Tooltip
     fn get_tooltip(&self, cx: &Context) -> String {
-        cx.style.tooltip.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().tooltip.get(*self).cloned().unwrap_or_default()
     }
 
     // Text
     fn get_text(&self, cx: &Context) -> String {
-        cx.style.text.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().text.get(*self).cloned().unwrap_or_default()
     }
 
     fn get_font(&self, cx: &Context) -> String {
-        cx.style.font.get(*self).cloned().unwrap_or_default()
+        cx.style_ref().font.get(*self).cloned().unwrap_or_default()
     }
 }

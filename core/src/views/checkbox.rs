@@ -160,7 +160,7 @@ impl View for Checkbox {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseDown(MouseButton::Left) => {
-                if meta.target == cx.current {
+                if meta.target == cx.current() {
                     if let Some(callback) = &self.on_toggle {
                         (callback)(cx);
                     }

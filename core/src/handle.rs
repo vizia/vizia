@@ -9,18 +9,18 @@ macro_rules! set_style {
     ($name:ident, $t:ty) => {
         pub fn $name(self, value: impl Res<$t>) -> Self {
             value.set_or_bind(self.cx, self.entity, |cx, entity, v| {
-                cx.style.$name.insert(entity, v.into());
+                cx.style().$name.insert(entity, v.into());
 
                 // TODO - Split this out
-                cx.style.needs_relayout = true;
-                cx.style.needs_redraw = true;
+                cx.need_relayout();
+                cx.need_redraw();
             });
 
-            // self.cx.style.$name.insert(self.entity, value.get_val(self.cx).into());
+            // self.cx.style().$name.insert(self.entity, value.get_val(self.cx).into());
 
             // // TODO - Split this out
-            // self.cx.style.needs_relayout = true;
-            // self.cx.style.needs_redraw = true;
+            // self.cx.need_relayout();
+            // self.cx.need_redraw();
 
             self
         }
@@ -42,7 +42,7 @@ impl<'a, T> Handle<'a, T> {
     }
 
     pub fn ignore(self) -> Self {
-        self.cx.tree.set_ignored(self.entity, true);
+        self.cx.tree().set_ignored(self.entity, true);
         self.focusable(false)
     }
 
@@ -79,26 +79,26 @@ impl<'a, T> Handle<'a, T> {
     }
 
     pub fn id(self, id: &str) -> Self {
-        self.cx.style.ids.insert(self.entity, id.to_owned()).expect("Could not insert id");
-        self.cx.style.needs_restyle = true;
+        self.cx.style().ids.insert(self.entity, id.to_owned()).expect("Could not insert id");
+        self.cx.need_restyle();
 
         self
     }
 
     pub fn cursor(self, cursor_icon: CursorIcon) -> Self {
-        self.cx.style.cursor.insert(self.entity, cursor_icon);
+        self.cx.style().cursor.insert(self.entity, cursor_icon);
 
-        self.cx.style.needs_redraw = true;
+        self.cx.need_redraw();
 
         self
     }
 
     pub fn class(self, name: &str) -> Self {
-        if let Some(class_list) = self.cx.style.classes.get_mut(self.entity) {
+        if let Some(class_list) = self.cx.style().classes.get_mut(self.entity) {
             class_list.insert(name.to_string());
         }
 
-        self.cx.style.needs_restyle = true;
+        self.cx.need_restyle();
 
         self
     }
@@ -106,7 +106,7 @@ impl<'a, T> Handle<'a, T> {
     pub fn toggle_class(self, name: &str, applied: impl Res<bool>) -> Self {
         let name = name.to_owned();
         applied.set_or_bind(self.cx, self.entity, move |cx, entity, applied| {
-            if let Some(class_list) = cx.style.classes.get_mut(entity) {
+            if let Some(class_list) = cx.style().classes.get_mut(entity) {
                 if applied {
                     class_list.insert(name.clone());
                 } else {
@@ -114,51 +114,51 @@ impl<'a, T> Handle<'a, T> {
                 }
             }
 
-            cx.style.needs_restyle = true;
+            cx.need_restyle();
         });
 
         self
     }
 
     pub fn font(self, font_name: &str) -> Self {
-        self.cx.style.font.insert(self.entity, font_name.to_owned());
+        self.cx.style().font.insert(self.entity, font_name.to_owned());
 
-        self.cx.style.needs_redraw = true;
+        self.cx.need_redraw();
 
         self
     }
 
     pub fn checked(self, state: impl Res<bool>) -> Self {
         state.set_or_bind(self.cx, self.entity, |cx, entity, val| {
-            if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
+            if let Some(pseudo_classes) = cx.style().pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClass::CHECKED, val);
             } else {
                 let mut pseudoclass = PseudoClass::empty();
                 pseudoclass.set(PseudoClass::CHECKED, val);
-                cx.style.pseudo_classes.insert(entity, pseudoclass).unwrap();
+                cx.style().pseudo_classes.insert(entity, pseudoclass).unwrap();
             }
 
-            cx.style.needs_restyle = true;
+            cx.need_restyle();
         });
 
         // let state = state.get_val(self.cx);
-        // if let Some(pseudo_classes) = self.cx.style.pseudo_classes.get_mut(self.entity) {
+        // if let Some(pseudo_classes) = self.cx.style().pseudo_classes.get_mut(self.entity) {
         //     pseudo_classes.set(PseudoClass::CHECKED, state);
         // } else {
         //     let mut pseudoclass = PseudoClass::empty();
         //     pseudoclass.set(PseudoClass::CHECKED, state);
-        //     self.cx.style.pseudo_classes.insert(self.entity, pseudoclass).unwrap();
+        //     self.cx.style().pseudo_classes.insert(self.entity, pseudoclass).unwrap();
         // }
 
-        // self.cx.style.needs_restyle = true;
+        // self.cx.need_restyle();
 
         self
     }
 
     pub fn disabled(self, state: impl Res<bool>) -> Self {
         state.set_or_bind(self.cx, self.entity, |cx, entity, val| {
-            cx.style.disabled.insert(entity, val);
-            cx.style.needs_restyle = true;
+            cx.style().disabled.insert(entity, val);
+            cx.need_restyle();
         });
 
         self
@@ -166,18 +166,18 @@ impl<'a, T> Handle<'a, T> {
 
     pub fn text<U: ToString>(self, value: impl Res<U>) -> Self {
         value.set_or_bind(self.cx, self.entity, |cx, entity, val| {
-            if let Some(prev_data) = cx.style.text.get(entity) {
+            if let Some(prev_data) = cx.style().text.get(entity) {
                 if prev_data != &val.to_string() {
-                    cx.style.text.insert(entity, val.to_string());
+                    cx.style().text.insert(entity, val.to_string());
 
-                    cx.style.needs_relayout = true;
-                    cx.style.needs_redraw = true;
+                    cx.need_relayout();
+                    cx.need_redraw();
                 }
             } else {
-                cx.style.text.insert(entity, val.to_string());
+                cx.style().text.insert(entity, val.to_string());
 
-                cx.style.needs_relayout = true;
-                cx.style.needs_redraw = true;
+                cx.need_relayout();
+                cx.need_redraw();
             }
         });
 
@@ -187,16 +187,16 @@ impl<'a, T> Handle<'a, T> {
     pub fn image<U: ToString>(self, value: impl Res<U>) -> Self {
         value.set_or_bind(self.cx, self.entity, |cx, entity, val| {
             let val = val.to_string();
-            if let Some(prev_data) = cx.style.image.get(entity) {
+            if let Some(prev_data) = cx.style().image.get(entity) {
                 if prev_data != &val {
-                    cx.style.image.insert(entity, val);
+                    cx.style().image.insert(entity, val);
 
-                    cx.style.needs_redraw = true;
+                    cx.need_redraw();
                 }
             } else {
-                cx.style.image.insert(entity, val);
+                cx.style().image.insert(entity, val);
 
-                cx.style.needs_redraw = true;
+                cx.need_redraw();
             }
         });
 
@@ -204,27 +204,27 @@ impl<'a, T> Handle<'a, T> {
     }
 
     pub fn z_order(self, value: i32) -> Self {
-        self.cx.style.z_order.insert(self.entity, value);
+        self.cx.style().z_order.insert(self.entity, value);
 
-        self.cx.style.needs_redraw = true;
+        self.cx.need_redraw();
 
         self
     }
 
     pub fn overflow(self, value: Overflow) -> Self {
-        self.cx.style.overflow.insert(self.entity, value);
+        self.cx.style().overflow.insert(self.entity, value);
 
-        self.cx.style.needs_redraw = true;
+        self.cx.need_redraw();
 
         self
     }
 
     pub fn display<U: Clone + Into<Display>>(self, value: impl Res<U>) -> Self {
         value.set_or_bind(self.cx, self.entity, |cx, entity, val| {
-            cx.style.display.insert(entity, val.into());
+            cx.style().display.insert(entity, val.into());
 
-            cx.style.needs_relayout = true;
-            cx.style.needs_redraw = true;
+            cx.need_relayout();
+            cx.need_redraw();
         });
 
         self
@@ -232,9 +232,9 @@ impl<'a, T> Handle<'a, T> {
 
     pub fn visibility<U: Clone + Into<Visibility>>(self, value: impl Res<U>) -> Self {
         value.set_or_bind(self.cx, self.entity, move |cx, entity, v| {
-            cx.style.visibility.insert(entity, v.into());
+            cx.style().visibility.insert(entity, v.into());
 
-            cx.style.needs_redraw = true;
+            cx.need_redraw();
         });
 
         self
@@ -242,104 +242,104 @@ impl<'a, T> Handle<'a, T> {
 
     // Abilities
     pub fn hoverable(self, state: bool) -> Self {
-        if let Some(abilities) = self.cx.style.abilities.get_mut(self.entity) {
+        if let Some(abilities) = self.cx.style().abilities.get_mut(self.entity) {
             abilities.set(Abilities::HOVERABLE, state);
         }
 
-        self.cx.style.needs_restyle = true;
+        self.cx.need_restyle();
 
         self
     }
 
     pub fn focusable(self, state: bool) -> Self {
-        if let Some(abilities) = self.cx.style.abilities.get_mut(self.entity) {
+        if let Some(abilities) = self.cx.style().abilities.get_mut(self.entity) {
             abilities.set(Abilities::FOCUSABLE, state);
         }
 
-        self.cx.style.needs_restyle = true;
+        self.cx.need_restyle();
 
         self
     }
 
     pub fn child_space(self, value: Units) -> Self {
-        self.cx.style.child_left.insert(self.entity, value);
-        self.cx.style.child_right.insert(self.entity, value);
-        self.cx.style.child_top.insert(self.entity, value);
-        self.cx.style.child_bottom.insert(self.entity, value);
+        self.cx.style().child_left.insert(self.entity, value);
+        self.cx.style().child_right.insert(self.entity, value);
+        self.cx.style().child_top.insert(self.entity, value);
+        self.cx.style().child_bottom.insert(self.entity, value);
 
-        self.cx.style.needs_relayout = true;
-        self.cx.style.needs_redraw = true;
+        self.cx.need_relayout();
+        self.cx.need_redraw();
 
         self
     }
 
     pub fn border_radius(self, value: Units) -> Self {
-        self.cx.style.border_radius_top_left.insert(self.entity, value);
-        self.cx.style.border_radius_top_right.insert(self.entity, value);
-        self.cx.style.border_radius_bottom_left.insert(self.entity, value);
-        self.cx.style.border_radius_bottom_right.insert(self.entity, value);
+        self.cx.style().border_radius_top_left.insert(self.entity, value);
+        self.cx.style().border_radius_top_right.insert(self.entity, value);
+        self.cx.style().border_radius_bottom_left.insert(self.entity, value);
+        self.cx.style().border_radius_bottom_right.insert(self.entity, value);
 
-        self.cx.style.needs_redraw = true;
+        self.cx.need_redraw();
 
         self
     }
 
     pub fn space(self, value: Units) -> Self {
-        self.cx.style.left.insert(self.entity, value);
-        self.cx.style.right.insert(self.entity, value);
-        self.cx.style.top.insert(self.entity, value);
-        self.cx.style.bottom.insert(self.entity, value);
+        self.cx.style().left.insert(self.entity, value);
+        self.cx.style().right.insert(self.entity, value);
+        self.cx.style().top.insert(self.entity, value);
+        self.cx.style().bottom.insert(self.entity, value);
 
-        self.cx.style.needs_relayout = true;
-        self.cx.style.needs_redraw = true;
+        self.cx.need_relayout();
+        self.cx.need_redraw();
 
         self
     }
 
     pub fn size(self, value: Units) -> Self {
-        self.cx.style.width.insert(self.entity, value);
-        self.cx.style.height.insert(self.entity, value);
+        self.cx.style().width.insert(self.entity, value);
+        self.cx.style().height.insert(self.entity, value);
 
-        self.cx.style.needs_relayout = true;
-        self.cx.style.needs_redraw = true;
+        self.cx.need_relayout();
+        self.cx.need_redraw();
 
         self
     }
 
     pub fn min_size(self, value: Units) -> Self {
-        self.cx.style.min_width.insert(self.entity, value);
-        self.cx.style.min_height.insert(self.entity, value);
+        self.cx.style().min_width.insert(self.entity, value);
+        self.cx.style().min_height.insert(self.entity, value);
 
-        self.cx.style.needs_relayout = true;
-        self.cx.style.needs_redraw = true;
+        self.cx.need_relayout();
+        self.cx.need_redraw();
 
         self
     }
 
     pub fn max_size(self, value: Units) -> Self {
-        self.cx.style.max_width.insert(self.entity, value);
-        self.cx.style.max_height.insert(self.entity, value);
+        self.cx.style().max_width.insert(self.entity, value);
+        self.cx.style().max_height.insert(self.entity, value);
 
-        self.cx.style.needs_relayout = true;
-        self.cx.style.needs_redraw = true;
+        self.cx.need_relayout();
+        self.cx.need_redraw();
 
         self
     }
 
     pub fn color(self, color: Color) -> Self {
-        self.cx.style.font_color.insert(self.entity, color);
+        self.cx.style().font_color.insert(self.entity, color);
 
         self
     }
 
     pub fn grid_rows(self, rows: Vec<Units>) -> Self {
-        self.cx.style.grid_rows.insert(self.entity, rows);
+        self.cx.style().grid_rows.insert(self.entity, rows);
 
         self
     }
 
     pub fn grid_cols(self, cols: Vec<Units>) -> Self {
-        self.cx.style.grid_cols.insert(self.entity, cols);
+        self.cx.style().grid_cols.insert(self.entity, cols);
 
         self
     }
