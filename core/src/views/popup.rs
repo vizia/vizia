@@ -62,7 +62,9 @@ where
     L: Lens,
     L::Target: Clone + Into<bool>,
 {
-    pub fn something<F>(self, f: F) -> Self
+    /// Registers a callback for when the user clicks off of the popup, usually with the intent of
+    /// closing it.
+    pub fn on_blur<F>(self, f: F) -> Self
     where
         F: 'static + Fn(&mut Context),
     {

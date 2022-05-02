@@ -22,7 +22,7 @@ impl Dropdown {
                 Popup::new(cx, PopupData::is_open, move |cx| {
                     (content)(cx);
                 })
-                .something(|cx| cx.emit(PopupEvent::Close))
+                .on_blur(|cx| cx.emit(PopupEvent::Close))
                 .top(Percentage(100.0))
                 .height(Auto);
             })

@@ -52,7 +52,7 @@ fn main() {
                     .width(Pixels(100.0));
             });
         })
-        .something(|cx| cx.emit(AppEvent::HideModal))
+        .on_blur(|cx| cx.emit(AppEvent::HideModal))
         .width(Pixels(300.0))
         .height(Auto)
         .row_between(Pixels(10.0))
