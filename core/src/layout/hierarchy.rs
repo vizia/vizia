@@ -2,8 +2,8 @@ use morphorm::Hierarchy;
 
 use crate::prelude::*;
 
-use std::iter::Rev;
 use crate::layout::{LayoutChildIterator, LayoutTreeIterator};
+use std::iter::Rev;
 
 impl<'a> Hierarchy<'a> for Tree {
     type Item = Entity;

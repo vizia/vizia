@@ -1,5 +1,5 @@
-use std::collections::HashSet;
 use crate::events::ViewHandler;
+use std::collections::HashSet;
 
 use crate::prelude::*;
 use crate::state::ModelData;

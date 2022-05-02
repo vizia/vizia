@@ -1,5 +1,5 @@
-use std::fmt;
 use crate::animation::Interpolator;
+use std::fmt;
 
 /// Describes a color.
 ///

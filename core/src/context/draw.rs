@@ -1,13 +1,12 @@
 use femtovg::TextContext;
 use morphorm::Units;
 
+use crate::cache::CachedData;
+use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
 use crate::resource::{ImageOrId, ResourceManager};
 use crate::style::LinearGradient;
-use crate::cache::CachedData;
-use crate::input::{Modifiers, MouseState};
 use crate::text::Selection;
-
 
 /// A restricted context used when drawing.
 ///

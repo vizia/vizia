@@ -2,42 +2,42 @@
 //!
 //! Every member of this module is part of the prelude.
 
-mod label;
-mod menu;
-mod stack;
 mod button;
-mod list;
-mod table;
-mod textbox;
 mod checkbox;
 mod dropdown;
 mod element;
-mod slider;
+mod image;
 mod knob;
+mod label;
+mod list;
+mod menu;
 pub mod normalized_map;
 mod popup;
-mod scrollview;
-mod scrollbar;
 mod radio_buttons;
-mod image;
+mod scrollbar;
+mod scrollview;
+mod slider;
+mod stack;
+mod table;
+mod textbox;
 
-pub use label::Label;
-pub use stack::{HStack, VStack, ZStack};
+pub use self::image::Image;
 pub use button::Button;
-pub use list::List;
-pub use table::{Table, TableColumn};
-pub use textbox::Textbox;
 pub use checkbox::Checkbox;
 pub use dropdown::Dropdown;
 pub use element::Element;
-pub use slider::Slider;
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
-pub use popup::{PopupEvent, Popup, PopupData};
-pub use scrollview::{ScrollView, ScrollEvent, ScrollData};
-pub use scrollbar::Scrollbar;
+pub use label::Label;
+pub use list::List;
+pub use menu::{setup_menu_entry, Menu, MenuButton, MenuController, MenuEvent, MenuStack};
+pub use popup::{Popup, PopupData, PopupEvent};
 pub use radio_buttons::RadioButton;
-pub use self::image::Image;
-pub use menu::{MenuController, Menu, MenuEvent, MenuButton, MenuStack, setup_menu_entry};
+pub use scrollbar::Scrollbar;
+pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
+pub use slider::Slider;
+pub use stack::{HStack, VStack, ZStack};
+pub use table::{Table, TableColumn};
+pub use textbox::Textbox;
 
 use crate::prelude::*;
 

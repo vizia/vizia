@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
-use morphorm::GeometryChanged;
 use crate::events::ViewHandler;
+use morphorm::GeometryChanged;
 
 use crate::prelude::*;
 

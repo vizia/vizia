@@ -1,10 +1,10 @@
-use std::collections::HashSet;
 use morphorm::{LayoutType, PositionType, Units};
+use std::collections::HashSet;
 
-use crate::prelude::*;
-use crate::tree::TreeExt;
 use crate::entity::AsEntity;
+use crate::prelude::*;
 use crate::style::FocusOrder;
+use crate::tree::TreeExt;
 
 /// To be replaced by `PropSet2`
 ///

@@ -1,7 +1,7 @@
-use crate::entity::Entity;
-use crate::tree::TreeExt;
 use super::tree_iter::TreeIterator;
+use crate::entity::Entity;
 use crate::id::GenerationalId;
+use crate::tree::TreeExt;
 
 #[derive(Debug, Clone, Copy)]
 pub enum TreeError {

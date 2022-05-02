@@ -1,6 +1,6 @@
+use crate::id::GenerationalId;
 use crate::prelude::*;
 use crate::style::Rule;
-use crate::id::GenerationalId;
 
 use super::sparse_set::{DenseIndex, SparseSetGeneric};
 

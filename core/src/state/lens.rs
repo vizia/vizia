@@ -335,9 +335,9 @@ impl<L1, L2> RatioLens<L1, L2> {
 }
 
 impl<L1, L2> Lens for RatioLens<L1, L2>
-    where
-        L1: 'static + Clone + Lens<Target = f32>,
-        L2: 'static + Clone + Lens<Target = f32, Source = <L1 as Lens>::Source>,
+where
+    L1: 'static + Clone + Lens<Target = f32>,
+    L2: 'static + Clone + Lens<Target = f32, Source = <L1 as Lens>::Source>,
 {
     type Source = L1::Source;
     type Target = f32;

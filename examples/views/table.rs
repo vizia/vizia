@@ -1,5 +1,5 @@
-use vizia::prelude::*;
 use vizia::fonts::icons_names::{DOWN, UP};
+use vizia::prelude::*;
 
 fn main() {
     Application::new(|cx| {
@@ -37,11 +37,8 @@ fn main() {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
-                                let icon = if sorted.get(cx) == Sorted::Forward {
-                                    DOWN
-                                } else {
-                                    UP
-                                };
+                                let icon =
+                                    if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
@@ -98,11 +95,8 @@ fn main() {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
-                                let icon = if sorted.get(cx) == Sorted::Forward {
-                                    DOWN
-                                } else {
-                                    UP
-                                };
+                                let icon =
+                                    if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
@@ -157,11 +151,8 @@ fn main() {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
-                                let icon = if sorted.get(cx) == Sorted::Forward {
-                                    DOWN
-                                } else {
-                                    UP
-                                };
+                                let icon =
+                                    if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))

@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 
-use crate::prelude::*;
 use crate::fonts::{material_names::RIGHT, unicode_names::CHECK};
 use crate::modifiers::Over;
+use crate::prelude::*;
 use crate::tree::TreeExt;
 
 /// A helper function which sets up the necessary attributes on a view to be a menu entry.

@@ -9,9 +9,9 @@ use femtovg::ImageId;
 use morphorm::GeometryChanged;
 
 use crate::prelude::*;
-use crate::style::Transform2D;
 use crate::storage::sparse_set::SparseSet;
 use crate::storage::sparse_set::SparseSetError;
+use crate::style::Transform2D;
 
 /// Computed properties used for layout and drawing.
 

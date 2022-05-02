@@ -12,19 +12,12 @@ use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardP
 use femtovg::TextContext;
 use fnv::FnvHashMap;
 use keyboard_types::Code;
-use unic_langid::LanguageIdentifier;
 use morphorm::layout;
+use unic_langid::LanguageIdentifier;
 
 pub use draw::*;
 pub use proxy::*;
 
-use crate::prelude::*;
-use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
-use crate::state::ModelDataStore;
-use crate::storage::sparse_set::SparseSet;
-use crate::style::{apply_transform, Style};
-use crate::style_system::{apply_clipping, apply_inline_inheritance, apply_shared_inheritance, apply_styles, apply_text_constraints, apply_visibility, apply_z_ordering};
-use crate::tree::{focus_backward, focus_forward, is_focusable, TreeDepthIterator, TreeExt, TreeIterator};
 use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
@@ -32,6 +25,18 @@ use crate::hover_system::apply_hover;
 use crate::id::IdManager;
 use crate::input::{Modifiers, MouseState};
 use crate::layout::geometry_changed;
+use crate::prelude::*;
+use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
+use crate::state::ModelDataStore;
+use crate::storage::sparse_set::SparseSet;
+use crate::style::{apply_transform, Style};
+use crate::style_system::{
+    apply_clipping, apply_inline_inheritance, apply_shared_inheritance, apply_styles,
+    apply_text_constraints, apply_visibility, apply_z_ordering,
+};
+use crate::tree::{
+    focus_backward, focus_forward, is_focusable, TreeDepthIterator, TreeExt, TreeIterator,
+};
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");

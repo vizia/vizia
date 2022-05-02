@@ -1,6 +1,6 @@
+use crate::id::GenerationalId;
 use std::cmp::{Eq, PartialEq};
 use std::hash::Hash;
-use crate::id::GenerationalId;
 
 const ENTITY_INDEX_BITS: u32 = 24;
 const ENTITY_INDEX_MASK: u32 = (1 << ENTITY_INDEX_BITS) - 1;

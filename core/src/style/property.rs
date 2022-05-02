@@ -1,8 +1,8 @@
 use crate::prelude::*;
 
-use morphorm::{LayoutType, PositionType, Units};
 use crate::animation::Transition;
 use crate::style::shadow::BoxShadow;
+use morphorm::{LayoutType, PositionType, Units};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum PropType {
