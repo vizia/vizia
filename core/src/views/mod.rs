@@ -4,6 +4,7 @@
 
 mod button;
 mod checkbox;
+mod custom;
 mod dropdown;
 mod element;
 mod image;
@@ -20,6 +21,7 @@ mod slider;
 mod stack;
 mod table;
 mod textbox;
+pub use custom::*;
 
 pub use self::image::Image;
 pub use button::Button;
