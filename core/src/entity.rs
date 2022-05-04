@@ -77,13 +77,3 @@ impl GenerationalId for Entity {
         self.0 == u32::MAX
     }
 }
-
-pub trait AsEntity {
-    fn entity(&self) -> Entity;
-}
-
-impl AsEntity for Entity {
-    fn entity(&self) -> Entity {
-        *self
-    }
-}

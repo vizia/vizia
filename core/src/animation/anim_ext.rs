@@ -1,10 +1,11 @@
-use crate::entity::AsEntity;
 use crate::prelude::*;
 
 /// Trait which provides methods for entities to manipulate linked animations
 ///
 /// This trait is part of the prelude.
-pub trait AnimExt: AsEntity + Sized {
+pub trait AnimExt: Copy + Sized {
+    fn entity(self) -> Entity;
+
     /// Play an animation on the entity.
     ///
     /// Internally this generates an active animation and links the entity to it for each animated property.
@@ -87,4 +88,8 @@ pub trait AnimExt: AsEntity + Sized {
     }
 }
 
-impl<T: AsEntity> AnimExt for T {}
+impl AnimExt for Entity {
+    fn entity(self) -> Entity {
+        self
+    }
+}
