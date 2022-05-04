@@ -9,40 +9,26 @@ pub struct ScrollBuilder {
     vertical_indicator: bool,
 }
 
+// Custom modifiers for ScrollBuilder
+impl ScrollBuilder {
+    pub fn horizontal_indicator(mut self, flag: bool) -> Self {
+        self.horizontal_indicator = flag;
+
+        self
+    }
+
+    pub fn vertical_indicator(mut self, flag: bool) -> Self {
+        self.vertical_indicator = flag;
+
+        self
+    }
+}
+
 // What the builder should build
 // Maybe this could be simplified with a macro?
 impl ViewBuilder for ScrollBuilder {
-    type Builder = Self;
     fn build(self, cx: &mut Context) -> Entity {
         Scroll::new_with(cx, self.content, self.horizontal_indicator, self.vertical_indicator)
-    }
-
-    fn builder_mut(&mut self) -> &mut Self::Builder {
-        self
-    }
-}
-
-// Custom modifiers for ScrollBuilder
-pub trait ScrollMod {
-    fn horizontal_indicator(self, flag: bool) -> Self;
-
-    fn vertical_indicator(self, flag: bool) -> Self;
-}
-
-// Implement custom modifiers for any ViewBuilder which creates a Scroll
-// This is what allows calling a style modifier followed by a custom modifier
-// Could also maybe be generated with a macro?
-impl<V: ViewBuilder<Builder = ScrollBuilder>> ScrollMod for V {
-    fn horizontal_indicator(mut self, flag: bool) -> Self {
-        self.builder_mut().horizontal_indicator = flag;
-
-        self
-    }
-
-    fn vertical_indicator(mut self, flag: bool) -> Self {
-        self.builder_mut().vertical_indicator = flag;
-
-        self
     }
 }
 
@@ -83,11 +69,8 @@ impl Scroll {
 
 // Trait for any type that can build a view
 pub trait ViewBuilder {
-    type Builder: ViewBuilder;
     // NOTE - This only returns an entity for now. Later that entity can be stored in cx.
     fn build(self, cx: &mut Context) -> Entity;
-
-    fn builder_mut(&mut self) -> &mut Self::Builder;
 }
 
 // Trait for style modifiers
@@ -97,7 +80,7 @@ pub trait Mod {
     fn background_color(self, color: Color) -> BackgroundColorMod<Self::V>;
 }
 
-// Allow any ViewBuilder to use style modifiers
+// Allow any ViewBuilder to use style modifiers after custom modifiers
 // Parts of this could also be replaced by a macro
 impl<V: ViewBuilder> Mod for V {
     type V = V;
@@ -112,17 +95,12 @@ impl<V: ViewBuilder> Mod for V {
 
 // Replace with macro
 impl<V: ViewBuilder> ViewBuilder for SizeMod<V> {
-    type Builder = V::Builder;
     fn build(self, cx: &mut Context) -> Entity {
         let size = self.size;
         let current = self.inner.build(cx);
         cx.style().width.insert(current, size);
         cx.style().height.insert(current, size);
         current
-    }
-
-    fn builder_mut(&mut self) -> &mut Self::Builder {
-        self.inner.builder_mut()
     }
 }
 
@@ -138,15 +116,10 @@ pub struct BackgroundColorMod<V: ViewBuilder> {
 
 // Replace with macro
 impl<V: ViewBuilder> ViewBuilder for BackgroundColorMod<V> {
-    type Builder = V::Builder;
     fn build(self, cx: &mut Context) -> Entity {
         let color = self.color;
         let current = self.inner.build(cx);
         cx.style().background_color.insert(current, color);
         current
-    }
-
-    fn builder_mut(&mut self) -> &mut Self::Builder {
-        self.inner.builder_mut()
     }
 }
