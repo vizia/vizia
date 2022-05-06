@@ -1,7 +1,7 @@
 mod application;
 mod parent_window;
-mod window;
 pub(crate) mod proxy;
+mod window;
 
 pub use parent_window::ParentWindow;
 

@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
+use std::collections::VecDeque;
 use std::sync::Mutex;
 use vizia_core::{Event, EventProxy};
-use std::collections::VecDeque;
 
 lazy_static! {
     pub(crate) static ref PROXY_QUEUE: Mutex<VecDeque<Event>> = Mutex::new(VecDeque::new());
