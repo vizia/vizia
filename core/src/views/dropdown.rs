@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use crate::views::popup::PopupData;
 
-/// A dropdown used to display some state with the ability to open a popup with options to change that state.
+/// A dropdown is used to display some state with the ability to open a popup with options to change that state.
 ///
 /// Usually a dropdown is used in the context of a "combo box" or "list picker" to allow the user to select
 /// from one of several discrete options. The dropdown takes two closures, one which shows the current state
@@ -12,7 +12,7 @@ use crate::views::popup::PopupData;
 /// A basic dropdown displaying five options that the user can choose from.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # #[derive(Lens)]
 /// # struct AppData {
@@ -45,6 +45,9 @@ use crate::views::popup::PopupData;
 /// )
 /// .width(Pixels(100.0));
 /// ```
+///
+/// The line marked "close the popop" is not required for anything other than closing the popup -
+/// if you leave it out, the popup will simply not close until the user clicks out of the dropdown.
 pub struct Dropdown;
 
 impl Dropdown {
@@ -53,7 +56,7 @@ impl Dropdown {
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// #
     /// # let cx = &mut Context::new();
     /// #
