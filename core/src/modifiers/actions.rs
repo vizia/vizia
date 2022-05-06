@@ -45,6 +45,11 @@ impl<V: View> View for Press<V> {
 
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseDown(MouseButton::Left) => {
+                if cx.current() != cx.hovered()
+                    && !cx.hovered().is_descendant_of(cx.tree_ref(), cx.current())
+                {
+                    return;
+                }
                 if let Some(action) = &self.action {
                     (action)(cx);
                 }
