@@ -4,7 +4,7 @@
 
 mod button;
 mod checkbox;
-mod custom;
+pub mod custom;
 mod dropdown;
 mod element;
 mod image;
