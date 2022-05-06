@@ -13,7 +13,7 @@ use crate::prelude::*;
 /// create an invisible spacer between other views.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::new();
 /// #
@@ -27,7 +27,7 @@ use crate::prelude::*;
 /// An element can be used to display a rectangle like this black one with a size of 100 by 100 pixels.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::new();
 /// #
@@ -42,7 +42,7 @@ use crate::prelude::*;
 /// An element can be used to display a line like this black one with a size of 100 by 1 pixels.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::new();
 /// #
@@ -59,7 +59,7 @@ use crate::prelude::*;
 /// border radius has to be set to fifty percent.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::new();
 /// #
@@ -77,7 +77,7 @@ use crate::prelude::*;
 /// using the [`Context::load_image`](crate::Context::load_image) method.
 ///
 /// ```
-/// # use vizia_core::*;
+/// # use vizia_core::prelude::*;
 /// #
 /// # #[derive(Lens)]
 /// # struct AppData {
@@ -103,7 +103,7 @@ impl Element {
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::*;
+    /// # use vizia_core::prelude::*;
     /// #
     /// # let cx = &mut Context::new();
     /// #
