@@ -5,8 +5,8 @@ use baseview::{
 };
 use raw_window_handle::HasRawWindowHandle;
 
-use vizia_core::prelude::*;
 use crate::proxy::BaseviewProxy;
+use vizia_core::prelude::*;
 
 /// Handles a vizia_baseview application
 pub(crate) struct ViziaWindow {

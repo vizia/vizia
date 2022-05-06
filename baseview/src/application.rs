@@ -4,11 +4,11 @@ use baseview::{WindowHandle, WindowScalePolicy};
 use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
 
+use crate::proxy::queue_get;
 use vizia_core::cache::BoundingBox;
 use vizia_core::events::EventManager;
 use vizia_core::fonts;
 use vizia_core::prelude::*;
-use crate::proxy::queue_get;
 
 pub struct Application<F>
 where
