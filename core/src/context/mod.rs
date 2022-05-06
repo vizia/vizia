@@ -240,6 +240,7 @@ impl Context {
             pseudo_classes.set(PseudoClass::ACTIVE, flag);
         }
 
+        self.style().needs_restyle = true;
         self.style().needs_relayout = true;
         self.style().needs_redraw = true;
     }
@@ -251,6 +252,7 @@ impl Context {
             pseudo_classes.set(PseudoClass::CHECKED, flag);
         }
 
+        self.style().needs_restyle = true;
         self.style().needs_relayout = true;
         self.style().needs_redraw = true;
     }
@@ -262,6 +264,7 @@ impl Context {
             pseudo_classes.set(PseudoClass::SELECTED, flag);
         }
 
+        self.style().needs_restyle = true;
         self.style().needs_relayout = true;
         self.style().needs_redraw = true;
     }
