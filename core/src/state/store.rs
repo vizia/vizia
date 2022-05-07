@@ -14,6 +14,8 @@ pub(crate) trait Store {
     fn entity(&self) -> Entity;
 }
 
+pub struct PubStore(pub(crate) Box<dyn Store>);
+
 pub(crate) struct State<L: Lens, T> {
     // The entity which declared the binding
     pub entity: Entity,

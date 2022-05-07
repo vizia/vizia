@@ -1,10 +1,12 @@
 use std::any::TypeId;
+use std::collections::HashSet;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
 use std::rc::Rc;
 
 use crate::prelude::*;
+use crate::state::{PubStore, State};
 
 /// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
 ///
@@ -18,9 +20,19 @@ pub trait Lens: 'static + Clone {
     type Target;
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O;
-}
 
-pub(crate) trait LensCache: Lens {
+    fn make_store(&self, source: &Self::Source, entity: Entity) -> PubStore
+    where
+        Self::Target: Data,
+    {
+        PubStore(Box::new(State {
+            entity,
+            lens: self.clone(),
+            old: self.view(source, |t| t.cloned().map(|v| v)),
+            observers: HashSet::from([entity]),
+        }))
+    }
+
     fn cache_key(&self) -> Option<TypeId> {
         if std::mem::size_of::<Self>() == 0 {
             Some(TypeId::of::<Self>())
@@ -30,11 +42,9 @@ pub(crate) trait LensCache: Lens {
     }
 }
 
-impl<T: Lens> LensCache for T {}
-
 /// Helpers for constructing more complex `Lens`es.
 ///
-/// This trait is par tof the prelude.
+/// This trait is part of the prelude.
 pub trait LensExt: Lens {
     /// Retrieve a copy of the lensed data from context.
     ///
@@ -95,6 +105,13 @@ pub trait LensExt: Lens {
         G: 'static + Fn(&Self::Target) -> B,
     {
         self.then(Map::new(get))
+    }
+
+    fn map_shallow<G, B: 'static>(self, get: G) -> MapShallow<Self, Self::Target, B>
+        where
+            G: 'static + Fn(&Self::Target) -> B,
+    {
+        MapShallow { child: self, mapper: Rc::new(get) }
     }
 
     fn unwrap<T: 'static>(self) -> Then<Self, UnwrapLens<T>>
@@ -354,5 +371,40 @@ where
         } else {
             map(None)
         }
+    }
+}
+
+#[derive(Clone)]
+pub struct MapShallow<L, I, O> {
+    child: L,
+    mapper: Rc<dyn Fn(&I) -> O>,
+}
+
+impl<L, I, O> Lens for MapShallow<L, I, O>
+where
+    L: Lens<Target = I>,
+    I: Data,
+    O: Data,
+{
+    type Source = L::Source;
+    type Target = O;
+
+    fn view<OO, F: FnOnce(Option<&Self::Target>) -> OO>(
+        &self,
+        source: &Self::Source,
+        map: F,
+    ) -> OO {
+        self.child.view(source, |t| map(t.map(self.mapper.as_ref()).as_ref()))
+    }
+
+    fn cache_key(&self) -> Option<TypeId> {
+        self.child.cache_key()
+    }
+
+    fn make_store(&self, source: &Self::Source, entity: Entity) -> PubStore
+    where
+        Self::Target: Data,
+    {
+        self.child.make_store(source, entity)
     }
 }

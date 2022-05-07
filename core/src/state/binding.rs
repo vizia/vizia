@@ -2,7 +2,6 @@ use std::any::TypeId;
 use std::collections::HashSet;
 
 use crate::prelude::*;
-use crate::state::{LensCache, State};
 
 /// A binding view which rebuilds its contents when its observed data changes.
 ///
@@ -60,16 +59,9 @@ where
                             lens_wrap.add_observer(id);
                         }
                     } else {
-                        let mut observers = HashSet::new();
-                        observers.insert(id);
+                        let state = lens.make_store(model_data.downcast_ref().unwrap(), id).0;
 
-                        let model = model_data.downcast_ref::<L::Source>().unwrap();
-
-                        let old = lens.view(model, |t| t.cloned());
-
-                        let state = Box::new(State { entity: id, lens, old, observers });
-
-                        if let Some(key) = state.lens.cache_key() {
+                        if let Some(key) = lens.cache_key() {
                             model_data_store.lenses_dedup.insert(key, state);
                         } else {
                             model_data_store.lenses_dup.push(state);
@@ -91,16 +83,9 @@ where
                                 lens_wrap.add_observer(id);
                             }
                         } else {
-                            let mut observers = HashSet::new();
-                            observers.insert(id);
+                            let state = lens.make_store(view_handler.downcast_ref().unwrap(), id).0;
 
-                            let model = view_handler.downcast_ref::<L::Source>().unwrap();
-
-                            let old = lens.view(model, |t| t.cloned());
-
-                            let state = Box::new(State { entity: id, lens, old, observers });
-
-                            if let Some(key) = state.lens.cache_key() {
+                            if let Some(key) = lens.cache_key() {
                                 model_data_store.lenses_dedup.insert(key, state);
                             } else {
                                 model_data_store.lenses_dup.push(state);
