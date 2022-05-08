@@ -37,67 +37,7 @@ where
         F: 'static + Fn(&mut Context, L),
     {
         let binding = Self { lens: lens.clone(), content: Some(Box::new(builder)) };
-
-        let id = cx.entity_manager.create();
-        let current = cx.current();
-        cx.tree().add(id, current).expect("Failed to add to tree");
-        cx.cache().add(id).expect("Failed to add to cache");
-        cx.style().add(id);
-
-        let ancestors = cx.current().parent_iter(cx.tree()).collect::<HashSet<_>>();
-        let new_ancestors = id.parent_iter(cx.tree()).collect::<Vec<_>>();
-
-        for entity in new_ancestors {
-            if let Some(model_data_store) = cx.data.get_mut(entity) {
-                if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
-                    if let Some(lens_wrap) =
-                        lens.cache_key().and_then(|key| model_data_store.lenses_dedup.get_mut(&key))
-                    {
-                        let observers = lens_wrap.observers();
-
-                        if ancestors.intersection(observers).next().is_none() {
-                            lens_wrap.add_observer(id);
-                        }
-                    } else {
-                        let state = lens.make_store(model_data.downcast_ref().unwrap(), id).0;
-
-                        if let Some(key) = lens.cache_key() {
-                            model_data_store.lenses_dedup.insert(key, state);
-                        } else {
-                            model_data_store.lenses_dup.push(state);
-                        }
-                    }
-
-                    break;
-                }
-
-                if let Some(view_handler) = cx.views.get(&entity) {
-                    if view_handler.as_any_ref().is::<L::Source>() {
-                        if let Some(lens_wrap) = lens
-                            .cache_key()
-                            .and_then(|key| model_data_store.lenses_dedup.get_mut(&key))
-                        {
-                            let observers = lens_wrap.observers();
-
-                            if ancestors.intersection(observers).next().is_none() {
-                                lens_wrap.add_observer(id);
-                            }
-                        } else {
-                            let state = lens.make_store(view_handler.downcast_ref().unwrap(), id).0;
-
-                            if let Some(key) = lens.cache_key() {
-                                model_data_store.lenses_dedup.insert(key, state);
-                            } else {
-                                model_data_store.lenses_dup.push(state);
-                            }
-                        }
-
-                        break;
-                    }
-                }
-            }
-        }
-
+        let id = alloc_observer(cx, lens);
         cx.views.insert(id, Box::new(binding));
 
         cx.with_current(id, |cx| {
@@ -113,14 +53,73 @@ where
 }
 
 impl<L: 'static + Lens> View for Binding<L> {
-    fn element(&self) -> Option<&'static str> {
-        Some("binding")
-    }
-
     fn body<'a>(&mut self, cx: &'a mut Context) {
         cx.remove_children(cx.current());
         if let Some(builder) = &self.content {
             (builder)(cx, self.lens.clone());
         }
     }
+}
+
+pub(crate) fn alloc_observer<L: Lens<Target = T>, T: Data>(cx: &mut Context, lens: L) -> Entity {
+    let current = cx.current();
+    let id = cx.entity_manager.create();
+    cx.tree().add(id, current).expect("Failed to add to tree");
+    cx.cache().add(id).expect("Failed to add to cache");
+    cx.style().add(id);
+
+    let ancestors = cx.current().parent_iter(cx.tree()).collect::<HashSet<_>>();
+    let new_ancestors = id.parent_iter(cx.tree()).collect::<Vec<_>>();
+
+    for entity in new_ancestors {
+        if let Some(model_data_store) = cx.data.get_mut(entity) {
+            if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
+                if let Some(lens_wrap) =
+                    lens.cache_key().and_then(|key| model_data_store.lenses_dedup.get_mut(&key))
+                {
+                    let observers = lens_wrap.observers();
+
+                    if ancestors.intersection(observers).next().is_none() {
+                        lens_wrap.add_observer(id);
+                    }
+                } else {
+                    let state = lens.make_store(model_data.downcast_ref().unwrap(), id).0;
+
+                    if let Some(key) = lens.cache_key() {
+                        model_data_store.lenses_dedup.insert(key, state);
+                    } else {
+                        model_data_store.lenses_dup.push(state);
+                    }
+                }
+
+                break;
+            }
+
+            if let Some(view_handler) = cx.views.get(&entity) {
+                if view_handler.as_any_ref().is::<L::Source>() {
+                    if let Some(lens_wrap) =
+                        lens.cache_key().and_then(|key| model_data_store.lenses_dedup.get_mut(&key))
+                    {
+                        let observers = lens_wrap.observers();
+
+                        if ancestors.intersection(observers).next().is_none() {
+                            lens_wrap.add_observer(id);
+                        }
+                    } else {
+                        let state = lens.make_store(view_handler.downcast_ref().unwrap(), id).0;
+
+                        if let Some(key) = lens.cache_key() {
+                            model_data_store.lenses_dedup.insert(key, state);
+                        } else {
+                            model_data_store.lenses_dup.push(state);
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+    id
 }

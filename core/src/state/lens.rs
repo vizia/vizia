@@ -108,8 +108,8 @@ pub trait LensExt: Lens {
     }
 
     fn map_shallow<G, B: 'static>(self, get: G) -> MapShallow<Self, Self::Target, B>
-        where
-            G: 'static + Fn(&Self::Target) -> B,
+    where
+        G: 'static + Fn(&Self::Target) -> B,
     {
         MapShallow { child: self, mapper: Rc::new(get) }
     }

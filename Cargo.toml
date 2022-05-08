@@ -41,6 +41,10 @@ name = "proxy"
 path = "examples/proxy.rs"
 
 [[example]]
+name = "dispatch_binding"
+path = "examples/dispatch_binding.rs"
+
+[[example]]
 name = "scrollview"
 path = "examples/views/scrollview.rs"
 
