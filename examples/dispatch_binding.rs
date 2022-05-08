@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use vizia::prelude::*;
 
-const N: i64 = 10000;
+const N: i64 = 100000;
 
 const STYLE: &str = r#"
 label {
@@ -57,12 +57,12 @@ impl DispatchState for MyDispatch {
         old: &Option<Self::LookupType>,
         new: &Option<Self::LookupType>,
     ) -> HashSet<Entity> {
-        dbg!(old
+        old
             .as_ref()
             .unwrap()
             .symmetric_difference(new.as_ref().unwrap())
             .filter_map(|idx| self.mapping.get(idx).copied())
-            .collect())
+            .collect()
     }
 }
 
@@ -70,6 +70,8 @@ fn main() {
     Application::new(|cx| {
         AppData::default().build(cx);
         cx.add_theme(STYLE);
+        cx.text_context().resize_shaped_words_cache(N as usize * 2);
+        cx.text_context().resize_shaping_run_cache(N as usize * 2);
 
         ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
             DispatchView::<_, _, MyDispatch>::new(cx, AppData::selected, move |cx, handle| {
