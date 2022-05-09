@@ -52,7 +52,7 @@ jobs:
         with:
           command: doc
           args: >-
-            --features docs --no-deps
+            --no-deps
             -p vizia
             -p core
             -p winit
