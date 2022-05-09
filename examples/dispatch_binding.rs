@@ -57,8 +57,7 @@ impl DispatchState for MyDispatch {
         old: &Option<Self::LookupType>,
         new: &Option<Self::LookupType>,
     ) -> HashSet<Entity> {
-        old
-            .as_ref()
+        old.as_ref()
             .unwrap()
             .symmetric_difference(new.as_ref().unwrap())
             .filter_map(|idx| self.mapping.get(idx).copied())
