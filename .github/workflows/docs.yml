@@ -54,10 +54,10 @@ jobs:
           args: >-
             --no-deps
             -p vizia
-            -p core
-            -p winit
-            -p baseview
-            -p derive
+            -p vizia_core
+            -p vizia_winit
+            -p vizia_baseview
+            -p vizia_derive
       - name: Add a redirect index page
         run: |
           cat > target/doc/index.html <<EOF
