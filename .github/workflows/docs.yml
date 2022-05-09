@@ -68,7 +68,7 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4.3.0
         with:
           branch: gh-pages
-          folder: docs
+          folder: target/doc
 
           # Having the gh-pages branch on this repository adds a whole bunch of
           # noise to the GitHub feed if you follow this repo
