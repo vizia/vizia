@@ -22,7 +22,7 @@ jobs:
     name: Build and test all components
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
       # Needed for git-describe to do anything useful
       - name: Fetch all git history
         run: git fetch --force --prune --tags --unshallow
