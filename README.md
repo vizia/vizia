@@ -6,6 +6,11 @@
     <img src="https://img.shields.io/crates/l/vizia"
     alt="License" />
   </a>
+  <!-- Docs -->
+  <a href="https://docs.vizia.dev">
+    <img src="https://img.shields.io/badge/docs-website-blue" 
+      alt="Documentation" />
+  </a>
   <!-- CI -->
   <a href="https://github.com/vizia/vizia/actions/workflows/build.ym">
     <img src="https://github.com/vizia/vizia/actions/workflows/build.yml/badge.svg"
@@ -36,18 +41,21 @@ Vizia is a declarative GUI framework for the Rust programming language.
 ## At a Glance
 A simple counter application. Run with `cargo run --example counter`.
 ```rust
+// Define some model data
 #[derive(Lens)]
 pub struct AppData {
     count: i32,
 }
 
+// Define events to mutate the data
 pub enum AppEvent {
     Increment,
 }
 
+// Describe how the data can be mutated
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
-        event.map(|app_event| match app_event {
+        event.map(|app_event, _| match app_event {
             AppEvent::Increment => {
                 self.count += 1;
             }
@@ -56,12 +64,17 @@ impl Model for AppData {
 }
 
 Application::new(|cx| {
+    // Build the model data into the tree
     AppData { count: 0 }.build(cx);
 
     HStack::new(cx, |cx| {
+        // Declare a button which emits an event
         Button::new(cx, 
-            |cx| cx.emit(AppEvent::Increment), 
-            |cx| Label::new(cx, "Increment"));
+          |cx| cx.emit(AppEvent::Increment), 
+          |cx| Label::new(cx, "Increment")
+        );
+        
+        // Declare a label which is bound to part of the model, updating if it changes
         Label::new(cx, AppData::count)
             .width(Pixels(50.0));
     })
@@ -72,6 +85,7 @@ Application::new(|cx| {
 .inner_size((400, 100))
 .run();
 ```
+<!-- TODO - Replace with GIF? -->
 <div align="center"><img src="./assets/images/counter.png" width="400px" height="130px"/></div>
 
 ---
@@ -80,17 +94,18 @@ Application::new(|cx| {
 ## Features
  - Multiplatform (Windows, Linux, MacOS, Web)
  - Declarative API
- - Reactive data system (elm-like)
+ - Reactive event-driven data system
  - Flexible layout engine, powered by [morphorm](https://github.com/vizia/morphorm)
+ - GPU rendering, powered by [femtovg](https://github.com/femtovg/femtovg)
  - CSS styling with hot reloading
- - Style property animations
+ - Property animations
  - Audio plugin GUI development
 
-## Learning Vizia
+## Learn Vizia
 <!-- Add docs to this when ready -->
 <div align="center">
   <h3>
-    <a href="https://book.vizia.dev/"> Getting Started </a>
+    <a href="https://docs.vizia.dev/"> The Docs </a>
     <span> | </span>
     <a href="https://book.vizia.dev/"> The Book </a>
     <span> | </span>
@@ -98,28 +113,35 @@ Application::new(|cx| {
   </h3>
 </div>
 
+## Running the Examples
 
-## Example Projects
+A full list of [examples](https://github.com/vizia/vizia/tree/main/examples) is included in the repository.
 
-// Example projects go here... with pictures and stuff...
+To run an example with the [winit](https://github.com/rust-windowing/winit) (default) windowing backend:
+```bash
+cargo run --release --example name_of_example
+```
+To run an example with the [baseview](https://github.com/RustAudio/baseview) windowing backend:
+```bash
+cargo run --release --example name_of_example --no-default-features --features baseview
+```
+To run an example as a web application, first ensure that the `wasm32-unknown-unknown` toolchain is installed:
+```bash
+rustup target add wasm32-unknown-unknown
+```
+Then run an example with the following:
+```bash
+cargo run-wasm --release --example name_of_example
+```
+> **NOTE** - Some examples are not compatible with the web target.
 
-Vizia is also being used for the [Meadowlark project](https://github.com/MeadowlarkDAW/Meadowlark), an upcoming modern Digital Audio Workstation (DAW) built with Rust.
+<!-- ## Example Projects
 
-## Architecture
-Vizia's core abstraction is a tree of **entities**. Each entity is just an integer, but this integer keys a number of dictionaries affecting how the entities look and act:
-- **Style properties**, directives for layout and drawing
-- **Models**, custom user-stored data which store a list of observers
-- **Views**, bundles of callback logic to handle custom drawing, data reactivity, and user interaction
+Example projects go here... with pictures and stuff...
 
-In order to interact with this tree of entities, there are several tools. The important ones are:
-- **Bindings**, special views which watch for data changes and refresh their children
-- **Events**, messages that propagate up or down the tree and trigger callbacks
+Vizia is also being used for the [Meadowlark project](https://github.com/MeadowlarkDAW/Meadowlark), an upcoming modern Digital Audio Workstation (DAW) built with Rust. -->
 
-To learn more, read [the book](https://book.vizia.dev/), check out [the examples](https://github.com/vizia/vizia/tree/main/examples), or join [our discord](https://discord.gg/aNkTPsRm2w)!
-
-## Contributing
-
-// TODO
+## Contributing and Community
 
 For help with vizia, or to get involved with contributing to the project, come join us on [our discord](https://discord.gg/aNkTPsRm2w).
 
