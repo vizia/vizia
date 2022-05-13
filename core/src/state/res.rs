@@ -3,8 +3,8 @@ use crate::prelude::*;
 macro_rules! impl_res_simple {
     ($t:ty) => {
         impl Res<$t> for $t {
-            fn get_val(&self, _: &Context) -> $t {
-                *self
+            fn get_val(&self, _: &Context) -> Option<$t> {
+                Some(*self)
             }
 
             fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -22,10 +22,7 @@ macro_rules! impl_res_simple {
 ///
 /// This trait is part of the prelude.
 pub trait Res<T> {
-    fn get_val(&self, cx: &Context) -> T;
-    fn get_val_fallible(&self, cx: &Context) -> Option<T> {
-        Some(self.get_val(cx))
-    }
+    fn get_val(&self, cx: &Context) -> Option<T>;
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
         F: 'static + Clone + Fn(&mut Context, Entity, T);
@@ -50,15 +47,11 @@ impl_res_simple!(f64);
 
 impl<T, L> Res<T> for L
 where
-    L: Lens<Target = T> + LensExt,
+    L: Bindable<Output = T>,
     T: Clone + Data,
 {
-    fn get_val(&self, cx: &Context) -> T {
+    fn get_val(&self, cx: &Context) -> Option<T> {
         self.get(cx)
-    }
-
-    fn get_val_fallible(&self, cx: &Context) -> Option<T> {
-        self.get_fallible(cx).map(|x| x)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -67,7 +60,7 @@ where
     {
         cx.with_current(entity, |cx| {
             Binding::new(cx, self.clone(), move |cx, val| {
-                if let Some(v) = val.get_val_fallible(cx) {
+                if let Some(v) = val.get_val(cx) {
                     (closure)(cx, entity, v);
                 }
             });
@@ -76,8 +69,8 @@ where
 }
 
 impl<'s> Res<&'s str> for &'s str {
-    fn get_val(&self, _: &Context) -> &'s str {
-        self
+    fn get_val(&self, _: &Context) -> Option<&'s str> {
+        Some(self)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -89,8 +82,8 @@ impl<'s> Res<&'s str> for &'s str {
 }
 
 impl<'s> Res<&'s String> for &'s String {
-    fn get_val(&self, _: &Context) -> &'s String {
-        self
+    fn get_val(&self, _: &Context) -> Option<&'s String> {
+        Some(self)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -102,8 +95,8 @@ impl<'s> Res<&'s String> for &'s String {
 }
 
 impl Res<Color> for Color {
-    fn get_val(&self, _: &Context) -> Color {
-        *self
+    fn get_val(&self, _: &Context) -> Option<Color> {
+        Some(*self)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -115,8 +108,8 @@ impl Res<Color> for Color {
 }
 
 impl Res<Units> for Units {
-    fn get_val(&self, _: &Context) -> Units {
-        *self
+    fn get_val(&self, _: &Context) -> Option<Units> {
+        Some(*self)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -128,8 +121,8 @@ impl Res<Units> for Units {
 }
 
 impl Res<Visibility> for Visibility {
-    fn get_val(&self, _: &Context) -> Visibility {
-        *self
+    fn get_val(&self, _: &Context) -> Option<Visibility> {
+        Some(*self)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -141,8 +134,8 @@ impl Res<Visibility> for Visibility {
 }
 
 impl Res<Display> for Display {
-    fn get_val(&self, _: &Context) -> Display {
-        *self
+    fn get_val(&self, _: &Context) -> Option<Display> {
+        Some(*self)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -154,8 +147,8 @@ impl Res<Display> for Display {
 }
 
 impl Res<LayoutType> for LayoutType {
-    fn get_val(&self, _: &Context) -> LayoutType {
-        *self
+    fn get_val(&self, _: &Context) -> Option<LayoutType> {
+        Some(*self)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -167,8 +160,8 @@ impl Res<LayoutType> for LayoutType {
 }
 
 impl Res<PositionType> for PositionType {
-    fn get_val(&self, _: &Context) -> PositionType {
-        *self
+    fn get_val(&self, _: &Context) -> Option<PositionType> {
+        Some(*self)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -180,8 +173,8 @@ impl Res<PositionType> for PositionType {
 }
 
 impl<T: Copy> Res<(T, T)> for (T, T) {
-    fn get_val(&self, _: &Context) -> (T, T) {
-        *self
+    fn get_val(&self, _: &Context) -> Option<(T, T)> {
+        Some(*self)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)

@@ -25,7 +25,7 @@ where
         *data.counter.borrow_mut() += 1;
         handle
             .bind(MenuData::selected, move |handle, selected| {
-                let selected = selected.get(handle.cx) == Some(i);
+                let selected = selected.get(handle.cx) == Some(Some(i));
                 handle.cx.set_selected(selected);
                 if selected {
                     on_select(handle.cx);
@@ -295,17 +295,20 @@ impl MenuButton {
     where
         F: 'static + FnOnce(&mut Context),
         A: 'static + Fn(&mut Context),
-        L: Lens<Target = bool>,
+        L: Bindable<Output = bool>,
     {
         Self::new(
             cx,
             move |cx| {
                 HStack::new(cx, move |cx| {
                     builder(cx);
-                    Label::new(cx, "").left(Units::Stretch(1.0)).bind(lens, move |handle, lens| {
-                        let val = lens.get_fallible(handle.cx);
-                        handle.text(if val == Some(true) { CHECK } else { "" });
-                    });
+                    Label::new(cx, "").left(Units::Stretch(1.0)).text(lens.map_shallow(|v| {
+                        if *v {
+                            CHECK
+                        } else {
+                            ""
+                        }
+                    }));
                 });
             },
             action,

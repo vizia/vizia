@@ -1,12 +1,8 @@
 use std::any::TypeId;
-use std::collections::HashSet;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
 use std::rc::Rc;
-
-use crate::prelude::*;
-use crate::state::{PubStore, State};
 
 /// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
 ///
@@ -20,61 +16,12 @@ pub trait Lens: 'static + Clone {
     type Target;
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O;
-
-    fn make_store(&self, source: &Self::Source, entity: Entity) -> PubStore
-    where
-        Self::Target: Data,
-    {
-        PubStore(Box::new(State {
-            entity,
-            lens: self.clone(),
-            old: self.view(source, |t| t.cloned().map(|v| v)),
-            observers: HashSet::from([entity]),
-        }))
-    }
-
-    fn cache_key(&self) -> Option<TypeId> {
-        if std::mem::size_of::<Self>() == 0 {
-            Some(TypeId::of::<Self>())
-        } else {
-            None
-        }
-    }
 }
 
 /// Helpers for constructing more complex `Lens`es.
 ///
 /// This trait is part of the prelude.
 pub trait LensExt: Lens {
-    /// Retrieve a copy of the lensed data from context.
-    ///
-    /// Example
-    /// ```ignore
-    /// let value = lens.get(cx);
-    /// ```
-    fn get<C: DataContext>(&self, cx: &C) -> Self::Target
-    where
-        Self::Target: Clone,
-    {
-        self.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| {
-                t.expect("Lens failed to resolve. Do you want to use LensExt::get_fallible?")
-                    .clone()
-            },
-        )
-    }
-
-    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Target>
-    where
-        Self::Target: Clone,
-    {
-        self.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| t.cloned().map(|v| v),
-        )
-    }
-
     /// Used to construct a lens to some data contained within some other lensed data.
     ///
     /// # Example
@@ -105,13 +52,6 @@ pub trait LensExt: Lens {
         G: 'static + Fn(&Self::Target) -> B,
     {
         self.then(Map::new(get))
-    }
-
-    fn map_shallow<G, B: 'static>(self, get: G) -> MapShallow<Self, Self::Target, B>
-    where
-        G: 'static + Fn(&Self::Target) -> B,
-    {
-        MapShallow { child: self, mapper: Rc::new(get) }
     }
 
     fn unwrap<T: 'static>(self) -> Then<Self, UnwrapLens<T>>
@@ -371,40 +311,5 @@ where
         } else {
             map(None)
         }
-    }
-}
-
-#[derive(Clone)]
-pub struct MapShallow<L, I, O> {
-    child: L,
-    mapper: Rc<dyn Fn(&I) -> O>,
-}
-
-impl<L, I, O> Lens for MapShallow<L, I, O>
-where
-    L: Lens<Target = I>,
-    I: Data,
-    O: Data,
-{
-    type Source = L::Source;
-    type Target = O;
-
-    fn view<OO, F: FnOnce(Option<&Self::Target>) -> OO>(
-        &self,
-        source: &Self::Source,
-        map: F,
-    ) -> OO {
-        self.child.view(source, |t| map(t.map(self.mapper.as_ref()).as_ref()))
-    }
-
-    fn cache_key(&self) -> Option<TypeId> {
-        self.child.cache_key()
-    }
-
-    fn make_store(&self, source: &Self::Source, entity: Entity) -> PubStore
-    where
-        Self::Target: Data,
-    {
-        self.child.make_store(source, entity)
     }
 }

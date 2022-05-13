@@ -1,5 +1,8 @@
+use std::any::Any;
 use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 use vizia::prelude::*;
+use vizia_core::state::StoreId;
 
 const N: i64 = 100000;
 
@@ -39,29 +42,97 @@ impl Model for AppData {
     }
 }
 
-#[derive(Default)]
-pub struct MyDispatch {
-    mapping: HashMap<i64, Entity>,
+pub struct HashSetStore<L, T> {
+    mapping: HashMap<T, Entity>,
+    reverse_mapping: HashMap<Entity, T>,
+    old: Option<HashSet<T>>,
+    lens: L,
 }
 
-impl DispatchState for MyDispatch {
-    type RegisterType = i64;
-    type LookupType = HashSet<i64>;
-
-    fn register(&mut self, entity: Entity, value: Self::RegisterType) {
-        self.mapping.insert(value, entity);
+impl<L: Lens<Target = HashSet<T>>, T: 'static + Copy + Eq + Hash> Store for HashSetStore<L, T> {
+    fn update(&mut self, model: ModelOrView, callback: &mut dyn FnMut(Entity)) {
+        if let Some(model) = model.downcast_ref() {
+            self.lens.view(model, |target| {
+                let mut any = false;
+                for key in target.unwrap().symmetric_difference(self.old.as_ref().unwrap()) {
+                    any = true;
+                    if let Some(entity) = self.mapping.get(key) {
+                        callback(*entity);
+                    }
+                }
+                if any {
+                    self.old = Some(target.unwrap().clone());
+                }
+            });
+        }
     }
 
-    fn lookup(
+    fn remove_observer(&mut self, observer: &Entity) {
+        if let Some(key) = self.reverse_mapping.remove(observer) {
+            self.mapping.remove(&key);
+        }
+    }
+
+    fn num_observers(&self) -> usize {
+        self.mapping.len()
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+struct HashSetMember<L, T> {
+    lens: L,
+    member: T,
+}
+
+impl<L, T> HashSetMember<L, T>
+where
+    L: Lens<Target = HashSet<T>>,
+    <L as Lens>::Source: 'static,
+    T: Copy + Clone + Hash + Eq,
+{
+    fn new(lens: L, member: T) -> Self {
+        Self { lens, member }
+    }
+}
+
+impl<L, T> Bindable for HashSetMember<L, T>
+where
+    L: Lens<Target = HashSet<T>>,
+    <L as Lens>::Source: 'static,
+    T: 'static + Copy + Data + Hash + Eq,
+{
+    type Output = bool;
+
+    fn view<D: DataContext, F: FnOnce(Option<&Self::Output>) -> O, O>(
         &self,
-        old: &Option<Self::LookupType>,
-        new: &Option<Self::LookupType>,
-    ) -> HashSet<Entity> {
-        old.as_ref()
-            .unwrap()
-            .symmetric_difference(new.as_ref().unwrap())
-            .filter_map(|idx| self.mapping.get(idx).copied())
-            .collect()
+        cx: &D,
+        viewer: F,
+    ) -> O {
+        self.lens.view(cx.data().unwrap(), |data| {
+            viewer(data.map(|data| data.contains(&self.member)).as_ref())
+        })
+    }
+
+    fn requests(&self) -> Vec<StoreId> {
+        self.lens.requests()
+    }
+
+    fn make_store(&self, source: ModelOrView) -> Option<Box<dyn StoreHandler>> {
+        source.downcast_ref::<<L as Lens>::Source>().map(|source| -> Box<dyn StoreHandler> {
+            Box::new(HashSetStore {
+                lens: self.lens.clone(),
+                old: self.lens.view(source, |t| t.cloned().map(|v| v)),
+                mapping: HashMap::new(),
+                reverse_mapping: HashMap::new(),
+            })
+        })
+    }
+
+    fn add_to_store(&self, store: &mut dyn StoreHandler, entity: Entity) {
+        store.downcast_mut::<HashSetStore<L, T>>().map(|store| {
+            store.mapping.insert(self.member, entity);
+            store.reverse_mapping.insert(entity, self.member);
+        });
     }
 }
 
@@ -73,24 +144,15 @@ fn main() {
         cx.text_context().resize_shaping_run_cache(N as usize * 2);
 
         ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
-            DispatchView::<_, _, MyDispatch>::new(cx, AppData::selected, move |cx, handle| {
-                for i in 0..N {
-                    DispatchBinding::new(cx, i, handle, move |cx, lens| {
-                        let selected = lens.view(cx.data().unwrap(), move |state| {
-                            if let Some(state) = state {
-                                state.contains(&i)
-                            } else {
-                                false
-                            }
+            for i in 0..N {
+                Binding::new(cx, HashSetMember::new(AppData::selected, i), move |cx, lens| {
+                    Label::new(cx, &english_numbers::convert_no_fmt(i as i64))
+                        .checked(lens)
+                        .on_press(move |cx| {
+                            cx.emit(AppEvent::Toggle(i));
                         });
-                        Label::new(cx, &english_numbers::convert_no_fmt(i as i64))
-                            .checked(selected)
-                            .on_press(move |cx| {
-                                cx.emit(AppEvent::Toggle(i));
-                            });
-                    });
-                }
-            });
+                });
+            }
         });
     })
     .run();

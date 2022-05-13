@@ -135,7 +135,7 @@ mod model;
 pub use model::*;
 
 mod store;
-pub(crate) use store::*;
+pub use store::*;
 
 mod data;
 pub use data::*;
@@ -145,6 +145,3 @@ pub use binding::*;
 
 mod res;
 pub use res::*;
-
-mod dispatch;
-pub use dispatch::*;

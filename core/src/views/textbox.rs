@@ -459,8 +459,7 @@ where
     fn new_core(cx: &mut Context, lens: L, kind: TextboxKind) -> Handle<Self> {
         let result = Self { lens: lens.clone(), kind }.build(cx, move |cx| {
             Binding::new(cx, lens.clone(), |cx, text| {
-                let text =
-                    text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
+                let text = text.get(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
                         let td = TextboxData {

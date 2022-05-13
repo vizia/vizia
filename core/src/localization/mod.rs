@@ -111,18 +111,18 @@ impl Localized {
 }
 
 impl Res<String> for Localized {
-    fn get_val(&self, cx: &Context) -> String {
+    fn get_val(&self, cx: &Context) -> Option<String> {
         let bundle = cx.resource_manager_ref().current_translation();
         let message = if let Some(msg) = bundle.get_message(&self.key) {
             msg
         } else {
-            return format!("{{MISSING: {}}}", self.key);
+            return Some(format!("{{MISSING: {}}}", self.key));
         };
 
         let value = if let Some(value) = message.value() {
             value
         } else {
-            return format!("{{MISSING: {}}}", self.key);
+            return Some(format!("{{MISSING: {}}}", self.key));
         };
 
         let mut err = vec![];
@@ -130,9 +130,9 @@ impl Res<String> for Localized {
         let res = bundle.format_pattern(value, Some(&args), &mut err);
 
         if err.is_empty() {
-            res.to_string()
+            Some(res.to_string())
         } else {
-            format!("{} {{ERROR: {:?}}}", res, err)
+            Some(format!("{} {{ERROR: {:?}}}", res, err))
         }
     }
 
@@ -144,7 +144,9 @@ impl Res<String> for Localized {
             let lenses = self.args.values().map(|x| x.make_clone()).collect();
             let self2 = self.clone();
             bind_recursive(cx, &lenses, move |cx| {
-                closure(cx, entity, self2.get_val(cx));
+                if let Some(value) = self2.get_val(cx) {
+                    closure(cx, entity, value);
+                }
             });
         });
     }

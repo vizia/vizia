@@ -1,10 +1,10 @@
+use crate::events::ViewHandler;
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
 };
 
 use crate::prelude::*;
-use crate::state::Store;
 
 /// A trait implemented by application data in order to mutate in response to events.
 ///
@@ -38,7 +38,7 @@ use crate::state::Store;
 /// ```
 ///
 /// This trait is part of the prelude.
-pub trait Model: 'static + Sized {
+pub trait Model: 'static + Sized + Any {
     /// Build the model data into the application tree.
     ///
     /// # Examples
@@ -116,7 +116,7 @@ pub trait Model: 'static + Sized {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {}
 }
 
-pub(crate) trait ModelData: Any {
+pub trait ModelData: Any {
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut Context, event: &mut Event) {}
 
@@ -142,8 +142,23 @@ impl<T: Model> ModelData for T {
 #[derive(Default)]
 pub(crate) struct ModelDataStore {
     pub data: HashMap<TypeId, Box<dyn ModelData>>,
-    pub lenses_dedup: HashMap<TypeId, Box<dyn Store>>,
-    pub lenses_dup: Vec<Box<dyn Store>>,
+    pub lenses_dedup: HashMap<TypeId, Box<dyn StoreHandler>>,
+    pub lenses_dup: Vec<Box<dyn StoreHandler>>,
 }
 
 impl Model for () {}
+
+#[derive(Copy, Clone)]
+pub enum ModelOrView<'a> {
+    Model(&'a dyn ModelData),
+    View(&'a dyn ViewHandler),
+}
+
+impl<'a> ModelOrView<'a> {
+    pub fn downcast_ref<T: 'static>(self) -> Option<&'a T> {
+        match self {
+            ModelOrView::Model(m) => m.downcast_ref(),
+            ModelOrView::View(v) => v.downcast_ref(),
+        }
+    }
+}
