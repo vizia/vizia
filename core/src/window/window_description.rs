@@ -1,15 +1,16 @@
-/// The size of an application window.
-///
-/// TODO is this logical or physical?
+/// The logical size of an application window.
 ///
 /// This type is part of the prelude.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WindowSize {
+    /// The width of the window.
     pub width: u32,
+    /// The height of the window.
     pub height: u32,
 }
 
 impl WindowSize {
+    /// Creates a new window size.
     pub fn new(width: u32, height: u32) -> Self {
         Self { width, height }
     }
@@ -21,16 +22,17 @@ impl From<(u32, u32)> for WindowSize {
     }
 }
 
-/// The position of a window in screen coordinates.
-///
-/// TODO is this logical or physical?
+/// The logical position of a window in screen coordinates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Position {
+    /// The x coordinate of the position.
     pub x: u32,
+    /// The y coordinate of the position.
     pub y: u32,
 }
 
 impl Position {
+    /// Creates a new window position.
     pub fn new(x: u32, y: u32) -> Self {
         Position { x, y }
     }
