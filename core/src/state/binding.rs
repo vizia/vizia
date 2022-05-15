@@ -239,14 +239,14 @@ impl<T> ConstantBindable<T> {
     }
 }
 
-impl<T: Clone> Bindable for ConstantBindable<T> {
+impl<T: 'static + Clone> Bindable for ConstantBindable<T> {
     type Output = T;
 
-    fn view<D: DataContext, F: FnOnce(Option<&Self::Output>) -> T, T>(
+    fn view<D: DataContext, F: FnOnce(Option<&Self::Output>) -> O, O>(
         &self,
         _cx: &D,
         viewer: F,
-    ) -> T {
+    ) -> O {
         viewer(Some(&self.value))
     }
 
