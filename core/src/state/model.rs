@@ -160,3 +160,5 @@ impl<'a> ModelOrView<'a> {
         }
     }
 }
+
+impl Model for () {}

@@ -41,7 +41,7 @@ fn main() {
             // This vstack shouldn't be necessary but because of how bindings work it's required
             VStack::new(cx, move |cx| {
                 Binding::new(cx, AppData::selected, move |cx, selected| {
-                    let selected = selected.get(cx).contains(&index);
+                    let selected = selected.get(cx).unwrap().contains(&index);
 
                     Label::new(cx, item)
                         // Set the checked state based on whether this item is selected
