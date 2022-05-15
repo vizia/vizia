@@ -145,13 +145,11 @@ fn main() {
 
         ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
             for i in 0..N {
-                Binding::new(cx, HashSetMember::new(AppData::selected, i), move |cx, lens| {
-                    Label::new(cx, &english_numbers::convert_no_fmt(i as i64))
-                        .checked(lens)
-                        .on_press(move |cx| {
-                            cx.emit(AppEvent::Toggle(i));
-                        });
-                });
+                Label::new(cx, &english_numbers::convert_no_fmt(i as i64))
+                    .checked(HashSetMember::new(AppData::selected, i))
+                    .on_press(move |cx| {
+                        cx.emit(AppEvent::Toggle(i));
+                    });
             }
         });
     })

@@ -1147,11 +1147,6 @@ pub trait DataContext {
 
 impl DataContext for Context {
     fn data<T: 'static>(&self) -> Option<&T> {
-        // return data for the static model
-        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
-            return Some(t);
-        }
-
         for entity in self.current.parent_iter(&self.tree) {
             //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
             if let Some(data_list) = self.data.get(entity) {

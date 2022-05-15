@@ -146,8 +146,6 @@ pub(crate) struct ModelDataStore {
     pub lenses_dup: Vec<Box<dyn StoreHandler>>,
 }
 
-impl Model for () {}
-
 #[derive(Copy, Clone)]
 pub enum ModelOrView<'a> {
     Model(&'a dyn ModelData),

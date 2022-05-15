@@ -227,3 +227,34 @@ where
         self.child.add_to_store(store, entity);
     }
 }
+
+#[derive(Clone, Debug)]
+pub struct ConstantBindable<T> {
+    value: T
+}
+
+impl<T> ConstantBindable<T> {
+    pub fn new(value: T) -> Self {
+        Self { value }
+    }
+}
+
+impl<T: Clone> Bindable for ConstantBindable<T> {
+    type Output = T;
+
+    fn view<D: DataContext, F: FnOnce(Option<&Self::Output>) -> T, T>(&self, _cx: &D, viewer: F) -> T {
+        viewer(Some(&self.value))
+    }
+
+    fn requests(&self) -> Vec<StoreId> {
+        vec![]
+    }
+
+    fn make_store(&self, _source: ModelOrView) -> Option<Box<dyn StoreHandler>> {
+        panic!("You should never call this function");
+    }
+
+    fn add_to_store(&self, _store: &mut dyn StoreHandler, _entity: Entity) {
+        panic!("You should never call this function");
+    }
+}
