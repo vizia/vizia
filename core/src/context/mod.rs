@@ -749,7 +749,7 @@ impl Context {
 
     pub fn spawn<F>(&self, target: F)
     where
-        F: 'static + Send + Fn(&mut ContextProxy),
+        F: 'static + Send + FnOnce(&mut ContextProxy),
     {
         let mut cxp = ContextProxy {
             current: self.current,
