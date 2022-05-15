@@ -230,7 +230,7 @@ where
 
 #[derive(Clone, Debug)]
 pub struct ConstantBindable<T> {
-    value: T
+    value: T,
 }
 
 impl<T> ConstantBindable<T> {
@@ -242,7 +242,11 @@ impl<T> ConstantBindable<T> {
 impl<T: Clone> Bindable for ConstantBindable<T> {
     type Output = T;
 
-    fn view<D: DataContext, F: FnOnce(Option<&Self::Output>) -> T, T>(&self, _cx: &D, viewer: F) -> T {
+    fn view<D: DataContext, F: FnOnce(Option<&Self::Output>) -> T, T>(
+        &self,
+        _cx: &D,
+        viewer: F,
+    ) -> T {
         viewer(Some(&self.value))
     }
 
