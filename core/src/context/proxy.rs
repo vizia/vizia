@@ -86,6 +86,18 @@ impl ContextProxy {
     ) -> Result<(), ProxyEmitError> {
         self.emit(InternalEvent::LoadImage { path, image: Mutex::new(Some(image)), policy })
     }
+
+    pub fn spawn<F>(&self, target: F)
+    where
+        F: 'static + Send + FnOnce(&mut ContextProxy),
+    {
+        let mut cxp = ContextProxy {
+            current: self.current,
+            event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
+        };
+
+        std::thread::spawn(move || target(&mut cxp));
+    }
 }
 
 pub trait EventProxy: Send {
