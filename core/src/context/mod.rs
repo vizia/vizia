@@ -67,6 +67,7 @@ pub struct Context {
     captured: Entity,
     pub(crate) hovered: Entity,
     focused: Entity,
+    cursor_icon_locked: bool,
 
     resource_manager: ResourceManager,
 
@@ -103,6 +104,7 @@ impl Context {
             captured: Entity::null(),
             hovered: Entity::root(),
             focused: Entity::root(),
+            cursor_icon_locked: false,
             resource_manager: ResourceManager::new(),
             text_context: TextContext::default(),
 
@@ -230,9 +232,24 @@ impl Context {
     /// Releases the mouse events capture
     pub fn release(&mut self) {
         self.captured = Entity::null();
+    }
+
+    /// Prevents the cursor icon from changing until the lock is released
+    pub fn lock_cursor_icon(&mut self) {
+        self.cursor_icon_locked = true;
+    }
+
+    /// Releases any cursor icon lock, allowing the cursor icon to be changed
+    pub fn unlock_cursor_icon(&mut self) {
+        self.cursor_icon_locked = false;
         let hovered = self.hovered;
         let cursor = self.style().cursor.get(hovered).cloned().unwrap_or_default();
         self.emit(WindowEvent::SetCursor(cursor));
+    }
+
+    /// Returns true if the cursor icon is locked
+    pub fn is_cursor_icon_locked(&self) -> bool {
+        self.cursor_icon_locked
     }
 
     /// Sets application focus to the current entity

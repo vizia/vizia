@@ -561,6 +561,7 @@ where
                     cx.focus();
                     cx.capture();
                     cx.set_checked(true);
+                    cx.lock_cursor_icon();
 
                     cx.emit(TextEvent::Hit(cx.mouse().cursorx, cx.mouse().cursory));
                 } else {
@@ -585,6 +586,10 @@ where
                         Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered()),
                     );
                 }
+            }
+
+            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+                cx.unlock_cursor_icon();
             }
 
             WindowEvent::MouseMove(_, _) => {
