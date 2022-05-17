@@ -561,9 +561,21 @@ where
 
                     cx.emit(TextEvent::Hit(cx.mouse().cursorx, cx.mouse().cursory));
                 } else {
+                    cx.emit(TextEvent::Submit);
+                    if let Some(source) = cx.data::<L::Source>() {
+                        let text = self.lens.view(source, |t| {
+                            if let Some(t) = t {
+                                t.to_string()
+                            } else {
+                                "".to_owned()
+                            }
+                        });
+
+                        cx.emit(TextEvent::SelectAll);
+                        cx.emit(TextEvent::InsertText(text));
+                    };
                     cx.release();
                     cx.set_checked(false);
-                    cx.emit(TextEvent::EndEdit);
 
                     // Forward event to hovered
                     cx.event_queue.push_back(
@@ -612,6 +624,7 @@ where
                         };
 
                         cx.set_checked(false);
+                        cx.release();
                     } else {
                         cx.emit(TextEvent::InsertText("\n".to_owned()));
                     }
