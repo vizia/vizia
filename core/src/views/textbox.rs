@@ -508,11 +508,13 @@ where
                 .class("textbox_container");
         });
 
-        result.class(match kind {
-            TextboxKind::SingleLine => "single_line",
-            TextboxKind::MultiLineUnwrapped => "multi_line_unwrapped",
-            TextboxKind::MultiLineWrapped => "multi_line_wrapped",
-        })
+        result
+            .class(match kind {
+                TextboxKind::SingleLine => "single_line",
+                TextboxKind::MultiLineUnwrapped => "multi_line_unwrapped",
+                TextboxKind::MultiLineWrapped => "multi_line_wrapped",
+            })
+            .cursor(CursorIcon::Text)
     }
 }
 
@@ -571,14 +573,9 @@ where
             }
 
             WindowEvent::MouseMove(_, _) => {
-                cx.emit(WindowEvent::SetCursor(CursorIcon::Text));
                 if cx.mouse().left.state == MouseButtonState::Pressed {
                     cx.emit(TextEvent::Drag(cx.mouse().cursorx, cx.mouse().cursory));
                 }
-            }
-
-            WindowEvent::MouseLeave => {
-                cx.emit(WindowEvent::SetCursor(CursorIcon::Default));
             }
 
             WindowEvent::CharInput(c) => {

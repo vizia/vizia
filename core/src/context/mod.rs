@@ -203,6 +203,10 @@ impl Context {
         self.modifiers
     }
 
+    pub fn modifiers_mut(&mut self) -> &mut Modifiers {
+        &mut self.modifiers
+    }
+
     /// Mark the application as needing to rerun the draw method
     pub fn need_redraw(&mut self) {
         self.style.needs_redraw = true;
@@ -226,6 +230,9 @@ impl Context {
     /// Releases the mouse events capture
     pub fn release(&mut self) {
         self.captured = Entity::null();
+        let hovered = self.hovered;
+        let cursor = self.style().cursor.get(hovered).cloned().unwrap_or_default();
+        self.emit(WindowEvent::SetCursor(cursor));
     }
 
     /// Sets application focus to the current entity

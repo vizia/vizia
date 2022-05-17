@@ -450,10 +450,10 @@ impl Application {
                         }
 
                         winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
-                            context.modifiers().set(Modifiers::SHIFT, modifiers_state.shift());
-                            context.modifiers().set(Modifiers::ALT, modifiers_state.alt());
-                            context.modifiers().set(Modifiers::CTRL, modifiers_state.ctrl());
-                            context.modifiers().set(Modifiers::LOGO, modifiers_state.logo());
+                            context.modifiers_mut().set(Modifiers::SHIFT, modifiers_state.shift());
+                            context.modifiers_mut().set(Modifiers::ALT, modifiers_state.alt());
+                            context.modifiers_mut().set(Modifiers::CTRL, modifiers_state.ctrl());
+                            context.modifiers_mut().set(Modifiers::LOGO, modifiers_state.logo());
                         }
 
                         _ => {}
