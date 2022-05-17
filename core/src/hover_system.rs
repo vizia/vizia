@@ -121,7 +121,7 @@ pub fn apply_hover(cx: &mut Context) {
         );
 
         let cursor = cx.style().cursor.get(hovered_widget).cloned().unwrap_or_default();
-        if cx.captured() == Entity::null() {
+        if !cx.is_cursor_icon_locked() {
             cx.emit(WindowEvent::SetCursor(cursor));
         }
 
