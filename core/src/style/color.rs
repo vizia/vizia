@@ -91,10 +91,7 @@ impl ToString for Color {
 
         let data = self.data;
 
-        let mut color = format!("#{:x}", data);
-        color.remove(1);
-        color.remove(1);
-        color
+        format!("#{:x}", data)
     }
 }
 
