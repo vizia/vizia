@@ -1,5 +1,5 @@
 use std::fmt::Formatter;
-use std::sync::Mutex;
+use std::sync::{Mutex, Arc};
 
 use super::InternalEvent;
 
@@ -15,6 +15,8 @@ use crate::resource::ImageRetentionPolicy;
 pub struct ContextProxy {
     pub current: Entity,
     pub event_proxy: Option<Box<dyn EventProxy>>,
+    pub cursorx: Arc<Mutex<f32>>,
+    pub cursory: Arc<Mutex<f32>>,
 }
 
 /// Errors that might come up when emitting an event via a ContextProxy.
@@ -94,6 +96,8 @@ impl ContextProxy {
         let mut cxp = ContextProxy {
             current: self.current,
             event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
+            cursorx: self.cursorx.clone(),
+            cursory: self.cursory.clone(),
         };
 
         std::thread::spawn(move || target(&mut cxp));

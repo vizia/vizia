@@ -6,7 +6,7 @@ use std::any::Any;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::error::Error;
-use std::sync::Mutex;
+use std::sync::{Mutex, Arc};
 
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardProvider};
@@ -62,6 +62,10 @@ pub struct Context {
     environment: Environment,
 
     mouse: MouseState,
+
+    cursorx: Arc<Mutex<f32>>,
+    cursory: Arc<Mutex<f32>>,
+
     modifiers: Modifiers,
 
     captured: Entity,
@@ -100,6 +104,8 @@ impl Context {
             event_queue: VecDeque::new(),
             listeners: HashMap::default(),
             mouse: MouseState::default(),
+            cursorx: Arc::new(Mutex::new(0.0)),
+            cursory: Arc::new(Mutex::new(0.0)),
             modifiers: Modifiers::empty(),
             captured: Entity::null(),
             hovered: Entity::root(),
@@ -778,6 +784,8 @@ impl Context {
         let mut cxp = ContextProxy {
             current: self.current,
             event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
+            cursorx: self.cursorx.clone(),
+            cursory: self.cursory.clone(),
         };
 
         std::thread::spawn(move || target(&mut cxp));
@@ -975,6 +983,9 @@ impl Context {
             WindowEvent::MouseMove(x, y) => {
                 self.mouse.cursorx = *x;
                 self.mouse.cursory = *y;
+
+                *self.cursorx.lock().unwrap() = *x;
+                *self.cursory.lock().unwrap() = *y;
 
                 apply_hover(self);
 
