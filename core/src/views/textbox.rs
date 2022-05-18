@@ -130,6 +130,7 @@ impl TextboxData {
         self.transform = (tx.round() / scale, ty.round() / scale);
     }
 
+    // Insert text into the local buffer, replacing any selected text
     pub fn insert_text(&mut self, _cx: &mut Context, text: &str) {
         let text_length = text.len();
         self.text.edit(self.selection.range(), text);
@@ -137,6 +138,7 @@ impl TextboxData {
         self.selection = Selection::caret(self.selection.min() + text_length);
     }
 
+    // Remove text from the local buffer
     pub fn delete_text(&mut self, _cx: &mut Context, movement: Movement) {
         if !self.selection.is_caret() {
             self.text.edit(self.selection.range(), "");
@@ -335,6 +337,12 @@ impl Model for TextboxData {
             TextEvent::StartEdit => {
                 if !cx.is_disabled() {
                     if !self.edit {
+                        cx.focus();
+                        cx.capture();
+                        cx.set_checked(true);
+                        cx.lock_cursor_icon();
+
+                        cx.emit(TextEvent::Hit(cx.mouse().cursorx, cx.mouse().cursory));
                         self.edit = true;
                         cx.emit(TextEvent::SelectAll);
                     }
@@ -343,15 +351,17 @@ impl Model for TextboxData {
 
             TextEvent::EndEdit => {
                 self.edit = false;
+                cx.release();
+                cx.set_checked(false);
             }
 
             TextEvent::Submit => {
+                cx.emit(TextEvent::EndEdit);
                 if let Some(callback) = self.on_submit.take() {
                     (callback)(cx, self.text.as_str().to_owned());
 
                     self.on_submit = Some(callback);
                 }
-                cx.emit(TextEvent::EndEdit);
             }
 
             TextEvent::SelectAll => {
@@ -557,13 +567,6 @@ where
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 if cx.is_over() {
                     cx.emit(TextEvent::StartEdit);
-
-                    cx.focus();
-                    cx.capture();
-                    cx.set_checked(true);
-                    cx.lock_cursor_icon();
-
-                    cx.emit(TextEvent::Hit(cx.mouse().cursorx, cx.mouse().cursory));
                 } else {
                     cx.emit(TextEvent::Submit);
                     if let Some(source) = cx.data::<L::Source>() {
@@ -578,8 +581,6 @@ where
                         cx.emit(TextEvent::SelectAll);
                         cx.emit(TextEvent::InsertText(text));
                     };
-                    cx.release();
-                    cx.set_checked(false);
 
                     // Forward event to hovered
                     cx.event_queue.push_back(
