@@ -57,7 +57,7 @@ fn main() {
                                 }
                             })
                             .on_press(move |cx| {
-                                cx.emit(AppEvent::SetChoice(item.get(cx).clone()));
+                                cx.emit(AppEvent::SetChoice(item.get(cx)));
                                 cx.emit(PopupEvent::Close);
                             });
                     });

@@ -221,10 +221,10 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
                 _ => Align::Left,
             };
-            match child_right {
-                Units::Pixels(px) => child_space_x += px,
-                _ => {}
-            }
+
+            if let Units::Pixels(px) = child_right {
+                child_space_x += px
+            } 
 
             let baseline = match child_top {
                 Units::Pixels(val) => {
@@ -255,9 +255,9 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
                 _ => Baseline::Top,
             };
-            match child_bottom {
-                Units::Pixels(px) => child_space_y += px,
-                _ => {}
+
+            if let Units::Pixels(px) = child_bottom {
+                child_space_y += px
             }
 
             let mut content_width = 0.0;
@@ -396,7 +396,7 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     // Check for element name match
     if let Some(selector_element) = &selector.element {
         if let Some(element) = cx.views.get(&entity).and_then(|view| view.element()) {
-            if selector_element != &element {
+            if selector_element == element {
                 return false;
             }
         } else {
