@@ -74,11 +74,9 @@ where
                 let flag: bool = popup.lens.get(cx).into();
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
-                        if flag && meta.origin != cx.current() {
-                            if !cx.is_over() {
-                                (focus_event)(cx);
-                                meta.consume();
-                            }
+                        if flag && meta.origin != cx.current() && !cx.is_over() {
+                            (focus_event)(cx);
+                            meta.consume();
                         }
                     }
 

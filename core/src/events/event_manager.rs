@@ -127,6 +127,12 @@ impl EventManager {
     }
 }
 
+impl Default for EventManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
     if let Some(mut view) = context.views.remove(&entity) {
         context.with_current(entity, |context| {

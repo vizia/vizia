@@ -43,8 +43,8 @@ impl<V: View> View for Press<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        event.map(|window_event, _| match window_event {
-            WindowEvent::MouseDown(MouseButton::Left) => {
+        event.map(|window_event, _| {
+            if let WindowEvent::MouseDown(MouseButton::Left) = window_event {
                 if cx.current() != cx.hovered()
                     && !cx.hovered().is_descendant_of(cx.tree_ref(), cx.current())
                 {
@@ -54,8 +54,6 @@ impl<V: View> View for Press<V> {
                     (action)(cx);
                 }
             }
-
-            _ => {}
         });
     }
 
@@ -102,8 +100,8 @@ impl<V: View> View for Release<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseUp(MouseButton::Left) => {
+        event.map(|window_event, meta| {
+            if let WindowEvent::MouseUp(MouseButton::Left) = window_event {
                 if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx);
@@ -112,8 +110,6 @@ impl<V: View> View for Release<V> {
                     cx.release();
                 }
             }
-
-            _ => {}
         });
     }
 
@@ -160,16 +156,14 @@ impl<V: View> View for Hover<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseEnter => {
+        event.map(|window_event, meta| {
+            if let WindowEvent::MouseEnter = window_event {
                 if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx);
                     }
                 }
             }
-
-            _ => {}
         });
     }
 
@@ -216,14 +210,12 @@ impl<V: View> View for Over<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        event.map(|window_event, _| match window_event {
-            WindowEvent::MouseOver => {
+        event.map(|window_event, _| {
+            if let WindowEvent::MouseOver = window_event {
                 if let Some(action) = &self.action {
                     (action)(cx);
                 }
             }
-
-            _ => {}
         });
     }
 
@@ -270,16 +262,14 @@ impl<V: View> View for Leave<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseLeave => {
+        event.map(|window_event, meta| {
+            if let WindowEvent::MouseLeave = window_event {
                 if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx);
                     }
                 }
             }
-
-            _ => {}
         });
     }
 
@@ -326,14 +316,12 @@ impl<V: View> View for Move<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        event.map(|window_event, _| match window_event {
-            WindowEvent::MouseMove(x, y) => {
+        event.map(|window_event, _| {
+            if let WindowEvent::MouseMove(x, y) = window_event {
                 if let Some(action) = &self.action {
                     (action)(cx, *x, *y);
                 }
             }
-
-            _ => {}
         });
     }
 
@@ -380,14 +368,12 @@ impl<V: View> View for FocusIn<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        event.map(|window_event, _| match window_event {
-            WindowEvent::FocusIn => {
+        event.map(|window_event, _| {
+            if let WindowEvent::FocusIn = window_event {
                 if let Some(action) = &self.action {
                     (action)(cx);
                 }
             }
-
-            _ => {}
         });
     }
 
@@ -434,14 +420,12 @@ impl<V: View> View for FocusOut<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        event.map(|window_event, _| match window_event {
-            WindowEvent::FocusOut => {
+        event.map(|window_event, _| {
+            if let WindowEvent::FocusOut = window_event {
                 if let Some(action) = &self.action {
                     (action)(cx);
                 }
             }
-
-            _ => {}
         });
     }
 
