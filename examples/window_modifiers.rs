@@ -42,7 +42,7 @@ fn main() {
 
         VStack::new(cx, |cx| {
             Textbox::new(cx, AppData::title).width(Pixels(200.0)).on_submit(|cx, txt| {
-                cx.emit(AppEvent::SetTitle(txt.clone()));
+                cx.emit(AppEvent::SetTitle(txt));
             });
 
             HStack::new(cx, |cx| {

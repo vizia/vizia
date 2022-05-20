@@ -29,7 +29,7 @@ impl From<bool> for Display {
 
 impl Interpolator for Display {
     fn interpolate(_start: &Self, end: &Self, _t: f32) -> Self {
-        return *end;
+        *end
     }
 }
 
@@ -62,7 +62,7 @@ impl Default for Visibility {
 
 impl Interpolator for Visibility {
     fn interpolate(_start: &Self, end: &Self, _t: f32) -> Self {
-        return *end;
+        *end
     }
 }
 
@@ -80,7 +80,7 @@ impl Default for Opacity {
 
 impl Interpolator for Opacity {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        return Opacity(start.0 + (end.0 - start.0) * t);
+        Opacity(start.0 + (end.0 - start.0) * t)
     }
 }
 
