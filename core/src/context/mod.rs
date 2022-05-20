@@ -43,6 +43,8 @@ static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
+type Listeners = HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>;
+
 /// The main storage and control object for a Vizia application.
 ///
 /// This type is part of the prelude.
@@ -54,8 +56,7 @@ pub struct Context {
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) data: SparseSet<ModelDataStore>,
     pub(crate) event_queue: VecDeque<Event>,
-    pub(crate) listeners:
-        HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
+    pub(crate) listeners: Listeners,
     style: Style,
     cache: CachedData,
 
@@ -463,21 +464,15 @@ impl Context {
     /// Ensure all FontOrId entires are loaded into the contexts and become Ids.
     pub fn synchronize_fonts(&mut self, canvas: &mut Canvas) {
         for (name, font) in self.resource_manager.fonts.iter_mut() {
-            match font {
-                FontOrId::Font(data) => {
-                    let id1 = canvas
-                        .add_font_mem(&data.clone())
-                        .expect(&format!("Failed to load font file for: {}", name));
-                    let id2 = self.text_context.add_font_mem(&data.clone()).expect("failed");
-                    if id1 != id2 {
-                        panic!(
-                            "Fonts in canvas must have the same id as fonts in the text context"
-                        );
-                    }
-                    *font = FontOrId::Id(id1);
+            if let FontOrId::Font(data) = font {
+                let id1 = canvas
+                    .add_font_mem(&data.clone())
+                    .unwrap_or_else(|_| panic!("Failed to load font file for: {}", name));
+                let id2 = self.text_context.add_font_mem(&data.clone()).expect("failed");
+                if id1 != id2 {
+                    panic!("Fonts in canvas must have the same id as fonts in the text context");
                 }
-
-                _ => {}
+                *font = FontOrId::Id(id1);
             }
         }
     }
@@ -1074,7 +1069,7 @@ impl Context {
                             TreeIterator::full(&self.tree)
                                 .filter(|node| is_focusable(&self.style, *node))
                                 .next_back()
-                                .unwrap_or(Entity::root())
+                                .unwrap_or_else(Entity::root)
                         };
 
                         if prev_focused != self.focused {
@@ -1128,6 +1123,12 @@ impl Context {
             self.event_queue
                 .push_back(Event::new(event).target(self.hovered).propagate(Propagation::Up));
         }
+    }
+}
+
+impl Default for Context {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

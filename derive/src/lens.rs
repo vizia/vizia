@@ -291,7 +291,7 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
             _ => None,
         })
         .collect::<Vec<_>>();
-    if usable_variants.len() == 0 {
+    if usable_variants.is_empty() {
         panic!("This enum has no variants which can have Lenses built. A valid variant has exactly one unnamed field. If you think this is unreasonable, please work on https://github.com/rust-lang/rfcs/pull/2593")
     }
 
@@ -305,7 +305,7 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
         ));
     };
 
-    if input.generics.params.len() != 0 {
+    if !input.generics.params.is_empty() {
         panic!("Lens implementations can only be derived from non-generic enums (for now)");
     }
 
