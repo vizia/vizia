@@ -6,7 +6,7 @@ use std::any::Any;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::error::Error;
-use std::sync::{Mutex, Arc};
+use std::sync::{Arc, Mutex};
 
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardProvider};
@@ -779,7 +779,7 @@ impl Context {
 
     pub fn spawn<F>(&self, target: F)
     where
-        F: 'static + Send + FnOnce(&mut ContextProxy),
+        F: 'static + Send + FnOnce(ContextProxy),
     {
         let mut cxp = ContextProxy {
             current: self.current,
@@ -788,7 +788,7 @@ impl Context {
             cursory: self.cursory.clone(),
         };
 
-        std::thread::spawn(move || target(&mut cxp));
+        std::thread::spawn(move || target(cxp));
     }
 
     /// For each binding or data observer, check if its data has changed, and if so, rerun its

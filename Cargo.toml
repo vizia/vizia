@@ -143,7 +143,9 @@ path = "examples/lists/sortable_list.rs"
 name = "static_list"
 path = "examples/lists/static_list.rs"
 
-
+[[example]]
+name = "spawn"
+path = "examples/spawn.rs"
 
 [[example]]
 name = "menu"

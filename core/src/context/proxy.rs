@@ -1,5 +1,5 @@
 use std::fmt::Formatter;
-use std::sync::{Mutex, Arc};
+use std::sync::{Arc, Mutex};
 
 use super::InternalEvent;
 
@@ -17,6 +17,17 @@ pub struct ContextProxy {
     pub event_proxy: Option<Box<dyn EventProxy>>,
     pub cursorx: Arc<Mutex<f32>>,
     pub cursory: Arc<Mutex<f32>>,
+}
+
+impl Clone for ContextProxy {
+    fn clone(&self) -> Self {
+        ContextProxy {
+            current: self.current,
+            event_proxy: self.event_proxy.as_ref().map(|proxy| proxy.make_clone()),
+            cursorx: self.cursorx.clone(),
+            cursory: self.cursory.clone(),
+        }
+    }
 }
 
 /// Errors that might come up when emitting an event via a ContextProxy.
@@ -46,7 +57,7 @@ impl std::fmt::Display for ProxyEmitError {
 impl std::error::Error for ProxyEmitError {}
 
 impl ContextProxy {
-    pub fn emit<M: Message>(&mut self, message: M) -> Result<(), ProxyEmitError> {
+    pub fn emit<M: Message>(&self, message: M) -> Result<(), ProxyEmitError> {
         if let Some(proxy) = &self.event_proxy {
             let event = Event::new(message)
                 .target(self.current)
@@ -81,7 +92,7 @@ impl ContextProxy {
     }
 
     pub fn load_image(
-        &mut self,
+        &self,
         path: String,
         image: image::DynamicImage,
         policy: ImageRetentionPolicy,
