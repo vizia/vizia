@@ -572,7 +572,7 @@ impl WindowModifiers for Application {
     }
 
     fn always_on_top(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.always_on_top = flag.get_val(self.context);
+        self.window_description.always_on_top = flag.get_val(&self.context);
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
             cx.emit(WindowEvent::SetAlwaysOnTop(val));
         });
