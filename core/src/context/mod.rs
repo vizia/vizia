@@ -781,7 +781,7 @@ impl Context {
     where
         F: 'static + Send + FnOnce(ContextProxy),
     {
-        let mut cxp = ContextProxy {
+        let cxp = ContextProxy {
             current: self.current,
             event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
             cursorx: self.cursorx.clone(),

@@ -102,16 +102,16 @@ impl ContextProxy {
 
     pub fn spawn<F>(&self, target: F)
     where
-        F: 'static + Send + FnOnce(&mut ContextProxy),
+        F: 'static + Send + FnOnce(ContextProxy),
     {
-        let mut cxp = ContextProxy {
+        let cxp = ContextProxy {
             current: self.current,
             event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
             cursorx: self.cursorx.clone(),
             cursory: self.cursory.clone(),
         };
 
-        std::thread::spawn(move || target(&mut cxp));
+        std::thread::spawn(move || target(cxp));
     }
 }
 
