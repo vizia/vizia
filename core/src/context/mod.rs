@@ -768,13 +768,13 @@ impl Context {
             if let Some(model_store) = self.data.get_mut(entity) {
                 for (_, model) in model_store.data.iter() {
                     for lens in model_store.lenses_dup.iter_mut() {
-                        if lens.update(model) {
+                        if lens.update(&**model) {
                             observers.extend(lens.observers().iter())
                         }
                     }
 
                     for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                        if lens.update(model) {
+                        if lens.update(&**model) {
                             observers.extend(lens.observers().iter());
                         }
                     }
@@ -782,7 +782,7 @@ impl Context {
 
                 for lens in model_store.lenses_dup.iter_mut() {
                     if let Some(view_handler) = self.views.get(&entity) {
-                        if lens.update_view(view_handler) {
+                        if lens.update_view(&**view_handler) {
                             observers.extend(lens.observers().iter())
                         }
                     }
@@ -790,7 +790,7 @@ impl Context {
 
                 for (_, lens) in model_store.lenses_dedup.iter_mut() {
                     if let Some(view_handler) = self.views.get(&entity) {
-                        if lens.update_view(view_handler) {
+                        if lens.update_view(&**view_handler) {
                             observers.extend(lens.observers().iter())
                         }
                     }

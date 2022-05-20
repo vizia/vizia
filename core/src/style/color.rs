@@ -108,7 +108,7 @@ impl From<&str> for Color {
                 let mut data = ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8);
 
                 if clean_hex.len() == 3 {
-                    data |= 0x00_000_0FF;
+                    data |= 0x0000_00FF;
                 } else {
                     let a = (hex[0] as char).to_digit(16).unwrap() as u8 * 17;
                     data |= a as u32;
@@ -118,10 +118,7 @@ impl From<&str> for Color {
             }
 
             6 | 8 => {
-                let mut x = match u32::from_str_radix(clean_hex, 16) {
-                    Ok(x) => x,
-                    Err(_) => 0,
-                };
+                let mut x = u32::from_str_radix(clean_hex, 16).unwrap_or(0);
 
                 if clean_hex.len() == 6 {
                     x = (x << 8) | 0x00_000_0FF;

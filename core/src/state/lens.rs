@@ -61,7 +61,7 @@ pub trait LensExt: Lens {
     {
         self.view(
             cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| t.cloned().map(|v| v),
+            |t| t.cloned(),
         )
     }
 
@@ -198,13 +198,13 @@ impl<A, T> Index<A, T> {
     }
 
     pub fn idx(&self) -> usize {
-        self.index.clone()
+        self.index
     }
 }
 
 impl<A, T> Clone for Index<A, T> {
     fn clone(&self) -> Self {
-        Self { index: self.index.clone(), pa: PhantomData::default(), pt: PhantomData::default() }
+        Self { index: self.index, pa: PhantomData::default(), pt: PhantomData::default() }
     }
 }
 
@@ -225,7 +225,7 @@ where
     type Target = T;
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        let data = source.get(self.index.clone());
+        let data = source.get(self.index);
         map(data)
     }
 }
@@ -277,6 +277,12 @@ impl<T> Clone for UnwrapLens<T> {
 
 impl<T> UnwrapLens<T> {
     pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl<T> Default for UnwrapLens<T> {
+    fn default() -> Self {
         Self { t: PhantomData::default() }
     }
 }
@@ -300,6 +306,12 @@ pub struct IntoLens<T, U> {
 
 impl<T, U> IntoLens<T, U> {
     pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl<T, U> Default for IntoLens<T, U> {
+    fn default() -> Self {
         Self { t: Default::default(), u: Default::default() }
     }
 }
