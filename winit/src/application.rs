@@ -548,7 +548,7 @@ impl WindowModifiers for Application {
     }
 
     fn visible(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.visible = flag.get_val(&mut self.context);
+        self.window_description.visible = flag.get_val(&self.context);
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
             cx.emit(WindowEvent::SetVisible(val));
         });

@@ -447,9 +447,7 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "inner-shadow-blur" => Property::InnerShadowBlur(parse_units(input)?),
             "inner-shadow-color" => Property::InnerShadowColor(parse_color(input)?),
 
-            "transition" => Property::Transition(
-                input.parse_comma_separated(parse_transition2)?,
-            ),
+            "transition" => Property::Transition(input.parse_comma_separated(parse_transition2)?),
 
             "z-index" => Property::ZIndex(parse_z_index(input)?),
 
@@ -737,7 +735,8 @@ fn parse_length2<'i>(token: &Token<'i>) -> Result<Units, ParseError<'i, CustomPa
                 kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
                 location: SourceLocation { line: 0, column: 0 },
             };
-            return Err(basic_error.into());
+
+            Err(basic_error.into())
         }
     }
 }
@@ -1104,13 +1103,10 @@ fn parse_color2<'i>(token: &Token<'i>) -> Result<Color, ParseError<'i, CustomPar
             //     }
             // }
 
-            match css_color(&name) {
+            match css_color(name) {
                 Some(color) => Ok(color),
                 None => {
-                    return Err(CustomParseError::UnrecognisedColorName(
-                        name.to_owned().to_string(),
-                    )
-                    .into());
+                    Err(CustomParseError::UnrecognisedColorName(name.to_owned().to_string()).into())
                 }
             }
         }
@@ -1122,7 +1118,8 @@ fn parse_color2<'i>(token: &Token<'i>) -> Result<Color, ParseError<'i, CustomPar
                 kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
                 location: SourceLocation { line: 0, column: 0 },
             };
-            return Err(basic_error.into());
+
+            Err(basic_error.into())
         }
     }
 }

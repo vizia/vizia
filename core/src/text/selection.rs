@@ -33,6 +33,10 @@ impl Selection {
         self.max() - self.min()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.max() == self.min()
+    }
+
     pub fn is_caret(&self) -> bool {
         self.active == self.anchor
     }

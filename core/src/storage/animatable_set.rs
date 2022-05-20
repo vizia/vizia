@@ -214,7 +214,7 @@ where
             }
         }
 
-        return false;
+        false
     }
 
     pub fn inherit_shared(&mut self, entity: Entity, parent: Entity) -> bool {
@@ -257,7 +257,7 @@ where
             }
         }
 
-        return false;
+        false
     }
 
     /// Inserts an animation
@@ -416,7 +416,7 @@ where
         self.remove_innactive_animations();
     }
 
-    pub fn is_animating(&mut self, entity: Entity, animation: Animation) -> bool {
+    pub fn is_animating(&self, entity: Entity, animation: Animation) -> bool {
         if self.animations.contains(animation) {
             let entity_index = entity.index();
             if entity_index < self.inline_data.sparse.len() {

@@ -147,13 +147,8 @@ impl Selector {
     pub fn matches(&self, entity_selector: &Selector) -> bool {
         // Universal selector always matches
         if self.asterisk {
-            if !self.pseudo_classes.is_empty()
-                && !self.pseudo_classes.intersects(entity_selector.pseudo_classes)
-            {
-                return false;
-            } else {
-                return true;
-            }
+            return !(!self.pseudo_classes.is_empty()
+                && !self.pseudo_classes.intersects(entity_selector.pseudo_classes));
         }
 
         // Check for ID match

@@ -224,7 +224,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
 
             if let Units::Pixels(px) = child_right {
                 child_space_x += px
-            } 
+            }
 
             let baseline = match child_top {
                 Units::Pixels(val) => {
@@ -376,11 +376,7 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     // Universal selector always matches
     if selector.asterisk {
         if let Some(pseudo_classes) = cx.style_ref().pseudo_classes.get(entity) {
-            if !pseudo_classes.is_empty() && !pseudo_classes.intersects(*pseudo_classes) {
-                return false;
-            } else {
-                return true;
-            }
+            return !(!pseudo_classes.is_empty() && !pseudo_classes.intersects(*pseudo_classes));
         } else {
             return true;
         }
@@ -434,7 +430,7 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
         }
     }
 
-    return true;
+    true
 }
 
 pub fn apply_styles(cx: &mut Context, tree: &Tree) {

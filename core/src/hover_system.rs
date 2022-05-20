@@ -63,14 +63,13 @@ pub fn apply_hover(cx: &mut Context) {
             && ty < (clip_region.y + clip_region.h)
         {
             hovered_widget = entity;
-            if cx
+            if !cx
                 .style()
                 .pseudo_classes
                 .get(entity)
                 .cloned()
                 .unwrap_or_default()
                 .contains(PseudoClass::OVER)
-                == false
             {
                 cx.event_queue.push_back(
                     Event::new(WindowEvent::MouseOver)
@@ -90,7 +89,6 @@ pub fn apply_hover(cx: &mut Context) {
                 .cloned()
                 .unwrap_or_default()
                 .contains(PseudoClass::OVER)
-                == true
             {
                 cx.event_queue.push_back(
                     Event::new(WindowEvent::MouseOut).target(entity).propagate(Propagation::Direct),
