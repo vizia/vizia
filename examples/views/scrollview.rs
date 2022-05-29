@@ -15,6 +15,7 @@ fn main() {
             child_y: 300.0,
             parent_x: 300.0,
             parent_y: 300.0,
+            on_scroll: None,
         }
         .build(cx);
         HStack::new(cx, |cx| {

@@ -21,7 +21,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, T>>),
-        <L as Lens>::Source: Model,
+        //<L as Lens>::Source: Model,
     {
         //let item_template = Rc::new(item);
         List {
