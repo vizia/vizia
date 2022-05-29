@@ -241,9 +241,10 @@ impl Application {
                     }
 
                     // Events
-                    while event_manager.flush_events(&mut context) {}
+                    while event_manager.flush_events(&mut context) {
+                        context.process_data_updates();
+                    }
 
-                    context.process_data_updates();
                     context.process_style_updates();
 
                     if context.has_animations() {

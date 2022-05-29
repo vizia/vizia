@@ -77,12 +77,14 @@ impl View for AsyncList {
                 let container_height = cx.cache().get_height(current) / dpi;
                 let total_height = self.num_items as f32 * self.item_height;
                 let offsety = ((total_height - container_height) * *scrolly).round() * dpi;
-                let offset_num = (offsety / self.item_height).ceil() as usize;
+                let offset_num = (offsety / self.item_height).floor() as usize;
                 let num_visible = self.visible_items.len();
                 //println!("list: {} {}", offset_num, offset_num+num_visible);
-                self.visible_items.clear();
-                for i in offset_num..(offset_num + num_visible) {
-                    self.visible_items.push(i);
+                if offset_num != *self.visible_items.first().unwrap() {
+                    self.visible_items.clear();
+                    for i in offset_num..(offset_num + num_visible + 1) {
+                        self.visible_items.push(i);
+                    }
                 }
             }
         });
@@ -99,13 +101,13 @@ pub enum AsyncModelEvent {
 }
 
 impl AsyncModel {
-    fn new(cx: &mut Context, index: usize) -> Self {
+    fn new(cx: &mut Context, index: usize) {
+        Self { computed_result: None }.build(cx);
+
         cx.spawn(move |cx| {
             let result = compute_hash(index);
             cx.emit(AsyncModelEvent::Finished(result));
         });
-
-        Self { computed_result: None }
     }
 }
 
@@ -133,27 +135,7 @@ fn compute_hash(i: usize) -> String {
 
 fn main() {
     Application::new(|cx| {
-        // for index in 10000000..10000010 {
-        //     VStack::new(cx, |cx|{
-        //         AsyncModel::new(cx, index).build(cx);
-
-        //         Label::new(cx, AsyncModel::computed_result.map(|result| match result.clone() {
-        //             Some(value) => {
-        //                 value
-        //             }
-
-        //             None => {
-        //                 String::from("Loading...")
-        //             }
-        //         }));
-        //     })
-        //     .height(Auto);
-        // }
-
         AsyncList::new(cx, 10000, 30.0, |cx, index| {
-            // Label::new(cx, index)
-            //     .border_color(Color::red())
-            //     .border_width(Pixels(1.0))
             VStack::new(cx, |cx| {
                 AsyncModel::new(cx, index).build(cx);
 
@@ -166,7 +148,6 @@ fn main() {
                     }),
                 );
             })
-            // Create a model which performs an asynchronous computation
         });
     })
     .run();
