@@ -53,30 +53,30 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        event.map(|window_event, _| {
-            if let WindowEvent::KeyDown(code, _) = window_event {
-                match code {
-                    Code::ArrowDown => {
-                        if let Some(callback) = &self.increment_callback {
-                            (callback)(cx);
-                        }
+        event.map(|window_event, _| match window_event {
+            WindowEvent::KeyDown(code, _) => match code {
+                Code::ArrowDown => {
+                    if let Some(callback) = &self.increment_callback {
+                        (callback)(cx);
                     }
-
-                    Code::ArrowUp => {
-                        if let Some(callback) = &self.decrement_callback {
-                            (callback)(cx);
-                        }
-                    }
-
-                    Code::Escape => {
-                        if let Some(callback) = &self.clear_callback {
-                            (callback)(cx);
-                        }
-                    }
-
-                    _ => {}
                 }
-            }
+
+                Code::ArrowUp => {
+                    if let Some(callback) = &self.decrement_callback {
+                        (callback)(cx);
+                    }
+                }
+
+                Code::Escape => {
+                    if let Some(callback) = &self.clear_callback {
+                        (callback)(cx);
+                    }
+                }
+
+                _ => {}
+            },
+
+            _ => {}
         });
 
         // event.map(|window_event, _| match window_event {

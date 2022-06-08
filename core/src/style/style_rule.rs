@@ -34,7 +34,7 @@ impl StyleRule {
             specificity += selector.specificity();
         }
 
-        specificity
+        return specificity;
     }
 }
 

@@ -17,7 +17,7 @@ use morphorm::Units;
 pub type Canvas = femtovg::Canvas<OpenGl>;
 
 // Length proportional to radius of a cubic bezier handle for 90deg arcs.
-const KAPPA90: f32 = 0.552_284_8;
+const KAPPA90: f32 = 0.5522847493;
 
 /// A view is any object which can be displayed on the screen.
 ///
@@ -83,7 +83,7 @@ pub trait View: 'static + Sized {
         let parent = cx
             .tree()
             .get_layout_parent(entity)
-            .unwrap_or_else(|| panic!("Failed to find parent somehow: {}", entity));
+            .expect(&format!("Failed to find parent somehow: {}", entity));
 
         let parent_width = cx.cache().get_width(parent);
         let parent_height = cx.cache().get_height(parent);
@@ -654,7 +654,7 @@ pub trait View: 'static + Sized {
                                 let max_x = first_x.max(last_x).round();
                                 let mut path = Path::new();
                                 path.rect(min_x, min_y, max_x - min_x, font_metrics.height());
-                                canvas.fill_path(&mut path, Paint::color((*color).into()));
+                                canvas.fill_path(&mut path, Paint::color(color.clone().into()));
                             }
                         }
                         // should we draw the cursor?
@@ -669,7 +669,7 @@ pub trait View: 'static + Sized {
                                     cx.logical_to_physical(1.0),
                                     font_metrics.height(),
                                 );
-                                canvas.fill_path(&mut path, Paint::color((*color).into()));
+                                canvas.fill_path(&mut path, Paint::color(color.clone().into()));
                             }
                         }
                         canvas.fill_text(x, y, &text[range.clone()], paint).ok();
@@ -687,7 +687,7 @@ where
     T: std::marker::Sized + View + 'static,
 {
     fn element(&self) -> Option<&'static str> {
-        <T as View>::element(self)
+        <T as View>::element(&self)
     }
 
     fn body(&mut self, cx: &mut Context) {

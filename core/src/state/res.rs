@@ -58,7 +58,7 @@ where
     }
 
     fn get_val_fallible(&self, cx: &Context) -> Option<T> {
-        self.get_fallible(cx)
+        self.get_fallible(cx).map(|x| x)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)

@@ -30,7 +30,7 @@ impl TextboxData {
     pub fn new(text: String) -> Self {
         let text_length = text.as_str().len();
         Self {
-            text,
+            text: text.clone(),
             selection: Selection::new(0, text_length),
             sel_x: -1.0,
             re_sel_x: false,
@@ -55,8 +55,8 @@ impl TextboxData {
         let scale = cx.style().dpi_factor as f32;
 
         // calculate visible area for content and container
-        let bounds = *cx.cache().bounds.get(entity).unwrap();
-        let mut parent_bounds = *cx.cache().bounds.get(parent).unwrap();
+        let bounds = cx.cache().bounds.get(entity).unwrap().clone();
+        let mut parent_bounds = cx.cache().bounds.get(parent).unwrap().clone();
 
         // calculate line height - we'll need this
         let paint = text_paint_general(cx, entity);
@@ -68,9 +68,9 @@ impl TextboxData {
             TextboxKind::MultiLineWrapped => parent_bounds.w,
             _ => f32::MAX,
         };
-        let ranges = text_layout(render_width, &self.text, paint, cx.text_context()).unwrap();
+        let ranges = text_layout(render_width, &self.text, paint, &cx.text_context()).unwrap();
         let metrics =
-            measure_text_lines(&self.text, paint, &ranges, bounds.x, bounds.y, cx.text_context());
+            measure_text_lines(&self.text, paint, &ranges, bounds.x, bounds.y, &cx.text_context());
         let ranges_metrics = ranges.into_iter().zip(metrics.into_iter()).collect::<Vec<_>>();
         let (line, (x, _)) = idx_to_pos(self.selection.active, ranges_metrics.iter());
         if self.re_sel_x {
@@ -385,11 +385,13 @@ impl Model for TextboxData {
             TextEvent::Copy =>
             {
                 #[cfg(feature = "clipboard")]
-                if self.edit && cx.modifiers().contains(Modifiers::CTRL) {
-                    let selected_text = &self.text.as_str()[self.selection.range()];
-                    if !selected_text.is_empty() {
-                        cx.set_clipboard(selected_text.to_owned())
-                            .expect("Failed to add text to clipboard");
+                if self.edit {
+                    if cx.modifiers().contains(Modifiers::CTRL) {
+                        let selected_text = &self.text.as_str()[self.selection.range()];
+                        if selected_text.len() > 0 {
+                            cx.set_clipboard(selected_text.to_owned())
+                                .expect("Failed to add text to clipboard");
+                        }
                     }
                 }
             }
@@ -397,9 +399,11 @@ impl Model for TextboxData {
             TextEvent::Paste =>
             {
                 #[cfg(feature = "clipboard")]
-                if self.edit && cx.modifiers().contains(Modifiers::CTRL) {
-                    if let Ok(text) = cx.get_clipboard() {
-                        cx.emit(TextEvent::InsertText(text));
+                if self.edit {
+                    if cx.modifiers().contains(Modifiers::CTRL) {
+                        if let Ok(text) = cx.get_clipboard() {
+                            cx.emit(TextEvent::InsertText(text));
+                        }
                     }
                 }
             }
@@ -460,7 +464,7 @@ where
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
                         let td = TextboxData {
-                            text,
+                            text: text.clone(),
                             selection: text_data.selection,
                             edit: text_data.edit,
                             sel_x: text_data.sel_x,
@@ -479,7 +483,7 @@ where
                         cx.emit_to(cx.current(), ());
                     }
                 } else {
-                    let mut td = TextboxData::new(text);
+                    let mut td = TextboxData::new(text.clone());
                     td.set_caret(cx);
                     let parent = cx.current().parent(cx.tree()).unwrap();
                     cx.with_current(parent, |cx| td.build(cx));

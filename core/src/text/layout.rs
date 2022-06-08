@@ -61,7 +61,7 @@ fn text_paint(
 
     let mut paint = Paint::default();
     paint.set_font_size(font_size);
-    paint.set_font(&[*font_id]);
+    paint.set_font(&[font_id.clone()]);
 
     paint
 }
@@ -73,7 +73,7 @@ pub fn text_layout(
     text_context: &TextContext,
 ) -> Result<Vec<Range<usize>>, ErrorKind> {
     let mut lines = text_context.break_text_vec(width, text, paint)?;
-    if lines.is_empty() {
+    if lines.len() == 0 {
         lines.push(0..0)
     }
     let mut soft_break = false;
@@ -83,7 +83,7 @@ pub fn text_layout(
             let mut broken = false;
             for (idx, ch) in text[line_range.clone()].char_indices() {
                 if !ch.is_whitespace() {
-                    line_range.start += idx;
+                    line_range.start = idx + line_range.start;
                     broken = true;
                     break;
                 }
@@ -107,7 +107,7 @@ pub fn text_layout(
     }
 
     // if the text ends with a newline, add a blank line
-    if text.ends_with('\n') {
+    if text.chars().last() == Some('\n') {
         lines.push(text.len()..text.len());
     }
 
@@ -166,21 +166,17 @@ pub fn idx_to_pos<'a>(
                 result_xpos = glyph.x;
                 result_ypos = glyph.y;
             }
-
-            match glyph.byte_index.cmp(&byte_idx) {
-                std::cmp::Ordering::Less => {
-                    result_line = line;
-                    result_xpos = glyph.x + glyph.advance_x;
-                    result_ypos = glyph.y;
-                }
-                std::cmp::Ordering::Equal => {
-                    result_line = line;
-                    result_xpos = glyph.x;
-                    result_ypos = glyph.y;
-                }
-                std::cmp::Ordering::Greater => {
-                    break;
-                }
+            if glyph.byte_index == byte_idx {
+                result_line = line;
+                result_xpos = glyph.x;
+                result_ypos = glyph.y;
+            } else if glyph.byte_index < byte_idx {
+                // if the target is after me, place the cursor after me
+                result_line = line;
+                result_xpos = glyph.x + glyph.advance_x;
+                result_ypos = glyph.y;
+            } else {
+                break;
             }
         }
     }

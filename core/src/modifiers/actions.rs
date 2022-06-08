@@ -14,7 +14,7 @@ pub struct Press<V: View> {
 }
 
 impl<V: View> Press<V> {
-    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Press<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Press<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -73,7 +73,7 @@ pub struct Release<V: View> {
 }
 
 impl<V: View> Release<V> {
-    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Release<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Release<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -131,7 +131,7 @@ pub struct Hover<V: View> {
 }
 
 impl<V: View> Hover<V> {
-    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Hover<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Hover<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -187,7 +187,7 @@ pub struct Over<V: View> {
 }
 
 impl<V: View> Over<V> {
-    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Over<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Over<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -241,7 +241,7 @@ pub struct Leave<V: View> {
 }
 
 impl<V: View> Leave<V> {
-    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Leave<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Leave<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -297,7 +297,7 @@ pub struct Move<V: View> {
 }
 
 impl<V: View> Move<V> {
-    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Move<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Move<V>>
     where
         F: 'static + Fn(&mut Context, f32, f32),
     {
@@ -351,7 +351,7 @@ pub struct FocusIn<V: View> {
 }
 
 impl<V: View> FocusIn<V> {
-    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<FocusIn<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, FocusIn<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -405,7 +405,7 @@ pub struct FocusOut<V: View> {
 }
 
 impl<V: View> FocusOut<V> {
-    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<FocusOut<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, FocusOut<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -459,7 +459,7 @@ pub struct Geo<V: View> {
 }
 
 impl<V: View> Geo<V> {
-    pub fn new<F>(handle: Handle<V>, action: F) -> Handle<Geo<V>>
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Geo<V>>
     where
         F: 'static + Fn(&mut Context, GeometryChanged),
     {
@@ -488,14 +488,16 @@ impl<V: View> View for Geo<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        event.map(|window_event, meta| {
-            if let WindowEvent::GeometryChanged(geo) = window_event {
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::GeometryChanged(geo) => {
                 if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx, *geo);
                     }
                 }
             }
+
+            _ => {}
         });
     }
 
@@ -620,7 +622,7 @@ impl<'a, V: View> Actions<'a> for Handle<'a, V> {
 //         B: 'static + FnOnce(&mut Context);
 // }
 
-// impl<V: View> ViewModifers for Handle<V> {
+// impl<'a, V: View> ViewModifers for Handle<'a, V> {
 //     type View = V;
 //     fn overlay<B>(self, cx: &mut Context, builder: B) -> Handle<Self::View>
 //     where
