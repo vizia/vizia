@@ -103,18 +103,22 @@ pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
 
         if cx.cache().get_visibility(parent) == Visibility::Invisible {
             cx.cache().set_visibility(entity, Visibility::Invisible);
-        } else if let Some(visibility) = cx.style().visibility.get(entity).copied() {
-            cx.cache().set_visibility(entity, visibility);
         } else {
-            cx.cache().set_visibility(entity, Visibility::Visible);
+            if let Some(visibility) = cx.style().visibility.get(entity).copied() {
+                cx.cache().set_visibility(entity, visibility);
+            } else {
+                cx.cache().set_visibility(entity, Visibility::Visible);
+            }
         }
 
         if cx.cache().get_display(parent) == Display::None {
             cx.cache().set_display(entity, Display::None);
-        } else if let Some(display) = cx.style().display.get(entity).copied() {
-            cx.cache().set_display(entity, display);
         } else {
-            cx.cache().set_display(entity, Display::Flex);
+            if let Some(display) = cx.style().display.get(entity).copied() {
+                cx.cache().set_display(entity, display);
+            } else {
+                cx.cache().set_display(entity, Display::Flex);
+            }
         }
 
         let parent_opacity = cx.cache().get_opacity(parent);

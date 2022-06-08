@@ -42,8 +42,8 @@
 //! ```compile_fail
 //! entity.play_animation(animation_id);
 //! ```
-mod animation_id;
-pub use animation_id::Animation;
+mod animation;
+pub use animation::Animation;
 
 mod animation_state;
 pub(crate) use animation_state::AnimationState;

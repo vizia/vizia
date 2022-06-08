@@ -199,15 +199,6 @@ where
     }
 }
 
-impl<T> Default for Keymap<T>
-where
-    T: 'static + PartialEq + Send + Sync + Copy + Clone,
-{
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl<T> Model for Keymap<T>
 where
     T: 'static + PartialEq + Send + Sync + Copy + Clone,
