@@ -138,7 +138,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             Scrollbar::new(
                 cx,
                 data.clone().then(ScrollData::scroll_x),
-                data.then(RatioLens::new(ScrollData::parent_x, ScrollData::child_x)),
+                data.clone().then(RatioLens::new(ScrollData::parent_x, ScrollData::child_x)),
                 Orientation::Horizontal,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetX(value));

@@ -32,9 +32,13 @@ impl TreeExt for Entity {
         }
 
         if let Some(parent) = tree.get_parent(*self) {
-            parent == entity
+            if parent == entity {
+                return true;
+            } else {
+                return false;
+            }
         } else {
-            false
+            return false;
         }
     }
 

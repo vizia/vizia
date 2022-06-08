@@ -1,5 +1,3 @@
-#![allow(clippy::new_ret_no_self)]
-
 #[cfg(all(not(feature = "baseview"), feature = "winit"))]
 pub use vizia_winit::application::Application;
 

@@ -178,7 +178,7 @@ where
             }
         }
 
-        false
+        return false;
     }
 
     pub fn inherit_shared(&mut self, entity: Entity, parent: Entity) -> bool {
@@ -221,7 +221,7 @@ where
             }
         }
 
-        false
+        return false;
     }
 
     pub fn clear_rules(&mut self) {

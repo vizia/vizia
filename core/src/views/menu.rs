@@ -143,7 +143,7 @@ impl View for MenuController {
                             Event::new(window_event.clone())
                                 .propagate(Propagation::Up)
                                 .target(cx.hovered())
-                                .origin(meta.origin),
+                                .origin(meta.origin.clone()),
                         );
                     }
                     // if we click outside the menu, close everything
@@ -156,17 +156,19 @@ impl View for MenuController {
                         );
                     }
                 }
-            } else if let WindowEvent::MouseDown(_) = window_event {
-                // capture focus on click
-                cx.capture();
-                cx.emit(MenuEvent::Activate);
-                // send an over event to highlight whatever we're hovered on
-                cx.event_queue.push_back(
-                    Event::new(WindowEvent::MouseOver)
-                        .propagate(Propagation::Up)
-                        .target(cx.hovered())
-                        .origin(cx.current()),
-                );
+            } else {
+                if let WindowEvent::MouseDown(_) = window_event {
+                    // capture focus on click
+                    cx.capture();
+                    cx.emit(MenuEvent::Activate);
+                    // send an over event to highlight whatever we're hovered on
+                    cx.event_queue.push_back(
+                        Event::new(WindowEvent::MouseOver)
+                            .propagate(Propagation::Up)
+                            .target(cx.hovered())
+                            .origin(cx.current()),
+                    );
+                }
             }
         });
     }
@@ -337,14 +339,15 @@ impl View for MenuButton {
     }
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        event.map(|window_event, meta| {
-            if let WindowEvent::MouseDown(MouseButton::Left) = window_event {
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseDown(MouseButton::Left) => {
                 if let Some(callback) = &self.action {
                     callback(cx);
                     cx.emit(MenuEvent::Close);
                     meta.consume();
                 }
             }
+            _ => {}
         });
     }
 }

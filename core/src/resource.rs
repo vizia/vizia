@@ -143,7 +143,7 @@ impl ResourceManager {
         self.images.retain(|_, img| {
             !((!img.used
                 && img.retention_policy == ImageRetentionPolicy::DropWhenUnusedForOneFrame)
-                || (img.observers.is_empty()
+                || (img.observers.len() == 0
                     && img.retention_policy == ImageRetentionPolicy::DropWhenNoObservers))
         });
     }

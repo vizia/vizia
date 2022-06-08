@@ -97,7 +97,7 @@ impl Label {
     /// #
     /// Label::new(cx, "Text");
     /// ```
-    pub fn new<T>(cx: &mut Context, text: impl Res<T>) -> Handle<Self>
+    pub fn new<'a, T>(cx: &'a mut Context, text: impl Res<T>) -> Handle<'a, Self>
     where
         T: ToString,
     {

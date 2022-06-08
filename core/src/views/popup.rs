@@ -71,20 +71,24 @@ where
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
             cx.add_listener(move |popup: &mut Popup<L>, cx, event| {
-                let flag: bool = popup.lens.get(cx).into();
+                let flag: bool = popup.lens.get(cx).clone().into();
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
-                        if flag && meta.origin != cx.current() {
-                            if !cx.is_over() {
-                                (focus_event)(cx);
-                                meta.consume();
+                        if flag {
+                            if meta.origin != cx.current() {
+                                if !cx.is_over() {
+                                    (focus_event)(cx);
+                                    meta.consume();
+                                }
                             }
                         }
                     }
 
                     WindowEvent::KeyDown(code, _) => {
-                        if flag && *code == Code::Escape {
-                            (focus_event)(cx);
+                        if flag {
+                            if *code == Code::Escape {
+                                (focus_event)(cx);
+                            }
                         }
                     }
 
