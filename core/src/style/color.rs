@@ -121,7 +121,7 @@ impl From<&str> for Color {
                 let mut x = u32::from_str_radix(clean_hex, 16).unwrap_or(0);
 
                 if clean_hex.len() == 6 {
-                    x = (x << 8) | 0x0000_00FF;
+                    x = (x << 8) | 0x00_000_0FF;
                 }
 
                 Color { data: x }

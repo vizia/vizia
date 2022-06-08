@@ -526,8 +526,10 @@ where
                 if data_index.index() < self.inline_data.dense.len() {
                     return Some(&self.inline_data.dense[data_index.index()].value);
                 }
-            } else if data_index.index() < self.shared_data.dense.len() {
-                return Some(&self.shared_data.dense[data_index.index()].value);
+            } else {
+                if data_index.index() < self.shared_data.dense.len() {
+                    return Some(&self.shared_data.dense[data_index.index()].value);
+                }
             }
         }
 
@@ -587,32 +589,34 @@ where
                         current_anim_state.t0 = 0.0;
                         current_anim_state.start_time = instant::Instant::now();
                     }
-                } else if let Some(transition_state) = self.animations.get_mut(rule_animation) {
-                    //if rule_animation.index() < self.animations.dense.len() {
-                    // let transition_state =
-                    //     &mut self.animations.dense[rule_animation.index()].value;
-                    //let transition_state = self.animations.get_mut(rule_animation).unwrap();
-                    // Safe to unwrap because already checked that the rule exists
-                    let end = self.shared_data.get(*rule).unwrap();
+                } else {
+                    if let Some(transition_state) = self.animations.get_mut(rule_animation) {
+                        //if rule_animation.index() < self.animations.dense.len() {
+                        // let transition_state =
+                        //     &mut self.animations.dense[rule_animation.index()].value;
+                        //let transition_state = self.animations.get_mut(rule_animation).unwrap();
+                        // Safe to unwrap because already checked that the rule exists
+                        let end = self.shared_data.get(*rule).unwrap();
 
-                    let entity_data_index = self.inline_data.sparse[entity_index].data_index;
+                        let entity_data_index = self.inline_data.sparse[entity_index].data_index;
 
-                    if !entity_data_index.is_inline()
-                        && entity_data_index.index() < self.shared_data.dense.len()
-                    {
-                        let start_data =
-                            self.shared_data.dense[entity_data_index.index()].value.clone();
-                        *transition_state.keyframes.first_mut().unwrap() = (0.0, start_data);
-                    } else {
-                        *transition_state.keyframes.first_mut().unwrap() = (0.0, end.clone());
+                        if !entity_data_index.is_inline()
+                            && entity_data_index.index() < self.shared_data.dense.len()
+                        {
+                            let start_data =
+                                self.shared_data.dense[entity_data_index.index()].value.clone();
+                            *transition_state.keyframes.first_mut().unwrap() = (0.0, start_data);
+                        } else {
+                            *transition_state.keyframes.first_mut().unwrap() = (0.0, end.clone());
+                        }
+
+                        *transition_state.keyframes.last_mut().unwrap() = (1.0, end.clone());
+                        transition_state.from_rule =
+                            self.inline_data.sparse[entity_index].data_index.index();
+                        transition_state.to_rule = shared_data_index.index();
+                        self.play_animation(entity, rule_animation);
+                        //}
                     }
-
-                    *transition_state.keyframes.last_mut().unwrap() = (1.0, end.clone());
-                    transition_state.from_rule =
-                        self.inline_data.sparse[entity_index].data_index.index();
-                    transition_state.to_rule = shared_data_index.index();
-                    self.play_animation(entity, rule_animation);
-                    //}
                 }
                 //}
 
@@ -632,12 +636,11 @@ where
         // No matching rules so set if the data is shared set the index to null if not already null
         if entity_index < self.inline_data.sparse.len() {
             let data_index = self.inline_data.sparse[entity_index].data_index;
-            if !data_index.is_inline()
-                && !data_index.is_inherited()
-                && self.inline_data.sparse[entity_index].data_index != DataIndex::null()
-            {
-                self.inline_data.sparse[entity_index].data_index = DataIndex::null();
-                return true;
+            if !data_index.is_inline() && !data_index.is_inherited() {
+                if self.inline_data.sparse[entity_index].data_index != DataIndex::null() {
+                    self.inline_data.sparse[entity_index].data_index = DataIndex::null();
+                    return true;
+                }
             }
         }
 

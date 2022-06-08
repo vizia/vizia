@@ -81,20 +81,22 @@ pub fn apply_hover(cx: &mut Context) {
                     pseudo_class.set(PseudoClass::OVER, true);
                 }
             }
-        } else if cx
-            .style()
-            .pseudo_classes
-            .get(entity)
-            .cloned()
-            .unwrap_or_default()
-            .contains(PseudoClass::OVER)
-        {
-            cx.event_queue.push_back(
-                Event::new(WindowEvent::MouseOut).target(entity).propagate(Propagation::Direct),
-            );
+        } else {
+            if cx
+                .style()
+                .pseudo_classes
+                .get(entity)
+                .cloned()
+                .unwrap_or_default()
+                .contains(PseudoClass::OVER)
+            {
+                cx.event_queue.push_back(
+                    Event::new(WindowEvent::MouseOut).target(entity).propagate(Propagation::Direct),
+                );
 
-            if let Some(pseudo_class) = cx.style().pseudo_classes.get_mut(entity) {
-                pseudo_class.set(PseudoClass::OVER, false);
+                if let Some(pseudo_class) = cx.style().pseudo_classes.get_mut(entity) {
+                    pseudo_class.set(PseudoClass::OVER, false);
+                }
             }
         }
     }

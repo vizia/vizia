@@ -292,8 +292,10 @@ where
                 if data_index.index() < self.inline_data.dense.len() {
                     return Some(&self.inline_data.dense[data_index.index()].value);
                 }
-            } else if data_index.index() < self.shared_data.dense.len() {
-                return Some(&self.shared_data.dense[data_index.index()].value);
+            } else {
+                if data_index.index() < self.shared_data.dense.len() {
+                    return Some(&self.shared_data.dense[data_index.index()].value);
+                }
             }
         }
 
@@ -304,8 +306,10 @@ where
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
             let data_index = self.inline_data.sparse[entity_index].data_index;
-            if data_index.is_inline() && data_index.index() < self.inline_data.dense.len() {
-                return Some(&mut self.inline_data.dense[data_index.index()].value);
+            if data_index.is_inline() {
+                if data_index.index() < self.inline_data.dense.len() {
+                    return Some(&mut self.inline_data.dense[data_index.index()].value);
+                }
             }
         }
 
@@ -349,12 +353,11 @@ where
         // No matching rules so set if the data is shared set the index to null if not already null
         if entity_index < self.inline_data.sparse.len() {
             let data_index = self.inline_data.sparse[entity_index].data_index;
-            if !data_index.is_inline()
-                && !data_index.is_inherited()
-                && self.inline_data.sparse[entity_index].data_index != DataIndex::null()
-            {
-                self.inline_data.sparse[entity_index].data_index = DataIndex::null();
-                return true;
+            if !data_index.is_inline() && !data_index.is_inherited() {
+                if self.inline_data.sparse[entity_index].data_index != DataIndex::null() {
+                    self.inline_data.sparse[entity_index].data_index = DataIndex::null();
+                    return true;
+                }
             }
         }
 
