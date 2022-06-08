@@ -37,7 +37,7 @@ pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
 pub use slider::Slider;
 pub use stack::{HStack, VStack, ZStack};
 pub use table::{Table, TableColumn};
-pub use textbox::Textbox;
+pub use textbox::{TextEvent, Textbox};
 
 use crate::prelude::*;
 
