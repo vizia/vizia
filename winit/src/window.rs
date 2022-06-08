@@ -236,12 +236,18 @@ fn apply_window_description(
         .with_transparent(description.transparent)
         .with_decorations(description.decorations)
         .with_always_on_top(description.always_on_top)
-        .with_window_icon(description.icon.as_ref().map(|icon| winit::window::Icon::from_rgba(
-            icon.clone(),
-            description.icon_width,
-            description.icon_height,
-        )
-        .unwrap()))
+        .with_window_icon(if let Some(icon) = &description.icon {
+            Some(
+                winit::window::Icon::from_rgba(
+                    icon.clone(),
+                    description.icon_width,
+                    description.icon_height,
+                )
+                .unwrap(),
+            )
+        } else {
+            None
+        })
 }
 
 fn setup_canvas(result: &mut Window) {

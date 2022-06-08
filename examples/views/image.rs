@@ -4,7 +4,7 @@ use vizia::prelude::*;
 use vizia_core::resource::ImageRetentionPolicy;
 
 #[allow(unused)]
-const STYLE: &str = r#"
+const STYLE: &'static str = r#"
 element {
     background-image: "sample.png";
     width: 1s;
@@ -27,7 +27,7 @@ fn main() {
                 cx.spawn(move |cx| {
                     let data = reqwest::blocking::get(&path).unwrap().bytes().unwrap();
                     cx.load_image(
-                        path,
+                        path.clone(),
                         image::load_from_memory_with_format(
                             &data,
                             image::guess_format(&data).unwrap(),

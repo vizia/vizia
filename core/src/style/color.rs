@@ -118,7 +118,7 @@ impl From<&str> for Color {
             }
 
             6 | 8 => {
-                let mut x = match u32::from_str_radix(clean_hex, 16) {
+                let mut x = match u32::from_str_radix(&clean_hex, 16) {
                     Ok(x) => x,
                     Err(_) => 0,
                 };
@@ -207,7 +207,7 @@ impl Color {
 
 impl Interpolator for Color {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        Color::interpolate(*start, *end, t as f64)
+        Color::interpolate(start.clone(), end.clone(), t as f64)
     }
 }
 

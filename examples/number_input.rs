@@ -1,6 +1,6 @@
 use vizia::prelude::*;
 
-const STYLE: &str = r#"
+const STYLE: &'static str = r#"
 textbox.validation_error {
     background-color: #ffc0c0;
 }

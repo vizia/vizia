@@ -474,7 +474,7 @@ impl Application {
 
 impl WindowModifiers for Application {
     fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
-        self.window_description.title = title.get_val(&self.context).to_string();
+        self.window_description.title = title.get_val(&mut self.context).to_string();
         title.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
             cx.emit(WindowEvent::SetTitle(val.to_string()));
         });
@@ -493,7 +493,7 @@ impl WindowModifiers for Application {
 
     fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
         self.window_description.min_inner_size =
-            size.get_val(&self.context).map(|size| size.into());
+            size.get_val(&mut self.context).map(|size| size.into());
         size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
             cx.emit(WindowEvent::SetMinSize(val.map(|size| size.into())));
         });
@@ -512,7 +512,7 @@ impl WindowModifiers for Application {
     }
 
     fn position<P: Into<Position>>(mut self, position: impl Res<P>) -> Self {
-        self.window_description.position = Some(position.get_val(&self.context).into());
+        self.window_description.position = Some(position.get_val(&mut self.context).into());
         position.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
             cx.emit(WindowEvent::SetPosition(val.into()));
         });
@@ -539,7 +539,7 @@ impl WindowModifiers for Application {
     }
 
     fn maximized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.maximized = flag.get_val(&self.context);
+        self.window_description.maximized = flag.get_val(&mut self.context);
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
             cx.emit(WindowEvent::SetMaximized(val));
         });
@@ -572,7 +572,7 @@ impl WindowModifiers for Application {
     }
 
     fn always_on_top(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.always_on_top = flag.get_val(self.context);
+        self.window_description.always_on_top = flag.get_val(&mut self.context);
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
             cx.emit(WindowEvent::SetAlwaysOnTop(val));
         });
