@@ -91,14 +91,14 @@ impl Window {
         };
 
         // Apply generic WindowBuilder properties
-        let window_builder = apply_window_description(window_builder, window_description);
+        let window_builder = apply_window_description(window_builder, &window_description);
 
         // Get the window handle. this is a ContextWrapper
         let handle = {
             let handle = ContextBuilder::new()
                 .with_vsync(window_description.vsync)
                 // .with_srgb(true)
-                .build_windowed(window_builder, events_loop)
+                .build_windowed(window_builder, &events_loop)
                 .expect("Window context creation failed!");
 
             unsafe { handle.make_current().unwrap() }
