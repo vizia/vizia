@@ -1,16 +1,14 @@
 use femtovg::TextContext;
 use morphorm::Units;
 
-use crate::cache::CachedData;
+use crate::cache::{BoundingBox, CachedData};
 use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
 use crate::resource::{ImageOrId, ResourceManager};
 use crate::style::LinearGradient;
 use crate::text::Selection;
 
-/// A restricted context used when drawing.
-///
-/// This type is part of the prelude.
+/// A context used when drawing.
 pub struct DrawContext<'a>(&'a mut Context);
 
 macro_rules! style_getter_units {
@@ -39,30 +37,37 @@ impl<'a> DrawContext<'a> {
         Self(cx)
     }
 
+    /// Returns the current entity
     pub fn current(&self) -> Entity {
         self.0.current
     }
 
+    /// Returns a reference to the cache
     pub fn cache(&mut self) -> &mut CachedData {
         &mut self.0.cache
     }
 
+    /// Returns a reference to the tree
     pub fn tree(&self) -> &Tree {
         &self.0.tree
     }
 
+    /// Returns a reference to the resource manager
     pub(crate) fn resource_manager(&self) -> &ResourceManager {
         &self.0.resource_manager
     }
 
+    /// Returns a reference to the text context
     pub fn text_context(&self) -> &TextContext {
         &self.0.text_context
     }
 
+    /// Returns a reference to the mouse state
     pub fn mouse(&self) -> &MouseState {
         &self.0.mouse
     }
 
+    /// Returns a reference to the modifiers state
     pub fn modifiers(&self) -> &Modifiers {
         &self.0.modifiers
     }
@@ -85,6 +90,16 @@ impl<'a> DrawContext<'a> {
 
     pub fn logical_to_physical(&self, logical: f32) -> f32 {
         logical * self.0.style.dpi_factor as f32
+    }
+
+    /// Returns the current application scale factor
+    pub fn scale_factor(&self) -> f32 {
+        self.0.style_ref().dpi_factor as f32
+    }
+
+    /// Returns the bounds of the current entity
+    pub fn bounds(&self) -> BoundingBox {
+        self.0.cache_ref().get_bounds(self.current())
     }
 
     style_getter_units!(border_width);

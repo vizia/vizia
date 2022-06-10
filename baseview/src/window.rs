@@ -65,7 +65,7 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.environment().needs_rebuild = true;
+                context.needs_rebuild = true;
                 context.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
                     context,
@@ -106,7 +106,7 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.environment().needs_rebuild = true;
+                context.needs_rebuild = true;
                 context.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
                     context,
@@ -146,7 +146,7 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.environment().needs_rebuild = true;
+                context.needs_rebuild = true;
                 context.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
                     context,

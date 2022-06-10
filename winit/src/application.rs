@@ -223,13 +223,13 @@ impl Application {
                         if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
 
                     // Rebuild application if required
-                    if context.environment().needs_rebuild {
+                    if context.needs_rebuild {
                         context.set_current(Entity::root());
                         context.remove_children(Entity::root());
                         if let Some(builder) = &builder {
                             (builder)(&mut context);
                         }
-                        context.environment().needs_rebuild = false;
+                        context.needs_rebuild = false;
                     }
 
                     if let Some(mut window_view) = context.views.remove(&Entity::root()) {
@@ -601,8 +601,9 @@ impl WindowModifiers for Application {
 impl Env for Application {
     fn ignore_default_styles(mut self) -> Self {
         if self.context.environment().include_default_theme {
-            self.context.environment().include_default_theme = false;
-            self.context.environment().needs_rebuild = true;
+            //self.context.environment().include_default_theme = false;
+            self.context.emit(EnvironmentEvent::IncludeDefaultTheme(false));
+            self.context.needs_rebuild = true;
             self.context.reload_styles().expect("Failed to reload styles");
         }
 

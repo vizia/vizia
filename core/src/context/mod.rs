@@ -59,8 +59,7 @@ pub struct Context {
     style: Style,
     cache: CachedData,
 
-    environment: Environment,
-
+    //environment: Environment,
     mouse: MouseState,
     modifiers: Modifiers,
 
@@ -81,6 +80,8 @@ pub struct Context {
     click_time: Instant,
     double_click: bool,
     click_pos: (f32, f32),
+
+    pub needs_rebuild: bool,
 }
 
 impl Context {
@@ -96,7 +97,7 @@ impl Context {
             data: SparseSet::new(),
             style: Style::default(),
             cache,
-            environment: Environment::new(),
+            // environment: Environment::new(),
             event_queue: VecDeque::new(),
             listeners: HashMap::default(),
             mouse: MouseState::default(),
@@ -119,7 +120,11 @@ impl Context {
             click_time: Instant::now(),
             double_click: false,
             click_pos: (0.0, 0.0),
+
+            needs_rebuild: false,
         };
+
+        Environment::new().build(&mut result);
 
         result.entity_manager.create();
         result.add_theme(DEFAULT_LAYOUT);
@@ -178,8 +183,9 @@ impl Context {
         &self.cache
     }
 
-    pub fn environment(&mut self) -> &mut Environment {
-        &mut self.environment
+    pub fn environment(&self) -> &Environment {
+        //&mut self.environment
+        self.data::<Environment>().unwrap()
     }
 
     /// The current femtovg text context. Useful when measuring or rendering fonts.
@@ -658,7 +664,7 @@ impl Context {
 
         // Reload the stored themes
         for (index, theme) in self.resource_manager.themes.iter().enumerate() {
-            if !self.environment.include_default_theme && index == 1 {
+            if !self.environment().include_default_theme && index == 1 {
                 continue;
             }
 
