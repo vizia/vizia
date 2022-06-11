@@ -136,16 +136,16 @@ fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
         context.views.insert(entity, view);
     }
 
-    if let Some(mut model_list) = context.data.remove(entity) {
-        for (_, model) in model_list.data.iter_mut() {
-            // if event.trace {
-            //     println!("Event: {:?} -> Model {:?}", event, ty);
-            // }
-            context.with_current(entity, |cx| {
-                model.event(cx, event);
-            });
-        }
+    let mut type_ids = Vec::new();
+    if let Some(model_list) = context.data.get(entity) {
+        type_ids = model_list.data.iter().map(|(id, _)| id.clone()).collect();
+    }
 
-        context.data.insert(entity, model_list).expect("Failed to insert data");
+    for type_id in type_ids.iter() {
+        let mut model = context.data.get_mut(entity).unwrap().data.remove(type_id).unwrap();
+        context.with_current(entity, |cx| {
+            model.event(cx, event);
+        });
+        context.data.get_mut(entity).unwrap().data.insert(*type_id, model);
     }
 }

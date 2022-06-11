@@ -120,8 +120,11 @@ impl ResourceManager {
         self.renegotiate_language();
     }
 
-    pub fn current_translation(&self) -> &FluentBundle<FluentResource> {
-        self.translations.get(&self.language).unwrap()
+    pub fn current_translation(
+        &self,
+        locale: &LanguageIdentifier,
+    ) -> &FluentBundle<FluentResource> {
+        self.translations.get(locale).unwrap()
     }
 
     pub(crate) fn add_font(&mut self, _name: &str, _path: &str) {}

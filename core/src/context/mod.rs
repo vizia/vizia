@@ -2,7 +2,7 @@ mod draw;
 mod proxy;
 
 use instant::{Duration, Instant};
-use std::any::Any;
+use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::error::Error;
@@ -48,7 +48,7 @@ const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 /// This type is part of the prelude.
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
-    tree: Tree,
+    pub(crate) tree: Tree,
     current: Entity,
     /// TODO make this private when there's no longer a need to mutate views after building
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
@@ -774,7 +774,8 @@ impl Context {
     }
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
-        self.resource_manager.add_translation(lang, ftl)
+        self.resource_manager.add_translation(lang, ftl);
+        self.emit(EnvironmentEvent::SetLocale(self.resource_manager.language.clone()));
     }
 
     pub fn spawn<F>(&self, target: F)
@@ -1188,13 +1189,16 @@ impl DataContext for Context {
         }
 
         for entity in self.current.parent_iter(&self.tree) {
-            //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
+            println!("Current: {} {:?}", entity, entity.parent(&self.tree));
             if let Some(data_list) = self.data.get(entity) {
                 for (_, model) in data_list.data.iter() {
+                    println!("Cast: {:?}", TypeId::of::<T>());
                     if let Some(data) = model.downcast_ref::<T>() {
                         return Some(data);
                     }
                 }
+            } else {
+                println!("No data list on entity: {}", entity);
             }
 
             if let Some(view_handler) = self.views.get(&entity) {
