@@ -791,32 +791,27 @@ impl Context {
         for entity in self.tree.into_iter() {
             if let Some(model_store) = self.data.get_mut(entity) {
                 for (_, model) in model_store.data.iter() {
+                    let model = ModelOrView::Model(model.as_ref());
                     for lens in model_store.lenses_dup.iter_mut() {
-                        if lens.update(model) {
-                            observers.extend(lens.observers().iter())
-                        }
+                        lens.update(model, &mut |e| observers.push(e));
                     }
 
                     for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                        if lens.update(model) {
-                            observers.extend(lens.observers().iter());
-                        }
+                        lens.update(model, &mut |e| observers.push(e));
                     }
                 }
 
                 for lens in model_store.lenses_dup.iter_mut() {
                     if let Some(view_handler) = self.views.get(&entity) {
-                        if lens.update_view(view_handler) {
-                            observers.extend(lens.observers().iter())
-                        }
+                        let view_handler = ModelOrView::View(view_handler.as_ref());
+                        lens.update(view_handler, &mut |e| observers.push(e));
                     }
                 }
 
                 for (_, lens) in model_store.lenses_dedup.iter_mut() {
                     if let Some(view_handler) = self.views.get(&entity) {
-                        if lens.update_view(view_handler) {
-                            observers.extend(lens.observers().iter())
-                        }
+                        let view_handler = ModelOrView::View(view_handler.as_ref());
+                        lens.update(view_handler, &mut |e| observers.push(e));
                     }
                 }
             }

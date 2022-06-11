@@ -41,6 +41,10 @@ name = "proxy"
 path = "examples/proxy.rs"
 
 [[example]]
+name = "custom_store"
+path = "examples/custom_store.rs"
+
+[[example]]
 name = "scrollview"
 path = "examples/views/scrollview.rs"
 

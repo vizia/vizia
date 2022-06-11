@@ -4,8 +4,6 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::rc::Rc;
 
-use crate::prelude::*;
-
 /// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
 ///
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.
@@ -20,51 +18,10 @@ pub trait Lens: 'static + Clone {
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O;
 }
 
-pub(crate) trait LensCache: Lens {
-    fn cache_key(&self) -> Option<TypeId> {
-        if std::mem::size_of::<Self>() == 0 {
-            Some(TypeId::of::<Self>())
-        } else {
-            None
-        }
-    }
-}
-
-impl<T: Lens> LensCache for T {}
-
 /// Helpers for constructing more complex `Lens`es.
 ///
-/// This trait is par tof the prelude.
+/// This trait is part of the prelude.
 pub trait LensExt: Lens {
-    /// Retrieve a copy of the lensed data from context.
-    ///
-    /// Example
-    /// ```ignore
-    /// let value = lens.get(cx);
-    /// ```
-    fn get<C: DataContext>(&self, cx: &C) -> Self::Target
-    where
-        Self::Target: Clone,
-    {
-        self.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| {
-                t.expect("Lens failed to resolve. Do you want to use LensExt::get_fallible?")
-                    .clone()
-            },
-        )
-    }
-
-    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Target>
-    where
-        Self::Target: Clone,
-    {
-        self.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| t.cloned().map(|v| v),
-        )
-    }
-
     /// Used to construct a lens to some data contained within some other lensed data.
     ///
     /// # Example

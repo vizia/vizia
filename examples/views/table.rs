@@ -33,12 +33,15 @@ fn main() {
                                 .height(Stretch(1.0))
                                 .font("roboto-bold");
                             Binding::new(cx, TableData::first_name_sorted, |cx, sorted| {
-                                let visible = match sorted.get(cx) {
+                                let visible = match sorted.get(cx).unwrap() {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
-                                let icon =
-                                    if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
+                                let icon = if sorted.get(cx).unwrap() == Sorted::Forward {
+                                    DOWN
+                                } else {
+                                    UP
+                                };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
@@ -91,12 +94,15 @@ fn main() {
                                 .height(Stretch(1.0))
                                 .font("roboto-bold");
                             Binding::new(cx, TableData::last_name_sorted, |cx, sorted| {
-                                let visible = match sorted.get(cx) {
+                                let visible = match sorted.get(cx).unwrap() {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
-                                let icon =
-                                    if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
+                                let icon = if sorted.get(cx).unwrap() == Sorted::Forward {
+                                    DOWN
+                                } else {
+                                    UP
+                                };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
@@ -147,12 +153,15 @@ fn main() {
                                 .font("roboto-bold");
 
                             Binding::new(cx, TableData::age_sorted, |cx, sorted| {
-                                let visible = match sorted.get(cx) {
+                                let visible = match sorted.get(cx).unwrap() {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
-                                let icon =
-                                    if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
+                                let icon = if sorted.get(cx).unwrap() == Sorted::Forward {
+                                    DOWN
+                                } else {
+                                    UP
+                                };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))

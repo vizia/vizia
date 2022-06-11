@@ -59,8 +59,7 @@ where
 
 impl<'a, L> Handle<'a, Popup<L>>
 where
-    L: Lens,
-    L::Target: Clone + Into<bool>,
+    L: Bindable<Output = bool>,
 {
     /// Registers a callback for when the user clicks off of the popup, usually with the intent of
     /// closing it.
@@ -71,7 +70,7 @@ where
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
             cx.add_listener(move |popup: &mut Popup<L>, cx, event| {
-                let flag: bool = popup.lens.get(cx).clone().into();
+                let flag = popup.lens.get(cx).unwrap_or_default();
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag {
@@ -103,8 +102,7 @@ where
 
 impl<L> View for Popup<L>
 where
-    L: Lens,
-    L::Target: Into<bool>,
+    L: Bindable<Output = bool>,
 {
     fn element(&self) -> Option<&'static str> {
         Some("popup")

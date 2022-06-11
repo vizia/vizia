@@ -113,7 +113,7 @@ where
             Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
                 let lens = lens.clone();
                 ZStack::new(cx, move |cx| {
-                    let slider_data = slider_data.get(cx);
+                    let slider_data = slider_data.get(cx).unwrap();
                     let thumb_size = slider_data.thumb_size;
                     let orientation = slider_data.orientation;
                     let size = slider_data.size;
@@ -121,24 +121,25 @@ where
 
                     // Active track
                     Element::new(cx).class("active").bind(lens.clone(), move |handle, value| {
-                        let val = value.get(handle.cx);
-                        let normal_val = (val - range.start) / (range.end - range.start);
-                        let min = thumb_size / size;
-                        let max = 1.0;
-                        let dx = min + normal_val * (max - min);
+                        if let Some(val) = value.get(handle.cx) {
+                            let normal_val = (val - range.start) / (range.end - range.start);
+                            let min = thumb_size / size;
+                            let max = 1.0;
+                            let dx = min + normal_val * (max - min);
 
-                        if orientation == Orientation::Horizontal {
-                            handle
-                                .height(Stretch(1.0))
-                                .left(Pixels(0.0))
-                                .right(Stretch(1.0))
-                                .width(Percentage(dx * 100.0));
-                        } else {
-                            handle
-                                .width(Stretch(1.0))
-                                .top(Stretch(1.0))
-                                .bottom(Pixels(0.0))
-                                .height(Percentage(dx * 100.0));
+                            if orientation == Orientation::Horizontal {
+                                handle
+                                    .height(Stretch(1.0))
+                                    .left(Pixels(0.0))
+                                    .right(Stretch(1.0))
+                                    .width(Percentage(dx * 100.0));
+                            } else {
+                                handle
+                                    .width(Stretch(1.0))
+                                    .top(Stretch(1.0))
+                                    .bottom(Pixels(0.0))
+                                    .height(Percentage(dx * 100.0));
+                            }
                         }
                     });
 
@@ -154,21 +155,22 @@ where
                             }
                         })
                         .bind(lens.clone(), move |handle, value| {
-                            let val = value.get(handle.cx);
-                            let normal_val = (val - range.start) / (range.end - range.start);
-                            let px = normal_val * (1.0 - (thumb_size / size));
-                            if orientation == Orientation::Horizontal {
-                                handle
-                                    .right(Stretch(1.0))
-                                    .top(Stretch(1.0))
-                                    .bottom(Stretch(1.0))
-                                    .left(Percentage(100.0 * px));
-                            } else {
-                                handle
-                                    .top(Stretch(1.0))
-                                    .left(Stretch(1.0))
-                                    .right(Stretch(1.0))
-                                    .bottom(Percentage(100.0 * px));
+                            if let Some(val) = value.get(handle.cx) {
+                                let normal_val = (val - range.start) / (range.end - range.start);
+                                let px = normal_val * (1.0 - (thumb_size / size));
+                                if orientation == Orientation::Horizontal {
+                                    handle
+                                        .right(Stretch(1.0))
+                                        .top(Stretch(1.0))
+                                        .bottom(Stretch(1.0))
+                                        .left(Percentage(100.0 * px));
+                                } else {
+                                    handle
+                                        .top(Stretch(1.0))
+                                        .left(Stretch(1.0))
+                                        .right(Stretch(1.0))
+                                        .bottom(Percentage(100.0 * px));
+                                }
                             }
                         });
                 });

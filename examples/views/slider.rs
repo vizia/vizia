@@ -12,7 +12,7 @@ fn main() {
                     );
                     Label::new(
                         cx,
-                        AppData::value.map(|val| format!("{:.2}", (val - 50.0) / 100.0)),
+                        AppData::value.map_shallow(|val| format!("{:.2}", (val - 50.0) / 100.0)),
                     )
                     .width(Pixels(50.0));
                 })
@@ -25,7 +25,7 @@ fn main() {
                     Slider::new(cx, AppData::value)
                         .range(-50.0..50.0)
                         .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
-                    Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)))
+                    Label::new(cx, AppData::value.map_shallow(|val| format!("{:.2}", val)))
                         .width(Pixels(50.0));
                 })
                 .height(Pixels(50.0))
@@ -39,7 +39,7 @@ fn main() {
                     .range(-50.0..50.0)
                     .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)))
                     .class("vertical");
-                Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)))
+                Label::new(cx, AppData::value.map_shallow(|val| format!("{:.2}", val)))
                     .child_space(Stretch(1.0))
                     .width(Pixels(50.0));
             })

@@ -109,13 +109,15 @@ impl Checkbox {
     /// #
     /// Checkbox::new(cx, AppData::value);
     /// ```
-    pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
+    pub fn new(cx: &mut Context, checked: impl Bindable<Output = bool>) -> Handle<Self> {
         //let checked = checked.get_val_fallible(cx).unwrap_or(false);
-        Self { on_toggle: None }.build(cx, |_| {}).bind(checked, |handle, checked| {
-            if let Some(flag) = checked.get_val_fallible(handle.cx) {
-                handle.text(if flag { CHECK } else { "" }).checked(flag);
+        Self { on_toggle: None }.build(cx, |_| {}).text(checked.map_shallow(|b| {
+            if *b {
+                CHECK
+            } else {
+                ""
             }
-        })
+        }))
     }
 }
 

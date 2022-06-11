@@ -83,7 +83,7 @@
 //!         }.build(cx);
 //!
 //!         Binding::new(cx, AppData::count, |cx, count|{
-//!             Label::new(cx, &count.get(cx).to_string());
+//!             Label::new(cx, &count.get(cx).unwrap().to_string());
 //!         });
 //!     }).run();
 //! }
@@ -113,7 +113,7 @@
 //!         }.build(cx);
 //!
 //!         Binding::new(cx, AppData::count, |cx, count|{
-//!             Label::new(cx, &count.get(cx).to_string());
+//!             Label::new(cx, &count.get(cx).unwrap().to_string());
 //!         });
 //!
 //!         Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx|{
@@ -135,7 +135,7 @@ mod model;
 pub use model::*;
 
 mod store;
-pub(crate) use store::*;
+pub use store::*;
 
 mod data;
 pub use data::*;

@@ -33,11 +33,13 @@ impl<L: Lens<Target = f32>> Knob<L> {
     ) -> Handle<Self> {
         Self {
             lens: lens.clone(),
-            default_normal: normalized_default.get_val(cx),
+            default_normal: normalized_default
+                .get_val(cx)
+                .expect("normalized_default cannot take a fallible binding"),
 
             is_dragging: false,
             prev_drag_y: 0.0,
-            continuous_normal: lens.get(cx),
+            continuous_normal: lens.get(cx).expect("knob's lens cannot be a fallible lens"),
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
@@ -88,7 +90,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
 
             is_dragging: false,
             prev_drag_y: 0.0,
-            continuous_normal: lens.get(cx),
+            continuous_normal: lens.get(cx).expect("continuous_normal cannot be a fallible lens"),
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
@@ -152,7 +154,8 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
                 cx.capture();
                 cx.focus();
 
-                self.continuous_normal = self.lens.get(cx);
+                self.continuous_normal =
+                    self.lens.get(cx).expect("continuous_normal cannot be a fallible lens");
 
                 // if let Some(callback) = self.on_press.take() {
                 //     (callback)(self, cx, cx.current);
@@ -164,7 +167,8 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
                 self.is_dragging = false;
                 //self.continuous_normal = self.normalized_value;
 
-                self.continuous_normal = self.lens.get(cx);
+                self.continuous_normal =
+                    self.lens.get(cx).expect("continuous_normal cannot be a fallible lens");
 
                 cx.release();
 
@@ -426,7 +430,7 @@ impl Handle<'_, TickKnob> {
     pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
         let entity = self.entity;
         Binding::new(self.cx, lens, move |cx, value| {
-            let value = value.get(cx);
+            let value = value.get(cx).expect("knob value cannot be a fallible lens");
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<TickKnob>() {
                     knob.normalized_value = value;
@@ -559,7 +563,7 @@ impl Handle<'_, ArcTrack> {
     pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
         let entity = self.entity;
         Binding::new(self.cx, lens, move |cx, value| {
-            let value = value.get(cx);
+            let value = value.get(cx).expect("Knob value cannot be a fallible lens");
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<ArcTrack>() {
                     knob.normalized_value = value;
