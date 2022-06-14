@@ -808,6 +808,26 @@ impl Style {
                                     self.transitions.insert(rule_id, animation);
                                 }
 
+                                "col-between" => {
+                                    let animation = self.animation_manager.create();
+                                    self.col_between.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
+                                    self.col_between.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
+                                }
+
+                                "row-between" => {
+                                    let animation = self.animation_manager.create();
+                                    self.row_between.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
+                                    self.row_between.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
+                                }
+
                                 "opacity" => {
                                     let animation = self.animation_manager.create();
                                     self.opacity.insert_animation(
