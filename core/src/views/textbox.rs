@@ -23,7 +23,7 @@ pub struct TextboxData {
     on_edit: Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>,
     content_entity: Entity,
     kind: TextboxKind,
-    on_submit: Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>,
+    on_submit: Option<Arc<dyn Fn(&mut Context, String, bool) + Send + Sync>>,
 }
 
 impl TextboxData {
@@ -283,7 +283,7 @@ pub enum TextEvent {
     SelectAll,
     StartEdit,
     EndEdit,
-    Submit,
+    Submit(bool),
     Hit(f32, f32),
     Drag(f32, f32),
     Copy,
@@ -291,7 +291,7 @@ pub enum TextEvent {
 
     // Helpers
     SetOnEdit(Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>),
-    SetOnSubmit(Option<Arc<dyn Fn(&mut Context, String) + Send + Sync>>),
+    SetOnSubmit(Option<Arc<dyn Fn(&mut Context, String, bool) + Send + Sync>>),
     InitContent(Entity, TextboxKind),
     GeometryChanged,
 }
@@ -345,9 +345,9 @@ impl Model for TextboxData {
                 self.edit = false;
             }
 
-            TextEvent::Submit => {
+            TextEvent::Submit(flag) => {
                 if let Some(callback) = self.on_submit.take() {
-                    (callback)(cx, self.text.as_str().to_owned());
+                    (callback)(cx, self.text.as_str().to_owned(), *flag);
 
                     self.on_submit = Some(callback);
                 }
@@ -533,7 +533,7 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
 
     pub fn on_submit<F>(self, callback: F) -> Self
     where
-        F: 'static + Fn(&mut Context, String) + Send + Sync,
+        F: 'static + Fn(&mut Context, String, bool) + Send + Sync,
     {
         self.cx.emit_to(self.entity, TextEvent::SetOnSubmit(Some(Arc::new(callback))));
 
@@ -565,7 +565,7 @@ where
 
                     cx.emit(TextEvent::Hit(cx.mouse().cursorx, cx.mouse().cursory));
                 } else {
-                    cx.emit(TextEvent::Submit);
+                    cx.emit(TextEvent::Submit(false));
                     if let Some(source) = cx.data::<L::Source>() {
                         let text = self.lens.view(source, |t| {
                             if let Some(t) = t {
@@ -617,7 +617,7 @@ where
                     //cx.emit(TextEvent::EndEdit);
 
                     if matches!(self.kind, TextboxKind::SingleLine) {
-                        cx.emit(TextEvent::Submit);
+                        cx.emit(TextEvent::Submit(true));
                         if let Some(source) = cx.data::<L::Source>() {
                             let text = self.lens.view(source, |t| {
                                 if let Some(t) = t {
