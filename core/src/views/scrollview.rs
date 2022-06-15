@@ -110,9 +110,9 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                 let dpi_factor = handle.cx.style().dpi_factor;
                 if dpi_factor > 0.0 {
                     let data = data.get(handle.cx);
-                    let mut left = ((data.child_x - data.parent_x) * data.scroll_x).round()
+                    let left = ((data.child_x - data.parent_x) * data.scroll_x).round()
                         / handle.cx.style().dpi_factor as f32;
-                    let mut top = ((data.child_y - data.parent_y) * data.scroll_y).round()
+                    let top = ((data.child_y - data.parent_y) * data.scroll_y).round()
                         / handle.cx.style().dpi_factor as f32;
                     handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
                 }
