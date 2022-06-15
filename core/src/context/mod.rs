@@ -269,6 +269,18 @@ impl Context {
         self.style().needs_redraw = true;
     }
 
+    /// Sets the hover flag of the current entity
+    pub fn set_hover(&mut self, flag: bool) {
+        let current = self.current();
+        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
+            pseudo_classes.set(PseudoClass::HOVER, flag);
+        }
+
+        self.style().needs_restyle = true;
+        self.style().needs_relayout = true;
+        self.style().needs_redraw = true;
+    }
+
     /// Sets the checked flag of the current entity
     pub fn set_checked(&mut self, flag: bool) {
         let current = self.current();

@@ -62,7 +62,7 @@ pub mod prelude {
         LinearGradient, Opacity, Overflow, PseudoClass, Visibility,
     };
 
-    pub use keyboard_types::Code;
+    pub use keyboard_types::{Code, Key};
     pub use morphorm::Units::*;
     pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
 }
