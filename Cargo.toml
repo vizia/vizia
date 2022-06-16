@@ -41,6 +41,10 @@ name = "proxy"
 path = "examples/proxy.rs"
 
 [[example]]
+name = "key_input_propagation"
+path = "examples/key_input_propagation.rs"
+
+[[example]]
 name = "scrollview"
 path = "examples/views/scrollview.rs"
 
