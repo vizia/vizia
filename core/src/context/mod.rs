@@ -1048,8 +1048,7 @@ impl Context {
                 self.dispatch_direct_or_hovered(event, self.captured, true);
             }
             WindowEvent::MouseScroll(_, _) => {
-                self.event_queue
-                    .push_back(Event::new(event).target(self.hovered).propagate(Propagation::Up));
+                self.event_queue.push_back(Event::new(event).target(self.hovered));
             }
             WindowEvent::KeyDown(code, _) => {
                 #[cfg(debug_assertions)]
@@ -1135,10 +1134,10 @@ impl Context {
                     self.style().needs_redraw = true;
                 }
 
-                self.dispatch_direct_or_hovered(event, self.focused, true);
+                self.event_queue.push_back(Event::new(event).target(self.focused));
             }
             WindowEvent::KeyUp(_, _) | WindowEvent::CharInput(_) => {
-                self.dispatch_direct_or_hovered(event, self.focused, true);
+                self.event_queue.push_back(Event::new(event).target(self.focused));
             }
             _ => {}
         }
