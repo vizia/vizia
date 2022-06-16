@@ -75,7 +75,7 @@ impl InputView {
 }
 
 impl View for InputView {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut Context, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::KeyDown(code, _) => {
                 println!("The key {:?} got pressed!", code);
