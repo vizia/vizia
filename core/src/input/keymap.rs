@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-
+use super::KeymapEntry;
 use crate::prelude::*;
+use std::collections::HashMap;
 
 /// A keymap that associates key chords with actions.
 ///
@@ -76,12 +76,11 @@ use crate::prelude::*;
 /// ```
 ///
 /// This type is part of the prelude.
-#[derive(Debug)]
 pub struct Keymap<T>
 where
     T: 'static + PartialEq + Send + Sync + Copy + Clone,
 {
-    actions: HashMap<KeyChord, Vec<T>>,
+    entries: HashMap<KeyChord, Vec<KeymapEntry<T>>>,
 }
 
 impl<T> Keymap<T>
@@ -105,20 +104,20 @@ where
     /// let keymap = Keymap::<Action>::new();
     /// ```
     pub fn new() -> Self {
-        Self { actions: HashMap::new() }
+        Self { entries: HashMap::new() }
     }
 
     /// Inserts an entry into the keymap.
     ///
     /// This method is for internal use only.
     /// To insert an entry into the keymap at runtime use the [`KeymapEvent::InsertAction`] event.
-    fn insert(&mut self, action: T, chord: KeyChord) {
-        if let Some(actions) = self.actions.get_mut(&chord) {
-            if !actions.contains(&action) {
-                actions.push(action);
+    fn insert(&mut self, chord: KeyChord, keymap_entry: KeymapEntry<T>) {
+        if let Some(actions) = self.entries.get_mut(&chord) {
+            if !actions.contains(&keymap_entry) {
+                actions.push(keymap_entry);
             }
         } else {
-            self.actions.insert(chord, vec![action]);
+            self.entries.insert(chord, vec![keymap_entry]);
         }
     }
 
@@ -126,11 +125,11 @@ where
     ///
     /// This method is for internal use only.
     /// To remove an entry of the keymap at runtime use the [`KeymapEvent::RemoveAction`] event.
-    fn remove(&mut self, action: &T, chord: &KeyChord) {
-        if let Some(actions) = self.actions.get_mut(chord) {
+    fn remove(&mut self, chord: &KeyChord, action: &T) {
+        if let Some(actions) = self.entries.get_mut(chord) {
             if let Some(index) = actions.iter().position(|x| x == action) {
                 if actions.len() == 1 {
-                    self.actions.remove(chord);
+                    self.entries.remove(chord);
                 } else {
                     actions.swap_remove(index);
                 }
@@ -156,9 +155,12 @@ where
     /// for action in keymap.pressed_actions(cx, Code::KeyA) {
     ///     println!("The action {:?} is being pressed!", action);
     /// };
-    /// ```
-    pub fn pressed_actions(&self, cx: &Context, code: Code) -> impl Iterator<Item = &T> {
-        if let Some(actions) = self.actions.get(&KeyChord::new(cx.modifiers(), code)) {
+    pub fn pressed_actions(
+        &self,
+        cx: &Context,
+        code: Code,
+    ) -> impl Iterator<Item = &KeymapEntry<T>> {
+        if let Some(actions) = self.entries.get(&KeyChord::new(cx.modifiers(), code)) {
             actions.iter()
         } else {
             [].iter()
@@ -188,11 +190,11 @@ where
     ///     println!("The key chord {:?} triggers the action {:?}!", chord, action);
     /// }
     /// ```
-    pub fn export(&self) -> Vec<(T, KeyChord)> {
+    pub fn export(&self) -> Vec<(&KeyChord, &KeymapEntry<T>)> {
         let mut vec = Vec::new();
-        for (chord, actions) in self.actions.iter() {
-            for action in actions {
-                vec.push((*action, *chord));
+        for (chord, entries) in self.entries.iter() {
+            for entry in entries {
+                vec.push((chord, entry));
             }
         }
         vec
@@ -203,22 +205,36 @@ impl<T> Model for Keymap<T>
 where
     T: 'static + PartialEq + Send + Sync + Copy + Clone,
 {
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
-        event.map(|keymap_event, _| match keymap_event {
-            KeymapEvent::InsertAction(action, chord) => self.insert(*action, *chord),
-            KeymapEvent::RemoveAction(action, chord) => self.remove(action, chord),
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        event.map(|keymap_event, meta| {
+            match keymap_event {
+                KeymapEvent::InsertAction(chord, entry) => self.insert(*chord, *entry),
+                KeymapEvent::RemoveAction(chord, action) => self.remove(chord, action),
+                _ => {}
+            }
+            meta.consume();
         });
+        event.map(|window_event, _| match window_event {
+            WindowEvent::KeyDown(code, _) => {
+                if let Some(entries) = self.entries.get(&KeyChord::new(cx.modifiers(), *code)) {
+                    for entry in entries {
+                        (entry.callback())(cx)
+                    }
+                }
+            }
+            _ => {}
+        })
     }
 }
 
-impl<T> From<Vec<(T, KeyChord)>> for Keymap<T>
+impl<T> From<Vec<(KeyChord, KeymapEntry<T>)>> for Keymap<T>
 where
     T: 'static + PartialEq + Send + Sync + Copy + Clone,
 {
-    fn from(vec: Vec<(T, KeyChord)>) -> Self {
+    fn from(vec: Vec<(KeyChord, KeymapEntry<T>)>) -> Self {
         let mut keymap = Self::new();
-        for (action, chord) in vec {
-            keymap.insert(action, chord);
+        for (chord, entry) in vec {
+            keymap.insert(chord, entry);
         }
         keymap
     }
@@ -250,7 +266,7 @@ where
     ///     KeyChord::new(Modifiers::empty(), Code::KeyA),
     /// ));
     /// ```
-    InsertAction(T, KeyChord),
+    InsertAction(KeyChord, KeymapEntry<T>),
     /// Removes an entry from the [`Keymap`].
     ///
     /// # Examples
@@ -270,5 +286,5 @@ where
     ///     KeyChord::new(Modifiers::empty(), Code::KeyA),
     /// ));
     /// ```
-    RemoveAction(T, KeyChord),
+    RemoveAction(KeyChord, T),
 }

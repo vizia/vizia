@@ -9,3 +9,6 @@ pub use modifiers::*;
 
 mod mouse;
 pub use mouse::*;
+
+mod entry;
+pub use entry::*;
