@@ -43,7 +43,7 @@ pub mod prelude {
     pub use super::events::{Event, Message, Propagation};
     pub use super::handle::Handle;
     pub use super::input::{
-        KeyChord, Keymap, KeymapEvent, Modifiers, MouseButton, MouseButtonState,
+        KeyChord, Keymap, KeymapEntry, KeymapEvent, Modifiers, MouseButton, MouseButtonState,
     };
     pub use super::localization::Localized;
     pub use super::modifiers::Actions;
