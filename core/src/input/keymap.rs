@@ -1,4 +1,3 @@
-use super::KeymapEntry;
 use crate::prelude::*;
 use std::collections::HashMap;
 
@@ -24,7 +23,8 @@ use std::collections::HashMap;
 ///
 /// Now we can create a new keymap inside of our application and configure our key chords.
 /// We will bind `Action::One` to the key chord `A`, `Action::Two` to the key chord `CTRL+B`
-/// and `Action::Three` to the key chord `CTRL+SHIFT+C`.
+/// and `Action::Three` to the key chord `CTRL+SHIFT+C`. Every action has an associated callback
+/// function that gets triggered when the key chord is pressed.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
@@ -37,55 +37,23 @@ use std::collections::HashMap;
 /// # }
 /// #
 /// let keymap = Keymap::from(vec![
-///     (Action::One, KeyChord::new(Modifiers::empty(), Code::KeyA)),
-///     (Action::Two, KeyChord::new(Modifiers::CTRL, Code::KeyB)),
-///     (Action::Three, KeyChord::new(Modifiers::CTRL | Modifiers::SHIFT, Code::KeyC)),
+///     (KeyChord::new(Modifiers::empty(), Code::KeyA), KeymapEntry::new(Action::One, |_| println!("Action One"))),
+///     (KeyChord::new(Modifiers::CTRL, Code::KeyB), KeymapEntry::new(Action::Two, |_| println!("Action Two"))),
+///     (KeyChord::new(Modifiers::CTRL | Modifiers::SHIFT, Code::KeyC), KeymapEntry::new(Action::Three, |_| println!("Action Three"))),
 /// ]);
-/// ```
-///
-/// After we've defined our key chords we can now use them inside of a custom view. Here we check if the
-/// action `Action::One` is being pressed. If it is we just print a simple message to the console,
-/// but here you could do whatever you want to.
-///
-/// ```
-/// # use vizia_core::prelude::*;
-/// #
-/// # #[derive(Debug, PartialEq, Copy, Clone)]
-/// # enum Action {
-/// #     One,
-/// #     Two,
-/// #     Three,
-/// # }
-/// #
-/// struct CustomView;
-///
-/// impl View for CustomView {
-///     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-///         event.map(|window_event, _| match window_event {
-///             WindowEvent::KeyDown(code, _) => {
-///                 if let Some(keymap_data) = cx.data::<Keymap<Action>>() {
-///                     for action in keymap_data.pressed_actions(cx, *code) {
-///                         println!("The action {:?} is being pressed!", action);
-///                     }
-///                 }
-///             }
-///             _ => {}
-///         });
-///     }
-/// }
 /// ```
 ///
 /// This type is part of the prelude.
 pub struct Keymap<T>
 where
-    T: 'static + PartialEq + Send + Sync + Copy + Clone,
+    T: 'static + Copy + Clone + PartialEq + Send + Sync,
 {
     entries: HashMap<KeyChord, Vec<KeymapEntry<T>>>,
 }
 
 impl<T> Keymap<T>
 where
-    T: 'static + PartialEq + Send + Sync + Copy + Clone,
+    T: 'static + Copy + Clone + PartialEq + Send + Sync,
 {
     /// Creates a new keymap.
     ///
@@ -137,7 +105,7 @@ where
         }
     }
 
-    /// Returns an iterator over every pressed action or `None` if there are no actions for that key chord.
+    /// Returns an iterator over every pressed keymap entry.
     ///
     /// # Examples
     ///
@@ -152,8 +120,8 @@ where
     /// # let cx = &Context::new();
     /// # let keymap = Keymap::<Action>::new();
     /// #
-    /// for action in keymap.pressed_actions(cx, Code::KeyA) {
-    ///     println!("The action {:?} is being pressed!", action);
+    /// for entry in keymap.pressed_actions(cx, Code::KeyA) {
+    ///     println!("The action {:?} is being pressed!", entry.action());
     /// };
     pub fn pressed_actions(
         &self,
@@ -167,10 +135,10 @@ where
         }
     }
 
-    /// Exports all actions and their associated key chords.
+    /// Exports all keymap entries and their associated key chords.
     ///
-    /// This is useful if you want to have a settings window and need every to access every key chord
-    /// and action of a keymap.
+    /// This is useful if you want to have a settings window and need to access every key chord
+    /// and keymap entry of a keymap.
     ///
     /// # Examples
     ///
@@ -186,8 +154,8 @@ where
     /// #
     /// let actions_chords = keymap.export();
     ///
-    /// for (action, chord) in actions_chords {
-    ///     println!("The key chord {:?} triggers the action {:?}!", chord, action);
+    /// for (chord, entry) in actions_chords {
+    ///     println!("The key chord {:?} triggers the action {:?}!", chord, entry.action());
     /// }
     /// ```
     pub fn export(&self) -> Vec<(&KeyChord, &KeymapEntry<T>)> {
@@ -203,22 +171,18 @@ where
 
 impl<T> Model for Keymap<T>
 where
-    T: 'static + PartialEq + Send + Sync + Copy + Clone,
+    T: 'static + Copy + Clone + PartialEq + Send + Sync,
 {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        event.map(|keymap_event, meta| {
-            match keymap_event {
-                KeymapEvent::InsertAction(chord, entry) => self.insert(*chord, *entry),
-                KeymapEvent::RemoveAction(chord, action) => self.remove(chord, action),
-                _ => {}
-            }
-            meta.consume();
+        event.map(|keymap_event, _| match keymap_event {
+            KeymapEvent::InsertAction(chord, entry) => self.insert(*chord, *entry),
+            KeymapEvent::RemoveAction(chord, action) => self.remove(chord, action),
         });
         event.map(|window_event, _| match window_event {
             WindowEvent::KeyDown(code, _) => {
                 if let Some(entries) = self.entries.get(&KeyChord::new(cx.modifiers(), *code)) {
                     for entry in entries {
-                        (entry.callback())(cx)
+                        (entry.on_action())(cx)
                     }
                 }
             }
@@ -229,7 +193,7 @@ where
 
 impl<T> From<Vec<(KeyChord, KeymapEntry<T>)>> for Keymap<T>
 where
-    T: 'static + PartialEq + Send + Sync + Copy + Clone,
+    T: 'static + Copy + Clone + PartialEq + Send + Sync,
 {
     fn from(vec: Vec<(KeyChord, KeymapEntry<T>)>) -> Self {
         let mut keymap = Self::new();
@@ -245,7 +209,7 @@ where
 /// This type is part of the prelude.
 pub enum KeymapEvent<T>
 where
-    T: 'static + PartialEq + Send + Sync + Copy + Clone,
+    T: 'static + Copy + Clone + PartialEq + Send + Sync,
 {
     /// Inserts an entry into the [`Keymap`].
     ///
@@ -262,8 +226,8 @@ where
     /// # let cx = &mut Context::new();
     /// #
     /// cx.emit(KeymapEvent::InsertAction(
-    ///     Action::One,
     ///     KeyChord::new(Modifiers::empty(), Code::KeyA),
+    ///     KeymapEntry::new(Action::One, |_| println!("Action One")),
     /// ));
     /// ```
     InsertAction(KeyChord, KeymapEntry<T>),
@@ -282,8 +246,8 @@ where
     /// # let cx = &mut Context::new();
     /// #
     /// cx.emit(KeymapEvent::RemoveAction(
-    ///     Action::One,
     ///     KeyChord::new(Modifiers::empty(), Code::KeyA),
+    ///     Action::One,
     /// ));
     /// ```
     RemoveAction(KeyChord, T),

@@ -1,54 +1,65 @@
 use crate::context::Context;
 
-#[derive(Clone)]
+/// An entry inside of a [`Keymap`](crate::prelude::Keymap).
+///
+/// It consists of an action which is usually just an enum variant
+/// and a callback function that gets called if the action got triggered.
+///
+/// This type is part of the prelude.
+#[derive(Copy, Clone)]
 pub struct KeymapEntry<T>
 where
-    T: 'static + Send + Sync + Copy + Clone,
+    T: 'static + Copy + Clone + PartialEq + Send + Sync,
 {
     action: T,
-    callback: Box<dyn Fn(&mut Context)>,
+    on_action: fn(&mut Context),
 }
 
-impl<T> std::fmt::Debug for KeymapEntry<T>
+impl<T> KeymapEntry<T>
 where
-    T: 'static + std::fmt::Debug + Send + Sync + Copy + Clone,
+    T: 'static + Copy + Clone + PartialEq + Send + Sync,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.action)
+    /// Creates a new keymap entry.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # #[derive(Copy, Clone, PartialEq)]
+    /// # enum Action {
+    /// #     One,
+    /// # }
+    /// #
+    /// KeymapEntry::new(Action::One, |_| println!("Action One"));
+    /// ```
+    pub fn new(action: T, on_action: fn(&mut Context)) -> Self {
+        Self { action, on_action }
+    }
+
+    /// Returns the action of the keymap entry.
+    pub fn action(&self) -> &T {
+        &self.action
+    }
+
+    /// Returns the `on_action` callback function of the keymap entry.
+    pub fn on_action(&self) -> &fn(&mut Context) {
+        &self.on_action
     }
 }
 
-unsafe impl<T> Send for KeymapEntry<T> where T: 'static + Send + Sync + Copy + Clone {}
-unsafe impl<T> Sync for KeymapEntry<T> where T: 'static + Send + Sync + Copy + Clone {}
-
 impl<T> PartialEq for KeymapEntry<T>
 where
-    T: 'static + Send + Sync + Copy + Clone + PartialEq,
+    T: 'static + Copy + Clone + PartialEq + Send + Sync,
 {
     fn eq(&self, other: &Self) -> bool {
         self.action == other.action
     }
 }
 
-impl<T> KeymapEntry<T>
-where
-    T: 'static + Send + Sync + Copy + Clone + PartialEq,
-{
-    pub fn new<F>(action: T, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        Self { action, callback: Box::new(callback) }
-    }
-
-    pub fn callback(&self) -> &Box<dyn Fn(&mut Context)> {
-        &self.callback
-    }
-}
-
 impl<T> PartialEq<T> for KeymapEntry<T>
 where
-    T: 'static + Send + Sync + Copy + Clone + PartialEq,
+    T: 'static + Copy + Clone + PartialEq + Send + Sync,
 {
     fn eq(&self, other: &T) -> bool {
         self.action == *other
