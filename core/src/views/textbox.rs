@@ -336,6 +336,9 @@ impl Model for TextboxData {
                 if !cx.is_disabled() {
                     if !self.edit {
                         self.edit = true;
+                        cx.focus();
+                        cx.capture();
+                        cx.set_checked(true);
                         cx.emit(TextEvent::SelectAll);
                     }
                 }
@@ -343,6 +346,8 @@ impl Model for TextboxData {
 
             TextEvent::EndEdit => {
                 self.edit = false;
+                cx.set_checked(false);
+                cx.release();
             }
 
             TextEvent::Submit(flag) => {
