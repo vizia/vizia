@@ -162,6 +162,17 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                     map(Some(&source.#field_name))
                 }
             }
+
+            impl <L1, #(#lens_ty_idents),*> std::ops::Shr<L1> for #twizzled_name::#field_name#lens_ty_generics where
+                L1: Lens<Source = <Self as Lens>::Target>,
+                Self: Lens,
+            {
+                type Output = Then<Self, L1>;
+
+                fn shr(self, rhs: L1) -> Self::Output {
+                    self.then(rhs)
+                }
+            }
         }
     });
 

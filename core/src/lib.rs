@@ -47,7 +47,7 @@ pub mod prelude {
     };
     pub use super::localization::Localized;
     pub use super::modifiers::Actions;
-    pub use super::state::{Binding, Data, Lens, LensExt, Model, Res};
+    pub use super::state::{Binding, Data, Lens, LensExt, Model, Res, Then};
     pub use super::tree::{Tree, TreeExt};
     pub use super::view::{Canvas, View};
     pub use super::views::*;
