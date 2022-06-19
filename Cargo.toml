@@ -192,7 +192,6 @@ clipboard = ["vizia_core/clipboard"]
 serde = ["vizia_core/serde"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
-meadowlark = ["winit", "vizia_core/meadowlark"]
 x11 = ["vizia_winit?/x11", "vizia_core/x11"]
 wayland = ["vizia_winit?/wayland", "vizia_core/wayland"]
 
