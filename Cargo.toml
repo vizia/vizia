@@ -189,6 +189,7 @@ path = "examples/window_modifiers.rs"
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard"]
+serde = ["vizia_core/serde"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
 meadowlark = ["winit", "vizia_core/meadowlark"]
