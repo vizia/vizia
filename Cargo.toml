@@ -186,9 +186,15 @@ path = "examples/keymap_change_entries.rs"
 name = "window_modifiers"
 path = "examples/window_modifiers.rs"
 
+# Binding Examples
+
 [[example]]
 name = "then"
 path = "examples/binding/then.rs"
+
+[[example]]
+name = "index"
+path = "examples/binding/index.rs"
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
