@@ -4,6 +4,7 @@ use std::fmt;
 /// Describes a color.
 ///
 /// This type is part of the prelude.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Copy, Clone)]
 pub struct Color {
     pub data: u32,
