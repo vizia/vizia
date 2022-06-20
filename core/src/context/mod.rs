@@ -44,8 +44,6 @@ static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layou
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
 /// The main storage and control object for a Vizia application.
-///
-/// This type is part of the prelude.
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
     tree: Tree,
@@ -84,6 +82,7 @@ pub struct Context {
 }
 
 impl Context {
+    /// Creates a new default context.
     pub fn new() -> Self {
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
@@ -128,15 +127,18 @@ impl Context {
         result
     }
 
-    /// Access to the tree of entities
-    pub fn tree(&mut self) -> &mut Tree {
-        &mut self.tree
-    }
-
-    pub fn tree_ref(&self) -> &Tree {
+    /// Returns an immutable reference to the entity tree.
+    pub fn tree(&self) -> &Tree {
         &self.tree
     }
 
+    /// Returns a mutable reference to the entity tree.
+    pub fn tree_mut(&mut self) -> &mut Tree {
+        &mut self.tree
+    }
+
+    /// Returns the current entity.
+    ///
     /// The "current" entity, generally the entity which is currently being built or the entity
     /// which is currently having an event dispatched to it.
     pub fn current(&self) -> Entity {
@@ -158,24 +160,28 @@ impl Context {
         self.current = prev;
     }
 
-    /// The style storage for the application. Used to get properties set through inline style
-    /// attributes or CSS.
-    pub fn style(&mut self) -> &mut Style {
-        &mut self.style
+    /// Returns an immutable reference to the style store.
+    ///
+    /// Used to get properties set through inline style attributes or CSS.
+    pub fn style(&self) -> &Style {
+        &self.style
     }
 
-    pub fn style_ref(&self) -> &Style {
-        &self.style
+    /// Returns a mutable reference to the style store.
+    ///
+    /// Used to get properties set through inline style attributes or CSS.
+    pub fn style_mut(&mut self) -> &mut Style {
+        &mut self.style
     }
 
     /// The cache storage for the application. Used to get intermediate data computed during the
     /// layout and rendering processes.
-    pub fn cache(&mut self) -> &mut CachedData {
-        &mut self.cache
+    pub fn cache(&self) -> &CachedData {
+        &self.cache
     }
 
-    pub fn cache_ref(&self) -> &CachedData {
-        &self.cache
+    pub fn cache_mut(&mut self) -> &mut CachedData {
+        &mut self.cache
     }
 
     pub fn environment(&mut self) -> &mut Environment {
@@ -260,54 +266,54 @@ impl Context {
     /// Sets the active flag of the current entity
     pub fn set_active(&mut self, flag: bool) {
         let current = self.current();
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
+        if let Some(pseudo_classes) = self.style_mut().pseudo_classes.get_mut(current) {
             pseudo_classes.set(PseudoClass::ACTIVE, flag);
         }
 
-        self.style().needs_restyle = true;
-        self.style().needs_relayout = true;
-        self.style().needs_redraw = true;
+        self.style_mut().needs_restyle = true;
+        self.style_mut().needs_relayout = true;
+        self.style_mut().needs_redraw = true;
     }
 
     /// Sets the hover flag of the current entity
     pub fn set_hover(&mut self, flag: bool) {
         let current = self.current();
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
+        if let Some(pseudo_classes) = self.style_mut().pseudo_classes.get_mut(current) {
             pseudo_classes.set(PseudoClass::HOVER, flag);
         }
 
-        self.style().needs_restyle = true;
-        self.style().needs_relayout = true;
-        self.style().needs_redraw = true;
+        self.style_mut().needs_restyle = true;
+        self.style_mut().needs_relayout = true;
+        self.style_mut().needs_redraw = true;
     }
 
     /// Sets the checked flag of the current entity
     pub fn set_checked(&mut self, flag: bool) {
         let current = self.current();
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
+        if let Some(pseudo_classes) = self.style_mut().pseudo_classes.get_mut(current) {
             pseudo_classes.set(PseudoClass::CHECKED, flag);
         }
 
-        self.style().needs_restyle = true;
-        self.style().needs_relayout = true;
-        self.style().needs_redraw = true;
+        self.style_mut().needs_restyle = true;
+        self.style_mut().needs_relayout = true;
+        self.style_mut().needs_redraw = true;
     }
 
     /// Sets the checked flag of the current entity
     pub fn set_selected(&mut self, flag: bool) {
         let current = self.current();
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
+        if let Some(pseudo_classes) = self.style_mut().pseudo_classes.get_mut(current) {
             pseudo_classes.set(PseudoClass::SELECTED, flag);
         }
 
-        self.style().needs_restyle = true;
-        self.style().needs_relayout = true;
-        self.style().needs_redraw = true;
+        self.style_mut().needs_restyle = true;
+        self.style_mut().needs_relayout = true;
+        self.style_mut().needs_redraw = true;
     }
 
     pub fn toggle_class(&mut self, class_name: &str, applied: bool) {
         let current = self.current();
-        if let Some(class_list) = self.style().classes.get_mut(current) {
+        if let Some(class_list) = self.style_mut().classes.get_mut(current) {
             if applied {
                 class_list.insert(class_name.to_string());
             } else {
@@ -316,22 +322,25 @@ impl Context {
         } else if applied {
             let mut class_list = HashSet::new();
             class_list.insert(class_name.to_string());
-            self.style().classes.insert(current, class_list).expect("Failed to insert class name");
+            self.style_mut()
+                .classes
+                .insert(current, class_list)
+                .expect("Failed to insert class name");
         }
 
         self.need_restyle();
-        self.style().needs_relayout = true;
-        self.style().needs_redraw = true;
+        self.style_mut().needs_relayout = true;
+        self.style_mut().needs_redraw = true;
     }
 
     /// Returns true if the current entity is disabled
     pub fn is_disabled(&self) -> bool {
-        self.style_ref().disabled.get(self.current()).cloned().unwrap_or_default()
+        self.style().disabled.get(self.current()).cloned().unwrap_or_default()
     }
 
     /// Returns true if the mouse cursor is over the current entity
     pub fn is_over(&self) -> bool {
-        if let Some(pseudo_classes) = self.style_ref().pseudo_classes.get(self.current) {
+        if let Some(pseudo_classes) = self.style().pseudo_classes.get(self.current) {
             pseudo_classes.contains(PseudoClass::OVER)
         } else {
             false
@@ -1097,7 +1106,7 @@ impl Context {
 
                 if *code == Code::Tab {
                     let focused = self.focused;
-                    if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(focused) {
+                    if let Some(pseudo_classes) = self.style_mut().pseudo_classes.get_mut(focused) {
                         pseudo_classes.set(PseudoClass::FOCUS, false);
                     }
 
@@ -1139,12 +1148,12 @@ impl Context {
                     }
 
                     let focused = self.focused;
-                    if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(focused) {
+                    if let Some(pseudo_classes) = self.style_mut().pseudo_classes.get_mut(focused) {
                         pseudo_classes.set(PseudoClass::FOCUS, true);
                     }
 
-                    self.style().needs_relayout = true;
-                    self.style().needs_redraw = true;
+                    self.style_mut().needs_relayout = true;
+                    self.style_mut().needs_redraw = true;
                 }
 
                 self.dispatch_direct_or_hovered(event, self.focused, true);

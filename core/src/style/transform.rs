@@ -119,9 +119,9 @@ pub fn apply_transform(cx: &mut Context, tree: &Tree) {
         //let parent_origin = state.data.get_origin(parent);
         let parent_transform = cx.cache().get_transform(parent);
 
-        cx.cache().set_transform(entity, Transform2D::identity());
+        cx.cache_mut().set_transform(entity, Transform2D::identity());
 
-        cx.cache().set_transform(entity, parent_transform);
+        cx.cache_mut().set_transform(entity, parent_transform);
 
         let bounds = cx.cache().get_bounds(entity);
 
@@ -129,24 +129,24 @@ pub fn apply_transform(cx: &mut Context, tree: &Tree) {
 
         if let Some((tx, ty)) = cx.style().translate.get(entity).copied() {
             let scale = cx.style().dpi_factor as f32;
-            cx.cache().set_translate(entity, (tx * scale, ty * scale));
+            cx.cache_mut().set_translate(entity, (tx * scale, ty * scale));
         }
 
         if let Some(rotate) = cx.style().rotate.get(entity).copied() {
             let x = bounds.x + (bounds.w / 2.0);
             let y = bounds.y + (bounds.h / 2.0);
-            cx.cache().set_translate(entity, (x, y));
-            cx.cache().set_rotate(entity, (rotate).to_radians());
-            cx.cache().set_translate(entity, (-x, -y));
+            cx.cache_mut().set_translate(entity, (x, y));
+            cx.cache_mut().set_rotate(entity, (rotate).to_radians());
+            cx.cache_mut().set_translate(entity, (-x, -y));
         }
         //println!("End");
 
         if let Some((scalex, scaley)) = cx.style().scale.get(entity).copied() {
             let x = bounds.x + (bounds.w / 2.0);
             let y = bounds.y + (bounds.h / 2.0);
-            cx.cache().set_translate(entity, (x, y));
-            cx.cache().set_scale(entity, (scalex, scaley));
-            cx.cache().set_translate(entity, (-x, -y));
+            cx.cache_mut().set_translate(entity, (x, y));
+            cx.cache_mut().set_scale(entity, (scalex, scaley));
+            cx.cache_mut().set_translate(entity, (-x, -y));
         }
     }
 }

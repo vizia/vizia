@@ -23,9 +23,9 @@ pub(crate) fn geometry_changed(cx: &mut Context, tree: &Tree) {
             );
         }
 
-        cx.cache().set_geo_changed(node, morphorm::GeometryChanged::POSX_CHANGED, false);
-        cx.cache().set_geo_changed(node, morphorm::GeometryChanged::POSY_CHANGED, false);
-        cx.cache().set_geo_changed(node, morphorm::GeometryChanged::WIDTH_CHANGED, false);
-        cx.cache().set_geo_changed(node, morphorm::GeometryChanged::HEIGHT_CHANGED, false);
+        cx.cache_mut().set_geo_changed(node, morphorm::GeometryChanged::POSX_CHANGED, false);
+        cx.cache_mut().set_geo_changed(node, morphorm::GeometryChanged::POSY_CHANGED, false);
+        cx.cache_mut().set_geo_changed(node, morphorm::GeometryChanged::WIDTH_CHANGED, false);
+        cx.cache_mut().set_geo_changed(node, morphorm::GeometryChanged::HEIGHT_CHANGED, false);
     }
 }

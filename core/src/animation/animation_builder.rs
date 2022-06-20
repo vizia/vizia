@@ -140,7 +140,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// .add_keyframe(0.0, |keyframe| keyframe.set_background_color(Color::red()))
     /// ```
     pub fn set_background_color(self, color: Color) -> Self {
-        if let Some(anim_cx) = self.cx.style().background_color.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().background_color.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, color));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -149,7 +149,7 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, color));
 
-            self.cx.style().background_color.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().background_color.insert_animation(self.id, anim_cx);
         }
 
         self
@@ -162,7 +162,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// .add_keyframe(0.0, |keyframe| keyframe.set_left(Pixels(50.0)))
     /// ```
     pub fn set_left(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style().left.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().left.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, value));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -171,7 +171,7 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, value));
 
-            self.cx.style().left.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().left.insert_animation(self.id, anim_cx);
         }
 
         self
@@ -184,7 +184,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// .add_keyframe(0.0, |keyframe| keyframe.set_right(Pixels(50.0)))
     /// ```
     pub fn set_right(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style().right.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().right.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, value));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -193,7 +193,7 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, value));
 
-            self.cx.style().right.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().right.insert_animation(self.id, anim_cx);
         }
 
         self
@@ -206,7 +206,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// .add_keyframe(0.0, |keyframe| keyframe.set_top(Pixels(50.0)))
     /// ```
     pub fn set_top(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style().top.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().top.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, value));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -215,7 +215,7 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, value));
 
-            self.cx.style().top.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().top.insert_animation(self.id, anim_cx);
         }
 
         self
@@ -228,7 +228,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// .add_keyframe(0.0, |keyframe| keyframe.set_bottom(Pixels(50.0)))
     /// ```
     pub fn set_bottom(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style().bottom.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().bottom.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, value));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -237,7 +237,7 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, value));
 
-            self.cx.style().bottom.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().bottom.insert_animation(self.id, anim_cx);
         }
 
         self
@@ -250,7 +250,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// .add_keyframe(0.0, |keyframe| keyframe.set_width(Pixels(50.0)))
     /// ```
     pub fn set_width(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style().width.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().width.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, value));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -259,7 +259,7 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, value));
 
-            self.cx.style().width.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().width.insert_animation(self.id, anim_cx);
         }
 
         self
@@ -272,7 +272,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// .add_keyframe(0.0, |keyframe| keyframe.set_height(Pixels(50.0)))
     /// ```
     pub fn set_height(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style().height.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().height.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, value));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -281,7 +281,7 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, value));
 
-            self.cx.style().height.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().height.insert_animation(self.id, anim_cx);
         }
 
         self
@@ -294,7 +294,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// .add_keyframe(0.0, |keyframe| keyframe.set_child_left(Pixels(50.0)))
     /// ```
     pub fn set_child_left(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style().child_left.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().child_left.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, value));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -303,7 +303,7 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, value));
 
-            self.cx.style().child_left.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().child_left.insert_animation(self.id, anim_cx);
         }
 
         self
@@ -316,7 +316,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// .add_keyframe(0.0, |keyframe| keyframe.set_child_right(Pixels(50.0)))
     /// ```
     pub fn set_child_right(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style().child_right.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().child_right.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, value));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -325,7 +325,7 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, value));
 
-            self.cx.style().child_right.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().child_right.insert_animation(self.id, anim_cx);
         }
 
         self
@@ -338,7 +338,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// .add_keyframe(0.0, |keyframe| keyframe.set_child_top(Pixels(50.0)))
     /// ```
     pub fn set_child_top(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style().child_top.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().child_top.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, value));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -347,7 +347,7 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, value));
 
-            self.cx.style().child_top.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().child_top.insert_animation(self.id, anim_cx);
         }
 
         self
@@ -360,7 +360,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// .add_keyframe(0.0, |keyframe| keyframe.set_child_bottom(Pixels(50.0)))
     /// ```
     pub fn set_child_bottom(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style().child_bottom.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().child_bottom.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, value));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -369,7 +369,7 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, value));
 
-            self.cx.style().child_bottom.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().child_bottom.insert_animation(self.id, anim_cx);
         }
 
         self
@@ -382,7 +382,7 @@ impl<'a> KeyframeBuilder<'a> {
     /// .add_keyframe(0.0, |keyframe| keyframe.set_rotate(Pixels(50.0)))
     /// ```
     pub fn set_rotate(self, value: f32) -> Self {
-        if let Some(anim_cx) = self.cx.style().rotate.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().rotate.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, value));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -391,14 +391,14 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, value));
 
-            self.cx.style().rotate.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().rotate.insert_animation(self.id, anim_cx);
         }
 
         self
     }
 
     pub fn set_opacity(self, value: f32) -> Self {
-        if let Some(anim_cx) = self.cx.style().opacity.get_animation_mut(self.id) {
+        if let Some(anim_cx) = self.cx.style_mut().opacity.get_animation_mut(self.id) {
             anim_cx.keyframes.push((self.time, Opacity(value)));
         } else {
             let anim_cx = AnimationState::new(self.id)
@@ -407,7 +407,7 @@ impl<'a> KeyframeBuilder<'a> {
                 .set_persistent(self.animation_description.persistent)
                 .with_keyframe((self.time, Opacity(value)));
 
-            self.cx.style().opacity.insert_animation(self.id, anim_cx);
+            self.cx.style_mut().opacity.insert_animation(self.id, anim_cx);
         }
 
         self

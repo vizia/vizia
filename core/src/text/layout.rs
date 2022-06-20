@@ -27,11 +27,11 @@ pub fn text_paint_draw(cx: &DrawContext, entity: Entity) -> Paint {
 }
 
 pub fn text_paint_general(cx: &Context, entity: Entity) -> Paint {
-    let font = cx.style_ref().font.get(entity).map(|s| s.as_str()).unwrap_or("");
-    let font_size = cx.style_ref().font_size.get(entity).copied().unwrap_or(16.0)
-        * cx.style_ref().dpi_factor as f32;
+    let font = cx.style().font.get(entity).map(|s| s.as_str()).unwrap_or("");
+    let font_size =
+        cx.style().font_size.get(entity).copied().unwrap_or(16.0) * cx.style().dpi_factor as f32;
 
-    text_paint(font, &cx.style_ref().default_font, cx.resource_manager_ref(), font_size)
+    text_paint(font, &cx.style().default_font, cx.resource_manager_ref(), font_size)
 }
 
 fn text_paint(

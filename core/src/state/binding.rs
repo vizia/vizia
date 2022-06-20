@@ -41,9 +41,9 @@ where
 
         let id = cx.entity_manager.create();
         let current = cx.current();
-        cx.tree().add(id, current).expect("Failed to add to tree");
-        cx.cache().add(id).expect("Failed to add to cache");
-        cx.style().add(id);
+        cx.tree_mut().add(id, current).expect("Failed to add to tree");
+        cx.cache_mut().add(id).expect("Failed to add to cache");
+        cx.style_mut().add(id);
 
         let ancestors = cx.current().parent_iter(cx.tree()).collect::<HashSet<_>>();
         let new_ancestors = id.parent_iter(cx.tree()).collect::<Vec<_>>();

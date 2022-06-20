@@ -151,7 +151,7 @@ impl ApplicationRunner {
             WindowScalePolicy::SystemScaleFactor => 1.0,
         };
 
-        context.style().dpi_factor = scale;
+        context.style_mut().dpi_factor = scale;
 
         let logical_size = win_desc.inner_size;
         let physical_size = WindowSize {
@@ -175,24 +175,27 @@ impl ApplicationRunner {
         context.add_font_mem("arabic", arabic_font);
         context.add_font_mem("material", material_font);
 
-        context.style().default_font = "roboto".to_string();
+        context.style_mut().default_font = "roboto".to_string();
 
         //canvas.scale(scale as f32, scale as f32);
 
-        context.style().width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
-        context.style().height.insert(Entity::root(), Units::Pixels(logical_size.height as f32));
+        context.style_mut().width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
+        context
+            .style_mut()
+            .height
+            .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
-        context.style().disabled.insert(Entity::root(), false);
+        context.style_mut().disabled.insert(Entity::root(), false);
 
-        context.cache().set_width(Entity::root(), physical_size.width as f32);
-        context.cache().set_height(Entity::root(), physical_size.height as f32);
-        context.cache().set_opacity(Entity::root(), 1.0);
+        context.cache_mut().set_width(Entity::root(), physical_size.width as f32);
+        context.cache_mut().set_height(Entity::root(), physical_size.height as f32);
+        context.cache_mut().set_opacity(Entity::root(), 1.0);
 
         let mut bounding_box = BoundingBox::default();
         bounding_box.w = physical_size.width as f32;
         bounding_box.h = physical_size.height as f32;
 
-        context.cache().set_clip_region(Entity::root(), bounding_box);
+        context.cache_mut().set_clip_region(Entity::root(), bounding_box);
 
         ApplicationRunner {
             event_manager,
@@ -294,7 +297,7 @@ impl ApplicationRunner {
         if self.context.style().needs_redraw {
             //     // TODO - Move this to EventManager
             self.should_redraw = true;
-            self.context.style().needs_redraw = false;
+            self.context.style_mut().needs_redraw = false;
         }
     }
 
@@ -407,7 +410,7 @@ impl ApplicationRunner {
                         WindowScalePolicy::SystemScaleFactor => window_info.scale(),
                     };
 
-                    self.context.style().dpi_factor = self.scale_factor;
+                    self.context.style_mut().dpi_factor = self.scale_factor;
 
                     let logical_size = (
                         (window_info.physical_size().width as f64 / self.scale_factor),
@@ -418,22 +421,22 @@ impl ApplicationRunner {
                         (window_info.physical_size().width, window_info.physical_size().height);
 
                     self.context
-                        .style()
+                        .style_mut()
                         .width
                         .insert(Entity::root(), Units::Pixels(logical_size.0 as f32));
                     self.context
-                        .style()
+                        .style_mut()
                         .height
                         .insert(Entity::root(), Units::Pixels(logical_size.1 as f32));
 
-                    self.context.cache().set_width(Entity::root(), physical_size.0 as f32);
-                    self.context.cache().set_height(Entity::root(), physical_size.1 as f32);
+                    self.context.cache_mut().set_width(Entity::root(), physical_size.0 as f32);
+                    self.context.cache_mut().set_height(Entity::root(), physical_size.1 as f32);
 
                     let mut bounding_box = BoundingBox::default();
                     bounding_box.w = physical_size.0 as f32;
                     bounding_box.h = physical_size.1 as f32;
 
-                    self.context.cache().set_clip_region(Entity::root(), bounding_box);
+                    self.context.cache_mut().set_clip_region(Entity::root(), bounding_box);
 
                     self.context.need_restyle();
                     self.context.need_relayout();

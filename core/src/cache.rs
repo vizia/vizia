@@ -302,7 +302,7 @@ pub struct CachedData {
 
     pub(crate) geometry_changed: SparseSet<GeometryChanged>,
 
-    pub(crate) shadow_image: HashMap<Entity, (ImageId, ImageId)>,
+    pub shadow_image: HashMap<Entity, (ImageId, ImageId)>,
 
     pub(crate) text_lines: SparseSet<Vec<(Range<usize>, femtovg::TextMetrics)>>,
 }

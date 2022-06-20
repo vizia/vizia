@@ -20,8 +20,6 @@ pub type Canvas = femtovg::Canvas<OpenGl>;
 const KAPPA90: f32 = 0.5522847493;
 
 /// A view is any object which can be displayed on the screen.
-///
-/// This trait is part of the prelude.
 pub trait View: 'static + Sized {
     #[allow(unused_variables)]
     fn body(&mut self, cx: &mut Context) {}
@@ -31,9 +29,9 @@ pub trait View: 'static + Sized {
     {
         let id = cx.entity_manager.create();
         let current = cx.current();
-        cx.tree().add(id, current).expect("Failed to add to tree");
-        cx.cache().add(id).expect("Failed to add to cache");
-        cx.style().add(id);
+        cx.tree_mut().add(id, current).expect("Failed to add to tree");
+        cx.cache_mut().add(id).expect("Failed to add to cache");
+        cx.style_mut().add(id);
         cx.views.insert(id, Box::new(self));
 
         cx.data
@@ -98,22 +96,18 @@ pub trait View: 'static + Sized {
         let border_shape_bottom_right =
             cx.border_bottom_right_shape(entity).cloned().unwrap_or_default();
 
-        let border_radius_top_left = cx
-            .border_top_left_radius(entity)
-            .unwrap_or_default()
-            .value_or(bounds.w.min(bounds.h), 0.0);
+        let border_radius_top_left =
+            cx.border_top_left_radius().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
 
-        let border_radius_top_right = cx
-            .border_top_right_radius(entity)
-            .unwrap_or_default()
-            .value_or(bounds.w.min(bounds.h), 0.0);
+        let border_radius_top_right =
+            cx.border_top_right_radius().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
 
         let border_radius_bottom_left = cx
-            .border_bottom_left_radius(entity)
+            .border_bottom_left_radius()
             .unwrap_or_default()
             .value_or(bounds.w.min(bounds.h), 0.0);
         let border_radius_bottom_right = cx
-            .border_bottom_right_radius(entity)
+            .border_bottom_right_radius()
             .unwrap_or_default()
             .value_or(bounds.w.min(bounds.h), 0.0);
 
@@ -126,14 +120,13 @@ pub trait View: 'static + Sized {
         border_color.set_alphaf(border_color.a * opacity);
 
         let border_width =
-            cx.border_width(entity).unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
+            cx.border_width().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
 
         let outer_shadow_h_offset =
-            cx.outer_shadow_h_offset(entity).unwrap_or_default().value_or(bounds.w, 0.0);
+            cx.outer_shadow_h_offset().unwrap_or_default().value_or(bounds.w, 0.0);
         let outer_shadow_v_offset =
-            cx.outer_shadow_v_offset(entity).unwrap_or_default().value_or(bounds.w, 0.0);
-        let outer_shadow_blur =
-            cx.outer_shadow_blur(entity).unwrap_or_default().value_or(bounds.w, 0.0);
+            cx.outer_shadow_v_offset().unwrap_or_default().value_or(bounds.w, 0.0);
+        let outer_shadow_blur = cx.outer_shadow_blur().unwrap_or_default().value_or(bounds.w, 0.0);
 
         let outer_shadow_color = cx.outer_shadow_color(entity).cloned().unwrap_or_default();
 
@@ -141,13 +134,12 @@ pub trait View: 'static + Sized {
         outer_shadow_color.set_alphaf(outer_shadow_color.a * opacity);
 
         let _inner_shadow_h_offset =
-            cx.inner_shadow_h_offset(entity).unwrap_or_default().value_or(bounds.w, 0.0);
+            cx.inner_shadow_h_offset().unwrap_or_default().value_or(bounds.w, 0.0);
 
         let _inner_shadow_v_offset =
-            cx.inner_shadow_v_offset(entity).unwrap_or_default().value_or(bounds.w, 0.0);
+            cx.inner_shadow_v_offset().unwrap_or_default().value_or(bounds.w, 0.0);
 
-        let _inner_shadow_blur =
-            cx.inner_shadow_blur(entity).unwrap_or_default().value_or(bounds.w, 0.0);
+        let _inner_shadow_blur = cx.inner_shadow_blur().unwrap_or_default().value_or(bounds.w, 0.0);
 
         let inner_shadow_color = cx.inner_shadow_color(entity).cloned().unwrap_or_default();
 
@@ -357,7 +349,9 @@ pub trait View: 'static + Sized {
                     (shadow_image.0, shadow_image.1)
                 };
 
-            cx.cache().shadow_image.insert(entity, (source, target));
+            //cx.cache_mut().shadow_image.insert(entity, (source, target));
+
+            cx.cache_mut().shadow_image.insert(entity, (source, target));
 
             canvas.set_render_target(RenderTarget::Image(source));
             canvas.clear_rect(0, 0, size.0 as u32, size.1 as u32, femtovg::Color::rgba(0, 0, 0, 0));
@@ -485,10 +479,10 @@ pub trait View: 'static + Sized {
             let mut h = bounds.h;
 
             // TODO - Move this to a text layout system and include constraints
-            let child_left = cx.child_left(entity).unwrap_or_default();
-            let child_right = cx.child_right(entity).unwrap_or_default();
-            let child_top = cx.child_top(entity).unwrap_or_default();
-            let child_bottom = cx.child_bottom(entity).unwrap_or_default();
+            let child_left = cx.child_left().unwrap_or_default();
+            let child_right = cx.child_right().unwrap_or_default();
+            let child_top = cx.child_top().unwrap_or_default();
+            let child_bottom = cx.child_bottom().unwrap_or_default();
 
             let align = match child_left {
                 Units::Pixels(val) => match child_right {
@@ -675,7 +669,7 @@ pub trait View: 'static + Sized {
                         canvas.fill_text(x, y, &text[range.clone()], paint).ok();
                     }
 
-                    cx.cache().text_lines.insert(entity, cached).unwrap();
+                    cx.cache_mut().text_lines.insert(entity, cached).unwrap();
                 }
             }
         }

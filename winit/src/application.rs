@@ -112,7 +112,7 @@ impl Application {
 
     /// Sets the background color of the window.
     pub fn background_color(mut self, color: Color) -> Self {
-        self.context.style().background_color.insert(Entity::root(), color);
+        self.context.style_mut().background_color.insert(Entity::root(), color);
 
         self
     }
@@ -153,7 +153,7 @@ impl Application {
         context.add_font_mem("arabic", arabic_font);
         context.add_font_mem("material", material_font);
 
-        context.style().default_font = "roboto".to_string();
+        context.style_mut().default_font = "roboto".to_string();
 
         // Load resources
         context.synchronize_fonts(&mut window.canvas);
@@ -174,26 +174,26 @@ impl Application {
             clear_color.into(),
         );
 
-        context.style().dpi_factor = window.window().scale_factor();
+        context.style_mut().dpi_factor = window.window().scale_factor();
 
         context.views.insert(Entity::root(), Box::new(window));
 
         let logical_size: LogicalSize<f32> = physical_size.to_logical(dpi_factor);
 
-        context.cache().set_width(Entity::root(), physical_size.width as f32);
-        context.cache().set_height(Entity::root(), physical_size.height as f32);
+        context.cache_mut().set_width(Entity::root(), physical_size.width as f32);
+        context.cache_mut().set_height(Entity::root(), physical_size.height as f32);
 
-        context.style().width.insert(Entity::root(), Units::Pixels(logical_size.width));
-        context.style().height.insert(Entity::root(), Units::Pixels(logical_size.height));
+        context.style_mut().width.insert(Entity::root(), Units::Pixels(logical_size.width));
+        context.style_mut().height.insert(Entity::root(), Units::Pixels(logical_size.height));
 
-        context.style().pseudo_classes.insert(Entity::root(), PseudoClass::default()).unwrap();
-        context.style().disabled.insert(Entity::root(), false);
+        context.style_mut().pseudo_classes.insert(Entity::root(), PseudoClass::default()).unwrap();
+        context.style_mut().disabled.insert(Entity::root(), false);
 
         let mut bounding_box = BoundingBox::default();
         bounding_box.w = physical_size.width as f32;
         bounding_box.h = physical_size.height as f32;
 
-        context.cache().set_clip_region(Entity::root(), bounding_box);
+        context.cache_mut().set_clip_region(Entity::root(), bounding_box);
 
         let mut event_manager = EventManager::new();
 
@@ -269,7 +269,7 @@ impl Application {
                         if let Some(window) = window_view.downcast_ref::<Window>() {
                             if context.style().needs_redraw {
                                 window.window().request_redraw();
-                                context.style().needs_redraw = false;
+                                context.style_mut().needs_redraw = false;
                             }
                         }
 
@@ -302,22 +302,24 @@ impl Application {
                             scale_factor,
                             new_inner_size,
                         } => {
-                            context.style().dpi_factor = scale_factor;
-                            context.cache().set_width(Entity::root(), new_inner_size.width as f32);
+                            context.style_mut().dpi_factor = scale_factor;
                             context
-                                .cache()
+                                .cache_mut()
+                                .set_width(Entity::root(), new_inner_size.width as f32);
+                            context
+                                .cache_mut()
                                 .set_height(Entity::root(), new_inner_size.height as f32);
 
                             let logical_size: LogicalSize<f32> =
                                 new_inner_size.to_logical(context.style().dpi_factor);
 
                             context
-                                .style()
+                                .style_mut()
                                 .width
                                 .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
 
                             context
-                                .style()
+                                .style_mut()
                                 .height
                                 .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
                         }
@@ -420,23 +422,27 @@ impl Application {
                                 physical_size.to_logical(context.style().dpi_factor);
 
                             context
-                                .style()
+                                .style_mut()
                                 .width
                                 .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
 
                             context
-                                .style()
+                                .style_mut()
                                 .height
                                 .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
-                            context.cache().set_width(Entity::root(), physical_size.width as f32);
-                            context.cache().set_height(Entity::root(), physical_size.height as f32);
+                            context
+                                .cache_mut()
+                                .set_width(Entity::root(), physical_size.width as f32);
+                            context
+                                .cache_mut()
+                                .set_height(Entity::root(), physical_size.height as f32);
 
                             let mut bounding_box = BoundingBox::default();
                             bounding_box.w = physical_size.width as f32;
                             bounding_box.h = physical_size.height as f32;
 
-                            context.cache().set_clip_region(Entity::root(), bounding_box);
+                            context.cache_mut().set_clip_region(Entity::root(), bounding_box);
 
                             context.need_restyle();
                             context.need_relayout();

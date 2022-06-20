@@ -78,7 +78,7 @@ pub fn apply_hover(cx: &mut Context) {
                         .propagate(Propagation::Direct),
                 );
 
-                if let Some(pseudo_class) = cx.style().pseudo_classes.get_mut(entity) {
+                if let Some(pseudo_class) = cx.style_mut().pseudo_classes.get_mut(entity) {
                     pseudo_class.set(PseudoClass::OVER, true);
                 }
             }
@@ -96,7 +96,7 @@ pub fn apply_hover(cx: &mut Context) {
                     Event::new(WindowEvent::MouseOut).target(entity).propagate(Propagation::Direct),
                 );
 
-                if let Some(pseudo_class) = cx.style().pseudo_classes.get_mut(entity) {
+                if let Some(pseudo_class) = cx.style_mut().pseudo_classes.get_mut(entity) {
                     pseudo_class.set(PseudoClass::OVER, false);
                 }
             }
@@ -126,13 +126,13 @@ pub fn apply_hover(cx: &mut Context) {
         }
 
         // Set current hovered pseudoclass to true
-        if let Some(pseudo_classes) = cx.style().pseudo_classes.get_mut(hovered_widget) {
+        if let Some(pseudo_classes) = cx.style_mut().pseudo_classes.get_mut(hovered_widget) {
             pseudo_classes.set(PseudoClass::HOVER, true);
         }
 
         // Set previous hovered pseudoclass to false
         let hovered = cx.hovered();
-        if let Some(pseudo_classes) = cx.style().pseudo_classes.get_mut(hovered) {
+        if let Some(pseudo_classes) = cx.style_mut().pseudo_classes.get_mut(hovered) {
             pseudo_classes.set(PseudoClass::HOVER, false);
         }
 
@@ -141,6 +141,6 @@ pub fn apply_hover(cx: &mut Context) {
 
         cx.hovered = hovered_widget;
 
-        cx.style().needs_restyle = true;
+        cx.need_restyle();
     }
 }
