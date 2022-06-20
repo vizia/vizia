@@ -617,38 +617,38 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
             should_redraw = true;
         }
 
-        if cx.style().border_shape_top_left.link(entity, &matched_rules) {
+        if cx.style().border_top_left_shape.link(entity, &matched_rules) {
             should_redraw = true;
         }
 
-        if cx.style().border_shape_top_right.link(entity, &matched_rules) {
+        if cx.style().border_top_right_shape.link(entity, &matched_rules) {
             should_redraw = true;
         }
 
-        if cx.style().border_shape_bottom_left.link(entity, &matched_rules) {
+        if cx.style().border_bottom_left_shape.link(entity, &matched_rules) {
             should_redraw = true;
         }
 
-        if cx.style().border_shape_bottom_right.link(entity, &matched_rules) {
+        if cx.style().border_bottom_right_shape.link(entity, &matched_rules) {
             should_redraw = true;
         }
 
-        if cx.style().border_radius_top_left.link(entity, &matched_rules) {
+        if cx.style().border_top_left_radius.link(entity, &matched_rules) {
             //println!("26");
             should_redraw = true;
         }
 
-        if cx.style().border_radius_top_right.link(entity, &matched_rules) {
+        if cx.style().border_top_right_radius.link(entity, &matched_rules) {
             //println!("27");
             should_redraw = true;
         }
 
-        if cx.style().border_radius_bottom_left.link(entity, &matched_rules) {
+        if cx.style().border_bottom_left_radius.link(entity, &matched_rules) {
             //println!("28");
             should_redraw = true;
         }
 
-        if cx.style().border_radius_bottom_right.link(entity, &matched_rules) {
+        if cx.style().border_bottom_right_radius.link(entity, &matched_rules) {
             //println!("29");
             should_redraw = true;
         }

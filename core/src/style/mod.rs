@@ -120,16 +120,16 @@ pub struct Style {
     pub border_color: AnimatableSet<Color>,
 
     // Border Shape
-    pub border_shape_top_left: StyleSet<BorderCornerShape>,
-    pub border_shape_top_right: StyleSet<BorderCornerShape>,
-    pub border_shape_bottom_left: StyleSet<BorderCornerShape>,
-    pub border_shape_bottom_right: StyleSet<BorderCornerShape>,
+    pub border_top_left_shape: StyleSet<BorderCornerShape>,
+    pub border_top_right_shape: StyleSet<BorderCornerShape>,
+    pub border_bottom_left_shape: StyleSet<BorderCornerShape>,
+    pub border_bottom_right_shape: StyleSet<BorderCornerShape>,
 
     // Border Radius
-    pub border_radius_top_left: AnimatableSet<Units>,
-    pub border_radius_top_right: AnimatableSet<Units>,
-    pub border_radius_bottom_left: AnimatableSet<Units>,
-    pub border_radius_bottom_right: AnimatableSet<Units>,
+    pub border_top_left_radius: AnimatableSet<Units>,
+    pub border_top_right_radius: AnimatableSet<Units>,
+    pub border_bottom_left_radius: AnimatableSet<Units>,
+    pub border_bottom_right_radius: AnimatableSet<Units>,
 
     // Focus Order
     pub focus_order: SparseSet<FocusOrder>,
@@ -414,50 +414,50 @@ impl Style {
                     }
 
                     Property::BorderCornerShape(shape) => {
-                        self.border_shape_top_left.insert_rule(rule_id, shape);
-                        self.border_shape_top_right.insert_rule(rule_id, shape);
-                        self.border_shape_bottom_left.insert_rule(rule_id, shape);
-                        self.border_shape_bottom_right.insert_rule(rule_id, shape);
+                        self.border_top_left_shape.insert_rule(rule_id, shape);
+                        self.border_top_right_shape.insert_rule(rule_id, shape);
+                        self.border_bottom_left_shape.insert_rule(rule_id, shape);
+                        self.border_bottom_right_shape.insert_rule(rule_id, shape);
                     }
 
                     Property::BorderTopLeftShape(shape) => {
-                        self.border_shape_top_left.insert_rule(rule_id, shape);
+                        self.border_top_left_shape.insert_rule(rule_id, shape);
                     }
 
                     Property::BorderTopRightShape(shape) => {
-                        self.border_shape_top_right.insert_rule(rule_id, shape);
+                        self.border_top_right_shape.insert_rule(rule_id, shape);
                     }
 
                     Property::BorderBottomLeftShape(shape) => {
-                        self.border_shape_bottom_left.insert_rule(rule_id, shape);
+                        self.border_bottom_left_shape.insert_rule(rule_id, shape);
                     }
 
                     Property::BorderBottomRightShape(shape) => {
-                        self.border_shape_bottom_right.insert_rule(rule_id, shape);
+                        self.border_bottom_right_shape.insert_rule(rule_id, shape);
                     }
 
                     // Border Radius
                     Property::BorderRadius(value) => {
-                        self.border_radius_top_left.insert_rule(rule_id, value);
-                        self.border_radius_top_right.insert_rule(rule_id, value);
-                        self.border_radius_bottom_left.insert_rule(rule_id, value);
-                        self.border_radius_bottom_right.insert_rule(rule_id, value);
+                        self.border_top_left_radius.insert_rule(rule_id, value);
+                        self.border_top_right_radius.insert_rule(rule_id, value);
+                        self.border_bottom_left_radius.insert_rule(rule_id, value);
+                        self.border_bottom_right_radius.insert_rule(rule_id, value);
                     }
 
                     Property::BorderTopLeftRadius(value) => {
-                        self.border_radius_top_left.insert_rule(rule_id, value);
+                        self.border_top_left_radius.insert_rule(rule_id, value);
                     }
 
                     Property::BorderTopRightRadius(value) => {
-                        self.border_radius_top_right.insert_rule(rule_id, value);
+                        self.border_top_right_radius.insert_rule(rule_id, value);
                     }
 
                     Property::BorderBottomLeftRadius(value) => {
-                        self.border_radius_bottom_left.insert_rule(rule_id, value);
+                        self.border_bottom_left_radius.insert_rule(rule_id, value);
                     }
 
                     Property::BorderBottomRightRadius(value) => {
-                        self.border_radius_bottom_right.insert_rule(rule_id, value);
+                        self.border_bottom_right_radius.insert_rule(rule_id, value);
                     }
 
                     // Font
@@ -920,16 +920,16 @@ impl Style {
         self.border_color.remove(entity);
 
         // Border Shape
-        self.border_shape_bottom_left.remove(entity);
-        self.border_shape_bottom_right.remove(entity);
-        self.border_shape_top_left.remove(entity);
-        self.border_shape_top_right.remove(entity);
+        self.border_bottom_left_shape.remove(entity);
+        self.border_bottom_right_shape.remove(entity);
+        self.border_top_left_shape.remove(entity);
+        self.border_top_right_shape.remove(entity);
 
         // Border Radius
-        self.border_radius_bottom_left.remove(entity);
-        self.border_radius_bottom_right.remove(entity);
-        self.border_radius_top_left.remove(entity);
-        self.border_radius_top_right.remove(entity);
+        self.border_bottom_left_radius.remove(entity);
+        self.border_bottom_right_radius.remove(entity);
+        self.border_top_left_radius.remove(entity);
+        self.border_top_right_radius.remove(entity);
 
         self.focus_order.remove(entity);
 
@@ -1031,16 +1031,16 @@ impl Style {
         self.border_color.clear_rules();
 
         // Border Shape
-        self.border_shape_bottom_left.clear_rules();
-        self.border_shape_bottom_right.clear_rules();
-        self.border_shape_top_left.clear_rules();
-        self.border_shape_top_right.clear_rules();
+        self.border_bottom_left_shape.clear_rules();
+        self.border_bottom_right_shape.clear_rules();
+        self.border_top_left_shape.clear_rules();
+        self.border_top_right_shape.clear_rules();
 
         // Border Radius
-        self.border_radius_bottom_left.clear_rules();
-        self.border_radius_bottom_right.clear_rules();
-        self.border_radius_top_left.clear_rules();
-        self.border_radius_top_right.clear_rules();
+        self.border_bottom_left_radius.clear_rules();
+        self.border_bottom_right_radius.clear_rules();
+        self.border_top_left_radius.clear_rules();
+        self.border_top_right_radius.clear_rules();
 
         // Background
         self.background_color.clear_rules();

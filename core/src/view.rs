@@ -88,32 +88,32 @@ pub trait View: 'static + Sized {
         let parent_width = cx.cache().get_width(parent);
         let parent_height = cx.cache().get_height(parent);
 
-        let border_shape_top_left = cx.border_shape_top_left(entity).cloned().unwrap_or_default();
+        let border_shape_top_left = cx.border_top_left_shape(entity).cloned().unwrap_or_default();
 
-        let border_shape_top_right = cx.border_shape_top_right(entity).cloned().unwrap_or_default();
+        let border_shape_top_right = cx.border_top_right_shape(entity).cloned().unwrap_or_default();
 
         let border_shape_bottom_left =
-            cx.border_shape_bottom_left(entity).cloned().unwrap_or_default();
+            cx.border_bottom_left_shape(entity).cloned().unwrap_or_default();
 
         let border_shape_bottom_right =
-            cx.border_shape_bottom_right(entity).cloned().unwrap_or_default();
+            cx.border_bottom_right_shape(entity).cloned().unwrap_or_default();
 
         let border_radius_top_left = cx
-            .border_radius_top_left(entity)
+            .border_top_left_radius(entity)
             .unwrap_or_default()
             .value_or(bounds.w.min(bounds.h), 0.0);
 
         let border_radius_top_right = cx
-            .border_radius_top_right(entity)
+            .border_top_right_radius(entity)
             .unwrap_or_default()
             .value_or(bounds.w.min(bounds.h), 0.0);
 
         let border_radius_bottom_left = cx
-            .border_radius_bottom_left(entity)
+            .border_bottom_left_radius(entity)
             .unwrap_or_default()
             .value_or(bounds.w.min(bounds.h), 0.0);
         let border_radius_bottom_right = cx
-            .border_radius_bottom_right(entity)
+            .border_bottom_right_radius(entity)
             .unwrap_or_default()
             .value_or(bounds.w.min(bounds.h), 0.0);
 

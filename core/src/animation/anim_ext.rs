@@ -60,10 +60,10 @@ pub trait AnimExt: Copy + Sized {
         // Border
         cx.style().border_color.play_animation(self.entity(), animation);
         cx.style().border_width.play_animation(self.entity(), animation);
-        cx.style().border_radius_bottom_left.play_animation(self.entity(), animation);
-        cx.style().border_radius_top_left.play_animation(self.entity(), animation);
-        cx.style().border_radius_bottom_right.play_animation(self.entity(), animation);
-        cx.style().border_radius_top_right.play_animation(self.entity(), animation);
+        cx.style().border_bottom_left_radius.play_animation(self.entity(), animation);
+        cx.style().border_top_left_radius.play_animation(self.entity(), animation);
+        cx.style().border_bottom_right_radius.play_animation(self.entity(), animation);
+        cx.style().border_top_right_radius.play_animation(self.entity(), animation);
 
         // Transform
         cx.style().rotate.play_animation(self.entity(), animation);

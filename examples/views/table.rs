@@ -67,8 +67,8 @@ fn main() {
                         .child_left(Pixels(5.0))
                         .width(Stretch(1.0))
                         .height(Pixels(30.0))
-                        .border_radius_top_left(Pixels(3.0))
-                        .border_radius_bottom_left(Pixels(3.0))
+                        .border_top_left_radius(Pixels(3.0))
+                        .border_bottom_left_radius(Pixels(3.0))
                         .background_color(if index % 2 != 0 {
                             Color::rgb(230, 230, 230)
                         } else {
@@ -174,8 +174,8 @@ fn main() {
                         .child_left(Pixels(5.0))
                         .width(Stretch(1.0))
                         .height(Pixels(30.0))
-                        .border_radius_top_right(Pixels(3.0))
-                        .border_radius_bottom_right(Pixels(3.0))
+                        .border_top_right_radius(Pixels(3.0))
+                        .border_bottom_right_radius(Pixels(3.0))
                         .background_color(if index % 2 != 0 {
                             Color::rgb(230, 230, 230)
                         } else {

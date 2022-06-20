@@ -287,10 +287,21 @@ impl<'a, T> Handle<'a, T> {
     }
 
     pub fn border_radius(self, value: Units) -> Self {
-        self.cx.style().border_radius_top_left.insert(self.entity, value);
-        self.cx.style().border_radius_top_right.insert(self.entity, value);
-        self.cx.style().border_radius_bottom_left.insert(self.entity, value);
-        self.cx.style().border_radius_bottom_right.insert(self.entity, value);
+        self.cx.style().border_top_left_radius.insert(self.entity, value);
+        self.cx.style().border_top_right_radius.insert(self.entity, value);
+        self.cx.style().border_bottom_left_radius.insert(self.entity, value);
+        self.cx.style().border_bottom_right_radius.insert(self.entity, value);
+
+        self.cx.need_redraw();
+
+        self
+    }
+
+    pub fn border_shape(self, value: BorderCornerShape) -> Self {
+        self.cx.style().border_top_left_shape.insert(self.entity, value);
+        self.cx.style().border_top_right_shape.insert(self.entity, value);
+        self.cx.style().border_bottom_left_shape.insert(self.entity, value);
+        self.cx.style().border_bottom_right_shape.insert(self.entity, value);
 
         self.cx.need_redraw();
 
@@ -404,20 +415,17 @@ impl<'a, T> Handle<'a, T> {
     set_style!(selection_color, Color);
     set_style!(text_wrap, bool);
 
-    //set_style!(display, Display);
-    //set_style!(visibility, Visibility);
-
     set_style!(rotate, f32);
     set_style!(translate, (f32, f32));
     set_style!(scale, (f32, f32));
 
-    set_style!(border_shape_top_left, BorderCornerShape);
-    set_style!(border_shape_top_right, BorderCornerShape);
-    set_style!(border_shape_bottom_left, BorderCornerShape);
-    set_style!(border_shape_bottom_right, BorderCornerShape);
+    set_style!(border_top_left_shape, BorderCornerShape);
+    set_style!(border_top_right_shape, BorderCornerShape);
+    set_style!(border_bottom_left_shape, BorderCornerShape);
+    set_style!(border_bottom_right_shape, BorderCornerShape);
 
-    set_style!(border_radius_top_left, Units);
-    set_style!(border_radius_top_right, Units);
-    set_style!(border_radius_bottom_left, Units);
-    set_style!(border_radius_bottom_right, Units);
+    set_style!(border_top_left_radius, Units);
+    set_style!(border_top_right_radius, Units);
+    set_style!(border_bottom_left_radius, Units);
+    set_style!(border_bottom_right_radius, Units);
 }

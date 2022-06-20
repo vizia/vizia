@@ -88,10 +88,10 @@ impl<'a> DrawContext<'a> {
     }
 
     style_getter_units!(border_width);
-    style_getter_units!(border_radius_top_right);
-    style_getter_units!(border_radius_top_left);
-    style_getter_units!(border_radius_bottom_right);
-    style_getter_units!(border_radius_bottom_left);
+    style_getter_units!(border_top_right_radius);
+    style_getter_units!(border_top_left_radius);
+    style_getter_units!(border_bottom_right_radius);
+    style_getter_units!(border_bottom_left_radius);
     style_getter_units!(outer_shadow_h_offset);
     style_getter_units!(outer_shadow_v_offset);
     style_getter_units!(outer_shadow_blur);
@@ -110,10 +110,10 @@ impl<'a> DrawContext<'a> {
     style_getter_untranslated!(Color, selection_color);
     style_getter_untranslated!(Color, caret_color);
     style_getter_untranslated!(LinearGradient, background_gradient);
-    style_getter_untranslated!(BorderCornerShape, border_shape_top_right);
-    style_getter_untranslated!(BorderCornerShape, border_shape_top_left);
-    style_getter_untranslated!(BorderCornerShape, border_shape_bottom_right);
-    style_getter_untranslated!(BorderCornerShape, border_shape_bottom_left);
+    style_getter_untranslated!(BorderCornerShape, border_top_right_shape);
+    style_getter_untranslated!(BorderCornerShape, border_top_left_shape);
+    style_getter_untranslated!(BorderCornerShape, border_bottom_right_shape);
+    style_getter_untranslated!(BorderCornerShape, border_bottom_left_shape);
     style_getter_untranslated!(String, background_image);
     style_getter_untranslated!(String, text);
     style_getter_untranslated!(String, image);

@@ -548,10 +548,10 @@ impl Context {
             | self.style.scale.has_animations()
             | self.style.border_width.has_animations()
             | self.style.border_color.has_animations()
-            | self.style.border_radius_top_left.has_animations()
-            | self.style.border_radius_top_right.has_animations()
-            | self.style.border_radius_bottom_left.has_animations()
-            | self.style.border_radius_bottom_right.has_animations()
+            | self.style.border_top_left_radius.has_animations()
+            | self.style.border_top_right_radius.has_animations()
+            | self.style.border_bottom_left_radius.has_animations()
+            | self.style.border_bottom_right_radius.has_animations()
             | self.style.background_color.has_animations()
             | self.style.outer_shadow_h_offset.has_animations()
             | self.style.outer_shadow_v_offset.has_animations()
@@ -596,10 +596,10 @@ impl Context {
         self.style.scale.tick(time);
         self.style.border_width.tick(time);
         self.style.border_color.tick(time);
-        self.style.border_radius_top_left.tick(time);
-        self.style.border_radius_top_right.tick(time);
-        self.style.border_radius_bottom_left.tick(time);
-        self.style.border_radius_bottom_right.tick(time);
+        self.style.border_top_left_radius.tick(time);
+        self.style.border_top_right_radius.tick(time);
+        self.style.border_bottom_left_radius.tick(time);
+        self.style.border_bottom_right_radius.tick(time);
         self.style.background_color.tick(time);
         self.style.outer_shadow_h_offset.tick(time);
         self.style.outer_shadow_v_offset.tick(time);
