@@ -350,9 +350,9 @@ impl Model for TextboxData {
                 cx.release();
             }
 
-            TextEvent::Submit(flag) => {
+            TextEvent::Submit(reason) => {
                 if let Some(callback) = self.on_submit.take() {
-                    (callback)(cx, self.text.as_str().to_owned(), *flag);
+                    (callback)(cx, self.text.as_str().to_owned(), *reason);
 
                     self.on_submit = Some(callback);
                 }
