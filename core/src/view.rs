@@ -297,26 +297,27 @@ pub trait View: 'static + Sized {
             let sigma = outer_shadow_blur / 2.0;
             let d = (sigma * 5.0).ceil();
 
-            let shadow_image = cx.cache().shadow_image.get(&entity).cloned().unwrap_or_else(|| {
-                (
-                    canvas
-                        .create_image_empty(
-                            (bounds.w + d) as usize,
-                            (bounds.h + d) as usize,
-                            PixelFormat::Rgba8,
-                            ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
-                        )
-                        .expect("Failed to create image"),
-                    canvas
-                        .create_image_empty(
-                            (bounds.w + d) as usize,
-                            (bounds.h + d) as usize,
-                            PixelFormat::Rgba8,
-                            ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
-                        )
-                        .expect("Failed to create image"),
-                )
-            });
+            let shadow_image =
+                cx.draw_cache.shadow_image.get(entity).cloned().unwrap_or_else(|| {
+                    (
+                        canvas
+                            .create_image_empty(
+                                (bounds.w + d) as usize,
+                                (bounds.h + d) as usize,
+                                PixelFormat::Rgba8,
+                                ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
+                            )
+                            .expect("Failed to create image"),
+                        canvas
+                            .create_image_empty(
+                                (bounds.w + d) as usize,
+                                (bounds.h + d) as usize,
+                                PixelFormat::Rgba8,
+                                ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
+                            )
+                            .expect("Failed to create image"),
+                    )
+                });
 
             canvas.save();
             canvas.reset_scissor();
@@ -351,7 +352,7 @@ pub trait View: 'static + Sized {
 
             //cx.cache_mut().shadow_image.insert(entity, (source, target));
 
-            cx.cache_mut().shadow_image.insert(entity, (source, target));
+            cx.draw_cache.shadow_image.insert(entity, (source, target));
 
             canvas.set_render_target(RenderTarget::Image(source));
             canvas.clear_rect(0, 0, size.0 as u32, size.1 as u32, femtovg::Color::rgba(0, 0, 0, 0));
@@ -669,7 +670,7 @@ pub trait View: 'static + Sized {
                         canvas.fill_text(x, y, &text[range.clone()], paint).ok();
                     }
 
-                    cx.cache_mut().text_lines.insert(entity, cached).unwrap();
+                    cx.cache.text_lines.insert(entity, cached).unwrap();
                 }
             }
         }

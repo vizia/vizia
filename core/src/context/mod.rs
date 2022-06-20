@@ -45,17 +45,25 @@ const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
 /// The main storage and control object for a Vizia application.
 pub struct Context {
+    /// Creates and destroys entities.
     pub(crate) entity_manager: IdManager<Entity>,
+    /// The tree of entities.
     tree: Tree,
+    /// The current entity being processed.
     current: Entity,
     /// TODO make this private when there's no longer a need to mutate views after building
+    /// List of views.
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    /// List of model data.
     pub(crate) data: SparseSet<ModelDataStore>,
+    /// The event queue.
     pub(crate) event_queue: VecDeque<Event>,
+
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
     style: Style,
     cache: CachedData,
+    draw_cache: DrawCache,
 
     environment: Environment,
 
@@ -95,6 +103,7 @@ impl Context {
             data: SparseSet::new(),
             style: Style::default(),
             cache,
+            draw_cache: DrawCache::new(),
             environment: Environment::new(),
             event_queue: VecDeque::new(),
             listeners: HashMap::default(),

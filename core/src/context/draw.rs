@@ -1,32 +1,55 @@
+use std::any::Any;
+use std::ops::Range;
+
 use femtovg::{ImageId, TextContext};
+use fnv::FnvHashMap;
 use morphorm::Units;
 
 use crate::cache::CachedData;
+use crate::events::ViewHandler;
 use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
-use crate::resource::{FontOrId, ImageOrId, ResourceManager};
+use crate::resource::{ImageOrId, ResourceManager};
+use crate::state::ModelDataStore;
 use crate::storage::sparse_set::SparseSet;
-use crate::style::LinearGradient;
+use crate::style::{LinearGradient, Style};
 use crate::text::Selection;
 
 /// Cached data used for drawing.
 pub struct DrawCache {
-    shadow_image: SparseSet<(ImageId, ImageId)>,
+    pub shadow_image: SparseSet<(ImageId, ImageId)>,
+    pub text_lines: SparseSet<Vec<(Range<usize>, femtovg::TextMetrics)>>,
 }
 
 impl DrawCache {
+    pub fn new() -> Self {
+        Self { shadow_image: SparseSet::new(), text_lines: SparseSet::new() }
+    }
+
     pub fn shadow_image(&self, entity: Entity) -> Option<&(ImageId, ImageId)> {
         self.shadow_image.get(entity)
     }
 }
 
 /// A restricted context used when drawing.
-pub struct DrawContext<'a>(&'a mut Context);
+pub struct DrawContext<'a> {
+    current: Entity,
+    style: &'a Style,
+    pub cache: &'a mut CachedData,
+    pub draw_cache: &'a mut DrawCache,
+    tree: &'a Tree,
+    data: &'a SparseSet<ModelDataStore>,
+    views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    resource_manager: &'a ResourceManager,
+    text_context: &'a TextContext,
+    modifiers: &'a Modifiers,
+    mouse: &'a MouseState,
+}
 
 macro_rules! style_getter_units {
     ($name:ident) => {
         pub fn $name(&self) -> Option<Units> {
-            let result = self.0.style.$name.get(self.0.current);
+            let result = self.style.$name.get(self.current);
             if let Some(Units::Pixels(p)) = result {
                 Some(Units::Pixels(self.logical_to_physical(*p)))
             } else {
@@ -39,7 +62,7 @@ macro_rules! style_getter_units {
 macro_rules! style_getter_untranslated {
     ($ty:ty, $name:ident) => {
         pub fn $name(&self, entity: Entity) -> Option<&$ty> {
-            self.0.style.$name.get(entity)
+            self.style.$name.get(entity)
         }
     };
 }
@@ -47,79 +70,87 @@ macro_rules! style_getter_untranslated {
 impl<'a> DrawContext<'a> {
     /// Creates a new `DrawContext` from the given `Context`.
     pub fn new(cx: &'a mut Context) -> Self {
-        Self(cx)
+        Self {
+            current: cx.current,
+            style: &cx.style,
+            cache: &mut cx.cache,
+            draw_cache: &mut cx.draw_cache,
+            tree: &cx.tree,
+            data: &cx.data,
+            views: &cx.views,
+            resource_manager: &cx.resource_manager,
+            text_context: &cx.text_context,
+            modifiers: &cx.modifiers,
+            mouse: &cx.mouse,
+        }
     }
 
     /// Returns the current entity of the context.
     pub fn current(&self) -> Entity {
-        self.0.current
+        self.current
     }
 
     /// Returns an immutable reference to the data cache.
     pub fn cache(&self) -> &CachedData {
-        &self.0.cache
-    }
-
-    pub fn cache_mut(&mut self) -> &mut CachedData {
-        &mut self.0.cache
+        &self.cache
     }
 
     /// Returns an immutable reference to the entity tree.
     pub fn tree(&self) -> &Tree {
-        &self.0.tree
+        &self.tree
     }
 
     /// Returns an immutable reference to the resource manager.
     pub fn resource_manager(&self) -> &ResourceManager {
-        &self.0.resource_manager
+        &self.resource_manager
     }
 
     /// Returns an immutable reference to the text context.
     pub fn text_context(&self) -> &TextContext {
-        &self.0.text_context
+        &self.text_context
     }
 
     /// Returns an immutable reference to the mouse state.
     pub fn mouse(&self) -> &MouseState {
-        &self.0.mouse
+        &self.mouse
     }
 
     /// Returns an immutable reference to the modifiers state.
     pub fn modifiers(&self) -> &Modifiers {
-        &self.0.modifiers
+        &self.modifiers
     }
 
     pub fn get_image(&mut self, path: &str) -> &mut ImageOrId {
-        self.0.get_image(path)
+        self.get_image(path)
     }
 
     // pub fn get_font(&mut self, name: &str) -> &FontOrId {
-    //     self.0.get
+    //     self.get
     // }
 
     /// Returns the name of the default font.
     pub fn default_font(&self) -> &str {
-        &self.0.style.default_font
+        &self.style.default_font
     }
 
     /// Returns the font-size of the current entity in physical coordinates.
     pub fn font_size(&self, entity: Entity) -> f32 {
-        self.logical_to_physical(self.0.style.font_size.get(entity).copied().unwrap_or(16.0))
+        self.logical_to_physical(self.style.font_size.get(entity).copied().unwrap_or(16.0))
     }
 
     /// Returns true if the current entity matches the given pseudoclass.
     pub fn has_pseudo_class(&self, entity: Entity, cls: PseudoClass) -> bool {
-        self.0.has_pseudo_class(entity, cls)
+        self.has_pseudo_class(entity, cls)
     }
 
     /// Function to convert logical points to physical pixels.
     pub fn logical_to_physical(&self, logical: f32) -> f32 {
-        logical * self.0.style.dpi_factor as f32
+        logical * self.style.dpi_factor as f32
     }
 
     /// Function to convert physical pixels to logical points.
     pub fn physical_to_logical(&self, physical: f32) -> f32 {
-        physical * self.0.style.dpi_factor as f32
+        physical * self.style.dpi_factor as f32
     }
 
     style_getter_units!(border_width);
@@ -159,6 +190,28 @@ impl<'a> DrawContext<'a> {
 
 impl<'a> DataContext for DrawContext<'a> {
     fn data<T: 'static>(&self) -> Option<&T> {
-        self.0.data()
+        // return data for the static model
+        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
+            return Some(t);
+        }
+
+        for entity in self.current.parent_iter(&self.tree) {
+            //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
+            if let Some(data_list) = self.data.get(entity) {
+                for (_, model) in data_list.data.iter() {
+                    if let Some(data) = model.downcast_ref::<T>() {
+                        return Some(data);
+                    }
+                }
+            }
+
+            if let Some(view_handler) = self.views.get(&entity) {
+                if let Some(data) = view_handler.downcast_ref::<T>() {
+                    return Some(data);
+                }
+            }
+        }
+
+        None
     }
 }
