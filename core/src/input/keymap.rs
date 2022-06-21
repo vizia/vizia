@@ -46,14 +46,14 @@ use std::collections::HashMap;
 /// This type is part of the prelude.
 pub struct Keymap<T>
 where
-    T: 'static + Copy + Clone + PartialEq + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     entries: HashMap<KeyChord, Vec<KeymapEntry<T>>>,
 }
 
 impl<T> Keymap<T>
 where
-    T: 'static + Copy + Clone + PartialEq + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     /// Creates a new keymap.
     ///
@@ -171,11 +171,11 @@ where
 
 impl<T> Model for Keymap<T>
 where
-    T: 'static + Copy + Clone + PartialEq + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         event.map(|keymap_event, _| match keymap_event {
-            KeymapEvent::InsertAction(chord, entry) => self.insert(*chord, *entry),
+            KeymapEvent::InsertAction(chord, entry) => self.insert(*chord, entry.clone()),
             KeymapEvent::RemoveAction(chord, action) => self.remove(chord, action),
         });
         event.map(|window_event, _| match window_event {
@@ -193,7 +193,7 @@ where
 
 impl<T> From<Vec<(KeyChord, KeymapEntry<T>)>> for Keymap<T>
 where
-    T: 'static + Copy + Clone + PartialEq + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     fn from(vec: Vec<(KeyChord, KeymapEntry<T>)>) -> Self {
         let mut keymap = Self::new();
@@ -209,7 +209,7 @@ where
 /// This type is part of the prelude.
 pub enum KeymapEvent<T>
 where
-    T: 'static + Copy + Clone + PartialEq + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     /// Inserts an entry into the [`Keymap`].
     ///
