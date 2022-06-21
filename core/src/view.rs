@@ -66,7 +66,7 @@ pub trait View: 'static + Sized {
         //println!("{}", debug(&mut context, entity));
         let entity = cx.current();
 
-        let bounds = cx.cache().get_bounds(entity);
+        let bounds = cx.cache.get_bounds(entity);
 
         //Skip widgets with no width or no height
         if bounds.w == 0.0 || bounds.h == 0.0 {
@@ -80,12 +80,12 @@ pub trait View: 'static + Sized {
         let border_color = cx.border_color(entity).cloned().unwrap_or_default();
 
         let parent = cx
-            .tree()
+            .tree
             .get_layout_parent(entity)
             .expect(&format!("Failed to find parent somehow: {}", entity));
 
-        let parent_width = cx.cache().get_width(parent);
-        let parent_height = cx.cache().get_height(parent);
+        let parent_width = cx.cache.get_width(parent);
+        let parent_height = cx.cache.get_height(parent);
 
         let border_shape_top_left = cx.border_top_left_shape(entity).cloned().unwrap_or_default();
 
@@ -112,7 +112,7 @@ pub trait View: 'static + Sized {
             .unwrap_or_default()
             .value_or(bounds.w.min(bounds.h), 0.0);
 
-        let opacity = cx.cache().get_opacity(entity);
+        let opacity = cx.cache.get_opacity(entity);
 
         let mut background_color: femtovg::Color = background_color.into();
         background_color.set_alphaf(background_color.a * opacity);
@@ -580,11 +580,11 @@ pub trait View: 'static + Sized {
                 paint.set_text_baseline(baseline);
 
                 let font_metrics =
-                    cx.text_context().measure_font(paint).expect("Failed to read font metrics");
+                    cx.text_context.measure_font(paint).expect("Failed to read font metrics");
 
                 let text_width = if text_wrap { w } else { f32::MAX };
 
-                if let Ok(lines) = text_layout(text_width, &text, paint, cx.text_context()) {
+                if let Ok(lines) = text_layout(text_width, &text, paint, cx.text_context) {
                     // difference between first line and last line
                     let delta_height = font_metrics.height() * (lines.len() - 1) as f32;
                     let first_line_y = match baseline {
@@ -598,7 +598,7 @@ pub trait View: 'static + Sized {
                         &lines,
                         x,
                         first_line_y,
-                        cx.text_context(),
+                        cx.text_context,
                     );
                     let cached: Vec<(std::ops::Range<usize>, TextMetrics)> =
                         lines.into_iter().zip(metrics.into_iter()).collect();

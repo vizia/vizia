@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::context::Context;
+use crate::context::{Context, DrawContext};
 use crate::entity::Entity;
 use crate::view::Canvas;
 use fluent_bundle::{FluentBundle, FluentResource};
@@ -69,7 +69,7 @@ pub struct ResourceManager {
     pub translations: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
     pub language: LanguageIdentifier,
 
-    pub image_loader: Option<Box<dyn Fn(&mut Context, &str)>>,
+    pub image_loader: Option<Box<dyn Fn(&mut DrawContext, &str)>>,
 
     count: u32,
 }
