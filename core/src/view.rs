@@ -424,14 +424,14 @@ pub trait View: 'static + Sized {
 
         // background-image overrides gradient
         // TODO should we draw image on top of colors?
-        if let Some(background_image) = cx.background_image(entity) {
-            let background_image = background_image.clone(); // not ideal
-            let img = cx.get_image(&background_image);
+        // if let Some(background_image) = cx.background_image(entity) {
+        //     let background_image = background_image.clone(); // not ideal
+        //     let img = cx.get_image(&background_image);
 
-            let dim = img.dimensions();
-            let id = img.id(canvas);
-            paint = Paint::image(id, bounds.x, bounds.y, dim.0 as f32, dim.1 as f32, 0.0, 1.0);
-        }
+        //     let dim = img.dimensions();
+        //     let id = img.id(canvas);
+        //     paint = Paint::image(id, bounds.x, bounds.y, dim.0 as f32, dim.1 as f32, 0.0, 1.0);
+        // }
 
         //canvas.global_composite_blend_func(BlendFactor::DstColor, BlendFactor::OneMinusSrcAlpha);
 
@@ -545,25 +545,25 @@ pub trait View: 'static + Sized {
             };
 
             // Draw image
-            if let Some(image) = cx.image(entity).cloned() {
-                let image = cx.get_image(&image);
-                let x = match align {
-                    Align::Left => x,
-                    Align::Center => x - w * 0.5,
-                    Align::Right => x - w,
-                };
-                let y = match baseline {
-                    Baseline::Top => y,
-                    Baseline::Middle => y - h * 0.5,
-                    Baseline::Alphabetic | Baseline::Bottom => y - h,
-                };
+            // if let Some(image) = cx.image(entity).cloned() {
+            //     let image = cx.get_image(&image);
+            //     let x = match align {
+            //         Align::Left => x,
+            //         Align::Center => x - w * 0.5,
+            //         Align::Right => x - w,
+            //     };
+            //     let y = match baseline {
+            //         Baseline::Top => y,
+            //         Baseline::Middle => y - h * 0.5,
+            //         Baseline::Alphabetic | Baseline::Bottom => y - h,
+            //     };
 
-                let mut path = Path::new();
-                path.rect(x, y, w, h);
+            //     let mut path = Path::new();
+            //     path.rect(x, y, w, h);
 
-                let paint = Paint::image(image.id(canvas), x, y, w, h, 0.0, 1.0);
-                canvas.fill_path(&mut path, paint);
-            }
+            //     let paint = Paint::image(image.id(canvas), x, y, w, h, 0.0, 1.0);
+            //     canvas.fill_path(&mut path, paint);
+            // }
 
             if let Some(text) = cx.text(entity).cloned() {
                 // let mut x = posx + (border_width / 2.0);

@@ -44,7 +44,7 @@ pub struct DrawContext<'a> {
     pub tree: &'a Tree,
     data: &'a SparseSet<ModelDataStore>,
     views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
-    pub resource_manager: &'a mut ResourceManager,
+    pub resource_manager: &'a ResourceManager,
     pub text_context: &'a TextContext,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState,
@@ -85,7 +85,7 @@ impl<'a> DrawContext<'a> {
             tree: &cx.tree,
             data: &cx.data,
             views: &cx.views,
-            resource_manager: &mut cx.resource_manager,
+            resource_manager: &cx.resource_manager,
             text_context: &cx.text_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
@@ -123,56 +123,6 @@ impl<'a> DrawContext<'a> {
     /// Function to convert physical pixels to logical points.
     pub fn physical_to_logical(&self, physical: f32) -> f32 {
         physical * self.style.dpi_factor as f32
-    }
-
-    pub fn set_image_loader<F: 'static + Fn(&mut DrawContext, &str)>(&mut self, loader: F) {
-        self.resource_manager.image_loader = Some(Box::new(loader));
-    }
-
-    fn get_image_internal(&mut self, path: &str) -> &mut StoredImage {
-        if let Some(img) = self.resource_manager.images.get_mut(path) {
-            img.used = true;
-            // borrow checker hack
-            return self.resource_manager.images.get_mut(path).unwrap();
-        }
-
-        if let Some(callback) = self.resource_manager.image_loader.take() {
-            callback(self, path);
-            self.resource_manager.image_loader = Some(callback);
-        }
-
-        if let Some(img) = self.resource_manager.images.get_mut(path) {
-            img.used = true;
-            // borrow checker hack
-            return self.resource_manager.images.get_mut(path).unwrap();
-        } else {
-            self.resource_manager.images.insert(
-                path.to_owned(),
-                StoredImage {
-                    image: ImageOrId::Image(
-                        image::load_from_memory_with_format(
-                            include_bytes!("../../resources/images/broken_image.png"),
-                            image::ImageFormat::Png,
-                        )
-                        .unwrap(),
-                        femtovg::ImageFlags::NEAREST,
-                    ),
-                    retention_policy: ImageRetentionPolicy::Forever,
-                    used: true,
-                    dirty: false,
-                    observers: HashSet::new(),
-                },
-            );
-            self.resource_manager.images.get_mut(path).unwrap()
-        }
-    }
-
-    pub fn get_image(&mut self, path: &str) -> &mut ImageOrId {
-        &mut self.get_image_internal(path).image
-    }
-
-    pub fn add_image_observer(&mut self, path: &str, observer: Entity) {
-        self.get_image_internal(path).observers.insert(observer);
     }
 
     style_getter_units!(border_width);
