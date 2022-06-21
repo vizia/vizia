@@ -151,7 +151,7 @@ impl ApplicationRunner {
             WindowScalePolicy::SystemScaleFactor => 1.0,
         };
 
-        context.style_mut().dpi_factor = scale;
+        context.style.dpi_factor = scale;
 
         let logical_size = win_desc.inner_size;
         let physical_size = WindowSize {
@@ -175,27 +175,24 @@ impl ApplicationRunner {
         context.add_font_mem("arabic", arabic_font);
         context.add_font_mem("material", material_font);
 
-        context.style_mut().default_font = "roboto".to_string();
+        context.style.default_font = "roboto".to_string();
 
         //canvas.scale(scale as f32, scale as f32);
 
-        context.style_mut().width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
-        context
-            .style_mut()
-            .height
-            .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
+        context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
+        context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
-        context.style_mut().disabled.insert(Entity::root(), false);
+        context.style.disabled.insert(Entity::root(), false);
 
-        context.cache_mut().set_width(Entity::root(), physical_size.width as f32);
-        context.cache_mut().set_height(Entity::root(), physical_size.height as f32);
-        context.cache_mut().set_opacity(Entity::root(), 1.0);
+        context.cache.set_width(Entity::root(), physical_size.width as f32);
+        context.cache.set_height(Entity::root(), physical_size.height as f32);
+        context.cache.set_opacity(Entity::root(), 1.0);
 
         let mut bounding_box = BoundingBox::default();
         bounding_box.w = physical_size.width as f32;
         bounding_box.h = physical_size.height as f32;
 
-        context.cache_mut().set_clip_region(Entity::root(), bounding_box);
+        context.cache.set_clip_region(Entity::root(), bounding_box);
 
         ApplicationRunner {
             event_manager,
@@ -254,7 +251,7 @@ impl ApplicationRunner {
 
     pub fn on_frame_update(&mut self) {
         while let Some(event) = queue_get() {
-            self.context.emit_custom(event);
+            self.context.send_event(event);
         }
 
         //if let Some(mut window_view) = context.views.remove(&Entity::root()) {
@@ -294,10 +291,10 @@ impl ApplicationRunner {
 
         self.context.process_visual_updates();
 
-        if self.context.style().needs_redraw {
+        if self.context.style.needs_redraw {
             //     // TODO - Move this to EventManager
             self.should_redraw = true;
-            self.context.style_mut().needs_redraw = false;
+            self.context.style.needs_redraw = false;
         }
     }
 
@@ -308,15 +305,15 @@ impl ApplicationRunner {
 
     pub fn handle_event(&mut self, event: baseview::Event, should_quit: &mut bool) {
         if requests_exit(&event) {
-            self.context.emit_custom(Event::new(WindowEvent::WindowClose));
+            self.context.send_event(Event::new(WindowEvent::WindowClose));
             *should_quit = true;
         }
 
         match event {
             baseview::Event::Mouse(event) => match event {
                 baseview::MouseEvent::CursorMoved { position } => {
-                    let physical_posx = position.x * self.context.style().dpi_factor;
-                    let physical_posy = position.y * self.context.style().dpi_factor;
+                    let physical_posx = position.x * self.context.style.dpi_factor;
+                    let physical_posy = position.y * self.context.style.dpi_factor;
                     let cursorx = (physical_posx) as f32;
                     let cursory = (physical_posy) as f32;
                     self.context.dispatch_system_event(WindowEvent::MouseMove(cursorx, cursory));
@@ -362,16 +359,16 @@ impl ApplicationRunner {
 
                 match event.code {
                     Code::ShiftLeft | Code::ShiftRight => {
-                        self.context.modifiers_mut().set(Modifiers::SHIFT, pressed)
+                        self.context.modifiers.set(Modifiers::SHIFT, pressed)
                     }
                     Code::ControlLeft | Code::ControlRight => {
-                        self.context.modifiers_mut().set(Modifiers::CTRL, pressed)
+                        self.context.modifiers.set(Modifiers::CTRL, pressed)
                     }
                     Code::AltLeft | Code::AltRight => {
-                        self.context.modifiers_mut().set(Modifiers::ALT, pressed)
+                        self.context.modifiers.set(Modifiers::ALT, pressed)
                     }
                     Code::MetaLeft | Code::MetaRight => {
-                        self.context.modifiers_mut().set(Modifiers::LOGO, pressed)
+                        self.context.modifiers.set(Modifiers::LOGO, pressed)
                     }
                     _ => (),
                 }
@@ -410,7 +407,7 @@ impl ApplicationRunner {
                         WindowScalePolicy::SystemScaleFactor => window_info.scale(),
                     };
 
-                    self.context.style_mut().dpi_factor = self.scale_factor;
+                    self.context.style.dpi_factor = self.scale_factor;
 
                     let logical_size = (
                         (window_info.physical_size().width as f64 / self.scale_factor),
@@ -421,29 +418,29 @@ impl ApplicationRunner {
                         (window_info.physical_size().width, window_info.physical_size().height);
 
                     self.context
-                        .style_mut()
+                        .style
                         .width
                         .insert(Entity::root(), Units::Pixels(logical_size.0 as f32));
                     self.context
-                        .style_mut()
+                        .style
                         .height
                         .insert(Entity::root(), Units::Pixels(logical_size.1 as f32));
 
-                    self.context.cache_mut().set_width(Entity::root(), physical_size.0 as f32);
-                    self.context.cache_mut().set_height(Entity::root(), physical_size.1 as f32);
+                    self.context.cache.set_width(Entity::root(), physical_size.0 as f32);
+                    self.context.cache.set_height(Entity::root(), physical_size.1 as f32);
 
                     let mut bounding_box = BoundingBox::default();
                     bounding_box.w = physical_size.0 as f32;
                     bounding_box.h = physical_size.1 as f32;
 
-                    self.context.cache_mut().set_clip_region(Entity::root(), bounding_box);
+                    self.context.cache.set_clip_region(Entity::root(), bounding_box);
 
                     self.context.need_restyle();
                     self.context.need_relayout();
                     self.context.need_redraw();
                 }
                 baseview::WindowEvent::WillClose => {
-                    self.context.emit_custom(Event::new(WindowEvent::WindowClose));
+                    self.context.send_event(Event::new(WindowEvent::WindowClose));
                 }
                 _ => {}
             },
@@ -451,13 +448,13 @@ impl ApplicationRunner {
     }
 
     pub fn rebuild(&mut self, builder: &Option<Box<dyn Fn(&mut Context) + Send>>) {
-        if self.context.environment().needs_rebuild {
+        if self.context.environment.needs_rebuild {
             self.context.set_current(Entity::root());
             self.context.remove_children(Entity::root());
             if let Some(builder) = &builder {
                 (builder)(&mut self.context);
             }
-            self.context.environment().needs_rebuild = false;
+            self.context.environment.needs_rebuild = false;
         }
     }
 

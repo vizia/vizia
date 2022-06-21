@@ -112,7 +112,7 @@ impl Localized {
 
 impl Res<String> for Localized {
     fn get_val(&self, cx: &Context) -> String {
-        let bundle = cx.resource_manager_ref().current_translation();
+        let bundle = cx.resource_manager.current_translation();
         let message = if let Some(msg) = bundle.get_message(&self.key) {
             msg
         } else {

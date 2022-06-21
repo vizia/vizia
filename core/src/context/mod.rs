@@ -51,7 +51,7 @@ pub struct Context {
     /// Creates and destroys entities.
     pub(crate) entity_manager: IdManager<Entity>,
     /// The tree of entities.
-    tree: Tree,
+    pub tree: Tree,
     /// The current entity being processed.
     current: Entity,
     /// TODO make this private when there's no longer a need to mutate views after building
@@ -63,24 +63,24 @@ pub struct Context {
     pub(crate) event_queue: VecDeque<Event>,
 
     pub(crate) listeners:
-        HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
-    style: Style,
-    cache: CachedData,
+        HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
+    pub style: Style,
+    pub cache: CachedData,
     draw_cache: DrawCache,
 
-    environment: Environment,
+    pub environment: Environment,
 
-    mouse: MouseState,
-    modifiers: Modifiers,
+    pub mouse: MouseState,
+    pub modifiers: Modifiers,
 
     captured: Entity,
     pub(crate) hovered: Entity,
     focused: Entity,
-    cursor_icon_locked: bool,
+    pub cursor_icon_locked: bool,
 
-    resource_manager: ResourceManager,
+    pub resource_manager: ResourceManager,
 
-    text_context: TextContext,
+    pub text_context: TextContext,
 
     event_proxy: Option<Box<dyn EventProxy>>,
 
@@ -139,16 +139,6 @@ impl Context {
         result
     }
 
-    /// Returns an immutable reference to the entity tree.
-    pub fn tree(&self) -> &Tree {
-        &self.tree
-    }
-
-    /// Returns a mutable reference to the entity tree.
-    pub fn tree_mut(&mut self) -> &mut Tree {
-        &mut self.tree
-    }
-
     /// Returns the current entity.
     ///
     /// The "current" entity, generally the entity which is currently being built or the entity
@@ -172,61 +162,6 @@ impl Context {
         self.current = prev;
     }
 
-    /// Returns an immutable reference to the style store.
-    ///
-    /// Used to get properties set through inline style attributes or CSS.
-    pub fn style(&self) -> &Style {
-        &self.style
-    }
-
-    /// Returns a mutable reference to the style store.
-    ///
-    /// Used to get properties set through inline style attributes or CSS.
-    pub fn style_mut(&mut self) -> &mut Style {
-        &mut self.style
-    }
-
-    /// The cache storage for the application. Used to get intermediate data computed during the
-    /// layout and rendering processes.
-    pub fn cache(&self) -> &CachedData {
-        &self.cache
-    }
-
-    pub fn cache_mut(&mut self) -> &mut CachedData {
-        &mut self.cache
-    }
-
-    pub fn environment(&mut self) -> &mut Environment {
-        &mut self.environment
-    }
-
-    /// The current femtovg text context. Useful when measuring or rendering fonts.
-    pub fn text_context(&mut self) -> &mut TextContext {
-        &mut self.text_context
-    }
-
-    /// The current mouse state, i.e. the button and motion information.
-    pub fn mouse(&self) -> &MouseState {
-        &self.mouse
-    }
-
-    pub fn resource_manager(&mut self) -> &mut ResourceManager {
-        &mut self.resource_manager
-    }
-
-    pub fn resource_manager_ref(&self) -> &ResourceManager {
-        &self.resource_manager
-    }
-
-    /// The current keyboard modifiers state.
-    pub fn modifiers(&self) -> Modifiers {
-        self.modifiers
-    }
-
-    pub fn modifiers_mut(&mut self) -> &mut Modifiers {
-        &mut self.modifiers
-    }
-
     /// Mark the application as needing to rerun the draw method
     pub fn need_redraw(&mut self) {
         self.style.needs_redraw = true;
@@ -242,90 +177,9 @@ impl Context {
         self.style.needs_relayout = true;
     }
 
-    /// Causes mouse events to propagate to the current entity until released
-    pub fn capture(&mut self) {
-        self.captured = self.current;
-    }
-
-    /// Releases the mouse events capture
-    pub fn release(&mut self) {
-        self.captured = Entity::null();
-    }
-
-    /// Prevents the cursor icon from changing until the lock is released
-    pub fn lock_cursor_icon(&mut self) {
-        self.cursor_icon_locked = true;
-    }
-
-    /// Releases any cursor icon lock, allowing the cursor icon to be changed
-    pub fn unlock_cursor_icon(&mut self) {
-        self.cursor_icon_locked = false;
-        let hovered = self.hovered;
-        let cursor = self.style().cursor.get(hovered).cloned().unwrap_or_default();
-        self.emit(WindowEvent::SetCursor(cursor));
-    }
-
-    /// Returns true if the cursor icon is locked
-    pub fn is_cursor_icon_locked(&self) -> bool {
-        self.cursor_icon_locked
-    }
-
-    /// Sets application focus to the current entity
-    pub fn focus(&mut self) {
-        self.focused = self.current;
-    }
-
-    /// Sets the active flag of the current entity
-    pub fn set_active(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style_mut().pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClass::ACTIVE, flag);
-        }
-
-        self.style_mut().needs_restyle = true;
-        self.style_mut().needs_relayout = true;
-        self.style_mut().needs_redraw = true;
-    }
-
-    /// Sets the hover flag of the current entity
-    pub fn set_hover(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style_mut().pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClass::HOVER, flag);
-        }
-
-        self.style_mut().needs_restyle = true;
-        self.style_mut().needs_relayout = true;
-        self.style_mut().needs_redraw = true;
-    }
-
-    /// Sets the checked flag of the current entity
-    pub fn set_checked(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style_mut().pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClass::CHECKED, flag);
-        }
-
-        self.style_mut().needs_restyle = true;
-        self.style_mut().needs_relayout = true;
-        self.style_mut().needs_redraw = true;
-    }
-
-    /// Sets the checked flag of the current entity
-    pub fn set_selected(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style_mut().pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClass::SELECTED, flag);
-        }
-
-        self.style_mut().needs_restyle = true;
-        self.style_mut().needs_relayout = true;
-        self.style_mut().needs_redraw = true;
-    }
-
     pub fn toggle_class(&mut self, class_name: &str, applied: bool) {
         let current = self.current();
-        if let Some(class_list) = self.style_mut().classes.get_mut(current) {
+        if let Some(class_list) = self.style.classes.get_mut(current) {
             if applied {
                 class_list.insert(class_name.to_string());
             } else {
@@ -334,37 +188,12 @@ impl Context {
         } else if applied {
             let mut class_list = HashSet::new();
             class_list.insert(class_name.to_string());
-            self.style_mut()
-                .classes
-                .insert(current, class_list)
-                .expect("Failed to insert class name");
+            self.style.classes.insert(current, class_list).expect("Failed to insert class name");
         }
 
         self.need_restyle();
-        self.style_mut().needs_relayout = true;
-        self.style_mut().needs_redraw = true;
-    }
-
-    /// Returns true if the current entity is disabled
-    pub fn is_disabled(&self) -> bool {
-        self.style().disabled.get(self.current()).cloned().unwrap_or_default()
-    }
-
-    /// Returns true if the mouse cursor is over the current entity
-    pub fn is_over(&self) -> bool {
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get(self.current) {
-            pseudo_classes.contains(PseudoClass::OVER)
-        } else {
-            false
-        }
-    }
-
-    pub fn hovered(&self) -> Entity {
-        self.hovered
-    }
-
-    pub fn captured(&self) -> Entity {
-        self.captured
+        self.style.needs_relayout = true;
+        self.style.needs_redraw = true;
     }
 
     /// You should not call this method unless you are writing a windowing backend, in which case
@@ -472,7 +301,7 @@ impl Context {
     }
 
     /// Send an event with custom origin and propagation information.
-    pub fn emit_custom(&mut self, event: Event) {
+    pub fn send_event(&mut self, event: Event) {
         self.event_queue.push_back(event);
     }
 
@@ -489,7 +318,7 @@ impl Context {
     pub fn add_listener<F, W>(&mut self, listener: F)
     where
         W: View,
-        F: 'static + Fn(&mut W, &mut Context, &mut Event),
+        F: 'static + Fn(&mut W, &mut EventContext, &mut Event),
     {
         self.listeners.insert(
             self.current,
@@ -711,8 +540,6 @@ impl Context {
 
         Ok(())
     }
-
-
 
     pub fn load_image(
         &mut self,
@@ -1070,7 +897,7 @@ impl Context {
 
                 if *code == Code::Tab {
                     let focused = self.focused;
-                    if let Some(pseudo_classes) = self.style_mut().pseudo_classes.get_mut(focused) {
+                    if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {
                         pseudo_classes.set(PseudoClass::FOCUS, false);
                     }
 
@@ -1112,12 +939,12 @@ impl Context {
                     }
 
                     let focused = self.focused;
-                    if let Some(pseudo_classes) = self.style_mut().pseudo_classes.get_mut(focused) {
+                    if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {
                         pseudo_classes.set(PseudoClass::FOCUS, true);
                     }
 
-                    self.style_mut().needs_relayout = true;
-                    self.style_mut().needs_redraw = true;
+                    self.style.needs_relayout = true;
+                    self.style.needs_redraw = true;
                 }
 
                 self.dispatch_direct_or_hovered(event, self.focused, true);

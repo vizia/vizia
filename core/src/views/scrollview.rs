@@ -26,7 +26,7 @@ pub enum ScrollEvent {
 }
 
 impl Model for ScrollData {
-    fn event(&mut self, _cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|scroll_update, meta| {
             match scroll_update {
                 ScrollEvent::ScrollX(f) => self.scroll_x = (self.scroll_x + *f).clamp(0.0, 1.0),
@@ -107,13 +107,13 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         VStack::new(cx, content)
             .class("scroll_content")
             .bind(data.clone(), |handle, data| {
-                let dpi_factor = handle.cx.style().dpi_factor;
+                let dpi_factor = handle.cx.style.dpi_factor;
                 if dpi_factor > 0.0 {
                     let data = data.get(handle.cx);
                     let left = ((data.child_x - data.parent_x) * data.scroll_x).round()
-                        / handle.cx.style().dpi_factor as f32;
+                        / handle.cx.style.dpi_factor as f32;
                     let top = ((data.child_y - data.parent_y) * data.scroll_y).round()
-                        / handle.cx.style().dpi_factor as f32;
+                        / handle.cx.style.dpi_factor as f32;
                     handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
                 }
             })

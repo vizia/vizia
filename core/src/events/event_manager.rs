@@ -31,8 +31,8 @@ impl EventManager {
         // Move events from state to event manager
         self.event_queue.extend(context.event_queue.drain(0..));
 
-        if context.tree().changed {
-            self.tree = context.tree().clone();
+        if context.tree.changed {
+            self.tree = context.tree.clone();
         }
 
         // Loop over the events in the event queue
@@ -58,7 +58,11 @@ impl EventManager {
                 if let Some(listener) = context.listeners.remove(&entity) {
                     if let Some(mut event_handler) = context.views.remove(&entity) {
                         context.with_current(entity, |context| {
-                            (listener)(event_handler.as_mut(), context, event);
+                            (listener)(
+                                event_handler.as_mut(),
+                                &mut EventContext::new(context),
+                                event,
+                            );
                         });
 
                         context.views.insert(entity, event_handler);
@@ -138,11 +142,8 @@ fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
 
     if let Some(mut model_list) = context.data.remove(entity) {
         for (_, model) in model_list.data.iter_mut() {
-            // if event.trace {
-            //     println!("Event: {:?} -> Model {:?}", event, ty);
-            // }
             context.with_current(entity, |cx| {
-                model.event(cx, event);
+                model.event(&mut EventContext::new(cx), event);
             });
         }
 

@@ -1,5 +1,6 @@
 use std::any::Any;
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque, HashSet};
+use std::error::Error;
 use std::ops::Range;
 
 use femtovg::{ImageId, TextContext};
@@ -15,6 +16,8 @@ use crate::state::ModelDataStore;
 use crate::storage::sparse_set::SparseSet;
 use crate::style::{LinearGradient, Style};
 use crate::text::Selection;
+#[cfg(feature = "clipboard")]
+use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardProvider};
 
 pub struct EventContext<'a> {
     pub(crate) current: Entity,
@@ -27,12 +30,15 @@ pub struct EventContext<'a> {
     pub tree: &'a Tree,
     pub(crate) data: &'a SparseSet<ModelDataStore>,
     pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    listeners:
+        &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub resource_manager: &'a ResourceManager,
     pub text_context: &'a TextContext,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState,
     event_queue: &'a mut VecDeque<Event>,
     cursor_icon_locked: &'a mut bool,
+    clipboard: &'a mut Box<dyn ClipboardProvider>,
 }
 
 impl<'a> EventContext<'a> {
@@ -47,13 +53,35 @@ impl<'a> EventContext<'a> {
             tree: &cx.tree,
             data: &cx.data,
             views: &cx.views,
+            listeners: &mut cx.listeners,
             resource_manager: &cx.resource_manager,
             text_context: &cx.text_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
+            clipboard: &mut cx.clipboard,
         }
+    }
+
+    /// Add a listener to an entity.
+    ///
+    /// A listener can be used to handle events which would not normally propagate to the entity.
+    /// For example, mouse events when a different entity has captured them. Useful for things like
+    /// closing a popup when clicking outside of its bounding box.
+    pub fn add_listener<F, W>(&mut self, listener: F)
+    where
+        W: View,
+        F: 'static + Fn(&mut W, &mut EventContext, &mut Event),
+    {
+        self.listeners.insert(
+            self.current,
+            Box::new(move |event_handler, context, event| {
+                if let Some(widget) = event_handler.downcast_mut::<W>() {
+                    (listener)(widget, context, event);
+                }
+            }),
+        );
     }
 
     /// Send an event containing a message up the tree from the current entity.
@@ -162,6 +190,42 @@ impl<'a> EventContext<'a> {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
             pseudo_classes.set(PseudoClass::SELECTED, flag);
+        }
+
+        self.style.needs_restyle = true;
+        self.style.needs_relayout = true;
+        self.style.needs_redraw = true;
+    }
+
+    /// Get the contents of the system clipboard. This may fail for a variety of backend-specific
+    /// reasons.
+    #[cfg(feature = "clipboard")]
+    pub fn get_clipboard(&mut self) -> Result<String, Box<dyn Error + Send + Sync + 'static>> {
+        self.clipboard.get_contents()
+    }
+
+    /// Set the contents of the system clipboard. This may fail for a variety of backend-specific
+    /// reasons.
+    #[cfg(feature = "clipboard")]
+    pub fn set_clipboard(
+        &mut self,
+        text: String,
+    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+        self.clipboard.set_contents(text)
+    }
+
+    pub fn toggle_class(&mut self, class_name: &str, applied: bool) {
+        let current = self.current();
+        if let Some(class_list) = self.style.classes.get_mut(current) {
+            if applied {
+                class_list.insert(class_name.to_string());
+            } else {
+                class_list.remove(class_name);
+            }
+        } else if applied {
+            let mut class_list = HashSet::new();
+            class_list.insert(class_name.to_string());
+            self.style.classes.insert(current, class_list).expect("Failed to insert class name");
         }
 
         self.style.needs_restyle = true;

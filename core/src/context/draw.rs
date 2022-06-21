@@ -10,7 +10,7 @@ use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
-use crate::resource::{ImageOrId, ResourceManager, StoredImage, ImageRetentionPolicy};
+use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::ModelDataStore;
 use crate::storage::sparse_set::SparseSet;
 use crate::style::{LinearGradient, Style};

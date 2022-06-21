@@ -30,9 +30,9 @@ pub trait View: 'static + Sized {
     {
         let id = cx.entity_manager.create();
         let current = cx.current();
-        cx.tree_mut().add(id, current).expect("Failed to add to tree");
-        cx.cache_mut().add(id).expect("Failed to add to cache");
-        cx.style_mut().add(id);
+        cx.tree.add(id, current).expect("Failed to add to tree");
+        cx.cache.add(id).expect("Failed to add to cache");
+        cx.style.add(id);
         cx.views.insert(id, Box::new(self));
 
         cx.data
@@ -351,7 +351,7 @@ pub trait View: 'static + Sized {
                     (shadow_image.0, shadow_image.1)
                 };
 
-            //cx.cache_mut().shadow_image.insert(entity, (source, target));
+            //cx.cache.shadow_image.insert(entity, (source, target));
 
             cx.draw_cache.shadow_image.insert(entity, (source, target));
 
@@ -592,14 +592,8 @@ pub trait View: 'static + Sized {
                         Baseline::Middle => y - delta_height / 2.0,
                         Baseline::Alphabetic | Baseline::Bottom => y - delta_height,
                     };
-                    let metrics = measure_text_lines(
-                        &text,
-                        paint,
-                        &lines,
-                        x,
-                        first_line_y,
-                        cx.text_context,
-                    );
+                    let metrics =
+                        measure_text_lines(&text, paint, &lines, x, first_line_y, cx.text_context);
                     let cached: Vec<(std::ops::Range<usize>, TextMetrics)> =
                         lines.into_iter().zip(metrics.into_iter()).collect();
                     let selection = cx.text_selection(entity);

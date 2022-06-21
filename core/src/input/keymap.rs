@@ -204,7 +204,7 @@ impl<T> Model for Keymap<T>
 where
     T: 'static + PartialEq + Send + Sync + Copy + Clone,
 {
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|keymap_event, _| match keymap_event {
             KeymapEvent::InsertAction(action, chord) => self.insert(*action, *chord),
             KeymapEvent::RemoveAction(action, chord) => self.remove(action, chord),

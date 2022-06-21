@@ -26,7 +26,8 @@ where
         handle
             .bind(MenuData::selected, move |handle, selected| {
                 let selected = selected.get(handle.cx) == Some(i);
-                handle.cx.set_selected(selected);
+                // TODO:
+                //handle.cx.set_selected(selected);
                 if selected {
                     on_select(handle.cx);
                 } else {
@@ -63,7 +64,7 @@ pub enum MenuEvent {
 }
 
 impl Model for MenuData {
-    fn event(&mut self, _cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|menu_event, meta| match menu_event {
             MenuEvent::SetSelected(sel) => {
                 self.selected = *sel;
@@ -76,7 +77,7 @@ impl Model for MenuData {
 }
 
 impl Model for MenuControllerData {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|menu_event, _| match menu_event {
             MenuEvent::Close => {
                 self.active = false;
@@ -102,13 +103,17 @@ impl MenuController {
             panic!("Building a MenuController inside a MenuController. This is illegal.")
         }
 
-        Self {}.build(cx, move |cx| {
-            MenuControllerData { active }.build(cx);
-            if active {
-                cx.capture();
-            }
-            builder(cx);
-        })
+        Self {}
+            .build(cx, move |cx| {
+                MenuControllerData { active }.build(cx);
+
+                builder(cx);
+            })
+            .on_build(|cx| {
+                if active {
+                    cx.capture();
+                }
+            })
     }
 }
 
