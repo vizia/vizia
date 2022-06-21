@@ -258,7 +258,7 @@ impl ApplicationRunner {
         //if let Some(window) = window_view.downcast_mut::<Window>() {
 
         // Load resources
-        self.context.synchronize_fonts(&mut self.canvas);
+        self.context.synchronize_fonts();
 
         //}
 
@@ -299,7 +299,7 @@ impl ApplicationRunner {
     }
 
     pub fn render(&mut self) {
-        self.context.draw(&mut self.canvas);
+        self.context.draw();
         self.should_redraw = false;
     }
 

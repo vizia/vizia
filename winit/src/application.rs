@@ -133,7 +133,7 @@ impl Application {
         //     .expect("Cannot create renderer");
         // let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
 
-        let mut window = Window::new(&event_loop, &self.window_description);
+        let mut window = Window::new(&mut context, &event_loop, &self.window_description);
 
         // let font = canvas.add_font_mem(FONT).expect("Failed to load font");
 
@@ -156,7 +156,7 @@ impl Application {
         context.style.default_font = "roboto".to_string();
 
         // Load resources
-        context.synchronize_fonts(&mut window.canvas);
+        context.synchronize_fonts();
 
         let dpi_factor = window.window().scale_factor();
 
@@ -165,14 +165,16 @@ impl Application {
         let clear_color =
             context.style.background_color.get(Entity::root()).cloned().unwrap_or_default();
 
-        window.canvas.set_size(physical_size.width as u32, physical_size.height as u32, 1.0);
-        window.canvas.clear_rect(
-            0,
-            0,
-            physical_size.width as u32,
-            physical_size.height as u32,
-            clear_color.into(),
-        );
+        if let Some(canvas) = context.canvases.get_mut(&Entity::root()) {
+            canvas.set_size(physical_size.width as u32, physical_size.height as u32, 1.0);
+            canvas.clear_rect(
+                0,
+                0,
+                physical_size.width as u32,
+                physical_size.height as u32,
+                clear_color.into(),
+            );
+        }
 
         context.style.dpi_factor = window.window().scale_factor();
 
@@ -234,7 +236,7 @@ impl Application {
 
                     if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_mut::<Window>() {
-                            context.synchronize_fonts(&mut window.canvas);
+                            context.synchronize_fonts();
                         }
 
                         context.views.insert(Entity::root(), window_view);
@@ -619,7 +621,7 @@ impl Env for Application {
 fn context_draw(cx: &mut Context) {
     if let Some(mut window_view) = cx.views.remove(&Entity::root()) {
         if let Some(window) = window_view.downcast_mut::<Window>() {
-            cx.draw(&mut window.canvas);
+            cx.draw();
             window.swap_buffers();
         }
 

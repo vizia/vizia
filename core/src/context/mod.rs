@@ -23,6 +23,7 @@ pub use event::*;
 pub use proxy::*;
 
 use crate::cache::CachedData;
+use crate::draw_system::draw_system;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
 use crate::hover_system::apply_hover;
@@ -53,7 +54,7 @@ pub struct Context {
     /// The tree of entities.
     pub tree: Tree,
     /// The current entity being processed.
-    current: Entity,
+    pub current: Entity,
     /// TODO make this private when there's no longer a need to mutate views after building
     /// List of views.
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
@@ -66,30 +67,32 @@ pub struct Context {
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub style: Style,
     pub cache: CachedData,
-    draw_cache: DrawCache,
+    pub draw_cache: DrawCache,
+
+    pub canvases: HashMap<Entity, femtovg::Canvas<femtovg::renderer::OpenGl>>,
 
     pub environment: Environment,
 
     pub mouse: MouseState,
     pub modifiers: Modifiers,
 
-    captured: Entity,
+    pub captured: Entity,
     pub(crate) hovered: Entity,
-    focused: Entity,
+    pub focused: Entity,
     pub cursor_icon_locked: bool,
 
     pub resource_manager: ResourceManager,
 
     pub text_context: TextContext,
 
-    event_proxy: Option<Box<dyn EventProxy>>,
+    pub event_proxy: Option<Box<dyn EventProxy>>,
 
     #[cfg(feature = "clipboard")]
-    clipboard: Box<dyn ClipboardProvider>,
+    pub clipboard: Box<dyn ClipboardProvider>,
 
-    click_time: Instant,
-    double_click: bool,
-    click_pos: (f32, f32),
+    pub click_time: Instant,
+    pub double_click: bool,
+    pub click_pos: (f32, f32),
 }
 
 impl Context {
@@ -104,6 +107,7 @@ impl Context {
             current: Entity::root(),
             views: FnvHashMap::default(),
             data: SparseSet::new(),
+            canvases: HashMap::new(),
             style: Style::default(),
             cache,
             draw_cache: DrawCache::new(),
@@ -137,6 +141,10 @@ impl Context {
         result.add_theme(DEFAULT_THEME);
 
         result
+    }
+
+    pub fn draw(&mut self) {
+        draw_system(self);
     }
 
     /// Returns the current entity.
@@ -347,23 +355,25 @@ impl Context {
     }
 
     /// Ensure all FontOrId entires are loaded into the contexts and become Ids.
-    pub fn synchronize_fonts(&mut self, canvas: &mut Canvas) {
-        for (name, font) in self.resource_manager.fonts.iter_mut() {
-            match font {
-                FontOrId::Font(data) => {
-                    let id1 = canvas
-                        .add_font_mem(&data.clone())
-                        .expect(&format!("Failed to load font file for: {}", name));
-                    let id2 = self.text_context.add_font_mem(&data.clone()).expect("failed");
-                    if id1 != id2 {
-                        panic!(
-                            "Fonts in canvas must have the same id as fonts in the text context"
-                        );
+    pub fn synchronize_fonts(&mut self) {
+        if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
+            for (name, font) in self.resource_manager.fonts.iter_mut() {
+                match font {
+                    FontOrId::Font(data) => {
+                        let id1 = canvas
+                            .add_font_mem(&data.clone())
+                            .expect(&format!("Failed to load font file for: {}", name));
+                        let id2 = self.text_context.add_font_mem(&data.clone()).expect("failed");
+                        if id1 != id2 {
+                            panic!(
+                                "Fonts in canvas must have the same id as fonts in the text context"
+                            );
+                        }
+                        *font = FontOrId::Id(id1);
                     }
-                    *font = FontOrId::Id(id1);
-                }
 
-                _ => {}
+                    _ => {}
+                }
             }
         }
     }
@@ -541,6 +551,10 @@ impl Context {
         Ok(())
     }
 
+    pub fn set_image_loader<F: 'static + Fn(&mut Context, &str)>(&mut self, loader: F) {
+        self.resource_manager.image_loader = Some(Box::new(loader));
+    }
+
     pub fn load_image(
         &mut self,
         path: String,
@@ -698,86 +712,6 @@ impl Context {
 
         // Emit any geometry changed events
         geometry_changed(self, &tree);
-    }
-
-    pub fn draw(&mut self, canvas: &mut Canvas) {
-        self.resource_manager.mark_images_unused();
-
-        let window_width = self.cache.get_width(Entity::root());
-        let window_height = self.cache.get_height(Entity::root());
-
-        canvas.set_size(window_width as u32, window_height as u32, 1.0);
-        let clear_color =
-            self.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
-        canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
-
-        // filter for widgets that should be drawn
-        let tree_iter = self.tree.into_iter();
-        let mut draw_tree: Vec<Entity> = tree_iter
-            .filter(|&entity| {
-                entity != Entity::root()
-                    && self.cache.get_visibility(entity) != Visibility::Invisible
-                    && self.cache.get_display(entity) != Display::None
-                    && !self.tree.is_ignored(entity)
-                    && self.cache.get_opacity(entity) > 0.0
-                    && {
-                        let bounds = self.cache.get_bounds(entity);
-                        !(bounds.x > window_width
-                            || bounds.y > window_height
-                            || bounds.x + bounds.w <= 0.0
-                            || bounds.y + bounds.h <= 0.0)
-                    }
-            })
-            .collect();
-
-        // Sort the tree by z order
-        draw_tree.sort_by_cached_key(|entity| self.cache.get_z_index(*entity));
-
-        for entity in draw_tree.into_iter() {
-            // Apply clipping
-            let clip_region = self.cache.get_clip_region(entity);
-
-            // Skips drawing views with zero-sized clip regions
-            // This skips calling the `draw` method of the view
-            if clip_region.height() == 0.0 || clip_region.width() == 0.0 {
-                continue;
-            }
-
-            canvas.scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
-
-            // Apply transform
-            let transform = self.cache.get_transform(entity);
-            canvas.save();
-            canvas.set_transform(
-                transform[0],
-                transform[1],
-                transform[2],
-                transform[3],
-                transform[4],
-                transform[5],
-            );
-
-            if let Some(view) = self.views.remove(&entity) {
-                self.current = entity;
-                view.draw(&mut DrawContext::new(self), canvas);
-
-                self.views.insert(entity, view);
-            }
-
-            canvas.restore();
-
-            // Uncomment this for debug outlines
-            // TODO - Hook this up to a key in debug mode
-            // let mut path = Path::new();
-            // path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-            // let mut paint = Paint::color(femtovg::Color::rgb(255, 0, 0));
-            // paint.set_line_width(1.0);
-            // canvas.stroke_path(&mut path, paint);
-        }
-
-        canvas.flush();
-
-        self.resource_manager.evict_unused_images();
     }
 
     /// This method is in charge of receiving raw WindowEvents and dispatching them to the
