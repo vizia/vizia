@@ -501,9 +501,9 @@ impl Context {
         AnimationBuilder::new(id, self, duration)
     }
 
-    pub fn play_animation(&mut self, animation: Animation) {
-        self.current.play_animation(self, animation);
-    }
+    // pub fn play_animation(&mut self, animation: Animation) {
+    //     self.current.play_animation(self, animation);
+    // }
 
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
         if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {

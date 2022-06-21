@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::context::{Context, DrawContext};
+use crate::context::DrawContext;
 use crate::entity::Entity;
 use crate::view::Canvas;
 use fluent_bundle::{FluentBundle, FluentResource};

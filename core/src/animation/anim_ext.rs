@@ -21,7 +21,7 @@ pub trait AnimExt: Copy + Sized {
     ///
     /// entity.play_animation(cx, animation_id);
     /// ```
-    fn play_animation(self, cx: &mut Context, animation: Animation) -> Self {
+    fn play_animation(self, cx: &mut EventContext, animation: Animation) -> Self {
         // Background
         cx.style.background_color.play_animation(self.entity(), animation);
 

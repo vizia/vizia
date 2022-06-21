@@ -353,7 +353,7 @@ pub trait View: 'static + Sized {
 
             //cx.cache.shadow_image.insert(entity, (source, target));
 
-            cx.draw_cache.shadow_image.insert(entity, (source, target));
+            cx.draw_cache.shadow_image.insert(entity, (source, target)).unwrap();
 
             canvas.set_render_target(RenderTarget::Image(source));
             canvas.clear_rect(0, 0, size.0 as u32, size.1 as u32, femtovg::Color::rgba(0, 0, 0, 0));

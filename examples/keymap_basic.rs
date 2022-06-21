@@ -51,8 +51,7 @@ struct CustomView;
 
 impl CustomView {
     fn new(cx: &mut Context) -> Handle<Self> {
-        Self.build(cx, |cx| {
-        }).on_build(|cx|{
+        Self.build(cx, |_| {}).on_build(|cx| {
             cx.focus();
         })
     }

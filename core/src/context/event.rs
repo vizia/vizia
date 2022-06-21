@@ -1,23 +1,20 @@
-use std::any::Any;
-use std::collections::{HashMap, VecDeque, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::error::Error;
-use std::ops::Range;
 
-use femtovg::{ImageId, TextContext};
+use femtovg::TextContext;
 use fnv::FnvHashMap;
-use morphorm::Units;
 
 use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
-use crate::resource::{ImageOrId, ResourceManager};
+use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
 use crate::storage::sparse_set::SparseSet;
-use crate::style::{LinearGradient, Style};
-use crate::text::Selection;
+use crate::style::Style;
+
 #[cfg(feature = "clipboard")]
-use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardProvider};
+use copypasta::ClipboardProvider;
 
 pub struct EventContext<'a> {
     pub(crate) current: Entity,
@@ -231,5 +228,9 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle = true;
         self.style.needs_relayout = true;
         self.style.needs_redraw = true;
+    }
+
+    pub fn play_animation(&mut self, animation: Animation) {
+        self.current.play_animation(self, animation);
     }
 }

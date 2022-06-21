@@ -1,5 +1,4 @@
 use std::any::Any;
-use std::collections::HashSet;
 use std::ops::Range;
 
 use femtovg::{ImageId, TextContext};
@@ -10,7 +9,7 @@ use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
-use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
+use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
 use crate::storage::sparse_set::SparseSet;
 use crate::style::{LinearGradient, Style};
@@ -35,8 +34,8 @@ impl DrawCache {
 /// A restricted context used when drawing.
 pub struct DrawContext<'a> {
     pub(crate) current: Entity,
-    captured: &'a mut Entity,
-    focused: &'a mut Entity,
+    pub captured: &'a Entity,
+    pub focused: &'a Entity,
     pub(crate) hovered: &'a Entity,
     pub style: &'a Style,
     pub cache: &'a mut CachedData,
@@ -76,8 +75,8 @@ impl<'a> DrawContext<'a> {
     pub fn new(cx: &'a mut Context) -> Self {
         Self {
             current: cx.current,
-            captured: &mut cx.captured,
-            focused: &mut cx.focused,
+            captured: &cx.captured,
+            focused: &cx.focused,
             hovered: &cx.hovered,
             style: &cx.style,
             cache: &mut cx.cache,
@@ -110,10 +109,10 @@ impl<'a> DrawContext<'a> {
         self.logical_to_physical(self.style.font_size.get(entity).copied().unwrap_or(16.0))
     }
 
-    /// Returns true if the current entity matches the given pseudoclass.
-    pub fn has_pseudo_class(&self, entity: Entity, cls: PseudoClass) -> bool {
-        self.has_pseudo_class(entity, cls)
-    }
+    // /// Returns true if the current entity matches the given pseudoclass.
+    // pub fn has_pseudo_class(&self, entity: Entity, cls: PseudoClass) -> bool {
+    //     self.has_pseudo_class(entity, cls)
+    // }
 
     /// Function to convert logical points to physical pixels.
     pub fn logical_to_physical(&self, logical: f32) -> f32 {

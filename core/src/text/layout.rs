@@ -1,4 +1,3 @@
-use fluent_syntax::ast::Resource;
 use unicode_bidi::{bidi_class, BidiClass};
 
 use crate::prelude::*;
