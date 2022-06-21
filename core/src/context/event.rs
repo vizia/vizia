@@ -22,8 +22,7 @@ pub struct EventContext<'a> {
     focused: &'a mut Entity,
     pub(crate) hovered: &'a Entity,
     pub style: &'a mut Style,
-    // Should event handling be able to directly mutate the cache?
-    pub cache: &'a mut CachedData,
+    pub cache: &'a CachedData,
     pub tree: &'a Tree,
     pub(crate) data: &'a SparseSet<ModelDataStore>,
     pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
@@ -35,6 +34,7 @@ pub struct EventContext<'a> {
     pub mouse: &'a MouseState,
     event_queue: &'a mut VecDeque<Event>,
     cursor_icon_locked: &'a mut bool,
+    #[cfg(feature = "clipboard")]
     clipboard: &'a mut Box<dyn ClipboardProvider>,
 }
 
@@ -46,7 +46,7 @@ impl<'a> EventContext<'a> {
             focused: &mut cx.focused,
             hovered: &cx.hovered,
             style: &mut cx.style,
-            cache: &mut cx.cache,
+            cache: &cx.cache,
             tree: &cx.tree,
             data: &cx.data,
             views: &cx.views,
@@ -57,6 +57,7 @@ impl<'a> EventContext<'a> {
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
+            #[cfg(feature = "clipboard")]
             clipboard: &mut cx.clipboard,
         }
     }

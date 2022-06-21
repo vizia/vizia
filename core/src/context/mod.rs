@@ -31,6 +31,7 @@ use crate::id::IdManager;
 use crate::image_system::image_system;
 use crate::input::{Modifiers, MouseState};
 use crate::layout::geometry_changed;
+use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::ModelDataStore;
 use crate::storage::sparse_set::SparseSet;
@@ -42,7 +43,6 @@ use crate::style_system::{
 use crate::tree::{
     focus_backward, focus_forward, is_focusable, TreeDepthIterator, TreeExt, TreeIterator,
 };
-use crate::{image_system, prelude::*};
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");

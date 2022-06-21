@@ -490,7 +490,7 @@ pub trait View: 'static + Sized {
             let mut x = bounds.x;
             let mut y = bounds.y;
             let mut w = bounds.w;
-            let mut h = bounds.h;
+            //let mut h = bounds.h;
 
             // TODO - Move this to a text layout system and include constraints
             let child_left = cx.child_left().unwrap_or_default();
@@ -531,7 +531,7 @@ pub trait View: 'static + Sized {
                 Units::Pixels(val) => match child_bottom {
                     Units::Stretch(_) | Units::Auto => {
                         y += val + border_width;
-                        h -= val + border_width;
+                        //h -= val + border_width;
                         Baseline::Top
                     }
 
@@ -541,7 +541,7 @@ pub trait View: 'static + Sized {
                 Units::Stretch(_) => match child_bottom {
                     Units::Pixels(val) => {
                         y += bounds.h - val - border_width;
-                        h -= val - border_width;
+                        //h -= val - border_width;
                         Baseline::Bottom
                     }
 

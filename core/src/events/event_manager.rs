@@ -26,11 +26,10 @@ impl EventManager {
         // Clear the event queue in the event manager
         self.event_queue.clear();
 
-        //state.removed_entities.clear();
-
-        // Move events from state to event manager
+        // Move events from context to event manager
         self.event_queue.extend(context.event_queue.drain(0..));
 
+        // If the tree changed in the last cycle, clone a new copy of the tree
         if context.tree.changed {
             self.tree = context.tree.clone();
         }
@@ -46,10 +45,6 @@ impl EventManager {
                     }
                 }
             });
-
-            // if event.trace {
-            //     println!("Event: {:?}", event);
-            // }
 
             // Send events to any listeners
             let listeners =

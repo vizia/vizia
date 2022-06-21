@@ -128,7 +128,6 @@ where
 pub(crate) struct ApplicationRunner {
     context: Context,
     event_manager: EventManager,
-    canvas: Canvas<Renderer>,
     should_redraw: bool,
     scale_policy: WindowScalePolicy,
     scale_factor: f64,
@@ -194,10 +193,11 @@ impl ApplicationRunner {
 
         context.cache.set_clip_region(Entity::root(), bounding_box);
 
+        context.canvases.insert(Entity::root(), canvas);
+
         ApplicationRunner {
             event_manager,
             context,
-            canvas,
             should_redraw: true,
             scale_policy,
             scale_factor: scale,
@@ -259,6 +259,9 @@ impl ApplicationRunner {
 
         // Load resources
         self.context.synchronize_fonts();
+
+        // TODO: This doesn't work for some reason
+        self.context.load_images();
 
         //}
 

@@ -119,11 +119,7 @@ impl Window {
         cx.canvases.insert(Entity::root(), canvas);
 
         // Build our window
-        let mut window = Window {
-            id: handle.window().id(),
-            handle,
-            //canvas: Canvas::new(renderer).expect("Cannot create canvas"),
-        };
+        let window = Window { id: handle.window().id(), handle };
 
         window
     }

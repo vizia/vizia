@@ -25,10 +25,6 @@ impl DrawCache {
     pub fn new() -> Self {
         Self { shadow_image: SparseSet::new(), text_lines: SparseSet::new() }
     }
-
-    pub fn shadow_image(&self, entity: Entity) -> Option<&(ImageId, ImageId)> {
-        self.shadow_image.get(entity)
-    }
 }
 
 /// A restricted context used when drawing.
