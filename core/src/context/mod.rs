@@ -1,4 +1,6 @@
 mod draw;
+mod event;
+mod methods;
 mod proxy;
 
 use instant::{Duration, Instant};
@@ -17,6 +19,7 @@ use morphorm::layout;
 use unic_langid::LanguageIdentifier;
 
 pub use draw::*;
+pub use event::*;
 pub use proxy::*;
 
 use crate::cache::CachedData;

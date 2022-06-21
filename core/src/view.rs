@@ -1,5 +1,6 @@
 use std::{any::Any, collections::HashMap};
 
+use crate::context::EventContext;
 use crate::prelude::*;
 
 use crate::events::ViewHandler;
@@ -59,7 +60,7 @@ pub trait View: 'static + Sized {
     }
 
     #[allow(unused_variables)]
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {}
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         //println!("{}", debug(&mut context, entity));
@@ -689,7 +690,7 @@ where
         <T as View>::body(self, cx);
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         <T as View>::event(self, cx, event);
     }
 

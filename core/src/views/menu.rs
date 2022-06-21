@@ -117,13 +117,13 @@ impl View for MenuController {
         Some("menucontroller")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         let active = cx.data::<MenuControllerData>().unwrap().active;
 
         event.map(|window_event, meta| {
             if active {
                 let current = cx.current();
-                let is_child = cx.hovered().is_descendant_of(cx.tree(), current);
+                let is_child = cx.hovered().is_descendant_of(cx.tree, current);
                 // we capture focus in order to see clicks outside the menus, but we don't want
                 // to deprive our children of their events.
                 // We also want mouse scroll events to be seen by everyone
@@ -139,7 +139,8 @@ impl View for MenuController {
                         ))
                         || (!is_child && matches!(window_event, WindowEvent::MouseScroll(_, _)))
                     {
-                        cx.event_queue.push_back(
+                        // Forward events to hovered entity
+                        cx.send_event(
                             Event::new(window_event.clone())
                                 .propagate(Propagation::Up)
                                 .target(cx.hovered())
@@ -148,7 +149,7 @@ impl View for MenuController {
                     }
                     // if we click outside the menu, close everything
                     if matches!(window_event, WindowEvent::MouseDown(_)) && !is_child {
-                        cx.event_queue.push_back(
+                        cx.send_event(
                             Event::new(MenuEvent::Close)
                                 .propagate(Propagation::Subtree)
                                 .target(cx.current())
@@ -162,7 +163,7 @@ impl View for MenuController {
                     cx.capture();
                     cx.emit(MenuEvent::Activate);
                     // send an over event to highlight whatever we're hovered on
-                    cx.event_queue.push_back(
+                    cx.send_event(
                         Event::new(WindowEvent::MouseOver)
                             .propagate(Propagation::Up)
                             .target(cx.hovered())
@@ -251,14 +252,14 @@ impl View for Menu {
 /// A MenuButton is an entry in a menu that can be clicked to perform some action. It has various
 /// constructors depending on whether you want to make this button show a check icon conditionally.
 pub struct MenuButton {
-    action: Option<Box<dyn Fn(&mut Context)>>,
+    action: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
 impl MenuButton {
     pub fn new<F, A>(cx: &mut Context, contents: F, action: A) -> Handle<'_, Over<Self>>
     where
         F: 'static + FnOnce(&mut Context),
-        A: 'static + Fn(&mut Context),
+        A: 'static + Fn(&mut EventContext),
     {
         setup_menu_entry(
             Self { action: Some(Box::new(action)) }.build(cx, move |cx| {
@@ -275,7 +276,7 @@ impl MenuButton {
         action: A,
     ) -> Handle<'_, Over<Self>>
     where
-        A: 'static + Fn(&mut Context),
+        A: 'static + Fn(&mut EventContext),
     {
         Self::new(
             cx,
@@ -294,7 +295,7 @@ impl MenuButton {
     ) -> Handle<'_, Over<Self>>
     where
         F: 'static + FnOnce(&mut Context),
-        A: 'static + Fn(&mut Context),
+        A: 'static + Fn(&mut EventContext),
         L: Lens<Target = bool>,
     {
         Self::new(
@@ -319,7 +320,7 @@ impl MenuButton {
         lens: L,
     ) -> Handle<'_, Over<Self>>
     where
-        A: 'static + Fn(&mut Context),
+        A: 'static + Fn(&mut EventContext),
         L: 'static + Lens<Target = bool>,
     {
         Self::new_check(
@@ -338,7 +339,7 @@ impl View for MenuButton {
         Some("menubutton")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseDown(MouseButton::Left) => {
                 if let Some(callback) = &self.action {

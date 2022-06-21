@@ -60,7 +60,7 @@ use crate::prelude::*;
 /// struct CustomView;
 ///
 /// impl View for CustomView {
-///     fn event(&mut self, cx: &mut Context, event: &mut Event) {
+///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
 ///         event.map(|window_event, _| match window_event {
 ///             WindowEvent::KeyDown(code, _) => {
 ///                 if let Some(keymap_data) = cx.data::<Keymap<Action>>() {
@@ -150,15 +150,16 @@ where
     /// #     One,
     /// # }
     /// #
-    /// # let cx = &Context::new();
+    /// # let mut cx = &mut Context::new();
+    /// # let cx = &mut EventContext::new(cx);
     /// # let keymap = Keymap::<Action>::new();
     /// #
     /// for action in keymap.pressed_actions(cx, Code::KeyA) {
     ///     println!("The action {:?} is being pressed!", action);
     /// };
     /// ```
-    pub fn pressed_actions(&self, cx: &Context, code: Code) -> impl Iterator<Item = &T> {
-        if let Some(actions) = self.actions.get(&KeyChord::new(cx.modifiers(), code)) {
+    pub fn pressed_actions(&self, cx: &EventContext, code: Code) -> impl Iterator<Item = &T> {
+        if let Some(actions) = self.actions.get(&KeyChord::new(*cx.modifiers, code)) {
             actions.iter()
         } else {
             [].iter()

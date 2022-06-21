@@ -73,7 +73,7 @@ impl CustomView {
 }
 
 impl View for CustomView {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::KeyDown(code, _) => {
                 // Retrieve our keymap data containing all of our key chords.

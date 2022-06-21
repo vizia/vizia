@@ -33,7 +33,10 @@ impl DrawCache {
 
 /// A restricted context used when drawing.
 pub struct DrawContext<'a> {
-    current: Entity,
+    pub(crate) current: Entity,
+    captured: &'a mut Entity,
+    focused: &'a mut Entity,
+    pub(crate) hovered: &'a Entity,
     style: &'a Style,
     pub cache: &'a mut CachedData,
     pub draw_cache: &'a mut DrawCache,
@@ -72,6 +75,9 @@ impl<'a> DrawContext<'a> {
     pub fn new(cx: &'a mut Context) -> Self {
         Self {
             current: cx.current,
+            captured: &mut cx.captured,
+            focused: &mut cx.focused,
+            hovered: &cx.hovered,
             style: &cx.style,
             cache: &mut cx.cache,
             draw_cache: &mut cx.draw_cache,
@@ -83,11 +89,6 @@ impl<'a> DrawContext<'a> {
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
         }
-    }
-
-    /// Returns the current entity of the context.
-    pub fn current(&self) -> Entity {
-        self.current
     }
 
     /// Returns an immutable reference to the data cache.

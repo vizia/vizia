@@ -130,7 +130,7 @@ impl EventManager {
 fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
     if let Some(mut view) = context.views.remove(&entity) {
         context.with_current(entity, |context| {
-            view.event(context, event);
+            view.event(&mut EventContext::new(context), event);
         });
 
         context.views.insert(entity, view);

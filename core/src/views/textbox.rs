@@ -554,7 +554,7 @@ where
         Some("textbox")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         //let selection = cx.tree.get_child(cx.current, 0).unwrap();
         //let caret = cx.tree.get_child(cx.current, 1).unwrap();
 
@@ -568,7 +568,7 @@ where
                     cx.set_checked(true);
                     cx.lock_cursor_icon();
 
-                    cx.emit(TextEvent::Hit(cx.mouse().cursorx, cx.mouse().cursory));
+                    cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
                 } else {
                     cx.emit(TextEvent::Submit(false));
                     if let Some(source) = cx.data::<L::Source>() {
@@ -587,7 +587,7 @@ where
                     cx.set_checked(false);
 
                     // Forward event to hovered
-                    cx.event_queue.push_back(
+                    cx.send_event(
                         Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered()),
                     );
                 }
@@ -598,8 +598,8 @@ where
             }
 
             WindowEvent::MouseMove(_, _) => {
-                if cx.mouse().left.state == MouseButtonState::Pressed {
-                    cx.emit(TextEvent::Drag(cx.mouse().cursorx, cx.mouse().cursory));
+                if cx.mouse.left.state == MouseButtonState::Pressed {
+                    cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
                 }
             }
 
@@ -608,7 +608,7 @@ where
                             *c != '\u{8}' && // Backspace
                             *c != '\u{7f}' && // Delete
                             *c != '\u{0d}' && // Carriage return
-                            !cx.modifiers().contains(Modifiers::CTRL)
+                            !cx.modifiers.contains(Modifiers::CTRL)
                 {
                     cx.emit(TextEvent::InsertText(String::from(*c)));
                 }
@@ -645,7 +645,7 @@ where
 
                 Code::ArrowLeft => {
                     //if self.edit {
-                    let movement = if cx.modifiers().contains(Modifiers::CTRL) {
+                    let movement = if cx.modifiers.contains(Modifiers::CTRL) {
                         Movement::Word(Direction::Upstream)
                     } else {
                         Movement::Grapheme(Direction::Upstream)
@@ -653,7 +653,7 @@ where
 
                     cx.emit(TextEvent::MoveCursor(
                         movement,
-                        cx.modifiers().contains(Modifiers::SHIFT),
+                        cx.modifiers.contains(Modifiers::SHIFT),
                     ));
 
                     //self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
@@ -664,7 +664,7 @@ where
 
                 Code::ArrowRight => {
                     //if self.edit {
-                    let movement = if cx.modifiers().contains(Modifiers::CTRL) {
+                    let movement = if cx.modifiers.contains(Modifiers::CTRL) {
                         Movement::Word(Direction::Downstream)
                     } else {
                         Movement::Grapheme(Direction::Downstream)
@@ -672,7 +672,7 @@ where
 
                     cx.emit(TextEvent::MoveCursor(
                         movement,
-                        cx.modifiers().contains(Modifiers::SHIFT),
+                        cx.modifiers.contains(Modifiers::SHIFT),
                     ));
 
                     // self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
@@ -684,19 +684,19 @@ where
                 Code::ArrowUp => {
                     cx.emit(TextEvent::MoveCursor(
                         Movement::Line(Direction::Upstream),
-                        cx.modifiers().contains(Modifiers::SHIFT),
+                        cx.modifiers.contains(Modifiers::SHIFT),
                     ));
                 }
 
                 Code::ArrowDown => {
                     cx.emit(TextEvent::MoveCursor(
                         Movement::Line(Direction::Downstream),
-                        cx.modifiers().contains(Modifiers::SHIFT),
+                        cx.modifiers.contains(Modifiers::SHIFT),
                     ));
                 }
 
                 Code::Backspace => {
-                    if cx.modifiers().contains(Modifiers::CTRL) {
+                    if cx.modifiers.contains(Modifiers::CTRL) {
                         //self.delete_text(cx, Movement::Word(Direction::Upstream));
                         cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
                     } else {
@@ -709,7 +709,7 @@ where
 
                 Code::Delete => {
                     //if self.edit {
-                    if cx.modifiers().contains(Modifiers::CTRL) {
+                    if cx.modifiers.contains(Modifiers::CTRL) {
                         //self.delete_text(cx, Movement::Word(Direction::Downstream));
                         cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
                     } else {
@@ -729,14 +729,14 @@ where
                 Code::Home => {
                     cx.emit(TextEvent::MoveCursor(
                         Movement::ParagraphStart,
-                        cx.modifiers().contains(Modifiers::SHIFT),
+                        cx.modifiers.contains(Modifiers::SHIFT),
                     ));
                 }
 
                 Code::End => {
                     cx.emit(TextEvent::MoveCursor(
                         Movement::ParagraphEnd,
-                        cx.modifiers().contains(Modifiers::SHIFT),
+                        cx.modifiers.contains(Modifiers::SHIFT),
                     ));
                 }
 
@@ -748,7 +748,7 @@ where
 
                 Code::KeyA => {
                     //if self.edit {
-                    if cx.modifiers().contains(Modifiers::CTRL) {
+                    if cx.modifiers.contains(Modifiers::CTRL) {
                         // self.select_all(cx);
                         cx.emit(TextEvent::SelectAll);
                     }

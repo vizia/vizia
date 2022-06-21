@@ -21,7 +21,7 @@ pub struct Knob<L> {
     wheel_scalar: f32,
     modifier_scalar: f32,
 
-    on_changing: Option<Box<dyn Fn(&mut Context, f32)>>,
+    on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
 }
 
 impl<L: Lens<Target = f32>> Knob<L> {
@@ -107,7 +107,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
 impl<'a, L: Lens<Target = f32>> Handle<'a, Knob<L>> {
     pub fn on_changing<F>(self, callback: F) -> Self
     where
-        F: 'static + Fn(&mut Context, f32),
+        F: 'static + Fn(&mut EventContext, f32),
     {
         if let Some(view) = self.cx.views.get_mut(&self.entity) {
             if let Some(knob) = view.downcast_mut::<Knob<L>>() {
@@ -124,8 +124,8 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
         Some("knob")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        let move_virtual_slider = |self_ref: &mut Self, cx: &mut Context, new_normal: f32| {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        let move_virtual_slider = |self_ref: &mut Self, cx: &mut EventContext, new_normal: f32| {
             self_ref.continuous_normal = new_normal.clamp(0.0, 1.0);
 
             // TODO - Remove when done
@@ -147,7 +147,7 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 self.is_dragging = true;
-                self.prev_drag_y = cx.mouse().left.pos_down.1;
+                self.prev_drag_y = cx.mouse.left.pos_down.1;
 
                 cx.capture();
                 cx.focus();
@@ -181,7 +181,7 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
 
                     self.prev_drag_y = *y;
 
-                    if cx.modifiers().contains(Modifiers::SHIFT) {
+                    if cx.modifiers.contains(Modifiers::SHIFT) {
                         delta_normal *= self.modifier_scalar;
                     }
 
