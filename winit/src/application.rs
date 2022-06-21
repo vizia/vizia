@@ -133,7 +133,7 @@ impl Application {
         //     .expect("Cannot create renderer");
         // let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
 
-        let mut window = Window::new(&mut context, &event_loop, &self.window_description);
+        let window = Window::new(&mut context, &event_loop, &self.window_description);
 
         // let font = canvas.add_font_mem(FONT).expect("Failed to load font");
 
@@ -235,12 +235,14 @@ impl Application {
                     }
 
                     if let Some(mut window_view) = context.views.remove(&Entity::root()) {
-                        if let Some(window) = window_view.downcast_mut::<Window>() {
+                        if let Some(_) = window_view.downcast_mut::<Window>() {
                             context.synchronize_fonts();
                         }
 
                         context.views.insert(Entity::root(), window_view);
                     }
+
+                    context.load_images();
 
                     // Events
                     while event_manager.flush_events(&mut context) {}

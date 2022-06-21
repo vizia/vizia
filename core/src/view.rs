@@ -4,6 +4,7 @@ use crate::context::EventContext;
 use crate::prelude::*;
 
 use crate::events::ViewHandler;
+use crate::resource::ImageOrId;
 use crate::state::ModelDataStore;
 use crate::text::{idx_to_pos, measure_text_lines, text_layout, text_paint_draw};
 use femtovg::{
@@ -424,14 +425,25 @@ pub trait View: 'static + Sized {
 
         // background-image overrides gradient
         // TODO should we draw image on top of colors?
-        // if let Some(background_image) = cx.background_image(entity) {
-        //     let background_image = background_image.clone(); // not ideal
-        //     let img = cx.get_image(&background_image);
+        if let Some(background_image) = cx.background_image(entity) {
+            if let Some(img) = cx.resource_manager.images.get(background_image) {
+                match img.image {
+                    ImageOrId::Id(id, dim) => {
+                        paint = Paint::image(
+                            id,
+                            bounds.x,
+                            bounds.y,
+                            dim.0 as f32,
+                            dim.1 as f32,
+                            0.0,
+                            1.0,
+                        );
+                    }
 
-        //     let dim = img.dimensions();
-        //     let id = img.id(canvas);
-        //     paint = Paint::image(id, bounds.x, bounds.y, dim.0 as f32, dim.1 as f32, 0.0, 1.0);
-        // }
+                    _ => {}
+                }
+            }
+        }
 
         //canvas.global_composite_blend_func(BlendFactor::DstColor, BlendFactor::OneMinusSrcAlpha);
 

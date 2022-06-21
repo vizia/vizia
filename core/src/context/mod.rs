@@ -28,9 +28,9 @@ use crate::environment::Environment;
 use crate::events::ViewHandler;
 use crate::hover_system::apply_hover;
 use crate::id::IdManager;
+use crate::image_system::image_system;
 use crate::input::{Modifiers, MouseState};
 use crate::layout::geometry_changed;
-use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::ModelDataStore;
 use crate::storage::sparse_set::SparseSet;
@@ -42,6 +42,7 @@ use crate::style_system::{
 use crate::tree::{
     focus_backward, focus_forward, is_focusable, TreeDepthIterator, TreeExt, TreeIterator,
 };
+use crate::{image_system, prelude::*};
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
@@ -145,6 +146,10 @@ impl Context {
 
     pub fn draw(&mut self) {
         draw_system(self);
+    }
+
+    pub fn load_images(&mut self) {
+        image_system(self);
     }
 
     /// Returns the current entity.
@@ -561,6 +566,7 @@ impl Context {
         image: image::DynamicImage,
         policy: ImageRetentionPolicy,
     ) {
+        println!("Load image: {}", path);
         match self.resource_manager.images.entry(path) {
             Entry::Occupied(mut occ) => {
                 occ.get_mut().image = ImageOrId::Image(
@@ -571,6 +577,7 @@ impl Context {
                 occ.get_mut().retention_policy = policy;
             }
             Entry::Vacant(vac) => {
+                println!("Insert the image into resource manager");
                 vac.insert(StoredImage {
                     image: ImageOrId::Image(
                         image,

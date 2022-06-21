@@ -96,5 +96,5 @@ pub fn draw_system(cx: &mut Context) {
 
     canvas.flush();
 
-    cx.resource_manager.evict_unused_images();
+    //cx.resource_manager.evict_unused_images();
 }
