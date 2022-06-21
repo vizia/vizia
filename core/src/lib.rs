@@ -19,12 +19,9 @@ pub mod view;
 pub mod views;
 pub mod window;
 
-mod draw_system;
-mod hover_system;
 mod id;
-mod image_system;
 mod storage;
-mod style_system;
+mod systems;
 
 /// This is a re-export of [femtovg](https://docs.rs/femtovg/latest/femtovg/).
 pub mod vg {

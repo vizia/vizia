@@ -23,12 +23,9 @@ pub use event::*;
 pub use proxy::*;
 
 use crate::cache::CachedData;
-use crate::draw_system::draw_system;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
-use crate::hover_system::apply_hover;
 use crate::id::IdManager;
-use crate::image_system::image_system;
 use crate::input::{Modifiers, MouseState};
 use crate::layout::geometry_changed;
 use crate::prelude::*;
@@ -36,7 +33,10 @@ use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager
 use crate::state::ModelDataStore;
 use crate::storage::sparse_set::SparseSet;
 use crate::style::{apply_transform, Style};
-use crate::style_system::{
+use crate::systems::draw_system::draw_system;
+use crate::systems::hover_system::apply_hover;
+use crate::systems::image_system::image_system;
+use crate::systems::style_system::{
     apply_clipping, apply_inline_inheritance, apply_shared_inheritance, apply_styles,
     apply_text_constraints, apply_visibility, apply_z_ordering,
 };
