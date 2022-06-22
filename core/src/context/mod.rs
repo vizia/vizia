@@ -884,6 +884,7 @@ impl Context {
                         pseudo_classes.set(PseudoClass::FOCUS, true);
                     }
 
+                    self.style.needs_restyle = true;
                     self.style.needs_relayout = true;
                     self.style.needs_redraw = true;
                 }
