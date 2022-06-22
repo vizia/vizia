@@ -985,6 +985,8 @@ impl Context {
     pub fn dispatch_system_event(&mut self, event: WindowEvent) {
         match &event {
             WindowEvent::MouseMove(x, y) => {
+                self.mouse.previous_cursorx = self.mouse.cursorx;
+                self.mouse.previous_cursory = self.mouse.cursory;
                 self.mouse.cursorx = *x;
                 self.mouse.cursory = *y;
 
