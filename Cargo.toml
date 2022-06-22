@@ -183,6 +183,10 @@ name = "keymap_change_entries"
 path = "examples/keymap_change_entries.rs"
 
 [[example]]
+name = "mouse_delta"
+path = "examples/mouse_delta.rs"
+
+[[example]]
 name = "window_modifiers"
 path = "examples/window_modifiers.rs"
 
