@@ -74,7 +74,7 @@ use crate::prelude::*;
 ///
 /// An element can be used to display an image like this 100 by 100 pixels one. The image can
 /// be set by using a stylesheet or by using a lens. The image has to be loaded manually by
-/// using the [`Context::load_image`](crate::Context::load_image) method.
+/// using the [`Context::load_image`](crate::prelude::Context::load_image) method.
 ///
 /// ```
 /// # use vizia_core::prelude::*;
