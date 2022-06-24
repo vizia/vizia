@@ -1,4 +1,5 @@
 use crate::entity::Entity;
+use crate::id::GenerationalId;
 
 /// A mouse button.
 ///

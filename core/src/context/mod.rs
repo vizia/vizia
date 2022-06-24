@@ -23,7 +23,7 @@ use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
 use crate::hover_system::apply_hover;
-use crate::id::IdManager;
+use crate::id::{GenerationalId, IdManager};
 use crate::input::{Modifiers, MouseState};
 use crate::layout::geometry_changed;
 use crate::prelude::*;
