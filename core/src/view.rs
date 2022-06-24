@@ -14,8 +14,6 @@ use femtovg::{
 use morphorm::Units;
 
 /// The canvas we will be drawing to.
-///
-/// This type is part of the prelude.
 pub type Canvas = femtovg::Canvas<OpenGl>;
 
 // Length proportional to radius of a cubic bezier handle for 90deg arcs.
@@ -25,7 +23,7 @@ const KAPPA90: f32 = 0.5522847493;
 pub trait View: 'static + Sized {
     #[allow(unused_variables)]
     fn body(&mut self, cx: &mut Context) {}
-    fn build<F>(self, cx: &mut Context, content: F) -> Handle<Self>
+    fn build<'a, F>(self, cx: &'a mut Context, content: F) -> Handle<'a, Self>
     where
         F: FnOnce(&mut Context),
     {

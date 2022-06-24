@@ -10,16 +10,12 @@ use crate::resource::ImageRetentionPolicy;
 ///
 /// It supports a small subset of context operations. You will get one of these passed to you when
 /// you create a new thread with `cx.spawn()`.
-///
-/// This type is part of the prelude.
 pub struct ContextProxy {
     pub current: Entity,
     pub event_proxy: Option<Box<dyn EventProxy>>,
 }
 
 /// Errors that might come up when emitting an event via a ContextProxy.
-///
-/// This type is part of the prelude.
 #[derive(Debug)]
 pub enum ProxyEmitError {
     /// The current runtime does not support proxying events

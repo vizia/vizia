@@ -18,8 +18,6 @@ impl Environment {
 
 /// Methods which control the environment the application will run in. This trait is implemented for
 /// Application.
-///
-/// This trait is part of the prelude.
 pub trait Env {
     fn ignore_default_styles(self) -> Self;
 }

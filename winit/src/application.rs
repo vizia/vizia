@@ -49,7 +49,7 @@ impl Application {
         #[cfg(all(debug_assertions, target_arch = "wasm32"))]
         console_error_panic_hook::set_once();
 
-        #[allow(unused_mut)]
+        //#[allow(unused_mut)]
         let mut context = Context::new();
 
         let event_loop = EventLoop::with_user_event();
@@ -122,22 +122,7 @@ impl Application {
         let mut context = self.context;
         let event_loop = self.event_loop;
 
-        // let handle = ContextBuilder::new()
-        //     .with_vsync(true)
-        //     .build_windowed(WindowBuilder::new(), &event_loop)
-        //     .expect("Failed to build windowed context");
-
-        // let handle = unsafe { handle.make_current().unwrap() };
-
-        // let renderer = OpenGl::new(|s| handle.context().get_proc_address(s) as *const _)
-        //     .expect("Cannot create renderer");
-        // let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
-
         let window = Window::new(&mut context, &event_loop, &self.window_description);
-
-        // let font = canvas.add_font_mem(FONT).expect("Failed to load font");
-
-        // context.fonts = vec![font];
 
         let regular_font = fonts::ROBOTO_REGULAR;
         let bold_font = fonts::ROBOTO_BOLD;
@@ -199,12 +184,6 @@ impl Application {
 
         let mut event_manager = EventManager::new();
 
-        // if let Some(builder) = self.builder.take() {
-        //     (builder)(&mut context);
-
-        //     self.builder = Some(builder);
-        // }
-
         let builder = self.builder.take();
 
         let on_idle = self.on_idle.take();
@@ -234,13 +213,13 @@ impl Application {
                         context.environment.needs_rebuild = false;
                     }
 
-                    if let Some(mut window_view) = context.views.remove(&Entity::root()) {
-                        if let Some(_) = window_view.downcast_mut::<Window>() {
-                            context.synchronize_fonts();
-                        }
+                    //if let Some(mut window_view) = context.views.remove(&Entity::root()) {
+                    //    if let Some(_) = window_view.downcast_mut::<Window>() {
+                    context.synchronize_fonts();
+                    //    }
 
-                        context.views.insert(Entity::root(), window_view);
-                    }
+                    //    context.views.insert(Entity::root(), window_view);
+                    //}
 
                     context.load_images();
 

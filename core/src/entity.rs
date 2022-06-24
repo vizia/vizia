@@ -12,8 +12,6 @@ const ENTITY_GENERATION_MASK: u32 = (1 << ENTITY_GENERATION_BITS) - 1;
 ///
 /// Rather than having widgets own their data, all state is stored in a single database and
 /// is stored and loaded using entities.
-///
-/// This type is part of the prelude.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Entity(u32);
 

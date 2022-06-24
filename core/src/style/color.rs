@@ -2,8 +2,6 @@ use crate::animation::Interpolator;
 use std::fmt;
 
 /// Describes a color.
-///
-/// This type is part of the prelude.
 #[derive(Copy, Clone)]
 pub struct Color {
     pub data: u32,

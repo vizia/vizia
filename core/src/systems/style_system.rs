@@ -2,6 +2,7 @@ use crate::cache::BoundingBox;
 use femtovg::{Align, Baseline};
 use morphorm::Units;
 
+use crate::context::Context;
 use crate::prelude::*;
 use crate::style::{Rule, Selector, SelectorRelation};
 use crate::text::{measure_text_lines, text_layout, text_paint_general};

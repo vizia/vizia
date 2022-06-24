@@ -507,8 +507,6 @@ impl<V: View> View for Geo<V> {
 }
 
 /// Methods to add an event handler to a view.
-///
-/// This trait is part of the prelude.
 pub trait Actions<'a> {
     type View: View;
     fn on_press<F>(self, action: F) -> Handle<'a, Press<Self::View>>

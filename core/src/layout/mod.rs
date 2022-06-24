@@ -7,6 +7,7 @@ pub(crate) mod hierarchy;
 pub(crate) mod iter;
 pub(crate) mod node;
 
+use crate::context::Context;
 use crate::prelude::*;
 pub(crate) use iter::{LayoutChildIterator, LayoutTreeIterator};
 pub use morphorm::GeometryChanged;

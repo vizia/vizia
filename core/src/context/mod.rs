@@ -1,3 +1,4 @@
+// mod build;
 mod draw;
 mod event;
 mod methods;
@@ -21,6 +22,7 @@ use unic_langid::LanguageIdentifier;
 pub use draw::*;
 pub use event::*;
 pub use proxy::*;
+// pub use build::*;
 
 use crate::cache::CachedData;
 use crate::environment::Environment;
@@ -32,7 +34,7 @@ use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::ModelDataStore;
 use crate::storage::sparse_set::SparseSet;
-use crate::style::{apply_transform, Style};
+use crate::style::Style;
 use crate::systems::draw_system::draw_system;
 use crate::systems::hover_system::apply_hover;
 use crate::systems::image_system::image_system;
@@ -40,6 +42,7 @@ use crate::systems::style_system::{
     apply_clipping, apply_inline_inheritance, apply_shared_inheritance, apply_styles,
     apply_text_constraints, apply_visibility, apply_z_ordering,
 };
+use crate::systems::transform_system::apply_transform;
 use crate::tree::{
     focus_backward, focus_forward, is_focusable, TreeDepthIterator, TreeExt, TreeIterator,
 };
@@ -167,7 +170,7 @@ impl Context {
         self.current = e;
     }
 
-    /// Makes the above black magic more explicit
+    /// Temporarily sets the current entity, calls the provided closure, and then resets the current entity back to previous.
     pub(crate) fn with_current(&mut self, e: Entity, f: impl FnOnce(&mut Context)) {
         let prev = self.current;
         self.current = e;
@@ -921,8 +924,6 @@ pub(crate) enum InternalEvent {
 /// A trait for any Context-like object that lets you access stored model data.
 ///
 /// This lets e.g Lens::get be generic over any of these types.
-///
-/// This type is part of the prelude.
 pub trait DataContext {
     /// Get stored data from the context.
     fn data<T: 'static>(&self) -> Option<&T>;

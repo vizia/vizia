@@ -1,3 +1,4 @@
+use crate::context::Context;
 use crate::{prelude::*, resource::ImageOrId};
 
 pub fn image_system(cx: &mut Context) {

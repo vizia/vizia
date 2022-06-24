@@ -36,8 +36,6 @@ use crate::state::Store;
 ///     }
 /// }
 /// ```
-///
-/// This trait is part of the prelude.
 pub trait Model: 'static + Sized {
     /// Build the model data into the application tree.
     ///

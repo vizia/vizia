@@ -1,4 +1,4 @@
-use crate::context::InternalEvent;
+use crate::context::{Context, InternalEvent};
 use crate::prelude::*;
 use crate::tree::TreeExt;
 

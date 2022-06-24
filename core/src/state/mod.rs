@@ -1,7 +1,7 @@
 //! # Data Binding
 //!
 //! Binding provides reactivity to a vizia application. Rather than sending events back and forth between widgets
-//! to update local widget data, widgets can instead `bind` to application data.
+//! to update local widget data, widgets can instead *bind* to application data.
 //!
 //! # Example
 //! Fist we declare the data for our application. The [Lens] trait has been derived for the data, which allows us to bind to fields of the struct:
@@ -15,14 +15,14 @@
 //!
 //! ```
 //! Next we'll declare some events which will be sent by widgets to modify the app data. Data binding in vizia is one-way, events are sent up the tree
-//! to the app data to mutate it and updated values are sent to observers, such as a [`Binding`] view.
+//! to the app data to mutate it and updated values are sent to observers, such as a [Binding] view.
 //! ```
 //! enum AppEvent {
 //!     Increment,
 //!     Decrement,
 //! }
 //! ```
-//! Next we implement the [`Model`] trait on our app data, which allows us to modify the data in response to an `Event`:
+//! Next we implement the [`Model`] trait on our app data, which allows us to modify the data in response to an [Event](crate::prelude::Event):
 //! ```
 //! # use vizia_core::prelude::*;
 //! # use vizia_derive::*;

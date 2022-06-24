@@ -27,8 +27,6 @@ pub(crate) struct AnimationDescription {
 ///             .set_border_color(Color::red())
 ///     .build();
 /// ```
-///
-/// This type is part of the prelude.
 pub struct AnimationBuilder<'a> {
     id: Animation,
     cx: &'a mut Context,

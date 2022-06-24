@@ -2,8 +2,6 @@ use crate::entity::Entity;
 use std::{any::Any, fmt::Debug};
 
 /// Determines how an event propagates through the tree.
-///
-/// This type is part of the prelude.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Propagation {
     // /// Events propagate down the tree to the target entity, e.g. from grand-parent to parent to child (target)
@@ -21,8 +19,6 @@ pub enum Propagation {
 /// The content of an event.
 ///
 /// A message can be any static type.
-///
-/// This trait is part of the prelude.
 pub trait Message: Any + Send {
     /// A `&dyn Any` can be cast to a reference to a concrete type.
     fn as_any(&self) -> &dyn Any;
@@ -43,8 +39,6 @@ impl<S: 'static + Send> Message for S {
 }
 
 /// A wrapper around a message, providing metadata on how the event travels through the tree.
-///
-/// This type is part of the prelude.
 pub struct Event {
     /// The meta data of the event
     pub meta: EventMeta,
@@ -57,15 +51,6 @@ impl Debug for Event {
         Ok(())
     }
 }
-
-// // Allows events to be compared for equality
-// impl PartialEq for Event {
-//     fn eq(&self, other: &Event) -> bool {
-//         self.message.equals_a(&*other.message)
-//             //&& self.origin == other.origin
-//             && self.target == other.target
-//     }
-// }
 
 impl Event {
     /// Creates a new event with a specified message
@@ -101,10 +86,11 @@ impl Event {
         self
     }
 
-    /// Consumes the event to prevent it from continuing on its propagation path.
-    pub fn consume(&mut self) {
-        self.meta.consume();
-    }
+    // I don't think there's a situation where this is needed
+    // /// Consumes the event to prevent it from continuing on its propagation path.
+    // pub fn consume(&mut self) {
+    //     self.meta.consume();
+    // }
 
     /// Tries to downcast the event message to the specified type. If the downcast was successful,
     /// the downcasted message and the event meta data get passed into `f`.

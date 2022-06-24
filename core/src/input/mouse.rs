@@ -1,8 +1,6 @@
 use crate::entity::Entity;
 
 /// A mouse button.
-///
-/// This type is part of the prelude.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum MouseButton {
     Left,
@@ -12,8 +10,6 @@ pub enum MouseButton {
 }
 
 /// The state of a mouse button.
-///
-/// This type is part of the prelude.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum MouseButtonState {
     Pressed,

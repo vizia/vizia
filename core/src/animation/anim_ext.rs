@@ -1,8 +1,6 @@
 use crate::prelude::*;
 
 /// Trait which provides methods for entities to manipulate linked animations
-///
-/// This trait is part of the prelude.
 pub trait AnimExt: Copy + Sized {
     fn entity(self) -> Entity;
 

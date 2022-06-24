@@ -74,8 +74,6 @@ use crate::prelude::*;
 ///     }
 /// }
 /// ```
-///
-/// This type is part of the prelude.
 #[derive(Debug)]
 pub struct Keymap<T>
 where
@@ -226,8 +224,6 @@ where
 }
 
 /// An event used to interact with a [`Keymap`] at runtime.
-///
-/// This type is part of the prelude.
 pub enum KeymapEvent<T>
 where
     T: 'static + PartialEq + Send + Sync + Copy + Clone,

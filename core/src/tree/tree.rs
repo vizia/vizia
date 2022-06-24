@@ -20,8 +20,6 @@ pub enum TreeError {
 }
 
 /// The [Tree] describes the tree of entities.
-///
-/// This type is part of the prelude.
 #[derive(Debug, Clone)]
 pub struct Tree {
     pub parent: Vec<Option<Entity>>,

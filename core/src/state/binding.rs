@@ -5,8 +5,6 @@ use crate::prelude::*;
 use crate::state::{LensCache, State};
 
 /// A binding view which rebuilds its contents when its observed data changes.
-///
-/// This type is part of the prelude.
 pub struct Binding<L>
 where
     L: Lens,
