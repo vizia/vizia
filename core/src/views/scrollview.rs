@@ -53,21 +53,14 @@ pub struct ScrollView<L> {
 }
 
 impl ScrollView<scroll_data_derived_lenses::root> {
-    pub fn new<F>(
-        cx: &mut Context,
-        initial_x: f32,
-        initial_y: f32,
-        scroll_x: bool,
-        scroll_y: bool,
-        content: F,
-    ) -> Handle<Self>
+    pub fn new<F>(cx: &mut Context, settings: ScrollViewSettings, content: F) -> Handle<Self>
     where
         F: 'static + FnOnce(&mut Context),
     {
         Self { data: ScrollData::root }.build(cx, move |cx| {
             ScrollData {
-                scroll_x: initial_x,
-                scroll_y: initial_y,
+                scroll_x: settings.initial_x,
+                scroll_y: settings.initial_y,
                 child_x: 0.0,
                 child_y: 0.0,
                 parent_x: 0.0,
@@ -75,7 +68,7 @@ impl ScrollView<scroll_data_derived_lenses::root> {
             }
             .build(cx);
 
-            Self::common_builder(cx, ScrollData::root, content, scroll_x, scroll_y);
+            Self::common_builder(cx, ScrollData::root, content, settings);
         })
     }
 }
@@ -83,8 +76,7 @@ impl ScrollView<scroll_data_derived_lenses::root> {
 impl<L: Lens<Target = ScrollData>> ScrollView<L> {
     pub fn custom<F>(
         cx: &mut Context,
-        scroll_x: bool,
-        scroll_y: bool,
+        settings: ScrollViewSettings,
         data: L,
         content: F,
     ) -> Handle<Self>
@@ -96,24 +88,32 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         }
 
         Self { data: data.clone() }.build(cx, |cx| {
-            Self::common_builder(cx, data, content, scroll_x, scroll_y);
+            Self::common_builder(cx, data, content, settings);
         })
     }
 
-    fn common_builder<F>(cx: &mut Context, data: L, content: F, scroll_x: bool, scroll_y: bool)
+    fn common_builder<F>(cx: &mut Context, data: L, content: F, settings: ScrollViewSettings)
     where
         F: 'static + FnOnce(&mut Context),
     {
         VStack::new(cx, content)
             .class("scroll_content")
-            .bind(data.clone(), |handle, data| {
+            .bind(data.clone(), move |handle, data| {
                 let dpi_factor = handle.cx.style().dpi_factor;
                 if dpi_factor > 0.0 {
                     let data = data.get(handle.cx);
-                    let left = ((data.child_x - data.parent_x) * data.scroll_x).round()
-                        / handle.cx.style().dpi_factor as f32;
-                    let top = ((data.child_y - data.parent_y) * data.scroll_y).round()
-                        / handle.cx.style().dpi_factor as f32;
+                    let left = if settings.scroll_x {
+                        ((data.child_x - data.parent_x) * data.scroll_x).round()
+                            / handle.cx.style().dpi_factor as f32
+                    } else {
+                        0.0
+                    };
+                    let top = if settings.scroll_y {
+                        ((data.child_y - data.parent_y) * data.scroll_y).round()
+                            / handle.cx.style().dpi_factor as f32
+                    } else {
+                        0.0
+                    };
                     handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
                 }
             })
@@ -127,7 +127,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                     cx.emit(ScrollEvent::ChildGeo(width, height));
                 }
             });
-        if scroll_y {
+
+        if settings.scrollbar_y {
             Scrollbar::new(
                 cx,
                 data.clone().then(ScrollData::scroll_y),
@@ -139,7 +140,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             )
             .position_type(PositionType::SelfDirected);
         }
-        if scroll_x {
+
+        if settings.scrollbar_x {
             Scrollbar::new(
                 cx,
                 data.clone().then(ScrollData::scroll_x),
@@ -193,5 +195,55 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
 
             _ => {}
         });
+    }
+}
+
+/// The settings of a scroll view.
+///
+/// These settings are used at the construction time of a [`ScrollView`].
+#[derive(Debug, Clone, PartialEq)]
+pub struct ScrollViewSettings {
+    /// Specifies the initial horizontal position of the scroll view ranging from 0.0 (left) to 1.0 (right).
+    pub initial_x: f32,
+    /// Specifies the initial vertical position of the scroll view ranging from 0.0 (top) to 1.0 (bottom).
+    pub initial_y: f32,
+    /// Specifies if a horizontal scrollbar should automatically be added to the scroll view.
+    pub scrollbar_x: bool,
+    /// Specifies if a vertical scrollbar should automatically be added to the scroll view.
+    pub scrollbar_y: bool,
+    /// Specifies if the scroll view can be scrolled horizontally.
+    ///
+    /// If this is set to `false` the scroll view won't bind to the [`ScrollData::scroll_x`] lens.
+    pub scroll_x: bool,
+    /// Specifies if the scroll view can be scrolled vertically.
+    ///
+    /// If this is set to `false` the scroll view won't bind to the [`ScrollData::scroll_y`] lens.
+    pub scroll_y: bool,
+}
+
+impl ScrollViewSettings {
+    /// Creates new scroll view settings.
+    pub fn new(
+        initial_x: f32,
+        initial_y: f32,
+        scrollbar_x: bool,
+        scrollbar_y: bool,
+        scroll_x: bool,
+        scroll_y: bool,
+    ) -> Self {
+        Self { initial_x, initial_y, scrollbar_x, scrollbar_y, scroll_x, scroll_y }
+    }
+}
+
+impl Default for ScrollViewSettings {
+    fn default() -> Self {
+        Self {
+            initial_x: 0.0,
+            initial_y: 0.0,
+            scrollbar_x: true,
+            scrollbar_y: true,
+            scroll_x: true,
+            scroll_y: true,
+        }
     }
 }
