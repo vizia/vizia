@@ -190,6 +190,10 @@ path = "examples/mouse_delta.rs"
 name = "window_modifiers"
 path = "examples/window_modifiers.rs"
 
+[[example]]
+name = "test"
+path = "examples/test.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard"]
