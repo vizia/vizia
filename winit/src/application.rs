@@ -127,63 +127,6 @@ impl Application {
         let scale_factor = window.window().scale_factor() as f32;
         context.add_main_window(&self.window_description, canvas, scale_factor);
         context.views().insert(Entity::root(), Box::new(window));
-        //context.canvases.insert(Entity::root(), canvas);
-
-        // let regular_font = fonts::ROBOTO_REGULAR;
-        // let bold_font = fonts::ROBOTO_BOLD;
-        // let icon_font = fonts::ENTYPO;
-        // let emoji_font = fonts::OPEN_SANS_EMOJI;
-        // let arabic_font = fonts::AMIRI_REGULAR;
-        // let material_font = fonts::MATERIAL_ICONS_REGULAR;
-
-        // context.add_font_mem("roboto", regular_font);
-        // context.add_font_mem("roboto-bold", bold_font);
-        // context.add_font_mem("icons", icon_font);
-        // context.add_font_mem("emoji", emoji_font);
-        // context.add_font_mem("arabic", arabic_font);
-        // context.add_font_mem("material", material_font);
-
-        // context.style.default_font = "roboto".to_string();
-
-        // Load resources
-        //context.synchronize_fonts();
-
-        //let dpi_factor = window.window().scale_factor();
-
-        //let physical_size = window.window().inner_size();
-
-        // let clear_color =
-        //     context.style.background_color.get(Entity::root()).cloned().unwrap_or_default();
-
-        // if let Some(canvas) = context.canvases.get_mut(&Entity::root()) {
-        //     canvas.set_size(physical_size.width as u32, physical_size.height as u32, 1.0);
-        //     canvas.clear_rect(
-        //         0,
-        //         0,
-        //         physical_size.width as u32,
-        //         physical_size.height as u32,
-        //         clear_color.into(),
-        //     );
-        // }
-
-        // context.style.dpi_factor = window.window().scale_factor();
-
-        //let logical_size: LogicalSize<f32> = physical_size.to_logical(dpi_factor);
-
-        // context.cache.set_width(Entity::root(), physical_size.width as f32);
-        // context.cache.set_height(Entity::root(), physical_size.height as f32);
-
-        // context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width));
-        // context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height));
-
-        // context.style.pseudo_classes.insert(Entity::root(), PseudoClass::default()).unwrap();
-        // context.style.disabled.insert(Entity::root(), false);
-
-        // let mut bounding_box = BoundingBox::default();
-        // bounding_box.w = physical_size.width as f32;
-        // bounding_box.h = physical_size.height as f32;
-
-        // context.cache.set_clip_region(Entity::root(), bounding_box);
 
         let mut event_manager = EventManager::new();
 
@@ -428,12 +371,6 @@ impl Application {
                             context.need_restyle();
                             context.need_relayout();
                             context.need_redraw();
-
-                            // let mut bounding_box = BoundingBox::default();
-                            // bounding_box.w = size.width as f32;
-                            // bounding_box.h = size.height as f32;
-
-                            // context.cache.set_clip_region(Entity::root(), bounding_box);
                         }
 
                         winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {

@@ -8,7 +8,6 @@ use crate::proxy::queue_get;
 use vizia_core::cache::BoundingBox;
 use vizia_core::context::BackendContext;
 use vizia_core::events::EventManager;
-use vizia_core::fonts;
 use vizia_core::prelude::*;
 
 pub struct Application<F>
@@ -153,51 +152,6 @@ impl ApplicationRunner {
 
         context.add_main_window(&win_desc, canvas, scale_factor as f32);
 
-        // context.style().dpi_factor = scale;
-
-        // let logical_size = win_desc.inner_size;
-        // let physical_size = WindowSize {
-        //     width: (logical_size.width as f64 * scale).round() as u32,
-        //     height: (logical_size.height as f64 * scale).round() as u32,
-        // };
-
-        // canvas.set_size(physical_size.width, physical_size.height, 1.0);
-
-        // let regular_font = fonts::ROBOTO_REGULAR;
-        // let bold_font = fonts::ROBOTO_BOLD;
-        // let icon_font = fonts::ENTYPO;
-        // let emoji_font = fonts::OPEN_SANS_EMOJI;
-        // let arabic_font = fonts::AMIRI_REGULAR;
-        // let material_font = fonts::MATERIAL_ICONS_REGULAR;
-
-        // context.add_font_mem("roboto", regular_font);
-        // context.add_font_mem("roboto-bold", bold_font);
-        // context.add_font_mem("icons", icon_font);
-        // context.add_font_mem("emoji", emoji_font);
-        // context.add_font_mem("arabic", arabic_font);
-        // context.add_font_mem("material", material_font);
-
-        // context.style().default_font = "roboto".to_string();
-
-        // //canvas.scale(scale as f32, scale as f32);
-
-        // context.style().width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
-        // context.style().height.insert(Entity::root(), Units::Pixels(logical_size.height as f32));
-
-        // context.style().disabled.insert(Entity::root(), false);
-
-        // context.cache().set_width(Entity::root(), physical_size.width as f32);
-        // context.cache().set_height(Entity::root(), physical_size.height as f32);
-        // context.cache().set_opacity(Entity::root(), 1.0);
-
-        // let mut bounding_box = BoundingBox::default();
-        // bounding_box.w = physical_size.width as f32;
-        // bounding_box.h = physical_size.height as f32;
-
-        // context.cache().set_clip_region(Entity::root(), bounding_box);
-
-        // context.canvases.insert(Entity::root(), canvas);
-
         ApplicationRunner {
             event_manager,
             context,
@@ -207,58 +161,10 @@ impl ApplicationRunner {
         }
     }
 
-    /*
-    pub fn get_window(&self) -> Entity {
-        self.Entity::root()
-    }
-
-    pub fn get_state(&mut self) -> &mut State {
-        &mut self.context
-    }
-
-    pub fn get_event_manager(&mut self) -> &mut EventManager {
-        &mut self.event_manager
-    }
-    */
-
-    // pub fn update_data(&mut self) {
-    //     // Data Updates
-    //     let mut observers: Vec<Entity> = Vec::new();
-    //     for model_list in self.context.data.model_data.dense.iter().map(|entry| &entry.value){
-    //         for (_, model) in model_list.iter() {
-    //             //println!("Lenses: {:?}", context.lenses.len());
-    //             for (_, lens) in self.context.lenses.iter_mut() {
-    //                 if lens.update(model) {
-    //                     observers.extend(lens.observers().iter());
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     for observer in observers.iter() {
-    //         if let Some(mut view) = self.context.views.remove(observer) {
-    //             let prev = self.context.current;
-    //             self.context.current = *observer;
-    //             let prev_count = self.context.count;
-    //             self.context.count = 0;
-    //             view.body(&mut self.context);
-    //             self.context.current = prev;
-    //             self.context.count = prev_count;
-
-    //             self.context.style.needs_redraw = true;
-
-    //             self.context.views.insert(*observer, view);
-    //         }
-    //     }
-    // }
-
     pub fn on_frame_update(&mut self) {
         while let Some(event) = queue_get() {
             self.context.send_event(event);
         }
-
-        //if let Some(mut window_view) = context.views.remove(&Entity::root()) {
-        //if let Some(window) = window_view.downcast_mut::<Window>() {
 
         // Load resources
         self.context.synchronize_fonts();
@@ -266,39 +172,18 @@ impl ApplicationRunner {
         // TODO: This doesn't work for some reason
         self.context.load_images();
 
-        //}
-
-        //context.views.insert(Entity::root(), window_view);
-        //}
-
         // Events
         while self.event_manager.flush_events(&mut self.context) {}
 
         self.context.process_data_updates();
         self.context.process_style_updates();
 
-        // if self.context.has_animations() {
-        //     if let Some(window_event_handler) = self.context.views.remove(&Entity::root()) {
-        //         if let Some(window) = window_event_handler.downcast_ref::<Window>() {
-        //             window.handle.window().request_redraw();
-        //         }
-
-        //         context.views.insert(Entity::root(), window_event_handler);
-        //     }
-        // } else {
-        //     if should_poll {
-        //         *control_flow = ControlFlow::Poll;
-        //     } else {
-        //         *control_flow = ControlFlow::Wait;
-        //     }
-        // }
-
         self.context.apply_animations();
 
         self.context.process_visual_updates();
 
         if self.context.style().needs_redraw {
-            //     // TODO - Move this to EventManager
+            // TODO - Move this to EventManager
             self.should_redraw = true;
             self.context.style().needs_redraw = false;
         }
