@@ -4,10 +4,10 @@ use crate::{
 };
 use std::cell::RefCell;
 use vizia_core::cache::BoundingBox;
+use vizia_core::context::BackendContext;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
 use vizia_core::events::EventManager;
-use vizia_core::fonts;
 use vizia_core::prelude::*;
 use vizia_core::window::Position;
 use winit::{
@@ -59,8 +59,7 @@ impl Application {
             context.set_event_proxy(Box::new(WinitEventProxy(event_proxy_obj)));
         }
 
-        context.set_current(Entity::root());
-
+        // Run the application closure
         (content)(&mut context);
 
         Self {
@@ -112,7 +111,7 @@ impl Application {
 
     /// Sets the background color of the window.
     pub fn background_color(mut self, color: Color) -> Self {
-        self.context.style.background_color.insert(Entity::root(), color);
+        self.context.style().background_color.insert(Entity::root(), color);
 
         self
     }
@@ -122,65 +121,69 @@ impl Application {
         let mut context = self.context;
         let event_loop = self.event_loop;
 
-        let window = Window::new(&mut context, &event_loop, &self.window_description);
+        let (window, canvas) = Window::new(&event_loop, &self.window_description);
 
-        let regular_font = fonts::ROBOTO_REGULAR;
-        let bold_font = fonts::ROBOTO_BOLD;
-        let icon_font = fonts::ENTYPO;
-        let emoji_font = fonts::OPEN_SANS_EMOJI;
-        let arabic_font = fonts::AMIRI_REGULAR;
-        let material_font = fonts::MATERIAL_ICONS_REGULAR;
+        //let mut context = Context::new();
+        let scale_factor = window.window().scale_factor() as f32;
+        context.add_main_window(&self.window_description, canvas, scale_factor);
+        context.views().insert(Entity::root(), Box::new(window));
+        //context.canvases.insert(Entity::root(), canvas);
 
-        context.add_font_mem("roboto", regular_font);
-        context.add_font_mem("roboto-bold", bold_font);
-        context.add_font_mem("icons", icon_font);
-        context.add_font_mem("emoji", emoji_font);
-        context.add_font_mem("arabic", arabic_font);
-        context.add_font_mem("material", material_font);
+        // let regular_font = fonts::ROBOTO_REGULAR;
+        // let bold_font = fonts::ROBOTO_BOLD;
+        // let icon_font = fonts::ENTYPO;
+        // let emoji_font = fonts::OPEN_SANS_EMOJI;
+        // let arabic_font = fonts::AMIRI_REGULAR;
+        // let material_font = fonts::MATERIAL_ICONS_REGULAR;
 
-        context.style.default_font = "roboto".to_string();
+        // context.add_font_mem("roboto", regular_font);
+        // context.add_font_mem("roboto-bold", bold_font);
+        // context.add_font_mem("icons", icon_font);
+        // context.add_font_mem("emoji", emoji_font);
+        // context.add_font_mem("arabic", arabic_font);
+        // context.add_font_mem("material", material_font);
+
+        // context.style.default_font = "roboto".to_string();
 
         // Load resources
-        context.synchronize_fonts();
+        //context.synchronize_fonts();
 
-        let dpi_factor = window.window().scale_factor();
+        //let dpi_factor = window.window().scale_factor();
 
-        let physical_size = window.window().inner_size();
+        //let physical_size = window.window().inner_size();
 
-        let clear_color =
-            context.style.background_color.get(Entity::root()).cloned().unwrap_or_default();
+        // let clear_color =
+        //     context.style.background_color.get(Entity::root()).cloned().unwrap_or_default();
 
-        if let Some(canvas) = context.canvases.get_mut(&Entity::root()) {
-            canvas.set_size(physical_size.width as u32, physical_size.height as u32, 1.0);
-            canvas.clear_rect(
-                0,
-                0,
-                physical_size.width as u32,
-                physical_size.height as u32,
-                clear_color.into(),
-            );
-        }
+        // if let Some(canvas) = context.canvases.get_mut(&Entity::root()) {
+        //     canvas.set_size(physical_size.width as u32, physical_size.height as u32, 1.0);
+        //     canvas.clear_rect(
+        //         0,
+        //         0,
+        //         physical_size.width as u32,
+        //         physical_size.height as u32,
+        //         clear_color.into(),
+        //     );
+        // }
 
-        context.style.dpi_factor = window.window().scale_factor();
+        // context.style.dpi_factor = window.window().scale_factor();
 
-        context.views.insert(Entity::root(), Box::new(window));
+        //let logical_size: LogicalSize<f32> = physical_size.to_logical(dpi_factor);
 
-        let logical_size: LogicalSize<f32> = physical_size.to_logical(dpi_factor);
+        // context.cache.set_width(Entity::root(), physical_size.width as f32);
+        // context.cache.set_height(Entity::root(), physical_size.height as f32);
 
-        context.cache.set_width(Entity::root(), physical_size.width as f32);
-        context.cache.set_height(Entity::root(), physical_size.height as f32);
+        // context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width));
+        // context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height));
 
-        context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width));
-        context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height));
+        // context.style.pseudo_classes.insert(Entity::root(), PseudoClass::default()).unwrap();
+        // context.style.disabled.insert(Entity::root(), false);
 
-        context.style.pseudo_classes.insert(Entity::root(), PseudoClass::default()).unwrap();
-        context.style.disabled.insert(Entity::root(), false);
+        // let mut bounding_box = BoundingBox::default();
+        // bounding_box.w = physical_size.width as f32;
+        // bounding_box.h = physical_size.height as f32;
 
-        let mut bounding_box = BoundingBox::default();
-        bounding_box.w = physical_size.width as f32;
-        bounding_box.h = physical_size.height as f32;
-
-        context.cache.set_clip_region(Entity::root(), bounding_box);
+        // context.cache.set_clip_region(Entity::root(), bounding_box);
 
         let mut event_manager = EventManager::new();
 
@@ -204,13 +207,13 @@ impl Application {
                         if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
 
                     // Rebuild application if required
-                    if context.environment.needs_rebuild {
+                    if context.environment().needs_rebuild {
                         context.set_current(Entity::root());
                         context.remove_children(Entity::root());
                         if let Some(builder) = &builder {
                             (builder)(&mut context);
                         }
-                        context.environment.needs_rebuild = false;
+                        context.environment().needs_rebuild = false;
                     }
 
                     //if let Some(mut window_view) = context.views.remove(&Entity::root()) {
@@ -235,12 +238,13 @@ impl Application {
                         //context.insert_event(Event::new(WindowEvent::Relayout).target(Entity::root()));
                         event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();
                         //window.handle.window().request_redraw();
-                        if let Some(window_event_handler) = context.views.remove(&Entity::root()) {
+                        if let Some(window_event_handler) = context.views().remove(&Entity::root())
+                        {
                             if let Some(window) = window_event_handler.downcast_ref::<Window>() {
                                 window.window().request_redraw();
                             }
 
-                            context.views.insert(Entity::root(), window_event_handler);
+                            context.views().insert(Entity::root(), window_event_handler);
                         }
                     }
 
@@ -248,15 +252,15 @@ impl Application {
 
                     context.process_visual_updates();
 
-                    if let Some(window_view) = context.views.remove(&Entity::root()) {
+                    if let Some(window_view) = context.views().remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_ref::<Window>() {
-                            if context.style.needs_redraw {
+                            if context.style().needs_redraw {
                                 window.window().request_redraw();
-                                context.style.needs_redraw = false;
+                                context.style().needs_redraw = false;
                             }
                         }
 
-                        context.views.insert(Entity::root(), window_view);
+                        context.views().insert(Entity::root(), window_view);
                     }
 
                     if let Some(idle_callback) = &on_idle {
@@ -285,20 +289,22 @@ impl Application {
                             scale_factor,
                             new_inner_size,
                         } => {
-                            context.style.dpi_factor = scale_factor;
-                            context.cache.set_width(Entity::root(), new_inner_size.width as f32);
-                            context.cache.set_height(Entity::root(), new_inner_size.height as f32);
+                            context.style().dpi_factor = scale_factor;
+                            context.cache().set_width(Entity::root(), new_inner_size.width as f32);
+                            context
+                                .cache()
+                                .set_height(Entity::root(), new_inner_size.height as f32);
 
                             let logical_size: LogicalSize<f32> =
-                                new_inner_size.to_logical(context.style.dpi_factor);
+                                new_inner_size.to_logical(context.style().dpi_factor);
 
                             context
-                                .style
+                                .style()
                                 .width
                                 .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
 
                             context
-                                .style
+                                .style()
                                 .height
                                 .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
                         }
@@ -389,35 +395,35 @@ impl Application {
                         }
 
                         winit::event::WindowEvent::Resized(physical_size) => {
-                            if let Some(mut window_view) = context.views.remove(&Entity::root()) {
+                            if let Some(mut window_view) = context.views().remove(&Entity::root()) {
                                 if let Some(window) = window_view.downcast_mut::<Window>() {
                                     window.resize(physical_size);
                                 }
 
-                                context.views.insert(Entity::root(), window_view);
+                                context.views().insert(Entity::root(), window_view);
                             }
 
                             let logical_size: LogicalSize<f32> =
-                                physical_size.to_logical(context.style.dpi_factor);
+                                physical_size.to_logical(context.style().dpi_factor);
 
                             context
-                                .style
+                                .style()
                                 .width
                                 .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
 
                             context
-                                .style
+                                .style()
                                 .height
                                 .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
-                            context.cache.set_width(Entity::root(), physical_size.width as f32);
-                            context.cache.set_height(Entity::root(), physical_size.height as f32);
+                            context.cache().set_width(Entity::root(), physical_size.width as f32);
+                            context.cache().set_height(Entity::root(), physical_size.height as f32);
 
                             let mut bounding_box = BoundingBox::default();
                             bounding_box.w = physical_size.width as f32;
                             bounding_box.h = physical_size.height as f32;
 
-                            context.cache.set_clip_region(Entity::root(), bounding_box);
+                            context.cache().set_clip_region(Entity::root(), bounding_box);
 
                             context.need_restyle();
                             context.need_relayout();
@@ -431,10 +437,10 @@ impl Application {
                         }
 
                         winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
-                            context.modifiers.set(Modifiers::SHIFT, modifiers_state.shift());
-                            context.modifiers.set(Modifiers::ALT, modifiers_state.alt());
-                            context.modifiers.set(Modifiers::CTRL, modifiers_state.ctrl());
-                            context.modifiers.set(Modifiers::LOGO, modifiers_state.logo());
+                            context.modifiers().set(Modifiers::SHIFT, modifiers_state.shift());
+                            context.modifiers().set(Modifiers::ALT, modifiers_state.alt());
+                            context.modifiers().set(Modifiers::CTRL, modifiers_state.ctrl());
+                            context.modifiers().set(Modifiers::LOGO, modifiers_state.logo());
                         }
 
                         _ => {}
@@ -581,9 +587,9 @@ impl WindowModifiers for Application {
 
 impl Env for Application {
     fn ignore_default_styles(mut self) -> Self {
-        if self.context.environment.include_default_theme {
-            self.context.environment.include_default_theme = false;
-            self.context.environment.needs_rebuild = true;
+        if self.context.environment().include_default_theme {
+            self.context.environment().include_default_theme = false;
+            self.context.environment().needs_rebuild = true;
             self.context.reload_styles().expect("Failed to reload styles");
         }
 
@@ -600,12 +606,12 @@ impl Env for Application {
 // }
 
 fn context_draw(cx: &mut Context) {
-    if let Some(mut window_view) = cx.views.remove(&Entity::root()) {
+    if let Some(mut window_view) = cx.views().remove(&Entity::root()) {
         if let Some(window) = window_view.downcast_mut::<Window>() {
             cx.draw();
             window.swap_buffers();
         }
 
-        cx.views.insert(Entity::root(), window_view);
+        cx.views().insert(Entity::root(), window_view);
     }
 }

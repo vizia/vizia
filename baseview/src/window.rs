@@ -6,6 +6,7 @@ use baseview::{
 use raw_window_handle::HasRawWindowHandle;
 
 use crate::proxy::BaseviewProxy;
+use vizia_core::context::BackendContext;
 use vizia_core::prelude::*;
 
 /// Handles a vizia_baseview application
@@ -65,7 +66,7 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.environment.needs_rebuild = true;
+                context.environment().needs_rebuild = true;
                 context.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
                     context,
@@ -106,7 +107,7 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.environment.needs_rebuild = true;
+                context.environment().needs_rebuild = true;
                 context.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
                     context,
@@ -146,7 +147,7 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.environment.needs_rebuild = true;
+                context.environment().needs_rebuild = true;
                 context.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
                     context,

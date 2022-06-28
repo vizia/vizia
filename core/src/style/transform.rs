@@ -2,8 +2,6 @@
 
 use std::ops::{Index, IndexMut};
 
-use crate::prelude::*;
-
 /// A 2D transform matrix.
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct Transform2D(pub [f32; 6]);

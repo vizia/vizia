@@ -6,6 +6,7 @@ use raw_window_handle::HasRawWindowHandle;
 
 use crate::proxy::queue_get;
 use vizia_core::cache::BoundingBox;
+use vizia_core::context::BackendContext;
 use vizia_core::events::EventManager;
 use vizia_core::fonts;
 use vizia_core::prelude::*;
@@ -142,65 +143,67 @@ impl ApplicationRunner {
     ) -> Self {
         let event_manager = EventManager::new();
 
-        let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
+        let canvas = Canvas::new(renderer).expect("Cannot create canvas");
 
         // Assume scale for now until there is an event with a new one.
-        let scale = match scale_policy {
+        let scale_factor = match scale_policy {
             WindowScalePolicy::ScaleFactor(scale) => scale,
             WindowScalePolicy::SystemScaleFactor => 1.0,
         };
 
-        context.style.dpi_factor = scale;
+        context.add_main_window(&win_desc, canvas, scale_factor as f32);
 
-        let logical_size = win_desc.inner_size;
-        let physical_size = WindowSize {
-            width: (logical_size.width as f64 * scale).round() as u32,
-            height: (logical_size.height as f64 * scale).round() as u32,
-        };
+        // context.style().dpi_factor = scale;
 
-        canvas.set_size(physical_size.width, physical_size.height, 1.0);
+        // let logical_size = win_desc.inner_size;
+        // let physical_size = WindowSize {
+        //     width: (logical_size.width as f64 * scale).round() as u32,
+        //     height: (logical_size.height as f64 * scale).round() as u32,
+        // };
 
-        let regular_font = fonts::ROBOTO_REGULAR;
-        let bold_font = fonts::ROBOTO_BOLD;
-        let icon_font = fonts::ENTYPO;
-        let emoji_font = fonts::OPEN_SANS_EMOJI;
-        let arabic_font = fonts::AMIRI_REGULAR;
-        let material_font = fonts::MATERIAL_ICONS_REGULAR;
+        // canvas.set_size(physical_size.width, physical_size.height, 1.0);
 
-        context.add_font_mem("roboto", regular_font);
-        context.add_font_mem("roboto-bold", bold_font);
-        context.add_font_mem("icons", icon_font);
-        context.add_font_mem("emoji", emoji_font);
-        context.add_font_mem("arabic", arabic_font);
-        context.add_font_mem("material", material_font);
+        // let regular_font = fonts::ROBOTO_REGULAR;
+        // let bold_font = fonts::ROBOTO_BOLD;
+        // let icon_font = fonts::ENTYPO;
+        // let emoji_font = fonts::OPEN_SANS_EMOJI;
+        // let arabic_font = fonts::AMIRI_REGULAR;
+        // let material_font = fonts::MATERIAL_ICONS_REGULAR;
 
-        context.style.default_font = "roboto".to_string();
+        // context.add_font_mem("roboto", regular_font);
+        // context.add_font_mem("roboto-bold", bold_font);
+        // context.add_font_mem("icons", icon_font);
+        // context.add_font_mem("emoji", emoji_font);
+        // context.add_font_mem("arabic", arabic_font);
+        // context.add_font_mem("material", material_font);
 
-        //canvas.scale(scale as f32, scale as f32);
+        // context.style().default_font = "roboto".to_string();
 
-        context.style.width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
-        context.style.height.insert(Entity::root(), Units::Pixels(logical_size.height as f32));
+        // //canvas.scale(scale as f32, scale as f32);
 
-        context.style.disabled.insert(Entity::root(), false);
+        // context.style().width.insert(Entity::root(), Units::Pixels(logical_size.width as f32));
+        // context.style().height.insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
-        context.cache.set_width(Entity::root(), physical_size.width as f32);
-        context.cache.set_height(Entity::root(), physical_size.height as f32);
-        context.cache.set_opacity(Entity::root(), 1.0);
+        // context.style().disabled.insert(Entity::root(), false);
 
-        let mut bounding_box = BoundingBox::default();
-        bounding_box.w = physical_size.width as f32;
-        bounding_box.h = physical_size.height as f32;
+        // context.cache().set_width(Entity::root(), physical_size.width as f32);
+        // context.cache().set_height(Entity::root(), physical_size.height as f32);
+        // context.cache().set_opacity(Entity::root(), 1.0);
 
-        context.cache.set_clip_region(Entity::root(), bounding_box);
+        // let mut bounding_box = BoundingBox::default();
+        // bounding_box.w = physical_size.width as f32;
+        // bounding_box.h = physical_size.height as f32;
 
-        context.canvases.insert(Entity::root(), canvas);
+        // context.cache().set_clip_region(Entity::root(), bounding_box);
+
+        // context.canvases.insert(Entity::root(), canvas);
 
         ApplicationRunner {
             event_manager,
             context,
             should_redraw: true,
             scale_policy,
-            scale_factor: scale,
+            scale_factor,
         }
     }
 
@@ -294,10 +297,10 @@ impl ApplicationRunner {
 
         self.context.process_visual_updates();
 
-        if self.context.style.needs_redraw {
+        if self.context.style().needs_redraw {
             //     // TODO - Move this to EventManager
             self.should_redraw = true;
-            self.context.style.needs_redraw = false;
+            self.context.style().needs_redraw = false;
         }
     }
 
@@ -315,8 +318,8 @@ impl ApplicationRunner {
         match event {
             baseview::Event::Mouse(event) => match event {
                 baseview::MouseEvent::CursorMoved { position } => {
-                    let physical_posx = position.x * self.context.style.dpi_factor;
-                    let physical_posy = position.y * self.context.style.dpi_factor;
+                    let physical_posx = position.x * self.context.style().dpi_factor;
+                    let physical_posy = position.y * self.context.style().dpi_factor;
                     let cursorx = (physical_posx) as f32;
                     let cursory = (physical_posy) as f32;
                     self.context.dispatch_system_event(WindowEvent::MouseMove(cursorx, cursory));
@@ -362,16 +365,16 @@ impl ApplicationRunner {
 
                 match event.code {
                     Code::ShiftLeft | Code::ShiftRight => {
-                        self.context.modifiers.set(Modifiers::SHIFT, pressed)
+                        self.context.modifiers().set(Modifiers::SHIFT, pressed)
                     }
                     Code::ControlLeft | Code::ControlRight => {
-                        self.context.modifiers.set(Modifiers::CTRL, pressed)
+                        self.context.modifiers().set(Modifiers::CTRL, pressed)
                     }
                     Code::AltLeft | Code::AltRight => {
-                        self.context.modifiers.set(Modifiers::ALT, pressed)
+                        self.context.modifiers().set(Modifiers::ALT, pressed)
                     }
                     Code::MetaLeft | Code::MetaRight => {
-                        self.context.modifiers.set(Modifiers::LOGO, pressed)
+                        self.context.modifiers().set(Modifiers::LOGO, pressed)
                     }
                     _ => (),
                 }
@@ -410,7 +413,7 @@ impl ApplicationRunner {
                         WindowScalePolicy::SystemScaleFactor => window_info.scale(),
                     };
 
-                    self.context.style.dpi_factor = self.scale_factor;
+                    self.context.style().dpi_factor = self.scale_factor;
 
                     let logical_size = (
                         (window_info.physical_size().width as f64 / self.scale_factor),
@@ -421,22 +424,22 @@ impl ApplicationRunner {
                         (window_info.physical_size().width, window_info.physical_size().height);
 
                     self.context
-                        .style
+                        .style()
                         .width
                         .insert(Entity::root(), Units::Pixels(logical_size.0 as f32));
                     self.context
-                        .style
+                        .style()
                         .height
                         .insert(Entity::root(), Units::Pixels(logical_size.1 as f32));
 
-                    self.context.cache.set_width(Entity::root(), physical_size.0 as f32);
-                    self.context.cache.set_height(Entity::root(), physical_size.1 as f32);
+                    self.context.cache().set_width(Entity::root(), physical_size.0 as f32);
+                    self.context.cache().set_height(Entity::root(), physical_size.1 as f32);
 
                     let mut bounding_box = BoundingBox::default();
                     bounding_box.w = physical_size.0 as f32;
                     bounding_box.h = physical_size.1 as f32;
 
-                    self.context.cache.set_clip_region(Entity::root(), bounding_box);
+                    self.context.cache().set_clip_region(Entity::root(), bounding_box);
 
                     self.context.need_restyle();
                     self.context.need_relayout();
@@ -451,13 +454,13 @@ impl ApplicationRunner {
     }
 
     pub fn rebuild(&mut self, builder: &Option<Box<dyn Fn(&mut Context) + Send>>) {
-        if self.context.environment.needs_rebuild {
+        if self.context.environment().needs_rebuild {
             self.context.set_current(Entity::root());
             self.context.remove_children(Entity::root());
             if let Some(builder) = &builder {
                 (builder)(&mut self.context);
             }
-            self.context.environment.needs_rebuild = false;
+            self.context.environment().needs_rebuild = false;
         }
     }
 

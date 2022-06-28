@@ -1,10 +1,11 @@
-// mod build;
+mod build;
 mod draw;
 mod event;
 mod methods;
 mod proxy;
 
-use instant::{Duration, Instant};
+use femtovg::TextContext;
+use instant::Instant;
 use std::any::Any;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -13,55 +14,41 @@ use std::sync::Mutex;
 
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardProvider};
-use femtovg::TextContext;
 use fnv::FnvHashMap;
-use keyboard_types::Code;
-use morphorm::layout;
 use unic_langid::LanguageIdentifier;
 
+pub use build::*;
 pub use draw::*;
 pub use event::*;
 pub use proxy::*;
-// pub use build::*;
 
 use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
 use crate::id::IdManager;
 use crate::input::{Modifiers, MouseState};
-use crate::layout::geometry_changed;
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::ModelDataStore;
 use crate::storage::sparse_set::SparseSet;
 use crate::style::Style;
-use crate::systems::draw_system::draw_system;
-use crate::systems::hover_system::apply_hover;
-use crate::systems::image_system::image_system;
-use crate::systems::style_system::{
-    apply_clipping, apply_inline_inheritance, apply_shared_inheritance, apply_styles,
-    apply_text_constraints, apply_visibility, apply_z_ordering,
-};
-use crate::systems::transform_system::apply_transform;
-use crate::tree::{
-    focus_backward, focus_forward, is_focusable, TreeDepthIterator, TreeExt, TreeIterator,
-};
+use crate::tree::TreeExt;
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
-const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
+// const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
 /// The main storage and control object for a Vizia application.
 pub struct Context {
     /// Creates and destroys entities.
     pub(crate) entity_manager: IdManager<Entity>,
     /// The tree of entities.
-    pub tree: Tree,
+    pub(crate) tree: Tree,
     /// The current entity being processed.
-    pub current: Entity,
+    pub(crate) current: Entity,
     /// TODO make this private when there's no longer a need to mutate views after building
     /// List of views.
-    pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
     /// List of model data.
     pub(crate) data: SparseSet<ModelDataStore>,
     /// The event queue.
@@ -69,34 +56,34 @@ pub struct Context {
 
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
-    pub style: Style,
-    pub cache: CachedData,
-    pub draw_cache: DrawCache,
+    pub(crate) style: Style,
+    pub(crate) cache: CachedData,
+    pub(crate) draw_cache: DrawCache,
 
-    pub canvases: HashMap<Entity, femtovg::Canvas<femtovg::renderer::OpenGl>>,
+    pub(crate) canvases: HashMap<Entity, femtovg::Canvas<femtovg::renderer::OpenGl>>,
 
-    pub environment: Environment,
+    pub(crate) environment: Environment,
 
-    pub mouse: MouseState,
-    pub modifiers: Modifiers,
+    pub(crate) mouse: MouseState,
+    pub(crate) modifiers: Modifiers,
 
-    pub captured: Entity,
+    pub(crate) captured: Entity,
     pub(crate) hovered: Entity,
-    pub focused: Entity,
-    pub cursor_icon_locked: bool,
+    pub(crate) focused: Entity,
+    pub(crate) cursor_icon_locked: bool,
 
-    pub resource_manager: ResourceManager,
+    pub(crate) resource_manager: ResourceManager,
 
-    pub text_context: TextContext,
+    pub(crate) text_context: TextContext,
 
-    pub event_proxy: Option<Box<dyn EventProxy>>,
+    pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
     #[cfg(feature = "clipboard")]
-    pub clipboard: Box<dyn ClipboardProvider>,
+    pub(crate) clipboard: Box<dyn ClipboardProvider>,
 
-    pub click_time: Instant,
-    pub double_click: bool,
-    pub click_pos: (f32, f32),
+    pub(crate) click_time: Instant,
+    pub(crate) double_click: bool,
+    pub(crate) click_pos: (f32, f32),
 }
 
 impl Context {
@@ -145,14 +132,6 @@ impl Context {
         result.add_theme(DEFAULT_THEME);
 
         result
-    }
-
-    pub fn draw(&mut self) {
-        draw_system(self);
-    }
-
-    pub fn load_images(&mut self) {
-        image_system(self);
     }
 
     /// Returns the current entity.
@@ -210,23 +189,6 @@ impl Context {
         self.need_restyle();
         self.style.needs_relayout = true;
         self.style.needs_redraw = true;
-    }
-
-    /// You should not call this method unless you are writing a windowing backend, in which case
-    /// you should consult the existing windowing backends for usage information.
-    pub fn set_event_proxy(&mut self, proxy: Box<dyn EventProxy>) {
-        if self.event_proxy.is_some() {
-            panic!("Set the event proxy twice. This should never happen.");
-        }
-
-        self.event_proxy = Some(proxy);
-    }
-
-    /// You should not call this method unless you are writing a windowing backend, in which case
-    /// you should consult the existing windowing backends for usage information.
-    #[cfg(feature = "clipboard")]
-    pub fn set_clipboard_provider(&mut self, clipboard: Box<dyn ClipboardProvider>) {
-        self.clipboard = clipboard;
     }
 
     /// Get the contents of the system clipboard. This may fail for a variety of backend-specific
@@ -321,11 +283,6 @@ impl Context {
         self.event_queue.push_back(event);
     }
 
-    /// Check whether there are any events in the queue waiting for the next event dispatch cycle.
-    pub fn has_queued_events(&self) -> bool {
-        !self.event_queue.is_empty()
-    }
-
     /// Add a listener to an entity.
     ///
     /// A listener can be used to handle events which would not normally propagate to the entity.
@@ -362,166 +319,11 @@ impl Context {
         self.style.default_font = name.to_string();
     }
 
-    /// Ensure all FontOrId entires are loaded into the contexts and become Ids.
-    pub fn synchronize_fonts(&mut self) {
-        if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
-            for (name, font) in self.resource_manager.fonts.iter_mut() {
-                match font {
-                    FontOrId::Font(data) => {
-                        let id1 = canvas
-                            .add_font_mem(&data.clone())
-                            .expect(&format!("Failed to load font file for: {}", name));
-                        let id2 = self.text_context.add_font_mem(&data.clone()).expect("failed");
-                        if id1 != id2 {
-                            panic!(
-                                "Fonts in canvas must have the same id as fonts in the text context"
-                            );
-                        }
-                        *font = FontOrId::Id(id1);
-                    }
-
-                    _ => {}
-                }
-            }
-        }
-    }
-
     pub fn add_theme(&mut self, theme: &str) {
         self.resource_manager.themes.push(theme.to_owned());
 
         self.reload_styles().expect("Failed to reload styles");
     }
-
-    pub fn remove_user_themes(&mut self) {
-        self.resource_manager.themes.clear();
-
-        self.add_theme(DEFAULT_LAYOUT);
-        self.add_theme(DEFAULT_THEME);
-    }
-
-    pub fn add_stylesheet(&mut self, path: &str) -> Result<(), std::io::Error> {
-        let style_string = std::fs::read_to_string(path)?;
-        self.resource_manager.stylesheets.push(path.to_owned());
-        self.style.parse_theme(&style_string);
-
-        Ok(())
-    }
-
-    pub fn has_animations(&self) -> bool {
-        self.style.display.has_animations()
-            | self.style.visibility.has_animations()
-            | self.style.opacity.has_animations()
-            | self.style.rotate.has_animations()
-            | self.style.translate.has_animations()
-            | self.style.scale.has_animations()
-            | self.style.border_width.has_animations()
-            | self.style.border_color.has_animations()
-            | self.style.border_top_left_radius.has_animations()
-            | self.style.border_top_right_radius.has_animations()
-            | self.style.border_bottom_left_radius.has_animations()
-            | self.style.border_bottom_right_radius.has_animations()
-            | self.style.background_color.has_animations()
-            | self.style.outer_shadow_h_offset.has_animations()
-            | self.style.outer_shadow_v_offset.has_animations()
-            | self.style.outer_shadow_blur.has_animations()
-            | self.style.outer_shadow_color.has_animations()
-            | self.style.font_color.has_animations()
-            | self.style.font_size.has_animations()
-            | self.style.left.has_animations()
-            | self.style.right.has_animations()
-            | self.style.top.has_animations()
-            | self.style.bottom.has_animations()
-            | self.style.width.has_animations()
-            | self.style.height.has_animations()
-            | self.style.max_width.has_animations()
-            | self.style.max_height.has_animations()
-            | self.style.min_width.has_animations()
-            | self.style.min_height.has_animations()
-            | self.style.min_left.has_animations()
-            | self.style.max_left.has_animations()
-            | self.style.min_right.has_animations()
-            | self.style.max_right.has_animations()
-            | self.style.min_top.has_animations()
-            | self.style.max_top.has_animations()
-            | self.style.min_bottom.has_animations()
-            | self.style.max_bottom.has_animations()
-            | self.style.row_between.has_animations()
-            | self.style.col_between.has_animations()
-            | self.style.child_left.has_animations()
-            | self.style.child_right.has_animations()
-            | self.style.child_top.has_animations()
-            | self.style.child_bottom.has_animations()
-    }
-
-    pub fn apply_animations(&mut self) {
-        let time = instant::Instant::now();
-
-        self.style.display.tick(time);
-        self.style.visibility.tick(time);
-        self.style.opacity.tick(time);
-        self.style.rotate.tick(time);
-        self.style.translate.tick(time);
-        self.style.scale.tick(time);
-        self.style.border_width.tick(time);
-        self.style.border_color.tick(time);
-        self.style.border_top_left_radius.tick(time);
-        self.style.border_top_right_radius.tick(time);
-        self.style.border_bottom_left_radius.tick(time);
-        self.style.border_bottom_right_radius.tick(time);
-        self.style.background_color.tick(time);
-        self.style.outer_shadow_h_offset.tick(time);
-        self.style.outer_shadow_v_offset.tick(time);
-        self.style.outer_shadow_blur.tick(time);
-        self.style.outer_shadow_color.tick(time);
-        self.style.font_color.tick(time);
-        self.style.font_size.tick(time);
-        self.style.left.tick(time);
-        self.style.right.tick(time);
-        self.style.top.tick(time);
-        self.style.bottom.tick(time);
-        self.style.width.tick(time);
-        self.style.height.tick(time);
-        self.style.max_width.tick(time);
-        self.style.max_height.tick(time);
-        self.style.min_width.tick(time);
-        self.style.min_height.tick(time);
-        self.style.min_left.tick(time);
-        self.style.max_left.tick(time);
-        self.style.min_right.tick(time);
-        self.style.max_right.tick(time);
-        self.style.min_top.tick(time);
-        self.style.max_top.tick(time);
-        self.style.min_bottom.tick(time);
-        self.style.max_bottom.tick(time);
-        self.style.row_between.tick(time);
-        self.style.col_between.tick(time);
-        self.style.child_left.tick(time);
-        self.style.child_right.tick(time);
-        self.style.child_top.tick(time);
-        self.style.child_bottom.tick(time);
-
-        self.style.needs_relayout = true;
-    }
-
-    /// Adds a new property animation returning an animation builder
-    ///
-    /// # Example
-    /// Create an animation which animates the `left` property from 0 to 100 pixels in 5 seconds
-    /// and play the animation on an entity:
-    /// ```ignore
-    /// let animation_id = cx.add_animation(instant::Duration::from_secs(5))
-    ///     .add_keyframe(0.0, |keyframe| keyframe.set_left(Pixels(0.0)))
-    ///     .add_keyframe(1.0, |keyframe| keyframe.set_left(Pixels(100.0)))
-    ///     .build();
-    /// ```
-    pub fn add_animation(&mut self, duration: std::time::Duration) -> AnimationBuilder {
-        let id = self.style.animation_manager.create();
-        AnimationBuilder::new(id, self, duration)
-    }
-
-    // pub fn play_animation(&mut self, animation: Animation) {
-    //     self.current.play_animation(self, animation);
-    // }
 
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
         if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
@@ -558,6 +360,41 @@ impl Context {
 
         Ok(())
     }
+
+    pub fn remove_user_themes(&mut self) {
+        self.resource_manager.themes.clear();
+
+        self.add_theme(DEFAULT_LAYOUT);
+        self.add_theme(DEFAULT_THEME);
+    }
+
+    pub fn add_stylesheet(&mut self, path: &str) -> Result<(), std::io::Error> {
+        let style_string = std::fs::read_to_string(path)?;
+        self.resource_manager.stylesheets.push(path.to_owned());
+        self.style.parse_theme(&style_string);
+
+        Ok(())
+    }
+
+    /// Adds a new property animation returning an animation builder
+    ///
+    /// # Example
+    /// Create an animation which animates the `left` property from 0 to 100 pixels in 5 seconds
+    /// and play the animation on an entity:
+    /// ```ignore
+    /// let animation_id = cx.add_animation(instant::Duration::from_secs(5))
+    ///     .add_keyframe(0.0, |keyframe| keyframe.set_left(Pixels(0.0)))
+    ///     .add_keyframe(1.0, |keyframe| keyframe.set_left(Pixels(100.0)))
+    ///     .build();
+    /// ```
+    pub fn add_animation(&mut self, duration: std::time::Duration) -> AnimationBuilder {
+        let id = self.style.animation_manager.create();
+        AnimationBuilder::new(id, self, duration)
+    }
+
+    // pub fn play_animation(&mut self, animation: Animation) {
+    //     self.current.play_animation(self, animation);
+    // }
 
     pub fn set_image_loader<F: 'static + Fn(&mut Context, &str)>(&mut self, loader: F) {
         self.resource_manager.image_loader = Some(Box::new(loader));
@@ -617,298 +454,6 @@ impl Context {
         };
 
         std::thread::spawn(move || target(&mut cxp));
-    }
-
-    /// For each binding or data observer, check if its data has changed, and if so, rerun its
-    /// builder/body.
-    pub fn process_data_updates(&mut self) {
-        let mut observers: Vec<Entity> = Vec::new();
-
-        for entity in self.tree.into_iter() {
-            if let Some(model_store) = self.data.get_mut(entity) {
-                for (_, model) in model_store.data.iter() {
-                    for lens in model_store.lenses_dup.iter_mut() {
-                        if lens.update(model) {
-                            observers.extend(lens.observers().iter())
-                        }
-                    }
-
-                    for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                        if lens.update(model) {
-                            observers.extend(lens.observers().iter());
-                        }
-                    }
-                }
-
-                for lens in model_store.lenses_dup.iter_mut() {
-                    if let Some(view_handler) = self.views.get(&entity) {
-                        if lens.update_view(view_handler) {
-                            observers.extend(lens.observers().iter())
-                        }
-                    }
-                }
-
-                for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                    if let Some(view_handler) = self.views.get(&entity) {
-                        if lens.update_view(view_handler) {
-                            observers.extend(lens.observers().iter())
-                        }
-                    }
-                }
-            }
-        }
-
-        for img in self.resource_manager.images.values_mut() {
-            if img.dirty {
-                observers.extend(img.observers.iter());
-                img.dirty = false;
-            }
-        }
-
-        for observer in observers.iter() {
-            if let Some(mut view) = self.views.remove(observer) {
-                let prev = self.current;
-                self.current = *observer;
-                view.body(self);
-                self.current = prev;
-                self.views.insert(*observer, view);
-            }
-        }
-    }
-
-    pub fn process_style_updates(&mut self) {
-        // Not ideal
-        let tree = self.tree.clone();
-
-        apply_inline_inheritance(self, &tree);
-
-        if self.style.needs_restyle {
-            apply_styles(self, &tree);
-            self.style.needs_restyle = false;
-        }
-
-        apply_shared_inheritance(self, &tree);
-    }
-
-    /// Massages the style system until everything is coherent
-    pub fn process_visual_updates(&mut self) {
-        // Not ideal
-        let tree = self.tree.clone();
-
-        apply_z_ordering(self, &tree);
-        apply_visibility(self, &tree);
-
-        // Layout
-        if self.style.needs_relayout {
-            apply_text_constraints(self, &tree);
-
-            // hack!
-            let mut store = (Style::default(), TextContext::default(), ResourceManager::default());
-            std::mem::swap(&mut store.0, &mut self.style);
-            std::mem::swap(&mut store.1, &mut self.text_context);
-            std::mem::swap(&mut store.2, &mut self.resource_manager);
-
-            layout(&mut self.cache, &self.tree, &store);
-            std::mem::swap(&mut store.0, &mut self.style);
-            std::mem::swap(&mut store.1, &mut self.text_context);
-            std::mem::swap(&mut store.2, &mut self.resource_manager);
-
-            self.style.needs_relayout = false;
-        }
-
-        apply_transform(self, &tree);
-        apply_hover(self);
-        apply_clipping(self, &tree);
-
-        // Emit any geometry changed events
-        geometry_changed(self, &tree);
-    }
-
-    /// This method is in charge of receiving raw WindowEvents and dispatching them to the
-    /// appropriate points in the tree.
-    pub fn dispatch_system_event(&mut self, event: WindowEvent) {
-        match &event {
-            WindowEvent::MouseMove(x, y) => {
-                self.mouse.cursorx = *x;
-                self.mouse.cursory = *y;
-
-                apply_hover(self);
-
-                self.dispatch_direct_or_hovered(event, self.captured, false);
-            }
-            WindowEvent::MouseDown(button) => {
-                match button {
-                    MouseButton::Left => self.mouse.left.state = MouseButtonState::Pressed,
-                    MouseButton::Right => self.mouse.right.state = MouseButtonState::Pressed,
-                    MouseButton::Middle => self.mouse.middle.state = MouseButtonState::Pressed,
-                    _ => {}
-                }
-
-                let new_click_time = Instant::now();
-                let click_duration = new_click_time - self.click_time;
-                let new_click_pos = (self.mouse.cursorx, self.mouse.cursory);
-
-                if click_duration <= DOUBLE_CLICK_INTERVAL && new_click_pos == self.click_pos {
-                    if !self.double_click {
-                        self.dispatch_direct_or_hovered(
-                            WindowEvent::MouseDoubleClick(*button),
-                            self.captured,
-                            true,
-                        );
-                        self.double_click = true;
-                    }
-                } else {
-                    self.double_click = false;
-                }
-
-                self.click_time = new_click_time;
-                self.click_pos = new_click_pos;
-
-                match button {
-                    MouseButton::Left => {
-                        self.mouse.left.pos_down = (self.mouse.cursorx, self.mouse.cursory);
-                        self.mouse.left.pressed = self.hovered;
-                    }
-                    MouseButton::Right => {
-                        self.mouse.right.pos_down = (self.mouse.cursorx, self.mouse.cursory);
-                        self.mouse.right.pressed = self.hovered;
-                    }
-                    MouseButton::Middle => {
-                        self.mouse.middle.pos_down = (self.mouse.cursorx, self.mouse.cursory);
-                        self.mouse.middle.pressed = self.hovered;
-                    }
-                    _ => {}
-                }
-
-                self.dispatch_direct_or_hovered(event, self.captured, true);
-            }
-            WindowEvent::MouseUp(button) => {
-                match button {
-                    MouseButton::Left => {
-                        self.mouse.left.pos_up = (self.mouse.cursorx, self.mouse.cursory);
-                        self.mouse.left.released = self.hovered;
-                        self.mouse.left.state = MouseButtonState::Released;
-                    }
-                    MouseButton::Right => {
-                        self.mouse.right.pos_up = (self.mouse.cursorx, self.mouse.cursory);
-                        self.mouse.right.released = self.hovered;
-                        self.mouse.right.state = MouseButtonState::Released;
-                    }
-                    MouseButton::Middle => {
-                        self.mouse.middle.pos_up = (self.mouse.cursorx, self.mouse.cursory);
-                        self.mouse.middle.released = self.hovered;
-                        self.mouse.middle.state = MouseButtonState::Released;
-                    }
-                    _ => {}
-                }
-                self.dispatch_direct_or_hovered(event, self.captured, true);
-            }
-            WindowEvent::MouseScroll(_, _) => {
-                self.event_queue
-                    .push_back(Event::new(event).target(self.hovered).propagate(Propagation::Up));
-            }
-            WindowEvent::KeyDown(code, _) => {
-                #[cfg(debug_assertions)]
-                if *code == Code::KeyH {
-                    for entity in self.tree.into_iter() {
-                        println!("Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&self.tree), self.views.get(&entity).map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")), self.cache.get_posx(entity), self.cache.get_posy(entity), self.cache.get_width(entity), self.cache.get_height(entity));
-                    }
-                }
-
-                #[cfg(debug_assertions)]
-                if *code == Code::KeyI {
-                    let iter = TreeDepthIterator::full(&self.tree);
-                    for (entity, level) in iter {
-                        if let Some(element_name) = self.views.get(&entity).unwrap().element() {
-                            println!(
-                                "{:indent$} {} {} {:?} {:?} {:?} {:?}",
-                                "",
-                                entity,
-                                element_name,
-                                self.cache.get_visibility(entity),
-                                self.cache.get_display(entity),
-                                self.cache.get_bounds(entity),
-                                self.cache.get_clip_region(entity),
-                                indent = level
-                            );
-                        }
-                    }
-                }
-
-                if *code == Code::F5 {
-                    self.reload_styles().unwrap();
-                }
-
-                if *code == Code::Tab {
-                    let focused = self.focused;
-                    if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {
-                        pseudo_classes.set(PseudoClass::FOCUS, false);
-                    }
-
-                    if self.modifiers.contains(Modifiers::SHIFT) {
-                        let prev_focused = if let Some(prev_focused) =
-                            focus_backward(&self.tree, &self.style, self.focused)
-                        {
-                            prev_focused
-                        } else {
-                            TreeIterator::full(&self.tree)
-                                .filter(|node| is_focusable(&self.style, *node))
-                                .next_back()
-                                .unwrap_or(Entity::root())
-                        };
-
-                        if prev_focused != self.focused {
-                            self.event_queue
-                                .push_back(Event::new(WindowEvent::FocusOut).target(self.focused));
-                            self.event_queue
-                                .push_back(Event::new(WindowEvent::FocusIn).target(prev_focused));
-                            self.focused = prev_focused;
-                        }
-                    } else {
-                        let next_focused = if let Some(next_focused) =
-                            focus_forward(&self.tree, &self.style, self.focused)
-                        {
-                            next_focused
-                        } else {
-                            Entity::root()
-                        };
-
-                        if next_focused != self.focused {
-                            self.event_queue
-                                .push_back(Event::new(WindowEvent::FocusOut).target(self.focused));
-                            self.event_queue
-                                .push_back(Event::new(WindowEvent::FocusIn).target(next_focused));
-                            self.focused = next_focused;
-                        }
-                    }
-
-                    let focused = self.focused;
-                    if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {
-                        pseudo_classes.set(PseudoClass::FOCUS, true);
-                    }
-
-                    self.style.needs_restyle = true;
-                    self.style.needs_relayout = true;
-                    self.style.needs_redraw = true;
-                }
-
-                self.dispatch_direct_or_hovered(event, self.focused, true);
-            }
-            WindowEvent::KeyUp(_, _) | WindowEvent::CharInput(_) => {
-                self.dispatch_direct_or_hovered(event, self.focused, true);
-            }
-            _ => {}
-        }
-    }
-
-    fn dispatch_direct_or_hovered(&mut self, event: WindowEvent, target: Entity, root: bool) {
-        if target != Entity::null() {
-            self.event_queue
-                .push_back(Event::new(event).target(target).propagate(Propagation::Direct));
-        } else if self.hovered != Entity::root() || root {
-            self.event_queue
-                .push_back(Event::new(event).target(self.hovered).propagate(Propagation::Up));
-        }
     }
 }
 

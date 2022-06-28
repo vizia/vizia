@@ -9,7 +9,6 @@ use winit::{dpi::*, window::WindowId};
 
 pub struct Window {
     pub id: WindowId,
-    //pub canvas: Canvas<OpenGl>,
     #[cfg(not(target_arch = "wasm32"))]
     handle: glutin::WindowedContext<glutin::PossiblyCurrent>,
     #[cfg(target_arch = "wasm32")]
@@ -80,10 +79,9 @@ impl Window {
 #[cfg(not(target_arch = "wasm32"))]
 impl Window {
     pub fn new(
-        cx: &mut Context,
         events_loop: &EventLoop<Event>,
         window_description: &WindowDescription,
-    ) -> Self {
+    ) -> (Self, Canvas<OpenGl>) {
         let window_builder = WindowBuilder::new();
 
         //Windows COM doesn't play nicely with winit's drag and drop right now
@@ -116,12 +114,12 @@ impl Window {
         canvas.set_size(size.width as u32, size.height as u32, 1.0);
         canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
 
-        cx.canvases.insert(Entity::root(), canvas);
+        //cx.canvases.insert(Entity::root(), canvas);
 
         // Build our window
         let window = Window { id: handle.window().id(), handle };
 
-        window
+        (window, canvas)
     }
 
     pub fn window(&self) -> &winit::window::Window {
