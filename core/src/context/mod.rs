@@ -214,14 +214,14 @@ impl Context {
         self.style.pseudo_classes.get(entity).copied().unwrap_or_default().contains(cls)
     }
 
-    pub fn remove_children(&mut self, entity: Entity) {
+    pub(crate) fn remove_children(&mut self, entity: Entity) {
         let children = entity.child_iter(&self.tree).collect::<Vec<_>>();
         for child in children.into_iter() {
             self.remove(child);
         }
     }
 
-    pub fn remove(&mut self, entity: Entity) {
+    pub(crate) fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         if !delete_list.is_empty() {
