@@ -1,6 +1,6 @@
-use std::collections::{HashMap, HashSet};
-
+use crate::id::GenerationalId;
 use morphorm::{LayoutType, PositionType, Units};
+use std::collections::{HashMap, HashSet};
 
 use cssparser::{Parser, ParserInput};
 
@@ -69,7 +69,7 @@ impl Default for Abilities {
     }
 }
 
-/// Stores the style properties of all entities in the application. To set properties on entities see the [PropSet] trait.
+/// Stores the style properties of all entities in the application.
 #[derive(Default)]
 pub struct Style {
     pub(crate) rule_manager: IdManager<Rule>,

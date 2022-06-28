@@ -279,24 +279,3 @@ impl Data for Color {
         *self == *other
     }
 }
-
-#[cfg(feature = "meadowlark")]
-impl Data for rusty_daw_core::MusicalTime {
-    fn same(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
-#[cfg(feature = "meadowlark")]
-impl Data for rusty_daw_core::SuperFrames {
-    fn same(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
-#[cfg(feature = "meadowlark")]
-impl Data for rusty_daw_core::Seconds {
-    fn same(&self, other: &Self) -> bool {
-        self == other
-    }
-}

@@ -250,16 +250,16 @@ impl ApplicationRunner {
 
                 match event.code {
                     Code::ShiftLeft | Code::ShiftRight => {
-                        self.context.modifiers().set(Modifiers::SHIFT, pressed)
+                        self.context.modifiers_mut().set(Modifiers::SHIFT, pressed)
                     }
                     Code::ControlLeft | Code::ControlRight => {
-                        self.context.modifiers().set(Modifiers::CTRL, pressed)
+                        self.context.modifiers_mut().set(Modifiers::CTRL, pressed)
                     }
                     Code::AltLeft | Code::AltRight => {
-                        self.context.modifiers().set(Modifiers::ALT, pressed)
+                        self.context.modifiers_mut().set(Modifiers::ALT, pressed)
                     }
                     Code::MetaLeft | Code::MetaRight => {
-                        self.context.modifiers().set(Modifiers::LOGO, pressed)
+                        self.context.modifiers_mut().set(Modifiers::LOGO, pressed)
                     }
                     _ => (),
                 }

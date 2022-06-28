@@ -6,6 +6,7 @@ use cssparser::{
 };
 
 use crate::animation::Transition;
+use crate::id::GenerationalId;
 use crate::style::color::Color;
 use crate::style::property::Property;
 use crate::style::selector::{Selector, SelectorRelation};

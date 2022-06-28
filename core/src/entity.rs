@@ -1,12 +1,4 @@
-use crate::id::GenerationalId;
-use std::cmp::{Eq, PartialEq};
-use std::hash::Hash;
-
-const ENTITY_INDEX_BITS: u32 = 24;
-const ENTITY_INDEX_MASK: u32 = (1 << ENTITY_INDEX_BITS) - 1;
-
-const ENTITY_GENERATION_BITS: u32 = 8;
-const ENTITY_GENERATION_MASK: u32 = (1 << ENTITY_GENERATION_BITS) - 1;
+use crate::id::impl_generational_id;
 
 /// An entity is an identifier used to reference a view; to get/set properties in the context.
 ///
@@ -15,63 +7,16 @@ const ENTITY_GENERATION_MASK: u32 = (1 << ENTITY_GENERATION_BITS) - 1;
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Entity(u32);
 
-impl Default for Entity {
-    fn default() -> Self {
-        Entity::null()
-    }
-}
-
-impl std::fmt::Display for Entity {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.index())
-    }
-}
-
-impl std::fmt::Debug for Entity {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Entity {{index: {}, generation: {}}}", self.index(), self.generation())
-    }
-}
-
 impl Entity {
-    /// Creates a null entity
+    /// Creates a new root entity.
     ///
-    /// A null entity can be used as a placeholder within a widget struct but cannot be used to get/set properties
-    pub fn null() -> Entity {
-        Entity(u32::MAX)
-    }
-
-    /// Creates a root entity
-    ///
-    /// The root entity represents the main window and is always valid.
-    /// The root entity can be used to set properties on the primary window, such as background color,
-    /// as well as sending events to the window such as Restyle and Redraw events.
-    pub fn root() -> Entity {
-        Entity(0)
-    }
-
-    /// Creates a new entity with a given index and generation
-    pub(crate) fn new(index: u32, generation: u32) -> Entity {
-        assert!(index < ENTITY_INDEX_MASK);
-        assert!(generation < ENTITY_GENERATION_MASK);
-        Entity(index | generation << ENTITY_INDEX_BITS)
+    /// The root entity represents the main window and is always valid. It can be used to set
+    /// properties on the primary window, such as background color, as well as sending events
+    /// to the window such as [`Restyle`](crate::prelude::WindowEvent::Restyle) and
+    /// [`Redraw`](crate::prelude::WindowEvent::Redraw) events.
+    pub fn root() -> Self {
+        Self(0)
     }
 }
 
-impl GenerationalId for Entity {
-    fn new(index: usize, generation: usize) -> Self {
-        Entity::new(index as u32, generation as u32)
-    }
-
-    fn index(&self) -> usize {
-        (self.0 & ENTITY_INDEX_MASK) as usize
-    }
-
-    fn generation(&self) -> u8 {
-        ((self.0 >> ENTITY_INDEX_BITS) & ENTITY_GENERATION_MASK) as u8
-    }
-
-    fn is_null(&self) -> bool {
-        self.0 == u32::MAX
-    }
-}
+impl_generational_id!(Entity);
