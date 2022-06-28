@@ -270,7 +270,6 @@ impl Style {
                     }
                     Err(parse_error) => {
                         let style_parse_error = StyleParseError(parse_error.0);
-                        println!("{}", style_parse_error);
                         None
                     }
                 }
@@ -859,8 +858,6 @@ impl Style {
                 }
             }
         }
-        // println!("{:?}", self.rules);
-        // println!("{:?}", self.child_left.shared_data);
     }
 
     fn add_transition<T: Default + Interpolator>(

@@ -81,10 +81,6 @@ impl EventManager {
                 continue 'events;
             }
 
-            // if event.trace {
-            //     println!("Target: {} Parents: {:?} Tree: {:?}", target, target.parent_iter(&self.tree).collect::<Vec<_>>(), self.tree.parent);
-            // }
-
             // Propagate up from target to root (not including target)
             if event.meta.propagation == Propagation::Up {
                 // Walk up the tree from parent to parent

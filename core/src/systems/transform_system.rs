@@ -3,10 +3,7 @@ use crate::prelude::*;
 use crate::style::Transform2D;
 
 pub fn apply_transform(cx: &mut Context, tree: &Tree) {
-    //println!("Apply Transform");
     for entity in tree.into_iter() {
-        //println!("Entity: {}", entity);
-
         if entity == Entity::root() {
             continue;
         }
@@ -35,7 +32,6 @@ pub fn apply_transform(cx: &mut Context, tree: &Tree) {
             cx.cache.set_rotate(entity, (rotate).to_radians());
             cx.cache.set_translate(entity, (-x, -y));
         }
-        //println!("End");
 
         if let Some((scalex, scaley)) = cx.style.scale.get(entity).copied() {
             let x = bounds.x + (bounds.w / 2.0);

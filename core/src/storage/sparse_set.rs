@@ -96,9 +96,6 @@ impl<T, D: DenseIndex> SparseSetGeneric<T, D> {
 
     /// Returns a reference to the data for a given key if it exists
     pub fn get<I: GenerationalId>(&self, key: I) -> Option<&T> {
-        // if self.dense_idx(key).is_none() {
-        //     println!("Failed: {}", key.index());
-        // }
         self.dense_idx(key).map(|dense_idx| &self.dense[dense_idx.index()].value)
     }
 
@@ -231,7 +228,6 @@ mod tests {
 
         let ret = sparse_set.remove(Entity::root());
         assert_eq!(ret, Some(42));
-        println!("{:?}", sparse_set);
     }
 
     /// Test removing first of two items
@@ -251,7 +247,6 @@ mod tests {
 
         let ret = sparse_set.remove(Entity::root());
         assert_eq!(ret, Some(42));
-        println!("{:?}", sparse_set);
     }
 
     /// Test removing last of two items
@@ -271,7 +266,6 @@ mod tests {
 
         let ret = sparse_set.remove(Entity::new(1, 0));
         assert_eq!(ret, Some(69));
-        println!("{:?}", sparse_set);
     }
 
     /// Test removing middle of three items
@@ -295,7 +289,6 @@ mod tests {
 
         let ret = sparse_set.remove(Entity::new(1, 0));
         assert_eq!(ret, Some(69));
-        println!("{:?}", sparse_set);
     }
 
     /// Test removing item when the sparse array is actually sparse
@@ -338,6 +331,5 @@ mod tests {
         assert_eq!(ret, Some(69));
 
         sparse_set.insert(Entity::new(12, 1), 77).unwrap();
-        println!("{:?}", sparse_set);
     }
 }

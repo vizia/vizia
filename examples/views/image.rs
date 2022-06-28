@@ -22,7 +22,6 @@ fn main() {
     Application::new(|cx| {
         cx.add_theme(STYLE);
         cx.set_image_loader(|cx, path| {
-            println!("Call image loader for path: {}", path);
             if path.starts_with("https://") {
                 let path = path.to_string();
                 cx.spawn(move |cx| {

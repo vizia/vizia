@@ -54,10 +54,7 @@ impl LinearGradient {
     pub fn get_stops(&self, _parent_length: f32) -> Vec<(f32, Color)> {
         self.stops
             .iter()
-            .map(|stop| {
-                //println!("Stop: {:?}", stop.position.value_or(parent_length, 0.0));
-                (stop.position.value_or(1.0, 0.0), stop.color)
-            })
+            .map(|stop| (stop.position.value_or(1.0, 0.0), stop.color))
             .collect::<Vec<_>>()
     }
 }

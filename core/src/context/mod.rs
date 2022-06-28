@@ -9,6 +9,7 @@ use instant::Instant;
 use std::any::Any;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
+#[cfg(feature = "clipboard")]
 use std::error::Error;
 use std::sync::Mutex;
 
@@ -406,7 +407,6 @@ impl Context {
         image: image::DynamicImage,
         policy: ImageRetentionPolicy,
     ) {
-        println!("Load image: {}", path);
         match self.resource_manager.images.entry(path) {
             Entry::Occupied(mut occ) => {
                 occ.get_mut().image = ImageOrId::Image(
@@ -417,7 +417,6 @@ impl Context {
                 occ.get_mut().retention_policy = policy;
             }
             Entry::Vacant(vac) => {
-                println!("Insert the image into resource manager");
                 vac.insert(StoredImage {
                     image: ImageOrId::Image(
                         image,
@@ -482,7 +481,6 @@ impl DataContext for Context {
         }
 
         for entity in self.current.parent_iter(&self.tree) {
-            //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
             if let Some(data_list) = self.data.get(entity) {
                 for (_, model) in data_list.data.iter() {
                     if let Some(data) = model.downcast_ref::<T>() {

@@ -62,7 +62,6 @@ pub trait View: 'static + Sized {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        //println!("{}", debug(&mut context, entity));
         let entity = cx.current();
 
         let bounds = cx.cache.get_bounds(entity);
@@ -447,8 +446,6 @@ pub trait View: 'static + Sized {
 
         // Fill the quad
         canvas.fill_path(&mut path, paint);
-
-        //println!("{:.2?} seconds for whatever you did.", start.elapsed());
 
         // Draw border
         let mut paint = Paint::color(border_color);

@@ -128,20 +128,9 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
         let move_virtual_slider = |self_ref: &mut Self, cx: &mut EventContext, new_normal: f32| {
             self_ref.continuous_normal = new_normal.clamp(0.0, 1.0);
 
-            // TODO - Remove when done
-            //println!("Normalized: {}, Display: {}", self_ref.normalized_value, self_ref.map.normalized_to_display(self_ref.normalized_value));
-
             if let Some(callback) = &self_ref.on_changing {
                 (callback)(cx, self_ref.continuous_normal);
             }
-
-            //entity.emit(cx, SliderEvent::ValueChanged(self_ref.normalized_value));
-
-            // if let Some(track) = cx.query::<ArcTrack>(self_ref.value_track) {
-            //     track.normalized_value = self_ref.normalized_value;
-            // }
-
-            //Entity::root().redraw(cx);
         };
 
         event.map(|window_event, _| match window_event {

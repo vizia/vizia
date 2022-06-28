@@ -298,7 +298,6 @@ where
     }
 
     pub fn play_animation(&mut self, entity: Entity, animation: Animation) {
-        //println!("Play Animation: {:?}", animation);
         let entity_index = entity.index();
 
         if !self.animations.contains(animation) {
@@ -344,13 +343,10 @@ where
                     );
                     anim_state.entities.remove(&entity);
                 }
-                //println!("Already playing: {:?}", anim_state);
-                //anim_state.play(entity);
             }
             //else {
             // Safe to unwrap because already checked that the animation exists
             let mut anim_state = self.animations.get(animation).cloned().unwrap();
-            //println!("Start playing: {} {:?}", animation, anim_state);
             anim_state.output = Some(
                 self.animations
                     .get(animation)
@@ -409,8 +405,6 @@ where
             } else {
                 state.output = Some(T::interpolate(&start.1, &end.1, state.t));
             }
-
-            //println!("Tick: {:?}", state.get_output());
         }
 
         self.remove_innactive_animations();

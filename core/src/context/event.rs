@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet, VecDeque};
+#[cfg(feature = "clipboard")]
 use std::error::Error;
 
 use femtovg::TextContext;
