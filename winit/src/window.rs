@@ -17,7 +17,10 @@ pub struct Window {
 
 #[cfg(target_arch = "wasm32")]
 impl Window {
-    pub fn new(events_loop: &EventLoop<Event>, window_description: &WindowDescription) -> Self {
+    pub fn new(
+        events_loop: &EventLoop<Event>,
+        window_description: &WindowDescription,
+    ) -> (Self, Canvas<OpenGl>) {
         let window_builder = WindowBuilder::new();
 
         // For wasm, create or look up the canvas element we're drawing on
@@ -56,11 +59,12 @@ impl Window {
         let mut window = Window {
             id: handle.id(),
             handle,
-            canvas: Canvas::new(renderer).expect("Cannot create canvas"),
+            //canvas: Canvas::new(renderer).expect("Cannot create canvas"),
         };
 
-        setup_canvas(&mut window);
-        window
+        let canvas = Canvas::new(renderer).expect("Failed to create canvas");
+
+        (window, canvas)
     }
 
     pub fn window(&self) -> &winit::window::Window {
