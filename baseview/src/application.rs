@@ -169,7 +169,6 @@ impl ApplicationRunner {
         // Load resources
         self.context.synchronize_fonts();
 
-        // TODO: This doesn't work for some reason
         self.context.load_images();
 
         // Events

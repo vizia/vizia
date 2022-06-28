@@ -262,18 +262,12 @@ impl Style {
 
         let mut rule_list: Vec<StyleRule> = rules
             .into_iter()
-            .filter_map(|rule| {
-                match rule {
-                    Ok(mut style_rule) => {
-                        style_rule.id = self.rule_manager.create();
-                        Some(style_rule)
-                    }
-                    Err(parse_error) => {
-                        let style_parse_error = StyleParseError(parse_error.0);
-                        None
-                    }
+            .filter_map(|rule| match rule {
+                Ok(mut style_rule) => {
+                    style_rule.id = self.rule_manager.create();
+                    Some(style_rule)
                 }
-                //rule.ok()
+                Err(_) => None,
             })
             .collect();
 
@@ -281,10 +275,6 @@ impl Style {
 
         self.rules.sort_by_key(|rule| rule.specificity());
         self.rules.reverse();
-
-        // for rule in self.rules.iter() {
-        //     print!("{}", rule);
-        // }
 
         self.clear_style_rules();
         self.set_style_properties();

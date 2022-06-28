@@ -168,9 +168,9 @@ impl WindowHandler for ViziaWindow {
 
         self.application.rebuild(&self.builder);
 
-        self.application.on_frame_update();
-
         unsafe { context.make_current() };
+
+        self.application.on_frame_update();
 
         self.application.render();
         context.swap_buffers();
