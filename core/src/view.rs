@@ -485,7 +485,7 @@ pub trait View: 'static + Sized {
             let mut x = bounds.x;
             let mut y = bounds.y;
             let mut w = bounds.w;
-            //let mut h = bounds.h;
+            let mut h = bounds.h;
 
             // TODO - Move this to a text layout system and include constraints
             let child_left = cx.child_left().unwrap_or_default();
@@ -526,7 +526,7 @@ pub trait View: 'static + Sized {
                 Units::Pixels(val) => match child_bottom {
                     Units::Stretch(_) | Units::Auto => {
                         y += val + border_width;
-                        //h -= val + border_width;
+                        h -= val + border_width;
                         Baseline::Top
                     }
 
@@ -536,7 +536,7 @@ pub trait View: 'static + Sized {
                 Units::Stretch(_) => match child_bottom {
                     Units::Pixels(val) => {
                         y += bounds.h - val - border_width;
-                        //h -= val - border_width;
+                        h -= val - border_width;
                         Baseline::Bottom
                     }
 
@@ -552,25 +552,32 @@ pub trait View: 'static + Sized {
             };
 
             // Draw image
-            // if let Some(image) = cx.image(entity).cloned() {
-            //     let image = cx.get_image(&image);
-            //     let x = match align {
-            //         Align::Left => x,
-            //         Align::Center => x - w * 0.5,
-            //         Align::Right => x - w,
-            //     };
-            //     let y = match baseline {
-            //         Baseline::Top => y,
-            //         Baseline::Middle => y - h * 0.5,
-            //         Baseline::Alphabetic | Baseline::Bottom => y - h,
-            //     };
+            if let Some(image) = cx.image(entity) {
+                if let Some(img) = cx.resource_manager.images.get(image) {
+                    match img.image {
+                        ImageOrId::Id(id, _) => {
+                            let x = match align {
+                                Align::Left => x,
+                                Align::Center => x - w * 0.5,
+                                Align::Right => x - w,
+                            };
+                            let y = match baseline {
+                                Baseline::Top => y,
+                                Baseline::Middle => y - h * 0.5,
+                                Baseline::Alphabetic | Baseline::Bottom => y - h,
+                            };
 
-            //     let mut path = Path::new();
-            //     path.rect(x, y, w, h);
+                            let mut path = Path::new();
+                            path.rect(x, y, w, h);
 
-            //     let paint = Paint::image(image.id(canvas), x, y, w, h, 0.0, 1.0);
-            //     canvas.fill_path(&mut path, paint);
-            // }
+                            let paint = Paint::image(id, x, y, w, h, 0.0, 1.0);
+                            canvas.fill_path(&mut path, paint);
+                        }
+
+                        _ => {}
+                    }
+                }
+            }
 
             if let Some(text) = cx.text(entity).cloned() {
                 // let mut x = posx + (border_width / 2.0);

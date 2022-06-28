@@ -169,10 +169,10 @@ impl ApplicationRunner {
         // Load resources
         self.context.synchronize_fonts();
 
-        self.context.load_images();
-
         // Events
         while self.event_manager.flush_events(&mut self.context) {}
+
+        self.context.load_images();
 
         self.context.process_data_updates();
         self.context.process_style_updates();

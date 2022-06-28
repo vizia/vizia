@@ -167,10 +167,10 @@ impl Application {
                     //    context.views.insert(Entity::root(), window_view);
                     //}
 
-                    context.load_images();
-
                     // Events
                     while event_manager.flush_events(&mut context) {}
+
+                    context.load_images();
 
                     context.process_data_updates();
                     context.process_style_updates();

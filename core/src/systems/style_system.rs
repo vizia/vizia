@@ -286,19 +286,21 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                 }
             }
 
-            // if let Some(image) = cx.style.image.get(entity) {
-            //     let image = image.clone(); // ew
-            //     let (image_width, image_height) = cx.get_image(&image).dimensions();
-            //     let image_width = image_width as f32;
-            //     let image_height = image_height as f32;
+            if let Some(image) = cx.style.image.get(entity) {
+                let image = image.clone(); // ew
+                if let Some(image_store) = cx.resource_manager.images.get(&image) {
+                    let dims = image_store.image.dimensions();
+                    let image_width = dims.0 as f32;
+                    let image_height = dims.1 as f32;
 
-            //     if content_width < image_width {
-            //         content_width = image_width;
-            //     }
-            //     if content_height < image_height {
-            //         content_height = image_height;
-            //     }
-            // }
+                    if content_width < image_width {
+                        content_width = image_width;
+                    }
+                    if content_height < image_height {
+                        content_height = image_height;
+                    }
+                }
+            }
 
             cx.style.content_width.insert(entity, content_width);
             cx.style.content_height.insert(entity, content_height);
