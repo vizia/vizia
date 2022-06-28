@@ -9,6 +9,7 @@ use crate::{
     environment::Environment,
     events::ViewHandler,
     fonts,
+    id::GenerationalId,
     layout::geometry_changed,
     prelude::*,
     resource::{FontOrId, ResourceManager},

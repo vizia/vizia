@@ -47,6 +47,7 @@ pub mod prelude {
     pub use super::environment::Env;
     pub use super::events::{Event, Message, Propagation};
     pub use super::handle::Handle;
+    pub use super::id::GenerationalId;
     pub use super::input::{
         KeyChord, Keymap, KeymapEntry, KeymapEvent, Modifiers, MouseButton, MouseButtonState,
     };
