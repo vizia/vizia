@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::collections::{HashMap, HashSet, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
@@ -19,10 +20,10 @@ use copypasta::ClipboardProvider;
 
 pub struct EventContext<'a> {
     pub(crate) current: Entity,
-    captured: &'a mut Entity,
-    focused: &'a mut Entity,
+    pub(crate) captured: &'a mut Entity,
+    pub(crate) focused: &'a mut Entity,
     pub(crate) hovered: &'a Entity,
-    pub style: &'a mut Style,
+    pub(crate) style: &'a mut Style,
     pub cache: &'a CachedData,
     pub tree: &'a Tree,
     pub(crate) data: &'a SparseSet<ModelDataStore>,
@@ -33,7 +34,7 @@ pub struct EventContext<'a> {
     pub text_context: &'a TextContext,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState,
-    event_queue: &'a mut VecDeque<Event>,
+    pub(crate) event_queue: &'a mut VecDeque<Event>,
     cursor_icon_locked: &'a mut bool,
     #[cfg(feature = "clipboard")]
     clipboard: &'a mut Box<dyn ClipboardProvider>,
@@ -83,28 +84,6 @@ impl<'a> EventContext<'a> {
         );
     }
 
-    /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Message>(&mut self, message: M) {
-        self.event_queue.push_back(
-            Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up),
-        );
-    }
-
-    /// Send an event containing a message directly to a specified entity.
-    pub fn emit_to<M: Message>(&mut self, target: Entity, message: M) {
-        self.event_queue.push_back(
-            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
-        );
-    }
-
-    /// Send an event with custom origin and propagation information.
-    pub fn send_event(&mut self, event: Event) {
-        self.event_queue.push_back(event);
-    }
-
     pub fn set_active(&mut self, active: bool) {
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(self.current) {
             pseudo_classes.set(PseudoClass::ACTIVE, active);
@@ -123,17 +102,17 @@ impl<'a> EventContext<'a> {
         *self.captured = Entity::null();
     }
 
-    /// Sets application focus to the current entity
+    /// Sets application focus to the current entity.
     pub fn focus(&mut self) {
         *self.focused = self.current;
     }
 
-    /// Returns true if the current entity is disabled
+    /// Returns true if the current entity is disabled.
     pub fn is_disabled(&self) -> bool {
         self.style.disabled.get(self.current()).cloned().unwrap_or_default()
     }
 
-    /// Returns true if the mouse cursor is over the current entity
+    /// Returns true if the mouse cursor is over the current entity.
     pub fn is_over(&self) -> bool {
         if let Some(pseudo_classes) = self.style.pseudo_classes.get(self.current) {
             pseudo_classes.contains(PseudoClass::OVER)
@@ -142,12 +121,12 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    /// Prevents the cursor icon from changing until the lock is released
+    /// Prevents the cursor icon from changing until the lock is released.
     pub fn lock_cursor_icon(&mut self) {
         *self.cursor_icon_locked = true;
     }
 
-    /// Releases any cursor icon lock, allowing the cursor icon to be changed
+    /// Releases any cursor icon lock, allowing the cursor icon to be changed.
     pub fn unlock_cursor_icon(&mut self) {
         *self.cursor_icon_locked = false;
         let hovered = *self.hovered;
@@ -155,12 +134,12 @@ impl<'a> EventContext<'a> {
         self.emit(WindowEvent::SetCursor(cursor));
     }
 
-    /// Returns true if the cursor icon is locked
+    /// Returns true if the cursor icon is locked.
     pub fn is_cursor_icon_locked(&self) -> bool {
         *self.cursor_icon_locked
     }
 
-    /// Sets the hover flag of the current entity
+    /// Sets the hover flag of the current entity.
     pub fn set_hover(&mut self, flag: bool) {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
@@ -172,7 +151,7 @@ impl<'a> EventContext<'a> {
         self.style.needs_redraw = true;
     }
 
-    /// Sets the checked flag of the current entity
+    /// Sets the checked flag of the current entity.
     pub fn set_checked(&mut self, flag: bool) {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
@@ -184,7 +163,7 @@ impl<'a> EventContext<'a> {
         self.style.needs_redraw = true;
     }
 
-    /// Sets the checked flag of the current entity
+    /// Sets the checked flag of the current entity.
     pub fn set_selected(&mut self, flag: bool) {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
@@ -234,5 +213,32 @@ impl<'a> EventContext<'a> {
 
     pub fn play_animation(&mut self, animation: Animation) {
         self.current.play_animation(self, animation);
+    }
+}
+
+impl<'a> DataContext for EventContext<'a> {
+    fn data<T: 'static>(&self) -> Option<&T> {
+        // return data for the static model
+        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
+            return Some(t);
+        }
+
+        for entity in self.current.parent_iter(&self.tree) {
+            if let Some(data_list) = self.data.get(entity) {
+                for (_, model) in data_list.data.iter() {
+                    if let Some(data) = model.downcast_ref::<T>() {
+                        return Some(data);
+                    }
+                }
+            }
+
+            if let Some(view_handler) = self.views.get(&entity) {
+                if let Some(data) = view_handler.downcast_ref::<T>() {
+                    return Some(data);
+                }
+            }
+        }
+
+        None
     }
 }

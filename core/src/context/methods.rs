@@ -1,8 +1,9 @@
-use std::any::Any;
+use crate::{
+    entity::Entity,
+    events::{Event, Message, Propagation},
+};
 
-use crate::{entity::Entity, prelude::TreeExt};
-
-use super::{DataContext, DrawContext, EventContext};
+use super::{Context, DrawContext, EventContext};
 
 /// A macro for implementing methods on multiple contexts. Adapted from Druid.
 ///
@@ -30,29 +31,26 @@ impl_context_method!(EventContext<'_>, DrawContext<'_>, {
     }
 });
 
-impl<'a> DataContext for EventContext<'a> {
-    fn data<T: 'static>(&self) -> Option<&T> {
-        // return data for the static model
-        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
-            return Some(t);
-        }
-
-        for entity in self.current.parent_iter(&self.tree) {
-            if let Some(data_list) = self.data.get(entity) {
-                for (_, model) in data_list.data.iter() {
-                    if let Some(data) = model.downcast_ref::<T>() {
-                        return Some(data);
-                    }
-                }
-            }
-
-            if let Some(view_handler) = self.views.get(&entity) {
-                if let Some(data) = view_handler.downcast_ref::<T>() {
-                    return Some(data);
-                }
-            }
-        }
-
-        None
+impl_context_method!(Context, EventContext<'_>, {
+    /// Send an event containing a message up the tree from the current entity.
+    pub fn emit<M: Message>(&mut self, message: M) {
+        self.event_queue.push_back(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+        );
     }
-}
+
+    /// Send an event containing a message directly to a specified entity.
+    pub fn emit_to<M: Message>(&mut self, target: Entity, message: M) {
+        self.event_queue.push_back(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+        );
+    }
+
+    /// Send an event with custom origin and propagation information.
+    pub fn send_event(&mut self, event: Event) {
+        self.event_queue.push_back(event);
+    }
+});

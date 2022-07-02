@@ -87,14 +87,6 @@ impl<'a> DrawContext<'a> {
         }
     }
 
-    // pub fn get_image(&mut self, path: &str) -> &mut ImageOrId {
-    //     self.get_image(path)
-    // }
-
-    // pub fn get_font(&mut self, name: &str) -> &FontOrId {
-    //     self.get
-    // }
-
     /// Returns the name of the default font.
     pub fn default_font(&self) -> &str {
         &self.style.default_font
@@ -104,11 +96,6 @@ impl<'a> DrawContext<'a> {
     pub fn font_size(&self, entity: Entity) -> f32 {
         self.logical_to_physical(self.style.font_size.get(entity).copied().unwrap_or(16.0))
     }
-
-    // /// Returns true if the current entity matches the given pseudoclass.
-    // pub fn has_pseudo_class(&self, entity: Entity, cls: PseudoClass) -> bool {
-    //     self.has_pseudo_class(entity, cls)
-    // }
 
     /// Function to convert logical points to physical pixels.
     pub fn logical_to_physical(&self, logical: f32) -> f32 {

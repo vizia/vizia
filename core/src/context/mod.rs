@@ -1,4 +1,4 @@
-mod build;
+mod backend;
 mod draw;
 mod event;
 mod methods;
@@ -18,7 +18,7 @@ use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardP
 use fnv::FnvHashMap;
 use unic_langid::LanguageIdentifier;
 
-pub use build::*;
+pub use backend::*;
 pub use draw::*;
 pub use event::*;
 pub use proxy::*;
@@ -260,28 +260,6 @@ impl Context {
                 self.captured = Entity::null();
             }
         }
-    }
-
-    /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Message>(&mut self, message: M) {
-        self.event_queue.push_back(
-            Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up),
-        );
-    }
-
-    /// Send an event containing a message directly to a specified entity.
-    pub fn emit_to<M: Message>(&mut self, target: Entity, message: M) {
-        self.event_queue.push_back(
-            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
-        );
-    }
-
-    /// Send an event with custom origin and propagation information.
-    pub fn send_event(&mut self, event: Event) {
-        self.event_queue.push_back(event);
     }
 
     /// Add a listener to an entity.

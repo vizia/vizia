@@ -31,19 +31,7 @@ use copypasta::ClipboardProvider;
 
 const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
-// pub trait Backend {
-//     type Application;
-// }
-
-// pub struct Application<B: Backend> {
-//     inner: B::Application,
-// }
-
-// impl<B: Backend> Application<B> {
-//     pub fn new<F: Fn(&mut Context)>(content: F) -> B::Application;
-// }
-
-/// Context used by backend implementations to set up the application context
+/// Trait used by backend implementations to set up the application context
 pub trait BackendContext {
     fn add_main_window(
         &mut self,
