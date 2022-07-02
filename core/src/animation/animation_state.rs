@@ -94,17 +94,6 @@ where
         if current_time > self.start_time + self.duration {
             return false;
         }
-        // println!("Animating");
-
-        //let point = self.start_time.elapsed().as_secs_f32() / self.duration.as_secs_f32();
-
-        //let value = Prop::interpolate((0.0,1.0), (&self.keyframes[0].1, &self.keyframes[1].1), point);
-        // use the keyframes to interpolate the value and store the result in output.
-        //let mut pos = Positioning::default();
-
-        //let i = Prop::interpolate(0.0, Prop::default(), 1.0, Prop::default())
-
-        //let i = pos.interpolate();
 
         true
     }

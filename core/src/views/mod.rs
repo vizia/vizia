@@ -1,7 +1,4 @@
 //! This is the module where all types which implement View live.
-//!
-//! Every member of this module is part of the prelude.
-
 mod button;
 mod checkbox;
 mod dropdown;

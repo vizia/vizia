@@ -1,11 +1,9 @@
 //! The cache is a store for intermediate data produced while computing state, notably layout
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
-use std::collections::HashMap;
 use std::fmt::Debug;
 use std::ops::Range;
 
-use femtovg::ImageId;
 use morphorm::GeometryChanged;
 
 use crate::prelude::*;
@@ -302,8 +300,7 @@ pub struct CachedData {
 
     pub(crate) geometry_changed: SparseSet<GeometryChanged>,
 
-    pub(crate) shadow_image: HashMap<Entity, (ImageId, ImageId)>,
-
+    //pub shadow_image: HashMap<Entity, (ImageId, ImageId)>,
     pub(crate) text_lines: SparseSet<Vec<(Range<usize>, femtovg::TextMetrics)>>,
 }
 

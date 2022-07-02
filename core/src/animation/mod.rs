@@ -2,7 +2,7 @@
 //!
 //! Nearly every style property can be animated.
 //!
-//! # Creating Anaimtions
+//! # Creating Animations
 //! To create an animation, call `state.create_animation(duration)`, where the animation `duration` is a `std::time::Duration` type.
 //! This function returns an [AnimationBuilder], which can be used to construct the animation of several properties at once.
 // !

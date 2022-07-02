@@ -2,8 +2,6 @@ use crate::prelude::*;
 use crate::window::Position;
 
 /// Methods for building a window.
-///
-/// This trait is part of the prelude.
 pub trait WindowModifiers {
     fn title<T: ToString>(self, title: impl Res<T>) -> Self;
     fn inner_size<S: Into<WindowSize>>(self, size: impl Res<S>) -> Self;

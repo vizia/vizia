@@ -6,6 +6,7 @@ use baseview::{
 use raw_window_handle::HasRawWindowHandle;
 
 use crate::proxy::BaseviewProxy;
+use vizia_core::context::BackendContext;
 use vizia_core::prelude::*;
 
 /// Handles a vizia_baseview application
@@ -167,9 +168,9 @@ impl WindowHandler for ViziaWindow {
 
         self.application.rebuild(&self.builder);
 
-        self.application.on_frame_update();
-
         unsafe { context.make_current() };
+
+        self.application.on_frame_update();
 
         self.application.render();
         context.swap_buffers();

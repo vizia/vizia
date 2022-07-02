@@ -61,8 +61,6 @@ where
 
 /// A type implementing [`Res<String>`](crate::prelude::Res) which formats a localized message
 /// with any number of named arguments.
-///
-/// This type is part of the prelude.
 pub struct Localized {
     key: String,
     args: HashMap<String, Box<dyn FluentStore>>,
@@ -112,7 +110,7 @@ impl Localized {
 
 impl Res<String> for Localized {
     fn get_val(&self, cx: &Context) -> String {
-        let bundle = cx.resource_manager_ref().current_translation();
+        let bundle = cx.resource_manager.current_translation();
         let message = if let Some(msg) = bundle.get_message(&self.key) {
             msg
         } else {

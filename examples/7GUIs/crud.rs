@@ -68,7 +68,7 @@ pub enum AppEvent {
 }
 
 impl Model for AppData {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetSelected(index) => {
                 self.selected = Some(*index);
@@ -136,20 +136,15 @@ fn main() {
                     });
 
                     List::new(cx, AppData::list, |cx, index, item| {
-                        Binding::new(cx, AppData::selected, move |cx, selected| {
-                            let is_selected = if let Some(selected) = selected.get(cx) {
-                                selected == index
-                            } else {
-                                false
-                            };
-                            Binding::new(cx, item, move |cx, item| {
-                                let (name, surname) = item.get(cx).clone();
-                                Label::new(cx, &format!("{}, {}", surname, name))
-                                    .on_press(move |cx| {
-                                        cx.emit(AppEvent::SetSelected(index));
-                                    })
-                                    .checked(is_selected);
-                            });
+                        Binding::new(cx, item, move |cx, item| {
+                            let (name, surname) = item.get(cx).clone();
+                            Label::new(cx, &format!("{}, {}", surname, name))
+                                .on_press(move |cx| {
+                                    cx.emit(AppEvent::SetSelected(index));
+                                })
+                                .checked(
+                                    AppData::selected.map(move |selected| *selected == Some(index)),
+                                );
                         });
                     });
                 });

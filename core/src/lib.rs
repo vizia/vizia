@@ -23,10 +23,9 @@ pub mod view;
 pub mod views;
 pub mod window;
 
-mod hover_system;
 mod id;
 mod storage;
-mod style_system;
+mod systems;
 
 /// This is a re-export of [femtovg](https://docs.rs/femtovg/latest/femtovg/).
 pub mod vg {
@@ -41,11 +40,14 @@ pub mod image {
 /// Members which we recommend you wildcard-import.
 pub mod prelude {
     pub use super::animation::{AnimExt, Animation, AnimationBuilder};
-    pub use super::context::{Context, ContextProxy, DataContext, DrawContext, ProxyEmitError};
+    pub use super::context::{
+        Context, ContextProxy, DataContext, DrawContext, EventContext, ProxyEmitError,
+    };
     pub use super::entity::Entity;
     pub use super::environment::Env;
     pub use super::events::{Event, Message, Propagation};
     pub use super::handle::Handle;
+    pub use super::id::GenerationalId;
     pub use super::input::{
         KeyChord, Keymap, KeymapEntry, KeymapEvent, Modifiers, MouseButton, MouseButtonState,
     };

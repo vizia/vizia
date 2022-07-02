@@ -312,14 +312,6 @@ fn parse_selectors<'i, 't>(
 
     selectors.push(selector);
 
-    // for selec in selectors.iter() {
-    //     println!("{:?}", selec);
-    // }
-
-    // if selectors.iter().any(|sel| sel.relation.is_some()) {
-    //     eprintln!("WARNING: Complex selector relations not implemented");
-    // }
-
     Ok(selectors)
 }
 
@@ -618,45 +610,6 @@ fn parse_z_index<'i, 't>(
         }
     })
 }
-
-//TODO
-// fn parse_transition<'i, 't>(
-//     input: &mut Parser<'i, 't>,
-//     mut transition: Transition,
-// ) -> Result<Transition, ParseError<'i, CustomParseError>> {
-//     //let transition = Transition::default();
-
-//     Ok(match input.next()? {
-//         Token::Ident(s) => {
-//             println!("Transition: {}", s);
-//             transition.property = s.to_string();
-
-//             match input.next()? {
-//                 Token::Number { value: x, .. } => {
-//                     println!("With duration: {}", x);
-//                 }
-
-//                 t => {
-//                     let basic_error = BasicParseError {
-//                         kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
-//                         location: SourceLocation { line: 0, column: 0 },
-//                     };
-//                     return Err(basic_error.into());
-//                 }
-//             }
-
-//             transition
-//         }
-
-//         t => {
-//             let basic_error = BasicParseError {
-//                 kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
-//                 location: SourceLocation { line: 0, column: 0 },
-//             };
-//             return Err(basic_error.into());
-//         }
-//     })
-// }
 
 //TODO
 fn parse_box_shadow<'i, 't>(

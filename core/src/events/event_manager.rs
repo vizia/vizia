@@ -1,4 +1,4 @@
-use crate::context::InternalEvent;
+use crate::context::{Context, InternalEvent};
 use crate::prelude::*;
 use crate::tree::TreeExt;
 
@@ -26,13 +26,12 @@ impl EventManager {
         // Clear the event queue in the event manager
         self.event_queue.clear();
 
-        //state.removed_entities.clear();
-
-        // Move events from state to event manager
+        // Move events from context to event manager
         self.event_queue.extend(context.event_queue.drain(0..));
 
-        if context.tree().changed {
-            self.tree = context.tree().clone();
+        // If the tree changed in the last cycle, clone a new copy of the tree
+        if context.tree.changed {
+            self.tree = context.tree.clone();
         }
 
         // Loop over the events in the event queue
@@ -47,10 +46,6 @@ impl EventManager {
                 }
             });
 
-            // if event.trace {
-            //     println!("Event: {:?}", event);
-            // }
-
             // Send events to any listeners
             let listeners =
                 context.listeners.iter().map(|(entity, _)| *entity).collect::<Vec<Entity>>();
@@ -58,7 +53,11 @@ impl EventManager {
                 if let Some(listener) = context.listeners.remove(&entity) {
                     if let Some(mut event_handler) = context.views.remove(&entity) {
                         context.with_current(entity, |context| {
-                            (listener)(event_handler.as_mut(), context, event);
+                            (listener)(
+                                event_handler.as_mut(),
+                                &mut EventContext::new(context),
+                                event,
+                            );
                         });
 
                         context.views.insert(entity, event_handler);
@@ -81,10 +80,6 @@ impl EventManager {
             if event.meta.consumed {
                 continue 'events;
             }
-
-            // if event.trace {
-            //     println!("Target: {} Parents: {:?} Tree: {:?}", target, target.parent_iter(&self.tree).collect::<Vec<_>>(), self.tree.parent);
-            // }
 
             // Propagate up from target to root (not including target)
             if event.meta.propagation == Propagation::Up {
@@ -130,7 +125,7 @@ impl EventManager {
 fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
     if let Some(mut view) = context.views.remove(&entity) {
         context.with_current(entity, |context| {
-            view.event(context, event);
+            view.event(&mut EventContext::new(context), event);
         });
 
         context.views.insert(entity, view);
@@ -138,11 +133,8 @@ fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
 
     if let Some(mut model_list) = context.data.remove(entity) {
         for (_, model) in model_list.data.iter_mut() {
-            // if event.trace {
-            //     println!("Event: {:?} -> Model {:?}", event, ty);
-            // }
             context.with_current(entity, |cx| {
-                model.event(cx, event);
+                model.event(&mut EventContext::new(cx), event);
             });
         }
 

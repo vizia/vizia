@@ -1,8 +1,6 @@
 use crate::prelude::*;
 
 /// A stop in a gradient, defined by a position and a color.
-///
-/// This type is part of the prelude.
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct GradientStop {
     // Position of the gradient stop
@@ -19,8 +17,6 @@ impl GradientStop {
 }
 
 /// The direction of a linear gradient.
-///
-/// This type is part of the prelude.
 #[derive(Debug, Clone, PartialEq)]
 pub enum GradientDirection {
     LeftToRight,
@@ -36,8 +32,6 @@ impl Default for GradientDirection {
 }
 
 /// Describes a linear gradient.
-///
-/// This type is part of the prelude.
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct LinearGradient {
     // Direction of the gradient
@@ -60,10 +54,7 @@ impl LinearGradient {
     pub fn get_stops(&self, _parent_length: f32) -> Vec<(f32, Color)> {
         self.stops
             .iter()
-            .map(|stop| {
-                //println!("Stop: {:?}", stop.position.value_or(parent_length, 0.0));
-                (stop.position.value_or(1.0, 0.0), stop.color)
-            })
+            .map(|stop| (stop.position.value_or(1.0, 0.0), stop.color))
             .collect::<Vec<_>>()
     }
 }

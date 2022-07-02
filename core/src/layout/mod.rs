@@ -7,6 +7,7 @@ pub(crate) mod hierarchy;
 pub(crate) mod iter;
 pub(crate) mod node;
 
+use crate::context::Context;
 use crate::prelude::*;
 pub(crate) use iter::{LayoutChildIterator, LayoutTreeIterator};
 pub use morphorm::GeometryChanged;
@@ -14,7 +15,7 @@ use morphorm::{Cache, Hierarchy};
 
 pub(crate) fn geometry_changed(cx: &mut Context, tree: &Tree) {
     for node in tree.down_iter() {
-        let geometry_changed = cx.cache().geometry_changed(node);
+        let geometry_changed = cx.cache.geometry_changed(node);
         if !geometry_changed.is_empty() {
             cx.event_queue.push_back(
                 Event::new(WindowEvent::GeometryChanged(geometry_changed))
@@ -23,9 +24,9 @@ pub(crate) fn geometry_changed(cx: &mut Context, tree: &Tree) {
             );
         }
 
-        cx.cache().set_geo_changed(node, morphorm::GeometryChanged::POSX_CHANGED, false);
-        cx.cache().set_geo_changed(node, morphorm::GeometryChanged::POSY_CHANGED, false);
-        cx.cache().set_geo_changed(node, morphorm::GeometryChanged::WIDTH_CHANGED, false);
-        cx.cache().set_geo_changed(node, morphorm::GeometryChanged::HEIGHT_CHANGED, false);
+        cx.cache.set_geo_changed(node, morphorm::GeometryChanged::POSX_CHANGED, false);
+        cx.cache.set_geo_changed(node, morphorm::GeometryChanged::POSY_CHANGED, false);
+        cx.cache.set_geo_changed(node, morphorm::GeometryChanged::WIDTH_CHANGED, false);
+        cx.cache.set_geo_changed(node, morphorm::GeometryChanged::HEIGHT_CHANGED, false);
     }
 }

@@ -117,18 +117,20 @@ where
     /// #     One,
     /// # }
     /// #
-    /// # let cx = &Context::new();
+    /// # let mut cx = &mut Context::new();
+    /// # let cx = &mut EventContext::new(cx);
     /// # let keymap = Keymap::<Action>::new();
     /// #
     /// for entry in keymap.pressed_actions(cx, Code::KeyA) {
     ///     println!("The action {:?} is being pressed!", entry.action());
     /// };
+    /// ```
     pub fn pressed_actions(
         &self,
-        cx: &Context,
+        cx: &EventContext,
         code: Code,
     ) -> impl Iterator<Item = &KeymapEntry<T>> {
-        if let Some(actions) = self.entries.get(&KeyChord::new(cx.modifiers(), code)) {
+        if let Some(actions) = self.entries.get(&KeyChord::new(*cx.modifiers, code)) {
             actions.iter()
         } else {
             [].iter()
@@ -173,14 +175,14 @@ impl<T> Model for Keymap<T>
 where
     T: 'static + Clone + PartialEq + Send + Sync,
 {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|keymap_event, _| match keymap_event {
             KeymapEvent::InsertAction(chord, entry) => self.insert(*chord, entry.clone()),
             KeymapEvent::RemoveAction(chord, action) => self.remove(chord, action),
         });
         event.map(|window_event, _| match window_event {
             WindowEvent::KeyDown(code, _) => {
-                if let Some(entries) = self.entries.get(&KeyChord::new(cx.modifiers(), *code)) {
+                if let Some(entries) = self.entries.get(&KeyChord::new(*cx.modifiers, *code)) {
                     for entry in entries {
                         (entry.on_action())(cx)
                     }
@@ -205,8 +207,6 @@ where
 }
 
 /// An event used to interact with a [`Keymap`] at runtime.
-///
-/// This type is part of the prelude.
 pub enum KeymapEvent<T>
 where
     T: 'static + Clone + PartialEq + Send + Sync,

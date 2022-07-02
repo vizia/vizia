@@ -5,8 +5,6 @@ use crate::prelude::*;
 use crate::state::{LensCache, State};
 
 /// A binding view which rebuilds its contents when its observed data changes.
-///
-/// This type is part of the prelude.
 pub struct Binding<L>
 where
     L: Lens,
@@ -41,12 +39,12 @@ where
 
         let id = cx.entity_manager.create();
         let current = cx.current();
-        cx.tree().add(id, current).expect("Failed to add to tree");
-        cx.cache().add(id).expect("Failed to add to cache");
-        cx.style().add(id);
+        cx.tree.add(id, current).expect("Failed to add to tree");
+        cx.cache.add(id).expect("Failed to add to cache");
+        cx.style.add(id);
 
-        let ancestors = cx.current().parent_iter(cx.tree()).collect::<HashSet<_>>();
-        let new_ancestors = id.parent_iter(cx.tree()).collect::<Vec<_>>();
+        let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
+        let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
 
         for entity in new_ancestors {
             if let Some(model_data_store) = cx.data.get_mut(entity) {

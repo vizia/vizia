@@ -11,8 +11,6 @@ use crate::prelude::*;
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.
 /// The `view()` method takes a reference to the struct type as input and outputs a reference to the field.
 /// This provides a way to specify a binding to a specific field of some application data.
-///
-/// This trait is part of the prelude.
 pub trait Lens: 'static + Clone {
     type Source;
     type Target;
