@@ -2,7 +2,6 @@ use std::any::TypeId;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
-use std::rc::Rc;
 
 use crate::prelude::*;
 
@@ -77,7 +76,6 @@ pub trait LensExt: Lens {
     fn then<Other>(self, other: Other) -> Then<Self, Other>
     where
         Other: Lens<Source = Self::Target>,
-        Self: Sized,
     {
         Then::new(self, other)
     }
@@ -90,8 +88,9 @@ pub trait LensExt: Lens {
         self.then(Index::new(index))
     }
 
-    fn map<G, B: 'static>(self, get: G) -> Then<Self, Map<Self::Target, B>>
+    fn map<G: Clone, B: 'static + Clone>(self, get: G) -> Then<Self, Map<G, Self::Target, B>>
     where
+        Self::Target: Clone,
         G: 'static + Fn(&Self::Target) -> B,
     {
         self.then(Map::new(get))
@@ -115,26 +114,31 @@ pub trait LensExt: Lens {
 // Implement LensExt for all types which implement Lens
 impl<T: Lens> LensExt for T {}
 
-pub struct Map<I, O> {
-    get: Rc<dyn Fn(&I) -> O>,
+pub struct Map<G, I, O> {
+    get: G,
+    i: PhantomData<I>,
+    o: PhantomData<O>,
 }
 
-impl<I, O> Clone for Map<I, O> {
+impl<G: Clone, I, O> Clone for Map<G, I, O> {
     fn clone(&self) -> Self {
-        Map { get: self.get.clone() }
+        Map { get: self.get.clone(), i: PhantomData::default(), o: PhantomData::default() }
     }
 }
 
-impl<I, O> Map<I, O> {
-    pub fn new<F>(get: F) -> Self
+impl<G, I, O> Map<G, I, O> {
+    pub fn new(get: G) -> Self
     where
-        F: 'static + Fn(&I) -> O,
+        G: Fn(&I) -> O,
     {
-        Self { get: Rc::new(get) }
+        Self { get, i: PhantomData::default(), o: PhantomData::default() }
     }
 }
 
-impl<I: 'static, O: 'static> Lens for Map<I, O> {
+impl<G: Clone, I: 'static + Clone, O: 'static + Clone> Lens for Map<G, I, O>
+where
+    G: 'static + Fn(&I) -> O,
+{
     // TODO can we get rid of these static bounds?
     type Source = I;
     type Target = O;
@@ -219,7 +223,6 @@ impl<A, T> Copy for Index<A, T> {}
 impl<A, T: 'static> Lens for Index<A, T>
 where
     A: 'static + std::ops::Deref<Target = [T]>,
-    T: Sized,
 {
     type Source = A;
     type Target = T;

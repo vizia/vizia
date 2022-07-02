@@ -16,7 +16,7 @@ where
     clear_callback: Option<Box<dyn Fn(&mut Context)>>,
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T> List<L, T> {
+impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
     /// Creates a new List view with a binding to the given lens and a template for constructing the list items
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
