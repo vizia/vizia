@@ -1,6 +1,5 @@
 pub struct Environment {
     // Signifies whether the app should be rebuilt.
-    pub needs_rebuild: bool,
     pub include_default_theme: bool,
 }
 
@@ -12,7 +11,7 @@ impl Default for Environment {
 
 impl Environment {
     pub fn new() -> Self {
-        Self { needs_rebuild: false, include_default_theme: true }
+        Self { include_default_theme: true }
     }
 }
 

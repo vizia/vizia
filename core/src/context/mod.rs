@@ -122,8 +122,6 @@ impl Context {
         };
 
         result.entity_manager.create();
-        result.add_theme(DEFAULT_LAYOUT);
-        result.add_theme(DEFAULT_THEME);
 
         result
     }
@@ -685,8 +683,6 @@ impl Context {
         }
 
         self.style.parse_theme(&overall_theme);
-
-        //self.environment.needs_rebuild = true;
 
         Ok(())
     }
