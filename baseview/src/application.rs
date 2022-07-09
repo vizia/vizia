@@ -447,17 +447,6 @@ impl ApplicationRunner {
         }
     }
 
-    pub fn rebuild(&mut self, builder: &Option<Box<dyn Fn(&mut Context) + Send>>) {
-        if self.context.environment().needs_rebuild {
-            self.context.set_current(Entity::root());
-            self.context.remove_children(Entity::root());
-            if let Some(builder) = &builder {
-                (builder)(&mut self.context);
-            }
-            self.context.environment().needs_rebuild = false;
-        }
-    }
-
     pub fn handle_idle(&mut self, on_idle: &Option<Box<dyn Fn(&mut Context) + Send>>) {
         if let Some(idle_callback) = on_idle {
             self.context.set_current(Entity::root());

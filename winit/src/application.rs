@@ -16,10 +16,13 @@ use winit::{
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
 
+static DEFAULT_THEME: &str = include_str!("../../core/resources/themes/default_theme.css");
+static DEFAULT_LAYOUT: &str = include_str!("../../core/resources/themes/default_layout.css");
+
 pub struct Application {
     context: Context,
     event_loop: EventLoop<Event>,
-    builder: Option<Box<dyn Fn(&mut Context)>>,
+    builder: Option<Box<dyn FnOnce(&mut Context)>>,
     on_idle: Option<Box<dyn Fn(&mut Context)>>,
     window_description: WindowDescription,
     should_poll: bool,
@@ -43,7 +46,7 @@ impl EventProxy for WinitEventProxy {
 impl Application {
     pub fn new<F>(content: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + FnOnce(&mut Context),
     {
         // wasm + debug: send panics to console
         #[cfg(all(debug_assertions, target_arch = "wasm32"))]
@@ -60,8 +63,6 @@ impl Application {
         }
 
         context.set_current(Entity::root());
-
-        (content)(&mut context);
 
         Self {
             context,
@@ -197,13 +198,15 @@ impl Application {
 
         let mut event_manager = EventManager::new();
 
-        // if let Some(builder) = self.builder.take() {
-        //     (builder)(&mut context);
+        context.add_theme(DEFAULT_LAYOUT);
 
-        //     self.builder = Some(builder);
-        // }
+        if context.environment().include_default_theme {
+            context.add_theme(DEFAULT_THEME);
+        }
 
-        let builder = self.builder.take();
+        if let Some(builder) = self.builder.take() {
+            (builder)(&mut context);
+        }
 
         let on_idle = self.on_idle.take();
 
@@ -221,16 +224,6 @@ impl Application {
                 winit::event::Event::MainEventsCleared => {
                     *stored_control_flow.borrow_mut() =
                         if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
-
-                    // Rebuild application if required
-                    if context.environment().needs_rebuild {
-                        context.set_current(Entity::root());
-                        context.remove_children(Entity::root());
-                        if let Some(builder) = &builder {
-                            (builder)(&mut context);
-                        }
-                        context.environment().needs_rebuild = false;
-                    }
 
                     if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_mut::<Window>() {
@@ -602,7 +595,6 @@ impl Env for Application {
     fn ignore_default_styles(mut self) -> Self {
         if self.context.environment().include_default_theme {
             self.context.environment().include_default_theme = false;
-            self.context.environment().needs_rebuild = true;
             self.context.reload_styles().expect("Failed to reload styles");
         }
 
