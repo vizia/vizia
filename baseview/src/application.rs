@@ -269,6 +269,9 @@ impl ApplicationRunner {
         while self.event_manager.flush_events(&mut self.context) {}
 
         self.context.process_data_updates();
+
+        // Force restyle on every frame for baseview backend
+        self.context.style().needs_restyle = true;
         self.context.process_style_updates();
 
         // if self.context.has_animations() {
