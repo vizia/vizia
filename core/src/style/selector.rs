@@ -144,6 +144,31 @@ impl Selector {
     //     }
     // }
 
+    // Returns true if the selectors are identical
+    pub fn same(&self, entity_selector: &Selector) -> bool {
+        if self.asterisk != entity_selector.asterisk {
+            return false;
+        }
+
+        if self.id != entity_selector.id {
+            return false;
+        }
+
+        if self.element != entity_selector.element {
+            return false;
+        }
+
+        if self.classes != entity_selector.classes {
+            return false;
+        }
+
+        if self.pseudo_classes != entity_selector.pseudo_classes {
+            return false;
+        }
+
+        true
+    }
+
     pub fn matches(&self, entity_selector: &Selector) -> bool {
         // Universal selector always matches
         if self.asterisk {

@@ -252,9 +252,9 @@ impl Application {
 
                             context.views.insert(Entity::root(), window_event_handler);
                         }
-                    }
 
-                    context.apply_animations();
+                        context.apply_animations();
+                    }
 
                     context.process_visual_updates();
 

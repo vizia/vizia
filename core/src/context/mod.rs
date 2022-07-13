@@ -537,7 +537,7 @@ impl Context {
         Ok(())
     }
 
-    pub fn has_animations(&self) -> bool {
+    pub fn has_animations(&mut self) -> bool {
         self.style.display.has_animations()
             | self.style.visibility.has_animations()
             | self.style.opacity.has_animations()
@@ -557,30 +557,36 @@ impl Context {
             | self.style.outer_shadow_color.has_animations()
             | self.style.font_color.has_animations()
             | self.style.font_size.has_animations()
-            | self.style.left.has_animations()
-            | self.style.right.has_animations()
-            | self.style.top.has_animations()
-            | self.style.bottom.has_animations()
-            | self.style.width.has_animations()
-            | self.style.height.has_animations()
-            | self.style.max_width.has_animations()
-            | self.style.max_height.has_animations()
-            | self.style.min_width.has_animations()
-            | self.style.min_height.has_animations()
-            | self.style.min_left.has_animations()
-            | self.style.max_left.has_animations()
-            | self.style.min_right.has_animations()
-            | self.style.max_right.has_animations()
-            | self.style.min_top.has_animations()
-            | self.style.max_top.has_animations()
-            | self.style.min_bottom.has_animations()
-            | self.style.max_bottom.has_animations()
-            | self.style.row_between.has_animations()
-            | self.style.col_between.has_animations()
-            | self.style.child_left.has_animations()
-            | self.style.child_right.has_animations()
-            | self.style.child_top.has_animations()
-            | self.style.child_bottom.has_animations()
+            | if self.style.left.has_animations()
+                | self.style.right.has_animations()
+                | self.style.top.has_animations()
+                | self.style.bottom.has_animations()
+                | self.style.width.has_animations()
+                | self.style.height.has_animations()
+                | self.style.max_width.has_animations()
+                | self.style.max_height.has_animations()
+                | self.style.min_width.has_animations()
+                | self.style.min_height.has_animations()
+                | self.style.min_left.has_animations()
+                | self.style.max_left.has_animations()
+                | self.style.min_right.has_animations()
+                | self.style.max_right.has_animations()
+                | self.style.min_top.has_animations()
+                | self.style.max_top.has_animations()
+                | self.style.min_bottom.has_animations()
+                | self.style.max_bottom.has_animations()
+                | self.style.row_between.has_animations()
+                | self.style.col_between.has_animations()
+                | self.style.child_left.has_animations()
+                | self.style.child_right.has_animations()
+                | self.style.child_top.has_animations()
+                | self.style.child_bottom.has_animations()
+            {
+                self.style.needs_relayout = true;
+                true
+            } else {
+                false
+            }
     }
 
     pub fn apply_animations(&mut self) {
@@ -629,8 +635,6 @@ impl Context {
         self.style.child_right.tick(time);
         self.style.child_top.tick(time);
         self.style.child_bottom.tick(time);
-
-        self.style.needs_relayout = true;
     }
 
     /// Adds a new property animation returning an animation builder
@@ -884,7 +888,6 @@ impl Context {
             std::mem::swap(&mut store.0, &mut self.style);
             std::mem::swap(&mut store.1, &mut self.text_context);
             std::mem::swap(&mut store.2, &mut self.resource_manager);
-
             self.style.needs_relayout = false;
         }
 
