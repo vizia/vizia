@@ -150,15 +150,15 @@ impl Selector {
             return false;
         }
 
-        if self.id != entity_selector.id {
+        if self.id.is_none() || self.id != entity_selector.id {
             return false;
         }
 
-        if self.element != entity_selector.element {
+        if self.element.is_none() || self.element != entity_selector.element {
             return false;
         }
 
-        if self.classes != entity_selector.classes {
+        if self.classes.is_empty() || self.classes != entity_selector.classes {
             return false;
         }
 
