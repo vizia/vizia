@@ -191,8 +191,8 @@ name = "window_modifiers"
 path = "examples/window_modifiers.rs"
 
 [[example]]
-name = "test"
-path = "examples/test.rs"
+name = "long_list"
+path = "examples/lists/long_list.rs"
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
