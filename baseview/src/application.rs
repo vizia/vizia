@@ -286,8 +286,9 @@ impl ApplicationRunner {
         //         *control_flow = ControlFlow::Wait;
         //     }
         // }
-
-        self.context.apply_animations();
+        if self.context.has_animations() {
+            self.context.apply_animations();
+        }
 
         self.context.process_visual_updates();
 
