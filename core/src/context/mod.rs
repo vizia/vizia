@@ -80,8 +80,6 @@ pub struct Context {
     click_time: Instant,
     double_click: bool,
     click_pos: (f32, f32),
-
-    pub needs_rebuild: bool,
 }
 
 impl Context {
@@ -120,8 +118,6 @@ impl Context {
             click_time: Instant::now(),
             double_click: false,
             click_pos: (0.0, 0.0),
-
-            needs_rebuild: false,
         };
 
         Environment::new().build(&mut result);
