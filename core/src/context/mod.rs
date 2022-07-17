@@ -2,7 +2,7 @@ mod draw;
 mod proxy;
 
 use instant::{Duration, Instant};
-use std::any::{Any, TypeId};
+use std::any::Any;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::error::Error;
