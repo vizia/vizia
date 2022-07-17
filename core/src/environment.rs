@@ -36,7 +36,6 @@ impl Model for Environment {
             }
 
             EnvironmentEvent::SetLocale(locale) => {
-                println!("Set the locale: {}", locale);
                 self.locale = locale.clone();
             }
         });

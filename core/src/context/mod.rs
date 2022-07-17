@@ -1197,16 +1197,12 @@ impl DataContext for Context {
         }
 
         for entity in self.current.parent_iter(&self.tree) {
-            println!("Current: {} {:?}", entity, entity.parent(&self.tree));
             if let Some(data_list) = self.data.get(entity) {
                 for (_, model) in data_list.data.iter() {
-                    println!("Cast: {:?}", TypeId::of::<T>());
                     if let Some(data) = model.downcast_ref::<T>() {
                         return Some(data);
                     }
                 }
-            } else {
-                println!("No data list on entity: {}", entity);
             }
 
             if let Some(view_handler) = self.views.get(&entity) {

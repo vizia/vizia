@@ -55,9 +55,9 @@ fn main() {
             Label::new(cx, Localized::new("hello-world"));
             HStack::new(cx, |cx| {
                 Label::new(cx, Localized::new("enter-name"));
-                // Textbox::new(cx, AppData::name).width(Units::Pixels(300.0)).on_edit(|cx, text| {
-                //     cx.emit(AppEvent::SetName(text));
-                // });
+                Textbox::new(cx, AppData::name).width(Units::Pixels(300.0)).on_edit(|cx, text| {
+                    cx.emit(AppEvent::SetName(text));
+                });
             })
             .child_top(Stretch(1.0))
             .child_bottom(Stretch(1.0))
