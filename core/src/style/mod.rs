@@ -1,6 +1,6 @@
-use std::collections::{HashMap, HashSet};
-
+use crate::id::GenerationalId;
 use morphorm::{LayoutType, PositionType, Units};
+use std::collections::{HashMap, HashSet};
 
 use cssparser::{Parser, ParserInput};
 
@@ -71,7 +71,7 @@ impl Default for Abilities {
     }
 }
 
-/// Stores the style properties of all entities in the application. To set properties on entities see the [PropSet] trait.
+/// Stores the style properties of all entities in the application.
 #[derive(Default)]
 pub struct Style {
     pub(crate) rule_manager: IdManager<Rule>,
@@ -805,6 +805,26 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.child_bottom.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
+                                }
+
+                                "col-between" => {
+                                    let animation = self.animation_manager.create();
+                                    self.col_between.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
+                                    self.col_between.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
+                                }
+
+                                "row-between" => {
+                                    let animation = self.animation_manager.create();
+                                    self.row_between.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
+                                    self.row_between.insert_transition(rule_id, animation);
                                     self.transitions.insert(rule_id, animation);
                                 }
 

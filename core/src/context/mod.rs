@@ -23,7 +23,7 @@ use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
 use crate::hover_system::apply_hover;
-use crate::id::IdManager;
+use crate::id::{GenerationalId, IdManager};
 use crate::input::{Modifiers, MouseState};
 use crate::layout::geometry_changed;
 use crate::prelude::*;
@@ -127,8 +127,6 @@ impl Context {
         Environment::new().build(&mut result);
 
         result.entity_manager.create();
-        result.add_theme(DEFAULT_LAYOUT);
-        result.add_theme(DEFAULT_THEME);
 
         result
     }
@@ -268,6 +266,18 @@ impl Context {
         let current = self.current();
         if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
             pseudo_classes.set(PseudoClass::ACTIVE, flag);
+        }
+
+        self.style().needs_restyle = true;
+        self.style().needs_relayout = true;
+        self.style().needs_redraw = true;
+    }
+
+    /// Sets the hover flag of the current entity
+    pub fn set_hover(&mut self, flag: bool) {
+        let current = self.current();
+        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
+            pseudo_classes.set(PseudoClass::HOVER, flag);
         }
 
         self.style().needs_restyle = true;
@@ -533,7 +543,7 @@ impl Context {
         Ok(())
     }
 
-    pub fn has_animations(&self) -> bool {
+    pub fn has_animations(&mut self) -> bool {
         self.style.display.has_animations()
             | self.style.visibility.has_animations()
             | self.style.opacity.has_animations()
@@ -553,30 +563,36 @@ impl Context {
             | self.style.outer_shadow_color.has_animations()
             | self.style.font_color.has_animations()
             | self.style.font_size.has_animations()
-            | self.style.left.has_animations()
-            | self.style.right.has_animations()
-            | self.style.top.has_animations()
-            | self.style.bottom.has_animations()
-            | self.style.width.has_animations()
-            | self.style.height.has_animations()
-            | self.style.max_width.has_animations()
-            | self.style.max_height.has_animations()
-            | self.style.min_width.has_animations()
-            | self.style.min_height.has_animations()
-            | self.style.min_left.has_animations()
-            | self.style.max_left.has_animations()
-            | self.style.min_right.has_animations()
-            | self.style.max_right.has_animations()
-            | self.style.min_top.has_animations()
-            | self.style.max_top.has_animations()
-            | self.style.min_bottom.has_animations()
-            | self.style.max_bottom.has_animations()
-            | self.style.row_between.has_animations()
-            | self.style.col_between.has_animations()
-            | self.style.child_left.has_animations()
-            | self.style.child_right.has_animations()
-            | self.style.child_top.has_animations()
-            | self.style.child_bottom.has_animations()
+            | if self.style.left.has_animations()
+                | self.style.right.has_animations()
+                | self.style.top.has_animations()
+                | self.style.bottom.has_animations()
+                | self.style.width.has_animations()
+                | self.style.height.has_animations()
+                | self.style.max_width.has_animations()
+                | self.style.max_height.has_animations()
+                | self.style.min_width.has_animations()
+                | self.style.min_height.has_animations()
+                | self.style.min_left.has_animations()
+                | self.style.max_left.has_animations()
+                | self.style.min_right.has_animations()
+                | self.style.max_right.has_animations()
+                | self.style.min_top.has_animations()
+                | self.style.max_top.has_animations()
+                | self.style.min_bottom.has_animations()
+                | self.style.max_bottom.has_animations()
+                | self.style.row_between.has_animations()
+                | self.style.col_between.has_animations()
+                | self.style.child_left.has_animations()
+                | self.style.child_right.has_animations()
+                | self.style.child_top.has_animations()
+                | self.style.child_bottom.has_animations()
+            {
+                self.style.needs_relayout = true;
+                true
+            } else {
+                false
+            }
     }
 
     pub fn apply_animations(&mut self) {
@@ -625,8 +641,6 @@ impl Context {
         self.style.child_right.tick(time);
         self.style.child_top.tick(time);
         self.style.child_bottom.tick(time);
-
-        self.style.needs_relayout = true;
     }
 
     /// Adds a new property animation returning an animation builder
@@ -679,8 +693,6 @@ impl Context {
         }
 
         self.style.parse_theme(&overall_theme);
-
-        //self.environment.needs_rebuild = true;
 
         Ok(())
     }
@@ -883,7 +895,6 @@ impl Context {
             std::mem::swap(&mut store.0, &mut self.style);
             std::mem::swap(&mut store.1, &mut self.text_context);
             std::mem::swap(&mut store.2, &mut self.resource_manager);
-
             self.style.needs_relayout = false;
         }
 
@@ -980,6 +991,8 @@ impl Context {
     pub fn dispatch_system_event(&mut self, event: WindowEvent) {
         match &event {
             WindowEvent::MouseMove(x, y) => {
+                self.mouse.previous_cursorx = self.mouse.cursorx;
+                self.mouse.previous_cursory = self.mouse.cursory;
                 self.mouse.cursorx = *x;
                 self.mouse.cursory = *y;
 
@@ -1055,8 +1068,7 @@ impl Context {
                 self.dispatch_direct_or_hovered(event, self.captured, true);
             }
             WindowEvent::MouseScroll(_, _) => {
-                self.event_queue
-                    .push_back(Event::new(event).target(self.hovered).propagate(Propagation::Up));
+                self.event_queue.push_back(Event::new(event).target(self.hovered));
             }
             WindowEvent::KeyDown(code, _) => {
                 #[cfg(debug_assertions)]
@@ -1142,10 +1154,10 @@ impl Context {
                     self.style().needs_redraw = true;
                 }
 
-                self.dispatch_direct_or_hovered(event, self.focused, true);
+                self.event_queue.push_back(Event::new(event).target(self.focused));
             }
             WindowEvent::KeyUp(_, _) | WindowEvent::CharInput(_) => {
-                self.dispatch_direct_or_hovered(event, self.focused, true);
+                self.event_queue.push_back(Event::new(event).target(self.focused));
             }
             _ => {}
         }

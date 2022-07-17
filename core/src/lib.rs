@@ -1,3 +1,7 @@
+#[cfg(feature = "serde")]
+#[macro_use]
+extern crate serde;
+
 pub mod animation;
 pub mod cache;
 pub mod context;
@@ -43,7 +47,7 @@ pub mod prelude {
     pub use super::events::{Event, Message, Propagation};
     pub use super::handle::Handle;
     pub use super::input::{
-        KeyChord, Keymap, KeymapEvent, Modifiers, MouseButton, MouseButtonState,
+        KeyChord, Keymap, KeymapEntry, KeymapEvent, Modifiers, MouseButton, MouseButtonState,
     };
     pub use super::localization::Localized;
     pub use super::modifiers::Actions;
@@ -62,7 +66,7 @@ pub mod prelude {
         LinearGradient, Opacity, Overflow, PseudoClass, Visibility,
     };
 
-    pub use keyboard_types::Code;
+    pub use keyboard_types::{Code, Key};
     pub use morphorm::Units::*;
     pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
     pub use unic_langid::LanguageIdentifier;

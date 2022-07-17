@@ -129,7 +129,7 @@ where
 
         if entity_index < self.inline_data.sparse.len() {
             let data_index = self.inline_data.sparse[entity_index].data_index;
-            if data_index.is_inline() {
+            if data_index.is_inline() && !data_index.is_inherited() {
                 self.inline_data.remove(entity)
             } else {
                 self.inline_data.sparse[entity_index] = Index::null();

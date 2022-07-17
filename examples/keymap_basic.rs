@@ -18,60 +18,56 @@ fn main() {
     Application::new(|cx| {
         // Build the keymap.
         Keymap::from(vec![
-            (Action::OnA, KeyChord::new(Modifiers::empty(), Code::KeyA)),
-            (Action::OnB, KeyChord::new(Modifiers::empty(), Code::KeyB)),
-            (Action::OnC, KeyChord::new(Modifiers::empty(), Code::KeyC)),
-            (Action::OnCtrlA, KeyChord::new(Modifiers::CTRL, Code::KeyA)),
-            (Action::OnAltA, KeyChord::new(Modifiers::ALT, Code::KeyA)),
-            (Action::OnShiftA, KeyChord::new(Modifiers::SHIFT, Code::KeyA)),
-            (Action::OnLogoA, KeyChord::new(Modifiers::LOGO, Code::KeyA)),
-            (Action::OnAltShiftX, KeyChord::new(Modifiers::ALT | Modifiers::SHIFT, Code::KeyX)),
             (
-                Action::OnCtrlAltShiftY,
-                KeyChord::new(Modifiers::CTRL | Modifiers::ALT | Modifiers::SHIFT, Code::KeyY),
+                KeyChord::new(Modifiers::empty(), Code::KeyA),
+                KeymapEntry::new(Action::OnA, |_| println!("Action A")),
             ),
             (
-                Action::OnCtrlAltShiftLogoZ,
+                KeyChord::new(Modifiers::empty(), Code::KeyB),
+                KeymapEntry::new(Action::OnB, |_| println!("Action B")),
+            ),
+            (
+                KeyChord::new(Modifiers::empty(), Code::KeyC),
+                KeymapEntry::new(Action::OnC, |_| println!("Action C")),
+            ),
+            (
+                KeyChord::new(Modifiers::CTRL, Code::KeyA),
+                KeymapEntry::new(Action::OnCtrlA, |_| println!("Action OnCtrlA")),
+            ),
+            (
+                KeyChord::new(Modifiers::ALT, Code::KeyA),
+                KeymapEntry::new(Action::OnAltA, |_| println!("Action OnAltA")),
+            ),
+            (
+                KeyChord::new(Modifiers::SHIFT, Code::KeyA),
+                KeymapEntry::new(Action::OnShiftA, |_| println!("Action OnShiftA")),
+            ),
+            (
+                KeyChord::new(Modifiers::LOGO, Code::KeyA),
+                KeymapEntry::new(Action::OnLogoA, |_| println!("Action OnLogoA")),
+            ),
+            (
+                KeyChord::new(Modifiers::ALT | Modifiers::SHIFT, Code::KeyX),
+                KeymapEntry::new(Action::OnAltShiftX, |_| println!("Action OnAltShiftX")),
+            ),
+            (
+                KeyChord::new(Modifiers::CTRL | Modifiers::ALT | Modifiers::SHIFT, Code::KeyY),
+                KeymapEntry::new(Action::OnCtrlAltShiftY, |_| println!("Action OnCtrlAltShiftY")),
+            ),
+            (
                 KeyChord::new(
                     Modifiers::CTRL | Modifiers::ALT | Modifiers::SHIFT | Modifiers::LOGO,
                     Code::KeyZ,
                 ),
+                KeymapEntry::new(Action::OnCtrlAltShiftLogoZ, |_| {
+                    println!("Action OnCtrlAltShiftLogoZ")
+                }),
             ),
         ])
         .build(cx);
-
-        // Create a custom view.
-        CustomView::new(cx);
     })
     .title("Keymap - Basic")
     .run();
-}
-
-struct CustomView;
-
-impl CustomView {
-    fn new(cx: &mut Context) -> Handle<Self> {
-        Self.build(cx, |cx| {
-            cx.focus();
-        })
-    }
-}
-
-impl View for CustomView {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
-            WindowEvent::KeyDown(code, _) => {
-                // Retrieve our keymap data containing all of our key chords.
-                if let Some(keymap_data) = cx.data::<Keymap<Action>>() {
-                    // Loop through every action that is being pressed.
-                    for action in keymap_data.pressed_actions(cx, *code) {
-                        println!("The action {:?} is being pressed!", action);
-                    }
-                }
-            }
-            _ => {}
-        });
-    }
 }
 
 // The actions that are associated with the key chords.

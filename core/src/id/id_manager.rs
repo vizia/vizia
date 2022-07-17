@@ -1,9 +1,7 @@
+use super::GenerationalId;
 use std::{collections::VecDeque, marker::PhantomData};
 
-use super::GenerationalId;
-
 const MINIMUM_FREE_INDICES: usize = 1024;
-
 const IDX_MAX: u32 = std::u32::MAX >> 8;
 
 /// The IdManager is responsible for allocating generational IDs.
@@ -49,7 +47,7 @@ impl<I: GenerationalId + Copy> IdManager<I> {
             idx
         };
 
-        I::new(index as usize, self.generation[index as usize] as usize)
+        I::new(index, self.generation[index as usize] as u32)
     }
 
     /// Destroys an ID returning false if the ID has already been destroyed.
@@ -59,7 +57,7 @@ impl<I: GenerationalId + Copy> IdManager<I> {
         if self.is_alive(id) {
             let index = id.index();
             assert!(index < self.generation.len(), "ID is invalid");
-            assert!(self.generation[index] != std::u8::MAX, "ID generation is at maximum");
+            assert!(self.generation[index] != u8::MAX, "ID generation is at maximum");
             self.generation[index as usize] += 1;
             self.free_list.push_back(index as u32);
             true

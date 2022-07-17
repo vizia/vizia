@@ -6,6 +6,7 @@ use crate::{context::Context, events::Event, state::Lens, state::Model};
 #[derive(Lens)]
 pub struct Environment {
     pub locale: LanguageIdentifier,
+    // Signifies whether the app should be rebuilt.
     pub include_default_theme: bool,
 }
 

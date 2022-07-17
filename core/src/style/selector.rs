@@ -144,6 +144,39 @@ impl Selector {
     //     }
     // }
 
+    pub fn is_empty(&self) -> bool {
+        self.id.is_none() && self.element.is_none() && self.classes.is_empty()
+    }
+
+    // Returns true if the selectors are identical unless either are empty
+    pub fn same(&self, entity_selector: &Selector) -> bool {
+        if self.is_empty() || entity_selector.is_empty() {
+            return false;
+        }
+
+        if self.asterisk != entity_selector.asterisk {
+            return false;
+        }
+
+        if self.id.is_some() && self.id != entity_selector.id {
+            return false;
+        }
+
+        if self.element.is_some() && self.element != entity_selector.element {
+            return false;
+        }
+
+        if !self.classes.is_empty() && self.classes != entity_selector.classes {
+            return false;
+        }
+
+        if self.pseudo_classes != entity_selector.pseudo_classes {
+            return false;
+        }
+
+        true
+    }
+
     pub fn matches(&self, entity_selector: &Selector) -> bool {
         // Universal selector always matches
         if self.asterisk {

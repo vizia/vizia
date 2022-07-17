@@ -63,6 +63,18 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
+    /// Callback which is run when the view is built/rebuilt
+    pub fn on_build<F>(self, callback: F) -> Self
+    where
+        F: Fn(&mut Context),
+    {
+        self.cx.with_current(self.entity(), |cx| {
+            (callback)(cx);
+        });
+
+        self
+    }
+
     pub fn bind<L, F>(self, lens: L, closure: F) -> Self
     where
         L: Lens,

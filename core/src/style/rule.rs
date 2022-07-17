@@ -1,18 +1,4 @@
-use std::cmp::{Eq, PartialEq};
-use std::hash::Hash;
-
-// use crate::{Color, PropSet2, Selector, State};
-use crate::id::GenerationalId;
-
-const RULE_INDEX_BITS: u32 = 24;
-const RULE_INDEX_MASK: u32 = (1 << RULE_INDEX_BITS) - 1;
-
-const RULE_GENERATION_BITS: u32 = 8;
-const RULE_GENERATION_MASK: u32 = (1 << RULE_GENERATION_BITS) - 1;
-
-// const RULE_MAX: u32 = std::u32::MAX>>8;
-
-// const MINIMUM_FREE_INDICES: usize = 1024;
+use crate::id::impl_generational_id;
 
 /// A rule is an id used to get/set shared style properties in State.
 ///
@@ -21,68 +7,7 @@ const RULE_GENERATION_MASK: u32 = (1 << RULE_GENERATION_BITS) - 1;
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Rule(u32);
 
-impl Default for Rule {
-    fn default() -> Self {
-        Rule::null()
-    }
-}
-
-impl std::fmt::Display for Rule {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.index())
-    }
-}
-
-impl std::fmt::Debug for Rule {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Rule {{index: {}, generation: {}}}", self.index(), self.generation())
-    }
-}
-
-impl Rule {
-    /// Creates a null rule.
-    ///
-    /// A null rule can be used as a placeholder within a widget struct but cannot be used to get/set properties.
-    pub fn null() -> Rule {
-        Rule(std::u32::MAX)
-    }
-
-    /// Creates a new rule with a given index and generation.
-    pub(crate) fn new(index: u32, generation: u32) -> Rule {
-        assert!(index < RULE_INDEX_MASK);
-        assert!(generation < RULE_GENERATION_MASK);
-        Rule(index | generation << RULE_INDEX_BITS)
-    }
-
-    /// Returns true if the rule is null.
-    pub fn is_null(&self) -> bool {
-        self.0 == std::u32::MAX
-    }
-
-    // Adds a selector to the rule (TODO)
-    // pub fn selector(self, selector: Selector) -> Self {
-    //     self
-    // }
-}
-
-impl GenerationalId for Rule {
-    fn new(index: usize, generation: usize) -> Self {
-        Rule::new(index as u32, generation as u32)
-    }
-
-    fn index(&self) -> usize {
-        (self.0 & RULE_INDEX_MASK) as usize
-    }
-
-    fn generation(&self) -> u8 {
-        ((self.0 >> RULE_INDEX_BITS) & RULE_GENERATION_MASK) as u8
-    }
-
-    /// Returns true if the entity is null
-    fn is_null(&self) -> bool {
-        self.0 == std::u32::MAX
-    }
-}
+impl_generational_id!(Rule);
 
 // impl PropSet2 for Rule {
 

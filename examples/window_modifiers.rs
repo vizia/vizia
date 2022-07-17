@@ -41,7 +41,7 @@ fn main() {
         AppData { title: "Window Modifiers".to_owned(), inner_size: (400, 400) }.build(cx);
 
         VStack::new(cx, |cx| {
-            Textbox::new(cx, AppData::title).width(Pixels(200.0)).on_submit(|cx, txt| {
+            Textbox::new(cx, AppData::title).width(Pixels(200.0)).on_submit(|cx, txt, _| {
                 cx.emit(AppEvent::SetTitle(txt.clone()));
             });
 

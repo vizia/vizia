@@ -286,8 +286,9 @@ impl ApplicationRunner {
         //         *control_flow = ControlFlow::Wait;
         //     }
         // }
-
-        self.context.apply_animations();
+        if self.context.has_animations() {
+            self.context.apply_animations();
+        }
 
         self.context.process_visual_updates();
 
@@ -359,16 +360,16 @@ impl ApplicationRunner {
 
                 match event.code {
                     Code::ShiftLeft | Code::ShiftRight => {
-                        self.context.modifiers().set(Modifiers::SHIFT, pressed)
+                        self.context.modifiers_mut().set(Modifiers::SHIFT, pressed)
                     }
                     Code::ControlLeft | Code::ControlRight => {
-                        self.context.modifiers().set(Modifiers::CTRL, pressed)
+                        self.context.modifiers_mut().set(Modifiers::CTRL, pressed)
                     }
                     Code::AltLeft | Code::AltRight => {
-                        self.context.modifiers().set(Modifiers::ALT, pressed)
+                        self.context.modifiers_mut().set(Modifiers::ALT, pressed)
                     }
                     Code::MetaLeft | Code::MetaRight => {
-                        self.context.modifiers().set(Modifiers::LOGO, pressed)
+                        self.context.modifiers_mut().set(Modifiers::LOGO, pressed)
                     }
                     _ => (),
                 }
@@ -444,17 +445,6 @@ impl ApplicationRunner {
                 }
                 _ => {}
             },
-        }
-    }
-
-    pub fn rebuild(&mut self, builder: &Option<Box<dyn Fn(&mut Context) + Send>>) {
-        if self.context.needs_rebuild {
-            self.context.set_current(Entity::root());
-            self.context.remove_children(Entity::root());
-            if let Some(builder) = &builder {
-                (builder)(&mut self.context);
-            }
-            self.context.needs_rebuild = false;
         }
     }
 
