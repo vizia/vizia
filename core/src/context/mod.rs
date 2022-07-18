@@ -48,7 +48,7 @@ const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 /// This type is part of the prelude.
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
-    tree: Tree,
+    pub(crate) tree: Tree,
     current: Entity,
     /// TODO make this private when there's no longer a need to mutate views after building
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
@@ -59,8 +59,7 @@ pub struct Context {
     style: Style,
     cache: CachedData,
 
-    environment: Environment,
-
+    //environment: Environment,
     mouse: MouseState,
     modifiers: Modifiers,
 
@@ -96,7 +95,7 @@ impl Context {
             data: SparseSet::new(),
             style: Style::default(),
             cache,
-            environment: Environment::new(),
+            // environment: Environment::new(),
             event_queue: VecDeque::new(),
             listeners: HashMap::default(),
             mouse: MouseState::default(),
@@ -120,6 +119,8 @@ impl Context {
             double_click: false,
             click_pos: (0.0, 0.0),
         };
+
+        Environment::new().build(&mut result);
 
         result.entity_manager.create();
 
@@ -176,8 +177,9 @@ impl Context {
         &self.cache
     }
 
-    pub fn environment(&mut self) -> &mut Environment {
-        &mut self.environment
+    pub fn environment(&self) -> &Environment {
+        //&mut self.environment
+        self.data::<Environment>().unwrap()
     }
 
     /// The current femtovg text context. Useful when measuring or rendering fonts.
@@ -672,7 +674,7 @@ impl Context {
 
         // Reload the stored themes
         for (index, theme) in self.resource_manager.themes.iter().enumerate() {
-            if !self.environment.include_default_theme && index == 1 {
+            if !self.environment().include_default_theme && index == 1 {
                 continue;
             }
 
@@ -780,7 +782,8 @@ impl Context {
     }
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
-        self.resource_manager.add_translation(lang, ftl)
+        self.resource_manager.add_translation(lang, ftl);
+        self.emit(EnvironmentEvent::SetLocale(self.resource_manager.language.clone()));
     }
 
     pub fn spawn<F>(&self, target: F)
@@ -1194,7 +1197,6 @@ impl DataContext for Context {
         }
 
         for entity in self.current.parent_iter(&self.tree) {
-            //println!("Current: {} {:?}", entity, entity.parent(&self.tree));
             if let Some(data_list) = self.data.get(entity) {
                 for (_, model) in data_list.data.iter() {
                     if let Some(data) = model.downcast_ref::<T>() {

@@ -594,7 +594,8 @@ impl WindowModifiers for Application {
 impl Env for Application {
     fn ignore_default_styles(mut self) -> Self {
         if self.context.environment().include_default_theme {
-            self.context.environment().include_default_theme = false;
+            //self.context.environment().include_default_theme = false;
+            self.context.emit(EnvironmentEvent::IncludeDefaultTheme(false));
             self.context.reload_styles().expect("Failed to reload styles");
         }
 

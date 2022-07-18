@@ -189,8 +189,6 @@ impl WindowHandler for ViziaWindow {
     fn on_frame(&mut self, window: &mut Window) {
         let context = window.gl_context().expect("Window was created without OpenGL support");
 
-        //self.application.rebuild(&self.builder);
-
         self.application.on_frame_update();
 
         unsafe { context.make_current() };

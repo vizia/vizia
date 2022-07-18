@@ -43,7 +43,7 @@ pub mod prelude {
     pub use super::animation::{AnimExt, Animation, AnimationBuilder};
     pub use super::context::{Context, ContextProxy, DataContext, DrawContext, ProxyEmitError};
     pub use super::entity::Entity;
-    pub use super::environment::Env;
+    pub use super::environment::{Env, Environment, EnvironmentEvent};
     pub use super::events::{Event, Message, Propagation};
     pub use super::handle::Handle;
     pub use super::input::{
@@ -69,6 +69,7 @@ pub mod prelude {
     pub use keyboard_types::{Code, Key};
     pub use morphorm::Units::*;
     pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
+    pub use unic_langid::LanguageIdentifier;
 }
 
 /// One very small function for abstracting debugging between web and desktop programming.
