@@ -3,7 +3,6 @@
 
 use morphorm::GeometryChanged;
 use std::fmt::Debug;
-use std::ops::Range;
 
 use crate::prelude::*;
 use crate::storage::sparse_set::SparseSet;
