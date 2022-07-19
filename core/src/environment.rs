@@ -18,14 +18,16 @@ impl Default for Environment {
 
 impl Environment {
     pub fn new() -> Self {
-        Self { locale: LanguageIdentifier::default(), include_default_theme: true }
+        let locale = sys_locale::get_locale().map(|l| l.parse().unwrap()).unwrap_or_default();
+
+        Self { locale, include_default_theme: true }
     }
 }
 
 pub enum EnvironmentEvent {
     IncludeDefaultTheme(bool),
     SetLocale(LanguageIdentifier),
-    //UseSystemLocale,
+    UseSystemLocale,
 }
 
 impl Model for Environment {
@@ -37,6 +39,11 @@ impl Model for Environment {
 
             EnvironmentEvent::SetLocale(locale) => {
                 self.locale = locale.clone();
+            }
+
+            EnvironmentEvent::UseSystemLocale => {
+                self.locale =
+                    sys_locale::get_locale().map(|l| l.parse().unwrap()).unwrap_or_default();
             }
         });
     }

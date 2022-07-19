@@ -194,6 +194,10 @@ path = "examples/window_modifiers.rs"
 name = "long_list"
 path = "examples/lists/long_list.rs"
 
+[[example]]
+name = "locale_binding"
+path = "examples/localization/locale_binding.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard"]
