@@ -1,6 +1,7 @@
 mod draw;
 mod proxy;
 
+use femtovg::renderer::Drawable;
 use instant::{Duration, Instant};
 use std::any::Any;
 use std::collections::hash_map::Entry;
@@ -58,7 +59,7 @@ pub struct Context {
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
     style: Style,
     cache: CachedData,
-
+    pub draw_cache: DrawCache,
     //environment: Environment,
     mouse: MouseState,
     modifiers: Modifiers,
@@ -97,6 +98,7 @@ impl Context {
             data: SparseSet::new(),
             style: Style::default(),
             cache,
+            draw_cache: DrawCache::new(),
             // environment: Environment::new(),
             event_queue: VecDeque::new(),
             listeners: HashMap::default(),
@@ -426,6 +428,7 @@ impl Context {
 
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
+            self.draw_cache.remove(*entity);
             self.style.remove(*entity);
             self.data.remove(*entity);
             self.views.remove(entity);
