@@ -76,6 +76,8 @@ pub struct ResourceManager {
 
 impl ResourceManager {
     pub fn new() -> Self {
+        let locale = sys_locale::get_locale().map(|l| l.parse().unwrap()).unwrap_or_default();
+
         ResourceManager {
             stylesheets: Vec::new(),
             themes: Vec::new(),
@@ -85,7 +87,7 @@ impl ResourceManager {
                 LanguageIdentifier::default(),
                 FluentBundle::new(vec![LanguageIdentifier::default()]),
             )]),
-            language: LanguageIdentifier::default(),
+            language: locale,
             image_loader: None,
             count: 0,
         }
