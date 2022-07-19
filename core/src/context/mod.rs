@@ -1,7 +1,6 @@
 mod draw;
 mod proxy;
 
-use femtovg::renderer::Drawable;
 use instant::{Duration, Instant};
 use std::any::Any;
 use std::collections::hash_map::Entry;
