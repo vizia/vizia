@@ -20,10 +20,10 @@ pub(crate) fn text_paint_layout(
 }
 
 pub fn text_paint_draw(cx: &DrawContext, entity: Entity) -> Paint {
-    let font = cx.font(entity).map(|s| s.as_str()).unwrap_or("");
+    let font = cx.font().map(|s| s.as_str()).unwrap_or("");
     let font_size = cx.font_size(entity);
 
-    text_paint(font, cx.default_font(), cx.resource_manager(), font_size)
+    text_paint(font, cx.default_font(), &cx.resource_manager, font_size)
 }
 
 pub fn text_paint_general(cx: &Context, entity: Entity) -> Paint {

@@ -225,7 +225,7 @@ impl TextboxData {
                 let line_height = font_metrics.height();
 
                 let default = vec![];
-                let lines = cx.cache().text_lines.get(entity).unwrap_or(&default);
+                let lines = cx.draw_cache.text_lines.get(entity).unwrap_or(&default);
                 let (line, (_, y)) = idx_to_pos(self.selection.active, lines.iter());
 
                 if line == 0 && matches!(dir, Direction::Upstream) {
@@ -368,7 +368,7 @@ impl Model for TextboxData {
                 let idx = pos_to_idx(
                     posx,
                     posy,
-                    cx.cache().text_lines.get(self.content_entity).unwrap().iter(),
+                    cx.draw_cache.text_lines.get(self.content_entity).unwrap().iter(),
                 );
                 self.selection = Selection::new(idx, idx);
                 self.sel_x = posx;
@@ -381,7 +381,7 @@ impl Model for TextboxData {
                 let idx = pos_to_idx(
                     posx,
                     posy,
-                    cx.cache().text_lines.get(self.content_entity).unwrap().iter(),
+                    cx.draw_cache.text_lines.get(self.content_entity).unwrap().iter(),
                 );
                 self.selection = Selection::new(self.selection.anchor, idx);
                 self.sel_x = posx;

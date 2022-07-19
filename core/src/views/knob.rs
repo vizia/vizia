@@ -251,35 +251,31 @@ impl Ticks {
 }
 impl View for Ticks {
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        let current = cx.current();
-        let opacity = cx.cache().get_opacity(current);
+        let opacity = cx.opacity();
 
         //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
         // background_color.set_alphaf(background_color.a * opacity);
 
         let mut foreground_color: femtovg::Color =
-            cx.background_color(current).cloned().unwrap_or_default().into();
+            cx.background_color().cloned().unwrap_or_default().into();
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
         // let background_color = femtovg::Color::rgb(54, 54, 54);
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
 
-        let posx = cx.cache().get_posx(current);
-        let posy = cx.cache().get_posy(current);
-        let width = cx.cache().get_width(current);
-        let height = cx.cache().get_height(current);
+        let bounds = cx.bounds();
 
         // Clalculate arc center
-        let centerx = posx + 0.5 * width;
-        let centery = posy + 0.5 * height;
+        let centerx = bounds.x + 0.5 * bounds.w;
+        let centery = bounds.y + 0.5 * bounds.h;
 
         // Convert start and end angles to radians and rotate origin direction to be upwards instead of to the right
         let start = self.angle_start.to_radians() - PI / 2.0;
         let end = self.angle_end.to_radians() - PI / 2.0;
 
-        let parent = cx.tree().parent(current).unwrap();
+        let parent = cx.tree.parent(cx.current).unwrap();
 
-        let parent_width = cx.cache().get_width(parent);
+        let parent_width = cx.cache.get_width(parent);
 
         // Convert radius and span into screen coordinates
         let radius = self.radius.value_or(parent_width / 2.0, 0.0);
@@ -349,35 +345,31 @@ impl TickKnob {
 }
 impl View for TickKnob {
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        let current = cx.current();
-        let opacity = cx.cache().get_opacity(current);
+        let opacity = cx.opacity();
 
         //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
         // background_color.set_alphaf(background_color.a * opacity);
 
         let mut foreground_color: femtovg::Color =
-            cx.background_color(current).cloned().unwrap_or_default().into();
+            cx.background_color().cloned().unwrap_or_default().into();
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
         let background_color = femtovg::Color::rgb(54, 54, 54);
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
 
-        let posx = cx.cache().get_posx(current);
-        let posy = cx.cache().get_posy(current);
-        let width = cx.cache().get_width(current);
-        let height = cx.cache().get_height(current);
+        let bounds = cx.bounds();
 
         // Clalculate arc center
-        let centerx = posx + 0.5 * width;
-        let centery = posy + 0.5 * height;
+        let centerx = bounds.x + 0.5 * bounds.w;
+        let centery = bounds.y + 0.5 * bounds.h;
 
         // Convert start and end angles to radians and rotate origin direction to be upwards instead of to the right
         let start = self.angle_start.to_radians() - PI / 2.0;
         let end = self.angle_end.to_radians() - PI / 2.0;
 
-        let parent = cx.tree().parent(current).unwrap();
+        let parent = cx.tree.parent(cx.current).unwrap();
 
-        let parent_width = cx.cache().get_width(parent);
+        let parent_width = cx.cache.get_width(parent);
 
         // Convert radius and span into screen coordinates
         let radius = self.radius.value_or(parent_width / 2.0, 0.0);
@@ -479,35 +471,31 @@ impl ArcTrack {
 
 impl View for ArcTrack {
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        let current = cx.current();
-        let opacity = cx.cache().get_opacity(current);
+        let opacity = cx.opacity();
 
         //let mut background_color: femtovg::Color = cx.current.get_background_color(cx).into();
         // background_color.set_alphaf(background_color.a * opacity);
 
         let mut foreground_color: femtovg::Color =
-            cx.background_color(current).cloned().unwrap_or_default().into();
+            cx.background_color().cloned().unwrap_or_default().into();
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
         let background_color = femtovg::Color::rgb(54, 54, 54);
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
 
-        let posx = cx.cache().get_posx(current);
-        let posy = cx.cache().get_posy(current);
-        let width = cx.cache().get_width(current);
-        let height = cx.cache().get_height(current);
+        let bounds = cx.bounds();
 
         // Calculate arc center
-        let centerx = posx + 0.5 * width;
-        let centery = posy + 0.5 * height;
+        let centerx = bounds.x + 0.5 * bounds.w;
+        let centery = bounds.y + 0.5 * bounds.h;
 
         // Convert start and end angles to radians and rotate origin direction to be upwards instead of to the right
         let start = self.angle_start.to_radians() - PI / 2.0;
         let end = self.angle_end.to_radians() - PI / 2.0;
 
-        let parent = cx.tree().parent(current).unwrap();
+        let parent = cx.tree.parent(cx.current).unwrap();
 
-        let parent_width = cx.cache().get_width(parent);
+        let parent_width = cx.cache.get_width(parent);
 
         // Convert radius and span into screen coordinates
         let radius = self.radius.value_or(parent_width / 2.0, 0.0);
