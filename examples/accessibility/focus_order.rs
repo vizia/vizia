@@ -34,15 +34,27 @@ fn main() {
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Button 1"))
-                    .on_focus_in(|cx| cx.emit(AppEvent::SetText("Button 1".to_string())))
-                    .on_focus_out(|cx| cx.emit(AppEvent::SetText("".to_string())));
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Button 2"))
-                    .on_focus_in(|cx| cx.emit(AppEvent::SetText("Button 2".to_string())))
-                    .on_focus_out(|cx| cx.emit(AppEvent::SetText("".to_string())));
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Button 3"))
-                    .on_focus_in(|cx| cx.emit(AppEvent::SetText("Button 3".to_string())))
-                    .on_focus_out(|cx| cx.emit(AppEvent::SetText("".to_string())));
+                Button::new(cx, |_| {}, |cx| Label::new(cx, "Button 1")).on_focus(|cx, focus| {
+                    if focus {
+                        cx.emit(AppEvent::SetText("Button 1".to_string()));
+                    } else {
+                        cx.emit(AppEvent::SetText("".to_string()));
+                    }
+                });
+                Button::new(cx, |_| {}, |cx| Label::new(cx, "Button 2")).on_focus(|cx, focus| {
+                    if focus {
+                        cx.emit(AppEvent::SetText("Button 2".to_string()));
+                    } else {
+                        cx.emit(AppEvent::SetText("".to_string()));
+                    }
+                });
+                Button::new(cx, |_| {}, |cx| Label::new(cx, "Button 3")).on_focus(|cx, focus| {
+                    if focus {
+                        cx.emit(AppEvent::SetText("Button 3".to_string()));
+                    } else {
+                        cx.emit(AppEvent::SetText("".to_string()));
+                    }
+                });
             })
             .col_between(Pixels(10.0))
             .height(Auto);
