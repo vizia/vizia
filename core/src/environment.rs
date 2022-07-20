@@ -18,7 +18,7 @@ impl Default for Environment {
 
 impl Environment {
     pub fn new() -> Self {
-        let locale = sys_locale::get_locale().map(|l| l.parse().unwrap()).unwrap_or_default();
+        let locale = sys_locale::get_locale().map(|l| l.parse().ok()).flatten().unwrap_or_default();
 
         Self { locale, include_default_theme: true }
     }
