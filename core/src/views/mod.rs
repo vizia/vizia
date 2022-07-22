@@ -33,7 +33,7 @@ pub use menu::{setup_menu_entry, Menu, MenuButton, MenuController, MenuEvent, Me
 pub use popup::{Popup, PopupData, PopupEvent};
 pub use radio_buttons::RadioButton;
 pub use scrollbar::Scrollbar;
-pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
+pub use scrollview::{ScrollData, ScrollEvent, ScrollView, ScrollViewSettings};
 pub use slider::Slider;
 pub use stack::{HStack, VStack, ZStack};
 pub use table::{Table, TableColumn};
