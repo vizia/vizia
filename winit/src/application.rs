@@ -106,6 +106,12 @@ impl Application {
         self
     }
 
+    pub fn ignore_default_theme(mut self) -> Self {
+        self.context.ignore_default_theme = true;
+
+        self
+    }
+
     // TODO - Rename this
     pub fn get_proxy(&self) -> EventLoopProxy<Event> {
         self.event_loop.create_proxy()
@@ -200,7 +206,7 @@ impl Application {
 
         context.add_theme(DEFAULT_LAYOUT);
 
-        if context.environment().include_default_theme {
+        if context.ignore_default_theme {
             context.add_theme(DEFAULT_THEME);
         }
 
@@ -586,18 +592,6 @@ impl WindowModifiers for Application {
     #[cfg(target_arch = "wasm32")]
     fn canvas(mut self, canvas: &str) -> Self {
         self.window_description.target_canvas = Some(canvas.to_owned());
-
-        self
-    }
-}
-
-impl Env for Application {
-    fn ignore_default_styles(mut self) -> Self {
-        if self.context.environment().include_default_theme {
-            //self.context.environment().include_default_theme = false;
-            self.context.emit(EnvironmentEvent::IncludeDefaultTheme(false));
-            self.context.reload_styles().expect("Failed to reload styles");
-        }
 
         self
     }

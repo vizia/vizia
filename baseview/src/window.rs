@@ -50,6 +50,7 @@ impl ViziaWindow {
         scale_policy: WindowScalePolicy,
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+        ignore_default_theme: bool,
     ) -> WindowHandle
     where
         P: HasRawWindowHandle,
@@ -72,9 +73,11 @@ impl ViziaWindow {
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
 
+                context.ignore_default_theme = ignore_default_theme;
+
                 context.add_theme(DEFAULT_LAYOUT);
 
-                if context.environment().include_default_theme {
+                if !ignore_default_theme {
                     context.add_theme(DEFAULT_THEME);
                 }
 
@@ -99,6 +102,7 @@ impl ViziaWindow {
         scale_policy: WindowScalePolicy,
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+        ignore_default_theme: bool,
     ) -> WindowHandle
     where
         F: Fn(&mut Context),
@@ -119,9 +123,11 @@ impl ViziaWindow {
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
 
+                context.ignore_default_theme = ignore_default_theme;
+
                 context.add_theme(DEFAULT_LAYOUT);
 
-                if context.environment().include_default_theme {
+                if !ignore_default_theme {
                     context.add_theme(DEFAULT_THEME);
                 }
 
@@ -146,6 +152,7 @@ impl ViziaWindow {
         scale_policy: WindowScalePolicy,
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+        ignore_default_theme: bool,
     ) where
         F: Fn(&mut Context),
         F: 'static + Send,
@@ -165,9 +172,11 @@ impl ViziaWindow {
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
 
+                context.ignore_default_theme = ignore_default_theme;
+
                 context.add_theme(DEFAULT_LAYOUT);
 
-                if context.environment().include_default_theme {
+                if !ignore_default_theme {
                     context.add_theme(DEFAULT_THEME);
                 }
 

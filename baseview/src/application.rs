@@ -18,6 +18,7 @@ where
     window_description: WindowDescription,
     scale_policy: WindowScalePolicy,
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+    ignore_default_theme: bool,
 }
 
 impl<F> Application<F>
@@ -31,6 +32,7 @@ where
             window_description: WindowDescription::new(),
             scale_policy: WindowScalePolicy::SystemScaleFactor,
             on_idle: None,
+            ignore_default_theme: false,
         }
     }
 
@@ -53,6 +55,12 @@ where
         self
     }
 
+    pub fn ignore_default_theme(mut self) -> Self {
+        self.ignore_default_theme = true;
+
+        self
+    }
+
     /// Open a new window that blocks the current thread until the window is destroyed.
     ///
     /// Do **not** use this in the context of audio plugins, unless it is compiled as a
@@ -65,6 +73,7 @@ where
             self.scale_policy,
             self.app,
             self.on_idle,
+            self.ignore_default_theme,
         )
     }
 
@@ -82,6 +91,7 @@ where
             self.scale_policy,
             self.app,
             self.on_idle,
+            self.ignore_default_theme,
         )
     }
 
@@ -97,6 +107,7 @@ where
             self.scale_policy,
             self.app,
             self.on_idle,
+            self.ignore_default_theme,
         )
     }
 

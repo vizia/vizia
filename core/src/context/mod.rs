@@ -80,6 +80,8 @@ pub struct Context {
     click_time: Instant,
     double_click: bool,
     click_pos: (f32, f32),
+
+    pub ignore_default_theme: bool,
 }
 
 impl Context {
@@ -118,6 +120,8 @@ impl Context {
             click_time: Instant::now(),
             double_click: false,
             click_pos: (0.0, 0.0),
+
+            ignore_default_theme: false,
         };
 
         Environment::new().build(&mut result);
@@ -674,7 +678,7 @@ impl Context {
 
         // Reload the stored themes
         for (index, theme) in self.resource_manager.themes.iter().enumerate() {
-            if !self.environment().include_default_theme && index == 1 {
+            if self.ignore_default_theme && index == 1 {
                 continue;
             }
 
