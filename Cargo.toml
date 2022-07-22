@@ -198,6 +198,10 @@ path = "examples/lists/long_list.rs"
 name = "locale_binding"
 path = "examples/localization/locale_binding.rs"
 
+[[example]]
+name = "ignore_default_theme"
+path = "examples/ignore_default_theme.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard"]

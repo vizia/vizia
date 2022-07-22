@@ -43,7 +43,7 @@ pub mod prelude {
     pub use super::animation::{AnimExt, Animation, AnimationBuilder};
     pub use super::context::{Context, ContextProxy, DataContext, DrawContext, ProxyEmitError};
     pub use super::entity::Entity;
-    pub use super::environment::{Env, Environment, EnvironmentEvent};
+    pub use super::environment::{Environment, EnvironmentEvent};
     pub use super::events::{Event, Message, Propagation};
     pub use super::handle::Handle;
     pub use super::input::{
