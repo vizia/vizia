@@ -206,7 +206,7 @@ impl Application {
 
         context.add_theme(DEFAULT_LAYOUT);
 
-        if context.ignore_default_theme {
+        if !context.ignore_default_theme {
             context.add_theme(DEFAULT_THEME);
         }
 
