@@ -33,11 +33,9 @@ where
                     on_deselect(handle.cx);
                 }
             })
-            .on_over(move |cx, over| {
-                if over {
-                    if cx.data::<MenuControllerData>().unwrap().active {
-                        cx.emit(MenuEvent::SetSelected(Some(i)));
-                    }
+            .on_over(move |cx| {
+                if cx.data::<MenuControllerData>().unwrap().active {
+                    cx.emit(MenuEvent::SetSelected(Some(i)));
                 }
             })
     } else {

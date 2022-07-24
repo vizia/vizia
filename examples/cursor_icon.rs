@@ -11,10 +11,8 @@ macro_rules! cursor_label {
             .child_bottom(Stretch(1.0))
             .child_left(Pixels(5.0))
             .text_wrap(false)
-            .on_hover(|cx, hover| {
-                if hover {
-                    cx.emit(WindowEvent::SetCursor(CursorIcon::$name));
-                }
+            .on_hover(|cx| {
+                cx.emit(WindowEvent::SetCursor(CursorIcon::$name));
             });
     };
 }
