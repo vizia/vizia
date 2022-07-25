@@ -59,7 +59,7 @@ impl Window {
 
         let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
 
-        let size = handle.window().inner_size();
+        let size = handle.inner_size();
         canvas.set_size(size.width as u32, size.height as u32, 1.0);
         canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
 
@@ -68,7 +68,6 @@ impl Window {
         // Build our window
         let mut window = Window { id: handle.id(), handle };
 
-        setup_canvas(&mut window);
         window
     }
 
