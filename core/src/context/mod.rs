@@ -59,6 +59,8 @@ pub struct Context {
     style: Style,
     cache: CachedData,
     pub draw_cache: DrawCache,
+
+    pub canvases: HashMap<Entity, crate::prelude::Canvas>,
     //environment: Environment,
     mouse: MouseState,
     modifiers: Modifiers,
@@ -98,6 +100,7 @@ impl Context {
             style: Style::default(),
             cache,
             draw_cache: DrawCache::new(),
+            canvases: HashMap::new(),
             // environment: Environment::new(),
             event_queue: VecDeque::new(),
             listeners: HashMap::default(),
@@ -503,23 +506,25 @@ impl Context {
     }
 
     /// Ensure all FontOrId entires are loaded into the contexts and become Ids.
-    pub fn synchronize_fonts(&mut self, canvas: &mut Canvas) {
-        for (name, font) in self.resource_manager.fonts.iter_mut() {
-            match font {
-                FontOrId::Font(data) => {
-                    let id1 = canvas
-                        .add_font_mem(&data.clone())
-                        .expect(&format!("Failed to load font file for: {}", name));
-                    let id2 = self.text_context.add_font_mem(&data.clone()).expect("failed");
-                    if id1 != id2 {
-                        panic!(
-                            "Fonts in canvas must have the same id as fonts in the text context"
-                        );
+    pub fn synchronize_fonts(&mut self) {
+        if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
+            for (name, font) in self.resource_manager.fonts.iter_mut() {
+                match font {
+                    FontOrId::Font(data) => {
+                        let id1 = canvas
+                            .add_font_mem(&data.clone())
+                            .expect(&format!("Failed to load font file for: {}", name));
+                        let id2 = self.text_context.add_font_mem(&data.clone()).expect("failed");
+                        if id1 != id2 {
+                            panic!(
+                                "Fonts in canvas must have the same id as fonts in the text context"
+                            );
+                        }
+                        *font = FontOrId::Id(id1);
                     }
-                    *font = FontOrId::Id(id1);
-                }
 
-                _ => {}
+                    _ => {}
+                }
             }
         }
     }
@@ -908,7 +913,8 @@ impl Context {
         geometry_changed(self, &tree);
     }
 
-    pub fn draw(&mut self, canvas: &mut Canvas) {
+    pub fn draw(&mut self) {
+        let canvas = self.canvases.get_mut(&Entity::root()).unwrap();
         self.resource_manager.mark_images_unused();
 
         let window_width = self.cache.get_width(Entity::root());
@@ -967,7 +973,25 @@ impl Context {
 
             if let Some(view) = self.views.remove(&entity) {
                 self.current = entity;
-                view.draw(&mut DrawContext::new(self), canvas);
+                view.draw(
+                    &mut DrawContext {
+                        current: self.current,
+                        captured: &self.captured,
+                        focused: &self.focused,
+                        hovered: &self.hovered,
+                        style: &self.style,
+                        cache: &mut self.cache,
+                        draw_cache: &mut self.draw_cache,
+                        tree: &self.tree,
+                        data: &self.data,
+                        views: &self.views,
+                        resource_manager: &self.resource_manager,
+                        text_context: &self.text_context,
+                        modifiers: &self.modifiers,
+                        mouse: &self.mouse,
+                    },
+                    canvas,
+                );
 
                 self.views.insert(entity, view);
             }
