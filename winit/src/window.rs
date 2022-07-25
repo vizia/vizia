@@ -9,7 +9,6 @@ use winit::{dpi::*, window::WindowId};
 
 pub struct Window {
     pub id: WindowId,
-    pub canvas: Canvas<OpenGl>,
 
     #[cfg(not(target_arch = "wasm32"))]
     handle: glutin::WindowedContext<glutin::PossiblyCurrent>,
@@ -19,7 +18,11 @@ pub struct Window {
 
 #[cfg(target_arch = "wasm32")]
 impl Window {
-    pub fn new(events_loop: &EventLoop<Event>, window_description: &WindowDescription) -> Self {
+    pub fn new(
+        cx: &mut Context,
+        events_loop: &EventLoop<Event>,
+        window_description: &WindowDescription,
+    ) -> Self {
         let window_builder = WindowBuilder::new();
 
         // For wasm, create or look up the canvas element we're drawing on
@@ -54,12 +57,16 @@ impl Window {
         // Get the window handle. this is a winit::window::Window
         let handle = window_builder.build(&events_loop).unwrap();
 
+        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
+
+        let size = handle.window().inner_size();
+        canvas.set_size(size.width as u32, size.height as u32, 1.0);
+        canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
+
+        cx.canvases.insert(Entity::root(), canvas);
+
         // Build our window
-        let mut window = Window {
-            id: handle.id(),
-            handle,
-            canvas: Canvas::new(renderer).expect("Cannot create canvas"),
-        };
+        let mut window = Window { id: handle.id(), handle };
 
         setup_canvas(&mut window);
         window
@@ -80,7 +87,11 @@ impl Window {
 
 #[cfg(not(target_arch = "wasm32"))]
 impl Window {
-    pub fn new(events_loop: &EventLoop<Event>, window_description: &WindowDescription) -> Self {
+    pub fn new(
+        cx: &mut Context,
+        events_loop: &EventLoop<Event>,
+        window_description: &WindowDescription,
+    ) -> Self {
         let window_builder = WindowBuilder::new();
 
         //Windows COM doesn't play nicely with winit's drag and drop right now
@@ -107,14 +118,17 @@ impl Window {
         // Build the femtovg renderer
         let renderer = OpenGl::new_from_glutin_context(&handle).expect("Cannot create renderer");
 
-        // Build our window
-        let mut window = Window {
-            id: handle.window().id(),
-            handle,
-            canvas: Canvas::new(renderer).expect("Cannot create canvas"),
-        };
+        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
 
-        setup_canvas(&mut window);
+        let size = handle.window().inner_size();
+        canvas.set_size(size.width as u32, size.height as u32, 1.0);
+        canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
+
+        cx.canvases.insert(Entity::root(), canvas);
+
+        // Build our window
+        let window = Window { id: handle.window().id(), handle };
+
         window
     }
 
@@ -248,11 +262,4 @@ fn apply_window_description(
         } else {
             None
         })
-}
-
-fn setup_canvas(result: &mut Window) {
-    // Set some initial properties on our result canvas
-    let size = result.window().inner_size();
-    result.canvas.set_size(size.width as u32, size.height as u32, 1.0);
-    result.canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
 }
