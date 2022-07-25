@@ -66,7 +66,7 @@ impl Window {
         cx.canvases.insert(Entity::root(), canvas);
 
         // Build our window
-        let mut window = Window { id: handle.id(), handle };
+        let window = Window { id: handle.id(), handle };
 
         window
     }
