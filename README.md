@@ -34,6 +34,10 @@
 
 <br/>
 
+<h4 align="center">Vizia is a declarative GUI framework for the <a href="https://www.rust-lang.org/">Rust</a> programming language.</h4>
+
+<br/>
+
 <div align="center">
   <h3>
     <a href="https://docs.vizia.dev/"> Docs </a>
@@ -45,10 +49,6 @@
     <a href="https://discord.gg/aNkTPsRm2w"> Discord </a>
   </h3>
 </div>
-
-<br/>
-
-<h4 align="center">Vizia is a declarative GUI framework for the <a href="https://www.rust-lang.org/">Rust</a> programming language.</h4>
 
 <br/>
 
