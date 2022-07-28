@@ -388,8 +388,12 @@ fn entity_selector(cx: &Context, entity: Entity) -> Selector {
 fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     // Universal selector always matches
     if selector.asterisk {
-        if let Some(pseudo_classes) = cx.style_ref().pseudo_classes.get(entity) {
-            if !pseudo_classes.is_empty() && !pseudo_classes.intersects(*pseudo_classes) {
+        if let Some(mut pseudo_classes) = cx.style_ref().pseudo_classes.get(entity).cloned() {
+            if let Some(disabled) = cx.style_ref().disabled.get(entity) {
+                pseudo_classes.set(PseudoClass::DISABLED, *disabled);
+            }
+            let selector_pseudo_classes = selector.pseudo_classes;
+            if !pseudo_classes.is_empty() && !pseudo_classes.contains(selector_pseudo_classes) {
                 return false;
             } else {
                 return true;
@@ -426,22 +430,14 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
         return false;
     }
 
-    // Disabled needs to be handled separately because it can be inherited
-    if let Some(disabled) = cx.style_ref().disabled.get(entity) {
-        if !selector.pseudo_classes.is_empty()
-            && *disabled != selector.pseudo_classes.contains(PseudoClass::DISABLED)
-        {
-            return false;
-        }
-    }
-
     // Check for pseudo-class match
-    if let Some(pseudo_classes) = cx.style_ref().pseudo_classes.get(entity) {
-        let mut selector_pseudo_classes = selector.pseudo_classes;
-        selector_pseudo_classes.set(PseudoClass::DISABLED, false);
+    if let Some(mut pseudo_classes) = cx.style_ref().pseudo_classes.get(entity).cloned() {
+        if let Some(disabled) = cx.style_ref().disabled.get(entity) {
+            pseudo_classes.set(PseudoClass::DISABLED, *disabled);
+        }
+        let selector_pseudo_classes = selector.pseudo_classes;
 
-        if !selector_pseudo_classes.is_empty()
-            && !selector_pseudo_classes.intersects(*pseudo_classes)
+        if !selector_pseudo_classes.is_empty() && !pseudo_classes.contains(selector_pseudo_classes)
         {
             return false;
         }
@@ -830,11 +826,6 @@ pub fn apply_styles(cx: &mut Context, tree: &Tree) {
 
         compute_matched_rules(cx, tree, entity, &mut matched_rules);
         link_style_data(cx, entity, &matched_rules);
-        //println!("Entity: {}, Matched Rules: {:?}", entity, &matched_rules);
-
-        // if matched_rules.len() == 0 {
-        //     continue;
-        // }
 
         prev_entity = Some(entity);
         prev_matched_rules = matched_rules.clone();

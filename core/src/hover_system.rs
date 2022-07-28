@@ -121,7 +121,10 @@ pub fn apply_hover(cx: &mut Context) {
         );
 
         let cursor = cx.style().cursor.get(hovered_widget).cloned().unwrap_or_default();
-        if !cx.is_cursor_icon_locked() {
+        // TODO: Decide if not changing the cursor when the view is disabled is the correct thing to do
+        if !cx.is_cursor_icon_locked()
+            && !cx.style().disabled.get(hovered_widget).cloned().unwrap_or_default()
+        {
             cx.emit(WindowEvent::SetCursor(cursor));
         }
 
