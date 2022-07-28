@@ -111,11 +111,14 @@ impl Checkbox {
     /// ```
     pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
         //let checked = checked.get_val_fallible(cx).unwrap_or(false);
-        Self { on_toggle: None }.build(cx, |_| {}).bind(checked, |handle, checked| {
-            if let Some(flag) = checked.get_val_fallible(handle.cx) {
-                handle.text(if flag { CHECK } else { "" }).checked(flag);
-            }
-        })
+        Self { on_toggle: None }
+            .build(cx, |_| {})
+            .bind(checked, |handle, checked| {
+                if let Some(flag) = checked.get_val_fallible(handle.cx) {
+                    handle.text(if flag { CHECK } else { "" }).checked(flag);
+                }
+            })
+            .cursor(CursorIcon::Hand)
     }
 }
 
@@ -159,14 +162,29 @@ impl View for Checkbox {
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseDown(MouseButton::Left) => {
-                if meta.target == cx.current() {
+            WindowEvent::MouseUp(MouseButton::Left) => {
+                if cx.mouse().left.pressed == cx.current()
+                    && meta.target == cx.current()
+                    && !cx.is_disabled()
+                {
                     if let Some(callback) = &self.on_toggle {
                         (callback)(cx);
                     }
                 }
             }
 
+            // TODO: Should this be done manually like this or should disabled controls always revert to default cursor icon?
+            // TODO: This doesn't work in it's current form. Commented out in favour of setting mouse cursor in hover system.
+            // WindowEvent::MouseEnter => {
+            //     if meta.target == cx.current() && cx.is_disabled() {
+            //         println!("Enter: {}", cx.current());
+            //         // After context and modifiers change this will become:
+            //         // cx.cursor(CursorIcon::Default);
+            //         let current = cx.current();
+            //         cx.style().cursor.insert(current, CursorIcon::Default);
+            //         cx.need_redraw();
+            //     }
+            // }
             _ => {}
         });
     }

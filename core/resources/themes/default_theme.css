@@ -62,11 +62,9 @@ button.accent:active label {
 checkbox {
     width: 20px;
     height: 20px;
-    border-radius: 3px;
+    border-radius: 1px;
     border-width: 1px;
-    border-color: #838383;
-    color: #ffffff00;
-    background-color: #ffffff00;
+    border-color: #666666;
     child-space: 1s;
 }
 
@@ -80,10 +78,36 @@ checkbox:active {
 }
 
 checkbox:checked {
+    background-color: #3c77d2;
+    border-color: #3c77d2;
+    color: #f5f5f5;
+}
+
+checkbox:disabled {
+    border-color: #bdbdbd;
+}
+
+checkbox:hover:disabled {
+    background-color: #00000000;
+}
+
+checkbox:checked:hover {
+    background-color: #0082e6;
+    border-color: #0082e6;
+    color: #f5f5f5;
+}
+
+checkbox:checked:disabled {
+    background-color: #bdbdbd;
+    border-color: #bdbdbd;
+    color: #f5f5f5;
+}
+
+/* checkbox:checked {
     background-color: #005a9e;
     border-color: #005a9e;
     color: #f5f5f5;
-}
+} */
 
 textbox {
     width: auto;
