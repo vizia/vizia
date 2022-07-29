@@ -35,6 +35,7 @@ use crate::style_system::{
     apply_clipping, apply_inline_inheritance, apply_shared_inheritance, apply_styles,
     apply_text_constraints, apply_visibility, apply_z_ordering,
 };
+use crate::systems::image_system::image_system;
 use crate::tree::{
     focus_backward, focus_forward, is_focusable, TreeDepthIterator, TreeExt, TreeIterator,
 };
@@ -56,7 +57,7 @@ pub struct Context {
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
-    style: Style,
+    pub(crate) style: Style,
     cache: CachedData,
     pub draw_cache: DrawCache,
 
@@ -70,7 +71,7 @@ pub struct Context {
     focused: Entity,
     cursor_icon_locked: bool,
 
-    resource_manager: ResourceManager,
+    pub(crate) resource_manager: ResourceManager,
 
     text_context: TextContext,
 
@@ -708,6 +709,7 @@ impl Context {
         self.resource_manager.image_loader = Some(Box::new(loader));
     }
 
+    /*
     fn get_image_internal(&mut self, path: &str) -> &mut StoredImage {
         if let Some(img) = self.resource_manager.images.get_mut(path) {
             img.used = true;
@@ -745,14 +747,13 @@ impl Context {
             self.resource_manager.images.get_mut(path).unwrap()
         }
     }
+    */
 
-    pub fn get_image(&mut self, path: &str) -> &mut ImageOrId {
-        &mut self.get_image_internal(path).image
-    }
-
+    /*
     pub fn add_image_observer(&mut self, path: &str, observer: Entity) {
         self.get_image_internal(path).observers.insert(observer);
     }
+    */
 
     pub fn load_image(
         &mut self,
@@ -786,11 +787,11 @@ impl Context {
         self.style.needs_relayout = true;
     }
 
-    pub fn evict_image(&mut self, path: &str) {
-        self.resource_manager.images.remove(path);
-        self.style.needs_redraw = true;
-        self.style.needs_relayout = true;
-    }
+    // pub fn evict_image(&mut self, path: &str) {
+    //     self.resource_manager.images.remove(path);
+    //     self.style.needs_redraw = true;
+    //     self.style.needs_relayout = true;
+    // }
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
         self.resource_manager.add_translation(lang, ftl);
@@ -885,6 +886,8 @@ impl Context {
         // Not ideal
         let tree = self.tree.clone();
 
+        image_system(self);
+
         apply_z_ordering(self, &tree);
         apply_visibility(self, &tree);
 
@@ -915,7 +918,6 @@ impl Context {
 
     pub fn draw(&mut self) {
         let canvas = self.canvases.get_mut(&Entity::root()).unwrap();
-        self.resource_manager.mark_images_unused();
 
         let window_width = self.cache.get_width(Entity::root());
         let window_height = self.cache.get_height(Entity::root());
@@ -1008,8 +1010,6 @@ impl Context {
         }
 
         canvas.flush();
-
-        self.resource_manager.evict_unused_images();
     }
 
     /// This method is in charge of receiving raw WindowEvents and dispatching them to the
