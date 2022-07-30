@@ -6,6 +6,7 @@ use morphorm::GeometryChanged;
 use crate::prelude::*;
 
 // Press
+#[doc(hidden)]
 pub struct Press<V: View> {
     view: Box<dyn ViewHandler>,
     action: Option<Box<dyn Fn(&mut Context)>>,
@@ -65,6 +66,7 @@ impl<V: View> View for Press<V> {
 }
 
 // Release
+#[doc(hidden)]
 pub struct Release<V: View> {
     view: Box<dyn ViewHandler>,
     action: Option<Box<dyn Fn(&mut Context)>>,
@@ -123,6 +125,7 @@ impl<V: View> View for Release<V> {
 }
 
 // Hover
+#[doc(hidden)]
 pub struct Hover<V: View> {
     view: Box<dyn ViewHandler>,
     action: Option<Box<dyn Fn(&mut Context)>>,
@@ -178,7 +181,65 @@ impl<V: View> View for Hover<V> {
     }
 }
 
-// Hover
+// Hover Out
+#[doc(hidden)]
+pub struct HoverOut<V: View> {
+    view: Box<dyn ViewHandler>,
+    action: Option<Box<dyn Fn(&mut Context)>>,
+
+    p: PhantomData<V>,
+}
+
+impl<V: View> HoverOut<V> {
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, HoverOut<V>>
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
+            if view.downcast_ref::<V>().is_some() {
+                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
+
+                handle.cx.views.insert(handle.entity, Box::new(item));
+            } else {
+                if let Some(hover) = view.downcast_mut::<Hover<V>>() {
+                    hover.action = Some(Box::new(action));
+                }
+                handle.cx.views.insert(handle.entity, view);
+            }
+        }
+
+        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
+    }
+}
+
+impl<V: View> View for HoverOut<V> {
+    fn element(&self) -> Option<&'static str> {
+        self.view.element()
+    }
+
+    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+        self.view.event(cx, event);
+
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseLeave => {
+                if meta.target == cx.current() {
+                    if let Some(action) = &self.action {
+                        (action)(cx);
+                    }
+                }
+            }
+
+            _ => {}
+        });
+    }
+
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+        self.view.draw(cx, canvas);
+    }
+}
+
+// Over
+#[doc(hidden)]
 pub struct Over<V: View> {
     view: Box<dyn ViewHandler>,
     action: Option<Box<dyn Fn(&mut Context)>>,
@@ -232,16 +293,17 @@ impl<V: View> View for Over<V> {
     }
 }
 
-// Leave
-pub struct Leave<V: View> {
+// Over
+#[doc(hidden)]
+pub struct OverOut<V: View> {
     view: Box<dyn ViewHandler>,
     action: Option<Box<dyn Fn(&mut Context)>>,
 
     p: PhantomData<V>,
 }
 
-impl<V: View> Leave<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Leave<V>>
+impl<V: View> OverOut<V> {
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, OverOut<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -251,8 +313,8 @@ impl<V: View> Leave<V> {
 
                 handle.cx.views.insert(handle.entity, Box::new(item));
             } else {
-                if let Some(hover) = view.downcast_mut::<Leave<V>>() {
-                    hover.action = Some(Box::new(action));
+                if let Some(over) = view.downcast_mut::<Over<V>>() {
+                    over.action = Some(Box::new(action));
                 }
                 handle.cx.views.insert(handle.entity, view);
             }
@@ -262,7 +324,7 @@ impl<V: View> Leave<V> {
     }
 }
 
-impl<V: View> View for Leave<V> {
+impl<V: View> View for OverOut<V> {
     fn element(&self) -> Option<&'static str> {
         self.view.element()
     }
@@ -270,12 +332,10 @@ impl<V: View> View for Leave<V> {
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         self.view.event(cx, event);
 
-        event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseLeave => {
-                if meta.target == cx.current() {
-                    if let Some(action) = &self.action {
-                        (action)(cx);
-                    }
+        event.map(|window_event, _| match window_event {
+            WindowEvent::MouseOut => {
+                if let Some(action) = &self.action {
+                    (action)(cx);
                 }
             }
 
@@ -288,16 +348,17 @@ impl<V: View> View for Leave<V> {
     }
 }
 
-// Move
-pub struct Move<V: View> {
+// Mouse Move
+#[doc(hidden)]
+pub struct MouseMove<V: View> {
     view: Box<dyn ViewHandler>,
     action: Option<Box<dyn Fn(&mut Context, f32, f32)>>,
 
     p: PhantomData<V>,
 }
 
-impl<V: View> Move<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Move<V>>
+impl<V: View> MouseMove<V> {
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, MouseMove<V>>
     where
         F: 'static + Fn(&mut Context, f32, f32),
     {
@@ -307,7 +368,7 @@ impl<V: View> Move<V> {
 
                 handle.cx.views.insert(handle.entity, Box::new(item));
             } else {
-                if let Some(hover) = view.downcast_mut::<Move<V>>() {
+                if let Some(hover) = view.downcast_mut::<MouseMove<V>>() {
                     hover.action = Some(Box::new(action));
                 }
                 handle.cx.views.insert(handle.entity, view);
@@ -318,7 +379,7 @@ impl<V: View> Move<V> {
     }
 }
 
-impl<V: View> View for Move<V> {
+impl<V: View> View for MouseMove<V> {
     fn element(&self) -> Option<&'static str> {
         self.view.element()
     }
@@ -342,16 +403,17 @@ impl<V: View> View for Move<V> {
     }
 }
 
-// FocusIn
-pub struct FocusIn<V: View> {
+// Focus
+#[doc(hidden)]
+pub struct Focus<V: View> {
     view: Box<dyn ViewHandler>,
     action: Option<Box<dyn Fn(&mut Context)>>,
 
     p: PhantomData<V>,
 }
 
-impl<V: View> FocusIn<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, FocusIn<V>>
+impl<V: View> Focus<V> {
+    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Focus<V>>
     where
         F: 'static + Fn(&mut Context),
     {
@@ -361,7 +423,7 @@ impl<V: View> FocusIn<V> {
 
                 handle.cx.views.insert(handle.entity, Box::new(item));
             } else {
-                if let Some(view) = view.downcast_mut::<FocusIn<V>>() {
+                if let Some(view) = view.downcast_mut::<Focus<V>>() {
                     view.action = Some(Box::new(action));
                 }
                 handle.cx.views.insert(handle.entity, view);
@@ -372,7 +434,7 @@ impl<V: View> FocusIn<V> {
     }
 }
 
-impl<V: View> View for FocusIn<V> {
+impl<V: View> View for Focus<V> {
     fn element(&self) -> Option<&'static str> {
         self.view.element()
     }
@@ -396,7 +458,8 @@ impl<V: View> View for FocusIn<V> {
     }
 }
 
-// FocusOut
+// Focus Out
+#[doc(hidden)]
 pub struct FocusOut<V: View> {
     view: Box<dyn ViewHandler>,
     action: Option<Box<dyn Fn(&mut Context)>>,
@@ -415,7 +478,7 @@ impl<V: View> FocusOut<V> {
 
                 handle.cx.views.insert(handle.entity, Box::new(item));
             } else {
-                if let Some(view) = view.downcast_mut::<FocusOut<V>>() {
+                if let Some(view) = view.downcast_mut::<Focus<V>>() {
                     view.action = Some(Box::new(action));
                 }
                 handle.cx.views.insert(handle.entity, view);
@@ -451,6 +514,7 @@ impl<V: View> View for FocusOut<V> {
 }
 
 // Geo
+#[doc(hidden)]
 pub struct Geo<V: View> {
     view: Box<dyn ViewHandler>,
     action: Option<Box<dyn Fn(&mut Context, GeometryChanged)>>,
@@ -506,130 +570,127 @@ impl<V: View> View for Geo<V> {
     }
 }
 
-/// Methods to add an event handler to a view.
-///
-/// This trait is part of the prelude.
-pub trait Actions<'a> {
-    type View: View;
-    fn on_press<F>(self, action: F) -> Handle<'a, Press<Self::View>>
+/// Modifiers which add an action callback to a view.
+pub trait ActionModifiers<'a, V: View> {
+    /// Adds a callback which is performed when the view is pressed on with the left mouse button.
+    fn on_press<F>(self, action: F) -> Handle<'a, Press<V>>
     where
         F: 'static + Fn(&mut Context);
 
-    fn on_release<F>(self, action: F) -> Handle<'a, Release<Self::View>>
+    /// Adds a callback which is performed when the left mouse button is released on a view after being pressed.
+    fn on_release<F>(self, action: F) -> Handle<'a, Release<V>>
     where
         F: 'static + Fn(&mut Context);
 
-    fn on_hover<F>(self, action: F) -> Handle<'a, Hover<Self::View>>
+    /// Adds a callback which is performed when the mouse pointer moves over or away from a view.
+    fn on_hover<F>(self, action: F) -> Handle<'a, Hover<V>>
     where
         F: 'static + Fn(&mut Context);
 
-    fn on_over<F>(self, action: F) -> Handle<'a, Over<Self::View>>
+    /// Adds a callback which is performed when the mouse pointer moves over or away from a view.
+    fn on_hover_out<F>(self, action: F) -> Handle<'a, HoverOut<V>>
     where
         F: 'static + Fn(&mut Context);
 
-    fn on_leave<F>(self, action: F) -> Handle<'a, Leave<Self::View>>
+    /// Adds a callback which is performed when the mouse pointer moves over or away from the bounds of a view.
+    fn on_over<F>(self, action: F) -> Handle<'a, Over<V>>
     where
         F: 'static + Fn(&mut Context);
 
-    fn on_move<F>(self, action: F) -> Handle<'a, Move<Self::View>>
+    /// Adds a callback which is performed when the mouse pointer moves over or away from the bounds of a view.
+    fn on_over_out<F>(self, action: F) -> Handle<'a, OverOut<V>>
+    where
+        F: 'static + Fn(&mut Context);
+
+    /// Adds a callback which is performed when the mouse pointer moves.
+    fn on_mouse_move<F>(self, action: F) -> Handle<'a, MouseMove<V>>
     where
         F: 'static + Fn(&mut Context, f32, f32);
 
-    fn on_focus_in<F>(self, action: F) -> Handle<'a, FocusIn<Self::View>>
+    /// Adds a callback which is performed when the view gains or loses keyboard focus.
+    fn on_focus<F>(self, action: F) -> Handle<'a, Focus<V>>
     where
         F: 'static + Fn(&mut Context);
 
-    fn on_focus_out<F>(self, action: F) -> Handle<'a, FocusOut<Self::View>>
+    /// Adds a callback which is performed when the view gains or loses keyboard focus.
+    fn on_focus_out<F>(self, action: F) -> Handle<'a, FocusOut<V>>
     where
         F: 'static + Fn(&mut Context);
 
-    fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<Self::View>>
+    /// Adds a callback which is performed when the the view changes size or position after layout.
+    fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<V>>
     where
         F: 'static + Fn(&mut Context, GeometryChanged);
 }
 
-impl<'a, V: View> Actions<'a> for Handle<'a, V> {
-    type View = V;
-    fn on_press<F>(self, action: F) -> Handle<'a, Press<Self::View>>
+impl<'a, V: View> ActionModifiers<'a, V> for Handle<'a, V> {
+    fn on_press<F>(self, action: F) -> Handle<'a, Press<V>>
     where
         F: 'static + Fn(&mut Context),
     {
         Press::new(self, action)
     }
 
-    fn on_release<F>(self, action: F) -> Handle<'a, Release<Self::View>>
+    fn on_release<F>(self, action: F) -> Handle<'a, Release<V>>
     where
         F: 'static + Fn(&mut Context),
     {
         Release::new(self, action)
     }
 
-    fn on_hover<F>(self, action: F) -> Handle<'a, Hover<Self::View>>
+    fn on_hover<F>(self, action: F) -> Handle<'a, Hover<V>>
     where
         F: 'static + Fn(&mut Context),
     {
         Hover::new(self, action)
     }
 
-    fn on_over<F>(self, action: F) -> Handle<'a, Over<Self::View>>
+    fn on_hover_out<F>(self, action: F) -> Handle<'a, HoverOut<V>>
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        HoverOut::new(self, action)
+    }
+
+    fn on_over<F>(self, action: F) -> Handle<'a, Over<V>>
     where
         F: 'static + Fn(&mut Context),
     {
         Over::new(self, action)
     }
 
-    fn on_leave<F>(self, action: F) -> Handle<'a, Leave<Self::View>>
+    fn on_over_out<F>(self, action: F) -> Handle<'a, OverOut<V>>
     where
         F: 'static + Fn(&mut Context),
     {
-        Leave::new(self, action)
+        OverOut::new(self, action)
     }
 
-    fn on_move<F>(self, action: F) -> Handle<'a, Move<Self::View>>
+    fn on_mouse_move<F>(self, action: F) -> Handle<'a, MouseMove<V>>
     where
         F: 'static + Fn(&mut Context, f32, f32),
     {
-        Move::new(self, action)
+        MouseMove::new(self, action)
     }
 
-    fn on_focus_in<F>(self, action: F) -> Handle<'a, FocusIn<Self::View>>
+    fn on_focus<F>(self, action: F) -> Handle<'a, Focus<V>>
     where
         F: 'static + Fn(&mut Context),
     {
-        FocusIn::new(self, action)
+        Focus::new(self, action)
     }
 
-    fn on_focus_out<F>(self, action: F) -> Handle<'a, FocusOut<Self::View>>
+    fn on_focus_out<F>(self, action: F) -> Handle<'a, FocusOut<V>>
     where
         F: 'static + Fn(&mut Context),
     {
         FocusOut::new(self, action)
     }
 
-    fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<Self::View>>
+    fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<V>>
     where
         F: 'static + Fn(&mut Context, GeometryChanged),
     {
         Geo::new(self, action)
     }
 }
-
-// pub trait ViewModifers {
-//     type View: View;
-
-//     fn overlay<B>(self, cx: &mut Context, builder: B) -> Handle<Self::View>
-//     where
-//         B: 'static + FnOnce(&mut Context);
-// }
-
-// impl<'a, V: View> ViewModifers for Handle<'a, V> {
-//     type View = V;
-//     fn overlay<B>(self, cx: &mut Context, builder: B) -> Handle<Self::View>
-//     where
-//         B: 'static + FnOnce(&mut Context),
-//     {
-//         (builder)(cx);
-
-//         self
-//     }
-// }
