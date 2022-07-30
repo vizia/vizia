@@ -1,4 +1,7 @@
+use std::collections::HashSet;
+
 use crate::context::Context;
+use crate::resource::{ImageRetentionPolicy, StoredImage};
 use crate::{prelude::*, resource::ImageOrId};
 
 pub fn image_system(cx: &mut Context) {
@@ -24,9 +27,7 @@ fn load_image(cx: &mut Context, entity: Entity, image_name: &String) {
     if !try_load_image(cx, entity, image_name) {
         // Image doesn't exists yet so call the image loader
         if let Some(callback) = cx.resource_manager.image_loader.take() {
-            // TODO: Figure out a way to not recall the image loader when an image is in the process of being loaded
-            // asynchronously. The issue is that the same image loader could be responsible for loading multiple images,
-            // some of which aren't asynchronous. So we can't just selectively call the image loader callback.
+
             (callback)(cx, image_name);
 
             cx.resource_manager.image_loader = Some(callback);
@@ -61,6 +62,26 @@ fn try_load_image(cx: &mut Context, entity: Entity, image_name: &str) -> bool {
         }
 
         return true;
+    } else {
+        // Image doesn't exist yet so load and show placeholder image
+        // TODO: Add way to configure the placeholder image
+        cx.resource_manager.images.insert(
+            image_name.to_owned(),
+            StoredImage {
+                image: ImageOrId::Image(
+                    image::load_from_memory_with_format(
+                        include_bytes!("../../resources/images/broken_image.png"),
+                        image::ImageFormat::Png,
+                    )
+                    .unwrap(),
+                    femtovg::ImageFlags::NEAREST,
+                ),
+                retention_policy: ImageRetentionPolicy::Forever,
+                used: true,
+                dirty: false,
+                observers: HashSet::new(),
+            },
+        );
     }
 
     false

@@ -709,52 +709,6 @@ impl Context {
         self.resource_manager.image_loader = Some(Box::new(loader));
     }
 
-    /*
-    fn get_image_internal(&mut self, path: &str) -> &mut StoredImage {
-        if let Some(img) = self.resource_manager.images.get_mut(path) {
-            img.used = true;
-            // borrow checker hack
-            return self.resource_manager.images.get_mut(path).unwrap();
-        }
-
-        if let Some(callback) = self.resource_manager.image_loader.take() {
-            callback(self, path);
-            self.resource_manager.image_loader = Some(callback);
-        }
-
-        if let Some(img) = self.resource_manager.images.get_mut(path) {
-            img.used = true;
-            // borrow checker hack
-            return self.resource_manager.images.get_mut(path).unwrap();
-        } else {
-            self.resource_manager.images.insert(
-                path.to_owned(),
-                StoredImage {
-                    image: ImageOrId::Image(
-                        image::load_from_memory_with_format(
-                            include_bytes!("../../resources/images/broken_image.png"),
-                            image::ImageFormat::Png,
-                        )
-                        .unwrap(),
-                        femtovg::ImageFlags::NEAREST,
-                    ),
-                    retention_policy: ImageRetentionPolicy::Forever,
-                    used: true,
-                    dirty: false,
-                    observers: HashSet::new(),
-                },
-            );
-            self.resource_manager.images.get_mut(path).unwrap()
-        }
-    }
-    */
-
-    /*
-    pub fn add_image_observer(&mut self, path: &str, observer: Entity) {
-        self.get_image_internal(path).observers.insert(observer);
-    }
-    */
-
     pub fn load_image(
         &mut self,
         path: String,
@@ -786,12 +740,6 @@ impl Context {
         self.style.needs_redraw = true;
         self.style.needs_relayout = true;
     }
-
-    // pub fn evict_image(&mut self, path: &str) {
-    //     self.resource_manager.images.remove(path);
-    //     self.style.needs_redraw = true;
-    //     self.style.needs_relayout = true;
-    // }
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
         self.resource_manager.add_translation(lang, ftl);
