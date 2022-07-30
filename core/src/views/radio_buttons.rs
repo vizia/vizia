@@ -106,7 +106,7 @@ impl View for RadioButton {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseUp(MouseButton::Left) => {
-                if cx.mouse().left.pressed == cx.current()
+                if cx.mouse.left.pressed == cx.current()
                     && meta.target == cx.current()
                     && !cx.is_disabled()
                 {
