@@ -27,7 +27,6 @@ fn load_image(cx: &mut Context, entity: Entity, image_name: &String) {
     if !try_load_image(cx, entity, image_name) {
         // Image doesn't exists yet so call the image loader
         if let Some(callback) = cx.resource_manager.image_loader.take() {
-
             (callback)(cx, image_name);
 
             cx.resource_manager.image_loader = Some(callback);
