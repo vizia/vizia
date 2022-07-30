@@ -127,7 +127,11 @@ impl ResourceManager {
         &self,
         locale: &LanguageIdentifier,
     ) -> &FluentBundle<FluentResource> {
-        self.translations.get(locale).unwrap()
+        if let Some(bundle) = self.translations.get(locale) {
+            bundle
+        } else {
+            self.translations.get(&self.language).unwrap()
+        }
     }
 
     pub(crate) fn add_font(&mut self, _name: &str, _path: &str) {}
