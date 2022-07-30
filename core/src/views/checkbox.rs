@@ -85,7 +85,7 @@ use crate::prelude::*;
 /// });
 /// ```
 pub struct Checkbox {
-    on_toggle: Option<Box<dyn Fn(&mut Context)>>,
+    on_toggle: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
 impl Checkbox {
@@ -149,7 +149,7 @@ impl Handle<'_, Checkbox> {
     /// ```
     pub fn on_toggle<F>(self, callback: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         self.modify(|checkbox| checkbox.on_toggle = Some(Box::new(callback)))
     }
@@ -160,10 +160,10 @@ impl View for Checkbox {
         Some("checkbox")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseUp(MouseButton::Left) => {
-                if cx.mouse().left.pressed == cx.current()
+                if cx.mouse.left.pressed == cx.current()
                     && meta.target == cx.current()
                     && !cx.is_disabled()
                 {

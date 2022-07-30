@@ -11,9 +11,9 @@ where
     L: Lens<Target = Vec<T>>,
 {
     p: PhantomData<L>,
-    increment_callback: Option<Box<dyn Fn(&mut Context)>>,
-    decrement_callback: Option<Box<dyn Fn(&mut Context)>>,
-    clear_callback: Option<Box<dyn Fn(&mut Context)>>,
+    increment_callback: Option<Box<dyn Fn(&mut EventContext)>>,
+    decrement_callback: Option<Box<dyn Fn(&mut EventContext)>>,
+    clear_callback: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
@@ -52,7 +52,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
         Some("list")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::KeyDown(code, _) => match code {
                 Code::ArrowDown => {
@@ -93,7 +93,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
 impl<L: Lens<Target = Vec<T>>, T: Data> Handle<'_, List<L, T>> {
     pub fn on_increment<F>(self, callback: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         if let Some(list) =
             self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L, T>>())
@@ -106,7 +106,7 @@ impl<L: Lens<Target = Vec<T>>, T: Data> Handle<'_, List<L, T>> {
 
     pub fn on_decrement<F>(self, callback: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         if let Some(list) =
             self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L, T>>())
@@ -119,7 +119,7 @@ impl<L: Lens<Target = Vec<T>>, T: Data> Handle<'_, List<L, T>> {
 
     pub fn on_clear<F>(self, callback: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         if let Some(list) =
             self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L, T>>())

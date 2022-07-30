@@ -1,4 +1,5 @@
 mod draw;
+mod event;
 mod proxy;
 
 use instant::{Duration, Instant};
@@ -17,6 +18,7 @@ use morphorm::layout;
 use unic_langid::LanguageIdentifier;
 
 pub use draw::*;
+pub use event::*;
 pub use proxy::*;
 
 use crate::cache::CachedData;
@@ -56,7 +58,7 @@ pub struct Context {
     pub(crate) data: SparseSet<ModelDataStore>,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) listeners:
-        HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
+        HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) style: Style,
     cache: CachedData,
     pub draw_cache: DrawCache,
@@ -478,7 +480,7 @@ impl Context {
     pub fn add_listener<F, W>(&mut self, listener: F)
     where
         W: View,
-        F: 'static + Fn(&mut W, &mut Context, &mut Event),
+        F: 'static + Fn(&mut W, &mut EventContext, &mut Event),
     {
         self.listeners.insert(
             self.current,
@@ -665,10 +667,6 @@ impl Context {
     pub fn add_animation(&mut self, duration: std::time::Duration) -> AnimationBuilder {
         let id = self.style.animation_manager.create();
         AnimationBuilder::new(id, self, duration)
-    }
-
-    pub fn play_animation(&mut self, animation: Animation) {
-        self.current.play_animation(self, animation);
     }
 
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
