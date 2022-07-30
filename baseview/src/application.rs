@@ -139,7 +139,6 @@ where
 pub(crate) struct ApplicationRunner {
     context: Context,
     event_manager: EventManager,
-    canvas: Canvas<Renderer>,
     should_redraw: bool,
     scale_policy: WindowScalePolicy,
     scale_factor: f64,
@@ -205,10 +204,11 @@ impl ApplicationRunner {
 
         context.cache().set_clip_region(Entity::root(), bounding_box);
 
+        context.canvases.insert(Entity::root(), canvas);
+
         ApplicationRunner {
             event_manager,
             context,
-            canvas,
             should_redraw: true,
             scale_policy,
             scale_factor: scale,
@@ -269,7 +269,7 @@ impl ApplicationRunner {
         //if let Some(window) = window_view.downcast_mut::<Window>() {
 
         // Load resources
-        self.context.synchronize_fonts(&mut self.canvas);
+        self.context.synchronize_fonts();
 
         //}
 
@@ -311,7 +311,7 @@ impl ApplicationRunner {
     }
 
     pub fn render(&mut self) {
-        self.context.draw(&mut self.canvas);
+        self.context.draw();
         self.should_redraw = false;
     }
 

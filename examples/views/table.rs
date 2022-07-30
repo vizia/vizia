@@ -224,7 +224,7 @@ pub enum Sorted {
 }
 
 impl Model for TableData {
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetAge(index, age) => {
                 self.people[*index].last_name = age.clone();

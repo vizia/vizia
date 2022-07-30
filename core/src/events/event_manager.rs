@@ -58,7 +58,11 @@ impl EventManager {
                 if let Some(listener) = context.listeners.remove(&entity) {
                     if let Some(mut event_handler) = context.views.remove(&entity) {
                         context.with_current(entity, |context| {
-                            (listener)(event_handler.as_mut(), context, event);
+                            (listener)(
+                                event_handler.as_mut(),
+                                &mut EventContext::new(context),
+                                event,
+                            );
                         });
 
                         context.views.insert(entity, event_handler);
@@ -127,25 +131,45 @@ impl EventManager {
     }
 }
 
+// fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
+//     if let Some(mut view) = context.views.remove(&entity) {
+//         context.with_current(entity, |context| {
+//             view.event(&mut EventContext::new(context), event);
+//         });
+
+//         context.views.insert(entity, view);
+//     }
+
+//     let mut type_ids = Vec::new();
+//     if let Some(model_list) = context.data.get(entity) {
+//         type_ids = model_list.data.iter().map(|(id, _)| id.clone()).collect();
+//     }
+
+//     for type_id in type_ids.iter() {
+//         let mut model = context.data.get_mut(entity).unwrap().data.remove(type_id).unwrap();
+//         context.with_current(entity, |cx| {
+//             model.event(&mut EventContext::new(context), event);
+//         });
+//         context.data.get_mut(entity).unwrap().data.insert(*type_id, model);
+//     }
+// }
+
 fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
     if let Some(mut view) = context.views.remove(&entity) {
         context.with_current(entity, |context| {
-            view.event(context, event);
+            view.event(&mut EventContext::new(context), event);
         });
 
         context.views.insert(entity, view);
     }
 
-    let mut type_ids = Vec::new();
-    if let Some(model_list) = context.data.get(entity) {
-        type_ids = model_list.data.iter().map(|(id, _)| id.clone()).collect();
-    }
+    if let Some(mut model_list) = context.data.remove(entity) {
+        for (_, model) in model_list.data.iter_mut() {
+            context.with_current(entity, |cx| {
+                model.event(&mut EventContext::new(cx), event);
+            });
+        }
 
-    for type_id in type_ids.iter() {
-        let mut model = context.data.get_mut(entity).unwrap().data.remove(type_id).unwrap();
-        context.with_current(entity, |cx| {
-            model.event(cx, event);
-        });
-        context.data.get_mut(entity).unwrap().data.insert(*type_id, model);
+        context.data.insert(entity, model_list).expect("Failed to insert data");
     }
 }

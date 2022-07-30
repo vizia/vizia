@@ -22,7 +22,7 @@
 //! Views and Models receive events through the `event()` method of the View or Model traits.
 //! The event message must then be downcast to the right type:
 //! ```compile_fail
-//! fn on_event(&mut self, state: &mut State, entity: Entity, event: &mut Event) {
+//! fn on_event(&mut self, state: &mut EventContext, event: &mut Event) {
 //!     event.map(|my_event, _| match my_event {
 //!         MyEvent::ReadDocs => {
 //!             // Do something

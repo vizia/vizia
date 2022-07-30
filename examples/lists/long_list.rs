@@ -17,7 +17,7 @@ pub struct AppData {
 }
 
 impl Model for AppData {
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::KeyDown(code, _) => {
                 if *code == Code::Space {

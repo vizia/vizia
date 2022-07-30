@@ -57,7 +57,7 @@ use crate::prelude::*;
 /// );
 /// ```
 pub struct Button {
-    action: Option<Box<dyn Fn(&mut Context)>>,
+    action: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
 impl Button {
@@ -74,7 +74,7 @@ impl Button {
     /// ```
     pub fn new<A, F, V>(cx: &mut Context, action: A, content: F) -> Handle<Self>
     where
-        A: 'static + Fn(&mut Context),
+        A: 'static + Fn(&mut EventContext),
         F: FnOnce(&mut Context) -> Handle<V>,
         V: 'static + View,
     {
@@ -89,7 +89,7 @@ impl View for Button {
         Some("button")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 cx.set_active(true);

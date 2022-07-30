@@ -23,7 +23,7 @@ use crate::state::Store;
 /// }
 ///
 /// impl Model for AppData {
-///     fn event(&mut self, cx: &mut Context, event: &mut Event) {
+///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
 ///         event.map(|app_event, _| match app_event {
 ///             AppEvent::Increment => {
 ///                 self.count += 1;
@@ -99,7 +99,7 @@ pub trait Model: 'static + Sized {
     /// # }
     /// #
     /// impl Model for AppData {
-    ///     fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    ///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
     ///         event.map(|app_event, _| match app_event {
     ///             AppEvent::Increment => {
     ///                 self.count += 1;
@@ -113,12 +113,12 @@ pub trait Model: 'static + Sized {
     /// }
     /// ```
     #[allow(unused_variables)]
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {}
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 }
 
 pub(crate) trait ModelData: Any {
     #[allow(unused_variables)]
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {}
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 
     fn as_any_ref(&self) -> &dyn Any;
 }
@@ -130,7 +130,7 @@ impl dyn ModelData {
 }
 
 impl<T: Model> ModelData for T {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         <T as Model>::event(self, cx, event);
     }
 

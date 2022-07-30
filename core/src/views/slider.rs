@@ -70,7 +70,7 @@ pub struct Slider<L: Lens> {
     p: PhantomData<L>,
     is_dragging: bool,
     internal: SliderDataInternal,
-    on_changing: Option<Box<dyn Fn(&mut Context, f32)>>,
+    on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
 }
 
 impl<L> Slider<L>
@@ -148,8 +148,8 @@ where
                         .on_geo_changed(|cx, geo| {
                             if geo.contains(GeometryChanged::WIDTH_CHANGED) {
                                 let current = cx.current();
-                                let width = cx.cache().get_width(current);
-                                let height = cx.cache().get_height(current);
+                                let width = cx.cache.get_width(current);
+                                let height = cx.cache.get_height(current);
                                 cx.emit(SliderEventInternal::SetThumbSize(width, height));
                             }
                         })
@@ -182,7 +182,7 @@ impl<L: Lens> View for Slider<L> {
         Some("slider")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|slider_event_internal, _| match slider_event_internal {
             SliderEventInternal::SetThumbSize(width, height) => match self.internal.orientation {
                 Orientation::Horizontal => {
@@ -202,8 +202,8 @@ impl<L: Lens> View for Slider<L> {
         event.map(|window_event, _| match window_event {
             WindowEvent::GeometryChanged(_) => {
                 let current = cx.current();
-                let width = cx.cache().get_width(current);
-                let height = cx.cache().get_height(current);
+                let width = cx.cache.get_width(current);
+                let height = cx.cache.get_height(current);
 
                 if width >= height {
                     self.internal.orientation = Orientation::Horizontal;
@@ -224,19 +224,18 @@ impl<L: Lens> View for Slider<L> {
                 let max = self.internal.range.end;
 
                 let current = cx.current();
-                let width = cx.cache().get_width(current);
-                let height = cx.cache().get_height(current);
-                let posx = cx.cache().get_posx(current);
-                let posy = cx.cache().get_posy(current);
+                let width = cx.cache.get_width(current);
+                let height = cx.cache.get_height(current);
+                let posx = cx.cache.get_posx(current);
+                let posy = cx.cache.get_posy(current);
 
                 let mut dx = match self.internal.orientation {
                     Orientation::Horizontal => {
-                        (cx.mouse().left.pos_down.0 - posx - thumb_size / 2.0)
-                            / (width - thumb_size)
+                        (cx.mouse.left.pos_down.0 - posx - thumb_size / 2.0) / (width - thumb_size)
                     }
 
                     Orientation::Vertical => {
-                        (height - (cx.mouse().left.pos_down.1 - posy) - thumb_size / 2.0)
+                        (height - (cx.mouse.left.pos_down.1 - posy) - thumb_size / 2.0)
                             / (height - thumb_size)
                     }
                 };
@@ -266,10 +265,10 @@ impl<L: Lens> View for Slider<L> {
                     let max = self.internal.range.end;
 
                     let current = cx.current();
-                    let width = cx.cache().get_width(current);
-                    let height = cx.cache().get_height(current);
-                    let posx = cx.cache().get_posx(current);
-                    let posy = cx.cache().get_posy(current);
+                    let width = cx.cache.get_width(current);
+                    let height = cx.cache.get_height(current);
+                    let posx = cx.cache.get_posx(current);
+                    let posy = cx.cache.get_posy(current);
 
                     let mut dx = match self.internal.orientation {
                         Orientation::Horizontal => {
@@ -321,7 +320,7 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     /// ```
     pub fn on_changing<F>(self, callback: F) -> Self
     where
-        F: 'static + Fn(&mut Context, f32),
+        F: 'static + Fn(&mut EventContext, f32),
     {
         self.modify(|slider| slider.on_changing = Some(Box::new(callback)))
     }

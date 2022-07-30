@@ -17,6 +17,7 @@ pub mod modifiers;
 pub mod resource;
 pub mod state;
 pub mod style;
+pub mod systems;
 pub mod text;
 pub mod tree;
 pub mod view;
@@ -41,7 +42,9 @@ pub mod image {
 /// Members which we recommend you wildcard-import.
 pub mod prelude {
     pub use super::animation::{AnimExt, Animation, AnimationBuilder};
-    pub use super::context::{Context, ContextProxy, DataContext, DrawContext, ProxyEmitError};
+    pub use super::context::{
+        Context, ContextProxy, DataContext, DrawContext, EventContext, ProxyEmitError,
+    };
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent};
     pub use super::events::{Event, Message, Propagation};

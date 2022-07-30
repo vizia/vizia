@@ -1,7 +1,7 @@
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
 
-use crate::{context::Context, events::Event, state::Lens, state::Model};
+use crate::{context::EventContext, events::Event, state::Lens, state::Model};
 
 #[derive(Lens)]
 pub struct Environment {
@@ -28,7 +28,7 @@ pub enum EnvironmentEvent {
 }
 
 impl Model for Environment {
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|event, _| match event {
             EnvironmentEvent::SetLocale(locale) => {
                 self.locale = locale.clone();

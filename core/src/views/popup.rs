@@ -8,7 +8,7 @@ pub struct PopupData {
 }
 
 impl Model for PopupData {
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|popup_event, meta| match popup_event {
             PopupEvent::Open => {
                 self.is_open = true;
@@ -66,7 +66,7 @@ where
     /// closing it.
     pub fn on_blur<F>(self, f: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
