@@ -265,7 +265,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             let mut content_height = 0.0;
 
             if let Some(text) = cx.style_ref().text.get(entity).cloned() {
-                let mut paint = text_paint_general(cx, entity);
+                let mut paint = text_paint_general(&cx.style, &cx.resource_manager, entity);
                 paint.set_text_align(align);
                 paint.set_text_baseline(baseline);
 
