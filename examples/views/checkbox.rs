@@ -1,3 +1,4 @@
+use vizia::fonts::unicode_names::CANCEL;
 use vizia::prelude::*;
 
 #[derive(Debug, Lens)]
@@ -67,6 +68,19 @@ fn main() {
                 Label::new(cx, "Disabled");
             })
             .disabled(true)
+            .size(Auto)
+            .col_between(Pixels(5.0))
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0));
+
+            Label::new(cx, "Checkbox with Label").top(Pixels(20.0)).top(Pixels(20.0));
+
+            HStack::new(cx, |cx| {
+                Checkbox::new(cx, AppData::option1)
+                    .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
+                    .text(AppData::option1.map(|flag| if *flag { CANCEL } else { "" }));
+                Label::new(cx, "Custom");
+            })
             .size(Auto)
             .col_between(Pixels(5.0))
             .child_top(Stretch(1.0))

@@ -65,6 +65,7 @@ checkbox {
     border-radius: 1px;
     border-width: 1px;
     border-color: #666666;
+    background-color: transparent;
     child-space: 1s;
 }
 
@@ -81,6 +82,7 @@ checkbox:checked {
     background-color: #3c77d2;
     border-color: #3c77d2;
     color: #f5f5f5;
+    transition: background-color 0.1 0.0;
 }
 
 checkbox:disabled {
@@ -88,13 +90,14 @@ checkbox:disabled {
 }
 
 checkbox:hover:disabled {
-    background-color: #00000000;
+    background-color: transparent;
 }
 
 checkbox:checked:hover {
     background-color: #0082e6;
     border-color: #0082e6;
     color: #f5f5f5;
+    transition: background-color 0.1 0.0;
 }
 
 checkbox:checked:disabled {
@@ -102,12 +105,6 @@ checkbox:checked:disabled {
     border-color: #bdbdbd;
     color: #f5f5f5;
 }
-
-/* checkbox:checked {
-    background-color: #005a9e;
-    border-color: #005a9e;
-    color: #f5f5f5;
-} */
 
 textbox {
     width: auto;
@@ -169,28 +166,62 @@ radiobutton {
     height: 20px;
     border-width: 1px;
     border-radius: 50%;
-    border-color: #888888;
-    background-color: white;
+    border-color: #666666;
+    background-color: transparent;
     child-space: 1s;
 }
 
+radiobutton:hover {
+    background-color: #e5e5e5;
+}
+
 radiobutton:checked {
-    border-color: #005a9e;
-    background-color: #005a9e;
+    border-color: #3c77d2;
+}
+
+radiobutton:checked:hover {
+    border-color: #0082e6;
+}
+
+radiobutton:disabled {
+    border-color: #bdbdbd;
+}
+
+radiobutton:disabled:hover {
+    background-color: transparent;
+}
+
+radiobutton:checked:hover {
+    background-color: transparent;
 }
 
 radiobutton .inner {
-    width: 8px;
-    height: 8px;
+    width: 0px;
+    height: 0px;
     border-radius: 50%;
-    background-color: white;
-    display: none;
+    background-color: #666666;
+    transition: width 0.2 0.0;
+    transition: height 0.2 0.0;
 }
 
 radiobutton:checked .inner {
-    display: flex;
     width: 12px;
     height: 12px;
+    background-color: #3c77d2;
+    transition: width 0.1 0.0;
+    transition: height 0.1 0.0;
+}
+
+radiobutton:hover .inner {
+    background-color: #0082e6;
+}
+
+radiobutton:disabled .inner {
+    width: 12px;
+    height: 12px;
+    background-color: #bdbdbd;
+    transition: width 0.1 0.0;
+    transition: height 0.1 0.0;
 }
 
 /* dropdown .title {
