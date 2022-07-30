@@ -306,8 +306,6 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                     if content_height < image_height {
                         content_height = image_height;
                     }
-                } else {
-                    // Use placeholder image
                 }
             }
 
