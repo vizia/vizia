@@ -50,7 +50,7 @@ use crate::prelude::*;
 /// #
 /// # AppData { value: false }.build(cx);
 /// #
-/// RadioButton::new(cx, AppData::value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue));
+/// RadioButton::new(cx, AppData::value).on_select(|cx| cx.emit(AppEvent::ToggleValue));
 /// ```
 ///
 /// ## Radio button with a label
