@@ -1152,6 +1152,7 @@ impl Context {
 
                     self.style().needs_relayout = true;
                     self.style().needs_redraw = true;
+                    self.style().needs_restyle = true;
                 }
 
                 self.event_queue.push_back(Event::new(event).target(self.focused));
