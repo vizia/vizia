@@ -258,9 +258,23 @@ impl Context {
 
     /// Sets application focus to the current entity
     pub fn focus(&mut self) {
-        self.focused = self.current;
-        self.style().needs_restyle = true;
+        let old_focus = self.focused;
+        let new_focus = self.current;
+        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(old_focus) {
+            pseudo_classes.set(PseudoClass::FOCUS, false);
+        }
+        if self.current != self.focused {
+            self.event_queue.push_back(Event::new(WindowEvent::FocusOut).target(old_focus));
+            self.event_queue.push_back(Event::new(WindowEvent::FocusIn).target(new_focus));
+            self.focused = self.current;
+        }
+        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(new_focus) {
+            pseudo_classes.set(PseudoClass::FOCUS, true);
+        }
+
+        self.style().needs_relayout = true;
         self.style().needs_redraw = true;
+        self.style().needs_restyle = true;
     }
 
     /// Sets the active flag of the current entity
