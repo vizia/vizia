@@ -1115,7 +1115,7 @@ impl Context {
                             prev_focused
                         } else {
                             TreeIterator::full(&self.tree)
-                                .filter(|node| is_focusable(&self.style, *node))
+                                .filter(|node| is_navigatable(&self.style, *node))
                                 .next_back()
                                 .unwrap_or(Entity::root())
                         };
@@ -1133,7 +1133,10 @@ impl Context {
                         {
                             next_focused
                         } else {
-                            Entity::root()
+                            TreeIterator::full(&self.tree)
+                                .filter(|node| is_navigatable(&self.style, *node))
+                                .next()
+                                .unwrap_or(Entity::root())
                         };
 
                         if next_focused != self.focused {
