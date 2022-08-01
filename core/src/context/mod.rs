@@ -264,8 +264,8 @@ impl Context {
             pseudo_classes.set(PseudoClass::FOCUS, false);
         }
         if self.current != self.focused {
-            self.event_queue.push_back(Event::new(WindowEvent::FocusOut).target(old_focus));
-            self.event_queue.push_back(Event::new(WindowEvent::FocusIn).target(new_focus));
+            self.emit_to(old_focus, WindowEvent::FocusOut);
+            self.emit_to(new_focus, WindowEvent::FocusIn);
             self.focused = self.current;
         }
         if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(new_focus) {
