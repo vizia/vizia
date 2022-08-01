@@ -885,7 +885,6 @@ impl Style {
             .insert(entity, PseudoClass::default())
             .expect("Failed to add pseudoclasses");
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
-        println!("Add abilities {entity:?}");
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
         self.visibility.insert(entity, Default::default());
         self.focus_order.insert(entity, Default::default()).unwrap();
