@@ -134,6 +134,11 @@ pub struct Style {
     pub border_radius_bottom_left: AnimatableSet<Units>,
     pub border_radius_bottom_right: AnimatableSet<Units>,
 
+    // Outline
+    pub outline_width: AnimatableSet<Units>,
+    pub outline_color: AnimatableSet<Color>,
+    pub outline_offset: AnimatableSet<Units>,
+
     // Focus Order
     pub focus_order: SparseSet<FocusOrder>,
 
@@ -461,6 +466,18 @@ impl Style {
 
                     Property::BorderBottomRightRadius(value) => {
                         self.border_radius_bottom_right.insert_rule(rule_id, value);
+                    }
+
+                    Property::OutlineWidth(value) => {
+                        self.outline_width.insert_rule(rule_id, value);
+                    }
+
+                    Property::OutlineColor(value) => {
+                        self.outline_color.insert_rule(rule_id, value);
+                    }
+
+                    Property::OutlineOffset(value) => {
+                        self.outline_offset.insert_rule(rule_id, value);
                     }
 
                     // Font
@@ -848,6 +865,36 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.outer_shadow_color.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
+                                }
+
+                                "outline-width" => {
+                                    let animation = self.animation_manager.create();
+                                    self.outline_width.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
+                                    self.outline_width.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
+                                }
+
+                                "outline-color" => {
+                                    let animation = self.animation_manager.create();
+                                    self.outline_color.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
+                                    self.outline_color.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
+                                }
+
+                                "outline-offset" => {
+                                    let animation = self.animation_manager.create();
+                                    self.outline_offset.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
+                                    self.outline_offset.insert_transition(rule_id, animation);
                                     self.transitions.insert(rule_id, animation);
                                 }
 

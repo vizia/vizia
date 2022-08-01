@@ -648,6 +648,18 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
         should_redraw = true;
     }
 
+    if cx.style().outline_width.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
+    if cx.style().outline_color.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
+    if cx.style().outline_offset.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
     if cx.style().layout_type.link(entity, &matched_rules) {
         //println!("30");
         should_relayout = true;
