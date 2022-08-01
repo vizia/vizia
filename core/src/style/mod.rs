@@ -62,6 +62,9 @@ bitflags! {
         const FOCUSABLE = 1 << 1;
         const CHECKABLE = 1 << 2;
         const SELECTABLE = 1 << 3;
+        /// The element should be focusable in sequential keyboard navigation -
+        /// allowing the equivilant of a negative tabindex in html.
+        const KEYBOARD_NAVIGATABLE = 1 << 4;
     }
 }
 
@@ -882,6 +885,7 @@ impl Style {
             .insert(entity, PseudoClass::default())
             .expect("Failed to add pseudoclasses");
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
+        println!("Add abilities {entity:?}");
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
         self.visibility.insert(entity, Default::default());
         self.focus_order.insert(entity, Default::default()).unwrap();

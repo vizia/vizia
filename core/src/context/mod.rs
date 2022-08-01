@@ -36,7 +36,7 @@ use crate::style_system::{
     apply_text_constraints, apply_visibility, apply_z_ordering,
 };
 use crate::tree::{
-    focus_backward, focus_forward, is_focusable, TreeDepthIterator, TreeExt, TreeIterator,
+    focus_backward, focus_forward, is_navigatable, TreeDepthIterator, TreeExt, TreeIterator,
 };
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
@@ -259,6 +259,8 @@ impl Context {
     /// Sets application focus to the current entity
     pub fn focus(&mut self) {
         self.focused = self.current;
+        self.style().needs_restyle = true;
+        self.style().needs_redraw = true;
     }
 
     /// Sets the active flag of the current entity
