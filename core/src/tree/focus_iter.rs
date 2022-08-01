@@ -12,9 +12,9 @@ pub fn is_navigatable<'a>(style: &'a Style, node: Entity) -> bool {
 
 pub fn focus_forward<'a>(tree: &'a Tree, style: &'a Style, node: Entity) -> Option<Entity> {
     TreeIterator { tree, tours: DoubleEndedTreeTour::new(Some(node), Some(Entity::root())) }
-    .skip(1)    
-    .filter(|node| is_navigatable(style, *node))
-    .next()
+        .skip(1)
+        .filter(|node| is_navigatable(style, *node))
+        .next()
 }
 
 pub fn focus_backward<'a>(tree: &'a Tree, style: &'a Style, node: Entity) -> Option<Entity> {
@@ -27,6 +27,5 @@ pub fn focus_backward<'a>(tree: &'a Tree, style: &'a Style, node: Entity) -> Opt
         //tours: DoubleEndedTreeTour::new(Some(Entity::root()), Some(node)),
     };
     iter.next_back();
-    iter.filter(|node| is_navigatable(style, *node))
-    .next_back()
+    iter.filter(|node| is_navigatable(style, *node)).next_back()
 }
