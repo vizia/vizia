@@ -101,7 +101,7 @@ impl Label {
     where
         T: ToString,
     {
-        Self {}.build(cx, |_| {}).text(text)
+        Self {}.build(cx, |_| {}).text(text).focusable(false)
     }
 }
 

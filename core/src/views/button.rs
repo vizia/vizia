@@ -94,6 +94,7 @@ impl View for Button {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 cx.set_active(true);
                 cx.capture();
+                cx.focus();
                 if let Some(callback) = &self.action {
                     (callback)(cx);
                 }

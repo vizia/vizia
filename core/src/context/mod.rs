@@ -39,7 +39,7 @@ use crate::style_system::{
 };
 use crate::systems::image_system::image_system;
 use crate::tree::{
-    focus_backward, focus_forward, is_focusable, TreeDepthIterator, TreeExt, TreeIterator,
+    focus_backward, focus_forward, is_navigatable, TreeDepthIterator, TreeExt, TreeIterator,
 };
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
@@ -265,7 +265,23 @@ impl Context {
 
     /// Sets application focus to the current entity
     pub fn focus(&mut self) {
-        self.focused = self.current;
+        let old_focus = self.focused;
+        let new_focus = self.current;
+        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(old_focus) {
+            pseudo_classes.set(PseudoClass::FOCUS, false);
+        }
+        if self.current != self.focused {
+            self.emit_to(old_focus, WindowEvent::FocusOut);
+            self.emit_to(new_focus, WindowEvent::FocusIn);
+            self.focused = self.current;
+        }
+        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(new_focus) {
+            pseudo_classes.set(PseudoClass::FOCUS, true);
+        }
+
+        self.style().needs_relayout = true;
+        self.style().needs_redraw = true;
+        self.style().needs_restyle = true;
     }
 
     /// Sets the active flag of the current entity
@@ -1087,7 +1103,7 @@ impl Context {
                             prev_focused
                         } else {
                             TreeIterator::full(&self.tree)
-                                .filter(|node| is_focusable(&self.style, *node))
+                                .filter(|node| is_navigatable(&self.style, *node))
                                 .next_back()
                                 .unwrap_or(Entity::root())
                         };
@@ -1105,7 +1121,10 @@ impl Context {
                         {
                             next_focused
                         } else {
-                            Entity::root()
+                            TreeIterator::full(&self.tree)
+                                .filter(|node| is_navigatable(&self.style, *node))
+                                .next()
+                                .unwrap_or(Entity::root())
                         };
 
                         if next_focused != self.focused {
@@ -1124,6 +1143,7 @@ impl Context {
 
                     self.style().needs_relayout = true;
                     self.style().needs_redraw = true;
+                    self.style().needs_restyle = true;
                 }
 
                 self.event_queue.push_back(Event::new(event).target(self.focused));

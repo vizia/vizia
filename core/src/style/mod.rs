@@ -62,6 +62,9 @@ bitflags! {
         const FOCUSABLE = 1 << 1;
         const CHECKABLE = 1 << 2;
         const SELECTABLE = 1 << 3;
+        /// The element should be focusable in sequential keyboard navigation -
+        /// allowing the equivilant of a negative tabindex in html.
+        const KEYBOARD_NAVIGATABLE = 1 << 4;
     }
 }
 
