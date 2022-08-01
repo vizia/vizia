@@ -2,17 +2,18 @@ use crate::prelude::*;
 use crate::style::Style;
 use crate::tree::*;
 
-pub fn is_focusable<'a>(style: &'a Style, node: Entity) -> bool {
+pub fn is_navigatable<'a>(style: &'a Style, node: Entity) -> bool {
     style
         .abilities
         .get(node)
-        .and_then(|abilities| Some(abilities.contains(Abilities::FOCUSABLE)))
+        .and_then(|abilities| Some(abilities.contains(Abilities::KEYBOARD_NAVIGATABLE)))
         .unwrap_or(false)
 }
 
 pub fn focus_forward<'a>(tree: &'a Tree, style: &'a Style, node: Entity) -> Option<Entity> {
     TreeIterator { tree, tours: DoubleEndedTreeTour::new(Some(node), Some(Entity::root())) }
     .skip(1)    
+    .filter(|node| is_navigatable(style, *node))
     .next()
 }
 
@@ -26,6 +27,6 @@ pub fn focus_backward<'a>(tree: &'a Tree, style: &'a Style, node: Entity) -> Opt
         //tours: DoubleEndedTreeTour::new(Some(Entity::root()), Some(node)),
     };
     iter.next_back();
-    iter.filter(|node| is_focusable(style, *node))
+    iter.filter(|node| is_navigatable(style, *node))
     .next_back()
 }
