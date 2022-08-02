@@ -19,25 +19,25 @@ impl MouseDeltaView {
 }
 
 impl View for MouseDeltaView {
-    fn event(&mut self, cx: &mut Context, _: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, _: &mut Event) {
         println!("                     |            x |            y ");
         println!("---------------------|--------------|--------------");
 
-        let frame_delta = cx.mouse().frame_delta();
+        let frame_delta = cx.mouse.frame_delta();
         println!("Frame delta          | {:>12.4} | {:>12.4}", frame_delta.0, frame_delta.1);
 
-        if cx.mouse().left.state == MouseButtonState::Pressed {
-            let delta = cx.mouse().delta(MouseButton::Left);
+        if cx.mouse.left.state == MouseButtonState::Pressed {
+            let delta = cx.mouse.delta(MouseButton::Left);
             println!("Pressed left delta   | {:>12.4} | {:>12.4}", delta.0, delta.1);
         }
 
-        if cx.mouse().right.state == MouseButtonState::Pressed {
-            let delta = cx.mouse().delta(MouseButton::Right);
+        if cx.mouse.right.state == MouseButtonState::Pressed {
+            let delta = cx.mouse.delta(MouseButton::Right);
             println!("Pressed right delta  | {:>12.4} | {:>12.4}", delta.0, delta.1);
         }
 
-        if cx.mouse().middle.state == MouseButtonState::Pressed {
-            let delta = cx.mouse().delta(MouseButton::Middle);
+        if cx.mouse.middle.state == MouseButtonState::Pressed {
+            let delta = cx.mouse.delta(MouseButton::Middle);
             println!("Pressed middle delta | {:>12.4} | {:>12.4}", delta.0, delta.1);
         }
 
