@@ -158,7 +158,7 @@ pub enum KnobChangeEvent {
     SetKnob(usize, f32),
 }
 impl Model for KnobData {
-    fn event(&mut self, _cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|knob_change_event, _| match knob_change_event {
             KnobChangeEvent::SetKnob(idx, new_val) => {
                 self.knobs[*idx] = *new_val;

@@ -1,4 +1,5 @@
 mod draw;
+mod event;
 mod proxy;
 
 use instant::{Duration, Instant};
@@ -17,6 +18,7 @@ use morphorm::layout;
 use unic_langid::LanguageIdentifier;
 
 pub use draw::*;
+pub use event::*;
 pub use proxy::*;
 
 use crate::cache::CachedData;
@@ -35,6 +37,7 @@ use crate::style_system::{
     apply_clipping, apply_inline_inheritance, apply_shared_inheritance, apply_styles,
     apply_text_constraints, apply_visibility, apply_z_ordering,
 };
+use crate::systems::image_system::image_system;
 use crate::tree::{
     focus_backward, focus_forward, is_navigatable, TreeDepthIterator, TreeExt, TreeIterator,
 };
@@ -55,10 +58,12 @@ pub struct Context {
     pub(crate) data: SparseSet<ModelDataStore>,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) listeners:
-        HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut Context, &mut Event)>>,
-    style: Style,
+        HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
+    pub(crate) style: Style,
     cache: CachedData,
+    pub draw_cache: DrawCache,
 
+    pub canvases: HashMap<Entity, crate::prelude::Canvas>,
     //environment: Environment,
     mouse: MouseState,
     modifiers: Modifiers,
@@ -68,7 +73,7 @@ pub struct Context {
     focused: Entity,
     cursor_icon_locked: bool,
 
-    resource_manager: ResourceManager,
+    pub(crate) resource_manager: ResourceManager,
 
     text_context: TextContext,
 
@@ -97,6 +102,8 @@ impl Context {
             data: SparseSet::new(),
             style: Style::default(),
             cache,
+            draw_cache: DrawCache::new(),
+            canvases: HashMap::new(),
             // environment: Environment::new(),
             event_queue: VecDeque::new(),
             listeners: HashMap::default(),
@@ -442,6 +449,7 @@ impl Context {
 
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
+            self.draw_cache.remove(*entity);
             self.style.remove(*entity);
             self.data.remove(*entity);
             self.views.remove(entity);
@@ -488,7 +496,7 @@ impl Context {
     pub fn add_listener<F, W>(&mut self, listener: F)
     where
         W: View,
-        F: 'static + Fn(&mut W, &mut Context, &mut Event),
+        F: 'static + Fn(&mut W, &mut EventContext, &mut Event),
     {
         self.listeners.insert(
             self.current,
@@ -517,23 +525,25 @@ impl Context {
     }
 
     /// Ensure all FontOrId entires are loaded into the contexts and become Ids.
-    pub fn synchronize_fonts(&mut self, canvas: &mut Canvas) {
-        for (name, font) in self.resource_manager.fonts.iter_mut() {
-            match font {
-                FontOrId::Font(data) => {
-                    let id1 = canvas
-                        .add_font_mem(&data.clone())
-                        .expect(&format!("Failed to load font file for: {}", name));
-                    let id2 = self.text_context.add_font_mem(&data.clone()).expect("failed");
-                    if id1 != id2 {
-                        panic!(
-                            "Fonts in canvas must have the same id as fonts in the text context"
-                        );
+    pub fn synchronize_fonts(&mut self) {
+        if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
+            for (name, font) in self.resource_manager.fonts.iter_mut() {
+                match font {
+                    FontOrId::Font(data) => {
+                        let id1 = canvas
+                            .add_font_mem(&data.clone())
+                            .expect(&format!("Failed to load font file for: {}", name));
+                        let id2 = self.text_context.add_font_mem(&data.clone()).expect("failed");
+                        if id1 != id2 {
+                            panic!(
+                                "Fonts in canvas must have the same id as fonts in the text context"
+                            );
+                        }
+                        *font = FontOrId::Id(id1);
                     }
-                    *font = FontOrId::Id(id1);
-                }
 
-                _ => {}
+                    _ => {}
+                }
             }
         }
     }
@@ -681,10 +691,6 @@ impl Context {
         AnimationBuilder::new(id, self, duration)
     }
 
-    pub fn play_animation(&mut self, animation: Animation) {
-        self.current.play_animation(self, animation);
-    }
-
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
         if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
             return Ok(());
@@ -723,52 +729,6 @@ impl Context {
         self.resource_manager.image_loader = Some(Box::new(loader));
     }
 
-    fn get_image_internal(&mut self, path: &str) -> &mut StoredImage {
-        if let Some(img) = self.resource_manager.images.get_mut(path) {
-            img.used = true;
-            // borrow checker hack
-            return self.resource_manager.images.get_mut(path).unwrap();
-        }
-
-        if let Some(callback) = self.resource_manager.image_loader.take() {
-            callback(self, path);
-            self.resource_manager.image_loader = Some(callback);
-        }
-
-        if let Some(img) = self.resource_manager.images.get_mut(path) {
-            img.used = true;
-            // borrow checker hack
-            return self.resource_manager.images.get_mut(path).unwrap();
-        } else {
-            self.resource_manager.images.insert(
-                path.to_owned(),
-                StoredImage {
-                    image: ImageOrId::Image(
-                        image::load_from_memory_with_format(
-                            include_bytes!("../../resources/images/broken_image.png"),
-                            image::ImageFormat::Png,
-                        )
-                        .unwrap(),
-                        femtovg::ImageFlags::NEAREST,
-                    ),
-                    retention_policy: ImageRetentionPolicy::Forever,
-                    used: true,
-                    dirty: false,
-                    observers: HashSet::new(),
-                },
-            );
-            self.resource_manager.images.get_mut(path).unwrap()
-        }
-    }
-
-    pub fn get_image(&mut self, path: &str) -> &mut ImageOrId {
-        &mut self.get_image_internal(path).image
-    }
-
-    pub fn add_image_observer(&mut self, path: &str, observer: Entity) {
-        self.get_image_internal(path).observers.insert(observer);
-    }
-
     pub fn load_image(
         &mut self,
         path: String,
@@ -797,12 +757,6 @@ impl Context {
                 });
             }
         }
-        self.style.needs_redraw = true;
-        self.style.needs_relayout = true;
-    }
-
-    pub fn evict_image(&mut self, path: &str) {
-        self.resource_manager.images.remove(path);
         self.style.needs_redraw = true;
         self.style.needs_relayout = true;
     }
@@ -900,6 +854,8 @@ impl Context {
         // Not ideal
         let tree = self.tree.clone();
 
+        image_system(self);
+
         apply_z_ordering(self, &tree);
         apply_visibility(self, &tree);
 
@@ -928,8 +884,8 @@ impl Context {
         geometry_changed(self, &tree);
     }
 
-    pub fn draw(&mut self, canvas: &mut Canvas) {
-        self.resource_manager.mark_images_unused();
+    pub fn draw(&mut self) {
+        let canvas = self.canvases.get_mut(&Entity::root()).unwrap();
 
         let window_width = self.cache.get_width(Entity::root());
         let window_height = self.cache.get_height(Entity::root());
@@ -987,7 +943,25 @@ impl Context {
 
             if let Some(view) = self.views.remove(&entity) {
                 self.current = entity;
-                view.draw(&mut DrawContext::new(self), canvas);
+                view.draw(
+                    &mut DrawContext {
+                        current: self.current,
+                        captured: &self.captured,
+                        focused: &self.focused,
+                        hovered: &self.hovered,
+                        style: &self.style,
+                        cache: &mut self.cache,
+                        draw_cache: &mut self.draw_cache,
+                        tree: &self.tree,
+                        data: &self.data,
+                        views: &self.views,
+                        resource_manager: &self.resource_manager,
+                        text_context: &self.text_context,
+                        modifiers: &self.modifiers,
+                        mouse: &self.mouse,
+                    },
+                    canvas,
+                );
 
                 self.views.insert(entity, view);
             }
@@ -1004,8 +978,6 @@ impl Context {
         }
 
         canvas.flush();
-
-        self.resource_manager.evict_unused_images();
     }
 
     /// This method is in charge of receiving raw WindowEvents and dispatching them to the

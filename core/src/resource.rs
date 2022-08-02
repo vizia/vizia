@@ -150,11 +150,17 @@ impl ResourceManager {
     }
 
     pub fn evict_unused_images(&mut self) {
-        self.images.retain(|_, img| {
-            !((!img.used
-                && img.retention_policy == ImageRetentionPolicy::DropWhenUnusedForOneFrame)
-                || (img.observers.len() == 0
-                    && img.retention_policy == ImageRetentionPolicy::DropWhenNoObservers))
+        self.images.retain(|name, img| match img.retention_policy {
+            ImageRetentionPolicy::DropWhenUnusedForOneFrame => {
+                if !img.used {
+                    println!("Evict image: {}", name);
+                }
+                img.used
+            }
+
+            ImageRetentionPolicy::DropWhenNoObservers => !img.observers.is_empty(),
+
+            ImageRetentionPolicy::Forever => true,
         });
     }
 }
