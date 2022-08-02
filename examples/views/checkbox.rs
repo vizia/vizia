@@ -53,9 +53,10 @@ fn main() {
 
             // Checkboxes with label
             HStack::new(cx, |cx| {
-                Checkbox::new(cx, AppData::option1)
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1));
-                Label::new(cx, "Checkbox");
+                let checkbox = Checkbox::new(cx, AppData::option1)
+                    .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
+                    .entity();
+                Label::new(cx, "Checkbox").describing(checkbox);
             })
             .size(Auto)
             .col_between(Pixels(5.0))
@@ -63,9 +64,10 @@ fn main() {
             .child_bottom(Stretch(1.0));
 
             HStack::new(cx, |cx| {
-                Checkbox::new(cx, AppData::option2)
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleOption2));
-                Label::new(cx, "Disabled");
+                let checkbox = Checkbox::new(cx, AppData::option2)
+                    .on_toggle(|cx| cx.emit(AppEvent::ToggleOption2))
+                    .entity();
+                Label::new(cx, "Disabled").describing(checkbox);
             })
             .disabled(true)
             .size(Auto)
@@ -76,10 +78,11 @@ fn main() {
             Label::new(cx, "Checkbox with Label").top(Pixels(20.0)).top(Pixels(20.0));
 
             HStack::new(cx, |cx| {
-                Checkbox::new(cx, AppData::option1)
+                let checkbox = Checkbox::new(cx, AppData::option1)
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
-                    .text(AppData::option1.map(|flag| if *flag { CANCEL } else { "" }));
-                Label::new(cx, "Custom");
+                    .text(AppData::option1.map(|flag| if *flag { CANCEL } else { "" }))
+                    .entity();
+                Label::new(cx, "Custom").describing(checkbox);
             })
             .size(Auto)
             .col_between(Pixels(5.0))
