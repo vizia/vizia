@@ -1,3 +1,4 @@
+mod backend;
 mod draw;
 mod event;
 mod proxy;
@@ -17,6 +18,7 @@ use keyboard_types::Code;
 use morphorm::layout;
 use unic_langid::LanguageIdentifier;
 
+pub use backend::*;
 pub use draw::*;
 pub use event::*;
 pub use proxy::*;
@@ -52,7 +54,7 @@ const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
     pub(crate) tree: Tree,
-    current: Entity,
+    pub(crate) current: Entity,
     /// TODO make this private when there's no longer a need to mutate views after building
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) data: SparseSet<ModelDataStore>,
@@ -61,31 +63,31 @@ pub struct Context {
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,
     pub(crate) style: Style,
-    cache: CachedData,
-    pub draw_cache: DrawCache,
+    pub(crate) cache: CachedData,
+    pub(crate) draw_cache: DrawCache,
 
-    pub canvases: HashMap<Entity, crate::prelude::Canvas>,
+    pub(crate) canvases: HashMap<Entity, crate::prelude::Canvas>,
     //environment: Environment,
-    mouse: MouseState,
-    modifiers: Modifiers,
+    pub(crate) mouse: MouseState,
+    pub(crate) modifiers: Modifiers,
 
-    captured: Entity,
+    pub(crate) captured: Entity,
     pub(crate) hovered: Entity,
-    focused: Entity,
-    cursor_icon_locked: bool,
+    pub(crate) focused: Entity,
+    pub(crate) cursor_icon_locked: bool,
 
     pub(crate) resource_manager: ResourceManager,
 
-    text_context: TextContext,
+    pub(crate) text_context: TextContext,
 
-    event_proxy: Option<Box<dyn EventProxy>>,
+    pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
     #[cfg(feature = "clipboard")]
-    clipboard: Box<dyn ClipboardProvider>,
+    pub(crate) clipboard: Box<dyn ClipboardProvider>,
 
-    click_time: Instant,
-    double_click: bool,
-    click_pos: (f32, f32),
+    pub(crate) click_time: Instant,
+    pub(crate) double_click: bool,
+    pub(crate) click_pos: (f32, f32),
 
     pub ignore_default_theme: bool,
 }
@@ -191,7 +193,6 @@ impl Context {
     }
 
     pub fn environment(&self) -> &Environment {
-        //&mut self.environment
         self.data::<Environment>().unwrap()
     }
 
