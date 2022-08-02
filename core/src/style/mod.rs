@@ -70,7 +70,7 @@ bitflags! {
 
 impl Default for Abilities {
     fn default() -> Abilities {
-        Abilities::all()
+        Abilities::HOVERABLE
     }
 }
 

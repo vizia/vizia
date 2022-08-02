@@ -334,7 +334,7 @@ impl Model for TextboxData {
                 if !cx.is_disabled() {
                     if !self.edit {
                         self.edit = true;
-                        cx.focus();
+                        cx.focus_with_visibility(false);
                         cx.capture();
                         cx.set_checked(true);
                         cx.emit(TextEvent::SelectAll);
@@ -521,6 +521,7 @@ where
                 TextboxKind::MultiLineWrapped => "multi_line_wrapped",
             })
             .cursor(CursorIcon::Text)
+            .keyboard_navigatable(true)
     }
 }
 
@@ -561,7 +562,7 @@ where
                 if cx.is_over() {
                     cx.emit(TextEvent::StartEdit);
 
-                    cx.focus();
+                    cx.focus_with_visibility(false);
                     cx.capture();
                     cx.set_checked(true);
                     cx.lock_cursor_icon();

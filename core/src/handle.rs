@@ -281,6 +281,8 @@ impl<'a, T> Handle<'a, T> {
     pub fn keyboard_navigatable(self, state: bool) -> Self {
         if let Some(abilities) = self.cx.style().abilities.get_mut(self.entity) {
             abilities.set(Abilities::KEYBOARD_NAVIGATABLE, state);
+            // If an element is keyboard navigatable then it must be focusable
+            abilities.set(Abilities::FOCUSABLE, state);
         }
 
         self.cx.need_restyle();

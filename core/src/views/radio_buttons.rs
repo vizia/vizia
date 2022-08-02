@@ -90,11 +90,11 @@ impl RadioButton {
                 Element::new(cx)
                     .class("inner")
                     .hoverable(false)
-                    .focusable(false)
                     .position_type(PositionType::SelfDirected);
             })
             .checked(checked)
             .cursor(CursorIcon::Hand)
+            .keyboard_navigatable(true)
     }
 }
 

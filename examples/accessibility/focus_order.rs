@@ -1,12 +1,5 @@
 use vizia::prelude::*;
 
-const STYLE: &str = r#"
-    button:focus {
-        border-width: 1px;
-        border-color: blue;
-    }
-"#;
-
 #[derive(Lens)]
 pub struct AppData {
     text: String,
@@ -28,8 +21,6 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
-
         AppData { text: "".to_string() }.build(cx);
 
         VStack::new(cx, |cx| {

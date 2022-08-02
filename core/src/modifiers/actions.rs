@@ -596,14 +596,14 @@ impl<'a, V: View> Actions<'a> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut Context),
     {
-        FocusIn::new(self, action)
+        FocusIn::new(self.keyboard_navigatable(true), action)
     }
 
     fn on_focus_out<F>(self, action: F) -> Handle<'a, FocusOut<Self::View>>
     where
         F: 'static + Fn(&mut Context),
     {
-        FocusOut::new(self, action)
+        FocusOut::new(self.keyboard_navigatable(true), action)
     }
 
     fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<Self::View>>

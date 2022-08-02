@@ -65,7 +65,7 @@ pub struct Context {
 
     captured: Entity,
     pub(crate) hovered: Entity,
-    focused: Entity,
+    pub(crate) focused: Entity,
     cursor_icon_locked: bool,
 
     resource_manager: ResourceManager,
@@ -256,25 +256,66 @@ impl Context {
         self.cursor_icon_locked
     }
 
-    /// Sets application focus to the current entity
-    pub fn focus(&mut self) {
+    /// Enables or disables pseudoclasses for the focus of an entity
+    fn set_focus_pseudo_classes(&mut self, focused: Entity, enabled: bool, focus_visible: bool) {
+        #[cfg(debug_assertions)]
+        if enabled {
+            println!(
+                "Focus changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
+                focused,
+                self.tree().get_parent(focused),
+                self.views
+                    .get(&focused)
+                    .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
+                self.cache().get_posx(focused),
+                self.cache().get_posy(focused),
+                self.cache().get_width(focused),
+                self.cache().get_height(focused),
+            );
+        }
+
+        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(focused) {
+            pseudo_classes.set(PseudoClass::FOCUS, enabled);
+            if !enabled || focus_visible {
+                pseudo_classes.set(PseudoClass::FOCUS_VISIBLE, enabled);
+            }
+        }
+
+        for ancestor in focused.parent_iter(&self.tree) {
+            let entity = ancestor;
+            if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
+                pseudo_classes.set(PseudoClass::FOCUS_WITHIN, enabled);
+            }
+        }
+    }
+
+    /// Sets application focus to the current entity with the specified focus visiblity
+    pub fn focus_with_visibility(&mut self, focus_visible: bool) {
         let old_focus = self.focused;
         let new_focus = self.current;
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(old_focus) {
-            pseudo_classes.set(PseudoClass::FOCUS, false);
-        }
+        self.set_focus_pseudo_classes(old_focus, false, focus_visible);
         if self.current != self.focused {
             self.emit_to(old_focus, WindowEvent::FocusOut);
             self.emit_to(new_focus, WindowEvent::FocusIn);
             self.focused = self.current;
         }
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(new_focus) {
-            pseudo_classes.set(PseudoClass::FOCUS, true);
-        }
+        self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
         self.style().needs_relayout = true;
         self.style().needs_redraw = true;
         self.style().needs_restyle = true;
+    }
+
+    /// Sets application focus to the current entity using the previous focus visibility
+    pub fn focus(&mut self) {
+        let focused = self.focused;
+        let old_focus_visible = self
+            .style()
+            .pseudo_classes
+            .get_mut(focused)
+            .filter(|class| class.contains(PseudoClass::FOCUS_VISIBLE))
+            .is_some();
+        self.focus_with_visibility(old_focus_visible)
     }
 
     /// Sets the active flag of the current entity
@@ -364,6 +405,10 @@ impl Context {
 
     pub fn captured(&self) -> Entity {
         self.captured
+    }
+
+    pub fn focused(&self) -> Entity {
+        self.focused
     }
 
     /// You should not call this method unless you are writing a windowing backend, in which case
@@ -1048,6 +1093,15 @@ impl Context {
                     MouseButton::Left => {
                         self.mouse.left.pos_down = (self.mouse.cursorx, self.mouse.cursory);
                         self.mouse.left.pressed = self.hovered;
+                        if self
+                            .style
+                            .abilities
+                            .get(self.hovered)
+                            .filter(|abilities| abilities.contains(Abilities::FOCUSABLE))
+                            .is_some()
+                        {
+                            self.with_current(self.hovered, |cx| cx.focus());
+                        }
                     }
                     MouseButton::Right => {
                         self.mouse.right.pos_down = (self.mouse.cursorx, self.mouse.cursory);
@@ -1120,21 +1174,18 @@ impl Context {
 
                 if *code == Code::Tab {
                     let focused = self.focused;
-                    if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(focused) {
-                        pseudo_classes.set(PseudoClass::FOCUS, false);
-                    }
+                    self.set_focus_pseudo_classes(focused, false, true);
 
                     if self.modifiers.contains(Modifiers::SHIFT) {
-                        let prev_focused = if let Some(prev_focused) =
-                            focus_backward(&self.tree, &self.style, self.focused)
-                        {
-                            prev_focused
-                        } else {
-                            TreeIterator::full(&self.tree)
-                                .filter(|node| is_navigatable(&self.style, *node))
-                                .next_back()
-                                .unwrap_or(Entity::root())
-                        };
+                        let prev_focused =
+                            if let Some(prev_focused) = focus_backward(&self, self.focused) {
+                                prev_focused
+                            } else {
+                                TreeIterator::full(&self.tree)
+                                    .filter(|node| is_navigatable(&self, *node))
+                                    .next_back()
+                                    .unwrap_or(Entity::root())
+                            };
 
                         if prev_focused != self.focused {
                             self.event_queue
@@ -1144,16 +1195,15 @@ impl Context {
                             self.focused = prev_focused;
                         }
                     } else {
-                        let next_focused = if let Some(next_focused) =
-                            focus_forward(&self.tree, &self.style, self.focused)
-                        {
-                            next_focused
-                        } else {
-                            TreeIterator::full(&self.tree)
-                                .filter(|node| is_navigatable(&self.style, *node))
-                                .next()
-                                .unwrap_or(Entity::root())
-                        };
+                        let next_focused =
+                            if let Some(next_focused) = focus_forward(&self, self.focused) {
+                                next_focused
+                            } else {
+                                TreeIterator::full(&self.tree)
+                                    .filter(|node| is_navigatable(&self, *node))
+                                    .next()
+                                    .unwrap_or(Entity::root())
+                            };
 
                         if next_focused != self.focused {
                             self.event_queue
@@ -1165,9 +1215,7 @@ impl Context {
                     }
 
                     let focused = self.focused;
-                    if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(focused) {
-                        pseudo_classes.set(PseudoClass::FOCUS, true);
-                    }
+                    self.set_focus_pseudo_classes(focused, true, true);
 
                     self.style().needs_relayout = true;
                     self.style().needs_redraw = true;
