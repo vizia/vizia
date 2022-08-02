@@ -77,6 +77,7 @@ pub trait View: 'static + Sized {
         let font_color = cx.font_color().cloned().unwrap_or(Color::rgb(0, 0, 0));
 
         let border_color = cx.border_color().cloned().unwrap_or_default();
+        let outline_color = cx.outline_color().cloned().unwrap_or_default();
 
         let parent = cx
             .tree
@@ -119,6 +120,15 @@ pub trait View: 'static + Sized {
 
         let border_width =
             cx.border_width().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
+
+        let outline_width =
+            cx.outline_width().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
+
+        let mut outline_color: femtovg::Color = outline_color.into();
+        outline_color.set_alphaf(outline_color.a * opacity);
+
+        let outline_offset =
+            cx.outline_offset().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
 
         let outer_shadow_h_offset =
             cx.outer_shadow_h_offset().unwrap_or_default().value_or(bounds.w, 0.0);
@@ -450,6 +460,23 @@ pub trait View: 'static + Sized {
         let mut paint = Paint::color(border_color);
         paint.set_line_width(border_width);
         canvas.stroke_path(&mut path, paint);
+
+        // Draw outline
+        let mut outline_path = Path::new();
+        let half_outline_width = outline_width / 2.0;
+        outline_path.rounded_rect_varying(
+            bounds.x - half_outline_width - outline_offset,
+            bounds.y - half_outline_width - outline_offset,
+            bounds.w + outline_width + 2.0 * outline_offset,
+            bounds.h + outline_width + 2.0 * outline_offset,
+            border_radius_top_left * 1.5,
+            border_radius_top_right * 1.5,
+            border_radius_bottom_right * 1.5,
+            border_radius_bottom_left * 1.5,
+        );
+        let mut outline_paint = Paint::color(outline_color);
+        outline_paint.set_line_width(outline_width);
+        canvas.stroke_path(&mut outline_path, outline_paint);
 
         // // Draw inner shadow
         // let mut path = Path::new();

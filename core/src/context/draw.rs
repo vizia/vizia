@@ -121,6 +121,8 @@ impl<'a> DrawContext<'a> {
     style_getter_units!(border_radius_top_left);
     style_getter_units!(border_radius_bottom_right);
     style_getter_units!(border_radius_bottom_left);
+    style_getter_units!(outline_width);
+    style_getter_units!(outline_offset);
     style_getter_units!(outer_shadow_h_offset);
     style_getter_units!(outer_shadow_v_offset);
     style_getter_units!(outer_shadow_blur);
@@ -134,6 +136,7 @@ impl<'a> DrawContext<'a> {
     style_getter_untranslated!(Color, background_color);
     style_getter_untranslated!(Color, font_color);
     style_getter_untranslated!(Color, border_color);
+    style_getter_untranslated!(Color, outline_color);
     style_getter_untranslated!(Color, outer_shadow_color);
     style_getter_untranslated!(Color, inner_shadow_color);
     style_getter_untranslated!(Color, selection_color);

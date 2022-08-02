@@ -186,7 +186,7 @@ impl Color {
     }
 
     pub const fn green() -> Self {
-        Self { data: 0x00FF00FF }
+        Self { data: 0x008000FF }
     }
 
     pub const fn blue() -> Self {
