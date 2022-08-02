@@ -135,7 +135,23 @@ impl<'a> EventContext<'a> {
 
     /// Sets application focus to the current entity.
     pub fn focus(&mut self) {
-        *self.focused = self.current;
+        let old_focus = *self.focused;
+        let new_focus = self.current;
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(old_focus) {
+            pseudo_classes.set(PseudoClass::FOCUS, false);
+        }
+        if self.current != *self.focused {
+            self.emit_to(old_focus, WindowEvent::FocusOut);
+            self.emit_to(new_focus, WindowEvent::FocusIn);
+            *self.focused = self.current;
+        }
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(new_focus) {
+            pseudo_classes.set(PseudoClass::FOCUS, true);
+        }
+
+        self.style.needs_relayout = true;
+        self.style.needs_redraw = true;
+        self.style.needs_restyle = true;
     }
 
     pub fn hovered(&self) -> Entity {
