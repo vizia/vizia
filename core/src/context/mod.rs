@@ -1102,6 +1102,9 @@ impl Context {
                         {
                             self.with_current(self.hovered, |cx| cx.focus());
                         }
+                        self.with_current(self.hovered, |cx| {
+                            cx.emit(WindowEvent::TriggerDown { mouse: true })
+                        });
                     }
                     MouseButton::Right => {
                         self.mouse.right.pos_down = (self.mouse.cursorx, self.mouse.cursory);
@@ -1122,6 +1125,9 @@ impl Context {
                         self.mouse.left.pos_up = (self.mouse.cursorx, self.mouse.cursory);
                         self.mouse.left.released = self.hovered;
                         self.mouse.left.state = MouseButtonState::Released;
+                        self.with_current(self.mouse.left.pressed, |cx| {
+                            cx.emit(WindowEvent::TriggerUp { mouse: true })
+                        });
                     }
                     MouseButton::Right => {
                         self.mouse.right.pos_up = (self.mouse.cursorx, self.mouse.cursory);
@@ -1222,9 +1228,23 @@ impl Context {
                     self.style().needs_restyle = true;
                 }
 
+                if matches!(*code, Code::Enter | Code::NumpadEnter | Code::Space) {
+                    self.with_current(self.focused, |cx| {
+                        cx.emit(WindowEvent::TriggerDown { mouse: false })
+                    });
+                }
+
                 self.event_queue.push_back(Event::new(event).target(self.focused));
             }
             WindowEvent::KeyUp(_, _) | WindowEvent::CharInput(_) => {
+                if matches!(
+                    event,
+                    WindowEvent::KeyUp(Code::Enter | Code::NumpadEnter | Code::Space, _)
+                ) {
+                    self.with_current(self.focused, |cx| {
+                        cx.emit(WindowEvent::TriggerUp { mouse: false })
+                    });
+                }
                 self.event_queue.push_back(Event::new(event).target(self.focused));
             }
             _ => {}

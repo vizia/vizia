@@ -44,10 +44,9 @@ impl<V: View> View for Press<V> {
         self.view.event(cx, event);
 
         event.map(|window_event, _| match window_event {
-            WindowEvent::MouseDown(MouseButton::Left) => {
-                if cx.current() != cx.hovered()
-                    && !cx.hovered().is_descendant_of(cx.tree_ref(), cx.current())
-                {
+            WindowEvent::TriggerDown { mouse } => {
+                let over = if *mouse { cx.hovered() } else { cx.focused() };
+                if cx.current() != over && !over.is_descendant_of(cx.tree_ref(), cx.current()) {
                     return;
                 }
                 if let Some(action) = &self.action {
@@ -103,7 +102,7 @@ impl<V: View> View for Release<V> {
         self.view.event(cx, event);
 
         event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseUp(MouseButton::Left) => {
+            WindowEvent::TriggerDown { .. } => {
                 if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx);
@@ -554,14 +553,14 @@ impl<'a, V: View> Actions<'a> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut Context),
     {
-        Press::new(self, action)
+        Press::new(self.keyboard_navigatable(true), action)
     }
 
     fn on_release<F>(self, action: F) -> Handle<'a, Release<Self::View>>
     where
         F: 'static + Fn(&mut Context),
     {
-        Release::new(self, action)
+        Release::new(self.keyboard_navigatable(true), action)
     }
 
     fn on_hover<F>(self, action: F) -> Handle<'a, Hover<Self::View>>

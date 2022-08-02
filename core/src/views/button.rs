@@ -93,7 +93,7 @@ impl View for Button {
 
     fn event(&mut self, cx: &mut Context, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+            WindowEvent::TriggerDown { .. } => {
                 cx.set_active(true);
                 cx.capture();
                 cx.focus();
@@ -102,7 +102,7 @@ impl View for Button {
                 }
             }
 
-            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+            WindowEvent::TriggerUp { .. } => {
                 if meta.target == cx.current() {
                     cx.release();
                     cx.set_active(false);

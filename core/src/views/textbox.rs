@@ -558,11 +558,11 @@ where
         //let caret = cx.tree.get_child(cx.current, 1).unwrap();
 
         event.map(|window_event, _| match window_event {
-            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+            WindowEvent::TriggerDown { mouse } => {
                 if cx.is_over() {
                     cx.emit(TextEvent::StartEdit);
 
-                    cx.focus_with_visibility(false);
+                    cx.focus_with_visibility(!mouse);
                     cx.capture();
                     cx.set_checked(true);
                     cx.lock_cursor_icon();
@@ -587,12 +587,12 @@ where
 
                     // Forward event to hovered
                     cx.event_queue.push_back(
-                        Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered()),
+                        Event::new(WindowEvent::TriggerDown { mouse: true }).target(cx.hovered()),
                     );
                 }
             }
 
-            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+            WindowEvent::TriggerUp { .. } => {
                 cx.unlock_cursor_icon();
             }
 
@@ -605,6 +605,7 @@ where
             WindowEvent::CharInput(c) => {
                 if *c != '\u{1b}' && // Escape
                             *c != '\u{8}' && // Backspace
+                            *c != '\u{9}' && // Tab
                             *c != '\u{7f}' && // Delete
                             *c != '\u{0d}' && // Carriage return
                             !cx.modifiers().contains(Modifiers::CTRL)
