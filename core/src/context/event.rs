@@ -277,8 +277,8 @@ impl<'a> EventContext<'a> {
     }
 
     pub fn spawn<F>(&self, target: F)
-        where
-            F: 'static + Send + FnOnce(&mut ContextProxy),
+    where
+        F: 'static + Send + FnOnce(&mut ContextProxy),
     {
         let mut cxp = ContextProxy {
             current: self.current,

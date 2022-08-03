@@ -55,9 +55,8 @@ impl EventManager {
             let mut global_listeners = vec![];
             std::mem::swap(&mut context.global_listeners, &mut global_listeners);
             for listener in &global_listeners {
-                context.with_current(Entity::root(), |cx| {
-                    listener(&mut EventContext::new(cx), event)
-                });
+                context
+                    .with_current(Entity::root(), |cx| listener(&mut EventContext::new(cx), event));
             }
             std::mem::swap(&mut context.global_listeners, &mut global_listeners);
 
