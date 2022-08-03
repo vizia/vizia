@@ -42,6 +42,7 @@ pub struct EventContext<'a> {
     cursor_icon_locked: &'a mut bool,
     #[cfg(feature = "clipboard")]
     clipboard: &'a mut Box<dyn ClipboardProvider>,
+    event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
 }
 
 impl<'a> EventContext<'a> {
@@ -66,6 +67,7 @@ impl<'a> EventContext<'a> {
             cursor_icon_locked: &mut cx.cursor_icon_locked,
             #[cfg(feature = "clipboard")]
             clipboard: &mut cx.clipboard,
+            event_proxy: &mut cx.event_proxy,
         }
     }
 
@@ -268,6 +270,22 @@ impl<'a> EventContext<'a> {
 
     pub fn environment(&self) -> &Environment {
         self.data::<Environment>().unwrap()
+    }
+
+    pub fn needs_redraw(&mut self) {
+        self.style.needs_redraw = true;
+    }
+
+    pub fn spawn<F>(&self, target: F)
+        where
+            F: 'static + Send + FnOnce(&mut ContextProxy),
+    {
+        let mut cxp = ContextProxy {
+            current: self.current,
+            event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
+        };
+
+        std::thread::spawn(move || target(&mut cxp));
     }
 }
 

@@ -51,7 +51,17 @@ impl EventManager {
             //     println!("Event: {:?}", event);
             // }
 
-            // Send events to any listeners
+            // Send events to any global listeners
+            let mut global_listeners = vec![];
+            std::mem::swap(&mut context.global_listeners, &mut global_listeners);
+            for listener in &global_listeners {
+                context.with_current(Entity::root(), |cx| {
+                    listener(&mut EventContext::new(cx), event)
+                });
+            }
+            std::mem::swap(&mut context.global_listeners, &mut global_listeners);
+
+            // Send events to any local listeners
             let listeners =
                 context.listeners.iter().map(|(entity, _)| *entity).collect::<Vec<Entity>>();
             for entity in listeners {
