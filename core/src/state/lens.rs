@@ -90,7 +90,6 @@ pub trait LensExt: Lens {
 
     fn map<G: Clone, B: 'static + Clone>(self, get: G) -> Then<Self, Map<G, Self::Target, B>>
     where
-        Self::Target: Clone,
         G: 'static + Fn(&Self::Target) -> B,
     {
         self.then(Map::new(get))
@@ -135,10 +134,7 @@ impl<G, I, O> Map<G, I, O> {
     }
 }
 
-impl<G: Clone, I: 'static + Clone, O: 'static + Clone> Lens for Map<G, I, O>
-where
-    G: 'static + Fn(&I) -> O,
-{
+impl<G: 'static + Clone + Fn(&I) -> O, I: 'static, O: 'static> Lens for Map<G, I, O> {
     // TODO can we get rid of these static bounds?
     type Source = I;
     type Target = O;

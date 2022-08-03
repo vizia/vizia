@@ -59,6 +59,7 @@ pub struct Context {
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
+    pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,
     pub(crate) style: Style,
     cache: CachedData,
     pub draw_cache: DrawCache,
@@ -107,6 +108,7 @@ impl Context {
             // environment: Environment::new(),
             event_queue: VecDeque::new(),
             listeners: HashMap::default(),
+            global_listeners: vec![],
             mouse: MouseState::default(),
             modifiers: Modifiers::empty(),
             captured: Entity::null(),
@@ -506,6 +508,18 @@ impl Context {
                 }
             }),
         );
+    }
+
+    /// Adds a global listener to the application.
+    ///
+    /// Global listeners have the first opportunity to handle every event that is sent in an
+    /// application. They will *never* be removed. If you need a listener tied to the lifetime of a
+    /// view, use `add_listener`.
+    pub fn add_global_listener<F>(&mut self, listener: F)
+    where
+        F: 'static + Fn(&mut EventContext, &mut Event),
+    {
+        self.global_listeners.push(Box::new(listener));
     }
 
     /// Add a font from memory to the application.
