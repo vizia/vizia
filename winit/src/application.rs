@@ -72,6 +72,11 @@ impl Application {
         }
     }
 
+    pub fn ignore_default_theme(mut self) -> Self {
+        self.context.ignore_default_theme = true;
+        self
+    }
+
     pub fn should_poll(mut self) -> Self {
         self.should_poll = true;
 

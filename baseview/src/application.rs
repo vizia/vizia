@@ -36,6 +36,11 @@ where
         }
     }
 
+    pub fn ignore_default_theme(mut self) -> Self {
+        self.ignore_default_theme = true;
+        self
+    }
+
     /// Change the window's scale policy. Not part of [`new()`][Self::new] to keep the same
     /// signature as the winit backend.
     pub fn with_scale_policy(mut self, scale_policy: WindowScalePolicy) -> Self {
