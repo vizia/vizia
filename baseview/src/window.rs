@@ -4,6 +4,7 @@ use baseview::{
     Event, EventStatus, Window, WindowHandle, WindowHandler, WindowOpenOptions, WindowScalePolicy,
 };
 use raw_window_handle::HasRawWindowHandle;
+use vizia_core::context::BackendContext;
 
 use crate::proxy::BaseviewProxy;
 use vizia_core::prelude::*;

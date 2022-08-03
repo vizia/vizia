@@ -31,8 +31,8 @@ impl EventManager {
         // Move events from state to event manager
         self.event_queue.extend(context.event_queue.drain(0..));
 
-        if context.tree().changed {
-            self.tree = context.tree().clone();
+        if context.tree.changed {
+            self.tree = context.tree.clone();
         }
 
         // Loop over the events in the event queue

@@ -128,7 +128,7 @@ where
         cx: &Context,
         code: Code,
     ) -> impl Iterator<Item = &KeymapEntry<T>> {
-        if let Some(actions) = self.entries.get(&KeyChord::new(cx.modifiers(), code)) {
+        if let Some(actions) = self.entries.get(&KeyChord::new(cx.modifiers, code)) {
             actions.iter()
         } else {
             [].iter()
