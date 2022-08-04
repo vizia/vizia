@@ -1117,8 +1117,12 @@ impl Context {
                         self.mouse.left.pos_up = (self.mouse.cursorx, self.mouse.cursory);
                         self.mouse.left.released = self.hovered;
                         self.mouse.left.state = MouseButtonState::Released;
-                        self.with_current(self.mouse.left.pressed, |cx| {
-                            cx.emit(WindowEvent::TriggerUp { mouse: true })
+                        self.with_current(self.hovered, |cx| {
+                            cx.dispatch_direct_or_hovered(
+                                WindowEvent::TriggerUp { mouse: true },
+                                cx.captured,
+                                true,
+                            );
                         });
                     }
                     MouseButton::Right => {
