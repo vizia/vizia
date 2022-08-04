@@ -46,9 +46,7 @@ impl<V: View> View for Press<V> {
         event.map(|window_event, _| match window_event {
             WindowEvent::TriggerDown { mouse } => {
                 let over = if *mouse { cx.hovered() } else { cx.focused() };
-                if cx.current() != over
-                    && !over.is_descendant_of(cx.tree, cx.current())
-                {
+                if cx.current() != over && !over.is_descendant_of(cx.tree, cx.current()) {
                     return;
                 }
                 if let Some(action) = &self.action {

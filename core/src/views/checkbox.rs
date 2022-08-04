@@ -188,10 +188,7 @@ impl View for Checkbox {
         event.map(|window_event, meta| match window_event {
             WindowEvent::TriggerUp { mouse } => {
                 let over = if *mouse { cx.mouse.left.pressed } else { cx.focused() };
-                if over == cx.current()
-                    && meta.target == cx.current()
-                    && !cx.is_disabled()
-                {
+                if over == cx.current() && meta.target == cx.current() && !cx.is_disabled() {
                     if let Some(callback) = &self.on_toggle {
                         (callback)(cx);
                     }
