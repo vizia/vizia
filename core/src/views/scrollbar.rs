@@ -7,7 +7,7 @@ pub struct Scrollbar<L1> {
 
     reference_points: Option<(f32, f32)>,
 
-    on_changing: Option<Box<dyn Fn(&mut Context, f32)>>,
+    on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
 }
 
 impl<L1: Lens<Target = f32>> Scrollbar<L1> {
@@ -19,7 +19,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
         callback: F,
     ) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, f32),
+        F: 'static + Fn(&mut EventContext, f32),
     {
         let result = Self {
             value: value.clone(),
@@ -56,27 +56,27 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
         }
     }
 
-    fn container_and_thumb_size(&self, cx: &mut Context) -> (f32, f32) {
+    fn container_and_thumb_size(&self, cx: &mut EventContext) -> (f32, f32) {
         let current = cx.current();
-        let child = cx.tree().get_child(current, 0).unwrap();
+        let child = cx.tree.get_child(current, 0).unwrap();
         match &self.orientation {
-            Orientation::Horizontal => (cx.cache().get_width(current), cx.cache().get_width(child)),
-            Orientation::Vertical => (cx.cache().get_height(current), cx.cache().get_height(child)),
+            Orientation::Horizontal => (cx.cache.get_width(current), cx.cache.get_width(child)),
+            Orientation::Vertical => (cx.cache.get_height(current), cx.cache.get_height(child)),
         }
     }
 
-    fn thumb_bounds(&self, cx: &mut Context) -> (f32, f32, f32, f32) {
+    fn thumb_bounds(&self, cx: &mut EventContext) -> (f32, f32, f32, f32) {
         let current = cx.current();
-        let child = cx.tree().get_child(current, 0).unwrap();
+        let child = cx.tree.get_child(current, 0).unwrap();
         (
-            cx.cache().get_posx(child),
-            cx.cache().get_posy(child),
-            cx.cache().get_width(child),
-            cx.cache().get_height(child),
+            cx.cache.get_posx(child),
+            cx.cache.get_posy(child),
+            cx.cache.get_width(child),
+            cx.cache.get_height(child),
         )
     }
 
-    fn compute_new_value(&self, cx: &mut Context, physical_delta: f32, value_ref: f32) -> f32 {
+    fn compute_new_value(&self, cx: &mut EventContext, physical_delta: f32, value_ref: f32) -> f32 {
         // delta is moving within the negative space of the thumb: (1 - ratio) * container
         let (size, thumb_size) = self.container_and_thumb_size(cx);
         let negative_space = size - thumb_size;
@@ -89,7 +89,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
         }
     }
 
-    fn change(&mut self, cx: &mut Context, new_val: f32) {
+    fn change(&mut self, cx: &mut EventContext, new_val: f32) {
         if let Some(callback) = &self.on_changing {
             callback(cx, new_val.clamp(0.0, 1.0));
         }
@@ -101,11 +101,11 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
         Some("scrollbar")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| {
             let pos = match &self.orientation {
-                Orientation::Horizontal => cx.mouse().cursorx,
-                Orientation::Vertical => cx.mouse().cursory,
+                Orientation::Horizontal => cx.mouse.cursorx,
+                Orientation::Vertical => cx.mouse.cursory,
             };
             match window_event {
                 WindowEvent::MouseDown(MouseButton::Left) => {
@@ -117,18 +117,18 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                         let (tx, ty, tw, th) = self.thumb_bounds(cx);
                         let physical_delta = match &self.orientation {
                             Orientation::Horizontal => {
-                                if cx.mouse().cursorx < tx {
+                                if cx.mouse.cursorx < tx {
                                     -jump
-                                } else if cx.mouse().cursorx >= tx + tw {
+                                } else if cx.mouse.cursorx >= tx + tw {
                                     jump
                                 } else {
                                     return;
                                 }
                             }
                             Orientation::Vertical => {
-                                if cx.mouse().cursory < ty {
+                                if cx.mouse.cursory < ty {
                                     -jump
-                                } else if cx.mouse().cursory >= ty + th {
+                                } else if cx.mouse.cursory >= ty + th {
                                     jump
                                 } else {
                                     return;

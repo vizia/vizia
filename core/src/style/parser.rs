@@ -431,6 +431,12 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
                 Property::BorderBottomRightShape(parse_border_corner_shape(input)?)
             }
 
+            "outline-width" => Property::OutlineWidth(parse_units(input)?),
+
+            "outline-color" => Property::OutlineColor(parse_color(input)?),
+
+            "outline-offset" => Property::OutlineOffset(parse_units(input)?),
+
             "opacity" => Property::Opacity(parse_length_or_percentage(input)?),
 
             "display" => Property::Display(parse_display(input)?),

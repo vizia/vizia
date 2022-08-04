@@ -265,7 +265,7 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
             let mut content_height = 0.0;
 
             if let Some(text) = cx.style_ref().text.get(entity).cloned() {
-                let mut paint = text_paint_general(cx, entity);
+                let mut paint = text_paint_general(&cx.style, &cx.resource_manager, entity);
                 paint.set_text_align(align);
                 paint.set_text_baseline(baseline);
 
@@ -294,17 +294,18 @@ pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
                 }
             }
 
-            if let Some(image) = cx.style().image.get(entity) {
-                let image = image.clone(); // ew
-                let (image_width, image_height) = cx.get_image(&image).dimensions();
-                let image_width = image_width as f32;
-                let image_height = image_height as f32;
+            if let Some(image_name) = cx.style_ref().image.get(entity) {
+                if let Some(img) = cx.resource_manager.images.get(image_name) {
+                    let (image_width, image_height) = img.image.dimensions();
+                    let image_width = image_width as f32;
+                    let image_height = image_height as f32;
 
-                if content_width < image_width {
-                    content_width = image_width;
-                }
-                if content_height < image_height {
-                    content_height = image_height;
+                    if content_width < image_width {
+                        content_width = image_width;
+                    }
+                    if content_height < image_height {
+                        content_height = image_height;
+                    }
                 }
             }
 
@@ -645,6 +646,18 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
 
     if cx.style().border_radius_bottom_right.link(entity, &matched_rules) {
         //println!("29");
+        should_redraw = true;
+    }
+
+    if cx.style().outline_width.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
+    if cx.style().outline_color.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
+    if cx.style().outline_offset.link(entity, &matched_rules) {
         should_redraw = true;
     }
 

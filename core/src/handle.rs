@@ -436,4 +436,8 @@ impl<'a, T> Handle<'a, T> {
     set_style!(border_radius_top_right, Units);
     set_style!(border_radius_bottom_left, Units);
     set_style!(border_radius_bottom_right, Units);
+
+    set_style!(outline_width, Units);
+    set_style!(outline_color, Color);
+    set_style!(outline_offset, Units);
 }

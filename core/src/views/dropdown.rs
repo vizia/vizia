@@ -84,7 +84,7 @@ use crate::views::popup::PopupData;
 /// # }
 /// #
 /// # impl Model for AppData {
-/// #     fn event(&mut self, _cx: &mut Context, event: &mut Event) {
+/// #     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
 /// #         event.map(|msg, _| {
 /// #             match msg {
 /// #                 AppEvent::SetFilter(s) => self.filter = s.clone(),

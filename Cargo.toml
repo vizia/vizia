@@ -202,6 +202,10 @@ path = "examples/localization/locale_binding.rs"
 name = "ignore_default_theme"
 path = "examples/ignore_default_theme.rs"
 
+[[example]]
+name = "outline"
+path = "examples/style/outline.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard"]
