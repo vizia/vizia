@@ -1092,7 +1092,7 @@ impl Context {
                             .filter(|abilities| abilities.contains(Abilities::FOCUSABLE))
                             .is_some()
                         {
-                            self.with_current(self.hovered, |cx| cx.focus());
+                            self.with_current(self.hovered, |cx| cx.focus_with_visibility(false));
                         }
                         self.with_current(self.hovered, |cx| {
                             cx.emit(WindowEvent::TriggerDown { mouse: true })
