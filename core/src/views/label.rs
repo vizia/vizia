@@ -143,25 +143,25 @@ impl View for Label {
         Some("label")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::TriggerDown { .. } | WindowEvent::TriggerUp { .. } => {
-                if cx.current() == cx.mouse().left.pressed
+                if cx.current() == cx.mouse.left.pressed
                     && meta.target == cx.current()
                     && !cx.is_disabled()
                 {
                     if let Some(describing) = self.describing {
-                        cx.with_current(describing, |cx| {
-                            cx.focus_with_visibility(false);
-                            cx.capture();
-                            let message = if matches!(window_event, WindowEvent::TriggerDown { .. })
-                            {
-                                WindowEvent::TriggerDown { mouse: false }
-                            } else {
-                                WindowEvent::TriggerUp { mouse: false }
-                            };
-                            cx.emit_to(describing, message);
-                        });
+                        let old = cx.current;
+                        cx.current = describing;
+                        cx.focus_with_visibility(false);
+                        cx.capture();
+                        let message = if matches!(window_event, WindowEvent::TriggerDown { .. }) {
+                            WindowEvent::TriggerDown { mouse: false }
+                        } else {
+                            WindowEvent::TriggerUp { mouse: false }
+                        };
+                        cx.emit_to(describing, message);
+                        cx.current = old;
                     }
                 }
             }
