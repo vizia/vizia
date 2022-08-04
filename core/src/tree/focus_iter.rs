@@ -7,7 +7,7 @@ pub fn is_navigatable(cx: &Context, node: Entity) -> bool {
         return false;
     }
 
-    // Skip dsabled widgets
+    // Skip disabled widgets
     if cx.style_ref().disabled.get(node).cloned().unwrap_or_default() {
         return false;
     }
