@@ -96,6 +96,10 @@ impl<'a> DrawContext<'a> {
         self.cache.get_bounds(self.current)
     }
 
+    pub fn clip_region(&self) -> BoundingBox {
+        self.cache.get_clip_region(self.current)
+    }
+
     /// Returns the name of the default font.
     pub fn default_font(&self) -> &str {
         &self.style.default_font
