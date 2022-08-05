@@ -88,8 +88,6 @@ pub struct Context {
     click_pos: (f32, f32),
 
     pub ignore_default_theme: bool,
-
-    removed_entities: HashSet<Entity>,
 }
 
 impl Context {
@@ -133,7 +131,6 @@ impl Context {
             click_pos: (0.0, 0.0),
 
             ignore_default_theme: false,
-            removed_entities: HashSet::new(),
         };
 
         Environment::new().build(&mut result);
@@ -464,8 +461,6 @@ impl Context {
                 self.captured = Entity::null();
             }
         }
-
-        self.removed_entities.extend(delete_list);
     }
 
     /// Send an event containing a message up the tree from the current entity.
@@ -846,9 +841,8 @@ impl Context {
         let ordered_observers =
             self.tree.into_iter().filter(|ent| observers.contains(&ent)).collect::<Vec<_>>();
 
-        self.removed_entities.clear();
         for observer in ordered_observers.into_iter() {
-            if self.removed_entities.contains(&observer) {
+            if !self.entity_manager.is_alive(observer) {
                 continue;
             }
 
