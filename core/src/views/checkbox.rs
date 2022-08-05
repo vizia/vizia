@@ -143,6 +143,7 @@ impl Checkbox {
                 }
             })
             .cursor(CursorIcon::Hand)
+            .keyboard_navigatable(true)
     }
 }
 
