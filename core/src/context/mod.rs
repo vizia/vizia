@@ -88,6 +88,8 @@ pub struct Context {
     click_pos: (f32, f32),
 
     pub ignore_default_theme: bool,
+
+    removed_entities: HashSet<Entity>,
 }
 
 impl Context {
@@ -131,6 +133,7 @@ impl Context {
             click_pos: (0.0, 0.0),
 
             ignore_default_theme: false,
+            removed_entities: HashSet::new(),
         };
 
         Environment::new().build(&mut result);
@@ -461,6 +464,8 @@ impl Context {
                 self.captured = Entity::null();
             }
         }
+
+        self.removed_entities.extend(delete_list);
     }
 
     /// Send an event containing a message up the tree from the current entity.
@@ -795,7 +800,7 @@ impl Context {
     /// For each binding or data observer, check if its data has changed, and if so, rerun its
     /// builder/body.
     pub fn process_data_updates(&mut self) {
-        let mut observers: Vec<Entity> = Vec::new();
+        let mut observers: HashSet<Entity> = HashSet::new();
 
         for entity in self.tree.into_iter() {
             if let Some(model_store) = self.data.get_mut(entity) {
@@ -838,13 +843,21 @@ impl Context {
             }
         }
 
-        for observer in observers.iter() {
-            if let Some(mut view) = self.views.remove(observer) {
+        let ordered_observers =
+            self.tree.into_iter().filter(|ent| observers.contains(&ent)).collect::<Vec<_>>();
+
+        self.removed_entities.clear();
+        for observer in ordered_observers.into_iter() {
+            if self.removed_entities.contains(&observer) {
+                continue;
+            }
+
+            if let Some(mut view) = self.views.remove(&observer) {
                 let prev = self.current;
-                self.current = *observer;
+                self.current = observer;
                 view.body(self);
                 self.current = prev;
-                self.views.insert(*observer, view);
+                self.views.insert(observer, view);
             }
         }
     }
