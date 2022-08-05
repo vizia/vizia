@@ -51,6 +51,8 @@ const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 /// This type is part of the prelude.
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
+    pub(crate) identifier_manager: IdManager<EntityIdentifier>,
+    pub(crate) entity_identifiers: HashMap<EntityIdentifier, Entity>,
     pub(crate) tree: Tree,
     current: Entity,
     /// TODO make this private when there's no longer a need to mutate views after building
@@ -97,6 +99,8 @@ impl Context {
 
         let mut result = Self {
             entity_manager: IdManager::new(),
+            identifier_manager: IdManager::new(),
+            entity_identifiers: HashMap::new(),
             tree: Tree::new(),
             current: Entity::root(),
             views: FnvHashMap::default(),
@@ -138,6 +142,11 @@ impl Context {
         result.entity_manager.create();
 
         result
+    }
+
+    /// Create a new entity identifier
+    pub fn new_entity_identifier(&mut self) -> EntityIdentifier {
+        self.identifier_manager.create()
     }
 
     /// Access to the tree of entities

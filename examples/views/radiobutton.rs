@@ -62,14 +62,15 @@ fn main() {
 
             for i in 0..3 {
                 let current_option = index_to_option(i);
+                let button_identifier = cx.new_entity_identifier();
                 HStack::new(cx, move |cx| {
-                    let button = RadioButton::new(
+                    RadioButton::new(
                         cx,
                         AppData::option.map(move |option| *option == current_option),
                     )
                     .on_select(move |cx| cx.emit(AppEvent::ToggleOption(current_option)))
-                    .entity();
-                    Label::new(cx, &current_option.to_string()).describing(button);
+                    .identify(button_identifier);
+                    Label::new(cx, &current_option.to_string()).describing(button_identifier);
                 })
                 .disabled(if i == 2 { true } else { false })
                 .size(Auto)

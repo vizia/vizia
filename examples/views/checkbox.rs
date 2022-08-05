@@ -52,22 +52,24 @@ fn main() {
             Label::new(cx, "Checkbox with Label").top(Pixels(20.0));
 
             // Checkboxes with label
+            let checkbox_identifier = cx.new_entity_identifier();
             HStack::new(cx, |cx| {
-                let checkbox = Checkbox::new(cx, AppData::option1)
+                Checkbox::new(cx, AppData::option1)
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
-                    .entity();
-                Label::new(cx, "Checkbox").describing(checkbox);
+                    .identify(checkbox_identifier);
+                Label::new(cx, "Checkbox").describing(checkbox_identifier);
             })
             .size(Auto)
             .col_between(Pixels(5.0))
             .child_top(Stretch(1.0))
             .child_bottom(Stretch(1.0));
 
+            let checkbox_identifier = cx.new_entity_identifier();
             HStack::new(cx, |cx| {
-                let checkbox = Checkbox::new(cx, AppData::option2)
+                Checkbox::new(cx, AppData::option2)
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOption2))
-                    .entity();
-                Label::new(cx, "Disabled").describing(checkbox);
+                    .identify(checkbox_identifier);
+                Label::new(cx, "Disabled").describing(checkbox_identifier);
             })
             .disabled(true)
             .size(Auto)
@@ -77,12 +79,13 @@ fn main() {
 
             Label::new(cx, "Checkbox with Label").top(Pixels(20.0)).top(Pixels(20.0));
 
+            let checkbox_identifier = cx.new_entity_identifier();
             HStack::new(cx, |cx| {
-                let checkbox = Checkbox::new(cx, AppData::option1)
+                Checkbox::new(cx, AppData::option1)
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
                     .text(AppData::option1.map(|flag| if *flag { CANCEL } else { "" }))
-                    .entity();
-                Label::new(cx, "Custom").describing(checkbox);
+                    .identify(checkbox_identifier);
+                Label::new(cx, "Custom").describing(checkbox_identifier);
             })
             .size(Auto)
             .col_between(Pixels(5.0))

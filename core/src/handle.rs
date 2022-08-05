@@ -46,6 +46,11 @@ impl<'a, T> Handle<'a, T> {
         self.focusable(false)
     }
 
+    pub fn identify(self, entity_identifier: EntityIdentifier) -> Self {
+        self.cx.entity_identifiers.insert(entity_identifier, self.entity);
+        self
+    }
+
     pub fn modify<F>(self, f: F) -> Self
     where
         F: FnOnce(&mut T),

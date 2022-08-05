@@ -45,7 +45,7 @@ pub mod prelude {
     pub use super::context::{
         Context, ContextProxy, DataContext, DrawContext, EventContext, ProxyEmitError,
     };
-    pub use super::entity::Entity;
+    pub use super::entity::{Entity, EntityIdentifier};
     pub use super::environment::{Environment, EnvironmentEvent};
     pub use super::events::{Event, Message, Propagation};
     pub use super::handle::Handle;
