@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use femtovg::{renderer::OpenGl, Canvas, TextContext};
 use fnv::FnvHashMap;
 use instant::{Duration, Instant};
@@ -319,10 +321,10 @@ impl BackendContext for Context {
         self.style.needs_relayout = true;
     }
 
-    /// For each binding or data observer, check if its data has changed, and if so, rerun its
+        /// For each binding or data observer, check if its data has changed, and if so, rerun its
     /// builder/body.
     fn process_data_updates(&mut self) {
-        let mut observers: Vec<Entity> = Vec::new();
+        let mut observers: HashSet<Entity> = HashSet::new();
 
         for entity in self.tree.into_iter() {
             if let Some(model_store) = self.data.get_mut(entity) {
@@ -365,13 +367,20 @@ impl BackendContext for Context {
             }
         }
 
-        for observer in observers.iter() {
-            if let Some(mut view) = self.views.remove(observer) {
+        let ordered_observers =
+            self.tree.into_iter().filter(|ent| observers.contains(&ent)).collect::<Vec<_>>();
+
+        for observer in ordered_observers.into_iter() {
+            if !self.entity_manager.is_alive(observer) {
+                continue;
+            }
+
+            if let Some(mut view) = self.views.remove(&observer) {
                 let prev = self.current;
-                self.current = *observer;
+                self.current = observer;
                 view.body(self);
                 self.current = prev;
-                self.views.insert(*observer, view);
+                self.views.insert(observer, view);
             }
         }
     }
@@ -395,6 +404,8 @@ impl BackendContext for Context {
         // Not ideal
         let tree = self.tree.clone();
 
+        image_system(self);
+
         apply_z_ordering(self, &tree);
         apply_visibility(self, &tree);
 
@@ -412,7 +423,6 @@ impl BackendContext for Context {
             std::mem::swap(&mut store.0, &mut self.style);
             std::mem::swap(&mut store.1, &mut self.text_context);
             std::mem::swap(&mut store.2, &mut self.resource_manager);
-
             self.style.needs_relayout = false;
         }
 
