@@ -55,11 +55,10 @@ impl Application {
         #[allow(unused_mut)]
         let mut context = Context::new();
 
-        let mut cx = BackendContext::new(&mut context);
-
         let event_loop = EventLoop::with_user_event();
         #[cfg(not(target_arch = "wasm32"))]
         {
+            let mut cx = BackendContext::new(&mut context);
             let event_proxy_obj = event_loop.create_proxy();
             cx.set_event_proxy(Box::new(WinitEventProxy(event_proxy_obj)));
         }
