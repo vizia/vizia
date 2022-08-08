@@ -4,9 +4,9 @@ use baseview::{
     Event, EventStatus, Window, WindowHandle, WindowHandler, WindowOpenOptions, WindowScalePolicy,
 };
 use raw_window_handle::HasRawWindowHandle;
-use vizia_core::context::BackendContext;
 
 use crate::proxy::BaseviewProxy;
+use vizia_core::context::backend::*;
 use vizia_core::prelude::*;
 
 static DEFAULT_THEME: &str = include_str!("../../core/resources/themes/default_theme.css");
@@ -82,7 +82,9 @@ impl ViziaWindow {
                     context.add_theme(DEFAULT_THEME);
                 }
 
-                context.set_event_proxy(Box::new(BaseviewProxy()));
+                let mut cx = BackendContext::new(&mut context);
+
+                cx.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
                     context,
                     win_desc,
@@ -132,7 +134,9 @@ impl ViziaWindow {
                     context.add_theme(DEFAULT_THEME);
                 }
 
-                context.set_event_proxy(Box::new(BaseviewProxy()));
+                let mut cx = BackendContext::new(&mut context);
+
+                cx.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
                     context,
                     win_desc,
@@ -181,7 +185,9 @@ impl ViziaWindow {
                     context.add_theme(DEFAULT_THEME);
                 }
 
-                context.set_event_proxy(Box::new(BaseviewProxy()));
+                let mut cx = BackendContext::new(&mut context);
+
+                cx.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
                     context,
                     win_desc,

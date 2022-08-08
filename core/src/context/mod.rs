@@ -1,4 +1,4 @@
-mod backend;
+pub mod backend;
 mod draw;
 mod event;
 mod proxy;
@@ -15,7 +15,6 @@ use femtovg::TextContext;
 use fnv::FnvHashMap;
 use unic_langid::LanguageIdentifier;
 
-pub use backend::*;
 pub use draw::*;
 pub use event::*;
 pub use proxy::*;
@@ -138,7 +137,7 @@ impl Context {
     /// Set the current entity. This is useful in user code when you're performing black magic and
     /// want to trick other parts of the code into thinking you're processing some other part of the
     /// tree.
-    pub(crate) fn set_current(&mut self, e: Entity) {
+    pub fn set_current(&mut self, e: Entity) {
         self.current = e;
     }
 
@@ -172,16 +171,16 @@ impl Context {
     /// Sets the checked flag of the current entity
     pub fn set_selected(&mut self, flag: bool) {
         let current = self.current();
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
             pseudo_classes.set(PseudoClass::SELECTED, flag);
         }
 
-        self.style().needs_restyle = true;
-        self.style().needs_relayout = true;
-        self.style().needs_redraw = true;
+        self.style.needs_restyle = true;
+        self.style.needs_relayout = true;
+        self.style.needs_redraw = true;
     }
 
-    pub fn remove_children(&mut self, entity: Entity) {
+    pub(crate) fn remove_children(&mut self, entity: Entity) {
         let children = entity.child_iter(&self.tree).collect::<Vec<_>>();
         for child in children.into_iter() {
             self.remove(child);
@@ -252,9 +251,9 @@ impl Context {
     }
 
     /// Check whether there are any events in the queue waiting for the next event dispatch cycle.
-    pub fn has_queued_events(&self) -> bool {
-        !self.event_queue.is_empty()
-    }
+    // pub fn has_queued_events(&self) -> bool {
+    //     !self.event_queue.is_empty()
+    // }
 
     /// Add a listener to an entity.
     ///

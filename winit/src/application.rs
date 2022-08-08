@@ -4,7 +4,7 @@ use crate::{
 };
 use std::cell::RefCell;
 use vizia_core::cache::BoundingBox;
-use vizia_core::context::BackendContext;
+use vizia_core::context::backend::*;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
 use vizia_core::events::EventManager;
@@ -55,11 +55,13 @@ impl Application {
         #[allow(unused_mut)]
         let mut context = Context::new();
 
+        let mut cx = BackendContext::new(&mut context);
+
         let event_loop = EventLoop::with_user_event();
         #[cfg(not(target_arch = "wasm32"))]
         {
             let event_proxy_obj = event_loop.create_proxy();
-            context.set_event_proxy(Box::new(WinitEventProxy(event_proxy_obj)));
+            cx.set_event_proxy(Box::new(WinitEventProxy(event_proxy_obj)));
         }
 
         Self {
@@ -116,7 +118,8 @@ impl Application {
 
     /// Sets the background color of the window.
     pub fn background_color(mut self, color: Color) -> Self {
-        self.context.style().background_color.insert(Entity::root(), color);
+        let mut cx = BackendContext::new(&mut self.context);
+        cx.style().background_color.insert(Entity::root(), color);
 
         self
     }
@@ -124,14 +127,19 @@ impl Application {
     /// Starts the application and enters the main event loop.
     pub fn run(mut self) {
         let mut context = self.context;
+
         let event_loop = self.event_loop;
 
         let (window, canvas) = Window::new(&event_loop, &self.window_description);
 
         //let mut context = Context::new();
         let scale_factor = window.window().scale_factor() as f32;
-        context.add_main_window(&self.window_description, canvas, scale_factor);
-        context.views().insert(Entity::root(), Box::new(window));
+        BackendContext::new(&mut context).add_main_window(
+            &self.window_description,
+            canvas,
+            scale_factor,
+        );
+        context.views.insert(Entity::root(), Box::new(window));
 
         let mut event_manager = EventManager::new();
 
@@ -151,9 +159,11 @@ impl Application {
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
         event_loop.run(move |event, _, control_flow| {
+            let mut cx = BackendContext::new(&mut context);
+
             match event {
                 winit::event::Event::UserEvent(event) => {
-                    context.send_event(event);
+                    cx.send_event(event);
                 }
 
                 winit::event::Event::MainEventsCleared => {
@@ -162,57 +172,56 @@ impl Application {
 
                     //if let Some(mut window_view) = context.views.remove(&Entity::root()) {
                     //    if let Some(_) = window_view.downcast_mut::<Window>() {
-                    context.synchronize_fonts();
+                    cx.synchronize_fonts();
                     //    }
 
                     //    context.views.insert(Entity::root(), window_view);
                     //}
 
                     // Events
-                    while event_manager.flush_events(&mut context) {}
+                    while event_manager.flush_events(cx.0) {}
 
-                    context.load_images();
+                    cx.load_images();
 
-                    context.process_data_updates();
-                    context.process_style_updates();
+                    cx.process_data_updates();
+                    cx.process_style_updates();
 
-                    if context.has_animations() {
+                    if cx.has_animations() {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
 
                         //context.insert_event(Event::new(WindowEvent::Relayout).target(Entity::root()));
                         event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();
                         //window.handle.window().request_redraw();
-                        if let Some(window_event_handler) = context.views().remove(&Entity::root())
-                        {
+                        if let Some(window_event_handler) = cx.views().remove(&Entity::root()) {
                             if let Some(window) = window_event_handler.downcast_ref::<Window>() {
                                 window.window().request_redraw();
                             }
 
-                            context.views().insert(Entity::root(), window_event_handler);
+                            cx.views().insert(Entity::root(), window_event_handler);
                         }
                     }
 
-                    context.apply_animations();
+                    cx.apply_animations();
 
-                    context.process_visual_updates();
+                    cx.process_visual_updates();
 
-                    if let Some(window_view) = context.views().remove(&Entity::root()) {
+                    if let Some(window_view) = cx.views().remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_ref::<Window>() {
-                            if context.style().needs_redraw {
+                            if cx.style().needs_redraw {
                                 window.window().request_redraw();
-                                context.style().needs_redraw = false;
+                                cx.style().needs_redraw = false;
                             }
                         }
 
-                        context.views().insert(Entity::root(), window_view);
+                        cx.views().insert(Entity::root(), window_view);
                     }
 
                     if let Some(idle_callback) = &on_idle {
-                        context.set_current(Entity::root());
-                        (idle_callback)(&mut context);
+                        cx.set_current(Entity::root());
+                        (idle_callback)(cx.context());
                     }
 
-                    if context.has_queued_events() {
+                    if cx.has_queued_events() {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
                         event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
                     }
@@ -220,7 +229,7 @@ impl Application {
 
                 winit::event::Event::RedrawRequested(_) => {
                     // Redraw here
-                    context_draw(&mut context);
+                    context_draw(&mut cx);
                 }
 
                 winit::event::Event::WindowEvent { window_id: _, event } => {
@@ -233,22 +242,18 @@ impl Application {
                             scale_factor,
                             new_inner_size,
                         } => {
-                            context.style().dpi_factor = scale_factor;
-                            context.cache().set_width(Entity::root(), new_inner_size.width as f32);
-                            context
-                                .cache()
-                                .set_height(Entity::root(), new_inner_size.height as f32);
+                            cx.style().dpi_factor = scale_factor;
+                            cx.cache().set_width(Entity::root(), new_inner_size.width as f32);
+                            cx.cache().set_height(Entity::root(), new_inner_size.height as f32);
 
                             let logical_size: LogicalSize<f32> =
-                                new_inner_size.to_logical(context.style().dpi_factor);
+                                new_inner_size.to_logical(cx.style().dpi_factor);
 
-                            context
-                                .style()
+                            cx.style()
                                 .width
                                 .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
 
-                            context
-                                .style()
+                            cx.style()
                                 .height
                                 .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
                         }
@@ -259,7 +264,7 @@ impl Application {
                             position,
                             modifiers: _,
                         } => {
-                            context.dispatch_system_event(WindowEvent::MouseMove(
+                            cx.dispatch_system_event(WindowEvent::MouseMove(
                                 position.x as f32,
                                 position.y as f32,
                             ));
@@ -288,7 +293,7 @@ impl Application {
                                 }
                             };
 
-                            context.dispatch_system_event(event);
+                            cx.dispatch_system_event(event);
                         }
 
                         winit::event::WindowEvent::MouseWheel { delta, phase: _, .. } => {
@@ -304,7 +309,7 @@ impl Application {
                                 }
                             };
 
-                            context.dispatch_system_event(out_event);
+                            cx.dispatch_system_event(out_event);
                         }
 
                         winit::event::WindowEvent::KeyboardInput {
@@ -331,54 +336,52 @@ impl Application {
                                 }
                             };
 
-                            context.dispatch_system_event(event);
+                            cx.dispatch_system_event(event);
                         }
 
                         winit::event::WindowEvent::ReceivedCharacter(character) => {
-                            context.dispatch_system_event(WindowEvent::CharInput(character));
+                            cx.dispatch_system_event(WindowEvent::CharInput(character));
                         }
 
                         winit::event::WindowEvent::Resized(physical_size) => {
-                            if let Some(mut window_view) = context.views().remove(&Entity::root()) {
+                            if let Some(mut window_view) = cx.views().remove(&Entity::root()) {
                                 if let Some(window) = window_view.downcast_mut::<Window>() {
                                     window.resize(physical_size);
                                 }
 
-                                context.views().insert(Entity::root(), window_view);
+                                cx.views().insert(Entity::root(), window_view);
                             }
 
                             let logical_size: LogicalSize<f32> =
-                                physical_size.to_logical(context.style().dpi_factor);
+                                physical_size.to_logical(cx.style().dpi_factor);
 
-                            context
-                                .style()
+                            cx.style()
                                 .width
                                 .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
 
-                            context
-                                .style()
+                            cx.style()
                                 .height
                                 .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
 
-                            context.cache().set_width(Entity::root(), physical_size.width as f32);
-                            context.cache().set_height(Entity::root(), physical_size.height as f32);
+                            cx.cache().set_width(Entity::root(), physical_size.width as f32);
+                            cx.cache().set_height(Entity::root(), physical_size.height as f32);
 
                             let mut bounding_box = BoundingBox::default();
                             bounding_box.w = physical_size.width as f32;
                             bounding_box.h = physical_size.height as f32;
 
-                            context.cache().set_clip_region(Entity::root(), bounding_box);
+                            cx.cache().set_clip_region(Entity::root(), bounding_box);
 
-                            context.need_restyle();
-                            context.need_relayout();
-                            context.need_redraw();
+                            cx.0.need_restyle();
+                            cx.0.need_relayout();
+                            cx.0.need_redraw();
                         }
 
                         winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
-                            context.modifiers().set(Modifiers::SHIFT, modifiers_state.shift());
-                            context.modifiers().set(Modifiers::ALT, modifiers_state.alt());
-                            context.modifiers().set(Modifiers::CTRL, modifiers_state.ctrl());
-                            context.modifiers().set(Modifiers::LOGO, modifiers_state.logo());
+                            cx.modifiers().set(Modifiers::SHIFT, modifiers_state.shift());
+                            cx.modifiers().set(Modifiers::ALT, modifiers_state.alt());
+                            cx.modifiers().set(Modifiers::CTRL, modifiers_state.ctrl());
+                            cx.modifiers().set(Modifiers::LOGO, modifiers_state.logo());
                         }
 
                         _ => {}
@@ -531,7 +534,7 @@ impl WindowModifiers for Application {
 //     }
 // }
 
-fn context_draw(cx: &mut Context) {
+fn context_draw(cx: &mut BackendContext) {
     if let Some(mut window_view) = cx.views().remove(&Entity::root()) {
         if let Some(window) = window_view.downcast_mut::<Window>() {
             cx.draw();
