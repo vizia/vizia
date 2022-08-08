@@ -291,6 +291,10 @@ impl<'a> EventContext<'a> {
 
         std::thread::spawn(move || target(&mut cxp));
     }
+
+    pub fn scale_factor(&self) -> f32 {
+        self.style.dpi_factor as f32
+    }
 }
 
 impl<'a> DataContext for EventContext<'a> {
