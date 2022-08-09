@@ -113,13 +113,13 @@ where
             }
         }
 
-        cx.views.insert(id, Box::new(binding));
+        cx.bindings.insert(id, Box::new(binding));
 
         cx.with_current(id, |cx| {
             // Call the body of the binding
-            if let Some(mut view_handler) = cx.views.remove(&id) {
-                view_handler.body(cx);
-                cx.views.insert(id, view_handler);
+            if let Some(mut binding) = cx.bindings.remove(&id) {
+                binding.body(cx);
+                cx.bindings.insert(id, binding);
             }
         });
 
@@ -127,11 +127,11 @@ where
     }
 }
 
-impl<L: 'static + Lens> View for Binding<L> {
-    fn element(&self) -> Option<&'static str> {
-        Some("binding")
-    }
+pub trait BindingHandler {
+    fn body<'a>(&mut self, cx: &'a mut Context);
+}
 
+impl<L: 'static + Lens> BindingHandler for Binding<L> {
     fn body<'a>(&mut self, cx: &'a mut Context) {
         cx.remove_children(cx.current());
         if let Some(builder) = &self.content {
