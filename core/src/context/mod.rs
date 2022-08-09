@@ -4,7 +4,7 @@ mod event;
 mod proxy;
 
 use instant::Instant;
-use std::any::Any;
+use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Mutex;
@@ -26,7 +26,7 @@ use crate::id::{GenerationalId, IdManager};
 use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
-use crate::state::ModelDataStore;
+use crate::state::{BindingHandler, ModelDataStore, ModelOrView};
 use crate::storage::sparse_set::SparseSet;
 use crate::style::Style;
 use crate::tree::TreeExt;
@@ -44,6 +44,7 @@ pub struct Context {
     /// TODO make this private when there's no longer a need to mutate views after building
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) data: SparseSet<ModelDataStore>,
+    pub(crate) bindings: FnvHashMap<Entity, Box<dyn BindingHandler>>,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
@@ -89,6 +90,7 @@ impl Context {
             current: Entity::root(),
             views: FnvHashMap::default(),
             data: SparseSet::new(),
+            bindings: FnvHashMap::default(),
             style: Style::default(),
             cache,
             draw_cache: DrawCache::new(),
@@ -197,16 +199,10 @@ impl Context {
         }
 
         for entity in delete_list.iter().rev() {
-            for model_store in self.data.dense.iter_mut().map(|entry| &mut entry.value) {
-                for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                    lens.remove_observer(entity);
-                }
-                for lens in model_store.lenses_dup.iter_mut() {
-                    lens.remove_observer(entity);
-                }
+            if let Some(binding) = self.bindings.remove(entity) {
+                binding.remove(self);
 
-                model_store.lenses_dedup.retain(|_, store| store.num_observers() != 0);
-                model_store.lenses_dup.retain(|store| store.num_observers() != 0);
+                self.bindings.insert(*entity, binding);
             }
 
             for image in self.resource_manager.images.values_mut() {
@@ -455,11 +451,9 @@ impl DataContext for Context {
         }
 
         for entity in self.current.parent_iter(&self.tree) {
-            if let Some(data_list) = self.data.get(entity) {
-                for (_, model) in data_list.data.iter() {
-                    if let Some(data) = model.downcast_ref::<T>() {
-                        return Some(data);
-                    }
+            if let Some(model_data_store) = self.data.get(entity) {
+                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+                    return model.downcast_ref::<T>();
                 }
             }
 

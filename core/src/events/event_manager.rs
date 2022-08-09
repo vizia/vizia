@@ -149,21 +149,23 @@ fn visit_entity(cx: &mut Context, entity: Entity, event: &mut Event) {
         cx.views.insert(entity, view);
     }
 
-    if let Some(ids) = cx
-        .data
-        .get(entity)
-        .and_then(|model_list| Some(model_list.data.keys().cloned().collect::<Vec<_>>()))
-    {
+    if let Some(ids) = cx.data.get(entity).and_then(|model_data_store| {
+        Some(model_data_store.models.keys().cloned().collect::<Vec<_>>())
+    }) {
         for id in ids {
-            if let Some(mut model) =
-                cx.data.get_mut(entity).and_then(|model_list| model_list.data.remove(&id))
+            if let Some(mut model) = cx
+                .data
+                .get_mut(entity)
+                .and_then(|model_data_store| model_data_store.models.remove(&id))
             {
                 let mut context = EventContext::new(cx);
                 context.current = entity;
 
                 model.event(&mut context, event);
 
-                cx.data.get_mut(entity).and_then(|model_list| model_list.data.insert(id, model));
+                cx.data
+                    .get_mut(entity)
+                    .and_then(|model_data_store| model_data_store.models.insert(id, model));
             }
         }
     }

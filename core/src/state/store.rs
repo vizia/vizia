@@ -1,12 +1,25 @@
-use crate::events::ViewHandler;
-use std::collections::HashSet;
+use std::{any::TypeId, collections::HashSet};
 
 use crate::prelude::*;
-use crate::state::ModelData;
+
+use super::ModelOrView;
+
+use std::sync::atomic::{AtomicU64, Ordering};
+
+// Generates a unique ID
+pub fn next_uuid() -> u64 {
+    static UUID: AtomicU64 = AtomicU64::new(0);
+    UUID.fetch_add(1, Ordering::Relaxed)
+}
+
+#[derive(Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum StoreId {
+    Type(TypeId),
+    UUID(u64),
+}
 
 pub(crate) trait Store {
-    fn update(&mut self, model: &Box<dyn ModelData>) -> bool;
-    fn update_view(&mut self, model: &Box<dyn ViewHandler>) -> bool;
+    fn update(&mut self, model: ModelOrView) -> bool;
     fn observers(&self) -> &HashSet<Entity>;
     fn add_observer(&mut self, observer: Entity);
     fn remove_observer(&mut self, observer: &Entity);
@@ -14,7 +27,7 @@ pub(crate) trait Store {
     fn entity(&self) -> Entity;
 }
 
-pub(crate) struct State<L: Lens, T> {
+pub(crate) struct BasicStore<L: Lens, T> {
     // The entity which declared the binding
     pub entity: Entity,
     pub lens: L,
@@ -22,7 +35,7 @@ pub(crate) struct State<L: Lens, T> {
     pub observers: HashSet<Entity>,
 }
 
-impl<L: Lens, T> Store for State<L, T>
+impl<L: Lens, T> Store for BasicStore<L, T>
 where
     L: Lens<Target = T>,
     <L as Lens>::Target: Data,
@@ -31,24 +44,8 @@ where
         self.entity
     }
 
-    fn update(&mut self, model: &Box<dyn ModelData>) -> bool {
+    fn update(&mut self, model: ModelOrView) -> bool {
         if let Some(data) = model.downcast_ref::<L::Source>() {
-            let result = self.lens.view(data, |t| match (&self.old, t) {
-                (Some(a), Some(b)) if a.same(b) => None,
-                (None, None) => None,
-                _ => Some(t.cloned()),
-            });
-            if let Some(new_data) = result {
-                self.old = new_data;
-                return true;
-            }
-        }
-
-        false
-    }
-
-    fn update_view(&mut self, view: &Box<dyn ViewHandler>) -> bool {
-        if let Some(data) = view.downcast_ref::<L::Source>() {
             let result = self.lens.view(data, |t| match (&self.old, t) {
                 (Some(a), Some(b)) if a.same(b) => None,
                 (None, None) => None,

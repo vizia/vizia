@@ -24,8 +24,6 @@ const KAPPA90: f32 = 0.5522847493;
 ///
 /// This trait is part of the prelude.
 pub trait View: 'static + Sized {
-    #[allow(unused_variables)]
-    fn body(&mut self, cx: &mut Context) {}
     fn build<F>(self, cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),
@@ -38,14 +36,7 @@ pub trait View: 'static + Sized {
         cx.views.insert(id, Box::new(self));
 
         cx.data
-            .insert(
-                id,
-                ModelDataStore {
-                    data: HashMap::default(),
-                    lenses_dedup: HashMap::default(),
-                    lenses_dup: vec![],
-                },
-            )
+            .insert(id, ModelDataStore { models: HashMap::default(), stores: HashMap::default() })
             .expect("Failed to insert model data store");
 
         let handle = Handle { entity: id, p: Default::default(), cx };
@@ -718,10 +709,6 @@ where
 {
     fn element(&self) -> Option<&'static str> {
         <T as View>::element(&self)
-    }
-
-    fn body(&mut self, cx: &mut Context) {
-        <T as View>::body(self, cx);
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
