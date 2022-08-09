@@ -433,15 +433,11 @@ impl Context {
 
         for entity in delete_list.iter().rev() {
             for model_store in self.data.dense.iter_mut().map(|entry| &mut entry.value) {
-                for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                    lens.remove_observer(entity);
-                }
-                for lens in model_store.lenses_dup.iter_mut() {
+                for (_, lens) in model_store.stores.iter_mut() {
                     lens.remove_observer(entity);
                 }
 
-                model_store.lenses_dedup.retain(|_, store| store.num_observers() != 0);
-                model_store.lenses_dup.retain(|store| store.num_observers() != 0);
+                model_store.stores.retain(|_, store| store.num_observers() != 0);
             }
 
             for image in self.resource_manager.images.values_mut() {
@@ -799,38 +795,24 @@ impl Context {
 
         for entity in self.tree.into_iter() {
             if let Some(model_store) = self.data.get_mut(entity) {
+                // Update observers of model data
                 for (_, model) in model_store.data.iter() {
                     let model = ModelOrView::Model(model.as_ref());
 
-                    for lens in model_store.lenses_dup.iter_mut() {
-                        if lens.update(model) {
-                            observers.extend(lens.observers().iter())
-                        }
-                    }
-
-                    for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                        if lens.update(model) {
-                            observers.extend(lens.observers().iter());
+                    for (_, store) in model_store.stores.iter_mut() {
+                        if store.update(model) {
+                            observers.extend(store.observers().iter())
                         }
                     }
                 }
 
-                for lens in model_store.lenses_dup.iter_mut() {
+                // Update observers of view data
+                for (_, store) in model_store.stores.iter_mut() {
                     if let Some(view_handler) = self.views.get(&entity) {
                         let view_model = ModelOrView::View(view_handler.as_ref());
 
-                        if lens.update(view_model) {
-                            observers.extend(lens.observers().iter())
-                        }
-                    }
-                }
-
-                for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                    if let Some(view_handler) = self.views.get(&entity) {
-                        let view_model = ModelOrView::View(view_handler.as_ref());
-
-                        if lens.update(view_model) {
-                            observers.extend(lens.observers().iter())
+                        if store.update(view_model) {
+                            observers.extend(store.observers().iter())
                         }
                     }
                 }

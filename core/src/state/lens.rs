@@ -5,6 +5,8 @@ use std::ops::Deref;
 
 use crate::prelude::*;
 
+use super::{next_uuid, StoreId};
+
 /// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
 ///
 /// When deriving the `Lens` trait on a struct, the derive macro constructs a static type which implements the `Lens` trait for each field.
@@ -20,11 +22,11 @@ pub trait Lens: 'static + Clone {
 }
 
 pub(crate) trait LensCache: Lens {
-    fn cache_key(&self) -> Option<TypeId> {
+    fn cache_key(&self) -> StoreId {
         if std::mem::size_of::<Self>() == 0 {
-            Some(TypeId::of::<Self>())
+            StoreId::Type(TypeId::of::<Self>())
         } else {
-            None
+            StoreId::UUID(next_uuid())
         }
     }
 }
