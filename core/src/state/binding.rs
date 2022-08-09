@@ -79,9 +79,12 @@ where
             }
         }
 
+        // Check if there's already a store with the same lens somewhere up the tree. If there is, add this binding as an observer,
+        // else create a new store with this binding as an observer.
         for entity in new_ancestors {
             if let Some(model_data_store) = cx.data.get_mut(entity) {
-                if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
+                // Check for model store
+                if let Some(model_data) = model_data_store.models.get(&TypeId::of::<L::Source>()) {
                     insert_store(
                         &ancestors,
                         &mut model_data_store.stores,
@@ -93,6 +96,7 @@ where
                     break;
                 }
 
+                // Check for view store
                 if let Some(view_handler) = cx.views.get(&entity) {
                     if view_handler.as_any_ref().is::<L::Source>() {
                         insert_store(
