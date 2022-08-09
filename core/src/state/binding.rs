@@ -11,6 +11,7 @@ pub struct Binding<L>
 where
     L: Lens,
 {
+    entity: Entity,
     lens: L,
     content: Option<Box<dyn Fn(&mut Context, L)>>,
 }
@@ -37,13 +38,13 @@ where
     where
         F: 'static + Fn(&mut Context, L),
     {
-        let binding = Self { lens: lens.clone(), content: Some(Box::new(builder)) };
-
         let id = cx.entity_manager.create();
         let current = cx.current();
         cx.tree().add(id, current).expect("Failed to add to tree");
         cx.cache().add(id).expect("Failed to add to cache");
         cx.style().add(id);
+
+        let binding = Self { entity: id, lens: lens.clone(), content: Some(Box::new(builder)) };
 
         let ancestors = cx.current().parent_iter(cx.tree()).collect::<HashSet<_>>();
         let new_ancestors = id.parent_iter(cx.tree()).collect::<Vec<_>>();
@@ -129,6 +130,7 @@ where
 
 pub trait BindingHandler {
     fn body<'a>(&mut self, cx: &'a mut Context);
+    fn remove(&self, cx: &mut Context);
 }
 
 impl<L: 'static + Lens> BindingHandler for Binding<L> {
@@ -136,6 +138,40 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
         cx.remove_children(cx.current());
         if let Some(builder) = &self.content {
             (builder)(cx, self.lens.clone());
+        }
+    }
+
+    fn remove(&self, cx: &mut Context) {
+        for entity in self.entity.parent_iter(&cx.tree) {
+            if let Some(model_data_store) = cx.data.get_mut(entity) {
+                // Check for model store
+                if model_data_store.models.get(&TypeId::of::<L::Source>()).is_some() {
+                    let key = self.lens.cache_key();
+
+                    if let Some(store) = model_data_store.stores.get_mut(&key) {
+                        store.remove_observer(&self.entity);
+
+                        model_data_store.stores.retain(|_, store| store.num_observers() != 0);
+                    }
+
+                    break;
+                }
+
+                // Check for view store
+                if let Some(view_handler) = cx.views.get(&entity) {
+                    if view_handler.as_any_ref().is::<L::Source>() {
+                        let key = self.lens.cache_key();
+
+                        if let Some(store) = model_data_store.stores.get_mut(&key) {
+                            store.remove_observer(&self.entity);
+
+                            model_data_store.stores.retain(|_, store| store.num_observers() != 0);
+                        }
+
+                        break;
+                    }
+                }
+            }
         }
     }
 }

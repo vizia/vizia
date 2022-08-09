@@ -434,12 +434,10 @@ impl Context {
         }
 
         for entity in delete_list.iter().rev() {
-            for model_store in self.data.dense.iter_mut().map(|entry| &mut entry.value) {
-                for (_, lens) in model_store.stores.iter_mut() {
-                    lens.remove_observer(entity);
-                }
+            if let Some(binding) = self.bindings.remove(entity) {
+                binding.remove(self);
 
-                model_store.stores.retain(|_, store| store.num_observers() != 0);
+                self.bindings.insert(*entity, binding);
             }
 
             for image in self.resource_manager.images.values_mut() {
