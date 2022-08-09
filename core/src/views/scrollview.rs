@@ -107,13 +107,13 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         VStack::new(cx, content)
             .class("scroll_content")
             .bind(data.clone(), |handle, data| {
-                let dpi_factor = handle.cx.style().dpi_factor;
+                let dpi_factor = handle.cx.style.dpi_factor;
                 if dpi_factor > 0.0 {
                     let data = data.get(handle.cx);
                     let left = ((data.child_x - data.parent_x) * data.scroll_x).round()
-                        / handle.cx.style().dpi_factor as f32;
+                        / handle.cx.style.dpi_factor as f32;
                     let top = ((data.child_y - data.parent_y) * data.scroll_y).round()
-                        / handle.cx.style().dpi_factor as f32;
+                        / handle.cx.style.dpi_factor as f32;
                     handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
                 }
             })

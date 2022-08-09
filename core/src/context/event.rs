@@ -117,6 +117,7 @@ impl<'a> EventContext<'a> {
         );
     }
 
+    /// Set the active state for the current entity.
     pub fn set_active(&mut self, active: bool) {
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(self.current) {
             pseudo_classes.set(PseudoClass::ACTIVE, active);
@@ -127,10 +128,12 @@ impl<'a> EventContext<'a> {
         self.style.needs_redraw = true;
     }
 
+    /// Capture mouse input for the current entity.
     pub fn capture(&mut self) {
         *self.captured = self.current;
     }
 
+    /// Release mouse input capture for current entity.
     pub fn release(&mut self) {
         *self.captured = Entity::null();
     }
@@ -156,6 +159,7 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle = true;
     }
 
+    /// Return the currently hovered entity.
     pub fn hovered(&self) -> Entity {
         *self.hovered
     }
@@ -295,7 +299,7 @@ impl<'a> EventContext<'a> {
 
 impl<'a> DataContext for EventContext<'a> {
     fn data<T: 'static>(&self) -> Option<&T> {
-        // return data for the static model
+        // Return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);
         }

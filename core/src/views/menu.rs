@@ -102,13 +102,16 @@ impl MenuController {
             panic!("Building a MenuController inside a MenuController. This is illegal.")
         }
 
-        Self {}.build(cx, move |cx| {
-            MenuControllerData { active }.build(cx);
-            if active {
-                cx.capture();
-            }
-            builder(cx);
-        })
+        Self {}
+            .build(cx, move |cx| {
+                MenuControllerData { active }.build(cx);
+                builder(cx);
+            })
+            .on_build(|cx| {
+                if active {
+                    cx.capture();
+                }
+            })
     }
 }
 
