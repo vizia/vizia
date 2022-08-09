@@ -13,20 +13,17 @@ use crate::{
     environment::Environment,
     events::ViewHandler,
     fonts,
-    hover_system::apply_hover,
     id::GenerationalId,
     layout::geometry_changed,
     prelude::*,
     resource::{FontOrId, ResourceManager},
     state::ModelOrView,
-    style::{apply_transform, Style},
-    style_system::{
-        apply_clipping, apply_inline_inheritance, apply_shared_inheritance, apply_styles,
-        apply_text_constraints, apply_visibility, apply_z_ordering,
-    },
-    systems::{draw_system::draw_system, image_system::image_system},
+    style::Style,
+    systems::*,
     tree::{focus_backward, focus_forward, is_navigatable, TreeIterator},
 };
+
+pub use crate::systems::animation::has_animations;
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
@@ -203,102 +200,6 @@ impl<'a> BackendContext<'a> {
         }
     }
 
-    pub fn has_animations(&self) -> bool {
-        self.0.style.display.has_animations()
-            | self.0.style.visibility.has_animations()
-            | self.0.style.opacity.has_animations()
-            | self.0.style.rotate.has_animations()
-            | self.0.style.translate.has_animations()
-            | self.0.style.scale.has_animations()
-            | self.0.style.border_width.has_animations()
-            | self.0.style.border_color.has_animations()
-            | self.0.style.border_radius_top_left.has_animations()
-            | self.0.style.border_radius_top_right.has_animations()
-            | self.0.style.border_radius_bottom_left.has_animations()
-            | self.0.style.border_radius_bottom_right.has_animations()
-            | self.0.style.background_color.has_animations()
-            | self.0.style.outer_shadow_h_offset.has_animations()
-            | self.0.style.outer_shadow_v_offset.has_animations()
-            | self.0.style.outer_shadow_blur.has_animations()
-            | self.0.style.outer_shadow_color.has_animations()
-            | self.0.style.font_color.has_animations()
-            | self.0.style.font_size.has_animations()
-            | self.0.style.left.has_animations()
-            | self.0.style.right.has_animations()
-            | self.0.style.top.has_animations()
-            | self.0.style.bottom.has_animations()
-            | self.0.style.width.has_animations()
-            | self.0.style.height.has_animations()
-            | self.0.style.max_width.has_animations()
-            | self.0.style.max_height.has_animations()
-            | self.0.style.min_width.has_animations()
-            | self.0.style.min_height.has_animations()
-            | self.0.style.min_left.has_animations()
-            | self.0.style.max_left.has_animations()
-            | self.0.style.min_right.has_animations()
-            | self.0.style.max_right.has_animations()
-            | self.0.style.min_top.has_animations()
-            | self.0.style.max_top.has_animations()
-            | self.0.style.min_bottom.has_animations()
-            | self.0.style.max_bottom.has_animations()
-            | self.0.style.row_between.has_animations()
-            | self.0.style.col_between.has_animations()
-            | self.0.style.child_left.has_animations()
-            | self.0.style.child_right.has_animations()
-            | self.0.style.child_top.has_animations()
-            | self.0.style.child_bottom.has_animations()
-    }
-
-    pub fn apply_animations(&mut self) {
-        let time = instant::Instant::now();
-
-        self.0.style.display.tick(time);
-        self.0.style.visibility.tick(time);
-        self.0.style.opacity.tick(time);
-        self.0.style.rotate.tick(time);
-        self.0.style.translate.tick(time);
-        self.0.style.scale.tick(time);
-        self.0.style.border_width.tick(time);
-        self.0.style.border_color.tick(time);
-        self.0.style.border_radius_top_left.tick(time);
-        self.0.style.border_radius_top_right.tick(time);
-        self.0.style.border_radius_bottom_left.tick(time);
-        self.0.style.border_radius_bottom_right.tick(time);
-        self.0.style.background_color.tick(time);
-        self.0.style.outer_shadow_h_offset.tick(time);
-        self.0.style.outer_shadow_v_offset.tick(time);
-        self.0.style.outer_shadow_blur.tick(time);
-        self.0.style.outer_shadow_color.tick(time);
-        self.0.style.font_color.tick(time);
-        self.0.style.font_size.tick(time);
-        self.0.style.left.tick(time);
-        self.0.style.right.tick(time);
-        self.0.style.top.tick(time);
-        self.0.style.bottom.tick(time);
-        self.0.style.width.tick(time);
-        self.0.style.height.tick(time);
-        self.0.style.max_width.tick(time);
-        self.0.style.max_height.tick(time);
-        self.0.style.min_width.tick(time);
-        self.0.style.min_height.tick(time);
-        self.0.style.min_left.tick(time);
-        self.0.style.max_left.tick(time);
-        self.0.style.min_right.tick(time);
-        self.0.style.max_right.tick(time);
-        self.0.style.min_top.tick(time);
-        self.0.style.max_top.tick(time);
-        self.0.style.min_bottom.tick(time);
-        self.0.style.max_bottom.tick(time);
-        self.0.style.row_between.tick(time);
-        self.0.style.col_between.tick(time);
-        self.0.style.child_left.tick(time);
-        self.0.style.child_right.tick(time);
-        self.0.style.child_top.tick(time);
-        self.0.style.child_bottom.tick(time);
-
-        self.0.style.needs_relayout = true;
-    }
-
     /// For each binding or data observer, check if its data has changed, and if so, rerun its
     /// builder/body.
     pub fn process_data_updates(&mut self) {
@@ -360,14 +261,14 @@ impl<'a> BackendContext<'a> {
         // Not ideal
         let tree = self.0.tree.clone();
 
-        apply_inline_inheritance(self.0, &tree);
+        inline_inheritance_system(self.0, &tree);
 
         if self.0.style.needs_restyle {
-            apply_styles(self.0, &tree);
+            style_system(self.0, &tree);
             self.0.style.needs_restyle = false;
         }
 
-        apply_shared_inheritance(self.0, &tree);
+        shared_inheritance_system(self.0, &tree);
     }
 
     /// Massages the style system until everything is coherent
@@ -375,14 +276,16 @@ impl<'a> BackendContext<'a> {
         // Not ideal
         let tree = self.0.tree.clone();
 
+        animation_system(self.0);
+
         image_system(self.0);
 
-        apply_z_ordering(self.0, &tree);
-        apply_visibility(self.0, &tree);
+        z_ordering_system(self.0, &tree);
+        visibility_system(self.0, &tree);
 
         // Layout
         if self.0.style.needs_relayout {
-            apply_text_constraints(self.0, &tree);
+            text_constraints_system(self.0, &tree);
 
             // hack!
             let mut store = (Style::default(), TextContext::default(), ResourceManager::default());
@@ -397,9 +300,9 @@ impl<'a> BackendContext<'a> {
             self.0.style.needs_relayout = false;
         }
 
-        apply_transform(self.0, &tree);
-        apply_hover(self.0);
-        apply_clipping(self.0, &tree);
+        transform_system(self.0, &tree);
+        hover_system(self.0);
+        clipping_system(self.0, &tree);
 
         // Emit any geometry changed events
         geometry_changed(self.0, &tree);
@@ -415,7 +318,7 @@ impl<'a> BackendContext<'a> {
                 self.0.mouse.cursorx = *x;
                 self.0.mouse.cursory = *y;
 
-                apply_hover(self.0);
+                hover_system(self.0);
 
                 self.dispatch_direct_or_hovered(event, self.0.captured, false);
             }
