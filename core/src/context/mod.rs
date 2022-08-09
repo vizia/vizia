@@ -30,7 +30,7 @@ use crate::input::{Modifiers, MouseState};
 use crate::layout::geometry_changed;
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
-use crate::state::ModelDataStore;
+use crate::state::{ModelDataStore, ModelOrView};
 use crate::storage::sparse_set::SparseSet;
 use crate::style::{apply_transform, Style};
 use crate::style_system::{
@@ -800,6 +800,8 @@ impl Context {
         for entity in self.tree.into_iter() {
             if let Some(model_store) = self.data.get_mut(entity) {
                 for (_, model) in model_store.data.iter() {
+                    let model = ModelOrView::Model(model.as_ref());
+
                     for lens in model_store.lenses_dup.iter_mut() {
                         if lens.update(model) {
                             observers.extend(lens.observers().iter())
@@ -815,7 +817,9 @@ impl Context {
 
                 for lens in model_store.lenses_dup.iter_mut() {
                     if let Some(view_handler) = self.views.get(&entity) {
-                        if lens.update_view(view_handler) {
+                        let view_model = ModelOrView::View(view_handler.as_ref());
+
+                        if lens.update(view_model) {
                             observers.extend(lens.observers().iter())
                         }
                     }
@@ -823,7 +827,9 @@ impl Context {
 
                 for (_, lens) in model_store.lenses_dedup.iter_mut() {
                     if let Some(view_handler) = self.views.get(&entity) {
-                        if lens.update_view(view_handler) {
+                        let view_model = ModelOrView::View(view_handler.as_ref());
+
+                        if lens.update(view_model) {
                             observers.extend(lens.observers().iter())
                         }
                     }
