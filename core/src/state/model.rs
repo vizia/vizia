@@ -6,6 +6,8 @@ use std::{
 use crate::state::Store;
 use crate::{events::ViewHandler, prelude::*};
 
+use super::StoreId;
+
 /// A trait implemented by application data in order to mutate in response to events.
 ///
 /// # Examples
@@ -69,11 +71,7 @@ pub trait Model: 'static + Sized {
             cx.data
                 .insert(
                     cx.current(),
-                    ModelDataStore {
-                        data: data_list,
-                        lenses_dedup: HashMap::default(),
-                        lenses_dup: vec![],
-                    },
+                    ModelDataStore { data: data_list, stores: HashMap::default() },
                 )
                 .expect("Failed to add data");
         }
@@ -142,8 +140,7 @@ impl<T: Model> ModelData for T {
 #[derive(Default)]
 pub(crate) struct ModelDataStore {
     pub data: HashMap<TypeId, Box<dyn ModelData>>,
-    pub lenses_dedup: HashMap<TypeId, Box<dyn Store>>,
-    pub lenses_dup: Vec<Box<dyn Store>>,
+    pub stores: HashMap<StoreId, Box<dyn Store>>,
 }
 
 impl Model for () {}

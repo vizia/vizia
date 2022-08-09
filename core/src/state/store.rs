@@ -1,8 +1,22 @@
-use std::collections::HashSet;
+use std::{any::TypeId, collections::HashSet};
 
 use crate::prelude::*;
 
 use super::ModelOrView;
+
+use std::sync::atomic::{AtomicU64, Ordering};
+
+// Generates a unique ID
+pub fn next_uuid() -> u64 {
+    static UUID: AtomicU64 = AtomicU64::new(0);
+    UUID.fetch_add(1, Ordering::Relaxed)
+}
+
+#[derive(Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum StoreId {
+    Type(TypeId),
+    UUID(u64),
+}
 
 pub(crate) trait Store {
     fn update(&mut self, model: ModelOrView) -> bool;

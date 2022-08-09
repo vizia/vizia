@@ -1,8 +1,8 @@
 use std::any::TypeId;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
-use crate::state::{BasicStore, LensCache};
+use crate::state::{BasicStore, LensCache, ModelOrView, Store, StoreId};
 
 /// A binding view which rebuilds its contents when its observed data changes.
 ///
@@ -48,64 +48,60 @@ where
         let ancestors = cx.current().parent_iter(cx.tree()).collect::<HashSet<_>>();
         let new_ancestors = id.parent_iter(cx.tree()).collect::<Vec<_>>();
 
+        fn insert_store<L: Lens>(
+            ancestors: &HashSet<Entity>,
+            stores: &mut HashMap<StoreId, Box<dyn Store>>,
+            model_data: ModelOrView,
+            lens: L,
+            id: Entity,
+        ) where
+            L::Target: Data,
+        {
+            let key = lens.cache_key();
+
+            if let Some(store) = stores.get_mut(&key) {
+                let observers = store.observers();
+
+                if ancestors.intersection(observers).next().is_none() {
+                    store.add_observer(id);
+                }
+            } else {
+                let mut observers = HashSet::new();
+                observers.insert(id);
+
+                let model = model_data.downcast_ref::<L::Source>().unwrap();
+
+                let old = lens.view(model, |t| t.cloned());
+
+                let store = Box::new(BasicStore { entity: id, lens, old, observers });
+
+                stores.insert(key, store);
+            }
+        }
+
         for entity in new_ancestors {
             if let Some(model_data_store) = cx.data.get_mut(entity) {
                 if let Some(model_data) = model_data_store.data.get(&TypeId::of::<L::Source>()) {
-                    if let Some(lens_wrap) =
-                        lens.cache_key().and_then(|key| model_data_store.lenses_dedup.get_mut(&key))
-                    {
-                        let observers = lens_wrap.observers();
-
-                        if ancestors.intersection(observers).next().is_none() {
-                            lens_wrap.add_observer(id);
-                        }
-                    } else {
-                        let mut observers = HashSet::new();
-                        observers.insert(id);
-
-                        let model = model_data.downcast_ref::<L::Source>().unwrap();
-
-                        let old = lens.view(model, |t| t.cloned());
-
-                        let state = Box::new(BasicStore { entity: id, lens, old, observers });
-
-                        if let Some(key) = state.lens.cache_key() {
-                            model_data_store.lenses_dedup.insert(key, state);
-                        } else {
-                            model_data_store.lenses_dup.push(state);
-                        }
-                    }
+                    insert_store(
+                        &ancestors,
+                        &mut model_data_store.stores,
+                        ModelOrView::Model(model_data.as_ref()),
+                        lens,
+                        id,
+                    );
 
                     break;
                 }
 
                 if let Some(view_handler) = cx.views.get(&entity) {
                     if view_handler.as_any_ref().is::<L::Source>() {
-                        if let Some(lens_wrap) = lens
-                            .cache_key()
-                            .and_then(|key| model_data_store.lenses_dedup.get_mut(&key))
-                        {
-                            let observers = lens_wrap.observers();
-
-                            if ancestors.intersection(observers).next().is_none() {
-                                lens_wrap.add_observer(id);
-                            }
-                        } else {
-                            let mut observers = HashSet::new();
-                            observers.insert(id);
-
-                            let model = view_handler.downcast_ref::<L::Source>().unwrap();
-
-                            let old = lens.view(model, |t| t.cloned());
-
-                            let state = Box::new(BasicStore { entity: id, lens, old, observers });
-
-                            if let Some(key) = state.lens.cache_key() {
-                                model_data_store.lenses_dedup.insert(key, state);
-                            } else {
-                                model_data_store.lenses_dup.push(state);
-                            }
-                        }
+                        insert_store(
+                            &ancestors,
+                            &mut model_data_store.stores,
+                            ModelOrView::View(view_handler.as_ref()),
+                            lens,
+                            id,
+                        );
 
                         break;
                     }
