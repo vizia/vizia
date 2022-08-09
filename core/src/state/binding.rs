@@ -2,7 +2,7 @@ use std::any::TypeId;
 use std::collections::HashSet;
 
 use crate::prelude::*;
-use crate::state::{LensCache, State};
+use crate::state::{BasicStore, LensCache};
 
 /// A binding view which rebuilds its contents when its observed data changes.
 ///
@@ -67,7 +67,7 @@ where
 
                         let old = lens.view(model, |t| t.cloned());
 
-                        let state = Box::new(State { entity: id, lens, old, observers });
+                        let state = Box::new(BasicStore { entity: id, lens, old, observers });
 
                         if let Some(key) = state.lens.cache_key() {
                             model_data_store.lenses_dedup.insert(key, state);
@@ -98,7 +98,7 @@ where
 
                             let old = lens.view(model, |t| t.cloned());
 
-                            let state = Box::new(State { entity: id, lens, old, observers });
+                            let state = Box::new(BasicStore { entity: id, lens, old, observers });
 
                             if let Some(key) = state.lens.cache_key() {
                                 model_data_store.lenses_dedup.insert(key, state);
