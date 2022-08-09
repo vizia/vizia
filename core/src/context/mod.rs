@@ -829,6 +829,7 @@ impl Context {
         let ordered_observers =
             self.tree.into_iter().filter(|ent| observers.contains(&ent)).collect::<Vec<_>>();
 
+        // Update observers in tree order
         for observer in ordered_observers.into_iter() {
             if !self.entity_manager.is_alive(observer) {
                 continue;
@@ -837,7 +838,7 @@ impl Context {
             if let Some(mut binding) = self.bindings.remove(&observer) {
                 let prev = self.current;
                 self.current = observer;
-                binding.body(self);
+                binding.update(self);
                 self.current = prev;
                 self.bindings.insert(observer, binding);
             }
