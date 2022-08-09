@@ -119,7 +119,7 @@ where
         cx.with_current(id, |cx| {
             // Call the body of the binding
             if let Some(mut binding) = cx.bindings.remove(&id) {
-                binding.body(cx);
+                binding.update(cx);
                 cx.bindings.insert(id, binding);
             }
         });
@@ -129,12 +129,12 @@ where
 }
 
 pub trait BindingHandler {
-    fn body<'a>(&mut self, cx: &'a mut Context);
+    fn update<'a>(&mut self, cx: &'a mut Context);
     fn remove(&self, cx: &mut Context);
 }
 
 impl<L: 'static + Lens> BindingHandler for Binding<L> {
-    fn body<'a>(&mut self, cx: &'a mut Context) {
+    fn update<'a>(&mut self, cx: &'a mut Context) {
         cx.remove_children(cx.current());
         if let Some(builder) = &self.content {
             (builder)(cx, self.lens.clone());
