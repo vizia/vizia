@@ -14,7 +14,7 @@ pub(crate) trait Store {
     fn entity(&self) -> Entity;
 }
 
-pub(crate) struct State<L: Lens, T> {
+pub(crate) struct BasicStore<L: Lens, T> {
     // The entity which declared the binding
     pub entity: Entity,
     pub lens: L,
@@ -22,7 +22,7 @@ pub(crate) struct State<L: Lens, T> {
     pub observers: HashSet<Entity>,
 }
 
-impl<L: Lens, T> Store for State<L, T>
+impl<L: Lens, T> Store for BasicStore<L, T>
 where
     L: Lens<Target = T>,
     <L as Lens>::Target: Data,
