@@ -3,8 +3,8 @@ use std::{
     collections::HashMap,
 };
 
-use crate::prelude::*;
 use crate::state::Store;
+use crate::{events::ViewHandler, prelude::*};
 
 /// A trait implemented by application data in order to mutate in response to events.
 ///
@@ -147,3 +147,17 @@ pub(crate) struct ModelDataStore {
 }
 
 impl Model for () {}
+
+#[derive(Copy, Clone)]
+pub(crate) enum ModelOrView<'a> {
+    Model(&'a dyn ModelData),
+    View(&'a dyn ViewHandler),
+}
+impl<'a> ModelOrView<'a> {
+    pub fn downcast_ref<T: 'static>(self) -> Option<&'a T> {
+        match self {
+            ModelOrView::Model(m) => m.downcast_ref(),
+            ModelOrView::View(v) => v.downcast_ref(),
+        }
+    }
+}
