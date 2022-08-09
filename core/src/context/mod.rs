@@ -26,7 +26,7 @@ use crate::id::{GenerationalId, IdManager};
 use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
-use crate::state::{BindingHandler, ModelDataStore, ModelOrView};
+use crate::state::{BindingHandler, ModelDataStore};
 use crate::storage::sparse_set::SparseSet;
 use crate::style::Style;
 use crate::tree::TreeExt;

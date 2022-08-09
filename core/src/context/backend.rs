@@ -6,6 +6,8 @@ use instant::{Duration, Instant};
 use morphorm::layout;
 
 use super::EventProxy;
+#[cfg(debug_assertions)]
+use crate::tree::TreeDepthIterator;
 use crate::{
     cache::{BoundingBox, CachedData},
     environment::Environment,
@@ -16,14 +18,16 @@ use crate::{
     layout::geometry_changed,
     prelude::*,
     resource::{FontOrId, ResourceManager},
+    state::ModelOrView,
     style::{apply_transform, Style},
     style_system::{
         apply_clipping, apply_inline_inheritance, apply_shared_inheritance, apply_styles,
         apply_text_constraints, apply_visibility, apply_z_ordering,
     },
     systems::{draw_system::draw_system, image_system::image_system},
-    tree::{focus_backward, focus_forward, is_navigatable, TreeDepthIterator, TreeIterator},
+    tree::{focus_backward, focus_forward, is_navigatable, TreeIterator},
 };
+
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
@@ -301,33 +305,25 @@ impl<'a> BackendContext<'a> {
         let mut observers: HashSet<Entity> = HashSet::new();
 
         for entity in self.0.tree.into_iter() {
-            if let Some(model_store) = self.0.data.get_mut(entity) {
-                for (_, model) in model_store.data.iter() {
-                    for lens in model_store.lenses_dup.iter_mut() {
-                        if lens.update(model) {
-                            observers.extend(lens.observers().iter())
-                        }
-                    }
+            if let Some(model_data_store) = self.0.data.get_mut(entity) {
+                // Determine observers of model data
+                for (_, model) in model_data_store.models.iter() {
+                    let model = ModelOrView::Model(model.as_ref());
 
-                    for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                        if lens.update(model) {
-                            observers.extend(lens.observers().iter());
+                    for (_, store) in model_data_store.stores.iter_mut() {
+                        if store.update(model) {
+                            observers.extend(store.observers().iter())
                         }
                     }
                 }
 
-                for lens in model_store.lenses_dup.iter_mut() {
+                // Determine observers of view data
+                for (_, store) in model_data_store.stores.iter_mut() {
                     if let Some(view_handler) = self.0.views.get(&entity) {
-                        if lens.update_view(view_handler) {
-                            observers.extend(lens.observers().iter())
-                        }
-                    }
-                }
+                        let view_model = ModelOrView::View(view_handler.as_ref());
 
-                for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                    if let Some(view_handler) = self.0.views.get(&entity) {
-                        if lens.update_view(view_handler) {
-                            observers.extend(lens.observers().iter())
+                        if store.update(view_model) {
+                            observers.extend(store.observers().iter())
                         }
                     }
                 }
@@ -344,17 +340,18 @@ impl<'a> BackendContext<'a> {
         let ordered_observers =
             self.0.tree.into_iter().filter(|ent| observers.contains(&ent)).collect::<Vec<_>>();
 
+        // Update observers in tree order
         for observer in ordered_observers.into_iter() {
             if !self.0.entity_manager.is_alive(observer) {
                 continue;
             }
 
-            if let Some(mut view) = self.0.views.remove(&observer) {
+            if let Some(mut binding) = self.0.bindings.remove(&observer) {
                 let prev = self.0.current;
                 self.0.current = observer;
-                view.body(self.0);
+                binding.update(self.0);
                 self.0.current = prev;
-                self.0.views.insert(observer, view);
+                self.0.bindings.insert(observer, binding);
             }
         }
     }
