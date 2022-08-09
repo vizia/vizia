@@ -63,16 +63,13 @@ pub trait Model: 'static + Sized {
     /// }
     /// ```
     fn build(self, cx: &mut Context) {
-        if let Some(data_list) = cx.data.get_mut(cx.current()) {
-            data_list.data.insert(TypeId::of::<Self>(), Box::new(self));
+        if let Some(model_data_store) = cx.data.get_mut(cx.current()) {
+            model_data_store.models.insert(TypeId::of::<Self>(), Box::new(self));
         } else {
-            let mut data_list: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
-            data_list.insert(TypeId::of::<Self>(), Box::new(self));
+            let mut models: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
+            models.insert(TypeId::of::<Self>(), Box::new(self));
             cx.data
-                .insert(
-                    cx.current(),
-                    ModelDataStore { data: data_list, stores: HashMap::default() },
-                )
+                .insert(cx.current(), ModelDataStore { models, stores: HashMap::default() })
                 .expect("Failed to add data");
         }
     }
@@ -139,7 +136,7 @@ impl<T: Model> ModelData for T {
 
 #[derive(Default)]
 pub(crate) struct ModelDataStore {
-    pub data: HashMap<TypeId, Box<dyn ModelData>>,
+    pub models: HashMap<TypeId, Box<dyn ModelData>>,
     pub stores: HashMap<StoreId, Box<dyn Store>>,
 }
 

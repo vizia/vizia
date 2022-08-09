@@ -3,7 +3,7 @@ mod event;
 mod proxy;
 
 use instant::{Duration, Instant};
-use std::any::Any;
+use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::error::Error;
@@ -794,12 +794,12 @@ impl Context {
         let mut observers: HashSet<Entity> = HashSet::new();
 
         for entity in self.tree.into_iter() {
-            if let Some(model_store) = self.data.get_mut(entity) {
+            if let Some(model_data_store) = self.data.get_mut(entity) {
                 // Update observers of model data
-                for (_, model) in model_store.data.iter() {
+                for (_, model) in model_data_store.models.iter() {
                     let model = ModelOrView::Model(model.as_ref());
 
-                    for (_, store) in model_store.stores.iter_mut() {
+                    for (_, store) in model_data_store.stores.iter_mut() {
                         if store.update(model) {
                             observers.extend(store.observers().iter())
                         }
@@ -807,7 +807,7 @@ impl Context {
                 }
 
                 // Update observers of view data
-                for (_, store) in model_store.stores.iter_mut() {
+                for (_, store) in model_data_store.stores.iter_mut() {
                     if let Some(view_handler) = self.views.get(&entity) {
                         let view_model = ModelOrView::View(view_handler.as_ref());
 
@@ -1208,11 +1208,9 @@ impl DataContext for Context {
         }
 
         for entity in self.current.parent_iter(&self.tree) {
-            if let Some(data_list) = self.data.get(entity) {
-                for (_, model) in data_list.data.iter() {
-                    if let Some(data) = model.downcast_ref::<T>() {
-                        return Some(data);
-                    }
+            if let Some(model_data_store) = self.data.get(entity) {
+                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+                    return model.downcast_ref::<T>();
                 }
             }
 
