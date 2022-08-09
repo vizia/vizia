@@ -30,7 +30,7 @@ use crate::input::{Modifiers, MouseState};
 use crate::layout::geometry_changed;
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
-use crate::state::{ModelDataStore, ModelOrView};
+use crate::state::{BindingHandler, ModelDataStore, ModelOrView};
 use crate::storage::sparse_set::SparseSet;
 use crate::style::{apply_transform, Style};
 use crate::style_system::{
@@ -56,6 +56,7 @@ pub struct Context {
     /// TODO make this private when there's no longer a need to mutate views after building
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) data: SparseSet<ModelDataStore>,
+    pub(crate) bindings: FnvHashMap<Entity, Box<dyn BindingHandler>>,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
@@ -101,6 +102,7 @@ impl Context {
             current: Entity::root(),
             views: FnvHashMap::default(),
             data: SparseSet::new(),
+            bindings: FnvHashMap::default(),
             style: Style::default(),
             cache,
             draw_cache: DrawCache::new(),
@@ -795,7 +797,7 @@ impl Context {
 
         for entity in self.tree.into_iter() {
             if let Some(model_data_store) = self.data.get_mut(entity) {
-                // Update observers of model data
+                // Determine observers of model data
                 for (_, model) in model_data_store.models.iter() {
                     let model = ModelOrView::Model(model.as_ref());
 
@@ -806,7 +808,7 @@ impl Context {
                     }
                 }
 
-                // Update observers of view data
+                // Determine observers of view data
                 for (_, store) in model_data_store.stores.iter_mut() {
                     if let Some(view_handler) = self.views.get(&entity) {
                         let view_model = ModelOrView::View(view_handler.as_ref());
@@ -834,12 +836,12 @@ impl Context {
                 continue;
             }
 
-            if let Some(mut view) = self.views.remove(&observer) {
+            if let Some(mut binding) = self.bindings.remove(&observer) {
                 let prev = self.current;
                 self.current = observer;
-                view.body(self);
+                binding.body(self);
                 self.current = prev;
-                self.views.insert(observer, view);
+                self.bindings.insert(observer, binding);
             }
         }
     }
