@@ -276,6 +276,10 @@ impl Context {
                 image.observers.remove(entity);
             }
 
+            if let Some(identifier) = self.style.ids.get(*entity) {
+                self.entity_identifiers.remove(identifier);
+            }
+
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.draw_cache.remove(*entity);
