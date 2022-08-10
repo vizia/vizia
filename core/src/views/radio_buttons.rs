@@ -90,11 +90,11 @@ impl RadioButton {
                 Element::new(cx)
                     .class("inner")
                     .hoverable(false)
-                    .focusable(false)
                     .position_type(PositionType::SelfDirected);
             })
             .checked(checked)
             .cursor(CursorIcon::Hand)
+            .keyboard_navigatable(true)
     }
 }
 
@@ -105,11 +105,9 @@ impl View for RadioButton {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseUp(MouseButton::Left) => {
-                if cx.mouse.left.pressed == cx.current()
-                    && meta.target == cx.current()
-                    && !cx.is_disabled()
-                {
+            WindowEvent::TriggerUp { mouse } => {
+                let over = if *mouse { cx.mouse.left.pressed } else { cx.focused() };
+                if over == cx.current() && meta.target == cx.current() && !cx.is_disabled() {
                     if let Some(callback) = &self.on_select {
                         (callback)(cx);
                     }

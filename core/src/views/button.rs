@@ -78,9 +78,11 @@ impl Button {
         F: FnOnce(&mut Context) -> Handle<V>,
         V: 'static + View,
     {
-        Self { action: Some(Box::new(action)) }.build(cx, move |cx| {
-            (content)(cx).hoverable(false).focusable(false);
-        })
+        Self { action: Some(Box::new(action)) }
+            .build(cx, move |cx| {
+                (content)(cx).hoverable(false);
+            })
+            .keyboard_navigatable(true)
     }
 }
 
@@ -91,7 +93,7 @@ impl View for Button {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+            WindowEvent::TriggerDown { .. } => {
                 cx.set_active(true);
                 cx.capture();
                 cx.focus();
@@ -100,7 +102,7 @@ impl View for Button {
                 }
             }
 
-            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+            WindowEvent::TriggerUp { .. } => {
                 if meta.target == cx.current() {
                     cx.release();
                     cx.set_active(false);

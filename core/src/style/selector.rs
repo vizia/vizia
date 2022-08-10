@@ -11,7 +11,7 @@ bitflags! {
     /// A bitflag of possible pseudoclasses.
     ///
     /// This type is part of the prelude.
-    pub struct PseudoClass: u8 {
+    pub struct PseudoClass: u16 {
         const HOVER = 1;
         const OVER = 1 << 1;
         const ACTIVE = 1 << 2;
@@ -20,6 +20,8 @@ bitflags! {
         const CHECKED = 1 << 5;
         const SELECTED = 1 << 6;
         const CUSTOM = 1 << 7;
+        const FOCUS_WITHIN = 1<<8;
+        const FOCUS_VISIBLE = 1 << 9;
     }
 }
 
@@ -51,6 +53,12 @@ impl std::fmt::Display for PseudoClass {
         }
         if self.contains(PseudoClass::SELECTED) {
             write!(f, ":selected")?;
+        }
+        if self.contains(PseudoClass::FOCUS_WITHIN) {
+            write!(f, ":focus-within")?;
+        }
+        if self.contains(PseudoClass::FOCUS_VISIBLE) {
+            write!(f, ":focus-visible")?;
         }
 
         Ok(())

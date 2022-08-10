@@ -4,15 +4,30 @@ use vizia::prelude::*;
 pub struct AppData {
     text: String,
     value: f32,
+    checked: bool,
 }
 
-impl Model for AppData {}
+#[derive(Debug)]
+pub enum AppEvent {
+    Toggle,
+}
+
+impl Model for AppData {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::Toggle => {
+                self.checked ^= true;
+            }
+        });
+    }
+}
 
 fn main() {
     Application::new(|cx| {
         AppData {
             text: String::from("As well as model data which implements ToString:"),
             value: 3.141592,
+            checked: false,
         }
         .build(cx);
 
@@ -29,6 +44,15 @@ fn main() {
             Label::new(cx, "Unless text wrapping is disabled.")
                 .width(Pixels(200.0))
                 .text_wrap(false);
+
+            HStack::new(cx, |cx| {
+                Checkbox::new(cx, AppData::checked)
+                    .on_toggle(|cx| cx.emit(AppEvent::Toggle))
+                    .id("checkbox_1");
+
+                Label::new(cx, "A label that is describing a form element also acts as a trigger")
+                    .describing("checkbox_1");
+            });
         })
         .child_space(Stretch(1.0))
         .row_between(Pixels(20.0));

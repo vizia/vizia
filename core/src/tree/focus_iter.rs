@@ -1,25 +1,46 @@
 use crate::prelude::*;
-use crate::style::Style;
 use crate::tree::*;
 
-pub fn is_navigatable<'a>(style: &'a Style, node: Entity) -> bool {
-    style
+pub fn is_navigatable(cx: &Context, node: Entity) -> bool {
+    // Skip invisible widgets
+    if cx.cache.get_visibility(node) == Visibility::Invisible {
+        return false;
+    }
+
+    // Skip disabled widgets
+    if cx.style.disabled.get(node).cloned().unwrap_or_default() {
+        return false;
+    }
+
+    // Skip non-displayed widgets
+    if cx.cache.get_display(node) == Display::None {
+        return false;
+    }
+
+    // Skip ignored widgets
+    if cx.tree.is_ignored(node) {
+        return false;
+    }
+    cx.style
         .abilities
         .get(node)
         .and_then(|abilities| Some(abilities.contains(Abilities::KEYBOARD_NAVIGATABLE)))
         .unwrap_or(false)
 }
 
-pub fn focus_forward<'a>(tree: &'a Tree, style: &'a Style, node: Entity) -> Option<Entity> {
-    TreeIterator { tree, tours: DoubleEndedTreeTour::new(Some(node), Some(Entity::root())) }
-        .skip(1)
-        .filter(|node| is_navigatable(style, *node))
-        .next()
+pub fn focus_forward<'a>(cx: &Context, node: Entity) -> Option<Entity> {
+    TreeIterator {
+        tree: &cx.tree,
+        tours: DoubleEndedTreeTour::new(Some(node), Some(Entity::root())),
+    }
+    .skip(1)
+    .filter(|node| is_navigatable(cx, *node))
+    .next()
 }
 
-pub fn focus_backward<'a>(tree: &'a Tree, style: &'a Style, node: Entity) -> Option<Entity> {
+pub fn focus_backward<'a>(cx: &Context, node: Entity) -> Option<Entity> {
     let mut iter = TreeIterator {
-        tree,
+        tree: &cx.tree,
         tours: DoubleEndedTreeTour::new_raw(
             TreeTour::new(Some(Entity::root())),
             TreeTour::with_direction(Some(node), TourDirection::Leaving),
@@ -27,5 +48,5 @@ pub fn focus_backward<'a>(tree: &'a Tree, style: &'a Style, node: Entity) -> Opt
         //tours: DoubleEndedTreeTour::new(Some(Entity::root()), Some(node)),
     };
     iter.next_back();
-    iter.filter(|node| is_navigatable(style, *node)).next_back()
+    iter.filter(|node| is_navigatable(cx, *node)).next_back()
 }

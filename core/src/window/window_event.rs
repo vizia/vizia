@@ -20,6 +20,14 @@ pub enum WindowEvent {
     MouseDown(MouseButton),
     /// Emitted when a mouse button is released
     MouseUp(MouseButton),
+    /// When an interactable element has started to be triggered with a left mouse click or keyboard
+    TriggerDown {
+        mouse: bool,
+    },
+    /// When an interactable element has stopped being triggered with a left mouse click or keyboard
+    TriggerUp {
+        mouse: bool,
+    },
     /// Emitted when the mouse cursor is moved
     MouseMove(f32, f32),
     /// Emitted when the mouse scroll wheel is scrolled

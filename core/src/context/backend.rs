@@ -417,7 +417,7 @@ impl<'a> BackendContext<'a> {
 
                 apply_hover(self.0);
 
-                self.dispatch_direct_or_hovered(event, self.0.captured, false);
+                self.dispatch_direct_or_up(event, self.0.captured, self.0.hovered, false);
             }
             WindowEvent::MouseDown(button) => {
                 match button {
@@ -433,9 +433,10 @@ impl<'a> BackendContext<'a> {
 
                 if click_duration <= DOUBLE_CLICK_INTERVAL && new_click_pos == self.0.click_pos {
                     if !self.0.double_click {
-                        self.dispatch_direct_or_hovered(
+                        self.dispatch_direct_or_up(
                             WindowEvent::MouseDoubleClick(*button),
                             self.0.captured,
+                            self.0.hovered,
                             true,
                         );
                         self.0.double_click = true;
@@ -451,6 +452,20 @@ impl<'a> BackendContext<'a> {
                     MouseButton::Left => {
                         self.0.mouse.left.pos_down = (self.0.mouse.cursorx, self.0.mouse.cursory);
                         self.0.mouse.left.pressed = self.0.hovered;
+                        self.0.triggered = self.0.hovered;
+                        if self
+                            .0
+                            .style
+                            .abilities
+                            .get(self.0.hovered)
+                            .filter(|abilities| abilities.contains(Abilities::FOCUSABLE))
+                            .is_some()
+                        {
+                            self.with_current(self.0.hovered, |cx| cx.focus_with_visibility(false));
+                        }
+                        self.with_current(self.0.hovered, |cx| {
+                            cx.emit(WindowEvent::TriggerDown { mouse: true })
+                        });
                     }
                     MouseButton::Right => {
                         self.0.mouse.right.pos_down = (self.0.mouse.cursorx, self.0.mouse.cursory);
@@ -463,7 +478,7 @@ impl<'a> BackendContext<'a> {
                     _ => {}
                 }
 
-                self.dispatch_direct_or_hovered(event, self.0.captured, true);
+                self.dispatch_direct_or_up(event, self.0.captured, self.0.hovered, true);
             }
             WindowEvent::MouseUp(button) => {
                 match button {
@@ -471,6 +486,12 @@ impl<'a> BackendContext<'a> {
                         self.0.mouse.left.pos_up = (self.0.mouse.cursorx, self.0.mouse.cursory);
                         self.0.mouse.left.released = self.0.hovered;
                         self.0.mouse.left.state = MouseButtonState::Released;
+                        self.dispatch_direct_or_up(
+                            WindowEvent::TriggerUp { mouse: true },
+                            self.0.captured,
+                            self.0.triggered,
+                            true,
+                        );
                     }
                     MouseButton::Right => {
                         self.0.mouse.right.pos_up = (self.0.mouse.cursorx, self.0.mouse.cursory);
@@ -484,7 +505,7 @@ impl<'a> BackendContext<'a> {
                     }
                     _ => {}
                 }
-                self.dispatch_direct_or_hovered(event, self.0.captured, true);
+                self.dispatch_direct_or_up(event, self.0.captured, self.0.hovered, true);
             }
             WindowEvent::MouseScroll(_, _) => {
                 self.0.event_queue.push_back(Event::new(event).target(self.0.hovered));
@@ -522,22 +543,18 @@ impl<'a> BackendContext<'a> {
                 }
 
                 if *code == Code::Tab {
-                    let focused = self.0.focused;
-                    if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(focused) {
-                        pseudo_classes.set(PseudoClass::FOCUS, false);
-                    }
+                    self.0.set_focus_pseudo_classes(self.0.focused, false, true);
 
                     if self.0.modifiers.contains(Modifiers::SHIFT) {
-                        let prev_focused = if let Some(prev_focused) =
-                            focus_backward(&self.0.tree, &self.0.style, self.0.focused)
-                        {
-                            prev_focused
-                        } else {
-                            TreeIterator::full(&self.0.tree)
-                                .filter(|node| is_navigatable(&self.0.style, *node))
-                                .next_back()
-                                .unwrap_or(Entity::root())
-                        };
+                        let prev_focused =
+                            if let Some(prev_focused) = focus_backward(&self.0, self.0.focused) {
+                                prev_focused
+                            } else {
+                                TreeIterator::full(&self.0.tree)
+                                    .filter(|node| is_navigatable(&self.0, *node))
+                                    .next_back()
+                                    .unwrap_or(Entity::root())
+                            };
 
                         if prev_focused != self.0.focused {
                             self.0.event_queue.push_back(
@@ -549,16 +566,15 @@ impl<'a> BackendContext<'a> {
                             self.0.focused = prev_focused;
                         }
                     } else {
-                        let next_focused = if let Some(next_focused) =
-                            focus_forward(&self.0.tree, &self.0.style, self.0.focused)
-                        {
-                            next_focused
-                        } else {
-                            TreeIterator::full(&self.0.tree)
-                                .filter(|node| is_navigatable(&self.0.style, *node))
-                                .next()
-                                .unwrap_or(Entity::root())
-                        };
+                        let next_focused =
+                            if let Some(next_focused) = focus_forward(&self.0, self.0.focused) {
+                                next_focused
+                            } else {
+                                TreeIterator::full(&self.0.tree)
+                                    .filter(|node| is_navigatable(&self.0, *node))
+                                    .next()
+                                    .unwrap_or(Entity::root())
+                            };
 
                         if next_focused != self.0.focused {
                             self.0.event_queue.push_back(
@@ -571,34 +587,50 @@ impl<'a> BackendContext<'a> {
                         }
                     }
 
-                    let focused = self.0.focused;
-                    if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(focused) {
-                        pseudo_classes.set(PseudoClass::FOCUS, true);
-                    }
+                    self.0.set_focus_pseudo_classes(self.0.focused, true, true);
 
                     self.style().needs_relayout = true;
                     self.style().needs_redraw = true;
                     self.style().needs_restyle = true;
                 }
 
+                if matches!(*code, Code::Enter | Code::NumpadEnter | Code::Space) {
+                    self.0.triggered = self.0.focused;
+                    self.0.with_current(self.0.focused, |cx| {
+                        cx.emit(WindowEvent::TriggerDown { mouse: false })
+                    });
+                }
+
                 self.0.event_queue.push_back(Event::new(event).target(self.0.focused));
             }
             WindowEvent::KeyUp(_, _) | WindowEvent::CharInput(_) => {
+                if matches!(
+                    event,
+                    WindowEvent::KeyUp(Code::Enter | Code::NumpadEnter | Code::Space, _)
+                ) {
+                    self.0.with_current(self.0.triggered, |cx| {
+                        cx.emit(WindowEvent::TriggerUp { mouse: false })
+                    });
+                }
                 self.0.event_queue.push_back(Event::new(event).target(self.0.focused));
             }
             _ => {}
         }
     }
 
-    pub fn dispatch_direct_or_hovered(&mut self, event: WindowEvent, target: Entity, root: bool) {
-        if target != Entity::null() {
+    pub fn dispatch_direct_or_up(
+        &mut self,
+        event: WindowEvent,
+        direct: Entity,
+        up: Entity,
+        root: bool,
+    ) {
+        if direct != Entity::null() {
             self.0
                 .event_queue
-                .push_back(Event::new(event).target(target).propagate(Propagation::Direct));
-        } else if self.0.hovered != Entity::root() || root {
-            self.0
-                .event_queue
-                .push_back(Event::new(event).target(self.0.hovered).propagate(Propagation::Up));
+                .push_back(Event::new(event).target(direct).propagate(Propagation::Direct));
+        } else if up != Entity::root() || root {
+            self.0.event_queue.push_back(Event::new(event).target(up).propagate(Propagation::Up));
         }
     }
 }
