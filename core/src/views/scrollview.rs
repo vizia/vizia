@@ -106,13 +106,13 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                         ((data.child_x - data.parent_x) * data.scroll_x).round()
                             / handle.cx.style.dpi_factor as f32
                     } else {
-                        0.0
+                        settings.initial_x
                     };
                     let top = if settings.scroll_y {
                         ((data.child_y - data.parent_y) * data.scroll_y).round()
                             / handle.cx.style.dpi_factor as f32
                     } else {
-                        0.0
+                        settings.initial_y
                     };
                     handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
                 }
