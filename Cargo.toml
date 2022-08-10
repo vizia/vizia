@@ -206,6 +206,10 @@ path = "examples/ignore_default_theme.rs"
 name = "outline"
 path = "examples/style/outline.rs"
 
+[[example]]
+name = "svg"
+path = "examples/svg.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard"]
@@ -227,3 +231,4 @@ chrono = "0.4.19"
 image = { version = "0.24.0", default-features = false, features = ["png"] }
 reqwest = { version = "0.11.9", features = ["blocking"] }
 instant = "0.1.12"
+usvg = "*"
