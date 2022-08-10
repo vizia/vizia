@@ -1,9 +1,8 @@
 use std::collections::HashSet;
 
-use femtovg::{renderer::OpenGl, Canvas, TextContext};
+use femtovg::{renderer::OpenGl, Canvas};
 use fnv::FnvHashMap;
 use instant::{Duration, Instant};
-use morphorm::layout;
 
 use super::EventProxy;
 #[cfg(debug_assertions)]
@@ -16,7 +15,7 @@ use crate::{
     id::GenerationalId,
     layout::geometry_changed,
     prelude::*,
-    resource::{FontOrId, ResourceManager},
+    resource::FontOrId,
     state::ModelOrView,
     style::Style,
     systems::*,
