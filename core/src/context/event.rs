@@ -27,7 +27,7 @@ pub struct EventContext<'a> {
     pub(crate) focused: &'a mut Entity,
     pub(crate) hovered: &'a Entity,
     pub(crate) style: &'a mut Style,
-    entity_identifiers: &'a HashMap<EntityIdentifier, Entity>,
+    entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a CachedData,
     pub draw_cache: &'a DrawCache,
     pub tree: &'a Tree,
@@ -74,8 +74,8 @@ impl<'a> EventContext<'a> {
     }
 
     /// Finds the entity that identifier identifies
-    pub fn resolve_entity_identifier(&self, identity: EntityIdentifier) -> Option<Entity> {
-        self.entity_identifiers.get(&identity).cloned()
+    pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
+        self.entity_identifiers.get(identity).cloned()
     }
 
     pub fn current(&self) -> Entity {

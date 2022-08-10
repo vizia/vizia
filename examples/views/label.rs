@@ -45,14 +45,13 @@ fn main() {
                 .width(Pixels(200.0))
                 .text_wrap(false);
 
-            let checkbox_identifier = cx.new_entity_identifier();
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, AppData::checked)
                     .on_toggle(|cx| cx.emit(AppEvent::Toggle))
-                    .identify(checkbox_identifier);
+                    .identify("checkbox_1");
 
                 Label::new(cx, "A label that is describing a form element also acts as a trigger")
-                    .describing(checkbox_identifier);
+                    .describing("checkbox_1");
             });
         })
         .child_space(Stretch(1.0))

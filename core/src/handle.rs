@@ -46,8 +46,8 @@ impl<'a, T> Handle<'a, T> {
         self.focusable(false)
     }
 
-    pub fn identify(self, entity_identifier: EntityIdentifier) -> Self {
-        self.cx.entity_identifiers.insert(entity_identifier, self.entity);
+    pub fn identify(self, entity_identifier: impl Into<String>) -> Self {
+        self.cx.entity_identifiers.insert(entity_identifier.into(), self.entity);
         self
     }
 

@@ -22,11 +22,3 @@ impl Entity {
 }
 
 impl_generational_id!(Entity);
-
-/// An entity identifier is an identifier that points to an entity (which may change).
-///
-/// This type is part of the prelude.
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct EntityIdentifier(u32);
-
-impl_generational_id!(EntityIdentifier);

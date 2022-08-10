@@ -84,7 +84,7 @@ use crate::prelude::*;
 /// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
 /// ```
 pub struct Label {
-    describing: Option<EntityIdentifier>,
+    describing: Option<String>,
 }
 
 impl Label {
@@ -130,12 +130,11 @@ impl Handle<'_, Label> {
     /// #
     /// # AppData { value: false }.build(cx);
     /// #
-    /// let checkbox_identifier = cx.new_entity_identifier();
-    /// Checkbox::new(cx, AppData::value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue)).identify(checkbox_identifier);
-    /// Label::new(cx, "hello").describing(checkbox_identifier);
+    /// Checkbox::new(cx, AppData::value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue)).identify("checkbox_identifier");
+    /// Label::new(cx, "hello").describing("checkbox_identifier");
     /// ```
-    pub fn describing(self, entity_identifier: EntityIdentifier) -> Self {
-        self.modify(|label| label.describing = Some(entity_identifier))
+    pub fn describing(self, entity_identifier: impl Into<String>) -> Self {
+        self.modify(|label| label.describing = Some(entity_identifier.into()))
     }
 }
 
@@ -149,7 +148,7 @@ impl View for Label {
             WindowEvent::TriggerDown { .. } | WindowEvent::TriggerUp { .. } => {
                 if cx.current() == cx.mouse.left.pressed && meta.target == cx.current() {
                     if let Some(describing) =
-                        self.describing.and_then(|identity| cx.resolve_entity_identifier(identity))
+                        self.describing.as_ref().and_then(|identity| cx.resolve_entity_identifier(&identity))
                     {
                         let old = cx.current;
                         cx.current = describing;
