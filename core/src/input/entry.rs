@@ -1,4 +1,4 @@
-use crate::context::Context;
+use crate::context::EventContext;
 
 /// An entry inside of a [`Keymap`](crate::prelude::Keymap).
 ///
@@ -12,7 +12,7 @@ where
     T: 'static + Clone + PartialEq + Send + Sync,
 {
     action: T,
-    on_action: fn(&mut Context),
+    on_action: fn(&mut EventContext),
 }
 
 impl<T> KeymapEntry<T>
@@ -33,7 +33,7 @@ where
     /// #
     /// KeymapEntry::new(Action::One, |_| println!("Action One"));
     /// ```
-    pub fn new(action: T, on_action: fn(&mut Context)) -> Self {
+    pub fn new(action: T, on_action: fn(&mut EventContext)) -> Self {
         Self { action, on_action }
     }
 
@@ -43,7 +43,7 @@ where
     }
 
     /// Returns the `on_action` callback function of the keymap entry.
-    pub fn on_action(&self) -> &fn(&mut Context) {
+    pub fn on_action(&self) -> &fn(&mut EventContext) {
         &self.on_action
     }
 }

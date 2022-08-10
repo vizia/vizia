@@ -6,24 +6,31 @@ use baseview::{
 use raw_window_handle::HasRawWindowHandle;
 
 use crate::proxy::BaseviewProxy;
+use vizia_core::context::backend::*;
 use vizia_core::prelude::*;
+
+static DEFAULT_THEME: &str = include_str!("../../core/resources/themes/default_theme.css");
+static DEFAULT_LAYOUT: &str = include_str!("../../core/resources/themes/default_layout.css");
 
 /// Handles a vizia_baseview application
 pub(crate) struct ViziaWindow {
     application: ApplicationRunner,
-    builder: Option<Box<dyn Fn(&mut Context) + Send>>,
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
 }
 
 impl ViziaWindow {
     fn new(
-        cx: Context,
+        mut cx: Context,
         win_desc: WindowDescription,
         scale_policy: WindowScalePolicy,
         window: &mut baseview::Window,
-        builder: Option<Box<dyn Fn(&mut Context) + Send>>,
+        builder: Option<Box<dyn FnOnce(&mut Context) + Send>>,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ) -> ViziaWindow {
+        if let Some(builder) = builder {
+            (builder)(&mut cx);
+        }
+
         let context = window.gl_context().expect("Window was created without OpenGL support");
         let renderer = load_renderer(window);
 
@@ -31,7 +38,7 @@ impl ViziaWindow {
         let application = ApplicationRunner::new(cx, win_desc, scale_policy, renderer);
         unsafe { context.make_not_current() };
 
-        ViziaWindow { application, builder, on_idle }
+        ViziaWindow { application, on_idle }
     }
 
     /// Open a new child window.
@@ -44,6 +51,7 @@ impl ViziaWindow {
         scale_policy: WindowScalePolicy,
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+        ignore_default_theme: bool,
     ) -> WindowHandle
     where
         P: HasRawWindowHandle,
@@ -65,8 +73,18 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.environment().needs_rebuild = true;
-                context.set_event_proxy(Box::new(BaseviewProxy()));
+
+                context.ignore_default_theme = ignore_default_theme;
+
+                context.add_theme(DEFAULT_LAYOUT);
+
+                if !ignore_default_theme {
+                    context.add_theme(DEFAULT_THEME);
+                }
+
+                let mut cx = BackendContext::new(&mut context);
+
+                cx.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
                     context,
                     win_desc,
@@ -87,6 +105,7 @@ impl ViziaWindow {
         scale_policy: WindowScalePolicy,
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+        ignore_default_theme: bool,
     ) -> WindowHandle
     where
         F: Fn(&mut Context),
@@ -106,8 +125,18 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.environment().needs_rebuild = true;
-                context.set_event_proxy(Box::new(BaseviewProxy()));
+
+                context.ignore_default_theme = ignore_default_theme;
+
+                context.add_theme(DEFAULT_LAYOUT);
+
+                if !ignore_default_theme {
+                    context.add_theme(DEFAULT_THEME);
+                }
+
+                let mut cx = BackendContext::new(&mut context);
+
+                cx.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
                     context,
                     win_desc,
@@ -128,6 +157,7 @@ impl ViziaWindow {
         scale_policy: WindowScalePolicy,
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+        ignore_default_theme: bool,
     ) where
         F: Fn(&mut Context),
         F: 'static + Send,
@@ -146,8 +176,18 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                context.environment().needs_rebuild = true;
-                context.set_event_proxy(Box::new(BaseviewProxy()));
+
+                context.ignore_default_theme = ignore_default_theme;
+
+                context.add_theme(DEFAULT_LAYOUT);
+
+                if !ignore_default_theme {
+                    context.add_theme(DEFAULT_THEME);
+                }
+
+                let mut cx = BackendContext::new(&mut context);
+
+                cx.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
                     context,
                     win_desc,
@@ -164,8 +204,6 @@ impl ViziaWindow {
 impl WindowHandler for ViziaWindow {
     fn on_frame(&mut self, window: &mut Window) {
         let context = window.gl_context().expect("Window was created without OpenGL support");
-
-        self.application.rebuild(&self.builder);
 
         self.application.on_frame_update();
 

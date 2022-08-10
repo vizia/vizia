@@ -190,6 +190,22 @@ path = "examples/mouse_delta.rs"
 name = "window_modifiers"
 path = "examples/window_modifiers.rs"
 
+[[example]]
+name = "long_list"
+path = "examples/lists/long_list.rs"
+
+[[example]]
+name = "locale_binding"
+path = "examples/localization/locale_binding.rs"
+
+[[example]]
+name = "ignore_default_theme"
+path = "examples/ignore_default_theme.rs"
+
+[[example]]
+name = "outline"
+path = "examples/style/outline.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard"]

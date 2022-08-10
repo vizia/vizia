@@ -76,6 +76,8 @@ pub struct ResourceManager {
 
 impl ResourceManager {
     pub fn new() -> Self {
+        let locale = sys_locale::get_locale().map(|l| l.parse().ok()).flatten().unwrap_or_default();
+
         ResourceManager {
             stylesheets: Vec::new(),
             themes: Vec::new(),
@@ -85,7 +87,7 @@ impl ResourceManager {
                 LanguageIdentifier::default(),
                 FluentBundle::new(vec![LanguageIdentifier::default()]),
             )]),
-            language: LanguageIdentifier::default(),
+            language: locale,
             image_loader: None,
             count: 0,
         }
@@ -98,7 +100,8 @@ impl ResourceManager {
             .filter(|&x| x != &LanguageIdentifier::default())
             .collect::<Vec<_>>();
         let locale = sys_locale::get_locale()
-            .map(|l| l.parse().unwrap())
+            .map(|l| l.parse().ok())
+            .flatten()
             .unwrap_or_else(|| available.first().copied().cloned().unwrap_or_default());
         let default = LanguageIdentifier::default();
         let default_ref = &default; // ???
@@ -120,8 +123,15 @@ impl ResourceManager {
         self.renegotiate_language();
     }
 
-    pub fn current_translation(&self) -> &FluentBundle<FluentResource> {
-        self.translations.get(&self.language).unwrap()
+    pub fn current_translation(
+        &self,
+        locale: &LanguageIdentifier,
+    ) -> &FluentBundle<FluentResource> {
+        if let Some(bundle) = self.translations.get(locale) {
+            bundle
+        } else {
+            self.translations.get(&self.language).unwrap()
+        }
     }
 
     pub(crate) fn add_font(&mut self, _name: &str, _path: &str) {}
@@ -140,11 +150,17 @@ impl ResourceManager {
     }
 
     pub fn evict_unused_images(&mut self) {
-        self.images.retain(|_, img| {
-            !((!img.used
-                && img.retention_policy == ImageRetentionPolicy::DropWhenUnusedForOneFrame)
-                || (img.observers.len() == 0
-                    && img.retention_policy == ImageRetentionPolicy::DropWhenNoObservers))
+        self.images.retain(|name, img| match img.retention_policy {
+            ImageRetentionPolicy::DropWhenUnusedForOneFrame => {
+                if !img.used {
+                    println!("Evict image: {}", name);
+                }
+                img.used
+            }
+
+            ImageRetentionPolicy::DropWhenNoObservers => !img.observers.is_empty(),
+
+            ImageRetentionPolicy::Forever => true,
         });
     }
 }

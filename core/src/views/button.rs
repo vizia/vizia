@@ -57,7 +57,7 @@ use crate::prelude::*;
 /// );
 /// ```
 pub struct Button {
-    action: Option<Box<dyn Fn(&mut Context)>>,
+    action: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
 impl Button {
@@ -74,13 +74,15 @@ impl Button {
     /// ```
     pub fn new<A, F, V>(cx: &mut Context, action: A, content: F) -> Handle<Self>
     where
-        A: 'static + Fn(&mut Context),
+        A: 'static + Fn(&mut EventContext),
         F: FnOnce(&mut Context) -> Handle<V>,
         V: 'static + View,
     {
-        Self { action: Some(Box::new(action)) }.build(cx, move |cx| {
-            (content)(cx).hoverable(false).focusable(false);
-        })
+        Self { action: Some(Box::new(action)) }
+            .build(cx, move |cx| {
+                (content)(cx).hoverable(false);
+            })
+            .keyboard_navigatable(true)
     }
 }
 
@@ -89,17 +91,18 @@ impl View for Button {
         Some("button")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+            WindowEvent::TriggerDown { .. } => {
                 cx.set_active(true);
                 cx.capture();
+                cx.focus();
                 if let Some(callback) = &self.action {
                     (callback)(cx);
                 }
             }
 
-            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+            WindowEvent::TriggerUp { .. } => {
                 if meta.target == cx.current() {
                     cx.release();
                     cx.set_active(false);

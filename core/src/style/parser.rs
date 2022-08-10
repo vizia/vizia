@@ -6,6 +6,7 @@ use cssparser::{
 };
 
 use crate::animation::Transition;
+use crate::id::GenerationalId;
 use crate::style::color::Color;
 use crate::style::property::Property;
 use crate::style::selector::{Selector, SelectorRelation};
@@ -272,6 +273,8 @@ fn parse_selectors<'i, 't>(
                     "checked" => selector.pseudo_classes.insert(PseudoClass::CHECKED),
                     "selected" => selector.pseudo_classes.insert(PseudoClass::SELECTED),
                     "custom" => selector.pseudo_classes.insert(PseudoClass::CUSTOM),
+                    "focus-within" => selector.pseudo_classes.insert(PseudoClass::FOCUS_WITHIN),
+                    "focus-visible" => selector.pseudo_classes.insert(PseudoClass::FOCUS_VISIBLE),
 
                     _ => {
                         let parse_error = ParseError {
@@ -427,6 +430,12 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "border-bottom-right-shape" => {
                 Property::BorderBottomRightShape(parse_border_corner_shape(input)?)
             }
+
+            "outline-width" => Property::OutlineWidth(parse_units(input)?),
+
+            "outline-color" => Property::OutlineColor(parse_color(input)?),
+
+            "outline-offset" => Property::OutlineOffset(parse_units(input)?),
 
             "opacity" => Property::Opacity(parse_length_or_percentage(input)?),
 

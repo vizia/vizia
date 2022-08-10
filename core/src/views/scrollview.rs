@@ -26,7 +26,7 @@ pub enum ScrollEvent {
 }
 
 impl Model for ScrollData {
-    fn event(&mut self, _cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|scroll_update, meta| {
             match scroll_update {
                 ScrollEvent::ScrollX(f) => self.scroll_x = (self.scroll_x + *f).clamp(0.0, 1.0),
@@ -99,18 +99,18 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         VStack::new(cx, content)
             .class("scroll_content")
             .bind(data.clone(), move |handle, data| {
-                let dpi_factor = handle.cx.style().dpi_factor;
+                let dpi_factor = handle.cx.style.dpi_factor;
                 if dpi_factor > 0.0 {
                     let data = data.get(handle.cx);
                     let left = if settings.scroll_x {
                         ((data.child_x - data.parent_x) * data.scroll_x).round()
-                            / handle.cx.style().dpi_factor as f32
+                            / handle.cx.style.dpi_factor as f32
                     } else {
                         0.0
                     };
                     let top = if settings.scroll_y {
                         ((data.child_y - data.parent_y) * data.scroll_y).round()
-                            / handle.cx.style().dpi_factor as f32
+                            / handle.cx.style.dpi_factor as f32
                     } else {
                         0.0
                     };
@@ -122,8 +122,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                     || geo.contains(GeometryChanged::WIDTH_CHANGED)
                 {
                     let current = cx.current();
-                    let width = cx.cache().get_width(current);
-                    let height = cx.cache().get_height(current);
+                    let width = cx.cache.get_width(current);
+                    let height = cx.cache.get_height(current);
                     cx.emit(ScrollEvent::ChildGeo(width, height));
                 }
             });
@@ -161,22 +161,22 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
         Some("scrollview")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::GeometryChanged(geo) => {
                 if geo.contains(GeometryChanged::HEIGHT_CHANGED)
                     || geo.contains(GeometryChanged::WIDTH_CHANGED)
                 {
                     let current = cx.current();
-                    let width = cx.cache().get_width(current);
-                    let height = cx.cache().get_height(current);
+                    let width = cx.cache.get_width(current);
+                    let height = cx.cache.get_height(current);
                     cx.emit(ScrollEvent::ParentGeo(width, height));
                 }
             }
 
             WindowEvent::MouseScroll(x, y) => {
                 let (x, y) =
-                    if cx.modifiers().contains(Modifiers::SHIFT) { (-*y, *x) } else { (*x, -*y) };
+                    if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, *x) } else { (*x, -*y) };
 
                 // what percentage of the negative space does this cross?
                 let data = self.data.get(cx);

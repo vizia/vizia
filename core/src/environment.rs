@@ -1,7 +1,11 @@
+use unic_langid::LanguageIdentifier;
+use vizia_derive::Lens;
+
+use crate::{context::EventContext, events::Event, state::Lens, state::Model};
+
+#[derive(Lens)]
 pub struct Environment {
-    // Signifies whether the app should be rebuilt.
-    pub needs_rebuild: bool,
-    pub include_default_theme: bool,
+    pub locale: LanguageIdentifier,
 }
 
 impl Default for Environment {
@@ -12,14 +16,28 @@ impl Default for Environment {
 
 impl Environment {
     pub fn new() -> Self {
-        Self { needs_rebuild: false, include_default_theme: true }
+        let locale = sys_locale::get_locale().map(|l| l.parse().ok()).flatten().unwrap_or_default();
+
+        Self { locale }
     }
 }
 
-/// Methods which control the environment the application will run in. This trait is implemented for
-/// Application.
-///
-/// This trait is part of the prelude.
-pub trait Env {
-    fn ignore_default_styles(self) -> Self;
+pub enum EnvironmentEvent {
+    SetLocale(LanguageIdentifier),
+    UseSystemLocale,
+}
+
+impl Model for Environment {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|event, _| match event {
+            EnvironmentEvent::SetLocale(locale) => {
+                self.locale = locale.clone();
+            }
+
+            EnvironmentEvent::UseSystemLocale => {
+                self.locale =
+                    sys_locale::get_locale().map(|l| l.parse().unwrap()).unwrap_or_default();
+            }
+        });
+    }
 }

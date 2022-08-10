@@ -11,7 +11,7 @@ bitflags! {
     /// A bitflag of possible pseudoclasses.
     ///
     /// This type is part of the prelude.
-    pub struct PseudoClass: u8 {
+    pub struct PseudoClass: u16 {
         const HOVER = 1;
         const OVER = 1 << 1;
         const ACTIVE = 1 << 2;
@@ -20,6 +20,8 @@ bitflags! {
         const CHECKED = 1 << 5;
         const SELECTED = 1 << 6;
         const CUSTOM = 1 << 7;
+        const FOCUS_WITHIN = 1<<8;
+        const FOCUS_VISIBLE = 1 << 9;
     }
 }
 
@@ -51,6 +53,12 @@ impl std::fmt::Display for PseudoClass {
         }
         if self.contains(PseudoClass::SELECTED) {
             write!(f, ":selected")?;
+        }
+        if self.contains(PseudoClass::FOCUS_WITHIN) {
+            write!(f, ":focus-within")?;
+        }
+        if self.contains(PseudoClass::FOCUS_VISIBLE) {
+            write!(f, ":focus-visible")?;
         }
 
         Ok(())
@@ -143,6 +151,39 @@ impl Selector {
     //         asterisk: false,
     //     }
     // }
+
+    pub fn is_empty(&self) -> bool {
+        self.id.is_none() && self.element.is_none() && self.classes.is_empty()
+    }
+
+    // Returns true if the selectors are identical unless either are empty
+    pub fn same(&self, entity_selector: &Selector) -> bool {
+        if self.is_empty() || entity_selector.is_empty() {
+            return false;
+        }
+
+        if self.asterisk != entity_selector.asterisk {
+            return false;
+        }
+
+        if self.id.is_some() && self.id != entity_selector.id {
+            return false;
+        }
+
+        if self.element.is_some() && self.element != entity_selector.element {
+            return false;
+        }
+
+        if !self.classes.is_empty() && self.classes != entity_selector.classes {
+            return false;
+        }
+
+        if self.pseudo_classes != entity_selector.pseudo_classes {
+            return false;
+        }
+
+        true
+    }
 
     pub fn matches(&self, entity_selector: &Selector) -> bool {
         // Universal selector always matches

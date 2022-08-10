@@ -77,6 +77,11 @@ pub(crate) enum Property {
     BorderBottomLeftShape(BorderCornerShape),
     BorderBottomRightShape(BorderCornerShape),
 
+    // Outline
+    OutlineWidth(Units),
+    OutlineColor(Color),
+    OutlineOffset(Units),
+
     // Background
     BackgroundColor(Color),
     BackgroundImage(String),

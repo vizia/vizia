@@ -83,7 +83,9 @@ use crate::prelude::*;
 /// #
 /// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
 /// ```
-pub struct Label;
+pub struct Label {
+    describing: Option<String>,
+}
 
 impl Label {
     /// Creates a new label.
@@ -101,12 +103,69 @@ impl Label {
     where
         T: ToString,
     {
-        Self {}.build(cx, |_| {}).text(text)
+        Self { describing: None }.build(cx, |_| {}).text(text)
+    }
+}
+
+impl Handle<'_, Label> {
+    /// Which form element does this label describe.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # #[derive(Lens)]
+    /// # struct AppData {
+    /// #     value: bool,
+    /// # }
+    /// #
+    /// # impl Model for AppData {}
+    /// #
+    /// # enum AppEvent {
+    /// #     ToggleValue,
+    /// # }
+    /// #
+    /// # let cx = &mut Context::new();
+    /// #
+    /// # AppData { value: false }.build(cx);
+    /// #
+    /// Checkbox::new(cx, AppData::value).on_toggle(|cx| cx.emit(AppEvent::ToggleValue)).id("checkbox_identifier");
+    /// Label::new(cx, "hello").describing("checkbox_identifier");
+    /// ```
+    pub fn describing(self, entity_identifier: impl Into<String>) -> Self {
+        self.modify(|label| label.describing = Some(entity_identifier.into()))
     }
 }
 
 impl View for Label {
     fn element(&self) -> Option<&'static str> {
         Some("label")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::TriggerDown { .. } | WindowEvent::TriggerUp { .. } => {
+                if cx.current() == cx.mouse.left.pressed && meta.target == cx.current() {
+                    if let Some(describing) = self
+                        .describing
+                        .as_ref()
+                        .and_then(|identity| cx.resolve_entity_identifier(&identity))
+                    {
+                        let old = cx.current;
+                        cx.current = describing;
+                        cx.focus_with_visibility(false);
+                        let message = if matches!(window_event, WindowEvent::TriggerDown { .. }) {
+                            WindowEvent::TriggerDown { mouse: false }
+                        } else {
+                            WindowEvent::TriggerUp { mouse: false }
+                        };
+                        cx.emit_to(describing, message);
+                        cx.current = old;
+                    }
+                }
+            }
+            _ => {}
+        });
     }
 }

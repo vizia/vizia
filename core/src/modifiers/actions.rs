@@ -8,7 +8,7 @@ use crate::prelude::*;
 // Press
 pub struct Press<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
+    action: Option<Box<dyn Fn(&mut EventContext)>>,
 
     p: PhantomData<V>,
 }
@@ -16,7 +16,7 @@ pub struct Press<V: View> {
 impl<V: View> Press<V> {
     pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Press<V>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
@@ -40,14 +40,13 @@ impl<V: View> View for Press<V> {
         self.view.element()
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         self.view.event(cx, event);
 
         event.map(|window_event, _| match window_event {
-            WindowEvent::MouseDown(MouseButton::Left) => {
-                if cx.current() != cx.hovered()
-                    && !cx.hovered().is_descendant_of(cx.tree_ref(), cx.current())
-                {
+            WindowEvent::TriggerDown { mouse } => {
+                let over = if *mouse { cx.hovered() } else { cx.focused() };
+                if cx.current() != over && !over.is_descendant_of(cx.tree, cx.current()) {
                     return;
                 }
                 if let Some(action) = &self.action {
@@ -67,7 +66,7 @@ impl<V: View> View for Press<V> {
 // Release
 pub struct Release<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
+    action: Option<Box<dyn Fn(&mut EventContext)>>,
 
     p: PhantomData<V>,
 }
@@ -75,7 +74,7 @@ pub struct Release<V: View> {
 impl<V: View> Release<V> {
     pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Release<V>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
@@ -99,11 +98,11 @@ impl<V: View> View for Release<V> {
         self.view.element()
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         self.view.event(cx, event);
 
         event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseUp(MouseButton::Left) => {
+            WindowEvent::TriggerDown { .. } => {
                 if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx);
@@ -125,7 +124,7 @@ impl<V: View> View for Release<V> {
 // Hover
 pub struct Hover<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
+    action: Option<Box<dyn Fn(&mut EventContext)>>,
 
     p: PhantomData<V>,
 }
@@ -133,7 +132,7 @@ pub struct Hover<V: View> {
 impl<V: View> Hover<V> {
     pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Hover<V>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
@@ -157,7 +156,7 @@ impl<V: View> View for Hover<V> {
         self.view.element()
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         self.view.event(cx, event);
 
         event.map(|window_event, meta| match window_event {
@@ -181,7 +180,7 @@ impl<V: View> View for Hover<V> {
 // Hover
 pub struct Over<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
+    action: Option<Box<dyn Fn(&mut EventContext)>>,
 
     p: PhantomData<V>,
 }
@@ -189,7 +188,7 @@ pub struct Over<V: View> {
 impl<V: View> Over<V> {
     pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Over<V>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
@@ -213,7 +212,7 @@ impl<V: View> View for Over<V> {
         self.view.element()
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         self.view.event(cx, event);
 
         event.map(|window_event, _| match window_event {
@@ -235,7 +234,7 @@ impl<V: View> View for Over<V> {
 // Leave
 pub struct Leave<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
+    action: Option<Box<dyn Fn(&mut EventContext)>>,
 
     p: PhantomData<V>,
 }
@@ -243,7 +242,7 @@ pub struct Leave<V: View> {
 impl<V: View> Leave<V> {
     pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Leave<V>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
@@ -267,7 +266,7 @@ impl<V: View> View for Leave<V> {
         self.view.element()
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         self.view.event(cx, event);
 
         event.map(|window_event, meta| match window_event {
@@ -291,7 +290,7 @@ impl<V: View> View for Leave<V> {
 // Move
 pub struct Move<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context, f32, f32)>>,
+    action: Option<Box<dyn Fn(&mut EventContext, f32, f32)>>,
 
     p: PhantomData<V>,
 }
@@ -299,7 +298,7 @@ pub struct Move<V: View> {
 impl<V: View> Move<V> {
     pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Move<V>>
     where
-        F: 'static + Fn(&mut Context, f32, f32),
+        F: 'static + Fn(&mut EventContext, f32, f32),
     {
         if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
@@ -323,7 +322,7 @@ impl<V: View> View for Move<V> {
         self.view.element()
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         self.view.event(cx, event);
 
         event.map(|window_event, _| match window_event {
@@ -345,7 +344,7 @@ impl<V: View> View for Move<V> {
 // FocusIn
 pub struct FocusIn<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
+    action: Option<Box<dyn Fn(&mut EventContext)>>,
 
     p: PhantomData<V>,
 }
@@ -353,7 +352,7 @@ pub struct FocusIn<V: View> {
 impl<V: View> FocusIn<V> {
     pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, FocusIn<V>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
@@ -377,7 +376,7 @@ impl<V: View> View for FocusIn<V> {
         self.view.element()
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         self.view.event(cx, event);
 
         event.map(|window_event, _| match window_event {
@@ -399,7 +398,7 @@ impl<V: View> View for FocusIn<V> {
 // FocusOut
 pub struct FocusOut<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
+    action: Option<Box<dyn Fn(&mut EventContext)>>,
 
     p: PhantomData<V>,
 }
@@ -407,7 +406,7 @@ pub struct FocusOut<V: View> {
 impl<V: View> FocusOut<V> {
     pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, FocusOut<V>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
@@ -431,7 +430,7 @@ impl<V: View> View for FocusOut<V> {
         self.view.element()
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         self.view.event(cx, event);
 
         event.map(|window_event, _| match window_event {
@@ -453,7 +452,7 @@ impl<V: View> View for FocusOut<V> {
 // Geo
 pub struct Geo<V: View> {
     view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context, GeometryChanged)>>,
+    action: Option<Box<dyn Fn(&mut EventContext, GeometryChanged)>>,
 
     p: PhantomData<V>,
 }
@@ -461,7 +460,7 @@ pub struct Geo<V: View> {
 impl<V: View> Geo<V> {
     pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Geo<V>>
     where
-        F: 'static + Fn(&mut Context, GeometryChanged),
+        F: 'static + Fn(&mut EventContext, GeometryChanged),
     {
         if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
             if view.downcast_ref::<V>().is_some() {
@@ -485,7 +484,7 @@ impl<V: View> View for Geo<V> {
         self.view.element()
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         self.view.event(cx, event);
 
         event.map(|window_event, meta| match window_event {
@@ -513,102 +512,102 @@ pub trait Actions<'a> {
     type View: View;
     fn on_press<F>(self, action: F) -> Handle<'a, Press<Self::View>>
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext);
 
     fn on_release<F>(self, action: F) -> Handle<'a, Release<Self::View>>
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext);
 
     fn on_hover<F>(self, action: F) -> Handle<'a, Hover<Self::View>>
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext);
 
     fn on_over<F>(self, action: F) -> Handle<'a, Over<Self::View>>
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext);
 
     fn on_leave<F>(self, action: F) -> Handle<'a, Leave<Self::View>>
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext);
 
     fn on_move<F>(self, action: F) -> Handle<'a, Move<Self::View>>
     where
-        F: 'static + Fn(&mut Context, f32, f32);
+        F: 'static + Fn(&mut EventContext, f32, f32);
 
     fn on_focus_in<F>(self, action: F) -> Handle<'a, FocusIn<Self::View>>
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext);
 
     fn on_focus_out<F>(self, action: F) -> Handle<'a, FocusOut<Self::View>>
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext);
 
     fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<Self::View>>
     where
-        F: 'static + Fn(&mut Context, GeometryChanged);
+        F: 'static + Fn(&mut EventContext, GeometryChanged);
 }
 
 impl<'a, V: View> Actions<'a> for Handle<'a, V> {
     type View = V;
     fn on_press<F>(self, action: F) -> Handle<'a, Press<Self::View>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
-        Press::new(self, action)
+        Press::new(self.keyboard_navigatable(true), action)
     }
 
     fn on_release<F>(self, action: F) -> Handle<'a, Release<Self::View>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
-        Release::new(self, action)
+        Release::new(self.keyboard_navigatable(true), action)
     }
 
     fn on_hover<F>(self, action: F) -> Handle<'a, Hover<Self::View>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         Hover::new(self, action)
     }
 
     fn on_over<F>(self, action: F) -> Handle<'a, Over<Self::View>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         Over::new(self, action)
     }
 
     fn on_leave<F>(self, action: F) -> Handle<'a, Leave<Self::View>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
         Leave::new(self, action)
     }
 
     fn on_move<F>(self, action: F) -> Handle<'a, Move<Self::View>>
     where
-        F: 'static + Fn(&mut Context, f32, f32),
+        F: 'static + Fn(&mut EventContext, f32, f32),
     {
         Move::new(self, action)
     }
 
     fn on_focus_in<F>(self, action: F) -> Handle<'a, FocusIn<Self::View>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
-        FocusIn::new(self, action)
+        FocusIn::new(self.keyboard_navigatable(true), action)
     }
 
     fn on_focus_out<F>(self, action: F) -> Handle<'a, FocusOut<Self::View>>
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext),
     {
-        FocusOut::new(self, action)
+        FocusOut::new(self.keyboard_navigatable(true), action)
     }
 
     fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<Self::View>>
     where
-        F: 'static + Fn(&mut Context, GeometryChanged),
+        F: 'static + Fn(&mut EventContext, GeometryChanged),
     {
         Geo::new(self, action)
     }

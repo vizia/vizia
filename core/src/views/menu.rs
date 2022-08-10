@@ -24,6 +24,7 @@ where
         let i = *data.counter.borrow();
         *data.counter.borrow_mut() += 1;
         handle
+            .keyboard_navigatable(true)
             .bind(MenuData::selected, move |handle, selected| {
                 let selected = selected.get(handle.cx) == Some(i);
                 handle.cx.set_selected(selected);
@@ -63,7 +64,7 @@ pub enum MenuEvent {
 }
 
 impl Model for MenuData {
-    fn event(&mut self, _cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|menu_event, meta| match menu_event {
             MenuEvent::SetSelected(sel) => {
                 self.selected = *sel;
@@ -76,7 +77,7 @@ impl Model for MenuData {
 }
 
 impl Model for MenuControllerData {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|menu_event, _| match menu_event {
             MenuEvent::Close => {
                 self.active = false;
@@ -102,13 +103,16 @@ impl MenuController {
             panic!("Building a MenuController inside a MenuController. This is illegal.")
         }
 
-        Self {}.build(cx, move |cx| {
-            MenuControllerData { active }.build(cx);
-            if active {
-                cx.capture();
-            }
-            builder(cx);
-        })
+        Self {}
+            .build(cx, move |cx| {
+                MenuControllerData { active }.build(cx);
+                builder(cx);
+            })
+            .on_build(|cx| {
+                if active {
+                    cx.capture();
+                }
+            })
     }
 }
 
@@ -117,13 +121,13 @@ impl View for MenuController {
         Some("menucontroller")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         let active = cx.data::<MenuControllerData>().unwrap().active;
 
         event.map(|window_event, meta| {
             if active {
                 let current = cx.current();
-                let is_child = cx.hovered().is_descendant_of(cx.tree(), current);
+                let is_child = cx.hovered().is_descendant_of(cx.tree, current);
                 // we capture focus in order to see clicks outside the menus, but we don't want
                 // to deprive our children of their events.
                 // We also want mouse scroll events to be seen by everyone
@@ -132,8 +136,8 @@ impl View for MenuController {
                         && matches!(
                             window_event,
                             WindowEvent::MouseMove(_, _)
-                                | WindowEvent::MouseDown(_)
-                                | WindowEvent::MouseUp(_)
+                                | WindowEvent::TriggerDown { .. }
+                                | WindowEvent::TriggerUp { .. }
                                 | WindowEvent::MouseScroll(_, _)
                                 | WindowEvent::MouseDoubleClick(_)
                         ))
@@ -157,7 +161,7 @@ impl View for MenuController {
                     }
                 }
             } else {
-                if let WindowEvent::MouseDown(_) = window_event {
+                if let WindowEvent::TriggerDown { .. } = window_event {
                     // capture focus on click
                     cx.capture();
                     cx.emit(MenuEvent::Activate);
@@ -251,19 +255,21 @@ impl View for Menu {
 /// A MenuButton is an entry in a menu that can be clicked to perform some action. It has various
 /// constructors depending on whether you want to make this button show a check icon conditionally.
 pub struct MenuButton {
-    action: Option<Box<dyn Fn(&mut Context)>>,
+    action: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
 impl MenuButton {
     pub fn new<F, A>(cx: &mut Context, contents: F, action: A) -> Handle<'_, Over<Self>>
     where
         F: 'static + FnOnce(&mut Context),
-        A: 'static + Fn(&mut Context),
+        A: 'static + Fn(&mut EventContext),
     {
         setup_menu_entry(
-            Self { action: Some(Box::new(action)) }.build(cx, move |cx| {
-                contents(cx);
-            }),
+            Self { action: Some(Box::new(action)) }
+                .build(cx, move |cx| {
+                    contents(cx);
+                })
+                .keyboard_navigatable(true),
             |_| {},
             |_| {},
         )
@@ -275,7 +281,7 @@ impl MenuButton {
         action: A,
     ) -> Handle<'_, Over<Self>>
     where
-        A: 'static + Fn(&mut Context),
+        A: 'static + Fn(&mut EventContext),
     {
         Self::new(
             cx,
@@ -294,7 +300,7 @@ impl MenuButton {
     ) -> Handle<'_, Over<Self>>
     where
         F: 'static + FnOnce(&mut Context),
-        A: 'static + Fn(&mut Context),
+        A: 'static + Fn(&mut EventContext),
         L: Lens<Target = bool>,
     {
         Self::new(
@@ -319,7 +325,7 @@ impl MenuButton {
         lens: L,
     ) -> Handle<'_, Over<Self>>
     where
-        A: 'static + Fn(&mut Context),
+        A: 'static + Fn(&mut EventContext),
         L: 'static + Lens<Target = bool>,
     {
         Self::new_check(
@@ -338,9 +344,9 @@ impl View for MenuButton {
         Some("menubutton")
     }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseDown(MouseButton::Left) => {
+            WindowEvent::TriggerDown { .. } => {
                 if let Some(callback) = &self.action {
                     callback(cx);
                     cx.emit(MenuEvent::Close);

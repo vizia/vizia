@@ -3,8 +3,10 @@ use std::{
     collections::HashMap,
 };
 
-use crate::prelude::*;
 use crate::state::Store;
+use crate::{events::ViewHandler, prelude::*};
+
+use super::StoreId;
 
 /// A trait implemented by application data in order to mutate in response to events.
 ///
@@ -23,7 +25,7 @@ use crate::state::Store;
 /// }
 ///
 /// impl Model for AppData {
-///     fn event(&mut self, cx: &mut Context, event: &mut Event) {
+///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
 ///         event.map(|app_event, _| match app_event {
 ///             AppEvent::Increment => {
 ///                 self.count += 1;
@@ -61,20 +63,13 @@ pub trait Model: 'static + Sized {
     /// }
     /// ```
     fn build(self, cx: &mut Context) {
-        if let Some(data_list) = cx.data.get_mut(cx.current()) {
-            data_list.data.insert(TypeId::of::<Self>(), Box::new(self));
+        if let Some(model_data_store) = cx.data.get_mut(cx.current()) {
+            model_data_store.models.insert(TypeId::of::<Self>(), Box::new(self));
         } else {
-            let mut data_list: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
-            data_list.insert(TypeId::of::<Self>(), Box::new(self));
+            let mut models: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
+            models.insert(TypeId::of::<Self>(), Box::new(self));
             cx.data
-                .insert(
-                    cx.current(),
-                    ModelDataStore {
-                        data: data_list,
-                        lenses_dedup: HashMap::default(),
-                        lenses_dup: vec![],
-                    },
-                )
+                .insert(cx.current(), ModelDataStore { models, stores: HashMap::default() })
                 .expect("Failed to add data");
         }
     }
@@ -99,7 +94,7 @@ pub trait Model: 'static + Sized {
     /// # }
     /// #
     /// impl Model for AppData {
-    ///     fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    ///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
     ///         event.map(|app_event, _| match app_event {
     ///             AppEvent::Increment => {
     ///                 self.count += 1;
@@ -113,12 +108,12 @@ pub trait Model: 'static + Sized {
     /// }
     /// ```
     #[allow(unused_variables)]
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {}
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 }
 
 pub(crate) trait ModelData: Any {
     #[allow(unused_variables)]
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {}
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 
     fn as_any_ref(&self) -> &dyn Any;
 }
@@ -130,7 +125,7 @@ impl dyn ModelData {
 }
 
 impl<T: Model> ModelData for T {
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         <T as Model>::event(self, cx, event);
     }
 
@@ -141,9 +136,22 @@ impl<T: Model> ModelData for T {
 
 #[derive(Default)]
 pub(crate) struct ModelDataStore {
-    pub data: HashMap<TypeId, Box<dyn ModelData>>,
-    pub lenses_dedup: HashMap<TypeId, Box<dyn Store>>,
-    pub lenses_dup: Vec<Box<dyn Store>>,
+    pub models: HashMap<TypeId, Box<dyn ModelData>>,
+    pub stores: HashMap<StoreId, Box<dyn Store>>,
 }
 
 impl Model for () {}
+
+#[derive(Copy, Clone)]
+pub(crate) enum ModelOrView<'a> {
+    Model(&'a dyn ModelData),
+    View(&'a dyn ViewHandler),
+}
+impl<'a> ModelOrView<'a> {
+    pub fn downcast_ref<T: 'static>(self) -> Option<&'a T> {
+        match self {
+            ModelOrView::Model(m) => m.downcast_ref(),
+            ModelOrView::View(v) => v.downcast_ref(),
+        }
+    }
+}

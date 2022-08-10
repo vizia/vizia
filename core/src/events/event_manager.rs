@@ -31,8 +31,8 @@ impl EventManager {
         // Move events from state to event manager
         self.event_queue.extend(context.event_queue.drain(0..));
 
-        if context.tree().changed {
-            self.tree = context.tree().clone();
+        if context.tree.changed {
+            self.tree = context.tree.clone();
         }
 
         // Loop over the events in the event queue
@@ -51,14 +51,27 @@ impl EventManager {
             //     println!("Event: {:?}", event);
             // }
 
-            // Send events to any listeners
+            // Send events to any global listeners
+            let mut global_listeners = vec![];
+            std::mem::swap(&mut context.global_listeners, &mut global_listeners);
+            for listener in &global_listeners {
+                context
+                    .with_current(Entity::root(), |cx| listener(&mut EventContext::new(cx), event));
+            }
+            std::mem::swap(&mut context.global_listeners, &mut global_listeners);
+
+            // Send events to any local listeners
             let listeners =
                 context.listeners.iter().map(|(entity, _)| *entity).collect::<Vec<Entity>>();
             for entity in listeners {
                 if let Some(listener) = context.listeners.remove(&entity) {
                     if let Some(mut event_handler) = context.views.remove(&entity) {
                         context.with_current(entity, |context| {
-                            (listener)(event_handler.as_mut(), context, event);
+                            (listener)(
+                                event_handler.as_mut(),
+                                &mut EventContext::new(context),
+                                event,
+                            );
                         });
 
                         context.views.insert(entity, event_handler);
@@ -127,25 +140,33 @@ impl EventManager {
     }
 }
 
-fn visit_entity(context: &mut Context, entity: Entity, event: &mut Event) {
-    if let Some(mut view) = context.views.remove(&entity) {
-        context.with_current(entity, |context| {
-            view.event(context, event);
+fn visit_entity(cx: &mut Context, entity: Entity, event: &mut Event) {
+    if let Some(mut view) = cx.views.remove(&entity) {
+        cx.with_current(entity, |cx| {
+            view.event(&mut EventContext::new(cx), event);
         });
 
-        context.views.insert(entity, view);
+        cx.views.insert(entity, view);
     }
 
-    if let Some(mut model_list) = context.data.remove(entity) {
-        for (_, model) in model_list.data.iter_mut() {
-            // if event.trace {
-            //     println!("Event: {:?} -> Model {:?}", event, ty);
-            // }
-            context.with_current(entity, |cx| {
-                model.event(cx, event);
-            });
-        }
+    if let Some(ids) = cx.data.get(entity).and_then(|model_data_store| {
+        Some(model_data_store.models.keys().cloned().collect::<Vec<_>>())
+    }) {
+        for id in ids {
+            if let Some(mut model) = cx
+                .data
+                .get_mut(entity)
+                .and_then(|model_data_store| model_data_store.models.remove(&id))
+            {
+                let mut context = EventContext::new(cx);
+                context.current = entity;
 
-        context.data.insert(entity, model_list).expect("Failed to insert data");
+                model.event(&mut context, event);
+
+                cx.data
+                    .get_mut(entity)
+                    .and_then(|model_data_store| model_data_store.models.insert(id, model));
+            }
+        }
     }
 }

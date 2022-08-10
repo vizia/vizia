@@ -29,7 +29,6 @@ button:over {
 
 button:active {
     outer-shadow: 0 1 1 transparent;
-    overflow: hidden;
 }
 
 button:active label {
@@ -59,19 +58,28 @@ button.accent:active label {
     color: #c2d7e7;
 }
 
+button:focus-visible {
+    outline-width: 2px;
+    outline-color: blue;
+}
+
 checkbox {
     width: 20px;
     height: 20px;
-    border-radius: 3px;
+    border-radius: 1px;
     border-width: 1px;
-    border-color: #838383;
-    color: #ffffff00;
-    background-color: #ffffff00;
+    border-color: #666666;
+    background-color: transparent;
     child-space: 1s;
 }
 
 checkbox:hover {
     background-color: #e5e5e5;
+}
+
+checkbox:focus-visible {
+    outline-width: 2px;
+    outline-color: #3c77d2;
 }
 
 checkbox:active {
@@ -80,8 +88,30 @@ checkbox:active {
 }
 
 checkbox:checked {
-    background-color: #005a9e;
-    border-color: #005a9e;
+    background-color: #3c77d2;
+    border-color: #3c77d2;
+    color: #f5f5f5;
+    transition: background-color 0.1 0.0;
+}
+
+checkbox:disabled {
+    border-color: #bdbdbd;
+}
+
+checkbox:hover:disabled {
+    background-color: transparent;
+}
+
+checkbox:checked:hover {
+    background-color: #0082e6;
+    border-color: #0082e6;
+    color: #f5f5f5;
+    transition: background-color 0.1 0.0;
+}
+
+checkbox:checked:disabled {
+    background-color: #bdbdbd;
+    border-color: #bdbdbd;
     color: #f5f5f5;
 }
 
@@ -103,11 +133,11 @@ textbox:hover {
     background-color: #f6f6f6;
 }
 
-textbox:checked {
+textbox:focus {
     border-color: #4c00ff;
 }
 
-textbox:checked .textbox_content {
+textbox:focus .textbox_content {
     caret-color: #ff0000;
     selection-color: #6464c888;
 }
@@ -145,28 +175,67 @@ radiobutton {
     height: 20px;
     border-width: 1px;
     border-radius: 50%;
-    border-color: #888888;
-    background-color: white;
+    border-color: #666666;
+    background-color: transparent;
     child-space: 1s;
 }
 
+radiobutton:hover {
+    background-color: #e5e5e5;
+}
+
+radiobutton:focus-visible {
+    outline-width: 2px;
+    outline-color: blue;
+}
+
 radiobutton:checked {
-    border-color: #005a9e;
-    background-color: #005a9e;
+    border-color: #3c77d2;
+}
+
+radiobutton:checked:hover {
+    border-color: #0082e6;
+}
+
+radiobutton:disabled {
+    border-color: #bdbdbd;
+}
+
+radiobutton:disabled:hover {
+    background-color: transparent;
+}
+
+radiobutton:checked:hover {
+    background-color: transparent;
 }
 
 radiobutton .inner {
-    width: 8px;
-    height: 8px;
+    width: 0px;
+    height: 0px;
     border-radius: 50%;
-    background-color: white;
-    display: none;
+    background-color: #666666;
+    transition: width 0.2 0.0;
+    transition: height 0.2 0.0;
 }
 
 radiobutton:checked .inner {
-    display: flex;
     width: 12px;
     height: 12px;
+    background-color: #3c77d2;
+    transition: width 0.1 0.0;
+    transition: height 0.1 0.0;
+}
+
+radiobutton:hover .inner {
+    background-color: #0082e6;
+}
+
+radiobutton:disabled .inner {
+    width: 12px;
+    height: 12px;
+    background-color: #bdbdbd;
+    transition: width 0.1 0.0;
+    transition: height 0.1 0.0;
 }
 
 /* dropdown .title {
@@ -187,6 +256,11 @@ dropdown .title {
     overflow: visible;
 }
 
+dropdown:focus-within {
+    outline-width: 2px;
+    outline-color: blue;
+}
+
 dropdown>popup {
     outer-shadow: 0 3 5 #00000055;
 }
@@ -199,6 +273,11 @@ dropdown list label {
     width: 1s;
     height: 30px;
     child-left: 6px;
+}
+
+dropdown list label:focus-visible{
+    outline-width: 2px;
+    outline-color: blue;
 }
 
 dropdown vstack {

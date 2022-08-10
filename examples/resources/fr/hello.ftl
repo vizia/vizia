@@ -1,6 +1,6 @@
 hello-world = Bonjour, monde!
-intro = Bienvenue, { $name }
-enter-name = Veuillez saisir votre nom
+intro = Bienvenue, { $name }.
+enter-name = Veuillez saisir votre nom:
 emails =
     { $unread_emails ->
         [one] Vous avez un e-mail non lu.

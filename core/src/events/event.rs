@@ -1,4 +1,5 @@
 use crate::entity::Entity;
+use crate::id::GenerationalId;
 use std::{any::Any, fmt::Debug};
 
 /// Determines how an event propagates through the tree.
