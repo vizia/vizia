@@ -29,7 +29,6 @@ button:over {
 
 button:active {
     outer-shadow: 0 1 1 transparent;
-    overflow: hidden;
 }
 
 button:active label {
@@ -60,8 +59,8 @@ button.accent:active label {
 }
 
 button:focus-visible {
-    border-width: 2px;
-    border-color: blue;
+    outline-width: 2px;
+    outline-color: blue;
 }
 
 checkbox {
@@ -79,8 +78,8 @@ checkbox:hover {
 }
 
 checkbox:focus-visible {
-    border-width: 2px;
-    border-color: #3c77d2;
+    outline-width: 2px;
+    outline-color: #3c77d2;
 }
 
 checkbox:active {
@@ -186,8 +185,8 @@ radiobutton:hover {
 }
 
 radiobutton:focus-visible {
-    border-width: 2px;
-    border-color: blue;
+    outline-width: 2px;
+    outline-color: blue;
 }
 
 radiobutton:checked {
@@ -258,8 +257,8 @@ dropdown .title {
 }
 
 dropdown:focus-within {
-    border-width: 2px;
-    border-color: blue;
+    outline-width: 2px;
+    outline-color: blue;
 }
 
 dropdown>popup {
@@ -277,8 +276,8 @@ dropdown list label {
 }
 
 dropdown list label:focus-visible{
-    border-width: 2px;
-    border-color: blue;
+    outline-width: 2px;
+    outline-color: blue;
 }
 
 dropdown vstack {
