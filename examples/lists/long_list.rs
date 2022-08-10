@@ -37,12 +37,17 @@ fn main() {
         HStack::new(cx, |cx| {
             AppData { long_list: (0..10000).collect() }.build(cx);
 
-            ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                List::new(cx, AppData::long_list, |cx, _, item| {
-                    Label::new(cx, item).width(Pixels(100.0)).height(Pixels(30.0));
-                });
-            });
+            ScrollView::new(
+                cx,
+                ScrollViewSettings { scrollbar_x: false, ..Default::default() },
+                |cx| {
+                    List::new(cx, AppData::long_list, |cx, _, item| {
+                        Label::new(cx, item).width(Pixels(100.0)).height(Pixels(30.0));
+                    });
+                },
+            );
         });
     })
+
     .run();
 }
