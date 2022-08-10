@@ -48,7 +48,7 @@ fn main() {
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, AppData::checked)
                     .on_toggle(|cx| cx.emit(AppEvent::Toggle))
-                    .identify("checkbox_1");
+                    .id("checkbox_1");
 
                 Label::new(cx, "A label that is describing a form element also acts as a trigger")
                     .describing("checkbox_1");

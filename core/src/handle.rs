@@ -46,11 +46,6 @@ impl<'a, T> Handle<'a, T> {
         self.focusable(false)
     }
 
-    pub fn identify(self, entity_identifier: impl Into<String>) -> Self {
-        self.cx.entity_identifiers.insert(entity_identifier.into(), self.entity);
-        self
-    }
-
     pub fn modify<F>(self, f: F) -> Self
     where
         F: FnOnce(&mut T),
@@ -96,9 +91,12 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
-    pub fn id(self, id: &str) -> Self {
-        self.cx.style().ids.insert(self.entity, id.to_owned()).expect("Could not insert id");
+    pub fn id(self, id: impl Into<String>) -> Self {
+        let id = id.into();
+        self.cx.style().ids.insert(self.entity, id.clone()).expect("Could not insert id");
         self.cx.need_restyle();
+
+        self.cx.entity_identifiers.insert(id, self.entity);
 
         self
     }
