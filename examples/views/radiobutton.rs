@@ -67,8 +67,9 @@ fn main() {
                         cx,
                         AppData::option.map(move |option| *option == current_option),
                     )
-                    .on_select(move |cx| cx.emit(AppEvent::ToggleOption(current_option)));
-                    Label::new(cx, &current_option.to_string());
+                    .on_select(move |cx| cx.emit(AppEvent::ToggleOption(current_option)))
+                    .id(format!("button_{i}"));
+                    Label::new(cx, &current_option.to_string()).describing(format!("button_{i}"));
                 })
                 .disabled(if i == 2 { true } else { false })
                 .size(Auto)

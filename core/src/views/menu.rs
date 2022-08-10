@@ -24,6 +24,7 @@ where
         let i = *data.counter.borrow();
         *data.counter.borrow_mut() += 1;
         handle
+            .keyboard_navigatable(true)
             .bind(MenuData::selected, move |handle, selected| {
                 let selected = selected.get(handle.cx) == Some(i);
                 handle.cx.set_selected(selected);
@@ -135,8 +136,8 @@ impl View for MenuController {
                         && matches!(
                             window_event,
                             WindowEvent::MouseMove(_, _)
-                                | WindowEvent::MouseDown(_)
-                                | WindowEvent::MouseUp(_)
+                                | WindowEvent::TriggerDown { .. }
+                                | WindowEvent::TriggerUp { .. }
                                 | WindowEvent::MouseScroll(_, _)
                                 | WindowEvent::MouseDoubleClick(_)
                         ))
@@ -160,7 +161,7 @@ impl View for MenuController {
                     }
                 }
             } else {
-                if let WindowEvent::MouseDown(_) = window_event {
+                if let WindowEvent::TriggerDown { .. } = window_event {
                     // capture focus on click
                     cx.capture();
                     cx.emit(MenuEvent::Activate);
@@ -264,9 +265,11 @@ impl MenuButton {
         A: 'static + Fn(&mut EventContext),
     {
         setup_menu_entry(
-            Self { action: Some(Box::new(action)) }.build(cx, move |cx| {
-                contents(cx);
-            }),
+            Self { action: Some(Box::new(action)) }
+                .build(cx, move |cx| {
+                    contents(cx);
+                })
+                .keyboard_navigatable(true),
             |_| {},
             |_| {},
         )
@@ -343,7 +346,7 @@ impl View for MenuButton {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseDown(MouseButton::Left) => {
+            WindowEvent::TriggerDown { .. } => {
                 if let Some(callback) = &self.action {
                     callback(cx);
                     cx.emit(MenuEvent::Close);

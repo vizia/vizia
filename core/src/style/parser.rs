@@ -273,6 +273,8 @@ fn parse_selectors<'i, 't>(
                     "checked" => selector.pseudo_classes.insert(PseudoClass::CHECKED),
                     "selected" => selector.pseudo_classes.insert(PseudoClass::SELECTED),
                     "custom" => selector.pseudo_classes.insert(PseudoClass::CUSTOM),
+                    "focus-within" => selector.pseudo_classes.insert(PseudoClass::FOCUS_WITHIN),
+                    "focus-visible" => selector.pseudo_classes.insert(PseudoClass::FOCUS_VISIBLE),
 
                     _ => {
                         let parse_error = ParseError {
