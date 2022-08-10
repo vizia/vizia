@@ -147,8 +147,10 @@ impl View for Label {
         event.map(|window_event, meta| match window_event {
             WindowEvent::TriggerDown { .. } | WindowEvent::TriggerUp { .. } => {
                 if cx.current() == cx.mouse.left.pressed && meta.target == cx.current() {
-                    if let Some(describing) =
-                        self.describing.as_ref().and_then(|identity| cx.resolve_entity_identifier(&identity))
+                    if let Some(describing) = self
+                        .describing
+                        .as_ref()
+                        .and_then(|identity| cx.resolve_entity_identifier(&identity))
                     {
                         let old = cx.current;
                         cx.current = describing;

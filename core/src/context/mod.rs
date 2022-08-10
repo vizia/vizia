@@ -60,6 +60,7 @@ pub struct Context {
     pub(crate) modifiers: Modifiers,
 
     pub(crate) captured: Entity,
+    pub(crate) triggered: Entity,
     pub(crate) hovered: Entity,
     pub(crate) focused: Entity,
     pub(crate) cursor_icon_locked: bool,
@@ -104,6 +105,7 @@ impl Context {
             mouse: MouseState::default(),
             modifiers: Modifiers::empty(),
             captured: Entity::null(),
+            triggered: Entity::null(),
             hovered: Entity::root(),
             focused: Entity::root(),
             cursor_icon_locked: false,
@@ -170,6 +172,68 @@ impl Context {
     /// Mark the application as needing to rerun layout computations
     pub fn need_relayout(&mut self) {
         self.style.needs_relayout = true;
+    }
+
+    /// Enables or disables pseudoclasses for the focus of an entity
+    fn set_focus_pseudo_classes(&mut self, focused: Entity, enabled: bool, focus_visible: bool) {
+        #[cfg(debug_assertions)]
+        if enabled {
+            println!(
+            "Focus changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
+            focused,
+            self.tree.get_parent(focused),
+            self.views
+                .get(&focused)
+                .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
+            self.cache.get_posx(focused),
+            self.cache.get_posy(focused),
+            self.cache.get_width(focused),
+            self.cache.get_height(focused),
+        );
+        }
+
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {
+            pseudo_classes.set(PseudoClass::FOCUS, enabled);
+            if !enabled || focus_visible {
+                pseudo_classes.set(PseudoClass::FOCUS_VISIBLE, enabled);
+            }
+        }
+
+        for ancestor in focused.parent_iter(&self.tree) {
+            let entity = ancestor;
+            if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
+                pseudo_classes.set(PseudoClass::FOCUS_WITHIN, enabled);
+            }
+        }
+    }
+
+    /// Sets application focus to the current entity with the specified focus visiblity
+    pub fn focus_with_visibility(&mut self, focus_visible: bool) {
+        let old_focus = self.focused;
+        let new_focus = self.current;
+        self.set_focus_pseudo_classes(old_focus, false, focus_visible);
+        if self.current != self.focused {
+            self.emit_to(old_focus, WindowEvent::FocusOut);
+            self.emit_to(new_focus, WindowEvent::FocusIn);
+            self.focused = self.current;
+        }
+        self.set_focus_pseudo_classes(new_focus, true, focus_visible);
+
+        self.style.needs_relayout = true;
+        self.style.needs_redraw = true;
+        self.style.needs_restyle = true;
+    }
+
+    /// Sets application focus to the current entity using the previous focus visibility
+    pub fn focus(&mut self) {
+        let focused = self.focused;
+        let old_focus_visible = self
+            .style
+            .pseudo_classes
+            .get_mut(focused)
+            .filter(|class| class.contains(PseudoClass::FOCUS_VISIBLE))
+            .is_some();
+        self.focus_with_visibility(old_focus_visible)
     }
 
     /// Sets the checked flag of the current entity
