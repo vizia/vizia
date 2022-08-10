@@ -1,4 +1,4 @@
-use std::any::Any;
+use std::any::{Any, TypeId};
 use std::collections::{HashMap, HashSet, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
@@ -124,6 +124,7 @@ impl<'a> EventContext<'a> {
         );
     }
 
+    /// Set the active state for the current entity.
     pub fn set_active(&mut self, active: bool) {
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(self.current) {
             pseudo_classes.set(PseudoClass::ACTIVE, active);
@@ -134,10 +135,12 @@ impl<'a> EventContext<'a> {
         self.style.needs_redraw = true;
     }
 
+    /// Capture mouse input for the current entity.
     pub fn capture(&mut self) {
         *self.captured = self.current;
     }
 
+    /// Release mouse input capture for current entity.
     pub fn release(&mut self) {
         *self.captured = Entity::null();
     }
@@ -192,7 +195,7 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle = true;
     }
 
-    /// Sets application focus to the current entity using the previous focus visibility
+    /// Sets application focus to the current entity using the previous focus visibility.
     pub fn focus(&mut self) {
         let focused = self.focused();
         let old_focus_visible = self
@@ -204,10 +207,12 @@ impl<'a> EventContext<'a> {
         self.focus_with_visibility(old_focus_visible)
     }
 
+    /// Return the currently hovered entity.
     pub fn hovered(&self) -> Entity {
         *self.hovered
     }
 
+    /// Return the currently focused entity.
     pub fn focused(&self) -> Entity {
         *self.focused
     }
@@ -339,21 +344,23 @@ impl<'a> EventContext<'a> {
 
         std::thread::spawn(move || target(&mut cxp));
     }
+
+    pub fn scale_factor(&self) -> f32 {
+        self.style.dpi_factor as f32
+    }
 }
 
 impl<'a> DataContext for EventContext<'a> {
     fn data<T: 'static>(&self) -> Option<&T> {
-        // return data for the static model
+        // Return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);
         }
 
         for entity in self.current.parent_iter(&self.tree) {
-            if let Some(data_list) = self.data.get(entity) {
-                for (_, model) in data_list.data.iter() {
-                    if let Some(data) = model.downcast_ref::<T>() {
-                        return Some(data);
-                    }
+            if let Some(model_data_store) = self.data.get(entity) {
+                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+                    return model.downcast_ref::<T>();
                 }
             }
 

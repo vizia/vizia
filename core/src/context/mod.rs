@@ -1,20 +1,18 @@
+pub mod backend;
 mod draw;
 mod event;
 mod proxy;
 
-use instant::{Duration, Instant};
-use std::any::Any;
+use instant::Instant;
+use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::error::Error;
 use std::sync::Mutex;
 
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardProvider};
 use femtovg::TextContext;
 use fnv::FnvHashMap;
-use keyboard_types::Code;
-use morphorm::layout;
 use unic_langid::LanguageIdentifier;
 
 pub use draw::*;
@@ -24,27 +22,17 @@ pub use proxy::*;
 use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
-use crate::hover_system::apply_hover;
 use crate::id::{GenerationalId, IdManager};
 use crate::input::{Modifiers, MouseState};
-use crate::layout::geometry_changed;
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
-use crate::state::ModelDataStore;
+use crate::state::{BindingHandler, ModelDataStore};
 use crate::storage::sparse_set::SparseSet;
-use crate::style::{apply_transform, Style};
-use crate::style_system::{
-    apply_clipping, apply_inline_inheritance, apply_shared_inheritance, apply_styles,
-    apply_text_constraints, apply_visibility, apply_z_ordering,
-};
-use crate::systems::image_system::image_system;
-use crate::tree::{
-    focus_backward, focus_forward, is_navigatable, TreeDepthIterator, TreeExt, TreeIterator,
-};
+use crate::style::Style;
+use crate::tree::TreeExt;
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
-const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
 /// The main storage and control object for a Vizia application.
 ///
@@ -53,40 +41,41 @@ pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
     pub(crate) entity_identifiers: HashMap<String, Entity>,
     pub(crate) tree: Tree,
-    current: Entity,
+    pub(crate) current: Entity,
     /// TODO make this private when there's no longer a need to mutate views after building
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) data: SparseSet<ModelDataStore>,
+    pub(crate) bindings: FnvHashMap<Entity, Box<dyn BindingHandler>>,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,
     pub(crate) style: Style,
-    cache: CachedData,
-    pub draw_cache: DrawCache,
+    pub(crate) cache: CachedData,
+    pub(crate) draw_cache: DrawCache,
 
-    pub canvases: HashMap<Entity, crate::prelude::Canvas>,
+    pub(crate) canvases: HashMap<Entity, crate::prelude::Canvas>,
     //environment: Environment,
-    mouse: MouseState,
-    modifiers: Modifiers,
+    pub(crate) mouse: MouseState,
+    pub(crate) modifiers: Modifiers,
 
-    captured: Entity,
+    pub(crate) captured: Entity,
     pub(crate) hovered: Entity,
     pub(crate) focused: Entity,
-    cursor_icon_locked: bool,
+    pub(crate) cursor_icon_locked: bool,
 
     pub(crate) resource_manager: ResourceManager,
 
-    text_context: TextContext,
+    pub(crate) text_context: TextContext,
 
-    event_proxy: Option<Box<dyn EventProxy>>,
+    pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
     #[cfg(feature = "clipboard")]
-    clipboard: Box<dyn ClipboardProvider>,
+    pub(crate) clipboard: Box<dyn ClipboardProvider>,
 
-    click_time: Instant,
-    double_click: bool,
-    click_pos: (f32, f32),
+    pub(crate) click_time: Instant,
+    pub(crate) double_click: bool,
+    pub(crate) click_pos: (f32, f32),
 
     pub ignore_default_theme: bool,
 }
@@ -103,6 +92,7 @@ impl Context {
             current: Entity::root(),
             views: FnvHashMap::default(),
             data: SparseSet::new(),
+            bindings: FnvHashMap::default(),
             style: Style::default(),
             cache,
             draw_cache: DrawCache::new(),
@@ -142,15 +132,6 @@ impl Context {
         result
     }
 
-    /// Access to the tree of entities
-    pub fn tree(&mut self) -> &mut Tree {
-        &mut self.tree
-    }
-
-    pub fn tree_ref(&self) -> &Tree {
-        &self.tree
-    }
-
     /// The "current" entity, generally the entity which is currently being built or the entity
     /// which is currently having an event dispatched to it.
     pub fn current(&self) -> Entity {
@@ -172,56 +153,8 @@ impl Context {
         self.current = prev;
     }
 
-    /// The style storage for the application. Used to get properties set through inline style
-    /// attributes or CSS.
-    pub fn style(&mut self) -> &mut Style {
-        &mut self.style
-    }
-
-    pub fn style_ref(&self) -> &Style {
-        &self.style
-    }
-
-    /// The cache storage for the application. Used to get intermediate data computed during the
-    /// layout and rendering processes.
-    pub fn cache(&mut self) -> &mut CachedData {
-        &mut self.cache
-    }
-
-    pub fn cache_ref(&self) -> &CachedData {
-        &self.cache
-    }
-
     pub fn environment(&self) -> &Environment {
-        //&mut self.environment
         self.data::<Environment>().unwrap()
-    }
-
-    /// The current femtovg text context. Useful when measuring or rendering fonts.
-    pub fn text_context(&mut self) -> &mut TextContext {
-        &mut self.text_context
-    }
-
-    /// The current mouse state, i.e. the button and motion information.
-    pub fn mouse(&self) -> &MouseState {
-        &self.mouse
-    }
-
-    pub fn resource_manager(&mut self) -> &mut ResourceManager {
-        &mut self.resource_manager
-    }
-
-    pub fn resource_manager_ref(&self) -> &ResourceManager {
-        &self.resource_manager
-    }
-
-    /// The current keyboard modifiers state.
-    pub fn modifiers(&self) -> Modifiers {
-        self.modifiers
-    }
-
-    pub fn modifiers_mut(&mut self) -> &mut Modifiers {
-        &mut self.modifiers
     }
 
     /// Mark the application as needing to rerun the draw method
@@ -239,230 +172,19 @@ impl Context {
         self.style.needs_relayout = true;
     }
 
-    /// Causes mouse events to propagate to the current entity until released
-    pub fn capture(&mut self) {
-        self.captured = self.current;
-    }
-
-    /// Releases the mouse events capture
-    pub fn release(&mut self) {
-        self.captured = Entity::null();
-    }
-
-    /// Prevents the cursor icon from changing until the lock is released
-    pub fn lock_cursor_icon(&mut self) {
-        self.cursor_icon_locked = true;
-    }
-
-    /// Releases any cursor icon lock, allowing the cursor icon to be changed
-    pub fn unlock_cursor_icon(&mut self) {
-        self.cursor_icon_locked = false;
-        let hovered = self.hovered;
-        let cursor = self.style().cursor.get(hovered).cloned().unwrap_or_default();
-        self.emit(WindowEvent::SetCursor(cursor));
-    }
-
-    /// Returns true if the cursor icon is locked
-    pub fn is_cursor_icon_locked(&self) -> bool {
-        self.cursor_icon_locked
-    }
-
-    /// Enables or disables pseudoclasses for the focus of an entity
-    fn set_focus_pseudo_classes(&mut self, focused: Entity, enabled: bool, focus_visible: bool) {
-        #[cfg(debug_assertions)]
-        if enabled {
-            println!(
-                "Focus changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
-                focused,
-                self.tree().get_parent(focused),
-                self.views
-                    .get(&focused)
-                    .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
-                self.cache().get_posx(focused),
-                self.cache().get_posy(focused),
-                self.cache().get_width(focused),
-                self.cache().get_height(focused),
-            );
-        }
-
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(focused) {
-            pseudo_classes.set(PseudoClass::FOCUS, enabled);
-            if !enabled || focus_visible {
-                pseudo_classes.set(PseudoClass::FOCUS_VISIBLE, enabled);
-            }
-        }
-
-        for ancestor in focused.parent_iter(&self.tree) {
-            let entity = ancestor;
-            if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
-                pseudo_classes.set(PseudoClass::FOCUS_WITHIN, enabled);
-            }
-        }
-    }
-
-    /// Sets application focus to the current entity with the specified focus visiblity
-    pub fn focus_with_visibility(&mut self, focus_visible: bool) {
-        let old_focus = self.focused;
-        let new_focus = self.current;
-        self.set_focus_pseudo_classes(old_focus, false, focus_visible);
-        if self.current != self.focused {
-            self.emit_to(old_focus, WindowEvent::FocusOut);
-            self.emit_to(new_focus, WindowEvent::FocusIn);
-            self.focused = self.current;
-        }
-        self.set_focus_pseudo_classes(new_focus, true, focus_visible);
-
-        self.style().needs_relayout = true;
-        self.style().needs_redraw = true;
-        self.style().needs_restyle = true;
-    }
-
-    /// Sets application focus to the current entity using the previous focus visibility
-    pub fn focus(&mut self) {
-        let focused = self.focused;
-        let old_focus_visible = self
-            .style()
-            .pseudo_classes
-            .get_mut(focused)
-            .filter(|class| class.contains(PseudoClass::FOCUS_VISIBLE))
-            .is_some();
-        self.focus_with_visibility(old_focus_visible)
-    }
-
-    /// Sets the active flag of the current entity
-    pub fn set_active(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClass::ACTIVE, flag);
-        }
-
-        self.style().needs_restyle = true;
-        self.style().needs_relayout = true;
-        self.style().needs_redraw = true;
-    }
-
-    /// Sets the hover flag of the current entity
-    pub fn set_hover(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClass::HOVER, flag);
-        }
-
-        self.style().needs_restyle = true;
-        self.style().needs_relayout = true;
-        self.style().needs_redraw = true;
-    }
-
-    /// Sets the checked flag of the current entity
-    pub fn set_checked(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClass::CHECKED, flag);
-        }
-
-        self.style().needs_restyle = true;
-        self.style().needs_relayout = true;
-        self.style().needs_redraw = true;
-    }
-
     /// Sets the checked flag of the current entity
     pub fn set_selected(&mut self, flag: bool) {
         let current = self.current();
-        if let Some(pseudo_classes) = self.style().pseudo_classes.get_mut(current) {
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
             pseudo_classes.set(PseudoClass::SELECTED, flag);
         }
 
-        self.style().needs_restyle = true;
-        self.style().needs_relayout = true;
-        self.style().needs_redraw = true;
+        self.style.needs_restyle = true;
+        self.style.needs_relayout = true;
+        self.style.needs_redraw = true;
     }
 
-    pub fn toggle_class(&mut self, class_name: &str, applied: bool) {
-        let current = self.current();
-        if let Some(class_list) = self.style().classes.get_mut(current) {
-            if applied {
-                class_list.insert(class_name.to_string());
-            } else {
-                class_list.remove(class_name);
-            }
-        } else if applied {
-            let mut class_list = HashSet::new();
-            class_list.insert(class_name.to_string());
-            self.style().classes.insert(current, class_list).expect("Failed to insert class name");
-        }
-
-        self.need_restyle();
-        self.style().needs_relayout = true;
-        self.style().needs_redraw = true;
-    }
-
-    /// Returns true if the current entity is disabled
-    pub fn is_disabled(&self) -> bool {
-        self.style_ref().disabled.get(self.current()).cloned().unwrap_or_default()
-    }
-
-    /// Returns true if the mouse cursor is over the current entity
-    pub fn is_over(&self) -> bool {
-        if let Some(pseudo_classes) = self.style_ref().pseudo_classes.get(self.current) {
-            pseudo_classes.contains(PseudoClass::OVER)
-        } else {
-            false
-        }
-    }
-
-    pub fn hovered(&self) -> Entity {
-        self.hovered
-    }
-
-    pub fn captured(&self) -> Entity {
-        self.captured
-    }
-
-    pub fn focused(&self) -> Entity {
-        self.focused
-    }
-
-    /// You should not call this method unless you are writing a windowing backend, in which case
-    /// you should consult the existing windowing backends for usage information.
-    pub fn set_event_proxy(&mut self, proxy: Box<dyn EventProxy>) {
-        if self.event_proxy.is_some() {
-            panic!("Set the event proxy twice. This should never happen.");
-        }
-
-        self.event_proxy = Some(proxy);
-    }
-
-    /// You should not call this method unless you are writing a windowing backend, in which case
-    /// you should consult the existing windowing backends for usage information.
-    #[cfg(feature = "clipboard")]
-    pub fn set_clipboard_provider(&mut self, clipboard: Box<dyn ClipboardProvider>) {
-        self.clipboard = clipboard;
-    }
-
-    /// Get the contents of the system clipboard. This may fail for a variety of backend-specific
-    /// reasons.
-    #[cfg(feature = "clipboard")]
-    pub fn get_clipboard(&mut self) -> Result<String, Box<dyn Error + Send + Sync + 'static>> {
-        self.clipboard.get_contents()
-    }
-
-    /// Set the contents of the system clipboard. This may fail for a variety of backend-specific
-    /// reasons.
-    #[cfg(feature = "clipboard")]
-    pub fn set_clipboard(
-        &mut self,
-        text: String,
-    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-        self.clipboard.set_contents(text)
-    }
-
-    /// Check whether an entity has a given pseudoclass, e.g. detecting if it's checked, selected,
-    /// etc.
-    pub fn has_pseudo_class(&self, entity: Entity, cls: PseudoClass) -> bool {
-        self.style.pseudo_classes.get(entity).copied().unwrap_or_default().contains(cls)
-    }
-
-    pub fn remove_children(&mut self, entity: Entity) {
+    pub(crate) fn remove_children(&mut self, entity: Entity) {
         let children = entity.child_iter(&self.tree).collect::<Vec<_>>();
         for child in children.into_iter() {
             self.remove(child);
@@ -479,16 +201,10 @@ impl Context {
         }
 
         for entity in delete_list.iter().rev() {
-            for model_store in self.data.dense.iter_mut().map(|entry| &mut entry.value) {
-                for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                    lens.remove_observer(entity);
-                }
-                for lens in model_store.lenses_dup.iter_mut() {
-                    lens.remove_observer(entity);
-                }
+            if let Some(binding) = self.bindings.remove(entity) {
+                binding.remove(self);
 
-                model_store.lenses_dedup.retain(|_, store| store.num_observers() != 0);
-                model_store.lenses_dup.retain(|store| store.num_observers() != 0);
+                self.bindings.insert(*entity, binding);
             }
 
             for image in self.resource_manager.images.values_mut() {
@@ -533,9 +249,9 @@ impl Context {
     }
 
     /// Check whether there are any events in the queue waiting for the next event dispatch cycle.
-    pub fn has_queued_events(&self) -> bool {
-        !self.event_queue.is_empty()
-    }
+    // pub fn has_queued_events(&self) -> bool {
+    //     !self.event_queue.is_empty()
+    // }
 
     /// Add a listener to an entity.
     ///
@@ -585,30 +301,6 @@ impl Context {
         self.style.default_font = name.to_string();
     }
 
-    /// Ensure all FontOrId entires are loaded into the contexts and become Ids.
-    pub fn synchronize_fonts(&mut self) {
-        if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
-            for (name, font) in self.resource_manager.fonts.iter_mut() {
-                match font {
-                    FontOrId::Font(data) => {
-                        let id1 = canvas
-                            .add_font_mem(&data.clone())
-                            .expect(&format!("Failed to load font file for: {}", name));
-                        let id2 = self.text_context.add_font_mem(&data.clone()).expect("failed");
-                        if id1 != id2 {
-                            panic!(
-                                "Fonts in canvas must have the same id as fonts in the text context"
-                            );
-                        }
-                        *font = FontOrId::Id(id1);
-                    }
-
-                    _ => {}
-                }
-            }
-        }
-    }
-
     pub fn add_theme(&mut self, theme: &str) {
         self.resource_manager.themes.push(theme.to_owned());
 
@@ -628,112 +320,6 @@ impl Context {
         self.style.parse_theme(&style_string);
 
         Ok(())
-    }
-
-    pub fn has_animations(&mut self) -> bool {
-        self.style.display.has_animations()
-            | self.style.visibility.has_animations()
-            | self.style.opacity.has_animations()
-            | self.style.rotate.has_animations()
-            | self.style.translate.has_animations()
-            | self.style.scale.has_animations()
-            | self.style.border_width.has_animations()
-            | self.style.border_color.has_animations()
-            | self.style.border_radius_top_left.has_animations()
-            | self.style.border_radius_top_right.has_animations()
-            | self.style.border_radius_bottom_left.has_animations()
-            | self.style.border_radius_bottom_right.has_animations()
-            | self.style.outline_width.has_animations()
-            | self.style.outline_color.has_animations()
-            | self.style.outline_offset.has_animations()
-            | self.style.background_color.has_animations()
-            | self.style.outer_shadow_h_offset.has_animations()
-            | self.style.outer_shadow_v_offset.has_animations()
-            | self.style.outer_shadow_blur.has_animations()
-            | self.style.outer_shadow_color.has_animations()
-            | self.style.font_color.has_animations()
-            | self.style.font_size.has_animations()
-            | if self.style.left.has_animations()
-                | self.style.right.has_animations()
-                | self.style.top.has_animations()
-                | self.style.bottom.has_animations()
-                | self.style.width.has_animations()
-                | self.style.height.has_animations()
-                | self.style.max_width.has_animations()
-                | self.style.max_height.has_animations()
-                | self.style.min_width.has_animations()
-                | self.style.min_height.has_animations()
-                | self.style.min_left.has_animations()
-                | self.style.max_left.has_animations()
-                | self.style.min_right.has_animations()
-                | self.style.max_right.has_animations()
-                | self.style.min_top.has_animations()
-                | self.style.max_top.has_animations()
-                | self.style.min_bottom.has_animations()
-                | self.style.max_bottom.has_animations()
-                | self.style.row_between.has_animations()
-                | self.style.col_between.has_animations()
-                | self.style.child_left.has_animations()
-                | self.style.child_right.has_animations()
-                | self.style.child_top.has_animations()
-                | self.style.child_bottom.has_animations()
-            {
-                self.style.needs_relayout = true;
-                true
-            } else {
-                false
-            }
-    }
-
-    pub fn apply_animations(&mut self) {
-        let time = instant::Instant::now();
-
-        self.style.display.tick(time);
-        self.style.visibility.tick(time);
-        self.style.opacity.tick(time);
-        self.style.rotate.tick(time);
-        self.style.translate.tick(time);
-        self.style.scale.tick(time);
-        self.style.border_width.tick(time);
-        self.style.border_color.tick(time);
-        self.style.border_radius_top_left.tick(time);
-        self.style.border_radius_top_right.tick(time);
-        self.style.border_radius_bottom_left.tick(time);
-        self.style.border_radius_bottom_right.tick(time);
-        self.style.outline_width.tick(time);
-        self.style.outline_color.tick(time);
-        self.style.outline_offset.tick(time);
-        self.style.background_color.tick(time);
-        self.style.outer_shadow_h_offset.tick(time);
-        self.style.outer_shadow_v_offset.tick(time);
-        self.style.outer_shadow_blur.tick(time);
-        self.style.outer_shadow_color.tick(time);
-        self.style.font_color.tick(time);
-        self.style.font_size.tick(time);
-        self.style.left.tick(time);
-        self.style.right.tick(time);
-        self.style.top.tick(time);
-        self.style.bottom.tick(time);
-        self.style.width.tick(time);
-        self.style.height.tick(time);
-        self.style.max_width.tick(time);
-        self.style.max_height.tick(time);
-        self.style.min_width.tick(time);
-        self.style.min_height.tick(time);
-        self.style.min_left.tick(time);
-        self.style.max_left.tick(time);
-        self.style.min_right.tick(time);
-        self.style.max_right.tick(time);
-        self.style.min_top.tick(time);
-        self.style.max_top.tick(time);
-        self.style.min_bottom.tick(time);
-        self.style.max_bottom.tick(time);
-        self.style.row_between.tick(time);
-        self.style.col_between.tick(time);
-        self.style.child_left.tick(time);
-        self.style.child_right.tick(time);
-        self.style.child_top.tick(time);
-        self.style.child_bottom.tick(time);
     }
 
     /// Adds a new property animation returning an animation builder
@@ -838,426 +424,6 @@ impl Context {
 
         std::thread::spawn(move || target(&mut cxp));
     }
-
-    /// For each binding or data observer, check if its data has changed, and if so, rerun its
-    /// builder/body.
-    pub fn process_data_updates(&mut self) {
-        let mut observers: Vec<Entity> = Vec::new();
-
-        for entity in self.tree.into_iter() {
-            if let Some(model_store) = self.data.get_mut(entity) {
-                for (_, model) in model_store.data.iter() {
-                    for lens in model_store.lenses_dup.iter_mut() {
-                        if lens.update(model) {
-                            observers.extend(lens.observers().iter())
-                        }
-                    }
-
-                    for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                        if lens.update(model) {
-                            observers.extend(lens.observers().iter());
-                        }
-                    }
-                }
-
-                for lens in model_store.lenses_dup.iter_mut() {
-                    if let Some(view_handler) = self.views.get(&entity) {
-                        if lens.update_view(view_handler) {
-                            observers.extend(lens.observers().iter())
-                        }
-                    }
-                }
-
-                for (_, lens) in model_store.lenses_dedup.iter_mut() {
-                    if let Some(view_handler) = self.views.get(&entity) {
-                        if lens.update_view(view_handler) {
-                            observers.extend(lens.observers().iter())
-                        }
-                    }
-                }
-            }
-        }
-
-        for img in self.resource_manager.images.values_mut() {
-            if img.dirty {
-                observers.extend(img.observers.iter());
-                img.dirty = false;
-            }
-        }
-
-        for observer in observers.iter() {
-            if let Some(mut view) = self.views.remove(observer) {
-                let prev = self.current;
-                self.current = *observer;
-                view.body(self);
-                self.current = prev;
-                self.views.insert(*observer, view);
-            }
-        }
-    }
-
-    pub fn process_style_updates(&mut self) {
-        // Not ideal
-        let tree = self.tree.clone();
-
-        apply_inline_inheritance(self, &tree);
-
-        if self.style.needs_restyle {
-            apply_styles(self, &tree);
-            self.style.needs_restyle = false;
-        }
-
-        apply_shared_inheritance(self, &tree);
-    }
-
-    /// Massages the style system until everything is coherent
-    pub fn process_visual_updates(&mut self) {
-        // Not ideal
-        let tree = self.tree.clone();
-
-        image_system(self);
-
-        apply_z_ordering(self, &tree);
-        apply_visibility(self, &tree);
-
-        // Layout
-        if self.style.needs_relayout {
-            apply_text_constraints(self, &tree);
-
-            // hack!
-            let mut store = (Style::default(), TextContext::default(), ResourceManager::default());
-            std::mem::swap(&mut store.0, &mut self.style);
-            std::mem::swap(&mut store.1, &mut self.text_context);
-            std::mem::swap(&mut store.2, &mut self.resource_manager);
-
-            layout(&mut self.cache, &self.tree, &store);
-            std::mem::swap(&mut store.0, &mut self.style);
-            std::mem::swap(&mut store.1, &mut self.text_context);
-            std::mem::swap(&mut store.2, &mut self.resource_manager);
-            self.style.needs_relayout = false;
-        }
-
-        apply_transform(self, &tree);
-        apply_hover(self);
-        apply_clipping(self, &tree);
-
-        // Emit any geometry changed events
-        geometry_changed(self, &tree);
-    }
-
-    pub fn draw(&mut self) {
-        let canvas = self.canvases.get_mut(&Entity::root()).unwrap();
-
-        let window_width = self.cache.get_width(Entity::root());
-        let window_height = self.cache.get_height(Entity::root());
-
-        canvas.set_size(window_width as u32, window_height as u32, 1.0);
-        let clear_color =
-            self.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
-        canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
-
-        // filter for widgets that should be drawn
-        let tree_iter = self.tree.into_iter();
-        let mut draw_tree: Vec<Entity> = tree_iter
-            .filter(|&entity| {
-                entity != Entity::root()
-                    && self.cache.get_visibility(entity) != Visibility::Invisible
-                    && self.cache.get_display(entity) != Display::None
-                    && !self.tree.is_ignored(entity)
-                    && self.cache.get_opacity(entity) > 0.0
-                    && {
-                        let bounds = self.cache.get_bounds(entity);
-                        !(bounds.x > window_width
-                            || bounds.y > window_height
-                            || bounds.x + bounds.w <= 0.0
-                            || bounds.y + bounds.h <= 0.0)
-                    }
-            })
-            .collect();
-
-        // Sort the tree by z order
-        draw_tree.sort_by_cached_key(|entity| self.cache.get_z_index(*entity));
-
-        for entity in draw_tree.into_iter() {
-            // Apply clipping
-            let clip_region = self.cache.get_clip_region(entity);
-
-            // Skips drawing views with zero-sized clip regions
-            // This skips calling the `draw` method of the view
-            if clip_region.height() == 0.0 || clip_region.width() == 0.0 {
-                continue;
-            }
-
-            canvas.scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
-
-            // Apply transform
-            let transform = self.cache.get_transform(entity);
-            canvas.save();
-            canvas.set_transform(
-                transform[0],
-                transform[1],
-                transform[2],
-                transform[3],
-                transform[4],
-                transform[5],
-            );
-
-            if let Some(view) = self.views.remove(&entity) {
-                self.current = entity;
-                view.draw(
-                    &mut DrawContext {
-                        current: self.current,
-                        captured: &self.captured,
-                        focused: &self.focused,
-                        hovered: &self.hovered,
-                        style: &self.style,
-                        cache: &mut self.cache,
-                        draw_cache: &mut self.draw_cache,
-                        tree: &self.tree,
-                        data: &self.data,
-                        views: &self.views,
-                        resource_manager: &self.resource_manager,
-                        text_context: &self.text_context,
-                        modifiers: &self.modifiers,
-                        mouse: &self.mouse,
-                    },
-                    canvas,
-                );
-
-                self.views.insert(entity, view);
-            }
-
-            canvas.restore();
-
-            // Uncomment this for debug outlines
-            // TODO - Hook this up to a key in debug mode
-            // let mut path = Path::new();
-            // path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-            // let mut paint = Paint::color(femtovg::Color::rgb(255, 0, 0));
-            // paint.set_line_width(1.0);
-            // canvas.stroke_path(&mut path, paint);
-        }
-
-        canvas.flush();
-    }
-
-    /// This method is in charge of receiving raw WindowEvents and dispatching them to the
-    /// appropriate points in the tree.
-    pub fn dispatch_system_event(&mut self, event: WindowEvent) {
-        match &event {
-            WindowEvent::MouseMove(x, y) => {
-                self.mouse.previous_cursorx = self.mouse.cursorx;
-                self.mouse.previous_cursory = self.mouse.cursory;
-                self.mouse.cursorx = *x;
-                self.mouse.cursory = *y;
-
-                apply_hover(self);
-
-                self.dispatch_direct_or_hovered(event, self.captured, false);
-            }
-            WindowEvent::MouseDown(button) => {
-                match button {
-                    MouseButton::Left => self.mouse.left.state = MouseButtonState::Pressed,
-                    MouseButton::Right => self.mouse.right.state = MouseButtonState::Pressed,
-                    MouseButton::Middle => self.mouse.middle.state = MouseButtonState::Pressed,
-                    _ => {}
-                }
-
-                let new_click_time = Instant::now();
-                let click_duration = new_click_time - self.click_time;
-                let new_click_pos = (self.mouse.cursorx, self.mouse.cursory);
-
-                if click_duration <= DOUBLE_CLICK_INTERVAL && new_click_pos == self.click_pos {
-                    if !self.double_click {
-                        self.dispatch_direct_or_hovered(
-                            WindowEvent::MouseDoubleClick(*button),
-                            self.captured,
-                            true,
-                        );
-                        self.double_click = true;
-                    }
-                } else {
-                    self.double_click = false;
-                }
-
-                self.click_time = new_click_time;
-                self.click_pos = new_click_pos;
-
-                match button {
-                    MouseButton::Left => {
-                        self.mouse.left.pos_down = (self.mouse.cursorx, self.mouse.cursory);
-                        self.mouse.left.pressed = self.hovered;
-                        if self
-                            .style
-                            .abilities
-                            .get(self.hovered)
-                            .filter(|abilities| abilities.contains(Abilities::FOCUSABLE))
-                            .is_some()
-                        {
-                            self.with_current(self.hovered, |cx| cx.focus_with_visibility(false));
-                        }
-                        self.with_current(self.hovered, |cx| {
-                            cx.emit(WindowEvent::TriggerDown { mouse: true })
-                        });
-                    }
-                    MouseButton::Right => {
-                        self.mouse.right.pos_down = (self.mouse.cursorx, self.mouse.cursory);
-                        self.mouse.right.pressed = self.hovered;
-                    }
-                    MouseButton::Middle => {
-                        self.mouse.middle.pos_down = (self.mouse.cursorx, self.mouse.cursory);
-                        self.mouse.middle.pressed = self.hovered;
-                    }
-                    _ => {}
-                }
-
-                self.dispatch_direct_or_hovered(event, self.captured, true);
-            }
-            WindowEvent::MouseUp(button) => {
-                match button {
-                    MouseButton::Left => {
-                        self.mouse.left.pos_up = (self.mouse.cursorx, self.mouse.cursory);
-                        self.mouse.left.released = self.hovered;
-                        self.mouse.left.state = MouseButtonState::Released;
-                        self.with_current(self.hovered, |cx| {
-                            cx.dispatch_direct_or_hovered(
-                                WindowEvent::TriggerUp { mouse: true },
-                                cx.captured,
-                                true,
-                            );
-                        });
-                    }
-                    MouseButton::Right => {
-                        self.mouse.right.pos_up = (self.mouse.cursorx, self.mouse.cursory);
-                        self.mouse.right.released = self.hovered;
-                        self.mouse.right.state = MouseButtonState::Released;
-                    }
-                    MouseButton::Middle => {
-                        self.mouse.middle.pos_up = (self.mouse.cursorx, self.mouse.cursory);
-                        self.mouse.middle.released = self.hovered;
-                        self.mouse.middle.state = MouseButtonState::Released;
-                    }
-                    _ => {}
-                }
-                self.dispatch_direct_or_hovered(event, self.captured, true);
-            }
-            WindowEvent::MouseScroll(_, _) => {
-                self.event_queue.push_back(Event::new(event).target(self.hovered));
-            }
-            WindowEvent::KeyDown(code, _) => {
-                #[cfg(debug_assertions)]
-                if *code == Code::KeyH {
-                    for entity in self.tree.into_iter() {
-                        println!("Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&self.tree), self.views.get(&entity).map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")), self.cache.get_posx(entity), self.cache.get_posy(entity), self.cache.get_width(entity), self.cache.get_height(entity));
-                    }
-                }
-
-                #[cfg(debug_assertions)]
-                if *code == Code::KeyI {
-                    let iter = TreeDepthIterator::full(&self.tree);
-                    for (entity, level) in iter {
-                        if let Some(element_name) = self.views.get(&entity).unwrap().element() {
-                            println!(
-                                "{:indent$} {} {} {:?} {:?} {:?} {:?}",
-                                "",
-                                entity,
-                                element_name,
-                                self.cache.get_visibility(entity),
-                                self.cache.get_display(entity),
-                                self.cache.get_bounds(entity),
-                                self.cache.get_clip_region(entity),
-                                indent = level
-                            );
-                        }
-                    }
-                }
-
-                if *code == Code::F5 {
-                    self.reload_styles().unwrap();
-                }
-
-                if *code == Code::Tab {
-                    let focused = self.focused;
-                    self.set_focus_pseudo_classes(focused, false, true);
-
-                    if self.modifiers.contains(Modifiers::SHIFT) {
-                        let prev_focused =
-                            if let Some(prev_focused) = focus_backward(&self, self.focused) {
-                                prev_focused
-                            } else {
-                                TreeIterator::full(&self.tree)
-                                    .filter(|node| is_navigatable(&self, *node))
-                                    .next_back()
-                                    .unwrap_or(Entity::root())
-                            };
-
-                        if prev_focused != self.focused {
-                            self.event_queue
-                                .push_back(Event::new(WindowEvent::FocusOut).target(self.focused));
-                            self.event_queue
-                                .push_back(Event::new(WindowEvent::FocusIn).target(prev_focused));
-                            self.focused = prev_focused;
-                        }
-                    } else {
-                        let next_focused =
-                            if let Some(next_focused) = focus_forward(&self, self.focused) {
-                                next_focused
-                            } else {
-                                TreeIterator::full(&self.tree)
-                                    .filter(|node| is_navigatable(&self, *node))
-                                    .next()
-                                    .unwrap_or(Entity::root())
-                            };
-
-                        if next_focused != self.focused {
-                            self.event_queue
-                                .push_back(Event::new(WindowEvent::FocusOut).target(self.focused));
-                            self.event_queue
-                                .push_back(Event::new(WindowEvent::FocusIn).target(next_focused));
-                            self.focused = next_focused;
-                        }
-                    }
-
-                    let focused = self.focused;
-                    self.set_focus_pseudo_classes(focused, true, true);
-
-                    self.style().needs_relayout = true;
-                    self.style().needs_redraw = true;
-                    self.style().needs_restyle = true;
-                }
-
-                if matches!(*code, Code::Enter | Code::NumpadEnter | Code::Space) {
-                    self.with_current(self.focused, |cx| {
-                        cx.emit(WindowEvent::TriggerDown { mouse: false })
-                    });
-                }
-
-                self.event_queue.push_back(Event::new(event).target(self.focused));
-            }
-            WindowEvent::KeyUp(_, _) | WindowEvent::CharInput(_) => {
-                if matches!(
-                    event,
-                    WindowEvent::KeyUp(Code::Enter | Code::NumpadEnter | Code::Space, _)
-                ) {
-                    self.with_current(self.focused, |cx| {
-                        cx.emit(WindowEvent::TriggerUp { mouse: false })
-                    });
-                }
-                self.event_queue.push_back(Event::new(event).target(self.focused));
-            }
-            _ => {}
-        }
-    }
-
-    fn dispatch_direct_or_hovered(&mut self, event: WindowEvent, target: Entity, root: bool) {
-        if target != Entity::null() {
-            self.event_queue
-                .push_back(Event::new(event).target(target).propagate(Propagation::Direct));
-        } else if self.hovered != Entity::root() || root {
-            self.event_queue
-                .push_back(Event::new(event).target(self.hovered).propagate(Propagation::Up));
-        }
-    }
 }
 
 pub(crate) enum InternalEvent {
@@ -1287,11 +453,9 @@ impl DataContext for Context {
         }
 
         for entity in self.current.parent_iter(&self.tree) {
-            if let Some(data_list) = self.data.get(entity) {
-                for (_, model) in data_list.data.iter() {
-                    if let Some(data) = model.downcast_ref::<T>() {
-                        return Some(data);
-                    }
+            if let Some(model_data_store) = self.data.get(entity) {
+                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+                    return model.downcast_ref::<T>();
                 }
             }
 

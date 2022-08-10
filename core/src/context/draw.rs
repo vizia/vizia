@@ -1,4 +1,4 @@
-use std::any::Any;
+use std::any::{Any, TypeId};
 use std::ops::Range;
 
 use femtovg::{ImageId, TextContext};
@@ -96,6 +96,10 @@ impl<'a> DrawContext<'a> {
         self.cache.get_bounds(self.current)
     }
 
+    pub fn clip_region(&self) -> BoundingBox {
+        self.cache.get_clip_region(self.current)
+    }
+
     /// Returns the name of the default font.
     pub fn default_font(&self) -> &str {
         &self.style.default_font
@@ -166,11 +170,9 @@ impl<'a> DataContext for DrawContext<'a> {
         }
 
         for entity in self.current.parent_iter(&self.tree) {
-            if let Some(data_list) = self.data.get(entity) {
-                for (_, model) in data_list.data.iter() {
-                    if let Some(data) = model.downcast_ref::<T>() {
-                        return Some(data);
-                    }
+            if let Some(model_data_store) = self.data.get(entity) {
+                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+                    return model.downcast_ref::<T>();
                 }
             }
 

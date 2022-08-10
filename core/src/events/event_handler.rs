@@ -7,8 +7,6 @@ pub trait ViewHandler: Any {
         None
     }
 
-    fn body(&mut self, cx: &mut Context);
-
     fn event(&mut self, cx: &mut EventContext, event: &mut Event);
 
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas);

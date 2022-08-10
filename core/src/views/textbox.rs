@@ -482,7 +482,7 @@ where
                             kind: text_data.kind,
                             on_submit: text_data.on_submit.clone(),
                         };
-                        let parent = cx.current().parent(cx.tree()).unwrap();
+                        let parent = cx.current().parent(&cx.tree).unwrap();
                         cx.with_current(parent, |cx| td.build(cx));
                         // push an event into the queue to force an update because the textbox data
                         // may have already been observed this update cycle
@@ -491,7 +491,7 @@ where
                 } else {
                     let mut td = TextboxData::new(text.clone());
                     td.set_caret(&mut EventContext::new(cx));
-                    let parent = cx.current().parent(cx.tree()).unwrap();
+                    let parent = cx.current().parent(&cx.tree).unwrap();
                     cx.with_current(parent, |cx| td.build(cx));
                     cx.emit_to(cx.current(), ());
                 }
