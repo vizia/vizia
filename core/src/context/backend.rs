@@ -261,14 +261,16 @@ impl<'a> BackendContext<'a> {
         // Not ideal
         let tree = self.0.tree.clone();
 
+        // Apply any inline style inheritance.
         inline_inheritance_system(self.0, &tree);
 
-        if self.0.style.needs_restyle {
-            style_system(self.0, &tree);
-            self.0.style.needs_restyle = false;
-        }
+        //
+        style_system(self.0, &tree);
 
         shared_inheritance_system(self.0, &tree);
+
+        // Load any unloaded images and remove unused images.
+        image_system(self.0);
     }
 
     /// Massages the style system until everything is coherent
@@ -276,35 +278,28 @@ impl<'a> BackendContext<'a> {
         // Not ideal
         let tree = self.0.tree.clone();
 
+        // Compute any animations for this frame.
         animation_system(self.0);
 
-        image_system(self.0);
-
+        // Apply z-order inheritance.
         z_ordering_system(self.0, &tree);
+
+        // Apply visibility inheritance.
         visibility_system(self.0, &tree);
 
-        // Layout
-        if self.0.style.needs_relayout {
-            text_constraints_system(self.0, &tree);
+        // Perform layout.
+        layout_system(self.0, &tree);
 
-            // hack!
-            let mut store = (Style::default(), TextContext::default(), ResourceManager::default());
-            std::mem::swap(&mut store.0, &mut self.0.style);
-            std::mem::swap(&mut store.1, &mut self.0.text_context);
-            std::mem::swap(&mut store.2, &mut self.0.resource_manager);
-
-            layout(&mut self.0.cache, &self.0.tree, &store);
-            std::mem::swap(&mut store.0, &mut self.0.style);
-            std::mem::swap(&mut store.1, &mut self.0.text_context);
-            std::mem::swap(&mut store.2, &mut self.0.resource_manager);
-            self.0.style.needs_relayout = false;
-        }
-
+        // Apply transform inheritance.
         transform_system(self.0, &tree);
+
+        // Determine hovered entity.
         hover_system(self.0);
+
+        // Apply clipping inheritance.
         clipping_system(self.0, &tree);
 
-        // Emit any geometry changed events
+        // Emit any geometry changed events.
         geometry_changed(self.0, &tree);
     }
 

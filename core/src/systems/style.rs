@@ -489,45 +489,49 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
 
 // Iterate tree and determine the matched style rules for each entity. Link the entity to the style data.
 pub fn style_system(cx: &mut Context, tree: &Tree) {
-    let mut prev_entity = None;
+    if cx.style.needs_restyle {
+        let mut prev_entity = None;
 
-    let mut prev_matched_rules = Vec::with_capacity(100);
+        let mut prev_matched_rules = Vec::with_capacity(100);
 
-    let mut matched_rules = Vec::with_capacity(100);
+        let mut matched_rules = Vec::with_capacity(100);
 
-    let iterator = LayoutTreeIterator::full(tree);
+        let iterator = LayoutTreeIterator::full(tree);
 
-    // Loop through all entities
-    'ent: for entity in iterator {
-        // Skip the root
-        if entity == Entity::root() {
-            continue;
-        }
+        // Loop through all entities
+        'ent: for entity in iterator {
+            // Skip the root
+            if entity == Entity::root() {
+                continue;
+            }
 
-        // Create a list of style rules that match this entity
-        //let mut matched_rules: Vec<Rule> = Vec::new();
-        matched_rules.clear();
+            // Create a list of style rules that match this entity
+            //let mut matched_rules: Vec<Rule> = Vec::new();
+            matched_rules.clear();
 
-        // If the entity and the previous entity have the same parent and selectors then they share the same rules
-        if let Some(prev) = prev_entity {
-            if let Some(parent) = tree.get_layout_parent(entity) {
-                if let Some(prev_parent) = tree.get_layout_parent(prev) {
-                    if parent == prev_parent {
-                        if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
-                            matched_rules = prev_matched_rules.clone();
-                            prev_entity = Some(entity);
-                            link_style_data(cx, entity, &matched_rules);
-                            continue 'ent;
+            // If the entity and the previous entity have the same parent and selectors then they share the same rules
+            if let Some(prev) = prev_entity {
+                if let Some(parent) = tree.get_layout_parent(entity) {
+                    if let Some(prev_parent) = tree.get_layout_parent(prev) {
+                        if parent == prev_parent {
+                            if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
+                                matched_rules = prev_matched_rules.clone();
+                                prev_entity = Some(entity);
+                                link_style_data(cx, entity, &matched_rules);
+                                continue 'ent;
+                            }
                         }
                     }
                 }
             }
+
+            compute_matched_rules(cx, tree, entity, &mut matched_rules);
+            link_style_data(cx, entity, &matched_rules);
+
+            prev_entity = Some(entity);
+            prev_matched_rules = matched_rules.clone();
         }
 
-        compute_matched_rules(cx, tree, entity, &mut matched_rules);
-        link_style_data(cx, entity, &matched_rules);
-
-        prev_entity = Some(entity);
-        prev_matched_rules = matched_rules.clone();
+        cx.style.needs_restyle = false;
     }
 }

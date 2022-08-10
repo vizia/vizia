@@ -180,8 +180,6 @@ impl Application {
                     // Events
                     while event_manager.flush_events(cx.0) {}
 
-                    cx.load_images();
-
                     cx.process_data_updates();
                     cx.process_style_updates();
 
