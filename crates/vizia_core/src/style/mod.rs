@@ -945,8 +945,8 @@ impl Style {
         self.ids.remove(entity);
         self.classes.remove(entity);
         self.pseudo_classes.remove(entity);
-        //self.disabled.remove(entity);
-        //self.abilities.remove(entity);
+        self.disabled.remove(entity);
+        self.abilities.remove(entity);
         // Display
         self.display.remove(entity);
         // Visibility
@@ -980,6 +980,10 @@ impl Style {
         self.border_radius_bottom_right.remove(entity);
         self.border_radius_top_left.remove(entity);
         self.border_radius_top_right.remove(entity);
+
+        self.outline_width.remove(entity);
+        self.outline_color.remove(entity);
+        self.outline_offset.remove(entity);
 
         self.focus_order.remove(entity);
 
@@ -1047,6 +1051,7 @@ impl Style {
 
         // Text and Font
         self.text.remove(entity);
+        self.text_wrap.remove(entity);
         self.font.remove(entity);
         self.font_color.remove(entity);
         self.font_size.remove(entity);
@@ -1054,12 +1059,15 @@ impl Style {
         self.selection_color.remove(entity);
         self.caret_color.remove(entity);
 
+        self.cursor.remove(entity);
+
+        self.name.remove(entity);
+
         self.image.remove(entity);
     }
 
     pub fn clear_style_rules(&mut self) {
-        //self.disabled.clear_rules(entity);
-        //self.abilities.clear_rules(entity);
+        self.disabled.clear_rules();
         // Display
         self.display.clear_rules();
         // Visibility
@@ -1092,6 +1100,11 @@ impl Style {
         self.border_radius_top_left.clear_rules();
         self.border_radius_top_right.clear_rules();
 
+        // Outline
+        self.outline_width.clear_rules();
+        self.outline_color.clear_rules();
+        self.outline_offset.clear_rules();
+
         // Background
         self.background_color.clear_rules();
         self.background_image.clear_rules();
@@ -1101,8 +1114,6 @@ impl Style {
         self.outer_shadow_v_offset.clear_rules();
         self.outer_shadow_blur.clear_rules();
         self.outer_shadow_color.clear_rules();
-        self.selection_color.clear_rules();
-        self.caret_color.clear_rules();
 
         self.inner_shadow_h_offset.clear_rules();
         self.inner_shadow_v_offset.clear_rules();
@@ -1158,9 +1169,17 @@ impl Style {
 
         // Text and Font
         self.text.clear_rules();
+        self.text_wrap.clear_rules();
         self.font.clear_rules();
         self.font_color.clear_rules();
         self.font_size.clear_rules();
+        self.text_selection.clear_rules();
+        self.selection_color.clear_rules();
+        self.caret_color.clear_rules();
+
+        self.cursor.clear_rules();
+
+        self.name.clear_rules();
 
         self.image.clear_rules();
     }

@@ -437,6 +437,10 @@ impl Context {
 
         self.style.parse_theme(&overall_theme);
 
+        self.style.needs_restyle = true;
+        self.style.needs_relayout = true;
+        self.style.needs_redraw = true;
+
         Ok(())
     }
 
