@@ -1,6 +1,6 @@
-use vizia_id::GenerationalId;
 use crate::prelude::*;
 use crate::tree::*;
+use vizia_id::GenerationalId;
 
 /// Iterator for iterating through the tree in depth first preorder.
 pub struct LayoutTreeIterator<'a> {
@@ -105,9 +105,9 @@ impl<'a> DoubleEndedIterator for LayoutChildIterator<'a> {
 
 #[cfg(test)]
 mod test {
-    use vizia_id::IdManager;
     use crate::layout::LayoutChildIterator;
     use crate::prelude::*;
+    use vizia_id::IdManager;
 
     #[test]
     fn test_child_iter() {

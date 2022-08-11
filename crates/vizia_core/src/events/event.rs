@@ -1,6 +1,6 @@
 use crate::entity::Entity;
-use vizia_id::GenerationalId;
 use std::{any::Any, fmt::Debug};
+use vizia_id::GenerationalId;
 
 /// Determines how an event propagates through the tree.
 ///

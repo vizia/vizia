@@ -1,8 +1,8 @@
 use super::child_iter::ChildIterator;
 use super::parent_iter::ParentIterator;
 use super::tree_iter::TreeIterator;
-use vizia_id::GenerationalId;
 use crate::prelude::*;
+use vizia_id::GenerationalId;
 
 /// Trait which provides methods for querying the tree.
 pub trait TreeExt {
