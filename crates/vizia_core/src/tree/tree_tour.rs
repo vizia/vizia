@@ -1,4 +1,4 @@
-use crate::id::GenerationalId;
+use vizia_id::GenerationalId;
 use crate::prelude::*;
 
 /// Generic iterator based on [`TreeTour`].

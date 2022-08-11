@@ -15,6 +15,8 @@ wayland = ["copypasta?/wayland"]
 
 [dependencies]
 vizia_derive = {version = "0.1.0", path = "../vizia_derive"}
+vizia_storage = { path = "../vizia_storage" }
+vizia_id = { path = "../vizia_id" }
 femtovg = { git = "https://github.com/femtovg/femtovg", rev = "87fe627794f3f793d8e3a338c838a2f8e8a8aa9d", default-features = false, features = ["image-loading"] }
 image = { version = "0.24.0", default-features = false, features = ["png"] } # inherited from femtovg
 morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "c14e888b1d66719fc3f13ccdb1ea01a10368ef9e" }

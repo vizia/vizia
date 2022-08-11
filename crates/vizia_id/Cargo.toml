@@ -1,0 +1,11 @@
+[package]
+name = "vizia_id"
+version = "0.1.0"
+authors = ["George Atkinson"]
+license = "MIT"
+repository = "https://github.com/vizia/vizia"
+edition = "2021"
+description = "Core components of vizia"
+rust-version = "1.60"
+
+[dependencies]

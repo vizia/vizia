@@ -8,7 +8,7 @@ use fnv::FnvHashMap;
 
 use crate::cache::CachedData;
 use crate::events::ViewHandler;
-use crate::id::GenerationalId;
+use vizia_id::GenerationalId;
 use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
 use crate::resource::ResourceManager;

@@ -1,7 +1,7 @@
 use super::child_iter::ChildIterator;
 use super::parent_iter::ParentIterator;
 use super::tree_iter::TreeIterator;
-use crate::id::GenerationalId;
+use vizia_id::GenerationalId;
 use crate::prelude::*;
 
 /// Trait which provides methods for querying the tree.

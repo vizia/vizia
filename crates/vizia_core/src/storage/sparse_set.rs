@@ -1,4 +1,4 @@
-use crate::id::GenerationalId;
+use vizia_id::GenerationalId;
 
 pub trait DenseIndex: Copy + Clone {
     fn new(index: usize) -> Self;

@@ -1,6 +1,6 @@
-use crate::id::GenerationalId;
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
+use vizia_id::GenerationalId;
 
 use cssparser::{Parser, ParserInput};
 
@@ -46,12 +46,12 @@ use shadow::*;
 // pub use prop::*;
 
 use crate::animation::{AnimationState, Interpolator, Transition};
-use crate::id::IdManager;
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::sparse_set::SparseSet;
 use crate::storage::style_set::StyleSet;
 use crate::text::Selection;
 use bitflags::bitflags;
+use vizia_id::IdManager;
 
 bitflags! {
     /// Describes the capabilities of a view with respect to user interaction.

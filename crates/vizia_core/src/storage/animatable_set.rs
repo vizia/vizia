@@ -1,5 +1,5 @@
 use crate::animation::{AnimationState, Interpolator};
-use crate::id::GenerationalId;
+use vizia_id::GenerationalId;
 use crate::prelude::*;
 use crate::style::Rule;
 

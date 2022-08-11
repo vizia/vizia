@@ -1,4 +1,4 @@
-use super::GenerationalId;
+use crate::GenerationalId;
 use std::{collections::VecDeque, marker::PhantomData};
 
 const MINIMUM_FREE_INDICES: usize = 1024;
@@ -7,20 +7,29 @@ const IDX_MAX: u32 = std::u32::MAX >> 8;
 /// The IdManager is responsible for allocating generational IDs.
 ///
 /// The IdManager is generic on ID type, requiring only that the ID type implements [GenerationalId].
-pub(crate) struct IdManager<I> {
+pub struct IdManager<I>
+where
+    I: GenerationalId,
+{
     generation: Vec<u8>,
     free_list: VecDeque<u32>,
 
     p: PhantomData<I>,
 }
 
-impl<I: GenerationalId + Copy> Default for IdManager<I> {
+impl<I> Default for IdManager<I>
+where
+    I: GenerationalId,
+{
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<I: GenerationalId + Copy> IdManager<I> {
+impl<I> IdManager<I>
+where
+    I: GenerationalId,
+{
     pub fn new() -> Self {
         Self {
             generation: Vec::new(),
@@ -76,9 +85,16 @@ impl<I: GenerationalId + Copy> IdManager<I> {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
-    use crate::entity::Entity;
+    use crate::{
+        impl_generational_id, GenerationalId, GENERATIONAL_ID_GENERATION_MASK,
+        GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
+    };
+
+    #[derive(Copy, Clone, PartialEq)]
+    struct Entity(u32);
+
+    impl_generational_id!(Entity);
 
     /// Test for creating a new IdManager
     #[test]
