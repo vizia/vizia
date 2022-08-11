@@ -271,12 +271,12 @@ mod tests {
                 1
             ]
         );
-        // assert_eq!(sparse_set.dense[0].key, 0);
-        // assert_eq!(sparse_set.dense[0].value, 42);
-        // assert_eq!(sparse_set.dense[1].key, 12);
-        // assert_eq!(sparse_set.dense[1].value, 69);
-        // assert_eq!(sparse_set.dense[2].key, 5);
-        // assert_eq!(sparse_set.dense[2].value, 33);
+        assert_eq!(sparse_set.dense[0].key, 0);
+        assert_eq!(sparse_set.dense[0].value, 42);
+        assert_eq!(sparse_set.dense[1].key, 12);
+        assert_eq!(sparse_set.dense[1].value, 69);
+        assert_eq!(sparse_set.dense[2].key, 5);
+        assert_eq!(sparse_set.dense[2].value, 33);
         assert_eq!(sparse_set.remove(Entity::new(12, 0)), Some(69));
     }
 }
