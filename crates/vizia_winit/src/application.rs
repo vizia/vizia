@@ -16,8 +16,8 @@ use winit::{
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
 
-static DEFAULT_THEME: &str = include_str!("../../core/resources/themes/default_theme.css");
-static DEFAULT_LAYOUT: &str = include_str!("../../core/resources/themes/default_layout.css");
+static DEFAULT_THEME: &str = include_str!("../../vizia_core/resources/themes/default_theme.css");
+static DEFAULT_LAYOUT: &str = include_str!("../../vizia_core/resources/themes/default_layout.css");
 
 pub struct Application {
     context: Context,
