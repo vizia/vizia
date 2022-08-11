@@ -4,6 +4,7 @@ use crate::context::Context;
 use crate::resource::{ImageRetentionPolicy, StoredImage};
 use crate::{prelude::*, resource::ImageOrId};
 
+// Iterate he tree and load any images used by entities which aren't already loaded. Remove any images no longer being used.
 pub fn image_system(cx: &mut Context) {
     cx.resource_manager.mark_images_unused();
 

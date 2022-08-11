@@ -1,320 +1,9 @@
-use crate::cache::BoundingBox;
 use crate::layout::LayoutTreeIterator;
-use femtovg::{Align, Baseline};
-use morphorm::Units;
-
 use crate::prelude::*;
 use crate::style::{Rule, Selector, SelectorRelation};
-use crate::text::{measure_text_lines, text_layout, text_paint_general};
 use crate::tree::TreeExt;
 
-pub fn apply_z_ordering(cx: &mut Context, tree: &Tree) {
-    for entity in tree.into_iter() {
-        if entity == Entity::root() {
-            continue;
-        }
-
-        if tree.is_ignored(entity) {
-            continue;
-        }
-
-        let parent = tree.get_layout_parent(entity).unwrap();
-
-        if let Some(z_order) = cx.style.z_order.get(entity).copied() {
-            cx.cache.set_z_index(entity, z_order);
-        } else {
-            let parent_z_order = cx.cache.get_z_index(parent);
-            cx.cache.set_z_index(entity, parent_z_order);
-        }
-    }
-}
-
-pub fn apply_clipping(cx: &mut Context, tree: &Tree) {
-    //println!("Apply Clipping");
-    for entity in tree.into_iter() {
-        if entity == Entity::root() {
-            continue;
-        }
-
-        if tree.is_ignored(entity) {
-            continue;
-        }
-
-        let parent = tree.get_layout_parent(entity).unwrap();
-
-        let parent_clip_region = cx.cache.get_clip_region(parent);
-
-        let overflow = cx.style.overflow.get(entity).cloned().unwrap_or_default();
-
-        let clip_region = if overflow == Overflow::Hidden {
-            let clip_widget = cx.style.clip_widget.get(entity).cloned().unwrap_or(entity);
-
-            let clip_x = cx.cache.get_posx(clip_widget);
-            let clip_y = cx.cache.get_posy(clip_widget);
-            let clip_w = cx.cache.get_width(clip_widget);
-            let clip_h = cx.cache.get_height(clip_widget);
-
-            let mut intersection = BoundingBox::default();
-            intersection.x = clip_x.max(parent_clip_region.x);
-            intersection.y = clip_y.max(parent_clip_region.y);
-
-            intersection.w = if clip_x + clip_w < parent_clip_region.x + parent_clip_region.w {
-                clip_x + clip_w - intersection.x
-            } else {
-                parent_clip_region.x + parent_clip_region.w - intersection.x
-            };
-
-            intersection.h = if clip_y + clip_h < parent_clip_region.y + parent_clip_region.h {
-                clip_y + clip_h - intersection.y
-            } else {
-                parent_clip_region.y + parent_clip_region.h - intersection.y
-            };
-
-            intersection.w = intersection.w.max(0.0);
-            intersection.h = intersection.h.max(0.0);
-
-            intersection
-        } else {
-            parent_clip_region
-        };
-
-        // Absolute positioned nodes ignore overflow hidden
-        //if position_type == PositionType::SelfDirected {
-        //    cx.cache().set_clip_region(entity, root_clip_region);
-        //} else {
-        cx.cache.set_clip_region(entity, clip_region);
-        //}
-    }
-}
-
-pub fn apply_visibility(cx: &mut Context, tree: &Tree) {
-    let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
-    draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
-
-    for entity in draw_tree.into_iter() {
-        if entity == Entity::root() {
-            continue;
-        }
-
-        if tree.is_ignored(entity) {
-            continue;
-        }
-
-        let parent = tree.get_layout_parent(entity).unwrap();
-
-        if cx.cache.get_visibility(parent) == Visibility::Invisible {
-            cx.cache.set_visibility(entity, Visibility::Invisible);
-        } else {
-            if let Some(visibility) = cx.style.visibility.get(entity).copied() {
-                cx.cache.set_visibility(entity, visibility);
-            } else {
-                cx.cache.set_visibility(entity, Visibility::Visible);
-            }
-        }
-
-        if cx.cache.get_display(parent) == Display::None {
-            cx.cache.set_display(entity, Display::None);
-        } else {
-            if let Some(display) = cx.style.display.get(entity).copied() {
-                cx.cache.set_display(entity, display);
-            } else {
-                cx.cache.set_display(entity, Display::Flex);
-            }
-        }
-
-        let parent_opacity = cx.cache.get_opacity(parent);
-
-        let opacity = cx.style.opacity.get(entity).cloned().unwrap_or_default();
-
-        cx.cache.set_opacity(entity, opacity.0 * parent_opacity);
-    }
-}
-
-// Apply this before layout
-// THE GOAL OF THIS FUNCTION: set content-width and content-height
-pub fn apply_text_constraints(cx: &mut Context, tree: &Tree) {
-    //println!("Apply text constraints");
-    let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
-    draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
-
-    for entity in draw_tree.into_iter() {
-        if entity == Entity::root() {
-            continue;
-        }
-
-        if cx.cache.display.get(entity) == Some(&Display::None) {
-            continue;
-        }
-
-        if tree.is_ignored(entity) {
-            continue;
-        }
-
-        // content-size is only used if any dimension is auto
-        if cx.style.min_width.get(entity).copied().unwrap_or_default() != Units::Auto
-            && cx.style.min_height.get(entity).copied().unwrap_or_default() != Units::Auto
-            && cx.style.width.get(entity).copied().unwrap_or_default() != Units::Auto
-            && cx.style.height.get(entity).copied().unwrap_or_default() != Units::Auto
-            && cx.style.max_width.get(entity).map_or(true, |w| w != &Units::Auto)
-            && cx.style.max_height.get(entity).map_or(true, |h| h != &Units::Auto)
-        {
-            continue;
-        }
-
-        let desired_width = cx.style.width.get(entity).cloned().unwrap_or_default();
-        let desired_height = cx.style.height.get(entity).cloned().unwrap_or_default();
-        let style = &cx.style;
-        let text = style.text.get(entity);
-        let image = style.image.get(entity);
-
-        if (text.is_some() || image.is_some())
-            && (desired_width == Units::Auto || desired_height == Units::Auto)
-        {
-            let parent = cx.tree.get_layout_parent(entity).expect("Failed to find parent somehow");
-            let parent_width = cx.cache.get_width(parent);
-
-            let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
-            {
-                Units::Pixels(val) => val,
-                Units::Percentage(val) => parent_width * val,
-                _ => 0.0,
-            };
-
-            let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
-            let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();
-            let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
-            let child_bottom = cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
-
-            let mut x = cx.cache.get_posx(entity);
-            let mut y = cx.cache.get_posy(entity);
-            let width = cx.cache.get_width(entity);
-            let height = cx.cache.get_height(entity);
-            let mut child_space_x = 0.0;
-            let mut child_space_y = 0.0;
-
-            let align = match child_left {
-                Units::Pixels(val) => {
-                    child_space_x += val;
-                    match child_right {
-                        Units::Stretch(_) => {
-                            x += val + border_width;
-                            Align::Left
-                        }
-
-                        _ => Align::Left,
-                    }
-                }
-
-                Units::Stretch(_) => match child_right {
-                    Units::Pixels(val) => {
-                        x += width - val - border_width;
-                        Align::Right
-                    }
-
-                    Units::Stretch(_) => {
-                        x += 0.5 * width;
-                        Align::Center
-                    }
-
-                    _ => Align::Right,
-                },
-
-                _ => Align::Left,
-            };
-            match child_right {
-                Units::Pixels(px) => child_space_x += px,
-                _ => {}
-            }
-
-            let baseline = match child_top {
-                Units::Pixels(val) => {
-                    child_space_y += val;
-                    match child_bottom {
-                        Units::Stretch(_) => {
-                            y += val + border_width;
-                            Baseline::Top
-                        }
-
-                        _ => Baseline::Top,
-                    }
-                }
-
-                Units::Stretch(_) => match child_bottom {
-                    Units::Pixels(val) => {
-                        y += height - val - border_width;
-                        Baseline::Bottom
-                    }
-
-                    Units::Stretch(_) => {
-                        y += 0.5 * height;
-                        Baseline::Middle
-                    }
-
-                    _ => Baseline::Top,
-                },
-
-                _ => Baseline::Top,
-            };
-            match child_bottom {
-                Units::Pixels(px) => child_space_y += px,
-                _ => {}
-            }
-
-            let mut content_width = 0.0;
-            let mut content_height = 0.0;
-
-            if let Some(text) = cx.style.text.get(entity).cloned() {
-                let mut paint = text_paint_general(&cx.style, &cx.resource_manager, entity);
-                paint.set_text_align(align);
-                paint.set_text_baseline(baseline);
-
-                let font_metrics =
-                    cx.text_context.measure_font(paint).expect("Failed to read font metrics");
-
-                if let Ok(lines) = text_layout(f32::MAX, &text, paint, &cx.text_context) {
-                    let metrics = measure_text_lines(&text, paint, &lines, x, y, &cx.text_context);
-                    let text_width = metrics
-                        .iter()
-                        .map(|m| m.width())
-                        .reduce(|a, b| a.max(b))
-                        .unwrap_or_default();
-                    let text_height = font_metrics.height().round() * metrics.len() as f32;
-
-                    // Add an extra pixel to account for AA
-                    let text_width = text_width.round() + 1.0 + child_space_x;
-                    let text_height = text_height.round() + 1.0 + child_space_y;
-
-                    if content_width < text_width {
-                        content_width = text_width;
-                    }
-                    if content_height < text_height {
-                        content_height = text_height;
-                    }
-                }
-            }
-
-            if let Some(image_name) = cx.style.image.get(entity) {
-                if let Some(img) = cx.resource_manager.images.get(image_name) {
-                    let (image_width, image_height) = img.image.dimensions();
-                    let image_width = image_width as f32;
-                    let image_height = image_height as f32;
-
-                    if content_width < image_width {
-                        content_width = image_width;
-                    }
-                    if content_height < image_height {
-                        content_height = image_height;
-                    }
-                }
-            }
-
-            cx.style.content_width.insert(entity, content_width);
-            cx.style.content_height.insert(entity, content_height);
-        }
-    }
-}
-
-pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
+pub fn inline_inheritance_system(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
         if let Some(parent) = tree.get_layout_parent(entity) {
             cx.style.disabled.inherit_inline(entity, parent);
@@ -328,7 +17,7 @@ pub fn apply_inline_inheritance(cx: &mut Context, tree: &Tree) {
     }
 }
 
-pub fn apply_shared_inheritance(cx: &mut Context, tree: &Tree) {
+pub fn shared_inheritance_system(cx: &mut Context, tree: &Tree) {
     for entity in tree.into_iter() {
         if let Some(parent) = tree.get_layout_parent(entity) {
             cx.style.font_color.inherit_shared(entity, parent);
@@ -798,48 +487,51 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
     }
 }
 
-pub fn apply_styles(cx: &mut Context, tree: &Tree) {
-    //println!("RESTYLE");
+// Iterate tree and determine the matched style rules for each entity. Link the entity to the style data.
+pub fn style_system(cx: &mut Context, tree: &Tree) {
+    if cx.style.needs_restyle {
+        let mut prev_entity = None;
 
-    let mut prev_entity = None;
+        let mut prev_matched_rules = Vec::with_capacity(100);
 
-    let mut prev_matched_rules = Vec::with_capacity(100);
+        let mut matched_rules = Vec::with_capacity(100);
 
-    let mut matched_rules = Vec::with_capacity(100);
+        let iterator = LayoutTreeIterator::full(tree);
 
-    let iterator = LayoutTreeIterator::full(tree);
+        // Loop through all entities
+        'ent: for entity in iterator {
+            // Skip the root
+            if entity == Entity::root() {
+                continue;
+            }
 
-    // Loop through all entities
-    'ent: for entity in iterator {
-        // Skip the root
-        if entity == Entity::root() {
-            continue;
-        }
+            // Create a list of style rules that match this entity
+            //let mut matched_rules: Vec<Rule> = Vec::new();
+            matched_rules.clear();
 
-        // Create a list of style rules that match this entity
-        //let mut matched_rules: Vec<Rule> = Vec::new();
-        matched_rules.clear();
-
-        // If the entity and the previous entity have the same parent and selectors then they share the same rules
-        if let Some(prev) = prev_entity {
-            if let Some(parent) = tree.get_layout_parent(entity) {
-                if let Some(prev_parent) = tree.get_layout_parent(prev) {
-                    if parent == prev_parent {
-                        if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
-                            matched_rules = prev_matched_rules.clone();
-                            prev_entity = Some(entity);
-                            link_style_data(cx, entity, &matched_rules);
-                            continue 'ent;
+            // If the entity and the previous entity have the same parent and selectors then they share the same rules
+            if let Some(prev) = prev_entity {
+                if let Some(parent) = tree.get_layout_parent(entity) {
+                    if let Some(prev_parent) = tree.get_layout_parent(prev) {
+                        if parent == prev_parent {
+                            if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
+                                matched_rules = prev_matched_rules.clone();
+                                prev_entity = Some(entity);
+                                link_style_data(cx, entity, &matched_rules);
+                                continue 'ent;
+                            }
                         }
                     }
                 }
             }
+
+            compute_matched_rules(cx, tree, entity, &mut matched_rules);
+            link_style_data(cx, entity, &matched_rules);
+
+            prev_entity = Some(entity);
+            prev_matched_rules = matched_rules.clone();
         }
 
-        compute_matched_rules(cx, tree, entity, &mut matched_rules);
-        link_style_data(cx, entity, &matched_rules);
-
-        prev_entity = Some(entity);
-        prev_matched_rules = matched_rules.clone();
+        cx.style.needs_restyle = false;
     }
 }

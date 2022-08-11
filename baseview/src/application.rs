@@ -191,8 +191,6 @@ impl ApplicationRunner {
         cx.process_data_updates();
         cx.process_style_updates();
 
-        cx.apply_animations();
-
         cx.process_visual_updates();
 
         if cx.style().needs_redraw {

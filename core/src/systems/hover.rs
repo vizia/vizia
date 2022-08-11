@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
-/// Determines the hovered entity based on the mouse cursor position.
-pub fn apply_hover(cx: &mut Context) {
+// Determines the hovered entity based on the mouse cursor position.
+pub fn hover_system(cx: &mut Context) {
     // TODO - Cache this
     let mut draw_tree: Vec<Entity> = cx.tree.into_iter().collect();
     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
