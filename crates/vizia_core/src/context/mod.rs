@@ -26,10 +26,10 @@ use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
-use crate::storage::sparse_set::SparseSet;
 use crate::style::Style;
 use crate::tree::TreeExt;
 use vizia_id::{GenerationalId, IdManager};
+use vizia_storage::SparseSet;
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");

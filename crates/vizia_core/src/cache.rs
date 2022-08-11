@@ -5,8 +5,8 @@ use morphorm::GeometryChanged;
 use std::fmt::Debug;
 
 use crate::prelude::*;
-use crate::storage::sparse_set::SparseSet;
-use crate::storage::sparse_set::SparseSetError;
+use vizia_storage::SparseSet;
+use vizia_storage::SparseSetError;
 use crate::style::Transform2D;
 
 /// Computed properties used for layout and drawing.
