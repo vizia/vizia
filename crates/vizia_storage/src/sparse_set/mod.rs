@@ -14,8 +14,8 @@ pub struct SparseSetGeneric<I, V>
 where
     I: SparseSetIndex,
 {
-    sparse: Vec<I>,
-    dense: Vec<Entry<I, V>>,
+    pub sparse: Vec<I>,
+    pub dense: Vec<Entry<I, V>>,
 }
 
 impl<I, V> Default for SparseSetGeneric<I, V>

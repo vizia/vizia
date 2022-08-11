@@ -1,8 +1,8 @@
-use vizia_id::GenerationalId;
 use crate::prelude::*;
 use crate::style::Rule;
+use vizia_id::GenerationalId;
 
-use super::sparse_set::{DenseIndex, SparseSetGeneric};
+use vizia_storage::{SparseSetGeneric, SparseSetIndex};
 
 const INDEX_MASK: u32 = u32::MAX / 4;
 const INLINE_MASK: u32 = 1 << 31;
@@ -76,7 +76,7 @@ impl Default for Index {
     }
 }
 
-impl DenseIndex for Index {
+impl SparseSetIndex for Index {
     fn new(index: usize) -> Self {
         Index { data_index: DataIndex::inline(index), anim_index: u32::MAX }
     }
@@ -98,9 +98,9 @@ impl DenseIndex for Index {
 /// animations to be quickly iterated to update the value.
 pub struct StyleSet<T> {
     /// Shared data determined by style rules
-    shared_data: SparseSetGeneric<T, Index>,
+    shared_data: SparseSetGeneric<Index, T>,
     /// Inline data defined on specific entities
-    inline_data: SparseSetGeneric<T, Index>,
+    inline_data: SparseSetGeneric<Index, T>,
 }
 
 impl<T> Default for StyleSet<T> {

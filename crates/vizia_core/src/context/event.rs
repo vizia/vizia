@@ -13,7 +13,7 @@ use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
-use crate::storage::sparse_set::SparseSet;
+use vizia_storage::SparseSet;
 use crate::style::Style;
 
 #[cfg(feature = "clipboard")]

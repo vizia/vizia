@@ -47,7 +47,7 @@ use shadow::*;
 
 use crate::animation::{AnimationState, Interpolator, Transition};
 use crate::storage::animatable_set::AnimatableSet;
-use crate::storage::sparse_set::SparseSet;
+use vizia_storage::SparseSet;
 use crate::storage::style_set::StyleSet;
 use crate::text::Selection;
 use bitflags::bitflags;

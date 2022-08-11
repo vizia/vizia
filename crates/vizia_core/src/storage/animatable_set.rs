@@ -1,9 +1,8 @@
 use crate::animation::{AnimationState, Interpolator};
-use vizia_id::GenerationalId;
 use crate::prelude::*;
 use crate::style::Rule;
-
-use super::sparse_set::{DenseIndex, SparseSet, SparseSetGeneric};
+use vizia_id::GenerationalId;
+use vizia_storage::{SparseSet, SparseSetGeneric, SparseSetIndex};
 
 const INDEX_MASK: u32 = u32::MAX / 4;
 const INLINE_MASK: u32 = 1 << 31;
@@ -87,7 +86,7 @@ impl Default for InlineIndex {
     }
 }
 
-impl DenseIndex for InlineIndex {
+impl SparseSetIndex for InlineIndex {
     fn new(index: usize) -> Self {
         InlineIndex { data_index: DataIndex::inline(index), anim_index: u32::MAX }
     }
@@ -113,7 +112,7 @@ impl Default for SharedIndex {
     }
 }
 
-impl DenseIndex for SharedIndex {
+impl SparseSetIndex for SharedIndex {
     fn new(index: usize) -> Self {
         SharedIndex { data_index: index as u32, animation: Animation::null() }
     }
@@ -136,9 +135,9 @@ impl DenseIndex for SharedIndex {
 #[derive(Default, Debug)]
 pub struct AnimatableSet<T: Interpolator> {
     /// Shared data determined by style rules
-    pub(crate) shared_data: SparseSetGeneric<T, SharedIndex>,
+    pub(crate) shared_data: SparseSetGeneric<SharedIndex, T>,
     /// Inline data defined on specific entities
-    pub(crate) inline_data: SparseSetGeneric<T, InlineIndex>,
+    pub(crate) inline_data: SparseSetGeneric<InlineIndex, T>,
     /// Animation descriptions
     animations: SparseSet<AnimationState<T>>,
     /// Animations which are currently playing
