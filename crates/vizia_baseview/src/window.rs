@@ -9,8 +9,8 @@ use crate::proxy::BaseviewProxy;
 use vizia_core::context::backend::*;
 use vizia_core::prelude::*;
 
-static DEFAULT_THEME: &str = include_str!("../../core/resources/themes/default_theme.css");
-static DEFAULT_LAYOUT: &str = include_str!("../../core/resources/themes/default_layout.css");
+static DEFAULT_THEME: &str = include_str!("../../vizia_core/resources/themes/default_theme.css");
+static DEFAULT_LAYOUT: &str = include_str!("../../vizia_core/resources/themes/default_layout.css");
 
 /// Handles a vizia_baseview application
 pub(crate) struct ViziaWindow {

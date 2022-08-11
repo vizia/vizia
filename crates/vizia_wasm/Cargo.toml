@@ -1,5 +1,5 @@
 [package]
-name = "run-wasm"
+name = "vizia_wasm"
 version = "0.1.0"
 edition = "2021"
 
