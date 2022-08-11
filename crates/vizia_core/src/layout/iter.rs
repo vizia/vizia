@@ -1,4 +1,4 @@
-use crate::id::GenerationalId;
+use vizia_id::GenerationalId;
 use crate::prelude::*;
 use crate::tree::*;
 
@@ -105,7 +105,7 @@ impl<'a> DoubleEndedIterator for LayoutChildIterator<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::id::IdManager;
+    use vizia_id::IdManager;
     use crate::layout::LayoutChildIterator;
     use crate::prelude::*;
 

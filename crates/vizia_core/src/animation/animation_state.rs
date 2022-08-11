@@ -1,5 +1,5 @@
 use crate::animation::Interpolator;
-use crate::id::GenerationalId;
+use vizia_id::GenerationalId;
 use instant::{Duration, Instant};
 use std::collections::HashSet;
 

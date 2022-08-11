@@ -39,7 +39,7 @@ impl<'a> DoubleEndedIterator for TreeIterator<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::id::GenerationalId;
+    use vizia_id::GenerationalId;
     use crate::tree::TreeError;
 
     #[test]

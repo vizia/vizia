@@ -1,14 +1,14 @@
 /// The bits used for the index.
-pub(crate) const GENERATIONAL_ID_INDEX_BITS: u32 = 24;
+pub const GENERATIONAL_ID_INDEX_BITS: u32 = 24;
 
 /// The mask of the bits used for the index.
-pub(crate) const GENERATIONAL_ID_INDEX_MASK: u32 = (1 << GENERATIONAL_ID_INDEX_BITS) - 1;
+pub const GENERATIONAL_ID_INDEX_MASK: u32 = (1 << GENERATIONAL_ID_INDEX_BITS) - 1;
 
 /// The bits used for the generation.
-pub(crate) const GENERATIONAL_ID_GENERATION_BITS: u32 = 8;
+pub const GENERATIONAL_ID_GENERATION_BITS: u32 = 8;
 
 /// The mask of the bits used for the generation.
-pub(crate) const GENERATIONAL_ID_GENERATION_MASK: u32 = (1 << GENERATIONAL_ID_GENERATION_BITS) - 1;
+pub const GENERATIONAL_ID_GENERATION_MASK: u32 = (1 << GENERATIONAL_ID_GENERATION_BITS) - 1;
 
 /// A trait implemented by any generational id.
 ///
@@ -37,17 +37,18 @@ pub trait GenerationalId: Copy + PartialEq {
     fn is_null(&self) -> bool;
 }
 
+#[macro_export]
 macro_rules! impl_generational_id {
     ($impl_type: ty) => {
         impl Default for $impl_type {
             fn default() -> Self {
-                $crate::id::GenerationalId::null()
+                GenerationalId::null()
             }
         }
 
         impl std::fmt::Display for $impl_type {
             fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(f, "{}", $crate::id::GenerationalId::index(self))
+                write!(f, "{}", GenerationalId::index(self))
             }
         }
 
@@ -56,26 +57,25 @@ macro_rules! impl_generational_id {
                 write!(
                     f,
                     concat!(stringify!($impl_type), " (index: {}, generation: {})"),
-                    $crate::id::GenerationalId::index(self),
-                    $crate::id::GenerationalId::generation(self),
+                    GenerationalId::index(self),
+                    GenerationalId::generation(self),
                 )
             }
         }
 
-        impl $crate::id::GenerationalId for $impl_type {
+        impl GenerationalId for $impl_type {
             fn new(index: u32, generation: u32) -> Self {
-                assert!(index < $crate::id::GENERATIONAL_ID_INDEX_MASK);
-                assert!(generation < $crate::id::GENERATIONAL_ID_GENERATION_MASK);
-                Self(index | generation << $crate::id::GENERATIONAL_ID_INDEX_BITS)
+                assert!(index < GENERATIONAL_ID_INDEX_MASK);
+                assert!(generation < GENERATIONAL_ID_GENERATION_MASK);
+                Self(index | generation << GENERATIONAL_ID_INDEX_BITS)
             }
 
             fn index(&self) -> usize {
-                (self.0 & $crate::id::GENERATIONAL_ID_INDEX_MASK) as usize
+                (self.0 & GENERATIONAL_ID_INDEX_MASK) as usize
             }
 
             fn generation(&self) -> u8 {
-                ((self.0 >> $crate::id::GENERATIONAL_ID_INDEX_BITS)
-                    & $crate::id::GENERATIONAL_ID_GENERATION_MASK) as u8
+                ((self.0 >> GENERATIONAL_ID_INDEX_BITS) & GENERATIONAL_ID_GENERATION_MASK) as u8
             }
 
             fn null() -> Self {
@@ -89,4 +89,4 @@ macro_rules! impl_generational_id {
     };
 }
 
-pub(crate) use impl_generational_id;
+pub use impl_generational_id;

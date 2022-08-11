@@ -1,5 +1,5 @@
 use crate::cache::BoundingBox;
-use crate::id::GenerationalId;
+use vizia_id::GenerationalId;
 use crate::prelude::*;
 use crate::text::{
     idx_to_pos, measure_text_lines, pos_to_idx, text_layout, text_paint_general, Direction,

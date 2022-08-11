@@ -1,6 +1,6 @@
 use super::tree_iter::TreeIterator;
 use crate::entity::Entity;
-use crate::id::GenerationalId;
+use vizia_id::GenerationalId;
 use crate::tree::TreeExt;
 
 #[derive(Debug, Clone, Copy)]

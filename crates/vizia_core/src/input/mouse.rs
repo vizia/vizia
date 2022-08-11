@@ -1,5 +1,5 @@
 use crate::entity::Entity;
-use crate::id::GenerationalId;
+use vizia_id::GenerationalId;
 
 /// A mouse button.
 ///

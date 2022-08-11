@@ -12,7 +12,6 @@ use crate::{
     environment::Environment,
     events::ViewHandler,
     fonts,
-    id::GenerationalId,
     layout::geometry_changed,
     prelude::*,
     resource::FontOrId,
@@ -21,6 +20,7 @@ use crate::{
     systems::*,
     tree::{focus_backward, focus_forward, is_navigatable, TreeIterator},
 };
+use vizia_id::GenerationalId;
 
 pub use crate::systems::animation::has_animations;
 

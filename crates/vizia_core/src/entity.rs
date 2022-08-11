@@ -1,4 +1,7 @@
-use crate::id::impl_generational_id;
+use vizia_id::{
+    impl_generational_id, GenerationalId, GENERATIONAL_ID_GENERATION_MASK,
+    GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
+};
 
 /// An entity is an identifier used to reference a view; to get/set properties in the context.
 ///

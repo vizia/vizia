@@ -22,7 +22,6 @@ pub use proxy::*;
 use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
-use crate::id::{GenerationalId, IdManager};
 use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
@@ -30,6 +29,7 @@ use crate::state::{BindingHandler, ModelDataStore};
 use crate::storage::sparse_set::SparseSet;
 use crate::style::Style;
 use crate::tree::TreeExt;
+use vizia_id::{GenerationalId, IdManager};
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");

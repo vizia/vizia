@@ -24,7 +24,6 @@ pub mod view;
 pub mod views;
 pub mod window;
 
-mod id;
 mod storage;
 
 /// This is a re-export of [femtovg](https://docs.rs/femtovg/latest/femtovg/).
