@@ -8,13 +8,13 @@ use fnv::FnvHashMap;
 
 use crate::cache::CachedData;
 use crate::events::ViewHandler;
-use vizia_id::GenerationalId;
 use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
-use vizia_storage::SparseSet;
 use crate::style::Style;
+use vizia_id::GenerationalId;
+use vizia_storage::SparseSet;
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;

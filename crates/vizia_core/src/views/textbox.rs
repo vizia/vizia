@@ -1,5 +1,4 @@
 use crate::cache::BoundingBox;
-use vizia_id::GenerationalId;
 use crate::prelude::*;
 use crate::text::{
     idx_to_pos, measure_text_lines, pos_to_idx, text_layout, text_paint_general, Direction,
@@ -8,6 +7,7 @@ use crate::text::{
 use crate::tree::TreeExt;
 use keyboard_types::Code;
 use std::sync::Arc;
+use vizia_id::GenerationalId;
 
 #[derive(Lens)]
 pub struct TextboxData {

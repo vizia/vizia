@@ -6,12 +6,12 @@ use cssparser::{
 };
 
 use crate::animation::Transition;
-use vizia_id::GenerationalId;
 use crate::style::color::Color;
 use crate::style::property::Property;
 use crate::style::selector::{Selector, SelectorRelation};
 use crate::style::StyleRule;
 use crate::style::*;
+use vizia_id::GenerationalId;
 
 #[derive(Clone)]
 pub enum CustomParseError {

@@ -1,6 +1,6 @@
-use vizia_id::GenerationalId;
 use crate::prelude::*;
 use crate::tree::*;
+use vizia_id::GenerationalId;
 
 /// Iterator for iterating the children of an entity.
 pub struct ChildIterator<'a> {

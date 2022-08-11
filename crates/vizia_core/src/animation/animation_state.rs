@@ -1,7 +1,7 @@
 use crate::animation::Interpolator;
-use vizia_id::GenerationalId;
 use instant::{Duration, Instant};
 use std::collections::HashSet;
+use vizia_id::GenerationalId;
 
 use crate::prelude::*;
 

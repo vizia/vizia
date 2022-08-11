@@ -39,8 +39,8 @@ impl<'a> DoubleEndedIterator for TreeIterator<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use vizia_id::GenerationalId;
     use crate::tree::TreeError;
+    use vizia_id::GenerationalId;
 
     #[test]
     fn simple_forward_backward() -> Result<(), TreeError> {

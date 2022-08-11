@@ -1,7 +1,7 @@
 use super::tree_iter::TreeIterator;
 use crate::entity::Entity;
-use vizia_id::GenerationalId;
 use crate::tree::TreeExt;
+use vizia_id::GenerationalId;
 
 #[derive(Debug, Clone, Copy)]
 pub enum TreeError {

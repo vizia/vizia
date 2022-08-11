@@ -1,5 +1,5 @@
-use vizia_id::GenerationalId;
 use crate::prelude::*;
+use vizia_id::GenerationalId;
 
 /// Generic iterator based on [`TreeTour`].
 pub struct TreeTourIterator<'a, F> {

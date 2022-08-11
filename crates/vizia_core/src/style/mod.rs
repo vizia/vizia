@@ -47,11 +47,11 @@ use shadow::*;
 
 use crate::animation::{AnimationState, Interpolator, Transition};
 use crate::storage::animatable_set::AnimatableSet;
-use vizia_storage::SparseSet;
 use crate::storage::style_set::StyleSet;
 use crate::text::Selection;
 use bitflags::bitflags;
 use vizia_id::IdManager;
+use vizia_storage::SparseSet;
 
 bitflags! {
     /// Describes the capabilities of a view with respect to user interaction.
