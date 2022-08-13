@@ -50,7 +50,6 @@ pub mod prelude {
     pub use super::localization::Localized;
     pub use super::modifiers::Actions;
     pub use super::state::{Binding, Data, Lens, LensExt, Model, Res};
-    pub use super::tree::{Tree, TreeExt};
     pub use super::view::{Canvas, View};
     pub use super::views::*;
     pub use super::window::{
@@ -58,6 +57,7 @@ pub mod prelude {
     };
     pub use vizia_derive::{Data, Lens};
     pub use vizia_input::{Code, Key, Modifiers, MouseButton, MouseButtonState};
+    pub use vizia_storage::{Tree, TreeExt};
 
     pub use super::style::{
         Abilities, BorderCornerShape, Color, Display, GradientDirection, GradientStop,

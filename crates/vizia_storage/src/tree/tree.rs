@@ -1,41 +1,29 @@
-use super::tree_iter::TreeIterator;
-use crate::entity::Entity;
-use crate::tree::TreeExt;
+use crate::{TreeError, TreeExt, TreeIterator};
 use vizia_id::GenerationalId;
-
-#[derive(Debug, Clone, Copy)]
-pub enum TreeError {
-    // The entity does not exist in the tree.
-    NoEntity,
-    // Parent does not exist in the tree.
-    InvalidParent,
-    // Sibling does not exist in the tree.
-    InvalidSibling,
-    // Entity is null.
-    NullEntity,
-    // Desired sibling is already the sibling.
-    AlreadySibling,
-    // Desired first child id already the first child.
-    AlreadyFirstChild,
-}
 
 /// The [Tree] describes the tree of entities.
 ///
 /// This type is part of the prelude.
 #[derive(Debug, Clone)]
-pub struct Tree {
-    pub parent: Vec<Option<Entity>>,
-    pub first_child: Vec<Option<Entity>>,
-    pub next_sibling: Vec<Option<Entity>>,
-    pub prev_sibling: Vec<Option<Entity>>,
+pub struct Tree<I>
+where
+    I: GenerationalId,
+{
+    pub parent: Vec<Option<I>>,
+    pub first_child: Vec<Option<I>>,
+    pub next_sibling: Vec<Option<I>>,
+    pub prev_sibling: Vec<Option<I>>,
     pub ignored: Vec<bool>,
     pub changed: bool,
 }
 
-impl Tree {
+impl<I> Tree<I>
+where
+    I: GenerationalId,
+{
     /// Creates a new tree with a root entity.
-    pub fn new() -> Tree {
-        Tree {
+    pub fn new() -> Self {
+        Self {
             parent: vec![None],
             first_child: vec![None],
             next_sibling: vec![None],
@@ -45,7 +33,7 @@ impl Tree {
         }
     }
 
-    pub fn get_child_index(&self, entity: Entity) -> Option<usize> {
+    pub fn get_child_index(&self, entity: I) -> Option<usize> {
         if let Some(parent) = self.get_parent(entity) {
             for (index, child) in parent.child_iter(self).enumerate() {
                 if child == entity {
@@ -58,7 +46,7 @@ impl Tree {
     }
 
     /// Returns the last child of an entity.
-    pub fn get_last_child(&self, entity: Entity) -> Option<Entity> {
+    pub fn get_last_child(&self, entity: I) -> Option<I> {
         //check if entity exists
         let index = entity.index();
         if index < self.first_child.len() {
@@ -76,7 +64,7 @@ impl Tree {
     }
 
     /// Returns the nth child of an entity.
-    pub fn get_child(&self, entity: Entity, n: usize) -> Option<Entity> {
+    pub fn get_child(&self, entity: I, n: usize) -> Option<I> {
         if entity.is_null() {
             return None;
         };
@@ -95,7 +83,7 @@ impl Tree {
     }
 
     /// Returns the number of children of an entity.
-    pub fn get_num_children(&self, entity: Entity) -> Option<u32> {
+    pub fn get_num_children(&self, entity: I) -> Option<u32> {
         let index = entity.index();
         if entity.is_null() {
             return None;
@@ -111,12 +99,12 @@ impl Tree {
     }
 
     /// Returns true if the node should be skipped by layout
-    pub fn is_ignored(&self, entity: Entity) -> bool {
+    pub fn is_ignored(&self, entity: I) -> bool {
         self.ignored.get(entity.index()).map_or_else(|| false, |ignored| *ignored)
     }
 
     /// Returns the first ancestor of an entity which is not ignored
-    pub fn get_layout_parent(&self, entity: Entity) -> Option<Entity> {
+    pub fn get_layout_parent(&self, entity: I) -> Option<I> {
         let mut i = self.get_parent(entity);
         while let Some(parent) = i {
             if !self.is_ignored(parent) {
@@ -129,27 +117,27 @@ impl Tree {
     }
 
     /// Returns the parent of an entity.
-    pub fn get_parent(&self, entity: Entity) -> Option<Entity> {
+    pub fn get_parent(&self, entity: I) -> Option<I> {
         self.parent.get(entity.index()).map_or(None, |&parent| parent)
     }
 
     /// Returns the first child of an entity or `None` if there isn't one.
-    pub fn get_first_child(&self, entity: Entity) -> Option<Entity> {
+    pub fn get_first_child(&self, entity: I) -> Option<I> {
         self.first_child.get(entity.index()).map_or(None, |&first_child| first_child)
     }
 
     /// Returns the next sibling of an entity or `None` if t here isn't one.
-    pub fn get_next_sibling(&self, entity: Entity) -> Option<Entity> {
+    pub fn get_next_sibling(&self, entity: I) -> Option<I> {
         self.next_sibling.get(entity.index()).map_or(None, |&next_sibling| next_sibling)
     }
 
     /// Returns the previous sibling of an entity or `None` if there isn't one.
-    pub fn get_prev_sibling(&self, entity: Entity) -> Option<Entity> {
+    pub fn get_prev_sibling(&self, entity: I) -> Option<I> {
         self.prev_sibling.get(entity.index()).map_or(None, |&prev_sibling| prev_sibling)
     }
 
     /// Returns true if the entity is the first child of its parent.
-    pub fn is_first_child(&self, entity: Entity) -> bool {
+    pub fn is_first_child(&self, entity: I) -> bool {
         if let Some(parent) = self.get_parent(entity) {
             if let Some(first_child) = self.get_first_child(parent) {
                 if first_child == entity {
@@ -164,7 +152,7 @@ impl Tree {
     }
 
     /// Returns true if the entity is the last child of its parent.
-    pub fn is_last_child(&self, entity: Entity) -> bool {
+    pub fn is_last_child(&self, entity: I) -> bool {
         if let Some(parent) = self.get_parent(entity) {
             if let Some(mut temp) = self.get_first_child(parent) {
                 while let Some(next_sibling) = self.get_next_sibling(temp) {
@@ -181,7 +169,7 @@ impl Tree {
     }
 
     // Checks if entity1 is the sibling of entity2.
-    pub fn is_sibling(&self, entity1: Entity, entity2: Entity) -> bool {
+    pub fn is_sibling(&self, entity1: I, entity2: I) -> bool {
         if let Some(parent1) = self.get_parent(entity1) {
             if let Some(parent2) = self.get_parent(entity2) {
                 return parent1 == parent2;
@@ -192,16 +180,16 @@ impl Tree {
     }
 
     /// Returns true if the entity has children.
-    pub fn has_children(&self, entity: Entity) -> bool {
+    pub fn has_children(&self, entity: I) -> bool {
         self.get_first_child(entity).is_some()
     }
 
     /// Removes an entity from the tree
     ///
     /// This method assumes that a check if the entity is alive has already been done prior to calling this method.
-    pub fn remove(&mut self, entity: Entity) -> Result<(), TreeError> {
+    pub fn remove(&mut self, entity: I) -> Result<(), TreeError> {
         // Check if the entity is null
-        if entity == Entity::null() {
+        if entity == I::null() {
             return Err(TreeError::NullEntity);
         }
 
@@ -222,7 +210,7 @@ impl Tree {
         // Set the next sibling of the previous sibling of the entity to the next sibling of the entity.
         // from:    [PS] -> [E] -> [NS]
         // to:      [PS] -> [NS]
-        // where:   PS - Previous Sibling, E - Entity, NS - Next Sibling
+        // where:   PS - Previous Sibling, E - I, NS - Next Sibling
         if let Some(prev_sibling) = self.get_prev_sibling(entity) {
             self.next_sibling[prev_sibling.index()] = self.get_next_sibling(entity);
         }
@@ -230,7 +218,7 @@ impl Tree {
         // Set the previous sibling of the next sibling of the entity to the previous sibling of the entity.
         // from:    [PS] <- [E] <- [NS]
         // to:      [PS] <- [NS]
-        // where:   PS - Previous Sibling, E - Entity, NS - Next Sibling
+        // where:   PS - Previous Sibling, E - I, NS - Next Sibling
         if let Some(next_sibling) = self.get_next_sibling(entity) {
             self.prev_sibling[next_sibling.index()] = self.get_prev_sibling(entity);
         }
@@ -248,7 +236,7 @@ impl Tree {
     }
 
     /// Makes the entity the first child of its parent.
-    pub fn set_first_child(&mut self, entity: Entity) -> Result<(), TreeError> {
+    pub fn set_first_child(&mut self, entity: I) -> Result<(), TreeError> {
         let index = entity.index();
         // Check is sibling exists in the tree
         if index >= self.parent.len() {
@@ -295,7 +283,7 @@ impl Tree {
         Ok(())
     }
 
-    pub fn set_next_sibling(&mut self, entity: Entity, sibling: Entity) -> Result<(), TreeError> {
+    pub fn set_next_sibling(&mut self, entity: I, sibling: I) -> Result<(), TreeError> {
         if self.next_sibling[entity.index()] == Some(sibling) {
             return Err(TreeError::AlreadySibling);
         }
@@ -350,7 +338,7 @@ impl Tree {
         Ok(())
     }
 
-    pub fn set_prev_sibling(&mut self, entity: Entity, sibling: Entity) -> Result<(), TreeError> {
+    pub fn set_prev_sibling(&mut self, entity: I, sibling: I) -> Result<(), TreeError> {
         if self.prev_sibling[entity.index()] == Some(sibling) {
             return Err(TreeError::InvalidSibling);
         }
@@ -409,7 +397,7 @@ impl Tree {
         Ok(())
     }
 
-    pub fn set_parent(&mut self, entity: Entity, parent: Entity) {
+    pub fn set_parent(&mut self, entity: I, parent: I) {
         if let Some(old_parent) = self.get_parent(entity) {
             if self.is_first_child(entity) {
                 self.first_child[old_parent.index()] = self.get_next_sibling(entity);
@@ -446,13 +434,13 @@ impl Tree {
         self.changed = true;
     }
 
-    pub fn set_ignored(&mut self, entity: Entity, flag: bool) {
+    pub fn set_ignored(&mut self, entity: I, flag: bool) {
         self.ignored.get_mut(entity.index()).and_then(|ignored| Some(*ignored = flag));
     }
 
     /// Adds an entity to the tree with the specified parent.
-    pub fn add(&mut self, entity: Entity, parent: Entity) -> Result<(), TreeError> {
-        if entity == Entity::null() || parent == Entity::null() {
+    pub fn add(&mut self, entity: I, parent: I) -> Result<(), TreeError> {
+        if entity == I::null() || parent == I::null() {
             return Err(TreeError::NullEntity);
         }
 
@@ -502,9 +490,12 @@ impl Tree {
     }
 }
 
-impl<'a> IntoIterator for &'a Tree {
-    type Item = Entity;
-    type IntoIter = TreeIterator<'a>;
+impl<'a, I> IntoIterator for &'a Tree<I>
+where
+    I: GenerationalId,
+{
+    type Item = I;
+    type IntoIter = TreeIterator<'a, I>;
 
     fn into_iter(self) -> Self::IntoIter {
         TreeIterator::full(self)

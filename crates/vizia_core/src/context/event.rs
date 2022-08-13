@@ -30,7 +30,7 @@ pub struct EventContext<'a> {
     entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a CachedData,
     pub draw_cache: &'a DrawCache,
-    pub tree: &'a Tree,
+    pub tree: &'a Tree<Entity>,
     pub(crate) data: &'a SparseSet<ModelDataStore>,
     pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
     listeners:

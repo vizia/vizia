@@ -1,5 +1,10 @@
-use crate::prelude::*;
-use crate::tree::*;
+use crate::{
+    context::Context,
+    entity::Entity,
+    style::{Abilities, Display, Visibility},
+};
+use vizia_id::GenerationalId;
+use vizia_storage::{DoubleEndedTreeTour, TourDirection, TreeIterator, TreeTour};
 
 pub fn is_navigatable(cx: &Context, node: Entity) -> bool {
     // Skip invisible widgets
@@ -29,24 +34,21 @@ pub fn is_navigatable(cx: &Context, node: Entity) -> bool {
 }
 
 pub fn focus_forward<'a>(cx: &Context, node: Entity) -> Option<Entity> {
-    TreeIterator {
-        tree: &cx.tree,
-        tours: DoubleEndedTreeTour::new(Some(node), Some(Entity::root())),
-    }
-    .skip(1)
-    .filter(|node| is_navigatable(cx, *node))
-    .next()
+    TreeIterator::new(&cx.tree, DoubleEndedTreeTour::new(Some(node), Some(Entity::root())))
+        .skip(1)
+        .filter(|node| is_navigatable(cx, *node))
+        .next()
 }
 
 pub fn focus_backward<'a>(cx: &Context, node: Entity) -> Option<Entity> {
-    let mut iter = TreeIterator {
-        tree: &cx.tree,
-        tours: DoubleEndedTreeTour::new_raw(
+    let mut iter = TreeIterator::new(
+        &cx.tree,
+        DoubleEndedTreeTour::new_raw(
             TreeTour::new(Some(Entity::root())),
             TreeTour::with_direction(Some(node), TourDirection::Leaving),
         ),
         //tours: DoubleEndedTreeTour::new(Some(Entity::root()), Some(node)),
-    };
+    );
     iter.next_back();
     iter.filter(|node| is_navigatable(cx, *node)).next_back()
 }

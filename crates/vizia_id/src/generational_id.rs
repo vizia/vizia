@@ -35,6 +35,9 @@ pub trait GenerationalId: Copy + PartialEq {
 
     /// Returns `true` is the generational id is null.
     fn is_null(&self) -> bool;
+
+    /// Returns the root id usually referring to the first id (e.g. Entity(0)).
+    fn root() -> Self;
 }
 
 #[macro_export]
@@ -84,6 +87,10 @@ macro_rules! impl_generational_id {
 
             fn is_null(&self) -> bool {
                 *self == Self::null()
+            }
+
+            fn root() -> Self {
+                Self(0)
             }
         }
     };

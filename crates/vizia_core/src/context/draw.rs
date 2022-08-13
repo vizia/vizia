@@ -41,7 +41,7 @@ pub struct DrawContext<'a> {
     pub style: &'a Style,
     pub cache: &'a CachedData,
     pub draw_cache: &'a mut DrawCache,
-    pub tree: &'a Tree,
+    pub tree: &'a Tree<Entity>,
     pub(crate) data: &'a SparseSet<ModelDataStore>,
     pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub resource_manager: &'a ResourceManager,

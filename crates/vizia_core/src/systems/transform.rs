@@ -1,6 +1,7 @@
 use crate::{prelude::*, style::Transform2D};
+use vizia_id::GenerationalId;
 
-pub fn transform_system(cx: &mut Context, tree: &Tree) {
+pub fn transform_system(cx: &mut Context, tree: &Tree<Entity>) {
     for entity in tree.into_iter() {
         if entity == Entity::root() {
             continue;

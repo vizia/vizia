@@ -5,8 +5,6 @@ use fnv::FnvHashMap;
 use instant::{Duration, Instant};
 
 use super::EventProxy;
-#[cfg(debug_assertions)]
-use crate::tree::TreeDepthIterator;
 use crate::{
     cache::{BoundingBox, CachedData},
     environment::Environment,
@@ -18,9 +16,12 @@ use crate::{
     state::ModelOrView,
     style::Style,
     systems::*,
-    tree::{focus_backward, focus_forward, is_navigatable, TreeIterator},
+    tree::{focus_backward, focus_forward, is_navigatable},
 };
 use vizia_id::GenerationalId;
+#[cfg(debug_assertions)]
+use vizia_storage::TreeDepthIterator;
+use vizia_storage::TreeIterator;
 
 pub use crate::systems::animation::has_animations;
 

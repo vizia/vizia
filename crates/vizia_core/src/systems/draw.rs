@@ -1,5 +1,6 @@
 use crate::context::Context;
 use crate::prelude::*;
+use vizia_id::GenerationalId;
 
 pub fn draw_system(cx: &mut Context) {
     let canvas = cx.canvases.get_mut(&Entity::root()).unwrap();
