@@ -26,4 +26,4 @@ mod debug_iter;
 pub use debug_iter::TreeDepthIterator;
 
 mod focus_iter;
-pub use focus_iter::{focus_backward, focus_forward, is_navigatable};
+pub use focus_iter::{focus_backward, focus_forward, is_focusable, is_navigatable};

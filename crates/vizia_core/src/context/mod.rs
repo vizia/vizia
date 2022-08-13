@@ -27,7 +27,7 @@ use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
-use crate::tree::TreeExt;
+use crate::tree::{TreeExt, TreeIterator, is_focusable};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_storage::SparseSet;
 
@@ -63,6 +63,7 @@ pub struct Context {
     pub(crate) triggered: Entity,
     pub(crate) hovered: Entity,
     pub(crate) focused: Entity,
+    pub(crate) lock_focus_to: Entity,
     pub(crate) cursor_icon_locked: bool,
 
     pub(crate) resource_manager: ResourceManager,
@@ -108,6 +109,7 @@ impl Context {
             triggered: Entity::null(),
             hovered: Entity::root(),
             focused: Entity::root(),
+            lock_focus_to: Entity::root(),
             cursor_icon_locked: false,
             resource_manager: ResourceManager::new(),
             text_context: TextContext::default(),
@@ -234,6 +236,19 @@ impl Context {
             .filter(|class| class.contains(PseudoClass::FOCUS_VISIBLE))
             .is_some();
         self.focus_with_visibility(old_focus_visible)
+    }
+
+    /// Stop the user from tabbing out of a subtree, which is useful for modals.
+    pub fn lock_focus_to(&mut self, lock_focus_to: Entity) {
+        self.lock_focus_to = lock_focus_to;
+        // Adjust the currently focused entity if it is not currently within the subtree
+        if !self.focused.is_descendant_of(&self.tree, lock_focus_to) {
+            let new_focus = TreeIterator::subtree(&self.tree, lock_focus_to)
+                .filter(|node| is_focusable(&self, *node))
+                .next()
+                .unwrap_or(Entity::root());
+            self.with_current(new_focus, |cx| cx.focus());
+        }
     }
 
     /// Sets the checked flag of the current entity

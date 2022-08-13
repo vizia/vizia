@@ -41,7 +41,7 @@ fn main() {
             .width(Pixels(150.0))
             .space(Pixels(50.0));
 
-        Popup::new(cx, AppData::show_modal, |cx| {
+        Popup::new(cx, AppData::show_modal, true, |cx| {
             Label::new(cx, "This is a message").width(Stretch(1.0));
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| cx.emit(AppEvent::HideModal), |cx| Label::new(cx, "Ok"))

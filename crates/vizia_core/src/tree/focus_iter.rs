@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use crate::tree::*;
 
+/// Should the user be able to navigate to the entity with tab?
 pub fn is_navigatable(cx: &Context, node: Entity) -> bool {
     // Skip invisible widgets
     if cx.cache.get_visibility(node) == Visibility::Invisible {
@@ -17,6 +18,20 @@ pub fn is_navigatable(cx: &Context, node: Entity) -> bool {
         return false;
     }
 
+    // Skip nodes outside of the subtree
+    if !node.is_descendant_of(&cx.tree, cx.lock_focus_to) {
+        return false;
+    }
+
+    has_ability(cx, node, Abilities::KEYBOARD_NAVIGATABLE)
+}
+
+/// Is the entity focusable - some focusable entities are not in the tab order.
+pub fn is_focusable(cx: &Context, node: Entity) -> bool {
+    has_ability(cx, node, Abilities::FOCUSABLE)
+}
+
+fn has_ability(cx: &Context, node: Entity, ability: Abilities) -> bool {
     // Skip ignored widgets
     if cx.tree.is_ignored(node) {
         return false;
@@ -24,7 +39,7 @@ pub fn is_navigatable(cx: &Context, node: Entity) -> bool {
     cx.style
         .abilities
         .get(node)
-        .and_then(|abilities| Some(abilities.contains(Abilities::KEYBOARD_NAVIGATABLE)))
+        .and_then(|abilities| Some(abilities.contains(ability)))
         .unwrap_or(false)
 }
 

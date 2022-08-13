@@ -153,7 +153,7 @@ impl Dropdown {
                     .width(Stretch(1.0))
                     .on_press(|cx| cx.emit(PopupEvent::Switch));
 
-                Popup::new(cx, PopupData::is_open, move |cx| {
+                Popup::new(cx, PopupData::is_open, false, move |cx| {
                     (content)(cx);
                 })
                 .on_blur(|cx| cx.emit(PopupEvent::Close))

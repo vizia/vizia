@@ -43,17 +43,36 @@ impl<L> Popup<L>
 where
     L: Lens<Target = bool>,
 {
-    pub fn new<F>(cx: &mut Context, lens: L, content: F) -> Handle<Self>
+    pub fn new<F>(cx: &mut Context, lens: L, capture_focus: bool, content: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context),
     {
-        Self { lens: lens.clone() }
+        let mut handle = Self { lens: lens.clone() }
             .build(cx, |cx| {
                 (content)(cx);
             })
-            .checked(lens)
+            .checked(lens.clone())
             .position_type(PositionType::SelfDirected)
-            .z_order(100)
+            .z_order(100);
+
+        if capture_focus {
+            use std::cell::Cell;
+
+            let old_focus = Cell::new(Entity::root());
+            let old_lock = Cell::new(Entity::root());
+            handle = handle.bind(lens, move |handle, enabled| {
+                if enabled.get(handle.cx) {
+                    old_focus.set(handle.cx.focused);
+                    old_lock.set(handle.cx.lock_focus_to);
+                    handle.cx.lock_focus_to(handle.entity);
+                } else {
+                    handle.cx.lock_focus_to(old_lock.get());
+                    handle.cx.with_current(old_focus.get(), |cx| cx.focus());
+                }
+            });
+        }
+
+        handle
     }
 }
 
