@@ -1,15 +1,20 @@
-use crate::prelude::*;
-use crate::tree::*;
+use crate::{DoubleEndedTreeTour, TourDirection, TourStep, Tree};
 use vizia_id::GenerationalId;
 
 /// Iterator for iterating the children of an entity.
-pub struct ChildIterator<'a> {
-    tree: &'a Tree,
-    tours: DoubleEndedTreeTour,
+pub struct ChildIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    tree: &'a Tree<I>,
+    tours: DoubleEndedTreeTour<I>,
 }
 
-impl<'a> ChildIterator<'a> {
-    pub fn new(tree: &'a Tree, node: Entity) -> Self {
+impl<'a, I> ChildIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    pub fn new(tree: &'a Tree<I>, node: I) -> Self {
         Self {
             tree,
             tours: DoubleEndedTreeTour::new(
@@ -20,8 +25,12 @@ impl<'a> ChildIterator<'a> {
     }
 }
 
-impl<'a> Iterator for ChildIterator<'a> {
-    type Item = Entity;
+impl<'a, I> Iterator for ChildIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    type Item = I;
+
     fn next(&mut self) -> Option<Self::Item> {
         self.tours.next_with(self.tree, |node, direction| match direction {
             TourDirection::Entering => {
@@ -38,8 +47,11 @@ impl<'a> Iterator for ChildIterator<'a> {
     }
 }
 
-impl<'a> DoubleEndedIterator for ChildIterator<'a> {
-    fn next_back(&mut self) -> Option<Entity> {
+impl<'a, I> DoubleEndedIterator for ChildIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
         self.tours.next_back_with(self.tree, |node, direction| match direction {
             TourDirection::Entering => {
                 if

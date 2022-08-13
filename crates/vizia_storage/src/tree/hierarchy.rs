@@ -1,15 +1,16 @@
-use morphorm::Hierarchy;
-
-use crate::prelude::*;
-
-use crate::layout::{LayoutChildIterator, LayoutTreeIterator};
+use crate::{LayoutChildIterator, LayoutTreeIterator, Tree};
+use morphorm::{Hierarchy, Node};
 use std::iter::Rev;
+use vizia_id::GenerationalId;
 
-impl<'a> Hierarchy<'a> for Tree {
-    type Item = Entity;
-    type DownIter = LayoutTreeIterator<'a>;
-    type UpIter = Rev<LayoutTreeIterator<'a>>;
-    type ChildIter = LayoutChildIterator<'a>;
+impl<'a, I> Hierarchy<'a> for Tree<I>
+where
+    I: GenerationalId + for<'w> Node<'w> + 'a,
+{
+    type Item = I;
+    type DownIter = LayoutTreeIterator<'a, I>;
+    type UpIter = Rev<LayoutTreeIterator<'a, I>>;
+    type ChildIter = LayoutChildIterator<'a, I>;
 
     fn down_iter(&'a self) -> Self::DownIter {
         LayoutTreeIterator::full(self)

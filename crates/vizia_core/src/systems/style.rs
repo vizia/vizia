@@ -1,9 +1,9 @@
-use crate::layout::LayoutTreeIterator;
 use crate::prelude::*;
 use crate::style::{Rule, Selector, SelectorRelation};
-use crate::tree::TreeExt;
+use vizia_id::GenerationalId;
+use vizia_storage::{LayoutTreeIterator, TreeExt};
 
-pub fn inline_inheritance_system(cx: &mut Context, tree: &Tree) {
+pub fn inline_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
     for entity in tree.into_iter() {
         if let Some(parent) = tree.get_layout_parent(entity) {
             cx.style.disabled.inherit_inline(entity, parent);
@@ -17,7 +17,7 @@ pub fn inline_inheritance_system(cx: &mut Context, tree: &Tree) {
     }
 }
 
-pub fn shared_inheritance_system(cx: &mut Context, tree: &Tree) {
+pub fn shared_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
     for entity in tree.into_iter() {
         if let Some(parent) = tree.get_layout_parent(entity) {
             cx.style.font_color.inherit_shared(entity, parent);
@@ -135,7 +135,12 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     return true;
 }
 
-fn compute_matched_rules(cx: &Context, tree: &Tree, entity: Entity, matched_rules: &mut Vec<Rule>) {
+fn compute_matched_rules(
+    cx: &Context,
+    tree: &Tree<Entity>,
+    entity: Entity,
+    matched_rules: &mut Vec<Rule>,
+) {
     // Loop through all of the style rules
     'rule_loop: for rule in cx.style.rules.iter() {
         let mut relation_entity = entity;
@@ -488,7 +493,7 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
 }
 
 // Iterate tree and determine the matched style rules for each entity. Link the entity to the style data.
-pub fn style_system(cx: &mut Context, tree: &Tree) {
+pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
     if cx.style.needs_restyle {
         let mut prev_entity = None;
 

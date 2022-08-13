@@ -4,10 +4,10 @@ use crate::text::{
     idx_to_pos, measure_text_lines, pos_to_idx, text_layout, text_paint_general, Direction,
     EditableText, Movement, Selection,
 };
-use crate::tree::TreeExt;
 use std::sync::Arc;
 use vizia_id::GenerationalId;
 use vizia_input::Code;
+use vizia_storage::TreeExt;
 
 #[derive(Lens)]
 pub struct TextboxData {

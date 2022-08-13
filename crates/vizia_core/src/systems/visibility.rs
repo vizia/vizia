@@ -1,6 +1,7 @@
 use crate::prelude::*;
+use vizia_id::GenerationalId;
 
-pub fn visibility_system(cx: &mut Context, tree: &Tree) {
+pub fn visibility_system(cx: &mut Context, tree: &Tree<Entity>) {
     let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 

@@ -1,61 +1,19 @@
-use crate::prelude::*;
-use crate::tree::*;
+use crate::{DoubleEndedTreeTour, TourDirection, TourStep, Tree};
 use vizia_id::GenerationalId;
 
-/// Iterator for iterating through the tree in depth first preorder.
-pub struct LayoutTreeIterator<'a> {
-    tree: &'a Tree,
-    tours: DoubleEndedTreeTour,
+pub struct LayoutChildIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    tree: &'a Tree<I>,
+    tours: DoubleEndedTreeTour<I>,
 }
 
-impl<'a> LayoutTreeIterator<'a> {
-    pub fn full(tree: &'a Tree) -> Self {
-        Self::subtree(tree, Entity::root())
-    }
-
-    pub fn subtree(tree: &'a Tree, root: Entity) -> Self {
-        Self { tree, tours: DoubleEndedTreeTour::new_same(Some(root)) }
-    }
-}
-
-impl<'a> Iterator for LayoutTreeIterator<'a> {
-    type Item = Entity;
-    fn next(&mut self) -> Option<Entity> {
-        self.tours.next_with(self.tree, |node, direction| match direction {
-            TourDirection::Entering => {
-                if self.tree.is_ignored(node) {
-                    (None, TourStep::EnterFirstChild)
-                } else {
-                    (Some(node), TourStep::EnterFirstChild)
-                }
-            }
-            TourDirection::Leaving => (None, TourStep::EnterNextSibling),
-        })
-    }
-}
-
-impl<'a> DoubleEndedIterator for LayoutTreeIterator<'a> {
-    fn next_back(&mut self) -> Option<Entity> {
-        self.tours.next_back_with(self.tree, |node, direction| match direction {
-            TourDirection::Entering => (None, TourStep::EnterLastChild),
-            TourDirection::Leaving => {
-                if self.tree.is_ignored(node) {
-                    (None, TourStep::EnterPrevSibling)
-                } else {
-                    (Some(node), TourStep::EnterPrevSibling)
-                }
-            }
-        })
-    }
-}
-
-pub struct LayoutChildIterator<'a> {
-    tree: &'a Tree,
-    tours: DoubleEndedTreeTour,
-}
-
-impl<'a> LayoutChildIterator<'a> {
-    pub fn new(tree: &'a Tree, node: Entity) -> Self {
+impl<'a, I> LayoutChildIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    pub fn new(tree: &'a Tree<I>, node: I) -> Self {
         Self {
             tree,
             tours: DoubleEndedTreeTour::new(
@@ -66,8 +24,12 @@ impl<'a> LayoutChildIterator<'a> {
     }
 }
 
-impl<'a> Iterator for LayoutChildIterator<'a> {
-    type Item = Entity;
+impl<'a, I> Iterator for LayoutChildIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    type Item = I;
+
     fn next(&mut self) -> Option<Self::Item> {
         self.tours.next_with(self.tree, |node, direction| match direction {
             TourDirection::Entering => {
@@ -82,8 +44,11 @@ impl<'a> Iterator for LayoutChildIterator<'a> {
     }
 }
 
-impl<'a> DoubleEndedIterator for LayoutChildIterator<'a> {
-    fn next_back(&mut self) -> Option<Entity> {
+impl<'a, I> DoubleEndedIterator for LayoutChildIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
         self.tours.next_back_with(self.tree, |node, direction| match direction {
             TourDirection::Entering => {
                 if self.tree.is_ignored(node) {
@@ -105,9 +70,16 @@ impl<'a> DoubleEndedIterator for LayoutChildIterator<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::layout::LayoutChildIterator;
-    use crate::prelude::*;
-    use vizia_id::IdManager;
+    use super::*;
+    use vizia_id::{
+        impl_generational_id, GenerationalId, IdManager, GENERATIONAL_ID_GENERATION_MASK,
+        GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
+    };
+
+    #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct Entity(u32);
+
+    impl_generational_id!(Entity);
 
     #[test]
     fn test_child_iter() {

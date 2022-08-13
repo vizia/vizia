@@ -1,25 +1,35 @@
-use crate::prelude::*;
-use crate::tree::*;
+use crate::{DoubleEndedTreeTour, TourDirection, TourStep, Tree};
+use vizia_id::GenerationalId;
 
-pub struct TreeDepthIterator<'a> {
-    tree: &'a Tree,
-    tours: DoubleEndedTreeTour,
+pub struct TreeDepthIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    tree: &'a Tree<I>,
+    tours: DoubleEndedTreeTour<I>,
     depth_forward: usize,
     // depth_backward: usize,
 }
 
-impl<'a> TreeDepthIterator<'a> {
-    pub fn full(tree: &'a Tree) -> Self {
-        Self::subtree(tree, Entity::root())
+impl<'a, I> TreeDepthIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    pub fn full(tree: &'a Tree<I>) -> Self {
+        Self::subtree(tree, I::root())
     }
 
-    pub fn subtree(tree: &'a Tree, root: Entity) -> Self {
+    pub fn subtree(tree: &'a Tree<I>, root: I) -> Self {
         Self { tree, depth_forward: 0, tours: DoubleEndedTreeTour::new_same(Some(root)) }
     }
 }
 
-impl<'a> Iterator for TreeDepthIterator<'a> {
-    type Item = (Entity, usize);
+impl<'a, I> Iterator for TreeDepthIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    type Item = (I, usize);
+
     fn next(&mut self) -> Option<Self::Item> {
         self.tours.next_with(self.tree, |node, direction| match direction {
             TourDirection::Entering => {
