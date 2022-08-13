@@ -22,13 +22,13 @@ pub use proxy::*;
 use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
-use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
 use crate::tree::TreeExt;
 use vizia_id::{GenerationalId, IdManager};
+use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
@@ -56,7 +56,7 @@ pub struct Context {
 
     pub(crate) canvases: HashMap<Entity, crate::prelude::Canvas>,
     //environment: Environment,
-    pub(crate) mouse: MouseState,
+    pub(crate) mouse: MouseState<Entity>,
     pub(crate) modifiers: Modifiers,
 
     pub(crate) captured: Entity,

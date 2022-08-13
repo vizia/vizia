@@ -258,8 +258,8 @@ impl ApplicationRunner {
             },
             baseview::Event::Keyboard(event) => {
                 let (s, pressed) = match event.state {
-                    keyboard_types::KeyState::Down => (MouseButtonState::Pressed, true),
-                    keyboard_types::KeyState::Up => (MouseButtonState::Released, false),
+                    vizia_input::KeyState::Down => (MouseButtonState::Pressed, true),
+                    vizia_input::KeyState::Up => (MouseButtonState::Released, false),
                 };
 
                 match event.code {

@@ -7,12 +7,12 @@ use morphorm::Units;
 
 use crate::cache::{BoundingBox, CachedData};
 use crate::events::ViewHandler;
-use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
 use crate::style::{LinearGradient, Style};
 use crate::text::Selection;
+use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 
 /// Cached data used for drawing.
@@ -47,7 +47,7 @@ pub struct DrawContext<'a> {
     pub resource_manager: &'a ResourceManager,
     pub text_context: &'a TextContext,
     pub modifiers: &'a Modifiers,
-    pub mouse: &'a MouseState,
+    pub mouse: &'a MouseState<Entity>,
 }
 
 macro_rules! style_getter_units {

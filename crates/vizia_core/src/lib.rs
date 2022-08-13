@@ -46,9 +46,7 @@ pub mod prelude {
     pub use super::environment::{Environment, EnvironmentEvent};
     pub use super::events::{Event, Message, Propagation};
     pub use super::handle::Handle;
-    pub use super::input::{
-        KeyChord, Keymap, KeymapEntry, KeymapEvent, Modifiers, MouseButton, MouseButtonState,
-    };
+    pub use super::input::{KeyChord, Keymap, KeymapEntry, KeymapEvent};
     pub use super::localization::Localized;
     pub use super::modifiers::Actions;
     pub use super::state::{Binding, Data, Lens, LensExt, Model, Res};
@@ -58,15 +56,14 @@ pub mod prelude {
     pub use super::window::{
         CursorIcon, WindowDescription, WindowEvent, WindowModifiers, WindowSize,
     };
-
     pub use vizia_derive::{Data, Lens};
+    pub use vizia_input::{Code, Key, Modifiers, MouseButton, MouseButtonState};
 
     pub use super::style::{
         Abilities, BorderCornerShape, Color, Display, GradientDirection, GradientStop,
         LinearGradient, Opacity, Overflow, PseudoClass, Visibility,
     };
 
-    pub use keyboard_types::{Code, Key};
     pub use morphorm::Units::*;
     pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
     pub use unic_langid::LanguageIdentifier;

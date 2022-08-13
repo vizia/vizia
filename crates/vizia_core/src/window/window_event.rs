@@ -1,5 +1,5 @@
-use keyboard_types::{Code, Key};
 use morphorm::GeometryChanged;
+use vizia_input::{Code, Key};
 
 use crate::prelude::*;
 use crate::window::Position;
