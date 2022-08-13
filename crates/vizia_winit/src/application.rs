@@ -9,8 +9,8 @@ use vizia_core::context::backend::*;
 use vizia_core::context::EventProxy;
 use vizia_core::events::EventManager;
 use vizia_core::prelude::*;
-use vizia_core::window::Position;
 use vizia_id::GenerationalId;
+use vizia_window::Position;
 use winit::{
     dpi::LogicalSize,
     event::VirtualKeyCode,
