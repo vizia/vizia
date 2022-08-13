@@ -18,6 +18,7 @@ vizia_derive = { path = "../vizia_derive" }
 vizia_storage = { path = "../vizia_storage" }
 vizia_id = { path = "../vizia_id" }
 vizia_input = { path = "../vizia_input" }
+vizia_window = { path = "../vizia_window" }
 
 femtovg = { git = "https://github.com/femtovg/femtovg", rev = "87fe627794f3f793d8e3a338c838a2f8e8a8aa9d", default-features = false, features = ["image-loading"] }
 image = { version = "0.24.0", default-features = false, features = ["png"] } # inherited from femtovg
