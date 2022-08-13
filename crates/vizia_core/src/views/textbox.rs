@@ -592,6 +592,39 @@ where
                 }
             }
 
+            WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
+                if !cx.is_over() {
+                    cx.emit(TextEvent::Submit(false));
+                    if let Some(source) = cx.data::<L::Source>() {
+                        let text = self.lens.view(source, |t| {
+                            if let Some(t) = t {
+                                t.to_string()
+                            } else {
+                                "".to_owned()
+                            }
+                        });
+
+                        cx.emit(TextEvent::SelectAll);
+                        cx.emit(TextEvent::InsertText(text));
+                    };
+                    cx.release();
+                    cx.set_checked(false);
+
+                    // Forward event to hovered
+                    cx.event_queue.push_back(
+                        Event::new(WindowEvent::MouseDown(*button)).target(cx.hovered()),
+                    );
+                }
+            }
+
+            WindowEvent::FocusIn => {
+                cx.emit(TextEvent::StartEdit);
+            }
+
+            WindowEvent::FocusOut => {
+                cx.emit(TextEvent::EndEdit);
+            }
+
             WindowEvent::TriggerUp { .. } => {
                 cx.unlock_cursor_icon();
             }

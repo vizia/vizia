@@ -491,7 +491,7 @@ impl<'a> BackendContext<'a> {
                     self.style().needs_restyle = true;
                 }
 
-                if matches!(*code, Code::Enter | Code::NumpadEnter | Code::Space) {
+                if matches!(*code, Code::Space) {
                     self.0.triggered = self.0.focused;
                     self.0.with_current(self.0.focused, |cx| {
                         cx.emit(WindowEvent::TriggerDown { mouse: false })
@@ -501,10 +501,7 @@ impl<'a> BackendContext<'a> {
                 self.0.event_queue.push_back(Event::new(event).target(self.0.focused));
             }
             WindowEvent::KeyUp(_, _) | WindowEvent::CharInput(_) => {
-                if matches!(
-                    event,
-                    WindowEvent::KeyUp(Code::Enter | Code::NumpadEnter | Code::Space, _)
-                ) {
+                if matches!(event, WindowEvent::KeyUp(Code::Space, _)) {
                     self.0.with_current(self.0.triggered, |cx| {
                         cx.emit(WindowEvent::TriggerUp { mouse: false })
                     });
