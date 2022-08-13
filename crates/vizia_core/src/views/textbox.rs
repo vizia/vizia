@@ -592,6 +592,14 @@ where
                 }
             }
 
+            WindowEvent::FocusIn => {
+                cx.emit(TextEvent::StartEdit);
+            }
+
+            WindowEvent::FocusOut => {
+                cx.emit(TextEvent::EndEdit);
+            }
+
             WindowEvent::TriggerUp { .. } => {
                 cx.unlock_cursor_icon();
             }

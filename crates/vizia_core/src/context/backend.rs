@@ -361,9 +361,13 @@ impl<'a> BackendContext<'a> {
                         {
                             self.with_current(self.0.hovered, |cx| cx.focus_with_visibility(false));
                         }
-                        self.with_current(self.0.hovered, |cx| {
-                            cx.emit(WindowEvent::TriggerDown { mouse: true })
-                        });
+
+                        self.dispatch_direct_or_up(
+                            WindowEvent::TriggerDown { mouse: true },
+                            self.0.captured,
+                            self.0.triggered,
+                            true,
+                        );
                     }
                     MouseButton::Right => {
                         self.0.mouse.right.pos_down = (self.0.mouse.cursorx, self.0.mouse.cursory);
@@ -492,7 +496,7 @@ impl<'a> BackendContext<'a> {
                     self.style().needs_restyle = true;
                 }
 
-                if matches!(*code, Code::Enter | Code::NumpadEnter | Code::Space) {
+                if matches!(*code, Code::Space) {
                     self.0.triggered = self.0.focused;
                     self.0.with_current(self.0.focused, |cx| {
                         cx.emit(WindowEvent::TriggerDown { mouse: false })
@@ -502,10 +506,7 @@ impl<'a> BackendContext<'a> {
                 self.0.event_queue.push_back(Event::new(event).target(self.0.focused));
             }
             WindowEvent::KeyUp(_, _) | WindowEvent::CharInput(_) => {
-                if matches!(
-                    event,
-                    WindowEvent::KeyUp(Code::Enter | Code::NumpadEnter | Code::Space, _)
-                ) {
+                if matches!(event, WindowEvent::KeyUp(Code::Space, _)) {
                     self.0.with_current(self.0.triggered, |cx| {
                         cx.emit(WindowEvent::TriggerUp { mouse: false })
                     });
