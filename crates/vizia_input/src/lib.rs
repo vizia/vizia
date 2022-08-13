@@ -1,7 +1,9 @@
+mod chord;
 mod modifiers;
-pub use modifiers::*;
-
 mod mouse;
+
+pub use chord::*;
+pub use modifiers::*;
 pub use mouse::*;
 
 pub use keyboard_types::Modifiers as KeyboardModifiers;
