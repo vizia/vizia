@@ -27,7 +27,7 @@ use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
-use crate::tree::{TreeExt, TreeIterator, is_focusable};
+use crate::tree::{is_focusable, TreeExt, TreeIterator};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_storage::SparseSet;
 
