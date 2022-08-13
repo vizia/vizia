@@ -13,10 +13,11 @@ x11 = ["winit/x11", "glutin?/x11"]
 wayland = ["winit/wayland", "winit/wayland-dlopen", "glutin?/wayland", "glutin?/wayland-dlopen"]
 
 [dependencies]
+vizia_input = { path = "../vizia_input" }
+vizia_core = { path = "../vizia_core" }
+
 winit = { version = "0.26.1", default-features = false }
 femtovg = { git = "https://github.com/femtovg/femtovg", rev = "87fe627794f3f793d8e3a338c838a2f8e8a8aa9d", default-features = false }
-keyboard-types = { version = "0.6.2", default-features = false }
-vizia_core = { path = "../vizia_core", version = "0.1" }
 glutin = { version = "0.28.0", default-features = false, optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

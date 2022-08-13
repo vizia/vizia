@@ -1,9 +1,7 @@
-use std::marker::PhantomData;
-
-use keyboard_types::Code;
-
 use crate::prelude::*;
 use crate::state::{Index, Then};
+use std::marker::PhantomData;
+use vizia_input::Code;
 
 /// A view for creating a list of items from a binding to a Vec<T>
 pub struct List<L, T: 'static>

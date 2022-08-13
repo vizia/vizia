@@ -5,9 +5,9 @@ use crate::text::{
     EditableText, Movement, Selection,
 };
 use crate::tree::TreeExt;
-use keyboard_types::Code;
 use std::sync::Arc;
 use vizia_id::GenerationalId;
+use vizia_input::Code;
 
 #[derive(Lens)]
 pub struct TextboxData {
