@@ -360,9 +360,13 @@ impl<'a> BackendContext<'a> {
                         {
                             self.with_current(self.0.hovered, |cx| cx.focus_with_visibility(false));
                         }
-                        self.with_current(self.0.hovered, |cx| {
-                            cx.emit(WindowEvent::TriggerDown { mouse: true })
-                        });
+
+                        self.dispatch_direct_or_up(
+                            WindowEvent::TriggerDown { mouse: true },
+                            self.0.captured,
+                            self.0.triggered,
+                            true,
+                        );
                     }
                     MouseButton::Right => {
                         self.0.mouse.right.pos_down = (self.0.mouse.cursorx, self.0.mouse.cursory);
