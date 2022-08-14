@@ -2,6 +2,8 @@ use std::marker::PhantomData;
 
 use morphorm::{LayoutType, PositionType, Units};
 
+use vizia_id::GenerationalId;
+
 use crate::prelude::*;
 use crate::text::Selection;
 
@@ -44,6 +46,20 @@ impl<'a, T> Handle<'a, T> {
     pub fn ignore(self) -> Self {
         self.cx.tree.set_ignored(self.entity, true);
         self.focusable(false)
+    }
+
+    /// Stop the user from tabbing out of a subtree, which is useful for modal dialogs.
+    pub fn lock_focus_to_within(self) -> Self {
+        self.cx.tree.set_lock_focus_within(self.entity, true);
+        self.cx.focus_stack.push(self.cx.focused);
+        if !self.cx.focused.is_descendant_of(&self.cx.tree, self.entity) {
+            let new_focus = vizia_storage::TreeIterator::subtree(&self.cx.tree, self.entity)
+                .filter(|node| crate::tree::is_focusable(self.cx, *node))
+                .next()
+                .unwrap_or(Entity::root());
+            self.cx.with_current(new_focus, |cx| cx.focus());
+        }
+        self
     }
 
     pub fn modify<F>(self, f: F) -> Self

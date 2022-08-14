@@ -65,3 +65,21 @@ impl View for ZStack {
         Some("zstack")
     }
 }
+
+/// A view that is used simply to contain other views. Can be useful for style reasons or when working with bindings.
+pub struct Container;
+
+impl Container {
+    pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
+    where
+        F: FnOnce(&mut Context),
+    {
+        Self {}.build(cx, content)
+    }
+}
+
+impl View for Container {
+    fn element(&self) -> Option<&'static str> {
+        Some("container")
+    }
+}

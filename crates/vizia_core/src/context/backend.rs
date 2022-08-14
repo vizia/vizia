@@ -447,16 +447,18 @@ impl<'a> BackendContext<'a> {
                 if *code == Code::Tab {
                     self.0.set_focus_pseudo_classes(self.0.focused, false, true);
 
+                    let lock_focus_to = self.0.tree.lock_focus_within(self.0.focused);
                     if self.0.modifiers.contains(Modifiers::SHIFT) {
-                        let prev_focused =
-                            if let Some(prev_focused) = focus_backward(&self.0, self.0.focused) {
-                                prev_focused
-                            } else {
-                                TreeIterator::full(&self.0.tree)
-                                    .filter(|node| is_navigatable(&self.0, *node))
-                                    .next_back()
-                                    .unwrap_or(Entity::root())
-                            };
+                        let prev_focused = if let Some(prev_focused) =
+                            focus_backward(&self.0, self.0.focused, lock_focus_to)
+                        {
+                            prev_focused
+                        } else {
+                            TreeIterator::full(&self.0.tree)
+                                .filter(|node| is_navigatable(&self.0, *node, lock_focus_to))
+                                .next_back()
+                                .unwrap_or(Entity::root())
+                        };
 
                         if prev_focused != self.0.focused {
                             self.0.event_queue.push_back(
@@ -468,15 +470,16 @@ impl<'a> BackendContext<'a> {
                             self.0.focused = prev_focused;
                         }
                     } else {
-                        let next_focused =
-                            if let Some(next_focused) = focus_forward(&self.0, self.0.focused) {
-                                next_focused
-                            } else {
-                                TreeIterator::full(&self.0.tree)
-                                    .filter(|node| is_navigatable(&self.0, *node))
-                                    .next()
-                                    .unwrap_or(Entity::root())
-                            };
+                        let next_focused = if let Some(next_focused) =
+                            focus_forward(&self.0, self.0.focused, lock_focus_to)
+                        {
+                            next_focused
+                        } else {
+                            TreeIterator::full(&self.0.tree)
+                                .filter(|node| is_navigatable(&self.0, *node, lock_focus_to))
+                                .next()
+                                .unwrap_or(Entity::root())
+                        };
 
                         if next_focused != self.0.focused {
                             self.0.event_queue.push_back(

@@ -14,6 +14,7 @@ where
     pub next_sibling: Vec<Option<I>>,
     pub prev_sibling: Vec<Option<I>>,
     pub ignored: Vec<bool>,
+    pub lock_focus_within: Vec<bool>,
     pub changed: bool,
 }
 
@@ -29,6 +30,7 @@ where
             next_sibling: vec![None],
             prev_sibling: vec![None],
             ignored: vec![false],
+            lock_focus_within: vec![true],
             changed: true,
         }
     }
@@ -101,6 +103,14 @@ where
     /// Returns true if the node should be skipped by layout
     pub fn is_ignored(&self, entity: I) -> bool {
         self.ignored.get(entity.index()).map_or_else(|| false, |ignored| *ignored)
+    }
+
+    /// Returns the first ancestor to have the lock_focus_within flag set
+    pub fn lock_focus_within(&self, entity: I) -> I {
+        entity
+            .parent_iter(&self)
+            .find(|&entity| self.lock_focus_within.get(entity.index()).cloned().unwrap_or_default())
+            .unwrap_or(I::root())
     }
 
     /// Returns the first ancestor of an entity which is not ignored
@@ -228,6 +238,7 @@ where
         self.prev_sibling[entity_index] = None;
         self.parent[entity_index] = None;
         self.ignored[entity_index] = false;
+        self.lock_focus_within[entity_index] = false;
 
         // Set the changed flag
         self.changed = true;
@@ -438,6 +449,10 @@ where
         self.ignored.get_mut(entity.index()).and_then(|ignored| Some(*ignored = flag));
     }
 
+    pub fn set_lock_focus_within(&mut self, entity: I, flag: bool) {
+        self.lock_focus_within.get_mut(entity.index()).and_then(|result| Some(*result = flag));
+    }
+
     /// Adds an entity to the tree with the specified parent.
     pub fn add(&mut self, entity: I, parent: I) -> Result<(), TreeError> {
         if entity == I::null() || parent == I::null() {
@@ -458,6 +473,7 @@ where
             self.next_sibling.resize(entity_index + 1, None);
             self.prev_sibling.resize(entity_index + 1, None);
             self.ignored.resize(entity_index + 1, false);
+            self.lock_focus_within.resize(entity_index + 1, false);
         }
 
         self.parent[entity_index] = Some(parent);
@@ -465,6 +481,7 @@ where
         self.next_sibling[entity_index] = None;
         self.prev_sibling[entity_index] = None;
         self.ignored[entity_index] = false;
+        self.lock_focus_within[entity_index] = false;
 
         // If the parent has no first child then this entity is the first child
         if self.first_child[parent_index] == None {

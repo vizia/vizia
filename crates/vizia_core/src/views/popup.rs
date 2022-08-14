@@ -1,5 +1,4 @@
 use morphorm::PositionType;
-use vizia_id::GenerationalId;
 
 use crate::prelude::*;
 
@@ -48,32 +47,21 @@ where
     where
         F: 'static + Fn(&mut Context),
     {
-        let mut handle = Self { lens: lens.clone() }
+        Self { lens: lens.clone() }
             .build(cx, |cx| {
-                (content)(cx);
+                Binding::new(cx, lens.clone(), move |cx, lens| {
+                    if lens.get(cx) {
+                        if capture_focus {
+                            Container::new(cx, &content).lock_focus_to_within();
+                        } else {
+                            (content)(cx);
+                        }
+                    }
+                });
             })
             .checked(lens.clone())
             .position_type(PositionType::SelfDirected)
-            .z_order(100);
-
-        if capture_focus {
-            use std::cell::Cell;
-
-            let old_focus = Cell::new(Entity::root());
-            let old_lock = Cell::new(Entity::root());
-            handle = handle.bind(lens, move |handle, enabled| {
-                if enabled.get(handle.cx) {
-                    old_focus.set(handle.cx.focused);
-                    old_lock.set(handle.cx.lock_focus_to);
-                    handle.cx.lock_focus_to(handle.entity);
-                } else {
-                    handle.cx.lock_focus_to(old_lock.get());
-                    handle.cx.with_current(old_focus.get(), |cx| cx.focus());
-                }
-            });
-        }
-
-        handle
+            .z_order(100)
     }
 }
 
