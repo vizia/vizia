@@ -283,6 +283,11 @@ dropdown vstack {
     child-space: auto;
 }
 
+knob:focus-visible {
+    outline-width: 2px;
+    outline-color: blue;
+}
+
 slider {
     background-color: #868686;
     border-radius: 3px;
