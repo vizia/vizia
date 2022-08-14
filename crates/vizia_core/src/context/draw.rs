@@ -11,6 +11,7 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
 use crate::style::{LinearGradient, Style};
+use crate::systems::Prop;
 use crate::text::Selection;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -90,6 +91,10 @@ impl<'a> DrawContext<'a> {
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
         }
+    }
+
+    pub fn get_property<T: Prop>(&self, name: &str) -> Option<&T> {
+        T::get(self, name)
     }
 
     pub fn bounds(&self) -> BoundingBox {

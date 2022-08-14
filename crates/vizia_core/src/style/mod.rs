@@ -236,6 +236,8 @@ pub struct Style {
     pub needs_redraw: bool,
 
     pub dpi_factor: f64,
+
+    pub custom_color_props: HashMap<String, AnimatableSet<Color>>,
 }
 
 impl Style {
@@ -903,9 +905,15 @@ impl Style {
                         }
                     }
 
-                    Property::Unknown(s, _) => {
-                        println!("Unknown style property: {}", s)
-                    }
+                    Property::Custom(name, value) => match value {
+                        PropType::Color(col) => {
+                            if let Some(store) = self.custom_color_props.get_mut(&name) {
+                                store.insert_rule(rule_id, col);
+                            }
+                        }
+
+                        _ => {}
+                    },
 
                     _ => {}
                 }
@@ -1064,6 +1072,10 @@ impl Style {
         self.name.remove(entity);
 
         self.image.remove(entity);
+
+        for (_, prop) in self.custom_color_props.iter_mut() {
+            prop.remove(entity);
+        }
     }
 
     pub fn clear_style_rules(&mut self) {
@@ -1182,5 +1194,9 @@ impl Style {
         self.name.clear_rules();
 
         self.image.clear_rules();
+
+        for (_, prop) in self.custom_color_props.iter_mut() {
+            prop.clear_rules();
+        }
     }
 }
