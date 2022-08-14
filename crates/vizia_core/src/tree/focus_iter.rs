@@ -1,10 +1,8 @@
-use crate::{
-    context::Context,
-    entity::Entity,
-    style::{Abilities, Display, Visibility},
-};
+use crate::context::Context;
+use crate::entity::Entity;
+use crate::style::{Abilities, Display, Visibility};
 use vizia_id::GenerationalId;
-use vizia_storage::{DoubleEndedTreeTour, TourDirection, TreeIterator, TreeTour};
+use vizia_storage::{DoubleEndedTreeTour, TourDirection, TreeExt, TreeIterator, TreeTour};
 
 /// Should the user be able to navigate to the entity with tab?
 pub fn is_navigatable(cx: &Context, node: Entity) -> bool {
