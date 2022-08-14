@@ -42,7 +42,7 @@ pub struct BoundingBox {
 
 impl std::fmt::Display for BoundingBox {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{{ x: {}, y: {}, w: {}, h:{} }}", self.x, self.y, self.w, self.h)
+        write!(f, "{{ x: {:?}, y: {:?}, w: {:?}, h:{:?} }}", self.x, self.y, self.w, self.h)
     }
 }
 

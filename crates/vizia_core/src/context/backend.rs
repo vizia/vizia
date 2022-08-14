@@ -20,7 +20,7 @@ use crate::{
 };
 use vizia_id::GenerationalId;
 #[cfg(debug_assertions)]
-use vizia_storage::TreeDepthIterator;
+use vizia_storage::TreeExt;
 use vizia_storage::TreeIterator;
 
 pub use crate::systems::animation::has_animations;
@@ -428,19 +428,45 @@ impl<'a> BackendContext<'a> {
 
                 #[cfg(debug_assertions)]
                 if *code == Code::KeyI {
-                    let iter = TreeDepthIterator::full(&self.0.tree);
-                    for (entity, level) in iter {
-                        if let Some(element_name) = self.0.views.get(&entity).unwrap().element() {
+                    println!("Entity tree");
+                    let (tree, views, cache) = (&self.0.tree, &self.0.views, &self.0.cache);
+                    let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
+                    let root_indents = |entity: Entity| {
+                        entity
+                            .parent_iter(tree)
+                            .skip(1)
+                            .collect::<Vec<_>>()
+                            .into_iter()
+                            .rev()
+                            .skip(1)
+                            .map(|entity| if has_next_sibling(entity) { "│   " } else { "    " })
+                            .collect::<String>()
+                    };
+                    let local_idents =
+                        |entity| if has_next_sibling(entity) { "├── " } else { "└── " };
+
+                    for entity in TreeIterator::full(tree).skip(1) {
+                        if let Some(element_name) =
+                            views.get(&entity).and_then(|view| view.element())
+                        {
                             println!(
-                                "{:indent$} {} {} {:?} {:?} {:?} {:?}",
-                                "",
+                                "{}{}{} {} {:?} display={:?} bounds={} clip={}",
+                                root_indents(entity),
+                                local_idents(entity),
                                 entity,
                                 element_name,
-                                self.0.cache.get_visibility(entity),
-                                self.0.cache.get_display(entity),
-                                self.0.cache.get_bounds(entity),
-                                self.0.cache.get_clip_region(entity),
-                                indent = level
+                                cache.get_visibility(entity),
+                                cache.get_display(entity),
+                                cache.get_bounds(entity),
+                                cache.get_clip_region(entity),
+                            );
+                        } else {
+                            println!(
+                                "{}{}{} {} view",
+                                root_indents(entity),
+                                local_idents(entity),
+                                entity,
+                                if views.get(&entity).is_some() { "unnamed" } else { "no" }
                             );
                         }
                     }
