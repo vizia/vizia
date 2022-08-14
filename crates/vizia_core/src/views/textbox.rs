@@ -558,11 +558,11 @@ where
         //let caret = cx.tree.get_child(cx.current, 1).unwrap();
 
         event.map(|window_event, _| match window_event {
-            WindowEvent::TriggerDown { mouse } => {
+            WindowEvent::MouseDown(MouseButton::Left) => {
                 if cx.is_over() {
                     cx.emit(TextEvent::StartEdit);
 
-                    cx.focus_with_visibility(!mouse);
+                    cx.focus_with_visibility(false);
                     cx.capture();
                     cx.set_checked(true);
                     cx.lock_cursor_icon();
@@ -587,7 +587,7 @@ where
 
                     // Forward event to hovered
                     cx.event_queue.push_back(
-                        Event::new(WindowEvent::TriggerDown { mouse: true }).target(cx.hovered()),
+                        Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered()),
                     );
                 }
             }
@@ -600,7 +600,7 @@ where
                 cx.emit(TextEvent::EndEdit);
             }
 
-            WindowEvent::TriggerUp { .. } => {
+            WindowEvent::MouseUp(MouseButton::Left) => {
                 cx.unlock_cursor_icon();
             }
 
