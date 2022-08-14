@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use vizia_id::GenerationalId;
 
 // Determines the hovered entity based on the mouse cursor position.
 pub fn hover_system(cx: &mut Context) {

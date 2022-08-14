@@ -1,25 +1,38 @@
-use crate::prelude::*;
-use crate::tree::*;
+use crate::{DoubleEndedTreeTour, TourDirection, TourStep, Tree};
+use vizia_id::GenerationalId;
 
 /// Iterator for iterating through the tree in depth first preorder.
-pub struct TreeIterator<'a> {
-    pub(crate) tree: &'a Tree,
-    pub(crate) tours: DoubleEndedTreeTour,
+pub struct TreeIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    tree: &'a Tree<I>,
+    tours: DoubleEndedTreeTour<I>,
 }
 
-impl<'a> TreeIterator<'a> {
-    pub fn full(tree: &'a Tree) -> Self {
-        Self::subtree(tree, Entity::root())
+impl<'a, I> TreeIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    pub fn new(tree: &'a Tree<I>, tours: DoubleEndedTreeTour<I>) -> Self {
+        Self { tree, tours }
     }
 
-    pub fn subtree(tree: &'a Tree, root: Entity) -> Self {
+    pub fn full(tree: &'a Tree<I>) -> Self {
+        Self::subtree(tree, I::root())
+    }
+
+    pub fn subtree(tree: &'a Tree<I>, root: I) -> Self {
         Self { tree, tours: DoubleEndedTreeTour::new_same(Some(root)) }
     }
 }
 
-impl<'a> Iterator for TreeIterator<'a> {
-    type Item = Entity;
-    fn next(&mut self) -> Option<Entity> {
+impl<'a, I> Iterator for TreeIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    type Item = I;
+    fn next(&mut self) -> Option<I> {
         self.tours.next_with(self.tree, |node, direction| match direction {
             TourDirection::Entering => (Some(node), TourStep::EnterFirstChild),
             TourDirection::Leaving => (None, TourStep::EnterNextSibling),
@@ -27,8 +40,11 @@ impl<'a> Iterator for TreeIterator<'a> {
     }
 }
 
-impl<'a> DoubleEndedIterator for TreeIterator<'a> {
-    fn next_back(&mut self) -> Option<Entity> {
+impl<'a, I> DoubleEndedIterator for TreeIterator<'a, I>
+where
+    I: GenerationalId,
+{
+    fn next_back(&mut self) -> Option<I> {
         self.tours.next_back_with(self.tree, |node, direction| match direction {
             TourDirection::Entering => (None, TourStep::EnterLastChild),
             TourDirection::Leaving => (Some(node), TourStep::EnterPrevSibling),
@@ -39,8 +55,16 @@ impl<'a> DoubleEndedIterator for TreeIterator<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::tree::TreeError;
-    use vizia_id::GenerationalId;
+    use crate::TreeError;
+    use vizia_id::{
+        impl_generational_id, GenerationalId, GENERATIONAL_ID_GENERATION_MASK,
+        GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
+    };
+
+    #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct Entity(u32);
+
+    impl_generational_id!(Entity);
 
     #[test]
     fn simple_forward_backward() -> Result<(), TreeError> {

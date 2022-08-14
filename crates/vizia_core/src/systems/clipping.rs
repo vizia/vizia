@@ -1,7 +1,8 @@
 use crate::{cache::BoundingBox, prelude::*};
+use vizia_id::GenerationalId;
 
 // Iterate tree and apply clip region to nodes based on specified clip widget and parent clip region.
-pub fn clipping_system(cx: &mut Context, tree: &Tree) {
+pub fn clipping_system(cx: &mut Context, tree: &Tree<Entity>) {
     for entity in tree.into_iter() {
         if entity == Entity::root() {
             continue;

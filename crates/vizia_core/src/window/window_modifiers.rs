@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::window::Position;
+use vizia_window::Position;
 
 /// Methods for building a window.
 ///

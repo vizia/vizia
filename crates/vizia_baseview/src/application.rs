@@ -9,6 +9,7 @@ use vizia_core::cache::BoundingBox;
 use vizia_core::context::backend::*;
 use vizia_core::events::EventManager;
 use vizia_core::prelude::*;
+use vizia_id::GenerationalId;
 
 pub struct Application<F>
 where
@@ -258,8 +259,8 @@ impl ApplicationRunner {
             },
             baseview::Event::Keyboard(event) => {
                 let (s, pressed) = match event.state {
-                    keyboard_types::KeyState::Down => (MouseButtonState::Pressed, true),
-                    keyboard_types::KeyState::Up => (MouseButtonState::Released, false),
+                    vizia_input::KeyState::Down => (MouseButtonState::Pressed, true),
+                    vizia_input::KeyState::Up => (MouseButtonState::Released, false),
                 };
 
                 match event.code {
@@ -283,7 +284,7 @@ impl ApplicationRunner {
                             Some(event.key.clone()),
                         ));
 
-                        if let keyboard_types::Key::Character(written) = &event.key {
+                        if let vizia_input::Key::Character(written) = &event.key {
                             for chr in written.chars() {
                                 cx.dispatch_system_event(WindowEvent::CharInput(chr));
                             }
@@ -360,9 +361,9 @@ pub fn requests_exit(event: &baseview::Event) -> bool {
         baseview::Event::Window(baseview::WindowEvent::WillClose) => true,
         #[cfg(target_os = "macos")]
         baseview::Event::Keyboard(event) => {
-            if event.code == keyboard_types::Code::KeyQ {
-                if event.modifiers == keyboard_types::Modifiers::META {
-                    if event.state == keyboard_types::KeyState::Down {
+            if event.code == vizia_input::Code::KeyQ {
+                if event.modifiers == vizia_input::KeyboardModifiers::META {
+                    if event.state == vizia_input::KeyState::Down {
                         return true;
                     }
                 }

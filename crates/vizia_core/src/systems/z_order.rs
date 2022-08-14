@@ -1,6 +1,7 @@
 use crate::prelude::*;
+use vizia_id::GenerationalId;
 
-pub fn z_ordering_system(cx: &mut Context, tree: &Tree) {
+pub fn z_ordering_system(cx: &mut Context, tree: &Tree<Entity>) {
     for entity in tree.into_iter() {
         if entity == Entity::root() {
             continue;

@@ -1,4 +1,3 @@
-use crate::entity::Entity;
 use vizia_id::GenerationalId;
 
 /// A mouse button.
@@ -29,7 +28,10 @@ pub enum MouseButtonState {
 
 /// Data which describes the current state of a mouse button.
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub struct MouseButtonData {
+pub struct MouseButtonData<I>
+where
+    I: GenerationalId,
+{
     /// The state of the mouse button (pressed/released).
     pub state: MouseButtonState,
     /// The position of the mouse cursor when the mouse button was last pressed.
@@ -37,26 +39,32 @@ pub struct MouseButtonData {
     /// The position of the mouse cursor when the mouse button was last released.
     pub pos_up: (f32, f32),
     /// The hovered entity when the mouse button was last pressed.
-    pub pressed: Entity,
+    pub pressed: I,
     /// The hovered entity when the mouse button was last released.
-    pub released: Entity,
+    pub released: I,
 }
 
-impl Default for MouseButtonData {
+impl<I> Default for MouseButtonData<I>
+where
+    I: GenerationalId,
+{
     fn default() -> Self {
         MouseButtonData {
             state: MouseButtonState::Released,
             pos_down: (0.0, 0.0),
             pos_up: (0.0, 0.0),
-            pressed: Entity::null(),
-            released: Entity::null(),
+            pressed: I::null(),
+            released: I::null(),
         }
     }
 }
 
 /// The current state of the mouse cursor and buttons.
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub struct MouseState {
+pub struct MouseState<I>
+where
+    I: GenerationalId,
+{
     /// The horizontal mouse cursor position of the frame.
     pub cursorx: f32,
     /// The vertical mouse cursor position of the frame.
@@ -66,14 +74,17 @@ pub struct MouseState {
     /// The vertical mouse cursor position of the previous frame.
     pub previous_cursory: f32,
     /// The state of the left mouse button.
-    pub left: MouseButtonData,
+    pub left: MouseButtonData<I>,
     /// The state of the right mouse button.
-    pub right: MouseButtonData,
+    pub right: MouseButtonData<I>,
     /// The state of the middle mouse button.
-    pub middle: MouseButtonData,
+    pub middle: MouseButtonData<I>,
 }
 
-impl Default for MouseState {
+impl<I> Default for MouseState<I>
+where
+    I: GenerationalId,
+{
     fn default() -> Self {
         MouseState {
             cursorx: -1.0,
@@ -87,7 +98,10 @@ impl Default for MouseState {
     }
 }
 
-impl MouseState {
+impl<I> MouseState<I>
+where
+    I: GenerationalId,
+{
     /// Returns the delta of the mouse cursor position of the current and previous frame.
     pub fn frame_delta(&self) -> (f32, f32) {
         (self.cursorx - self.previous_cursorx, self.cursory - self.previous_cursory)

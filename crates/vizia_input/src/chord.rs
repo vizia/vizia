@@ -1,7 +1,7 @@
-use crate::prelude::*;
+use crate::{Code, Modifiers};
 use std::hash::Hash;
 
-/// A key chord used inside of a [`Keymap`](crate::prelude::Keymap).
+/// A key chord used inside of a `Keymap`.
 ///
 /// This type is part of the prelude.
 #[derive(Default, Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -18,7 +18,7 @@ impl KeyChord {
     /// # Examples
     ///
     /// ```
-    /// # use vizia_core::prelude::*;
+    /// # use vizia_input::*;
     /// #
     /// let key_chord = KeyChord::new(Modifiers::empty(), Code::KeyA);
     /// ```

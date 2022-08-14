@@ -8,12 +8,12 @@ use fnv::FnvHashMap;
 
 use crate::cache::CachedData;
 use crate::events::ViewHandler;
-use crate::input::{Modifiers, MouseState};
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
 use crate::style::Style;
 use vizia_id::GenerationalId;
+use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 
 #[cfg(feature = "clipboard")]
@@ -30,7 +30,7 @@ pub struct EventContext<'a> {
     entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a CachedData,
     pub draw_cache: &'a DrawCache,
-    pub tree: &'a Tree,
+    pub tree: &'a Tree<Entity>,
     pub(crate) data: &'a SparseSet<ModelDataStore>,
     pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
     listeners:
@@ -38,7 +38,7 @@ pub struct EventContext<'a> {
     pub resource_manager: &'a ResourceManager,
     pub text_context: &'a TextContext,
     pub modifiers: &'a Modifiers,
-    pub mouse: &'a MouseState,
+    pub mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
     cursor_icon_locked: &'a mut bool,
     #[cfg(feature = "clipboard")]

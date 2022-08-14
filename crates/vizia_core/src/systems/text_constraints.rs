@@ -1,10 +1,11 @@
 use crate::prelude::*;
 use crate::text::{measure_text_lines, text_layout, text_paint_general};
 use crate::vg::*;
+use vizia_id::GenerationalId;
 
 // Apply this before layout
 // THE GOAL OF THIS FUNCTION: set content-width and content-height
-pub fn text_constraints_system(cx: &mut Context, tree: &Tree) {
+pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
     let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 

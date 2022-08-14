@@ -1,6 +1,7 @@
 use crate::context::InternalEvent;
 use crate::prelude::*;
-use crate::tree::TreeExt;
+use vizia_id::GenerationalId;
+use vizia_storage::TreeExt;
 
 /// Dispatches events to views and models.
 ///
@@ -12,7 +13,7 @@ pub struct EventManager {
     event_queue: Vec<Event>,
 
     // A copy of the tree for iteration
-    tree: Tree,
+    tree: Tree<Entity>,
 }
 
 impl EventManager {
