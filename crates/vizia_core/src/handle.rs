@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use morphorm::{LayoutType, PositionType, Units};
 
 use crate::prelude::*;
+use crate::systems::Prop;
 use crate::text::Selection;
 
 macro_rules! set_style {
@@ -39,6 +40,10 @@ pub struct Handle<'a, T> {
 impl<'a, T> Handle<'a, T> {
     pub fn entity(&self) -> Entity {
         self.entity
+    }
+
+    pub fn set_property<P: Prop>(&mut self, name: &str, val: P) {
+        self.cx.set_property(self.entity, name, val);
     }
 
     pub fn ignore(self) -> Self {

@@ -4,10 +4,12 @@ use vizia::{prelude::*, style::PropType};
 const STYLE: &str = r#"
     .foo {
         --custom-color: red;
+        transition: --custom-color 1.0 0.0;
     }
 
     .foo:hover {
         --custom-color: green;
+        transition: --custom-color 1.0 0.0;
     }
 "#;
 
@@ -33,13 +35,29 @@ impl View for CustomView {
     }
 }
 
+pub trait CustomProp {
+    fn custom_color(self, color: Color) -> Self;
+}
+
+impl<'a, V: View> CustomProp for Handle<'a, V> {
+    fn custom_color(mut self, color: Color) -> Self {
+        self.set_property("custom-color", color);
+
+        self
+    }
+}
+
 fn main() {
     Application::new(|cx| {
         cx.add_property("custom-color", PropType::Color(Color::default()));
 
         cx.add_theme(STYLE);
 
+        // Uses CSS styling
         CustomView::new(cx).size(Pixels(100.0)).class("foo");
+
+        // Uses inline styling
+        CustomView::new(cx).size(Pixels(100.0)).custom_color(Color::blue());
     })
     .run();
 }

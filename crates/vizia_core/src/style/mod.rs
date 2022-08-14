@@ -900,6 +900,19 @@ impl Style {
                                     self.transitions.insert(rule_id, animation);
                                 }
 
+                                custom if custom.starts_with("--") => {
+                                    let custom_name = &custom[2..];
+                                    let transition = self.add_transition(transition.clone());
+                                    let animation = self.animation_manager.create();
+                                    if let Some(store) =
+                                        self.custom_color_props.get_mut(custom_name)
+                                    {
+                                        store.insert_animation(animation, transition);
+                                        store.insert_transition(rule_id, animation);
+                                        self.transitions.insert(rule_id, animation);
+                                    }
+                                }
+
                                 _ => {}
                             }
                         }

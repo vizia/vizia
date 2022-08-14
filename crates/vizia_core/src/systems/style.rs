@@ -5,11 +5,18 @@ use vizia_storage::{LayoutTreeIterator, TreeExt};
 
 pub trait Prop {
     fn get<'a>(cx: &'a DrawContext, name: &str) -> Option<&'a Self>;
+    fn set(cx: &mut Context, name: &str, val: Self);
 }
 
 impl Prop for Color {
     fn get<'a>(cx: &'a DrawContext, name: &str) -> Option<&'a Self> {
         cx.style.custom_color_props.get(name).and_then(|store| store.get(cx.current))
+    }
+
+    fn set(cx: &mut Context, name: &str, val: Self) {
+        if let Some(store) = cx.style.custom_color_props.get_mut(name) {
+            store.insert(cx.current, val);
+        }
     }
 }
 

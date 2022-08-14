@@ -27,6 +27,7 @@ use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::storage::animatable_set::AnimatableSet;
 use crate::style::{PropType, Style};
+use crate::systems::Prop;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -506,6 +507,12 @@ impl Context {
 
             _ => {}
         }
+    }
+
+    pub fn set_property<T: Prop>(&mut self, entity: Entity, name: &str, val: T) {
+        self.with_current(entity, |cx| {
+            T::set(cx, name, val);
+        })
     }
 }
 
