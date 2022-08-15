@@ -282,7 +282,8 @@ impl Context {
                 self.entity_identifiers.remove(identifier);
             }
 
-            if self.focused == *entity && delete_list.contains(&self.tree.lock_focus_within(entity))
+            if self.focused == *entity
+                && delete_list.contains(&self.tree.lock_focus_within(*entity))
             {
                 if let Some(new_focus) = self.focus_stack.pop() {
                     self.with_current(new_focus, |cx| cx.focus());
