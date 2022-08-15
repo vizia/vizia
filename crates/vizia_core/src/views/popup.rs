@@ -52,7 +52,7 @@ where
                 Binding::new(cx, lens.clone(), move |cx, lens| {
                     if lens.get(cx) {
                         if capture_focus {
-                            Container::new(cx, &content).lock_focus_to_within();
+                            VStack::new(cx, &content).lock_focus_to_within();
                         } else {
                             (content)(cx);
                         }
