@@ -1,3 +1,5 @@
+//! # Demo
+//! <iframe frameBorder="0" width = "100%" height = "420px" src="https://demo.vizia.dev/" title="Vizia Demo"></iframe>
 #[cfg(all(not(feature = "baseview"), feature = "winit"))]
 pub use vizia_winit::application::Application;
 
