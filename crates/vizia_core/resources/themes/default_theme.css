@@ -285,6 +285,7 @@ dropdown vstack {
 
 knob:focus-visible {
     outline-width: 2px;
+    outline-offset: 3px;
     outline-color: blue;
 }
 
