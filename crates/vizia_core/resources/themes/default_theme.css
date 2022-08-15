@@ -289,8 +289,15 @@ knob:focus-visible {
     outline-color: blue;
 }
 
-slider {
+slider>* {
     background-color: #868686;
+    border-radius: 3px;
+}
+
+slider:focus-visible {
+    outline-width: 2px;
+    outline-color: blue;
+    outline-offset: 5px;
     border-radius: 3px;
 }
 
