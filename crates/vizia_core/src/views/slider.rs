@@ -7,6 +7,7 @@ use crate::views::Orientation;
 enum SliderEventInternal {
     SetThumbSize(f32, f32),
     SetRange(Range<f32>),
+    SetKeyboardFraction(f32),
 }
 
 #[derive(Clone, Debug, Default, Data)]
@@ -15,6 +16,7 @@ pub struct SliderDataInternal {
     pub size: f32,
     pub thumb_size: f32,
     pub range: Range<f32>,
+    pub keyboard_fraction: f32,
 }
 
 /// The slider control can be used to select from a continuous set of values.
@@ -67,7 +69,7 @@ pub struct SliderDataInternal {
 /// ```
 #[derive(Lens)]
 pub struct Slider<L: Lens> {
-    p: PhantomData<L>,
+    lens: L,
     is_dragging: bool,
     internal: SliderDataInternal,
     on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
@@ -97,7 +99,7 @@ where
     /// ```
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
         Self {
-            p: PhantomData::default(),
+            lens: lens.clone(),
             is_dragging: false,
 
             internal: SliderDataInternal {
@@ -105,6 +107,7 @@ where
                 thumb_size: 0.0,
                 size: 0.0,
                 range: 0.0..1.0,
+                keyboard_fraction: 0.1,
             },
 
             on_changing: None,
@@ -174,10 +177,11 @@ where
                 });
             });
         })
+        .keyboard_navigatable(true)
     }
 }
 
-impl<L: Lens> View for Slider<L> {
+impl<L: Lens<Target = f32>> View for Slider<L> {
     fn element(&self) -> Option<&'static str> {
         Some("slider")
     }
@@ -196,6 +200,10 @@ impl<L: Lens> View for Slider<L> {
 
             SliderEventInternal::SetRange(range) => {
                 self.internal.range = range.clone();
+            }
+
+            SliderEventInternal::SetKeyboardFraction(keyboard_fraction) => {
+                self.internal.keyboard_fraction = keyboard_fraction;
             }
         });
 
@@ -218,6 +226,7 @@ impl<L: Lens> View for Slider<L> {
                 self.is_dragging = true;
                 cx.capture();
                 cx.set_active(true);
+                cx.focus_with_visibility(false);
 
                 let thumb_size = self.internal.thumb_size;
                 let min = self.internal.range.start;
@@ -290,6 +299,24 @@ impl<L: Lens> View for Slider<L> {
                 }
             }
 
+            WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
+                let min = self.internal.range.start;
+                let max = self.internal.range.end;
+                let val = (self.lens.get(cx) + 0.1 * (max - min)).clamp(min, max);
+                if let Some(callback) = &self.on_changing {
+                    (callback)(cx, val);
+                }
+            }
+
+            WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
+                let min = self.internal.range.start;
+                let max = self.internal.range.end;
+                let val = (self.lens.get(cx) - 0.1 * (max - min)).clamp(min, max);
+                if let Some(callback) = &self.on_changing {
+                    (callback)(cx, val);
+                }
+            }
+
             _ => {}
         });
     }
@@ -348,6 +375,31 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     /// ```
     pub fn range(self, range: Range<f32>) -> Self {
         self.cx.emit_to(self.entity, SliderEventInternal::SetRange(range));
+
+        self
+    }
+
+    /// Sets the fraction of a slider that a press of an arrow key will change.
+    ///
+    /// # Example
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_derive::*;
+    /// # let mut cx = &mut Context::new();
+    /// # #[derive(Lens, Default)]
+    /// # pub struct AppData {
+    /// #     value: f32,
+    /// # }
+    /// # impl Model for AppData {}
+    /// # AppData::default().build(cx);
+    /// Slider::new(cx, AppData::value)
+    ///     .keyboard_fraction(0.05)
+    ///     .on_changing(|cx, value| {
+    ///         println!("Slider on_changing: {}", value);
+    ///     });
+    /// ```
+    pub fn keyboard_fraction(self, keyboard_fraction: f32) -> Self {
+        self.cx.emit_to(self.entity, SliderEventInternal::SetKeyboardFraction(keyboard_fraction));
 
         self
     }
