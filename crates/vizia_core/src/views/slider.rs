@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, ops::Range};
+use std::ops::Range;
 
 use crate::prelude::*;
 use crate::views::Orientation;
@@ -203,7 +203,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             }
 
             SliderEventInternal::SetKeyboardFraction(keyboard_fraction) => {
-                self.internal.keyboard_fraction = keyboard_fraction;
+                self.internal.keyboard_fraction = *keyboard_fraction;
             }
         });
 
