@@ -73,7 +73,8 @@ impl<L: Lens<Target = f32>> Knob<L> {
                 //     .translate((30.0,0.0))
                 //     .rotate(30.0);
             });
-        }).keyboard_navigatable(true)
+        })
+        .keyboard_navigatable(true)
     }
 
     pub fn custom<F, T>(
@@ -212,14 +213,14 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
                 move_virtual_slider(self, cx, self.default_normal);
             }
 
-            WindowEvent::KeyDown(Code::ArrowUp| Code::ArrowRight,_) => {
+            WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
                 self.continuous_normal = self.lens.get(cx);
-                move_virtual_slider(self, cx, self.continuous_normal+self.arrow_scalar);
+                move_virtual_slider(self, cx, self.continuous_normal + self.arrow_scalar);
             }
-            
-            WindowEvent::KeyDown(Code::ArrowDown| Code::ArrowLeft,_) => {
+
+            WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
                 self.continuous_normal = self.lens.get(cx);
-                move_virtual_slider(self, cx, self.continuous_normal-self.arrow_scalar);
+                move_virtual_slider(self, cx, self.continuous_normal - self.arrow_scalar);
             }
 
             _ => {}
