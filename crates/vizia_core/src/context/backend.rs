@@ -351,16 +351,18 @@ impl<'a> BackendContext<'a> {
                         self.0.mouse.left.pos_down = (self.0.mouse.cursorx, self.0.mouse.cursory);
                         self.0.mouse.left.pressed = self.0.hovered;
                         self.0.triggered = self.0.hovered;
-                        if self
+                        let focusable = self
                             .0
                             .style
                             .abilities
                             .get(self.0.hovered)
                             .filter(|abilities| abilities.contains(Abilities::FOCUSABLE))
-                            .is_some()
-                        {
-                            self.with_current(self.0.hovered, |cx| cx.focus_with_visibility(false));
-                        }
+                            .is_some();
+
+                        self.with_current(
+                            if focusable { self.0.hovered } else { self.0.focused },
+                            |cx| cx.focus_with_visibility(false),
+                        );
 
                         self.dispatch_direct_or_up(
                             WindowEvent::TriggerDown { mouse: true },
@@ -496,7 +498,7 @@ impl<'a> BackendContext<'a> {
                     self.style().needs_restyle = true;
                 }
 
-                if matches!(*code, Code::Space) {
+                if matches!(*code, Code::Enter | Code::NumpadEnter | Code::Space) {
                     self.0.triggered = self.0.focused;
                     self.0.with_current(self.0.focused, |cx| {
                         cx.emit(WindowEvent::TriggerDown { mouse: false })
@@ -506,7 +508,10 @@ impl<'a> BackendContext<'a> {
                 self.0.event_queue.push_back(Event::new(event).target(self.0.focused));
             }
             WindowEvent::KeyUp(_, _) | WindowEvent::CharInput(_) => {
-                if matches!(event, WindowEvent::KeyUp(Code::Space, _)) {
+                if matches!(
+                    event,
+                    WindowEvent::KeyUp(Code::Enter | Code::NumpadEnter | Code::Space, _)
+                ) {
                     self.0.with_current(self.0.triggered, |cx| {
                         cx.emit(WindowEvent::TriggerUp { mouse: false })
                     });

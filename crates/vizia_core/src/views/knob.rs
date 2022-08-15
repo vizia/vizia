@@ -5,6 +5,7 @@ use crate::prelude::*;
 
 static DEFAULT_DRAG_SCALAR: f32 = 0.0042;
 static DEFAULT_WHEEL_SCALAR: f32 = 0.005;
+static DEFAULT_ARROW_SCALAR: f32 = 0.1;
 static DEFAULT_MODIFIER_SCALAR: f32 = 0.04;
 
 use std::f32::consts::PI;
@@ -19,6 +20,7 @@ pub struct Knob<L> {
 
     drag_scalar: f32,
     wheel_scalar: f32,
+    arrow_scalar: f32,
     modifier_scalar: f32,
 
     on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
@@ -41,6 +43,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
+            arrow_scalar: DEFAULT_ARROW_SCALAR,
             modifier_scalar: DEFAULT_MODIFIER_SCALAR,
 
             on_changing: None,
@@ -71,6 +74,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
                 //     .rotate(30.0);
             });
         })
+        .keyboard_navigatable(true)
     }
 
     pub fn custom<F, T>(
@@ -92,6 +96,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
+            arrow_scalar: DEFAULT_ARROW_SCALAR,
             modifier_scalar: DEFAULT_MODIFIER_SCALAR,
 
             on_changing: None,
@@ -150,7 +155,7 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
                 self.prev_drag_y = cx.mouse.left.pos_down.1;
 
                 cx.capture();
-                cx.focus();
+                cx.focus_with_visibility(false);
 
                 self.continuous_normal = self.lens.get(cx);
 
@@ -206,6 +211,16 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
                 self.is_dragging = false;
 
                 move_virtual_slider(self, cx, self.default_normal);
+            }
+
+            WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
+                self.continuous_normal = self.lens.get(cx);
+                move_virtual_slider(self, cx, self.continuous_normal + self.arrow_scalar);
+            }
+
+            WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
+                self.continuous_normal = self.lens.get(cx);
+                move_virtual_slider(self, cx, self.continuous_normal - self.arrow_scalar);
             }
 
             _ => {}
