@@ -255,7 +255,7 @@ dropdown .title {
     overflow: visible;
 }
 
-dropdown:focus-within {
+dropdown>.title:focus-visible {
     outline-width: 2px;
     outline-color: blue;
 }
