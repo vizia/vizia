@@ -43,15 +43,23 @@ impl<L> Popup<L>
 where
     L: Lens<Target = bool>,
 {
-    pub fn new<F>(cx: &mut Context, lens: L, content: F) -> Handle<Self>
+    pub fn new<F>(cx: &mut Context, lens: L, capture_focus: bool, content: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context),
     {
         Self { lens: lens.clone() }
             .build(cx, |cx| {
-                (content)(cx);
+                Binding::new(cx, lens.clone(), move |cx, lens| {
+                    if lens.get(cx) {
+                        if capture_focus {
+                            VStack::new(cx, &content).lock_focus_to_within();
+                        } else {
+                            (content)(cx);
+                        }
+                    }
+                });
             })
-            .checked(lens)
+            .checked(lens.clone())
             .position_type(PositionType::SelfDirected)
             .z_order(100)
     }

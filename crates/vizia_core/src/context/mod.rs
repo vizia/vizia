@@ -63,6 +63,7 @@ pub struct Context {
     pub(crate) triggered: Entity,
     pub(crate) hovered: Entity,
     pub(crate) focused: Entity,
+    pub(crate) focus_stack: Vec<Entity>,
     pub(crate) cursor_icon_locked: bool,
 
     pub(crate) resource_manager: ResourceManager,
@@ -108,6 +109,7 @@ impl Context {
             triggered: Entity::null(),
             hovered: Entity::root(),
             focused: Entity::root(),
+            focus_stack: Vec::new(),
             cursor_icon_locked: false,
             resource_manager: ResourceManager::new(),
             text_context: TextContext::default(),
@@ -278,6 +280,14 @@ impl Context {
 
             if let Some(identifier) = self.style.ids.get(*entity) {
                 self.entity_identifiers.remove(identifier);
+            }
+
+            if self.focused == *entity
+                && delete_list.contains(&self.tree.lock_focus_within(*entity))
+            {
+                if let Some(new_focus) = self.focus_stack.pop() {
+                    self.with_current(new_focus, |cx| cx.focus());
+                }
             }
 
             self.tree.remove(*entity).expect("");
