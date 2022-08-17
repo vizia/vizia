@@ -1,0 +1,13 @@
+{
+	"[rust]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnPaste": true,
+		"editor.defaultFormatter": "rust-lang.rust-analyzer",
+	},
+	"[css]": {
+		"editor.formatOnSave": true,
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+	},
+	"prettier.tabWidth": 4,
+	"css.lint.unknownProperties": "ignore"
+}
