@@ -343,7 +343,9 @@ impl Model for TextboxData {
                         cx.focus_with_visibility(false);
                         cx.capture();
                         cx.set_checked(true);
-                        cx.emit(TextEvent::SelectAll);
+                        if self.selection.active == self.selection.anchor{
+                            cx.emit(TextEvent::SelectAll);
+                        }
                     }
                 }
             }
@@ -588,8 +590,6 @@ where
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseDown(MouseButton::Left) => {
                 if cx.is_over() {
-                    cx.emit(TextEvent::StartEdit);
-
                     cx.focus_with_visibility(false);
                     cx.capture();
                     cx.set_checked(true);
@@ -638,6 +638,9 @@ where
 
             WindowEvent::MouseUp(MouseButton::Left) => {
                 cx.unlock_cursor_icon();
+                if cx.is_over(){
+                    cx.emit(TextEvent::StartEdit);
+                }
             }
 
             WindowEvent::MouseMove(_, _) => {
