@@ -444,15 +444,15 @@ impl<'a> BackendContext<'a> {
                     };
                     let local_idents =
                         |entity| if has_next_sibling(entity) { "├── " } else { "└── " };
+                    let indents = |entity| root_indents(entity) + local_idents(entity);
 
                     for entity in TreeIterator::full(tree).skip(1) {
                         if let Some(element_name) =
                             views.get(&entity).and_then(|view| view.element())
                         {
                             println!(
-                                "{}{}{} {} {:?} display={:?} bounds={} clip={}",
-                                root_indents(entity),
-                                local_idents(entity),
+                                "{}{} {} {:?} display={:?} bounds={} clip={}",
+                                indents(entity),
                                 entity,
                                 element_name,
                                 cache.get_visibility(entity),
@@ -460,13 +460,25 @@ impl<'a> BackendContext<'a> {
                                 cache.get_bounds(entity),
                                 cache.get_clip_region(entity),
                             );
+                        } else if let Some(binding_name) =
+                            self.0.bindings.get(&entity).and_then(|binding| binding.name())
+                        {
+                            println!(
+                                "{}{} binding observing {}",
+                                indents(entity),
+                                entity,
+                                binding_name
+                            );
                         } else {
                             println!(
-                                "{}{}{} {} view",
-                                root_indents(entity),
-                                local_idents(entity),
+                                "{}{} {}",
+                                indents(entity),
                                 entity,
-                                if views.get(&entity).is_some() { "unnamed" } else { "no" }
+                                if views.get(&entity).is_some() {
+                                    "unnamed view"
+                                } else {
+                                    "no binding or view"
+                                }
                             );
                         }
                     }

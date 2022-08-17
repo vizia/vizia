@@ -4,30 +4,6 @@ use std::collections::{HashMap, HashSet};
 use crate::prelude::*;
 use crate::state::{BasicStore, LensCache, ModelOrView, Store, StoreId};
 
-/// A view on a binding to allow for better debugging
-struct BindingView<L: Lens> {
-    lens: L,
-}
-
-impl<L: Lens> View for BindingView<L> {
-    fn build<F>(self, cx: &mut Context, _content: F) -> Handle<Self> {
-        let id = cx.entity_manager.create();
-        let current = cx.current();
-        cx.tree.add(id, current).expect("Failed to add to tree");
-        cx.cache.add(id).expect("Failed to add to cache");
-        cx.style.add(id);
-        cx.views.insert(id, Box::new(self));
-
-        Handle { entity: id, p: Default::default(), cx }
-    }
-
-    fn element(&self) -> Option<&'static str> {
-        self.lens.name()
-    }
-
-    fn draw(&self, _cx: &mut DrawContext, _canvas: &mut Canvas) {}
-}
-
 /// A binding view which rebuilds its contents when its observed data changes.
 ///
 /// This type is part of the prelude.
@@ -62,7 +38,11 @@ where
     where
         F: 'static + Fn(&mut Context, L),
     {
-        let id = BindingView { lens: lens.clone() }.build(cx, |_| {}).ignore().entity;
+        let id = cx.entity_manager.create();
+        let current = cx.current();
+        cx.tree.add(id, current).expect("Failed to add to tree");
+        cx.cache.add(id).expect("Failed to add to cache");
+        cx.style.add(id);
 
         let binding = Self { entity: id, lens: lens.clone(), content: Some(Box::new(builder)) };
 
@@ -143,12 +123,15 @@ where
                 cx.bindings.insert(id, binding);
             }
         });
+
+        let _: Handle<Self> = Handle { entity: id, p: Default::default(), cx }.ignore();
     }
 }
 
 pub trait BindingHandler {
     fn update<'a>(&mut self, cx: &'a mut Context);
     fn remove(&self, cx: &mut Context);
+    fn name(&self) -> Option<&'static str>;
 }
 
 impl<L: 'static + Lens> BindingHandler for Binding<L> {
@@ -191,5 +174,9 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
                 }
             }
         }
+    }
+
+    fn name(&self) -> Option<&'static str> {
+        self.lens.name()
     }
 }
