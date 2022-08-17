@@ -274,7 +274,7 @@ impl TextboxData {
     }
 
     pub fn select_range(&mut self, _: &mut EventContext, range: &core::ops::RangeInclusive<usize>) {
-        self.selection = Selection::new(*range.start(), *range.end() + 1);
+        self.selection = Selection::new(*range.start(), *range.end());
     }
 }
 
@@ -371,19 +371,7 @@ impl Model for TextboxData {
             }
 
             TextEvent::SelectWord => {
-                let start = if let Some(offset) = self.text.prev_word_offset(self.selection.active)
-                {
-                    self.selection.active = offset;
-                    offset
-                } else {
-                    self.selection.active
-                };
-                let end = if let Some(offset) = self.text.next_word_offset(self.selection.active) {
-                    offset - 1
-                } else {
-                    self.selection.active
-                };
-                self.select_range(cx, &(start..=end));
+                self.select_range(cx, &self.text.word_around(self.selection.active));
                 self.set_caret(cx);
             }
 
