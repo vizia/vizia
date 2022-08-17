@@ -427,7 +427,7 @@ impl<'a> BackendContext<'a> {
                 }
 
                 #[cfg(debug_assertions)]
-                if *code == Code::KeyI {
+                if *code == Code::KeyI && self.0.modifiers.contains(Modifiers::CTRL) {
                     println!("Entity tree");
                     let (tree, views, cache) = (&self.0.tree, &self.0.views, &self.0.cache);
                     let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
