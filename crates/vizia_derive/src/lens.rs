@@ -150,6 +150,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     let impls = fields.iter().filter(|f| !f.attrs.ignore).map(|f| {
         let field_name = &f.ident.unwrap_named();
         let field_ty = &f.ty;
+        let name = format!("binding={}:{}", struct_type.to_string(), field_name.to_string());
 
         quote! {
 
@@ -160,6 +161,10 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
                 fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &#struct_type#ty_generics, map: F) -> O {
                     map(Some(&source.#field_name))
+                }
+
+                fn name(&self) -> Option<&'static str>{
+                    Some(#name)
                 }
             }
         }
@@ -330,6 +335,7 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
     });
 
     let impls = usable_variants.iter().map(|(variant_name, variant_type)| {
+        let name = format!("binding={}:{}", enum_type.to_string(), variant_name.to_string());
         quote! {
             impl Lens for #twizzled_name::#variant_name {
                 type Source = #enum_type;
@@ -341,6 +347,10 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
                     } else {
                         None
                     })
+                }
+
+                fn name(&self) -> Option<&'static str>{
+                    Some(#name)
                 }
             }
         }

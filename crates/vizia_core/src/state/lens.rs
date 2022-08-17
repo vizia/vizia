@@ -19,6 +19,10 @@ pub trait Lens: 'static + Clone {
     type Target;
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O;
+    
+    fn name(&self) -> Option<&'static str> {
+        None
+    }
 }
 
 pub(crate) trait LensCache: Lens {
@@ -35,7 +39,7 @@ impl<T: Lens> LensCache for T {}
 
 /// Helpers for constructing more complex `Lens`es.
 ///
-/// This trait is par tof the prelude.
+/// This trait is part of the prelude.
 pub trait LensExt: Lens {
     /// Retrieve a copy of the lensed data from context.
     ///
@@ -177,6 +181,10 @@ where
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
         self.a.view(source, |t| if let Some(t) = t { self.b.view(t, map) } else { map(None) })
+    }
+
+    fn name(&self) -> Option<&'static str> {
+        self.a.name()
     }
 }
 
