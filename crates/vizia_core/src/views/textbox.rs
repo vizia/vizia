@@ -632,7 +632,7 @@ where
                 cx.emit(TextEvent::SelectWord);
             }
 
-            WindowEvent::MouseTrippleClick(MouseButton::Left) => {
+            WindowEvent::MouseTripleClick(MouseButton::Left) => {
                 cx.emit(TextEvent::SelectParagraph);
             }
 

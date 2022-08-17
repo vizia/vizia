@@ -14,8 +14,8 @@ pub enum WindowEvent {
     WindowResize(f32, f32),
     /// Emitted when a mouse button is double clicked
     MouseDoubleClick(MouseButton),
-    /// Emitted when a mouse button is tripple clicked
-    MouseTrippleClick(MouseButton),
+    /// Emitted when a mouse button is triple clicked
+    MouseTripleClick(MouseButton),
     /// Emitted when a mouse button is pressed
     MouseDown(MouseButton),
     /// Emitted when a mouse button is released

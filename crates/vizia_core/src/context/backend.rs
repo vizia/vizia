@@ -378,7 +378,7 @@ impl<'a> BackendContext<'a> {
                     if self.0.clicks <= 2 {
                         self.0.clicks += 1;
                         let event = if self.0.clicks == 3 {
-                            WindowEvent::MouseTrippleClick(button)
+                            WindowEvent::MouseTripleClick(button)
                         } else {
                             WindowEvent::MouseDoubleClick(button)
                         };
