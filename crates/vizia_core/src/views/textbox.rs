@@ -626,7 +626,7 @@ where
 
             WindowEvent::MouseUp(MouseButton::Left) => {
                 cx.unlock_cursor_icon();
-                if cx.is_over() {
+                if cx.mouse.left.pressed == cx.current() {
                     cx.emit(TextEvent::StartEdit);
                 }
             }
