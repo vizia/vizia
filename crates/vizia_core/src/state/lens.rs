@@ -19,7 +19,7 @@ pub trait Lens: 'static + Clone {
     type Target;
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O;
-    
+
     fn name(&self) -> Option<&'static str> {
         None
     }

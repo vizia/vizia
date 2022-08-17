@@ -481,7 +481,7 @@ impl View for ArcTrack {
     fn element(&self) -> Option<&'static str> {
         Some("arctrack")
     }
-    
+
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let opacity = cx.opacity();
 
