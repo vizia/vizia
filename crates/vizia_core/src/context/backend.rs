@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use femtovg::{renderer::OpenGl, Canvas};
+use femtovg::{renderer::OpenGl, Canvas, TextContext};
 use fnv::FnvHashMap;
 use instant::{Duration, Instant};
 
@@ -198,6 +198,10 @@ impl<'a> BackendContext<'a> {
                 }
             }
         }
+    }
+
+    pub fn text_context(&mut self) -> &mut TextContext {
+        &mut self.0.text_context
     }
 
     /// For each binding or data observer, check if its data has changed, and if so, rerun its

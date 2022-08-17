@@ -20,6 +20,8 @@ where
     scale_policy: WindowScalePolicy,
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ignore_default_theme: bool,
+    text_shaping_run_cache_size: Option<usize>,
+    text_shaped_words_cache_size: Option<usize>,
 }
 
 impl<F> Application<F>
@@ -34,6 +36,8 @@ where
             scale_policy: WindowScalePolicy::SystemScaleFactor,
             on_idle: None,
             ignore_default_theme: false,
+            text_shaping_run_cache_size: None,
+            text_shaped_words_cache_size: None
         }
     }
 
@@ -74,6 +78,8 @@ where
             self.app,
             self.on_idle,
             self.ignore_default_theme,
+            self.text_shaping_run_cache_size,
+            self.text_shaped_words_cache_size,
         )
     }
 
@@ -132,6 +138,18 @@ where
     pub fn on_idle<I: 'static + Fn(&mut Context) + Send>(mut self, callback: I) -> Self {
         self.on_idle = Some(Box::new(callback));
 
+        self
+    }
+
+    /// Resize the cache used for rendering text lines
+    pub fn text_shaping_run_cache(mut self, size: usize) -> Self {
+        self.text_shaping_run_cache_size = Some(size);
+        self
+    }
+
+    /// Resize the cache used for rendering words
+    pub fn text_shaped_words_cache(mut self, size: usize) -> Self {
+        self.text_shaped_words_cache_size = Some(size);
         self
     }
 }
