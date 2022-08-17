@@ -1,4 +1,3 @@
-
 label.icon {
     font: "icons";
 }
@@ -84,7 +83,7 @@ image {
     height: auto;
 }
 
-zstack>* {
+zstack > * {
     position-type: self-directed;
 }
 
@@ -109,11 +108,11 @@ scrollview {
     overflow: hidden;
 }
 
-scrollbar>.thumb {
+scrollbar > .thumb {
     background-color: #5d5d5d;
 }
 
-scrollview>.scroll_content {
+scrollview > .scroll_content {
     min-width: 100%;
     min-height: 100%;
     width: auto;
@@ -121,7 +120,7 @@ scrollview>.scroll_content {
     position-type: self-directed;
 }
 
-scrollview>scrollbar.horizontal {
+scrollview > scrollbar.horizontal {
     left: 0px;
     width: 1s;
     right: 14px;
@@ -131,7 +130,7 @@ scrollview>scrollbar.horizontal {
     bottom: 0px;
 }
 
-scrollview>scrollbar.vertical {
+scrollview > scrollbar.vertical {
     top: 0px;
     height: 1s;
     bottom: 0px;
@@ -143,12 +142,12 @@ scrollview>scrollbar.vertical {
 
 popup {
     display: none;
-    opacity: 0.0;
+    opacity: 0;
 }
 
 popup:checked {
     display: flex;
-    opacity: 1.0;
+    opacity: 1;
 }
 
 menucontroller {
@@ -175,21 +174,21 @@ menustack.horizontal {
     layout-type: row;
 }
 
-menu>menustack {
+menu > menustack {
     position-type: self-directed;
     z-index: 1000;
     display: none;
 }
 
-menu:selected>menustack {
+menu:selected > menustack {
     display: flex;
 }
 
-menustack.vertical>menu>menustack {
+menustack.vertical > menu > menustack {
     left: 100%;
 }
 
-menustack.horizontal>menu>menustack {
+menustack.horizontal > menu > menustack {
     top: 100%;
 }
 
@@ -197,7 +196,7 @@ menustack.horizontal>menu>menustack {
     display: none;
 }
 
-menustack.vertical>menu>hstack>.menu_arrow {
+menustack.vertical > menu > hstack > .menu_arrow {
     display: flex;
     font: "material";
     left: 1s;
