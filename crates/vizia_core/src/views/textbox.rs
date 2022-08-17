@@ -274,7 +274,7 @@ impl TextboxData {
     }
 
     pub fn select_range(&mut self, _: &mut EventContext, range: &core::ops::RangeInclusive<usize>) {
-        self.selection = Selection::new(*range.start(), *range.end()+1);
+        self.selection = Selection::new(*range.start(), *range.end() + 1);
     }
 }
 
@@ -343,7 +343,7 @@ impl Model for TextboxData {
                         cx.focus_with_visibility(false);
                         cx.capture();
                         cx.set_checked(true);
-                        if self.selection.active == self.selection.anchor{
+                        if self.selection.active == self.selection.anchor {
                             cx.emit(TextEvent::SelectAll);
                         }
                     }
@@ -379,7 +379,7 @@ impl Model for TextboxData {
                     self.selection.active
                 };
                 let end = if let Some(offset) = self.text.next_word_offset(self.selection.active) {
-                    offset-1
+                    offset - 1
                 } else {
                     self.selection.active
                 };
@@ -638,7 +638,7 @@ where
 
             WindowEvent::MouseUp(MouseButton::Left) => {
                 cx.unlock_cursor_icon();
-                if cx.is_over(){
+                if cx.is_over() {
                     cx.emit(TextEvent::StartEdit);
                 }
             }
