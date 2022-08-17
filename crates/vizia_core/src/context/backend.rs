@@ -321,7 +321,7 @@ impl<'a> BackendContext<'a> {
 
                 self.dispatch_direct_or_up(event, self.0.captured, self.0.hovered, false);
             }
-            WindowEvent::MouseDown(button) => {
+            &WindowEvent::MouseDown(button) => {
                 match button {
                     MouseButton::Left => self.0.mouse.left.state = MouseButtonState::Pressed,
                     MouseButton::Right => self.0.mouse.right.state = MouseButtonState::Pressed,
@@ -332,20 +332,6 @@ impl<'a> BackendContext<'a> {
                 let new_click_time = Instant::now();
                 let click_duration = new_click_time - self.0.click_time;
                 let new_click_pos = (self.0.mouse.cursorx, self.0.mouse.cursory);
-
-                if click_duration <= DOUBLE_CLICK_INTERVAL && new_click_pos == self.0.click_pos {
-                    if !self.0.double_click {
-                        self.dispatch_direct_or_up(
-                            WindowEvent::MouseDoubleClick(*button),
-                            self.0.captured,
-                            self.0.hovered,
-                            true,
-                        );
-                        self.0.double_click = true;
-                    }
-                } else {
-                    self.0.double_click = false;
-                }
 
                 self.0.click_time = new_click_time;
                 self.0.click_pos = new_click_pos;
@@ -387,6 +373,20 @@ impl<'a> BackendContext<'a> {
                 }
 
                 self.dispatch_direct_or_up(event, self.0.captured, self.0.hovered, true);
+
+                if click_duration <= DOUBLE_CLICK_INTERVAL && new_click_pos == self.0.click_pos {
+                    if self.0.clicks <= 2 {
+                        self.0.clicks += 1;
+                        let event = if self.0.clicks == 3 {
+                            WindowEvent::MouseTrippleClick(button)
+                        } else {
+                            WindowEvent::MouseDoubleClick(button)
+                        };
+                        self.dispatch_direct_or_up(event, self.0.captured, self.0.hovered, true);
+                    }
+                } else {
+                    self.0.clicks = 1;
+                }
             }
             WindowEvent::MouseUp(button) => {
                 match button {
