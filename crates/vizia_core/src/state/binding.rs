@@ -24,7 +24,7 @@ impl<L: Lens> View for BindingView<L> {
     fn element(&self) -> Option<&'static str> {
         self.lens.name()
     }
-    
+
     fn draw(&self, _cx: &mut DrawContext, _canvas: &mut Canvas) {}
 }
 
