@@ -390,6 +390,18 @@ impl Application {
             *control_flow = *stored_control_flow.borrow();
         });
     }
+
+    /// Resize the cache used for rendering text lines
+    pub fn text_shaping_run_cache(mut self, size: usize) -> Self {
+        BackendContext::new(&mut self.context).text_context().resize_shaping_run_cache(size);
+        self
+    }
+
+    /// Resize the cache used for rendering words
+    pub fn text_shaped_words_cache(mut self, size: usize) -> Self {
+        BackendContext::new(&mut self.context).text_context().resize_shaped_words_cache(size);
+        self
+    }
 }
 
 impl WindowModifiers for Application {
