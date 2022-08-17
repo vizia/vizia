@@ -91,7 +91,7 @@ checkbox:checked {
     background-color: #3c77d2;
     border-color: #3c77d2;
     color: #f5f5f5;
-    transition: background-color 0.1 0.0;
+    transition: background-color 0.1 0;
 }
 
 checkbox:disabled {
@@ -106,7 +106,7 @@ checkbox:checked:hover {
     background-color: #0082e6;
     border-color: #0082e6;
     color: #f5f5f5;
-    transition: background-color 0.1 0.0;
+    transition: background-color 0.1 0;
 }
 
 checkbox:checked:disabled {
@@ -213,16 +213,16 @@ radiobutton .inner {
     height: 0px;
     border-radius: 50%;
     background-color: #666666;
-    transition: width 0.2 0.0;
-    transition: height 0.2 0.0;
+    transition: width 0.2 0;
+    transition: height 0.2 0;
 }
 
 radiobutton:checked .inner {
     width: 12px;
     height: 12px;
     background-color: #3c77d2;
-    transition: width 0.1 0.0;
-    transition: height 0.1 0.0;
+    transition: width 0.1 0;
+    transition: height 0.1 0;
 }
 
 radiobutton:hover .inner {
@@ -233,8 +233,8 @@ radiobutton:disabled .inner {
     width: 12px;
     height: 12px;
     background-color: #bdbdbd;
-    transition: width 0.1 0.0;
-    transition: height 0.1 0.0;
+    transition: width 0.1 0;
+    transition: height 0.1 0;
 }
 
 /* dropdown .title {
@@ -255,16 +255,16 @@ dropdown .title {
     overflow: visible;
 }
 
-dropdown>.title:focus-visible {
+dropdown > .title:focus-visible {
     outline-width: 2px;
     outline-color: blue;
 }
 
-dropdown>popup {
+dropdown > popup {
     outer-shadow: 0 3 5 #00000055;
 }
 
-dropdown>popup>list {
+dropdown > popup > list {
     width: 1s;
 }
 
@@ -274,7 +274,7 @@ dropdown list label {
     child-left: 6px;
 }
 
-dropdown list label:focus-visible{
+dropdown list label:focus-visible {
     outline-width: 2px;
     outline-color: blue;
 }
@@ -289,7 +289,7 @@ knob:focus-visible {
     outline-color: blue;
 }
 
-slider>* {
+slider > * {
     background-color: #868686;
     border-radius: 3px;
 }
@@ -322,7 +322,7 @@ scrollbar {
     child-space: 2px;
 }
 
-scrollbar>.thumb {
+scrollbar > .thumb {
     border-radius: 6px;
     min-width: 12px;
     min-height: 12px;
