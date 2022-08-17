@@ -333,9 +333,6 @@ impl<'a> BackendContext<'a> {
                 let click_duration = new_click_time - self.0.click_time;
                 let new_click_pos = (self.0.mouse.cursorx, self.0.mouse.cursory);
 
-                self.0.click_time = new_click_time;
-                self.0.click_pos = new_click_pos;
-
                 match button {
                     MouseButton::Left => {
                         self.0.mouse.left.pos_down = (self.0.mouse.cursorx, self.0.mouse.cursory);
@@ -387,6 +384,9 @@ impl<'a> BackendContext<'a> {
                 } else {
                     self.0.clicks = 1;
                 }
+
+                self.0.click_time = new_click_time;
+                self.0.click_pos = new_click_pos;
             }
             WindowEvent::MouseUp(button) => {
                 match button {
