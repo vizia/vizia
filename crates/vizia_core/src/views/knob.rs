@@ -265,6 +265,10 @@ impl Ticks {
     }
 }
 impl View for Ticks {
+    fn element(&self) -> Option<&'static str> {
+        Some("ticks")
+    }
+
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let opacity = cx.opacity();
 
@@ -359,6 +363,10 @@ impl TickKnob {
     }
 }
 impl View for TickKnob {
+    fn element(&self) -> Option<&'static str> {
+        Some("tickknob")
+    }
+
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let opacity = cx.opacity();
 
@@ -485,6 +493,10 @@ impl ArcTrack {
 }
 
 impl View for ArcTrack {
+    fn element(&self) -> Option<&'static str> {
+        Some("arctrack")
+    }
+    
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let opacity = cx.opacity();
 
