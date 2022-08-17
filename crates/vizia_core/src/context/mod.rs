@@ -76,7 +76,7 @@ pub struct Context {
     pub(crate) clipboard: Box<dyn ClipboardProvider>,
 
     pub(crate) click_time: Instant,
-    pub(crate) double_click: bool,
+    pub(crate) clicks: usize,
     pub(crate) click_pos: (f32, f32),
 
     pub ignore_default_theme: bool,
@@ -123,7 +123,7 @@ impl Context {
                 Box::new(NopClipboardContext::new().unwrap())
             },
             click_time: Instant::now(),
-            double_click: false,
+            clicks: 0,
             click_pos: (0.0, 0.0),
 
             ignore_default_theme: false,

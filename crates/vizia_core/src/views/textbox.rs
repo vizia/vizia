@@ -272,6 +272,10 @@ impl TextboxData {
     pub fn select_all(&mut self, _: &mut EventContext) {
         self.selection = Selection::new(0, self.text.len());
     }
+
+    pub fn select_range(&mut self, _: &mut EventContext, range: &core::ops::RangeInclusive<usize>) {
+        self.selection = Selection::new(*range.start(), *range.end()+1);
+    }
 }
 
 pub enum TextEvent {
@@ -279,6 +283,8 @@ pub enum TextEvent {
     DeleteText(Movement),
     MoveCursor(Movement, bool),
     SelectAll,
+    SelectWord,
+    SelectParagraph,
     StartEdit,
     EndEdit,
     Submit(bool),
@@ -359,6 +365,28 @@ impl Model for TextboxData {
 
             TextEvent::SelectAll => {
                 self.select_all(cx);
+                self.set_caret(cx);
+            }
+
+            TextEvent::SelectWord => {
+                let start = if let Some(offset) = self.text.prev_word_offset(self.selection.active)
+                {
+                    self.selection.active = offset;
+                    offset
+                } else {
+                    self.selection.active
+                };
+                let end = if let Some(offset) = self.text.next_word_offset(self.selection.active) {
+                    offset-1
+                } else {
+                    self.selection.active
+                };
+                self.select_range(cx, &(start..=end));
+                self.set_caret(cx);
+            }
+
+            TextEvent::SelectParagraph => {
+                self.select_range(cx, &self.text.paragraph_around(self.selection.active));
                 self.set_caret(cx);
             }
 
@@ -598,6 +626,14 @@ where
 
             WindowEvent::FocusOut => {
                 cx.emit(TextEvent::EndEdit);
+            }
+
+            WindowEvent::MouseDoubleClick(MouseButton::Left) => {
+                cx.emit(TextEvent::SelectWord);
+            }
+
+            WindowEvent::MouseTrippleClick(MouseButton::Left) => {
+                cx.emit(TextEvent::SelectParagraph);
             }
 
             WindowEvent::MouseUp(MouseButton::Left) => {

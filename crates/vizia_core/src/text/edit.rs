@@ -18,6 +18,8 @@ pub trait EditableText: Clone {
 
     // fn prev_codepoint_offset(&self, from: usize) -> Option<usize>;
     // fn next_codepoint_offset(&self, from: usize) -> Option<usize>;
+
+    fn paragraph_around(&self, pos: usize) -> core::ops::RangeInclusive<usize>;
 }
 
 impl EditableText for String {
@@ -89,6 +91,24 @@ impl EditableText for String {
             offset += next_grapheme.len();
         }
         Some(self.len())
+    }
+
+    fn paragraph_around(&self, pos: usize) -> core::ops::RangeInclusive<usize> {
+        let mut start = 0;
+        let mut end = self.len() - 1;
+        for prev_grapheme in self[0..pos].graphemes(true).rev() {
+            if prev_grapheme == "\n" {
+                start = pos;
+                break;
+            }
+        }
+        for next_grapheme in self[pos..].graphemes(true) {
+            if next_grapheme == "\n" {
+                end = pos;
+                break;
+            }
+        }
+        start..=end
     }
 }
 
