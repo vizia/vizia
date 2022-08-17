@@ -37,7 +37,7 @@ where
             on_idle: None,
             ignore_default_theme: false,
             text_shaping_run_cache_size: None,
-            text_shaped_words_cache_size: None
+            text_shaped_words_cache_size: None,
         }
     }
 
