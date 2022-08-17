@@ -781,8 +781,16 @@ where
 
 // can't just be a stack because what if you've styled stacks
 pub struct TextboxContainer {}
-impl View for TextboxContainer {}
+impl View for TextboxContainer {
+    fn element(&self) -> Option<&'static str> {
+        Some("textboxcontainer")
+    }
+}
 
 // can't just be a label because what if you've styled labels
 pub struct TextboxLabel {}
-impl View for TextboxLabel {}
+impl View for TextboxLabel {
+    fn element(&self) -> Option<&'static str> {
+        Some("textboxlabel")
+    }
+}

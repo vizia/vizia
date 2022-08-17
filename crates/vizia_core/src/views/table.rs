@@ -93,4 +93,7 @@ where
     R: Lens<Target = Vec<T>>,
     L: Lens<Source = T, Target = U>,
 {
+    fn element(&self) -> Option<&'static str> {
+        Some("tablecolumn")
+    }
 }
