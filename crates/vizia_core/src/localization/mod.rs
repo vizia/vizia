@@ -1,21 +1,85 @@
+//! Provides types for adapting an application to a particular language or regional peculiarities.
+//! 
+//! # Language Translation
+//! 
+//! Vizia provides the ability to dynamically translate text using [fluent](https://projectfluent.org/). Fluent provides a syntax for describing how text should be translated into different languages.
+//! The [fluent syntax guide](https://projectfluent.org/fluent/guide/) contains more information on the fluent syntax.
+//! 
+//! ## Adding Fluent Files 
+//! Before text can be translated, one or more fluent files must be added to an application with the corresponding locale:
+//! ```
+//! # use vizia_core::prelude::*;
+//! # let mut context = Context::new();
+//! // Adds a fluent file to the application resource manager.
+//! // This file is then used for translations to the corresponding locale.
+//! cx.add_translation(
+//!     "en-US".parse().unwrap(),
+//!     include_str!("../en-US/translation.ftl").to_owned(),
+//! );
+//! 
+//! ```
+//! 
+//! ## Setting the Locale
+//! The application will use the system locale by default, however an environment event can be used to set a custom locale. 
+//! If no fluent file can be found for the specified locale, then a fallback fluent file is used from the list of available files.
+//! ```
+//! # use vizia_core::prelude::*;
+//! # let mut context = Context::new();
+//! // Sets the current locale to en-US, regardless of the system locale
+//! cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap()));
+//! ```
+//! 
+//! ## Basic Translation
+//! Use the [`Localized`] type to specify a translation key to be used with fluent files. The key is then used to look up the corresponding translation. 
+//! ```
+//! # use vizia_core::prelude::*;
+//! # let mut context = Context::new();
+//! Label::new(cx, Localized::new("hello-world"));
+//! ```
+//! The markup in the loaded fluent (.ftl) files defines the translations for a particular key. The translation used depends on the application locale, which can be queried from [`Environment`].
+//! ```
+//! // en-US/hello.ftl
+//! hello-world = Hello, world!
+//! ```
+//! ```
+//! // fr/hello.ftl
+//! hello-world = Bonjour, monde!
+//! ```
+//! 
+//! ## Variables
+//! Data from the application can be inserted into translated text using a [placeable](https://projectfluent.org/fluent/guide/variables.html).
+//! The variable is enclosed in curly braces and prefixed with a `$` symbol.
+//! ```ftl
+//! welcome = Welcome, { $user }!
+//! ```
+//! The [`Localized`] type provides two methods for referencing a variable. The `arg_const(...)` method allows a keyed value to be inserted into the translation.
+//! ```
+//! Label::new(cx, Localized::new("welcome").arg_const("user", "Jane"));
+//! ```
+//! While the `arg(...)` method allows a keyed lens to be used, binding the fluent variable to a piece of application data, and updating when that data changes.
+//! ```
+//! Label::new(cx, Localized::new("welcome").arg("user", AppData::user));
+//! ```
+
+
 use crate::prelude::*;
 use fluent_bundle::FluentArgs;
-pub use fluent_bundle::FluentValue;
+use fluent_bundle::FluentValue;
 use std::collections::HashMap;
 
-pub trait FluentStore {
+pub(crate) trait FluentStore {
     fn get_val(&self, cx: &Context) -> FluentValue<'static>;
     fn make_clone(&self) -> Box<dyn FluentStore>;
     fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>);
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct LensState<L> {
+pub(crate) struct LensState<L> {
     lens: L,
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct ValState<T> {
+pub(crate) struct ValState<T> {
     val: T,
 }
 
@@ -59,18 +123,11 @@ where
     }
 }
 
-/// A type implementing [`Res<String>`](crate::prelude::Res) which formats a localized message
+/// A type which formats a localized message
 /// with any number of named arguments.
-///
-/// This type is part of the prelude.
 pub struct Localized {
     key: String,
     args: HashMap<String, Box<dyn FluentStore>>,
-}
-
-pub enum LocalizedArg {
-    Lens(Box<dyn FluentStore>),
-    Const(),
 }
 
 impl Clone for Localized {
@@ -91,10 +148,46 @@ impl Localized {
         res
     }
 
+    /// Creates a new Localized type with a given key.
+    /// 
+    /// The given key is used to retrieve a translation from a fluent bundle resource.
+    /// 
+    /// # Example
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_derive::*;
+    /// # use vizia_winit::application::Application;
+    /// Application::new(|cx|{
+    ///     Label::new(cx, Localized::new("key"));
+    /// })
+    /// .run();
     pub fn new(key: &str) -> Self {
         Self { key: key.to_owned(), args: HashMap::new() }
     }
 
+    /// Add a variable argument binding to the Localized type.
+    /// 
+    /// Takes a key name and a lens to the value for the argument.
+    /// 
+    /// # Example
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_derive::*;
+    /// # use vizia_winit::application::Application;
+    /// # #[derive(Lens)]
+    /// # struct AppData {
+    /// #   value: i32,
+    /// # }
+    /// # impl Model for AppData {}
+    /// Application::new(|cx|{
+    ///     
+    ///     AppData {
+    ///         value: 5,
+    ///     }.build(cx);
+    /// 
+    ///     Label::new(cx, Localized::new("key").arg("value", AppData::value));
+    /// })
+    /// .run();
     pub fn arg<L>(mut self, key: &str, lens: L) -> Self
     where
         L: Lens,
@@ -104,6 +197,19 @@ impl Localized {
         self
     }
 
+    /// Add a constant argument to the Localized type.
+    /// 
+    /// Takes a key name and a value for the argument.
+    /// 
+    /// # Example
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
+    /// Application::new(|cx|{
+    /// 
+    ///     Label::new(cx, Localized::new("key").arg_const("value", 32));
+    /// })
+    /// .run();
     pub fn arg_const<T: Into<FluentValue<'static>> + Data>(mut self, key: &str, val: T) -> Self {
         self.args.insert(key.to_owned(), Box::new(ValState { val }));
         self
