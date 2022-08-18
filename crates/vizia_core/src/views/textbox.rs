@@ -351,6 +351,7 @@ impl Model for TextboxData {
             }
 
             TextEvent::EndEdit => {
+                self.selection.active = self.selection.anchor;
                 self.edit = false;
                 cx.set_checked(false);
                 cx.release();
@@ -612,7 +613,11 @@ where
             }
 
             WindowEvent::FocusIn => {
-                cx.emit(TextEvent::StartEdit);
+                if cx.mouse.left.pressed != cx.current()
+                    || cx.mouse.left.state == MouseButtonState::Released
+                {
+                    cx.emit(TextEvent::StartEdit);
+                }
             }
 
             WindowEvent::FocusOut => {
