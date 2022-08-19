@@ -13,6 +13,7 @@ use vizia_id::GenerationalId;
 use vizia_window::Position;
 use winit::event_loop::EventLoopBuilder;
 #[cfg(all(
+    feature = "clipboard",
     feature = "wayland",
     any(
         target_os = "linux",
@@ -145,6 +146,7 @@ impl Application {
         let (window, canvas) = Window::new(&event_loop, &self.window_description);
 
         #[cfg(all(
+            feature = "clipboard",
             feature = "wayland",
             any(
                 target_os = "linux",
