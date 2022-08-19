@@ -4,7 +4,7 @@ use femtovg::{renderer::OpenGl, Canvas, Color};
 use glutin::ContextBuilder;
 use vizia_core::prelude::*;
 use winit::event_loop::EventLoop;
-use winit::window::WindowBuilder;
+use winit::window::{CursorGrabMode, WindowBuilder};
 use winit::{dpi::*, window::WindowId};
 
 pub struct Window {
@@ -147,7 +147,8 @@ impl View for Window {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::GrabCursor(flag) => {
-                self.window().set_cursor_grab(*flag).expect("Failed to set cursor grab");
+                let grab_mode = if *flag { CursorGrabMode::Locked } else { CursorGrabMode::None };
+                self.window().set_cursor_grab(grab_mode).expect("Failed to set cursor grab");
             }
 
             WindowEvent::SetCursorPosition(x, y) => {

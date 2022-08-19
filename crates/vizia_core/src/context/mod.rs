@@ -9,8 +9,10 @@ use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Mutex;
 
+#[cfg(all(feature = "clipboard", feature = "x11"))]
+use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
-use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardProvider};
+use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
 use femtovg::TextContext;
 use fnv::FnvHashMap;
 use unic_langid::LanguageIdentifier;
@@ -117,9 +119,14 @@ impl Context {
             event_proxy: None,
 
             #[cfg(feature = "clipboard")]
-            clipboard: if let Ok(context) = ClipboardContext::new() {
-                Box::new(context)
-            } else {
+            clipboard: {
+                #[cfg(feature = "x11")]
+                if let Ok(context) = ClipboardContext::new() {
+                    Box::new(context)
+                } else {
+                    Box::new(NopClipboardContext::new().unwrap())
+                }
+                #[cfg(not(feature = "x11"))]
                 Box::new(NopClipboardContext::new().unwrap())
             },
             click_time: Instant::now(),

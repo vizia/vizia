@@ -10,7 +10,8 @@ rust-version = "1.60"
 
 [features]
 x11 = ["winit/x11", "glutin?/x11"]
-wayland = ["winit/wayland", "winit/wayland-dlopen", "glutin?/wayland", "glutin?/wayland-dlopen"]
+wayland = ["winit/wayland", "winit/wayland-dlopen", "winit/wayland-csd-adwaita", "glutin?/wayland", "glutin?/wayland-dlopen", "copypasta?/wayland"]
+clipboard = ["copypasta"]
 
 [dependencies]
 vizia_input = { path = "../vizia_input" }
@@ -18,13 +19,14 @@ vizia_core = { path = "../vizia_core" }
 vizia_id = { path = "../vizia_id" }
 vizia_window = { path = "../vizia_window" }
 
-winit = { version = "0.26.1", default-features = false }
-femtovg = { git = "https://github.com/femtovg/femtovg", rev = "87fe627794f3f793d8e3a338c838a2f8e8a8aa9d", default-features = false }
-glutin = { version = "0.28.0", default-features = false, optional = true }
+winit = { version = "0.27.2", default-features = false }
+femtovg = { git = "https://github.com/femtovg/femtovg", rev = "8df076f1dd610b5e0a584f0d7fd7f210988b3684", default-features = false }
+glutin = { version = "0.29.1", default-features = false, optional = true }
+copypasta = {version = "0.7.1", optional = true, default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-glutin = { version = "0.28.0", default-features = false }
-femtovg = { git = "https://github.com/femtovg/femtovg", rev = "87fe627794f3f793d8e3a338c838a2f8e8a8aa9d", default-features = false, features = ["glutin"] }
+glutin = { version = "0.29.1", default-features = false }
+femtovg = { git = "https://github.com/femtovg/femtovg", rev = "8df076f1dd610b5e0a584f0d7fd7f210988b3684", features = ["glutin"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2" }

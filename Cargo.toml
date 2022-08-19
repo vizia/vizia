@@ -206,7 +206,7 @@ path = "examples/style/outline.rs"
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
-clipboard = ["vizia_core/clipboard"]
+clipboard = ["vizia_core/clipboard", "vizia_winit/clipboard"]
 serde = ["vizia_core/serde"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
