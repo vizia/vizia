@@ -192,11 +192,12 @@ pub fn pos_to_idx<'a>(
     x: f32,
     y: f32,
     cache: impl Iterator<Item = &'a (Range<usize>, TextMetrics)>,
+    single_line: bool,
 ) -> usize {
     let mut last = 0;
     // first: what line is it?
     for (line_range, line_metrics) in cache {
-        if y < line_metrics.y + line_metrics.height() {
+        if y < line_metrics.y + line_metrics.height() || single_line {
             // it's me!
             for glyph in line_metrics.glyphs.iter() {
                 if x < glyph.x + glyph.advance_x / 2.0 {

@@ -239,7 +239,12 @@ impl TextboxData {
                             Direction::Right => 0.0,
                         };
 
-                    self.selection.active = pos_to_idx(self.sel_x, new_y, lines.iter());
+                    self.selection.active = pos_to_idx(
+                        self.sel_x,
+                        new_y,
+                        lines.iter(),
+                        self.kind == TextboxKind::SingleLine,
+                    );
                 }
             }
 
@@ -388,6 +393,7 @@ impl Model for TextboxData {
                     posx,
                     posy,
                     cx.draw_cache.text_lines.get(self.content_entity).unwrap().iter(),
+                    self.kind == TextboxKind::SingleLine,
                 );
                 self.selection = Selection::new(idx, idx);
                 self.sel_x = posx;
@@ -401,6 +407,7 @@ impl Model for TextboxData {
                     posx,
                     posy,
                     cx.draw_cache.text_lines.get(self.content_entity).unwrap().iter(),
+                    self.kind == TextboxKind::SingleLine,
                 );
                 self.selection = Selection::new(self.selection.anchor, idx);
                 self.sel_x = posx;
@@ -458,7 +465,7 @@ pub struct Textbox<L: Lens> {
     kind: TextboxKind,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum TextboxKind {
     SingleLine,
     MultiLineUnwrapped,
