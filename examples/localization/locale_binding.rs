@@ -1,5 +1,12 @@
+#[allow(unused_imports)]
 use vizia::prelude::*;
 
+#[cfg(not(feature = "localization"))]
+fn main() {
+    panic!("This example requires the 'localization' feature!");
+}
+
+#[cfg(feature = "localization")]
 fn main() {
     Application::new(|cx| {
         cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap()));

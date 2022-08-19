@@ -204,9 +204,14 @@ path = "examples/ignore_default_theme.rs"
 name = "outline"
 path = "examples/style/outline.rs"
 
+[[example]]
+name = "basic_translation"
+path = "examples/localization/basic_translation.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard"]
+localization = ["vizia_core/localization"]
 serde = ["vizia_core/serde"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]

@@ -3,10 +3,12 @@
 use crate::context::Context;
 use crate::entity::Entity;
 use crate::view::Canvas;
+#[cfg(feature = "localization")]
 use fluent_bundle::{FluentBundle, FluentResource};
 use image::GenericImageView;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
+#[cfg(feature = "localization")]
 use unic_langid::LanguageIdentifier;
 
 pub(crate) struct StoredImage {
@@ -66,7 +68,9 @@ pub struct ResourceManager {
     pub themes: Vec<String>,      // Themes are the string content stylesheets
     pub(crate) images: HashMap<String, StoredImage>,
     pub fonts: HashMap<String, FontOrId>,
+    #[cfg(feature = "localization")]
     pub translations: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
+    #[cfg(feature = "localization")]
     pub language: LanguageIdentifier,
 
     pub image_loader: Option<Box<dyn Fn(&mut Context, &str)>>,
@@ -76,6 +80,7 @@ pub struct ResourceManager {
 
 impl ResourceManager {
     pub fn new() -> Self {
+        #[cfg(feature = "localization")]
         let locale = sys_locale::get_locale().map(|l| l.parse().ok()).flatten().unwrap_or_default();
 
         ResourceManager {
@@ -83,16 +88,19 @@ impl ResourceManager {
             themes: Vec::new(),
             fonts: HashMap::new(),
             images: HashMap::new(),
+            #[cfg(feature = "localization")]
             translations: HashMap::from([(
                 LanguageIdentifier::default(),
                 FluentBundle::new(vec![LanguageIdentifier::default()]),
             )]),
+            #[cfg(feature = "localization")]
             language: locale,
             image_loader: None,
             count: 0,
         }
     }
 
+    #[cfg(feature = "localization")]
     fn renegotiate_language(&mut self) {
         let available = self
             .translations
@@ -114,6 +122,7 @@ impl ResourceManager {
         self.language = (**langs.first().unwrap()).clone();
     }
 
+    #[cfg(feature = "localization")]
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
         let res = fluent_bundle::FluentResource::try_new(ftl)
             .expect("Failed to parse translation as FTL");
@@ -123,6 +132,7 @@ impl ResourceManager {
         self.renegotiate_language();
     }
 
+    #[cfg(feature = "localization")]
     pub fn current_translation(
         &self,
         locale: &LanguageIdentifier,

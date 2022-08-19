@@ -47,6 +47,7 @@ pub mod prelude {
     pub use super::events::{Event, Message, Propagation};
     pub use super::handle::Handle;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
+    #[cfg(feature = "localization")]
     pub use super::localization::Localized;
     pub use super::modifiers::Actions;
     pub use super::state::{Binding, Data, Lens, LensExt, Model, Res};
@@ -65,7 +66,8 @@ pub mod prelude {
 
     pub use morphorm::Units::*;
     pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
-    pub use unic_langid::LanguageIdentifier;
+    #[cfg(feature = "localization")]
+    pub use unic_langid::{langid, LanguageIdentifier};
 }
 
 /// One very small function for abstracting debugging between web and desktop programming.

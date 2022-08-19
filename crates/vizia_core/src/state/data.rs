@@ -1,7 +1,5 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
-use unic_langid::LanguageIdentifier;
-
 use crate::prelude::*;
 
 /// A trait for any type which can be bound to, i.e. can be cached and compared against previous
@@ -60,6 +58,7 @@ impl_data_simple!(std::net::IpAddr);
 impl_data_simple!(std::net::SocketAddr);
 impl_data_simple!(std::ops::RangeFull);
 impl_data_simple!(std::path::PathBuf);
+#[cfg(feature = "localization")]
 impl_data_simple!(LanguageIdentifier);
 
 impl_data_simple!(String);

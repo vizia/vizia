@@ -1,11 +1,13 @@
+#![cfg(feature = "localization")]
+
 //! Provides types for adapting an application to a particular language or regional peculiarities.
-//! 
+//!
 //! # Language Translation
-//! 
+//!
 //! Vizia provides the ability to dynamically translate text using [fluent](https://projectfluent.org/). Fluent provides a syntax for describing how text should be translated into different languages.
 //! The [fluent syntax guide](https://projectfluent.org/fluent/guide/) contains more information on the fluent syntax.
-//! 
-//! ## Adding Fluent Files 
+//!
+//! ## Adding Fluent Files
 //! Before text can be translated, one or more fluent files must be added to an application with the corresponding locale:
 //! ```
 //! # use vizia_core::prelude::*;
@@ -16,11 +18,11 @@
 //!     "en-US".parse().unwrap(),
 //!     include_str!("../en-US/translation.ftl").to_owned(),
 //! );
-//! 
+//!
 //! ```
-//! 
+//!
 //! ## Setting the Locale
-//! The application will use the system locale by default, however an environment event can be used to set a custom locale. 
+//! The application will use the system locale by default, however an environment event can be used to set a custom locale.
 //! If no fluent file can be found for the specified locale, then a fallback fluent file is used from the list of available files.
 //! ```
 //! # use vizia_core::prelude::*;
@@ -28,9 +30,9 @@
 //! // Sets the current locale to en-US, regardless of the system locale
 //! cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap()));
 //! ```
-//! 
+//!
 //! ## Basic Translation
-//! Use the [`Localized`] type to specify a translation key to be used with fluent files. The key is then used to look up the corresponding translation. 
+//! Use the [`Localized`] type to specify a translation key to be used with fluent files. The key is then used to look up the corresponding translation.
 //! ```
 //! # use vizia_core::prelude::*;
 //! # let mut context = Context::new();
@@ -45,7 +47,7 @@
 //! // fr/hello.ftl
 //! hello-world = Bonjour, monde!
 //! ```
-//! 
+//!
 //! ## Variables
 //! Data from the application can be inserted into translated text using a [placeable](https://projectfluent.org/fluent/guide/variables.html).
 //! The variable is enclosed in curly braces and prefixed with a `$` symbol.
@@ -60,7 +62,6 @@
 //! ```
 //! Label::new(cx, Localized::new("welcome").arg("user", AppData::user));
 //! ```
-
 
 use crate::prelude::*;
 use fluent_bundle::FluentArgs;
@@ -149,9 +150,9 @@ impl Localized {
     }
 
     /// Creates a new Localized type with a given key.
-    /// 
+    ///
     /// The given key is used to retrieve a translation from a fluent bundle resource.
-    /// 
+    ///
     /// # Example
     /// ```no_run
     /// # use vizia_core::prelude::*;
@@ -166,9 +167,9 @@ impl Localized {
     }
 
     /// Add a variable argument binding to the Localized type.
-    /// 
+    ///
     /// Takes a key name and a lens to the value for the argument.
-    /// 
+    ///
     /// # Example
     /// ```no_run
     /// # use vizia_core::prelude::*;
@@ -184,7 +185,7 @@ impl Localized {
     ///     AppData {
     ///         value: 5,
     ///     }.build(cx);
-    /// 
+    ///
     ///     Label::new(cx, Localized::new("key").arg("value", AppData::value));
     /// })
     /// .run();
@@ -198,15 +199,15 @@ impl Localized {
     }
 
     /// Add a constant argument to the Localized type.
-    /// 
+    ///
     /// Takes a key name and a value for the argument.
-    /// 
+    ///
     /// # Example
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
-    /// 
+    ///
     ///     Label::new(cx, Localized::new("key").arg_const("value", 32));
     /// })
     /// .run();

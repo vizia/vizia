@@ -13,6 +13,7 @@ use std::sync::Mutex;
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardProvider};
 use femtovg::TextContext;
 use fnv::FnvHashMap;
+#[cfg(feature = "localization")]
 use unic_langid::LanguageIdentifier;
 
 pub use draw::*;
@@ -490,8 +491,9 @@ impl Context {
         self.style.needs_relayout = true;
     }
 
-    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
-        self.resource_manager.add_translation(lang, ftl);
+    #[cfg(feature = "localization")]
+    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: impl ToString) {
+        self.resource_manager.add_translation(lang, ftl.to_string());
         self.emit(EnvironmentEvent::SetLocale(self.resource_manager.language.clone()));
     }
 
