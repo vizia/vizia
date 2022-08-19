@@ -119,12 +119,7 @@ impl ViziaWindow {
                 let mut context = Context::new();
 
                 context.ignore_default_theme = ignore_default_theme;
-
-                context.add_theme(DEFAULT_LAYOUT);
-
-                if !ignore_default_theme {
-                    context.add_theme(DEFAULT_THEME);
-                }
+                context.remove_user_themes();
 
                 let mut cx = BackendContext::new(&mut context);
 
@@ -180,12 +175,7 @@ impl ViziaWindow {
                 }
 
                 context.ignore_default_theme = ignore_default_theme;
-
-                context.add_theme(DEFAULT_LAYOUT);
-
-                if !ignore_default_theme {
-                    context.add_theme(DEFAULT_THEME);
-                }
+                context.remove_user_themes();
 
                 let mut cx = BackendContext::new(&mut context);
 
