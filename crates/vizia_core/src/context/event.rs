@@ -142,7 +142,9 @@ impl<'a> EventContext<'a> {
 
     /// Release mouse input capture for current entity.
     pub fn release(&mut self) {
-        *self.captured = Entity::null();
+        if self.current == *self.captured {
+            *self.captured = Entity::null();
+        }
     }
 
     /// Enables or disables pseudoclasses for the focus of an entity
