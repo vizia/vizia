@@ -12,7 +12,7 @@ use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 use vizia_window::Position;
 use winit::event_loop::EventLoopBuilder;
-#[cfg(feature = "wayland")]
+#[cfg(all(feature = "wayland", not(target_arch = "wasm32")))]
 use winit::platform::unix::WindowExtUnix;
 use winit::{
     dpi::LogicalSize,
@@ -135,7 +135,7 @@ impl Application {
 
         let (window, canvas) = Window::new(&event_loop, &self.window_description);
 
-        #[cfg(feature = "wayland")]
+        #[cfg(all(feature = "wayland", not(target_arch = "wasm32")))]
         unsafe {
             if let Some(display) = window.window().wayland_display() {
                 let (_, clipboard) =
