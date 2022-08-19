@@ -17,9 +17,6 @@ use winit::{
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
 
-static DEFAULT_THEME: &str = include_str!("../../vizia_core/resources/themes/default_theme.css");
-static DEFAULT_LAYOUT: &str = include_str!("../../vizia_core/resources/themes/default_layout.css");
-
 pub struct Application {
     context: Context,
     event_loop: EventLoop<Event>,
@@ -143,10 +140,7 @@ impl Application {
 
         let mut event_manager = EventManager::new();
 
-        context.add_theme(DEFAULT_LAYOUT);
-        if !context.ignore_default_theme {
-            context.add_theme(DEFAULT_THEME);
-        }
+        context.remove_user_themes();
         if let Some(builder) = self.builder.take() {
             (builder)(&mut context);
         }

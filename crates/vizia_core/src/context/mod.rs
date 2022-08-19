@@ -389,7 +389,9 @@ impl Context {
         self.resource_manager.themes.clear();
 
         self.add_theme(DEFAULT_LAYOUT);
-        self.add_theme(DEFAULT_THEME);
+        if !self.ignore_default_theme {
+            self.add_theme(DEFAULT_THEME);
+        }
     }
 
     pub fn add_stylesheet(&mut self, path: &str) -> Result<(), std::io::Error> {
@@ -430,12 +432,7 @@ impl Context {
         let mut overall_theme = String::new();
 
         // Reload the stored themes
-        for (index, theme) in self.resource_manager.themes.iter().enumerate() {
-            if self.ignore_default_theme && index == 1 {
-                continue;
-            }
-
-            //self.style.parse_theme(theme);
+        for theme in self.resource_manager.themes.iter() {
             overall_theme += theme;
         }
 
