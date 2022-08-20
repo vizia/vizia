@@ -174,7 +174,7 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
 
             WindowEvent::MouseScroll(x, y) => {
                 let (x, y) =
-                    if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, *x) } else { (*x, -*y) };
+                    if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, -*x) } else { (-*x, -*y) };
 
                 // what percentage of the negative space does this cross?
                 let data = self.data.get(cx);
