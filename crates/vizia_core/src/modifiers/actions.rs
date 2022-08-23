@@ -299,8 +299,6 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         self
     }
 
-
-
     fn on_over<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
