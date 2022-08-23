@@ -6,7 +6,7 @@ fn main() {
 
         Button::new(cx, |cx| cx.emit(PopupEvent::Switch), |cx| Label::new(cx, "Open"));
 
-        Popup::new(cx, PopupData::is_open, |_| {})
+        Popup::new(cx, PopupData::is_open, true, |_| {})
             .on_blur(|cx| cx.emit(PopupEvent::Close))
             .space(Pixels(100.0))
             .size(Pixels(200.0))

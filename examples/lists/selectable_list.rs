@@ -15,7 +15,7 @@ pub enum AppEvent {
 
 impl Model for AppData {
     // Intercept list events from the list view to modify the selected index in the model
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::Select(index) => {
                 self.selected = *index;

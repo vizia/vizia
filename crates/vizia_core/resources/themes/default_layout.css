@@ -1,0 +1,205 @@
+label.icon {
+    font: "icons";
+}
+
+textbox {
+    min-width: 0px;
+    overflow: hidden;
+}
+
+textbox .textbox_content {
+    layout-type: row;
+    width: auto;
+    height: auto;
+    min-width: 0px;
+    overflow: visible;
+    /*
+    border-width: 1px;
+    border-color: green;
+     */
+}
+
+textbox .textbox_container {
+    width: 1s;
+    height: 1s;
+    min-width: 0px;
+    min-height: 0px;
+    child-right: 1s;
+    child-bottom: 1s;
+    overflow: visible;
+}
+
+textbox.align_right .textbox_container {
+    child-right: 0px;
+    child-left: 1s;
+}
+
+textbox.align_right .textbox_content {
+    child-right: 0px;
+    child-left: 1s;
+}
+
+textbox.align_center .textbox_container {
+    child-left: 1s;
+}
+
+textbox.align_center .textbox_content {
+    child-right: 1s;
+    child-left: 1s;
+}
+
+textbox.multi_line_wrapped .textbox_content {
+    max-width: 100%;
+}
+
+textbox.single_line .textbox_container {
+    min-height: auto;
+}
+
+textbox.single_line {
+    min-height: auto;
+}
+
+textbox.multi_line_wrapped {
+    min-height: 28px;
+}
+
+textbox.multi_line_unwrapped {
+    min-height: 28px;
+}
+
+label {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    min-width: 0px;
+    layout-type: row;
+    child-space: auto;
+    child-left: 0px;
+}
+
+image {
+    width: auto;
+    height: auto;
+}
+
+zstack > * {
+    position-type: self-directed;
+}
+
+slider {
+    height: 5px;
+    width: 1s;
+}
+
+slider.vertical {
+    top: auto;
+    bottom: auto;
+    height: 1s;
+    width: 5px;
+}
+
+slider .thumb {
+    top: 1s;
+    bottom: 1s;
+}
+
+scrollview {
+    overflow: hidden;
+}
+
+scrollbar > .thumb {
+    background-color: #5d5d5d;
+}
+
+scrollview > .scroll_content {
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    position-type: self-directed;
+}
+
+scrollview > scrollbar.horizontal {
+    left: 0px;
+    width: 1s;
+    right: 14px;
+
+    top: 1s;
+    height: 14px;
+    bottom: 0px;
+}
+
+scrollview > scrollbar.vertical {
+    top: 0px;
+    height: 1s;
+    bottom: 0px;
+
+    left: 1s;
+    width: 14px;
+    right: 0px;
+}
+
+popup {
+    display: none;
+    opacity: 0;
+}
+
+popup:checked {
+    display: flex;
+    opacity: 1;
+}
+
+menucontroller {
+    width: 0px;
+    height: 0px;
+    overflow: visible;
+}
+
+menustack {
+    width: auto;
+    height: auto;
+    overflow: visible;
+}
+
+menu {
+    overflow: visible;
+}
+
+menustack.vertical {
+    layout-type: column;
+}
+
+menustack.horizontal {
+    layout-type: row;
+}
+
+menu > menustack {
+    position-type: self-directed;
+    z-index: 1000;
+    display: none;
+}
+
+menu:selected > menustack {
+    display: flex;
+}
+
+menustack.vertical > menu > menustack {
+    left: 100%;
+}
+
+menustack.horizontal > menu > menustack {
+    top: 100%;
+}
+
+.menu_arrow {
+    display: none;
+}
+
+menustack.vertical > menu > hstack > .menu_arrow {
+    display: flex;
+    font: "material";
+    left: 1s;
+    top: 1s;
+    bottom: 1s;
+}

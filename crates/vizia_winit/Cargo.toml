@@ -1,0 +1,34 @@
+[package]
+name = "vizia_winit"
+version = "0.1.0"
+authors = ["George Atkinson"]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/vizia/vizia"
+description = "Winit backend for vizia"
+rust-version = "1.60"
+
+[features]
+x11 = ["winit/x11", "glutin?/x11"]
+wayland = ["winit/wayland", "winit/wayland-dlopen", "winit/wayland-csd-adwaita", "glutin?/wayland", "glutin?/wayland-dlopen", "copypasta?/wayland"]
+clipboard = ["copypasta"]
+
+[dependencies]
+vizia_input = { path = "../vizia_input" }
+vizia_core = { path = "../vizia_core" }
+vizia_id = { path = "../vizia_id" }
+vizia_window = { path = "../vizia_window" }
+
+winit = { version = "0.27.2", default-features = false }
+femtovg = { git = "https://github.com/femtovg/femtovg", rev = "8df076f1dd610b5e0a584f0d7fd7f210988b3684", default-features = false }
+glutin = { version = "0.29.1", default-features = false, optional = true }
+copypasta = {version = "0.7.1", optional = true, default-features = false }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+glutin = { version = "0.29.1", default-features = false }
+femtovg = { git = "https://github.com/femtovg/femtovg", rev = "8df076f1dd610b5e0a584f0d7fd7f210988b3684", features = ["glutin"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { version = "0.2" }
+web_sys = { version = "0.3", package = "web-sys", features=["console", "WebGlContextAttributes"] }
+console_error_panic_hook = "0.1.5"

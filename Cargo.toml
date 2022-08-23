@@ -7,10 +7,8 @@ description = "A Rust GUI Framework"
 autoexamples = false
 rust-version = "1.60"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [workspace]
-members = ["core", "winit", "baseview", "derive", "run-wasm"]
+members = [ "crates/*", "run-wasm" ]
 
 [[example]]
 name = "action_modifier"
@@ -198,9 +196,17 @@ path = "examples/lists/long_list.rs"
 name = "locale_binding"
 path = "examples/localization/locale_binding.rs"
 
+[[example]]
+name = "ignore_default_theme"
+path = "examples/ignore_default_theme.rs"
+
+[[example]]
+name = "outline"
+path = "examples/style/outline.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
-clipboard = ["vizia_core/clipboard"]
+clipboard = ["vizia_core/clipboard", "vizia_winit/clipboard"]
 serde = ["vizia_core/serde"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
@@ -208,9 +214,9 @@ x11 = ["vizia_winit?/x11", "vizia_core/x11"]
 wayland = ["vizia_winit?/wayland", "vizia_core/wayland"]
 
 [dependencies]
-vizia_core = { version = "0.1.0", path = "core"}
-vizia_winit = { version = "0.1.0", path = "winit", optional = true }
-vizia_baseview = { version = "0.1.0", path = "baseview", optional = true }
+vizia_core = { version = "0.1.0", path = "crates/vizia_core"}
+vizia_winit = { version = "0.1.0", path = "crates/vizia_winit", optional = true }
+vizia_baseview = { version = "0.1.0", path = "crates/vizia_baseview", optional = true }
 
 [dev-dependencies]
 english-numbers = "0.3.3"

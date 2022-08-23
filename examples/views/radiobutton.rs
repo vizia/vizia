@@ -28,7 +28,7 @@ pub enum AppEvent {
 }
 
 impl Model for AppData {
-    fn event(&mut self, _cx: &mut Context, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::ToggleOption(option) => {
                 self.option = *option;
@@ -44,6 +44,22 @@ fn main() {
         // Exclusive checkboxes (radio buttons) with labels
         // Only one checkbox can be checked at a time and cannot be unchecked
         VStack::new(cx, |cx| {
+            Label::new(cx, "Basic Radiobuttons");
+            HStack::new(cx, |cx| {
+                for i in 0..3 {
+                    let current_option = index_to_option(i);
+                    RadioButton::new(
+                        cx,
+                        AppData::option.map(move |option| *option == current_option),
+                    )
+                    .disabled(if i == 2 { true } else { false })
+                    .on_select(move |cx| cx.emit(AppEvent::ToggleOption(current_option)));
+                }
+            })
+            .col_between(Pixels(20.0));
+
+            Label::new(cx, "Label").top(Pixels(20.0));
+
             for i in 0..3 {
                 let current_option = index_to_option(i);
                 HStack::new(cx, move |cx| {
@@ -51,9 +67,11 @@ fn main() {
                         cx,
                         AppData::option.map(move |option| *option == current_option),
                     )
-                    .on_select(move |cx| cx.emit(AppEvent::ToggleOption(current_option)));
-                    Label::new(cx, &current_option.to_string());
+                    .on_select(move |cx| cx.emit(AppEvent::ToggleOption(current_option)))
+                    .id(format!("button_{i}"));
+                    Label::new(cx, &current_option.to_string()).describing(format!("button_{i}"));
                 })
+                .disabled(if i == 2 { true } else { false })
                 .size(Auto)
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0))

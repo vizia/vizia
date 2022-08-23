@@ -15,6 +15,12 @@ list label {
     background-color: white;
 }
 
+list label:focus-visible {
+    outline-width: 2px;
+    outline-color: blue;
+}
+
 list label:checked {
     background-color: blue;
+    color: white;
 }

@@ -34,12 +34,30 @@
 
 <br/>
 
-Vizia is a declarative GUI framework for the Rust programming language.
+<h4 align="center">Vizia is a declarative GUI framework for the <a href="https://www.rust-lang.org/">Rust</a> programming language.</h4>
 
-> **WARNING** - Vizia is currently experimental and **not** considered stable.
+<br/>
 
-## At a Glance
+<div align="center">
+  <h3>
+    <a href="https://docs.vizia.dev/"> Docs </a>
+    <span> | </span>
+    <a href="https://book.vizia.dev/"> Guide </a>
+    <span> | </span>
+    <a href="https://demo.vizia.dev/"> Demo </a>
+    <span> | </span>
+    <a href="https://discord.gg/aNkTPsRm2w"> Discord </a>
+  </h3>
+</div>
+
+<br/>
+
+# At a Glance
 A simple counter application. Run with `cargo run --example counter`.
+
+<!-- TODO - Replace with GIF? -->
+<div align="center"><img src="./assets/images/counter.png" width="400px" height="130px"/></div>
+
 ```rust
 // Define some model data
 #[derive(Lens)]
@@ -85,13 +103,11 @@ Application::new(|cx| {
 .inner_size((400, 100))
 .run();
 ```
-<!-- TODO - Replace with GIF? -->
-<div align="center"><img src="./assets/images/counter.png" width="400px" height="130px"/></div>
 
----
+<br/>
 
 
-## Features
+# Features
  - Multiplatform (Windows, Linux, MacOS, Web)
  - Declarative API
  - Reactive event-driven data system
@@ -101,19 +117,7 @@ Application::new(|cx| {
  - Property animations
  - Audio plugin GUI development
 
-## Learn Vizia
-<!-- Add docs to this when ready -->
-<div align="center">
-  <h3>
-    <a href="https://docs.vizia.dev/"> The Docs </a>
-    <span> | </span>
-    <a href="https://book.vizia.dev/"> The Book </a>
-    <span> | </span>
-    <a href="https://demo.vizia.dev/"> Web Demo </a>
-  </h3>
-</div>
-
-## Running the Examples
+# Running the Examples
 
 A full list of [examples](https://github.com/vizia/vizia/tree/main/examples) is included in the repository.
 
@@ -125,6 +129,8 @@ To run an example with the [baseview](https://github.com/RustAudio/baseview) win
 ```bash
 cargo run --release --example name_of_example --no-default-features --features baseview
 ```
+
+## Web
 To run an example as a web application, first ensure that the `wasm32-unknown-unknown` toolchain is installed:
 ```bash
 rustup target add wasm32-unknown-unknown
@@ -141,11 +147,11 @@ Example projects go here... with pictures and stuff...
 
 Vizia is also being used for the [Meadowlark project](https://github.com/MeadowlarkDAW/Meadowlark), an upcoming modern Digital Audio Workstation (DAW) built with Rust. -->
 
-## Contributing and Community
+# Contributing and Community
 
 For help with vizia, or to get involved with contributing to the project, come join us on [our discord](https://discord.gg/aNkTPsRm2w).
 
-## License and Attribution
+# License and Attribution
 Vizia is licensed under [MIT](https://github.com/vizia/vizia/blob/main/LICENSE).
 
 Fonts used in Vizia:
