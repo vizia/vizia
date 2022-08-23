@@ -1,113 +1,95 @@
-use std::marker::PhantomData;
-
-use crate::events::ViewHandler;
-use morphorm::GeometryChanged;
-
 use crate::prelude::*;
+use std::{any::TypeId, sync::Arc};
 
-// Press
-#[doc(hidden)]
-pub struct Press<V: View> {
-    view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
-
-    p: PhantomData<V>,
+pub(crate) struct ActionsModel {
+    pub(crate) on_press: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_release: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_hover: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_hover_out: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_over: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_over_out: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_mouse_move: Option<Arc<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
+    pub(crate) on_focus_in: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_focus_out: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_geo_changed:
+        Option<Arc<dyn Fn(&mut EventContext, GeometryChanged) + Send + Sync>>,
 }
 
-impl<V: View> Press<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Press<V>>
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
-            if view.downcast_ref::<V>().is_some() {
-                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
-
-                handle.cx.views.insert(handle.entity, Box::new(item));
-            } else {
-                if let Some(press) = view.downcast_mut::<Press<V>>() {
-                    press.action = Some(Box::new(action));
-                }
-                handle.cx.views.insert(handle.entity, view);
-            }
+impl ActionsModel {
+    pub(crate) fn new() -> Self {
+        Self {
+            on_press: None,
+            on_release: None,
+            on_hover: None,
+            on_hover_out: None,
+            on_over: None,
+            on_over_out: None,
+            on_mouse_move: None,
+            on_focus_in: None,
+            on_focus_out: None,
+            on_geo_changed: None,
         }
-
-        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
     }
 }
 
-impl<V: View> View for Press<V> {
-    fn element(&self) -> Option<&'static str> {
-        self.view.element()
-    }
+impl Model for ActionsModel {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|actions_event, _| match actions_event {
+            ActionsEvent::OnPress(on_press) => {
+                self.on_press = Some(on_press.clone());
+            }
 
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        self.view.event(cx, event);
+            ActionsEvent::OnRelease(on_release) => {
+                self.on_release = Some(on_release.clone());
+            }
 
-        event.map(|window_event, _| match window_event {
-            WindowEvent::MouseDown(MouseButton::Left) => {
-                if cx.current() != cx.hovered()
-                    && !cx.hovered().is_descendant_of(cx.tree_ref(), cx.current())
-                {
+            ActionsEvent::OnHover(on_hover) => {
+                self.on_hover = Some(on_hover.clone());
+            }
+
+            ActionsEvent::OnHoverOut(on_hover_out) => {
+                self.on_hover_out = Some(on_hover_out.clone());
+            }
+
+            ActionsEvent::OnOver(on_over) => {
+                self.on_over = Some(on_over.clone());
+            }
+
+            ActionsEvent::OnOverOut(on_over_out) => {
+                self.on_over_out = Some(on_over_out.clone());
+            }
+
+            ActionsEvent::OnMouseMove(on_move) => {
+                self.on_mouse_move = Some(on_move.clone());
+            }
+
+            ActionsEvent::OnFocusIn(on_focus_in) => {
+                self.on_focus_in = Some(on_focus_in.clone());
+            }
+
+            ActionsEvent::OnFocusOut(on_focus_out) => {
+                self.on_focus_out = Some(on_focus_out.clone());
+            }
+
+            ActionsEvent::OnGeoChanged(on_geo_changed) => {
+                self.on_geo_changed = Some(on_geo_changed.clone());
+            }
+        });
+
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::TriggerDown { mouse } => {
+                let over = if *mouse { cx.hovered() } else { cx.focused() };
+                if cx.current() != over && !over.is_descendant_of(cx.tree, cx.current()) {
                     return;
                 }
-                if let Some(action) = &self.action {
+                if let Some(action) = &self.on_press {
                     (action)(cx);
                 }
             }
 
-            _ => {}
-        });
-    }
-
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        self.view.draw(cx, canvas);
-    }
-}
-
-// Release
-#[doc(hidden)]
-pub struct Release<V: View> {
-    view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
-
-    p: PhantomData<V>,
-}
-
-impl<V: View> Release<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Release<V>>
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
-            if view.downcast_ref::<V>().is_some() {
-                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
-
-                handle.cx.views.insert(handle.entity, Box::new(item));
-            } else {
-                if let Some(release) = view.downcast_mut::<Release<V>>() {
-                    release.action = Some(Box::new(action));
-                }
-                handle.cx.views.insert(handle.entity, view);
-            }
-        }
-
-        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
-    }
-}
-
-impl<V: View> View for Release<V> {
-    fn element(&self) -> Option<&'static str> {
-        self.view.element()
-    }
-
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        self.view.event(cx, event);
-
-        event.map(|window_event, meta| match window_event {
-            WindowEvent::MouseUp(MouseButton::Left) => {
+            WindowEvent::TriggerUp { .. } => {
                 if meta.target == cx.current() {
-                    if let Some(action) = &self.action {
+                    if let Some(action) = &self.on_release {
                         (action)(cx);
                     }
 
@@ -115,447 +97,57 @@ impl<V: View> View for Release<V> {
                 }
             }
 
-            _ => {}
-        });
-    }
-
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        self.view.draw(cx, canvas);
-    }
-}
-
-// Hover
-#[doc(hidden)]
-pub struct Hover<V: View> {
-    view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
-
-    p: PhantomData<V>,
-}
-
-impl<V: View> Hover<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Hover<V>>
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
-            if view.downcast_ref::<V>().is_some() {
-                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
-
-                handle.cx.views.insert(handle.entity, Box::new(item));
-            } else {
-                if let Some(hover) = view.downcast_mut::<Hover<V>>() {
-                    hover.action = Some(Box::new(action));
-                }
-                handle.cx.views.insert(handle.entity, view);
-            }
-        }
-
-        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
-    }
-}
-
-impl<V: View> View for Hover<V> {
-    fn element(&self) -> Option<&'static str> {
-        self.view.element()
-    }
-
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        self.view.event(cx, event);
-
-        event.map(|window_event, meta| match window_event {
             WindowEvent::MouseEnter => {
                 if meta.target == cx.current() {
-                    if let Some(action) = &self.action {
+                    if let Some(action) = &self.on_hover {
                         (action)(cx);
                     }
                 }
             }
 
-            _ => {}
-        });
-    }
-
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        self.view.draw(cx, canvas);
-    }
-}
-
-// Hover Out
-#[doc(hidden)]
-pub struct HoverOut<V: View> {
-    view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
-
-    p: PhantomData<V>,
-}
-
-impl<V: View> HoverOut<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, HoverOut<V>>
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
-            if view.downcast_ref::<V>().is_some() {
-                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
-
-                handle.cx.views.insert(handle.entity, Box::new(item));
-            } else {
-                if let Some(hover) = view.downcast_mut::<Hover<V>>() {
-                    hover.action = Some(Box::new(action));
-                }
-                handle.cx.views.insert(handle.entity, view);
-            }
-        }
-
-        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
-    }
-}
-
-impl<V: View> View for HoverOut<V> {
-    fn element(&self) -> Option<&'static str> {
-        self.view.element()
-    }
-
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        self.view.event(cx, event);
-
-        event.map(|window_event, meta| match window_event {
             WindowEvent::MouseLeave => {
                 if meta.target == cx.current() {
-                    if let Some(action) = &self.action {
+                    if let Some(action) = &self.on_hover_out {
                         (action)(cx);
                     }
                 }
             }
 
-            _ => {}
-        });
-    }
-
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        self.view.draw(cx, canvas);
-    }
-}
-
-// Over
-#[doc(hidden)]
-pub struct Over<V: View> {
-    view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
-
-    p: PhantomData<V>,
-}
-
-impl<V: View> Over<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Over<V>>
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
-            if view.downcast_ref::<V>().is_some() {
-                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
-
-                handle.cx.views.insert(handle.entity, Box::new(item));
-            } else {
-                if let Some(over) = view.downcast_mut::<Over<V>>() {
-                    over.action = Some(Box::new(action));
-                }
-                handle.cx.views.insert(handle.entity, view);
-            }
-        }
-
-        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
-    }
-}
-
-impl<V: View> View for Over<V> {
-    fn element(&self) -> Option<&'static str> {
-        self.view.element()
-    }
-
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        self.view.event(cx, event);
-
-        event.map(|window_event, _| match window_event {
             WindowEvent::MouseOver => {
-                if let Some(action) = &self.action {
+                if let Some(action) = &self.on_over {
                     (action)(cx);
                 }
             }
 
-            _ => {}
-        });
-    }
-
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        self.view.draw(cx, canvas);
-    }
-}
-
-// Over
-#[doc(hidden)]
-pub struct OverOut<V: View> {
-    view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
-
-    p: PhantomData<V>,
-}
-
-impl<V: View> OverOut<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, OverOut<V>>
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
-            if view.downcast_ref::<V>().is_some() {
-                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
-
-                handle.cx.views.insert(handle.entity, Box::new(item));
-            } else {
-                if let Some(over) = view.downcast_mut::<Over<V>>() {
-                    over.action = Some(Box::new(action));
-                }
-                handle.cx.views.insert(handle.entity, view);
-            }
-        }
-
-        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
-    }
-}
-
-impl<V: View> View for OverOut<V> {
-    fn element(&self) -> Option<&'static str> {
-        self.view.element()
-    }
-
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        self.view.event(cx, event);
-
-        event.map(|window_event, _| match window_event {
             WindowEvent::MouseOut => {
-                if let Some(action) = &self.action {
-                    (action)(cx);
+                if meta.target == cx.current() {
+                    if let Some(action) = &self.on_over_out {
+                        (action)(cx);
+                    }
                 }
             }
 
-            _ => {}
-        });
-    }
-
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        self.view.draw(cx, canvas);
-    }
-}
-
-// Mouse Move
-#[doc(hidden)]
-pub struct MouseMove<V: View> {
-    view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context, f32, f32)>>,
-
-    p: PhantomData<V>,
-}
-
-impl<V: View> MouseMove<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, MouseMove<V>>
-    where
-        F: 'static + Fn(&mut Context, f32, f32),
-    {
-        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
-            if view.downcast_ref::<V>().is_some() {
-                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
-
-                handle.cx.views.insert(handle.entity, Box::new(item));
-            } else {
-                if let Some(hover) = view.downcast_mut::<MouseMove<V>>() {
-                    hover.action = Some(Box::new(action));
-                }
-                handle.cx.views.insert(handle.entity, view);
-            }
-        }
-
-        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
-    }
-}
-
-impl<V: View> View for MouseMove<V> {
-    fn element(&self) -> Option<&'static str> {
-        self.view.element()
-    }
-
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        self.view.event(cx, event);
-
-        event.map(|window_event, _| match window_event {
             WindowEvent::MouseMove(x, y) => {
-                if let Some(action) = &self.action {
+                if let Some(action) = &self.on_mouse_move {
                     (action)(cx, *x, *y);
                 }
             }
 
-            _ => {}
-        });
-    }
-
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        self.view.draw(cx, canvas);
-    }
-}
-
-// Focus
-#[doc(hidden)]
-pub struct Focus<V: View> {
-    view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
-
-    p: PhantomData<V>,
-}
-
-impl<V: View> Focus<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Focus<V>>
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
-            if view.downcast_ref::<V>().is_some() {
-                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
-
-                handle.cx.views.insert(handle.entity, Box::new(item));
-            } else {
-                if let Some(view) = view.downcast_mut::<Focus<V>>() {
-                    view.action = Some(Box::new(action));
-                }
-                handle.cx.views.insert(handle.entity, view);
-            }
-        }
-
-        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
-    }
-}
-
-impl<V: View> View for Focus<V> {
-    fn element(&self) -> Option<&'static str> {
-        self.view.element()
-    }
-
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        self.view.event(cx, event);
-
-        event.map(|window_event, _| match window_event {
             WindowEvent::FocusIn => {
-                if let Some(action) = &self.action {
+                if let Some(action) = &self.on_focus_in {
                     (action)(cx);
                 }
             }
 
-            _ => {}
-        });
-    }
-
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        self.view.draw(cx, canvas);
-    }
-}
-
-// Focus Out
-#[doc(hidden)]
-pub struct FocusOut<V: View> {
-    view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context)>>,
-
-    p: PhantomData<V>,
-}
-
-impl<V: View> FocusOut<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, FocusOut<V>>
-    where
-        F: 'static + Fn(&mut Context),
-    {
-        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
-            if view.downcast_ref::<V>().is_some() {
-                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
-
-                handle.cx.views.insert(handle.entity, Box::new(item));
-            } else {
-                if let Some(view) = view.downcast_mut::<Focus<V>>() {
-                    view.action = Some(Box::new(action));
-                }
-                handle.cx.views.insert(handle.entity, view);
-            }
-        }
-
-        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
-    }
-}
-
-impl<V: View> View for FocusOut<V> {
-    fn element(&self) -> Option<&'static str> {
-        self.view.element()
-    }
-
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        self.view.event(cx, event);
-
-        event.map(|window_event, _| match window_event {
             WindowEvent::FocusOut => {
-                if let Some(action) = &self.action {
+                if let Some(action) = &self.on_focus_out {
                     (action)(cx);
                 }
             }
 
-            _ => {}
-        });
-    }
-
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        self.view.draw(cx, canvas);
-    }
-}
-
-// Geo
-#[doc(hidden)]
-pub struct Geo<V: View> {
-    view: Box<dyn ViewHandler>,
-    action: Option<Box<dyn Fn(&mut Context, GeometryChanged)>>,
-
-    p: PhantomData<V>,
-}
-
-impl<V: View> Geo<V> {
-    pub fn new<'a, F>(handle: Handle<'a, V>, action: F) -> Handle<'a, Geo<V>>
-    where
-        F: 'static + Fn(&mut Context, GeometryChanged),
-    {
-        if let Some(mut view) = handle.cx.views.remove(&handle.entity) {
-            if view.downcast_ref::<V>().is_some() {
-                let item = Self { view, action: Some(Box::new(action)), p: Default::default() };
-
-                handle.cx.views.insert(handle.entity, Box::new(item));
-            } else {
-                if let Some(geo) = view.downcast_mut::<Geo<V>>() {
-                    geo.action = Some(Box::new(action));
-                }
-                handle.cx.views.insert(handle.entity, view);
-            }
-        }
-
-        Handle { entity: handle.entity, p: Default::default(), cx: handle.cx }
-    }
-}
-
-impl<V: View> View for Geo<V> {
-    fn element(&self) -> Option<&'static str> {
-        self.view.element()
-    }
-
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        self.view.event(cx, event);
-
-        event.map(|window_event, meta| match window_event {
             WindowEvent::GeometryChanged(geo) => {
                 if meta.target == cx.current() {
-                    if let Some(action) = &self.action {
+                    if let Some(action) = &self.on_geo_changed {
                         (action)(cx, *geo);
                     }
                 }
@@ -564,133 +156,238 @@ impl<V: View> View for Geo<V> {
             _ => {}
         });
     }
+}
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        self.view.draw(cx, canvas);
-    }
+pub(crate) enum ActionsEvent {
+    OnPress(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnRelease(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnHover(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnHoverOut(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnOver(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnOverOut(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnMouseMove(Arc<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>),
+    OnFocusIn(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnFocusOut(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnGeoChanged(Arc<dyn Fn(&mut EventContext, GeometryChanged) + Send + Sync>),
 }
 
 /// Modifiers which add an action callback to a view.
-pub trait ActionModifiers<'a, V: View> {
+pub trait ActionModifiers {
     /// Adds a callback which is performed when the view is pressed on with the left mouse button.
-    fn on_press<F>(self, action: F) -> Handle<'a, Press<V>>
+    fn on_press<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext) + Send + Sync;
 
     /// Adds a callback which is performed when the left mouse button is released on a view after being pressed.
-    fn on_release<F>(self, action: F) -> Handle<'a, Release<V>>
+    fn on_release<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext) + Send + Sync;
 
     /// Adds a callback which is performed when the mouse pointer moves over or away from a view.
-    fn on_hover<F>(self, action: F) -> Handle<'a, Hover<V>>
+    fn on_hover<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext) + Send + Sync;
 
     /// Adds a callback which is performed when the mouse pointer moves over or away from a view.
-    fn on_hover_out<F>(self, action: F) -> Handle<'a, HoverOut<V>>
+    fn on_hover_out<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext) + Send + Sync;
 
     /// Adds a callback which is performed when the mouse pointer moves over or away from the bounds of a view.
-    fn on_over<F>(self, action: F) -> Handle<'a, Over<V>>
+    fn on_over<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext) + Send + Sync;
 
     /// Adds a callback which is performed when the mouse pointer moves over or away from the bounds of a view.
-    fn on_over_out<F>(self, action: F) -> Handle<'a, OverOut<V>>
+    fn on_over_out<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext) + Send + Sync;
 
     /// Adds a callback which is performed when the mouse pointer moves.
-    fn on_mouse_move<F>(self, action: F) -> Handle<'a, MouseMove<V>>
+    fn on_mouse_move<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context, f32, f32);
+        F: 'static + Fn(&mut EventContext, f32, f32) + Send + Sync;
 
     /// Adds a callback which is performed when the view gains or loses keyboard focus.
-    fn on_focus<F>(self, action: F) -> Handle<'a, Focus<V>>
+    fn on_focus_in<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext) + Send + Sync;
 
     /// Adds a callback which is performed when the view gains or loses keyboard focus.
-    fn on_focus_out<F>(self, action: F) -> Handle<'a, FocusOut<V>>
+    fn on_focus_out<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context);
+        F: 'static + Fn(&mut EventContext) + Send + Sync;
 
     /// Adds a callback which is performed when the the view changes size or position after layout.
-    fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<V>>
+    fn on_geo_changed<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context, GeometryChanged);
+        F: 'static + Fn(&mut EventContext, GeometryChanged) + Send + Sync;
 }
 
-impl<'a, V: View> ActionModifiers<'a, V> for Handle<'a, V> {
-    fn on_press<F>(self, action: F) -> Handle<'a, Press<V>>
-    where
-        F: 'static + Fn(&mut Context),
+// If the entity doesn't have an `ActionsModel` then add one to the entity
+fn build_action_model(cx: &mut Context, entity: Entity) {
+    if cx
+        .data
+        .get(entity)
+        .and_then(|model_data_store| model_data_store.models.get(&TypeId::of::<ActionsModel>()))
+        .is_none()
     {
-        Press::new(self, action)
+        cx.with_current(entity, |cx| {
+            ActionsModel::new().build(cx);
+        });
+    }
+}
+
+impl<'a, V: View> ActionModifiers for Handle<'a, V> {
+    fn on_press<F>(self, action: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext) + Send + Sync,
+    {
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnPress(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
     }
 
-    fn on_release<F>(self, action: F) -> Handle<'a, Release<V>>
+    fn on_release<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        Release::new(self, action)
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnRelease(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
     }
 
-    fn on_hover<F>(self, action: F) -> Handle<'a, Hover<V>>
+    fn on_hover<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        Hover::new(self, action)
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnHover(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
     }
 
-    fn on_hover_out<F>(self, action: F) -> Handle<'a, HoverOut<V>>
+    fn on_hover_out<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        HoverOut::new(self, action)
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnHoverOut(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
     }
 
-    fn on_over<F>(self, action: F) -> Handle<'a, Over<V>>
+
+
+    fn on_over<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        Over::new(self, action)
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnOver(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
     }
 
-    fn on_over_out<F>(self, action: F) -> Handle<'a, OverOut<V>>
+    fn on_over_out<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        OverOut::new(self, action)
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnOverOut(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
     }
 
-    fn on_mouse_move<F>(self, action: F) -> Handle<'a, MouseMove<V>>
+    fn on_mouse_move<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context, f32, f32),
+        F: 'static + Fn(&mut EventContext, f32, f32) + Send + Sync,
     {
-        MouseMove::new(self, action)
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnMouseMove(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
     }
 
-    fn on_focus<F>(self, action: F) -> Handle<'a, Focus<V>>
+    fn on_focus_in<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        Focus::new(self, action)
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnFocusIn(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
     }
 
-    fn on_focus_out<F>(self, action: F) -> Handle<'a, FocusOut<V>>
+    fn on_focus_out<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context),
+        F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        FocusOut::new(self, action)
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnFocusOut(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
     }
 
-    fn on_geo_changed<F>(self, action: F) -> Handle<'a, Geo<V>>
+    fn on_geo_changed<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut Context, GeometryChanged),
+        F: 'static + Fn(&mut EventContext, GeometryChanged) + Send + Sync,
     {
-        Geo::new(self, action)
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnGeoChanged(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
     }
 }

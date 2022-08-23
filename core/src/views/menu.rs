@@ -1,7 +1,6 @@
 use std::cell::RefCell;
 
 use crate::fonts::{material_names::RIGHT, unicode_names::CHECK};
-use crate::modifiers::Over;
 use crate::prelude::*;
 use crate::tree::TreeExt;
 
@@ -14,7 +13,7 @@ pub fn setup_menu_entry<T, F1, F2>(
     handle: Handle<'_, T>,
     on_select: F1,
     on_deselect: F2,
-) -> Handle<'_, Over<T>>
+) -> Handle<'_, T>
 where
     T: View,
     F1: 'static + Fn(&mut Context),
@@ -214,7 +213,7 @@ impl Menu {
     /// Construct a new menu. The first closure is the label/stack/etc that will be displayed
     /// while the menu is closed, and the second closure will be passed to a vertical MenuStack
     /// to be constructed and then displayed when the menu is opened
-    pub fn new<F1, F2, Lbl>(cx: &mut Context, label: F1, items: F2) -> Handle<'_, Over<Self>>
+    pub fn new<F1, F2, Lbl>(cx: &mut Context, label: F1, items: F2) -> Handle<'_, Self>
     where
         F1: 'static + FnOnce(&mut Context) -> Handle<'_, Lbl>,
         F2: 'static + FnOnce(&mut Context),
@@ -255,7 +254,7 @@ pub struct MenuButton {
 }
 
 impl MenuButton {
-    pub fn new<F, A>(cx: &mut Context, contents: F, action: A) -> Handle<'_, Over<Self>>
+    pub fn new<F, A>(cx: &mut Context, contents: F, action: A) -> Handle<'_, Self>
     where
         F: 'static + FnOnce(&mut Context),
         A: 'static + Fn(&mut Context),
@@ -273,7 +272,7 @@ impl MenuButton {
         cx: &mut Context,
         text: impl 'static + Res<U>,
         action: A,
-    ) -> Handle<'_, Over<Self>>
+    ) -> Handle<'_, Self>
     where
         A: 'static + Fn(&mut Context),
     {
@@ -286,12 +285,7 @@ impl MenuButton {
         )
     }
 
-    pub fn new_check<F, A, L>(
-        cx: &mut Context,
-        builder: F,
-        action: A,
-        lens: L,
-    ) -> Handle<'_, Over<Self>>
+    pub fn new_check<F, A, L>(cx: &mut Context, builder: F, action: A, lens: L) -> Handle<'_, Self>
     where
         F: 'static + FnOnce(&mut Context),
         A: 'static + Fn(&mut Context),
@@ -317,7 +311,7 @@ impl MenuButton {
         text: impl 'static + Res<U>,
         action: A,
         lens: L,
-    ) -> Handle<'_, Over<Self>>
+    ) -> Handle<'_, Self>
     where
         A: 'static + Fn(&mut Context),
         L: 'static + Lens<Target = bool>,
