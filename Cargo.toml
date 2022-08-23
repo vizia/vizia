@@ -51,6 +51,10 @@ name = "stylesheet"
 path = "examples/stylesheet.rs"
 
 [[example]]
+name = "switch"
+path = "examples/views/switch.rs"
+
+[[example]]
 name = "table"
 path = "examples/views/table.rs"
 
