@@ -35,14 +35,12 @@ fn main() {
     Application::new(|cx| {
         AppData { option1: true, option2: false }.build(cx);
 
-        cx.add_stylesheet(DARK_THEME)
-            .expect("Failed to find stylesheet");
+        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
         VStack::new(cx, |cx| {
-
             VStack::new(cx, |cx| {
                 Label::new(cx, "Basic Switches");
-    
+
                 HStack::new(cx, |cx| {
                     Switch::new(cx, AppData::option1)
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
@@ -53,7 +51,7 @@ fn main() {
                 .col_between(Pixels(5.0))
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0));
-    
+
                 HStack::new(cx, |cx| {
                     Switch::new(cx, AppData::option2)
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleOption2))
@@ -64,7 +62,7 @@ fn main() {
                 .col_between(Pixels(5.0))
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0));
-    
+
                 HStack::new(cx, |cx| {
                     Switch::new(cx, AppData::option2)
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleOption2))
@@ -76,14 +74,14 @@ fn main() {
                 .col_between(Pixels(5.0))
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0));
-
-            }).size(Auto)
-        .row_between(Pixels(10.0))
-        .space(Stretch(1.0));
-
+            })
+            .size(Auto)
+            .row_between(Pixels(10.0))
+            .space(Stretch(1.0));
         })
-        .class("main").width(Units::Stretch(1.0)).height(Units::Stretch(1.0));
-        
+        .class("main")
+        .width(Units::Stretch(1.0))
+        .height(Units::Stretch(1.0));
     })
     //.ignore_default_theme()
     .ignore_default_theme()
