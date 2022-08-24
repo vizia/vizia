@@ -2,11 +2,11 @@
 	"[rust]": {
 		"editor.formatOnSave": true,
 		"editor.formatOnPaste": true,
-		"editor.defaultFormatter": "matklad.rust-analyzer",
+		"editor.defaultFormatter": "rust-lang.rust-analyzer",
 	},
 	"[css]": {
 		"editor.formatOnSave": true,
-		"editor.defaultFormatter": "vscode.css-language-features",
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
 	},
 	"prettier.tabWidth": 4,
 	"css.lint.unknownProperties": "ignore"
