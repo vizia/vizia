@@ -9,6 +9,8 @@ pub(crate) struct ActionsModel {
     pub(crate) on_over: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_over_out: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_mouse_move: Option<Arc<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
+    pub(crate) on_mouse_down: Option<Arc<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>>,
+    pub(crate) on_mouse_up: Option<Arc<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>>,
     pub(crate) on_focus_in: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_focus_out: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_geo_changed:
@@ -25,6 +27,8 @@ impl ActionsModel {
             on_over: None,
             on_over_out: None,
             on_mouse_move: None,
+            on_mouse_down: None,
+            on_mouse_up: None,
             on_focus_in: None,
             on_focus_out: None,
             on_geo_changed: None,
@@ -61,6 +65,14 @@ impl Model for ActionsModel {
 
             ActionsEvent::OnMouseMove(on_move) => {
                 self.on_mouse_move = Some(on_move.clone());
+            }
+
+            ActionsEvent::OnMouseDown(on_mouse_down) => {
+                self.on_mouse_down = Some(on_mouse_down.clone());
+            }
+
+            ActionsEvent::OnMouseUp(on_mouse_up) => {
+                self.on_mouse_up = Some(on_mouse_up.clone());
             }
 
             ActionsEvent::OnFocusIn(on_focus_in) => {
@@ -133,6 +145,18 @@ impl Model for ActionsModel {
                 }
             }
 
+            WindowEvent::MouseDown(mouse_button) => {
+                if let Some(action) = &self.on_mouse_down {
+                    (action)(cx, *mouse_button);
+                }
+            }
+
+            WindowEvent::MouseUp(mouse_button) => {
+                if let Some(action) = &self.on_mouse_up {
+                    (action)(cx, *mouse_button);
+                }
+            }
+
             WindowEvent::FocusIn => {
                 if let Some(action) = &self.on_focus_in {
                     (action)(cx);
@@ -166,6 +190,8 @@ pub(crate) enum ActionsEvent {
     OnOver(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
     OnOverOut(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
     OnMouseMove(Arc<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>),
+    OnMouseDown(Arc<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>),
+    OnMouseUp(Arc<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>),
     OnFocusIn(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
     OnFocusOut(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
     OnGeoChanged(Arc<dyn Fn(&mut EventContext, GeometryChanged) + Send + Sync>),
@@ -173,52 +199,156 @@ pub(crate) enum ActionsEvent {
 
 /// Modifiers which add an action callback to a view.
 pub trait ActionModifiers {
-    /// Adds a callback which is performed when the view is pressed on with the left mouse button.
+    /// Adds a callback which is performed when the the view receives the [`TriggerDown`](crate::prelude::WindowEvent::TriggerDown) event.
+    /// By default a view receives the [`TriggerDown`](crate::prelude::WindowEvent::TriggerDown) event when the left mouse button is pressed on the view,
+    /// or when the space or enter keys are pressed while the view is focused.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_press(|_| println!("View was pressed!"));
+    /// ```
     fn on_press<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync;
 
-    /// Adds a callback which is performed when the left mouse button is released on a view after being pressed.
+    /// Adds a callback which is performed when the the view receives the [`TriggerUp`](crate::prelude::WindowEvent::TriggerUp) event.
+    /// By default a view receives the [`TriggerUp`](crate::prelude::WindowEvent::TriggerUp) event when the left mouse button is released on the view,
+    /// or when the space or enter keys are released while the view is focused.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_release(|_| println!("View was released!"));
+    /// ```
     fn on_release<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync;
 
-    /// Adds a callback which is performed when the mouse pointer moves over or away from a view.
+    /// Adds a callback which is performed when the mouse pointer moves over a view.
+    /// This callback is not triggered when the mouse pointer moves over an overlapping child of the view.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_hover(|_| println!("Mouse cursor entered the view!"));
+    /// ```
     fn on_hover<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync;
 
-    /// Adds a callback which is performed when the mouse pointer moves over or away from a view.
+    /// Adds a callback which is performed when the mouse pointer moves away from a view.
+    /// This callback is not triggered when the mouse pointer moves away from an overlapping child of the view.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_hover_out(|_| println!("Mouse cursor left the view!"));
+    /// ```
     fn on_hover_out<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync;
 
-    /// Adds a callback which is performed when the mouse pointer moves over or away from the bounds of a view.
+    /// Adds a callback which is performed when the mouse pointer moves over the bounds of a view,
+    /// including any overlapping children.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_over(|_| println!("Mouse cursor entered the view bounds!"));
+    /// ```
     fn on_over<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync;
 
-    /// Adds a callback which is performed when the mouse pointer moves over or away from the bounds of a view.
+    /// Adds a callback which is performed when the mouse pointer moves away from the bounds of a view,
+    /// including any overlapping children.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_over_out(|_| println!("Mouse cursor left the view bounds!"));
+    /// ```
     fn on_over_out<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync;
 
-    /// Adds a callback which is performed when the mouse pointer moves.
+    /// Adds a callback which is performed when the mouse pointer moves within the bounds of a view.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_mouse_move(|_, x, y| println!("Cursor moving: {} {}", x, y));
+    /// ```
     fn on_mouse_move<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, f32, f32) + Send + Sync;
 
-    /// Adds a callback which is performed when the view gains or loses keyboard focus.
+    /// Adds a callback which is performed when a mouse button is pressed on the view.
+    /// Unlike the `on_press` callback, this callback is triggered for all mouse buttons and not for any keyboard keys.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_mouse_down(|_, button| println!("Mouse button, {:?}, was pressed!", button));
+    /// ```
+    fn on_mouse_down<F>(self, action: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, MouseButton) + Send + Sync;
+
+    /// Adds a callback which is performed when a mouse button is released on the view.
+    /// Unlike the `on_release` callback, this callback is triggered for all mouse buttons and not for any keyboard keys.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_mouse_up(|_, button| println!("Mouse button, {:?}, was released!", button));
+    /// ```
+    fn on_mouse_up<F>(self, action: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, MouseButton) + Send + Sync;
+
+    /// Adds a callback which is performed when the view gains keyboard focus.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_focus_in(|_| println!("View gained keyboard focus!"));
+    /// ```
     fn on_focus_in<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync;
 
-    /// Adds a callback which is performed when the view gains or loses keyboard focus.
+    /// Adds a callback which is performed when the view loses keyboard focus.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_focus_out(|_| println!("View lost keyboard focus!"));
+    /// ```
     fn on_focus_out<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync;
 
     /// Adds a callback which is performed when the the view changes size or position after layout.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_geo_changed(|_, _| println!("View geometry changed!"));
+    /// ```
     fn on_geo_changed<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, GeometryChanged) + Send + Sync;
@@ -337,6 +467,36 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnMouseMove(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
+    }
+
+    fn on_mouse_down<F>(self, action: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, MouseButton) + Send + Sync,
+    {
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnMouseDown(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
+    }
+
+    fn on_mouse_up<F>(self, action: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, MouseButton) + Send + Sync,
+    {
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnMouseUp(Arc::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );

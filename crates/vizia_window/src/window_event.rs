@@ -20,11 +20,11 @@ pub enum WindowEvent {
     MouseDown(MouseButton),
     /// Emitted when a mouse button is released.
     MouseUp(MouseButton),
-    /// When an interactable element has started to be triggered with a left mouse click or keyboard
+    /// Emitted when an interactable element has started to be triggered with a left mouse click / space or enter key press.
     TriggerDown {
         mouse: bool,
     },
-    /// When an interactable element has stopped being triggered with a left mouse click or keyboard
+    /// Emitted when an interactable element has stopped being triggered with a left mouse click / space or enter key press.
     TriggerUp {
         mouse: bool,
     },
@@ -82,7 +82,8 @@ pub enum WindowEvent {
     MouseCaptureEvent,
     /// Emitted when mouse events have been released.
     MouseCaptureOutEvent,
-    /// Emitted when an entity changes position or size (TODO: check if this includes margins + borders)
+    // TODO: check if this includes margins + borders.
+    /// Emitted when an entity changes position or size.
     GeometryChanged(GeometryChanged),
     /// Requests a redraw of the window contents.
     Redraw,
