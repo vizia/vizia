@@ -205,8 +205,12 @@ name = "outline"
 path = "examples/style/outline.rs"
 
 [[example]]
-name = "basic_translation"
-path = "examples/localization/basic_translation.rs"
+name = "fluent_translation"
+path = "examples/localization/fluent_translation.rs"
+
+[[example]]
+name = "fluent_variables"
+path = "examples/localization/fluent_variables.rs"
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
