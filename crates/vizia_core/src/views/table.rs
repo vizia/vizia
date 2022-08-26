@@ -2,8 +2,6 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 
 use crate::prelude::*;
-use crate::state::{Index, Then};
-
 // TODO
 
 pub struct Table<L, T: 'static>

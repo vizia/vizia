@@ -6,11 +6,11 @@ use std::error::Error;
 use femtovg::TextContext;
 use fnv::FnvHashMap;
 
+use crate::binding::ModelDataStore;
 use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::state::ModelDataStore;
 use crate::style::Style;
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};

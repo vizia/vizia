@@ -1,4 +1,4 @@
-// Need better name for this module
+//! A modifier on a view which changes its properties.
 
 mod actions;
 pub use actions::*;

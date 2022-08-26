@@ -3,12 +3,12 @@ use std::{
     collections::HashMap,
 };
 
-use crate::state::Store;
+use crate::binding::Store;
 use crate::{events::ViewHandler, prelude::*};
 
 use super::StoreId;
 
-/// A trait implemented by application data in order to mutate in response to events.
+/// A trait implemented by application data in order to response to events and mutate.
 ///
 /// # Examples
 ///
@@ -38,8 +38,6 @@ use super::StoreId;
 ///     }
 /// }
 /// ```
-///
-/// This trait is part of the prelude.
 pub trait Model: 'static + Sized {
     /// Build the model data into the application tree.
     ///
@@ -147,6 +145,7 @@ pub(crate) enum ModelOrView<'a> {
     Model(&'a dyn ModelData),
     View(&'a dyn ViewHandler),
 }
+
 impl<'a> ModelOrView<'a> {
     pub fn downcast_ref<T: 'static>(self) -> Option<&'a T> {
         match self {

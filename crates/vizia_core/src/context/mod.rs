@@ -20,12 +20,12 @@ pub use draw::*;
 pub use event::*;
 pub use proxy::*;
 
+use crate::binding::{BindingHandler, ModelDataStore};
 use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
-use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};

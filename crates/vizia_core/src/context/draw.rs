@@ -5,11 +5,11 @@ use femtovg::{ImageId, TextContext};
 use fnv::FnvHashMap;
 use morphorm::Units;
 
+use crate::binding::ModelDataStore;
 use crate::cache::{BoundingBox, CachedData};
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::state::ModelDataStore;
 use crate::style::{LinearGradient, Style};
 use crate::text::Selection;
 use vizia_input::{Modifiers, MouseState};

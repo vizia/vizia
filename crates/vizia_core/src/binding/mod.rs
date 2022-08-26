@@ -22,7 +22,7 @@
 //!     Decrement,
 //! }
 //! ```
-//! Next we implement the [`Model`] trait on our app data, which allows us to modify the data in response to an `Event`:
+//! Then we implement the [`Model`] trait on our app data, which allows us to modify the data in response to an `Event`:
 //! ```
 //! # use vizia_core::prelude::*;
 //! # use vizia_derive::*;
@@ -140,8 +140,8 @@ pub(crate) use store::*;
 mod data;
 pub use data::*;
 
-mod binding;
-pub use binding::*;
+mod binding_view;
+pub use binding_view::*;
 
 mod res;
 pub use res::*;

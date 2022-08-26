@@ -3,6 +3,7 @@
 extern crate serde;
 
 pub mod animation;
+pub mod binding;
 pub mod cache;
 pub mod context;
 pub mod entity;
@@ -15,7 +16,6 @@ pub mod layout;
 pub mod localization;
 pub mod modifiers;
 pub mod resource;
-pub mod state;
 pub mod style;
 pub mod systems;
 pub mod text;
@@ -39,6 +39,7 @@ pub mod image {
 /// Members which we recommend you wildcard-import.
 pub mod prelude {
     pub use super::animation::{AnimExt, Animation, AnimationBuilder};
+    pub use super::binding::{Binding, Data, Index, Lens, LensExt, Model, Res, Then};
     pub use super::context::{
         Context, ContextProxy, DataContext, DrawContext, EventContext, ProxyEmitError,
     };
@@ -50,7 +51,6 @@ pub mod prelude {
     #[cfg(feature = "localization")]
     pub use super::localization::Localized;
     pub use super::modifiers::Actions;
-    pub use super::state::{Binding, Data, Lens, LensExt, Model, Res};
     pub use super::view::{Canvas, View};
     pub use super::views::*;
     pub use super::window::WindowModifiers;

@@ -3,7 +3,7 @@ use vizia_derive::Lens;
 #[cfg(feature = "localization")]
 use unic_langid::LanguageIdentifier;
 
-use crate::{context::EventContext, events::Event, state::Lens, state::Model};
+use crate::{binding::Lens, binding::Model, context::EventContext, events::Event};
 
 #[derive(Lens)]
 pub struct Environment {

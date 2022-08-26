@@ -2,11 +2,11 @@ use std::{ptr, rc::Rc, sync::Arc};
 
 use crate::prelude::*;
 
-/// A trait for any type which can be bound to, i.e. can be cached and compared against previous
-/// versions.
+/// A trait for any type which can be bound to.
 ///
-/// This type is part of the prelude.
+/// The `Data` trait ensures that data can be cached (by cloning) and compared.
 pub trait Data: 'static + Clone {
+    /// Returns false if `self` and `other` are different.
     fn same(&self, other: &Self) -> bool;
 }
 

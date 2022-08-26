@@ -6,6 +6,7 @@ use instant::{Duration, Instant};
 
 use super::EventProxy;
 use crate::{
+    binding::ModelOrView,
     cache::{BoundingBox, CachedData},
     environment::Environment,
     events::ViewHandler,
@@ -13,7 +14,6 @@ use crate::{
     layout::geometry_changed,
     prelude::*,
     resource::FontOrId,
-    state::ModelOrView,
     style::Style,
     systems::*,
     tree::{focus_backward, focus_forward, is_navigatable},

@@ -2,9 +2,9 @@ use std::{any::Any, collections::HashMap};
 
 use crate::prelude::*;
 
+use crate::binding::ModelDataStore;
 use crate::events::ViewHandler;
 use crate::resource::ImageOrId;
-use crate::state::ModelDataStore;
 use crate::text::{idx_to_pos, measure_text_lines, text_layout, text_paint_draw};
 use femtovg::{
     renderer::OpenGl, Align, Baseline, ImageFlags, Paint, Path, PixelFormat, RenderTarget,

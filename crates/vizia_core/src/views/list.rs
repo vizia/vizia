@@ -1,5 +1,5 @@
+use crate::binding::{Index, Then};
 use crate::prelude::*;
-use crate::state::{Index, Then};
 use std::marker::PhantomData;
 use vizia_input::Code;
 
