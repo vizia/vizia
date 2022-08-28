@@ -50,40 +50,69 @@ impl Model for SpinboxData {
 
 pub struct Spinbox {}
 
-// #[derive(Clone, Debug)]
-// pub enum SpinboxKind {
-//     Horizontal,
-//     Vertical,
-// }
+#[derive(Clone, Copy, Debug)]
+pub enum SpinboxKind {
+    Horizontal,
+    Vertical,
+}
 
 impl Spinbox {
-    pub fn new<L: Lens>(cx: &mut Context, lens: L) -> Handle<Spinbox>
+    pub fn new<L: Lens>(cx: &mut Context, lens: L, kind: SpinboxKind) -> Handle<Spinbox>
     where
         <L as Lens>::Target: Data + ToString,
     {
         Self {}
-            .build(cx, |cx| {
+            .build(cx, move |cx| {
                 let sd = SpinboxData { on_decrement: None, on_increment: None };
                 let parent = cx.current().parent(&cx.tree).unwrap();
                 cx.with_current(parent, |cx| sd.build(cx));
                 cx.emit_to(cx.current(), ());
 
-                Binding::new(cx, lens, |cx, lens| {
+                Binding::new(cx, lens, move |cx, lens| {
                     let lens = lens.get(cx);
-                    HStack::new(cx, |cx| {
-                        Element::new(cx)
-                            .text("-")
-                            .on_press(|ex| ex.emit(SpinboxEvent::Decrement))
-                            .class("spinbox-button")
-                            .hoverable(true);
-                        Element::new(cx).text(&lens.to_string()).class("spinbox-value");
-                        Element::new(cx)
-                            .text("+")
-                            .on_press(|ex| ex.emit(SpinboxEvent::Increment))
-                            .class("spinbox-button")
-                            .hoverable(true);
-                    });
+                    match kind {
+                        SpinboxKind::Horizontal => {
+                            HStack::new(cx, |cx| {
+                                Element::new(cx)
+                                    .text("-")
+                                    .on_press(|ex| ex.emit(SpinboxEvent::Decrement))
+                                    .class("spinbox-button")
+                                    .hoverable(true);
+                                Element::new(cx)
+                                    .text(&lens.to_string())
+                                    .overflow(Overflow::Visible)
+                                    .class("spinbox-value");
+                                Element::new(cx)
+                                    .text("+")
+                                    .on_press(|ex| ex.emit(SpinboxEvent::Increment))
+                                    .class("spinbox-button")
+                                    .hoverable(true);
+                            });
+                        }
+                        SpinboxKind::Vertical => {
+                            VStack::new(cx, |cx| {
+                                Element::new(cx)
+                                    .text("+")
+                                    .on_press(|ex| ex.emit(SpinboxEvent::Increment))
+                                    .class("spinbox-button")
+                                    .hoverable(true);
+                                Element::new(cx)
+                                    .text(&lens.to_string())
+                                    .overflow(Overflow::Visible)
+                                    .class("spinbox-value");
+                                Element::new(cx)
+                                    .text("-")
+                                    .on_press(|ex| ex.emit(SpinboxEvent::Decrement))
+                                    .class("spinbox-button")
+                                    .hoverable(true);
+                            });
+                        }
+                    }
                 })
+            })
+            .class(match kind {
+                SpinboxKind::Horizontal => "horizontal",
+                SpinboxKind::Vertical => "vertical",
             })
             .keyboard_navigatable(true)
     }

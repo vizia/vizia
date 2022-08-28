@@ -36,7 +36,7 @@ pub use radio_buttons::RadioButton;
 pub use scrollbar::Scrollbar;
 pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
 pub use slider::Slider;
-pub use spinbox::{Spinbox, SpinboxData, SpinboxEvent};
+pub use spinbox::{Spinbox, SpinboxData, SpinboxEvent, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
 pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};

@@ -19,13 +19,16 @@ const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
 
 fn main() {
     Application::new(|cx| {
-        AppState { spinbox_value: 20 }.build(cx);
+        AppState { spinbox_value: 99 }.build(cx);
 
-        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
+        cx.add_stylesheet(LIGHT_THEME).expect("Failed to find stylesheet");
 
         VStack::new(cx, |cx| {
-            VStack::new(cx, |cx| {
-                Spinbox::new(cx, AppState::spinbox_value)
+            HStack::new(cx, |cx| {
+                Spinbox::new(cx, AppState::spinbox_value, SpinboxKind::Horizontal)
+                    .on_increment(|ex| ex.emit(AppEvent::Increment))
+                    .on_decrement(|ex| ex.emit(AppEvent::Decrement));
+                Spinbox::new(cx, AppState::spinbox_value, SpinboxKind::Vertical)
                     .on_increment(|ex| ex.emit(AppEvent::Increment))
                     .on_decrement(|ex| ex.emit(AppEvent::Decrement));
             })
