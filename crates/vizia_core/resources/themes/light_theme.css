@@ -1,0 +1,32 @@
+.main {
+    background-color: #F8F8F8;
+}
+
+spinbox {
+    top: 4px;
+    left: 4px;
+    bottom: 4px;
+    right: 4px;
+    background-color: #fff;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #E4E4E4;
+}
+
+spinbox .spinbox-button {
+    width: 24px;
+    height: 24px;
+    child-space: 1s;
+    color: #888888;
+}
+
+spinbox .spinbox-button:hover {
+    color: #000;
+}
+
+spinbox .spinbox-value {
+    min-width: 24px;
+    height: 24px;
+    child-space: 1s;
+    color: #000;
+}
