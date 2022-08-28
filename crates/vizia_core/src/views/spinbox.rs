@@ -25,14 +25,12 @@ impl Model for SpinboxData {
         event.map(|e, _| match e {
             SpinboxEvent::Increment => {
                 if let Some(callback) = &self.on_increment {
-                    println!("pressed increment");
                     (callback)(cx)
                 }
             }
 
             SpinboxEvent::Decrement => {
                 if let Some(callback) = &self.on_decrement {
-                    println!("pressed decrement");
                     (callback)(cx)
                 }
             }
