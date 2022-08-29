@@ -127,6 +127,7 @@ where {
                 Binding::new(cx, Datepicker::selected_date, move |cx, selected_date| {
                     let view_date = view_date.get(cx);
                     let selected_date = selected_date.get(cx);
+
                     VStack::new(cx, |cx| {
                         HStack::new(cx, |cx| {
                             for h in DAYS_HEADER {
@@ -167,6 +168,8 @@ where {
                         })
                         .class("datepicker-calendar-row");
 
+                        let mut weeks = 1;
+
                         // Filling weeks
                         while current_rendered_day < days_this_month - 7 {
                             HStack::new(cx, |cx| {
@@ -181,11 +184,12 @@ where {
                                 }
                             })
                             .class("datepicker-calendar-row");
+                            weeks += 1;
                         }
 
                         // Last week of month
+                        let mut new_days = 1;
                         HStack::new(cx, |cx| {
-                            let mut new_days = 1;
                             for i in 0..7 {
                                 current_rendered_day += 1;
                                 if current_rendered_day <= days_this_month {
@@ -202,6 +206,30 @@ where {
                             }
                         })
                         .class("datepicker-calendar-row");
+
+                        weeks += 1;
+
+                        // Keep 6 rows for consistency between months
+                        // (there is a possibility to render 6 instead of the usual 5)
+                        if weeks == 5 {
+                            HStack::new(cx, |cx| {
+                                for i in 0..7 {
+                                    current_rendered_day += 1;
+                                    if current_rendered_day <= days_this_month {
+                                        Self::render_day(
+                                            cx,
+                                            &view_date,
+                                            &selected_date,
+                                            current_rendered_day,
+                                        );
+                                    } else {
+                                        Self::render_disabled_day(cx, new_days);
+                                        new_days += 1;
+                                    }
+                                }
+                            })
+                            .class("datepicker-calendar-row");
+                        }
                     })
                     .class("datepicker-calendar");
 
