@@ -24,10 +24,12 @@ use quote::{quote, quote_spanned};
 const BASE_DRUID_DEPRECATED_ATTR_PATH: &str = "druid";
 const BASE_DATA_ATTR_PATH: &str = "data";
 const BASE_LENS_ATTR_PATH: &str = "lens";
+const BASE_RAY_ATTR_PATH: &str = "setter";
 const IGNORE_ATTR_PATH: &str = "ignore";
 const DATA_SAME_FN_ATTR_PATH: &str = "same_fn";
 const DATA_EQ_ATTR_PATH: &str = "eq";
 const LENS_NAME_OVERRIDE_ATTR_PATH: &str = "name";
+const RAY_NAME_OVERRIDE_ATTR_PATH: &str = "name";
 
 /// The fields for a struct or an enum variant.
 #[derive(Debug)]
@@ -83,6 +85,12 @@ pub struct LensAttrs {
     pub lens_name_override: Option<Ident>,
 }
 
+#[derive(Debug)]
+pub struct RayAttrs {
+    pub ignore: bool,
+    pub ray_name_override: Option<Ident>,
+}
+
 impl Fields<DataAttr> {
     pub fn parse_ast(fields: &syn::Fields) -> Result<Self, Error> {
         let kind = match fields {
@@ -111,6 +119,23 @@ impl Fields<LensAttrs> {
             .iter()
             .enumerate()
             .map(|(i, field)| Field::<LensAttrs>::parse_ast(field, i))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(Fields { kind, fields })
+    }
+}
+
+impl Fields<RayAttrs> {
+    pub fn parse_ast(fields: &syn::Fields) -> Result<Self, Error> {
+        let kind = match fields {
+            syn::Fields::Named(_) => FieldKind::Named,
+            syn::Fields::Unnamed(_) | syn::Fields::Unit => FieldKind::Unnamed,
+        };
+
+        let fields = fields
+            .iter()
+            .enumerate()
+            .map(|(i, field)| Field::<RayAttrs>::parse_ast(field, i))
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(Fields { kind, fields })
@@ -258,6 +283,69 @@ impl Field<LensAttrs> {
             }
         }
         Ok(Field { ident, ty, vis, attrs: LensAttrs { ignore, lens_name_override } })
+    }
+}
+
+impl Field<RayAttrs> {
+    pub fn parse_ast(field: &syn::Field, index: usize) -> Result<Self, Error> {
+        let ident = match field.ident.as_ref() {
+            Some(ident) => FieldIdent::Named(ident.to_string().trim_start_matches("r#").to_owned()),
+            None => FieldIdent::Unnamed(index),
+        };
+
+        let ty = field.ty.clone();
+
+        let vis = field.vis.clone();
+
+        let mut ignore = false;
+        let mut ray_name_override = None;
+
+        for attr in field.attrs.iter() {
+            if attr.path.is_ident(BASE_DRUID_DEPRECATED_ATTR_PATH) {
+                panic!(
+                    "The 'druid' attribute has been replaced with separate \
+                    'lens' and 'data' attributes.",
+                );
+            } else if attr.path.is_ident(BASE_RAY_ATTR_PATH) {
+                match attr.parse_meta()? {
+                    Meta::List(meta) => {
+                        for nested in meta.nested.iter() {
+                            match nested {
+                                NestedMeta::Meta(Meta::Path(path))
+                                    if path.is_ident(IGNORE_ATTR_PATH) =>
+                                {
+                                    if ignore {
+                                        return Err(Error::new(
+                                            nested.span(),
+                                            "Duplicate attribute",
+                                        ));
+                                    }
+                                    ignore = true;
+                                }
+                                NestedMeta::Meta(Meta::NameValue(meta))
+                                    if meta.path.is_ident(RAY_NAME_OVERRIDE_ATTR_PATH) =>
+                                {
+                                    if ray_name_override.is_some() {
+                                        return Err(Error::new(meta.span(), "Duplicate attribute"));
+                                    }
+
+                                    let ident = parse_lit_into_ident(&meta.lit)?;
+                                    ray_name_override = Some(ident);
+                                }
+                                other => return Err(Error::new(other.span(), "Unknown attribute")),
+                            }
+                        }
+                    }
+                    other => {
+                        return Err(Error::new(
+                            other.span(),
+                            "Expected attribute list (the form #[lens(one, two)])",
+                        ));
+                    }
+                }
+            }
+        }
+        Ok(Field { ident, ty, vis, attrs: RayAttrs { ignore, ray_name_override } })
     }
 }
 

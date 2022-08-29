@@ -17,24 +17,9 @@ const STYLE: &str = r#"
 
 "#;
 
-#[derive(Lens)]
+#[derive(Lens, Model, Setter)]
 pub struct AppData {
     value: f32,
-}
-
-#[derive(Debug)]
-pub enum AppEvent {
-    SetValue(f32),
-}
-
-impl Model for AppData {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetValue(value) => {
-                self.value = *value;
-            }
-        });
-    }
 }
 
 fn main() {
@@ -44,10 +29,10 @@ fn main() {
         AppData { value: 0.2 }.build(cx);
 
         Knob::new(cx, 0.5, AppData::value, false).on_changing(|cx, val| {
-            cx.emit(AppEvent::SetValue(val));
+            cx.emit(AppDataSetter::Value(val));
         });
         Knob::new(cx, 0.5, AppData::value, true).on_changing(|cx, val| {
-            cx.emit(AppEvent::SetValue(val));
+            cx.emit(AppDataSetter::Value(val));
         });
 
         //ArcTrack::new(cx).width(Pixels(50.0)).height(Pixels(50.0)).space(Pixels(20.0));
