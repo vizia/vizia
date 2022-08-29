@@ -123,18 +123,17 @@ where {
 
             Element::new(cx).class("datepicker-divisor");
 
-            VStack::new(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    for h in DAYS_HEADER {
-                        Element::new(cx).text(h).class("datepicker-calendar-header");
-                    }
-                })
-                .class("datepicker-calendar-headers");
-
-                Binding::new(cx, Datepicker::view_date, |cx, view_date| {
-                    Binding::new(cx, Datepicker::selected_date, move |cx, selected_date| {
-                        let view_date = view_date.get(cx);
-                        let selected_date = selected_date.get(cx);
+            Binding::new(cx, Datepicker::view_date, |cx, view_date| {
+                Binding::new(cx, Datepicker::selected_date, move |cx, selected_date| {
+                    let view_date = view_date.get(cx);
+                    let selected_date = selected_date.get(cx);
+                    VStack::new(cx, |cx| {
+                        HStack::new(cx, |cx| {
+                            for h in DAYS_HEADER {
+                                Element::new(cx).text(h).class("datepicker-calendar-header");
+                            }
+                        })
+                        .class("datepicker-calendar-headers");
 
                         let days_this_month =
                             Self::last_day_of_month(view_date.year, view_date.month);
@@ -203,12 +202,36 @@ where {
                             }
                         })
                         .class("datepicker-calendar-row");
-                    });
-                });
-            })
-            .class("datepicker-calendar");
+                    })
+                    .class("datepicker-calendar");
 
-            Element::new(cx).class("datepicker-divisor");
+                    Element::new(cx).class("datepicker-divisor");
+
+                    let year = selected_date.year;
+                    let month = selected_date.month;
+                    let day = selected_date.day;
+
+                    Label::new(
+                        cx,
+                        &format!(
+                            "{} {} of {} {}",
+                            NaiveDate::from_ymd(year, month, day).weekday().to_string(),
+                            day,
+                            month,
+                            year
+                        ),
+                    )
+                    .class("datepicker-selected-date");
+
+                    HStack::new(cx, |cx| {
+                        Button::new(cx, |ex| println!("Cancel"), |cx| Label::new(cx, "Cancel"))
+                            .class("datepicker-cancel");
+                        Button::new(cx, |ex| println!("Apply"), |cx| Label::new(cx, "Apply"))
+                            .class("datepicker-apply");
+                    })
+                    .class("datepicker-actions-container");
+                });
+            });
         })
         .layout_type(LayoutType::Column)
         .keyboard_navigatable(true)

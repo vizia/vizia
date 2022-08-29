@@ -215,3 +215,48 @@ datepicker {
     color: #404040;
     child-space: 1s;
 }
+
+.datepicker-selected-date {
+    left: 1s;
+    right: 1s;
+    color: #B0B0B0;
+}
+
+.datepicker-actions-container {
+    left: 1s;
+    right: 1s;
+    col-between: 4px;
+}
+
+.datepicker-cancel {
+    border-width: 2px;
+    border-color: #EF5151;
+    border-radius: 4px;
+    height: auto;
+    width: auto;
+}
+
+.datepicker-cancel label {
+    top: 2px;
+    bottom: 2px;
+    right: 8px;
+    left: 8px;
+    color: #EF5151;
+}
+
+.datepicker-apply {
+    border-width: 2px;
+    border-color: #51AFEF;
+    background-color: #51AFEF;
+    border-radius: 4px;
+    height: auto;
+    width: auto;
+}
+
+.datepicker-apply label {
+    top: 2px;
+    bottom: 2px;
+    right: 8px;
+    left: 8px;
+    color: #181818;
+}
