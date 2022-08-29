@@ -87,7 +87,7 @@ checkbox:hover {
 
 checkbox:focus-visible {
     outline-width: 1px;
-    outline-color: #51AFEF;
+    outline-color: #51afef80;
     outline-offset: 3px;
 }
 
@@ -115,6 +115,57 @@ checkbox:checked:disabled {
     background-color: #404040;
     border-color: #404040;
     color: #181818;
+}
+
+dropdown .title {
+    width: auto;
+    height: 30px;
+    background-color: #242424;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #2F2F2F;
+    child-space: 1s;
+    child-left: 5px;
+    overflow: visible;
+}
+
+dropdown .title:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+dropdown popup {
+    top: 4px;
+    background-color: #242424;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #2F2F2F;
+}
+
+dropdown popup list {
+    width: 1s;
+}
+
+dropdown list label {
+    width: 1s;
+    height: 30px;
+    child-left: 6px;
+    color: #888;
+}
+
+dropdown list label:checked {
+    color: #fff;
+}
+
+dropdown list label:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+dropdown vstack {
+    child-space: auto;
 }
 
 spinbox {

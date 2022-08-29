@@ -105,7 +105,7 @@ fn main() {
         .width(Units::Stretch(1.0))
         .height(Units::Stretch(1.0));
     })
-    //.ignore_default_theme()
+    .ignore_default_theme()
     .title("Checkbox")
     .run();
 }
