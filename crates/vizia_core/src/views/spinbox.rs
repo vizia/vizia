@@ -61,17 +61,14 @@ impl Spinbox {
     {
         Self {}
             .build(cx, move |cx| {
-                let sd = SpinboxData { on_decrement: None, on_increment: None };
-                let parent = cx.current().parent(&cx.tree).unwrap();
-                cx.with_current(parent, |cx| sd.build(cx));
-                cx.emit_to(cx.current(), ());
-
+                SpinboxData { on_decrement: None, on_increment: None }.build(cx);
                 Binding::new(cx, lens, move |cx, lens| {
                     let lens = lens.get(cx);
                     match kind {
                         SpinboxKind::Horizontal => {
                             HStack::new(cx, |cx| {
                                 Element::new(cx)
+                                    .font("icons")
                                     .text("-")
                                     .on_press(|ex| ex.emit(SpinboxEvent::Decrement))
                                     .class("spinbox-button")
@@ -81,6 +78,7 @@ impl Spinbox {
                                     .overflow(Overflow::Visible)
                                     .class("spinbox-value");
                                 Element::new(cx)
+                                    .font("icons")
                                     .text("+")
                                     .on_press(|ex| ex.emit(SpinboxEvent::Increment))
                                     .class("spinbox-button")
@@ -121,7 +119,7 @@ impl<'a> Handle<'a, Spinbox> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        self.cx.emit(SpinboxEvent::SetOnIncrement(Some(Arc::new(callback))));
+        self.cx.emit_to(self.entity(), SpinboxEvent::SetOnIncrement(Some(Arc::new(callback))));
 
         self
     }
@@ -130,7 +128,7 @@ impl<'a> Handle<'a, Spinbox> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        self.cx.emit(SpinboxEvent::SetOnDecrement(Some(Arc::new(callback))));
+        self.cx.emit_to(self.entity(), SpinboxEvent::SetOnDecrement(Some(Arc::new(callback))));
 
         self
     }

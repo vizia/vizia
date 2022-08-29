@@ -39,9 +39,9 @@ fn main() {
                 Spinbox::new(cx, AppState::spinbox_value_1, SpinboxKind::Horizontal)
                     .on_increment(|ex| ex.emit(AppEvent::Increment_1))
                     .on_decrement(|ex| ex.emit(AppEvent::Decrement_1));
-                Spinbox::new(cx, AppState::spinbox_value_1, SpinboxKind::Vertical)
-                    .on_increment(|ex| ex.emit(AppEvent::Increment_1))
-                    .on_decrement(|ex| ex.emit(AppEvent::Decrement_1));
+                // Spinbox::new(cx, AppState::spinbox_value_1, SpinboxKind::Vertical)
+                //     .on_increment(|ex| ex.emit(AppEvent::Increment_1))
+                //     .on_decrement(|ex| ex.emit(AppEvent::Decrement_1));
                 Spinbox::new(cx, AppState::spinbox_value_2, SpinboxKind::Horizontal)
                     .on_increment(|ex| ex.emit(AppEvent::Increment_2))
                     .on_decrement(|ex| ex.emit(AppEvent::Decrement_2));
