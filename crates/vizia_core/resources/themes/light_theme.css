@@ -1,5 +1,7 @@
 .main {
     background-color: #F8F8F8;
+    width: 1s;
+    height: 1s;
 }
 button {
     width: auto;

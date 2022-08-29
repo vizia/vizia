@@ -46,15 +46,10 @@ fn main() {
                     .on_increment(|ex| ex.emit(AppEvent::Increment_2))
                     .on_decrement(|ex| ex.emit(AppEvent::Decrement_2));
             })
-            .size(Auto)
-            .row_between(Pixels(10.0))
-            .space(Stretch(1.0));
+            .class("container");
         })
-        .class("main")
-        .width(Units::Stretch(1.0))
-        .height(Units::Stretch(1.0));
+        .class("main");
     })
-    //.ignore_default_theme()
     .ignore_default_theme()
     .title("Spinbox")
     .run();

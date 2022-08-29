@@ -4,6 +4,14 @@
 
 .main {
     background-color: #181818;
+    width: 1s;
+    height: 1s;
+}
+
+.container {
+    col-between: 10px;
+    row-between: 10px;
+    space: 1s;
 }
 
 button {

@@ -72,13 +72,9 @@ fn main() {
 
                 //
             })
-            .size(Auto)
-            .col_between(Pixels(10.0))
-            .space(Stretch(1.0));
+            .class("container");
         })
-        .class("main")
-        .width(Units::Stretch(1.0))
-        .height(Units::Stretch(1.0));
+        .class("main");
     })
     .ignore_default_theme()
     .title("Label")
