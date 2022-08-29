@@ -377,7 +377,7 @@ impl View for TickKnob {
             cx.background_color().cloned().unwrap_or_default().into();
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
-        let background_color = femtovg::Color::rgb(54, 54, 54);
+        let background_color = femtovg::Color::rgb(127, 127, 127);
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
 
         let bounds = cx.bounds();
@@ -507,7 +507,7 @@ impl View for ArcTrack {
             cx.background_color().cloned().unwrap_or_default().into();
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
-        let background_color = femtovg::Color::rgb(54, 54, 54);
+        let background_color = femtovg::Color::rgb(127, 127, 127);
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
 
         let bounds = cx.bounds();

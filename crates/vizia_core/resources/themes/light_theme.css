@@ -163,6 +163,25 @@ dropdown vstack {
     child-space: auto;
 }
 
+knob {
+    width: 48px;
+    height: 48;
+    background-color: #242424;
+    border-radius: 38px;
+    border-width: 2px;
+    border-color: #2F2F2F;
+}
+
+knob .track {
+    background-color: #51AFEF;
+}
+
+knob:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
 spinbox {
     top: 4px;
     left: 4px;
