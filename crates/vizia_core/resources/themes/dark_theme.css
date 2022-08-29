@@ -6,6 +6,70 @@
     background-color: #181818;
 }
 
+button {
+    width: auto;
+    height: 28px;
+    border-radius: 4px;
+    child-space: 1s;
+    child-left: 10px;
+    child-right: 10px;
+    border-width: 2px;
+    border-color: #51AFEF;
+    overflow: visible;
+}
+
+button label {
+    color: #51AFEF;
+    child-space: 1s;
+}
+
+button:over {
+    border-color: #9FD5FB;
+}
+
+button:over label {
+    color: #9FD5FB;
+}
+
+button:active {
+    border-color: #fff;
+}
+
+button:active label {
+    color: #fff;
+}
+
+button.accent {
+    background-color: #51AFEF;
+    border-width: 0px;
+}
+
+button.accent label {
+    color: #181818;
+}
+
+button.accent:over {
+    background-color: #9FD5FB;
+}
+
+button.accent:active {
+    background-color: #fff;
+}
+
+button:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+button:disabled {
+    border-color: #888;
+}
+
+button:disabled label {
+    color: #888;
+}
+
 spinbox {
     top: 4px;
     left: 4px;
