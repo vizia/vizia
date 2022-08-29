@@ -328,6 +328,90 @@ scrollbar > .thumb {
     min-height: 12px;
 }
 
+switch {
+    width: 24px;
+    height: 16px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: #888888;
+    background-color: transparent;
+    child-space: 1s;
+    transition: border-color 0.1 0;
+}
+
+.switch-handle-container {
+    left: 2px;
+    top: 2px;
+    width: 16px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: transparent;
+    transition: background-color 0.1 0;
+}
+
+.switch-handle {
+    width: 8px;
+    height: 8px;
+    background-color: #888888;
+    border-radius: 4px;
+    transition: background-color 0.1 0;
+}
+
+switch:hover .switch-handle-container .switch-handle {
+    background-color: #51AFEF;
+}
+
+switch:focus-visible {
+    outline-width: 1px;
+    outline-color: #51AFEF;
+}
+
+switch:active {
+    border-color: #b6b6b6;
+    background-color: #dcdcdc;
+}
+
+switch:checked {
+    border-color: #51AFEF;
+}
+
+switch:checked .switch-handle-container {
+    background-color: #51afef40;
+}
+
+switch:checked .switch-handle-container .switch-handle {
+    background-color: #51AFEF;
+    left: 8px;
+}
+
+switch:checked:hover .switch-handle-container .switch-handle {
+    background-color: #9FD5FB;
+}
+
+switch:disabled {
+    border-color: #B6B6B6;
+}
+
+switch:disabled .switch-handle-container .switch-handle {
+    background-color: #B6B6B6;
+}
+
+switch:hover:disabled {
+    background-color: transparent;
+}
+
+switch:hover:disabled .switch-handle-container .switch-handle {
+    background-color: #B6B6B6;
+}
+
+switch:checked:disabled .switch-handle-container {
+    background-color: #B6B6B640;
+}
+
+switch:checked:disabled .switch-handle-container .switch-handle {
+    background-color: #B6B6B6;
+}
+
 list {
     width: auto;
     height: auto;
