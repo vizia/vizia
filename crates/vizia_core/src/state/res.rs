@@ -193,7 +193,7 @@ impl<T: Copy> Res<(T, T)> for (T, T) {
 }
 
 impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
-    fn get_val(&self, cx: &Context) -> Option<T> {
+    fn get_val(&self, _: &Context) -> Option<T> {
         self.clone()
     }
 
