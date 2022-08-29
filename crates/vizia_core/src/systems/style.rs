@@ -68,7 +68,14 @@ fn entity_selector(cx: &Context, entity: Entity) -> Selector {
         id: cx.style.ids.get(entity).cloned(),
         element: cx.style.elements.get(entity).cloned(),
         classes: cx.style.classes.get(entity).cloned().unwrap_or_default(),
-        pseudo_classes: cx.style.pseudo_classes.get(entity).cloned().unwrap_or_default(),
+        pseudo_classes: {
+            let mut pseudo_classes =
+                cx.style.pseudo_classes.get(entity).cloned().unwrap_or_default();
+            if let Some(disabled) = cx.style.disabled.get(entity) {
+                pseudo_classes.set(PseudoClass::DISABLED, *disabled);
+            }
+            pseudo_classes
+        },
         relation: SelectorRelation::None,
     }
 }
