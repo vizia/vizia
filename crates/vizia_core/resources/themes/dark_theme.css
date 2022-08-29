@@ -70,6 +70,53 @@ button:disabled label {
     color: #888;
 }
 
+checkbox {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border-width: 2px;
+    border-color: #888;
+    background-color: transparent;
+    child-space: 1s;
+}
+
+checkbox:hover {
+    border-color: #51AFEF;
+    background-color: transparent;
+}
+
+checkbox:focus-visible {
+    outline-width: 1px;
+    outline-color: #51AFEF;
+    outline-offset: 3px;
+}
+
+checkbox:checked {
+    background-color: #51AFEF;
+    border-color: #51AFEF;
+    color: #181818;
+}
+
+checkbox:disabled {
+    border-color: #404040;
+}
+
+checkbox:hover:disabled {
+    background-color: transparent;
+}
+
+checkbox:checked:hover {
+    background-color: #9FD5FB;
+    border-color: #9FD5FB;
+    color: #181818;
+}
+
+checkbox:checked:disabled {
+    background-color: #404040;
+    border-color: #404040;
+    color: #181818;
+}
+
 spinbox {
     top: 4px;
     left: 4px;
