@@ -209,7 +209,7 @@ datepicker {
 
 
 
-.datepicker-calendar-day-disabled {
+.datepicker-calendar-day:disabled {
     width: 32px;
     height: 32px;
     color: #404040;

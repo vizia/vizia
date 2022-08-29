@@ -65,7 +65,7 @@ impl Datepicker {
     }
 
     fn render_disabled_day(cx: &mut Context, day: u32) {
-        Element::new(cx).text(&day.to_string()).class("datepicker-calendar-day-disabled");
+        Element::new(cx).text(&day.to_string()).class("datepicker-calendar-day").disabled(true);
     }
 
     fn render_day(cx: &mut Context, view_date: &Date, selected_date: &Date, current_day: u32) {
