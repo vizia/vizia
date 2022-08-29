@@ -87,6 +87,10 @@ name = "label"
 path = "examples/views/label.rs"
 
 [[example]]
+name = "spinbox"
+path = "examples/views/spinbox.rs"
+
+[[example]]
 name = "slider"
 path = "examples/views/slider.rs"
 
