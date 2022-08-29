@@ -180,18 +180,10 @@ datepicker {
     right: 1s;
 }
 
-.datepicker-calendar-headers {
-
-}
-
 .datepicker-calendar-header {
     child-space: 1s;
     width: 32px;
     height: 32px;
-}
-
-.datepicker-calendar-row {
-
 }
 
 .datepicker-calendar-day {
@@ -206,8 +198,6 @@ datepicker {
     background-color: #51AFEF;
     border-radius: 4px;
 }
-
-
 
 .datepicker-calendar-day-disabled {
     width: 32px;
