@@ -1,6 +1,6 @@
 use vizia::prelude::*;
 
-#[derive(Lens)]
+#[derive(Lens, Ray)]
 pub struct AppData {
     text: String,
 }
@@ -12,11 +12,7 @@ pub enum AppEvent {
 
 impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetText(text) => {
-                self.text = text.clone();
-            }
-        });
+        event.take::<AppDataRay, _>(|mut app_event, _| app_event.strike(self));
     }
 }
 

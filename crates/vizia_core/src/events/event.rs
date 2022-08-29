@@ -27,6 +27,7 @@ pub enum Propagation {
 pub trait Message: Any + Send {
     /// A `&dyn Any` can be cast to a reference to a concrete type.
     fn as_any(&self) -> &dyn Any;
+    fn into_any(self) -> Box<dyn Any>;
 }
 
 impl dyn Message {
@@ -41,6 +42,9 @@ impl<S: 'static + Send> Message for S {
     fn as_any(&self) -> &dyn Any {
         self
     }
+    fn into_any(self) -> Box<dyn Any> {
+        Box::new(self)
+    }
 }
 
 /// A wrapper around a message, providing metadata on how the event travels through the tree.
@@ -50,7 +54,7 @@ pub struct Event {
     /// The meta data of the event
     pub meta: EventMeta,
     /// The message of the event
-    message: Box<dyn Message>,
+    message: Option<Box<dyn Message>>,
 }
 
 impl Debug for Event {
@@ -74,7 +78,7 @@ impl Event {
     where
         M: Message,
     {
-        Event { meta: Default::default(), message: Box::new(message) }
+        Event { meta: Default::default(), message: Some(Box::new(message)) }
     }
 
     /// Sets the target of the event.
@@ -114,8 +118,30 @@ impl Event {
         M: Message,
         F: FnOnce(&M, &mut EventMeta),
     {
-        if let Some(message) = self.message.downcast() {
-            (f)(message, &mut self.meta);
+        if let Some(message) = &self.message {
+            if let Some(message) = message.downcast() {
+                (f)(message, &mut self.meta);
+            }
+        }
+    }
+
+    /// Tries to downcast the event message to the specified type. If the downcast was successful,
+    /// the downcasted message gets passed into `f` by value, and the event becomes consumed.
+    pub fn take<M, F>(&mut self, f: F)
+    where
+        M: Message,
+        F: FnOnce(Box<M>, &mut EventMeta),
+    {
+        if let Some(message) = self.message.take() {
+            match message.into_any().downcast() {
+                Ok(v) => {
+                    self.meta.consume();
+                    (f)(v, &mut self.meta);
+                }
+                Err(v) => {
+                    self.message = Some(v.downcast().unwrap());
+                },
+            }
         }
     }
 }

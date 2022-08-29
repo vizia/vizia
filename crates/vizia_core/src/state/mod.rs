@@ -145,3 +145,6 @@ pub use binding::*;
 
 mod res;
 pub use res::*;
+
+mod ray;
+pub use ray::*;
