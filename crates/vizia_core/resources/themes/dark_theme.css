@@ -195,6 +195,61 @@ knob:focus-visible {
     outline-offset: 3px;
 }
 
+radiobutton {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+    border-radius: 50%;
+    border-color: #888;
+    background-color: transparent;
+    child-space: 1s;
+}
+
+radiobutton:hover {
+    border-color: #51AFEF;
+}
+
+radiobutton:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+radiobutton:checked {
+    border-color: #51AFEF;
+}
+
+radiobutton:checked:hover {
+    border-color: #9FD5FB;
+}
+
+radiobutton:disabled {
+    border-color: #404040;
+}
+
+radiobutton .inner {
+    width: 0px;
+    height: 0px;
+    border-radius: 50%;
+    background-color: #888;
+}
+
+radiobutton:checked .inner {
+    width: 8px;
+    height: 8px;
+    background-color: #51AFEF;
+}
+
+radiobutton:hover .inner {
+    background-color: #9FD5FB;
+}
+
+radiobutton:disabled .inner {
+    width: 8px;
+    height: 8px;
+    background-color: #404040;
+}
+
 spinbox {
     top: 4px;
     left: 4px;
