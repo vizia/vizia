@@ -19,34 +19,6 @@ pub enum Propagation {
     Direct,
 }
 
-/// The content of an event.
-///
-/// A message can be any static type.
-///
-/// This trait is part of the prelude.
-pub trait Message: Any + Send {
-    /// A `&dyn Any` can be cast to a reference to a concrete type.
-    fn as_any(&self) -> &dyn Any;
-    fn into_any(self) -> Box<dyn Any>;
-}
-
-impl dyn Message {
-    /// Casts a message to the specified type if the message is of that type.
-    pub fn downcast<T: Message>(&self) -> Option<&T> {
-        self.as_any().downcast_ref()
-    }
-}
-
-// Implements message for any static type that implements Send
-impl<S: 'static + Send> Message for S {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-    fn into_any(self) -> Box<dyn Any> {
-        Box::new(self)
-    }
-}
-
 /// A wrapper around a message, providing metadata on how the event travels through the tree.
 ///
 /// This type is part of the prelude.
@@ -54,7 +26,7 @@ pub struct Event {
     /// The meta data of the event
     pub meta: EventMeta,
     /// The message of the event
-    message: Option<Box<dyn Message>>,
+    message: Option<Box<dyn Any + Send>>,
 }
 
 impl Debug for Event {
@@ -76,7 +48,7 @@ impl Event {
     /// Creates a new event with a specified message
     pub fn new<M>(message: M) -> Self
     where
-        M: Message,
+        M: Any + Send,
     {
         Event { meta: Default::default(), message: Some(Box::new(message)) }
     }
@@ -115,11 +87,11 @@ impl Event {
     /// the downcasted message and the event meta data get passed into `f`.
     pub fn map<M, F>(&mut self, f: F)
     where
-        M: Message,
+        M: Any + Send,
         F: FnOnce(&M, &mut EventMeta),
     {
         if let Some(message) = &self.message {
-            if let Some(message) = message.downcast() {
+            if let Some(message) = message.as_ref().downcast_ref() {
                 (f)(message, &mut self.meta);
             }
         }
@@ -129,17 +101,17 @@ impl Event {
     /// the downcasted message gets passed into `f` by value, and the event becomes consumed.
     pub fn take<M, F>(&mut self, f: F)
         where
-            M: Message,
+            M: Any + Send,
             F: FnOnce(Box<M>, &mut EventMeta),
     {
         if let Some(message) = &self.message {
-            if message.as_ref().as_any().is::<M>() {
+            if message.as_ref().is::<M>() {
                 // Safe to unwrap because we already checked it exists
                 let m = self.message.take().unwrap();
                 // Safe to unwrap because we already checked it can be cast to M
-                let weh = <dyn Message>::into_any(*m);
-                let v = weh.downcast::<M>().unwrap();
+                let v = m.downcast().unwrap();
                 (f)(v, &mut self.meta);
+                self.meta.consume();
             }
         }
     }

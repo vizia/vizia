@@ -44,7 +44,7 @@ pub mod prelude {
     };
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent};
-    pub use super::events::{Event, Message, Propagation};
+    pub use super::events::{Event, Propagation};
     pub use super::handle::Handle;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     pub use super::localization::Localized;
