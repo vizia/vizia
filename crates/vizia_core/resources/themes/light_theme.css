@@ -1,5 +1,5 @@
 .main {
-    background-color: #F8F8F8;
+    background-color: #EBEBEB;
     width: 1s;
     height: 1s;
 }
@@ -490,4 +490,38 @@ tablecolumn {
     child-bottom: 2px;
     border-radius: 4px;
     color: #51AFEF;
+}
+
+textbox {
+    width: 280px;
+    height: 80px;
+    border-width: 1px;
+    border-color: #E4E4E4;
+    border-radius: 4px;
+    background-color: #fff;
+    child-left: 5px;
+    child-right: 5px;
+    child-top: 2px;
+    child-bottom: 2px;
+}
+
+textbox:checked {
+    border-color: #51AFEF;
+}
+textbox:checked .textbox_content {
+    caret-color: #51AFEF;
+    selection-color: #51AFEF40;
+}
+
+textbox:disabled {
+    color: #888;
+}
+
+textbox:focus-visible {
+    border-color: #51afef80;
+}
+
+textbox.error {
+    border-color: #EF5151;
+    border-width: 2px;
 }
