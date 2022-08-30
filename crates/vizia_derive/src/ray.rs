@@ -1,9 +1,9 @@
-use proc_macro2::Ident;
-use quote::quote;
-use syn::{Data};
-use syn::spanned::Spanned;
 use crate::attr::{FieldKind, Fields, RayAttrs};
 use crate::lens::{char_has_case, increase_visibility};
+use proc_macro2::Ident;
+use quote::quote;
+use syn::spanned::Spanned;
+use syn::Data;
 
 pub(crate) fn derive_ray_impl(
     input: syn::DeriveInput,
@@ -65,10 +65,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         }
     });
 
-    let enum_docs = format!(
-        "Ray enum for [`{ty}`](super::{ty}).",
-        ty = enum_type,
-    );
+    let enum_docs = format!("Ray enum for [`{ty}`](super::{ty}).", ty = enum_type,);
 
     let expanded = quote! {
         #[doc = #enum_docs]

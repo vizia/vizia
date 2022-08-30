@@ -312,26 +312,26 @@ impl Field<RayAttrs> {
                         for nested in meta.nested.iter() {
                             match nested {
                                 NestedMeta::Meta(Meta::Path(path))
-                                if path.is_ident(IGNORE_ATTR_PATH) =>
-                                    {
-                                        if ignore {
-                                            return Err(Error::new(
-                                                nested.span(),
-                                                "Duplicate attribute",
-                                            ));
-                                        }
-                                        ignore = true;
+                                    if path.is_ident(IGNORE_ATTR_PATH) =>
+                                {
+                                    if ignore {
+                                        return Err(Error::new(
+                                            nested.span(),
+                                            "Duplicate attribute",
+                                        ));
                                     }
+                                    ignore = true;
+                                }
                                 NestedMeta::Meta(Meta::NameValue(meta))
-                                if meta.path.is_ident(RAY_NAME_OVERRIDE_ATTR_PATH) =>
-                                    {
-                                        if ray_name_override.is_some() {
-                                            return Err(Error::new(meta.span(), "Duplicate attribute"));
-                                        }
-
-                                        let ident = parse_lit_into_ident(&meta.lit)?;
-                                        ray_name_override = Some(ident);
+                                    if meta.path.is_ident(RAY_NAME_OVERRIDE_ATTR_PATH) =>
+                                {
+                                    if ray_name_override.is_some() {
+                                        return Err(Error::new(meta.span(), "Duplicate attribute"));
                                     }
+
+                                    let ident = parse_lit_into_ident(&meta.lit)?;
+                                    ray_name_override = Some(ident);
+                                }
                                 other => return Err(Error::new(other.span(), "Unknown attribute")),
                             }
                         }

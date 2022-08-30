@@ -100,9 +100,9 @@ impl Event {
     /// Tries to downcast the event message to the specified type. If the downcast was successful,
     /// the downcasted message gets passed into `f` by value, and the event becomes consumed.
     pub fn take<M, F>(&mut self, f: F)
-        where
-            M: Any + Send,
-            F: FnOnce(Box<M>, &mut EventMeta),
+    where
+        M: Any + Send,
+        F: FnOnce(Box<M>, &mut EventMeta),
     {
         if let Some(message) = &self.message {
             if message.as_ref().is::<M>() {
