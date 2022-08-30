@@ -437,3 +437,57 @@ switch:checked:disabled .switch-handle-container {
 switch:checked:disabled .switch-handle-container .switch-handle {
     background-color: #B6B6B6;
 }
+
+table {
+    border-radius: 4px;
+    space: 1s;
+}
+
+tablecolumn {
+    width: 120px;
+}
+
+.table-column-header {
+    height: 30px;
+}
+
+.table-column-title {
+    child-left: 5px;
+    width: 1s;
+    height: 1s;
+    font: "roboto-bold";
+}
+
+.table-column-icon {
+    width: 30px;
+    child-space: 1s;
+    font: "icons";
+}
+
+.table-row-divisor {
+    height: 1px;
+    background-color: #404040;
+}
+
+.table-element {
+    child-left: 5px;
+    width: 1s;
+    height: 32px;
+    child-space: 1s;
+    child-left: 4px;
+    background-color: transparent;
+}
+
+.table-element-colored {
+    left: 4px;
+    top: 1s;
+    bottom: 1s;
+    background-color: #51AFEF20;
+    child-space: 1s;
+    child-left: 8px;
+    child-right: 8px;
+    child-top: 2px;
+    child-bottom: 2px;
+    border-radius: 4px;
+    color: #51AFEF;
+}
