@@ -246,6 +246,40 @@ radiobutton:disabled .inner {
     background-color: #B6B6B6;
 }
 
+scrollbar {
+    background-color: #F8F8F8;
+}
+
+scrollbar.horizontal {
+    height: 8px;
+}
+
+scrollbar.vertical {
+    width: 8px;
+}
+
+scrollbar .thumb {
+    background-color: #B6B6B6;
+    min-width: 4px;
+    min-height: 4px;
+}
+
+scrollbar.horizontal .thumb {
+    height: 8px;
+}
+
+scrollbar.vertical .thumb {
+    width: 8px;
+}
+
+scrollbar .thumb:hover {
+    background-color: #888;
+}
+
+scrollbar .thumb:focus {
+    background-color: #888;
+}
+
 spinbox {
     top: 4px;
     left: 4px;
