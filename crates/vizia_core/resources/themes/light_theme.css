@@ -280,6 +280,31 @@ scrollbar .thumb:focus {
     background-color: #888;
 }
 
+slider * {
+    background-color: #51AFEF20;
+    border-radius: 2px;
+}
+
+slider:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+slider .active {
+    background-color: #51afef80;
+    border-radius: 2px;
+}
+
+slider .thumb {
+    background-color: #51AFEF;
+    border-radius: 6px;
+    width: 12px;
+    height: 12px;
+    child-space: 1s;
+}
+
 spinbox {
     top: 4px;
     left: 4px;

@@ -262,6 +262,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
 
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
+                cx.focus_with_visibility(false);
                 cx.release();
                 cx.set_active(false);
             }

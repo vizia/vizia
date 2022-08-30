@@ -88,15 +88,16 @@ zstack > * {
 }
 
 slider {
-    height: 5px;
+    height: 4px;
     width: 1s;
+    border-radius: 2px;
 }
 
 slider.vertical {
     top: auto;
     bottom: auto;
     height: 1s;
-    width: 5px;
+    width: 4px;
 }
 
 slider .thumb {
