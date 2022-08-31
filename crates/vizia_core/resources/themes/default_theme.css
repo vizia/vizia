@@ -155,6 +155,10 @@ label.h1 {
     bottom: 10px;
 }
 
+label.describing {
+    cursor: hand;
+}
+
 label:disabled {
     color: gray;
 }
