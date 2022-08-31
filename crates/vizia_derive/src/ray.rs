@@ -46,24 +46,22 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
-    // Define ray types for each field
-    let variants = fields.iter().filter(|f| !f.attrs.ignore).map(|f| {
+    let mut variants = vec![];
+    let mut swap_arms = vec![];
+    let mut apply_arms = vec![];
+
+    // Define ray types for each field, define ray match arms for each field
+    for f in fields.iter().filter(|f| !f.attrs.ignore) {
         let field_name = &f.ident.unwrap_named();
         let field_ty = &f.ty;
         let variant_name = Ident::new(&to_camel_case(&field_name.to_string()), field_name.span());
-        quote! {
-            #variant_name(#field_ty)
-        }
-    });
 
-    // Define ray match arms for each field
-    let match_arms = fields.iter().filter(|f| !f.attrs.ignore).map(|f| {
-        let field_name = &f.ident.unwrap_named();
-        let variant_name = Ident::new(&to_camel_case(&field_name.to_string()), field_name.span());
-        quote! {
-            #ray_name::#variant_name(v) => std::mem::swap(v, &mut source.#field_name)
-        }
-    });
+        variants.push(quote! { #variant_name(#field_ty) });
+        swap_arms.push(
+            quote! { #ray_name::#variant_name(v) => std::mem::swap(v, &mut source.#field_name) },
+        );
+        apply_arms.push(quote! { #ray_name::#variant_name(v) => source.#field_name = v });
+    }
 
     let enum_docs = format!("Ray enum for [`{ty}`](super::{ty}).", ty = enum_type,);
 
@@ -78,14 +76,19 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         impl #impl_generics Ray for #ray_name #ty_generics #where_clause {
             type Source = #enum_type;
 
-            fn strike(&mut self, source: &mut Self::Source) {
+            fn swap(&mut self, source: &mut Self::Source) {
                 match self {
-                    #(#match_arms),*
+                    #(#swap_arms),*
+                }
+            }
+
+            fn apply(self, source: &mut Self::Source) {
+                match self {
+                    #(#apply_arms),*
                 }
             }
         }
     };
-    println!("{}", expanded);
 
     Ok(expanded)
 }

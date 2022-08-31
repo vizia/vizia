@@ -1,5 +1,6 @@
 pub trait Ray {
     type Source;
 
-    fn strike(&mut self, source: &mut Self::Source);
+    fn apply(self, source: &mut Self::Source);
+    fn swap(&mut self, source: &mut Self::Source);
 }

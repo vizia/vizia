@@ -98,22 +98,19 @@ impl Event {
     }
 
     /// Tries to downcast the event message to the specified type. If the downcast was successful,
-    /// the downcasted message gets passed into `f` by value, and the event becomes consumed.
-    pub fn take<M, F>(&mut self, f: F)
-    where
-        M: Any + Send,
-        F: FnOnce(Box<M>, &mut EventMeta),
-    {
+    /// return the message by value and consume the event. Otherwise, do nothing.
+    pub fn take<M: Any + Send>(&mut self) -> Option<M> {
         if let Some(message) = &self.message {
             if message.as_ref().is::<M>() {
                 // Safe to unwrap because we already checked it exists
                 let m = self.message.take().unwrap();
                 // Safe to unwrap because we already checked it can be cast to M
                 let v = m.downcast().unwrap();
-                (f)(v, &mut self.meta);
                 self.meta.consume();
+                return Some(*v);
             }
         }
+        None
     }
 }
 

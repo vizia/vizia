@@ -7,7 +7,7 @@ pub struct AppData {
 
 impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.take::<AppDataRay, _>(|mut app_event, _| app_event.strike(self));
+        event.take::<AppDataRay>().map(|ray| ray.apply(self));
     }
 }
 
