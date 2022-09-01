@@ -93,22 +93,22 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
                 (Units::Stretch(_), Units::Stretch(_)) => {
                     x += w / 2.0;
                     Align::Center
-                },
+                }
                 (Units::Stretch(_), _) => {
                     x += w;
                     Align::Right
-                },
+                }
                 _ => Align::Left,
             };
             let baseline = match (child_top, child_bottom) {
                 (Units::Stretch(_), Units::Stretch(_)) => {
                     y += h / 2.0;
                     Baseline::Middle
-                },
+                }
                 (Units::Stretch(_), _) => {
                     y += h;
                     Baseline::Bottom
-                },
+                }
                 _ => Baseline::Top,
             };
 
