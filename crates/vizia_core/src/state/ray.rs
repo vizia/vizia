@@ -1,4 +1,4 @@
-pub trait Ray {
+pub trait Setter {
     type Source;
 
     fn apply(self, source: &mut Self::Source);

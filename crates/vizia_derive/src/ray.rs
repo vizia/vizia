@@ -12,18 +12,18 @@ pub(crate) fn derive_ray_impl(
         Data::Struct(_) => derive_struct(&input),
         Data::Enum(e) => Err(syn::Error::new(
             e.enum_token.span(),
-            "Ray implementations cannot be derived from enums",
+            "Setter implementations cannot be derived from enums",
         )),
         Data::Union(u) => Err(syn::Error::new(
             u.union_token.span(),
-            "Ray implementations cannot be derived from unions",
+            "Setter implementations cannot be derived from unions",
         )),
     }
 }
 
 fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn::Error> {
     let enum_type = &input.ident;
-    let ray_name = Ident::new(&(enum_type.to_string() + "Ray"), enum_type.span());
+    let ray_name = Ident::new(&(enum_type.to_string() + "Setter"), enum_type.span());
 
     let module_vis = &input.vis;
     let enum_vis = increase_visibility(module_vis);
@@ -33,14 +33,14 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     } else {
         return Err(syn::Error::new(
             input.span(),
-            "Ray implementations can only be derived from structs with named fields",
+            "Setter implementations can only be derived from structs with named fields",
         ));
     };
 
     if fields.kind != FieldKind::Named {
         return Err(syn::Error::new(
             input.span(),
-            "Ray implementations can only be derived from structs with named fields",
+            "Setter implementations can only be derived from structs with named fields",
         ));
     }
 
@@ -63,7 +63,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         apply_arms.push(quote! { #ray_name::#variant_name(v) => source.#field_name = v });
     }
 
-    let enum_docs = format!("Ray enum for [`{ty}`](super::{ty}).", ty = enum_type,);
+    let enum_docs = format!("Setter enum for [`{ty}`](super::{ty}).", ty = enum_type,);
 
     let expanded = quote! {
         #[doc = #enum_docs]
@@ -73,7 +73,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             #(#variants),*
         }
 
-        impl #impl_generics Ray for #ray_name #ty_generics #where_clause {
+        impl #impl_generics Setter for #ray_name #ty_generics #where_clause {
             type Source = #enum_type;
 
             fn swap(&mut self, source: &mut Self::Source) {

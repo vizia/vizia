@@ -24,7 +24,7 @@ use quote::{quote, quote_spanned};
 const BASE_DRUID_DEPRECATED_ATTR_PATH: &str = "druid";
 const BASE_DATA_ATTR_PATH: &str = "data";
 const BASE_LENS_ATTR_PATH: &str = "lens";
-const BASE_RAY_ATTR_PATH: &str = "ray";
+const BASE_RAY_ATTR_PATH: &str = "setter";
 const IGNORE_ATTR_PATH: &str = "ignore";
 const DATA_SAME_FN_ATTR_PATH: &str = "same_fn";
 const DATA_EQ_ATTR_PATH: &str = "eq";
