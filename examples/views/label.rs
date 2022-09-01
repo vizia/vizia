@@ -52,7 +52,8 @@ fn main() {
 
                 Label::new(cx, "A label that is describing a form element also acts as a trigger")
                     .describing("checkbox_1");
-            });
+            })
+            .col_between(Pixels(5.0));
         })
         .child_space(Stretch(1.0))
         .row_between(Pixels(20.0));
