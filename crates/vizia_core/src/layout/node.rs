@@ -123,15 +123,15 @@ impl<'w> Node<'w> for Entity {
     }
 
     fn content_width(&self, store: &Self::Data) -> Option<f32> {
-        store.0.content_width.get(*self).cloned()
+        store.0.content_width.get(*self).cloned().map(|x| x * store.0.dpi_factor as f32)
     }
 
     fn content_height(&self, store: &Self::Data) -> Option<f32> {
-        store.0.content_height.get(*self).cloned()
+        store.0.content_height.get(*self).cloned().map(|x| x * store.0.dpi_factor as f32)
     }
 
     fn content_width_secondary(&self, store: &Self::Data, _height: f32) -> Option<f32> {
-        store.0.content_width.get(*self).cloned()
+        store.0.content_width.get(*self).cloned().map(|x| x * store.0.dpi_factor as f32)
     }
 
     fn content_height_secondary(&self, store: &Self::Data, width: f32) -> Option<f32> {
