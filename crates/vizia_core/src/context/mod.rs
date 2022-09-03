@@ -184,7 +184,12 @@ impl Context {
     }
 
     /// Enables or disables pseudoclasses for the focus of an entity
-    fn set_focus_pseudo_classes(&mut self, focused: Entity, enabled: bool, focus_visible: bool) {
+    pub(crate) fn set_focus_pseudo_classes(
+        &mut self,
+        focused: Entity,
+        enabled: bool,
+        focus_visible: bool,
+    ) {
         #[cfg(debug_assertions)]
         if enabled {
             println!(

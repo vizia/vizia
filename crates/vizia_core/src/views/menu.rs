@@ -147,7 +147,7 @@ impl View for MenuController {
                             Event::new(window_event.clone())
                                 .propagate(Propagation::Up)
                                 .target(cx.hovered())
-                                .origin(meta.origin.clone()),
+                                .origin(cx.current()),
                         );
                     }
                     // if we click outside the menu, close everything
