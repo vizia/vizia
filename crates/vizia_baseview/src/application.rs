@@ -240,15 +240,15 @@ impl ApplicationRunner {
                     let physical_posy = position.y * cx.style().dpi_factor;
                     let cursorx = (physical_posx) as f32;
                     let cursory = (physical_posy) as f32;
-                    cx.dispatch_system_event(WindowEvent::MouseMove(cursorx, cursory));
+                    cx.emit_origin(WindowEvent::MouseMove(cursorx, cursory));
                 }
                 baseview::MouseEvent::ButtonPressed(button) => {
                     let b = translate_mouse_button(button);
-                    cx.dispatch_system_event(WindowEvent::MouseDown(b));
+                    cx.emit_origin(WindowEvent::MouseDown(b));
                 }
                 baseview::MouseEvent::ButtonReleased(button) => {
                     let b = translate_mouse_button(button);
-                    cx.dispatch_system_event(WindowEvent::MouseUp(b));
+                    cx.emit_origin(WindowEvent::MouseUp(b));
                 }
                 baseview::MouseEvent::WheelScrolled(scroll_delta) => {
                     let (lines_x, lines_y) = match scroll_delta {
@@ -271,7 +271,7 @@ impl ApplicationRunner {
                         ),
                     };
 
-                    cx.dispatch_system_event(WindowEvent::MouseScroll(lines_x, lines_y));
+                    cx.emit_origin(WindowEvent::MouseScroll(lines_x, lines_y));
                 }
                 _ => {}
             },
@@ -297,23 +297,17 @@ impl ApplicationRunner {
 
                 match s {
                     MouseButtonState::Pressed => {
-                        cx.dispatch_system_event(WindowEvent::KeyDown(
-                            event.code,
-                            Some(event.key.clone()),
-                        ));
+                        cx.emit_origin(WindowEvent::KeyDown(event.code, Some(event.key.clone())));
 
                         if let vizia_input::Key::Character(written) = &event.key {
                             for chr in written.chars() {
-                                cx.dispatch_system_event(WindowEvent::CharInput(chr));
+                                cx.emit_origin(WindowEvent::CharInput(chr));
                             }
                         }
                     }
 
                     MouseButtonState::Released => {
-                        cx.dispatch_system_event(WindowEvent::KeyUp(
-                            event.code,
-                            Some(event.key.clone()),
-                        ));
+                        cx.emit_origin(WindowEvent::KeyUp(event.code, Some(event.key.clone())));
                     }
                 }
             }

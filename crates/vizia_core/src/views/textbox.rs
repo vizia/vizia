@@ -797,12 +797,9 @@ where
                 Code::PageDown => {}
 
                 Code::KeyA => {
-                    //if self.edit {
                     if cx.modifiers.contains(Modifiers::CTRL) {
-                        // self.select_all(cx);
                         cx.emit(TextEvent::SelectAll);
                     }
-                    //}
                 }
 
                 Code::KeyC => {
