@@ -26,7 +26,7 @@ pub struct Event {
     /// The meta data of the event
     pub meta: EventMeta,
     /// The message of the event
-    message: Option<Box<dyn Any + Send>>,
+    pub(crate) message: Option<Box<dyn Any + Send>>,
 }
 
 impl Debug for Event {
