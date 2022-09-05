@@ -2,7 +2,7 @@ use chrono::{Datelike, NaiveDate, Utc, Weekday};
 
 use crate::prelude::*;
 
-#[derive(Lens, Data, Clone)]
+#[derive(Lens, Data, Clone, Copy, Debug)]
 pub struct Date {
     day: u32,
     month: u32,
@@ -16,6 +16,9 @@ pub struct Datepicker {
     selected_date: Date,
 
     month_str: String,
+
+    on_cancel: Option<Box<dyn Fn(&mut EventContext)>>,
+    on_apply: Option<Box<dyn Fn(&mut EventContext, Date)>>,
 }
 
 const MONTHS: [&str; 12] = [
@@ -36,6 +39,9 @@ const MONTHS: [&str; 12] = [
 const DAYS_HEADER: [&str; 7] = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
 pub enum DatepickerEvent {
+    Apply,
+    Cancel,
+
     IncrementMonth,
     DecrementMonth,
 
@@ -46,10 +52,6 @@ pub enum DatepickerEvent {
 }
 
 impl Datepicker {
-    fn is_leap_year(year: i32) -> bool {
-        NaiveDate::from_ymd_opt(year, 2, 29).is_some()
-    }
-
     fn first_day_of_month(year: i32, month: u32) -> Weekday {
         NaiveDate::from_ymd(year, month, 1).weekday()
     }
@@ -96,8 +98,11 @@ impl Datepicker {
         }
     }
 
-    pub fn new(cx: &mut Context) -> Handle<Self>
-where {
+    pub fn new<C, A>(cx: &mut Context, on_cancel: C, on_apply: A) -> Handle<Self>
+    where
+        C: 'static + Fn(&mut EventContext),
+        A: 'static + Fn(&mut EventContext, Date),
+    {
         let today = Utc::today();
         let day = today.day();
         let month = today.month();
@@ -107,10 +112,13 @@ where {
             month_str: MONTHS[month as usize - 1].to_string(),
             view_date: Date { day, month, year },
             selected_date: Date { day, month, year },
+            on_cancel: Some(Box::new(on_cancel)),
+            on_apply: Some(Box::new(on_apply)),
         }
         .build(cx, |cx| {
             HStack::new(cx, |cx| {
                 Spinbox::new(cx, Datepicker::month_str, SpinboxKind::Horizontal)
+                    .width(Units::Pixels(144.0))
                     .left(Units::Stretch(1.0))
                     .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
                     .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
@@ -156,7 +164,7 @@ where {
                                 );
                             }
 
-                            for i in 0..7 - filling_days {
+                            for _ in 0..7 - filling_days {
                                 current_rendered_day += 1;
                                 Self::render_day(
                                     cx,
@@ -173,7 +181,7 @@ where {
                         // Filling weeks
                         while current_rendered_day < days_this_month - 7 {
                             HStack::new(cx, |cx| {
-                                for i in 0..7 {
+                                for _ in 0..7 {
                                     current_rendered_day += 1;
                                     Self::render_day(
                                         cx,
@@ -190,7 +198,7 @@ where {
                         // Last week of month
                         let mut new_days = 1;
                         HStack::new(cx, |cx| {
-                            for i in 0..7 {
+                            for _ in 0..7 {
                                 current_rendered_day += 1;
                                 if current_rendered_day <= days_this_month {
                                     Self::render_day(
@@ -213,7 +221,7 @@ where {
                         // (there is a possibility to render 6 instead of the usual 5)
                         if weeks == 5 {
                             HStack::new(cx, |cx| {
-                                for i in 0..7 {
+                                for _ in 0..7 {
                                     current_rendered_day += 1;
                                     if current_rendered_day <= days_this_month {
                                         Self::render_day(
@@ -252,10 +260,18 @@ where {
                     .class("datepicker-selected-date");
 
                     HStack::new(cx, |cx| {
-                        Button::new(cx, |ex| println!("Cancel"), |cx| Label::new(cx, "Cancel"))
-                            .class("datepicker-cancel");
-                        Button::new(cx, |ex| println!("Apply"), |cx| Label::new(cx, "Apply"))
-                            .class("datepicker-apply");
+                        Button::new(
+                            cx,
+                            |ex| ex.emit(DatepickerEvent::Cancel),
+                            |cx| Label::new(cx, "Cancel"),
+                        )
+                        .class("datepicker-cancel");
+                        Button::new(
+                            cx,
+                            |ex| ex.emit(DatepickerEvent::Apply),
+                            |cx| Label::new(cx, "Apply"),
+                        )
+                        .class("datepicker-apply");
                     })
                     .class("datepicker-actions-container");
                 });
@@ -273,6 +289,18 @@ impl View for Datepicker {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|e, _| match e {
+            DatepickerEvent::Apply => {
+                if let Some(callback) = &self.on_apply {
+                    (callback)(cx, self.selected_date);
+                }
+            }
+
+            DatepickerEvent::Cancel => {
+                if let Some(callback) = &self.on_cancel {
+                    (callback)(cx);
+                }
+            }
+
             DatepickerEvent::IncrementMonth => {
                 if self.view_date.month == 12 {
                     self.view_date.month = 1;

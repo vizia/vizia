@@ -19,7 +19,11 @@ fn main() {
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                Datepicker::new(cx);
+                Datepicker::new(
+                    cx,
+                    |_| println!("Cancel!"),
+                    |_, date| println!("Apply! {:?}", date),
+                );
             })
             .size(Auto)
             .row_between(Pixels(10.0))
