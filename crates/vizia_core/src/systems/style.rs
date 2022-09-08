@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::style::{Rule, Selector, SelectorRelation};
+use crate::style::{Rule, Selector, SelectorRelation, StyleRule};
 use vizia_id::GenerationalId;
 use vizia_storage::{LayoutTreeIterator, TreeExt};
 
@@ -142,11 +142,11 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     return true;
 }
 
-fn compute_matched_rules(
-    cx: &Context,
+pub(crate) fn compute_matched_rules<'a>(
+    cx: &'a Context,
     tree: &Tree<Entity>,
     entity: Entity,
-    matched_rules: &mut Vec<Rule>,
+    matched_rules: &mut Vec<&'a StyleRule>,
 ) {
     // Loop through all of the style rules
     'rule_loop: for rule in cx.style.rules.iter() {
@@ -203,7 +203,7 @@ fn compute_matched_rules(
         }
 
         // If all the selectors match then add the rule to the matched rules list
-        matched_rules.push(rule.id);
+        matched_rules.push(rule);
     }
 }
 
@@ -504,9 +504,8 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
     if cx.style.needs_restyle {
         let mut prev_entity = None;
 
-        let mut prev_matched_rules = Vec::with_capacity(100);
-
-        let mut matched_rules = Vec::with_capacity(100);
+        let mut matched_rule_ids = Vec::with_capacity(100);
+        let mut prev_matched_rule_ids = Vec::with_capacity(100);
 
         let iterator = LayoutTreeIterator::full(tree);
 
@@ -517,19 +516,14 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
                 continue;
             }
 
-            // Create a list of style rules that match this entity
-            //let mut matched_rules: Vec<Rule> = Vec::new();
-            matched_rules.clear();
-
             // If the entity and the previous entity have the same parent and selectors then they share the same rules
             if let Some(prev) = prev_entity {
                 if let Some(parent) = tree.get_layout_parent(entity) {
                     if let Some(prev_parent) = tree.get_layout_parent(prev) {
                         if parent == prev_parent {
                             if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
-                                matched_rules = prev_matched_rules.clone();
                                 prev_entity = Some(entity);
-                                link_style_data(cx, entity, &matched_rules);
+                                link_style_data(cx, entity, &prev_matched_rule_ids);
                                 continue 'ent;
                             }
                         }
@@ -537,11 +531,14 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
                 }
             }
 
+            let mut matched_rules = Vec::with_capacity(100);
             compute_matched_rules(cx, tree, entity, &mut matched_rules);
-            link_style_data(cx, entity, &matched_rules);
+            matched_rule_ids.extend(matched_rules.into_iter().map(|r| r.id));
+            link_style_data(cx, entity, &matched_rule_ids);
 
             prev_entity = Some(entity);
-            prev_matched_rules = matched_rules.clone();
+            prev_matched_rule_ids.clear();
+            prev_matched_rule_ids.append(&mut matched_rule_ids);
         }
 
         cx.style.needs_restyle = false;

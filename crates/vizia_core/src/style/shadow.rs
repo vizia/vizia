@@ -1,4 +1,6 @@
 use crate::prelude::*;
+use crate::style::fmt_units;
+use std::fmt::Formatter;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub(crate) struct BoxShadow {
@@ -16,5 +18,18 @@ impl Default for BoxShadow {
             blur_radius: Units::Auto,
             color: Color::rgba(0, 0, 0, 128),
         }
+    }
+}
+
+impl std::fmt::Display for BoxShadow {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} {} {} {}",
+            fmt_units(&self.horizontal_offset),
+            fmt_units(&self.vertical_offset),
+            fmt_units(&self.blur_radius),
+            &self.color
+        )
     }
 }
