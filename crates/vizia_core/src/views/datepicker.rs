@@ -253,7 +253,7 @@ impl Datepicker {
                             "{} {} of {} {}",
                             NaiveDate::from_ymd(year, month, day).weekday().to_string(),
                             day,
-                            month,
+                            MONTHS[month as usize - 1][0..3].to_string(),
                             year
                         ),
                     )
