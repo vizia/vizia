@@ -339,11 +339,14 @@ impl ApplicationRunner {
                     cx.cache().set_width(Entity::root(), physical_size.0 as f32);
                     cx.cache().set_height(Entity::root(), physical_size.1 as f32);
 
-                    let mut bounding_box = BoundingBox::default();
-                    bounding_box.w = physical_size.0 as f32;
-                    bounding_box.h = physical_size.1 as f32;
+                    let clip_region = BoundingBox {
+                        x: -std::f32::MAX / 2.0,
+                        y: -std::f32::MAX / 2.0,
+                        w: std::f32::MAX,
+                        h: std::f32::MAX,
+                    };
 
-                    cx.cache().set_clip_region(Entity::root(), bounding_box);
+                    cx.cache().set_clip_region(Entity::root(), clip_region);
 
                     cx.0.need_restyle();
                     cx.0.need_relayout();

@@ -25,10 +25,13 @@ pub fn draw_system(cx: &mut Context) {
                 && cx.cache.get_opacity(entity) > 0.0
                 && {
                     let bounds = cx.cache.get_bounds(entity);
-                    !(bounds.x > window_width
-                        || bounds.y > window_height
-                        || bounds.x + bounds.w <= 0.0
-                        || bounds.y + bounds.h <= 0.0)
+                    let transform = cx.cache.get_transform(entity);
+                    let (x, y) = transform.transform_point(bounds.x, bounds.y);
+                    let (w, h) = transform.transform_point(bounds.w, bounds.h);
+                    !(x > window_width
+                        || y > window_height
+                        || w + bounds.w <= 0.0
+                        || h + bounds.h <= 0.0)
                 }
         })
         .collect();
