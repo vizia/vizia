@@ -184,6 +184,9 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
+        let mut cx = BackendContext::new(&mut context);
+        cx.synchronize_fonts();
+
         event_loop.run(move |event, _, control_flow| {
             let mut cx = BackendContext::new(&mut context);
 
