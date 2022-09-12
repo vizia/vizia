@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use chrono::{Datelike, NaiveDate, Utc, Weekday};
 
 use crate::prelude::*;
@@ -68,39 +66,7 @@ impl Datepicker {
         .num_days() as u32
     }
 
-    fn render_disabled_day(cx: &mut Context, day: u32) {
-        Element::new(cx).text(&day.to_string()).class("datepicker-calendar-day-disabled");
-    }
-
-    fn render_day(cx: &mut Context, view_date: &Date, selected_date: &Date, current_day: u32) {
-        let view_date = view_date.clone();
-        Element::new(cx)
-            .text(&current_day.to_string())
-            .class("datepicker-calendar-day")
-            .checked(
-                selected_date.day == current_day
-                    && selected_date.month == view_date.month
-                    && selected_date.year == view_date.year,
-            )
-            .cursor(CursorIcon::Hand)
-            .on_press(move |ex| {
-                ex.emit(DatepickerEvent::SelectDate(Date {
-                    day: current_day,
-                    month: view_date.month,
-                    year: view_date.year,
-                }))
-            });
-    }
-
-    fn previous_month_days(year: i32, month: u32) -> u32 {
-        if month == 1 {
-            Self::last_day_of_month(year - 1, 12)
-        } else {
-            Self::last_day_of_month(year, month - 1)
-        }
-    }
-
-    fn view_month_info(cx: &mut Context, view_date: &Date, month_offset: i32) -> (Weekday, u32) {
+    fn view_month_info(view_date: &Date, month_offset: i32) -> (Weekday, u32) {
         let month = view_date.month;
         let mut year = view_date.year;
 
@@ -123,9 +89,9 @@ impl Datepicker {
         (Self::first_day_of_month(year, month), Self::last_day_of_month(year, month))
     }
 
-    fn get_day_number(cx: &mut Context, y: u32, x: u32, view_date: &Date) -> (u32, bool) {
-        let (_, days_prev_month) = Self::view_month_info(cx, &view_date, -1);
-        let (first_day_this_month, days_this_month) = Self::view_month_info(cx, &view_date, 0);
+    fn get_day_number(y: u32, x: u32, view_date: &Date) -> (u32, bool) {
+        let (_, days_prev_month) = Self::view_month_info(&view_date, -1);
+        let (first_day_this_month, days_this_month) = Self::view_month_info(&view_date, 0);
 
         let mut fdtm_i = first_day_this_month as usize as u32;
         if fdtm_i == 0 {
@@ -181,101 +147,96 @@ impl Datepicker {
 
             Element::new(cx).class("datepicker-divisor");
 
-            Binding::new(cx, Datepicker::view_date, |cx, view_date| {
-                Binding::new(cx, Datepicker::selected_date, move |cx, selected_date| {
-                    let view_date = view_date.get(cx);
-                    let selected_date = selected_date.get(cx);
+            VStack::new(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    for h in DAYS_HEADER {
+                        Element::new(cx).text(h).class("datepicker-calendar-header");
+                    }
+                })
+                .class("datepicker-calendar-headers");
 
-                    VStack::new(cx, |cx| {
-                        HStack::new(cx, |cx| {
-                            for h in DAYS_HEADER {
-                                Element::new(cx).text(h).class("datepicker-calendar-header");
-                            }
-                        })
-                        .class("datepicker-calendar-headers");
+                for y in 0..6 {
+                    HStack::new(cx, |cx| {
+                        for x in 0..7 {
+                            Label::new(cx, "").bind(
+                                Datepicker::view_date,
+                                move |handle, view_date| {
+                                    handle.bind(
+                                        Datepicker::selected_date,
+                                        move |handle, selected_date| {
+                                            let view_date = view_date.get(handle.cx);
+                                            let selected_date = selected_date.get(handle.cx);
 
-                        for y in 0..6 {
-                            HStack::new(cx, |cx| {
-                                for x in 0..7 {
-                                    Label::new(cx, "").bind(
-                                        Datepicker::view_date,
-                                        move |handle, view_date| {
-                                            handle.bind(
-                                                Datepicker::selected_date,
-                                                move |handle, selected_date| {
-                                                    let view_date = view_date.get(handle.cx);
-                                                    let (day_number, disabled) =
-                                                        Self::get_day_number(
-                                                            handle.cx, y, x, &view_date,
-                                                        );
+                                            let (day_number, disabled) =
+                                                Self::get_day_number(y, x, &view_date);
 
-                                                    if disabled {
-                                                        handle.text(&day_number.to_string()).class(
-                                                            "datepicker-calendar-day-disabled",
-                                                        );
-                                                    } else {
-                                                        handle
-                                                            .text(&day_number.to_string())
-                                                            .class("datepicker-calendar-day")
-                                                            .cursor(CursorIcon::Hand)
-                                                            .on_press(move |ex| {
-                                                                ex.emit(
-                                                                    DatepickerEvent::SelectDate(
-                                                                        Date {
-                                                                            day: day_number,
-                                                                            month: view_date.month,
-                                                                            year: view_date.year,
-                                                                        },
-                                                                    ),
-                                                                )
-                                                            });
-                                                    }
-                                                },
-                                            );
+                                            if disabled {
+                                                handle
+                                                    .text(&day_number.to_string())
+                                                    .class("datepicker-calendar-day-disabled");
+                                            } else {
+                                                handle
+                                                    .text(&day_number.to_string())
+                                                    .class("datepicker-calendar-day")
+                                                    .cursor(CursorIcon::Hand)
+                                                    .on_press(move |ex| {
+                                                        ex.emit(DatepickerEvent::SelectDate(Date {
+                                                            day: day_number,
+                                                            month: view_date.month,
+                                                            year: view_date.year,
+                                                        }))
+                                                    })
+                                                    .checked(
+                                                        selected_date.day == day_number
+                                                            && selected_date.month
+                                                                == view_date.month
+                                                            && selected_date.year == view_date.year,
+                                                    );
+                                            }
                                         },
                                     );
-                                }
-                            })
-                            .class("datepicker-calendar-row");
+                                },
+                            );
                         }
                     })
-                    .class("datepicker-calendar");
+                    .class("datepicker-calendar-row");
+                }
+            })
+            .class("datepicker-calendar");
 
-                    Element::new(cx).class("datepicker-divisor");
+            Element::new(cx).class("datepicker-divisor");
 
-                    let year = selected_date.year;
-                    let month = selected_date.month;
-                    let day = selected_date.day;
+            Binding::new(cx, Datepicker::selected_date, |cx, selected_date| {
+                let selected_date = selected_date.get(cx);
 
-                    Label::new(
-                        cx,
-                        &format!(
-                            "{} {} of {} {}",
-                            NaiveDate::from_ymd(year, month, day).weekday().to_string(),
-                            day,
-                            MONTHS[month as usize - 1][0..3].to_string(),
-                            year
-                        ),
-                    )
-                    .class("datepicker-selected-date");
+                let year = selected_date.year;
+                let month = selected_date.month;
+                let day = selected_date.day;
 
-                    HStack::new(cx, |cx| {
-                        Button::new(
-                            cx,
-                            |ex| ex.emit(DatepickerEvent::Cancel),
-                            |cx| Label::new(cx, "Cancel"),
-                        )
-                        .class("datepicker-cancel");
-                        Button::new(
-                            cx,
-                            |ex| ex.emit(DatepickerEvent::Apply),
-                            |cx| Label::new(cx, "Apply"),
-                        )
-                        .class("datepicker-apply");
-                    })
-                    .class("datepicker-actions-container");
-                });
+                Label::new(
+                    cx,
+                    &format!(
+                        "{} {} of {} {}",
+                        NaiveDate::from_ymd(year, month, day).weekday().to_string(),
+                        day,
+                        MONTHS[month as usize - 1][0..3].to_string(),
+                        year
+                    ),
+                )
+                .class("datepicker-selected-date");
             });
+
+            HStack::new(cx, |cx| {
+                Button::new(
+                    cx,
+                    |ex| ex.emit(DatepickerEvent::Cancel),
+                    |cx| Label::new(cx, "Cancel"),
+                )
+                .class("datepicker-cancel");
+                Button::new(cx, |ex| ex.emit(DatepickerEvent::Apply), |cx| Label::new(cx, "Apply"))
+                    .class("datepicker-apply");
+            })
+            .class("datepicker-actions-container");
         })
         .layout_type(LayoutType::Column)
         .keyboard_navigatable(true)
