@@ -541,18 +541,32 @@ textbox.error {
 
 .modal {
     space: 1s;
-    background-color: white;
-    border-radius: 3px;
+    background-color: #323232;
+    border-radius: 4px;
     border-width: 1px;
-    border-color: #999999;
-    outer-shadow: 0 3 10 #00000055;
+    border-color: #424242;
     overflow: visible;
-    child-space: 10px;
+    child-space: 8px;
+    width: 200px;
+    row-between: 16px;
 }
 
-modal > popup > label {
+.modal label {
     width: auto;
     height: auto;
-    space: 5px;
-    child-space: 1s;
+    color: #888;
+}
+
+.modal button {
+    top: 8px;
+}
+
+.modal .title {
+    color: #fff;
+    font-size: 18px;
+    bottom: 4px;
+}
+
+.modal .accent {
+    left: 1s;
 }

@@ -531,3 +531,35 @@ textbox.error {
     border-color: #ef5151;
     border-width: 2px;
 }
+
+.modal {
+    space: 1s;
+    background-color: #e4e4e4;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #b6b6b6;
+    overflow: visible;
+    child-space: 8px;
+    width: 200px;
+    row-between: 16px;
+}
+
+.modal label {
+    width: auto;
+    height: auto;
+    color: #888;
+}
+
+.modal button {
+    top: 8px;
+}
+
+.modal .title {
+    color: #000000;
+    font-size: 18px;
+    bottom: 4px;
+}
+
+.modal .accent {
+    left: 1s;
+}
