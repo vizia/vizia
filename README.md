@@ -42,8 +42,8 @@
   <h3>
     <a href="https://docs.vizia.dev/"> Docs </a>
     <span> | </span>
-    <a href="https://book.vizia.dev/"> Guide </a>
-    <span> | </span>
+    <!-- <a href="https://book.vizia.dev/"> Guide </a>
+    <span> | </span> -->
     <a href="https://demo.vizia.dev/"> Demo </a>
     <span> | </span>
     <a href="https://discord.gg/aNkTPsRm2w"> Discord </a>
