@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use chrono::{Datelike, NaiveDate, Utc, Weekday};
 
 use crate::prelude::*;
@@ -98,6 +100,54 @@ impl Datepicker {
         }
     }
 
+    fn view_month_info(cx: &mut Context, view_date: &Date, month_offset: i32) -> (Weekday, u32) {
+        let month = view_date.month;
+        let mut year = view_date.year;
+
+        println!("{} {}, {}", year, month, month_offset);
+
+        let mut month = month as i32 + month_offset;
+
+        if month < 1 {
+            year -= 1;
+            month += 12;
+        } else if month > 12 {
+            year += 1;
+            month -= 12;
+        }
+
+        let month = month as u32;
+
+        println!("S{} {}, {}", year, month, month_offset);
+
+        (Self::first_day_of_month(year, month), Self::last_day_of_month(year, month))
+    }
+
+    fn get_day_number(cx: &mut Context, y: u32, x: u32, view_date: &Date) -> (u32, bool) {
+        let (_, days_prev_month) = Self::view_month_info(cx, &view_date, -1);
+        let (first_day_this_month, days_this_month) = Self::view_month_info(cx, &view_date, 0);
+
+        let mut fdtm_i = first_day_this_month as usize as u32;
+        if fdtm_i == 0 {
+            fdtm_i = 7;
+        }
+
+        if y == 0 {
+            if x < fdtm_i {
+                (days_prev_month - (fdtm_i - x - 1), true)
+            } else {
+                (x - fdtm_i + 1, false)
+            }
+        } else {
+            let day_number = y * 7 + x - fdtm_i + 1;
+            if day_number > days_this_month {
+                (day_number - days_this_month, true)
+            } else {
+                (day_number, false)
+            }
+        }
+    }
+
     pub fn new<C, A>(cx: &mut Context, on_cancel: C, on_apply: A) -> Handle<Self>
     where
         C: 'static + Fn(&mut EventContext),
@@ -144,96 +194,46 @@ impl Datepicker {
                         })
                         .class("datepicker-calendar-headers");
 
-                        let days_this_month =
-                            Self::last_day_of_month(view_date.year, view_date.month);
-
-                        let mut current_rendered_day = 0;
-
-                        let first_day_of_month =
-                            Self::first_day_of_month(view_date.year, view_date.month);
-
-                        // First week of month
-                        HStack::new(cx, |cx| {
-                            let previous_month_days =
-                                Self::previous_month_days(view_date.year, view_date.month);
-                            let filling_days = first_day_of_month.num_days_from_monday();
-                            for i in 0..filling_days {
-                                Self::render_disabled_day(
-                                    cx,
-                                    previous_month_days - (filling_days - i - 1),
-                                );
-                            }
-
-                            for _ in 0..7 - filling_days {
-                                current_rendered_day += 1;
-                                Self::render_day(
-                                    cx,
-                                    &view_date,
-                                    &selected_date,
-                                    current_rendered_day,
-                                );
-                            }
-                        })
-                        .class("datepicker-calendar-row");
-
-                        let mut weeks = 1;
-
-                        // Filling weeks
-                        while current_rendered_day < days_this_month - 7 {
+                        for y in 0..6 {
                             HStack::new(cx, |cx| {
-                                for _ in 0..7 {
-                                    current_rendered_day += 1;
-                                    Self::render_day(
-                                        cx,
-                                        &view_date,
-                                        &selected_date,
-                                        current_rendered_day,
+                                for x in 0..7 {
+                                    Label::new(cx, "").bind(
+                                        Datepicker::view_date,
+                                        move |handle, view_date| {
+                                            handle.bind(
+                                                Datepicker::selected_date,
+                                                move |handle, selected_date| {
+                                                    let view_date = view_date.get(handle.cx);
+                                                    let (day_number, disabled) =
+                                                        Self::get_day_number(
+                                                            handle.cx, y, x, &view_date,
+                                                        );
+
+                                                    if disabled {
+                                                        handle.text(&day_number.to_string()).class(
+                                                            "datepicker-calendar-day-disabled",
+                                                        );
+                                                    } else {
+                                                        handle
+                                                            .text(&day_number.to_string())
+                                                            .class("datepicker-calendar-day")
+                                                            .cursor(CursorIcon::Hand)
+                                                            .on_press(move |ex| {
+                                                                ex.emit(
+                                                                    DatepickerEvent::SelectDate(
+                                                                        Date {
+                                                                            day: day_number,
+                                                                            month: view_date.month,
+                                                                            year: view_date.year,
+                                                                        },
+                                                                    ),
+                                                                )
+                                                            });
+                                                    }
+                                                },
+                                            );
+                                        },
                                     );
-                                }
-                            })
-                            .class("datepicker-calendar-row");
-                            weeks += 1;
-                        }
-
-                        // Last week of month
-                        let mut new_days = 1;
-                        HStack::new(cx, |cx| {
-                            for _ in 0..7 {
-                                current_rendered_day += 1;
-                                if current_rendered_day <= days_this_month {
-                                    Self::render_day(
-                                        cx,
-                                        &view_date,
-                                        &selected_date,
-                                        current_rendered_day,
-                                    );
-                                } else {
-                                    Self::render_disabled_day(cx, new_days);
-                                    new_days += 1;
-                                }
-                            }
-                        })
-                        .class("datepicker-calendar-row");
-
-                        weeks += 1;
-
-                        // Keep 6 rows for consistency between months
-                        // (there is a possibility to render 6 instead of the usual 5)
-                        if weeks == 5 {
-                            HStack::new(cx, |cx| {
-                                for _ in 0..7 {
-                                    current_rendered_day += 1;
-                                    if current_rendered_day <= days_this_month {
-                                        Self::render_day(
-                                            cx,
-                                            &view_date,
-                                            &selected_date,
-                                            current_rendered_day,
-                                        );
-                                    } else {
-                                        Self::render_disabled_day(cx, new_days);
-                                        new_days += 1;
-                                    }
                                 }
                             })
                             .class("datepicker-calendar-row");
