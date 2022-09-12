@@ -1,13 +1,19 @@
 .main {
-    background-color: #EBEBEB;
+    background-color: #ebebeb;
     width: 1s;
     height: 1s;
+    child-top: 1s;
+    child-bottom: 1s;
+    child-left: 1s;
+    child-right: 1s;
 }
 
 .container {
     col-between: 10px;
     row-between: 10px;
     space: 1s;
+    width: auto;
+    height: auto;
 }
 
 button {
@@ -18,21 +24,21 @@ button {
     child-left: 10px;
     child-right: 10px;
     border-width: 2px;
-    border-color: #51AFEF;
+    border-color: #51afef;
     overflow: visible;
 }
 
 button label {
-    color: #51AFEF;
+    color: #51afef;
     child-space: 1s;
 }
 
 button:over {
-    border-color: #9FD5FB;
+    border-color: #9fd5fb;
 }
 
 button:over label {
-    color: #9FD5FB;
+    color: #9fd5fb;
 }
 
 button:active {
@@ -44,7 +50,7 @@ button:active label {
 }
 
 button.accent {
-    background-color: #51AFEF;
+    background-color: #51afef;
     border-width: 0px;
 }
 
@@ -53,7 +59,7 @@ button.accent label {
 }
 
 button.accent:over {
-    background-color: #9FD5FB;
+    background-color: #9fd5fb;
 }
 
 button.accent:active {
@@ -85,24 +91,24 @@ checkbox {
 }
 
 checkbox:hover {
-    border-color: #51AFEF;
+    border-color: #51afef;
     background-color: transparent;
 }
 
 checkbox:focus-visible {
     outline-width: 1px;
-    outline-color: #51AFEF;
+    outline-color: #51afef;
     outline-offset: 3px;
 }
 
 checkbox:checked {
-    background-color: #51AFEF;
-    border-color: #51AFEF;
+    background-color: #51afef;
+    border-color: #51afef;
     color: #fff;
 }
 
 checkbox:disabled {
-    border-color: #B6B6B6;
+    border-color: #b6b6b6;
 }
 
 checkbox:hover:disabled {
@@ -110,14 +116,14 @@ checkbox:hover:disabled {
 }
 
 checkbox:checked:hover {
-    background-color: #9FD5FB;
-    border-color: #9FD5FB;
+    background-color: #9fd5fb;
+    border-color: #9fd5fb;
     color: #fff;
 }
 
 checkbox:checked:disabled {
-    background-color: #B6B6B6;
-    border-color: #B6B6B6;
+    background-color: #b6b6b6;
+    border-color: #b6b6b6;
     color: #fff;
 }
 
@@ -127,7 +133,7 @@ dropdown .title {
     background-color: #fff;
     border-radius: 4px;
     border-width: 1px;
-    border-color: #E4E4E4;
+    border-color: #e4e4e4;
     child-space: 1s;
     child-left: 5px;
     overflow: visible;
@@ -144,7 +150,7 @@ dropdown popup {
     background-color: #fff;
     border-radius: 4px;
     border-width: 1px;
-    border-color: #E4E4E4;
+    border-color: #e4e4e4;
 }
 
 dropdown popup list {
@@ -178,11 +184,11 @@ knob {
     background-color: #242424;
     border-radius: 38px;
     border-width: 2px;
-    border-color: #2F2F2F;
+    border-color: #2f2f2f;
 }
 
 knob .track {
-    background-color: #51AFEF;
+    background-color: #51afef;
 }
 
 knob:focus-visible {
@@ -202,7 +208,7 @@ radiobutton {
 }
 
 radiobutton:hover {
-    border-color: #51AFEF;
+    border-color: #51afef;
 }
 
 radiobutton:focus-visible {
@@ -212,15 +218,15 @@ radiobutton:focus-visible {
 }
 
 radiobutton:checked {
-    border-color: #51AFEF;
+    border-color: #51afef;
 }
 
 radiobutton:checked:hover {
-    border-color: #9FD5FB;
+    border-color: #9fd5fb;
 }
 
 radiobutton:disabled {
-    border-color: #B6B6B6;
+    border-color: #b6b6b6;
 }
 
 radiobutton .inner {
@@ -233,21 +239,21 @@ radiobutton .inner {
 radiobutton:checked .inner {
     width: 8px;
     height: 8px;
-    background-color: #51AFEF;
+    background-color: #51afef;
 }
 
 radiobutton:hover .inner {
-    background-color: #9FD5FB;
+    background-color: #9fd5fb;
 }
 
 radiobutton:disabled .inner {
     width: 8px;
     height: 8px;
-    background-color: #B6B6B6;
+    background-color: #b6b6b6;
 }
 
 scrollbar {
-    background-color: #F8F8F8;
+    background-color: #f8f8f8;
 }
 
 scrollbar.horizontal {
@@ -259,7 +265,7 @@ scrollbar.vertical {
 }
 
 scrollbar .thumb {
-    background-color: #B6B6B6;
+    background-color: #b6b6b6;
     min-width: 4px;
     min-height: 4px;
 }
@@ -281,7 +287,7 @@ scrollbar .thumb:focus {
 }
 
 slider * {
-    background-color: #51AFEF20;
+    background-color: #51afef20;
     border-radius: 2px;
 }
 
@@ -298,7 +304,7 @@ slider .active {
 }
 
 slider .thumb {
-    background-color: #51AFEF;
+    background-color: #51afef;
     border-radius: 6px;
     width: 12px;
     height: 12px;
@@ -313,7 +319,7 @@ spinbox {
     background-color: #fff;
     border-radius: 4px;
     border-width: 1px;
-    border-color: #E4E4E4;
+    border-color: #e4e4e4;
     child-space: 1s;
 }
 
@@ -384,12 +390,12 @@ switch {
 }
 
 switch:hover .switch-handle-container .switch-handle {
-    background-color: #51AFEF;
+    background-color: #51afef;
 }
 
 switch:focus-visible {
     outline-width: 1px;
-    outline-color: #51AFEF;
+    outline-color: #51afef;
 }
 
 switch:active {
@@ -398,7 +404,7 @@ switch:active {
 }
 
 switch:checked {
-    border-color: #51AFEF;
+    border-color: #51afef;
 }
 
 switch:checked .switch-handle-container {
@@ -406,20 +412,20 @@ switch:checked .switch-handle-container {
 }
 
 switch:checked .switch-handle-container .switch-handle {
-    background-color: #51AFEF;
+    background-color: #51afef;
     left: 8px;
 }
 
 switch:checked:hover .switch-handle-container .switch-handle {
-    background-color: #9FD5FB;
+    background-color: #9fd5fb;
 }
 
 switch:disabled {
-    border-color: #B6B6B6;
+    border-color: #b6b6b6;
 }
 
 switch:disabled .switch-handle-container .switch-handle {
-    background-color: #B6B6B6;
+    background-color: #b6b6b6;
 }
 
 switch:hover:disabled {
@@ -427,15 +433,15 @@ switch:hover:disabled {
 }
 
 switch:hover:disabled .switch-handle-container .switch-handle {
-    background-color: #B6B6B6;
+    background-color: #b6b6b6;
 }
 
 switch:checked:disabled .switch-handle-container {
-    background-color: #B6B6B640;
+    background-color: #b6b6b640;
 }
 
 switch:checked:disabled .switch-handle-container .switch-handle {
-    background-color: #B6B6B6;
+    background-color: #b6b6b6;
 }
 
 table {
@@ -482,21 +488,21 @@ tablecolumn {
     left: 4px;
     top: 1s;
     bottom: 1s;
-    background-color: #51AFEF20;
+    background-color: #51afef20;
     child-space: 1s;
     child-left: 8px;
     child-right: 8px;
     child-top: 2px;
     child-bottom: 2px;
     border-radius: 4px;
-    color: #51AFEF;
+    color: #51afef;
 }
 
 textbox {
     width: 280px;
     height: 80px;
     border-width: 1px;
-    border-color: #E4E4E4;
+    border-color: #e4e4e4;
     border-radius: 4px;
     background-color: #fff;
     child-left: 5px;
@@ -506,11 +512,11 @@ textbox {
 }
 
 textbox:checked {
-    border-color: #51AFEF;
+    border-color: #51afef;
 }
 textbox:checked .textbox_content {
-    caret-color: #51AFEF;
-    selection-color: #51AFEF40;
+    caret-color: #51afef;
+    selection-color: #51afef40;
 }
 
 textbox:disabled {
@@ -522,6 +528,6 @@ textbox:focus-visible {
 }
 
 textbox.error {
-    border-color: #EF5151;
+    border-color: #ef5151;
     border-width: 2px;
 }
