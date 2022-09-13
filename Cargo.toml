@@ -19,6 +19,10 @@ name = "animation"
 path = "examples/animation.rs"
 
 [[example]]
+name = "binding"
+path = "examples/binding.rs"
+
+[[example]]
 name = "cursor_icon"
 path = "examples/cursor_icon.rs"
 

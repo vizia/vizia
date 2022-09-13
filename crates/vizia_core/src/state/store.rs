@@ -18,7 +18,7 @@ pub(crate) enum StoreId {
     UUID(u64),
 }
 
-pub(crate) trait Store {
+pub trait Store {
     fn update(&mut self, model: ModelOrView) -> bool;
     fn observers(&self) -> &HashSet<Entity>;
     fn add_observer(&mut self, observer: Entity);
@@ -27,7 +27,7 @@ pub(crate) trait Store {
     fn entity(&self) -> Entity;
 }
 
-pub(crate) struct BasicStore<L: Lens, T> {
+pub struct BasicStore<L: Lens, T> {
     // The entity which declared the binding
     pub entity: Entity,
     pub lens: L,

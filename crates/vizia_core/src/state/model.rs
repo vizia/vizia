@@ -111,7 +111,7 @@ pub trait Model: 'static + Sized {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 }
 
-pub(crate) trait ModelData: Any {
+pub trait ModelData: Any {
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 
@@ -143,7 +143,7 @@ pub(crate) struct ModelDataStore {
 impl Model for () {}
 
 #[derive(Copy, Clone)]
-pub(crate) enum ModelOrView<'a> {
+pub enum ModelOrView<'a> {
     Model(&'a dyn ModelData),
     View(&'a dyn ViewHandler),
 }

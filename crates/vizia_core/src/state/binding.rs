@@ -4,12 +4,14 @@ use std::collections::{HashMap, HashSet};
 use crate::prelude::*;
 use crate::state::{BasicStore, LensCache, ModelOrView, Store, StoreId};
 
+use super::Bindable;
+
 /// A binding view which rebuilds its contents when its observed data changes.
 ///
 /// This type is part of the prelude.
 pub struct Binding<L>
 where
-    L: Lens,
+    L: Bindable,
 {
     entity: Entity,
     lens: L,
@@ -18,9 +20,9 @@ where
 
 impl<L> Binding<L>
 where
-    L: 'static + Lens,
-    <L as Lens>::Source: 'static,
-    <L as Lens>::Target: Data,
+    L: 'static + Bindable + Clone,
+    // <L as Lens>::Source: 'static,
+    // <L as Lens>::Target: Data,
 {
     /// Creates a new binding view.
     ///
@@ -46,73 +48,79 @@ where
 
         let binding = Self { entity: id, lens: lens.clone(), content: Some(Box::new(builder)) };
 
-        let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
-        let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
+        lens.do_something(cx, id);
 
-        fn insert_store<L: Lens>(
-            ancestors: &HashSet<Entity>,
-            stores: &mut HashMap<StoreId, Box<dyn Store>>,
-            model_data: ModelOrView,
-            lens: L,
-            id: Entity,
-        ) where
-            L::Target: Data,
-        {
-            let key = lens.cache_key();
+        // let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
+        // let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
 
-            if let Some(store) = stores.get_mut(&key) {
-                let observers = store.observers();
+        // fn insert_store<L: Bindable>(
+        //     ancestors: &HashSet<Entity>,
+        //     stores: &mut HashMap<StoreId, Box<dyn Store>>,
+        //     model_data: ModelOrView,
+        //     lens: L,
+        //     id: Entity,
+        // )
+        // // where
+        // //     L::Target: Data,
+        // {
+        //     let key = lens.cache_key();
 
-                if ancestors.intersection(observers).next().is_none() {
-                    store.add_observer(id);
-                }
-            } else {
-                let mut observers = HashSet::new();
-                observers.insert(id);
+        //     if let Some(store) = stores.get_mut(&key) {
+        //         let observers = store.observers();
 
-                let model = model_data.downcast_ref::<L::Source>().unwrap();
+        //         if ancestors.intersection(observers).next().is_none() {
+        //             store.add_observer(id);
+        //         }
+        //     } else {
 
-                let old = lens.view(model, |t| t.cloned());
+        //         let store = Box::new(lens.create_store(cx, entity))
 
-                let store = Box::new(BasicStore { entity: id, lens, old, observers });
+        //         let mut observers = HashSet::new();
+        //         observers.insert(id);
 
-                stores.insert(key, store);
-            }
-        }
+        //         let model = model_data.downcast_ref::<L::Source>().unwrap();
 
-        // Check if there's already a store with the same lens somewhere up the tree. If there is, add this binding as an observer,
-        // else create a new store with this binding as an observer.
-        for entity in new_ancestors {
-            if let Some(model_data_store) = cx.data.get_mut(entity) {
-                // Check for model store
-                if let Some(model_data) = model_data_store.models.get(&TypeId::of::<L::Source>()) {
-                    insert_store(
-                        &ancestors,
-                        &mut model_data_store.stores,
-                        ModelOrView::Model(model_data.as_ref()),
-                        lens,
-                        id,
-                    );
+        //         let old = lens.view(model, |t| t.cloned());
 
-                    break;
-                }
+        //         let store = Box::new(BasicStore { entity: id, lens, old, observers });
 
-                // Check for view store
-                if let Some(view_handler) = cx.views.get(&entity) {
-                    if view_handler.as_any_ref().is::<L::Source>() {
-                        insert_store(
-                            &ancestors,
-                            &mut model_data_store.stores,
-                            ModelOrView::View(view_handler.as_ref()),
-                            lens,
-                            id,
-                        );
+        //         stores.insert(key, store);
+        //     }
+        // }
 
-                        break;
-                    }
-                }
-            }
-        }
+        // // Check if there's already a store with the same lens somewhere up the tree. If there is, add this binding as an observer,
+        // // else create a new store with this binding as an observer.
+        // for entity in new_ancestors {
+        //     if let Some(model_data_store) = cx.data.get_mut(entity) {
+        //         // Check for model store
+        //         if let Some(model_data) = model_data_store.models.get(&TypeId::of::<L::Source>()) {
+        //             insert_store(
+        //                 &ancestors,
+        //                 &mut model_data_store.stores,
+        //                 ModelOrView::Model(model_data.as_ref()),
+        //                 lens,
+        //                 id,
+        //             );
+
+        //             break;
+        //         }
+
+        //         // Check for view store
+        //         if let Some(view_handler) = cx.views.get(&entity) {
+        //             if view_handler.as_any_ref().is::<L::Source>() {
+        //                 insert_store(
+        //                     &ancestors,
+        //                     &mut model_data_store.stores,
+        //                     ModelOrView::View(view_handler.as_ref()),
+        //                     lens,
+        //                     id,
+        //                 );
+
+        //                 break;
+        //             }
+        //         }
+        //     }
+        // }
 
         cx.bindings.insert(id, Box::new(binding));
 
@@ -134,8 +142,9 @@ pub trait BindingHandler {
     fn name(&self) -> Option<&'static str>;
 }
 
-impl<L: 'static + Lens> BindingHandler for Binding<L> {
+impl<L: 'static + Bindable + Clone> BindingHandler for Binding<L> {
     fn update<'a>(&mut self, cx: &'a mut Context) {
+        println!("Update binding: {}", self.entity);
         cx.remove_children(cx.current());
         if let Some(builder) = &self.content {
             (builder)(cx, self.lens.clone());
@@ -143,40 +152,41 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
     }
 
     fn remove(&self, cx: &mut Context) {
-        for entity in self.entity.parent_iter(&cx.tree) {
-            if let Some(model_data_store) = cx.data.get_mut(entity) {
-                // Check for model store
-                if model_data_store.models.get(&TypeId::of::<L::Source>()).is_some() {
-                    let key = self.lens.cache_key();
+        // for entity in self.entity.parent_iter(&cx.tree) {
+        //     if let Some(model_data_store) = cx.data.get_mut(entity) {
+        //         // Check for model store
+        //         if model_data_store.models.get(&TypeId::of::<L::Source>()).is_some() {
+        //             let key = self.lens.cache_key();
 
-                    if let Some(store) = model_data_store.stores.get_mut(&key) {
-                        store.remove_observer(&self.entity);
+        //             if let Some(store) = model_data_store.stores.get_mut(&key) {
+        //                 store.remove_observer(&self.entity);
 
-                        model_data_store.stores.retain(|_, store| store.num_observers() != 0);
-                    }
+        //                 model_data_store.stores.retain(|_, store| store.num_observers() != 0);
+        //             }
 
-                    break;
-                }
+        //             break;
+        //         }
 
-                // Check for view store
-                if let Some(view_handler) = cx.views.get(&entity) {
-                    if view_handler.as_any_ref().is::<L::Source>() {
-                        let key = self.lens.cache_key();
+        //         // Check for view store
+        //         if let Some(view_handler) = cx.views.get(&entity) {
+        //             if view_handler.as_any_ref().is::<L::Source>() {
+        //                 let key = self.lens.cache_key();
 
-                        if let Some(store) = model_data_store.stores.get_mut(&key) {
-                            store.remove_observer(&self.entity);
+        //                 if let Some(store) = model_data_store.stores.get_mut(&key) {
+        //                     store.remove_observer(&self.entity);
 
-                            model_data_store.stores.retain(|_, store| store.num_observers() != 0);
-                        }
+        //                     model_data_store.stores.retain(|_, store| store.num_observers() != 0);
+        //                 }
 
-                        break;
-                    }
-                }
-            }
-        }
+        //                 break;
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     fn name(&self) -> Option<&'static str> {
-        self.lens.name()
+        // self.lens.name()
+        None
     }
 }

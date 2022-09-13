@@ -211,7 +211,8 @@ impl<'a> BackendContext<'a> {
 
                     for (_, store) in model_data_store.stores.iter_mut() {
                         if store.update(model) {
-                            observers.extend(store.observers().iter())
+                            observers.extend(store.observers().iter());
+                            println!("data changed, observers: {:?}", observers);
                         }
                     }
                 }
@@ -238,6 +239,8 @@ impl<'a> BackendContext<'a> {
 
         let ordered_observers =
             self.0.tree.into_iter().filter(|ent| observers.contains(&ent)).collect::<Vec<_>>();
+
+        //println!("Observers that need updating: {:?}", ordered_observers);
 
         // Update observers in tree order
         for observer in ordered_observers.into_iter() {
