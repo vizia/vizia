@@ -1,5 +1,6 @@
 * {
     color: #ffffff;
+    border-color: blue;
 }
 
 .main {
@@ -7,15 +8,10 @@
 }
 
 spinbox {
-    top: 4px;
-    left: 4px;
-    bottom: 4px;
-    right: 4px;
     background-color: #242424;
     border-radius: 4px;
     border-width: 1px;
     border-color: #2F2F2F;
-    child-space: 1s;
 }
 
 spinbox.horizontal {
@@ -27,6 +23,11 @@ spinbox.vertical {
 }
 
 spinbox .spinbox-button {
+    top: 4px;
+    left: 4px;
+    bottom: 4px;
+    right: 4px;
+
     height: 24px;
     child-space: 1s;
     color: #888888;
@@ -45,6 +46,9 @@ spinbox .spinbox-button:hover {
 }
 
 spinbox .spinbox-value {
+    top: 4px;
+    bottom: 4px;
+
     height: 24px;
     child-space: 1s;
     color: #ffffff;
@@ -137,4 +141,112 @@ switch:checked:disabled .switch-handle-container {
 
 switch:checked:disabled .switch-handle-container .switch-handle {
     background-color: #404040;
+}
+
+datepicker {
+    background-color: #242424;
+    width: 285px;
+    height: 324px;
+
+    border-radius: 4px;
+    
+    child-top: 8px;
+    child-bottom: 8px;
+    child-left: 16px;
+    child-right: 16px;
+
+    row-between: 8px;
+}
+
+.datepicker-header {
+    width: 1s;
+    height: auto;
+
+    col-between: 4px;
+}
+
+.datepicker-header spinbox {
+    width: auto;
+}
+
+.datepicker-divisor {
+    width: 1s;
+    height: 1px;
+    background-color: #2F2F2F;
+}
+
+.datepicker-calendar {
+    left: 1s;
+    right: 1s;
+}
+
+.datepicker-calendar-header {
+    child-space: 1s;
+    width: 32px;
+    height: 32px;
+}
+
+.datepicker-calendar-day {
+    width: 32px;
+    height: 32px;
+    color: #888;
+    child-space: 1s;
+}
+
+.datepicker-calendar-day:checked {
+    color: #181818;
+    background-color: #51AFEF;
+    border-radius: 4px;
+}
+
+.datepicker-calendar-day-disabled {
+    width: 32px;
+    height: 32px;
+    color: #404040;
+    child-space: 1s;
+}
+
+.datepicker-selected-date {
+    left: 1s;
+    right: 1s;
+    color: #B0B0B0;
+}
+
+.datepicker-actions-container {
+    left: 1s;
+    right: 1s;
+    col-between: 4px;
+}
+
+.datepicker-cancel {
+    border-width: 2px;
+    border-color: #EF5151;
+    border-radius: 4px;
+    height: auto;
+    width: auto;
+}
+
+.datepicker-cancel label {
+    top: 2px;
+    bottom: 2px;
+    right: 8px;
+    left: 8px;
+    color: #EF5151;
+}
+
+.datepicker-apply {
+    border-width: 2px;
+    border-color: #51AFEF;
+    background-color: #51AFEF;
+    border-radius: 4px;
+    height: auto;
+    width: auto;
+}
+
+.datepicker-apply label {
+    top: 2px;
+    bottom: 2px;
+    right: 8px;
+    left: 8px;
+    color: #181818;
 }
