@@ -1,8 +1,4 @@
-use std::any::TypeId;
-use std::collections::{HashMap, HashSet};
-
 use crate::prelude::*;
-use crate::state::{BasicStore, LensCache, ModelOrView, Store, StoreId};
 
 use super::Bindable;
 
@@ -13,7 +9,7 @@ pub struct Binding<L>
 where
     L: Bindable,
 {
-    entity: Entity,
+    _entity: Entity,
     lens: L,
     content: Option<Box<dyn Fn(&mut Context, L)>>,
 }
@@ -46,9 +42,9 @@ where
         cx.cache.add(id).expect("Failed to add to cache");
         cx.style.add(id);
 
-        let binding = Self { entity: id, lens: lens.clone(), content: Some(Box::new(builder)) };
+        let binding = Self { _entity: id, lens: lens.clone(), content: Some(Box::new(builder)) };
 
-        lens.do_something(cx, id);
+        lens.insert_store(cx, id);
 
         // let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
         // let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
@@ -144,14 +140,13 @@ pub trait BindingHandler {
 
 impl<L: 'static + Bindable + Clone> BindingHandler for Binding<L> {
     fn update<'a>(&mut self, cx: &'a mut Context) {
-        println!("Update binding: {}", self.entity);
         cx.remove_children(cx.current());
         if let Some(builder) = &self.content {
             (builder)(cx, self.lens.clone());
         }
     }
 
-    fn remove(&self, cx: &mut Context) {
+    fn remove(&self, _cx: &mut Context) {
         // TODO: Move removal code to store
 
         // for entity in self.entity.parent_iter(&cx.tree) {
@@ -188,6 +183,7 @@ impl<L: 'static + Bindable + Clone> BindingHandler for Binding<L> {
     }
 
     fn name(&self) -> Option<&'static str> {
+        // TODO: Add method to Bindable to query name
         // self.lens.name()
         None
     }

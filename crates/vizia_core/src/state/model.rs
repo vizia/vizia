@@ -3,10 +3,7 @@ use std::{
     collections::HashMap,
 };
 
-use crate::state::Store;
 use crate::{events::ViewHandler, prelude::*};
-
-use super::StoreId;
 
 /// A trait implemented by application data in order to mutate in response to events.
 ///
@@ -109,7 +106,7 @@ pub trait Model: 'static + Sized {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 }
 
-pub trait ModelData: Any {
+pub(crate) trait ModelData: Any {
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 
@@ -132,16 +129,10 @@ impl<T: Model> ModelData for T {
     }
 }
 
-#[derive(Default)]
-pub(crate) struct ModelDataStore {
-    pub models: HashMap<TypeId, Box<dyn ModelData>>,
-    pub stores: HashMap<StoreId, Box<dyn Store>>,
-}
-
 impl Model for () {}
 
 #[derive(Copy, Clone)]
-pub enum ModelOrView<'a> {
+pub(crate) enum ModelOrView<'a> {
     Model(&'a dyn ModelData),
     View(&'a dyn ViewHandler),
 }

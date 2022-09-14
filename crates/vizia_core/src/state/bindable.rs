@@ -3,27 +3,25 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use vizia_storage::{SparseSet, Tree, TreeExt};
+use vizia_storage::TreeExt;
 
 use crate::{
-    context::{Context, DataContext},
+    context::Context,
     entity::Entity,
     state::{LensCache, ModelOrView, StoreId},
 };
 
-use super::{BasicStore, Data, Lens, ModelData, Store};
+use super::{BasicStore, Data, Lens, Store};
 
 pub trait Bindable {
-    fn do_something(self, cx: &mut Context, entity: Entity);
+    fn insert_store(self, cx: &mut Context, entity: Entity);
 }
 
 impl<L: Lens> Bindable for L
 where
     L::Target: Data,
 {
-    fn do_something(self, cx: &mut Context, id: Entity) {
-        println!("Create store: {}", id);
-
+    fn insert_store(self, cx: &mut Context, id: Entity) {
         let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
         let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
 
@@ -44,7 +42,6 @@ where
             if let Some(store) = stores.get_mut(&key) {
                 let observers = store.observers();
 
-                println!("add observer to existing store: {}", id);
                 if ancestors.intersection(observers).next().is_none() {
                     store.add_observer(id);
                 }
@@ -58,7 +55,6 @@ where
 
                 let store = Box::new(BasicStore { entity: id, lens, old, observers });
 
-                println!("Insert a new store: {}", id);
                 stores.insert(key, store);
             }
         }
@@ -68,7 +64,7 @@ where
                 // Check for model store for first lens
                 if let Some(model_data) = models.get(&TypeId::of::<L::Source>()) {
                     if !storages.contains(entity) {
-                        storages.insert(entity, HashMap::new());
+                        storages.insert(entity, HashMap::new()).unwrap();
                     }
 
                     if let Some(stores) = storages.get_mut(entity) {
@@ -88,7 +84,7 @@ where
                 if let Some(view_handler) = cx.views.get(&entity) {
                     if view_handler.as_any_ref().is::<L::Source>() {
                         if !storages.contains(entity) {
-                            storages.insert(entity, HashMap::new());
+                            storages.insert(entity, HashMap::new()).unwrap();
                         }
 
                         if let Some(stores) = storages.get_mut(entity) {
@@ -114,7 +110,7 @@ where
     L1::Target: Data,
     L2::Target: Data,
 {
-    fn do_something(self, cx: &mut Context, id: Entity) {
+    fn insert_store(self, cx: &mut Context, id: Entity) {
         let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
         let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
 
@@ -159,13 +155,13 @@ where
             }
         }
 
-        // Iterate up the tree and find the store
+        // Iterate up the tree and find the first matching model/view for either of the lenses
         for entity in new_ancestors {
             if let Some(models) = data.get_mut(entity) {
                 // Check for model store for first lens
                 if let Some(model_data) = models.get(&TypeId::of::<L1::Source>()) {
                     if !storages.contains(entity) {
-                        storages.insert(entity, HashMap::new());
+                        storages.insert(entity, HashMap::new()).unwrap();
                     }
 
                     if let Some(stores) = storages.get_mut(entity) {
@@ -185,7 +181,7 @@ where
                 // Check for model store for second lens
                 if let Some(model_data) = models.get(&TypeId::of::<L2::Source>()) {
                     if !storages.contains(entity) {
-                        storages.insert(entity, HashMap::new());
+                        storages.insert(entity, HashMap::new()).unwrap();
                     }
 
                     if let Some(stores) = storages.get_mut(entity) {
@@ -206,7 +202,7 @@ where
                 if let Some(view_handler) = cx.views.get(&entity) {
                     if view_handler.as_any_ref().is::<L1::Source>() {
                         if !storages.contains(entity) {
-                            storages.insert(entity, HashMap::new());
+                            storages.insert(entity, HashMap::new()).unwrap();
                         }
 
                         if let Some(stores) = storages.get_mut(entity) {
@@ -228,7 +224,7 @@ where
                 if let Some(view_handler) = cx.views.get(&entity) {
                     if view_handler.as_any_ref().is::<L2::Source>() {
                         if !storages.contains(entity) {
-                            storages.insert(entity, HashMap::new());
+                            storages.insert(entity, HashMap::new()).unwrap();
                         }
 
                         if let Some(stores) = storages.get_mut(entity) {
@@ -250,7 +246,7 @@ where
     }
 }
 
-pub struct DualStore<L1: Lens, L2: Lens> {
+pub(crate) struct DualStore<L1: Lens, L2: Lens> {
     pub entity: Entity,
     pub lens1: L1,
     pub lens2: L2,

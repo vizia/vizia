@@ -10,7 +10,7 @@ use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::state::{ModelData, ModelDataStore};
+use crate::state::ModelData;
 use crate::style::Style;
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};

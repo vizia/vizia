@@ -1,18 +1,13 @@
-use std::{
-    any::TypeId,
-    collections::{HashMap, HashSet},
-};
-
-use vizia_storage::SparseSet;
+use std::{any::TypeId, collections::HashSet};
 
 use crate::prelude::*;
 
-use super::{ModelData, ModelOrView};
+use super::ModelOrView;
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
 // Generates a unique ID
-pub fn next_uuid() -> u64 {
+pub(crate) fn next_uuid() -> u64 {
     static UUID: AtomicU64 = AtomicU64::new(0);
     UUID.fetch_add(1, Ordering::Relaxed)
 }
@@ -23,7 +18,7 @@ pub(crate) enum StoreId {
     UUID(u64),
 }
 
-pub trait Store {
+pub(crate) trait Store {
     fn update(&mut self, model: ModelOrView) -> bool;
     fn observers(&self) -> &HashSet<Entity>;
     fn add_observer(&mut self, observer: Entity);
@@ -32,7 +27,7 @@ pub trait Store {
     fn entity(&self) -> Entity;
 }
 
-pub struct BasicStore<L: Lens, T> {
+pub(crate) struct BasicStore<L: Lens, T> {
     // The entity which declared the binding
     pub entity: Entity,
     pub lens: L,

@@ -10,7 +10,7 @@ use crate::cache::{BoundingBox, CachedData};
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::state::{ModelData, ModelDataStore};
+use crate::state::ModelData;
 use crate::style::{LinearGradient, Style};
 use crate::text::Selection;
 use vizia_input::{Modifiers, MouseState};
