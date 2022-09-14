@@ -267,45 +267,28 @@ where
         self.entity
     }
 
-    fn update(
-        &mut self,
-        data: &mut SparseSet<HashMap<TypeId, Box<dyn ModelData>>>,
-        tree: &Tree<Entity>,
-        entity: Entity,
-    ) -> bool {
-        for parent in self.entity.parent_iter(tree) {
-            if let Some(models) = data.get_mut(entity) {
-                for (type_id, model) in models.iter_mut() {
-                    // If either of the states pointed to by the lenses has changed then mark the whole store as dirty.
+    fn update(&mut self, model: ModelOrView) -> bool {
+        if let Some(data) = model.downcast_ref::<L1::Source>() {
+            let result = self.lens1.view(data, |t| match (&self.old.0, t) {
+                (Some(a), Some(b)) if a.same(b) => None,
+                (None, None) => None,
+                _ => Some(t.cloned()),
+            });
+            if let Some(new_data) = result {
+                self.old.0 = new_data;
+                return true;
+            }
+        }
 
-                    if type_id == &TypeId::of::<L1::Source>() {
-                        if let Some(data) = model.downcast_ref::<L1::Source>() {
-                            let result = self.lens1.view(data, |t| match (&self.old.0, t) {
-                                (Some(a), Some(b)) if a.same(b) => None,
-                                (None, None) => None,
-                                _ => Some(t.cloned()),
-                            });
-                            if let Some(new_data) = result {
-                                self.old.0 = new_data;
-                                return true;
-                            }
-                        }
-                    }
-
-                    if type_id == &TypeId::of::<L2::Source>() {
-                        if let Some(data) = model.downcast_ref::<L2::Source>() {
-                            let result = self.lens2.view(data, |t| match (&self.old.1, t) {
-                                (Some(a), Some(b)) if a.same(b) => None,
-                                (None, None) => None,
-                                _ => Some(t.cloned()),
-                            });
-                            if let Some(new_data) = result {
-                                self.old.1 = new_data;
-                                return true;
-                            }
-                        }
-                    }
-                }
+        if let Some(data) = model.downcast_ref::<L2::Source>() {
+            let result = self.lens2.view(data, |t| match (&self.old.1, t) {
+                (Some(a), Some(b)) if a.same(b) => None,
+                (None, None) => None,
+                _ => Some(t.cloned()),
+            });
+            if let Some(new_data) = result {
+                self.old.1 = new_data;
+                return true;
             }
         }
 

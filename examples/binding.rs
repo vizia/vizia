@@ -17,16 +17,16 @@ fn main() {
 
         Checkbox::new(cx, AppData::flag).on_toggle(|cx| cx.emit(AppDataSetter::Flag(true)));
         Checkbox::new(cx, MoreData::flag).on_toggle(|cx| cx.emit(MoreDataSetter::Flag(true)));
-        // Binding::new(cx, AppData::flag1, |cx, flag1| {
-        //     Binding::new(cx, AppData::flag2, move |cx, flag2| {
-        //         if flag1.get(cx) && flag2.get(cx) {
-        //             Label::new(cx, "Hello World");
-        //         }
-        //     });
-        // });
+
+        Binding::new(cx, AppData::flag, |cx, flag1| {
+            Binding::new(cx, MoreData::flag, move |cx, flag2| {
+                if flag1.get(cx) && flag2.get(cx) {
+                    Label::new(cx, "Hello World");
+                }
+            });
+        });
 
         Binding::new(cx, (AppData::flag, MoreData::flag), move |cx, (flag1, flag2)| {
-            println!("Rebuild this");
             if flag1.get(cx) && flag2.get(cx) {
                 Label::new(cx, "Hello Multibinding");
             }

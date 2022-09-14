@@ -152,6 +152,8 @@ impl<L: 'static + Bindable + Clone> BindingHandler for Binding<L> {
     }
 
     fn remove(&self, cx: &mut Context) {
+        // TODO: Move removal code to store
+
         // for entity in self.entity.parent_iter(&cx.tree) {
         //     if let Some(model_data_store) = cx.data.get_mut(entity) {
         //         // Check for model store
