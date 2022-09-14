@@ -1,8 +1,13 @@
-use std::{any::TypeId, collections::HashSet};
+use std::{
+    any::TypeId,
+    collections::{HashMap, HashSet},
+};
+
+use vizia_storage::SparseSet;
 
 use crate::prelude::*;
 
-use super::ModelOrView;
+use super::{ModelData, ModelOrView};
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -19,7 +24,12 @@ pub(crate) enum StoreId {
 }
 
 pub trait Store {
-    fn update(&mut self, model: ModelOrView) -> bool;
+    fn update(
+        &mut self,
+        data: &mut SparseSet<HashMap<TypeId, Box<dyn ModelData>>>,
+        tree: &Tree<Entity>,
+        entity: Entity,
+    ) -> bool;
     fn observers(&self) -> &HashSet<Entity>;
     fn add_observer(&mut self, observer: Entity);
     fn remove_observer(&mut self, observer: &Entity);
@@ -44,16 +54,28 @@ where
         self.entity
     }
 
-    fn update(&mut self, model: ModelOrView) -> bool {
-        if let Some(data) = model.downcast_ref::<L::Source>() {
-            let result = self.lens.view(data, |t| match (&self.old, t) {
-                (Some(a), Some(b)) if a.same(b) => None,
-                (None, None) => None,
-                _ => Some(t.cloned()),
-            });
-            if let Some(new_data) = result {
-                self.old = new_data;
-                return true;
+    fn update(
+        &mut self,
+        data: &mut SparseSet<HashMap<TypeId, Box<dyn ModelData>>>,
+        tree: &Tree<Entity>,
+        entity: Entity,
+    ) -> bool {
+        if let Some(models) = data.get_mut(entity) {
+            for (type_id, model) in models.iter_mut() {
+                if type_id == &TypeId::of::<L::Source>() {
+                    if let Some(data) = model.downcast_ref::<L::Source>() {
+                        let result = self.lens.view(data, |t| match (&self.old, t) {
+                            (Some(a), Some(b)) if a.same(b) => None,
+                            (None, None) => None,
+                            _ => Some(t.cloned()),
+                        });
+                        if let Some(new_data) = result {
+                            self.old = new_data;
+                            println!("Update data");
+                            return true;
+                        }
+                    }
+                }
             }
         }
 

@@ -26,7 +26,7 @@ use crate::environment::Environment;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
-use crate::state::{BindingHandler, ModelDataStore};
+use crate::state::{BindingHandler, ModelData, ModelDataStore, Store, StoreId};
 use crate::style::Style;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
@@ -46,7 +46,9 @@ pub struct Context {
     pub(crate) current: Entity,
     /// TODO make this private when there's no longer a need to mutate views after building
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
-    pub(crate) data: SparseSet<ModelDataStore>,
+    // pub(crate) data: SparseSet<ModelDataStore>,
+    pub(crate) data: SparseSet<HashMap<TypeId, Box<dyn ModelData>>>,
+    pub(crate) stores: SparseSet<HashMap<StoreId, Box<dyn Store>>>,
     pub(crate) bindings: FnvHashMap<Entity, Box<dyn BindingHandler>>,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) listeners:
@@ -96,6 +98,7 @@ impl Context {
             current: Entity::root(),
             views: FnvHashMap::default(),
             data: SparseSet::new(),
+            stores: SparseSet::new(),
             bindings: FnvHashMap::default(),
             style: Style::default(),
             cache,
@@ -544,8 +547,8 @@ impl DataContext for Context {
         }
 
         for entity in self.current.parent_iter(&self.tree) {
-            if let Some(model_data_store) = self.data.get(entity) {
-                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+            if let Some(models) = self.data.get(entity) {
+                if let Some(model) = models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }

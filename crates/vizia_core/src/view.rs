@@ -35,9 +35,7 @@ pub trait View: 'static + Sized {
         cx.style.add(id);
         cx.views.insert(id, Box::new(self));
 
-        cx.data
-            .insert(id, ModelDataStore { models: HashMap::default(), stores: HashMap::default() })
-            .expect("Failed to insert model data store");
+        cx.data.insert(id, HashMap::new()).expect("Failed to insert model data store");
 
         let handle = Handle { entity: id, p: Default::default(), cx };
 

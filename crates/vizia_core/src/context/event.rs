@@ -10,7 +10,7 @@ use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::state::ModelDataStore;
+use crate::state::{ModelData, ModelDataStore};
 use crate::style::Style;
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
@@ -31,7 +31,7 @@ pub struct EventContext<'a> {
     pub cache: &'a CachedData,
     pub draw_cache: &'a DrawCache,
     pub tree: &'a Tree<Entity>,
-    pub(crate) data: &'a SparseSet<ModelDataStore>,
+    pub(crate) data: &'a SparseSet<HashMap<TypeId, Box<dyn ModelData>>>,
     pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
     listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
@@ -360,8 +360,8 @@ impl<'a> DataContext for EventContext<'a> {
         }
 
         for entity in self.current.parent_iter(&self.tree) {
-            if let Some(model_data_store) = self.data.get(entity) {
-                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+            if let Some(models) = self.data.get(entity) {
+                if let Some(model) = models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }
