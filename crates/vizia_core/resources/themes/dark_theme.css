@@ -570,3 +570,47 @@ textbox.error {
 .modal .accent {
     left: 1s;
 }
+
+tooltip .tooltip-wrapper {
+    background-color: #51afef;
+    border-radius: 4px;
+    child-space: 8px;
+}
+
+tooltip .title {
+    font-size: 18px;
+}
+
+tooltip .subtitle {
+    color: #00000088;
+}
+
+tooltip label {
+    color: #181818;
+}
+
+tooltip .tooltip-button-wrapper {
+    top: 8px;
+    left: 1s;
+    width: auto;
+    height: auto;
+    col-between: 8px;
+}
+
+tooltip button {
+    border-color: #181818;
+}
+
+.tooltip-pointer-wrapper {
+    width: 16px;
+    height: 12px;
+    overflow: hidden;
+    left: 4px;
+}
+
+.tooltip-pointer {
+    width: 12px;
+    height: 12px;
+    background-color: #51afef;
+    border-radius: 2px;
+}

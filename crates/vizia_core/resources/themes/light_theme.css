@@ -116,74 +116,40 @@ checkbox:hover:disabled {
 }
 
 checkbox:checked:hover {
-    background-color: #9fd5fb;
-    border-color: #9fd5fb;
-    color: #fff;
-}
-
-checkbox:checked:disabled {
-    background-color: #b6b6b6;
-    border-color: #b6b6b6;
-    color: #fff;
-}
-
-dropdown .title {
-    width: auto;
-    height: 30px;
-    background-color: #fff;
+tooltip .tooltip-wrapper {
+    background-color: #51afef;
     border-radius: 4px;
-    border-width: 1px;
-    border-color: #e4e4e4;
-    child-space: 1s;
-    child-left: 5px;
-    overflow: visible;
+    child-space: 8px;
 }
 
-dropdown .title:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
+tooltip .title {
+    font-size: 18px;
 }
 
-dropdown popup {
-    top: 4px;
-    background-color: #fff;
-    border-radius: 4px;
-    border-width: 1px;
-    border-color: #e4e4e4;
+tooltip label {
+    color: #181818;
 }
 
-dropdown popup list {
-    width: 1s;
+tooltip button {
+    top: 8px;
+    left: 1s;
+    border-color: #181818;
 }
 
-dropdown list label {
-    width: 1s;
-    height: 30px;
-    child-left: 6px;
-    color: #888;
+.tooltip-pointer-wrapper {
+    width: 16px;
+    height: 12px;
+    overflow: hidden;
+    left: 4px;
 }
 
-dropdown list label:checked {
-    color: #000;
+.tooltip-pointer {
+    width: 12px;
+    height: 12px;
+    background-color: #51afef;
+    border-radius: 2px;
 }
-
-dropdown list label:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
-}
-
-dropdown vstack {
-    child-space: auto;
-}
-
-knob {
-    width: 48px;
-    height: 48;
-    background-color: #242424;
-    border-radius: 38px;
-    border-width: 2px;
+px;
     border-color: #2f2f2f;
 }
 
@@ -562,4 +528,47 @@ textbox.error {
 
 .modal .accent {
     left: 1s;
+}
+
+tooltip .tooltip-wrapper {
+    background-color: #51afef;
+    border-radius: 4px;
+    child-space: 8px;
+}
+
+tooltip .title {
+    font-size: 18px;
+}
+
+tooltip .subtitle {
+    color: #00000088;
+}
+
+tooltip label {
+    color: #fff;
+}
+
+tooltip .tooltip-button-wrapper {
+    top: 8px;
+    left: 1s;
+    width: auto;
+    height: auto;
+}
+
+tooltip button {
+    border-color: #fff;
+}
+
+.tooltip-pointer-wrapper {
+    width: 16px;
+    height: 12px;
+    overflow: hidden;
+    left: 4px;
+}
+
+.tooltip-pointer {
+    width: 12px;
+    height: 12px;
+    background-color: #51afef;
+    border-radius: 2px;
 }

@@ -12,7 +12,6 @@ mod label;
 mod list;
 mod menu;
 pub mod normalized_map;
-mod switch;
 mod popup;
 mod radio_buttons;
 mod scrollbar;
@@ -20,8 +19,10 @@ mod scrollview;
 mod slider;
 mod spinbox;
 mod stack;
+mod switch;
 mod table;
 mod textbox;
+mod tooltip;
 
 pub use self::image::Image;
 pub use button::Button;
@@ -36,12 +37,13 @@ pub use popup::{Popup, PopupData, PopupEvent};
 pub use radio_buttons::RadioButton;
 pub use scrollbar::Scrollbar;
 pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
-pub use switch::Switch;
 pub use slider::Slider;
 pub use spinbox::{Spinbox, SpinboxData, SpinboxEvent, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
+pub use switch::Switch;
 pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};
+pub use tooltip::{Tooltip, TooltipEvent, TooltipSeq};
 
 use crate::prelude::*;
 
