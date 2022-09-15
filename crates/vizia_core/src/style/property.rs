@@ -7,12 +7,12 @@ use morphorm::{LayoutType, PositionType, Units};
 #[derive(Debug, Clone, PartialEq)]
 pub enum PropType {
     Units(Units),
-    String(String),
+    Color(Color),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum Property {
-    Unknown(String, PropType),
+    Custom(String, PropType),
 
     // General
     Display(Display),

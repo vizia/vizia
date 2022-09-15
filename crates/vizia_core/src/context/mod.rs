@@ -27,7 +27,9 @@ use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
-use crate::style::Style;
+use crate::storage::animatable_set::AnimatableSet;
+use crate::style::{PropType, Style};
+use crate::systems::Prop;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -514,6 +516,22 @@ impl Context {
         };
 
         std::thread::spawn(move || target(&mut cxp));
+    }
+
+    pub fn add_property(&mut self, name: &str, prop_type: PropType) {
+        match prop_type {
+            PropType::Color(_) => {
+                self.style.custom_color_props.insert(name.to_owned(), AnimatableSet::new());
+            }
+
+            _ => {}
+        }
+    }
+
+    pub fn set_property<T: Prop>(&mut self, entity: Entity, name: &str, val: T) {
+        self.with_current(entity, |cx| {
+            T::set(cx, name, val);
+        })
     }
 }
 

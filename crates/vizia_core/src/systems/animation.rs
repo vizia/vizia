@@ -1,6 +1,13 @@
 use crate::prelude::*;
 
 pub fn has_animations(cx: &Context) -> bool {
+    let mut custom_is_animating = false;
+    for (_, prop) in cx.style.custom_color_props.iter() {
+        if prop.has_animations() {
+            custom_is_animating = true;
+        }
+    }
+
     cx.style.display.has_animations()
         | cx.style.visibility.has_animations()
         | cx.style.opacity.has_animations()
@@ -44,6 +51,7 @@ pub fn has_animations(cx: &Context) -> bool {
         | cx.style.child_right.has_animations()
         | cx.style.child_top.has_animations()
         | cx.style.child_bottom.has_animations()
+        | custom_is_animating
 }
 
 pub fn animation_system(cx: &mut Context) {
@@ -94,4 +102,8 @@ pub fn animation_system(cx: &mut Context) {
     cx.style.child_bottom.tick(time);
 
     cx.style.needs_relayout = true;
+
+    for (_, prop) in cx.style.custom_color_props.iter_mut() {
+        prop.tick(time);
+    }
 }

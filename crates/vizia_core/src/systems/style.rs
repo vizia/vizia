@@ -3,6 +3,23 @@ use crate::style::{Rule, Selector, SelectorRelation, StyleRule};
 use vizia_id::GenerationalId;
 use vizia_storage::{LayoutTreeIterator, TreeExt};
 
+pub trait Prop {
+    fn get<'a>(cx: &'a DrawContext, name: &str) -> Option<&'a Self>;
+    fn set(cx: &mut Context, name: &str, val: Self);
+}
+
+impl Prop for Color {
+    fn get<'a>(cx: &'a DrawContext, name: &str) -> Option<&'a Self> {
+        cx.style.custom_color_props.get(name).and_then(|store| store.get(cx.current))
+    }
+
+    fn set(cx: &mut Context, name: &str, val: Self) {
+        if let Some(store) = cx.style.custom_color_props.get_mut(name) {
+            store.insert(cx.current, val);
+        }
+    }
+}
+
 pub fn inline_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
     for entity in tree.into_iter() {
         if let Some(parent) = tree.get_layout_parent(entity) {
@@ -488,6 +505,12 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
 
     if cx.style.cursor.link(entity, &matched_rules) {
         should_redraw = true;
+    }
+
+    for (_, prop) in cx.style.custom_color_props.iter_mut() {
+        if prop.link(entity, &matched_rules) {
+            should_redraw = true;
+        }
     }
 
     if should_relayout {

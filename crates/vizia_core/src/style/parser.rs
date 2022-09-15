@@ -464,14 +464,16 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
 
             "cursor" => Property::Cursor(parse_cursor(input)?),
 
-            ident => Property::Unknown(ident.to_owned(), parse_unknown(input)?),
-            // _ => {
-            //     let basic_error = BasicParseError {
-            //         kind: BasicParseErrorKind::UnexpectedToken(input.next()?.to_owned()),
-            //         location: SourceLocation { line: 0, column: 0 },
-            //     };
-            //     return Err(basic_error.into());
-            // }
+            ident if ident.starts_with("--") => {
+                Property::Custom((&ident[2..]).to_owned(), parse_custom(input)?)
+            }
+            _ => {
+                let basic_error = BasicParseError {
+                    kind: BasicParseErrorKind::UnexpectedToken(input.next()?.to_owned()),
+                    location: SourceLocation { line: 0, column: 0 },
+                };
+                return Err(basic_error.into());
+            }
         })
     }
 }
@@ -511,17 +513,10 @@ fn css_string(name: &str) -> Option<String> {
     Some(String::from(name))
 }
 
-fn parse_unknown<'i, 't>(
+fn parse_custom<'i, 't>(
     input: &mut Parser<'i, 't>,
 ) -> Result<PropType, ParseError<'i, CustomParseError>> {
     Ok(match input.next()? {
-        Token::QuotedString(s) => match css_string(&s) {
-            Some(string) => PropType::String(string),
-            None => {
-                return Err(CustomParseError::InvalidStringName(s.to_owned().to_string()).into())
-            }
-        },
-
         Token::Number { value: x, .. } => PropType::Units(Units::Pixels(*x as f32)),
         Token::Percentage { unit_value: x, .. } => PropType::Units(Units::Percentage(*x as f32)),
 
@@ -534,6 +529,28 @@ fn parse_unknown<'i, 't>(
         }
 
         Token::Ident(name) if name == &"auto" => PropType::Units(Units::Auto),
+
+        Token::Ident(name) => {
+            // if input.try_parse(|input| input.expect_ident_matching("rgb")).is_ok() {
+            //     if input.expect_parenthesis_block().is_ok() {
+            //         input.parse_nested_block(parse: F)
+            //     }
+            // }
+
+            match css_color(&name) {
+                Some(color) => PropType::Color(color),
+                None => {
+                    return Err(CustomParseError::UnrecognisedColorName(
+                        name.to_owned().to_string(),
+                    )
+                    .into());
+                }
+            }
+        }
+
+        Token::IDHash(hash) | Token::Hash(hash) => {
+            PropType::Color(Color::from(hash.to_owned().to_string()))
+        }
 
         t => {
             let basic_error = BasicParseErrorKind::UnexpectedToken(t.to_owned());
