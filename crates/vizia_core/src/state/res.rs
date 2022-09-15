@@ -1,4 +1,8 @@
+use std::{marker::PhantomData, rc::Rc};
+
 use crate::prelude::*;
+
+use super::Bindable;
 
 macro_rules! impl_res_simple {
     ($t:ty) => {
@@ -47,6 +51,61 @@ impl_res_simple!(char);
 impl_res_simple!(bool);
 impl_res_simple!(f32);
 impl_res_simple!(f64);
+
+pub struct BindMap<B, F, T> {
+    b: B,
+    map: Rc<F>,
+    p: PhantomData<T>,
+}
+
+impl<B, F, T> BindMap<B, F, T> {
+    pub fn new(b: B, map: F) -> Self
+    where
+        B: Bindable + Clone,
+        F: Fn(B::Output) -> T,
+    {
+        Self { b, map: Rc::new(map), p: PhantomData::default() }
+    }
+}
+
+pub trait BindableExt: Bindable + Clone {
+    fn bind_map<F, T>(self, f: F) -> BindMap<Self, F, T>
+    where
+        F: Fn(Self::Output) -> T,
+    {
+        BindMap::new(self, f)
+    }
+}
+
+impl<B: Bindable + Clone> BindableExt for B {}
+
+impl<B, F, T> Res<T> for BindMap<B, F, T>
+where
+    B: 'static + Bindable + Clone,
+    F: 'static + Fn(B::Output) -> T,
+{
+    fn get_val(&self, cx: &Context) -> T {
+        todo!()
+    }
+
+    fn set_or_bind<G>(&self, cx: &mut Context, entity: Entity, closure: G)
+    where
+        G: 'static + Clone + Fn(&mut Context, Entity, T),
+    {
+        cx.with_current(entity, |cx| {
+            let b = self.b.clone();
+            let map = self.map.clone();
+            Binding::new(cx, self.b.clone(), move |cx, val| {
+                let val = (map)(b.get_val(cx));
+
+                (closure)(cx, entity, val)
+                // if let Some(v) = val.get_val_fallible(cx) {
+                //     (closure)(cx, entity, v);
+                // }
+            });
+        });
+    }
+}
 
 impl<T, L> Res<T> for L
 where

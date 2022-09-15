@@ -11,9 +11,11 @@ use crate::{
     state::{LensCache, ModelOrView, StoreId},
 };
 
-use super::{BasicStore, Data, Lens, Store};
+use super::{BasicStore, Data, Lens, LensExt, Store};
 
 pub trait Bindable {
+    type Output;
+    fn get_val(&self, cx: &mut Context) -> Self::Output;
     fn insert_store(self, cx: &mut Context, entity: Entity);
 }
 
@@ -21,6 +23,12 @@ impl<L: Lens> Bindable for L
 where
     L::Target: Data,
 {
+    type Output = L::Target;
+
+    fn get_val(&self, cx: &mut Context) -> Self::Output {
+        self.get(cx)
+    }
+
     fn insert_store(self, cx: &mut Context, id: Entity) {
         let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
         let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
@@ -110,6 +118,12 @@ where
     L1::Target: Data,
     L2::Target: Data,
 {
+    type Output = (L1::Target, L2::Target);
+
+    fn get_val(&self, cx: &mut Context) -> Self::Output {
+        (self.0.get(cx), self.1.get(cx))
+    }
+
     fn insert_store(self, cx: &mut Context, id: Entity) {
         let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
         let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();

@@ -1,4 +1,5 @@
 use vizia::prelude::*;
+use vizia::state::{Bindable, BindableExt};
 
 #[derive(Lens, Setter, Model)]
 pub struct AppData {
@@ -31,6 +32,16 @@ fn main() {
                 Label::new(cx, "Hello Multibinding");
             }
         });
+
+        Label::new(cx, "Test").background_color((AppData::flag, MoreData::flag).bind_map(
+            |(flag1, flag2)| {
+                if flag1 && flag2 {
+                    Color::red()
+                } else {
+                    Color::blue()
+                }
+            },
+        ));
     })
     .run();
 }
