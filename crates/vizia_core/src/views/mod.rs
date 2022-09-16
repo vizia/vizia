@@ -22,6 +22,7 @@ mod stack;
 mod switch;
 mod table;
 mod textbox;
+mod timepicker;
 mod tooltip;
 
 pub use self::image::Image;
@@ -43,6 +44,7 @@ pub use stack::{HStack, VStack, ZStack};
 pub use switch::Switch;
 pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};
+pub use timepicker::{AMOrPM, DayTime, Timepicker, TimepickerEvent};
 pub use tooltip::{Tooltip, TooltipEvent, TooltipSeq};
 
 use crate::prelude::*;

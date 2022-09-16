@@ -278,10 +278,6 @@ slider .thumb {
 }
 
 spinbox {
-    top: 4px;
-    left: 4px;
-    bottom: 4px;
-    right: 4px;
     background-color: #fff;
     border-radius: 4px;
     border-width: 1px;
@@ -571,4 +567,32 @@ tooltip button {
     height: 12px;
     background-color: #51afef;
     border-radius: 2px;
+}
+
+timepicker {
+    background-color: #fff;
+    border-radius: 4px;
+    child-space: 8px;
+}
+
+timepicker .timepicker-wrapper {
+    col-between: 8px;
+}
+
+timepicker .timepicker-button-wrapper {
+    row-between: 1s;
+}
+
+timepicker .timepicker-dots-wrapper {
+    width: auto;
+    height: 1s;
+    child-space: 1s;
+    row-between: 8px;
+}
+
+timepicker .timepicker-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 4px;
+    background-color: #E4E4E4;
 }
