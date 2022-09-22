@@ -112,6 +112,10 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
             if selector_element != &element {
                 return false;
             }
+        } else if entity == Entity::root() {
+            if selector_element != "root" {
+                return false;
+            }
         } else {
             return false;
         }
@@ -511,11 +515,6 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
 
         // Loop through all entities
         'ent: for entity in iterator {
-            // Skip the root
-            if entity == Entity::root() {
-                continue;
-            }
-
             // If the entity and the previous entity have the same parent and selectors then they share the same rules
             if let Some(prev) = prev_entity {
                 if let Some(parent) = tree.get_layout_parent(entity) {
