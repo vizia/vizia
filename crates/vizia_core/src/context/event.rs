@@ -26,7 +26,7 @@ pub struct EventContext<'a> {
     pub(crate) captured: &'a mut Entity,
     pub(crate) focused: &'a mut Entity,
     pub(crate) hovered: &'a Entity,
-    pub(crate) style: &'a mut Style,
+    pub style: &'a mut Style,
     entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a CachedData,
     pub draw_cache: &'a DrawCache,
