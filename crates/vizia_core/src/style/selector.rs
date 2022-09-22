@@ -22,6 +22,7 @@ bitflags! {
         const CUSTOM = 1 << 7;
         const FOCUS_WITHIN = 1<<8;
         const FOCUS_VISIBLE = 1 << 9;
+        const ROOT = 1 << 10;
     }
 }
 
@@ -59,6 +60,9 @@ impl std::fmt::Display for PseudoClass {
         }
         if self.contains(PseudoClass::FOCUS_VISIBLE) {
             write!(f, ":focus-visible")?;
+        }
+        if self.contains(PseudoClass::ROOT) {
+            write!(f, ":root")?;
         }
 
         Ok(())
