@@ -60,6 +60,10 @@ impl EventManager {
                 }
             });
 
+            if event.meta.consumed {
+                continue 'events;
+            }
+
             // Send events to any global listeners
             let mut global_listeners = vec![];
             std::mem::swap(&mut context.global_listeners, &mut global_listeners);
@@ -244,6 +248,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     } else {
                         WindowEvent::MouseDoubleClick(*button)
                     };
+                    meta.consume();
                     emit_direct_or_up(context, event, context.captured, context.hovered, true);
                 }
             } else {
