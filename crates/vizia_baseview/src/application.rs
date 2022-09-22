@@ -194,6 +194,8 @@ impl ApplicationRunner {
 
         cx.load_images();
 
+        // Force restyle on every frame for baseview backend to avoid style inheritance issues
+        cx.style().needs_restyle = true;
         cx.process_data_updates();
         cx.process_style_updates();
 
