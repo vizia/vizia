@@ -1,7 +1,5 @@
 use crate::window::ViziaWindow;
-use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
-use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
 
 use crate::proxy::queue_get;
@@ -163,25 +161,14 @@ pub(crate) struct ApplicationRunner {
 }
 
 impl ApplicationRunner {
-    pub fn new(
-        mut context: Context,
-        win_desc: WindowDescription,
-        scale_policy: WindowScalePolicy,
-        renderer: Renderer,
-    ) -> Self {
-        let mut cx = BackendContext::new(&mut context);
-
+    pub fn new(context: Context, scale_policy: WindowScalePolicy) -> Self {
         let event_manager = EventManager::new();
-
-        let canvas = Canvas::new(renderer).expect("Cannot create canvas");
 
         // Assume scale for now until there is an event with a new one.
         let scale_factor = match scale_policy {
             WindowScalePolicy::ScaleFactor(scale) => scale,
             WindowScalePolicy::SystemScaleFactor => 1.0,
         };
-
-        cx.add_main_window(&win_desc, canvas, scale_factor as f32);
 
         ApplicationRunner {
             event_manager,
