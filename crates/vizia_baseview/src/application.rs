@@ -233,25 +233,44 @@ impl ApplicationRunner {
             *should_quit = true;
         }
 
+        let mut update_modifiers = |modifiers: vizia_input::KeyboardModifiers| {
+            cx.modifiers()
+                .set(Modifiers::SHIFT, modifiers.contains(vizia_input::KeyboardModifiers::SHIFT));
+            cx.modifiers()
+                .set(Modifiers::CTRL, modifiers.contains(vizia_input::KeyboardModifiers::CONTROL));
+            cx.modifiers()
+                .set(Modifiers::LOGO, modifiers.contains(vizia_input::KeyboardModifiers::META));
+            cx.modifiers()
+                .set(Modifiers::ALT, modifiers.contains(vizia_input::KeyboardModifiers::ALT));
+        };
+
         match event {
             baseview::Event::Mouse(event) => match event {
-                baseview::MouseEvent::CursorMoved { position } => {
+                baseview::MouseEvent::CursorMoved { position, modifiers } => {
+                    update_modifiers(modifiers);
+
                     let physical_posx = position.x * cx.style().dpi_factor;
                     let physical_posy = position.y * cx.style().dpi_factor;
                     let cursorx = (physical_posx) as f32;
                     let cursory = (physical_posy) as f32;
                     cx.emit_origin(WindowEvent::MouseMove(cursorx, cursory));
                 }
-                baseview::MouseEvent::ButtonPressed(button) => {
+                baseview::MouseEvent::ButtonPressed { button, modifiers } => {
+                    update_modifiers(modifiers);
+
                     let b = translate_mouse_button(button);
                     cx.emit_origin(WindowEvent::MouseDown(b));
                 }
-                baseview::MouseEvent::ButtonReleased(button) => {
+                baseview::MouseEvent::ButtonReleased { button, modifiers } => {
+                    update_modifiers(modifiers);
+
                     let b = translate_mouse_button(button);
                     cx.emit_origin(WindowEvent::MouseUp(b));
                 }
-                baseview::MouseEvent::WheelScrolled(scroll_delta) => {
-                    let (lines_x, lines_y) = match scroll_delta {
+                baseview::MouseEvent::WheelScrolled { delta, modifiers } => {
+                    update_modifiers(modifiers);
+
+                    let (lines_x, lines_y) = match delta {
                         baseview::ScrollDelta::Lines { x, y } => (x, y),
                         baseview::ScrollDelta::Pixels { x, y } => (
                             if x < 0.0 {
