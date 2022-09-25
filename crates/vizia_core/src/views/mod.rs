@@ -21,6 +21,7 @@ mod scrollview;
 mod slider;
 mod spinbox;
 mod stack;
+mod tab;
 mod table;
 mod textbox;
 
@@ -42,6 +43,7 @@ pub use switch::Switch;
 pub use slider::Slider;
 pub use spinbox::{Spinbox, SpinboxData, SpinboxEvent, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
+pub use tab::{TabPair, TabView};
 pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};
 
