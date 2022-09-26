@@ -11,7 +11,7 @@ spinbox {
     background-color: #242424;
     border-radius: 4px;
     border-width: 1px;
-    border-color: #2F2F2F;
+    border-color: #2f2f2f;
 }
 
 spinbox.horizontal {
@@ -89,12 +89,12 @@ switch {
 }
 
 switch:hover .switch-handle-container .switch-handle {
-    background-color: #51AFEF;
+    background-color: #51afef;
 }
 
 switch:focus-visible {
     outline-width: 1px;
-    outline-color: #51AFEF;
+    outline-color: #51afef;
 }
 
 switch:active {
@@ -103,7 +103,7 @@ switch:active {
 }
 
 switch:checked {
-    border-color: #51AFEF;
+    border-color: #51afef;
 }
 
 switch:checked .switch-handle-container {
@@ -111,12 +111,12 @@ switch:checked .switch-handle-container {
 }
 
 switch:checked .switch-handle-container .switch-handle {
-    background-color: #51AFEF;
+    background-color: #51afef;
     left: 8px;
 }
 
 switch:checked:hover .switch-handle-container .switch-handle {
-    background-color: #9FD5FB;
+    background-color: #9fd5fb;
 }
 
 switch:disabled {
@@ -149,7 +149,7 @@ datepicker {
     height: 324px;
 
     border-radius: 4px;
-    
+
     child-top: 8px;
     child-bottom: 8px;
     child-left: 16px;
@@ -172,7 +172,7 @@ datepicker {
 .datepicker-divisor {
     width: 1s;
     height: 1px;
-    background-color: #2F2F2F;
+    background-color: #2f2f2f;
 }
 
 .datepicker-calendar {
@@ -195,7 +195,7 @@ datepicker {
 
 .datepicker-calendar-day:checked {
     color: #181818;
-    background-color: #51AFEF;
+    background-color: #51afef;
     border-radius: 4px;
 }
 
@@ -209,7 +209,7 @@ datepicker {
 .datepicker-selected-date {
     left: 1s;
     right: 1s;
-    color: #B0B0B0;
+    color: #b0b0b0;
 }
 
 .datepicker-actions-container {
@@ -220,7 +220,7 @@ datepicker {
 
 .datepicker-cancel {
     border-width: 2px;
-    border-color: #EF5151;
+    border-color: #ef5151;
     border-radius: 4px;
     height: auto;
     width: auto;
@@ -231,13 +231,13 @@ datepicker {
     bottom: 2px;
     right: 8px;
     left: 8px;
-    color: #EF5151;
+    color: #ef5151;
 }
 
 .datepicker-apply {
     border-width: 2px;
-    border-color: #51AFEF;
-    background-color: #51AFEF;
+    border-color: #51afef;
+    background-color: #51afef;
     border-radius: 4px;
     height: auto;
     width: auto;
@@ -249,4 +249,48 @@ datepicker {
     right: 8px;
     left: 8px;
     color: #181818;
+}
+
+tabview {
+    width: 1s;
+    height: 1s;
+    background-color: #242424;
+}
+
+.tabview-tabheader-wrapper {
+    height: 32px;
+    child-space: 4px;
+    col-between: 4px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #323232;
+}
+
+tabheader {
+    width: auto;
+    height: 32px;
+    border-radius: 4px;
+    color: #fff;
+    background-color: #323232;
+}
+
+tabheader label {
+    top: 4px;
+    bottom: 4px;
+    left: 8px;
+    right: 8px;
+}
+
+tabheader:disabled {
+    background-color: transparent;
+}
+
+tabheader:disabled label {
+    color: #888;
+}
+
+.tabview-content-wrapper {
+    width: 1s;
+    height: 1s;
+    background-color: #121212;
 }

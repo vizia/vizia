@@ -19,8 +19,8 @@ impl TabView {
         T: 'static,
         F: 'static + Copy + Fn(&mut Context, Then<L, Index<Vec<T>, T>>) -> TabPair,
     {
-        Self { selected_index: 0 }.build(cx, move |cx| {
-            VStack::new(cx, move |cx| {
+        Self { selected_index: 0 }
+            .build(cx, move |cx| {
                 let lens2 = lens.clone();
                 // Tab headers
                 HStack::new(cx, move |cx| {
@@ -29,24 +29,37 @@ impl TabView {
                         for index in 0..list_length {
                             let l = lens.clone().index(index);
                             let builder = (content)(cx, l).header;
-                            TabHeader::new(cx, index, builder);
+                            TabHeader::new(cx, index, builder).bind(
+                                TabView::selected_index,
+                                move |handle, selected_index| {
+                                    let selected_index = selected_index.get(handle.cx);
+                                    handle.disabled(selected_index != index);
+                                },
+                            );
                         }
                     })
                 })
-                .height(Auto);
+                .class("tabview-tabheader-wrapper");
 
                 // Tab content
-                Binding::new(cx, TabView::selected_index, move |cx, selected| {
-                    let selected = selected.get(cx);
-                    let l = lens2.clone().index(selected);
-                    ((content)(cx, l).content)(cx);
-                });
-            });
-        })
+                HStack::new(cx, |cx| {
+                    Binding::new(cx, TabView::selected_index, move |cx, selected| {
+                        let selected = selected.get(cx);
+                        let l = lens2.clone().index(selected);
+                        ((content)(cx, l).content)(cx);
+                    });
+                })
+                .class("tabview-content-wrapper");
+            })
+            .layout_type(LayoutType::Column)
     }
 }
 
 impl View for TabView {
+    fn element(&self) -> Option<&'static str> {
+        Some("tabview")
+    }
+
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|tab_event, meta| match tab_event {
             TabEvent::SetSelected(index) => {
@@ -81,11 +94,15 @@ impl TabHeader {
     where
         F: 'static + Fn(&mut Context),
     {
-        Self { index }.build(cx, |cx| (content)(cx)).size(Auto)
+        Self { index }.build(cx, |cx| (content)(cx))
     }
 }
 
 impl View for TabHeader {
+    fn element(&self) -> Option<&'static str> {
+        Some("tabheader")
+    }
+
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _meta| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
