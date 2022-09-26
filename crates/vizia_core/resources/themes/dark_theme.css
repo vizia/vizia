@@ -254,6 +254,7 @@ datepicker {
 tabview {
     width: 1s;
     height: 1s;
+    background-color: #242424;
 }
 
 .tabview-tabheader-wrapper {

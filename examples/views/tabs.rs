@@ -16,7 +16,7 @@ fn main() {
     Application::new(|cx| {
         AppData { list: vec!["Tab1", "Tab2"] }.build(cx);
 
-        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
+        cx.add_stylesheet(LIGHT_THEME).expect("Failed to find stylesheet");
 
         VStack::new(cx, |cx| {
             TabView::new(cx, AppData::list, |cx, item| match item.get(cx) {
