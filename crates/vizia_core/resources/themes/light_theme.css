@@ -1,5 +1,5 @@
 .main {
-    background-color: #ebebeb;
+    background-color: #e4e4e4;
     width: 1s;
     height: 1s;
     child-top: 1s;
@@ -25,8 +25,9 @@ button {
     child-space: 1s;
     child-left: 10px;
     child-right: 10px;
-    background-color: #51afef;
-    border-width: 0px;
+    border-width: 1px;
+    border-color: #d9d9d9;
+    background-color: #ececec;
     overflow: visible;
     transition: background-color 0.1 0;
 }
@@ -37,42 +38,29 @@ button label {
 }
 
 button:over {
-    background-color: #80caff;
+    background-color: #fff;
     transition: background-color 0.1 0;
 }
 
 button:active {
+    background-color: #d9d9d9;
+}
+
+button.accent {
+    border-width: 0px;
+    background-color: #51afef;
+}
+
+button.accent label {
+    color: #181818;
+}
+
+button.accent:over {
+    background-color: #80caff;
+}
+
+button.accent:active {
     background-color: #3995d6;
-}
-
-button.outline {
-    background-color: transparent;
-    border-width: 2px;
-    border-color: #3995d6;
-}
-
-button.outline label {
-    color: #3995d6;
-}
-
-button.outline:over {
-    border-color: #51afef;
-}
-
-button.outline:over label {
-    color: #51afef;
-}
-
-button.outline:active {
-    border-color: #2f7db6;
-}
-
-button.outline:active label {
-    color: #2f7db6;
-}
-
-button:disabled.outline {
-    border-color: #888;
 }
 
 button:focus-visible {
@@ -82,7 +70,12 @@ button:focus-visible {
 }
 
 button:disabled {
-    background-color: #888;
+    background-color: transparent;
+    border-color: #404040;
+}
+
+button:disabled label {
+    color: #888;
 }
 
 checkbox {

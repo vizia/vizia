@@ -29,54 +29,42 @@ button {
     child-space: 1s;
     child-left: 10px;
     child-right: 10px;
-    background-color: #51afef;
-    border-width: 0px;
+    border-width: 1px;
+    border-color: #424242;
+    background-color: #323232;
     overflow: visible;
     transition: background-color 0.1 0;
 }
 
 button label {
-    color: #181818;
+    color: #fff;
     child-space: 1s;
 }
 
 button:over {
-    background-color: #80caff;
+    background-color: #424242;
     transition: background-color 0.1 0;
 }
 
 button:active {
+    background-color: #242424;
+}
+
+button.accent {
+    border-width: 0px;
+    background-color: #51afef;
+}
+
+button.accent label {
+    color: #181818;
+}
+
+button.accent:over {
+    background-color: #80caff;
+}
+
+button.accent:active {
     background-color: #3995d6;
-}
-
-button.outline {
-    background-color: transparent;
-    border-width: 2px;
-    border-color: #51afef;
-}
-
-button.outline label {
-    color: #51afef;
-}
-
-button.outline:over {
-    border-color: #80caff;
-}
-
-button.outline:over label {
-    color: #80caff;
-}
-
-button.outline:active {
-    border-color: #3995d6;
-}
-
-button.outline:active label {
-    color: #3995d6;
-}
-
-button:disabled.outline {
-    border-color: #888;
 }
 
 button:focus-visible {
@@ -86,7 +74,12 @@ button:focus-visible {
 }
 
 button:disabled {
-    background-color: #888;
+    background-color: transparent;
+    border-color: #404040;
+}
+
+button:disabled label {
+    color: #888;
 }
 
 checkbox {
