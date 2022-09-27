@@ -8,14 +8,14 @@ const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
+        cx.add_stylesheet(LIGHT_THEME).expect("Failed to find stylesheet");
 
         VStack::new(cx, |cx| {
             VStack::new(cx, |cx| {
                 // Basic Button
                 Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
                 // Accent Button
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Another Button")).class("accent");
+                Button::new(cx, |_| {}, |cx| Label::new(cx, "Another Button")).class("outline");
                 // Disabled Button
                 Button::new(cx, |_| {}, |cx| Label::new(cx, "Disabled Button")).disabled(true);
                 // Button with Icon

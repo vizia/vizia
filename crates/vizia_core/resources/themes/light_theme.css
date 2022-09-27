@@ -23,47 +23,54 @@ button {
     child-space: 1s;
     child-left: 10px;
     child-right: 10px;
-    border-width: 2px;
-    border-color: #51afef;
+    background-color: #51afef;
+    border-width: 0px;
     overflow: visible;
+    transition: background-color 0.1 0;
 }
 
 button label {
-    color: #51afef;
+    color: #181818;
     child-space: 1s;
 }
 
 button:over {
-    border-color: #9fd5fb;
-}
-
-button:over label {
-    color: #9fd5fb;
+    background-color: #3995d6;
+    transition: background-color 0.1 0;
 }
 
 button:active {
-    border-color: #3f8bbd;
+    background-color: #2c7ab3;
 }
 
-button:active label {
-    color: #3f8bbd;
+button.outline {
+    background-color: transparent;
+    border-width: 2px;
+    border-color: #51afef;
 }
 
-button.accent {
-    background-color: #51afef;
-    border-width: 0px;
+button.outline label {
+    color: #51afef;
 }
 
-button.accent label {
-    color: #fff;
+button.outline:over {
+    border-color: #3995d6;
 }
 
-button.accent:over {
-    background-color: #9fd5fb;
+button.outline:over label {
+    color: #3995d6;
 }
 
-button.accent:active {
-    background-color: #317099;
+button.outline:active {
+    border-color: #2c7ab3;
+}
+
+button.outline:active label {
+    color: #2c7ab3;
+}
+
+button:disabled.outline {
+    border-color: #888;
 }
 
 button:focus-visible {
@@ -73,11 +80,7 @@ button:focus-visible {
 }
 
 button:disabled {
-    border-color: #888;
-}
-
-button:disabled label {
-    color: #888;
+    background-color: #888;
 }
 
 checkbox {
@@ -116,14 +119,14 @@ checkbox:hover:disabled {
 }
 
 checkbox:checked:hover {
-    background-color: #9FD5FB;
-    border-color: #9FD5FB;
+    background-color: #80caff;
+    border-color: #80caff;
     color: #fff;
 }
 
 checkbox:checked:disabled {
-    background-color: #B6B6B6;
-    border-color: #B6B6B6;
+    background-color: #b6b6b6;
+    border-color: #b6b6b6;
     color: #fff;
 }
 
@@ -133,7 +136,7 @@ dropdown .title {
     background-color: #fff;
     border-radius: 4px;
     border-width: 1px;
-    border-color: #E4E4E4;
+    border-color: #e4e4e4;
     child-space: 1s;
     child-left: 5px;
     overflow: visible;
@@ -150,7 +153,7 @@ dropdown popup {
     background-color: #fff;
     border-radius: 4px;
     border-width: 1px;
-    border-color: #E4E4E4;
+    border-color: #e4e4e4;
 }
 
 dropdown popup list {
@@ -184,11 +187,11 @@ knob {
     background-color: #242424;
     border-radius: 38px;
     border-width: 2px;
-    border-color: #2F2F2F;
+    border-color: #2f2f2f;
 }
 
 knob .track {
-    background-color: #51AFEF;
+    background-color: #51afef;
 }
 
 knob:focus-visible {
@@ -222,7 +225,7 @@ radiobutton:checked {
 }
 
 radiobutton:checked:hover {
-    border-color: #9fd5fb;
+    border-color: #80caff;
 }
 
 radiobutton:disabled {
@@ -243,7 +246,7 @@ radiobutton:checked .inner {
 }
 
 radiobutton:hover .inner {
-    background-color: #9fd5fb;
+    background-color: #80caff;
 }
 
 radiobutton:disabled .inner {
@@ -413,7 +416,7 @@ switch:checked .switch-handle-container .switch-handle {
 }
 
 switch:checked:hover .switch-handle-container .switch-handle {
-    background-color: #9fd5fb;
+    background-color: #80caff;
 }
 
 switch:disabled {
@@ -619,7 +622,7 @@ timepicker .timepicker-dot {
     width: 6px;
     height: 6px;
     border-radius: 4px;
-    background-color: #B6B6B6;
+    background-color: #b6b6b6;
 }
 
 datepicker {
