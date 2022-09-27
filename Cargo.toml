@@ -91,6 +91,14 @@ name = "label"
 path = "examples/views/label.rs"
 
 [[example]]
+name = "tooltip"
+path = "examples/views/tooltip.rs"
+
+[[example]]
+name = "timepicker"
+path = "examples/views/timepicker.rs"
+
+[[example]]
 name = "spinbox"
 path = "examples/views/spinbox.rs"
 
