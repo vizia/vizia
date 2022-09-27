@@ -82,6 +82,7 @@ impl Button {
             .build(cx, move |cx| {
                 (content)(cx).hoverable(false);
             })
+            .cursor(CursorIcon::Hand)
             .keyboard_navigatable(true)
     }
 }

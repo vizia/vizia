@@ -742,12 +742,26 @@ impl CachedData {
     //     }
     // }
 
+    pub fn get_hoverability(&self, entity: Entity) -> bool {
+        if let Some(abilities) = self.abilities.get(entity) {
+            abilities.contains(Abilities::HOVERABLE)
+        } else {
+            false
+        }
+    }
+
     pub fn get_visibility(&self, entity: Entity) -> Visibility {
         self.visibility.get(entity).cloned().unwrap()
     }
 
     pub fn get_display(&self, entity: Entity) -> Display {
         self.display.get(entity).cloned().unwrap()
+    }
+
+    pub(crate) fn set_hoverability(&mut self, entity: Entity, val: bool) {
+        if let Some(abilities) = self.abilities.get_mut(entity) {
+            abilities.set(Abilities::HOVERABLE, val);
+        }
     }
 
     pub(crate) fn set_visibility(&mut self, entity: Entity, val: Visibility) {
