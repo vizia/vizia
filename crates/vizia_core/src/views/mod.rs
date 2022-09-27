@@ -4,6 +4,7 @@
 
 mod button;
 mod checkbox;
+mod datepicker;
 mod dropdown;
 mod element;
 mod image;
@@ -28,6 +29,7 @@ mod tooltip;
 pub use self::image::Image;
 pub use button::Button;
 pub use checkbox::Checkbox;
+pub use datepicker::Datepicker;
 pub use dropdown::Dropdown;
 pub use element::Element;
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
