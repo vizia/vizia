@@ -16,6 +16,8 @@
     height: auto;
 }
 
+/* Button  */
+
 button {
     width: auto;
     height: 28px;
@@ -51,10 +53,6 @@ button.outline {
 
 button.outline label {
     color: #51afef;
-}
-
-button.outline:over {
-    border-color: #80caff;
 }
 
 button.outline:over label {
