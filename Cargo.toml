@@ -165,11 +165,13 @@ path = "examples/lists/sortable_list.rs"
 name = "static_list"
 path = "examples/lists/static_list.rs"
 
-
-
 [[example]]
 name = "menu"
 path = "examples/views/menu.rs"
+
+[[example]]
+name = "tabs"
+path = "examples/views/tabs.rs"
 
 
 [[example]]
