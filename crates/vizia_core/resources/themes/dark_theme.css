@@ -63,6 +63,10 @@ button.outline:over {
     border-color: #80caff;
 }
 
+button.outline:over label {
+    color: #80caff;
+}
+
 button.outline:active {
     border-color: #3995d6;
 }

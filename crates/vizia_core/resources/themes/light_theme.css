@@ -48,23 +48,27 @@ button:active {
 button.outline {
     background-color: transparent;
     border-width: 2px;
-    border-color: #51afef;
-}
-
-button.outline label {
-    color: #51afef;
-}
-
-button.outline:over label {
-    color: #80caff;
-}
-
-button.outline:active {
     border-color: #3995d6;
 }
 
-button.outline:active label {
+button.outline label {
     color: #3995d6;
+}
+
+button.outline:over {
+    border-color: #51afef;
+}
+
+button.outline:over label {
+    color: #51afef;
+}
+
+button.outline:active {
+    border-color: #2f7db6;
+}
+
+button.outline:active label {
+    color: #2f7db6;
 }
 
 button:disabled.outline {
