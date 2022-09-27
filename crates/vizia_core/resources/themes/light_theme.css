@@ -35,12 +35,12 @@ button label {
 }
 
 button:over {
-    background-color: #3995d6;
+    background-color: #80caff;
     transition: background-color 0.1 0;
 }
 
 button:active {
-    background-color: #2c7ab3;
+    background-color: #3995d6;
 }
 
 button.outline {
@@ -54,19 +54,19 @@ button.outline label {
 }
 
 button.outline:over {
-    border-color: #3995d6;
+    border-color: #80caff;
 }
 
 button.outline:over label {
-    color: #3995d6;
+    color: #80caff;
 }
 
 button.outline:active {
-    border-color: #2c7ab3;
+    border-color: #3995d6;
 }
 
 button.outline:active label {
-    color: #2c7ab3;
+    color: #3995d6;
 }
 
 button:disabled.outline {
