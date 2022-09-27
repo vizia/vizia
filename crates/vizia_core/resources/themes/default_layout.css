@@ -88,15 +88,16 @@ zstack > * {
 }
 
 slider {
-    height: 5px;
+    height: 4px;
     width: 1s;
+    border-radius: 2px;
 }
 
 slider.vertical {
     top: auto;
     bottom: auto;
     height: 1s;
-    width: 5px;
+    width: 4px;
 }
 
 slider .thumb {
@@ -126,7 +127,7 @@ scrollview > scrollbar.horizontal {
     right: 14px;
 
     top: 1s;
-    height: 14px;
+    height: 8px;
     bottom: 0px;
 }
 
@@ -136,7 +137,7 @@ scrollview > scrollbar.vertical {
     bottom: 0px;
 
     left: 1s;
-    width: 14px;
+    width: 8px;
     right: 0px;
 }
 

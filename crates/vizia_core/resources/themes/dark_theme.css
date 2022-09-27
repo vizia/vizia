@@ -5,6 +5,318 @@
 
 .main {
     background-color: #181818;
+    width: 1s;
+    height: 1s;
+    child-top: 1s;
+    child-bottom: 1s;
+    child-left: 1s;
+    child-right: 1s;
+}
+
+.container {
+    col-between: 10px;
+    row-between: 10px;
+    width: auto;
+    height: auto;
+}
+
+button {
+    width: auto;
+    height: 28px;
+    border-radius: 4px;
+    child-space: 1s;
+    child-left: 10px;
+    child-right: 10px;
+    border-width: 2px;
+    border-color: #51afef;
+    overflow: visible;
+}
+
+button label {
+    color: #51afef;
+    child-space: 1s;
+}
+
+button:over {
+    border-color: #9fd5fb;
+}
+
+button:over label {
+    color: #9fd5fb;
+}
+
+button:active {
+    border-color: #fff;
+}
+
+button:active label {
+    color: #fff;
+}
+
+button.accent {
+    background-color: #51afef;
+    border-width: 0px;
+}
+
+button.accent label {
+    color: #181818;
+}
+
+button.accent:over {
+    background-color: #9fd5fb;
+}
+
+button.accent:active {
+    background-color: #fff;
+}
+
+button:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+button:disabled {
+    border-color: #888;
+}
+
+button:disabled label {
+    color: #888;
+}
+
+checkbox {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border-width: 2px;
+    border-color: #888;
+    background-color: transparent;
+    child-space: 1s;
+}
+
+checkbox:hover {
+    border-color: #51afef;
+    background-color: transparent;
+}
+
+checkbox:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+checkbox:checked {
+    background-color: #51afef;
+    border-color: #51afef;
+    color: #181818;
+}
+
+checkbox:disabled {
+    border-color: #404040;
+}
+
+checkbox:hover:disabled {
+    background-color: transparent;
+}
+
+checkbox:checked:hover {
+    background-color: #9fd5fb;
+    border-color: #9fd5fb;
+    color: #181818;
+}
+
+checkbox:checked:disabled {
+    background-color: #404040;
+    border-color: #404040;
+    color: #181818;
+}
+
+dropdown .title {
+    width: auto;
+    height: 30px;
+    background-color: #242424;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #2f2f2f;
+    child-space: 1s;
+    child-left: 5px;
+    overflow: visible;
+}
+
+dropdown .title:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+dropdown popup {
+    top: 4px;
+    background-color: #242424;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #2f2f2f;
+}
+
+dropdown popup list {
+    width: 1s;
+}
+
+dropdown list label {
+    width: 1s;
+    height: 30px;
+    child-left: 6px;
+    color: #888;
+}
+
+dropdown list label:checked {
+    color: #fff;
+}
+
+dropdown list label:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+dropdown vstack {
+    child-space: auto;
+}
+
+knob {
+    width: 48px;
+    height: 48;
+    background-color: #242424;
+    border-radius: 38px;
+    border-width: 2px;
+    border-color: #2f2f2f;
+}
+
+knob .track {
+    background-color: #51afef;
+}
+
+knob:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+radiobutton {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+    border-radius: 50%;
+    border-color: #888;
+    background-color: transparent;
+    child-space: 1s;
+}
+
+radiobutton:hover {
+    border-color: #51afef;
+}
+
+radiobutton:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+radiobutton:checked {
+    border-color: #51afef;
+}
+
+radiobutton:checked:hover {
+    border-color: #9fd5fb;
+}
+
+radiobutton:disabled {
+    border-color: #404040;
+}
+
+radiobutton .inner {
+    width: 0px;
+    height: 0px;
+    border-radius: 50%;
+    background-color: #888;
+}
+
+radiobutton:checked .inner {
+    width: 8px;
+    height: 8px;
+    background-color: #51afef;
+}
+
+radiobutton:hover .inner {
+    background-color: #9fd5fb;
+}
+
+radiobutton:disabled .inner {
+    width: 8px;
+    height: 8px;
+    background-color: #404040;
+}
+
+scrollbar {
+    background-color: #181818;
+}
+
+scrollbar.horizontal {
+    height: 8px;
+}
+
+scrollbar.vertical {
+    width: 8px;
+}
+
+scrollbar .thumb {
+    background-color: #404040;
+    min-width: 4px;
+    min-height: 4px;
+}
+
+scrollbar.horizontal .thumb {
+    height: 8px;
+}
+
+scrollbar.vertical .thumb {
+    width: 8px;
+}
+
+scrollbar .thumb:hover {
+    background-color: #888;
+}
+
+scrollbar .thumb:focus {
+    background-color: #888;
+}
+
+slider * {
+    background-color: #51afef20;
+    border-radius: 2px;
+}
+
+slider:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+slider .active {
+    background-color: #51afef80;
+    border-radius: 2px;
+}
+
+slider .thumb {
+    background-color: #51afef;
+    border-radius: 6px;
+    width: 12px;
+    height: 12px;
+    child-space: 1s;
+}
+
+slider .thumb:hover {
+    background-color: #9fd5fb;
 }
 
 spinbox {
@@ -12,6 +324,7 @@ spinbox {
     border-radius: 4px;
     border-width: 1px;
     border-color: #2f2f2f;
+    child-space: 1s;
 }
 
 spinbox.horizontal {
@@ -140,6 +453,198 @@ switch:checked:disabled .switch-handle-container {
 }
 
 switch:checked:disabled .switch-handle-container .switch-handle {
+    background-color: #404040;
+}
+
+table {
+    border-radius: 4px;
+    space: 1s;
+}
+
+tablecolumn {
+    width: 120px;
+}
+
+.table-column-header {
+    height: 30px;
+}
+
+.table-column-title {
+    child-left: 5px;
+    width: 1s;
+    height: 1s;
+    font: "roboto-bold";
+}
+
+.table-column-icon {
+    width: 30px;
+    child-space: 1s;
+    font: "icons";
+}
+
+.table-row-divisor {
+    height: 1px;
+    background-color: #404040;
+}
+
+.table-element {
+    child-left: 5px;
+    width: 1s;
+    height: 32px;
+    child-space: 1s;
+    child-left: 4px;
+    background-color: transparent;
+}
+
+.table-element-colored {
+    left: 4px;
+    top: 1s;
+    bottom: 1s;
+    background-color: #51afef20;
+    child-space: 1s;
+    child-left: 8px;
+    child-right: 8px;
+    child-top: 2px;
+    child-bottom: 2px;
+    border-radius: 4px;
+    color: #51afef;
+}
+
+textbox {
+    width: 280px;
+    height: 80px;
+    border-width: 1px;
+    border-color: #2f2f2f;
+    border-radius: 4px;
+    background-color: #242424;
+    child-left: 5px;
+    child-right: 5px;
+    child-top: 2px;
+    child-bottom: 2px;
+}
+
+textbox:checked {
+    border-color: #51afef;
+}
+textbox:checked .textbox_content {
+    caret-color: #51afef;
+    selection-color: #51afef40;
+}
+
+textbox:disabled {
+    color: #888;
+}
+
+textbox:focus-visible {
+    border-color: #51afef80;
+}
+
+textbox.error {
+    border-color: #ef5151;
+    border-width: 2px;
+}
+
+.modal {
+    space: 1s;
+    background-color: #323232;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #424242;
+    overflow: visible;
+    child-space: 8px;
+    width: 200px;
+    row-between: 16px;
+}
+
+.modal label {
+    width: auto;
+    height: auto;
+    color: #888;
+}
+
+.modal button {
+    top: 8px;
+}
+
+.modal .title {
+    color: #fff;
+    font-size: 18px;
+    bottom: 4px;
+}
+
+.modal .accent {
+    left: 1s;
+}
+
+tooltip .tooltip-wrapper {
+    background-color: #51afef;
+    border-radius: 4px;
+    child-space: 8px;
+}
+
+tooltip .title {
+    font-size: 18px;
+}
+
+tooltip .subtitle {
+    color: #00000088;
+}
+
+tooltip label {
+    color: #181818;
+}
+
+tooltip .tooltip-button-wrapper {
+    top: 8px;
+    left: 1s;
+    width: auto;
+    height: auto;
+    col-between: 8px;
+}
+
+tooltip button {
+    border-color: #181818;
+}
+
+.tooltip-pointer-wrapper {
+    width: 16px;
+    height: 12px;
+    overflow: hidden;
+    left: 4px;
+}
+
+.tooltip-pointer {
+    width: 12px;
+    height: 12px;
+    background-color: #51afef;
+    border-radius: 2px;
+}
+
+timepicker {
+    background-color: #242424;
+    border-radius: 4px;
+    child-space: 8px;
+}
+
+timepicker .timepicker-wrapper {
+    col-between: 8px;
+}
+
+timepicker .timepicker-button-wrapper {
+    row-between: 1s;
+}
+
+timepicker .timepicker-dots-wrapper {
+    width: auto;
+    height: 1s;
+    child-space: 1s;
+    row-between: 8px;
+}
+
+timepicker .timepicker-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 4px;
     background-color: #404040;
 }
 

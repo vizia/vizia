@@ -1,56 +1,67 @@
 use vizia::prelude::*;
 
+#[allow(dead_code)]
+const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
+#[allow(dead_code)]
+const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
+
 fn main() {
     Application::new(|cx| {
         AppData { value: 0.0 }.build(cx);
 
-        HStack::new(cx, |cx| {
-            VStack::new(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    Slider::new(cx, AppData::value.map(|val| (val + 50.0) / 100.0)).on_changing(
-                        move |cx, val| cx.emit(AppEvent::SetValue(-50.0 + (val * 100.0))),
-                    );
-                    Label::new(
-                        cx,
-                        AppData::value.map(|val| format!("{:.2}", (val - 50.0) / 100.0)),
-                    )
-                    .width(Pixels(50.0));
-                })
-                .height(Pixels(50.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .col_between(Pixels(10.0));
+        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
-                HStack::new(cx, |cx| {
+        VStack::new(cx, |cx| {
+            HStack::new(cx, |cx| {
+                VStack::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Slider::new(cx, AppData::value.map(|val| (val + 50.0) / 100.0))
+                            .on_changing(move |cx, val| {
+                                cx.emit(AppEvent::SetValue(-50.0 + (val * 100.0)))
+                            });
+                        Label::new(
+                            cx,
+                            AppData::value.map(|val| format!("{:.2}", (val - 50.0) / 100.0)),
+                        )
+                        .width(Pixels(50.0));
+                    })
+                    .height(Pixels(50.0))
+                    .child_top(Stretch(1.0))
+                    .child_bottom(Stretch(1.0))
+                    .col_between(Pixels(10.0));
+
+                    HStack::new(cx, |cx| {
+                        Slider::new(cx, AppData::value)
+                            .range(-50.0..50.0)
+                            .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
+                        Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)))
+                            .width(Pixels(50.0));
+                    })
+                    .height(Pixels(50.0))
+                    .child_top(Stretch(1.0))
+                    .child_bottom(Stretch(1.0))
+                    .col_between(Pixels(10.0));
+                });
+
+                VStack::new(cx, |cx| {
                     Slider::new(cx, AppData::value)
                         .range(-50.0..50.0)
-                        .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
+                        .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)))
+                        .class("vertical");
                     Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)))
+                        .child_space(Stretch(1.0))
                         .width(Pixels(50.0));
                 })
-                .height(Pixels(50.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .col_between(Pixels(10.0));
-            });
-
-            VStack::new(cx, |cx| {
-                Slider::new(cx, AppData::value)
-                    .range(-50.0..50.0)
-                    .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)))
-                    .class("vertical");
-                Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)))
-                    .child_space(Stretch(1.0))
-                    .width(Pixels(50.0));
+                .width(Pixels(50.0))
+                .child_left(Stretch(1.0))
+                .child_right(Stretch(1.0))
+                .row_between(Pixels(10.0));
             })
-            .width(Pixels(50.0))
-            .child_left(Stretch(1.0))
-            .child_right(Stretch(1.0))
-            .row_between(Pixels(10.0));
+            .class("container");
         })
-        .child_space(Pixels(50.0))
-        .col_between(Pixels(50.0));
+        .class("main");
     })
+    .ignore_default_theme()
     .title("Slider")
     .run();
 }
