@@ -1,7 +1,7 @@
 use vizia::fonts::icons_names::DOWN;
 use vizia::prelude::*;
 
-#[derive(Lens)]
+#[derive(Lens, Model, Setter)]
 pub struct AppData {
     list: Vec<String>,
     choice: String,

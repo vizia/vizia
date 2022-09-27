@@ -78,6 +78,8 @@ impl TextboxData {
 
         // do the computation
         let (mut tx, mut ty) = self.transform;
+        tx *= scale;
+        ty *= scale;
         let text_box = BoundingBox { x: bounds.x + tx, y: bounds.y + ty, w: bounds.w, h: bounds.h };
         if text_box.x < parent_bounds.x
             && text_box.x + text_box.w < parent_bounds.x + parent_bounds.w
@@ -387,8 +389,8 @@ impl Model for TextboxData {
             }
 
             TextEvent::Hit(posx, posy) => {
-                let posx = *posx - self.transform.0;
-                let posy = *posy - self.transform.1;
+                let posx = *posx - self.transform.0 * cx.style.dpi_factor as f32;
+                let posy = *posy - self.transform.1 * cx.style.dpi_factor as f32;
                 let idx = pos_to_idx(
                     posx,
                     posy,
@@ -401,8 +403,8 @@ impl Model for TextboxData {
             }
 
             TextEvent::Drag(posx, posy) => {
-                let posx = *posx - self.transform.0;
-                let posy = *posy - self.transform.1;
+                let posx = *posx - self.transform.0 * cx.style.dpi_factor as f32;
+                let posy = *posy - self.transform.1 * cx.style.dpi_factor as f32;
                 let idx = pos_to_idx(
                     posx,
                     posy,
@@ -797,12 +799,9 @@ where
                 Code::PageDown => {}
 
                 Code::KeyA => {
-                    //if self.edit {
                     if cx.modifiers.contains(Modifiers::CTRL) {
-                        // self.select_all(cx);
                         cx.emit(TextEvent::SelectAll);
                     }
-                    //}
                 }
 
                 Code::KeyC => {

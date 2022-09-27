@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::fmt::Formatter;
 use std::sync::Mutex;
 
@@ -44,7 +45,7 @@ impl std::fmt::Display for ProxyEmitError {
 impl std::error::Error for ProxyEmitError {}
 
 impl ContextProxy {
-    pub fn emit<M: Message>(&mut self, message: M) -> Result<(), ProxyEmitError> {
+    pub fn emit<M: Any + Send>(&mut self, message: M) -> Result<(), ProxyEmitError> {
         if let Some(proxy) = &self.event_proxy {
             let event = Event::new(message)
                 .target(self.current)
@@ -57,7 +58,7 @@ impl ContextProxy {
         }
     }
 
-    pub fn emit_to<M: Message>(
+    pub fn emit_to<M: Any + Send>(
         &mut self,
         target: Entity,
         message: M,

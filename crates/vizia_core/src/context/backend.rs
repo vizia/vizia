@@ -1,8 +1,8 @@
+use std::any::Any;
 use std::collections::HashSet;
 
 use femtovg::{renderer::OpenGl, Canvas, TextContext};
 use fnv::FnvHashMap;
-use instant::{Duration, Instant};
 
 use super::EventProxy;
 use crate::{
@@ -16,19 +16,13 @@ use crate::{
     state::ModelOrView,
     style::Style,
     systems::*,
-    tree::{focus_backward, focus_forward, is_navigatable},
 };
 use vizia_id::GenerationalId;
-#[cfg(debug_assertions)]
-use vizia_storage::TreeExt;
-use vizia_storage::TreeIterator;
 
 pub use crate::systems::animation::has_animations;
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
-
-const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 
 pub struct BackendContext<'a>(pub &'a mut Context);
 
@@ -103,7 +97,7 @@ impl<'a> BackendContext<'a> {
             .height
             .insert(Entity::root(), Units::Pixels(window_description.inner_size.height as f32));
 
-        self.0.style.pseudo_classes.insert(Entity::root(), PseudoClass::default()).unwrap();
+        self.0.style.pseudo_classes.insert(Entity::root(), PseudoClass::ROOT).unwrap();
         self.0.style.disabled.insert(Entity::root(), false);
 
         let bounding_box =
@@ -307,279 +301,12 @@ impl<'a> BackendContext<'a> {
         geometry_changed(self.0, &tree);
     }
 
-    /// This method is in charge of receiving raw WindowEvents and dispatching them to the
-    /// appropriate points in the tree.
-    pub fn dispatch_system_event(&mut self, event: WindowEvent) {
-        match &event {
-            WindowEvent::MouseMove(x, y) => {
-                self.0.mouse.previous_cursorx = self.0.mouse.cursorx;
-                self.0.mouse.previous_cursory = self.0.mouse.cursory;
-                self.0.mouse.cursorx = *x;
-                self.0.mouse.cursory = *y;
-
-                hover_system(self.0);
-
-                self.dispatch_direct_or_up(event, self.0.captured, self.0.hovered, false);
-            }
-            &WindowEvent::MouseDown(button) => {
-                match button {
-                    MouseButton::Left => self.0.mouse.left.state = MouseButtonState::Pressed,
-                    MouseButton::Right => self.0.mouse.right.state = MouseButtonState::Pressed,
-                    MouseButton::Middle => self.0.mouse.middle.state = MouseButtonState::Pressed,
-                    _ => {}
-                }
-
-                let new_click_time = Instant::now();
-                let click_duration = new_click_time - self.0.click_time;
-                let new_click_pos = (self.0.mouse.cursorx, self.0.mouse.cursory);
-
-                match button {
-                    MouseButton::Left => {
-                        self.0.mouse.left.pos_down = (self.0.mouse.cursorx, self.0.mouse.cursory);
-                        self.0.mouse.left.pressed = self.0.hovered;
-                        self.0.triggered = self.0.hovered;
-                        let focusable = self
-                            .0
-                            .style
-                            .abilities
-                            .get(self.0.hovered)
-                            .filter(|abilities| abilities.contains(Abilities::FOCUSABLE))
-                            .is_some();
-
-                        self.with_current(
-                            if focusable { self.0.hovered } else { self.0.focused },
-                            |cx| cx.focus_with_visibility(false),
-                        );
-
-                        self.dispatch_direct_or_up(
-                            WindowEvent::TriggerDown { mouse: true },
-                            self.0.captured,
-                            self.0.triggered,
-                            true,
-                        );
-                    }
-                    MouseButton::Right => {
-                        self.0.mouse.right.pos_down = (self.0.mouse.cursorx, self.0.mouse.cursory);
-                        self.0.mouse.right.pressed = self.0.hovered;
-                    }
-                    MouseButton::Middle => {
-                        self.0.mouse.middle.pos_down = (self.0.mouse.cursorx, self.0.mouse.cursory);
-                        self.0.mouse.middle.pressed = self.0.hovered;
-                    }
-                    _ => {}
-                }
-
-                self.dispatch_direct_or_up(event, self.0.captured, self.0.hovered, true);
-
-                if click_duration <= DOUBLE_CLICK_INTERVAL && new_click_pos == self.0.click_pos {
-                    if self.0.clicks <= 2 {
-                        self.0.clicks += 1;
-                        let event = if self.0.clicks == 3 {
-                            WindowEvent::MouseTripleClick(button)
-                        } else {
-                            WindowEvent::MouseDoubleClick(button)
-                        };
-                        self.dispatch_direct_or_up(event, self.0.captured, self.0.hovered, true);
-                    }
-                } else {
-                    self.0.clicks = 1;
-                }
-
-                self.0.click_time = new_click_time;
-                self.0.click_pos = new_click_pos;
-            }
-            WindowEvent::MouseUp(button) => {
-                match button {
-                    MouseButton::Left => {
-                        self.0.mouse.left.pos_up = (self.0.mouse.cursorx, self.0.mouse.cursory);
-                        self.0.mouse.left.released = self.0.hovered;
-                        self.0.mouse.left.state = MouseButtonState::Released;
-                        self.dispatch_direct_or_up(
-                            WindowEvent::TriggerUp { mouse: true },
-                            self.0.captured,
-                            self.0.triggered,
-                            true,
-                        );
-                    }
-                    MouseButton::Right => {
-                        self.0.mouse.right.pos_up = (self.0.mouse.cursorx, self.0.mouse.cursory);
-                        self.0.mouse.right.released = self.0.hovered;
-                        self.0.mouse.right.state = MouseButtonState::Released;
-                    }
-                    MouseButton::Middle => {
-                        self.0.mouse.middle.pos_up = (self.0.mouse.cursorx, self.0.mouse.cursory);
-                        self.0.mouse.middle.released = self.0.hovered;
-                        self.0.mouse.middle.state = MouseButtonState::Released;
-                    }
-                    _ => {}
-                }
-                self.dispatch_direct_or_up(event, self.0.captured, self.0.hovered, true);
-            }
-            WindowEvent::MouseScroll(_, _) => {
-                self.0.event_queue.push_back(Event::new(event).target(self.0.hovered));
-            }
-            WindowEvent::KeyDown(code, _) => {
-                #[cfg(debug_assertions)]
-                if *code == Code::KeyH {
-                    for entity in self.0.tree.into_iter() {
-                        println!("Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}", entity, entity.parent(&self.0.tree), self.0.views.get(&entity).map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")), self.0.cache.get_posx(entity), self.0.cache.get_posy(entity), self.0.cache.get_width(entity), self.0.cache.get_height(entity));
-                    }
-                }
-
-                #[cfg(debug_assertions)]
-                if *code == Code::KeyI && self.0.modifiers.contains(Modifiers::CTRL) {
-                    println!("Entity tree");
-                    let (tree, views, cache) = (&self.0.tree, &self.0.views, &self.0.cache);
-                    let has_next_sibling = |entity| tree.get_next_sibling(entity).is_some();
-                    let root_indents = |entity: Entity| {
-                        entity
-                            .parent_iter(tree)
-                            .skip(1)
-                            .collect::<Vec<_>>()
-                            .into_iter()
-                            .rev()
-                            .skip(1)
-                            .map(|entity| if has_next_sibling(entity) { "│   " } else { "    " })
-                            .collect::<String>()
-                    };
-                    let local_idents =
-                        |entity| if has_next_sibling(entity) { "├── " } else { "└── " };
-                    let indents = |entity| root_indents(entity) + local_idents(entity);
-
-                    for entity in TreeIterator::full(tree).skip(1) {
-                        if let Some(element_name) =
-                            views.get(&entity).and_then(|view| view.element())
-                        {
-                            println!(
-                                "{}{} {} {:?} display={:?} bounds={} clip={}",
-                                indents(entity),
-                                entity,
-                                element_name,
-                                cache.get_visibility(entity),
-                                cache.get_display(entity),
-                                cache.get_bounds(entity),
-                                cache.get_clip_region(entity),
-                            );
-                        } else if let Some(binding_name) =
-                            self.0.bindings.get(&entity).and_then(|binding| binding.name())
-                        {
-                            println!(
-                                "{}{} binding observing {}",
-                                indents(entity),
-                                entity,
-                                binding_name
-                            );
-                        } else {
-                            println!(
-                                "{}{} {}",
-                                indents(entity),
-                                entity,
-                                if views.get(&entity).is_some() {
-                                    "unnamed view"
-                                } else {
-                                    "no binding or view"
-                                }
-                            );
-                        }
-                    }
-                }
-
-                if *code == Code::F5 {
-                    self.0.reload_styles().unwrap();
-                }
-
-                if *code == Code::Tab {
-                    self.0.set_focus_pseudo_classes(self.0.focused, false, true);
-
-                    let lock_focus_to = self.0.tree.lock_focus_within(self.0.focused);
-                    if self.0.modifiers.contains(Modifiers::SHIFT) {
-                        let prev_focused = if let Some(prev_focused) =
-                            focus_backward(&self.0, self.0.focused, lock_focus_to)
-                        {
-                            prev_focused
-                        } else {
-                            TreeIterator::full(&self.0.tree)
-                                .filter(|node| is_navigatable(&self.0, *node, lock_focus_to))
-                                .next_back()
-                                .unwrap_or(Entity::root())
-                        };
-
-                        if prev_focused != self.0.focused {
-                            self.0.event_queue.push_back(
-                                Event::new(WindowEvent::FocusOut).target(self.0.focused),
-                            );
-                            self.0
-                                .event_queue
-                                .push_back(Event::new(WindowEvent::FocusIn).target(prev_focused));
-                            self.0.focused = prev_focused;
-                        }
-                    } else {
-                        let next_focused = if let Some(next_focused) =
-                            focus_forward(&self.0, self.0.focused, lock_focus_to)
-                        {
-                            next_focused
-                        } else {
-                            TreeIterator::full(&self.0.tree)
-                                .filter(|node| is_navigatable(&self.0, *node, lock_focus_to))
-                                .next()
-                                .unwrap_or(Entity::root())
-                        };
-
-                        if next_focused != self.0.focused {
-                            self.0.event_queue.push_back(
-                                Event::new(WindowEvent::FocusOut).target(self.0.focused),
-                            );
-                            self.0
-                                .event_queue
-                                .push_back(Event::new(WindowEvent::FocusIn).target(next_focused));
-                            self.0.focused = next_focused;
-                        }
-                    }
-
-                    self.0.set_focus_pseudo_classes(self.0.focused, true, true);
-
-                    self.style().needs_relayout = true;
-                    self.style().needs_redraw = true;
-                    self.style().needs_restyle = true;
-                }
-
-                if matches!(*code, Code::Enter | Code::NumpadEnter | Code::Space) {
-                    self.0.triggered = self.0.focused;
-                    self.0.with_current(self.0.focused, |cx| {
-                        cx.emit(WindowEvent::TriggerDown { mouse: false })
-                    });
-                }
-
-                self.0.event_queue.push_back(Event::new(event).target(self.0.focused));
-            }
-            WindowEvent::KeyUp(_, _) | WindowEvent::CharInput(_) => {
-                if matches!(
-                    event,
-                    WindowEvent::KeyUp(Code::Enter | Code::NumpadEnter | Code::Space, _)
-                ) {
-                    self.0.with_current(self.0.triggered, |cx| {
-                        cx.emit(WindowEvent::TriggerUp { mouse: false })
-                    });
-                }
-                self.0.event_queue.push_back(Event::new(event).target(self.0.focused));
-            }
-            _ => {}
-        }
-    }
-
-    pub fn dispatch_direct_or_up(
-        &mut self,
-        event: WindowEvent,
-        direct: Entity,
-        up: Entity,
-        root: bool,
-    ) {
-        if direct != Entity::null() {
-            self.0
-                .event_queue
-                .push_back(Event::new(event).target(direct).propagate(Propagation::Direct));
-        } else if up != Entity::root() || root {
-            self.0.event_queue.push_back(Event::new(event).target(up).propagate(Propagation::Up));
-        }
+    pub fn emit_origin<M: Send + Any>(&mut self, message: M) {
+        self.0.event_queue.push_back(
+            Event::new(message)
+                .target(self.0.current)
+                .origin(Entity::root())
+                .propagate(Propagation::Up),
+        );
     }
 }

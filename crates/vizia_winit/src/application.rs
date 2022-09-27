@@ -184,6 +184,9 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
+        let mut cx = BackendContext::new(&mut context);
+        cx.synchronize_fonts();
+
         event_loop.run(move |event, _, control_flow| {
             let mut cx = BackendContext::new(&mut context);
 
@@ -213,7 +216,6 @@ impl Application {
                     if has_animations(&cx.0) {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
 
-                        //context.insert_event(Event::new(WindowEvent::Relayout).target(Entity::root()));
                         event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();
                         //window.handle.window().request_redraw();
                         if let Some(window_event_handler) = cx.views().remove(&Entity::root()) {
@@ -286,7 +288,7 @@ impl Application {
                             position,
                             modifiers: _,
                         } => {
-                            cx.dispatch_system_event(WindowEvent::MouseMove(
+                            cx.emit_origin(WindowEvent::MouseMove(
                                 position.x as f32,
                                 position.y as f32,
                             ));
@@ -315,7 +317,7 @@ impl Application {
                                 }
                             };
 
-                            cx.dispatch_system_event(event);
+                            cx.emit_origin(event);
                         }
 
                         winit::event::WindowEvent::MouseWheel { delta, phase: _, .. } => {
@@ -331,7 +333,7 @@ impl Application {
                                 }
                             };
 
-                            cx.dispatch_system_event(out_event);
+                            cx.emit_origin(out_event);
                         }
 
                         winit::event::WindowEvent::KeyboardInput {
@@ -358,11 +360,11 @@ impl Application {
                                 }
                             };
 
-                            cx.dispatch_system_event(event);
+                            cx.emit_origin(event);
                         }
 
                         winit::event::WindowEvent::ReceivedCharacter(character) => {
-                            cx.dispatch_system_event(WindowEvent::CharInput(character));
+                            cx.emit_origin(WindowEvent::CharInput(character));
                         }
 
                         winit::event::WindowEvent::Resized(physical_size) => {

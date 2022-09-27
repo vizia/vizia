@@ -1,6 +1,6 @@
 use vizia::prelude::*;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Options {
     First,
     Second,
@@ -18,7 +18,7 @@ impl std::fmt::Display for Options {
     }
 }
 
-#[derive(Lens)]
+#[derive(Lens, Model, Setter)]
 pub struct AppData {
     pub option: Options,
 }

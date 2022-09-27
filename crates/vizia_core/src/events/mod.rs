@@ -1,9 +1,9 @@
 //! Events
 //!
-//! Views communicate with each other and model data via events. An [Event] contains a [Message], as well as metadata to describe how events
+//! Views communicate with each other and model data via events. An [Event] contains a message, as well as metadata to describe how events
 //! should propagate through the tree. By default events will propagate up the tree from the target.
 //!
-//! A [Message] can be any static type but is usually an enum. For example:
+//! A message can be any static thread-safe type but is usually an enum. For example:
 //! ```
 //! enum MyEvent {
 //!     ReadDocs,
@@ -39,7 +39,7 @@ mod event_manager;
 pub use event_manager::EventManager;
 
 mod event;
-pub use event::{Event, EventMeta, Message, Propagation};
+pub use event::{Event, EventMeta, Propagation};
 
 mod event_handler;
 pub use event_handler::ViewHandler;

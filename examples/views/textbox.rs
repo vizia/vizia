@@ -1,6 +1,6 @@
 use vizia::prelude::*;
 
-#[derive(Lens)]
+#[derive(Lens, Setter, Model)]
 pub struct AppData {
     text: String,
 }
