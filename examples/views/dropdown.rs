@@ -7,21 +7,6 @@ pub struct AppData {
     choice: String,
 }
 
-#[derive(Debug)]
-pub enum AppEvent {
-    SetChoice(String),
-}
-
-impl Model for AppData {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetChoice(choice) => {
-                self.choice = choice.clone();
-            }
-        });
-    }
-}
-
 #[allow(dead_code)]
 const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
 #[allow(dead_code)]
@@ -65,7 +50,7 @@ fn main() {
                                     }
                                 })
                                 .on_press(move |cx| {
-                                    cx.emit(AppEvent::SetChoice(item.get(cx).clone()));
+                                    cx.emit(AppDataSetter::Choice(item.get(cx).clone()));
                                     cx.emit(PopupEvent::Close);
                                 });
                         });

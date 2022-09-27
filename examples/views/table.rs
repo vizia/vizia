@@ -10,7 +10,7 @@ fn column_header<L, M>(cx: &mut Context, text: &str, lens: L, on_press: M)
 where
     L: Lens<Target = Sorted>,
     <L as Lens>::Target: Data,
-    M: Message + Clone,
+    M: 'static + Send + Sync + Clone,
 {
     VStack::new(cx, move |cx| {
         Element::new(cx).class("table-row-divisor");
