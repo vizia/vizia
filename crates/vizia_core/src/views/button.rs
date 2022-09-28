@@ -56,7 +56,9 @@ use crate::prelude::*;
 ///     },
 /// );
 /// ```
-pub struct Button {}
+pub struct Button {
+    action: Option<Box<dyn Fn(&mut EventContext)>>,
+}
 
 impl Button {
     /// Creates a new button.
@@ -70,12 +72,13 @@ impl Button {
     /// #
     /// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
     /// ```
-    pub fn new<F, V>(cx: &mut Context, content: F) -> Handle<Self>
+    pub fn new<A, F, V>(cx: &mut Context, action: A, content: F) -> Handle<Self>
     where
+        A: 'static + Fn(&mut EventContext),
         F: FnOnce(&mut Context) -> Handle<V>,
         V: 'static + View,
     {
-        Self {}
+        Self { action: Some(Box::new(action)) }
             .build(cx, move |cx| {
                 (content)(cx).hoverable(false);
             })
@@ -87,5 +90,27 @@ impl Button {
 impl View for Button {
     fn element(&self) -> Option<&'static str> {
         Some("button")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::TriggerDown { .. } => {
+                cx.set_active(true);
+                cx.capture();
+                cx.focus();
+                if let Some(callback) = &self.action {
+                    (callback)(cx);
+                }
+            }
+
+            WindowEvent::TriggerUp { .. } => {
+                if meta.target == cx.current() {
+                    cx.release();
+                    cx.set_active(false);
+                }
+            }
+
+            _ => {}
+        });
     }
 }

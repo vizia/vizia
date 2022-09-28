@@ -11,22 +11,29 @@ fn main() {
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
         VStack::new(cx, |cx| {
-            // Basic Button
-            Button::new(cx, |cx| Label::new(cx, "Button"));
-            // Accent Button
-            Button::new(cx, |cx| Label::new(cx, "Another Button")).class("accent");
-            // Disabled Button
-            Button::new(cx, |cx| Label::new(cx, "Disabled Button")).disabled(true);
-            // Button with Icon
-            Button::new(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    Label::new(cx, CHECK).class("icon");
-                    Label::new(cx, "Button");
-                })
-                .size(Auto)
-                .child_space(Stretch(1.0))
-                .col_between(Pixels(2.0))
-            });
+            VStack::new(cx, |cx| {
+                // Basic Button
+                Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
+                // Accent Button
+                Button::new(cx, |_| {}, |cx| Label::new(cx, "Another Button")).class("accent");
+                // Disabled Button
+                Button::new(cx, |_| {}, |cx| Label::new(cx, "Disabled Button")).disabled(true);
+                // Button with Icon
+                Button::new(
+                    cx,
+                    |_| {},
+                    |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, CHECK).class("icon");
+                            Label::new(cx, "Button");
+                        })
+                        .size(Auto)
+                        .child_space(Stretch(1.0))
+                        .col_between(Pixels(2.0))
+                    },
+                );
+            })
+            .class("container");
         })
         .class("container");
     })

@@ -60,19 +60,28 @@ where
                         .on_increment(|ex| ex.emit(TimepickerEvent::IncrementMinutes))
                         .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementMinutes));
                     VStack::new(cx, |cx| {
-                        Button::new(cx, |cx| {
-                            Label::new(cx, "x").bind(lens.then(DayTime::zone), |handle, lens| {
-                                let lens = lens.get(handle.cx);
-                                match lens {
-                                    AMOrPM::AM => handle.text("AM"),
-                                    AMOrPM::PM => handle.text("PM"),
-                                };
-                            })
-                        })
-                        .on_press(|ex| ex.emit(TimepickerEvent::ToggleAMOrPM));
+                        Button::new(
+                            cx,
+                            |cx| cx.emit(TimepickerEvent::ToggleAMOrPM),
+                            |cx| {
+                                Label::new(cx, "x").bind(
+                                    lens.then(DayTime::zone),
+                                    |handle, lens| {
+                                        let lens = lens.get(handle.cx);
+                                        match lens {
+                                            AMOrPM::AM => handle.text("AM"),
+                                            AMOrPM::PM => handle.text("PM"),
+                                        };
+                                    },
+                                )
+                            },
+                        );
 
-                        Button::new(cx, |cx| Label::new(cx, "Ok"))
-                            .on_press(|ex| ex.emit(TimepickerEvent::Ok));
+                        Button::new(
+                            cx,
+                            |cx| cx.emit(TimepickerEvent::Ok),
+                            |cx| Label::new(cx, "Ok"),
+                        );
                     })
                     .class("timepicker-button-wrapper");
                 })

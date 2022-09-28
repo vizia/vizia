@@ -227,11 +227,13 @@ impl Datepicker {
             });
 
             HStack::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Cancel"))
-                    .class("datepicker-cancel")
-                    .on_press(|ex| ex.emit(DatepickerEvent::Cancel));
-                Button::new(cx, |cx| Label::new(cx, "Apply"))
-                    .on_press(|ex| ex.emit(DatepickerEvent::Apply))
+                Button::new(
+                    cx,
+                    |ex| ex.emit(DatepickerEvent::Cancel),
+                    |cx| Label::new(cx, "Cancel"),
+                )
+                .class("datepicker-cancel");
+                Button::new(cx, |ex| ex.emit(DatepickerEvent::Apply), |cx| Label::new(cx, "Apply"))
                     .class("datepicker-apply");
             })
             .class("datepicker-actions-container");
