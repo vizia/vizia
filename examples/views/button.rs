@@ -13,25 +13,21 @@ fn main() {
         VStack::new(cx, |cx| {
             VStack::new(cx, |cx| {
                 // Basic Button
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
+                Button::new(cx, |cx| Label::new(cx, "Button"));
                 // Accent Button
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Another Button")).class("accent");
+                Button::new(cx, |cx| Label::new(cx, "Another Button")).class("accent");
                 // Disabled Button
-                Button::new(cx, |_| {}, |cx| Label::new(cx, "Disabled Button")).disabled(true);
+                Button::new(cx, |cx| Label::new(cx, "Disabled Button")).disabled(true);
                 // Button with Icon
-                Button::new(
-                    cx,
-                    |_| {},
-                    |cx| {
-                        HStack::new(cx, |cx| {
-                            Label::new(cx, CHECK).class("icon");
-                            Label::new(cx, "Button");
-                        })
-                        .size(Auto)
-                        .child_space(Stretch(1.0))
-                        .col_between(Pixels(2.0))
-                    },
-                );
+                Button::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Label::new(cx, CHECK).class("icon");
+                        Label::new(cx, "Button");
+                    })
+                    .size(Auto)
+                    .child_space(Stretch(1.0))
+                    .col_between(Pixels(2.0))
+                });
             })
             .class("container");
         })

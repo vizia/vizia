@@ -27,7 +27,8 @@ impl Tooltip {
                 Label::new(cx, title).class("title");
                 (content)(cx);
                 HStack::new(cx, |cx| {
-                    Button::new(cx, |ex| ex.emit(TooltipEvent::Ok), |cx| Label::new(cx, "Ok"));
+                    Button::new(cx, |cx| Label::new(cx, "Ok"))
+                        .on_press(|ex| ex.emit(TooltipEvent::Ok));
                 })
                 .class("tooltip-button-wrapper");
             })
@@ -98,16 +99,10 @@ impl TooltipSeq {
                 Label::new(cx, title).class("title");
                 (content)(cx);
                 HStack::new(cx, |cx| {
-                    Button::new(
-                        cx,
-                        |ex| ex.emit(TooltipSeqEvent::Prev),
-                        |cx| Label::new(cx, "Prev"),
-                    );
-                    Button::new(
-                        cx,
-                        |ex| ex.emit(TooltipSeqEvent::Next),
-                        |cx| Label::new(cx, "Next"),
-                    );
+                    Button::new(cx, |cx| Label::new(cx, "Prev"))
+                        .on_press(|ex| ex.emit(TooltipSeqEvent::Prev));
+                    Button::new(cx, |cx| Label::new(cx, "Next"))
+                        .on_press(|ex| ex.emit(TooltipSeqEvent::Next));
                 })
                 .class("tooltip-button-wrapper");
             })
