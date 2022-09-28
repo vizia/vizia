@@ -102,7 +102,7 @@ impl<V: View> View for Release<V> {
         self.view.event(cx, event);
 
         event.map(|window_event, meta| match window_event {
-            WindowEvent::TriggerDown { .. } => {
+            WindowEvent::TriggerUp { .. } => {
                 if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx);
