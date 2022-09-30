@@ -5,7 +5,7 @@ use crate::style::shadow::BoxShadow;
 use morphorm::{LayoutType, PositionType, Units};
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum PropType {
+pub(crate) enum PropType {
     Units(Units),
     String(String),
 }

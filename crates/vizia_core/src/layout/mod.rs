@@ -1,13 +1,12 @@
 //! # Layout
-//! Layout determines the size and position of entities on the screen.
+//! Layout determines the size and position of entities on the screen and is performed by [morphorm](https://github.com/vizia/morphorm).
 //!
-//! All layout calculations are handled by the Morphorm crate.
 pub(crate) mod cache;
 pub(crate) mod node;
 
 use crate::prelude::*;
-pub use morphorm::GeometryChanged;
 use morphorm::{Cache, Hierarchy};
+pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
 
 pub(crate) fn geometry_changed(cx: &mut Context, tree: &Tree<Entity>) {
     for node in tree.down_iter() {

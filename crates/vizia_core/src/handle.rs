@@ -5,6 +5,7 @@ use morphorm::{LayoutType, PositionType, Units};
 use vizia_id::GenerationalId;
 
 use crate::prelude::*;
+use crate::style::{Abilities, PseudoClass};
 use crate::text::Selection;
 
 macro_rules! set_style {

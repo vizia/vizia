@@ -1,4 +1,4 @@
-//! A modifier on a view which changes its properties.
+//! Provides methods on a view for changing its properties.
 
 mod actions;
 pub use actions::*;

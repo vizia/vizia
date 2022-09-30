@@ -96,12 +96,10 @@ impl Cache for CachedData {
 
     // Right
     fn right(&self, node: Self::Item) -> f32 {
-        //self.get_space_right(node)
         self.space.get(node).cloned().unwrap_or_default().right
     }
 
     fn set_right(&mut self, node: Self::Item, value: f32) {
-        self.set_space_right(node, value);
         if let Some(space) = self.space.get_mut(node) {
             space.right = value;
         }
@@ -110,21 +108,17 @@ impl Cache for CachedData {
     // Top
 
     fn top(&self, node: Self::Item) -> f32 {
-        //self.get_space_top(node)
         self.space.get(node).cloned().unwrap_or_default().top
     }
 
     fn set_top(&mut self, node: Self::Item, value: f32) {
-        //self.set_space_top(node, value)
         if let Some(space) = self.space.get_mut(node) {
             space.top = value;
         }
     }
 
     // Bottom
-
     fn bottom(&self, node: Self::Item) -> f32 {
-        //self.get_space_bottom(node)
         self.space.get(node).cloned().unwrap_or_default().bottom
     }
 

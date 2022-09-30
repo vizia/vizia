@@ -1,4 +1,4 @@
 mod window_modifiers;
 pub use window_modifiers::*;
 
-pub use vizia_window;
+pub use vizia_window::{CursorIcon, WindowEvent};

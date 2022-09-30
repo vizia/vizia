@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::style::{Rule, Selector, SelectorRelation, StyleRule};
+use crate::style::{PseudoClass, Rule, Selector, SelectorRelation, StyleRule};
 use vizia_id::GenerationalId;
 use vizia_storage::{LayoutTreeIterator, TreeExt};
 

@@ -14,7 +14,7 @@ use crate::style::*;
 use vizia_id::GenerationalId;
 
 #[derive(Clone)]
-pub enum CustomParseError {
+pub(crate) enum CustomParseError {
     InvalidLengthUnits(String),
     InvalidValue(String),
     UnrecognisedColorName(String),
@@ -33,7 +33,7 @@ impl<'t> From<CustomParseError> for ParseError<'t, CustomParseError> {
 }
 
 /// Type which describes errors produced by the css style parser.
-pub struct StyleParseError<'t>(pub ParseError<'t, CustomParseError>);
+pub(crate) struct StyleParseError<'t>(pub ParseError<'t, CustomParseError>);
 
 impl<'t> std::fmt::Display for StyleParseError<'t> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

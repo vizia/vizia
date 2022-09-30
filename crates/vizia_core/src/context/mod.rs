@@ -28,7 +28,7 @@ use crate::environment::Environment;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
-use crate::style::Style;
+use crate::style::{PseudoClass, Style};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;

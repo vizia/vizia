@@ -2,7 +2,7 @@
 #[macro_use]
 extern crate serde;
 
-pub mod animation;
+mod animation;
 pub mod binding;
 pub mod cache;
 pub mod context;
@@ -17,8 +17,8 @@ pub mod localization;
 pub mod modifiers;
 pub mod resource;
 pub mod style;
-pub mod systems;
-pub mod text;
+mod systems;
+pub(crate) mod text;
 pub mod tree;
 pub mod view;
 pub mod views;
@@ -61,8 +61,8 @@ pub mod prelude {
     pub use vizia_window::{CursorIcon, WindowDescription, WindowEvent, WindowSize};
 
     pub use super::style::{
-        Abilities, BorderCornerShape, Color, Display, GradientDirection, GradientStop,
-        LinearGradient, Opacity, Overflow, PseudoClass, Visibility,
+        BorderCornerShape, Color, Display, GradientDirection, GradientStop, LinearGradient,
+        Opacity, Overflow, Visibility,
     };
 
     pub use morphorm::Units::*;

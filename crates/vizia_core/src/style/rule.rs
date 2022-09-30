@@ -8,7 +8,7 @@ use vizia_id::{
 /// Rather than having widgets own their data, all state is stored in a single database and
 /// is stored and loaded using entities.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Rule(u32);
+pub(crate) struct Rule(u32);
 
 impl_generational_id!(Rule);
 

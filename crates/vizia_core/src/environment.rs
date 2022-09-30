@@ -1,3 +1,5 @@
+//! A model for system specific state which can be accessed by any model or view.
+
 use vizia_derive::Lens;
 
 #[cfg(feature = "localization")]
@@ -5,6 +7,7 @@ use unic_langid::LanguageIdentifier;
 
 use crate::{binding::Lens, binding::Model, context::EventContext, events::Event};
 
+/// A model for system specific state which can be accessed by any model or view.
 #[derive(Lens)]
 pub struct Environment {
     #[cfg(feature = "localization")]
@@ -29,6 +32,7 @@ impl Environment {
     }
 }
 
+/// Events for setting the state in the [Environment].  
 pub enum EnvironmentEvent {
     #[cfg(feature = "localization")]
     SetLocale(LanguageIdentifier),

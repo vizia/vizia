@@ -11,7 +11,7 @@ bitflags! {
     /// A bitflag of possible pseudoclasses.
     ///
     /// This type is part of the prelude.
-    pub struct PseudoClass: u16 {
+    pub(crate) struct PseudoClass: u16 {
         const HOVER = 1;
         const OVER = 1 << 1;
         const ACTIVE = 1 << 2;
@@ -70,7 +70,7 @@ impl std::fmt::Display for PseudoClass {
 }
 
 #[derive(Clone, Debug)]
-pub enum SelectorRelation {
+pub(crate) enum SelectorRelation {
     None,
     Ancestor,
     Parent,
@@ -78,7 +78,7 @@ pub enum SelectorRelation {
 
 /// A style selector.
 #[derive(Clone, Debug)]
-pub struct Selector {
+pub(crate) struct Selector {
     pub id: Option<String>,
     pub element: Option<String>,
     pub classes: HashSet<String>,

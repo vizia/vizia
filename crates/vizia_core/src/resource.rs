@@ -19,7 +19,7 @@ pub(crate) struct StoredImage {
     pub observers: HashSet<Entity>,
 }
 
-pub enum ImageOrId {
+pub(crate) enum ImageOrId {
     Image(image::DynamicImage, femtovg::ImageFlags),
     Id(femtovg::ImageId, (u32, u32)), // need to be able to get dimensions without a canvas
 }
@@ -54,7 +54,7 @@ pub enum ImageRetentionPolicy {
     DropWhenNoObservers,
 }
 
-pub enum FontOrId {
+pub(crate) enum FontOrId {
     Font(Vec<u8>),
     Id(femtovg::FontId),
 }
@@ -62,12 +62,13 @@ pub enum FontOrId {
 // #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 // pub struct Resource(u32);
 
+#[doc(hidden)]
 #[derive(Default)]
 pub struct ResourceManager {
     pub stylesheets: Vec<String>, // Stylesheets refer to a file path
     pub themes: Vec<String>,      // Themes are the string content stylesheets
     pub(crate) images: HashMap<String, StoredImage>,
-    pub fonts: HashMap<String, FontOrId>,
+    pub(crate) fonts: HashMap<String, FontOrId>,
     #[cfg(feature = "localization")]
     pub translations: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
     #[cfg(feature = "localization")]

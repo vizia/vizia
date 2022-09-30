@@ -1,9 +1,14 @@
-pub const ROBOTO_REGULAR: &'static [u8] = include_bytes!("../resources/fonts/Roboto-Regular.ttf");
-pub const ROBOTO_BOLD: &'static [u8] = include_bytes!("../resources/fonts/Roboto-Bold.ttf");
-pub const ENTYPO: &'static [u8] = include_bytes!("../resources/fonts/entypo.ttf");
-pub const OPEN_SANS_EMOJI: &'static [u8] = include_bytes!("../resources/fonts/OpenSansEmoji.ttf");
-pub const AMIRI_REGULAR: &'static [u8] = include_bytes!("../resources/fonts/amiri-regular.ttf");
-pub const MATERIAL_ICONS_REGULAR: &'static [u8] =
+//! Lists of names for icon unicode code points.
+
+pub(crate) const ROBOTO_REGULAR: &'static [u8] =
+    include_bytes!("../resources/fonts/Roboto-Regular.ttf");
+pub(crate) const ROBOTO_BOLD: &'static [u8] = include_bytes!("../resources/fonts/Roboto-Bold.ttf");
+pub(crate) const ENTYPO: &'static [u8] = include_bytes!("../resources/fonts/entypo.ttf");
+pub(crate) const OPEN_SANS_EMOJI: &'static [u8] =
+    include_bytes!("../resources/fonts/OpenSansEmoji.ttf");
+pub(crate) const AMIRI_REGULAR: &'static [u8] =
+    include_bytes!("../resources/fonts/amiri-regular.ttf");
+pub(crate) const MATERIAL_ICONS_REGULAR: &'static [u8] =
     include_bytes!("../resources/fonts/MaterialIcons-Regular.ttf");
 
 pub mod icons_names {

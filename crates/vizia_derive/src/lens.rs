@@ -182,12 +182,15 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     });
 
     let mod_docs = format!("Derived lenses for [`{}`].", struct_type);
+    let root_docs = format!("Lens for the whole [`{ty}`](super::{ty}) struct.", ty = struct_type);
+    //let lens_docs = format!("# Lenses for [`{ty}`](super::{ty})", ty = struct_type);
 
     let expanded = quote! {
         #[doc = #mod_docs]
         #module_vis mod #twizzled_name {
             #(#defs)*
             #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+            #[doc = #root_docs]
             #struct_vis struct root#lens_ty_generics(#(#phantom_decls),*);
 
             impl #lens_ty_generics root#lens_ty_generics{
@@ -209,6 +212,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         }
 
         #[allow(non_upper_case_globals)]
+        #[doc(hidden)]
         impl #impl_generics #struct_type #ty_generics #where_clause {
             #(#associated_items)*
 
