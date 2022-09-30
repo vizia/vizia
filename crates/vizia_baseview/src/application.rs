@@ -1,7 +1,5 @@
 use crate::window::ViziaWindow;
-use crate::Renderer;
 use baseview::{WindowHandle, WindowScalePolicy};
-use femtovg::Canvas;
 use raw_window_handle::HasRawWindowHandle;
 
 use crate::proxy::queue_get;
@@ -163,25 +161,14 @@ pub(crate) struct ApplicationRunner {
 }
 
 impl ApplicationRunner {
-    pub fn new(
-        mut context: Context,
-        win_desc: WindowDescription,
-        scale_policy: WindowScalePolicy,
-        renderer: Renderer,
-    ) -> Self {
-        let mut cx = BackendContext::new(&mut context);
-
+    pub fn new(context: Context, scale_policy: WindowScalePolicy) -> Self {
         let event_manager = EventManager::new();
-
-        let canvas = Canvas::new(renderer).expect("Cannot create canvas");
 
         // Assume scale for now until there is an event with a new one.
         let scale_factor = match scale_policy {
             WindowScalePolicy::ScaleFactor(scale) => scale,
             WindowScalePolicy::SystemScaleFactor => 1.0,
         };
-
-        cx.add_main_window(&win_desc, canvas, scale_factor as f32);
 
         ApplicationRunner {
             event_manager,
@@ -207,6 +194,8 @@ impl ApplicationRunner {
 
         cx.load_images();
 
+        // Force restyle on every frame for baseview backend to avoid style inheritance issues
+        cx.style().needs_restyle = true;
         cx.process_data_updates();
         cx.process_style_updates();
 
@@ -233,25 +222,44 @@ impl ApplicationRunner {
             *should_quit = true;
         }
 
+        let mut update_modifiers = |modifiers: vizia_input::KeyboardModifiers| {
+            cx.modifiers()
+                .set(Modifiers::SHIFT, modifiers.contains(vizia_input::KeyboardModifiers::SHIFT));
+            cx.modifiers()
+                .set(Modifiers::CTRL, modifiers.contains(vizia_input::KeyboardModifiers::CONTROL));
+            cx.modifiers()
+                .set(Modifiers::LOGO, modifiers.contains(vizia_input::KeyboardModifiers::META));
+            cx.modifiers()
+                .set(Modifiers::ALT, modifiers.contains(vizia_input::KeyboardModifiers::ALT));
+        };
+
         match event {
             baseview::Event::Mouse(event) => match event {
-                baseview::MouseEvent::CursorMoved { position } => {
+                baseview::MouseEvent::CursorMoved { position, modifiers } => {
+                    update_modifiers(modifiers);
+
                     let physical_posx = position.x * cx.style().dpi_factor;
                     let physical_posy = position.y * cx.style().dpi_factor;
                     let cursorx = (physical_posx) as f32;
                     let cursory = (physical_posy) as f32;
-                    cx.dispatch_system_event(WindowEvent::MouseMove(cursorx, cursory));
+                    cx.emit_origin(WindowEvent::MouseMove(cursorx, cursory));
                 }
-                baseview::MouseEvent::ButtonPressed(button) => {
+                baseview::MouseEvent::ButtonPressed { button, modifiers } => {
+                    update_modifiers(modifiers);
+
                     let b = translate_mouse_button(button);
-                    cx.dispatch_system_event(WindowEvent::MouseDown(b));
+                    cx.emit_origin(WindowEvent::MouseDown(b));
                 }
-                baseview::MouseEvent::ButtonReleased(button) => {
+                baseview::MouseEvent::ButtonReleased { button, modifiers } => {
+                    update_modifiers(modifiers);
+
                     let b = translate_mouse_button(button);
-                    cx.dispatch_system_event(WindowEvent::MouseUp(b));
+                    cx.emit_origin(WindowEvent::MouseUp(b));
                 }
-                baseview::MouseEvent::WheelScrolled(scroll_delta) => {
-                    let (lines_x, lines_y) = match scroll_delta {
+                baseview::MouseEvent::WheelScrolled { delta, modifiers } => {
+                    update_modifiers(modifiers);
+
+                    let (lines_x, lines_y) = match delta {
                         baseview::ScrollDelta::Lines { x, y } => (x, y),
                         baseview::ScrollDelta::Pixels { x, y } => (
                             if x < 0.0 {
@@ -271,7 +279,7 @@ impl ApplicationRunner {
                         ),
                     };
 
-                    cx.dispatch_system_event(WindowEvent::MouseScroll(lines_x, lines_y));
+                    cx.emit_origin(WindowEvent::MouseScroll(lines_x, lines_y));
                 }
                 _ => {}
             },
@@ -297,23 +305,17 @@ impl ApplicationRunner {
 
                 match s {
                     MouseButtonState::Pressed => {
-                        cx.dispatch_system_event(WindowEvent::KeyDown(
-                            event.code,
-                            Some(event.key.clone()),
-                        ));
+                        cx.emit_origin(WindowEvent::KeyDown(event.code, Some(event.key.clone())));
 
                         if let vizia_input::Key::Character(written) = &event.key {
                             for chr in written.chars() {
-                                cx.dispatch_system_event(WindowEvent::CharInput(chr));
+                                cx.emit_origin(WindowEvent::CharInput(chr));
                             }
                         }
                     }
 
                     MouseButtonState::Released => {
-                        cx.dispatch_system_event(WindowEvent::KeyUp(
-                            event.code,
-                            Some(event.key.clone()),
-                        ));
+                        cx.emit_origin(WindowEvent::KeyUp(event.code, Some(event.key.clone())));
                     }
                 }
             }

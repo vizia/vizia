@@ -25,7 +25,7 @@ mod parser;
 pub use parser::*;
 
 mod style_rule;
-use style_rule::StyleRule;
+pub(crate) use style_rule::StyleRule;
 
 mod selector;
 pub use selector::*;

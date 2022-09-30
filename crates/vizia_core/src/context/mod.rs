@@ -9,8 +9,10 @@ use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Mutex;
 
+#[cfg(all(feature = "clipboard", feature = "x11"))]
+use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
-use copypasta::{nop_clipboard::NopClipboardContext, ClipboardContext, ClipboardProvider};
+use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
 use femtovg::TextContext;
 use fnv::FnvHashMap;
 #[cfg(feature = "localization")]
@@ -77,7 +79,7 @@ pub struct Context {
     pub(crate) clipboard: Box<dyn ClipboardProvider>,
 
     pub(crate) click_time: Instant,
-    pub(crate) double_click: bool,
+    pub(crate) clicks: usize,
     pub(crate) click_pos: (f32, f32),
 
     pub ignore_default_theme: bool,
@@ -118,13 +120,18 @@ impl Context {
             event_proxy: None,
 
             #[cfg(feature = "clipboard")]
-            clipboard: if let Ok(context) = ClipboardContext::new() {
-                Box::new(context)
-            } else {
+            clipboard: {
+                #[cfg(feature = "x11")]
+                if let Ok(context) = ClipboardContext::new() {
+                    Box::new(context)
+                } else {
+                    Box::new(NopClipboardContext::new().unwrap())
+                }
+                #[cfg(not(feature = "x11"))]
                 Box::new(NopClipboardContext::new().unwrap())
             },
             click_time: Instant::now(),
-            double_click: false,
+            clicks: 0,
             click_pos: (0.0, 0.0),
 
             ignore_default_theme: false,
@@ -178,7 +185,12 @@ impl Context {
     }
 
     /// Enables or disables pseudoclasses for the focus of an entity
-    fn set_focus_pseudo_classes(&mut self, focused: Entity, enabled: bool, focus_visible: bool) {
+    pub(crate) fn set_focus_pseudo_classes(
+        &mut self,
+        focused: Entity,
+        enabled: bool,
+        focus_visible: bool,
+    ) {
         #[cfg(debug_assertions)]
         if enabled {
             println!(
@@ -306,7 +318,7 @@ impl Context {
     }
 
     /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Message>(&mut self, message: M) {
+    pub fn emit<M: Any + Send>(&mut self, message: M) {
         self.event_queue.push_back(
             Event::new(message)
                 .target(self.current)
@@ -316,7 +328,7 @@ impl Context {
     }
 
     /// Send an event containing a message directly to a specified entity.
-    pub fn emit_to<M: Message>(&mut self, target: Entity, message: M) {
+    pub fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
         self.event_queue.push_back(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
         );
@@ -390,7 +402,9 @@ impl Context {
         self.resource_manager.themes.clear();
 
         self.add_theme(DEFAULT_LAYOUT);
-        self.add_theme(DEFAULT_THEME);
+        if !self.ignore_default_theme {
+            self.add_theme(DEFAULT_THEME);
+        }
     }
 
     pub fn add_stylesheet(&mut self, path: &str) -> Result<(), std::io::Error> {
@@ -431,12 +445,7 @@ impl Context {
         let mut overall_theme = String::new();
 
         // Reload the stored themes
-        for (index, theme) in self.resource_manager.themes.iter().enumerate() {
-            if self.ignore_default_theme && index == 1 {
-                continue;
-            }
-
-            //self.style.parse_theme(theme);
+        for theme in self.resource_manager.themes.iter() {
             overall_theme += theme;
         }
 

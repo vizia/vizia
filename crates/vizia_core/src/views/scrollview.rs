@@ -6,7 +6,7 @@ use crate::views::Orientation;
 
 const SCROLL_SENSITIVITY: f32 = 35.0;
 
-#[derive(Lens, Data, Clone)]
+#[derive(Lens, Data, Clone, Debug)]
 pub struct ScrollData {
     pub scroll_x: f32,
     pub scroll_y: f32,
@@ -25,6 +25,18 @@ pub enum ScrollEvent {
     ParentGeo(f32, f32),
 }
 
+impl ScrollData {
+    fn reset(&mut self) {
+        if self.child_x == self.parent_x {
+            self.scroll_x = 0.0;
+        }
+
+        if self.child_y == self.parent_y {
+            self.scroll_y = 0.0;
+        }
+    }
+}
+
 impl Model for ScrollData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|scroll_update, meta| {
@@ -36,10 +48,12 @@ impl Model for ScrollData {
                 ScrollEvent::ChildGeo(x, y) => {
                     self.child_x = *x;
                     self.child_y = *y;
+                    self.reset();
                 }
                 ScrollEvent::ParentGeo(x, y) => {
                     self.parent_x = *x;
                     self.parent_y = *y;
+                    self.reset();
                 }
             }
 
@@ -174,7 +188,7 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
 
             WindowEvent::MouseScroll(x, y) => {
                 let (x, y) =
-                    if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, *x) } else { (*x, -*y) };
+                    if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, -*x) } else { (-*x, -*y) };
 
                 // what percentage of the negative space does this cross?
                 let data = self.data.get(cx);

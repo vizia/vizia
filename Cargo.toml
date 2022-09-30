@@ -8,7 +8,7 @@ autoexamples = false
 rust-version = "1.60"
 
 [workspace]
-members = [ "crates/*" ]
+members = [ "crates/*", "run-wasm" ]
 
 [[example]]
 name = "action_modifier"
@@ -214,8 +214,8 @@ path = "examples/localization/fluent_variables.rs"
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
-clipboard = ["vizia_core/clipboard"]
 localization = ["vizia_core/localization"]
+clipboard = ["vizia_core/clipboard", "vizia_winit/clipboard"]
 serde = ["vizia_core/serde"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]

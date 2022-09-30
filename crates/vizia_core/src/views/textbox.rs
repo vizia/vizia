@@ -78,6 +78,8 @@ impl TextboxData {
 
         // do the computation
         let (mut tx, mut ty) = self.transform;
+        tx *= scale;
+        ty *= scale;
         let text_box = BoundingBox { x: bounds.x + tx, y: bounds.y + ty, w: bounds.w, h: bounds.h };
         if text_box.x < parent_bounds.x
             && text_box.x + text_box.w < parent_bounds.x + parent_bounds.w
@@ -239,7 +241,12 @@ impl TextboxData {
                             Direction::Right => 0.0,
                         };
 
-                    self.selection.active = pos_to_idx(self.sel_x, new_y, lines.iter());
+                    self.selection.active = pos_to_idx(
+                        self.sel_x,
+                        new_y,
+                        lines.iter(),
+                        self.kind == TextboxKind::SingleLine,
+                    );
                 }
             }
 
@@ -272,6 +279,10 @@ impl TextboxData {
     pub fn select_all(&mut self, _: &mut EventContext) {
         self.selection = Selection::new(0, self.text.len());
     }
+
+    pub fn select_range(&mut self, _: &mut EventContext, range: &core::ops::RangeInclusive<usize>) {
+        self.selection = Selection::new(*range.start(), *range.end());
+    }
 }
 
 pub enum TextEvent {
@@ -279,6 +290,8 @@ pub enum TextEvent {
     DeleteText(Movement),
     MoveCursor(Movement, bool),
     SelectAll,
+    SelectWord,
+    SelectParagraph,
     StartEdit,
     EndEdit,
     Submit(bool),
@@ -337,12 +350,15 @@ impl Model for TextboxData {
                         cx.focus_with_visibility(false);
                         cx.capture();
                         cx.set_checked(true);
-                        cx.emit(TextEvent::SelectAll);
+                        if self.selection.active == self.selection.anchor {
+                            cx.emit(TextEvent::SelectAll);
+                        }
                     }
                 }
             }
 
             TextEvent::EndEdit => {
+                self.selection.active = self.selection.anchor;
                 self.edit = false;
                 cx.set_checked(false);
                 cx.release();
@@ -362,13 +378,24 @@ impl Model for TextboxData {
                 self.set_caret(cx);
             }
 
+            TextEvent::SelectWord => {
+                self.select_range(cx, &self.text.word_around(self.selection.active));
+                self.set_caret(cx);
+            }
+
+            TextEvent::SelectParagraph => {
+                self.select_range(cx, &self.text.paragraph_around(self.selection.active));
+                self.set_caret(cx);
+            }
+
             TextEvent::Hit(posx, posy) => {
-                let posx = *posx - self.transform.0;
-                let posy = *posy - self.transform.1;
+                let posx = *posx - self.transform.0 * cx.style.dpi_factor as f32;
+                let posy = *posy - self.transform.1 * cx.style.dpi_factor as f32;
                 let idx = pos_to_idx(
                     posx,
                     posy,
                     cx.draw_cache.text_lines.get(self.content_entity).unwrap().iter(),
+                    self.kind == TextboxKind::SingleLine,
                 );
                 self.selection = Selection::new(idx, idx);
                 self.sel_x = posx;
@@ -376,12 +403,13 @@ impl Model for TextboxData {
             }
 
             TextEvent::Drag(posx, posy) => {
-                let posx = *posx - self.transform.0;
-                let posy = *posy - self.transform.1;
+                let posx = *posx - self.transform.0 * cx.style.dpi_factor as f32;
+                let posy = *posy - self.transform.1 * cx.style.dpi_factor as f32;
                 let idx = pos_to_idx(
                     posx,
                     posy,
                     cx.draw_cache.text_lines.get(self.content_entity).unwrap().iter(),
+                    self.kind == TextboxKind::SingleLine,
                 );
                 self.selection = Selection::new(self.selection.anchor, idx);
                 self.sel_x = posx;
@@ -439,7 +467,7 @@ pub struct Textbox<L: Lens> {
     kind: TextboxKind,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum TextboxKind {
     SingleLine,
     MultiLineUnwrapped,
@@ -560,8 +588,6 @@ where
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseDown(MouseButton::Left) => {
                 if cx.is_over() {
-                    cx.emit(TextEvent::StartEdit);
-
                     cx.focus_with_visibility(false);
                     cx.capture();
                     cx.set_checked(true);
@@ -589,19 +615,37 @@ where
                     cx.event_queue.push_back(
                         Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered()),
                     );
+                    cx.event_queue.push_back(
+                        Event::new(WindowEvent::TriggerDown { mouse: true }).target(cx.hovered()),
+                    );
                 }
             }
 
             WindowEvent::FocusIn => {
-                cx.emit(TextEvent::StartEdit);
+                if cx.mouse.left.pressed != cx.current()
+                    || cx.mouse.left.state == MouseButtonState::Released
+                {
+                    cx.emit(TextEvent::StartEdit);
+                }
             }
 
             WindowEvent::FocusOut => {
                 cx.emit(TextEvent::EndEdit);
             }
 
+            WindowEvent::MouseDoubleClick(MouseButton::Left) => {
+                cx.emit(TextEvent::SelectWord);
+            }
+
+            WindowEvent::MouseTripleClick(MouseButton::Left) => {
+                cx.emit(TextEvent::SelectParagraph);
+            }
+
             WindowEvent::MouseUp(MouseButton::Left) => {
                 cx.unlock_cursor_icon();
+                if cx.mouse.left.pressed == cx.current() {
+                    cx.emit(TextEvent::StartEdit);
+                }
             }
 
             WindowEvent::MouseMove(_, _) => {
@@ -755,12 +799,9 @@ where
                 Code::PageDown => {}
 
                 Code::KeyA => {
-                    //if self.edit {
                     if cx.modifiers.contains(Modifiers::CTRL) {
-                        // self.select_all(cx);
                         cx.emit(TextEvent::SelectAll);
                     }
-                    //}
                 }
 
                 Code::KeyC => {

@@ -1,5 +1,6 @@
 use crate::animation::Interpolator;
 use std::fmt;
+use std::fmt::Formatter;
 
 /// Describes a color.
 ///
@@ -8,6 +9,18 @@ use std::fmt;
 #[derive(Copy, Clone)]
 pub struct Color {
     pub data: u32,
+}
+
+impl std::fmt::Display for Color {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        if self.a() == 0 {
+            write!(f, "transparent")
+        } else if self.a() == 255 {
+            write!(f, "#{:02x}{:02x}{:02x}", self.r(), self.g(), self.b())
+        } else {
+            write!(f, "#{:02x}{:02x}{:02x}{:02x}", self.r(), self.g(), self.b(), self.a())
+        }
+    }
 }
 
 impl Color {
@@ -81,18 +94,6 @@ impl Color {
 
     fn interp(start_color: u8, end_color: u8, scale: f64) -> u8 {
         (end_color as f64 - start_color as f64).mul_add(scale, start_color as f64) as u8
-    }
-}
-
-impl ToString for Color {
-    fn to_string(&self) -> String {
-        if self.a() == 0 {
-            return String::from("transparent");
-        }
-
-        let data = self.data;
-
-        format!("#{:x}", data)
     }
 }
 

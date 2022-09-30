@@ -11,14 +11,24 @@ use vizia_core::events::EventManager;
 use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 use vizia_window::Position;
+use winit::event_loop::EventLoopBuilder;
+#[cfg(all(
+    feature = "clipboard",
+    feature = "wayland",
+    any(
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd"
+    )
+))]
+use winit::platform::unix::WindowExtUnix;
 use winit::{
     dpi::LogicalSize,
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
-
-static DEFAULT_THEME: &str = include_str!("../../vizia_core/resources/themes/default_theme.css");
-static DEFAULT_LAYOUT: &str = include_str!("../../vizia_core/resources/themes/default_layout.css");
 
 pub struct Application {
     context: Context,
@@ -56,7 +66,7 @@ impl Application {
         #[allow(unused_mut)]
         let mut context = Context::new();
 
-        let event_loop = EventLoop::with_user_event();
+        let event_loop = EventLoopBuilder::with_user_event().build();
         #[cfg(not(target_arch = "wasm32"))]
         {
             let mut cx = BackendContext::new(&mut context);
@@ -132,6 +142,25 @@ impl Application {
 
         let (window, canvas) = Window::new(&event_loop, &self.window_description);
 
+        #[cfg(all(
+            feature = "clipboard",
+            feature = "wayland",
+            any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd"
+            )
+        ))]
+        unsafe {
+            if let Some(display) = window.window().wayland_display() {
+                let (_, clipboard) =
+                    copypasta::wayland_clipboard::create_clipboards_from_external(display);
+                BackendContext::new(&mut context).set_clipboard_provider(Box::new(clipboard));
+            }
+        }
+
         //let mut context = Context::new();
         let scale_factor = window.window().scale_factor() as f32;
         BackendContext::new(&mut context).add_main_window(
@@ -143,10 +172,7 @@ impl Application {
 
         let mut event_manager = EventManager::new();
 
-        context.add_theme(DEFAULT_LAYOUT);
-        if !context.ignore_default_theme {
-            context.add_theme(DEFAULT_THEME);
-        }
+        context.remove_user_themes();
         if let Some(builder) = self.builder.take() {
             (builder)(&mut context);
         }
@@ -157,6 +183,9 @@ impl Application {
 
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
+
+        let mut cx = BackendContext::new(&mut context);
+        cx.synchronize_fonts();
 
         event_loop.run(move |event, _, control_flow| {
             let mut cx = BackendContext::new(&mut context);
@@ -187,7 +216,6 @@ impl Application {
                     if has_animations(&cx.0) {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
 
-                        //context.insert_event(Event::new(WindowEvent::Relayout).target(Entity::root()));
                         event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();
                         //window.handle.window().request_redraw();
                         if let Some(window_event_handler) = cx.views().remove(&Entity::root()) {
@@ -260,7 +288,7 @@ impl Application {
                             position,
                             modifiers: _,
                         } => {
-                            cx.dispatch_system_event(WindowEvent::MouseMove(
+                            cx.emit_origin(WindowEvent::MouseMove(
                                 position.x as f32,
                                 position.y as f32,
                             ));
@@ -289,7 +317,7 @@ impl Application {
                                 }
                             };
 
-                            cx.dispatch_system_event(event);
+                            cx.emit_origin(event);
                         }
 
                         winit::event::WindowEvent::MouseWheel { delta, phase: _, .. } => {
@@ -300,12 +328,12 @@ impl Application {
                                 winit::event::MouseScrollDelta::PixelDelta(pos) => {
                                     WindowEvent::MouseScroll(
                                         pos.x as f32 / 20.0,
-                                        pos.y as f32 / 114.0,
+                                        pos.y as f32 / 20.0, // this number calibrated for wayland
                                     )
                                 }
                             };
 
-                            cx.dispatch_system_event(out_event);
+                            cx.emit_origin(out_event);
                         }
 
                         winit::event::WindowEvent::KeyboardInput {
@@ -332,11 +360,11 @@ impl Application {
                                 }
                             };
 
-                            cx.dispatch_system_event(event);
+                            cx.emit_origin(event);
                         }
 
                         winit::event::WindowEvent::ReceivedCharacter(character) => {
-                            cx.dispatch_system_event(WindowEvent::CharInput(character));
+                            cx.emit_origin(WindowEvent::CharInput(character));
                         }
 
                         winit::event::WindowEvent::Resized(physical_size) => {

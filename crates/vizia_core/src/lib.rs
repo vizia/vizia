@@ -39,13 +39,13 @@ pub mod image {
 /// Members which we recommend you wildcard-import.
 pub mod prelude {
     pub use super::animation::{AnimExt, Animation, AnimationBuilder};
-    pub use super::binding::{Binding, Data, Index, Lens, LensExt, Model, Res, Then};
+    pub use super::binding::{Binding, Data, Index, Lens, LensExt, Model, Res, Setter, Then};
     pub use super::context::{
         Context, ContextProxy, DataContext, DrawContext, EventContext, ProxyEmitError,
     };
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent};
-    pub use super::events::{Event, Message, Propagation};
+    pub use super::events::{Event, Propagation};
     pub use super::handle::Handle;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     #[cfg(feature = "localization")]
@@ -54,7 +54,8 @@ pub mod prelude {
     pub use super::view::{Canvas, View};
     pub use super::views::*;
     pub use super::window::WindowModifiers;
-    pub use vizia_derive::{Data, Lens};
+    pub use vizia_derive::{Data, Lens, Model, Setter};
+    pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};
     pub use vizia_storage::{Tree, TreeExt};
     pub use vizia_window::{CursorIcon, WindowDescription, WindowEvent, WindowSize};

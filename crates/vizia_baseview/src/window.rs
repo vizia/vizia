@@ -9,9 +9,6 @@ use crate::proxy::BaseviewProxy;
 use vizia_core::context::backend::*;
 use vizia_core::prelude::*;
 
-static DEFAULT_THEME: &str = include_str!("../../vizia_core/resources/themes/default_theme.css");
-static DEFAULT_LAYOUT: &str = include_str!("../../vizia_core/resources/themes/default_layout.css");
-
 /// Handles a vizia_baseview application
 pub(crate) struct ViziaWindow {
     application: ApplicationRunner,
@@ -27,15 +24,30 @@ impl ViziaWindow {
         builder: Option<Box<dyn FnOnce(&mut Context) + Send>>,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ) -> ViziaWindow {
-        if let Some(builder) = builder {
-            (builder)(&mut cx);
-        }
-
         let context = window.gl_context().expect("Window was created without OpenGL support");
         let renderer = load_renderer(window);
 
         unsafe { context.make_current() };
-        let application = ApplicationRunner::new(cx, win_desc, scale_policy, renderer);
+
+        let canvas = Canvas::new(renderer).expect("Cannot create canvas");
+
+        // Assume scale for now until there is an event with a new one.
+        let scale_factor = match scale_policy {
+            WindowScalePolicy::ScaleFactor(scale) => scale,
+            WindowScalePolicy::SystemScaleFactor => 1.0,
+        };
+
+        BackendContext::new(&mut cx).add_main_window(&win_desc, canvas, scale_factor as f32);
+
+        cx.remove_user_themes();
+        if let Some(builder) = builder {
+            (builder)(&mut cx);
+        }
+
+        let mut backend_cx = BackendContext::new(&mut cx);
+        backend_cx.synchronize_fonts();
+
+        let application = ApplicationRunner::new(cx, scale_policy);
         unsafe { context.make_not_current() };
 
         ViziaWindow { application, on_idle }
@@ -75,12 +87,7 @@ impl ViziaWindow {
                 let mut context = Context::new();
 
                 context.ignore_default_theme = ignore_default_theme;
-
-                context.add_theme(DEFAULT_LAYOUT);
-
-                if !ignore_default_theme {
-                    context.add_theme(DEFAULT_THEME);
-                }
+                context.remove_user_themes();
 
                 let mut cx = BackendContext::new(&mut context);
 
@@ -127,12 +134,7 @@ impl ViziaWindow {
                 let mut context = Context::new();
 
                 context.ignore_default_theme = ignore_default_theme;
-
-                context.add_theme(DEFAULT_LAYOUT);
-
-                if !ignore_default_theme {
-                    context.add_theme(DEFAULT_THEME);
-                }
+                context.remove_user_themes();
 
                 let mut cx = BackendContext::new(&mut context);
 
@@ -188,12 +190,7 @@ impl ViziaWindow {
                 }
 
                 context.ignore_default_theme = ignore_default_theme;
-
-                context.add_theme(DEFAULT_LAYOUT);
-
-                if !ignore_default_theme {
-                    context.add_theme(DEFAULT_THEME);
-                }
+                context.remove_user_themes();
 
                 let mut cx = BackendContext::new(&mut context);
 

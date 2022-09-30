@@ -18,6 +18,9 @@ pub trait EditableText: Clone {
 
     // fn prev_codepoint_offset(&self, from: usize) -> Option<usize>;
     // fn next_codepoint_offset(&self, from: usize) -> Option<usize>;
+
+    fn word_around(&self, pos: usize) -> core::ops::RangeInclusive<usize>;
+    fn paragraph_around(&self, pos: usize) -> core::ops::RangeInclusive<usize>;
 }
 
 impl EditableText for String {
@@ -89,6 +92,61 @@ impl EditableText for String {
             offset += next_grapheme.len();
         }
         Some(self.len())
+    }
+
+    fn word_around(&self, pos: usize) -> core::ops::RangeInclusive<usize> {
+        let mut start = 0;
+        let mut end = self.len();
+        let selecting_whitespace = self[pos..]
+            .chars()
+            .next()
+            .map(char::is_whitespace)
+            .or_else(|| self[..pos].chars().rev().next().map(char::is_whitespace));
+
+        let mut offset = pos;
+        for prev_grapheme in self[0..pos].graphemes(true).rev() {
+            let is_whitespace = prev_grapheme.chars().next().map(char::is_whitespace);
+            if is_whitespace != selecting_whitespace {
+                start = offset;
+                break;
+            }
+            offset -= prev_grapheme.len();
+        }
+
+        let mut offset = pos;
+        for next_grapheme in self[pos..].graphemes(true) {
+            let is_whitespace = next_grapheme.chars().next().map(char::is_whitespace);
+            if is_whitespace != selecting_whitespace {
+                end = offset;
+                break;
+            }
+            offset += next_grapheme.len();
+        }
+        start..=end
+    }
+
+    fn paragraph_around(&self, pos: usize) -> core::ops::RangeInclusive<usize> {
+        let mut start = 0;
+        let mut end = self.len();
+
+        let mut offset = pos;
+        for prev_grapheme in self[0..pos].graphemes(true).rev() {
+            if prev_grapheme == "\n" {
+                start = offset;
+                break;
+            }
+            offset -= prev_grapheme.len();
+        }
+
+        let mut offset = pos;
+        for next_grapheme in self[pos..].graphemes(true) {
+            if next_grapheme == "\n" {
+                end = offset;
+                break;
+            }
+            offset += next_grapheme.len();
+        }
+        start..=end
     }
 }
 
