@@ -32,7 +32,35 @@ impl DrawCache {
     }
 }
 
-/// A restricted context used when drawing.
+/// A context used when drawing.
+///
+/// The `DrawContext` is provided by the `draw` method in `View` and can be used to immutably access the
+/// computed style and layout properties of the current view.
+///
+/// # Example
+/// ```
+/// # use vizia_core::prelude::*;
+/// # let cx = &mut Context::new();
+///
+/// pub struct CustomView {}
+///
+/// impl CustomView {
+///     pub fn new(cx: &mut Context) -> Handle<Self> {
+///         Self{}.build(cx, |_|{})
+///     }
+/// }
+///
+/// impl View for CustomView {
+///     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+///         // Get the computed bounds after layout of the current view
+///         let bounds = cx.bounds();
+///         // Draw to the canvas using the bounds of the current view
+///         let mut path = Path::new();
+///         path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+///         canvas.fill_path(&mut path, Paint::color(vg::Color::rgb(200, 100, 100)));
+///     }
+/// }
+/// ```
 pub struct DrawContext<'a> {
     pub(crate) current: Entity,
     pub captured: &'a Entity,

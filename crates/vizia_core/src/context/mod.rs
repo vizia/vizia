@@ -1,3 +1,4 @@
+#[doc(hidden)]
 pub mod backend;
 mod draw;
 mod event;
