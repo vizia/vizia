@@ -608,6 +608,16 @@ impl Style {
                                     self.transitions.insert(rule_id, animation);
                                 }
 
+                                "color" => {
+                                    let animation = self.animation_manager.create();
+                                    self.font_color.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
+                                    self.font_color.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
+                                }
+
                                 "left" => {
                                     let animation = self.animation_manager.create();
                                     self.left.insert_animation(
