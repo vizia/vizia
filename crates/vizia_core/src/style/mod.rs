@@ -1,5 +1,6 @@
 //! Style properties for changing the appearance of a view.
 //!
+//! # Styling Views
 //! Vizia provides two ways to style views:
 //! - Inline
 //! - Shared
@@ -29,7 +30,8 @@
 //!
 //! ### Adding Stylesheets
 //! To add a css string to an application, use [`add_theme()`](crate::context::Context::add_theme()) on [`Context`].
-//! This can be used with the `include_str!()` macro to embed a stylesheet into the application binary when compiled.
+//! This can be used with the `include_str!()` macro to embed an external stylesheet file into the application binary when compiled.
+//! Alternatively a constant string literal can be used to embed the CSS in the application.
 //!
 //! ```
 //! # use vizia_core::prelude::*;
@@ -47,9 +49,9 @@
 //! ```
 //!
 //! To add an external css stylesheet which is read from a file at runtime, use [`add_stylesheet()`](crate::context::Context::add_stylesheet()) on [`Context`].
-//! Stylesheets added this way can be hot-reloaded by pressing the F5 key on the application window.
+//! Stylesheets added this way can be hot-reloaded by pressing the F5 key in the application window.
 //!
-//! //! ```
+//! ```
 //! # use vizia_core::prelude::*;
 //! # let cx = &mut Context::new();
 //!
