@@ -616,7 +616,7 @@ where
                         Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered()),
                     );
                     cx.event_queue.push_back(
-                        Event::new(WindowEvent::TriggerDown { mouse: true }).target(cx.hovered()),
+                        Event::new(WindowEvent::PressDown { mouse: true }).target(cx.hovered()),
                     );
                 }
             }

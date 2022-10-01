@@ -201,6 +201,11 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     context.mouse.left.pos_down = (context.mouse.cursorx, context.mouse.cursory);
                     context.mouse.left.pressed = context.hovered;
                     context.triggered = context.hovered;
+                    if let Some(pseudo_classes) =
+                        context.style.pseudo_classes.get_mut(context.triggered)
+                    {
+                        pseudo_classes.set(PseudoClass::ACTIVE, true);
+                    }
                     let focusable = context
                         .style
                         .abilities
@@ -230,7 +235,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             if matches!(button, MouseButton::Left) {
                 emit_direct_or_up(
                     context,
-                    WindowEvent::TriggerDown { mouse: true },
+                    WindowEvent::PressDown { mouse: true },
                     context.captured,
                     context.triggered,
                     true,
@@ -281,13 +286,24 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             }
 
             if matches!(button, MouseButton::Left) {
-                emit_direct_or_up(
-                    context,
-                    WindowEvent::TriggerUp { mouse: true },
-                    context.captured,
-                    context.triggered,
-                    true,
-                );
+                if context.hovered == context.triggered {
+                    emit_direct_or_up(
+                        context,
+                        WindowEvent::Press { mouse: true },
+                        context.captured,
+                        context.triggered,
+                        true,
+                    );
+                }
+
+                if let Some(pseudo_classes) =
+                    context.style.pseudo_classes.get_mut(context.triggered)
+                {
+                    pseudo_classes.set(PseudoClass::ACTIVE, false);
+                }
+                context.need_restyle();
+
+                context.triggered = Entity::null();
             }
 
             mutate_direct_or_up(meta, context.captured, context.hovered, true);
@@ -427,6 +443,14 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                                 .target(prev_focused)
                                 .origin(Entity::root()),
                         );
+
+                        if let Some(pseudo_classes) =
+                            context.style.pseudo_classes.get_mut(context.triggered)
+                        {
+                            pseudo_classes.set(PseudoClass::ACTIVE, false);
+                        }
+                        context.need_restyle();
+                        context.triggered = Entity::null();
                     }
                 } else {
                     let next_focused = if let Some(next_focused) =
@@ -451,6 +475,14 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                                 .target(next_focused)
                                 .origin(Entity::root()),
                         );
+
+                        if let Some(pseudo_classes) =
+                            context.style.pseudo_classes.get_mut(context.triggered)
+                        {
+                            pseudo_classes.set(PseudoClass::ACTIVE, false);
+                        }
+                        context.need_restyle();
+                        context.triggered = Entity::null();
                     }
                 }
 
@@ -461,17 +493,31 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
 
             if matches!(*code, Code::Enter | Code::NumpadEnter | Code::Space) {
                 context.triggered = context.focused;
+                if let Some(pseudo_classes) =
+                    context.style.pseudo_classes.get_mut(context.triggered)
+                {
+                    pseudo_classes.set(PseudoClass::ACTIVE, true);
+                }
                 context.with_current(context.focused, |cx| {
-                    cx.emit(WindowEvent::TriggerDown { mouse: false })
+                    cx.emit(WindowEvent::PressDown { mouse: false })
                 });
             }
         }
         WindowEvent::KeyUp(code, _) => {
             meta.target = context.focused;
             if matches!(code, Code::Enter | Code::NumpadEnter | Code::Space) {
-                context.with_current(context.triggered, |cx| {
-                    cx.emit(WindowEvent::TriggerUp { mouse: false })
-                });
+                if context.focused == context.triggered {
+                    context.with_current(context.triggered, |cx| {
+                        cx.emit(WindowEvent::Press { mouse: false })
+                    });
+                }
+                if let Some(pseudo_classes) =
+                    context.style.pseudo_classes.get_mut(context.triggered)
+                {
+                    pseudo_classes.set(PseudoClass::ACTIVE, false);
+                }
+                context.need_restyle();
+                context.triggered = Entity::null();
             }
         }
         WindowEvent::CharInput(_) => {

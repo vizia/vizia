@@ -44,7 +44,7 @@ impl<V: View> View for Press<V> {
         self.view.event(cx, event);
 
         event.map(|window_event, _| match window_event {
-            WindowEvent::TriggerDown { mouse } => {
+            WindowEvent::Press { mouse } => {
                 let over = if *mouse { cx.hovered() } else { cx.focused() };
                 if cx.current() != over && !over.is_descendant_of(cx.tree, cx.current()) {
                     return;
@@ -102,7 +102,7 @@ impl<V: View> View for Release<V> {
         self.view.event(cx, event);
 
         event.map(|window_event, meta| match window_event {
-            WindowEvent::TriggerDown { .. } => {
+            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 if meta.target == cx.current() {
                     if let Some(action) = &self.action {
                         (action)(cx);
