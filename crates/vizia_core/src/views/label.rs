@@ -134,7 +134,7 @@ impl Handle<'_, Label> {
     /// Label::new(cx, "hello").describing("checkbox_identifier");
     /// ```
     pub fn describing(self, entity_identifier: impl Into<String>) -> Self {
-        self.modify(|label| label.describing = Some(entity_identifier.into()))
+        self.modify(|label| label.describing = Some(entity_identifier.into())).class("describing")
     }
 }
 
@@ -145,7 +145,7 @@ impl View for Label {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::TriggerDown { .. } | WindowEvent::TriggerUp { .. } => {
+            WindowEvent::Press { .. } | WindowEvent::PressDown { .. } => {
                 if cx.current() == cx.mouse.left.pressed && meta.target == cx.current() {
                     if let Some(describing) = self
                         .describing
@@ -155,10 +155,10 @@ impl View for Label {
                         let old = cx.current;
                         cx.current = describing;
                         cx.focus_with_visibility(false);
-                        let message = if matches!(window_event, WindowEvent::TriggerDown { .. }) {
-                            WindowEvent::TriggerDown { mouse: false }
+                        let message = if matches!(window_event, WindowEvent::Press { .. }) {
+                            WindowEvent::Press { mouse: false }
                         } else {
-                            WindowEvent::TriggerUp { mouse: false }
+                            WindowEvent::PressDown { mouse: false }
                         };
                         cx.emit_to(describing, message);
                         cx.current = old;

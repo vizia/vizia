@@ -3,7 +3,6 @@ use std::{any::TypeId, sync::Arc};
 
 pub(crate) struct ActionsModel {
     pub(crate) on_press: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_release: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_hover: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_hover_out: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_over: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
@@ -21,7 +20,6 @@ impl ActionsModel {
     pub(crate) fn new() -> Self {
         Self {
             on_press: None,
-            on_release: None,
             on_hover: None,
             on_hover_out: None,
             on_over: None,
@@ -41,10 +39,6 @@ impl Model for ActionsModel {
         event.map(|actions_event, _| match actions_event {
             ActionsEvent::OnPress(on_press) => {
                 self.on_press = Some(on_press.clone());
-            }
-
-            ActionsEvent::OnRelease(on_release) => {
-                self.on_release = Some(on_release.clone());
             }
 
             ActionsEvent::OnHover(on_hover) => {
@@ -89,23 +83,13 @@ impl Model for ActionsModel {
         });
 
         event.map(|window_event, meta| match window_event {
-            WindowEvent::TriggerDown { mouse } => {
+            WindowEvent::Press { mouse } => {
                 let over = if *mouse { cx.hovered() } else { cx.focused() };
                 if cx.current() != over && !over.is_descendant_of(cx.tree, cx.current()) {
                     return;
                 }
                 if let Some(action) = &self.on_press {
                     (action)(cx);
-                }
-            }
-
-            WindowEvent::TriggerUp { .. } => {
-                if meta.target == cx.current() {
-                    if let Some(action) = &self.on_release {
-                        (action)(cx);
-                    }
-
-                    cx.release();
                 }
             }
 
@@ -184,7 +168,6 @@ impl Model for ActionsModel {
 
 pub(crate) enum ActionsEvent {
     OnPress(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnRelease(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
     OnHover(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
     OnHoverOut(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
     OnOver(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
@@ -210,20 +193,6 @@ pub trait ActionModifiers {
     /// Element::new(cx).on_press(|_| println!("View was pressed!"));
     /// ```
     fn on_press<F>(self, action: F) -> Self
-    where
-        F: 'static + Fn(&mut EventContext) + Send + Sync;
-
-    /// Adds a callback which is performed when the the view receives the [`TriggerUp`](crate::prelude::WindowEvent::TriggerUp) event.
-    /// By default a view receives the [`TriggerUp`](crate::prelude::WindowEvent::TriggerUp) event when the left mouse button is released on the view,
-    /// or when the space or enter keys are released while the view is focused.
-    ///
-    /// # Example
-    /// ```rust
-    /// # use vizia_core::prelude::*;
-    /// # let mut cx = &mut Context::new();
-    /// Element::new(cx).on_release(|_| println!("View was released!"));
-    /// ```
-    fn on_release<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync;
 
@@ -377,21 +346,6 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnPress(Arc::new(action)))
-                .target(self.entity)
-                .origin(self.entity),
-        );
-
-        self
-    }
-
-    fn on_release<F>(self, action: F) -> Self
-    where
-        F: 'static + Fn(&mut EventContext) + Send + Sync,
-    {
-        build_action_model(self.cx, self.entity);
-
-        self.cx.emit_custom(
-            Event::new(ActionsEvent::OnRelease(Arc::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );

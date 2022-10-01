@@ -25,7 +25,7 @@ mod parser;
 pub use parser::*;
 
 mod style_rule;
-use style_rule::StyleRule;
+pub(crate) use style_rule::StyleRule;
 
 mod selector;
 pub use selector::*;
@@ -605,6 +605,16 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.background_color.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
+                                }
+
+                                "color" => {
+                                    let animation = self.animation_manager.create();
+                                    self.font_color.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
+                                    self.font_color.insert_transition(rule_id, animation);
                                     self.transitions.insert(rule_id, animation);
                                 }
 

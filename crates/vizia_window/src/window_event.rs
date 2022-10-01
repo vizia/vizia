@@ -20,12 +20,12 @@ pub enum WindowEvent {
     MouseDown(MouseButton),
     /// Emitted when a mouse button is released.
     MouseUp(MouseButton),
-    /// Emitted when an interactable element has started to be triggered with a left mouse click / space or enter key press.
-    TriggerDown {
+    /// Emitted when the primary mouse button or trigger key is pressed and then released on a view
+    Press {
         mouse: bool,
     },
-    /// Emitted when an interactable element has stopped being triggered with a left mouse click / space or enter key press.
-    TriggerUp {
+    /// Emitted when the primary mouse button or trigger key is pressed on a view
+    PressDown {
         mouse: bool,
     },
     /// Emitted when the mouse cursor is moved

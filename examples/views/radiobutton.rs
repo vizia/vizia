@@ -1,6 +1,6 @@
 use vizia::prelude::*;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Options {
     First,
     Second,
@@ -18,23 +18,9 @@ impl std::fmt::Display for Options {
     }
 }
 
-#[derive(Lens)]
+#[derive(Lens, Model, Setter)]
 pub struct AppData {
     pub option: Options,
-}
-
-pub enum AppEvent {
-    ToggleOption(Options),
-}
-
-impl Model for AppData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::ToggleOption(option) => {
-                self.option = *option;
-            }
-        });
-    }
 }
 
 fn main() {
@@ -53,7 +39,7 @@ fn main() {
                         AppData::option.map(move |option| *option == current_option),
                     )
                     .disabled(if i == 2 { true } else { false })
-                    .on_select(move |cx| cx.emit(AppEvent::ToggleOption(current_option)));
+                    .on_select(move |cx| cx.emit(AppDataSetter::Option(current_option)));
                 }
             })
             .col_between(Pixels(20.0));
@@ -67,7 +53,7 @@ fn main() {
                         cx,
                         AppData::option.map(move |option| *option == current_option),
                     )
-                    .on_select(move |cx| cx.emit(AppEvent::ToggleOption(current_option)))
+                    .on_select(move |cx| cx.emit(AppDataSetter::Option(current_option)))
                     .id(format!("button_{i}"));
                     Label::new(cx, &current_option.to_string()).describing(format!("button_{i}"));
                 })

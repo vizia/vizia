@@ -1,5 +1,6 @@
 use crate::animation::Interpolator;
 use crate::entity::Entity;
+use std::fmt::Formatter;
 use vizia_id::GenerationalId;
 
 /// Display determines whether an entity will be rendered and acted on by the layout system.
@@ -10,6 +11,19 @@ use vizia_id::GenerationalId;
 pub enum Display {
     None,
     Flex,
+}
+
+impl std::fmt::Display for Display {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Display::None => "none",
+                Display::Flex => "flex",
+            }
+        )
+    }
 }
 
 impl Default for Display {
@@ -45,6 +59,19 @@ pub enum Visibility {
     Invisible,
 }
 
+impl std::fmt::Display for Visibility {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Visibility::Visible => "visible",
+                Visibility::Invisible => "invisible",
+            }
+        )
+    }
+}
+
 impl From<bool> for Visibility {
     fn from(val: bool) -> Self {
         if val {
@@ -73,6 +100,12 @@ impl Interpolator for Visibility {
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Opacity(pub f32);
 
+impl std::fmt::Display for Opacity {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl Default for Opacity {
     fn default() -> Self {
         Opacity(1.0)
@@ -92,6 +125,19 @@ impl Interpolator for Opacity {
 pub enum Overflow {
     Visible,
     Hidden,
+}
+
+impl std::fmt::Display for Overflow {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Overflow::Visible => "visible",
+                Overflow::Hidden => "hidden",
+            }
+        )
+    }
 }
 
 impl Default for Overflow {
@@ -121,6 +167,19 @@ impl Default for FocusOrder {
 pub enum BorderCornerShape {
     Round,
     Bevel,
+}
+
+impl std::fmt::Display for BorderCornerShape {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                BorderCornerShape::Round => "round",
+                BorderCornerShape::Bevel => "bevel",
+            }
+        )
+    }
 }
 
 impl Default for BorderCornerShape {

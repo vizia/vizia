@@ -220,7 +220,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 }
 
 //I stole these from rustc!
-fn char_has_case(c: char) -> bool {
+pub(crate) fn char_has_case(c: char) -> bool {
     c.is_lowercase() || c.is_uppercase()
 }
 
@@ -382,7 +382,7 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
 
 /// Increase privite/inherited visiblity to `pub(super)`, `pub(super)` or anything else relative to
 /// `super` to one module higher than that, and leave everything else as is.
-fn increase_visibility(vis: &Visibility) -> Visibility {
+pub(crate) fn increase_visibility(vis: &Visibility) -> Visibility {
     match vis {
         // Private structs are promoted to `pub(super)`
         Visibility::Inherited => Visibility::Restricted(VisRestricted {

@@ -498,10 +498,10 @@ pub trait View: 'static + Sized {
 
         // Draw text and image
         if cx.text().is_some() || cx.image().is_some() {
-            let mut x = bounds.x;
-            let mut y = bounds.y;
-            let mut w = bounds.w;
-            let mut h = bounds.h;
+            let mut x = bounds.x + border_width;
+            let mut y = bounds.y + border_width;
+            let mut w = bounds.w - border_width * 2.0;
+            let mut h = bounds.h - border_width * 2.0;
 
             // TODO - Move this to a text layout system and include constraints
             let child_left = cx.child_left().unwrap_or_default();
@@ -509,61 +509,43 @@ pub trait View: 'static + Sized {
             let child_top = cx.child_top().unwrap_or_default();
             let child_bottom = cx.child_bottom().unwrap_or_default();
 
-            let align = match child_left {
-                Units::Pixels(val) => match child_right {
-                    Units::Stretch(_) | Units::Auto => {
-                        x += val + border_width;
-                        w -= val + border_width;
-                        Align::Left
-                    }
+            // shrink the bounding box based on pixel values
+            if let Units::Pixels(val) = child_left {
+                x += val;
+                w -= val;
+            }
+            if let Units::Pixels(val) = child_right {
+                w -= val;
+            }
+            if let Units::Pixels(val) = child_top {
+                y += val;
+                h -= val;
+            }
+            if let Units::Pixels(val) = child_bottom {
+                h -= val;
+            }
 
-                    _ => Align::Left,
-                },
-
-                Units::Stretch(_) => match child_right {
-                    Units::Pixels(val) => {
-                        x += bounds.w - val - border_width;
-                        w -= val - border_width;
-                        Align::Right
-                    }
-
-                    Units::Stretch(_) => {
-                        x += 0.5 * bounds.w;
-                        Align::Center
-                    }
-
-                    _ => Align::Right,
-                },
-
+            // set align/baseline and move the start coordinate to the appropriate place in the box
+            let align = match (child_left, child_right) {
+                (Units::Stretch(_), Units::Stretch(_)) => {
+                    x += w / 2.0;
+                    Align::Center
+                }
+                (Units::Stretch(_), _) => {
+                    x += w;
+                    Align::Right
+                }
                 _ => Align::Left,
             };
-
-            let baseline = match child_top {
-                Units::Pixels(val) => match child_bottom {
-                    Units::Stretch(_) | Units::Auto => {
-                        y += val + border_width;
-                        h -= val + border_width;
-                        Baseline::Top
-                    }
-
-                    _ => Baseline::Top,
-                },
-
-                Units::Stretch(_) => match child_bottom {
-                    Units::Pixels(val) => {
-                        y += bounds.h - val - border_width;
-                        h -= val - border_width;
-                        Baseline::Bottom
-                    }
-
-                    Units::Stretch(_) => {
-                        y += 0.5 * bounds.h;
-                        Baseline::Middle
-                    }
-
-                    _ => Baseline::Bottom,
-                },
-
+            let baseline = match (child_top, child_bottom) {
+                (Units::Stretch(_), Units::Stretch(_)) => {
+                    y += h / 2.0;
+                    Baseline::Middle
+                }
+                (Units::Stretch(_), _) => {
+                    y += h;
+                    Baseline::Bottom
+                }
                 _ => Baseline::Top,
             };
 
@@ -596,9 +578,6 @@ pub trait View: 'static + Sized {
             }
 
             if let Some(text) = cx.text().cloned() {
-                // let mut x = posx + (border_width / 2.0);
-                // let mut y = posy + (border_width / 2.0);
-
                 let mut font_color: femtovg::Color = font_color.into();
                 font_color.set_alphaf(font_color.a * opacity);
 

@@ -191,3 +191,16 @@ impl<T: Copy> Res<(T, T)> for (T, T) {
         (closure)(cx, entity, *self);
     }
 }
+
+impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
+    fn get_val(&self, _: &Context) -> Option<T> {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, Option<T>),
+    {
+        (closure)(cx, entity, self.clone())
+    }
+}

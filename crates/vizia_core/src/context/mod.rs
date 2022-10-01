@@ -184,7 +184,12 @@ impl Context {
     }
 
     /// Enables or disables pseudoclasses for the focus of an entity
-    fn set_focus_pseudo_classes(&mut self, focused: Entity, enabled: bool, focus_visible: bool) {
+    pub(crate) fn set_focus_pseudo_classes(
+        &mut self,
+        focused: Entity,
+        enabled: bool,
+        focus_visible: bool,
+    ) {
         #[cfg(debug_assertions)]
         if enabled {
             println!(
@@ -312,7 +317,7 @@ impl Context {
     }
 
     /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Message>(&mut self, message: M) {
+    pub fn emit<M: Any + Send>(&mut self, message: M) {
         self.event_queue.push_back(
             Event::new(message)
                 .target(self.current)
@@ -322,7 +327,7 @@ impl Context {
     }
 
     /// Send an event containing a message directly to a specified entity.
-    pub fn emit_to<M: Message>(&mut self, target: Entity, message: M) {
+    pub fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
         self.event_queue.push_back(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
         );

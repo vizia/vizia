@@ -26,7 +26,7 @@ pub struct EventContext<'a> {
     pub(crate) captured: &'a mut Entity,
     pub(crate) focused: &'a mut Entity,
     pub(crate) hovered: &'a Entity,
-    pub(crate) style: &'a mut Style,
+    pub style: &'a mut Style,
     entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a CachedData,
     pub draw_cache: &'a DrawCache,
@@ -83,7 +83,7 @@ impl<'a> EventContext<'a> {
     }
 
     /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Message>(&mut self, message: M) {
+    pub fn emit<M: Any + Send>(&mut self, message: M) {
         self.event_queue.push_back(
             Event::new(message)
                 .target(self.current)
@@ -93,7 +93,7 @@ impl<'a> EventContext<'a> {
     }
 
     /// Send an event containing a message directly to a specified entity.
-    pub fn emit_to<M: Message>(&mut self, target: Entity, message: M) {
+    pub fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
         self.event_queue.push_back(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
         );

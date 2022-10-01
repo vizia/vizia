@@ -47,7 +47,7 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
 
             let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
             {
-                Units::Pixels(val) => val,
+                Units::Pixels(val) => val * cx.style.dpi_factor as f32,
                 Units::Percentage(val) => parent_width * val,
                 _ => 0.0,
             };
@@ -59,78 +59,58 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
 
             let mut x = cx.cache.get_posx(entity);
             let mut y = cx.cache.get_posy(entity);
-            let width = cx.cache.get_width(entity);
-            let height = cx.cache.get_height(entity);
+            let mut w = cx.cache.get_width(entity) - border_width * 2.0;
+            let mut h = cx.cache.get_height(entity) - border_width * 2.0;
             let mut child_space_x = 0.0;
             let mut child_space_y = 0.0;
 
-            let align = match child_left {
-                Units::Pixels(val) => {
-                    child_space_x += val;
-                    match child_right {
-                        Units::Stretch(_) => {
-                            x += val + border_width;
-                            Align::Left
-                        }
+            // shrink the bounding box based on pixel values
+            if let Units::Pixels(val) = child_left {
+                let val = val * cx.style.dpi_factor as f32;
+                x += val;
+                w -= val;
+                child_space_x += val;
+            }
+            if let Units::Pixels(val) = child_right {
+                let val = val * cx.style.dpi_factor as f32;
+                w -= val;
+                child_space_x += val;
+            }
+            if let Units::Pixels(val) = child_top {
+                let val = val * cx.style.dpi_factor as f32;
+                y += val;
+                h -= val;
+                child_space_y += val;
+            }
+            if let Units::Pixels(val) = child_bottom {
+                let val = val * cx.style.dpi_factor as f32;
+                h -= val;
+                child_space_y += val;
+            }
 
-                        _ => Align::Left,
-                    }
+            // set align/baseline and move the start coordinate to the appropriate place in the box
+            let align = match (child_left, child_right) {
+                (Units::Stretch(_), Units::Stretch(_)) => {
+                    x += w / 2.0;
+                    Align::Center
                 }
-
-                Units::Stretch(_) => match child_right {
-                    Units::Pixels(val) => {
-                        x += width - val - border_width;
-                        Align::Right
-                    }
-
-                    Units::Stretch(_) => {
-                        x += 0.5 * width;
-                        Align::Center
-                    }
-
-                    _ => Align::Right,
-                },
-
+                (Units::Stretch(_), _) => {
+                    x += w;
+                    Align::Right
+                }
                 _ => Align::Left,
             };
-            match child_right {
-                Units::Pixels(px) => child_space_x += px,
-                _ => {}
-            }
-
-            let baseline = match child_top {
-                Units::Pixels(val) => {
-                    child_space_y += val;
-                    match child_bottom {
-                        Units::Stretch(_) => {
-                            y += val + border_width;
-                            Baseline::Top
-                        }
-
-                        _ => Baseline::Top,
-                    }
+            let baseline = match (child_top, child_bottom) {
+                (Units::Stretch(_), Units::Stretch(_)) => {
+                    y += h / 2.0;
+                    Baseline::Middle
                 }
-
-                Units::Stretch(_) => match child_bottom {
-                    Units::Pixels(val) => {
-                        y += height - val - border_width;
-                        Baseline::Bottom
-                    }
-
-                    Units::Stretch(_) => {
-                        y += 0.5 * height;
-                        Baseline::Middle
-                    }
-
-                    _ => Baseline::Top,
-                },
-
+                (Units::Stretch(_), _) => {
+                    y += h;
+                    Baseline::Bottom
+                }
                 _ => Baseline::Top,
             };
-            match child_bottom {
-                Units::Pixels(px) => child_space_y += px,
-                _ => {}
-            }
 
             let mut content_width = 0.0;
             let mut content_height = 0.0;
@@ -180,8 +160,8 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
                 }
             }
 
-            cx.style.content_width.insert(entity, content_width);
-            cx.style.content_height.insert(entity, content_height);
+            cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
+            cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
         }
     }
 }

@@ -120,113 +120,158 @@ pub(crate) enum Property {
     Cursor(CursorIcon),
 }
 
-/*
+pub(crate) fn fmt_units(val: &Units) -> String {
+    match val {
+        Units::Pixels(px) => format!("{}px", px),
+        Units::Percentage(p) => format!("{}%", p),
+        Units::Stretch(s) => format!("{}s", s),
+        Units::Auto => format!("auto"),
+    }
+}
+
+fn fmt_layout_type(val: &LayoutType) -> String {
+    match val {
+        LayoutType::Row => "row",
+        LayoutType::Column => "column",
+        LayoutType::Grid => "grid",
+    }
+    .to_owned()
+}
+
+fn fmt_position_type(val: &PositionType) -> String {
+    match val {
+        PositionType::SelfDirected => "self-directed",
+        PositionType::ParentDirected => "parent-directed",
+    }
+    .to_owned()
+}
+
 impl std::fmt::Display for Property {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-
-            Property::None => write!(f, ""),
-
             Property::Unknown(ident, prop) => {
-                write!(f, "display: {};", match prop {
-                    PropType::Units(val) => {
-                        match val {
-                            Units::Pixels(px) => {
-                                format!("{}px", px)
-                            }
+                write!(
+                    f,
+                    "/* unknown: {}: {}; /*",
+                    ident,
+                    match prop {
+                        PropType::Units(val) => fmt_units(val),
 
-                            Units::Percentage(p) => {
-                                format!("{}%", p)
-                            }
-
-                            Units::Stretch(s) => {
-                                format!("{}s", s)
-                            }
-
-                            Units::Auto => {
-                                format!("auto")
-                            }
-
+                        PropType::String(string) => {
+                            string.clone()
                         }
                     }
-
-                    PropType::String(string) => {
-                        string.clone()
-                    }
-                })
+                )
             }
             // General
-            Property::Display(val) => write!(f, "display: {};", 1),
-            Property::Visibility(val) => write!(f, "visibility: {};", 2),
-            Property::Overflow(val) => write!(f, "overflow: {};", 3),
+            Property::Display(val) => write!(f, "display: {};", val),
+            Property::Visibility(val) => write!(f, "visibility: {};", val),
+            Property::Overflow(val) => write!(f, "overflow: {};", val),
             Property::Opacity(val) => write!(f, "opacity: {};", val),
 
             // Positioning
-            Property::LayoutType(val) => write!(f, "layout-type: {};", val),
-            Property::PositionType(val) => write!(f, "position-type: {};", val),
+            Property::LayoutType(val) => write!(f, "layout-type: {};", fmt_layout_type(val)),
+            Property::PositionType(val) => write!(f, "position-type: {};", fmt_position_type(val)),
 
             // Position and Size
-            Property::Space(val) => write!(f, "space: {};", val),
-            Property::Left(val) => write!(f, "left: {};", val),
-            Property::Width(val) => write!(f, "width: {};", val),
-            Property::Right(val) => write!(f, "right: {};", val),
-            Property::Top(val) => write!(f, "top: {};", val),
-            Property::Height(val) => write!(f, "height: {};", val),
-            Property::Bottom(val) => write!(f, "bottom: {};", val),
+            Property::Space(val) => write!(f, "space: {};", fmt_units(val)),
+            Property::Left(val) => write!(f, "left: {};", fmt_units(val)),
+            Property::Width(val) => write!(f, "width: {};", fmt_units(val)),
+            Property::Right(val) => write!(f, "right: {};", fmt_units(val)),
+            Property::Top(val) => write!(f, "top: {};", fmt_units(val)),
+            Property::Height(val) => write!(f, "height: {};", fmt_units(val)),
+            Property::Bottom(val) => write!(f, "bottom: {};", fmt_units(val)),
 
             // Constraints
-            Property::MinLeft(val) => write!(f, "min-left: {};", val),
-            Property::MaxLeft(val) => write!(f, "max-left: {};", val),
-            Property::MinWidth(val) => write!(f, "min-width: {};", val),
-            Property::MaxWidth(val) => write!(f, "max-width: {};", val),
-            Property::MinRight(val) => write!(f, "min-right: {};", val),
-            Property::MaxRight(val) => write!(f, "max-right: {};", val),
+            Property::MinLeft(val) => write!(f, "min-left: {};", fmt_units(val)),
+            Property::MaxLeft(val) => write!(f, "max-left: {};", fmt_units(val)),
+            Property::MinWidth(val) => write!(f, "min-width: {};", fmt_units(val)),
+            Property::MaxWidth(val) => write!(f, "max-width: {};", fmt_units(val)),
+            Property::MinRight(val) => write!(f, "min-right: {};", fmt_units(val)),
+            Property::MaxRight(val) => write!(f, "max-right: {};", fmt_units(val)),
 
-            Property::MinTop(val) => write!(f, "min-top: {};", val),
-            Property::MaxTop(val) => write!(f, "max-top: {};", val),
-            Property::MinHeight(val) => write!(f, "min-height: {};", val),
-            Property::MaxHeight(val) => write!(f, "max-height: {};", val),
-            Property::MinBottom(val) => write!(f, "min-bottom: {};", val),
-            Property::MaxBottom(val) => write!(f, "max-bottom: {};", val),
+            Property::MinTop(val) => write!(f, "min-top: {};", fmt_units(val)),
+            Property::MaxTop(val) => write!(f, "max-top: {};", fmt_units(val)),
+            Property::MinHeight(val) => write!(f, "min-height: {};", fmt_units(val)),
+            Property::MaxHeight(val) => write!(f, "max-height: {};", fmt_units(val)),
+            Property::MinBottom(val) => write!(f, "min-bottom: {};", fmt_units(val)),
+            Property::MaxBottom(val) => write!(f, "max-bottom: {};", fmt_units(val)),
 
             // Child Spacing
-            Property::ChildSpace(val) => write!(f, "child-space: {};", val),
-            Property::ChildLeft(val) => write!(f, "child-left: {};", val),
-            Property::ChildRight(val) => write!(f, "child-right: {};", val),
-            Property::ChildTop(val) => write!(f, "child-top: {};", val),
-            Property::ChildBottom(val) => write!(f, "child-bottom: {};", val),
-            Property::ChildBetween(val) => write!(f, "child-between: {};", val),
+            Property::ChildSpace(val) => write!(f, "child-space: {};", fmt_units(val)),
+            Property::ChildLeft(val) => write!(f, "child-left: {};", fmt_units(val)),
+            Property::ChildRight(val) => write!(f, "child-right: {};", fmt_units(val)),
+            Property::ChildTop(val) => write!(f, "child-top: {};", fmt_units(val)),
+            Property::ChildBottom(val) => write!(f, "child-bottom: {};", fmt_units(val)),
+            Property::RowBetween(val) => write!(f, "row-between: {};", fmt_units(val)),
+            Property::ColBetween(val) => write!(f, "col-between: {};", fmt_units(val)),
 
             // Border
-            Property::BorderRadius(val) => write!(f, "border-radius: {};", val),
-            Property::BorderTopLeftRadius(val) => write!(f, "border-top-left-radius: {};", val),
-            Property::BorderTopRightRadius(val) => write!(f, "border-top-right-radius: {};", val),
+            Property::BorderRadius(val) => write!(f, "border-radius: {};", fmt_units(val)),
+            Property::BorderTopLeftRadius(val) => {
+                write!(f, "border-top-left-radius: {};", fmt_units(val))
+            }
+            Property::BorderTopRightRadius(val) => {
+                write!(f, "border-top-right-radius: {};", fmt_units(val))
+            }
             Property::BorderBottomLeftRadius(val) => {
-                write!(f, "border-bottom-left-radius: {};", val)
+                write!(f, "border-bottom-left-radius: {};", fmt_units(val))
             }
             Property::BorderBottomRightRadius(val) => {
-                write!(f, "border-bottom-right-radius: {};", val)
+                write!(f, "border-bottom-right-radius: {};", fmt_units(val))
             }
-            Property::BorderWidth(val) => write!(f, "border-width: {};", val),
-            Property::BorderColor(val) => write!(f, "border-color: {:?};", val),
+            Property::BorderWidth(val) => write!(f, "border-width: {};", fmt_units(val)),
+            Property::BorderColor(val) => write!(f, "border-color: {};", val),
+            Property::BorderCornerShape(val) => write!(f, "border-corner-shape: {};", val),
+            Property::BorderTopLeftShape(val) => write!(f, "border-top-left-shape: {};", val),
+            Property::BorderTopRightShape(val) => write!(f, "border-top-right-shape: {};", val),
+            Property::BorderBottomLeftShape(val) => write!(f, "border-bottom-left-shape: {};", val),
+            Property::BorderBottomRightShape(val) => {
+                write!(f, "border-bottom-right-shape: {};", val)
+            }
 
             // Background
-            Property::BackgroundColor(val) => write!(f, "background-color: {:?};", val),
+            Property::BackgroundColor(val) => write!(f, "background-color: {};", val),
             Property::BackgroundImage(val) => write!(f, "background-image: {};", val),
-            Property::BackgroundGradient(val) => write!(f, "background-gradient: {};", 4),
 
+            // Outline
+            Property::OutlineWidth(val) => write!(f, "outline-width: {}", fmt_units(val)),
+            Property::OutlineColor(val) => write!(f, "outline-color: {}", val),
+            Property::OutlineOffset(val) => write!(f, "outline-offset: {}", fmt_units(val)),
+
+            // Text
             Property::FontSize(val) => write!(f, "font-size: {};", val),
-            Property::FontColor(val) => write!(f, "color: {:?};", val),
+            Property::FontColor(val) => write!(f, "color: {};", val),
+            Property::Font(val) => write!(f, "font: {}", val),
+            Property::SelectionColor(val) => write!(f, "selection-color: {}", val),
+            Property::CaretColor(val) => write!(f, "caret-color: {}", val),
+            Property::TextWrap(val) => write!(f, "text-wrap: {}", val),
 
-            Property::OuterShadow(val) => write!(f, "outer-shadow: {};", 5),
-            Property::InnerShadow(val) => write!(f, "inner-shadow: {};", 6),
+            // Shadow
+            Property::OuterShadow(val) => write!(f, "outer-shadow: {};", val),
+            Property::InnerShadow(val) => write!(f, "inner-shadow: {};", val),
+            Property::OuterShadowHOffset(val) => {
+                write!(f, "outer-shadow-h-offset: {}", fmt_units(val))
+            }
+            Property::OuterShadowVOffset(val) => {
+                write!(f, "outer-shadow-v-offset: {}", fmt_units(val))
+            }
+            Property::OuterShadowBlur(val) => write!(f, "inner-shadow-blur: {}", fmt_units(val)),
+            Property::OuterShadowColor(val) => write!(f, "inner-shadow-color: {}", val),
+            Property::InnerShadowHOffset(val) => {
+                write!(f, "inner-shadow-h-offset: {}", fmt_units(val))
+            }
+            Property::InnerShadowVOffset(val) => {
+                write!(f, "inner-shadow-v-offset: {}", fmt_units(val))
+            }
+            Property::InnerShadowBlur(val) => write!(f, "inner-shadow-blur: {}", fmt_units(val)),
+            Property::InnerShadowColor(val) => write!(f, "inner-shadow-color: {}", val),
 
             Property::Transition(val) => write!(f, "transition: {:?};", val),
 
             Property::ZIndex(val) => write!(f, "z-index: {};", val),
 
-            _=> write!(f, ""),
+            Property::Cursor(val) => write!(f, "cursor: {};", val),
         }
     }
 }
-*/
