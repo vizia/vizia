@@ -3,6 +3,7 @@ use std::{any::TypeId, sync::Arc};
 
 pub(crate) struct ActionsModel {
     pub(crate) on_press: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_press_down: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_hover: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_hover_out: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_over: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
@@ -20,6 +21,7 @@ impl ActionsModel {
     pub(crate) fn new() -> Self {
         Self {
             on_press: None,
+            on_press_down: None,
             on_hover: None,
             on_hover_out: None,
             on_over: None,
@@ -39,6 +41,10 @@ impl Model for ActionsModel {
         event.map(|actions_event, _| match actions_event {
             ActionsEvent::OnPress(on_press) => {
                 self.on_press = Some(on_press.clone());
+            }
+
+            ActionsEvent::OnPressDown(on_press_down) => {
+                self.on_press_down = Some(on_press_down.clone());
             }
 
             ActionsEvent::OnHover(on_hover) => {
@@ -89,6 +95,16 @@ impl Model for ActionsModel {
                     return;
                 }
                 if let Some(action) = &self.on_press {
+                    (action)(cx);
+                }
+            }
+
+            WindowEvent::PressDown { mouse } => {
+                let over = if *mouse { cx.hovered() } else { cx.focused() };
+                if cx.current() != over && !over.is_descendant_of(cx.tree, cx.current()) {
+                    return;
+                }
+                if let Some(action) = &self.on_press_down {
                     (action)(cx);
                 }
             }
@@ -168,6 +184,7 @@ impl Model for ActionsModel {
 
 pub(crate) enum ActionsEvent {
     OnPress(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnPressDown(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
     OnHover(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
     OnHoverOut(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
     OnOver(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
@@ -182,9 +199,9 @@ pub(crate) enum ActionsEvent {
 
 /// Modifiers which add an action callback to a view.
 pub trait ActionModifiers {
-    /// Adds a callback which is performed when the the view receives the [`TriggerDown`](crate::prelude::WindowEvent::TriggerDown) event.
-    /// By default a view receives the [`TriggerDown`](crate::prelude::WindowEvent::TriggerDown) event when the left mouse button is pressed on the view,
-    /// or when the space or enter keys are pressed while the view is focused.
+    /// Adds a callback which is performed when the the view receives the [`Press`](crate::prelude::WindowEvent::Press) event.
+    /// By default a view receives the [`Press`](crate::prelude::WindowEvent::Press) event when the left mouse button is pressed and then released on the view,
+    /// or when the space or enter keys are pressed and then released while the view is focused.
     ///
     /// # Example
     /// ```rust
@@ -193,6 +210,20 @@ pub trait ActionModifiers {
     /// Element::new(cx).on_press(|_| println!("View was pressed!"));
     /// ```
     fn on_press<F>(self, action: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext) + Send + Sync;
+
+    /// Adds a callback which is performed when the the view receives the [`PressDown`](crate::prelude::WindowEvent::PressDown) event.
+    // By default a view receives the [`PressDown`](crate::prelude::WindowEvent::PressDown) event when the left mouse button is pressed on the view,
+    /// or when the space or enter keys are pressed while the view is focused.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::new();
+    /// Element::new(cx).on_press_down(|_| println!("View was pressed down!"));
+    /// ```
+    fn on_press_down<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync;
 
@@ -346,6 +377,21 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnPress(Arc::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
+    }
+
+    fn on_press_down<F>(self, action: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext) + Send + Sync,
+    {
+        build_action_model(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnPressDown(Arc::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
