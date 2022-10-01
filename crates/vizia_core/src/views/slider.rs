@@ -225,7 +225,6 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 self.is_dragging = true;
                 cx.capture();
-                cx.set_active(true);
                 cx.focus_with_visibility(false);
 
                 let thumb_size = self.internal.thumb_size;
@@ -263,7 +262,6 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
                 cx.release();
-                cx.set_active(false);
             }
 
             WindowEvent::MouseMove(x, y) => {
