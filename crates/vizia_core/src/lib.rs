@@ -2,7 +2,7 @@
 #[macro_use]
 extern crate serde;
 
-mod animation;
+pub mod animation;
 pub mod binding;
 #[doc(hidden)]
 pub mod cache;
@@ -11,13 +11,12 @@ pub mod context;
 pub mod entity;
 pub mod environment;
 pub mod events;
-pub mod fonts;
-pub mod handle;
 pub mod input;
 pub mod layout;
 pub mod localization;
 pub mod modifiers;
 pub mod resource;
+pub use resource::fonts;
 pub mod style;
 mod systems;
 pub(crate) mod text;
@@ -53,11 +52,12 @@ pub mod prelude {
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent};
     pub use super::events::{Event, Propagation};
-    pub use super::handle::Handle;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     #[cfg(feature = "localization")]
     pub use super::localization::Localized;
     pub use super::modifiers::Actions;
+    pub use super::resource::fonts;
+    pub use super::view::Handle;
     pub use super::view::{Canvas, View};
     pub use super::views::*;
     pub use super::window::WindowModifiers;

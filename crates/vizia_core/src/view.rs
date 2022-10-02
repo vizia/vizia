@@ -12,6 +12,8 @@
 //! .run();
 //! ```
 
+mod handle;
+pub use handle::Handle;
 use std::{any::Any, collections::HashMap};
 
 use crate::prelude::*;

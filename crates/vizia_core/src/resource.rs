@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+pub mod fonts;
+
 use crate::context::Context;
 use crate::entity::Entity;
 use crate::view::Canvas;

@@ -1,6 +1,4 @@
-//! # Animations
-//!
-//! Nearly every style property can be animated.
+//! Animate the style and layout properties of views.
 //!
 //! # Creating Anaimtions
 //! To create an animation, call `state.create_animation(duration)`, where the animation `duration` is a `std::time::Duration` type.
