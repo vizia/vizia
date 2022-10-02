@@ -4,8 +4,10 @@ extern crate serde;
 
 mod animation;
 pub mod binding;
+#[doc(hidden)]
 pub mod cache;
 pub mod context;
+#[doc(hidden)]
 pub mod entity;
 pub mod environment;
 pub mod events;
@@ -26,17 +28,22 @@ pub mod window;
 
 mod storage;
 
+/// Contains types and functions used for custom drawing within views.
+///
 /// This is a re-export of [femtovg](https://docs.rs/femtovg/latest/femtovg/).
 pub mod vg {
     pub use femtovg::*;
 }
 
+/// Contains types and functions used for loading and manipulating images.
+///
 /// This is a re-export of [image](https://docs.rs/image/latest/image/).
 pub mod image {
     pub use image::*;
 }
 
 /// Members which we recommend you wildcard-import.
+#[doc(hidden)]
 pub mod prelude {
     pub use super::animation::{AnimExt, Animation, AnimationBuilder};
     pub use super::binding::{Binding, Data, Index, Lens, LensExt, Model, Res, Setter, Then};

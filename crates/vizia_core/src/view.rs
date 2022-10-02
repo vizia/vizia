@@ -1,3 +1,17 @@
+//! Views are used to visually present model data and to act as controls which, when interacted with, send events to mutate model data.
+//!
+//! # Example
+//! The `Label` view is used to display a text string:
+//!
+//! ```no_run
+//! use crate::prelude::*;
+//!
+//! Application::new(|cx|{
+//!     Label::new(cx, "Hello World");
+//! })
+//! .run();
+//! ```
+
 use std::{any::Any, collections::HashMap};
 
 use crate::prelude::*;
@@ -12,9 +26,7 @@ use femtovg::{
 };
 use morphorm::Units;
 
-/// The canvas we will be drawing to.
-///
-/// This type is part of the prelude.
+/// The canvas which all views draw to.
 pub type Canvas = femtovg::Canvas<OpenGl>;
 
 // Length proportional to radius of a cubic bezier handle for 90deg arcs.
@@ -22,8 +34,85 @@ const KAPPA90: f32 = 0.5522847493;
 
 /// A view is any object which can be displayed on the screen.
 ///
-/// This trait is part of the prelude.
+/// # Creating a Custom View
+///
+/// To create a custom view, first define a struct with any view-specific state.
+/// ```
+/// # use crate::prelude::*;
+/// pub struct CustomView {
+///     count: i32,
+/// }
+/// ```
+///
+/// Next, implement the constructor for the custom view. Typically, the constructor will take `&mut Context` as the first argument
+/// and return a [`Handle`] to the view.
+/// ```
+/// # use crate::prelude::*;
+/// pub struct CustomView {
+///     count: i32,
+/// }
+///
+/// impl CustomView {
+///     pub fn new(cx: &mut Context, count: i32) -> Handle<Self> {
+///         Self {
+///             count,
+///         }.build(cx, |cx|{
+///             // If we want the view to contain other views we can build those here.
+///         })
+///     }
+/// }
+/// ```
+///
+/// The `build` method above is provided by the `View` trait, which we must implement for any custom view.
+/// ```
+/// # use crate::prelude::*;
+/// pub struct CustomView {
+///     count: i32,
+/// }
+///
+/// impl CustomView {
+///     pub fn new(cx: &mut Context, count: i32) -> Handle<Self> {
+///         Self {
+///             count,
+///         }.build(cx, |cx|{
+///             // If we want the view to contain other views we can build those here.
+///         })
+///     }
+/// }
+///
+/// impl View for CustomView {
+///
+/// }
+/// ```
+///
+/// The `View` trait contains methods, which can be optionally overridden, for assigning an element name, handling events, and performing custom drawing.
 pub trait View: 'static + Sized {
+    /// Builds the view into the tree and returns a handle which can be used to apply style and layout modifiers to the view.
+    ///
+    /// Typically this method is called within the constructor of a view, for example:
+    /// ```
+    /// pub struct CustomView{}
+    ///
+    /// impl CustomView {
+    ///     pub fn new(cx: &mut Context) -> Handle<Self> {
+    ///         Self{}.build(cx, |_|{})
+    ///     }
+    /// }
+    /// ```
+    /// The `content` closure allows for a view to be built from other views. For example, a custom view could encapsulate a
+    /// pair of labels:
+    /// ```
+    /// pub struct CustomView{}
+    ///
+    /// impl CustomView {
+    ///     pub fn new(cx: &mut Context) -> Handle<Self> {
+    ///         Self{}.build(cx, |cx|{
+    ///             Label::new(cx, "Hello");
+    ///             Label::new(cx, "World");
+    ///         })
+    ///     }
+    /// }
+    /// ```
     fn build<F>(self, cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),
@@ -46,15 +135,92 @@ pub trait View: 'static + Sized {
         handle
     }
 
-    /// The name of the view. This is used in css: to style every single one of a given view, you
-    /// specify the element name.
+    /// Specifies a name for the view type which can be used as an element selector in css.
+    ///
+    /// # Example
+    /// ```
+    /// pub struct CustomView{}
+    ///
+    /// impl CustomView {
+    ///     pub fn new(cx: &mut Context) -> Handle<Self> {
+    ///         Self{}.build(cx, |_|{})
+    ///     }
+    /// }
+    ///
+    /// impl View for CustomView {
+    ///     fn element(&self) -> Option<&'static str> {
+    ///         Some("custom_view")
+    ///     }
+    /// }
+    /// ```
+    /// Then in css:
+    /// ```css
+    /// custom_view {
+    ///     background-color: red;
+    /// }
+    /// ```
     fn element(&self) -> Option<&'static str> {
         None
     }
 
+    /// Handles any events received by the view.
+    ///
+    /// # Example
+    /// ```
+    /// pub struct CustomView{}
+    ///
+    /// impl CustomView {
+    ///     pub fn new(cx: &mut Context) -> Handle<Self> {
+    ///         Self{}.build(cx, |_|{})
+    ///     }
+    /// }
+    ///
+    /// impl View for CustomView {
+    ///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    ///         event.map(|window_event, meta| match window_event{
+    ///             WindowEvent::MouseDown(_) => {
+    ///                 if meta.target() == cx.current() {
+    ///                     // Emit a `WindowClose` event when this view is clicked on.
+    ///                     cx.emit(WindowEvent::WindowClose);
+    ///                 }
+    ///             }
+    ///         });
+    ///     }
+    /// }
+    /// ```
     #[allow(unused_variables)]
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {}
 
+    /// Provides custom drawing for the view.
+    ///
+    /// Usually the look of a view is determined by the style and layout properties of the view. However, the `draw` method of
+    /// the `View` trait can be used to provide completely custom drawing for the view. The properties of the view can be accessed
+    /// through the provided [`DrawContext`] and the provided [`Canvas`] can be used to draw custom paths.
+    ///
+    /// # Example
+    /// ```
+    /// pub struct CustomView{}
+    ///
+    /// impl CustomView {
+    ///     pub fn new(cx: &mut Context) -> Handle<Self> {
+    ///         Self{}.build(cx, |_|{})
+    ///     }
+    /// }
+    ///
+    /// impl View for CustomView {
+    ///     fn draw(&mut self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    ///         // Get the bounding box of the current view.
+    ///         let bounds = cx.bounds();
+    ///
+    ///         // Create a new `Path` from the `vg` module.
+    ///         let mut path = vg::Path::new();
+    ///         // Add a rectangle to the path with the dimensions of the view bounds.
+    ///         path.rect(bounds.x, bounds.y, bounds.w, bounds.h)
+    ///         // Fill the path onto the canvas with a red color.
+    ///         canvas.fill_path(&mut path, vg::Paint::color(Color::red().into()));
+    ///     }
+    /// }
+    /// ```
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let bounds = cx.bounds();
 

@@ -1,4 +1,4 @@
-//! # Data Binding
+//! Data binding provides a way to link views to model data so that view properties update when data changes.
 //!
 //! Binding provides reactivity to a vizia application. Rather than sending events back and forth between widgets
 //! to update local widget data, widgets can instead `bind` to application data.
@@ -26,14 +26,17 @@
 //! ```
 //! # use vizia_core::prelude::*;
 //! # use vizia_derive::*;
-//! # #[derive(Lens)]
-//! # struct AppData {
-//! #     count: i32,
-//! # }
-//! # enum AppEvent {
-//! #     Increment,
-//! #     Decrement,
-//! # }
+//!
+//! #[derive(Lens)]
+//! struct AppData {
+//!     count: i32,
+//! }
+//!
+//! enum AppEvent {
+//!     Increment,
+//!     Decrement,
+//! }
+//!
 //! impl Model for AppData {
 //!     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
 //!         event.map(|app_event, _| match app_event {
@@ -53,11 +56,13 @@
 //! # use vizia_core::prelude::*;
 //! # use vizia_derive::*;
 //! # use vizia_winit::application::Application;
-//! # #[derive(Lens)]
-//! # struct AppData {
-//! #     count: i32,
-//! # }
-//! # impl Model for AppData {}
+//! #[derive(Lens)]
+//! struct AppData {
+//!     count: i32,
+//! }
+//!
+//! impl Model for AppData {}
+//!
 //! fn main() {
 //!     Application::new(|cx|{
 //!         AppData {
@@ -66,16 +71,18 @@
 //!     }).run();  
 //! }
 //! ```
-//! A [`Binding`] view is one way in which data can be used by widgets. A [`Lens`] is used to determine what data the binding should react to:
+//! A [`Binding`] view is one way in which data can be used by views. A [`Lens`] is used to determine what data the binding should react to:
 //! ```no_run
 //! # use vizia_core::prelude::*;
 //! # use vizia_derive::*;
 //! # use vizia_winit::application::Application;
-//! # #[derive(Lens)]
-//! # struct AppData {
-//! #     count: i32,
-//! # }
-//! # impl Model for AppData {}
+//! #[derive(Lens)]
+//! struct AppData {
+//!     count: i32,
+//! }
+//!
+//! impl Model for AppData {}
+//!
 //! fn main() {
 //!     Application::new(|cx|{
 //!         AppData {
@@ -92,20 +99,35 @@
 //! The third parameter is a closure which provides the context and the lens, which can be used to retrieve the bound data using the `.get()`
 //! method, which takes the [Context](crate::prelude::Context) as an argument.
 //!
-//! Now when the data is modified by another widget, the label will update, for example:
+//! Now when the data is modified, the binding will rebuild its contents and the label will update, for example:
 //! ```no_run
 //! # use vizia_core::prelude::*;
 //! # use vizia_derive::*;
 //! # use vizia_winit::application::Application;
-//! # #[derive(Lens)]
-//! # struct AppData {
-//! #     count: i32,
-//! # }
-//! # impl Model for AppData {}
-//! # enum AppEvent {
-//! #     Increment,
-//! #     Decrement,
-//! # }
+//! #[derive(Lens)]
+//! struct AppData {
+//!     count: i32,
+//! }
+//!
+//! impl Model for AppData {
+//!     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+//!         event.map(|app_event, _| match app_event {
+//!             AppEvent::Increment => {
+//!                 self.count += 1;
+//!             }
+//!
+//!             AppEvent::Decrement => {
+//!                 self.count -= 1;
+//!             }
+//!         });
+//!     }
+//! }
+//!
+//! enum AppEvent {
+//!     Increment,
+//!     Decrement,
+//! }
+//!
 //! fn main() {
 //!     Application::new(|cx|{
 //!         AppData {
@@ -128,6 +150,30 @@
 //! ```
 //! Note, the checkbox does not need to be bound to the data to send an event to it. By default events will propagate up the tree.
 //!
+//! Completely rebuilding the `Label` when the data changes is unnecessary in this case. Instead we can update just the text of the label
+//! by binding the `text()` property modifier to the application data. This is called a property binding.
+//! ```
+//! fn main() {
+//!     Application::new(|cx|{
+//!         AppData {
+//!             count: 0,
+//!         }.build(cx);
+//!
+//!         Label::new(cx, AppData::count);
+//!
+//!         Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx|{
+//!             Label::new(cx, "Increment")
+//!         });
+//!
+//!         Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx|{
+//!             Label::new(cx, "Decrement")
+//!         });
+//!     }).run();
+//! }
+//! ```
+//!
+//! Note that even though the `count` value is `i32`, the label accepts a lens to this data because it implements `ToString` and is converted internally.
+//! If the data is the wrong type and cannot be converted internally, use the [`map()`](crate::binding::lens::LensExt::map()) method on the lens.
 mod lens;
 pub use lens::*;
 
