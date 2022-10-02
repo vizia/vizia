@@ -14,7 +14,7 @@ use crate::{
     layout::geometry_changed,
     prelude::*,
     resource::FontOrId,
-    style::{Abilities, PseudoClass, Style},
+    style::{PseudoClass, Style},
     systems::*,
 };
 use vizia_id::GenerationalId;

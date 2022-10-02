@@ -30,6 +30,18 @@ use winit::{
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
 
+///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
+///
+/// # Example
+/// ```
+/// use crate::prelude::*;
+///
+/// Application::new(|cx|{
+///    // Content goes here
+/// })
+/// .run();
+///```
+/// Calling `run()` on the `Application` causes the program to enter the event loop and for the main window to display.
 pub struct Application {
     context: Context,
     event_loop: EventLoop<Event>,
@@ -84,6 +96,7 @@ impl Application {
         }
     }
 
+    /// Sets the default built-in theming to be ignored.
     pub fn ignore_default_theme(mut self) -> Self {
         self.context.ignore_default_theme = true;
         self
@@ -121,12 +134,12 @@ impl Application {
         self
     }
 
-    // TODO - Rename this
     pub fn get_proxy(&self) -> EventLoopProxy<Event> {
         self.event_loop.create_proxy()
     }
 
     /// Sets the background color of the window.
+    /// TODO: Remove this is favour of root selector.
     pub fn background_color(mut self, color: Color) -> Self {
         let mut cx = BackendContext::new(&mut self.context);
         cx.style().background_color.insert(Entity::root(), color);
@@ -419,13 +432,13 @@ impl Application {
         });
     }
 
-    /// Resize the cache used for rendering text lines
+    /// Resize the cache used for rendering text lines.
     pub fn text_shaping_run_cache(mut self, size: usize) -> Self {
         BackendContext::new(&mut self.context).text_context().resize_shaping_run_cache(size);
         self
     }
 
-    /// Resize the cache used for rendering words
+    /// Resize the cache used for rendering words.
     pub fn text_shaped_words_cache(mut self, size: usize) -> Self {
         BackendContext::new(&mut self.context).text_context().resize_shaped_words_cache(size);
         self

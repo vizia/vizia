@@ -9,6 +9,18 @@ use vizia_core::events::EventManager;
 use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 
+///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
+///
+/// # Example
+/// ```
+/// use crate::prelude::*;
+///
+/// Application::new(|cx|{
+///    // Content goes here
+/// })
+/// .run();
+///```
+/// Calling `run()` on the `Application` causes the program to enter the event loop and for the main window to display.
 pub struct Application<F>
 where
     F: Fn(&mut Context) + Send + 'static,
@@ -39,6 +51,7 @@ where
         }
     }
 
+    /// Sets the default built-in theming to be ignored.
     pub fn ignore_default_theme(mut self) -> Self {
         self.ignore_default_theme = true;
         self
