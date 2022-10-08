@@ -79,6 +79,17 @@ pub struct Context {
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
+    /// The window's size in logical pixels, before `user_scale_factor` gets applied to it. If this
+    /// value changed during a frame then the window will be resized and a
+    /// [`WindowEvent::WindowResize`] will be emitted.
+    pub(crate) window_size: WindowSize,
+    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
+    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
+    /// changes during a frame, then the window will be resized at the end of the frame and a
+    /// [`WindowEvent::WindowResize`] will be emitted. This can be initialized using
+    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    pub(crate) user_scale_factor: f64,
+
     #[cfg(feature = "clipboard")]
     pub(crate) clipboard: Box<dyn ClipboardProvider>,
 
@@ -90,7 +101,7 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new() -> Self {
+    pub fn new(window_size: WindowSize, user_scale_factor: f64) -> Self {
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
 
@@ -136,6 +147,9 @@ impl Context {
             ),
 
             event_proxy: None,
+
+            window_size,
+            user_scale_factor,
 
             #[cfg(feature = "clipboard")]
             clipboard: {

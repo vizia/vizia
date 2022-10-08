@@ -16,7 +16,7 @@ use crate::prelude::*;
 /// #     Action,
 /// # }
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
 /// #
 /// Button::new(cx, |cx| cx.emit(AppEvent::Action), |cx| Label::new(cx, "Text"));
 /// ```
@@ -30,7 +30,7 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
 /// #
 /// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
 /// ```
@@ -43,7 +43,7 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
 /// #
 /// Button::new(
 ///     cx,
@@ -68,7 +68,7 @@ impl Button {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
     /// #
     /// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
     /// ```

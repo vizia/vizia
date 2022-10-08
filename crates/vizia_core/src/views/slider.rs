@@ -35,7 +35,7 @@ pub struct SliderDataInternal {
 /// ```
 /// # use vizia_core::prelude::*;
 /// # use vizia_derive::*;
-/// # let mut cx = &mut Context::new();
+/// # let mut cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
 /// # #[derive(Lens, Default)]
 /// # pub struct AppData {
 /// #     value: f32,
@@ -52,7 +52,7 @@ pub struct SliderDataInternal {
 /// ```
 /// # use vizia_core::prelude::*;
 /// # use vizia_derive::*;
-/// # let mut cx = &mut Context::new();
+/// # let mut cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
 /// # #[derive(Lens, Default)]
 /// # pub struct AppData {
 /// #     value: f32,
@@ -85,7 +85,7 @@ where
     /// ```
     /// # use vizia_core::prelude::*;
     /// # use vizia_derive::*;
-    /// # let mut cx = &mut Context::new();
+    /// # let mut cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
     /// # #[derive(Lens, Default)]
     /// # pub struct AppData {
     /// #     value: f32,
@@ -331,7 +331,7 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     /// ```
     /// # use vizia_core::prelude::*;
     /// # use vizia_derive::*;
-    /// # let mut cx = &mut Context::new();
+    /// # let mut cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
     /// # #[derive(Lens, Default)]
     /// # pub struct AppData {
     /// #     value: f32,
@@ -358,7 +358,7 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     /// ```
     /// # use vizia_core::prelude::*;
     /// # use vizia_derive::*;
-    /// # let mut cx = &mut Context::new();
+    /// # let mut cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
     /// # #[derive(Lens, Default)]
     /// # pub struct AppData {
     /// #     value: f32,
@@ -383,7 +383,7 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     /// ```
     /// # use vizia_core::prelude::*;
     /// # use vizia_derive::*;
-    /// # let mut cx = &mut Context::new();
+    /// # let mut cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
     /// # #[derive(Lens, Default)]
     /// # pub struct AppData {
     /// #     value: f32,

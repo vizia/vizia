@@ -25,7 +25,7 @@ use crate::views::popup::PopupData;
 /// #     SetValue(u8),
 /// # }
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
 /// #
 /// # AppData { value: 0 }.build(cx);
 /// #
@@ -57,7 +57,7 @@ use crate::views::popup::PopupData;
 ///
 /// ```
 /// # use vizia_core::prelude::*;
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
 /// #
 /// # cx.add_theme(r#"
 /// #     dropdown popup {
@@ -134,7 +134,7 @@ impl Dropdown {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::new(WindowSize::new(800, 600), 1.0);
     /// #
     /// Dropdown::new(cx, |cx| Label::new(cx, "Text"), |_| {});
     /// ```
