@@ -1,6 +1,5 @@
-use std::{any::Any, collections::HashMap};
-
 use crate::prelude::*;
+use std::{any::Any, collections::HashMap};
 
 use crate::events::ViewHandler;
 use crate::resource::ImageOrId;
