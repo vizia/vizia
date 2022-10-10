@@ -1,20 +1,20 @@
 use crate::prelude::*;
-use std::{any::TypeId, sync::Arc};
+use std::any::TypeId;
 
 pub(crate) struct ActionsModel {
-    pub(crate) on_press: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_press_down: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_hover: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_hover_out: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_over: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_over_out: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_mouse_move: Option<Arc<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
-    pub(crate) on_mouse_down: Option<Arc<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>>,
-    pub(crate) on_mouse_up: Option<Arc<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>>,
-    pub(crate) on_focus_in: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_focus_out: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_press: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_press_down: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_hover: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_hover_out: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_over: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_over_out: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_mouse_move: Option<Box<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
+    pub(crate) on_mouse_down: Option<Box<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>>,
+    pub(crate) on_mouse_up: Option<Box<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>>,
+    pub(crate) on_focus_in: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
+    pub(crate) on_focus_out: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_geo_changed:
-        Option<Arc<dyn Fn(&mut EventContext, GeometryChanged) + Send + Sync>>,
+        Option<Box<dyn Fn(&mut EventContext, GeometryChanged) + Send + Sync>>,
 }
 
 impl ActionsModel {
@@ -38,53 +38,53 @@ impl ActionsModel {
 
 impl Model for ActionsModel {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|actions_event, _| match actions_event {
+        event.take().map(|actions_event| match actions_event {
             ActionsEvent::OnPress(on_press) => {
-                self.on_press = Some(on_press.clone());
+                self.on_press = Some(on_press);
             }
 
             ActionsEvent::OnPressDown(on_press_down) => {
-                self.on_press_down = Some(on_press_down.clone());
+                self.on_press_down = Some(on_press_down);
             }
 
             ActionsEvent::OnHover(on_hover) => {
-                self.on_hover = Some(on_hover.clone());
+                self.on_hover = Some(on_hover);
             }
 
             ActionsEvent::OnHoverOut(on_hover_out) => {
-                self.on_hover_out = Some(on_hover_out.clone());
+                self.on_hover_out = Some(on_hover_out);
             }
 
             ActionsEvent::OnOver(on_over) => {
-                self.on_over = Some(on_over.clone());
+                self.on_over = Some(on_over);
             }
 
             ActionsEvent::OnOverOut(on_over_out) => {
-                self.on_over_out = Some(on_over_out.clone());
+                self.on_over_out = Some(on_over_out);
             }
 
             ActionsEvent::OnMouseMove(on_move) => {
-                self.on_mouse_move = Some(on_move.clone());
+                self.on_mouse_move = Some(on_move);
             }
 
             ActionsEvent::OnMouseDown(on_mouse_down) => {
-                self.on_mouse_down = Some(on_mouse_down.clone());
+                self.on_mouse_down = Some(on_mouse_down);
             }
 
             ActionsEvent::OnMouseUp(on_mouse_up) => {
-                self.on_mouse_up = Some(on_mouse_up.clone());
+                self.on_mouse_up = Some(on_mouse_up);
             }
 
             ActionsEvent::OnFocusIn(on_focus_in) => {
-                self.on_focus_in = Some(on_focus_in.clone());
+                self.on_focus_in = Some(on_focus_in);
             }
 
             ActionsEvent::OnFocusOut(on_focus_out) => {
-                self.on_focus_out = Some(on_focus_out.clone());
+                self.on_focus_out = Some(on_focus_out);
             }
 
             ActionsEvent::OnGeoChanged(on_geo_changed) => {
-                self.on_geo_changed = Some(on_geo_changed.clone());
+                self.on_geo_changed = Some(on_geo_changed);
             }
         });
 
@@ -183,18 +183,18 @@ impl Model for ActionsModel {
 }
 
 pub(crate) enum ActionsEvent {
-    OnPress(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnPressDown(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnHover(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnHoverOut(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnOver(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnOverOut(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnMouseMove(Arc<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>),
-    OnMouseDown(Arc<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>),
-    OnMouseUp(Arc<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>),
-    OnFocusIn(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnFocusOut(Arc<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnGeoChanged(Arc<dyn Fn(&mut EventContext, GeometryChanged) + Send + Sync>),
+    OnPress(Box<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnPressDown(Box<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnHover(Box<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnHoverOut(Box<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnOver(Box<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnOverOut(Box<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnMouseMove(Box<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>),
+    OnMouseDown(Box<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>),
+    OnMouseUp(Box<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>),
+    OnFocusIn(Box<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnFocusOut(Box<dyn Fn(&mut EventContext) + Send + Sync>),
+    OnGeoChanged(Box<dyn Fn(&mut EventContext, GeometryChanged) + Send + Sync>),
 }
 
 /// Modifiers which add an action callback to a view.
@@ -376,7 +376,7 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
-            Event::new(ActionsEvent::OnPress(Arc::new(action)))
+            Event::new(ActionsEvent::OnPress(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
@@ -391,7 +391,7 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
-            Event::new(ActionsEvent::OnPressDown(Arc::new(action)))
+            Event::new(ActionsEvent::OnPressDown(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
@@ -406,7 +406,7 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
-            Event::new(ActionsEvent::OnHover(Arc::new(action)))
+            Event::new(ActionsEvent::OnHover(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
@@ -421,7 +421,7 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
-            Event::new(ActionsEvent::OnHoverOut(Arc::new(action)))
+            Event::new(ActionsEvent::OnHoverOut(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
@@ -436,7 +436,7 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
-            Event::new(ActionsEvent::OnOver(Arc::new(action)))
+            Event::new(ActionsEvent::OnOver(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
@@ -451,7 +451,7 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
-            Event::new(ActionsEvent::OnOverOut(Arc::new(action)))
+            Event::new(ActionsEvent::OnOverOut(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
@@ -466,7 +466,7 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
-            Event::new(ActionsEvent::OnMouseMove(Arc::new(action)))
+            Event::new(ActionsEvent::OnMouseMove(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
@@ -481,7 +481,7 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
-            Event::new(ActionsEvent::OnMouseDown(Arc::new(action)))
+            Event::new(ActionsEvent::OnMouseDown(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
@@ -496,7 +496,7 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
-            Event::new(ActionsEvent::OnMouseUp(Arc::new(action)))
+            Event::new(ActionsEvent::OnMouseUp(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
@@ -511,7 +511,7 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
-            Event::new(ActionsEvent::OnFocusIn(Arc::new(action)))
+            Event::new(ActionsEvent::OnFocusIn(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
@@ -526,7 +526,7 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
-            Event::new(ActionsEvent::OnFocusOut(Arc::new(action)))
+            Event::new(ActionsEvent::OnFocusOut(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
@@ -541,7 +541,7 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
         build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
-            Event::new(ActionsEvent::OnGeoChanged(Arc::new(action)))
+            Event::new(ActionsEvent::OnGeoChanged(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
