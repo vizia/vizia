@@ -382,55 +382,55 @@ impl<'a, T> Handle<'a, T> {
         self
     }
 
-    pub fn grid_rows(self, rows: Vec<Units>) -> Self {
-        self.cx.style.grid_rows.insert(self.entity, rows);
+    // pub fn grid_rows(self, rows: Vec<Units>) -> Self {
+    //     self.cx.style.grid_rows.insert(self.entity, rows);
 
-        self
-    }
+    //     self
+    // }
 
-    pub fn grid_cols(self, cols: Vec<Units>) -> Self {
-        self.cx.style.grid_cols.insert(self.entity, cols);
+    // pub fn grid_cols(self, cols: Vec<Units>) -> Self {
+    //     self.cx.style.grid_cols.insert(self.entity, cols);
 
-        self
-    }
+    //     self
+    // }
 
     set_style!(background_color, Color);
     set_style!(background_image, String);
 
-    set_style!(layout_type, LayoutType);
-    set_style!(position_type, PositionType);
+    // set_style!(layout_type, LayoutType);
+    // set_style!(position_type, PositionType);
 
-    set_style!(left, Units);
-    set_style!(right, Units);
-    set_style!(top, Units);
-    set_style!(bottom, Units);
-    set_style!(width, Units);
-    set_style!(height, Units);
+    // set_style!(left, Units);
+    // set_style!(right, Units);
+    // set_style!(top, Units);
+    // set_style!(bottom, Units);
+    // set_style!(width, Units);
+    // set_style!(height, Units);
 
-    set_style!(min_width, Units);
-    set_style!(max_width, Units);
-    set_style!(min_height, Units);
-    set_style!(max_height, Units);
+    // set_style!(min_width, Units);
+    // set_style!(max_width, Units);
+    // set_style!(min_height, Units);
+    // set_style!(max_height, Units);
 
-    set_style!(min_left, Units);
-    set_style!(max_left, Units);
-    set_style!(min_right, Units);
-    set_style!(max_right, Units);
-    set_style!(min_top, Units);
-    set_style!(max_top, Units);
-    set_style!(min_bottom, Units);
-    set_style!(max_bottom, Units);
+    // set_style!(min_left, Units);
+    // set_style!(max_left, Units);
+    // set_style!(min_right, Units);
+    // set_style!(max_right, Units);
+    // set_style!(min_top, Units);
+    // set_style!(max_top, Units);
+    // set_style!(min_bottom, Units);
+    // set_style!(max_bottom, Units);
 
-    set_style!(child_left, Units);
-    set_style!(child_right, Units);
-    set_style!(child_top, Units);
-    set_style!(child_bottom, Units);
-    set_style!(row_between, Units);
-    set_style!(col_between, Units);
-    set_style!(row_index, usize);
-    set_style!(row_span, usize);
-    set_style!(col_index, usize);
-    set_style!(col_span, usize);
+    // set_style!(child_left, Units);
+    // set_style!(child_right, Units);
+    // set_style!(child_top, Units);
+    // set_style!(child_bottom, Units);
+    // set_style!(row_between, Units);
+    // set_style!(col_between, Units);
+    // set_style!(row_index, usize);
+    // set_style!(row_span, usize);
+    // set_style!(col_index, usize);
+    // set_style!(col_span, usize);
 
     set_style!(border_width, Units);
     set_style!(border_color, Color);
