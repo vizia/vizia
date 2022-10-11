@@ -48,7 +48,7 @@ pub mod prelude {
     pub use super::handle::Handle;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     pub use super::localization::Localized;
-    pub use super::modifiers::ActionModifiers;
+    pub use super::modifiers::{ActionModifiers, LayoutModifiers};
     pub use super::state::{Binding, Data, Lens, LensExt, Model, Res, Setter};
     pub use super::view::{Canvas, View};
     pub use super::views::*;
