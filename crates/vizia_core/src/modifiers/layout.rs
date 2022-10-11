@@ -94,10 +94,47 @@ pub trait LayoutModifiers: internal::Modifiable {
         Units
     );
 
-    modifier!(top, Units);
+    modifier!(
+        /// Sets the space on the top side of the view.
+        ///
+        /// The top space, along with the bottom space, determines the vertical position of a view.
+        ///
+        /// - `Units::Pixels(...)` - The top space will be a fixed number of points. This will scale with the DPI of the target display.
+        /// - `Units::Percentage(...)` - The top space will be a proportion of the parent width.
+        /// - `Units::Stretch(...)` - The top space will be a ratio of the remaining free space, see [`Units`](crate::prelude::Units).
+        /// - `Units::Auto` - The top space will be determined by the parent `child-left`, see [`child_left`](crate::prelude::LayoutModifiers::left).
+        ///
+        /// # Example
+        /// ```
+        /// # use vizia_core::prelude::*;
+        /// # let cx = &mut Context::new();
+        /// Element::new(cx).top(Units::Pixels(100.0));
+        /// ```
+        top,
+        Units
+    );
 
-    modifier!(bottom, Units);
+    modifier!(
+        /// Sets the space on the bottom side of the view.
+        ///
+        /// The bottom space, along with the top space, determines the vertical position of a view.
+        ///
+        /// - `Units::Pixels(...)` - The bottom space will be a fixed number of points. This will scale with the DPI of the target display.
+        /// - `Units::Percentage(...)` - The bottom space will be a proportion of the parent width.
+        /// - `Units::Stretch(...)` - The bottom space will be a ratio of the remaining free space, see [`Units`](crate::prelude::Units).
+        /// - `Units::Auto` - The bottom space will be determined by the parent `child-left`, see [`child_left`](crate::prelude::LayoutModifiers::left).
+        ///
+        /// # Example
+        /// ```
+        /// # use vizia_core::prelude::*;
+        /// # let cx = &mut Context::new();
+        /// Element::new(cx).bottom(Units::Pixels(100.0));
+        /// ```
+        bottom,
+        Units
+    );
 
+    /// Sets the space for all sides of the view.
     fn space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
@@ -114,10 +151,19 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
-    modifier!(width, Units);
+    modifier!(
+        /// Sets the width of the view.
+        width,
+        Units
+    );
 
-    modifier!(height, Units);
+    modifier!(
+        /// Sets the height of the view.
+        height,
+        Units
+    );
 
+    /// Sets the width and height of the view.
     fn size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
@@ -132,14 +178,41 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
-    modifier!(child_left, Units);
+    modifier!(
+        /// Sets the space between the left side of the view and the left side of its children.
+        ///
+        /// Applies only to child views which have a `left` property set to `Auto`.
+        child_left,
+        Units
+    );
 
-    modifier!(child_right, Units);
+    modifier!(
+        /// Sets the space between the right side of the view and the right side of its children.
+        ///
+        /// Applies only to child views which have a `right` property set to `Auto`.
+        child_right,
+        Units
+    );
 
-    modifier!(child_top, Units);
+    modifier!(
+        /// Sets the space between the top side of the view and the top side of its children.
+        ///
+        /// Applies only to child views which have a `top` property set to `Auto`.
+        child_top,
+        Units
+    );
 
-    modifier!(child_bottom, Units);
+    modifier!(
+        /// Sets the space between the bottom side of the view and the bottom side of its children.
+        ///
+        /// Applies only to child views which have a `bottom` property set to `Auto`.
+        child_bottom,
+        Units
+    );
 
+    /// Sets the space between the vew and its children.
+    ///
+    /// The child_space works by overriding the `Auto` space properties of its children.
     fn child_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
@@ -156,14 +229,31 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
-    modifier!(row_between, Units);
+    modifier!(
+        /// Sets the space between the views children in a vertical stack.
+        row_between,
+        Units
+    );
 
-    modifier!(col_between, Units);
+    modifier!(
+        /// Sets the space between the views children in a horizontal stack.
+        col_between,
+        Units
+    );
 
-    modifier!(min_width, Units);
+    modifier!(
+        /// Sets the minimum width of the view.
+        min_width,
+        Units
+    );
 
-    modifier!(min_height, Units);
+    modifier!(
+        /// Sets the minimum height of the view.
+        min_height,
+        Units
+    );
 
+    /// Sets the minimum width and minimum height of the view.
     fn min_size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
@@ -178,10 +268,19 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
-    modifier!(max_width, Units);
+    modifier!(
+        /// Sets the maximum width of the view.
+        max_width,
+        Units
+    );
 
-    modifier!(max_height, Units);
+    modifier!(
+        /// Sets the maximum height of the view.
+        max_height,
+        Units
+    );
 
+    /// Sets the maximum width and maximum height of the view.
     fn max_size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
@@ -196,14 +295,31 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
-    modifier!(min_left, Units);
+    modifier!(
+        /// Sets the minimum left space of the view.
+        min_left,
+        Units
+    );
 
-    modifier!(min_right, Units);
+    modifier!(
+        /// Sets the minimum right space of the view.
+        min_right,
+        Units
+    );
 
-    modifier!(min_top, Units);
+    modifier!(
+        /// Sets the minimum top space of the view.
+        min_top,
+        Units
+    );
 
-    modifier!(min_bottom, Units);
+    modifier!(
+        /// Sets the minimum bottom space of the view.
+        min_bottom,
+        Units
+    );
 
+    /// Sets the minimum space for all sides of the view.
     fn min_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
@@ -220,14 +336,31 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
-    modifier!(max_left, Units);
+    modifier!(
+        /// Sets the maximum left space of the view.
+        max_left,
+        Units
+    );
 
-    modifier!(max_right, Units);
+    modifier!(
+        /// Sets the maximum right space of the view.
+        max_right,
+        Units
+    );
 
-    modifier!(max_top, Units);
+    modifier!(
+        /// Sets the maximum top space of the view.
+        max_top,
+        Units
+    );
 
-    modifier!(max_bottom, Units);
+    modifier!(
+        /// Sets the maximum bottom space of the view.
+        max_bottom,
+        Units
+    );
 
+    /// Sets the maximum space for all sides of the view.
     fn max_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
@@ -244,6 +377,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the grid rows of the view.
     fn grid_rows(mut self, rows: Vec<Units>) -> Self {
         let entity = self.entity();
         self.context().style.grid_rows.insert(entity, rows);
@@ -251,6 +385,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the grid columns of the view.
     fn grid_cols(mut self, cols: Vec<Units>) -> Self {
         let entity = self.entity();
         self.context().style.grid_cols.insert(entity, cols);
@@ -258,10 +393,34 @@ pub trait LayoutModifiers: internal::Modifiable {
         self
     }
 
-    modifier!(row_index, usize);
-    modifier!(row_span, usize);
-    modifier!(col_index, usize);
-    modifier!(col_span, usize);
+    modifier!(
+        /// Sets the grid row index of the view.
+        ///
+        /// This index relates to the grid rows of the parent view when the parent layout type is set to `Grid`.
+        row_index,
+        usize
+    );
+    modifier!(
+        /// Sets the grid row span of the view.
+        ///
+        /// This relates to the range of occupied grid rows of the parent view when the parent layout type is set to `Grid`.
+        row_span,
+        usize
+    );
+    modifier!(
+        /// Sets the grid column index of the view.
+        ///
+        /// This index relates to the grid columns of the parent view when the parent layout type is set to `Grid`.
+        col_index,
+        usize
+    );
+    modifier!(
+        /// Sets the grid column span of the view.
+        ///
+        /// This relates to the range of occupied grid columns of the parent view when the parent layout type is set to `Grid`.
+        col_span,
+        usize
+    );
 }
 
 impl<'a, V: View> LayoutModifiers for Handle<'a, V> {}
