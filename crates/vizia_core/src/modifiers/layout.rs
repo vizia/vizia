@@ -1,6 +1,5 @@
-use crate::prelude::*;
-
 use super::internal;
+use crate::prelude::*;
 
 /// Modifiers for changing the layout properties of a view.
 pub trait LayoutModifiers: internal::Modifiable {
@@ -99,9 +98,39 @@ pub trait LayoutModifiers: internal::Modifiable {
 
     modifier!(bottom, Units);
 
+    fn space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.left.insert(entity, value);
+            cx.style.right.insert(entity, value);
+            cx.style.top.insert(entity, value);
+            cx.style.bottom.insert(entity, value);
+
+            cx.need_relayout();
+            cx.need_redraw();
+        });
+
+        self
+    }
+
     modifier!(width, Units);
 
     modifier!(height, Units);
+
+    fn size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.width.insert(entity, value);
+            cx.style.height.insert(entity, value);
+
+            cx.need_relayout();
+            cx.need_redraw();
+        });
+
+        self
+    }
 
     modifier!(child_left, Units);
 
@@ -111,33 +140,109 @@ pub trait LayoutModifiers: internal::Modifiable {
 
     modifier!(child_bottom, Units);
 
+    fn child_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.child_left.insert(entity, value);
+            cx.style.child_right.insert(entity, value);
+            cx.style.child_top.insert(entity, value);
+            cx.style.child_bottom.insert(entity, value);
+
+            cx.need_relayout();
+            cx.need_redraw();
+        });
+
+        self
+    }
+
     modifier!(row_between, Units);
 
     modifier!(col_between, Units);
 
     modifier!(min_width, Units);
 
-    modifier!(max_width, Units);
-
     modifier!(min_height, Units);
+
+    fn min_size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.min_width.insert(entity, value);
+            cx.style.min_height.insert(entity, value);
+
+            cx.need_relayout();
+            cx.need_redraw();
+        });
+
+        self
+    }
+
+    modifier!(max_width, Units);
 
     modifier!(max_height, Units);
 
-    modifier!(min_left, Units);
+    fn max_size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.max_width.insert(entity, value);
+            cx.style.max_height.insert(entity, value);
 
-    modifier!(max_left, Units);
+            cx.need_relayout();
+            cx.need_redraw();
+        });
+
+        self
+    }
+
+    modifier!(min_left, Units);
 
     modifier!(min_right, Units);
 
-    modifier!(max_right, Units);
-
     modifier!(min_top, Units);
-
-    modifier!(max_top, Units);
 
     modifier!(min_bottom, Units);
 
+    fn min_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.min_left.insert(entity, value);
+            cx.style.min_right.insert(entity, value);
+            cx.style.min_top.insert(entity, value);
+            cx.style.min_bottom.insert(entity, value);
+
+            cx.need_relayout();
+            cx.need_redraw();
+        });
+
+        self
+    }
+
+    modifier!(max_left, Units);
+
+    modifier!(max_right, Units);
+
+    modifier!(max_top, Units);
+
     modifier!(max_bottom, Units);
+
+    fn max_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.max_left.insert(entity, value);
+            cx.style.max_right.insert(entity, value);
+            cx.style.max_top.insert(entity, value);
+            cx.style.max_bottom.insert(entity, value);
+
+            cx.need_relayout();
+            cx.need_redraw();
+        });
+
+        self
+    }
 
     fn grid_rows(mut self, rows: Vec<Units>) -> Self {
         let entity = self.entity();

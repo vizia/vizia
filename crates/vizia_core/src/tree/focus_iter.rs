@@ -26,7 +26,7 @@ pub fn is_navigatable(cx: &Context, node: Entity, lock_focus_to: Entity) -> bool
         return false;
     }
 
-    has_ability(cx, node, Abilities::KEYBOARD_NAVIGATABLE)
+    has_ability(cx, node, Abilities::NAVIGABLE)
 }
 
 /// Is the entity focusable - some focusable entities are not in the tab order.

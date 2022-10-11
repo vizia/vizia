@@ -24,7 +24,7 @@ macro_rules! modifier {
 
 // Inside private module to hide implementation details.
 mod internal {
-    use crate::prelude::{Context, Entity, Handle, View};
+    use crate::prelude::{Context, Entity, Handle};
 
     // Allows a modifier trait to access to context and entity from `self`.
     pub trait Modifiable: Sized {
@@ -32,7 +32,7 @@ mod internal {
         fn entity(&self) -> Entity;
     }
 
-    impl<'a, V: View> Modifiable for Handle<'a, V> {
+    impl<'a, V> Modifiable for Handle<'a, V> {
         fn context(&mut self) -> &mut Context {
             self.cx
         }
@@ -51,3 +51,9 @@ pub use layout::*;
 
 mod style;
 pub use style::*;
+
+mod text;
+pub use text::*;
+
+mod abilities;
+pub use abilities::*;

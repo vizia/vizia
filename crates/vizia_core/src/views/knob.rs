@@ -74,7 +74,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
                 //     .rotate(30.0);
             });
         })
-        .keyboard_navigatable(true)
+        .navigable(true)
     }
 
     pub fn custom<F, V: View>(
