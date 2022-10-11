@@ -138,6 +138,7 @@ pub trait StyleModifiers: internal::Modifiable {
         String
     );
 
+    // TODO: Docs for this.
     fn image<U: ToString>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, val| {
