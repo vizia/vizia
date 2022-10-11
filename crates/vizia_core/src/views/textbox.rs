@@ -549,7 +549,7 @@ where
                 TextboxKind::MultiLineWrapped => "multi_line_wrapped",
             })
             .cursor(CursorIcon::Text)
-            .keyboard_navigatable(true)
+            .navigable(true)
     }
 }
 

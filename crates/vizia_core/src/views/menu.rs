@@ -23,7 +23,7 @@ where
         let i = *data.counter.borrow();
         *data.counter.borrow_mut() += 1;
         handle
-            .keyboard_navigatable(true)
+            .navigable(true)
             .bind(MenuData::selected, move |handle, selected| {
                 let selected = selected.get(handle.cx) == Some(i);
                 handle.cx.set_selected(selected);
@@ -267,7 +267,7 @@ impl MenuButton {
                 .build(cx, move |cx| {
                     contents(cx);
                 })
-                .keyboard_navigatable(true),
+                .navigable(true),
             |_| {},
             |_| {},
         )

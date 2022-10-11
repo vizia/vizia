@@ -83,7 +83,7 @@ impl Button {
                 (content)(cx).hoverable(false);
             })
             .cursor(CursorIcon::Hand)
-            .keyboard_navigatable(true)
+            .navigable(true)
     }
 }
 
