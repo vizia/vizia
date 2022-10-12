@@ -13,12 +13,14 @@
 //! ```
 //! Then, to send an event up the tree from the current entity, we can use `cx.emit(...)`, for example:
 //! ```no_run
-//! # use crate::prelude::*;
-//! # use vizia_winit::Application;
+//! # use vizia_core::prelude::*;
+//! # use vizia_winit::application::Application;
 //! # let cx = &mut Context::new();
 //! pub struct AppData {
 //!     count: i32,
 //! }
+//!
+//! impl Model for AppData {}
 //!
 //! pub enum AppEvent {
 //!     Increment,
@@ -39,9 +41,9 @@
 //! Views and Models receive events through the `event()` method of the View or Model traits.
 //! The event message must then be downcast to the right type using the `map` or `take` methods on the event:
 //! ```no_run
-//! # use crate::prelude::*;
+//! # use vizia_core::prelude::*;
 //! # let cx = &mut Context::new();
-//! # use vizia_winit::Application;
+//! # use vizia_winit::application::Application;
 //!
 //! pub struct AppData {
 //!     count: i32,
@@ -52,11 +54,11 @@
 //!     Decrement,    
 //! }
 //!
-//! impl Model for CustomModel {
+//! impl Model for AppData {
 //!     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
 //!         // `event.map()` will attempt to cast the event message to the desired type and
 //!         // pass a reference to the message type to the closure passed to the `map()` method.
-//!         event.map(|app_event, _| match my_event {
+//!         event.map(|app_event, _| match app_event {
 //!             AppEvent::Increment => {
 //!                 self.count += 1;
 //!             }

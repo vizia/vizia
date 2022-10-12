@@ -4,8 +4,8 @@
 //! The `Label` view is used to display a text string:
 //!
 //! ```no_run
-//! use crate::prelude::*;
-//!
+//! # use vizia_core::prelude::*;
+//! # use vizia_winit::application::Application;
 //! Application::new(|cx|{
 //!     Label::new(cx, "Hello World");
 //! })
@@ -40,7 +40,7 @@ const KAPPA90: f32 = 0.5522847493;
 ///
 /// To create a custom view, first define a struct with any view-specific state.
 /// ```
-/// # use crate::prelude::*;
+/// # use vizia_core::prelude::*;
 /// pub struct CustomView {
 ///     count: i32,
 /// }
@@ -49,7 +49,7 @@ const KAPPA90: f32 = 0.5522847493;
 /// Next, implement the constructor for the custom view. Typically, the constructor will take `&mut Context` as the first argument
 /// and return a [`Handle`] to the view.
 /// ```
-/// # use crate::prelude::*;
+/// # use vizia_core::prelude::*;
 /// pub struct CustomView {
 ///     count: i32,
 /// }
@@ -63,11 +63,13 @@ const KAPPA90: f32 = 0.5522847493;
 ///         })
 ///     }
 /// }
+///
+/// # impl View for CustomView {}
 /// ```
 ///
 /// The `build` method above is provided by the `View` trait, which we must implement for any custom view.
 /// ```
-/// # use crate::prelude::*;
+/// # use vizia_core::prelude::*;
 /// pub struct CustomView {
 ///     count: i32,
 /// }
@@ -93,6 +95,7 @@ pub trait View: 'static + Sized {
     ///
     /// Typically this method is called within the constructor of a view, for example:
     /// ```
+    /// # use vizia_core::prelude::*;
     /// pub struct CustomView{}
     ///
     /// impl CustomView {
@@ -100,10 +103,12 @@ pub trait View: 'static + Sized {
     ///         Self{}.build(cx, |_|{})
     ///     }
     /// }
+    /// # impl View for CustomView {}
     /// ```
     /// The `content` closure allows for a view to be built from other views. For example, a custom view could encapsulate a
     /// pair of labels:
     /// ```
+    /// # use vizia_core::prelude::*;
     /// pub struct CustomView{}
     ///
     /// impl CustomView {
@@ -114,6 +119,7 @@ pub trait View: 'static + Sized {
     ///         })
     ///     }
     /// }
+    /// # impl View for CustomView {}
     /// ```
     fn build<F>(self, cx: &mut Context, content: F) -> Handle<Self>
     where
@@ -141,6 +147,7 @@ pub trait View: 'static + Sized {
     ///
     /// # Example
     /// ```
+    /// # use vizia_core::prelude::*;
     /// pub struct CustomView{}
     ///
     /// impl CustomView {
@@ -169,6 +176,7 @@ pub trait View: 'static + Sized {
     ///
     /// # Example
     /// ```
+    /// # use vizia_core::prelude::*;
     /// pub struct CustomView{}
     ///
     /// impl CustomView {
@@ -181,11 +189,13 @@ pub trait View: 'static + Sized {
     ///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
     ///         event.map(|window_event, meta| match window_event{
     ///             WindowEvent::MouseDown(_) => {
-    ///                 if meta.target() == cx.current() {
+    ///                 if meta.target == cx.current() {
     ///                     // Emit a `WindowClose` event when this view is clicked on.
     ///                     cx.emit(WindowEvent::WindowClose);
     ///                 }
     ///             }
+    ///
+    ///             _=> {}
     ///         });
     ///     }
     /// }
@@ -201,6 +211,8 @@ pub trait View: 'static + Sized {
     ///
     /// # Example
     /// ```
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_core::vg;
     /// pub struct CustomView{}
     ///
     /// impl CustomView {
@@ -210,14 +222,14 @@ pub trait View: 'static + Sized {
     /// }
     ///
     /// impl View for CustomView {
-    ///     fn draw(&mut self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    ///     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
     ///         // Get the bounding box of the current view.
     ///         let bounds = cx.bounds();
     ///
     ///         // Create a new `Path` from the `vg` module.
     ///         let mut path = vg::Path::new();
     ///         // Add a rectangle to the path with the dimensions of the view bounds.
-    ///         path.rect(bounds.x, bounds.y, bounds.w, bounds.h)
+    ///         path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
     ///         // Fill the path onto the canvas with a red color.
     ///         canvas.fill_path(&mut path, vg::Paint::color(Color::red().into()));
     ///     }

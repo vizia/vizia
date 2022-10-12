@@ -33,9 +33,9 @@ use winit::{
 ///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
 ///
 /// # Example
-/// ```
-/// use crate::prelude::*;
-///
+/// ```no_run
+/// # use vizia_core::prelude::*;
+/// # use vizia_winit::application::Application;
 /// Application::new(|cx|{
 ///    // Content goes here
 /// })

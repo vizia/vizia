@@ -38,6 +38,12 @@ impl Position {
     }
 }
 
+impl From<(u32, u32)> for Position {
+    fn from(s: (u32, u32)) -> Self {
+        Position::new(s.0, s.1)
+    }
+}
+
 /// Passed to the window to set initial window properties.
 ///
 /// This type is part of the prelude.

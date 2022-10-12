@@ -152,7 +152,30 @@
 //!
 //! Completely rebuilding the `Label` when the data changes is unnecessary in this case. Instead we can update just the text of the label
 //! by binding the `text()` property modifier to the application data. This is called a property binding.
-//! ```
+//! ```no_run
+//! # use vizia_core::prelude::*;
+//! # use vizia_winit::application::Application;
+//!
+//! # #[derive(Lens)]
+//! # struct AppData {
+//! #     count: i32,
+//! # }
+//! # impl Model for AppData {
+//! #     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+//! #         event.map(|app_event, _| match app_event {
+//! #             AppEvent::Increment => {
+//! #                 self.count += 1;
+//! #             }
+//! #             AppEvent::Decrement => {
+//! #                 self.count -= 1;
+//! #             }
+//! #         });
+//! #     }
+//! # }
+//! # enum AppEvent {
+//! #     Increment,
+//! #     Decrement,
+//! # }
 //! fn main() {
 //!     Application::new(|cx|{
 //!         AppData {

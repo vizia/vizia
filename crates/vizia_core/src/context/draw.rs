@@ -40,6 +40,7 @@ impl DrawCache {
 /// # Example
 /// ```
 /// # use vizia_core::prelude::*;
+/// # use vizia_core::vg;
 /// # let cx = &mut Context::new();
 ///
 /// pub struct CustomView {}
@@ -55,9 +56,9 @@ impl DrawCache {
 ///         // Get the computed bounds after layout of the current view
 ///         let bounds = cx.bounds();
 ///         // Draw to the canvas using the bounds of the current view
-///         let mut path = Path::new();
+///         let mut path = vg::Path::new();
 ///         path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-///         canvas.fill_path(&mut path, Paint::color(vg::Color::rgb(200, 100, 100)));
+///         canvas.fill_path(&mut path, vg::Paint::color(vg::Color::rgb(200, 100, 100)));
 ///     }
 /// }
 /// ```

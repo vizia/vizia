@@ -6,8 +6,9 @@ pub trait WindowModifiers {
     /// Sets the title of the window to the given value. Accepts a type, or lens to a type, which implements `ToString`.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
@@ -20,12 +21,13 @@ pub trait WindowModifiers {
     /// The inner size is the window area excluding the window borders.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
-    /// .inner_size((300.0, 300.0))
+    /// .inner_size((300, 300))
     /// .run();
     /// ```
     fn inner_size<S: Into<WindowSize>>(self, size: impl Res<S>) -> Self;
@@ -34,12 +36,13 @@ pub trait WindowModifiers {
     /// Setting the minimum inner size to `None` removes the minimum inner size constraint from the window.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
-    /// .min_inner_size(Some((300.0, 300.0)))
+    /// .min_inner_size(Some((300, 300)))
     /// .run();
     /// ```
     fn min_inner_size<S: Into<WindowSize>>(self, size: impl Res<Option<S>>) -> Self;
@@ -48,32 +51,35 @@ pub trait WindowModifiers {
     /// Setting the maximum inner size to `None` removes the maximum inner size constraint from the window.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
-    /// .max_inner_size(Some((1000.0, 1000.0)))
+    /// .max_inner_size(Some((1000, 1000)))
     /// .run();
     /// ```
     fn max_inner_size<S: Into<WindowSize>>(self, size: impl Res<Option<S>>) -> Self;
     /// Sets the position of the window to the given value. Accepts a value, or lens, which can be converted to a [`Position`].
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
-    /// .position((100.0, 200.0))
+    /// .position((100, 200))
     /// .run();
     /// ```
     fn position<P: Into<Position>>(self, position: impl Res<P>) -> Self;
     /// Sets whether the window can be resized. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
@@ -84,8 +90,9 @@ pub trait WindowModifiers {
     /// Sets whether the window is minimized. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
@@ -96,8 +103,9 @@ pub trait WindowModifiers {
     /// Sets whether the window is maximized. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
@@ -108,8 +116,9 @@ pub trait WindowModifiers {
     /// Sets whether the window is visible. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
@@ -120,8 +129,9 @@ pub trait WindowModifiers {
     /// Sets whether the window is transparent. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
@@ -132,8 +142,9 @@ pub trait WindowModifiers {
     /// Sets whether the window has decorations. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
@@ -144,8 +155,9 @@ pub trait WindowModifiers {
     /// Sets whether the window should be on top of other windows. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
@@ -156,8 +168,9 @@ pub trait WindowModifiers {
     /// Sets whether the window has vsync enabled.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
@@ -168,8 +181,9 @@ pub trait WindowModifiers {
     /// Sets the icon used for the window.
     ///
     /// # Example
-    /// ```
-    /// # use crate::Application;
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
     /// Application::new(|cx|{
     ///     // Content here
     /// })
