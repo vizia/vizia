@@ -177,7 +177,7 @@ where
                 });
             });
         })
-        .keyboard_navigatable(true)
+        .navigable(true)
     }
 }
 

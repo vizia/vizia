@@ -94,7 +94,7 @@ impl RadioButton {
             })
             .checked(checked)
             .cursor(CursorIcon::Hand)
-            .keyboard_navigatable(true)
+            .navigable(true)
     }
 }
 
