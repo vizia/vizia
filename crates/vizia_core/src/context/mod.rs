@@ -1,3 +1,5 @@
+//! The `Context` is where the retained data of a vizia application lives.
+
 #[doc(hidden)]
 pub mod backend;
 mod draw;
