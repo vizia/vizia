@@ -70,7 +70,7 @@ pub enum AppEvent {
     Increment,
 }
 
-// Describe how the data can be mutated
+// Describe how the data is mutated in response to events
 impl Model for AppData {
     fn event(&mut self, _: &mut Context, event: &mut Event) {
         event.map(|app_event, _| match app_event {
@@ -119,7 +119,7 @@ Application::new(|cx| {
 
 # Running the Examples
 
-A full list of [examples](https://github.com/vizia/vizia/tree/main/examples) is included in the repository.
+A list of [examples](https://github.com/vizia/vizia/tree/main/examples) is included in the repository.
 
 To run an example with the [winit](https://github.com/rust-windowing/winit) (default) windowing backend:
 ```bash
@@ -139,7 +139,7 @@ Then run an example with the following:
 ```bash
 cargo run-wasm --release --example name_of_example
 ```
-> **NOTE** - Some examples are not compatible with the web target.
+> **NOTE** - Some examples are not compatible with the web target and will intentionally panic if run on web.
 
 <!-- ## Example Projects
 
