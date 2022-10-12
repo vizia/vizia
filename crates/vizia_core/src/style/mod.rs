@@ -1,4 +1,4 @@
-//! Style properties for changing the appearance of a view.
+//! Styling determines the appearance of a view.
 //!
 //! # Styling Views
 //! Vizia provides two ways to style views:

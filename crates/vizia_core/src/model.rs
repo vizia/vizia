@@ -1,3 +1,5 @@
+//! Model
+
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
@@ -6,9 +8,9 @@ use std::{
 use crate::binding::Store;
 use crate::{events::ViewHandler, prelude::*};
 
-use super::StoreId;
+use crate::binding::StoreId;
 
-/// A trait implemented by application data in order to response to events and mutate.
+/// A trait implemented by application data in order to respond to events and mutate state.
 ///
 /// # Examples
 ///

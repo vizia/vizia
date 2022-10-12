@@ -200,8 +200,7 @@
 mod lens;
 pub use lens::*;
 
-mod model;
-pub use model::*;
+pub use crate::model::*;
 
 mod store;
 pub(crate) use store::*;
