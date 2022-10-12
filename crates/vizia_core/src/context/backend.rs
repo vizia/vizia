@@ -24,21 +24,26 @@ pub use crate::systems::animation::has_animations;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
+/// Context used to integrate vizia with windowing backends such as winit and baseview.
 pub struct BackendContext<'a>(pub &'a mut Context);
 
 impl<'a> BackendContext<'a> {
+    /// Creates a new instance of a backend context.
     pub fn new(cx: &'a mut Context) -> Self {
         Self(cx)
     }
 
+    /// Returns a reference to the views stored in the context.
     pub fn views(&mut self) -> &mut FnvHashMap<Entity, Box<dyn ViewHandler>> {
         &mut self.0.views
     }
 
+    /// Returns a mutable reference to the style data.
     pub fn style(&mut self) -> &mut Style {
         &mut self.0.style
     }
 
+    /// Returns a reference to the cache of computed properties data.
     pub fn cache(&mut self) -> &mut CachedData {
         &mut self.0.cache
     }

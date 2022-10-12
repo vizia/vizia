@@ -121,10 +121,12 @@ impl<'a> DrawContext<'a> {
         }
     }
 
+    // Returns the bounding box of the current view.
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
     }
 
+    /// Returns the bounding box of the clip region of the current view.
     pub fn clip_region(&self) -> BoundingBox {
         self.cache.get_clip_region(self.current)
     }
@@ -186,6 +188,7 @@ impl<'a> DrawContext<'a> {
     style_getter_untranslated!(bool, text_wrap);
     style_getter_untranslated!(Selection, text_selection);
 
+    /// Returns the computed opacity of the current view.
     pub fn opacity(&self) -> f32 {
         self.cache.get_opacity(self.current)
     }

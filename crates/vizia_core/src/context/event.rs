@@ -21,6 +21,37 @@ use copypasta::ClipboardProvider;
 
 use super::DrawCache;
 
+/// A context used when handling events.
+///
+/// The `EventContext` is provided by the [`event`](crate::prelude::View::event) method in [`View`] and [`Model`] and can be used to mutably access the
+/// desired style and layout properties of the current view.
+///
+/// # Example
+/// ```
+/// # use vizia_core::prelude::*;
+/// # use vizia_core::vg;
+/// # let cx = &mut Context::new();
+///
+/// pub struct CustomView {}
+///
+/// impl CustomView {
+///     pub fn new(cx: &mut Context) -> Handle<Self> {
+///         Self{}.build(cx, |_|{})
+///     }
+/// }
+///
+/// impl View for CustomView {
+///     fn event(&self, cx: &mut EventContext, event: &mut Event) {
+///         event.map(|window_event, _| match window_event {
+///             WindowEvent::Press{mouse} => {
+///                 let current = cx.current();
+///                 // Change the view background color to red when pressed.
+///                 cx.style.background_color.insert(current, Color::red());
+///             }
+///         });
+///     }
+/// }
+/// ```
 pub struct EventContext<'a> {
     pub(crate) current: Entity,
     pub(crate) captured: &'a mut Entity,
@@ -73,11 +104,12 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    /// Finds the entity that identifier identifies
+    /// Finds the entity that identifier identifies.
     pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
         self.entity_identifiers.get(identity).cloned()
     }
 
+    /// Returns the entity ID of the current view.
     pub fn current(&self) -> Entity {
         self.current
     }
@@ -180,7 +212,7 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    /// Sets application focus to the current entity with the specified focus visiblity
+    /// Sets application focus to the current entity with the specified focus visibility.
     pub fn focus_with_visibility(&mut self, focus_visible: bool) {
         let old_focus = self.focused();
         let new_focus = self.current();
@@ -287,15 +319,17 @@ impl<'a> EventContext<'a> {
         self.style.needs_redraw = true;
     }
 
-    /// Get the contents of the system clipboard. This may fail for a variety of backend-specific
-    /// reasons.
+    /// Get the contents of the system clipboard.
+    ///
+    /// This may fail for a variety of backend-specific reasons.
     #[cfg(feature = "clipboard")]
     pub fn get_clipboard(&mut self) -> Result<String, Box<dyn Error + Send + Sync + 'static>> {
         self.clipboard.get_contents()
     }
 
-    /// Set the contents of the system clipboard. This may fail for a variety of backend-specific
-    /// reasons.
+    /// Set the contents of the system clipboard.
+    ///
+    /// This may fail for a variety of backend-specific reasons.
     #[cfg(feature = "clipboard")]
     pub fn set_clipboard(
         &mut self,
