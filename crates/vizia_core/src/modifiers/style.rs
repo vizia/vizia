@@ -1,5 +1,5 @@
 use super::internal;
-use crate::prelude::*;
+use crate::{prelude::*, style::PseudoClass};
 
 /// Modifiers for changing the style properties of a view.
 pub trait StyleModifiers: internal::Modifiable {

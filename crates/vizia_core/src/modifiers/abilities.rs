@@ -1,5 +1,5 @@
 use super::internal;
-use crate::prelude::*;
+use crate::{prelude::*, style::Abilities};
 
 /// Modifiers for changing the abilities of a view.
 pub trait AbilityModifiers: internal::Modifiable {
