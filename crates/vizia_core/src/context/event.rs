@@ -41,13 +41,15 @@ use super::DrawCache;
 /// }
 ///
 /// impl View for CustomView {
-///     fn event(&self, cx: &mut EventContext, event: &mut Event) {
+///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
 ///         event.map(|window_event, _| match window_event {
 ///             WindowEvent::Press{mouse} => {
 ///                 let current = cx.current();
 ///                 // Change the view background color to red when pressed.
 ///                 cx.style.background_color.insert(current, Color::red());
 ///             }
+///
+///             _=> {}
 ///         });
 ///     }
 /// }

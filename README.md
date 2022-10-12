@@ -58,7 +58,9 @@ A simple counter application. Run with `cargo run --example counter`.
 <!-- TODO - Replace with GIF? -->
 <div align="center"><img src="https://raw.githubusercontent.com/vizia/vizia/main/assets/images/counter.png" width="400px" height="130px"/></div>
 
-```rust
+```rust, no_run
+# use vizia_core::prelude::*;
+# use vizia_winit::application::Application;
 // Define some model data
 #[derive(Lens)]
 pub struct AppData {
@@ -72,7 +74,7 @@ pub enum AppEvent {
 
 // Describe how the data is mutated in response to events
 impl Model for AppData {
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::Increment => {
                 self.count += 1;
