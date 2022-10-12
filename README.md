@@ -59,8 +59,7 @@ A simple counter application. Run with `cargo run --example counter`.
 <div align="center"><img src="https://raw.githubusercontent.com/vizia/vizia/main/assets/images/counter.png" width="400px" height="130px"/></div>
 
 ```rust, no_run
-# use vizia_core::prelude::*;
-# use vizia_winit::application::Application;
+use vizia::prelude::*;
 // Define some model data
 #[derive(Lens)]
 pub struct AppData {
