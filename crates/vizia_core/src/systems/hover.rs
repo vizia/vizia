@@ -35,14 +35,8 @@ pub fn hover_system(cx: &mut Context) {
         }
 
         // Skip non-hoverable widgets
-        // if cx.cache.get_hoverable(entity) != true {
-        //     continue;
-        // }
-
-        if let Some(abilities) = cx.style.abilities.get(entity).cloned() {
-            if !abilities.contains(Abilities::HOVERABLE) {
-                continue;
-            }
+        if !cx.cache.get_hoverability(entity) {
+            continue;
         }
 
         let mut transform = cx.cache.get_transform(entity);

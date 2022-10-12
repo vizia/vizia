@@ -55,7 +55,7 @@ pub mod prelude {
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     #[cfg(feature = "localization")]
     pub use super::localization::Localized;
-    pub use super::modifiers::Actions;
+    pub use super::modifiers::ActionModifiers;
     pub use super::resource::fonts;
     pub use super::view::Handle;
     pub use super::view::{Canvas, View};

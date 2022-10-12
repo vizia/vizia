@@ -10,6 +10,7 @@ use fluent_bundle::{FluentBundle, FluentResource};
 use image::GenericImageView;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
 #[cfg(feature = "localization")]
 use unic_langid::LanguageIdentifier;
 
@@ -67,8 +68,8 @@ pub(crate) enum FontOrId {
 #[doc(hidden)]
 #[derive(Default)]
 pub struct ResourceManager {
-    pub stylesheets: Vec<String>, // Stylesheets refer to a file path
-    pub themes: Vec<String>,      // Themes are the string content stylesheets
+    pub stylesheets: Vec<PathBuf>, // Stylesheets refer to a file path
+    pub themes: Vec<String>,       // Themes are the string content stylesheets
     pub(crate) images: HashMap<String, StoredImage>,
     pub(crate) fonts: HashMap<String, FontOrId>,
     #[cfg(feature = "localization")]
