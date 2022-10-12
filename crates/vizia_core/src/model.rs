@@ -1,4 +1,4 @@
-//! Model
+//! Models are used to store application data and can be bound to by views to visually display the data.
 
 use std::{
     any::{Any, TypeId},

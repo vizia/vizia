@@ -1,3 +1,5 @@
+//! Types used for handling input events such as mouse and keyboard.
+
 mod keymap;
 pub use keymap::*;
 

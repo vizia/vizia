@@ -1,4 +1,4 @@
-<div align="center"><img src="./assets/branding/vizia-logo-01.png" width="128px" height="128px"/><h1>Vizia</h1></div>
+<div align="center"><img src="https://raw.githubusercontent.com/vizia/vizia/main/assets/branding/vizia-logo-01.png" width="128px" height="128px"/><h1>Vizia</h1></div>
 
 <div align="center">
   <!-- License -->
@@ -56,7 +56,7 @@
 A simple counter application. Run with `cargo run --example counter`.
 
 <!-- TODO - Replace with GIF? -->
-<div align="center"><img src="./assets/images/counter.png" width="400px" height="130px"/></div>
+<div align="center"><img src="https://raw.githubusercontent.com/vizia/vizia/main/assets/images/counter.png" width="400px" height="130px"/></div>
 
 ```rust
 // Define some model data

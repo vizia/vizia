@@ -1,5 +1,6 @@
-#![allow(dead_code)]
+//! Resource management for fonts, themes, images, and translations.
 
+#![allow(dead_code)]
 pub mod fonts;
 
 use crate::context::Context;
