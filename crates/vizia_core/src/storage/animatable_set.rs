@@ -280,9 +280,9 @@ where
         self.shared_data.insert(rule, value).unwrap();
     }
 
-    pub(crate) fn remove_rule(&mut self, rule: Rule) -> Option<T> {
-        self.shared_data.remove(rule)
-    }
+    // pub(crate) fn remove_rule(&mut self, rule: Rule) -> Option<T> {
+    //     self.shared_data.remove(rule)
+    // }
 
     /// Inserts a transition for a given rule
     ///
@@ -491,15 +491,15 @@ where
         None
     }
 
-    /// Returns a reference to any shared data for a given rule if it exists.
-    pub(crate) fn get_shared(&self, rule: Rule) -> Option<&T> {
-        self.shared_data.get(rule)
-    }
+    // /// Returns a reference to any shared data for a given rule if it exists.
+    // pub(crate) fn get_shared(&self, rule: Rule) -> Option<&T> {
+    //     self.shared_data.get(rule)
+    // }
 
-    /// Returns a mutable reference to any shared data for a given rule if it exists.
-    pub(crate) fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut T> {
-        self.shared_data.get_mut(rule)
-    }
+    // /// Returns a mutable reference to any shared data for a given rule if it exists.
+    // pub(crate) fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut T> {
+    //     self.shared_data.get_mut(rule)
+    // }
 
     pub fn get_animation(&self, animation: Animation) -> Option<&AnimationState<T>> {
         self.animations.get(animation)

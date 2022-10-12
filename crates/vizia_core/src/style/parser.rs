@@ -14,7 +14,7 @@ use crate::style::*;
 use vizia_id::GenerationalId;
 
 #[derive(Clone)]
-pub(crate) enum CustomParseError {
+pub enum CustomParseError {
     InvalidLengthUnits(String),
     InvalidValue(String),
     UnrecognisedColorName(String),

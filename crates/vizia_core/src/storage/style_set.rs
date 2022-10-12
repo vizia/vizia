@@ -243,9 +243,9 @@ where
         self.shared_data.insert(rule, value).unwrap();
     }
 
-    pub(crate) fn remove_rule(&mut self, rule: Rule) -> Option<T> {
-        self.shared_data.remove(rule)
-    }
+    // pub(crate) fn remove_rule(&mut self, rule: Rule) -> Option<T> {
+    //     self.shared_data.remove(rule)
+    // }
 
     /// Returns a reference to any inline data on the entity if it exists.
     pub fn get_inline(&self, entity: Entity) -> Option<&T> {
@@ -273,15 +273,15 @@ where
         None
     }
 
-    /// Returns a reference to any shared data for a given rule if it exists.
-    pub(crate) fn get_shared(&self, rule: Rule) -> Option<&T> {
-        self.shared_data.get(rule)
-    }
+    // /// Returns a reference to any shared data for a given rule if it exists.
+    // pub(crate) fn get_shared(&self, rule: Rule) -> Option<&T> {
+    //     self.shared_data.get(rule)
+    // }
 
-    /// Returns a mutable reference to any shared data for a given rule if it exists.
-    pub(crate) fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut T> {
-        self.shared_data.get_mut(rule)
-    }
+    // /// Returns a mutable reference to any shared data for a given rule if it exists.
+    // pub(crate) fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut T> {
+    //     self.shared_data.get_mut(rule)
+    // }
 
     /// Get the animated, inline, or shared data value from the storage.
     pub fn get(&self, entity: Entity) -> Option<&T> {

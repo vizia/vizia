@@ -1,7 +1,4 @@
-use crate::{
-    prelude::*,
-    style::{Abilities, PseudoClass},
-};
+use crate::{prelude::*, style::PseudoClass};
 use vizia_id::GenerationalId;
 
 // Determines the hovered entity based on the mouse cursor position.
