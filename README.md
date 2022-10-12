@@ -60,6 +60,7 @@ A simple counter application. Run with `cargo run --example counter`.
 
 ```rust, no_run
 use vizia::prelude::*;
+
 // Define some model data
 #[derive(Lens)]
 pub struct AppData {
@@ -82,7 +83,9 @@ impl Model for AppData {
     }
 }
 
+// Create an application with a single default window
 Application::new(|cx| {
+    
     // Build the model data into the tree
     AppData { count: 0 }.build(cx);
 
