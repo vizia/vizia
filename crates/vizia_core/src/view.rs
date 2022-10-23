@@ -355,7 +355,7 @@ pub trait View: 'static + Sized {
             canvas.translate(-bounds.x + d / 2.0, -bounds.y + d / 2.0);
             let mut outer_shadow = path.clone();
             let paint = Paint::color(outer_shadow_color);
-            canvas.fill_path(&mut outer_shadow, paint);
+            canvas.fill_path(&mut outer_shadow, &paint);
 
             canvas.restore();
 
@@ -375,7 +375,7 @@ pub trait View: 'static + Sized {
 
             canvas.fill_path(
                 &mut path,
-                Paint::image(
+                &Paint::image(
                     target_image,
                     bounds.x - d / 2.0,
                     bounds.y - d / 2.0,
@@ -442,14 +442,14 @@ pub trait View: 'static + Sized {
         //canvas.global_composite_blend_func(BlendFactor::DstColor, BlendFactor::OneMinusSrcAlpha);
 
         // Fill the quad
-        canvas.fill_path(&mut path, paint);
+        canvas.fill_path(&mut path, &paint);
 
         //println!("{:.2?} seconds for whatever you did.", start.elapsed());
 
         // Draw border
         let mut paint = Paint::color(border_color);
         paint.set_line_width(border_width);
-        canvas.stroke_path(&mut path, paint);
+        canvas.stroke_path(&mut path, &paint);
 
         // Draw outline
         let mut outline_path = Path::new();
@@ -466,7 +466,7 @@ pub trait View: 'static + Sized {
         );
         let mut outline_paint = Paint::color(outline_color);
         outline_paint.set_line_width(outline_width);
-        canvas.stroke_path(&mut outline_path, outline_paint);
+        canvas.stroke_path(&mut outline_path, &outline_paint);
 
         // // Draw inner shadow
         // let mut path = Path::new();
@@ -569,7 +569,7 @@ pub trait View: 'static + Sized {
                             path.rect(x, y, w, h);
 
                             let paint = Paint::image(id, x, y, w, h, 0.0, 1.0);
-                            canvas.fill_path(&mut path, paint);
+                            canvas.fill_path(&mut path, &paint);
                         }
 
                         _ => {}
@@ -589,11 +589,11 @@ pub trait View: 'static + Sized {
                 paint.set_text_baseline(baseline);
 
                 let font_metrics =
-                    cx.text_context.measure_font(paint).expect("Failed to read font metrics");
+                    cx.text_context.measure_font(&paint).expect("Failed to read font metrics");
 
                 let text_width = if text_wrap { w } else { f32::MAX };
 
-                if let Ok(lines) = text_layout(text_width, &text, paint, &cx.text_context) {
+                if let Ok(lines) = text_layout(text_width, &text, &paint, &cx.text_context) {
                     // difference between first line and last line
                     let delta_height = font_metrics.height() * (lines.len() - 1) as f32;
                     let first_line_y = match baseline {
@@ -601,8 +601,14 @@ pub trait View: 'static + Sized {
                         Baseline::Middle => y - delta_height / 2.0,
                         Baseline::Alphabetic | Baseline::Bottom => y - delta_height,
                     };
-                    let metrics =
-                        measure_text_lines(&text, paint, &lines, x, first_line_y, &cx.text_context);
+                    let metrics = measure_text_lines(
+                        &text,
+                        &paint,
+                        &lines,
+                        x,
+                        first_line_y,
+                        &cx.text_context,
+                    );
                     let cached: Vec<(std::ops::Range<usize>, TextMetrics)> =
                         lines.into_iter().zip(metrics.into_iter()).collect();
                     let selection = cx.text_selection();
@@ -653,7 +659,7 @@ pub trait View: 'static + Sized {
                                 let max_x = first_x.max(last_x).round();
                                 let mut path = Path::new();
                                 path.rect(min_x, min_y, max_x - min_x, font_metrics.height());
-                                canvas.fill_path(&mut path, Paint::color(color.clone().into()));
+                                canvas.fill_path(&mut path, &Paint::color(color.clone().into()));
                             }
                         }
                         // should we draw the cursor?
@@ -668,10 +674,10 @@ pub trait View: 'static + Sized {
                                     cx.logical_to_physical(1.0),
                                     font_metrics.height(),
                                 );
-                                canvas.fill_path(&mut path, Paint::color(color.clone().into()));
+                                canvas.fill_path(&mut path, &Paint::color(color.clone().into()));
                             }
                         }
-                        canvas.fill_text(x, y, &text[range.clone()], paint).ok();
+                        canvas.fill_text(x, y, &text[range.clone()], &paint).ok();
                     }
 
                     cx.draw_cache.text_lines.insert(cx.current, cached).unwrap();

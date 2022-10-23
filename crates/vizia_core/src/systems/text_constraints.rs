@@ -121,10 +121,10 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
                 paint.set_text_baseline(baseline);
 
                 let font_metrics =
-                    cx.text_context.measure_font(paint).expect("Failed to read font metrics");
+                    cx.text_context.measure_font(&paint).expect("Failed to read font metrics");
 
-                if let Ok(lines) = text_layout(f32::MAX, &text, paint, &cx.text_context) {
-                    let metrics = measure_text_lines(&text, paint, &lines, x, y, &cx.text_context);
+                if let Ok(lines) = text_layout(f32::MAX, &text, &paint, &cx.text_context) {
+                    let metrics = measure_text_lines(&text, &paint, &lines, x, y, &cx.text_context);
                     let text_width = metrics
                         .iter()
                         .map(|m| m.width())
