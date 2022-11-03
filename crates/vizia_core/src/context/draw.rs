@@ -58,7 +58,7 @@ impl DrawCache {
 ///         // Draw to the canvas using the bounds of the current view
 ///         let mut path = vg::Path::new();
 ///         path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-///         canvas.fill_path(&mut path, vg::Paint::color(vg::Color::rgb(200, 100, 100)));
+///         canvas.fill_path(&mut path, &vg::Paint::color(vg::Color::rgb(200, 100, 100)));
 ///     }
 /// }
 /// ```

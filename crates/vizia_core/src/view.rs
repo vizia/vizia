@@ -231,7 +231,7 @@ pub trait View: 'static + Sized {
     ///         // Add a rectangle to the path with the dimensions of the view bounds.
     ///         path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
     ///         // Fill the path onto the canvas with a red color.
-    ///         canvas.fill_path(&mut path, vg::Paint::color(Color::red().into()));
+    ///         canvas.fill_path(&mut path, &vg::Paint::color(Color::red().into()));
     ///     }
     /// }
     /// ```
