@@ -20,7 +20,7 @@ pub enum Propagation {
 /// A wrapper around a message, providing metadata on how the event travels through the tree.
 pub struct Event {
     /// The meta data of the event
-    pub meta: EventMeta,
+    pub(crate) meta: EventMeta,
     /// The message of the event
     pub(crate) message: Option<Box<dyn Any + Send>>,
 }
@@ -72,6 +72,33 @@ impl Event {
 
     /// Tries to downcast the event message to the specified type. If the downcast was successful,
     /// the message and the event metadata get passed into `f`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # let cx = &mut Context::new();
+    /// # use vizia_winit::application::Application;
+    /// # pub struct AppData {
+    /// #     count: i32,
+    /// # }
+    /// # pub enum AppEvent {
+    /// #     Increment,
+    /// #     Decrement,    
+    /// # }
+    /// # impl Model for AppData {
+    /// #     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    /// event.map(|app_event, _| match app_event {
+    ///     AppEvent::Increment => {
+    ///         self.count += 1;
+    ///     }
+    ///
+    ///     AppEvent::Decrement => {
+    ///         self.count -= 1;
+    ///     }
+    /// });
+    /// #     }
+    /// # }
+    /// ```
     pub fn map<M, F>(&mut self, f: F)
     where
         M: Any + Send,
@@ -86,6 +113,33 @@ impl Event {
 
     /// Tries to downcast the event message to the specified type. If the downcast was successful,
     /// return the message by value and consume the event. Otherwise, do nothing.
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # let cx = &mut Context::new();
+    /// # use vizia_winit::application::Application;
+    /// # pub struct AppData {
+    /// #     count: i32,
+    /// # }
+    /// # pub enum AppEvent {
+    /// #     Increment,
+    /// #     Decrement,    
+    /// # }
+    /// # impl Model for AppData {
+    /// #     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    /// event.take().map(|app_event| match app_event {
+    ///     AppEvent::Increment => {
+    ///         self.count += 1;
+    ///     }
+    ///
+    ///     AppEvent::Decrement => {
+    ///         self.count -= 1;
+    ///     }
+    /// });
+    /// #     }
+    /// # }
+    /// ```
     pub fn take<M: Any + Send>(&mut self) -> Option<M> {
         if let Some(message) = &self.message {
             if message.as_ref().is::<M>() {
@@ -115,13 +169,6 @@ pub struct EventMeta {
     pub(crate) consumed: bool,
     /// Specifies an order index which is used to sort the event queue.
     pub order: i32,
-}
-
-impl EventMeta {
-    /// Creates a new event meta.
-    pub fn new() -> Self {
-        Self::default()
-    }
 }
 
 impl EventMeta {

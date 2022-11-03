@@ -39,7 +39,7 @@
 //! ```
 //!
 //! Views and Models receive events through the `event()` method of the View or Model traits.
-//! The event message must then be downcast to the right type using the `map` or `take` methods on the event:
+//! The event message must then be downcast to the right type using the [`map`](Event::map) or [`take`](Event::take) methods on the event:
 //! ```no_run
 //! # use vizia_core::prelude::*;
 //! # let cx = &mut Context::new();
