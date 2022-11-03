@@ -68,6 +68,8 @@ use cssparser::{Parser, ParserInput};
 
 use crate::prelude::*;
 
+pub mod properties;
+
 mod color;
 pub use color::Color;
 

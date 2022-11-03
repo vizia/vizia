@@ -55,6 +55,33 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     modifier!(
+        /// Sets the width of the view.
+        width,
+        Units
+    );
+
+    modifier!(
+        /// Sets the height of the view.
+        height,
+        Units
+    );
+
+    /// Sets the width and height of the view.
+    fn size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.width.insert(entity, value);
+            cx.style.height.insert(entity, value);
+
+            cx.need_relayout();
+            cx.need_redraw();
+        });
+
+        self
+    }
+
+    modifier!(
         /// Sets the space on the left side of the view.
         ///
         /// The left space, along with the right space, determines the horizontal position of a view.
@@ -143,33 +170,6 @@ pub trait LayoutModifiers: internal::Modifiable {
             cx.style.right.insert(entity, value);
             cx.style.top.insert(entity, value);
             cx.style.bottom.insert(entity, value);
-
-            cx.need_relayout();
-            cx.need_redraw();
-        });
-
-        self
-    }
-
-    modifier!(
-        /// Sets the width of the view.
-        width,
-        Units
-    );
-
-    modifier!(
-        /// Sets the height of the view.
-        height,
-        Units
-    );
-
-    /// Sets the width and height of the view.
-    fn size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
-        let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            let value = v.into();
-            cx.style.width.insert(entity, value);
-            cx.style.height.insert(entity, value);
 
             cx.need_relayout();
             cx.need_redraw();
