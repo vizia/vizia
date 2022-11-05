@@ -2,7 +2,7 @@
 //!
 //! # Examples
 //! Modifiers can be used to apply inline [style](StyleModifiers) and [layout](LayoutModifiers) properties to a view:
-//! ```
+//! ```no_run
 //! # use vizia_core::prelude::*;
 //! # let cx = &mut Context::new();
 //! # use vizia_winit::application::Application;
@@ -13,7 +13,7 @@
 //! # }).run();
 //! ```
 //!
-//! ```
+//! ```no_run
 //! # use vizia_core::prelude::*;
 //! # let cx = &mut Context::new();
 //! # use vizia_winit::application::Application;
@@ -25,7 +25,7 @@
 //! ```
 //!
 //! Modifiers can also be used to add [actions](ActionModifiers) to a view:
-//! ```
+//! ```no_run
 //! # use vizia_core::prelude::*;
 //! # let cx = &mut Context::new();
 //! # use vizia_winit::application::Application;

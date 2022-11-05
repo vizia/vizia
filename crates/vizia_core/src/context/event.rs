@@ -27,7 +27,7 @@ use super::DrawCache;
 /// desired style and layout properties of the current view.
 ///
 /// # Example
-/// ```
+/// ```no_run
 /// # use vizia_core::prelude::*;
 /// # use vizia_core::vg;
 /// # let cx = &mut Context::new();

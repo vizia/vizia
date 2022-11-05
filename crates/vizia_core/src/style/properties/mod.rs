@@ -51,7 +51,7 @@
 //! <details>
 //!     <summary>Inline</summary>
 //!
-//! ```
+//! ```no_run
 //! # use vizia_core::prelude::*;
 //! # let cx = &mut Context::new();
 //! # use vizia_winit::application::Application;
@@ -79,7 +79,7 @@
 //! and will ignore its siblings or grid position. This is approximately equivalent to absolute positioning.
 //!
 //! ### Inline
-//! ```
+//! ```no_run
 //! # use vizia_core::prelude::*;
 //! # let cx = &mut Context::new();
 //! # use vizia_winit::application::Application;
