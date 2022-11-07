@@ -8,80 +8,89 @@ use vizia_input::{Code, Key, MouseButton};
 /// This type is part of the prelude.
 #[derive(Debug, Clone)]
 pub enum WindowEvent {
-    /// Emitted when a window is closed
+    /// Emitted when a window is closed.
     WindowClose,
-    /// Emitted when a window is opened
+    /// Emitted when a window changes size.
     WindowResize(f32, f32),
-    /// Emitted when a mouse button is double clicked
+    /// Emitted when a mouse button is double clicked.
     MouseDoubleClick(MouseButton),
     /// Emitted when a mouse button is triple clicked
     MouseTripleClick(MouseButton),
     /// Emitted when a mouse button is pressed
     MouseDown(MouseButton),
-    /// Emitted when a mouse button is released
+    /// Emitted when a mouse button is released.
     MouseUp(MouseButton),
-    /// When an interactable element has started to be triggered with a left mouse click or keyboard
-    TriggerDown {
+    /// Emitted when the primary mouse button or trigger key is pressed and then released on a view
+    Press {
         mouse: bool,
     },
-    /// When an interactable element has stopped being triggered with a left mouse click or keyboard
-    TriggerUp {
+    /// Emitted when the primary mouse button or trigger key is pressed on a view
+    PressDown {
         mouse: bool,
     },
     /// Emitted when the mouse cursor is moved
     MouseMove(f32, f32),
-    /// Emitted when the mouse scroll wheel is scrolled
+    /// Emitted when the mouse scroll wheel is scrolled.
     MouseScroll(f32, f32),
-    /// Emitted when the mouse cursor enters the bounding box of an entity
+    /// Emitted when the mouse cursor enters the bounding box of an entity.
     MouseOver,
-    /// Emitted when the mouse cursor leaves the bounding box of an entity
+    /// Emitted when the mouse cursor leaves the bounding box of an entity.
     MouseOut,
-    /// Emitted when the mouse cursor enters an entity or one of its descendants
+    /// Emitted when the mouse cursor enters an entity.
     MouseEnter,
-    /// Emitted when the mouse cursor leaves an entity or one of its descendants
+    /// Emitted when the mouse cursor leaves an entity.
     MouseLeave,
-
+    // Emitted when an entity gains keyboard focus.
     FocusIn,
-
+    // Emitted when an entity loses keyboard focus.
     FocusOut,
-
-    /// Emitted when a character is typed
+    /// Emitted when a character is typed.
     CharInput(char),
-    /// Emitted when a keyboard key is pressed
+    /// Emitted when a keyboard key is pressed.
     KeyDown(Code, Option<Key>),
-    /// Emitted when a keyboard key is released
+    /// Emitted when a keyboard key is released.
     KeyUp(Code, Option<Key>),
-    /// Sets the mouse cursor icon
+    /// Sets the mouse cursor icon.
     SetCursor(CursorIcon),
-    /// Grabs the mouse cursor, preventing it from leaving the window
+    /// Grabs the mouse cursor, preventing it from leaving the window.
     GrabCursor(bool),
-    /// Sets the (x,y) position of the mouse cursor in window coordinates
+    /// Sets the (x,y) position of the mouse cursor in window coordinates.
     SetCursorPosition(u32, u32),
-
+    /// Sets the title of the window.
     SetTitle(String),
+    /// Sets the size of the window.
     SetSize(WindowSize),
+    /// Sets the position of the window.
     SetPosition(Position),
+    /// Sets the maximum size of the window.
     SetMaxSize(Option<WindowSize>),
+    /// Sets the minimum size of the window.
     SetMinSize(Option<WindowSize>),
+    /// Sets whether the window is resizable.
     SetResizable(bool),
+    /// Sets whether the window is minimized.
     SetMinimized(bool),
+    /// Sets whether the window is maximized.
     SetMaximized(bool),
+    /// Sets whether the window is visible.
     SetVisible(bool),
+    /// Sets whether the window has decorations.
     SetDecorations(bool),
+    /// Sets whether the window remains on top of other windows.
     SetAlwaysOnTop(bool),
-
-    /// Emitted when mouse events have been captured
+    /// Emitted when mouse events have been captured.
     MouseCaptureEvent,
-    /// Emitted when mouse events have been released
+    /// Emitted when mouse events have been released.
     MouseCaptureOutEvent,
-    /// Emitted when an entity changes position or size (TODO: check if this includes margins + borders)
+    // TODO: check if this includes margins + borders.
+    /// Emitted when an entity changes position or size.
     GeometryChanged(GeometryChanged),
-    /// Requests a redraw of the window contents
+    /// Requests a redraw of the window contents.
     Redraw,
-    /// Request a restyle
+    /// Request a restyle.
     Restyle,
-    /// Requests a relayout
+    /// Requests a relayout.
     Relayout,
-    /// Prints the debug message to the console
+    /// Prints the debug message to the console.
     Debug(String),
 }

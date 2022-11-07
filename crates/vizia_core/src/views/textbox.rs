@@ -58,7 +58,7 @@ impl TextboxData {
 
         // calculate line height - we'll need this
         let paint = text_paint_general(cx.style, cx.resource_manager, entity);
-        let font_metrics = cx.text_context.measure_font(paint).unwrap();
+        let font_metrics = cx.text_context.measure_font(&paint).unwrap();
         let line_height = font_metrics.height();
 
         // we can't just access cache.text_lines because the text could be just-updated
@@ -66,9 +66,9 @@ impl TextboxData {
             TextboxKind::MultiLineWrapped => parent_bounds.w,
             _ => f32::MAX,
         };
-        let ranges = text_layout(render_width, &self.text, paint, &cx.text_context).unwrap();
+        let ranges = text_layout(render_width, &self.text, &paint, &cx.text_context).unwrap();
         let metrics =
-            measure_text_lines(&self.text, paint, &ranges, bounds.x, bounds.y, &cx.text_context);
+            measure_text_lines(&self.text, &paint, &ranges, bounds.x, bounds.y, &cx.text_context);
         let ranges_metrics = ranges.into_iter().zip(metrics.into_iter()).collect::<Vec<_>>();
         let (line, (x, _)) = idx_to_pos(self.selection.active, ranges_metrics.iter());
         if self.re_sel_x {
@@ -222,7 +222,7 @@ impl TextboxData {
             Movement::Line(dir) => {
                 let entity = self.content_entity;
                 let paint = text_paint_general(&cx.style, &cx.resource_manager, entity);
-                let font_metrics = cx.text_context.measure_font(paint).unwrap();
+                let font_metrics = cx.text_context.measure_font(&paint).unwrap();
                 // this computation happens in physical space
                 let line_height = font_metrics.height();
 
@@ -549,7 +549,7 @@ where
                 TextboxKind::MultiLineWrapped => "multi_line_wrapped",
             })
             .cursor(CursorIcon::Text)
-            .keyboard_navigatable(true)
+            .navigable(true)
     }
 }
 
@@ -616,7 +616,7 @@ where
                         Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered()),
                     );
                     cx.event_queue.push_back(
-                        Event::new(WindowEvent::TriggerDown { mouse: true }).target(cx.hovered()),
+                        Event::new(WindowEvent::PressDown { mouse: true }).target(cx.hovered()),
                     );
                 }
             }

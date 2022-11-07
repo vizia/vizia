@@ -82,7 +82,8 @@ impl Button {
             .build(cx, move |cx| {
                 (content)(cx).hoverable(false);
             })
-            .keyboard_navigatable(true)
+            .cursor(CursorIcon::Hand)
+            .navigable(true)
     }
 }
 
@@ -93,19 +94,17 @@ impl View for Button {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::TriggerDown { .. } => {
-                cx.set_active(true);
+            WindowEvent::PressDown { .. } => {
                 cx.capture();
                 cx.focus();
-                if let Some(callback) = &self.action {
-                    (callback)(cx);
-                }
             }
 
-            WindowEvent::TriggerUp { .. } => {
+            WindowEvent::Press { .. } => {
                 if meta.target == cx.current() {
+                    if let Some(callback) = &self.action {
+                        (callback)(cx);
+                    }
                     cx.release();
-                    cx.set_active(false);
                 }
             }
 
