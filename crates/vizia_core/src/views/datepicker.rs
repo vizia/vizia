@@ -239,7 +239,7 @@ impl Datepicker {
             .class("datepicker-actions-container");
         })
         .layout_type(LayoutType::Column)
-        .keyboard_navigatable(true)
+        .navigable(true)
     }
 }
 

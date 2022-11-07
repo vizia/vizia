@@ -110,7 +110,7 @@ impl Spinbox {
                 SpinboxKind::Horizontal => "horizontal",
                 SpinboxKind::Vertical => "vertical",
             })
-            .keyboard_navigatable(true)
+            .navigable(true)
     }
 }
 
