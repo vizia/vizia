@@ -82,18 +82,23 @@ button:disabled label {
 }
 
 checkbox {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border-radius: 4px;
     border-width: 2px;
     border-color: #888;
     background-color: transparent;
     child-space: 1s;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
+    font: "icons";
 }
 
 checkbox:hover {
     border-color: #51afef;
     background-color: transparent;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 checkbox:focus-visible {
@@ -106,6 +111,8 @@ checkbox:checked {
     background-color: #51afef;
     border-color: #51afef;
     color: #181818;
+    transition: background-color 0.2 0;
+    transition: border-color 0.1 0;
 }
 
 checkbox:disabled {
@@ -120,12 +127,16 @@ checkbox:checked:hover {
     background-color: #80caff;
     border-color: #80caff;
     color: #181818;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 checkbox:checked:disabled {
     background-color: #404040;
     border-color: #404040;
     color: #181818;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 dropdown .title {
