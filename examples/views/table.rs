@@ -23,9 +23,15 @@ where
                     Sorted::None => false,
                 };
                 let icon = if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
-                Element::new(cx).class("table-column-icon").text(icon).visibility(visible);
+                Element::new(cx)
+                    .class("table-column-icon")
+                    .font("icons")
+                    .text(icon)
+                    .visibility(visible);
             });
         })
+        .child_top(Stretch(1.0))
+        .child_bottom(Stretch(1.0))
         .on_press(move |cx| cx.emit(on_press.clone()));
 
         Element::new(cx).class("table-row-divisor");

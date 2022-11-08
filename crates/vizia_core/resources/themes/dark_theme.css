@@ -7,17 +7,14 @@ root {
     background-color: #181818;
     width: 1s;
     height: 1s;
-    child-top: 1s;
-    child-bottom: 1s;
-    child-left: 1s;
-    child-right: 1s;
+    child-space: 1s;
 }
 
 .container {
-    col-between: 10px;
-    row-between: 10px;
     width: auto;
     height: auto;
+    row-between: 8px;
+    col-between: 8px;
 }
 
 /* Button  */
@@ -53,6 +50,7 @@ button:active {
 button.accent {
     border-width: 0px;
     background-color: #51afef;
+    transition: background-color 0.1 0;
 }
 
 button.accent label {
@@ -61,6 +59,7 @@ button.accent label {
 
 button.accent:over {
     background-color: #80caff;
+    transition: background-color 0.1 0;
 }
 
 button.accent:active {

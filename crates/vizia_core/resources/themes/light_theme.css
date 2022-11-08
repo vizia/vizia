@@ -2,18 +2,14 @@ root {
     background-color: #e4e4e4;
     width: 1s;
     height: 1s;
-    child-top: 1s;
-    child-bottom: 1s;
-    child-left: 1s;
-    child-right: 1s;
+    child-space: 1s;
 }
 
 .container {
-    col-between: 10px;
-    row-between: 10px;
-    space: 1s;
     width: auto;
     height: auto;
+    row-between: 8px;
+    col-between: 8px;
 }
 
 /* Button  */

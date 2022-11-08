@@ -10,23 +10,20 @@ fn main() {
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
         VStack::new(cx, |cx| {
-            VStack::new(cx, |cx| {
-                Tooltip::new(cx, "Tooltip here!", |cx| {
-                    Label::new(cx, "Subtitle").class("subtitle");
-                    Label::new(cx, "Very serious tooltip explanation here.");
-                })
-                .on_ok(|_| println!("Ok!"));
-
-                TooltipSeq::new(cx, "Tooltip here!", |cx| {
-                    Label::new(cx, "Subtitle").class("subtitle");
-                    Label::new(cx, "Very serious tooltip explanation here.");
-                })
-                .on_next(|_| println!("Next!"))
-                .on_prev(|_| println!("Prev!"));
+            Tooltip::new(cx, "Tooltip here!", |cx| {
+                Label::new(cx, "Subtitle").class("subtitle");
+                Label::new(cx, "Very serious tooltip explanation here.");
             })
-            .class("container");
+            .on_ok(|_| println!("Ok!"));
+
+            TooltipSeq::new(cx, "Tooltip here!", |cx| {
+                Label::new(cx, "Subtitle").class("subtitle");
+                Label::new(cx, "Very serious tooltip explanation here.");
+            })
+            .on_next(|_| println!("Next!"))
+            .on_prev(|_| println!("Prev!"));
         })
-        .class("main");
+        .class("container");
     })
     .ignore_default_theme()
     .title("Tooltip")

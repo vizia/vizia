@@ -31,18 +31,15 @@ fn main() {
 
         AppData { value: 0.2 }.build(cx);
 
-        VStack::new(cx, |cx| {
-            HStack::new(cx, |cx| {
-                Knob::new(cx, 0.5, AppData::value, false).on_changing(|cx, val| {
-                    cx.emit(AppEvent::SetValue(val));
-                });
-                Knob::new(cx, 0.5, AppData::value, true).on_changing(|cx, val| {
-                    cx.emit(AppEvent::SetValue(val));
-                });
-            })
-            .class("container");
+        HStack::new(cx, |cx| {
+            Knob::new(cx, 0.5, AppData::value, false).on_changing(|cx, val| {
+                cx.emit(AppEvent::SetValue(val));
+            });
+            Knob::new(cx, 0.5, AppData::value, true).on_changing(|cx, val| {
+                cx.emit(AppEvent::SetValue(val));
+            });
         })
-        .class("main");
+        .class("container");
     })
     .ignore_default_theme()
     .title("Knob")

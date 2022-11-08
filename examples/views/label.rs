@@ -39,42 +39,32 @@ fn main() {
         .build(cx);
 
         VStack::new(cx, |cx| {
-            VStack::new(cx, |cx| {
-                //
+            Label::new(cx, "A label can display a static string of text.");
 
-                Label::new(cx, "A label can display a static string of text.");
+            Label::new(cx, AppData::text);
 
-                Label::new(cx, AppData::text);
+            Label::new(cx, AppData::value);
 
-                Label::new(cx, AppData::value);
+            Label::new(cx, "Text which is too long for the label will be wrapped.")
+                .width(Pixels(200.0));
 
-                Label::new(cx, "Text which is too long for the label will be wrapped.")
-                    .width(Pixels(200.0));
+            Label::new(cx, "Unless text wrapping is disabled.")
+                .width(Pixels(200.0))
+                .text_wrap(false);
 
-                Label::new(cx, "Unless text wrapping is disabled.")
-                    .width(Pixels(200.0))
-                    .text_wrap(false);
+            HStack::new(cx, |cx| {
+                Checkbox::new(cx, AppData::checked)
+                    .on_toggle(|cx| cx.emit(AppEvent::Toggle))
+                    .id("checkbox_1")
+                    .top(Units::Pixels(2.0))
+                    .bottom(Units::Pixels(2.0));
 
-                HStack::new(cx, |cx| {
-                    Checkbox::new(cx, AppData::checked)
-                        .on_toggle(|cx| cx.emit(AppEvent::Toggle))
-                        .id("checkbox_1")
-                        .top(Units::Pixels(2.0))
-                        .bottom(Units::Pixels(2.0));
-
-                    Label::new(
-                        cx,
-                        "A label that is describing a form element also acts as a trigger",
-                    )
+                Label::new(cx, "A label that is describing a form element also acts as a trigger")
                     .describing("checkbox_1");
-                })
-                .col_between(Units::Pixels(4.0));
-
-                //
             })
-            .class("container");
+            .col_between(Units::Pixels(4.0));
         })
-        .class("main");
+        .class("container");
     })
     .ignore_default_theme()
     .title("Label")
