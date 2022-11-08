@@ -212,11 +212,27 @@ impl<'w> Node<'w> for Entity {
     }
 
     fn grid_cols(&self, store: &Self::Data) -> Option<Vec<morphorm::Units>> {
-        store.0.grid_cols.get(*self).cloned()
+        store.0.grid_cols.get(*self).map(|grid_rows| {
+            grid_rows
+                .iter()
+                .map(|col| match col {
+                    Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+                    t => *t,
+                })
+                .collect::<Vec<_>>()
+        })
     }
 
     fn grid_rows(&self, store: &Self::Data) -> Option<Vec<morphorm::Units>> {
-        store.0.grid_rows.get(*self).cloned()
+        store.0.grid_rows.get(*self).map(|grid_rows| {
+            grid_rows
+                .iter()
+                .map(|row| match row {
+                    Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+                    t => *t,
+                })
+                .collect::<Vec<_>>()
+        })
     }
 
     fn row_between(&self, store: &Self::Data) -> Option<morphorm::Units> {
