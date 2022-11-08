@@ -18,10 +18,10 @@ fn main() {
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
         HStack::new(cx, |cx| {
-            Datepicker::new(cx, |_| println!("Cancel!"), |_, date| println!("Apply! {:?}", date));
+            Datepicker::new(cx).on_select(|cx, date| println!("{:?}", date));
         })
-        .class("main")
-        .child_space(Stretch(1.0));
+        .class("main");
+        //.child_space(Stretch(1.0));
     })
     .ignore_default_theme()
     .title("Datepicker")
