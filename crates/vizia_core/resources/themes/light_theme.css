@@ -116,14 +116,14 @@ checkbox:hover:disabled {
 }
 
 checkbox:checked:hover {
-    background-color: #9FD5FB;
-    border-color: #9FD5FB;
+    background-color: #9fd5fb;
+    border-color: #9fd5fb;
     color: #fff;
 }
 
 checkbox:checked:disabled {
-    background-color: #B6B6B6;
-    border-color: #B6B6B6;
+    background-color: #b6b6b6;
+    border-color: #b6b6b6;
     color: #fff;
 }
 
@@ -133,7 +133,7 @@ dropdown .title {
     background-color: #fff;
     border-radius: 4px;
     border-width: 1px;
-    border-color: #E4E4E4;
+    border-color: #e4e4e4;
     child-space: 1s;
     child-left: 5px;
     overflow: visible;
@@ -150,7 +150,7 @@ dropdown popup {
     background-color: #fff;
     border-radius: 4px;
     border-width: 1px;
-    border-color: #E4E4E4;
+    border-color: #e4e4e4;
 }
 
 dropdown popup list {
@@ -184,11 +184,11 @@ knob {
     background-color: #242424;
     border-radius: 38px;
     border-width: 2px;
-    border-color: #2F2F2F;
+    border-color: #2f2f2f;
 }
 
 knob .track {
-    background-color: #51AFEF;
+    background-color: #51afef;
 }
 
 knob:focus-visible {
@@ -320,10 +320,12 @@ spinbox {
 }
 
 spinbox.horizontal {
+    layout-type: row;
     height: 32px;
 }
 
 spinbox.vertical {
+    layout-type: column;
     width: 32px;
 }
 
@@ -346,14 +348,10 @@ spinbox .spinbox-button:hover {
 }
 
 spinbox .spinbox-value {
+    space: 1s;
     height: 24px;
     child-space: 1s;
     color: #000;
-}
-
-spinbox.vertical .spinbox-value {
-    left: 4px;
-    right: 4px;
 }
 
 switch {
@@ -619,13 +617,14 @@ timepicker .timepicker-dot {
     width: 6px;
     height: 6px;
     border-radius: 4px;
-    background-color: #B6B6B6;
+    background-color: #b6b6b6;
 }
 
 datepicker {
     background-color: #fff;
     width: 285px;
-    height: 324px;
+    /* height: 324px; */
+    height: auto;
 
     border-radius: 4px;
 
@@ -670,6 +669,8 @@ datepicker {
     height: 32px;
     color: #888;
     child-space: 1s;
+
+    cursor: hand;
 }
 
 .datepicker-calendar-day:checked {
@@ -683,6 +684,8 @@ datepicker {
     height: 32px;
     color: #d9d9d9;
     child-space: 1s;
+
+    cursor: arrow;
 }
 
 .datepicker-selected-date {
