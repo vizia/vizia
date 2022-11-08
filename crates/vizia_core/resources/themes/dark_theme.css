@@ -517,8 +517,8 @@ tablecolumn {
 }
 
 textbox {
-    width: 280px;
-    height: 80px;
+    width: auto;
+    height: auto;
     border-width: 1px;
     border-color: #2f2f2f;
     border-radius: 4px;

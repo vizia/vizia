@@ -80,8 +80,10 @@ where
                         Button::new(
                             cx,
                             |cx| cx.emit(TimepickerEvent::Ok),
-                            |cx| Label::new(cx, "Ok"),
-                        );
+                            |cx| Label::new(cx, "Ok").width(Stretch(1.0)),
+                        )
+                        .width(Stretch(1.0))
+                        .class("accent");
                     })
                     .class("timepicker-button-wrapper");
                 })

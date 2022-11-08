@@ -16,17 +16,14 @@ fn main() {
 
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
-        VStack::new(cx, |cx| {
-            HStack::new(cx, |cx| {
-                Timepicker::new(cx, AppData::timepicker_value)
-                    .on_changing(|cx, day_time| {
-                        cx.emit(AppDataSetter::TimepickerValue(day_time.clone()));
-                    })
-                    .on_ok(|_| println!("Ok!"));
-            })
-            .class("container");
+        HStack::new(cx, |cx| {
+            Timepicker::new(cx, AppData::timepicker_value)
+                .on_changing(|cx, day_time| {
+                    cx.emit(AppDataSetter::TimepickerValue(day_time.clone()));
+                })
+                .on_ok(|_| println!("Ok!"));
         })
-        .class("main");
+        .class("container");
     })
     .ignore_default_theme()
     .title("Spinbox")

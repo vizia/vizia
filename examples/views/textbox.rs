@@ -17,33 +17,30 @@ fn main() {
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
         VStack::new(cx, |cx| {
-            VStack::new(cx, |cx| {
-                Textbox::new(cx, AppData::text)
-                    .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
-                    .width(Pixels(200.0))
-                    .on_build(|cx| {
-                        cx.emit(TextEvent::StartEdit);
-                    });
+            Textbox::new(cx, AppData::text)
+                .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
+                .width(Pixels(200.0))
+                .on_build(|cx| {
+                    cx.emit(TextEvent::StartEdit);
+                });
 
-                Textbox::new(cx, AppData::text)
-                    .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
-                    .width(Pixels(200.0))
-                    .on_build(|cx| {
-                        cx.emit(TextEvent::StartEdit);
-                    })
-                    .disabled(true);
+            Textbox::new(cx, AppData::text)
+                .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
+                .width(Pixels(200.0))
+                .on_build(|cx| {
+                    cx.emit(TextEvent::StartEdit);
+                })
+                .disabled(true);
 
-                Textbox::new(cx, AppData::text)
-                    .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
-                    .width(Pixels(200.0))
-                    .on_build(|cx| {
-                        cx.emit(TextEvent::StartEdit);
-                    })
-                    .class("error");
-            })
-            .class("container");
+            Textbox::new(cx, AppData::text)
+                .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
+                .width(Pixels(200.0))
+                .on_build(|cx| {
+                    cx.emit(TextEvent::StartEdit);
+                })
+                .class("error");
         })
-        .class("main");
+        .class("container");
     })
     .ignore_default_theme()
     .title("Textbox")

@@ -1,5 +1,10 @@
 use vizia::prelude::*;
 
+#[allow(dead_code)]
+const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
+#[allow(dead_code)]
+const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
+
 const STYLE: &'static str = r#"
 textbox.validation_error {
     background-color: #ffc0c0;
@@ -43,6 +48,8 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
+        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
+
         cx.add_theme(STYLE);
         AppData { number: 5, invalid: false }.build(cx);
 
