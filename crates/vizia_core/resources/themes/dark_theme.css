@@ -3,7 +3,7 @@
     border-color: blue;
 }
 
-.main {
+root {
     background-color: #181818;
     width: 1s;
     height: 1s;
@@ -20,6 +20,8 @@
     height: auto;
 }
 
+/* Button  */
+
 button {
     width: auto;
     height: 28px;
@@ -27,35 +29,30 @@ button {
     child-space: 1s;
     child-left: 10px;
     child-right: 10px;
-    border-width: 2px;
-    border-color: #51afef;
+    border-width: 1px;
+    border-color: #424242;
+    background-color: #323232;
     overflow: visible;
+    transition: background-color 0.1 0;
 }
 
 button label {
-    color: #51afef;
+    color: #fff;
     child-space: 1s;
 }
 
 button:over {
-    border-color: #9fd5fb;
-}
-
-button:over label {
-    color: #9fd5fb;
+    background-color: #424242;
+    transition: background-color 0.1 0;
 }
 
 button:active {
-    border-color: #fff;
-}
-
-button:active label {
-    color: #fff;
+    background-color: #242424;
 }
 
 button.accent {
-    background-color: #51afef;
     border-width: 0px;
+    background-color: #51afef;
 }
 
 button.accent label {
@@ -63,11 +60,11 @@ button.accent label {
 }
 
 button.accent:over {
-    background-color: #9fd5fb;
+    background-color: #80caff;
 }
 
 button.accent:active {
-    background-color: #fff;
+    background-color: #3995d6;
 }
 
 button:focus-visible {
@@ -77,7 +74,8 @@ button:focus-visible {
 }
 
 button:disabled {
-    border-color: #888;
+    background-color: transparent;
+    border-color: #404040;
 }
 
 button:disabled label {
@@ -120,8 +118,8 @@ checkbox:hover:disabled {
 }
 
 checkbox:checked:hover {
-    background-color: #9fd5fb;
-    border-color: #9fd5fb;
+    background-color: #80caff;
+    border-color: #80caff;
     color: #181818;
 }
 
@@ -226,7 +224,7 @@ radiobutton:checked {
 }
 
 radiobutton:checked:hover {
-    border-color: #9fd5fb;
+    border-color: #80caff;
 }
 
 radiobutton:disabled {
@@ -247,7 +245,7 @@ radiobutton:checked .inner {
 }
 
 radiobutton:hover .inner {
-    background-color: #9fd5fb;
+    background-color: #80caff;
 }
 
 radiobutton:disabled .inner {
@@ -316,7 +314,7 @@ slider .thumb {
 }
 
 slider .thumb:hover {
-    background-color: #9fd5fb;
+    background-color: #80caff;
 }
 
 spinbox {
@@ -427,7 +425,7 @@ switch:checked .switch-handle-container .switch-handle {
 }
 
 switch:checked:hover .switch-handle-container .switch-handle {
-    background-color: #9fd5fb;
+    background-color: #80caff;
 }
 
 switch:disabled {

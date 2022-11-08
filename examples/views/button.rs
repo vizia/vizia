@@ -35,7 +35,7 @@ fn main() {
             })
             .class("container");
         })
-        .class("main");
+        .class("container");
     })
     .ignore_default_theme()
     .title("Button")
