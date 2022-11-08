@@ -1,7 +1,6 @@
 use std::cell::RefCell;
 
 use crate::fonts::{material_names::RIGHT, unicode_names::CHECK};
-use crate::modifiers::Over;
 use crate::prelude::*;
 use vizia_storage::TreeExt;
 
@@ -14,7 +13,7 @@ pub fn setup_menu_entry<T, F1, F2>(
     handle: Handle<'_, T>,
     on_select: F1,
     on_deselect: F2,
-) -> Handle<'_, Over<T>>
+) -> Handle<'_, T>
 where
     T: View,
     F1: 'static + Fn(&mut Context),
@@ -24,7 +23,7 @@ where
         let i = *data.counter.borrow();
         *data.counter.borrow_mut() += 1;
         handle
-            .keyboard_navigatable(true)
+            .navigable(true)
             .bind(MenuData::selected, move |handle, selected| {
                 let selected = selected.get(handle.cx) == Some(i);
                 handle.cx.set_selected(selected);
@@ -136,8 +135,7 @@ impl View for MenuController {
                         && matches!(
                             window_event,
                             WindowEvent::MouseMove(_, _)
-                                | WindowEvent::TriggerDown { .. }
-                                | WindowEvent::TriggerUp { .. }
+                                | WindowEvent::PressDown { .. }
                                 | WindowEvent::MouseScroll(_, _)
                                 | WindowEvent::MouseDoubleClick(_)
                         ))
@@ -161,7 +159,7 @@ impl View for MenuController {
                     }
                 }
             } else {
-                if let WindowEvent::TriggerDown { .. } = window_event {
+                if let WindowEvent::PressDown { .. } = window_event {
                     // capture focus on click
                     cx.capture();
                     cx.emit(MenuEvent::Activate);
@@ -218,7 +216,7 @@ impl Menu {
     /// Construct a new menu. The first closure is the label/stack/etc that will be displayed
     /// while the menu is closed, and the second closure will be passed to a vertical MenuStack
     /// to be constructed and then displayed when the menu is opened
-    pub fn new<F1, F2, Lbl>(cx: &mut Context, label: F1, items: F2) -> Handle<'_, Over<Self>>
+    pub fn new<F1, F2, Lbl>(cx: &mut Context, label: F1, items: F2) -> Handle<'_, Self>
     where
         F1: 'static + FnOnce(&mut Context) -> Handle<'_, Lbl>,
         F2: 'static + FnOnce(&mut Context),
@@ -259,7 +257,7 @@ pub struct MenuButton {
 }
 
 impl MenuButton {
-    pub fn new<F, A>(cx: &mut Context, contents: F, action: A) -> Handle<'_, Over<Self>>
+    pub fn new<F, A>(cx: &mut Context, contents: F, action: A) -> Handle<'_, Self>
     where
         F: 'static + FnOnce(&mut Context),
         A: 'static + Fn(&mut EventContext),
@@ -269,7 +267,7 @@ impl MenuButton {
                 .build(cx, move |cx| {
                     contents(cx);
                 })
-                .keyboard_navigatable(true),
+                .navigable(true),
             |_| {},
             |_| {},
         )
@@ -279,7 +277,7 @@ impl MenuButton {
         cx: &mut Context,
         text: impl 'static + Res<U>,
         action: A,
-    ) -> Handle<'_, Over<Self>>
+    ) -> Handle<'_, Self>
     where
         A: 'static + Fn(&mut EventContext),
     {
@@ -292,12 +290,7 @@ impl MenuButton {
         )
     }
 
-    pub fn new_check<F, A, L>(
-        cx: &mut Context,
-        builder: F,
-        action: A,
-        lens: L,
-    ) -> Handle<'_, Over<Self>>
+    pub fn new_check<F, A, L>(cx: &mut Context, builder: F, action: A, lens: L) -> Handle<'_, Self>
     where
         F: 'static + FnOnce(&mut Context),
         A: 'static + Fn(&mut EventContext),
@@ -323,7 +316,7 @@ impl MenuButton {
         text: impl 'static + Res<U>,
         action: A,
         lens: L,
-    ) -> Handle<'_, Over<Self>>
+    ) -> Handle<'_, Self>
     where
         A: 'static + Fn(&mut EventContext),
         L: 'static + Lens<Target = bool>,
@@ -346,7 +339,7 @@ impl View for MenuButton {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::TriggerDown { .. } => {
+            WindowEvent::PressDown { .. } => {
                 if let Some(callback) = &self.action {
                     callback(cx);
                     cx.emit(MenuEvent::Close);

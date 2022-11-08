@@ -297,7 +297,6 @@ where
     }
 
     pub fn play_animation(&mut self, entity: Entity, animation: Animation) {
-        //println!("Play Animation: {:?}", animation);
         let entity_index = entity.index();
 
         if !self.animations.contains(animation) {
@@ -349,7 +348,6 @@ where
             //else {
             // Safe to unwrap because already checked that the animation exists
             let mut anim_state = self.animations.get(animation).cloned().unwrap();
-            //println!("Start playing: {} {:?}", animation, anim_state);
             anim_state.output = Some(
                 self.animations
                     .get(animation)
@@ -408,8 +406,6 @@ where
             } else {
                 state.output = Some(T::interpolate(&start.1, &end.1, state.t));
             }
-
-            //println!("Tick: {:?}", state.get_output());
         }
 
         self.remove_innactive_animations();
@@ -566,34 +562,38 @@ where
                     let current_value = self.get(entity).cloned().unwrap_or_default();
                     let current_anim_state = &mut self.active_animations[entity_anim_index];
                     let rule_data_index = shared_data_index.data_index as usize;
-                    if rule_data_index == current_anim_state.from_rule {
-                        // Transitioning back to previous rule
-                        current_anim_state.from_rule = current_anim_state.to_rule;
-                        current_anim_state.to_rule = rule_data_index;
-                        *current_anim_state.keyframes.first_mut().unwrap() = (
-                            0.0,
-                            self.shared_data.dense[current_anim_state.from_rule].value.clone(),
-                        );
-                        *current_anim_state.keyframes.last_mut().unwrap() =
-                            (1.0, self.shared_data.dense[current_anim_state.to_rule].value.clone());
-                        current_anim_state.delay = current_anim_state.t - 1.0;
-                        current_anim_state.start_time = instant::Instant::now();
-                    } else {
-                        // Transitioning to new rule
-                        current_anim_state.to_rule = rule_data_index;
-                        *current_anim_state.keyframes.first_mut().unwrap() = (0.0, current_value);
-                        *current_anim_state.keyframes.last_mut().unwrap() =
-                            (1.0, self.shared_data.dense[current_anim_state.to_rule].value.clone());
-                        current_anim_state.t = 0.0;
-                        current_anim_state.t0 = 0.0;
-                        current_anim_state.start_time = instant::Instant::now();
+                    // Skip if the transition hasn't changed
+                    if current_anim_state.to_rule != rule_data_index {
+                        if rule_data_index == current_anim_state.from_rule {
+                            // Transitioning back to previous rule
+                            current_anim_state.from_rule = current_anim_state.to_rule;
+                            current_anim_state.to_rule = rule_data_index;
+                            *current_anim_state.keyframes.first_mut().unwrap() = (
+                                0.0,
+                                self.shared_data.dense[current_anim_state.from_rule].value.clone(),
+                            );
+                            *current_anim_state.keyframes.last_mut().unwrap() = (
+                                1.0,
+                                self.shared_data.dense[current_anim_state.to_rule].value.clone(),
+                            );
+                            current_anim_state.delay = current_anim_state.t - 1.0;
+                            current_anim_state.start_time = instant::Instant::now();
+                        } else {
+                            // Transitioning to new rule
+                            current_anim_state.to_rule = rule_data_index;
+                            *current_anim_state.keyframes.first_mut().unwrap() =
+                                (0.0, current_value);
+                            *current_anim_state.keyframes.last_mut().unwrap() = (
+                                1.0,
+                                self.shared_data.dense[current_anim_state.to_rule].value.clone(),
+                            );
+                            current_anim_state.t = 0.0;
+                            current_anim_state.t0 = 0.0;
+                            current_anim_state.start_time = instant::Instant::now();
+                        }
                     }
                 } else {
                     if let Some(transition_state) = self.animations.get_mut(rule_animation) {
-                        //if rule_animation.index() < self.animations.dense.len() {
-                        // let transition_state =
-                        //     &mut self.animations.dense[rule_animation.index()].value;
-                        //let transition_state = self.animations.get_mut(rule_animation).unwrap();
                         // Safe to unwrap because already checked that the rule exists
                         let end = self.shared_data.get(*rule).unwrap();
 
@@ -613,7 +613,9 @@ where
                         transition_state.from_rule =
                             self.inline_data.sparse[entity_index].data_index.index();
                         transition_state.to_rule = shared_data_index.index();
-                        self.play_animation(entity, rule_animation);
+                        if transition_state.from_rule != transition_state.to_rule {
+                            self.play_animation(entity, rule_animation);
+                        }
                         //}
                     }
                 }

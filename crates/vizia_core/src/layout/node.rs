@@ -142,7 +142,7 @@ impl<'w> Node<'w> for Entity {
         if let Some(text) = store.0.text.get(*self) {
             let paint = text_paint_layout(&store.0, &store.2, *self);
 
-            let font_metrics = store.1.measure_font(paint).expect("Failed to read font metrics");
+            let font_metrics = store.1.measure_font(&paint).expect("Failed to read font metrics");
             let mut child_space_x = 0.0;
             if let Some(Units::Pixels(val)) = store.0.child_left.get(*self) {
                 child_space_x += *val * store.0.dpi_factor as f32;
@@ -152,7 +152,7 @@ impl<'w> Node<'w> for Entity {
             }
             let child_width = (width - child_space_x).max(0.0);
 
-            if let Ok(lines) = text_layout(child_width, text, paint, &store.1) {
+            if let Ok(lines) = text_layout(child_width, text, &paint, &store.1) {
                 Some(font_metrics.height() * lines.len() as f32)
             } else {
                 None
@@ -212,11 +212,27 @@ impl<'w> Node<'w> for Entity {
     }
 
     fn grid_cols(&self, store: &Self::Data) -> Option<Vec<morphorm::Units>> {
-        store.0.grid_cols.get(*self).cloned()
+        store.0.grid_cols.get(*self).map(|grid_rows| {
+            grid_rows
+                .iter()
+                .map(|col| match col {
+                    Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+                    t => *t,
+                })
+                .collect::<Vec<_>>()
+        })
     }
 
     fn grid_rows(&self, store: &Self::Data) -> Option<Vec<morphorm::Units>> {
-        store.0.grid_rows.get(*self).cloned()
+        store.0.grid_rows.get(*self).map(|grid_rows| {
+            grid_rows
+                .iter()
+                .map(|row| match row {
+                    Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+                    t => *t,
+                })
+                .collect::<Vec<_>>()
+        })
     }
 
     fn row_between(&self, store: &Self::Data) -> Option<morphorm::Units> {

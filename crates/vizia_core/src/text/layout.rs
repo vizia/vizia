@@ -72,7 +72,7 @@ fn text_paint(
 pub fn text_layout(
     width: f32,
     text: &str,
-    paint: Paint,
+    paint: &Paint,
     text_context: &TextContext,
 ) -> Result<Vec<Range<usize>>, ErrorKind> {
     let mut lines = text_context.break_text_vec(width, text, paint)?;
@@ -119,18 +119,18 @@ pub fn text_layout(
 
 pub fn measure_text_lines(
     text: &str,
-    paint: Paint,
+    paint: &Paint,
     lines: &[Range<usize>],
     x: f32,
     y: f32,
     text_context: &TextContext,
 ) -> Vec<TextMetrics> {
     let mut metrics = vec![];
-    let line_height = text_context.measure_font(paint).unwrap().height();
+    let line_height = text_context.measure_font(&paint).unwrap().height();
 
     for (idx, line) in lines.iter().enumerate() {
         let y = y + idx as f32 * line_height;
-        if let Ok(mut res) = text_context.measure_text(x, y, &text[line.clone()], paint) {
+        if let Ok(mut res) = text_context.measure_text(x, y, &text[line.clone()], &paint) {
             for glyph in res.glyphs.iter_mut() {
                 glyph.byte_index += line.start;
             }

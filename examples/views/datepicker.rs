@@ -17,23 +17,12 @@ fn main() {
 
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
-        VStack::new(cx, |cx| {
-            HStack::new(cx, |cx| {
-                Datepicker::new(
-                    cx,
-                    |_| println!("Cancel!"),
-                    |_, date| println!("Apply! {:?}", date),
-                );
-            })
-            .size(Auto)
-            .row_between(Pixels(10.0))
-            .space(Stretch(1.0));
+        HStack::new(cx, |cx| {
+            Datepicker::new(cx).on_select(|cx, date| println!("{:?}", date));
         })
-        .class("main")
-        .width(Units::Stretch(1.0))
-        .height(Units::Stretch(1.0));
+        .class("main");
+        //.child_space(Stretch(1.0));
     })
-    //.ignore_default_theme()
     .ignore_default_theme()
     .title("Datepicker")
     .run();

@@ -42,7 +42,7 @@ pub use radio_buttons::RadioButton;
 pub use scrollbar::Scrollbar;
 pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
 pub use slider::Slider;
-pub use spinbox::{Spinbox, SpinboxData, SpinboxEvent, SpinboxKind};
+pub use spinbox::{Spinbox, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
 pub use switch::Switch;
 pub use tab::{TabPair, TabView};

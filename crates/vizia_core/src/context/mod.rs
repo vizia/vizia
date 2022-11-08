@@ -7,6 +7,7 @@ use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::path::Path;
 use std::sync::Mutex;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
@@ -406,9 +407,9 @@ impl Context {
         }
     }
 
-    pub fn add_stylesheet(&mut self, path: &str) -> Result<(), std::io::Error> {
-        let style_string = std::fs::read_to_string(path)?;
-        self.resource_manager.stylesheets.push(path.to_owned());
+    pub fn add_stylesheet(&mut self, path: impl AsRef<Path>) -> Result<(), std::io::Error> {
+        let style_string = std::fs::read_to_string(path.as_ref())?;
+        self.resource_manager.stylesheets.push(path.as_ref().to_owned());
         self.style.parse_theme(&style_string);
 
         Ok(())
