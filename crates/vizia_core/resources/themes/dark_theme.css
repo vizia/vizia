@@ -328,10 +328,12 @@ spinbox {
 }
 
 spinbox.horizontal {
+    layout-type: row;
     height: 32px;
 }
 
 spinbox.vertical {
+    layout-type: column;
     width: 32px;
 }
 
@@ -344,6 +346,8 @@ spinbox .spinbox-button {
     height: 24px;
     child-space: 1s;
     color: #888888;
+
+    cursor: hand;
 }
 
 spinbox.horizontal .spinbox-button {
@@ -359,17 +363,11 @@ spinbox .spinbox-button:hover {
 }
 
 spinbox .spinbox-value {
-    top: 4px;
-    bottom: 4px;
+    space: 1s;
 
     height: 24px;
     child-space: 1s;
     color: #ffffff;
-}
-
-spinbox.vertical .spinbox-value {
-    left: 4px;
-    right: 4px;
 }
 
 switch {
@@ -650,8 +648,10 @@ timepicker .timepicker-dot {
 
 datepicker {
     background-color: #242424;
+    /* width: 285px; */
     width: 285px;
-    height: 324px;
+    height: auto;
+    /* height: 324px; */
 
     border-radius: 4px;
 
@@ -696,6 +696,7 @@ datepicker {
     height: 32px;
     color: #888;
     child-space: 1s;
+    cursor: hand;
 }
 
 .datepicker-calendar-day:checked {
@@ -709,6 +710,7 @@ datepicker {
     height: 32px;
     color: #404040;
     child-space: 1s;
+    cursor: arrow;
 }
 
 .datepicker-selected-date {
