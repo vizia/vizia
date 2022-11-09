@@ -23,6 +23,10 @@ name = "datepicker"
 path = "examples/views/datepicker.rs"
 
 [[example]]
+name = "datetimepicker"
+path = "examples/views/datetimepicker.rs"
+
+[[example]]
 name = "cursor_icon"
 path = "examples/cursor_icon.rs"
 

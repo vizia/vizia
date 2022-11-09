@@ -766,6 +766,40 @@ datepicker {
     color: #181818;
 }
 
+/* datetimepicker .tabview-tabheader-wrapper {
+    child-left: 1s;
+    child-right: 1s;
+} */
+
+datetimepicker {
+    height: 362px;
+    width: 285px;
+}
+
+datetimepicker tabheader {
+    width: 1s;
+}
+
+datetimepicker tabheader label {
+    width: 1s;
+    height: 32px;
+    font: "icons";
+    child-space: 1s;
+}
+
+datetimepicker tabheader:checked label {
+    color: #51afef;
+}
+
+datetimepicker tabheader .indicator {
+    background-color: #2f2f2f;
+    height: 1px;
+}
+
+datetimepicker tabheader:checked .indicator {
+    background-color: #51afef;
+}
+
 tabview {
     width: 1s;
     height: 1s;
@@ -773,30 +807,23 @@ tabview {
 }
 
 .tabview-tabheader-wrapper {
-    height: 32px;
-    child-space: 4px;
-    col-between: 4px;
-    border-radius: 4px;
-    border-width: 1px;
-    border-color: #323232;
+    height: auto;
 }
 
 tabheader {
     width: auto;
-    height: 32px;
-    border-radius: 4px;
+    height: auto;
     color: #fff;
-    background-color: #323232;
 }
 
-tabheader label {
+/* tabheader label {
     top: 4px;
     bottom: 4px;
     left: 8px;
     right: 8px;
-}
+} */
 
-tabheader:disabled {
+/* tabheader:disabled {
     background-color: transparent;
 }
 
@@ -808,4 +835,4 @@ tabheader:disabled label {
     width: 1s;
     height: 1s;
     background-color: #121212;
-}
+} */

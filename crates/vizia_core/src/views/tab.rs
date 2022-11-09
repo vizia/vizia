@@ -33,7 +33,7 @@ impl TabView {
                                 TabView::selected_index,
                                 move |handle, selected_index| {
                                     let selected_index = selected_index.get(handle.cx);
-                                    handle.disabled(selected_index != index);
+                                    handle.checked(selected_index == index);
                                 },
                             );
                         }
