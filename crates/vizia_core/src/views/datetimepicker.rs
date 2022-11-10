@@ -1,54 +1,114 @@
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+
 use crate::prelude::*;
 
 const ICON_CALENDAR: &str = "\u{1f4c5}";
 const ICON_CLOCK: &str = "\u{1f554}";
 
-#[derive(Lens, Setter)]
-pub struct DatetimePicker {
-    tabs: Vec<&'static str>,
-    current_time: DayTime,
+pub enum DatetimePickerEvent {
+    SetDate(NaiveDate),
+    SetTime(NaiveTime),
 }
 
-impl DatetimePicker {
-    pub fn new(cx: &mut Context) -> Handle<Self> {
-        Self {
-            tabs: vec!["calendar", "clock"],
-            current_time: DayTime { hour: 10, minutes: 9, zone: AMOrPM::PM },
-        }
-        .build(cx, |cx| {
-            TabView::new(cx, DatetimePicker::tabs, |cx, item| match item.get(cx) {
-                "calendar" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, ICON_CALENDAR);
-                        Element::new(cx).class("indicator");
-                    },
-                    |cx| {
-                        Datepicker::new(cx);
-                    },
-                ),
+#[derive(Lens)]
+pub struct DatetimePicker<L: Lens> {
+    lens: L,
+    tabs: Vec<&'static str>,
+    // current_time: DayTime,
+    on_change: Option<Box<dyn Fn(&mut EventContext, NaiveDateTime)>>,
+}
 
-                "clock" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, ICON_CLOCK).font("icons");
-                        Element::new(cx).class("indicator");
-                    },
-                    |cx| {
-                        RadialTimepicker::new(cx)
-                            // .on_changing(|cx, day_time| {
-                            //     cx.emit(DatetimePickerSetter::CurrentTime(day_time.clone()));
-                            // })
-                            .size(Stretch(1.0));
-                    },
-                ),
+impl<L> DatetimePicker<L>
+where
+    L: Lens<Target = NaiveDateTime>,
+{
+    pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
+        Self { lens: lens.clone(), tabs: vec!["calendar", "clock"], on_change: None }.build(
+            cx,
+            |cx| {
+                TabView::new(cx, Self::tabs, move |cx, item| match item.get(cx) {
+                    "calendar" => {
+                        let lens1 = lens.clone();
+                        TabPair::new(
+                            move |cx| {
+                                Label::new(cx, ICON_CALENDAR).hoverable(false);
+                                Element::new(cx).class("indicator");
+                            },
+                            move |cx| {
+                                Datepicker::new(cx, lens1.clone().map(|datetime| datetime.date()))
+                                    .on_select(|cx, date| {
+                                        cx.emit(DatetimePickerEvent::SetDate(date))
+                                    });
+                            },
+                        )
+                    }
 
-                _ => TabPair::new(|_| {}, |_| {}),
-            });
-        })
+                    "clock" => {
+                        let lens1 = lens.clone();
+                        TabPair::new(
+                            move |cx| {
+                                Label::new(cx, ICON_CLOCK).font("icons").hoverable(false);
+                                Element::new(cx).class("indicator");
+                            },
+                            move |cx| {
+                                RadialTimepicker::new(
+                                    cx,
+                                    lens1.clone().map(|datetime| datetime.time()),
+                                )
+                                .on_change(|cx, time| {
+                                    cx.emit(DatetimePickerEvent::SetTime(time));
+                                })
+                                .size(Stretch(1.0));
+                            },
+                        )
+                    }
+
+                    _ => TabPair::new(|_| {}, |_| {}),
+                });
+            },
+        )
     }
 }
 
-impl View for DatetimePicker {
+impl<L> View for DatetimePicker<L>
+where
+    L: Lens<Target = NaiveDateTime>,
+{
     fn element(&self) -> Option<&'static str> {
         Some("datetimepicker")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|datetimepicker_event, _| match datetimepicker_event {
+            DatetimePickerEvent::SetDate(date) => {
+                if let Some(callback) = &self.on_change {
+                    let current = self.lens.get(cx);
+                    let new = NaiveDateTime::new(*date, current.time());
+                    (callback)(cx, new);
+                }
+            }
+
+            DatetimePickerEvent::SetTime(time) => {
+                if let Some(callback) = &self.on_change {
+                    let current = self.lens.get(cx);
+                    let new = NaiveDateTime::new(current.date(), *time);
+                    (callback)(cx, new);
+                }
+            }
+        });
+    }
+}
+
+impl<'v, L> Handle<'v, DatetimePicker<L>>
+where
+    L: Lens<Target = NaiveDateTime>,
+{
+    pub fn on_change<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, NaiveDateTime),
+    {
+        self.modify(|datetimepicker: &mut DatetimePicker<L>| {
+            datetimepicker.on_change = Some(Box::new(callback))
+        })
     }
 }

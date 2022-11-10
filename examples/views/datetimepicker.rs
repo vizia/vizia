@@ -1,9 +1,32 @@
-use chrono::{Date, Utc};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use vizia::prelude::*;
+
+const ICON_CALENDAR: &str = "\u{1f4c5}";
 
 #[derive(Clone, Lens)]
 struct AppState {
-    date: Date<Utc>,
+    datetime: NaiveDateTime,
+    show_popup: bool,
+}
+
+pub enum AppEvent {
+    SetDateTime(NaiveDateTime),
+    ToggleDatetimePicker,
+}
+
+impl Model for AppState {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetDateTime(datetime) => {
+                println!("Datetime changed to: {}", datetime);
+                self.datetime = *datetime;
+            }
+
+            AppEvent::ToggleDatetimePicker => {
+                self.show_popup ^= true;
+            }
+        });
+    }
 }
 
 #[allow(dead_code)]
@@ -13,18 +36,51 @@ const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
 
 fn main() {
     Application::new(|cx| {
-        AppState { date: Utc::today() }.build(cx);
+        AppState { datetime: Utc::now().naive_utc(), show_popup: false }.build(cx);
+
+        PopupData::default().build(cx);
 
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
-        HStack::new(cx, |cx| {
-            DatetimePicker::new(cx);
+        VStack::new(cx, |cx| {
+            ZStack::new(cx, |cx| {
+                Textbox::new(
+                    cx,
+                    AppState::datetime
+                        .map(|datetime| format!("{}", datetime.format("%Y-%m-%d %H:%M:%S"))),
+                )
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .width(Pixels(252.0))
+                .height(Pixels(32.0));
+
+                Label::new(cx, ICON_CALENDAR)
+                    .height(Pixels(32.0))
+                    .width(Pixels(32.0))
+                    .left(Stretch(1.0))
+                    .right(Pixels(0.0))
+                    .child_space(Stretch(1.0))
+                    .font("icons")
+                    // .border_color(Color::blue())
+                    // .border_width(Pixels(1.0))
+                    .cursor(CursorIcon::Hand)
+                    .on_press(|cx| cx.emit(PopupEvent::Switch));
+            })
+            //.border_color(Color::red())
+            //.border_width(Pixels(1.0))
+            .width(Pixels(252.0))
+            .height(Pixels(32.0));
+
+            Popup::new(cx, PopupData::is_open, false, |cx| {
+                DatetimePicker::new(cx, AppState::datetime)
+                    .on_change(|cx, datetime| cx.emit(AppEvent::SetDateTime(datetime)));
+            })
+            .on_blur(|cx| cx.emit(PopupEvent::Close))
+            .top(Pixels(36.0));
         })
-        .class("main");
+        .row_between(Pixels(8.0));
     })
     .ignore_default_theme()
     .title("Datepicker")
     .run();
 }
-
-impl Model for AppState {}

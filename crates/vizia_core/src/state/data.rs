@@ -61,7 +61,10 @@ impl_data_simple!(std::net::SocketAddr);
 impl_data_simple!(std::ops::RangeFull);
 impl_data_simple!(std::path::PathBuf);
 impl_data_simple!(LanguageIdentifier);
-
+impl_data_simple!(chrono::Date<chrono::Utc>);
+impl_data_simple!(chrono::DateTime<chrono::Utc>);
+impl_data_simple!(chrono::NaiveDate);
+impl_data_simple!(chrono::NaiveTime);
 impl_data_simple!(String);
 
 impl Data for &'static str {

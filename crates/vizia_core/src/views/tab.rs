@@ -17,25 +17,25 @@ impl TabView {
     where
         L: Lens<Target = Vec<T>>,
         T: 'static,
-        F: 'static + Copy + Fn(&mut Context, Then<L, Index<Vec<T>, T>>) -> TabPair,
+        F: 'static + Clone + Fn(&mut Context, Then<L, Index<Vec<T>, T>>) -> TabPair,
     {
         Self { selected_index: 0 }
             .build(cx, move |cx| {
                 let lens2 = lens.clone();
+                let content2 = content.clone();
                 // Tab headers
                 HStack::new(cx, move |cx| {
                     Binding::new(cx, lens.clone().map(|list| list.len()), move |cx, list_length| {
                         let list_length = list_length.get_fallible(cx).map_or(0, |d| d);
                         for index in 0..list_length {
                             let l = lens.clone().index(index);
-                            let builder = (content)(cx, l).header;
-                            TabHeader::new(cx, index, builder).bind(
-                                TabView::selected_index,
-                                move |handle, selected_index| {
+                            let builder = (content2)(cx, l).header;
+                            TabHeader::new(cx, index, builder)
+                                .bind(TabView::selected_index, move |handle, selected_index| {
                                     let selected_index = selected_index.get(handle.cx);
                                     handle.checked(selected_index == index);
-                                },
-                            );
+                                })
+                                .cursor(CursorIcon::Hand);
                         }
                     })
                 })
