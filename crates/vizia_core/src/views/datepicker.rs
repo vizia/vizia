@@ -4,11 +4,7 @@ use crate::prelude::*;
 
 #[derive(Lens)]
 pub struct Datepicker {
-    // The current date.
     view_date: NaiveDate,
-
-    // The current month.
-    month_str: String,
 
     #[lens(ignore)]
     on_select: Option<Box<dyn Fn(&mut EventContext, NaiveDate)>>,
@@ -110,16 +106,19 @@ impl Datepicker {
         let view_date = lens.clone().get(cx);
 
         Self {
-            month_str: MONTHS[view_date.month() as usize - 1].to_string(),
-            view_date: NaiveDate::from_ymd(view_date.year(), view_date.month(), view_date.day()),
+            view_date: NaiveDate::from_ymd(view_date.year(), view_date.month(), 1),
             on_select: None,
         }
         .build(cx, |cx| {
             HStack::new(cx, |cx| {
-                Spinbox::new(cx, Datepicker::month_str, SpinboxKind::Horizontal)
-                    .width(Stretch(3.0))
-                    .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
-                    .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
+                Spinbox::new(
+                    cx,
+                    Datepicker::view_date.map(|date| MONTHS[date.month() as usize - 1].to_string()),
+                    SpinboxKind::Horizontal,
+                )
+                .width(Stretch(3.0))
+                .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
+                .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
                 Spinbox::new(
                     cx,
                     Datepicker::view_date.map(|date| date.year()),
@@ -219,8 +218,6 @@ impl View for Datepicker {
                         self.view_date.day(),
                     );
                 }
-
-                self.month_str = MONTHS[self.view_date.month() as usize - 1].to_string();
             }
 
             DatepickerEvent::DecrementMonth => {
@@ -234,8 +231,6 @@ impl View for Datepicker {
                         self.view_date.day(),
                     );
                 }
-
-                self.month_str = MONTHS[self.view_date.month() as usize - 1].to_string();
             }
 
             DatepickerEvent::IncrementYear => {
