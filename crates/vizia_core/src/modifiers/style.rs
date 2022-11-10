@@ -1,5 +1,5 @@
 use super::internal;
-use crate::prelude::*;
+use crate::{prelude::*, style::Transform2D};
 
 /// Modifiers for changing the style properties of a view.
 pub trait StyleModifiers: internal::Modifiable {
@@ -270,28 +270,38 @@ pub trait StyleModifiers: internal::Modifiable {
         CursorIcon
     );
 
-    // Transform Properties
-    modifier!(
-        /// Sets the angle of rotation for the view.
-        ///
-        /// Rotation applies to the rendered view and does not affect layout.
-        rotate,
-        f32
-    );
-    modifier!(
-        /// Sets the translation offset of the view.
-        ///
-        /// Translation applies to the rendered view and does not affect layout.
-        translate,
-        (f32, f32)
-    );
+    // // Transform Properties
+    // modifier!(
+    //     /// Sets the angle of rotation for the view.
+    //     ///
+    //     /// Rotation applies to the rendered view and does not affect layout.
+    //     rotate,
+    //     f32
+    // );
+    // modifier!(
+    //     /// Sets the translation offset of the view.
+    //     ///
+    //     /// Translation applies to the rendered view and does not affect layout.
+    //     translate,
+    //     (f32, f32)
+    // );
+    // modifier!(
+    //     /// Sets the scale of the view.
+    //     ///
+    //     /// Scale applies to the rendered view and does not affect layout.
+    //     scale,
+    //     (f32, f32)
+    // );
+
     modifier!(
         /// Sets the scale of the view.
         ///
         /// Scale applies to the rendered view and does not affect layout.
-        scale,
-        (f32, f32)
+        transform,
+        Transform2D
     );
+
+    // modifier!(transform, Transform2D);
 }
 
 impl<'a, V: View> StyleModifiers for Handle<'a, V> {}

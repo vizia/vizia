@@ -1,4 +1,7 @@
-use crate::prelude::*;
+use crate::{prelude::*, style::Transform2D};
+
+const ICON_LEFT_OPEN: &str = "\u{e75d}";
+const ICON_RIGHT_OPEN: &str = "\u{e75e}";
 
 #[derive(PartialEq, Data, Clone, Copy, Debug)]
 pub enum AMOrPM {
@@ -20,6 +23,9 @@ pub enum TimepickerEvent {
     DecrementHour,
     DecrementMinutes,
     ToggleAMOrPM,
+    SetHours(u8),
+    SetMinutes(u8),
+    SetPage(RadialTimepickerPage),
 }
 
 #[derive(Lens)]
@@ -163,6 +169,207 @@ impl View for Timepicker {
                     (callback)(cx, self.current.clone())
                 }
             }
+
+            _ => {}
         })
     }
+}
+
+#[derive(PartialEq, Data, Clone, Copy, Debug)]
+pub enum RadialTimepickerPage {
+    Hours,
+    Minutes,
+}
+
+#[derive(Lens)]
+pub struct RadialTimepicker {
+    hours: u8,
+    minutes: u8,
+    page: RadialTimepickerPage,
+}
+
+impl RadialTimepicker {
+    pub fn new(cx: &mut Context) -> Handle<Self> {
+        Self { hours: 1, minutes: 10, page: RadialTimepickerPage::Hours }
+            .build(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    Binding::new(cx, RadialTimepicker::page, |cx, page| match page.get(cx) {
+                        RadialTimepickerPage::Hours => {
+                            Binding::new(cx, RadialTimepicker::hours, |cx, hours| {
+                                let hours = hours.get(cx);
+
+                                let angle = (hours) as f32 * 30.0;
+
+                                let mut transform = Transform2D::identity();
+                                transform.rotate(angle);
+                                transform
+                                    .premultiply(&Transform2D::identity().translate(0.0, -57.0));
+                                Element::new(cx)
+                                    .width(Pixels(1.0))
+                                    .height(Pixels(90.0))
+                                    .transform(transform)
+                                    .position_type(PositionType::SelfDirected)
+                                    .class("clock-hand");
+                            });
+
+                            for i in 0..12 {
+                                let mut transform = Transform2D::identity();
+                                transform.rotate(30.0 * (i + 1) as f32);
+                                transform
+                                    .premultiply(&Transform2D::identity().translate(0.0, -105.0));
+                                transform.premultiply(
+                                    &Transform2D::identity().rotate(-30.0 * (i + 1) as f32),
+                                );
+
+                                Label::new(cx, i + 1)
+                                    .size(Pixels(30.0))
+                                    .transform(transform)
+                                    .position_type(PositionType::SelfDirected)
+                                    .child_space(Stretch(1.0))
+                                    .border_radius(Percentage(50.0))
+                                    .cursor(CursorIcon::Hand)
+                                    .on_press(move |ex| ex.emit(TimepickerEvent::SetHours(i + 1)))
+                                    .class("marker")
+                                    .checked(
+                                        RadialTimepicker::hours.map(move |hours| *hours == i + 1),
+                                    );
+                            }
+                        }
+
+                        RadialTimepickerPage::Minutes => {
+                            Binding::new(cx, RadialTimepicker::minutes, |cx, minutes| {
+                                let minutes = minutes.get(cx);
+
+                                let angle = (minutes / 5) as f32 * 30.0;
+
+                                let mut transform = Transform2D::identity();
+                                transform.rotate(angle);
+                                transform
+                                    .premultiply(&Transform2D::identity().translate(0.0, -57.0));
+                                Element::new(cx)
+                                    .width(Pixels(1.0))
+                                    .height(Pixels(90.0))
+                                    .transform(transform)
+                                    .position_type(PositionType::SelfDirected)
+                                    .class("clock-hand");
+                            });
+
+                            for i in 0..12 {
+                                let mut transform = Transform2D::identity();
+                                transform.rotate(30.0 * i as f32);
+                                transform
+                                    .premultiply(&Transform2D::identity().translate(0.0, -105.0));
+                                transform
+                                    .premultiply(&Transform2D::identity().rotate(-30.0 * i as f32));
+
+                                Label::new(cx, &format!("{:#02}", i * 5))
+                                    .size(Pixels(30.0))
+                                    .transform(transform)
+                                    .position_type(PositionType::SelfDirected)
+                                    .child_space(Stretch(1.0))
+                                    .border_radius(Percentage(50.0))
+                                    .cursor(CursorIcon::Hand)
+                                    .on_press(move |ex| ex.emit(TimepickerEvent::SetMinutes(i * 5)))
+                                    .class("marker")
+                                    .checked(
+                                        RadialTimepicker::minutes
+                                            .map(move |minutes| *minutes / 5 == i),
+                                    );
+                            }
+                        }
+                    });
+
+                    Element::new(cx)
+                        .size(Pixels(4.0))
+                        .border_radius(Percentage(50.0))
+                        .position_type(PositionType::SelfDirected)
+                        .class("center-dot");
+                })
+                .child_space(Stretch(1.0))
+                .border_radius(Percentage(50.0))
+                .class("clock-face");
+
+                Label::new(cx, ICON_LEFT_OPEN)
+                    .position_type(PositionType::SelfDirected)
+                    .size(Pixels(30.0))
+                    .space(Stretch(1.0))
+                    .left(Pixels(8.0))
+                    .top(Pixels(8.0))
+                    .child_space(Stretch(1.0))
+                    //.background_color(Color::rgb(200, 200, 200))
+                    .border_radius(Percentage(50.0))
+                    .font("icons")
+                    .disabled(
+                        RadialTimepicker::page.map(|page| page == &RadialTimepickerPage::Hours),
+                    )
+                    .class("switch-page-button")
+                    .on_press(|cx| cx.emit(TimepickerEvent::SetPage(RadialTimepickerPage::Hours)));
+
+                Label::new(cx, ICON_RIGHT_OPEN)
+                    .position_type(PositionType::SelfDirected)
+                    .size(Pixels(30.0))
+                    .space(Stretch(1.0))
+                    .right(Pixels(8.0))
+                    .top(Pixels(8.0))
+                    .child_space(Stretch(1.0))
+                    //.background_color(Color::rgb(200, 200, 200))
+                    .border_radius(Percentage(50.0))
+                    .font("icons")
+                    .disabled(
+                        RadialTimepicker::page.map(|page| page == &RadialTimepickerPage::Minutes),
+                    )
+                    .class("switch-page-button")
+                    .on_press(|cx| {
+                        cx.emit(TimepickerEvent::SetPage(RadialTimepickerPage::Minutes))
+                    });
+            })
+            // .child_space(Stretch(1.0))
+            .size(Pixels(220.0))
+    }
+}
+
+impl View for RadialTimepicker {
+    fn element(&self) -> Option<&'static str> {
+        Some("radial_timepicker")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|timepicker_event, _| match timepicker_event {
+            TimepickerEvent::SetHours(hours) => {
+                self.hours = *hours;
+                self.page = RadialTimepickerPage::Minutes;
+            }
+
+            TimepickerEvent::SetMinutes(minutes) => {
+                self.minutes = *minutes;
+            }
+
+            TimepickerEvent::SetPage(page) => {
+                self.page = *page;
+            }
+
+            _ => {}
+        });
+    }
+
+    // fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+    //     let bounds = cx.bounds();
+
+    //     match self.page {
+    //         RadialTimepickerPage::Hours => {
+    //             let angle = (self.hours - 1) as f32 * 30.0;
+    //             canvas.save();
+    //             canvas.translate(bounds.x + bounds.w / 2.0, bounds.y + bounds.h / 2.0);
+    //             let mut path = vg::Path::new();
+    //             path.move_to(0.0, 0.0);
+    //             path.line_to(0.0, -100.0);
+    //             canvas.stroke_path(&mut path, &vg::Paint::color(Color::black().into()));
+    //             canvas.restore();
+    //         }
+
+    //         _ => {} //RadialTimepickerPage::Minutes => (self.minutes as f32 / 5.0) * 30.0,
+    //     }
+
+    //     // println!("angle: {}", angle);
+    // }
 }

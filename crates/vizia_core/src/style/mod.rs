@@ -111,9 +111,10 @@ pub struct Style {
     pub clip_widget: SparseSet<Entity>,
 
     // Transform
-    pub rotate: AnimatableSet<f32>,
-    pub translate: AnimatableSet<(f32, f32)>,
-    pub scale: AnimatableSet<(f32, f32)>,
+    // pub rotate: AnimatableSet<f32>,
+    // pub translate: AnimatableSet<(f32, f32)>,
+    // pub scale: AnimatableSet<(f32, f32)>,
+    pub transform: StyleSet<Transform2D>,
 
     pub overflow: StyleSet<Overflow>, // TODO
     //pub scroll: DenseStorage<Scroll>,     // TODO
@@ -969,9 +970,11 @@ impl Style {
         self.clip_widget.remove(entity);
 
         // Transform
-        self.translate.remove(entity);
-        self.rotate.remove(entity);
-        self.scale.remove(entity);
+        // self.translate.remove(entity);
+        // self.rotate.remove(entity);
+        // self.scale.remove(entity);
+
+        self.transform.remove(entity);
 
         self.overflow.remove(entity);
 
@@ -1088,9 +1091,11 @@ impl Style {
         self.z_order.clear_rules();
 
         // Transform
-        self.translate.clear_rules();
-        self.rotate.clear_rules();
-        self.scale.clear_rules();
+        // self.translate.clear_rules();
+        // self.rotate.clear_rules();
+        // self.scale.clear_rules();
+
+        self.transform.clear_rules();
 
         self.overflow.clear_rules();
 

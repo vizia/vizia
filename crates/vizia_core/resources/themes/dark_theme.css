@@ -654,6 +654,59 @@ timepicker .timepicker-dot {
     background-color: #404040;
 }
 
+radial_timepicker {
+    background-color: #242424;
+    child-space: 1s;
+    border-radius: 4px;
+}
+
+radial_timepicker .clock-face {
+    background-color: #404040;
+    width: 200px;
+    height: 200px;
+}
+
+radial_timepicker .clock-hand {
+    background-color: #51afef;
+}
+
+radial_timepicker .center-dot {
+    background-color: #51afef;
+}
+
+radial_timepicker .marker {
+    background-color: transparent;
+}
+
+radial_timepicker .marker:checked {
+    background-color: #51afef;
+    color: #181818;
+}
+
+radial_timepicker .switch-page-button {
+    background-color: #51afef;
+}
+
+radial_timepicker .switch-page-button {
+    background-color: #51afef;
+    color: #181818;
+    cursor: hand;
+}
+
+radial_timepicker .switch-page-button:over {
+    background-color: #80caff;
+    transition: background-color 0.1 0;
+}
+
+radial_timepicker .switch-page-button:active {
+    background-color: #3995d6;
+}
+
+radial_timepicker .switch-page-button:disabled {
+    background-color: transparent;
+    color: #888;
+}
+
 datepicker {
     background-color: #242424;
     /* width: 285px; */

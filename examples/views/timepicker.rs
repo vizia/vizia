@@ -22,6 +22,7 @@ fn main() {
                     cx.emit(AppDataSetter::TimepickerValue(day_time.clone()));
                 })
                 .on_ok(|_| println!("Ok!"));
+            RadialTimepicker::new(cx);
         })
         .class("container");
     })

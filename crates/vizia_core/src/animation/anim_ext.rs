@@ -66,9 +66,9 @@ pub trait AnimExt: Copy + Sized {
         cx.style.border_radius_top_right.play_animation(self.entity(), animation);
 
         // Transform
-        cx.style.rotate.play_animation(self.entity(), animation);
+        // cx.style.rotate.play_animation(self.entity(), animation);
         // cx.style.translate.play_animation(self.entity(), animation);
-        cx.style.scale.play_animation(self.entity(), animation);
+        // cx.style.scale.play_animation(self.entity(), animation);
 
         // Display
         cx.style.opacity.play_animation(self.entity(), animation);

@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, style::Transform2D};
 
 macro_rules! impl_res_simple {
     ($t:ty) => {
@@ -49,6 +49,7 @@ impl_res_simple!(f32);
 impl_res_simple!(f64);
 impl_res_simple!(CursorIcon);
 impl_res_simple!(Overflow);
+impl_res_simple!(Transform2D);
 
 impl<T, L> Res<T> for L
 where

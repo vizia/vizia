@@ -103,7 +103,7 @@ impl<'w> Node<'w> for Entity {
 
     fn width(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.0.width.get(*self).cloned().map(|w| match w {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
             t => t,
         })
     }
@@ -164,7 +164,7 @@ impl<'w> Node<'w> for Entity {
 
     fn height(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.0.height.get(*self).cloned().map(|h| match h {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
             t => t,
         })
     }

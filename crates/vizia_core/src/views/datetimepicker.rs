@@ -33,11 +33,11 @@ impl DatetimePicker {
                         Element::new(cx).class("indicator");
                     },
                     |cx| {
-                        Timepicker::new(cx, DatetimePicker::current_time)
-                            .on_changing(|cx, day_time| {
-                                cx.emit(DatetimePickerSetter::CurrentTime(day_time.clone()));
-                            })
-                            .height(Pixels(100.0));
+                        RadialTimepicker::new(cx)
+                            // .on_changing(|cx, day_time| {
+                            //     cx.emit(DatetimePickerSetter::CurrentTime(day_time.clone()));
+                            // })
+                            .size(Stretch(1.0));
                     },
                 ),
 

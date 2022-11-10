@@ -375,27 +375,27 @@ impl<'a> KeyframeBuilder<'a> {
         self
     }
 
-    /// Adds a rotate transform property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_rotate(Pixels(50.0)))
-    /// ```
-    pub fn set_rotate(self, value: f32) -> Self {
-        if let Some(anim_cx) = self.cx.style.rotate.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, value));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, value));
+    // /// Adds a rotate transform property to the keyframe.
+    // ///
+    // /// # Example
+    // /// ```ignore
+    // /// .add_keyframe(0.0, |keyframe| keyframe.set_rotate(Pixels(50.0)))
+    // /// ```
+    // pub fn set_rotate(self, value: f32) -> Self {
+    //     if let Some(anim_cx) = self.cx.style.rotate.get_animation_mut(self.id) {
+    //         anim_cx.keyframes.push((self.time, value));
+    //     } else {
+    //         let anim_cx = AnimationState::new(self.id)
+    //             .with_duration(self.animation_description.duration)
+    //             .with_delay(self.animation_description.delay)
+    //             .set_persistent(self.animation_description.persistent)
+    //             .with_keyframe((self.time, value));
 
-            self.cx.style.rotate.insert_animation(self.id, anim_cx);
-        }
+    //         self.cx.style.rotate.insert_animation(self.id, anim_cx);
+    //     }
 
-        self
-    }
+    //     self
+    // }
 
     pub fn set_opacity(self, value: f32) -> Self {
         if let Some(anim_cx) = self.cx.style.opacity.get_animation_mut(self.id) {

@@ -4,6 +4,16 @@ use std::ops::{Index, IndexMut};
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct Transform2D(pub [f32; 6]);
 
+impl std::fmt::Display for Transform2D {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(
+            f,
+            "\u{2308}{} {} {}\u{2309}\n\u{230A}{} {} {}\u{230B}",
+            self.0[0], self.0[2], self.0[4], self.0[1], self.0[3], self.0[5]
+        )
+    }
+}
+
 impl Transform2D {
     pub fn new(a: f32, b: f32, c: f32, d: f32, e: f32, f: f32) -> Self {
         Self([a, b, c, d, e, f])
@@ -13,9 +23,9 @@ impl Transform2D {
         Self([1.0, 0.0, 0.0, 1.0, 0.0, 0.0])
     }
 
-    pub fn rotate(&mut self, a: f32) {
-        let cs = a.cos();
-        let sn = a.sin();
+    pub fn rotate(&mut self, a: f32) -> &mut Self {
+        let cs = a.to_radians().cos();
+        let sn = a.to_radians().sin();
 
         self[0] = cs;
         self[1] = sn;
@@ -23,6 +33,8 @@ impl Transform2D {
         self[3] = cs;
         self[4] = 0.0;
         self[5] = 0.0;
+
+        self
     }
 
     pub fn get_rotate(&self) -> f32 {
@@ -47,9 +59,11 @@ impl Transform2D {
         self[5] = ((t[1] as f64 * t[4] as f64 - t[0] as f64 * t[5] as f64) * invdet) as f32;
     }
 
-    pub fn translate(&mut self, tx: f32, ty: f32) {
+    pub fn translate(&mut self, tx: f32, ty: f32) -> &mut Self {
         self[4] = tx;
         self[5] = ty;
+
+        self
     }
 
     pub fn scale(&mut self, sx: f32, sy: f32) {
@@ -63,7 +77,7 @@ impl Transform2D {
         (dx, dy)
     }
 
-    pub fn multiply(&mut self, other: &Self) {
+    pub fn multiply(&mut self, other: &Self) -> &mut Self {
         let t0 = self[0] * other[0] + self[1] * other[2];
         let t2 = self[2] * other[0] + self[3] * other[2];
         let t4 = self[4] * other[0] + self[5] * other[2] + other[4];
@@ -73,12 +87,16 @@ impl Transform2D {
         self[0] = t0;
         self[2] = t2;
         self[4] = t4;
+
+        self
     }
 
-    pub fn premultiply(&mut self, other: &Self) {
+    pub fn premultiply(&mut self, other: &Self) -> &mut Self {
         let mut other = *other;
         other.multiply(self);
         *self = other;
+
+        self
     }
 }
 
