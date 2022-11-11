@@ -49,25 +49,25 @@ where
             cx,
             move |cx| {
                 HStack::new(cx, |cx| {
-                    Spinbox::new(
-                        cx,
-                        lens.clone().map(|time| format!("{:#02}", time.hour12().1)),
-                        SpinboxKind::Vertical,
-                    )
-                    .on_increment(|ex| ex.emit(TimepickerEvent::IncrementHour))
-                    .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementHour));
-                    VStack::new(cx, |cx| {
-                        Element::new(cx).class("timepicker-dot");
-                        Element::new(cx).class("timepicker-dot");
-                    })
-                    .class("timepicker-dots-wrapper");
-                    Spinbox::new(
-                        cx,
-                        lens.clone().map(|time| format!("{:#02}", time.minute())),
-                        SpinboxKind::Vertical,
-                    )
-                    .on_increment(|ex| ex.emit(TimepickerEvent::IncrementMinutes))
-                    .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementMinutes));
+                    // Spinbox::new(
+                    //     cx,
+                    //     lens.clone().map(|time| format!("{:#02}", time.hour12().1)),
+                    //     SpinboxKind::Vertical,
+                    // )
+                    // .on_increment(|ex| ex.emit(TimepickerEvent::IncrementHour))
+                    // .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementHour));
+                    // VStack::new(cx, |cx| {
+                    //     Element::new(cx).class("timepicker-dot");
+                    //     Element::new(cx).class("timepicker-dot");
+                    // })
+                    // .class("timepicker-dots-wrapper");
+                    // Spinbox::new(
+                    //     cx,
+                    //     lens.clone().map(|time| format!("{:#02}", time.minute())),
+                    //     SpinboxKind::Vertical,
+                    // )
+                    // .on_increment(|ex| ex.emit(TimepickerEvent::IncrementMinutes))
+                    // .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementMinutes));
                     VStack::new(cx, |cx| {
                         Button::new(
                             cx,

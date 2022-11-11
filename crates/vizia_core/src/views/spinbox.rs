@@ -20,9 +20,10 @@ pub enum SpinboxKind {
 }
 
 impl Spinbox {
-    pub fn new<L: Lens>(cx: &mut Context, lens: L, kind: SpinboxKind) -> Handle<Spinbox>
+    pub fn new<F, V>(cx: &mut Context, content: F, kind: SpinboxKind) -> Handle<Spinbox>
     where
-        <L as Lens>::Target: Data + ToString,
+        F: Fn(&mut Context) -> Handle<V>,
+        V: 'static + View,
     {
         Self { kind, on_decrement: None, on_increment: None }
             .build(cx, move |cx| {
@@ -40,12 +41,12 @@ impl Spinbox {
                         }
                     })
                     .class("spinbox-button");
-                Label::new(cx, lens.clone()).overflow(Overflow::Visible).class("spinbox-value");
+                (content)(cx).overflow(Overflow::Visible).class("spinbox-value");
                 Label::new(
                     cx,
                     Spinbox::kind.map(|kind| match kind {
                         SpinboxKind::Horizontal => "+",
-                        _ => "-",
+                        SpinboxKind::Vertical => "-",
                     }),
                 )
                 .font("icons")

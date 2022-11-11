@@ -111,22 +111,22 @@ impl Datepicker {
         }
         .build(cx, |cx| {
             HStack::new(cx, |cx| {
-                Spinbox::new(
-                    cx,
-                    Datepicker::view_date.map(|date| MONTHS[date.month() as usize - 1].to_string()),
-                    SpinboxKind::Horizontal,
-                )
-                .width(Stretch(3.0))
-                .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
-                .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
-                Spinbox::new(
-                    cx,
-                    Datepicker::view_date.map(|date| date.year()),
-                    SpinboxKind::Horizontal,
-                )
-                .width(Stretch(2.0))
-                .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
-                .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementYear));
+                // Spinbox::new(
+                //     cx,
+                //     Datepicker::view_date.map(|date| MONTHS[date.month() as usize - 1].to_string()),
+                //     SpinboxKind::Horizontal,
+                // )
+                // .width(Stretch(3.0))
+                // .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
+                // .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
+                // Spinbox::new(
+                //     cx,
+                //     Datepicker::view_date.map(|date| date.year()),
+                //     SpinboxKind::Horizontal,
+                // )
+                // .width(Stretch(2.0))
+                // .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
+                // .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementYear));
             })
             .class("datepicker-header");
 
