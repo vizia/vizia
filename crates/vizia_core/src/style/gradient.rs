@@ -43,7 +43,7 @@ pub struct LinearGradient {
     // Direction of the gradient
     pub direction: GradientDirection,
     // Stops of the gradient
-    pub stops: Vec<GradientStop>,
+    pub stops: Vec<(Units, Color)>,
 }
 
 impl LinearGradient {
@@ -51,19 +51,16 @@ impl LinearGradient {
         Self { direction, stops: Vec::new() }
     }
 
-    pub fn add_stop(mut self, stop: GradientStop) -> Self {
+    pub fn add_stop(mut self, stop: (Units, Color)) -> Self {
         self.stops.push(stop);
 
         self
     }
 
-    pub fn get_stops(&self, _parent_length: f32) -> Vec<(f32, Color)> {
+    pub fn get_stops(&self, parent_length: f32) -> Vec<(f32, Color)> {
         self.stops
             .iter()
-            .map(|stop| {
-                //println!("Stop: {:?}", stop.position.value_or(parent_length, 0.0));
-                (stop.position.value_or(1.0, 0.0), stop.color)
-            })
+            .map(|(pos, col)| (pos.value_or(parent_length, 0.0) / parent_length, *col))
             .collect::<Vec<_>>()
     }
 }

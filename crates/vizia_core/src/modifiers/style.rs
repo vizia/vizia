@@ -138,6 +138,14 @@ pub trait StyleModifiers: internal::Modifiable {
         String
     );
 
+    modifier!(
+        /// Sets the background gradient of the view.
+        ///
+        /// Background gradients will override any background color.
+        background_gradient,
+        LinearGradient
+    );
+
     // TODO: Docs for this.
     fn image<U: ToString>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
