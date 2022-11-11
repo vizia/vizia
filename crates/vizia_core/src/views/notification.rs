@@ -17,7 +17,7 @@ impl Notification {
                 Element::new(cx).class("color-strip");
                 VStack::new(cx, move |cx| {
                     let some_text = text.is_some();
-                    HStack::new(cx, move |cx| {
+                    let header = HStack::new(cx, move |cx| {
                         Label::new(cx, &header);
                         HStack::new(cx, |cx| {
                             if some_text {
@@ -36,13 +36,22 @@ impl Notification {
                         .class("icon-container");
                     })
                     .class("notification-header")
-                    .background_color(Notification::container_open.map(|v| {
-                        if *v {
-                            Color::from("#51afef22")
+                    .bind(Notification::container_open, |h, open| {
+                        if open.get(h.cx) {
+                            h.background_gradient(
+                                LinearGradient::new(GradientDirection::LeftToRight)
+                                    .add_stop(Percentage(0.0), Color::from("#51afef22"))
+                                    .add_stop(Percentage(100.0), Color::from("#51afef22")),
+                            );
                         } else {
-                            Color::from("#242424")
+                            h.background_gradient(
+                                LinearGradient::new(GradientDirection::LeftToRight)
+                                    .add_stop(Percentage(0.0), Color::from("#51afef22"))
+                                    .add_stop(Percentage(25.0), Color::transparent()),
+                            );
                         }
-                    }));
+                    });
+
                     Binding::new(cx, Notification::container_open, move |cx, open| {
                         if open.get(cx) {
                             if let Some(text) = &text {
