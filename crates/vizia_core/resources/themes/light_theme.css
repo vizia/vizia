@@ -336,6 +336,10 @@ spinbox.vertical {
     width: 32px;
 }
 
+spinbox .container {
+    width: auto;
+}
+
 spinbox .spinbox-button {
     height: 24px;
     child-space: 1s;
@@ -354,11 +358,48 @@ spinbox .spinbox-button:hover {
     color: #000;
 }
 
-spinbox .spinbox-value {
+spinbox label.spinbox-value {
     space: 1s;
+    width: auto;
     height: 24px;
     child-space: 1s;
-    color: #000;
+}
+
+spinbox textbox.spinbox-value {
+    width: auto;
+    min-width: 24px;
+    height: 24px;
+    child-space: 1s;
+    left: 4px;
+    right: 4px;
+    border-width: 0px;
+    border-radius: 0px;
+}
+
+spinbox textbox.spinbox-value textboxcontainer {
+    child-space: 1s;
+    width: auto;
+}
+
+spinbox textbox.spinbox-value textboxlabel {
+    width: auto;
+}
+
+spinbox dropdown.spinbox-value {
+    width: 100px;
+}
+
+spinbox dropdown.spinbox-value .title {
+    background-color: transparent;
+    border-width: 0px;
+}
+
+spinbox dropdown.spinbox-value popup {
+    width: auto;
+}
+
+spinbox dropdown.spinbox-value popup * {
+    width: auto;
 }
 
 switch {

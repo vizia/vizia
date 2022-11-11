@@ -24,6 +24,14 @@ impl Spinbox {
     where
         <L as Lens>::Target: Data + ToString,
     {
+        Self::custom(cx, move |cx| Label::new(cx, lens.clone()), kind)
+    }
+
+    pub fn custom<F, V>(cx: &mut Context, content: F, kind: SpinboxKind) -> Handle<Spinbox>
+    where
+        F: Fn(&mut Context) -> Handle<V>,
+        V: 'static + View,
+    {
         Self { kind, on_decrement: None, on_increment: None }
             .build(cx, move |cx| {
                 Label::new(cx, "")
@@ -40,12 +48,12 @@ impl Spinbox {
                         }
                     })
                     .class("spinbox-button");
-                Label::new(cx, lens.clone()).overflow(Overflow::Visible).class("spinbox-value");
+                (content)(cx).class("spinbox-value");
                 Label::new(
                     cx,
                     Spinbox::kind.map(|kind| match kind {
                         SpinboxKind::Horizontal => "+",
-                        _ => "-",
+                        SpinboxKind::Vertical => "-",
                     }),
                 )
                 .font("icons")
