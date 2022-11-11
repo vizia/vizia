@@ -51,8 +51,8 @@ impl LinearGradient {
         Self { direction, stops: Vec::new() }
     }
 
-    pub fn add_stop(mut self, stop: (Units, Color)) -> Self {
-        self.stops.push(stop);
+    pub fn add_stop(mut self, stop_position: Units, stop_color: Color) -> Self {
+        self.stops.push((stop_position, stop_color));
 
         self
     }
