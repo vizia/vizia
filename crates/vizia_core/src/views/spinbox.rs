@@ -20,7 +20,14 @@ pub enum SpinboxKind {
 }
 
 impl Spinbox {
-    pub fn new<F, V>(cx: &mut Context, content: F, kind: SpinboxKind) -> Handle<Spinbox>
+    pub fn new<L: Lens>(cx: &mut Context, lens: L, kind: SpinboxKind) -> Handle<Spinbox>
+    where
+        <L as Lens>::Target: Data + ToString,
+    {
+        Self::custom(cx, move |cx| Label::new(cx, lens.clone()), kind)
+    }
+
+    pub fn custom<F, V>(cx: &mut Context, content: F, kind: SpinboxKind) -> Handle<Spinbox>
     where
         F: Fn(&mut Context) -> Handle<V>,
         V: 'static + View,

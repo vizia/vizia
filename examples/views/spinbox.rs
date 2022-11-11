@@ -50,15 +50,11 @@ fn main() {
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                Spinbox::new(
-                    cx,
-                    |cx| Label::new(cx, AppState::spinbox_value_1),
-                    SpinboxKind::Horizontal,
-                )
-                .on_increment(|ex| ex.emit(AppEvent::Increment1))
-                .on_decrement(|ex| ex.emit(AppEvent::Decrement1));
+                Spinbox::new(cx, AppState::spinbox_value_1, SpinboxKind::Horizontal)
+                    .on_increment(|ex| ex.emit(AppEvent::Increment1))
+                    .on_decrement(|ex| ex.emit(AppEvent::Decrement1));
 
-                Spinbox::new(
+                Spinbox::custom(
                     cx,
                     |cx| {
                         Textbox::new(cx, AppState::spinbox_value_2)
@@ -69,7 +65,7 @@ fn main() {
                 .on_increment(|ex| ex.emit(AppEvent::Increment2))
                 .on_decrement(|ex| ex.emit(AppEvent::Decrement2));
 
-                Spinbox::new(
+                Spinbox::custom(
                     cx,
                     |cx| {
                         Dropdown::new(
