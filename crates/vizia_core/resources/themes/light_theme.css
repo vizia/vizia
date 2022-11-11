@@ -824,3 +824,12 @@ tabheader:disabled label {
     height: 1s;
     background-color: #fff;
 }
+
+chip {
+    border-radius: 15px;
+    child-left: 8px;
+    child-right: 8px;
+    child-top: 4px;
+    child-bottom: 4px;
+    width: auto;
+}
