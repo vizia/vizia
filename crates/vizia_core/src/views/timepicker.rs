@@ -33,32 +33,41 @@ pub enum TimepickerEvent {
 }
 
 #[derive(Lens)]
-pub struct Timepicker {
-    current: DayTime,
-    on_changing: Option<Box<dyn Fn(&mut EventContext, DayTime) + Send + Sync>>,
-    on_ok: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
+pub struct Timepicker<L: Lens, T: Timelike + Data> {
+    lens: L,
+    p: PhantomData<T>,
+    on_change: Option<Box<dyn Fn(&mut EventContext, NaiveTime)>>,
 }
 
-impl Timepicker {
-    pub fn new<L>(cx: &mut Context, lens: L) -> Handle<Self>
-    where
-        L: Lens<Target = DayTime>,
-    {
-        Self { on_changing: None, on_ok: None, current: lens.clone().get(cx).clone() }.build(
+impl<L, T> Timepicker<L, T>
+where
+    L: Lens<Target = T>,
+    T: Timelike + Data,
+{
+    pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
+        Self { lens: lens.clone(), p: PhantomData::default(), on_change: None }.build(
             cx,
             move |cx| {
                 HStack::new(cx, |cx| {
-                    Spinbox::new(cx, lens.clone().then(DayTime::hour), SpinboxKind::Vertical)
-                        .on_increment(|ex| ex.emit(TimepickerEvent::IncrementHour))
-                        .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementHour));
+                    Spinbox::new(
+                        cx,
+                        lens.clone().map(|time| format!("{:#02}", time.hour12().1)),
+                        SpinboxKind::Vertical,
+                    )
+                    .on_increment(|ex| ex.emit(TimepickerEvent::IncrementHour))
+                    .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementHour));
                     VStack::new(cx, |cx| {
                         Element::new(cx).class("timepicker-dot");
                         Element::new(cx).class("timepicker-dot");
                     })
                     .class("timepicker-dots-wrapper");
-                    Spinbox::new(cx, lens.clone().then(DayTime::minutes), SpinboxKind::Vertical)
-                        .on_increment(|ex| ex.emit(TimepickerEvent::IncrementMinutes))
-                        .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementMinutes));
+                    Spinbox::new(
+                        cx,
+                        lens.clone().map(|time| format!("{:#02}", time.minute())),
+                        SpinboxKind::Vertical,
+                    )
+                    .on_increment(|ex| ex.emit(TimepickerEvent::IncrementMinutes))
+                    .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementMinutes));
                     VStack::new(cx, |cx| {
                         Button::new(
                             cx,
@@ -66,21 +75,13 @@ impl Timepicker {
                             |cx| {
                                 Label::new(
                                     cx,
-                                    lens.then(DayTime::zone).map(|zone| match zone {
-                                        AMOrPM::AM => "AM",
-                                        AMOrPM::PM => "PM",
+                                    lens.clone().map(|time| match time.hour12().0 {
+                                        false => "AM",
+                                        true => "PM",
                                     }),
                                 )
                             },
                         );
-
-                        Button::new(
-                            cx,
-                            |cx| cx.emit(TimepickerEvent::Ok),
-                            |cx| Label::new(cx, "Ok").width(Stretch(1.0)),
-                        )
-                        .width(Stretch(1.0))
-                        .class("accent");
                     })
                     .class("timepicker-button-wrapper");
                 })
@@ -90,23 +91,26 @@ impl Timepicker {
     }
 }
 
-impl<'a> Handle<'a, Timepicker> {
-    pub fn on_changing<F>(self, callback: F) -> Self
+impl<'a, L, T> Handle<'a, Timepicker<L, T>>
+where
+    L: Lens<Target = T>,
+    T: Timelike + Data,
+{
+    pub fn on_change<F>(self, callback: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, DayTime) + Send + Sync,
+        F: 'static + Fn(&mut EventContext, NaiveTime),
     {
-        self.modify(|timepicker: &mut Timepicker| timepicker.on_changing = Some(Box::new(callback)))
-    }
-
-    pub fn on_ok<F>(self, callback: F) -> Self
-    where
-        F: 'static + Fn(&mut EventContext) + Send + Sync,
-    {
-        self.modify(|timepicker: &mut Timepicker| timepicker.on_ok = Some(Box::new(callback)))
+        self.modify(|timepicker: &mut Timepicker<L, T>| {
+            timepicker.on_change = Some(Box::new(callback))
+        })
     }
 }
 
-impl View for Timepicker {
+impl<L, T> View for Timepicker<L, T>
+where
+    L: Lens<Target = T>,
+    T: Timelike + Data,
+{
     fn element(&self) -> Option<&'static str> {
         Some("timepicker")
     }
@@ -114,63 +118,96 @@ impl View for Timepicker {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|e, _| match e {
             TimepickerEvent::IncrementHour => {
-                self.current.hour += 1;
-                if self.current.hour > 12 {
-                    self.current.hour -= 12;
-                }
+                if let Some(callback) = &self.on_change {
+                    let current = self.lens.get(cx);
 
-                if let Some(callback) = &self.on_changing {
-                    (callback)(cx, self.current)
+                    let mut hours = current.hour() + 1;
+
+                    if hours == 12 {
+                        hours = 0;
+                    }
+
+                    if hours == 24 {
+                        hours = 12;
+                    }
+
+                    let new = NaiveTime::from_hms(hours, current.minute(), current.second());
+
+                    (callback)(cx, new);
                 }
             }
 
             TimepickerEvent::IncrementMinutes => {
-                self.current.minutes += 1;
-                if self.current.minutes >= 60 {
-                    self.current.minutes -= 60;
-                }
+                if let Some(callback) = &self.on_change {
+                    let current = self.lens.get(cx);
 
-                if let Some(callback) = &self.on_changing {
-                    (callback)(cx, self.current)
+                    let mut minutes = current.minute() + 1;
+
+                    if minutes >= 60 {
+                        minutes -= 60;
+                    }
+
+                    let new = NaiveTime::from_hms(current.hour(), minutes, current.second());
+
+                    (callback)(cx, new);
                 }
             }
 
             TimepickerEvent::DecrementHour => {
-                self.current.hour -= 1;
-                if self.current.hour == 0 {
-                    self.current.hour += 12;
-                }
+                if let Some(callback) = &self.on_change {
+                    let current = self.lens.get(cx);
 
-                if let Some(callback) = &self.on_changing {
-                    (callback)(cx, self.current)
+                    let mut hours = current.hour() as i32 - 1;
+
+                    if hours < 0 {
+                        hours += 12;
+                    }
+
+                    if current.hour12().0 && hours < 12 {
+                        hours += 12;
+                    }
+
+                    let new = NaiveTime::from_hms(hours as u32, current.minute(), current.second());
+
+                    (callback)(cx, new);
                 }
             }
 
             TimepickerEvent::DecrementMinutes => {
-                if self.current.minutes < 5 {
-                    self.current.minutes += 60;
-                }
-                self.current.minutes -= 5;
+                if let Some(callback) = &self.on_change {
+                    let current = self.lens.get(cx);
 
-                if let Some(callback) = &self.on_changing {
-                    (callback)(cx, self.current)
-                }
-            }
+                    let mut minutes = current.minute() as i32 - 1;
 
-            TimepickerEvent::Ok => {
-                if let Some(callback) = &self.on_ok {
-                    (callback)(cx)
+                    if minutes < 0 {
+                        minutes += 60;
+                    }
+
+                    let new = NaiveTime::from_hms(current.hour(), minutes as u32, current.second());
+
+                    (callback)(cx, new);
                 }
             }
 
             TimepickerEvent::ToggleAMOrPM => {
-                match self.current.zone {
-                    AMOrPM::AM => self.current.zone = AMOrPM::PM,
-                    AMOrPM::PM => self.current.zone = AMOrPM::AM,
-                }
+                if let Some(callback) = &self.on_change {
+                    let current = self.lens.get(cx);
 
-                if let Some(callback) = &self.on_changing {
-                    (callback)(cx, self.current.clone())
+                    let new = match current.hour12().0 {
+                        false => NaiveTime::from_hms(
+                            current.hour() + 12,
+                            current.minute(),
+                            current.second(),
+                        ),
+
+                        true => NaiveTime::from_hms(
+                            current.hour() - 12,
+                            current.minute(),
+                            current.second(),
+                        ),
+                    };
+
+                    (callback)(cx, new)
                 }
             }
 
@@ -376,7 +413,6 @@ where
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|timepicker_event, _| match timepicker_event {
             TimepickerEvent::SetHours(hours) => {
-                //self.hours = *hours;
                 if let Some(callback) = &self.on_change {
                     let current = self.lens.get(cx);
                     let mut new_hours =
@@ -393,7 +429,6 @@ where
             }
 
             TimepickerEvent::SetMinutes(minutes) => {
-                // self.minutes = *minutes;
                 if let Some(callback) = &self.on_change {
                     let current = self.lens.get(cx);
                     (callback)(

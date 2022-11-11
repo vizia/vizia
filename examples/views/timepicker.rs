@@ -33,13 +33,11 @@ fn main() {
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
         HStack::new(cx, |cx| {
-            // Timepicker::new(cx, AppData::timepicker_value)
-            //     .on_changing(|cx, day_time| {
-            //         cx.emit(AppDataSetter::TimepickerValue(day_time.clone()));
-            //     })
-            //     .on_ok(|_| println!("Ok!"));
+            Timepicker::new(cx, AppState::time).on_change(|cx, time| {
+                cx.emit(AppEvent::SetTime(time));
+            });
             RadialTimepicker::new(cx, AppState::time)
-                .on_changing(|cx, time| cx.emit(AppEvent::SetTime(time)));
+                .on_change(|cx, time| cx.emit(AppEvent::SetTime(time)));
         })
         .class("container");
     })

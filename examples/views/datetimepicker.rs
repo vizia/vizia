@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use chrono::{NaiveDateTime, Utc};
 use vizia::prelude::*;
 
 const ICON_CALENDAR: &str = "\u{1f4c5}";
@@ -15,7 +15,7 @@ pub enum AppEvent {
 }
 
 impl Model for AppState {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetDateTime(datetime) => {
                 println!("Datetime changed to: {}", datetime);
@@ -47,7 +47,7 @@ fn main() {
                 Textbox::new(
                     cx,
                     AppState::datetime
-                        .map(|datetime| format!("{}", datetime.format("%Y-%m-%d %H:%M:%S"))),
+                        .map(|datetime| format!("{}", datetime.format("%d/%m/%Y  %H:%M:%S"))),
                 )
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0))
@@ -61,13 +61,9 @@ fn main() {
                     .right(Pixels(0.0))
                     .child_space(Stretch(1.0))
                     .font("icons")
-                    // .border_color(Color::blue())
-                    // .border_width(Pixels(1.0))
                     .cursor(CursorIcon::Hand)
                     .on_press(|cx| cx.emit(PopupEvent::Switch));
             })
-            //.border_color(Color::red())
-            //.border_width(Pixels(1.0))
             .width(Pixels(252.0))
             .height(Pixels(32.0));
 
