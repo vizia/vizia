@@ -71,6 +71,10 @@ name = "textbox_list"
 path = "examples/textbox_list.rs"
 
 [[example]]
+name = "mouse_popup"
+path = "examples/views/mouse_popup.rs"
+
+[[example]]
 name = "button"
 path = "examples/views/button.rs"
 
