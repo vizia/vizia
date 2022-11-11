@@ -48,7 +48,7 @@ impl Spinbox {
                         }
                     })
                     .class("spinbox-button");
-                (content)(cx).overflow(Overflow::Visible).class("spinbox-value");
+                (content)(cx).class("spinbox-value");
                 Label::new(
                     cx,
                     Spinbox::kind.map(|kind| match kind {
