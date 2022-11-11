@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use vizia_id::GenerationalId;
 
-use crate::prelude::*;
+use crate::{cache::BoundingBox, prelude::*};
 
 /// A handle to a view which has been already built into the tree.
 ///
@@ -80,5 +80,9 @@ impl<'a, V> Handle<'a, V> {
             (closure)(new_handle, data);
         });
         self
+    }
+
+    pub fn bounds(&self) -> BoundingBox {
+        self.cx.cache.get_bounds(self.entity)
     }
 }

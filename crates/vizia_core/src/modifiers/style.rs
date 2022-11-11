@@ -293,6 +293,26 @@ pub trait StyleModifiers: internal::Modifiable {
     //     (f32, f32)
     // );
 
+    fn translate<U: Into<(f32, f32)>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            let mut transform = Transform2D::identity();
+            transform.translate(value.0, value.1);
+
+            cx.style.transform.insert(entity, transform);
+
+            // cx.style.border_shape_top_left.insert(entity, value);
+            // cx.style.border_shape_top_right.insert(entity, value);
+            // cx.style.border_shape_bottom_left.insert(entity, value);
+            // cx.style.border_shape_bottom_right.insert(entity, value);
+
+            cx.need_redraw();
+        });
+
+        self
+    }
+
     modifier!(
         /// Sets the scale of the view.
         ///

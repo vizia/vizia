@@ -1,8 +1,10 @@
 use crate::context::InternalEvent;
 use crate::events::EventMeta;
 use crate::prelude::*;
+use crate::resource::ImageOrId;
 use crate::systems::{compute_matched_rules, hover_system};
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
+use femtovg::ImageFlags;
 use instant::{Duration, Instant};
 use std::any::Any;
 use vizia_id::GenerationalId;
@@ -49,7 +51,11 @@ impl EventManager {
                 InternalEvent::Redraw => context.need_redraw(),
                 InternalEvent::LoadImage { path, image, policy } => {
                     if let Some(image) = image.lock().unwrap().take() {
-                        context.load_image(path.clone(), image, *policy);
+                        context.load_image(
+                            path.clone(),
+                            ImageOrId::Image(image, ImageFlags::REPEAT_X | ImageFlags::REPEAT_Y),
+                            *policy,
+                        );
                     }
                 }
             });

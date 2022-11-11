@@ -4,6 +4,7 @@
 
 mod button;
 mod checkbox;
+mod colorpicker;
 mod datepicker;
 mod datetimepicker;
 mod dropdown;
@@ -31,6 +32,7 @@ mod tooltip;
 pub use self::image::Image;
 pub use button::Button;
 pub use checkbox::Checkbox;
+pub use colorpicker::ColorPicker;
 pub use datepicker::Datepicker;
 pub use datetimepicker::DatetimePicker;
 pub use dropdown::Dropdown;

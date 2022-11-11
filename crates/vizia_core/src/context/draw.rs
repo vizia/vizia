@@ -8,7 +8,7 @@ use morphorm::Units;
 use crate::cache::{BoundingBox, CachedData};
 use crate::events::ViewHandler;
 use crate::prelude::*;
-use crate::resource::ResourceManager;
+use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager};
 use crate::state::ModelDataStore;
 use crate::style::{LinearGradient, Style};
 use crate::text::Selection;
@@ -160,6 +160,32 @@ impl<'a> DrawContext<'a> {
     pub fn opacity(&self) -> f32 {
         self.cache.get_opacity(self.current)
     }
+
+    // pub fn load_image(
+    //     &mut self,
+    //     name: impl AsRef<str>,
+    //     image: ImageOrId,
+    //     policy: ImageRetentionPolicy,
+    // ) {
+    //     match self.resource_manager.images.entry(name) {
+    //         Entry::Occupied(mut occ) => {
+    //             occ.get_mut().image = image;
+    //             occ.get_mut().dirty = true;
+    //             occ.get_mut().retention_policy = policy;
+    //         }
+    //         Entry::Vacant(vac) => {
+    //             vac.insert(StoredImage {
+    //                 image,
+    //                 retention_policy: policy,
+    //                 used: true,
+    //                 dirty: false,
+    //                 observers: HashSet::new(),
+    //             });
+    //         }
+    //     }
+    //     self.style.needs_redraw = true;
+    //     self.style.needs_relayout = true;
+    // }
 }
 
 impl<'a> DataContext for DrawContext<'a> {
