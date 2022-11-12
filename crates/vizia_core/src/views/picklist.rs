@@ -19,20 +19,14 @@ impl PickList {
     {
         Self { on_select: None }
             .build(cx, |cx| {
-                let lens2 = list_lens.clone();
-                let select1 = selected.clone();
-                let select2 = selected.clone();
                 // Dropdown List
                 Dropdown::new(
                     cx,
                     move |cx| {
                         // A Label and an Icon
-                        let lens1 = list_lens.clone();
-                        let select1 = select1.clone();
                         HStack::new(cx, move |cx| {
-                            // Label::new(cx, lens.clone().index(selected));
-                            Label::new(cx, "").bind(lens1.clone(), move |handle, list| {
-                                handle.bind(select1.clone(), move |handle, selected| {
+                            Label::new(cx, "").bind(list_lens, move |handle, list| {
+                                handle.bind(selected, move |handle, selected| {
                                     let selected_index = selected.get(handle.cx);
 
                                     handle.text(list.clone().index(selected_index));
@@ -45,16 +39,13 @@ impl PickList {
                         .col_between(Stretch(1.0))
                     },
                     move |cx| {
-                        //let select = selected.clone();
-                        //let select = select.clone();
-                        let select2 = select2.clone();
-                        List::new(cx, lens2.clone(), move |cx, index, item| {
+                        List::new(cx, list_lens, move |cx, index, item| {
                             Label::new(cx, item)
                                 .width(Pixels(100.0))
                                 .child_top(Stretch(1.0))
                                 .child_bottom(Stretch(1.0))
                                 .border_radius(Units::Pixels(4.0))
-                                .checked(select2.clone().map(move |selected| *selected == index))
+                                .checked(selected.map(move |selected| *selected == index))
                                 .on_press(move |cx| {
                                     cx.emit(PickListEvent::SetOption(index));
                                     cx.emit(PopupEvent::Close);

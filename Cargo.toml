@@ -90,9 +90,9 @@ path = "examples/views/checkbox.rs"
 name = "dropdown"
 path = "examples/views/dropdown.rs"
 
-[[example]]
-name = "image"
-path = "examples/views/image.rs"
+# [[example]]
+# name = "image"
+# path = "examples/views/image.rs"
 
 [[example]]
 name = "knob"
