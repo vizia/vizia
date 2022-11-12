@@ -13,7 +13,6 @@ impl PickList {
     pub fn new<L1, L2, T>(cx: &mut Context, list_lens: L1, selected: L2) -> Handle<Self>
     where
         L1: Lens<Target = Vec<T>>,
-        <L1 as Lens>::Source: Model,
         T: 'static + Data + ToString,
         L2: Lens<Target = usize>,
     {
