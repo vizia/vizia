@@ -112,7 +112,7 @@ checkbox:checked {
     background-color: #51afef;
     border-color: #51afef;
     color: #181818;
-    transition: background-color 0.2 0;
+    transition: background-color 0.1 0;
     transition: border-color 0.1 0;
 }
 
@@ -141,7 +141,7 @@ checkbox:checked:disabled {
 }
 
 dropdown .title {
-    width: auto;
+    width: 1s;
     height: 30px;
     background-color: #242424;
     border-radius: 4px;
@@ -149,7 +149,6 @@ dropdown .title {
     border-color: #2f2f2f;
     child-space: 1s;
     child-left: 5px;
-    overflow: visible;
 }
 
 dropdown .title:focus-visible {
@@ -159,7 +158,7 @@ dropdown .title:focus-visible {
 }
 
 dropdown popup {
-    top: 4px;
+    width: 1s;
     background-color: #242424;
     border-radius: 4px;
     border-width: 1px;
@@ -372,9 +371,8 @@ spinbox .spinbox-button:hover {
     color: #ffffff;
 }
 
-spinbox label.spinbox-value {
-    space: 1s;
-    width: auto;
+spinbox .spinbox-value {
+    width: 1s;
 
     height: 24px;
     child-space: 1s;
@@ -402,21 +400,31 @@ spinbox textbox.spinbox-value textboxlabel {
     width: auto;
 }
 
-spinbox dropdown.spinbox-value {
-    width: 100px;
-}
-
 spinbox dropdown.spinbox-value .title {
     background-color: transparent;
     border-width: 0px;
 }
 
-spinbox dropdown.spinbox-value popup {
-    width: auto;
+spinbox picklist.spinbox-value {
+    width: 1s;
+    background-color: red;
+    child-space: 1s;
 }
 
-spinbox dropdown.spinbox-value popup * {
-    width: auto;
+spinbox picklist.spinbox-value dropdown {
+    width: 1s;
+    background-color: blue;
+}
+
+spinbox picklist.spinbox-value dropdown popup {
+    width: 1s;
+}
+
+spinbox picklist.spinbox-value .title {
+    width: 1s;
+    background-color: transparent;
+    border-width: 0px;
+    col-between: 4px;
 }
 
 switch {
