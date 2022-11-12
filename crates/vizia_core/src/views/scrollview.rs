@@ -136,8 +136,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                     || geo.contains(GeometryChanged::WIDTH_CHANGED)
                 {
                     let current = cx.current();
-                    let width = cx.cache.get_width(current);
-                    let height = cx.cache.get_height(current);
+                    let width = cx.cache().get_width(current);
+                    let height = cx.cache().get_height(current);
                     cx.emit(ScrollEvent::ChildGeo(width, height));
                 }
             });
