@@ -27,13 +27,7 @@ fn main() {
             cx,
             move |cx| {
                 // A Label and an Icon
-                HStack::new(cx, move |cx| {
-                    Label::new(cx, AppData::choice);
-                    Label::new(cx, DOWN).font("icons");
-                })
-                .child_left(Pixels(5.0))
-                .child_right(Pixels(5.0))
-                .col_between(Stretch(1.0))
+                Label::new(cx, AppData::choice)
             },
             move |cx| {
                 List::new(cx, AppData::list, |cx, _, item| {

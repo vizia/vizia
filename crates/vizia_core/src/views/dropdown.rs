@@ -144,14 +144,10 @@ impl Dropdown {
         F: 'static + Fn(&mut Context),
         V: 'static + View,
     {
-        Self {}
-            .build(cx, move |cx| {
-                PopupData::default().build(cx);
+        Self {}.build(cx, move |cx| {
+            PopupData::default().build(cx);
 
-                (label)(cx)
-                    .class("title")
-                    .width(Stretch(1.0))
-                    .on_press(|cx| cx.emit(PopupEvent::Switch));
+            (label)(cx).class("title").on_press(|cx| cx.emit(PopupEvent::Switch));
 
                 Popup::new(cx, PopupData::is_open, false, move |cx| {
                     (content)(cx);
@@ -162,7 +158,11 @@ impl Dropdown {
                 .translate((0.0, 4.0))
                 .height(Auto);
             })
-            .size(Auto)
+            .on_blur(|cx| cx.emit(PopupEvent::Close))
+            .top(Percentage(100.0))
+            // TODO WHEN POSSIBLE: Add 4 extra top padding
+            .height(Auto);
+        })
     }
 }
 
