@@ -104,7 +104,7 @@ fn main() {
                         300.0,
                         KnobMode::Continuous,
                     )
-                    .value(lens.clone())
+                    .value(lens)
                     .class("track");
                     ArcTrack::new(
                         cx,
