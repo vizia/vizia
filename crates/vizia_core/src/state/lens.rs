@@ -14,7 +14,7 @@ use super::{next_uuid, StoreId};
 /// This provides a way to specify a binding to a specific field of some application data.
 ///
 /// This trait is part of the prelude.
-pub trait Lens: 'static + Clone {
+pub trait Lens: 'static + Copy {
     type Source;
     type Target;
 
@@ -96,7 +96,8 @@ pub trait LensExt: Lens {
 
     fn map<G: Clone, B: 'static + Clone>(self, get: G) -> Then<Self, Map<G, Self::Target, B>>
     where
-        G: 'static + Fn(&Self::Target) -> B,
+        G: 'static + Copy + Fn(&Self::Target) -> B,
+        Self::Target: Clone,
     {
         self.then(Map::new(get))
     }
@@ -119,17 +120,20 @@ pub trait LensExt: Lens {
 // Implement LensExt for all types which implement Lens
 impl<T: Lens> LensExt for T {}
 
+#[derive(Clone)]
 pub struct Map<G, I, O> {
     get: G,
     i: PhantomData<I>,
     o: PhantomData<O>,
 }
 
-impl<G: Clone, I, O> Clone for Map<G, I, O> {
-    fn clone(&self) -> Self {
-        Map { get: self.get.clone(), i: PhantomData::default(), o: PhantomData::default() }
-    }
-}
+impl<G: Copy, I: Clone, O: Clone> std::marker::Copy for Map<G, I, O> {}
+
+// impl<G: Clone, I, O> Clone for Map<G, I, O> {
+//     fn clone(&self) -> Self {
+//         Map { get: self.get.clone(), i: PhantomData::default(), o: PhantomData::default() }
+//     }
+// }
 
 impl<G, I, O> Map<G, I, O> {
     pub fn new(get: G) -> Self
@@ -140,7 +144,9 @@ impl<G, I, O> Map<G, I, O> {
     }
 }
 
-impl<G: 'static + Clone + Fn(&I) -> O, I: 'static, O: 'static> Lens for Map<G, I, O> {
+impl<G: 'static + Copy + Fn(&I) -> O, I: Clone + 'static, O: Clone + 'static> Lens
+    for Map<G, I, O>
+{
     // TODO can we get rid of these static bounds?
     type Source = I;
     type Target = O;
