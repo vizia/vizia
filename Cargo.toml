@@ -75,6 +75,14 @@ name = "table"
 path = "examples/views/table.rs"
 
 [[example]]
+name = "notification"
+path = "examples/views/notification.rs"
+
+[[example]]
+name = "chip"
+path = "examples/views/chip.rs"
+
+[[example]]
 name = "textbox_list"
 path = "examples/textbox_list.rs"
 

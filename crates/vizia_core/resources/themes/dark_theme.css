@@ -951,3 +951,79 @@ tabheader:disabled label {
     height: 1s;
     background-color: #121212;
 } */
+
+chip {
+    border-radius: 15px;
+    child-left: 8px;
+    child-right: 8px;
+    child-top: 4px;
+    child-bottom: 4px;
+    width: auto;
+}
+
+notification {
+    width: 420px;
+    height: auto;
+    background-color: #242424;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+notification .color-strip {
+    background-color: #51afef;
+    width: 2px;
+    height: 1s;
+}
+
+notification .notification-header {
+    width: 1s;
+    height: auto;
+    child-left: 12px;
+    child-right: 4px;
+    child-top: 4px;
+    child-bottom: 4px;
+    col-between: 12px;
+    border-top-right-radius: 4px;
+}
+
+notification .notification-header label {
+    width: 1s;
+}
+
+notification .notification-container {
+    width: 1s;
+    height: auto;
+    child-left: 16px;
+    child-right: 16px;
+    child-top: 8px;
+    child-bottom: 8px;
+    overflow: visible;
+}
+
+notification .notification-container label {
+    width: 1s;
+    height: auto;
+    overflow: visible;
+}
+
+notification .icon-container {
+    width: auto;
+    height: auto;
+    col-between: 0px;
+}
+
+notification .icon {
+    width: 24px;
+    height: 24px;
+    child-space: 1s;
+}
+
+notification .icon label {
+    width: auto;
+    height: auto;
+    color: #ffffff88;
+}
+
+notification .icon:checked label {
+    color: #fff;
+}
