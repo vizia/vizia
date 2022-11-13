@@ -124,7 +124,7 @@ impl Datepicker {
                     },
                     SpinboxKind::Horizontal,
                 )
-                .width(Pixels(170.0))
+                .width(Pixels(131.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
                 Spinbox::custom(
@@ -135,7 +135,7 @@ impl Datepicker {
                     },
                     SpinboxKind::Horizontal,
                 )
-                .width(Stretch(2.0))
+                .width(Stretch(1.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementYear));
             })

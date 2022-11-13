@@ -431,10 +431,6 @@ spinbox picklist.spinbox-value dropdown {
     width: 100%;
 }
 
-spinbox picklist.spinbox-value dropdown popup {
-    width: 1s;
-}
-
 spinbox picklist.spinbox-value .title {
     width: 1s;
     background-color: transparent;
@@ -845,6 +841,11 @@ datepicker {
     col-between: 4px;
 }
 
+.datepicker-header picklist dropdown popup {
+    left: -28px;
+    width: 131px;
+}
+
 .datepicker-divisor {
     width: 1s;
     height: 1px;
@@ -978,12 +979,10 @@ datetimepicker tabheader:checked .indicator {
 tabview {
     width: 1s;
     height: 1s;
-    background-color: #323232;
 }
 
 .tabview-tabheader-wrapper {
     height: auto;
-    col-between: 4px;
 }
 
 tabheader {
