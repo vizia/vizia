@@ -20,7 +20,7 @@ vizia_id = { path = "../vizia_id" }
 vizia_input = { path = "../vizia_input" }
 vizia_window = { path = "../vizia_window" }
 
-femtovg = { git = "https://github.com/femtovg/femtovg", rev = "20dc7ef142004736f1ba1c626dd9c5bb556dde14", default-features = false, features = ["image-loading"] }
+femtovg = { git = "https://github.com/femtovg/femtovg", rev = "018883b4a22805992f90e373e85020e9732bd11e", default-features = false, features = ["image-loading"] }
 image = { version = "0.24.0", default-features = false, features = ["png"] } # inherited from femtovg
 morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "c14e888b1d66719fc3f13ccdb1ea01a10368ef9e" }
 bitflags = "1.3.2"
