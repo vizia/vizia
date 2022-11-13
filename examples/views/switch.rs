@@ -26,6 +26,7 @@ impl Model for AppData {
     }
 }
 
+const CENTER_LAYOUT: &str = "crates/vizia_core/resources/themes/center_layout.css";
 #[allow(dead_code)]
 const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
 #[allow(dead_code)]
@@ -35,49 +36,47 @@ fn main() {
     Application::new(|cx| {
         AppData { option1: true, option2: false }.build(cx);
 
+        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
         VStack::new(cx, |cx| {
-            VStack::new(cx, |cx| {
-                Label::new(cx, "Basic Switches");
+            Label::new(cx, "Basic Switches");
 
-                HStack::new(cx, |cx| {
-                    Switch::new(cx, AppData::option1)
-                        .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
-                        .id("Switch_2");
-                    Label::new(cx, "Switch 1").describing("Switch_1");
-                })
-                .size(Auto)
-                .col_between(Pixels(5.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0));
-
-                HStack::new(cx, |cx| {
-                    Switch::new(cx, AppData::option2)
-                        .on_toggle(|cx| cx.emit(AppEvent::ToggleOption2))
-                        .id("Switch_2");
-                    Label::new(cx, "Switch 2").describing("Switch_2");
-                })
-                .size(Auto)
-                .col_between(Pixels(5.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0));
-
-                HStack::new(cx, |cx| {
-                    Switch::new(cx, AppData::option2)
-                        .on_toggle(|cx| cx.emit(AppEvent::ToggleOption2))
-                        .id("Switch_2");
-                    Label::new(cx, "Switch Disabled").describing("Switch_D");
-                })
-                .disabled(true)
-                .size(Auto)
-                .col_between(Pixels(5.0))
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0));
+            HStack::new(cx, |cx| {
+                Switch::new(cx, AppData::option1)
+                    .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
+                    .id("Switch_2");
+                Label::new(cx, "Switch 1").describing("Switch_1");
             })
-            .class("container");
+            .size(Auto)
+            .col_between(Pixels(5.0))
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0));
+
+            HStack::new(cx, |cx| {
+                Switch::new(cx, AppData::option2)
+                    .on_toggle(|cx| cx.emit(AppEvent::ToggleOption2))
+                    .id("Switch_2");
+                Label::new(cx, "Switch 2").describing("Switch_2");
+            })
+            .size(Auto)
+            .col_between(Pixels(5.0))
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0));
+
+            HStack::new(cx, |cx| {
+                Switch::new(cx, AppData::option2)
+                    .on_toggle(|cx| cx.emit(AppEvent::ToggleOption2))
+                    .id("Switch_2");
+                Label::new(cx, "Switch Disabled").describing("Switch_D");
+            })
+            .disabled(true)
+            .size(Auto)
+            .col_between(Pixels(5.0))
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0));
         })
-        .class("main");
+        .class("container");
     })
     .ignore_default_theme()
     .title("Switch")

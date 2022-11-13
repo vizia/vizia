@@ -31,6 +31,7 @@ enum AppEvent {
     Set3(Spinbox3Values),
 }
 
+const CENTER_LAYOUT: &str = "crates/vizia_core/resources/themes/center_layout.css";
 #[allow(dead_code)]
 const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
 #[allow(dead_code)]
@@ -46,59 +47,58 @@ fn main() {
         }
         .build(cx);
 
+        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
-        VStack::new(cx, |cx| {
-            HStack::new(cx, |cx| {
-                Spinbox::new(cx, AppState::spinbox_value_1, SpinboxKind::Horizontal)
-                    .on_increment(|ex| ex.emit(AppEvent::Increment1))
-                    .on_decrement(|ex| ex.emit(AppEvent::Decrement1));
+        HStack::new(cx, |cx| {
+            Spinbox::new(cx, AppState::spinbox_value_1, SpinboxKind::Horizontal)
+                .on_increment(|ex| ex.emit(AppEvent::Increment1))
+                .on_decrement(|ex| ex.emit(AppEvent::Decrement1));
 
-                Spinbox::custom(
-                    cx,
-                    |cx| {
-                        Textbox::new(cx, AppState::spinbox_value_2)
-                            .on_edit(|ex, v| ex.emit(AppEvent::Set2(v)))
-                    },
-                    SpinboxKind::Vertical,
-                )
-                .on_increment(|ex| ex.emit(AppEvent::Increment2))
-                .on_decrement(|ex| ex.emit(AppEvent::Decrement2));
+            Spinbox::custom(
+                cx,
+                |cx| {
+                    Textbox::new(cx, AppState::spinbox_value_2)
+                        .on_edit(|ex, v| ex.emit(AppEvent::Set2(v)))
+                },
+                SpinboxKind::Vertical,
+            )
+            .on_increment(|ex| ex.emit(AppEvent::Increment2))
+            .on_decrement(|ex| ex.emit(AppEvent::Decrement2));
 
-                Spinbox::custom(
-                    cx,
-                    |cx| {
-                        Dropdown::new(
-                            cx,
-                            |cx| {
-                                HStack::new(cx, move |cx| {
-                                    Label::new(cx, AppState::spinbox_value_3);
-                                })
-                                .child_left(Pixels(5.0))
-                                .child_right(Pixels(5.0))
-                                .col_between(Stretch(1.0))
-                            },
-                            |cx| {
-                                List::new(cx, AppState::spinbox_value_3_choices, |cx, _, item| {
-                                    Label::new(cx, &format!("{}", item.get(cx).to_string()))
-                                        .on_press(move |cx| {
-                                            cx.emit(AppEvent::Set3(item.get(cx).clone()));
-                                            cx.emit(PopupEvent::Close);
-                                        });
-                                })
-                                .child_right(Pixels(4.0));
-                            },
-                        )
-                        .width(Pixels(50.0))
-                    },
-                    SpinboxKind::Horizontal,
-                )
-                .on_increment(|ex| ex.emit(AppEvent::Increment3))
-                .on_decrement(|ex| ex.emit(AppEvent::Decrement3));
-            })
-            .class("container");
+            Spinbox::custom(
+                cx,
+                |cx| {
+                    Dropdown::new(
+                        cx,
+                        |cx| {
+                            HStack::new(cx, move |cx| {
+                                Label::new(cx, AppState::spinbox_value_3);
+                            })
+                            .child_left(Pixels(5.0))
+                            .child_right(Pixels(5.0))
+                            .col_between(Stretch(1.0))
+                        },
+                        |cx| {
+                            List::new(cx, AppState::spinbox_value_3_choices, |cx, _, item| {
+                                Label::new(cx, &format!("{}", item.get(cx).to_string())).on_press(
+                                    move |cx| {
+                                        cx.emit(AppEvent::Set3(item.get(cx).clone()));
+                                        cx.emit(PopupEvent::Close);
+                                    },
+                                );
+                            })
+                            .child_right(Pixels(4.0));
+                        },
+                    )
+                    .width(Pixels(50.0))
+                },
+                SpinboxKind::Horizontal,
+            )
+            .on_increment(|ex| ex.emit(AppEvent::Increment3))
+            .on_decrement(|ex| ex.emit(AppEvent::Decrement3));
         })
-        .class("main");
+        .class("container");
     })
     .ignore_default_theme()
     .title("Spinbox")

@@ -3,11 +3,13 @@ use crate::prelude::*;
 pub struct Chip;
 
 impl Chip {
-    pub fn new<T: Lens>(cx: &mut Context, text: T) -> Handle<Self>
+    pub fn new<'a, T>(cx: &'a mut Context, text: impl Res<T>) -> Handle<'a, Self>
     where
-        <T as Lens>::Target: Data + ToString,
+        T: ToString,
     {
-        Self {}.build(cx, move |_| {}).text(text)
+        Self {}.build(cx, move |cx| {
+            Label::new(cx, text);
+        })
     }
 }
 

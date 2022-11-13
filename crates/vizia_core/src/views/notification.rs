@@ -1,5 +1,9 @@
 use crate::prelude::*;
 
+const ICON_CHEVRON_DOWN: &str = "\u{1F783}";
+const ICON_CHEVRON_RIGHT: &str = "\u{1F782}";
+const ICON_CLOSE: &str = "\u{1F7AA}";
+
 #[derive(Clone, Debug, PartialEq, Data, Lens)]
 pub struct Notification {
     container_open: bool,
@@ -17,19 +21,28 @@ impl Notification {
                 Element::new(cx).class("color-strip");
                 VStack::new(cx, move |cx| {
                     let some_text = text.is_some();
-                    let header = HStack::new(cx, move |cx| {
+                    HStack::new(cx, move |cx| {
                         Label::new(cx, &header);
                         HStack::new(cx, |cx| {
                             if some_text {
                                 HStack::new(cx, |cx| {
-                                    Label::new(cx, "v");
+                                    Label::new(cx, "v").bind(
+                                        Notification::container_open,
+                                        |h, open| {
+                                            if open.get(h.cx) {
+                                                h.text(ICON_CHEVRON_DOWN);
+                                            } else {
+                                                h.text(ICON_CHEVRON_RIGHT);
+                                            }
+                                        },
+                                    );
                                 })
                                 .on_press_down(|ex| ex.emit(NotificationEvent::ToggleContainer))
                                 .class("icon")
                                 .checked(Notification::container_open);
                             }
                             HStack::new(cx, |cx| {
-                                Label::new(cx, "X");
+                                Label::new(cx, ICON_CLOSE);
                             })
                             .class("icon");
                         })

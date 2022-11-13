@@ -149,18 +149,12 @@ impl Dropdown {
 
             (label)(cx).class("title").on_press(|cx| cx.emit(PopupEvent::Switch));
 
-                Popup::new(cx, PopupData::is_open, false, move |cx| {
-                    (content)(cx);
-                })
-                .on_blur(|cx| cx.emit(PopupEvent::Close))
-                .top(Percentage(100.0))
-                // TODO: move this to stylesheet
-                .translate((0.0, 4.0))
-                .height(Auto);
+            Popup::new(cx, PopupData::is_open, false, move |cx| {
+                (content)(cx);
             })
             .on_blur(|cx| cx.emit(PopupEvent::Close))
             .top(Percentage(100.0))
-            // TODO WHEN POSSIBLE: Add 4 extra top padding
+            .translate((0.0, 4.0))
             .height(Auto);
         })
     }

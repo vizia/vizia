@@ -1,6 +1,7 @@
 use vizia::fonts::icons_names::{DOWN, UP};
 use vizia::prelude::*;
 
+const CENTER_LAYOUT: &str = "crates/vizia_core/resources/themes/center_layout.css";
 #[allow(dead_code)]
 const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
 #[allow(dead_code)]
@@ -13,8 +14,6 @@ where
     M: 'static + Send + Sync + Clone,
 {
     VStack::new(cx, move |cx| {
-        Element::new(cx).class("table-row-divisor");
-
         HStack::new(cx, |cx| {
             Label::new(cx, text).class("table-column-title");
             Binding::new(cx, lens, |cx, sorted| {
@@ -43,7 +42,11 @@ fn table_element<'a, T>(cx: &mut Context, lens: impl Res<T>, checked: bool)
 where
     T: ToString,
 {
-    Label::new(cx, lens).class(if checked { "table-element-colored" } else { "table-element" });
+    if checked {
+        Chip::new(cx, lens).background_color(Color::from("#51afef88"));
+    } else {
+        Label::new(cx, lens).class("table-element");
+    }
 }
 
 fn main() {
@@ -90,70 +93,60 @@ fn main() {
         }
         .build(cx);
 
+        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
-        VStack::new(cx, |cx| {
-            VStack::new(cx, |cx| {
-                Table::new(cx, TableData::people, |cx, list| {
-                    TableColumn::new(
+        Table::new(cx, TableData::people, |cx, list| {
+            TableColumn::new(
+                cx,
+                list,
+                Person::first_name,
+                |cx| {
+                    column_header(
                         cx,
-                        list,
-                        Person::first_name,
-                        |cx| {
-                            column_header(
-                                cx,
-                                "First Name",
-                                TableData::first_name_sorted,
-                                AppEvent::ToggleSortFirstName,
-                            )
-                        },
-                        |cx, _, first_name| table_element(cx, first_name, false),
-                    );
+                        "First Name",
+                        TableData::first_name_sorted,
+                        AppEvent::ToggleSortFirstName,
+                    )
+                },
+                |cx, _, first_name| table_element(cx, first_name, false),
+            )
+            .width(Pixels(120.0));
 
-                    TableColumn::new(
+            TableColumn::new(
+                cx,
+                list,
+                Person::last_name,
+                |cx| {
+                    column_header(
                         cx,
-                        list,
-                        Person::last_name,
-                        |cx| {
-                            column_header(
-                                cx,
-                                "Last Name",
-                                TableData::last_name_sorted,
-                                AppEvent::ToggleSortLastName,
-                            )
-                        },
-                        |cx, _, last_name| table_element(cx, last_name, false),
-                    );
+                        "Last Name",
+                        TableData::last_name_sorted,
+                        AppEvent::ToggleSortLastName,
+                    )
+                },
+                |cx, _, last_name| table_element(cx, last_name, false),
+            )
+            .width(Pixels(120.0));
 
-                    TableColumn::new(
-                        cx,
-                        list,
-                        Person::age,
-                        |cx| {
-                            column_header(cx, "Age", TableData::age_sorted, AppEvent::ToggleSortAge)
-                        },
-                        |cx, _, age| table_element(cx, age, false),
-                    );
+            TableColumn::new(
+                cx,
+                list,
+                Person::age,
+                |cx| column_header(cx, "Age", TableData::age_sorted, AppEvent::ToggleSortAge),
+                |cx, _, age| table_element(cx, age, false),
+            )
+            .width(Pixels(120.0));
 
-                    TableColumn::new(
-                        cx,
-                        list,
-                        Person::email,
-                        |cx| {
-                            column_header(
-                                cx,
-                                "Email",
-                                TableData::email_sorted,
-                                AppEvent::ToggleSortEmail,
-                            )
-                        },
-                        |cx, _, email| table_element(cx, email, true),
-                    );
-                });
-            })
-            .class("container");
-        })
-        .class("main");
+            TableColumn::new(
+                cx,
+                list,
+                Person::email,
+                |cx| column_header(cx, "Email", TableData::email_sorted, AppEvent::ToggleSortEmail),
+                |cx, _, email| table_element(cx, email, true),
+            )
+            .width(Pixels(120.0));
+        });
     })
     .ignore_default_theme()
     .title("Table")
