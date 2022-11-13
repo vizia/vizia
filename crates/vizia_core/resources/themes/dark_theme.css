@@ -407,13 +407,11 @@ spinbox dropdown.spinbox-value .title {
 
 spinbox picklist.spinbox-value {
     width: 1s;
-    background-color: red;
     child-space: 1s;
 }
 
 spinbox picklist.spinbox-value dropdown {
-    width: 1s;
-    background-color: blue;
+    width: 100%;
 }
 
 spinbox picklist.spinbox-value dropdown popup {
@@ -425,6 +423,11 @@ spinbox picklist.spinbox-value .title {
     background-color: transparent;
     border-width: 0px;
     col-between: 4px;
+}
+
+spinbox picklist.spinbox-value .title label {
+    left: 1s;
+    right: 1s;
 }
 
 switch {

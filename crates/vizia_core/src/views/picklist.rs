@@ -10,7 +10,12 @@ pub enum PickListEvent {
 }
 
 impl PickList {
-    pub fn new<L1, L2, T>(cx: &mut Context, list_lens: L1, selected: L2) -> Handle<Self>
+    pub fn new<L1, L2, T>(
+        cx: &mut Context,
+        list_lens: L1,
+        selected: L2,
+        show_handle: bool,
+    ) -> Handle<Self>
     where
         L1: Lens<Target = Vec<T>>,
         T: 'static + Data + ToString,
@@ -30,7 +35,9 @@ impl PickList {
                                 handle.text(list.clone().index(selected_index));
                             });
                         });
-                        Label::new(cx, DOWN).font("icons");
+                        if show_handle {
+                            Label::new(cx, DOWN).font("icons");
+                        }
                     })
                     .child_left(Pixels(5.0))
                     .child_right(Pixels(5.0))

@@ -31,7 +31,7 @@ fn main() {
 
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
-        PickList::new(cx, AppState::options, AppState::selected_option)
+        PickList::new(cx, AppState::options, AppState::selected_option, true)
             .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)));
     })
     .ignore_default_theme()

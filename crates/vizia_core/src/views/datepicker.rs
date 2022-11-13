@@ -119,12 +119,12 @@ impl Datepicker {
                 Spinbox::custom(
                     cx,
                     |cx| {
-                        PickList::new(cx, Datepicker::months, Datepicker::selected_month)
+                        PickList::new(cx, Datepicker::months, Datepicker::selected_month, false)
                             .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
                     },
                     SpinboxKind::Horizontal,
                 )
-                .width(Pixels(150.0))
+                .width(Pixels(170.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
                 Spinbox::custom(
