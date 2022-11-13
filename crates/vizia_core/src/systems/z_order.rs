@@ -12,9 +12,10 @@ pub fn z_ordering_system(cx: &mut Context, tree: &Tree<Entity>) {
         }
 
         let parent = tree.get_layout_parent(entity).unwrap();
+        let parent_z_order = cx.cache.get_z_index(parent);
 
         if let Some(z_order) = cx.style.z_order.get(entity).copied() {
-            cx.cache.set_z_index(entity, z_order);
+            cx.cache.set_z_index(entity, parent_z_order + z_order);
         } else {
             let parent_z_order = cx.cache.get_z_index(parent);
             cx.cache.set_z_index(entity, parent_z_order);
