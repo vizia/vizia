@@ -18,9 +18,9 @@ where
     L: Lens<Target = Color>,
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
-        Self { lens: lens.clone(), on_change: None }
+        Self { lens, on_change: None }
             .build(cx, |cx| {
-                ColorSelector::new(cx, lens.clone())
+                ColorSelector::new(cx, lens)
                     .on_change(|cx, color| cx.emit(ColorPickerEvent::SetColor(color)))
                     .size(Pixels(200.0))
                     .background_color(Color::red());
@@ -31,7 +31,7 @@ where
                     //Dropdown
                     Textbox::new(
                         cx,
-                        lens.clone().map(|color| {
+                        lens.map(|color| {
                             let (h, s, v) = rgb_to_hsv(
                                 color.r() as f64 / 255.0,
                                 color.g() as f64 / 255.0,
@@ -43,7 +43,7 @@ where
                     .width(Stretch(1.0));
                     Textbox::new(
                         cx,
-                        lens.clone().map(|color| {
+                        lens.map(|color| {
                             let (h, s, v) = rgb_to_hsv(
                                 color.r() as f64 / 255.0,
                                 color.g() as f64 / 255.0,
@@ -55,7 +55,7 @@ where
                     .width(Stretch(1.0));
                     Textbox::new(
                         cx,
-                        lens.clone().map(|color| {
+                        lens.map(|color| {
                             let (h, s, v) = rgb_to_hsv(
                                 color.r() as f64 / 255.0,
                                 color.g() as f64 / 255.0,
@@ -124,7 +124,7 @@ where
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
         Self {
-            lens: lens.clone(),
+            lens,
             image: Rc::new(RefCell::new(None)),
             thumb_left: Pixels(0.0),
             thumb_top: Pixels(0.0),
@@ -144,7 +144,7 @@ where
                 .border_width(Pixels(2.0))
                 .border_color(Color::white())
                 .hoverable(false)
-                .bind(lens.clone(), |handle, color| {
+                .bind(lens, |handle, color| {
                     let color = color.get(handle.cx);
                     let (h, s, v) = rgb_to_hsv(
                         color.r() as f64 / 255.0,

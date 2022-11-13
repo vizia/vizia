@@ -44,7 +44,7 @@ where
         cx.cache.add(id).expect("Failed to add to cache");
         cx.style.add(id);
 
-        let binding = Self { entity: id, lens: lens.clone(), content: Some(Box::new(builder)) };
+        let binding = Self { entity: id, lens, content: Some(Box::new(builder)) };
 
         let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
         let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
@@ -138,7 +138,7 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
     fn update<'a>(&mut self, cx: &'a mut Context) {
         cx.remove_children(cx.current());
         if let Some(builder) = &self.content {
-            (builder)(cx, self.lens.clone());
+            (builder)(cx, self.lens);
         }
     }
 

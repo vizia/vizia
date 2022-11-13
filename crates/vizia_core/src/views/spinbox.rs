@@ -24,7 +24,7 @@ impl Spinbox {
     where
         <L as Lens>::Target: Data + ToString,
     {
-        Self::custom(cx, move |cx| Label::new(cx, lens.clone()), kind)
+        Self::custom(cx, move |cx| Label::new(cx, lens), kind)
     }
 
     pub fn custom<F, V>(cx: &mut Context, content: F, kind: SpinboxKind) -> Handle<Spinbox>
@@ -49,26 +49,20 @@ impl Spinbox {
                     })
                     .class("spinbox-button");
                 (content)(cx).class("spinbox-value");
-                Label::new(
-                    cx,
-                    Spinbox::kind.map(|kind| match kind {
-                        SpinboxKind::Horizontal => "+",
-                        SpinboxKind::Vertical => "-",
-                    }),
-                )
-                .font("icons")
-                .bind(Spinbox::kind, move |handle, spinbox_kind| {
-                    match spinbox_kind.get(handle.cx) {
-                        SpinboxKind::Horizontal => {
-                            handle.text("+").on_press(|ex| ex.emit(SpinboxEvent::Increment));
-                        }
+                Label::new(cx, "")
+                    .font("icons")
+                    .bind(Spinbox::kind, move |handle, spinbox_kind| {
+                        match spinbox_kind.get(handle.cx) {
+                            SpinboxKind::Horizontal => {
+                                handle.text("+").on_press(|ex| ex.emit(SpinboxEvent::Increment));
+                            }
 
-                        SpinboxKind::Vertical => {
-                            handle.text("-").on_press(|ex| ex.emit(SpinboxEvent::Decrement));
+                            SpinboxKind::Vertical => {
+                                handle.text("-").on_press(|ex| ex.emit(SpinboxEvent::Decrement));
+                            }
                         }
-                    }
-                })
-                .class("spinbox-button");
+                    })
+                    .class("spinbox-button");
             })
             .toggle_class("horizontal", Spinbox::kind.map(|kind| kind == &SpinboxKind::Horizontal))
             .toggle_class("vertical", Spinbox::kind.map(|kind| kind == &SpinboxKind::Vertical))

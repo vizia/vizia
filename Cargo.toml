@@ -27,6 +27,10 @@ name = "colorpicker"
 path = "examples/views/colorpicker.rs"
 
 [[example]]
+name = "picklist"
+path = "examples/views/picklist.rs"
+
+[[example]]
 name = "datetimepicker"
 path = "examples/views/datetimepicker.rs"
 
@@ -94,9 +98,9 @@ path = "examples/views/checkbox.rs"
 name = "dropdown"
 path = "examples/views/dropdown.rs"
 
-[[example]]
-name = "image"
-path = "examples/views/image.rs"
+# [[example]]
+# name = "image"
+# path = "examples/views/image.rs"
 
 [[example]]
 name = "knob"

@@ -103,7 +103,7 @@ impl Datepicker {
         L: Lens<Target = D>,
         D: Datelike + Data,
     {
-        let view_date = lens.clone().get(cx);
+        let view_date = lens.get(cx);
 
         Self {
             view_date: NaiveDate::from_ymd(view_date.year(), view_date.month(), 1),
@@ -145,7 +145,6 @@ impl Datepicker {
                 HStack::new(cx, move |cx| {
                     for y in 0..6 {
                         for x in 0..7 {
-                            let lens2 = lens.clone();
                             Label::new(cx, "")
                                 .bind(Datepicker::view_date, move |handle, view_date| {
                                     let view_date = view_date.get(handle.cx);
@@ -153,7 +152,7 @@ impl Datepicker {
                                     let (day_number, disabled) =
                                         Self::get_day_number(y, x, &view_date);
 
-                                    handle.bind(lens2.clone(), move |handle, selected_date| {
+                                    handle.bind(lens, move |handle, selected_date| {
                                         let selected_date = selected_date.get(handle.cx);
 
                                         handle

@@ -10,7 +10,7 @@ struct AppState {
     spinbox_value_3: Spinbox3Values,
 }
 
-#[derive(Clone, PartialEq, Data)]
+#[derive(Clone, PartialEq, Data, Copy)]
 enum Spinbox3Values {
     One,
     Two,
