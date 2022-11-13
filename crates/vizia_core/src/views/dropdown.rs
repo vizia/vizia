@@ -147,7 +147,10 @@ impl Dropdown {
         Self {}.build(cx, move |cx| {
             PopupData::default().build(cx);
 
-            (label)(cx).class("title").on_press(|cx| cx.emit(PopupEvent::Switch));
+            (label)(cx)
+                .cursor(CursorIcon::Hand)
+                .class("title")
+                .on_press(|cx| cx.emit(PopupEvent::Switch));
 
             Popup::new(cx, PopupData::is_open, false, move |cx| {
                 (content)(cx);

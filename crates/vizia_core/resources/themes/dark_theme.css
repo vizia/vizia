@@ -164,6 +164,8 @@ dropdown popup {
 
 dropdown popup list {
     width: 1s;
+    child-top: 4px;
+    child-bottom: 4px;
 }
 
 dropdown list label {
@@ -181,6 +183,10 @@ dropdown list label:focus-visible {
     outline-width: 1px;
     outline-color: #51afef80;
     outline-offset: 3px;
+}
+
+dropdown list label:hover {
+    background-color: #2f2f2f;
 }
 
 dropdown vstack {
