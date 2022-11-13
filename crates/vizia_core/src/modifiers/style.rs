@@ -305,15 +305,52 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.into();
-            let mut transform = Transform2D::identity();
-            transform.translate(value.0, value.1);
 
-            cx.style.transform.insert(entity, transform);
+            if let Some(transform) = cx.style.transform.get_mut(entity) {
+                transform.translate(value.0, value.1);
+            } else {
+                let mut transform = Transform2D::identity();
+                transform.translate(value.0, value.1);
+                cx.style.transform.insert(entity, transform);
+            }
 
-            // cx.style.border_shape_top_left.insert(entity, value);
-            // cx.style.border_shape_top_right.insert(entity, value);
-            // cx.style.border_shape_bottom_left.insert(entity, value);
-            // cx.style.border_shape_bottom_right.insert(entity, value);
+            cx.need_redraw();
+        });
+
+        self
+    }
+
+    fn rotate<U: Into<f32>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+
+            if let Some(transform) = cx.style.transform.get_mut(entity) {
+                transform.rotate(value);
+            } else {
+                let mut transform = Transform2D::identity();
+                transform.rotate(value);
+                cx.style.transform.insert(entity, transform);
+            }
+
+            cx.need_redraw();
+        });
+
+        self
+    }
+
+    fn scale<U: Into<(f32, f32)>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+
+            if let Some(transform) = cx.style.transform.get_mut(entity) {
+                transform.scale(value.0, value.1);
+            } else {
+                let mut transform = Transform2D::identity();
+                transform.scale(value.0, value.1);
+                cx.style.transform.insert(entity, transform);
+            }
 
             cx.need_redraw();
         });
