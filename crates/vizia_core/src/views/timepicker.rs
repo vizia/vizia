@@ -248,10 +248,10 @@ where
                                 let mut transform = Transform2D::identity();
                                 transform.rotate(angle);
                                 transform
-                                    .premultiply(&Transform2D::identity().translate(0.0, -57.0));
+                                    .premultiply(&Transform2D::identity().translate(0.0, -50.0));
                                 Element::new(cx)
                                     .width(Pixels(1.0))
-                                    .height(Pixels(90.0))
+                                    .height(Pixels(100.0))
                                     .transform(transform)
                                     .position_type(PositionType::SelfDirected)
                                     .class("clock-hand");
@@ -261,7 +261,7 @@ where
                                 let mut transform = Transform2D::identity();
                                 transform.rotate(30.0 * (i + 1) as f32);
                                 transform
-                                    .premultiply(&Transform2D::identity().translate(0.0, -117.0));
+                                    .premultiply(&Transform2D::identity().translate(0.0, -100.0));
                                 transform.premultiply(
                                     &Transform2D::identity().rotate(-30.0 * (i + 1) as f32),
                                 );
@@ -290,10 +290,10 @@ where
                                 let mut transform = Transform2D::identity();
                                 transform.rotate(angle);
                                 transform
-                                    .premultiply(&Transform2D::identity().translate(0.0, -57.0));
+                                    .premultiply(&Transform2D::identity().translate(0.0, -50.0));
                                 Element::new(cx)
                                     .width(Pixels(1.0))
-                                    .height(Pixels(90.0))
+                                    .height(Pixels(100.0))
                                     .transform(transform)
                                     .position_type(PositionType::SelfDirected)
                                     .class("clock-hand");
@@ -303,7 +303,7 @@ where
                                 let mut transform = Transform2D::identity();
                                 transform.rotate(30.0 * i as f32);
                                 transform
-                                    .premultiply(&Transform2D::identity().translate(0.0, -117.0));
+                                    .premultiply(&Transform2D::identity().translate(0.0, -100.0));
                                 transform
                                     .premultiply(&Transform2D::identity().rotate(-30.0 * i as f32));
 

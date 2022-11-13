@@ -158,7 +158,8 @@ impl Dropdown {
                 })
                 .on_blur(|cx| cx.emit(PopupEvent::Close))
                 .top(Percentage(100.0))
-                // TODO WHEN POSSIBLE: Add 4 extra top padding
+                // TODO: move this to stylesheet
+                .translate((0.0, 4.0))
                 .height(Auto);
             })
             .size(Auto)

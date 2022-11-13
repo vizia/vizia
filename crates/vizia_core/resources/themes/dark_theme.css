@@ -159,6 +159,7 @@ dropdown .title:focus-visible {
 }
 
 dropdown popup {
+    width: 1s;
     top: 4px;
     background-color: #242424;
     border-radius: 4px;
@@ -703,8 +704,8 @@ radial_timepicker {
 
 radial_timepicker .clock-face {
     background-color: #404040;
-    width: 220px;
-    height: 220px;
+    width: 230px;
+    height: 230px;
 }
 
 radial_timepicker .clock-hand {

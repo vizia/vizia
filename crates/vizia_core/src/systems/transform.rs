@@ -17,7 +17,11 @@ pub fn transform_system(cx: &mut Context, tree: &Tree<Entity>) {
 
         let bounds = cx.cache.get_bounds(entity);
 
-        if let Some(transform) = cx.style.transform.get(entity).copied() {
+        if let Some(mut transform) = cx.style.transform.get(entity).copied() {
+            // Scale translation by DPI
+            transform.0[4] = transform.0[4] * cx.style.dpi_factor as f32;
+            transform.0[5] = transform.0[5] * cx.style.dpi_factor as f32;
+
             let mut t = parent_transform;
             let x = bounds.x + (bounds.w / 2.0);
             let y = bounds.y + (bounds.h / 2.0);
