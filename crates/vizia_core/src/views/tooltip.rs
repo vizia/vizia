@@ -19,8 +19,7 @@ impl Tooltip {
     {
         Self { on_ok: None }.build(cx, |cx| {
             HStack::new(cx, |cx| {
-                Element::new(cx).class("tooltip-pointer");
-                //.translate((2.0, 7.0)).rotate(45.0f32);
+                Element::new(cx).class("tooltip-pointer").translate((2.0, 7.0)).rotate(45.0f32);
             })
             .class("tooltip-pointer-wrapper");
 
@@ -91,8 +90,7 @@ impl TooltipSeq {
     {
         Self { on_next: None, on_prev: None }.build(cx, |cx| {
             HStack::new(cx, |cx| {
-                Element::new(cx).class("tooltip-pointer");
-                //.translate((2.0, 7.0)).rotate(45.0f32);
+                Element::new(cx).class("tooltip-pointer").translate((2.0, 7.0)).rotate(45.0f32);
             })
             .class("tooltip-pointer-wrapper");
 

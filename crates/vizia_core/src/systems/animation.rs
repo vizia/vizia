@@ -4,9 +4,7 @@ pub fn has_animations(cx: &Context) -> bool {
     cx.style.display.has_animations()
         | cx.style.visibility.has_animations()
         | cx.style.opacity.has_animations()
-        // | cx.style.rotate.has_animations()
-        // | cx.style.translate.has_animations()
-        // | cx.style.scale.has_animations()
+        // TODO: Add transform
         | cx.style.border_width.has_animations()
         | cx.style.border_color.has_animations()
         | cx.style.border_radius_top_left.has_animations()

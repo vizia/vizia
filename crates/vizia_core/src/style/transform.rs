@@ -31,8 +31,6 @@ impl Transform2D {
         self[1] = sn;
         self[2] = -sn;
         self[3] = cs;
-        self[4] = 0.0;
-        self[5] = 0.0;
 
         self
     }

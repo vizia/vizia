@@ -274,11 +274,7 @@ pub struct CachedData {
     clip_region: SparseSet<BoundingBox>,
 
     // Transform
-    rotate: SparseSet<f32>,
-    scale: SparseSet<(f32, f32)>,
     transform: SparseSet<Transform2D>,
-
-    origin: SparseSet<(f32, f32)>,
 
     pub(crate) space: SparseSet<Space>,
     pub(crate) size: SparseSet<Size>,
@@ -310,10 +306,7 @@ impl CachedData {
 
         self.opacity.insert(entity, 1.0)?;
 
-        self.rotate.insert(entity, 0.0)?;
-        self.scale.insert(entity, (1.0, 1.0))?;
         self.transform.insert(entity, Transform2D::identity())?;
-        self.origin.insert(entity, (0.0, 0.0))?;
 
         self.z_index.insert(entity, 0)?;
 
@@ -347,10 +340,7 @@ impl CachedData {
 
         self.opacity.remove(entity);
 
-        self.rotate.remove(entity);
-        self.scale.remove(entity);
         self.transform.remove(entity);
-        self.origin.remove(entity);
 
         self.z_index.remove(entity);
 
@@ -565,26 +555,6 @@ impl CachedData {
 
     pub fn get_vertical_stretch_sum(&self, entity: Entity) -> f32 {
         self.vertical_stretch_sum.get(entity).cloned().unwrap()
-    }
-
-    pub fn get_rotate(&self, entity: Entity) -> f32 {
-        self.transform.get(entity).cloned().unwrap()[0].acos()
-    }
-
-    pub fn get_translate(&self, entity: Entity) -> (f32, f32) {
-        let transform = self.transform.get(entity).cloned().unwrap();
-
-        (transform[4], transform[5])
-    }
-
-    pub fn get_scale(&self, entity: Entity) -> f32 {
-        let scale = self.scale.get(entity).cloned().unwrap();
-
-        scale.0
-    }
-
-    pub fn get_origin(&self, entity: Entity) -> (f32, f32) {
-        self.origin.get(entity).cloned().unwrap()
     }
 
     /// Returns the transform on the entity.
@@ -805,36 +775,6 @@ impl CachedData {
             *opacity = val;
         }
     }
-
-    pub(crate) fn set_rotate(&mut self, entity: Entity, val: f32) {
-        if let Some(transform) = self.transform.get_mut(entity) {
-            let mut t = Transform2D::identity();
-            t.rotate(val);
-            transform.premultiply(&t);
-        }
-    }
-
-    pub(crate) fn set_translate(&mut self, entity: Entity, val: (f32, f32)) {
-        if let Some(transform) = self.transform.get_mut(entity) {
-            let mut t = Transform2D::identity();
-            t.translate(val.0, val.1);
-            transform.premultiply(&t);
-        }
-    }
-
-    pub(crate) fn set_scale(&mut self, entity: Entity, val: (f32, f32)) {
-        if let Some(transform) = self.transform.get_mut(entity) {
-            let mut t = Transform2D::identity();
-            t.scale(val.0, val.1);
-            transform.premultiply(&t);
-        }
-    }
-
-    // pub(crate) fn set_origin(&mut self, entity: Entity, val: (f32, f32)) {
-    //     if let Some(origin) = self.origin.get_mut(entity) {
-    //         *origin = val;
-    //     }
-    // }
 
     pub(crate) fn set_transform(&mut self, entity: Entity, val: Transform2D) {
         if let Some(transform) = self.transform.get_mut(entity) {

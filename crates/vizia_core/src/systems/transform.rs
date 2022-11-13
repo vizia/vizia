@@ -27,33 +27,10 @@ pub fn transform_system(cx: &mut Context, tree: &Tree<Entity>) {
             let y = bounds.y + (bounds.h / 2.0);
             let mut translate = Transform2D::identity();
             translate.translate(x, y);
-            // t.translate(-x, -y);
             t.premultiply(&translate).premultiply(&transform);
             translate.inverse();
             t.premultiply(&translate);
-            // t.translate(x, y);
             cx.cache.set_transform(entity, t);
         }
-
-        // if let Some((tx, ty)) = cx.style.translate.get(entity).copied() {
-        //     let scale = cx.style.dpi_factor as f32;
-        //     cx.cache.set_translate(entity, (tx * scale, ty * scale));
-        // }
-
-        // if let Some(rotate) = cx.style.rotate.get(entity).copied() {
-        //     let x = bounds.x + (bounds.w / 2.0);
-        //     let y = bounds.y + (bounds.h / 2.0);
-        //     cx.cache.set_translate(entity, (x, y));
-        //     cx.cache.set_rotate(entity, (rotate).to_radians());
-        //     cx.cache.set_translate(entity, (-x, -y));
-        // }
-
-        // if let Some((scalex, scaley)) = cx.style.scale.get(entity).copied() {
-        //     let x = bounds.x + (bounds.w / 2.0);
-        //     let y = bounds.y + (bounds.h / 2.0);
-        //     cx.cache.set_translate(entity, (x, y));
-        //     cx.cache.set_scale(entity, (scalex, scaley));
-        //     cx.cache.set_translate(entity, (-x, -y));
-        // }
     }
 }

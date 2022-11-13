@@ -532,7 +532,7 @@ where
                         .class("textbox_content")
                         .text(TextboxData::text)
                         .text_selection(TextboxData::selection)
-                        // .translate(TextboxData::transform)
+                        .translate(TextboxData::transform)
                         .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
                         .entity;
 
