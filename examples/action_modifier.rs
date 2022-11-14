@@ -11,7 +11,28 @@ fn main() {
                 println!("You right clicked on a label!")
             }
         });
+        CustomView::new(cx);
     })
     .title("Action Modifiers")
     .run();
 }
+
+#[derive(Lens)]
+pub struct CustomView {
+    text: String,
+}
+
+impl CustomView {
+    pub fn new(cx: &mut Context) -> Handle<Self> {
+        Self { text: String::from("Hello World") }
+            .build(cx, |cx| {
+                Label::new(cx, CustomView::text).hoverable(false);
+            })
+            .on_press(|cx| {
+                cx.modify(|custom_view| custom_view.text = String::from("Testy Test"));
+            })
+            .size(Auto)
+    }
+}
+
+impl View for CustomView {}
