@@ -109,7 +109,7 @@ pub trait View: 'static + Sized {
         border_color.set_alphaf(border_color.a * opacity);
 
         let border_width =
-            cx.border_width().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
+            cx.border_width().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0).round();
 
         let outline_width =
             cx.outline_width().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);

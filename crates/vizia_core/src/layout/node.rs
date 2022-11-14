@@ -19,7 +19,7 @@ impl<'w> Node<'w> for Entity {
 
     fn left(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.0.left.get(*self).cloned().map(|l| match l {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
             t => t,
         })
     }
@@ -40,7 +40,7 @@ impl<'w> Node<'w> for Entity {
 
     fn right(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.0.right.get(*self).cloned().map(|r| match r {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
             t => t,
         })
     }
@@ -61,7 +61,7 @@ impl<'w> Node<'w> for Entity {
 
     fn top(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.0.top.get(*self).cloned().map(|t| match t {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
             t => t,
         })
     }
@@ -82,7 +82,7 @@ impl<'w> Node<'w> for Entity {
 
     fn bottom(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.0.bottom.get(*self).cloned().map(|b| match b {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
             t => t,
         })
     }
@@ -251,28 +251,28 @@ impl<'w> Node<'w> for Entity {
 
     fn border_left(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.0.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
             t => t,
         })
     }
 
     fn border_right(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.0.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
             t => t,
         })
     }
 
     fn border_top(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.0.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
             t => t,
         })
     }
 
     fn border_bottom(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.0.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
             t => t,
         })
     }
