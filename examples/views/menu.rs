@@ -19,6 +19,9 @@ fn main() {
 
         AppData { check1: false, check2: true }.build(cx);
 
+        MenuBar::new(cx);
+
+        /*
         MenuController::new(cx, false, |cx| {
             MenuStack::new_horizontal(cx, |cx| {
                 Menu::new(
@@ -77,6 +80,7 @@ fn main() {
                 );
             });
         });
+        */
     })
     .ignore_default_theme()
     .title("Menu")
