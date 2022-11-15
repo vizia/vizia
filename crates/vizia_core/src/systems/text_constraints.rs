@@ -47,7 +47,7 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
 
             let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
             {
-                Units::Pixels(val) => val * cx.style.dpi_factor as f32,
+                Units::Pixels(val) => (val * cx.style.dpi_factor as f32).round(),
                 Units::Percentage(val) => parent_width * val,
                 _ => 0.0,
             };

@@ -37,6 +37,9 @@ use vizia_storage::TreeExt;
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 
+pub static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
+pub static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
+
 /// The main storage and control object for a Vizia application.
 ///
 /// This type is part of the prelude.

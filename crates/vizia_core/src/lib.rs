@@ -42,6 +42,7 @@ pub mod prelude {
     pub use super::context::{
         Context, ContextProxy, DataContext, DrawContext, EventContext, ProxyEmitError,
     };
+    pub use super::context::{DARK_THEME, LIGHT_THEME};
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent};
     pub use super::events::{Event, Propagation};

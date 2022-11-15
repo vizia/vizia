@@ -6,6 +6,9 @@
 
 root {
     background-color: #181818;
+    width: 1s;
+    height: 1s;
+    /* child-space: 1s; */
 }
 
 .container {
@@ -137,14 +140,20 @@ checkbox:checked:disabled {
     transition: border-color 0.1 0;
 }
 
+dropdown {
+    height: auto;
+}
+
 dropdown .title {
     width: 1s;
-    height: 30px;
+    height: 28px;
     background-color: #242424;
     border-radius: 4px;
     border-width: 1px;
     border-color: #2f2f2f;
-    child-space: 1s;
+    child-top: 1s;
+    child-bottom: 1s;
+    child-right: 5px;
     child-left: 5px;
 }
 
@@ -155,7 +164,8 @@ dropdown .title:focus-visible {
 }
 
 dropdown popup {
-    width: 100%;
+    width: 1s;
+    height: auto;
     background-color: #242424;
     border-radius: 4px;
     border-width: 1px;
@@ -164,6 +174,7 @@ dropdown popup {
 
 dropdown popup list {
     width: 1s;
+    height: auto;
     child-top: 4px;
     child-bottom: 4px;
 }
@@ -939,7 +950,7 @@ datepicker {
 }
 
 popup {
-    outer-shadow: 0 2 5 #00000055;
+    outer-shadow: 0 2 4 #00000055;
     width: auto;
     height: auto;
     opacity: 0%;
@@ -989,6 +1000,7 @@ tabview {
 
 .tabview-tabheader-wrapper {
     height: auto;
+    col-between: 1px;
 }
 
 tabheader {

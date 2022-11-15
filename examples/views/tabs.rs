@@ -23,7 +23,7 @@ fn main() {
         TabView::new(cx, AppData::list, |cx, item| match item.get(cx) {
             "Tab1" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item.clone());
+                    Label::new(cx, item);
                 },
                 |cx| {
                     Element::new(cx).size(Pixels(200.0)).background_color(Color::red());
@@ -32,7 +32,7 @@ fn main() {
 
             "Tab2" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item.clone());
+                    Label::new(cx, item);
                 },
                 |cx| {
                     Element::new(cx).size(Pixels(200.0)).background_color(Color::blue());
