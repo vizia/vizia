@@ -14,7 +14,6 @@ pub enum DatetimePickerEvent {
 pub struct DatetimePicker<L: Lens> {
     lens: L,
     tabs: Vec<&'static str>,
-    // current_time: DayTime,
     on_change: Option<Box<dyn Fn(&mut EventContext, NaiveDateTime)>>,
 }
 

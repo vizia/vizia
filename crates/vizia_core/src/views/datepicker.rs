@@ -5,6 +5,8 @@ use crate::prelude::*;
 #[derive(Lens)]
 pub struct Datepicker {
     view_date: NaiveDate,
+    months: Vec<String>,
+    selected_month: usize,
 
     #[lens(ignore)]
     on_select: Option<Box<dyn Fn(&mut EventContext, NaiveDate)>>,
@@ -30,9 +32,11 @@ const DAYS_HEADER: [&str; 7] = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 pub enum DatepickerEvent {
     IncrementMonth,
     DecrementMonth,
+    SelectMonth(usize),
 
     IncrementYear,
     DecrementYear,
+    SelectYear(String),
 
     SelectDate(NaiveDate),
 }
@@ -73,7 +77,6 @@ impl Datepicker {
     }
 
     fn get_day_number(y: u32, x: u32, view_date: &NaiveDate) -> (u32, bool) {
-        println!("{} {}", x, y);
         let (_, days_prev_month) = Self::view_month_info(&view_date, -1);
         let (first_day_this_month, days_this_month) = Self::view_month_info(&view_date, 0);
 
@@ -106,25 +109,33 @@ impl Datepicker {
         let view_date = lens.get(cx);
 
         Self {
+            months: MONTHS.to_vec().iter_mut().map(|v| v.to_string()).collect(),
+            selected_month: view_date.month() as usize,
             view_date: NaiveDate::from_ymd(view_date.year(), view_date.month(), 1),
             on_select: None,
         }
         .build(cx, |cx| {
             HStack::new(cx, |cx| {
-                Spinbox::new(
+                Spinbox::custom(
                     cx,
-                    Datepicker::view_date.map(|date| MONTHS[date.month() as usize - 1].to_string()),
+                    |cx| {
+                        PickList::new(cx, Datepicker::months, Datepicker::selected_month, false)
+                            .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
+                    },
                     SpinboxKind::Horizontal,
                 )
-                .width(Stretch(3.0))
+                .width(Pixels(131.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementMonth));
-                Spinbox::new(
+                Spinbox::custom(
                     cx,
-                    Datepicker::view_date.map(|date| date.year()),
+                    |cx| {
+                        Textbox::new(cx, Datepicker::view_date.map(|date| date.year()))
+                            .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
+                    },
                     SpinboxKind::Horizontal,
                 )
-                .width(Stretch(2.0))
+                .width(Stretch(1.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
                 .on_decrement(|ex| ex.emit(DatepickerEvent::DecrementYear));
             })
@@ -217,6 +228,7 @@ impl View for Datepicker {
                         self.view_date.day(),
                     );
                 }
+                self.selected_month = self.view_date.month() as usize;
             }
 
             DatepickerEvent::DecrementMonth => {
@@ -230,6 +242,16 @@ impl View for Datepicker {
                         self.view_date.day(),
                     );
                 }
+                self.selected_month = self.view_date.month() as usize;
+            }
+
+            DatepickerEvent::SelectMonth(month) => {
+                self.view_date = NaiveDate::from_ymd(
+                    self.view_date.year(),
+                    *month as u32 + 1,
+                    self.view_date.day(),
+                );
+                self.selected_month = *month;
             }
 
             DatepickerEvent::IncrementYear => {
@@ -238,6 +260,13 @@ impl View for Datepicker {
 
             DatepickerEvent::DecrementYear => {
                 self.view_date -= chrono::Duration::days(365);
+            }
+
+            DatepickerEvent::SelectYear(year) => {
+                if let Ok(year) = year.parse::<i32>() {
+                    self.view_date =
+                        NaiveDate::from_ymd(year, self.view_date.month(), self.view_date.day());
+                }
             }
 
             DatepickerEvent::SelectDate(date) => {

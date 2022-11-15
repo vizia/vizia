@@ -120,7 +120,7 @@ pub fn hover_system(cx: &mut Context) {
         if !cx.cursor_icon_locked
             && !cx.style.disabled.get(hovered_widget).cloned().unwrap_or_default()
         {
-            cx.emit(WindowEvent::SetCursor(cursor));
+            cx.emit_to(Entity::root(), WindowEvent::SetCursor(cursor));
         }
 
         // Set current hovered pseudoclass to true

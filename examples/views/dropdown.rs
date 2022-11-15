@@ -1,4 +1,3 @@
-use vizia::fonts::icons_names::DOWN;
 use vizia::prelude::*;
 
 #[derive(Lens, Model, Setter)]
@@ -7,6 +6,7 @@ pub struct AppData {
     choice: String,
 }
 
+const CENTER_LAYOUT: &str = "crates/vizia_core/resources/themes/center_layout.css";
 #[allow(dead_code)]
 const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
 #[allow(dead_code)]
@@ -20,41 +20,39 @@ fn main() {
         }
         .build(cx);
 
+        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
         // Dropdown List
-        Dropdown::new(
-            cx,
-            move |cx| {
-                // A Label and an Icon
-                HStack::new(cx, move |cx| {
-                    Label::new(cx, AppData::choice);
-                    Label::new(cx, DOWN).font("icons");
-                })
-                .child_left(Pixels(5.0))
-                .child_right(Pixels(5.0))
-                .col_between(Stretch(1.0))
-            },
-            move |cx| {
-                List::new(cx, AppData::list, |cx, _, item| {
-                    Label::new(cx, item)
-                        .width(Stretch(1.0))
-                        .child_top(Stretch(1.0))
-                        .child_bottom(Stretch(1.0))
-                        .border_radius(Units::Pixels(4.0))
-                        .bind(AppData::choice, move |handle, selected| {
-                            if item.get(handle.cx) == selected.get(handle.cx) {
-                                handle.checked(true);
-                            }
-                        })
-                        .on_press(move |cx| {
-                            cx.emit(AppDataSetter::Choice(item.get(cx).clone()));
-                            cx.emit(PopupEvent::Close);
-                        });
-                });
-            },
-        )
-        .width(Pixels(100.0));
+        HStack::new(cx, |cx| {
+            Dropdown::new(
+                cx,
+                move |cx| {
+                    // A Label and an Icon
+                    Label::new(cx, AppData::choice)
+                },
+                move |cx| {
+                    List::new(cx, AppData::list, |cx, _, item| {
+                        Label::new(cx, item)
+                            .width(Stretch(1.0))
+                            .child_top(Stretch(1.0))
+                            .child_bottom(Stretch(1.0))
+                            .cursor(CursorIcon::Hand)
+                            .bind(AppData::choice, move |handle, selected| {
+                                if item.get(handle.cx) == selected.get(handle.cx) {
+                                    handle.checked(true);
+                                }
+                            })
+                            .on_press(move |cx| {
+                                cx.emit(AppDataSetter::Choice(item.get(cx).clone()));
+                                cx.emit(PopupEvent::Close);
+                            });
+                    });
+                },
+            )
+            .width(Pixels(100.0));
+        })
+        .class("container");
     })
     .ignore_default_theme()
     .title("Dropdown")

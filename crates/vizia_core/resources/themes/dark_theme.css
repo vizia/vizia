@@ -6,9 +6,6 @@
 
 root {
     background-color: #181818;
-    width: 1s;
-    height: 1s;
-    child-space: 1s;
 }
 
 .container {
@@ -112,7 +109,7 @@ checkbox:checked {
     background-color: #51afef;
     border-color: #51afef;
     color: #181818;
-    transition: background-color 0.2 0;
+    transition: background-color 0.1 0;
     transition: border-color 0.1 0;
 }
 
@@ -141,7 +138,7 @@ checkbox:checked:disabled {
 }
 
 dropdown .title {
-    width: auto;
+    width: 1s;
     height: 30px;
     background-color: #242424;
     border-radius: 4px;
@@ -149,7 +146,6 @@ dropdown .title {
     border-color: #2f2f2f;
     child-space: 1s;
     child-left: 5px;
-    overflow: visible;
 }
 
 dropdown .title:focus-visible {
@@ -159,8 +155,7 @@ dropdown .title:focus-visible {
 }
 
 dropdown popup {
-    width: 1s;
-    top: 4px;
+    width: 100%;
     background-color: #242424;
     border-radius: 4px;
     border-width: 1px;
@@ -169,6 +164,8 @@ dropdown popup {
 
 dropdown popup list {
     width: 1s;
+    child-top: 4px;
+    child-bottom: 4px;
 }
 
 dropdown list label {
@@ -186,6 +183,10 @@ dropdown list label:focus-visible {
     outline-width: 1px;
     outline-color: #51afef80;
     outline-offset: 3px;
+}
+
+dropdown list label:hover {
+    background-color: #2f2f2f;
 }
 
 dropdown vstack {
@@ -219,10 +220,13 @@ radiobutton {
     border-color: #888;
     background-color: transparent;
     child-space: 1s;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 radiobutton:hover {
     border-color: #51afef;
+    transition: border-color 0.1 0;
 }
 
 radiobutton:focus-visible {
@@ -233,14 +237,17 @@ radiobutton:focus-visible {
 
 radiobutton:checked {
     border-color: #51afef;
+    transition: border-color 0.1 0;
 }
 
 radiobutton:checked:hover {
     border-color: #80caff;
+    transition: border-color 0.1 0;
 }
 
 radiobutton:disabled {
     border-color: #404040;
+    transition: border-color 0.1 0;
 }
 
 radiobutton .inner {
@@ -248,22 +255,32 @@ radiobutton .inner {
     height: 0px;
     border-radius: 50%;
     background-color: #888;
+    transition: width 0.15 0;
+    transition: height 0.15 0;
+    transition: background-color 0.1 0;
 }
 
 radiobutton:checked .inner {
     width: 8px;
     height: 8px;
     background-color: #51afef;
+    transition: width 0.15 0;
+    transition: height 0.15 0;
+    transition: background-color 0.1 0;
 }
 
 radiobutton:hover .inner {
     background-color: #80caff;
+    transition: background-color 0.1 0;
 }
 
 radiobutton:disabled .inner {
     width: 8px;
     height: 8px;
     background-color: #404040;
+    transition: width 0.15 0;
+    transition: height 0.15 0;
+    transition: background-color 0.1 0;
 }
 
 scrollbar {
@@ -373,13 +390,16 @@ spinbox .spinbox-button:hover {
     color: #ffffff;
 }
 
-spinbox label.spinbox-value {
-    space: 1s;
-    width: auto;
+spinbox .spinbox-value {
+    width: 1s;
 
     height: 24px;
     child-space: 1s;
     color: #ffffff;
+}
+
+spinbox label.spinbox-value {
+    width: auto;
 }
 
 spinbox textbox.spinbox-value {
@@ -403,21 +423,30 @@ spinbox textbox.spinbox-value textboxlabel {
     width: auto;
 }
 
-spinbox dropdown.spinbox-value {
-    width: 100px;
-}
-
 spinbox dropdown.spinbox-value .title {
     background-color: transparent;
     border-width: 0px;
 }
 
-spinbox dropdown.spinbox-value popup {
-    width: auto;
+spinbox picklist.spinbox-value {
+    width: 1s;
+    child-space: 1s;
 }
 
-spinbox dropdown.spinbox-value popup * {
-    width: auto;
+spinbox picklist.spinbox-value dropdown {
+    width: 100%;
+}
+
+spinbox picklist.spinbox-value .title {
+    width: 1s;
+    background-color: transparent;
+    border-width: 0px;
+    col-between: 4px;
+}
+
+spinbox picklist.spinbox-value .title label {
+    left: 1s;
+    right: 1s;
 }
 
 switch {
@@ -429,6 +458,7 @@ switch {
     background-color: transparent;
     child-space: 1s;
     transition: border-color 0.1 0;
+    transition: background-color 0.1 0;
 }
 
 .switch-handle-container {
@@ -438,83 +468,99 @@ switch {
     height: 8px;
     border-radius: 4px;
     background-color: transparent;
+    transition: left 0.1 0;
     transition: background-color 0.1 0;
 }
 
 .switch-handle {
+    left: 0px;
     width: 8px;
     height: 8px;
     background-color: #888888;
     border-radius: 4px;
     transition: background-color 0.1 0;
+    transition: left 0.1 0;
 }
 
 switch:hover .switch-handle-container .switch-handle {
     background-color: #51afef;
+    transition: background-color 0.1 0;
 }
 
 switch:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef;
-}
-
-switch:active {
-    border-color: #404040;
-    background-color: #dcdcdc;
+    outline-color: #51afef80;
+    outline-offset: 3px;
 }
 
 switch:checked {
     border-color: #51afef;
+    transition: border-color 0.1 0;
 }
 
 switch:checked .switch-handle-container {
     background-color: #51afef40;
+    transition: background-color 0.1 0;
 }
 
 switch:checked .switch-handle-container .switch-handle {
     background-color: #51afef;
     left: 8px;
+    transition: background-color 0.1 0;
+    transition: left 0.1 0;
 }
 
 switch:checked:hover .switch-handle-container .switch-handle {
     background-color: #80caff;
+    transition: background-color 0.1 0;
 }
 
 switch:disabled {
     border-color: #404040;
+    transition: border-color 0.1 0;
 }
 
 switch:disabled .switch-handle-container .switch-handle {
     background-color: #404040;
+    transition: background-color 0.1 0;
 }
 
 switch:hover:disabled {
     background-color: transparent;
+    transition: background-color 0.1 0;
 }
 
 switch:hover:disabled .switch-handle-container .switch-handle {
     background-color: #404040;
+    transition: background-color 0.1 0;
 }
 
 switch:checked:disabled .switch-handle-container {
     background-color: #40404040;
+    transition: background-color 0.1 0;
 }
 
 switch:checked:disabled .switch-handle-container .switch-handle {
     background-color: #404040;
+    transition: background-color 0.1 0;
 }
 
 table {
     border-radius: 4px;
-    space: 1s;
+    background-color: #242424;
+    child-left: 4px;
+    child-top: 4px;
+    child-right: 4px;
+    child-bottom: 4px;
 }
 
-tablecolumn {
-    width: 120px;
+tablecolumn * {
+    row-between: 4px;
 }
 
 .table-column-header {
     height: 30px;
+    bottom: 8px;
 }
 
 .table-column-title {
@@ -569,27 +615,39 @@ textbox {
     child-right: 5px;
     child-top: 2px;
     child-bottom: 2px;
+    transition: border-color 0.1 0;
+    transition: background-color 0.1 0;
+}
+
+textbox textboxlabel {
+    color: #fff;
+    transition: color 0.1 0;
 }
 
 textbox:checked {
     border-color: #51afef;
+    transition: border-color 0.1 0;
 }
+
 textbox:checked .textbox_content {
     caret-color: #51afef;
     selection-color: #51afef40;
 }
 
-textbox:disabled {
+textbox:disabled textboxlabel {
     color: #888;
+    transition: color 0.1 0;
 }
 
 textbox:focus-visible {
     border-color: #51afef80;
+    transition: border-color 0.1 0;
 }
 
 textbox.error {
     border-color: #ef5151;
     border-width: 2px;
+    transition: border-color 0.1 0;
 }
 
 .modal {
@@ -624,6 +682,10 @@ textbox.error {
     left: 1s;
 }
 
+tooltip {
+    height: auto;
+}
+
 tooltip .tooltip-wrapper {
     background-color: #51afef;
     border-radius: 4px;
@@ -638,7 +700,7 @@ tooltip .subtitle {
     color: #00000088;
 }
 
-tooltip label {
+tooltip .tooltip-wrapper > label {
     color: #181818;
 }
 
@@ -785,6 +847,11 @@ datepicker {
     col-between: 4px;
 }
 
+.datepicker-header picklist dropdown popup {
+    left: -28px;
+    width: 131px;
+}
+
 .datepicker-divisor {
     width: 1s;
     height: 1px;
@@ -918,7 +985,6 @@ datetimepicker tabheader:checked .indicator {
 tabview {
     width: 1s;
     height: 1s;
-    /* background-color: #242424; */
 }
 
 .tabview-tabheader-wrapper {
@@ -953,11 +1019,17 @@ tabheader:disabled label {
 } */
 
 chip {
-    border-radius: 15px;
+    border-radius: 16px;
     child-left: 8px;
     child-right: 8px;
     child-top: 4px;
     child-bottom: 4px;
+    width: auto;
+    height: auto;
+}
+
+chip label {
+    height: auto;
     width: auto;
 }
 
@@ -1026,4 +1098,35 @@ notification .icon label {
 
 notification .icon:checked label {
     color: #fff;
+}
+
+menucontroller {
+    background-color: #323232;
+}
+
+menucontroller label {
+    left: 8px;
+    right: 8px;
+}
+
+menustack {
+    col-between: 4px;
+    background-color: #323232;
+    border-radius: 4px;
+}
+
+menustack.vertical {
+    border-top-left-radius: 0px;
+    child-top: 4px;
+    child-bottom: 4px;
+    border-width: 1px;
+    border-color: #424242;
+}
+
+menu {
+    border-radius: 4px;
+}
+
+menubutton:hover {
+    background-color: #424242;
 }
