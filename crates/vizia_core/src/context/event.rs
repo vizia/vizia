@@ -323,9 +323,9 @@ impl<'a> EventContext<'a> {
         self.style.needs_redraw = true;
     }
 
-    pub fn play_animation(&mut self, animation: Animation) {
-        self.current.play_animation(self, animation);
-    }
+    // pub fn play_animation(&mut self, animation: Animation) {
+    //     self.current.play_animation(self, animation);
+    // }
 
     pub fn environment(&self) -> &Environment {
         self.data::<Environment>().unwrap()

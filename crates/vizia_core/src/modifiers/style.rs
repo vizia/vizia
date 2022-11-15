@@ -163,7 +163,7 @@ pub trait StyleModifiers: internal::Modifiable {
     modifier!(
         /// Sets the border width of the view.
         border_width,
-        Units
+        LengthOrPercentage
     );
 
     modifier!(
@@ -174,34 +174,34 @@ pub trait StyleModifiers: internal::Modifiable {
 
     modifier!(
         /// Sets the border radius for the top-left corner of the view.
-        border_radius_top_left,
-        Units
+        border_top_left_radius,
+        LengthOrPercentage
     );
     modifier!(
         /// Sets the border radius for the top-right corner of the view.
-        border_radius_top_right,
-        Units
+        border_top_right_radius,
+        LengthOrPercentage
     );
     modifier!(
         /// Sets the border radius for the bottom-left corner of the view.
-        border_radius_bottom_left,
-        Units
+        border_bottom_left_radius,
+        LengthOrPercentage
     );
     modifier!(
         /// Sets the border radius for the bottom-right corner of the view.
-        border_radius_bottom_right,
-        Units
+        border_bottom_right_radius,
+        LengthOrPercentage
     );
 
     /// Sets the border radius for all four corners of the view.
-    fn border_radius<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn border_radius<U: Into<LengthOrPercentage>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.into();
-            cx.style.border_radius_top_left.insert(entity, value);
-            cx.style.border_radius_top_right.insert(entity, value);
-            cx.style.border_radius_bottom_left.insert(entity, value);
-            cx.style.border_radius_bottom_right.insert(entity, value);
+            cx.style.border_top_left_radius.insert(entity, value.clone());
+            cx.style.border_top_right_radius.insert(entity, value.clone());
+            cx.style.border_bottom_left_radius.insert(entity, value.clone());
+            cx.style.border_bottom_right_radius.insert(entity, value.clone());
 
             cx.need_redraw();
         });
@@ -250,7 +250,7 @@ pub trait StyleModifiers: internal::Modifiable {
     modifier!(
         /// Sets the outline width of the view.
         outline_width,
-        Units
+        LengthOrPercentage
     );
 
     modifier!(
@@ -261,7 +261,7 @@ pub trait StyleModifiers: internal::Modifiable {
     modifier!(
         /// Sets the outline offset of the view.
         outline_offset,
-        Units
+        LengthOrPercentage
     );
 
     modifier!(

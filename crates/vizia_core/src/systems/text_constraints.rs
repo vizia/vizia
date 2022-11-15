@@ -45,12 +45,14 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
             let parent = cx.tree.get_layout_parent(entity).expect("Failed to find parent somehow");
             let parent_width = cx.cache.get_width(parent);
 
-            let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
-            {
-                Units::Pixels(val) => val * cx.style.dpi_factor as f32,
-                Units::Percentage(val) => parent_width * val,
-                _ => 0.0,
-            };
+            // let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
+            // {
+            //     Units::Pixels(val) => val * cx.style.dpi_factor as f32,
+            //     Units::Percentage(val) => parent_width * val,
+            //     _ => 0.0,
+            // };
+
+            let border_width = 0.0;
 
             let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
             let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();

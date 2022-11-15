@@ -57,5 +57,5 @@ pub(crate) use transition::Transition;
 mod animation_builder;
 pub use animation_builder::*;
 
-mod anim_ext;
-pub use anim_ext::AnimExt;
+// mod anim_ext;
+// pub use anim_ext::AnimExt;

@@ -1,0 +1,17 @@
+[package]
+name = "vizia_style"
+version = "0.1.0"
+authors = ["George Atkinson"]
+license = "MIT"
+repository = "https://github.com/vizia/vizia"
+edition = "2021"
+description = "The input components of vizia"
+rust-version = "1.60"
+
+[dependencies]
+cssparser = "0.29.6"
+femtovg = { git = "https://github.com/femtovg/femtovg", rev = "20dc7ef142004736f1ba1c626dd9c5bb556dde14", default-features = false, features = ["image-loading"] }
+parcel_selectors = { version = "0.24.2", path = "./selectors" }
+morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "c14e888b1d66719fc3f13ccdb1ea01a10368ef9e" }
+smallvec = "1.0"
+bitflags = "*"

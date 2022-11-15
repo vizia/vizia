@@ -6,41 +6,43 @@ use cssparser::{Parser, ParserInput};
 
 use crate::prelude::*;
 
-mod color;
-pub use color::Color;
+pub use vizia_style::{Color, Display, Opacity, ParserOptions, Property, StyleSheet, Visibility, BorderCornerShape, Overflow, LengthOrPercentage};
 
-mod units;
-pub use units::*;
+// mod color;
+// pub use color::Color;
+
+// mod units;
+// pub use units::*;
 
 mod rule;
 pub use rule::Rule;
 
-mod display;
-pub use display::*;
+// mod display;
+// pub use display::*;
 
 mod transform;
 pub use transform::*;
 
-mod parser;
-pub use parser::*;
+// mod parser;
+// pub use parser::*;
 
-mod style_rule;
-pub(crate) use style_rule::StyleRule;
+// mod style_rule;
+// pub(crate) use style_rule::StyleRule;
 
 mod selector;
 pub use selector::*;
 
-mod specificity;
-use specificity::*;
+// mod specificity;
+// use specificity::*;
 
-mod property;
-pub use property::*;
+// mod property;
+// pub use property::*;
 
 mod gradient;
 pub use gradient::*;
 
-mod shadow;
-use shadow::*;
+// mod shadow;
+// use shadow::*;
 
 // mod prop;
 // pub use prop::*;
@@ -82,8 +84,7 @@ pub struct Style {
     /// Creates and destroys animation ids
     pub(crate) animation_manager: IdManager<Animation>,
 
-    pub(crate) rules: Vec<StyleRule>,
-
+    // pub(crate) rules: Vec<StyleRule>,
     pub transitions: HashMap<Rule, Animation>,
 
     pub default_font: String,
@@ -96,10 +97,10 @@ pub struct Style {
     pub abilities: SparseSet<Abilities>,
 
     // Display
-    pub display: AnimatableSet<Display>,
+    pub display: StyleSet<Display>,
 
     // Visibility
-    pub visibility: AnimatableSet<Visibility>,
+    pub visibility: StyleSet<Visibility>,
 
     // Opacity
     pub opacity: AnimatableSet<Opacity>,
@@ -119,7 +120,7 @@ pub struct Style {
     //pub scroll: DenseStorage<Scroll>,     // TODO
 
     // Border
-    pub border_width: AnimatableSet<Units>,
+    pub border_width: StyleSet<LengthOrPercentage>,
     pub border_color: AnimatableSet<Color>,
 
     // Border Shape
@@ -129,18 +130,18 @@ pub struct Style {
     pub border_shape_bottom_right: StyleSet<BorderCornerShape>,
 
     // Border Radius
-    pub border_radius_top_left: AnimatableSet<Units>,
-    pub border_radius_top_right: AnimatableSet<Units>,
-    pub border_radius_bottom_left: AnimatableSet<Units>,
-    pub border_radius_bottom_right: AnimatableSet<Units>,
+    pub border_top_left_radius: StyleSet<LengthOrPercentage>,
+    pub border_top_right_radius: StyleSet<LengthOrPercentage>,
+    pub border_bottom_left_radius: StyleSet<LengthOrPercentage>,
+    pub border_bottom_right_radius: StyleSet<LengthOrPercentage>,
 
     // Outline
-    pub outline_width: AnimatableSet<Units>,
-    pub outline_color: AnimatableSet<Color>,
-    pub outline_offset: AnimatableSet<Units>,
+    pub outline_width: StyleSet<LengthOrPercentage>,
+    pub outline_color: StyleSet<Color>,
+    pub outline_offset: StyleSet<LengthOrPercentage>,
 
     // Focus Order
-    pub focus_order: SparseSet<FocusOrder>,
+    // pub focus_order: SparseSet<FocusOrder>,
 
     // Background
     pub background_color: AnimatableSet<Color>,
@@ -154,9 +155,9 @@ pub struct Style {
     pub outer_shadow_color: AnimatableSet<Color>,
 
     // Inner Shadow (TODO)
-    pub inner_shadow_h_offset: AnimatableSet<Units>,
-    pub inner_shadow_v_offset: AnimatableSet<Units>,
-    pub inner_shadow_blur: AnimatableSet<Units>,
+    pub inner_shadow_h_offset: StyleSet<LengthOrPercentage>,
+    pub inner_shadow_v_offset: StyleSet<LengthOrPercentage>,
+    pub inner_shadow_blur: StyleSet<LengthOrPercentage>,
     pub inner_shadow_color: AnimatableSet<Color>,
 
     // Text & Font
@@ -250,57 +251,59 @@ impl Style {
     // }
 
     pub fn remove_rules(&mut self) {
-        for rule in self.rules.iter() {
-            self.rule_manager.destroy(rule.id);
-        }
+        // for rule in self.rules.iter() {
+        //     self.rule_manager.destroy(rule.id);
+        // }
 
-        for (_, animation) in self.transitions.iter() {
-            self.animation_manager.destroy(*animation);
-        }
+        // for (_, animation) in self.transitions.iter() {
+        //     self.animation_manager.destroy(*animation);
+        // }
     }
 
     pub fn parse_theme(&mut self, stylesheet: &str) {
-        let mut input = ParserInput::new(stylesheet);
-        let mut parser = Parser::new(&mut input);
-        let rule_parser = parser::RuleParser::new();
+        if let Ok(theme) = StyleSheet::parse("test.css", stylesheet, ParserOptions::default()) {}
 
-        let rules = {
-            let rule_list_parser =
-                cssparser::RuleListParser::new_for_stylesheet(&mut parser, rule_parser);
-            rule_list_parser.collect::<Vec<_>>()
-        };
+        // let mut input = ParserInput::new(stylesheet);
+        // let mut parser = Parser::new(&mut input);
+        // let rule_parser = parser::RuleParser::new();
 
-        let mut rule_list: Vec<StyleRule> = rules
-            .into_iter()
-            .filter_map(|rule| {
-                match rule {
-                    Ok(mut style_rule) => {
-                        style_rule.id = self.rule_manager.create();
-                        Some(style_rule)
-                    }
-                    Err(parse_error) => {
-                        let style_parse_error = StyleParseError(parse_error.0);
-                        println!("{}", style_parse_error);
-                        None
-                    }
-                }
-                //rule.ok()
-            })
-            .collect();
+        // let rules = {
+        //     let rule_list_parser =
+        //         cssparser::RuleListParser::new_for_stylesheet(&mut parser, rule_parser);
+        //     rule_list_parser.collect::<Vec<_>>()
+        // };
 
-        self.rules.append(&mut rule_list);
+        // let mut rule_list: Vec<StyleRule> = rules
+        //     .into_iter()
+        //     .filter_map(|rule| {
+        //         match rule {
+        //             Ok(mut style_rule) => {
+        //                 style_rule.id = self.rule_manager.create();
+        //                 Some(style_rule)
+        //             }
+        //             Err(parse_error) => {
+        //                 let style_parse_error = StyleParseError(parse_error.0);
+        //                 println!("{}", style_parse_error);
+        //                 None
+        //             }
+        //         }
+        //         //rule.ok()
+        //     })
+        //     .collect();
 
-        self.rules.sort_by_key(|rule| rule.specificity());
-        self.rules.reverse();
+        // self.rules.append(&mut rule_list);
 
-        // for rule in self.rules.iter() {
-        //     print!("{}", rule);
-        // }
+        // self.rules.sort_by_key(|rule| rule.specificity());
+        // self.rules.reverse();
 
-        self.clear_style_rules();
-        self.set_style_properties();
+        // // for rule in self.rules.iter() {
+        // //     print!("{}", rule);
+        // // }
+
+        // self.clear_style_rules();
+        // self.set_style_properties();
     }
-
+    /*
     fn set_style_properties(&mut self) {
         for rule in self.rules.iter() {
             let rule_id = rule.id;
@@ -924,6 +927,7 @@ impl Style {
         // println!("{:?}", self.rules);
         // println!("{:?}", self.child_left.shared_data);
     }
+    */
 
     fn add_transition<T: Default + Interpolator>(
         &self,
@@ -944,7 +948,7 @@ impl Style {
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
         self.visibility.insert(entity, Default::default());
-        self.focus_order.insert(entity, Default::default()).unwrap();
+        //self.focus_order.insert(entity, Default::default()).unwrap();
         self.needs_restyle = true;
         self.needs_relayout = true;
         self.needs_redraw = true;
@@ -986,16 +990,16 @@ impl Style {
         self.border_shape_top_right.remove(entity);
 
         // Border Radius
-        self.border_radius_bottom_left.remove(entity);
-        self.border_radius_bottom_right.remove(entity);
-        self.border_radius_top_left.remove(entity);
-        self.border_radius_top_right.remove(entity);
+        self.border_bottom_left_radius.remove(entity);
+        self.border_bottom_right_radius.remove(entity);
+        self.border_top_left_radius.remove(entity);
+        self.border_top_right_radius.remove(entity);
 
         self.outline_width.remove(entity);
         self.outline_color.remove(entity);
         self.outline_offset.remove(entity);
 
-        self.focus_order.remove(entity);
+        //self.focus_order.remove(entity);
 
         // Background
         self.background_color.remove(entity);
@@ -1105,10 +1109,10 @@ impl Style {
         self.border_shape_top_right.clear_rules();
 
         // Border Radius
-        self.border_radius_bottom_left.clear_rules();
-        self.border_radius_bottom_right.clear_rules();
-        self.border_radius_top_left.clear_rules();
-        self.border_radius_top_right.clear_rules();
+        self.border_bottom_left_radius.clear_rules();
+        self.border_bottom_right_radius.clear_rules();
+        self.border_top_left_radius.clear_rules();
+        self.border_top_right_radius.clear_rules();
 
         // Outline
         self.outline_width.clear_rules();

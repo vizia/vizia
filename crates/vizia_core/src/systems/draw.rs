@@ -11,7 +11,7 @@ pub fn draw_system(cx: &mut Context) {
 
     canvas.set_size(window_width as u32, window_height as u32, 1.0);
     let clear_color =
-        cx.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
+        cx.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::rgb(255, 255, 255));
     canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
 
     // filter for widgets that should be drawn

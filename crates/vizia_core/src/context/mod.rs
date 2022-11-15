@@ -432,34 +432,34 @@ impl Context {
     }
 
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
-        if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
-            return Ok(());
-        }
+        // if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
+        //     return Ok(());
+        // }
 
-        self.style.remove_rules();
+        // self.style.remove_rules();
 
-        self.style.rules.clear();
+        // self.style.rules.clear();
 
-        self.style.clear_style_rules();
+        // self.style.clear_style_rules();
 
-        let mut overall_theme = String::new();
+        // let mut overall_theme = String::new();
 
-        // Reload the stored themes
-        for theme in self.resource_manager.themes.iter() {
-            overall_theme += theme;
-        }
+        // // Reload the stored themes
+        // for theme in self.resource_manager.themes.iter() {
+        //     overall_theme += theme;
+        // }
 
-        // Reload the stored stylesheets
-        for stylesheet in self.resource_manager.stylesheets.iter() {
-            let theme = std::fs::read_to_string(stylesheet)?;
-            overall_theme += &theme;
-        }
+        // // Reload the stored stylesheets
+        // for stylesheet in self.resource_manager.stylesheets.iter() {
+        //     let theme = std::fs::read_to_string(stylesheet)?;
+        //     overall_theme += &theme;
+        // }
 
-        self.style.parse_theme(&overall_theme);
+        // self.style.parse_theme(&overall_theme);
 
-        self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
+        // self.style.needs_restyle = true;
+        // self.style.needs_relayout = true;
+        // self.style.needs_redraw = true;
 
         Ok(())
     }

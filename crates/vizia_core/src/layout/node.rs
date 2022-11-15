@@ -234,31 +234,39 @@ impl<'w> Node<'w> for Entity {
     }
 
     fn border_left(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.0.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
-            t => t,
-        })
+        // store.0.border_width.get(*self).cloned().map(|v| match v {
+        //     Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+        //     t => t,
+        // })
+
+        None
     }
 
     fn border_right(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.0.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
-            t => t,
-        })
+        // store.0.border_width.get(*self).cloned().map(|v| match v {
+        //     Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+        //     t => t,
+        // })
+
+        None
     }
 
     fn border_top(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.0.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
-            t => t,
-        })
+        // store.0.border_width.get(*self).cloned().map(|v| match v {
+        //     Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+        //     t => t,
+        // })
+
+        None
     }
 
     fn border_bottom(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.0.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
-            t => t,
-        })
+        // store.0.border_width.get(*self).cloned().map(|v| match v {
+        //     Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+        //     t => t,
+        // })
+
+        None
     }
 
     fn row_index(&self, store: &Self::Data) -> Option<usize> {

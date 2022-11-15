@@ -120,42 +120,42 @@ impl<'a> DrawContext<'a> {
         physical * self.style.dpi_factor as f32
     }
 
-    style_getter_units!(border_width);
-    style_getter_units!(border_radius_top_right);
-    style_getter_units!(border_radius_top_left);
-    style_getter_units!(border_radius_bottom_right);
-    style_getter_units!(border_radius_bottom_left);
-    style_getter_units!(outline_width);
-    style_getter_units!(outline_offset);
-    style_getter_units!(outer_shadow_h_offset);
-    style_getter_units!(outer_shadow_v_offset);
-    style_getter_units!(outer_shadow_blur);
-    style_getter_units!(inner_shadow_h_offset);
-    style_getter_units!(inner_shadow_v_offset);
-    style_getter_units!(inner_shadow_blur);
-    style_getter_units!(child_left);
-    style_getter_units!(child_right);
-    style_getter_units!(child_top);
-    style_getter_units!(child_bottom);
-    style_getter_untranslated!(Color, background_color);
-    style_getter_untranslated!(Color, font_color);
-    style_getter_untranslated!(Color, border_color);
-    style_getter_untranslated!(Color, outline_color);
-    style_getter_untranslated!(Color, outer_shadow_color);
-    style_getter_untranslated!(Color, inner_shadow_color);
-    style_getter_untranslated!(Color, selection_color);
-    style_getter_untranslated!(Color, caret_color);
-    style_getter_untranslated!(LinearGradient, background_gradient);
-    style_getter_untranslated!(BorderCornerShape, border_shape_top_right);
-    style_getter_untranslated!(BorderCornerShape, border_shape_top_left);
-    style_getter_untranslated!(BorderCornerShape, border_shape_bottom_right);
-    style_getter_untranslated!(BorderCornerShape, border_shape_bottom_left);
-    style_getter_untranslated!(String, background_image);
-    style_getter_untranslated!(String, text);
-    style_getter_untranslated!(String, image);
-    style_getter_untranslated!(String, font);
-    style_getter_untranslated!(bool, text_wrap);
-    style_getter_untranslated!(Selection, text_selection);
+    // style_getter_untranslated!(LengthOrPercentage, border_width);
+    // style_getter_untranslated!(LengthOrPercentage, border_top_right_radius);
+    // style_getter_untranslated!(LengthOrPercentage, border_top_left_radius);
+    // style_getter_untranslated!(LengthOrPercentage, border_bottom_right_radius);
+    // style_getter_untranslated!(LengthOrPercentage, border_bottom_left_radius);
+    // style_getter_untranslated!(LengthOrPercentage, outline_width);
+    // style_getter_untranslated!(LengthOrPercentage, outline_offset);
+    // style_getter_untranslated!(LengthOrPercentage, outer_shadow_h_offset);
+    // style_getter_untranslated!(LengthOrPercentage, outer_shadow_v_offset);
+    // style_getter_untranslated!(LengthOrPercentage, outer_shadow_blur);
+    // style_getter_untranslated!(LengthOrPercentage, inner_shadow_h_offset);
+    // style_getter_untranslated!(LengthOrPercentage, inner_shadow_v_offset);
+    // style_getter_untranslated!(LengthOrPercentage, inner_shadow_blur);
+    // style_getter_units!(child_left);
+    // style_getter_units!(child_right);
+    // style_getter_units!(child_top);
+    // style_getter_units!(child_bottom);
+    // style_getter_untranslated!(Color, background_color);
+    // style_getter_untranslated!(Color, font_color);
+    // style_getter_untranslated!(Color, border_color);
+    // style_getter_untranslated!(Color, outline_color);
+    // style_getter_untranslated!(Color, outer_shadow_color);
+    // style_getter_untranslated!(Color, inner_shadow_color);
+    // style_getter_untranslated!(Color, selection_color);
+    // style_getter_untranslated!(Color, caret_color);
+    // style_getter_untranslated!(LinearGradient, background_gradient);
+    // style_getter_untranslated!(BorderCornerShape, border_shape_top_right);
+    // style_getter_untranslated!(BorderCornerShape, border_shape_top_left);
+    // style_getter_untranslated!(BorderCornerShape, border_shape_bottom_right);
+    // style_getter_untranslated!(BorderCornerShape, border_shape_bottom_left);
+    // style_getter_untranslated!(String, background_image);
+    // style_getter_untranslated!(String, text);
+    // style_getter_untranslated!(String, image);
+    // style_getter_untranslated!(String, font);
+    // style_getter_untranslated!(bool, text_wrap);
+    // style_getter_untranslated!(Selection, text_selection);
 
     pub fn opacity(&self) -> f32 {
         self.cache.get_opacity(self.current)

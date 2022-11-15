@@ -29,9 +29,9 @@ impl<'a, 'b, V> EventHandle<'a, 'b, V> {
         self.cx.focus()
     }
 
-    pub fn play_animation(&mut self, animation: Animation) {
-        self.cx.play_animation(animation);
-    }
+    // pub fn play_animation(&mut self, animation: Animation) {
+    //     self.cx.play_animation(animation);
+    // }
 
     /// Send an event containing a message up the tree from the current entity.
     pub fn emit<M: Any + Send>(&mut self, message: M) {

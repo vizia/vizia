@@ -38,7 +38,7 @@ pub mod image {
 
 /// Members which we recommend you wildcard-import.
 pub mod prelude {
-    pub use super::animation::{AnimExt, Animation, AnimationBuilder};
+    pub use super::animation::{Animation, AnimationBuilder};
     pub use super::context::{
         Context, ContextProxy, DataContext, DrawContext, EventContext, ProxyEmitError,
     };
@@ -63,7 +63,7 @@ pub mod prelude {
 
     pub use super::style::{
         Abilities, BorderCornerShape, Color, Display, GradientDirection, GradientStop,
-        LinearGradient, Opacity, Overflow, PseudoClass, Visibility,
+        LinearGradient, Opacity, Overflow, PseudoClass, Visibility, LengthOrPercentage,
     };
 
     pub use morphorm::Units::*;
