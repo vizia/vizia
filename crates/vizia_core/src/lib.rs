@@ -63,7 +63,7 @@ pub mod prelude {
 
     pub use super::style::{
         Abilities, BorderCornerShape, Color, Display, GradientDirection, GradientStop,
-        LinearGradient, Opacity, Overflow, PseudoClass, Visibility, LengthOrPercentage,
+        LinearGradient, Opacity, Overflow, PseudoClass, Visibility, LengthOrPercentage, Length, LengthValue,
     };
 
     pub use morphorm::Units::*;

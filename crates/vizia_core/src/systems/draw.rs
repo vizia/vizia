@@ -46,19 +46,19 @@ pub fn draw_system(cx: &mut Context) {
             continue;
         }
 
-        canvas.scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
+        // canvas.scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
 
         // Apply transform
         let transform = cx.cache.get_transform(entity);
         canvas.save();
-        canvas.set_transform(
-            transform[0],
-            transform[1],
-            transform[2],
-            transform[3],
-            transform[4],
-            transform[5],
-        );
+        // canvas.set_transform(
+        //     transform[0],
+        //     transform[1],
+        //     transform[2],
+        //     transform[3],
+        //     transform[4],
+        //     transform[5],
+        // );
 
         if let Some(view) = cx.views.remove(&entity) {
             cx.current = entity;

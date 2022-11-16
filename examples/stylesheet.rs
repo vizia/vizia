@@ -9,9 +9,14 @@ fn main() {
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet("examples/resources/test.css").expect("Failed to find file");
-
-        Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
+        Element::new(cx)
+            .size(Pixels(100.0))
+            .space(Pixels(20.0))
+            .background_color(Color::rgb(255, 0, 0))
+            .border_width("10px")
+            .border_width(LengthValue::Px(30.0))
+            .border_width("50%")
+            .border_color(Color::rgb(0,0,0));
     })
     .title("Stylesheet")
     .run();

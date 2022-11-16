@@ -14,6 +14,7 @@ use crate::style::{LinearGradient, Style};
 use crate::text::Selection;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
+use vizia_style::{Length, LengthOrPercentage, LengthValue};
 
 /// Cached data used for drawing.
 pub struct DrawCache {
@@ -120,6 +121,36 @@ impl<'a> DrawContext<'a> {
         physical * self.style.dpi_factor as f32
     }
 
+    /// Returns the border width in physical pixels
+    pub fn border_width(&self) -> f32 {
+        if let Some(border_width) = self.style.border_width.get(self.current) {
+            let bounds = self.bounds();
+
+            match border_width {
+                LengthOrPercentage::Length(length) => {
+                    match length {
+                        Length::Value(val) => {
+                            // TODO: Handle other length values
+                            if let LengthValue::Px(px) = val {
+                                return self.logical_to_physical(*px);
+                            } 
+                        }
+
+                        // TODO: Handle Calc
+                        _=> {}
+                    }
+                }
+
+                LengthOrPercentage::Percentage(val) => {
+                    return bounds.w.min(bounds.h) * val;
+                }
+            }
+
+        }
+
+        0.0
+    }
+
     // style_getter_untranslated!(LengthOrPercentage, border_width);
     // style_getter_untranslated!(LengthOrPercentage, border_top_right_radius);
     // style_getter_untranslated!(LengthOrPercentage, border_top_left_radius);
@@ -137,9 +168,9 @@ impl<'a> DrawContext<'a> {
     // style_getter_units!(child_right);
     // style_getter_units!(child_top);
     // style_getter_units!(child_bottom);
-    // style_getter_untranslated!(Color, background_color);
+    style_getter_untranslated!(Color, background_color);
     // style_getter_untranslated!(Color, font_color);
-    // style_getter_untranslated!(Color, border_color);
+    style_getter_untranslated!(Color, border_color);
     // style_getter_untranslated!(Color, outline_color);
     // style_getter_untranslated!(Color, outer_shadow_color);
     // style_getter_untranslated!(Color, inner_shadow_color);

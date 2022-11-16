@@ -6,7 +6,7 @@ use cssparser::{Parser, ParserInput};
 
 use crate::prelude::*;
 
-pub use vizia_style::{Color, Display, Opacity, ParserOptions, Property, StyleSheet, Visibility, BorderCornerShape, Overflow, LengthOrPercentage};
+pub use vizia_style::{Color, Display, Opacity, ParserOptions, Property, StyleSheet, Visibility, BorderCornerShape, Overflow, LengthOrPercentage, Length, LengthValue};
 
 // mod color;
 // pub use color::Color;

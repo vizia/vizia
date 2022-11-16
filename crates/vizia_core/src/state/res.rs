@@ -49,6 +49,7 @@ impl_res_simple!(f32);
 impl_res_simple!(f64);
 impl_res_simple!(CursorIcon);
 impl_res_simple!(Overflow);
+impl_res_simple!(LengthValue);
 
 impl<T, L> Res<T> for L
 where
@@ -202,6 +203,32 @@ impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
         F: 'static + Clone + Fn(&mut Context, Entity, Option<T>),
+    {
+        (closure)(cx, entity, self.clone())
+    }
+}
+
+impl Res<Length> for Length {
+    fn get_val(&self, _: &Context) -> Self {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, Self),
+    {
+        (closure)(cx, entity, self.clone())
+    }
+}
+
+impl Res<LengthOrPercentage> for LengthOrPercentage {
+    fn get_val(&self, _: &Context) -> Self {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, Self),
     {
         (closure)(cx, entity, self.clone())
     }
