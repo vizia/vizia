@@ -31,5 +31,5 @@ mod tree;
 pub mod visitor;
 
 pub use crate::nth_index_cache::NthIndexCache;
-pub use crate::parser::{Parser, SelectorImpl, SelectorList};
+pub use crate::parser::{Parser, Selector, SelectorImpl, SelectorList};
 pub use crate::tree::{Element, OpaqueElement};

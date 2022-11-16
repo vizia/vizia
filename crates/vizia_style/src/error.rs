@@ -1,5 +1,5 @@
 use cssparser::{BasicParseErrorKind, CowRcStr, ParseError, ParseErrorKind, Token};
-use parcel_selectors::parser::SelectorParseErrorKind;
+use selectors::parser::SelectorParseErrorKind;
 use std::fmt;
 
 #[derive(Debug, PartialEq, Clone)]

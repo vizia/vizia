@@ -1,4 +1,4 @@
-use parcel_selectors::SelectorList;
+use selectors::SelectorList;
 
 use crate::{CssRuleList, DeclarationBlock, Location, Selectors};
 

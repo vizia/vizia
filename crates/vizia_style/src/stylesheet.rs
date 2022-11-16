@@ -8,10 +8,9 @@ use cssparser::*;
 #[derive(Debug)]
 pub struct StyleSheet<'i, 'o> {
     // List of top level rules
-    rules: CssRuleList<'i>,
+    pub rules: CssRuleList<'i>,
 
-
-    options: ParserOptions<'o>,
+    pub options: ParserOptions<'o>,
 }
 
 impl<'i, 'o> StyleSheet<'i, 'o> {
@@ -36,10 +35,7 @@ impl<'i, 'o> StyleSheet<'i, 'o> {
             rules.push(rule)
         }
 
-        Ok(StyleSheet {
-            rules: CssRuleList(rules),
-            options,
-        })
+        Ok(StyleSheet { rules: CssRuleList(rules), options })
     }
     // pub fn parse(code: &'i str, options: &ParserOptions<'i>) -> Result<Self, Error<CustomParseError<'i>>> {
     //     let mut input = ParserInput::new(&code);
@@ -143,7 +139,7 @@ test {
 }
 "#;
 
-const EXAMPLE: &str = r#"
+    const EXAMPLE: &str = r#"
     :root {
         --main-bg-color: brown;
     }

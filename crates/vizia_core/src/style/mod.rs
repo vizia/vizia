@@ -1,12 +1,16 @@
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
+use vizia_style::CssRule;
 
 use cssparser::{Parser, ParserInput};
 
 use crate::prelude::*;
 
-pub use vizia_style::{Color, Display, Opacity, ParserOptions, Property, StyleSheet, Visibility, BorderCornerShape, Overflow, LengthOrPercentage, Length, LengthValue};
+pub use vizia_style::{
+    BorderCornerShape, Color, Display, Length, LengthOrPercentage, LengthValue, Opacity, Overflow,
+    ParserOptions, Property, SelectorList, Selectors, StyleSheet, Visibility,
+};
 
 // mod color;
 // pub use color::Color;
@@ -85,6 +89,7 @@ pub struct Style {
     pub(crate) animation_manager: IdManager<Animation>,
 
     // pub(crate) rules: Vec<StyleRule>,
+    // pub selectors: HashMap<Rule, SelectorList<Selectors>>,
     pub transitions: HashMap<Rule, Animation>,
 
     pub default_font: String,
@@ -261,7 +266,27 @@ impl Style {
     }
 
     pub fn parse_theme(&mut self, stylesheet: &str) {
-        if let Ok(theme) = StyleSheet::parse("test.css", stylesheet, ParserOptions::default()) {}
+        if let Ok(theme) = StyleSheet::parse("test.css", stylesheet, ParserOptions::default()) {
+            let rules = theme.rules.0;
+            for rule in rules {
+                match rule {
+                    CssRule::Style(style_rule) => {
+                        let rule_id = self.rule_manager.create();
+
+                        //TODO: Store map of selectors
+                        //let selectors = style_rule.selectors;
+
+                        //self.selectors.insert(rule_id, selectors);
+
+                        for property in style_rule.declarations.declarations {
+                            self.insert_property(rule_id, property);
+                        }
+                    }
+
+                    _ => {}
+                }
+            }
+        }
 
         // let mut input = ParserInput::new(stylesheet);
         // let mut parser = Parser::new(&mut input);
@@ -303,6 +328,17 @@ impl Style {
         // self.clear_style_rules();
         // self.set_style_properties();
     }
+
+    fn insert_property(&mut self, rule_id: Rule, property: Property) {
+        match property {
+            Property::Display(display) => {
+                self.display.insert_rule(rule_id, display);
+            }
+
+            _ => {}
+        }
+    }
+
     /*
     fn set_style_properties(&mut self) {
         for rule in self.rules.iter() {

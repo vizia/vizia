@@ -6,7 +6,7 @@ use crate::{
     ParserOptions, Property, PropertyRule, SelectorParser, Selectors, StyleRule,
 };
 use cssparser::*;
-use parcel_selectors::{
+use selectors::{
     parser::{NestingRequirement, Selector},
     SelectorList,
 };
@@ -29,18 +29,11 @@ pub struct TopLevelRuleParser<'a, 'o, 'i> {
 
 impl<'a, 'o, 'b, 'i> TopLevelRuleParser<'a, 'o, 'i> {
     pub fn new(options: &'a ParserOptions<'o>) -> Self {
-        TopLevelRuleParser {
-            default_namespace: None,
-            options,
-            state: State::Start,
-        }
+        TopLevelRuleParser { default_namespace: None, options, state: State::Start }
     }
 
     fn nested<'x: 'b>(&'x mut self) -> NestedRuleParser<'_, 'o, 'i> {
-        NestedRuleParser {
-            default_namespace: &mut self.default_namespace,
-            options: &self.options,
-        }
+        NestedRuleParser { default_namespace: &mut self.default_namespace, options: &self.options }
     }
 }
 
@@ -113,10 +106,8 @@ struct NestedRuleParser<'a, 'o, 'i> {
 
 impl<'a, 'o, 'b, 'i> NestedRuleParser<'a, 'o, 'i> {
     fn parse_nested_rules<'t>(&mut self, input: &mut Parser<'i, 't>) -> CssRuleList<'i> {
-        let nested_parser = NestedRuleParser {
-            default_namespace: self.default_namespace,
-            options: self.options,
-        };
+        let nested_parser =
+            NestedRuleParser { default_namespace: self.default_namespace, options: self.options };
 
         let mut iter = RuleListParser::new_for_nested_rule(input, nested_parser);
         let mut rules = Vec::new();
@@ -135,10 +126,7 @@ impl<'a, 'o, 'b, 'i> NestedRuleParser<'a, 'o, 'i> {
 
     fn loc(&self, start: &ParserState) -> Location {
         let loc = start.source_location();
-        Location {
-            line: loc.line,
-            column: loc.column,
-        }
+        Location { line: loc.line, column: loc.column }
     }
 }
 
@@ -175,10 +163,8 @@ impl<'a, 'o, 'b, 'i> QualifiedRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
         &mut self,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
-        let selector_parser = SelectorParser {
-            default_namespace: self.default_namespace,
-            is_nesting_allowed: false,
-        };
+        let selector_parser =
+            SelectorParser { default_namespace: self.default_namespace, is_nesting_allowed: false };
 
         SelectorList::parse(&selector_parser, input, NestingRequirement::None)
     }
@@ -193,18 +179,10 @@ impl<'a, 'o, 'b, 'i> QualifiedRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
         let (declarations, rules) = if self.options.nesting {
             parse_declarations_and_nested_rules(input, self.default_namespace, self.options)?
         } else {
-            (
-                DeclarationBlock::parse(input, self.options)?,
-                CssRuleList(vec![]),
-            )
+            (DeclarationBlock::parse(input, self.options)?, CssRuleList(vec![]))
         };
 
-        Ok(CssRule::Style(StyleRule {
-            selectors,
-            declarations,
-            rules,
-            loc,
-        }))
+        Ok(CssRule::Style(StyleRule { selectors, declarations, rules, loc }))
     }
 }
 
@@ -246,13 +224,7 @@ fn parse_declarations_and_nested_rules<'a, 'o, 'i, 't>(
         }
     }
 
-    Ok((
-        DeclarationBlock {
-            declarations,
-            important_declarations,
-        },
-        rules,
-    ))
+    Ok((DeclarationBlock { declarations, important_declarations }, rules))
 }
 
 // Style Rule
@@ -318,10 +290,7 @@ fn parse_nested_at_rule<'a, 'o, 'i, 't>(
     options: &'a ParserOptions<'i>,
 ) -> Result<CssRuleList<'i>, ParseError<'i, CustomParseError<'i>>> {
     let loc = input.current_source_location();
-    let loc = Location {
-        line: loc.line,
-        column: loc.column,
-    };
+    let loc = Location { line: loc.line, column: loc.column };
 
     // Declarations can be immediately within @media and @supports blocks that are nested within a parent style rule.
     // These act the same way as if they were nested within a `& { ... }` block.
@@ -333,8 +302,8 @@ fn parse_nested_at_rule<'a, 'o, 'i, 't>(
             0,
             CssRule::Style(StyleRule {
                 selectors: SelectorList(smallvec::smallvec![
-                    parcel_selectors::parser::Selector::from_vec2(vec![
-                        parcel_selectors::parser::Component::Nesting
+                    selectors::parser::Selector::from_vec2(vec![
+                        selectors::parser::Component::Nesting
                     ])
                 ]),
                 declarations,
@@ -356,10 +325,8 @@ impl<'a, 'o, 'b, 'i> QualifiedRuleParser<'i> for StyleRuleParser<'a, 'o, 'i> {
         &mut self,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
-        let selector_parser = SelectorParser {
-            default_namespace: self.default_namespace,
-            is_nesting_allowed: true,
-        };
+        let selector_parser =
+            SelectorParser { default_namespace: self.default_namespace, is_nesting_allowed: true };
         SelectorList::parse(&selector_parser, input, NestingRequirement::Prefixed)
     }
 
@@ -376,10 +343,7 @@ impl<'a, 'o, 'b, 'i> QualifiedRuleParser<'i> for StyleRuleParser<'a, 'o, 'i> {
             selectors,
             declarations,
             rules,
-            loc: Location {
-                line: loc.line,
-                column: loc.column,
-            },
+            loc: Location { line: loc.line, column: loc.column },
         }));
         Ok(())
     }

@@ -10,7 +10,7 @@ pub enum PseudoElement<'i> {
     Custom(CowRcStr<'i>),
 }
 
-impl<'i> parcel_selectors::parser::PseudoElement<'i> for PseudoElement<'i> {
+impl<'i> selectors::parser::PseudoElement<'i> for PseudoElement<'i> {
     type Impl = Selectors;
 
     fn accepts_state_pseudo_classes(&self) -> bool {

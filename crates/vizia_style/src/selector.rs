@@ -1,5 +1,5 @@
 use cssparser::*;
-use parcel_selectors::SelectorImpl;
+use selectors::SelectorImpl;
 
 use crate::{CustomParseError, Direction, Parse, PseudoClass, PseudoElement};
 
@@ -44,7 +44,7 @@ pub struct SelectorParser<'a, 'i> {
     pub is_nesting_allowed: bool,
 }
 
-impl<'a, 'i> parcel_selectors::parser::Parser<'i> for SelectorParser<'a, 'i> {
+impl<'a, 'i> selectors::parser::Parser<'i> for SelectorParser<'a, 'i> {
     type Impl = Selectors;
     type Error = CustomParseError<'i>;
 
@@ -103,7 +103,7 @@ impl<'a, 'i> parcel_selectors::parser::Parser<'i> for SelectorParser<'a, 'i> {
                 Dir(Direction::parse(parser)?)
             },
 
-            _=> return Err(parser.new_custom_error(parcel_selectors::parser::SelectorParseErrorKind::UnexpectedIdent(name.clone()))),
+            _=> return Err(parser.new_custom_error(selectors::parser::SelectorParseErrorKind::UnexpectedIdent(name.clone()))),
         };
 
         Ok(pseudo_class)
@@ -128,7 +128,7 @@ impl<'a, 'i> parcel_selectors::parser::Parser<'i> for SelectorParser<'a, 'i> {
 
 #[cfg(test)]
 mod tests {
-    use parcel_selectors::{
+    use selectors::{
         parser::{Component, LocalName, Selector},
         SelectorList,
     };
@@ -143,7 +143,7 @@ mod tests {
         SelectorList::parse(
             &SelectorParser { default_namespace: &None, is_nesting_allowed: true },
             &mut parser,
-            parcel_selectors::parser::NestingRequirement::None,
+            selectors::parser::NestingRequirement::None,
         )
     }
 
@@ -158,7 +158,7 @@ mod tests {
         let result = SelectorList::parse(
             &SelectorParser { default_namespace: &None, is_nesting_allowed: true },
             &mut parser,
-            parcel_selectors::parser::NestingRequirement::None,
+            selectors::parser::NestingRequirement::None,
         );
         assert!(result.is_ok());
     }

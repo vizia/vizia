@@ -1,3 +1,6 @@
+pub use selectors::SelectorList;
+
+#[cfg(test)]
 mod test {
     use std::{
         collections::{HashMap, HashSet},
@@ -5,7 +8,7 @@ mod test {
     };
 
     use cssparser::*;
-    use parcel_selectors::{
+    use selectors::{
         context::{MatchingContext, MatchingMode, QuirksMode},
         matching::{matches_selector, matches_selector_list},
         OpaqueElement, SelectorList,
@@ -19,12 +22,9 @@ mod test {
         let mut parser_input = ParserInput::new(input);
         let mut parser = Parser::new(&mut parser_input);
         SelectorList::parse(
-            &SelectorParser {
-                default_namespace: &None,
-                is_nesting_allowed: true,
-            },
+            &SelectorParser { default_namespace: &None, is_nesting_allowed: true },
             &mut parser,
-            parcel_selectors::parser::NestingRequirement::None,
+            selectors::parser::NestingRequirement::None,
         )
     }
 
@@ -60,10 +60,10 @@ mod test {
         store: &'s Store,
     }
 
-    impl<'i, 's> parcel_selectors::Element<'i> for Node<'s> {
+    impl<'i, 's> selectors::Element<'i> for Node<'s> {
         type Impl = Selectors;
 
-        fn opaque(&self) -> parcel_selectors::OpaqueElement {
+        fn opaque(&self) -> selectors::OpaqueElement {
             OpaqueElement::new(self)
         }
 
@@ -113,22 +113,19 @@ mod test {
 
         fn has_namespace(
             &self,
-            ns: &<Self::Impl as parcel_selectors::SelectorImpl<'i>>::BorrowedNamespaceUrl,
+            ns: &<Self::Impl as selectors::SelectorImpl<'i>>::BorrowedNamespaceUrl,
         ) -> bool {
             false
         }
 
-        fn is_part(
-            &self,
-            name: &<Self::Impl as parcel_selectors::SelectorImpl<'i>>::Identifier,
-        ) -> bool {
+        fn is_part(&self, name: &<Self::Impl as selectors::SelectorImpl<'i>>::Identifier) -> bool {
             false
         }
 
         fn imported_part(
             &self,
-            name: &<Self::Impl as parcel_selectors::SelectorImpl<'i>>::Identifier,
-        ) -> Option<<Self::Impl as parcel_selectors::SelectorImpl<'i>>::Identifier> {
+            name: &<Self::Impl as selectors::SelectorImpl<'i>>::Identifier,
+        ) -> Option<<Self::Impl as selectors::SelectorImpl<'i>>::Identifier> {
             None
         }
 
@@ -146,16 +143,16 @@ mod test {
 
         fn has_id(
             &self,
-            id: &<Self::Impl as parcel_selectors::SelectorImpl<'i>>::Identifier,
-            case_sensitivity: parcel_selectors::attr::CaseSensitivity,
+            id: &<Self::Impl as selectors::SelectorImpl<'i>>::Identifier,
+            case_sensitivity: selectors::attr::CaseSensitivity,
         ) -> bool {
             false
         }
 
         fn has_class(
             &self,
-            name: &<Self::Impl as parcel_selectors::SelectorImpl<'i>>::Identifier,
-            case_sensitivity: parcel_selectors::attr::CaseSensitivity,
+            name: &<Self::Impl as selectors::SelectorImpl<'i>>::Identifier,
+            case_sensitivity: selectors::attr::CaseSensitivity,
         ) -> bool {
             if let Some(classes) = self.store.classes.get(&self.entity) {
                 return classes.contains(name.0.as_ref());
@@ -166,12 +163,12 @@ mod test {
 
         fn attr_matches(
             &self,
-            ns: &parcel_selectors::attr::NamespaceConstraint<
-                &<Self::Impl as parcel_selectors::SelectorImpl<'i>>::NamespaceUrl,
+            ns: &selectors::attr::NamespaceConstraint<
+                &<Self::Impl as selectors::SelectorImpl<'i>>::NamespaceUrl,
             >,
-            local_name: &<Self::Impl as parcel_selectors::SelectorImpl<'i>>::LocalName,
-            operation: &parcel_selectors::attr::AttrSelectorOperation<
-                &<Self::Impl as parcel_selectors::SelectorImpl<'i>>::AttrValue,
+            local_name: &<Self::Impl as selectors::SelectorImpl<'i>>::LocalName,
+            operation: &selectors::attr::AttrSelectorOperation<
+                &<Self::Impl as selectors::SelectorImpl<'i>>::AttrValue,
             >,
         ) -> bool {
             false
@@ -179,20 +176,20 @@ mod test {
 
         fn match_pseudo_element(
             &self,
-            pe: &<Self::Impl as parcel_selectors::SelectorImpl<'i>>::PseudoElement,
-            context: &mut parcel_selectors::context::MatchingContext<'_, 'i, Self::Impl>,
+            pe: &<Self::Impl as selectors::SelectorImpl<'i>>::PseudoElement,
+            context: &mut selectors::context::MatchingContext<'_, 'i, Self::Impl>,
         ) -> bool {
             false
         }
 
         fn match_non_ts_pseudo_class<F>(
             &self,
-            pc: &<Self::Impl as parcel_selectors::SelectorImpl<'i>>::NonTSPseudoClass,
-            context: &mut parcel_selectors::context::MatchingContext<'_, 'i, Self::Impl>,
+            pc: &<Self::Impl as selectors::SelectorImpl<'i>>::NonTSPseudoClass,
+            context: &mut selectors::context::MatchingContext<'_, 'i, Self::Impl>,
             flags_setter: &mut F,
         ) -> bool
         where
-            F: FnMut(&Self, parcel_selectors::matching::ElementSelectorFlags),
+            F: FnMut(&Self, selectors::matching::ElementSelectorFlags),
         {
             if let Some(psudeo_class_flag) = self.store.pseudo_class.get(&self.entity) {
                 match pc {
@@ -242,15 +239,9 @@ mod test {
         store.element.insert(root, String::from("window"));
         store.element.insert(child, String::from("button"));
 
-        let root_node = Node {
-            entity: root,
-            store: &store,
-        };
+        let root_node = Node { entity: root, store: &store };
 
-        let child_node = Node {
-            entity: child,
-            store: &store,
-        };
+        let child_node = Node { entity: child, store: &store };
 
         if let Ok(selector_list) = parse("*") {
             let mut context =
@@ -276,15 +267,9 @@ mod test {
         store.element.insert(root, String::from("window"));
         store.element.insert(child, String::from("button"));
 
-        let root_node = Node {
-            entity: root,
-            store: &store,
-        };
+        let root_node = Node { entity: root, store: &store };
 
-        let child_node = Node {
-            entity: child,
-            store: &store,
-        };
+        let child_node = Node { entity: child, store: &store };
 
         if let Ok(selector_list) = parse("window") {
             let mut context =
@@ -326,15 +311,9 @@ mod test {
             classes.insert(String::from("bar"));
         }
 
-        let root_node = Node {
-            entity: root,
-            store: &store,
-        };
+        let root_node = Node { entity: root, store: &store };
 
-        let child_node = Node {
-            entity: child,
-            store: &store,
-        };
+        let child_node = Node { entity: child, store: &store };
 
         if let Ok(selector_list) = parse(".foo") {
             let mut context =
@@ -401,15 +380,9 @@ mod test {
 
         store.element.insert(child, String::from("child"));
 
-        let root_node = Node {
-            entity: root,
-            store: &store,
-        };
+        let root_node = Node { entity: root, store: &store };
 
-        let child_node = Node {
-            entity: child,
-            store: &store,
-        };
+        let child_node = Node { entity: child, store: &store };
 
         if let Ok(selector_list) = parse("window:hover") {
             let mut context =

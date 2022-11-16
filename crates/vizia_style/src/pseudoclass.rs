@@ -34,7 +34,7 @@ pub enum PseudoClass<'i> {
     Custom(CowRcStr<'i>),
 }
 
-impl<'i> parcel_selectors::parser::NonTSPseudoClass<'i> for PseudoClass<'i> {
+impl<'i> selectors::parser::NonTSPseudoClass<'i> for PseudoClass<'i> {
     type Impl = Selectors;
 
     fn is_active_or_hover(&self) -> bool {
