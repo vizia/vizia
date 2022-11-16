@@ -62,12 +62,12 @@ pub trait View: 'static + Sized {
             return;
         }
 
-        let background_color = cx.background_color().copied().unwrap_or_default();
-        
+        let background_color = cx.background_color();
+
         // let font_color = cx.font_color().cloned().unwrap_or(Color::rgb(0, 0, 0));
 
-        let border_color = cx.border_color().copied().unwrap_or_default();
-        let outline_color = cx.outline_color().copied().unwrap_or_default();
+        let border_color = cx.border_color();
+        let outline_color = cx.outline_color();
 
         // let parent = cx
         //     .tree
@@ -90,20 +90,20 @@ pub trait View: 'static + Sized {
         let border_bottom_left_radius = cx.border_bottom_left_radius();
         let border_bottom_right_radius = cx.border_bottom_right_radius();
 
-        let opacity = cx.opacity();
+        // let opacity = cx.opacity();
 
-        let mut background_color: femtovg::Color = background_color.into();
-        background_color.set_alphaf(background_color.a * opacity);
+        // let mut background_color: femtovg::Color = background_color.into();
+        // background_color.set_alphaf(background_color.a * opacity);
 
-        let mut border_color: femtovg::Color = border_color.into();
-        border_color.set_alphaf(border_color.a * opacity);
+        // let mut border_color: femtovg::Color = border_color.into();
+        // border_color.set_alphaf(border_color.a * opacity);
 
         let border_width = cx.border_width();
 
         let outline_width = cx.outline_width();
 
-        let mut outline_color: femtovg::Color = outline_color.into();
-        outline_color.set_alphaf(outline_color.a * opacity);
+        // let mut outline_color: femtovg::Color = outline_color.into();
+        // outline_color.set_alphaf(outline_color.a * opacity);
 
         let outline_offset = cx.outline_offset();
 
@@ -379,7 +379,7 @@ pub trait View: 'static + Sized {
         // }
 
         // Fill with background color
-        let mut paint = Paint::color(background_color);
+        let mut paint = Paint::color(background_color.into());
 
         // // Gradient overrides background color
         // if let Some(background_gradient) = cx.background_gradient() {
@@ -436,7 +436,7 @@ pub trait View: 'static + Sized {
         // //println!("{:.2?} seconds for whatever you did.", start.elapsed());
 
         // Draw border
-        let mut paint = Paint::color(border_color);
+        let mut paint = Paint::color(border_color.into());
         paint.set_line_width(border_width);
         canvas.stroke_path(&mut path, &paint);
 
@@ -453,7 +453,7 @@ pub trait View: 'static + Sized {
             border_bottom_right_radius * 1.5,
             border_bottom_left_radius * 1.5,
         );
-        let mut outline_paint = Paint::color(outline_color);
+        let mut outline_paint = Paint::color(outline_color.into());
         outline_paint.set_line_width(outline_width);
         canvas.stroke_path(&mut outline_path, &outline_paint);
 

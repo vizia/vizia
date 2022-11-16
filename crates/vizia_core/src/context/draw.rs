@@ -66,8 +66,36 @@ macro_rules! style_getter_units {
 
 macro_rules! style_getter_untranslated {
     ($ty:ty, $name:ident) => {
-        pub fn $name(&self) -> Option<&$ty> {
-            self.style.$name.get(self.current)
+        pub fn $name(&self) -> $ty {
+            self.style.$name.get(self.current).copied().unwrap_or_default()
+        }
+    };
+}
+
+macro_rules! get_color_property {
+    ($ty:ty, $name:ident) => {
+        pub fn $name(&self) -> $ty {
+            let opacity = self.cache.get_opacity(self.current);
+            if let Some(col) = self.style.$name.get(self.current) {
+                Color::rgba(col.r(), col.g(), col.b(), (opacity * col.a() as f32) as u8)
+            } else {
+                Color::rgba(0, 0, 0, 0)
+            }
+        }
+    };
+}
+
+macro_rules! get_length_property {
+    ($name:ident) => {
+        pub fn $name(&self) -> f32 {
+            if let Some(length) = self.style.$name.get(self.current) {
+                let bounds = self.bounds();
+
+                let px = length.to_pixels(bounds.w.min(bounds.h));
+                return self.logical_to_physical(px).round();
+            }
+
+            0.0
         }
     };
 }
@@ -121,87 +149,13 @@ impl<'a> DrawContext<'a> {
         physical * self.style.dpi_factor as f32
     }
 
-    /// Returns the border width in physical pixels
-    pub fn border_width(&self) -> f32 {
-        if let Some(border_width) = self.style.border_width.get(self.current) {
-            let bounds = self.bounds();
-            
-            let px = border_width.to_pixels(bounds.w.min(bounds.h));
-            return self.logical_to_physical(px).round();
-        }
-
-        0.0
-    }
-
-    pub fn outline_width(&self) -> f32 {
-        if let Some(outline_width) = self.style.outline_width.get(self.current) {
-            let bounds = self.bounds();
-            
-            let px = outline_width.to_pixels(bounds.w.min(bounds.h));
-            return self.logical_to_physical(px).round();
-        }
-
-        0.0
-    }
-
-    pub fn outline_offset(&self) -> f32 {
-        if let Some(outline_offset) = self.style.outline_width.get(self.current) {
-            let bounds = self.bounds();
-            
-            let px = outline_offset.to_pixels(bounds.w.min(bounds.h));
-            return self.logical_to_physical(px).round();
-        }
-
-        0.0
-    }
-
-    /// Returns the top-left border radius in physical pixels
-    pub fn border_top_left_radius(&self) -> f32 {
-        if let Some(border_top_left_radius) = self.style.border_top_left_radius.get(self.current) {
-            let bounds = self.bounds();
-            
-            let px = border_top_left_radius.to_pixels(bounds.w.min(bounds.h));
-            return self.logical_to_physical(px).round();
-        }
-
-        0.0
-    }
-
-    /// Returns the top-right border radius in physical pixels
-    pub fn border_top_right_radius(&self) -> f32 {
-        if let Some(border_top_right_radius) = self.style.border_top_right_radius.get(self.current) {
-            let bounds = self.bounds();
-            
-            let px = border_top_right_radius.to_pixels(bounds.w.min(bounds.h));
-            return self.logical_to_physical(px).round();
-        }
-
-        0.0
-    }
-
-    /// Returns the bottom-left border radius in physical pixels
-    pub fn border_bottom_left_radius(&self) -> f32 {
-        if let Some(border_bottom_left_radius) = self.style.border_bottom_left_radius.get(self.current) {
-            let bounds = self.bounds();
-            
-            let px = border_bottom_left_radius.to_pixels(bounds.w.min(bounds.h));
-            return self.logical_to_physical(px).round();
-        }
-
-        0.0
-    }
-
-    /// Returns the bottom-right border radius in physical pixels
-    pub fn border_bottom_right_radius(&self) -> f32 {
-        if let Some(border_bottom_right_radius) = self.style.border_bottom_right_radius.get(self.current) {
-            let bounds = self.bounds();
-            
-            let px = border_bottom_right_radius.to_pixels(bounds.w.min(bounds.h));
-            return self.logical_to_physical(px).round();
-        }
-
-        0.0
-    }
+    get_length_property!(border_width);
+    get_length_property!(outline_width);
+    get_length_property!(outline_offset);
+    get_length_property!(border_top_left_radius);
+    get_length_property!(border_top_right_radius);
+    get_length_property!(border_bottom_left_radius);
+    get_length_property!(border_bottom_right_radius);
 
     pub fn border_top_left_shape(&self) -> BorderCornerShape {
         self.style.border_top_left_shape.get(self.current).copied().unwrap_or_default()
@@ -214,11 +168,10 @@ impl<'a> DrawContext<'a> {
     pub fn border_bottom_left_shape(&self) -> BorderCornerShape {
         self.style.border_bottom_left_shape.get(self.current).copied().unwrap_or_default()
     }
-    
+
     pub fn border_bottom_right_shape(&self) -> BorderCornerShape {
         self.style.border_bottom_right_shape.get(self.current).copied().unwrap_or_default()
     }
-
 
     // style_getter_untranslated!(LengthOrPercentage, border_width);
     // style_getter_untranslated!(LengthOrPercentage, border_top_right_radius);
@@ -237,14 +190,14 @@ impl<'a> DrawContext<'a> {
     // style_getter_units!(child_right);
     // style_getter_units!(child_top);
     // style_getter_units!(child_bottom);
-    style_getter_untranslated!(Color, background_color);
-    // style_getter_untranslated!(Color, font_color);
-    style_getter_untranslated!(Color, border_color);
-    style_getter_untranslated!(Color, outline_color);
+    get_color_property!(Color, background_color);
+    get_color_property!(Color, font_color);
+    get_color_property!(Color, border_color);
+    get_color_property!(Color, outline_color);
     // style_getter_untranslated!(Color, outer_shadow_color);
     // style_getter_untranslated!(Color, inner_shadow_color);
-    // style_getter_untranslated!(Color, selection_color);
-    // style_getter_untranslated!(Color, caret_color);
+    get_color_property!(Color, selection_color);
+    get_color_property!(Color, caret_color);
     // style_getter_untranslated!(LinearGradient, background_gradient);
     // style_getter_untranslated!(BorderCornerShape, border_top_right_shape);
     // style_getter_untranslated!(BorderCornerShape, border_top_left_shape);

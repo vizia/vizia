@@ -108,6 +108,12 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     modifier!(
+        /// Sets the opacity of the view.
+        opacity,
+        Opacity
+    );
+
+    modifier!(
         /// Sets the z-order index of the view.
         ///
         /// Views with a higher z-order will be rendered on top of those with a lower z-order.
