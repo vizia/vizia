@@ -125,31 +125,100 @@ impl<'a> DrawContext<'a> {
     pub fn border_width(&self) -> f32 {
         if let Some(border_width) = self.style.border_width.get(self.current) {
             let bounds = self.bounds();
-
-            match border_width {
-                LengthOrPercentage::Length(length) => {
-                    match length {
-                        Length::Value(val) => {
-                            // TODO: Handle other length values
-                            if let LengthValue::Px(px) = val {
-                                return self.logical_to_physical(*px);
-                            } 
-                        }
-
-                        // TODO: Handle Calc
-                        _=> {}
-                    }
-                }
-
-                LengthOrPercentage::Percentage(val) => {
-                    return bounds.w.min(bounds.h) * val;
-                }
-            }
-
+            
+            let px = border_width.to_pixels(bounds.w.min(bounds.h));
+            return self.logical_to_physical(px).round();
         }
 
         0.0
     }
+
+    pub fn outline_width(&self) -> f32 {
+        if let Some(outline_width) = self.style.outline_width.get(self.current) {
+            let bounds = self.bounds();
+            
+            let px = outline_width.to_pixels(bounds.w.min(bounds.h));
+            return self.logical_to_physical(px).round();
+        }
+
+        0.0
+    }
+
+    pub fn outline_offset(&self) -> f32 {
+        if let Some(outline_offset) = self.style.outline_width.get(self.current) {
+            let bounds = self.bounds();
+            
+            let px = outline_offset.to_pixels(bounds.w.min(bounds.h));
+            return self.logical_to_physical(px).round();
+        }
+
+        0.0
+    }
+
+    /// Returns the top-left border radius in physical pixels
+    pub fn border_top_left_radius(&self) -> f32 {
+        if let Some(border_top_left_radius) = self.style.border_top_left_radius.get(self.current) {
+            let bounds = self.bounds();
+            
+            let px = border_top_left_radius.to_pixels(bounds.w.min(bounds.h));
+            return self.logical_to_physical(px).round();
+        }
+
+        0.0
+    }
+
+    /// Returns the top-right border radius in physical pixels
+    pub fn border_top_right_radius(&self) -> f32 {
+        if let Some(border_top_right_radius) = self.style.border_top_right_radius.get(self.current) {
+            let bounds = self.bounds();
+            
+            let px = border_top_right_radius.to_pixels(bounds.w.min(bounds.h));
+            return self.logical_to_physical(px).round();
+        }
+
+        0.0
+    }
+
+    /// Returns the bottom-left border radius in physical pixels
+    pub fn border_bottom_left_radius(&self) -> f32 {
+        if let Some(border_bottom_left_radius) = self.style.border_bottom_left_radius.get(self.current) {
+            let bounds = self.bounds();
+            
+            let px = border_bottom_left_radius.to_pixels(bounds.w.min(bounds.h));
+            return self.logical_to_physical(px).round();
+        }
+
+        0.0
+    }
+
+    /// Returns the bottom-right border radius in physical pixels
+    pub fn border_bottom_right_radius(&self) -> f32 {
+        if let Some(border_bottom_right_radius) = self.style.border_bottom_right_radius.get(self.current) {
+            let bounds = self.bounds();
+            
+            let px = border_bottom_right_radius.to_pixels(bounds.w.min(bounds.h));
+            return self.logical_to_physical(px).round();
+        }
+
+        0.0
+    }
+
+    pub fn border_top_left_shape(&self) -> BorderCornerShape {
+        self.style.border_top_left_shape.get(self.current).copied().unwrap_or_default()
+    }
+
+    pub fn border_top_right_shape(&self) -> BorderCornerShape {
+        self.style.border_top_right_shape.get(self.current).copied().unwrap_or_default()
+    }
+
+    pub fn border_bottom_left_shape(&self) -> BorderCornerShape {
+        self.style.border_bottom_left_shape.get(self.current).copied().unwrap_or_default()
+    }
+    
+    pub fn border_bottom_right_shape(&self) -> BorderCornerShape {
+        self.style.border_bottom_right_shape.get(self.current).copied().unwrap_or_default()
+    }
+
 
     // style_getter_untranslated!(LengthOrPercentage, border_width);
     // style_getter_untranslated!(LengthOrPercentage, border_top_right_radius);
@@ -171,16 +240,16 @@ impl<'a> DrawContext<'a> {
     style_getter_untranslated!(Color, background_color);
     // style_getter_untranslated!(Color, font_color);
     style_getter_untranslated!(Color, border_color);
-    // style_getter_untranslated!(Color, outline_color);
+    style_getter_untranslated!(Color, outline_color);
     // style_getter_untranslated!(Color, outer_shadow_color);
     // style_getter_untranslated!(Color, inner_shadow_color);
     // style_getter_untranslated!(Color, selection_color);
     // style_getter_untranslated!(Color, caret_color);
     // style_getter_untranslated!(LinearGradient, background_gradient);
-    // style_getter_untranslated!(BorderCornerShape, border_shape_top_right);
-    // style_getter_untranslated!(BorderCornerShape, border_shape_top_left);
-    // style_getter_untranslated!(BorderCornerShape, border_shape_bottom_right);
-    // style_getter_untranslated!(BorderCornerShape, border_shape_bottom_left);
+    // style_getter_untranslated!(BorderCornerShape, border_top_right_shape);
+    // style_getter_untranslated!(BorderCornerShape, border_top_left_shape);
+    // style_getter_untranslated!(BorderCornerShape, border_bottom_right_shape);
+    // style_getter_untranslated!(BorderCornerShape, border_bottom_left_shape);
     // style_getter_untranslated!(String, background_image);
     // style_getter_untranslated!(String, text);
     // style_getter_untranslated!(String, image);

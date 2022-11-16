@@ -57,17 +57,17 @@ pub trait View: 'static + Sized {
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let bounds = cx.bounds();
 
-        // //Skip widgets with no width or no height
-        // if bounds.w == 0.0 || bounds.h == 0.0 {
-        //     return;
-        // }
+        //Skip widgets with no width or no height
+        if bounds.w == 0.0 || bounds.h == 0.0 {
+            return;
+        }
 
         let background_color = cx.background_color().copied().unwrap_or_default();
         
         // let font_color = cx.font_color().cloned().unwrap_or(Color::rgb(0, 0, 0));
 
-        let border_color = cx.border_color().cloned().unwrap_or_default();
-        // let outline_color = cx.outline_color().cloned().unwrap_or_default();
+        let border_color = cx.border_color().copied().unwrap_or_default();
+        let outline_color = cx.outline_color().copied().unwrap_or_default();
 
         // let parent = cx
         //     .tree
@@ -77,28 +77,18 @@ pub trait View: 'static + Sized {
         // let parent_width = cx.cache.get_width(parent);
         // let parent_height = cx.cache.get_height(parent);
 
-        // let border_shape_top_left = cx.border_shape_top_left().cloned().unwrap_or_default();
+        let border_top_left_shape = cx.border_top_left_shape();
 
-        // let border_shape_top_right = cx.border_shape_top_right().cloned().unwrap_or_default();
+        let border_top_right_shape = cx.border_top_right_shape();
 
-        // let border_shape_bottom_left = cx.border_shape_bottom_left().cloned().unwrap_or_default();
+        let border_bottom_left_shape = cx.border_bottom_left_shape();
 
-        // let border_shape_bottom_right = cx.border_shape_bottom_right().cloned().unwrap_or_default();
+        let border_bottom_right_shape = cx.border_bottom_right_shape();
 
-        // let border_top_left_radius =
-        //     cx.border_top_left_radius().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
-
-        // let border_top_right_radius =
-        //     cx.border_top_right_radius().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
-
-        // let border_bottom_left_radius = cx
-        //     .border_bottom_left_radius()
-        //     .unwrap_or_default()
-        //     .value_or(bounds.w.min(bounds.h), 0.0);
-        // let border_bottom_right_radius = cx
-        //     .border_bottom_right_radius()
-        //     .unwrap_or_default()
-        //     .value_or(bounds.w.min(bounds.h), 0.0);
+        let border_top_left_radius = cx.border_top_left_radius();
+        let border_top_right_radius = cx.border_top_right_radius();
+        let border_bottom_left_radius = cx.border_bottom_left_radius();
+        let border_bottom_right_radius = cx.border_bottom_right_radius();
 
         let opacity = cx.opacity();
 
@@ -110,14 +100,12 @@ pub trait View: 'static + Sized {
 
         let border_width = cx.border_width();
 
-        // let outline_width =
-        //     cx.outline_width().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
+        let outline_width = cx.outline_width();
 
-        // let mut outline_color: femtovg::Color = outline_color.into();
-        // outline_color.set_alphaf(outline_color.a * opacity);
+        let mut outline_color: femtovg::Color = outline_color.into();
+        outline_color.set_alphaf(outline_color.a * opacity);
 
-        // let outline_offset =
-        //     cx.outline_offset().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
+        let outline_offset = cx.outline_offset();
 
         // let outer_shadow_h_offset =
         //     cx.outer_shadow_h_offset().unwrap_or_default().value_or(bounds.w, 0.0);
@@ -186,109 +174,109 @@ pub trait View: 'static + Sized {
         // //let start = instant::Instant::now();
         let mut path = Path::new();
 
-        // if bounds.w == bounds.h
-        //     && border_bottom_left_radius == (bounds.w - 2.0 * border_width) / 2.0
-        //     && border_bottom_right_radius == (bounds.w - 2.0 * border_width) / 2.0
-        //     && border_top_left_radius == (bounds.w - 2.0 * border_width) / 2.0
-        //     && border_top_right_radius == (bounds.w - 2.0 * border_width) / 2.0
-        // {
-        //     path.circle(
-        //         bounds.x + (border_width / 2.0) + (bounds.w - border_width) / 2.0,
-        //         bounds.y + (border_width / 2.0) + (bounds.h - border_width) / 2.0,
-        //         bounds.w / 2.0,
-        //     );
-        // } else {
-        //     let x = bounds.x + border_width / 2.0;
-        //     let y = bounds.y + border_width / 2.0;
-        //     let w = bounds.w - border_width;
-        //     let h = bounds.h - border_width;
-        //     let halfw = w.abs() * 0.5;
-        //     let halfh = h.abs() * 0.5;
+        if bounds.w == bounds.h
+            && border_bottom_left_radius == (bounds.w - 2.0 * border_width) / 2.0
+            && border_bottom_right_radius == (bounds.w - 2.0 * border_width) / 2.0
+            && border_top_left_radius == (bounds.w - 2.0 * border_width) / 2.0
+            && border_top_right_radius == (bounds.w - 2.0 * border_width) / 2.0
+        {
+            path.circle(
+                bounds.x + (border_width / 2.0) + (bounds.w - border_width) / 2.0,
+                bounds.y + (border_width / 2.0) + (bounds.h - border_width) / 2.0,
+                bounds.w / 2.0,
+            );
+        } else {
+            let x = bounds.x + border_width / 2.0;
+            let y = bounds.y + border_width / 2.0;
+            let w = bounds.w - border_width;
+            let h = bounds.h - border_width;
+            let halfw = w.abs() * 0.5;
+            let halfh = h.abs() * 0.5;
 
-        //     let rx_bl = border_bottom_left_radius.min(halfw) * w.signum();
-        //     let ry_bl = border_bottom_left_radius.min(halfh) * h.signum();
+            let rx_bl = border_bottom_left_radius.min(halfw) * w.signum();
+            let ry_bl = border_bottom_left_radius.min(halfh) * h.signum();
 
-        //     let rx_br = border_bottom_right_radius.min(halfw) * w.signum();
-        //     let ry_br = border_bottom_right_radius.min(halfh) * h.signum();
+            let rx_br = border_bottom_right_radius.min(halfw) * w.signum();
+            let ry_br = border_bottom_right_radius.min(halfh) * h.signum();
 
-        //     let rx_tr = border_top_right_radius.min(halfw) * w.signum();
-        //     let ry_tr = border_top_right_radius.min(halfh) * h.signum();
+            let rx_tr = border_top_right_radius.min(halfw) * w.signum();
+            let ry_tr = border_top_right_radius.min(halfh) * h.signum();
 
-        //     let rx_tl = border_top_left_radius.min(halfw) * w.signum();
-        //     let ry_tl = border_top_left_radius.min(halfh) * h.signum();
+            let rx_tl = border_top_left_radius.min(halfw) * w.signum();
+            let ry_tl = border_top_left_radius.min(halfh) * h.signum();
 
-        //     path.move_to(x, y + ry_tl);
-        //     path.line_to(x, y + h - ry_bl);
-        //     if border_bottom_left_radius != 0.0 {
-        //         if border_shape_bottom_left == BorderCornerShape::Round {
-        //             path.bezier_to(
-        //                 x,
-        //                 y + h - ry_bl * (1.0 - KAPPA90),
-        //                 x + rx_bl * (1.0 - KAPPA90),
-        //                 y + h,
-        //                 x + rx_bl,
-        //                 y + h,
-        //             );
-        //         } else {
-        //             path.line_to(x + rx_bl, y + h);
-        //         }
-        //     }
+            path.move_to(x, y + ry_tl);
+            path.line_to(x, y + h - ry_bl);
+            if border_bottom_left_radius != 0.0 {
+                if border_bottom_left_shape == BorderCornerShape::Round {
+                    path.bezier_to(
+                        x,
+                        y + h - ry_bl * (1.0 - KAPPA90),
+                        x + rx_bl * (1.0 - KAPPA90),
+                        y + h,
+                        x + rx_bl,
+                        y + h,
+                    );
+                } else {
+                    path.line_to(x + rx_bl, y + h);
+                }
+            }
 
-        //     path.line_to(x + w - rx_br, y + h);
+            path.line_to(x + w - rx_br, y + h);
 
-        //     if border_radius_bottom_right != 0.0 {
-        //         if border_shape_bottom_right == BorderCornerShape::Round {
-        //             path.bezier_to(
-        //                 x + w - rx_br * (1.0 - KAPPA90),
-        //                 y + h,
-        //                 x + w,
-        //                 y + h - ry_br * (1.0 - KAPPA90),
-        //                 x + w,
-        //                 y + h - ry_br,
-        //             );
-        //         } else {
-        //             path.line_to(x + w, y + h - ry_br);
-        //         }
-        //     }
+            if border_bottom_right_radius != 0.0 {
+                if border_bottom_right_shape == BorderCornerShape::Round {
+                    path.bezier_to(
+                        x + w - rx_br * (1.0 - KAPPA90),
+                        y + h,
+                        x + w,
+                        y + h - ry_br * (1.0 - KAPPA90),
+                        x + w,
+                        y + h - ry_br,
+                    );
+                } else {
+                    path.line_to(x + w, y + h - ry_br);
+                }
+            }
 
-        //     path.line_to(x + w, y + ry_tr);
+            path.line_to(x + w, y + ry_tr);
 
-        //     if border_top_right_radius != 0.0 {
-        //         if border_shape_top_right == BorderCornerShape::Round {
-        //             path.bezier_to(
-        //                 x + w,
-        //                 y + ry_tr * (1.0 - KAPPA90),
-        //                 x + w - rx_tr * (1.0 - KAPPA90),
-        //                 y,
-        //                 x + w - rx_tr,
-        //                 y,
-        //             );
-        //         } else {
-        //             path.line_to(x + w - rx_tr, y);
-        //         }
-        //     }
+            if border_top_right_radius != 0.0 {
+                if border_top_right_shape == BorderCornerShape::Round {
+                    path.bezier_to(
+                        x + w,
+                        y + ry_tr * (1.0 - KAPPA90),
+                        x + w - rx_tr * (1.0 - KAPPA90),
+                        y,
+                        x + w - rx_tr,
+                        y,
+                    );
+                } else {
+                    path.line_to(x + w - rx_tr, y);
+                }
+            }
 
-        //     path.line_to(x + rx_tl, y);
+            path.line_to(x + rx_tl, y);
 
-        //     if border_top_left_radius != 0.0 {
-        //         if border_shape_top_left == BorderCornerShape::Round {
-        //             path.bezier_to(
-        //                 x + rx_tl * (1.0 - KAPPA90),
-        //                 y,
-        //                 x,
-        //                 y + ry_tl * (1.0 - KAPPA90),
-        //                 x,
-        //                 y + ry_tl,
-        //             );
-        //         } else {
-        //             path.line_to(x, y + ry_tl);
-        //         }
-        //     }
+            if border_top_left_radius != 0.0 {
+                if border_top_left_shape == BorderCornerShape::Round {
+                    path.bezier_to(
+                        x + rx_tl * (1.0 - KAPPA90),
+                        y,
+                        x,
+                        y + ry_tl * (1.0 - KAPPA90),
+                        x,
+                        y + ry_tl,
+                    );
+                } else {
+                    path.line_to(x, y + ry_tl);
+                }
+            }
 
-        //     path.close();
-        // }
+            path.close();
+        }
 
-        path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+        //path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
 
         // // Draw outer shadow
 
@@ -452,22 +440,22 @@ pub trait View: 'static + Sized {
         paint.set_line_width(border_width);
         canvas.stroke_path(&mut path, &paint);
 
-        // // Draw outline
-        // let mut outline_path = Path::new();
-        // let half_outline_width = outline_width / 2.0;
-        // outline_path.rounded_rect_varying(
-        //     bounds.x - half_outline_width - outline_offset,
-        //     bounds.y - half_outline_width - outline_offset,
-        //     bounds.w + outline_width + 2.0 * outline_offset,
-        //     bounds.h + outline_width + 2.0 * outline_offset,
-        //     border_top_left_radius * 1.5,
-        //     border_top_right_radius * 1.5,
-        //     border_bottom_right_radius * 1.5,
-        //     border_bottom_left_radius * 1.5,
-        // );
-        // let mut outline_paint = Paint::color(outline_color);
-        // outline_paint.set_line_width(outline_width);
-        // canvas.stroke_path(&mut outline_path, &outline_paint);
+        // Draw outline
+        let mut outline_path = Path::new();
+        let half_outline_width = outline_width / 2.0;
+        outline_path.rounded_rect_varying(
+            bounds.x - half_outline_width - outline_offset,
+            bounds.y - half_outline_width - outline_offset,
+            bounds.w + outline_width + 2.0 * outline_offset,
+            bounds.h + outline_width + 2.0 * outline_offset,
+            border_top_left_radius * 1.5,
+            border_top_right_radius * 1.5,
+            border_bottom_right_radius * 1.5,
+            border_bottom_left_radius * 1.5,
+        );
+        let mut outline_paint = Paint::color(outline_color);
+        outline_paint.set_line_width(outline_width);
+        canvas.stroke_path(&mut outline_path, &outline_paint);
 
         // // // Draw inner shadow
         // // let mut path = Path::new();

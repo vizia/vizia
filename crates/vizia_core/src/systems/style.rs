@@ -312,19 +312,19 @@ pub fn hoverability_system(cx: &mut Context, tree: &Tree<Entity>) {
 //         should_redraw = true;
 //     }
 
-//     if cx.style.border_shape_top_left.link(entity, &matched_rules) {
+//     if cx.style.border_top_left_shape.link(entity, &matched_rules) {
 //         should_redraw = true;
 //     }
 
-//     if cx.style.border_shape_top_right.link(entity, &matched_rules) {
+//     if cx.style.border_top_right_shape.link(entity, &matched_rules) {
 //         should_redraw = true;
 //     }
 
-//     if cx.style.border_shape_bottom_left.link(entity, &matched_rules) {
+//     if cx.style.border_bottom_left_shape.link(entity, &matched_rules) {
 //         should_redraw = true;
 //     }
 
-//     if cx.style.border_shape_bottom_right.link(entity, &matched_rules) {
+//     if cx.style.border_bottom_right_shape.link(entity, &matched_rules) {
 //         should_redraw = true;
 //     }
 

@@ -211,22 +211,22 @@ pub trait StyleModifiers: internal::Modifiable {
 
     modifier!(
         /// Sets the border corner shape for the top-left corner of the view.
-        border_shape_top_left,
+        border_top_left_shape,
         BorderCornerShape
     );
     modifier!(
         /// Sets the border corner shape for the top-right corner of the view.
-        border_shape_top_right,
+        border_top_right_shape,
         BorderCornerShape
     );
     modifier!(
         /// Sets the border corner shape for the bottom-left corner of the view.
-        border_shape_bottom_left,
+        border_bottom_left_shape,
         BorderCornerShape
     );
     modifier!(
         /// Sets the border corner shape for the bottom-right corner of the view.
-        border_shape_bottom_right,
+        border_bottom_right_shape,
         BorderCornerShape
     );
 
@@ -235,10 +235,10 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.into();
-            cx.style.border_shape_top_left.insert(entity, value);
-            cx.style.border_shape_top_right.insert(entity, value);
-            cx.style.border_shape_bottom_left.insert(entity, value);
-            cx.style.border_shape_bottom_right.insert(entity, value);
+            cx.style.border_top_left_shape.insert(entity, value);
+            cx.style.border_top_right_shape.insert(entity, value);
+            cx.style.border_bottom_left_shape.insert(entity, value);
+            cx.style.border_bottom_right_shape.insert(entity, value);
 
             cx.need_redraw();
         });

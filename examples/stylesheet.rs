@@ -11,12 +11,17 @@ fn main() {
     Application::new(|cx| {
         Element::new(cx)
             .size(Pixels(100.0))
-            .space(Pixels(20.0))
-            .background_color(Color::rgb(255, 0, 0))
+            .space(Pixels(100.0))
+            .background_color("red")
             .border_width("10px")
-            .border_width(LengthValue::Px(30.0))
-            .border_width("50%")
-            .border_color(Color::rgb(0,0,0));
+            .border_radius("10px")
+            .border_top_left_radius("50%")
+            .border_top_right_radius("0")
+            .border_top_left_shape("bevel")
+            .border_color("#009900")
+            .outline_width("2px")
+            .outline_offset("5px")
+            .outline_color("cyan");
     })
     .title("Stylesheet")
     .run();

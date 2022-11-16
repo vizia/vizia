@@ -124,10 +124,10 @@ pub struct Style {
     pub border_color: AnimatableSet<Color>,
 
     // Border Shape
-    pub border_shape_top_left: StyleSet<BorderCornerShape>,
-    pub border_shape_top_right: StyleSet<BorderCornerShape>,
-    pub border_shape_bottom_left: StyleSet<BorderCornerShape>,
-    pub border_shape_bottom_right: StyleSet<BorderCornerShape>,
+    pub border_top_left_shape: StyleSet<BorderCornerShape>,
+    pub border_top_right_shape: StyleSet<BorderCornerShape>,
+    pub border_bottom_left_shape: StyleSet<BorderCornerShape>,
+    pub border_bottom_right_shape: StyleSet<BorderCornerShape>,
 
     // Border Radius
     pub border_top_left_radius: StyleSet<LengthOrPercentage>,
@@ -425,26 +425,26 @@ impl Style {
                     }
 
                     Property::BorderCornerShape(shape) => {
-                        self.border_shape_top_left.insert_rule(rule_id, shape);
-                        self.border_shape_top_right.insert_rule(rule_id, shape);
-                        self.border_shape_bottom_left.insert_rule(rule_id, shape);
-                        self.border_shape_bottom_right.insert_rule(rule_id, shape);
+                        self.border_top_left_shape.insert_rule(rule_id, shape);
+                        self.border_top_right_shape.insert_rule(rule_id, shape);
+                        self.border_bottom_left_shape.insert_rule(rule_id, shape);
+                        self.border_bottom_right_shape.insert_rule(rule_id, shape);
                     }
 
                     Property::BorderTopLeftShape(shape) => {
-                        self.border_shape_top_left.insert_rule(rule_id, shape);
+                        self.border_top_left_shape.insert_rule(rule_id, shape);
                     }
 
                     Property::BorderTopRightShape(shape) => {
-                        self.border_shape_top_right.insert_rule(rule_id, shape);
+                        self.border_top_right_shape.insert_rule(rule_id, shape);
                     }
 
                     Property::BorderBottomLeftShape(shape) => {
-                        self.border_shape_bottom_left.insert_rule(rule_id, shape);
+                        self.border_bottom_left_shape.insert_rule(rule_id, shape);
                     }
 
                     Property::BorderBottomRightShape(shape) => {
-                        self.border_shape_bottom_right.insert_rule(rule_id, shape);
+                        self.border_bottom_right_shape.insert_rule(rule_id, shape);
                     }
 
                     // Border Radius
@@ -984,10 +984,10 @@ impl Style {
         self.border_color.remove(entity);
 
         // Border Shape
-        self.border_shape_bottom_left.remove(entity);
-        self.border_shape_bottom_right.remove(entity);
-        self.border_shape_top_left.remove(entity);
-        self.border_shape_top_right.remove(entity);
+        self.border_bottom_left_shape.remove(entity);
+        self.border_bottom_right_shape.remove(entity);
+        self.border_top_left_shape.remove(entity);
+        self.border_top_right_shape.remove(entity);
 
         // Border Radius
         self.border_bottom_left_radius.remove(entity);
@@ -1103,10 +1103,10 @@ impl Style {
         self.border_color.clear_rules();
 
         // Border Shape
-        self.border_shape_bottom_left.clear_rules();
-        self.border_shape_bottom_right.clear_rules();
-        self.border_shape_top_left.clear_rules();
-        self.border_shape_top_right.clear_rules();
+        self.border_bottom_left_shape.clear_rules();
+        self.border_bottom_right_shape.clear_rules();
+        self.border_top_left_shape.clear_rules();
+        self.border_top_right_shape.clear_rules();
 
         // Border Radius
         self.border_bottom_left_radius.clear_rules();

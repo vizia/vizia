@@ -1,4 +1,5 @@
 use crate::{macros::impl_parse, Parse};
+use cssparser::{Parser, ParserInput};
 
 /// A color value.
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -341,6 +342,14 @@ fn hue(mut h: f32, m1: f32, m2: f32) -> f32 {
 impl From<Color> for femtovg::Color {
     fn from(src: Color) -> femtovg::Color {
         femtovg::Color::rgba(src.r(), src.g(), src.b(), src.a())
+    }
+}
+
+impl From<&str> for Color {
+    fn from(s: &str) -> Self {
+        let mut input = ParserInput::new(&s);
+        let mut parser = Parser::new(&mut input);
+        Color::parse(&mut parser).unwrap_or_default()
     }
 }
 
