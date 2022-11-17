@@ -6,10 +6,7 @@ use crate::{
     ParserOptions, Property, PropertyRule, SelectorParser, Selectors, StyleRule,
 };
 use cssparser::*;
-use selectors::{
-    parser::{NestingRequirement, Selector},
-    SelectorList,
-};
+use selectors::{parser::Selector, SelectorList};
 
 #[derive(PartialEq, PartialOrd)]
 enum State {
@@ -76,7 +73,7 @@ impl<'a, 'o, 'i> AtRuleParser<'i> for TopLevelRuleParser<'a, 'o, 'i> {
 }
 
 impl<'a, 'o, 'i> QualifiedRuleParser<'i> for TopLevelRuleParser<'a, 'o, 'i> {
-    type Prelude = SelectorList<'i, Selectors>;
+    type Prelude = SelectorList<Selectors>;
     type QualifiedRule = (SourcePosition, CssRule<'i>);
     type Error = CustomParseError<'i>;
 
@@ -155,7 +152,7 @@ impl<'a, 'o, 'b, 'i> AtRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
 }
 
 impl<'a, 'o, 'b, 'i> QualifiedRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
-    type Prelude = SelectorList<'i, Selectors>;
+    type Prelude = SelectorList<Selectors>;
     type QualifiedRule = CssRule<'i>;
     type Error = CustomParseError<'i>;
 
@@ -166,7 +163,7 @@ impl<'a, 'o, 'b, 'i> QualifiedRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
         let selector_parser =
             SelectorParser { default_namespace: self.default_namespace, is_nesting_allowed: false };
 
-        SelectorList::parse(&selector_parser, input, NestingRequirement::None)
+        SelectorList::parse(&selector_parser, input)
     }
 
     fn parse_block<'t>(
@@ -284,40 +281,40 @@ impl<'a, 'o, 'i> AtRuleParser<'i> for StyleRuleParser<'a, 'o, 'i> {
     }
 }
 
-fn parse_nested_at_rule<'a, 'o, 'i, 't>(
-    input: &mut Parser<'i, 't>,
-    default_namespace: &'a Option<CowRcStr<'i>>,
-    options: &'a ParserOptions<'i>,
-) -> Result<CssRuleList<'i>, ParseError<'i, CustomParseError<'i>>> {
-    let loc = input.current_source_location();
-    let loc = Location { line: loc.line, column: loc.column };
+// fn parse_nested_at_rule<'a, 'o, 'i, 't>(
+//     input: &mut Parser<'i, 't>,
+//     default_namespace: &'a Option<CowRcStr<'i>>,
+//     options: &'a ParserOptions<'i>,
+// ) -> Result<CssRuleList<'i>, ParseError<'i, CustomParseError<'i>>> {
+//     let loc = input.current_source_location();
+//     let loc = Location { line: loc.line, column: loc.column };
 
-    // Declarations can be immediately within @media and @supports blocks that are nested within a parent style rule.
-    // These act the same way as if they were nested within a `& { ... }` block.
-    let (declarations, mut rules) =
-        parse_declarations_and_nested_rules(input, default_namespace, options)?;
+//     // Declarations can be immediately within @media and @supports blocks that are nested within a parent style rule.
+//     // These act the same way as if they were nested within a `& { ... }` block.
+//     let (declarations, mut rules) =
+//         parse_declarations_and_nested_rules(input, default_namespace, options)?;
 
-    if declarations.declarations.len() > 0 {
-        rules.0.insert(
-            0,
-            CssRule::Style(StyleRule {
-                selectors: SelectorList(smallvec::smallvec![
-                    selectors::parser::Selector::from_vec2(vec![
-                        selectors::parser::Component::Nesting
-                    ])
-                ]),
-                declarations,
-                rules: CssRuleList(vec![]),
-                loc,
-            }),
-        )
-    }
+//     if declarations.declarations.len() > 0 {
+//         rules.0.insert(
+//             0,
+//             CssRule::Style(StyleRule {
+//                 selectors: SelectorList(smallvec::smallvec![
+//                     selectors::parser::Selector::from_vec2(vec![
+//                         selectors::parser::Component::Nesting
+//                     ])
+//                 ]),
+//                 declarations,
+//                 rules: CssRuleList(vec![]),
+//                 loc,
+//             }),
+//         )
+//     }
 
-    Ok(rules)
-}
+//     Ok(rules)
+// }
 
 impl<'a, 'o, 'b, 'i> QualifiedRuleParser<'i> for StyleRuleParser<'a, 'o, 'i> {
-    type Prelude = SelectorList<'i, Selectors>;
+    type Prelude = SelectorList<Selectors>;
     type QualifiedRule = ();
     type Error = CustomParseError<'i>;
 
@@ -327,7 +324,7 @@ impl<'a, 'o, 'b, 'i> QualifiedRuleParser<'i> for StyleRuleParser<'a, 'o, 'i> {
     ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
         let selector_parser =
             SelectorParser { default_namespace: self.default_namespace, is_nesting_allowed: true };
-        SelectorList::parse(&selector_parser, input, NestingRequirement::Prefixed)
+        SelectorList::parse(&selector_parser, input)
     }
 
     fn parse_block<'t>(

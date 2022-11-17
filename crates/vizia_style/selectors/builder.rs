@@ -19,7 +19,6 @@
 
 use crate::parser::{Combinator, Component, SelectorImpl};
 use crate::sink::Push;
-// use servo_arc::{Arc, HeaderWithLength, ThinArc};
 use smallvec::{self, SmallVec};
 use std::cmp;
 use std::iter;
@@ -30,26 +29,27 @@ use std::slice;
 /// consumer and never moved (because it contains a lot of inline data that
 /// would be slow to memmov).
 ///
-/// After instantiation, callers may call the push_simple_selector() and
+/// After instantation, callers may call the push_simple_selector() and
 /// push_combinator() methods to append selector data as it is encountered
 /// (from left to right). Once the process is complete, callers should invoke
 /// build(), which transforms the contents of the SelectorBuilder into a heap-
 /// allocated Selector and leaves the builder in a drained state.
-pub struct SelectorBuilder<'i, Impl: SelectorImpl<'i>> {
+#[derive(Debug)]
+pub struct SelectorBuilder<Impl: SelectorImpl> {
     /// The entire sequence of simple selectors, from left to right, without combinators.
     ///
     /// We make this large because the result of parsing a selector is fed into a new
     /// Arc-ed allocation, so any spilled vec would be a wasted allocation. Also,
     /// Components are large enough that we don't have much cache locality benefit
     /// from reserving stack space for fewer of them.
-    simple_selectors: SmallVec<[Component<'i, Impl>; 32]>,
+    simple_selectors: SmallVec<[Component<Impl>; 32]>,
     /// The combinators, and the length of the compound selector to their left.
     combinators: SmallVec<[(Combinator, usize); 16]>,
     /// The length of the current compount selector.
     current_len: usize,
 }
 
-impl<'i, Impl: SelectorImpl<'i>> Default for SelectorBuilder<'i, Impl> {
+impl<Impl: SelectorImpl> Default for SelectorBuilder<Impl> {
     #[inline(always)]
     fn default() -> Self {
         SelectorBuilder {
@@ -60,16 +60,16 @@ impl<'i, Impl: SelectorImpl<'i>> Default for SelectorBuilder<'i, Impl> {
     }
 }
 
-impl<'i, Impl: SelectorImpl<'i>> Push<Component<'i, Impl>> for SelectorBuilder<'i, Impl> {
-    fn push(&mut self, value: Component<'i, Impl>) {
+impl<Impl: SelectorImpl> Push<Component<Impl>> for SelectorBuilder<Impl> {
+    fn push(&mut self, value: Component<Impl>) {
         self.push_simple_selector(value);
     }
 }
 
-impl<'i, Impl: SelectorImpl<'i>> SelectorBuilder<'i, Impl> {
+impl<Impl: SelectorImpl> SelectorBuilder<Impl> {
     /// Pushes a simple selector onto the current compound selector.
     #[inline(always)]
-    pub fn push_simple_selector(&mut self, ss: Component<'i, Impl>) {
+    pub fn push_simple_selector(&mut self, ss: Component<Impl>) {
         assert!(!ss.is_combinator());
         self.simple_selectors.push(ss);
         self.current_len += 1;
@@ -96,7 +96,7 @@ impl<'i, Impl: SelectorImpl<'i>> SelectorBuilder<'i, Impl> {
         parsed_pseudo: bool,
         parsed_slotted: bool,
         parsed_part: bool,
-    ) -> (SpecificityAndFlags, Vec<Component<'i, Impl>>) {
+    ) -> (SpecificityAndFlags, Vec<Component<Impl>>) {
         // Compute the specificity and flags.
         let specificity = specificity(self.simple_selectors.iter());
         let mut flags = SelectorFlags::empty();
@@ -118,7 +118,7 @@ impl<'i, Impl: SelectorImpl<'i>> SelectorBuilder<'i, Impl> {
     pub fn build_with_specificity_and_flags(
         &mut self,
         spec: SpecificityAndFlags,
-    ) -> (SpecificityAndFlags, Vec<Component<'i, Impl>>) {
+    ) -> (SpecificityAndFlags, Vec<Component<Impl>>) {
         // Use a raw pointer to be able to call set_len despite "borrowing" the slice.
         // This is similar to SmallVec::drain, but we use a slice here because
         // we’re gonna traverse it non-linearly.
@@ -139,22 +139,22 @@ impl<'i, Impl: SelectorImpl<'i>> SelectorBuilder<'i, Impl> {
     }
 }
 
-struct SelectorBuilderIter<'a, 'i, Impl: SelectorImpl<'i>> {
-    current_simple_selectors: slice::Iter<'a, Component<'i, Impl>>,
-    rest_of_simple_selectors: &'a [Component<'i, Impl>],
+struct SelectorBuilderIter<'a, Impl: SelectorImpl> {
+    current_simple_selectors: slice::Iter<'a, Component<Impl>>,
+    rest_of_simple_selectors: &'a [Component<Impl>],
     combinators: iter::Rev<smallvec::Drain<'a, [(Combinator, usize); 16]>>,
 }
 
-impl<'a, 'i, Impl: SelectorImpl<'i>> ExactSizeIterator for SelectorBuilderIter<'a, 'i, Impl> {
+impl<'a, Impl: SelectorImpl> ExactSizeIterator for SelectorBuilderIter<'a, Impl> {
     fn len(&self) -> usize {
-        self.current_simple_selectors.len() +
-            self.rest_of_simple_selectors.len() +
-            self.combinators.len()
+        self.current_simple_selectors.len()
+            + self.rest_of_simple_selectors.len()
+            + self.combinators.len()
     }
 }
 
-impl<'a, 'i, Impl: SelectorImpl<'i>> Iterator for SelectorBuilderIter<'a, 'i, Impl> {
-    type Item = Component<'i, Impl>;
+impl<'a, Impl: SelectorImpl> Iterator for SelectorBuilderIter<'a, Impl> {
+    type Item = Component<Impl>;
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(simple_selector_ref) = self.current_simple_selectors.next() {
@@ -246,36 +246,36 @@ impl From<u32> for Specificity {
 impl From<Specificity> for u32 {
     #[inline]
     fn from(specificity: Specificity) -> u32 {
-        cmp::min(specificity.id_selectors, MAX_10BIT) << 20 |
-            cmp::min(specificity.class_like_selectors, MAX_10BIT) << 10 |
-            cmp::min(specificity.element_selectors, MAX_10BIT)
+        cmp::min(specificity.id_selectors, MAX_10BIT) << 20
+            | cmp::min(specificity.class_like_selectors, MAX_10BIT) << 10
+            | cmp::min(specificity.element_selectors, MAX_10BIT)
     }
 }
 
-fn specificity<'i, Impl>(iter: slice::Iter<Component<'i, Impl>>) -> u32
+fn specificity<Impl>(iter: slice::Iter<Component<Impl>>) -> u32
 where
-    Impl: SelectorImpl<'i>,
+    Impl: SelectorImpl,
 {
     complex_selector_specificity(iter).into()
 }
 
-fn complex_selector_specificity<'i, Impl>(iter: slice::Iter<Component<'i, Impl>>) -> Specificity
+fn complex_selector_specificity<Impl>(iter: slice::Iter<Component<Impl>>) -> Specificity
 where
-    Impl: SelectorImpl<'i>,
+    Impl: SelectorImpl,
 {
-    fn simple_selector_specificity<'i, Impl>(
-        simple_selector: &Component<'i, Impl>,
+    fn simple_selector_specificity<Impl>(
+        simple_selector: &Component<Impl>,
         specificity: &mut Specificity,
     ) where
-        Impl: SelectorImpl<'i>,
+        Impl: SelectorImpl,
     {
         match *simple_selector {
             Component::Combinator(..) => {
                 unreachable!("Found combinator in simple selectors vector?");
-            },
+            }
             Component::Part(..) | Component::PseudoElement(..) | Component::LocalName(..) => {
                 specificity.element_selectors += 1
-            },
+            }
             Component::Slotted(ref selector) => {
                 specificity.element_selectors += 1;
                 // Note that due to the way ::slotted works we only compete with
@@ -285,37 +285,37 @@ where
                 //
                 // See: https://github.com/w3c/csswg-drafts/issues/1915
                 *specificity += Specificity::from(selector.specificity());
-            },
+            }
             Component::Host(ref selector) => {
                 specificity.class_like_selectors += 1;
                 if let Some(ref selector) = *selector {
                     // See: https://github.com/w3c/csswg-drafts/issues/1915
                     *specificity += Specificity::from(selector.specificity());
                 }
-            },
+            }
             Component::ID(..) => {
                 specificity.id_selectors += 1;
-            },
-            Component::Class(..) |
-            Component::AttributeInNoNamespace { .. } |
-            Component::AttributeInNoNamespaceExists { .. } |
-            Component::AttributeOther(..) |
-            Component::FirstChild |
-            Component::LastChild |
-            Component::OnlyChild |
-            Component::Root |
-            Component::Empty |
-            Component::Scope |
-            Component::NthChild(..) |
-            Component::NthLastChild(..) |
-            Component::NthOfType(..) |
-            Component::NthLastOfType(..) |
-            Component::FirstOfType |
-            Component::LastOfType |
-            Component::OnlyOfType |
-            Component::NonTSPseudoClass(..) => {
+            }
+            Component::Class(..)
+            | Component::AttributeInNoNamespace { .. }
+            | Component::AttributeInNoNamespaceExists { .. }
+            | Component::AttributeOther(..)
+            | Component::FirstChild
+            | Component::LastChild
+            | Component::OnlyChild
+            | Component::Root
+            | Component::Empty
+            | Component::Scope
+            | Component::NthChild(..)
+            | Component::NthLastChild(..)
+            | Component::NthOfType(..)
+            | Component::NthLastOfType(..)
+            | Component::FirstOfType
+            | Component::LastOfType
+            | Component::OnlyOfType
+            | Component::NonTSPseudoClass(..) => {
                 specificity.class_like_selectors += 1;
-            },
+            }
             Component::Negation(ref list) | Component::Is(ref list) => {
                 // https://drafts.csswg.org/selectors/#specificity-rules:
                 //
@@ -327,18 +327,14 @@ where
                     max = std::cmp::max(selector.specificity(), max);
                 }
                 *specificity += Specificity::from(max);
-            },
-            Component::Where(..) |
-            Component::Has(..) |
-            Component::ExplicitUniversalType |
-            Component::ExplicitAnyNamespace |
-            Component::ExplicitNoNamespace |
-            Component::DefaultNamespace(..) |
-            Component::Namespace(..) => {
+            }
+            Component::Where(..)
+            | Component::ExplicitUniversalType
+            | Component::ExplicitAnyNamespace
+            | Component::ExplicitNoNamespace
+            | Component::DefaultNamespace(..)
+            | Component::Namespace(..) => {
                 // Does not affect specificity
-            },
-            Component::Nesting => {
-                // TODO
             }
         }
     }
@@ -349,5 +345,3 @@ where
     }
     specificity
 }
-
-// TODO - Add tests

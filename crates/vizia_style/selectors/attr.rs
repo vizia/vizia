@@ -6,8 +6,8 @@ use crate::parser::SelectorImpl;
 use cssparser::ToCss;
 use std::fmt;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct AttrSelectorWithOptionalNamespace<'i, Impl: SelectorImpl<'i>> {
+#[derive(Clone, Eq, PartialEq)]
+pub struct AttrSelectorWithOptionalNamespace<Impl: SelectorImpl> {
     pub namespace: Option<NamespaceConstraint<(Impl::NamespacePrefix, Impl::NamespaceUrl)>>,
     pub local_name: Impl::LocalName,
     pub local_name_lower: Impl::LocalName,
@@ -15,7 +15,7 @@ pub struct AttrSelectorWithOptionalNamespace<'i, Impl: SelectorImpl<'i>> {
     pub never_matches: bool,
 }
 
-impl<'i, Impl: SelectorImpl<'i>> AttrSelectorWithOptionalNamespace<'i, Impl> {
+impl<Impl: SelectorImpl> AttrSelectorWithOptionalNamespace<Impl> {
     pub fn namespace(&self) -> Option<NamespaceConstraint<&Impl::NamespaceUrl>> {
         self.namespace.as_ref().map(|ns| match ns {
             NamespaceConstraint::Any => NamespaceConstraint::Any,
@@ -24,7 +24,7 @@ impl<'i, Impl: SelectorImpl<'i>> AttrSelectorWithOptionalNamespace<'i, Impl> {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub enum NamespaceConstraint<NamespaceUrl> {
     Any,
 
@@ -32,7 +32,7 @@ pub enum NamespaceConstraint<NamespaceUrl> {
     Specific(NamespaceUrl),
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub enum ParsedAttrSelectorOperation<AttrValue> {
     Exists,
     WithValue {
@@ -59,20 +59,14 @@ impl<AttrValue> AttrSelectorOperation<AttrValue> {
     {
         match *self {
             AttrSelectorOperation::Exists => true,
-            AttrSelectorOperation::WithValue {
-                operator,
-                case_sensitivity,
-                ref expected_value,
-            } => operator.eval_str(
-                element_attr_value,
-                expected_value.as_ref(),
-                case_sensitivity,
-            ),
+            AttrSelectorOperation::WithValue { operator, case_sensitivity, ref expected_value } => {
+                operator.eval_str(element_attr_value, expected_value.as_ref(), case_sensitivity)
+            }
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub enum AttrSelectorOperator {
     Equal,
     Includes,
@@ -115,16 +109,16 @@ impl AttrSelectorOperator {
             AttrSelectorOperator::Prefix => e.len() >= s.len() && case.eq(&e[..s.len()], s),
             AttrSelectorOperator::Suffix => {
                 e.len() >= s.len() && case.eq(&e[(e.len() - s.len())..], s)
-            },
+            }
             AttrSelectorOperator::Substring => {
                 case.contains(element_attr_value, attr_selector_value)
-            },
+            }
             AttrSelectorOperator::Includes => element_attr_value
                 .split(SELECTOR_WHITESPACE)
                 .any(|part| case.eq(part.as_bytes(), s)),
             AttrSelectorOperator::DashMatch => {
                 case.eq(e, s) || (e.get(s.len()) == Some(&b'-') && case.eq(&e[..s.len()], s))
-            },
+            }
         }
     }
 }
@@ -151,13 +145,13 @@ impl ParsedCaseSensitivity {
                 if is_html_element_in_html_document =>
             {
                 CaseSensitivity::AsciiCaseInsensitive
-            },
+            }
             ParsedCaseSensitivity::AsciiCaseInsensitiveIfInHtmlElementInHtmlDocument => {
                 CaseSensitivity::CaseSensitive
-            },
+            }
             ParsedCaseSensitivity::CaseSensitive | ParsedCaseSensitivity::ExplicitCaseSensitive => {
                 CaseSensitivity::CaseSensitive
-            },
+            }
             ParsedCaseSensitivity::AsciiCaseInsensitive => CaseSensitivity::AsciiCaseInsensitive,
         }
     }
@@ -197,7 +191,7 @@ impl CaseSensitivity {
                     // though these cases should be handled with *NeverMatches and never go here.
                     true
                 }
-            },
+            }
         }
     }
 }

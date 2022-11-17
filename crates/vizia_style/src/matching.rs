@@ -24,7 +24,6 @@ mod test {
         SelectorList::parse(
             &SelectorParser { default_namespace: &None, is_nesting_allowed: true },
             &mut parser,
-            selectors::parser::NestingRequirement::None,
         )
     }
 
@@ -60,7 +59,7 @@ mod test {
         store: &'s Store,
     }
 
-    impl<'i, 's> selectors::Element<'i> for Node<'s> {
+    impl<'s> selectors::Element for Node<'s> {
         type Impl = Selectors;
 
         fn opaque(&self) -> selectors::OpaqueElement {
@@ -103,9 +102,9 @@ mod test {
             false
         }
 
-        fn has_local_name(&self, local_name: &SelectorIdent<'i>) -> bool {
+        fn has_local_name(&self, local_name: &SelectorIdent) -> bool {
             if let Some(element) = self.store.element.get(&self.entity) {
-                return element == local_name.0.as_ref();
+                return element == &local_name.0;
             }
 
             false
@@ -113,19 +112,19 @@ mod test {
 
         fn has_namespace(
             &self,
-            ns: &<Self::Impl as selectors::SelectorImpl<'i>>::BorrowedNamespaceUrl,
+            ns: &<Self::Impl as selectors::SelectorImpl>::BorrowedNamespaceUrl,
         ) -> bool {
             false
         }
 
-        fn is_part(&self, name: &<Self::Impl as selectors::SelectorImpl<'i>>::Identifier) -> bool {
+        fn is_part(&self, name: &<Self::Impl as selectors::SelectorImpl>::Identifier) -> bool {
             false
         }
 
         fn imported_part(
             &self,
-            name: &<Self::Impl as selectors::SelectorImpl<'i>>::Identifier,
-        ) -> Option<<Self::Impl as selectors::SelectorImpl<'i>>::Identifier> {
+            name: &<Self::Impl as selectors::SelectorImpl>::Identifier,
+        ) -> Option<<Self::Impl as selectors::SelectorImpl>::Identifier> {
             None
         }
 
@@ -143,7 +142,7 @@ mod test {
 
         fn has_id(
             &self,
-            id: &<Self::Impl as selectors::SelectorImpl<'i>>::Identifier,
+            id: &<Self::Impl as selectors::SelectorImpl>::Identifier,
             case_sensitivity: selectors::attr::CaseSensitivity,
         ) -> bool {
             false
@@ -151,11 +150,11 @@ mod test {
 
         fn has_class(
             &self,
-            name: &<Self::Impl as selectors::SelectorImpl<'i>>::Identifier,
+            name: &<Self::Impl as selectors::SelectorImpl>::Identifier,
             case_sensitivity: selectors::attr::CaseSensitivity,
         ) -> bool {
             if let Some(classes) = self.store.classes.get(&self.entity) {
-                return classes.contains(name.0.as_ref());
+                return classes.contains(&name.0);
             }
 
             false
@@ -164,11 +163,11 @@ mod test {
         fn attr_matches(
             &self,
             ns: &selectors::attr::NamespaceConstraint<
-                &<Self::Impl as selectors::SelectorImpl<'i>>::NamespaceUrl,
+                &<Self::Impl as selectors::SelectorImpl>::NamespaceUrl,
             >,
-            local_name: &<Self::Impl as selectors::SelectorImpl<'i>>::LocalName,
+            local_name: &<Self::Impl as selectors::SelectorImpl>::LocalName,
             operation: &selectors::attr::AttrSelectorOperation<
-                &<Self::Impl as selectors::SelectorImpl<'i>>::AttrValue,
+                &<Self::Impl as selectors::SelectorImpl>::AttrValue,
             >,
         ) -> bool {
             false
@@ -176,16 +175,16 @@ mod test {
 
         fn match_pseudo_element(
             &self,
-            pe: &<Self::Impl as selectors::SelectorImpl<'i>>::PseudoElement,
-            context: &mut selectors::context::MatchingContext<'_, 'i, Self::Impl>,
+            pe: &<Self::Impl as selectors::SelectorImpl>::PseudoElement,
+            context: &mut selectors::context::MatchingContext<'_, Self::Impl>,
         ) -> bool {
             false
         }
 
         fn match_non_ts_pseudo_class<F>(
             &self,
-            pc: &<Self::Impl as selectors::SelectorImpl<'i>>::NonTSPseudoClass,
-            context: &mut selectors::context::MatchingContext<'_, 'i, Self::Impl>,
+            pc: &<Self::Impl as selectors::SelectorImpl>::NonTSPseudoClass,
+            context: &mut selectors::context::MatchingContext<'_, Self::Impl>,
             flags_setter: &mut F,
         ) -> bool
         where

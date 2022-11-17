@@ -7,34 +7,64 @@ use crate::{CustomParseError, Direction, Parse, PseudoClass, PseudoElement};
 pub struct Selectors;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct SelectorString<'a>(pub CowRcStr<'a>);
+pub struct SelectorString(pub String);
 
-impl<'a> std::convert::From<CowRcStr<'a>> for SelectorString<'a> {
-    fn from(s: CowRcStr<'a>) -> SelectorString<'a> {
-        SelectorString(s.into())
+impl<'a> std::convert::From<CowRcStr<'a>> for SelectorString {
+    fn from(s: CowRcStr<'a>) -> SelectorString {
+        SelectorString(s.to_string())
+    }
+}
+
+impl<'a> std::convert::From<&str> for SelectorString {
+    fn from(s: &str) -> SelectorString {
+        SelectorString(s.to_string())
+    }
+}
+
+impl ToCss for SelectorString {
+    fn to_css<W>(&self, dest: &mut W) -> std::fmt::Result
+    where
+        W: std::fmt::Write,
+    {
+        dest.write_str(&self.0)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, Hash)]
-pub struct SelectorIdent<'i>(pub CowRcStr<'i>);
+pub struct SelectorIdent(pub String);
 
-impl<'a> std::convert::From<CowRcStr<'a>> for SelectorIdent<'a> {
-    fn from(s: CowRcStr<'a>) -> SelectorIdent {
-        SelectorIdent(s.into())
+impl<'a> std::convert::From<&str> for SelectorIdent {
+    fn from(s: &str) -> SelectorIdent {
+        SelectorIdent(s.to_string())
     }
 }
 
-impl<'i> SelectorImpl<'i> for Selectors {
-    type AttrValue = SelectorString<'i>;
-    type Identifier = SelectorIdent<'i>;
-    type LocalName = SelectorIdent<'i>;
-    type NamespacePrefix = SelectorIdent<'i>;
-    type NamespaceUrl = SelectorIdent<'i>;
-    type BorrowedNamespaceUrl = SelectorIdent<'i>;
-    type BorrowedLocalName = SelectorIdent<'i>;
+impl ToCss for SelectorIdent {
+    fn to_css<W>(&self, dest: &mut W) -> std::fmt::Result
+    where
+        W: std::fmt::Write,
+    {
+        dest.write_str(&self.0)
+    }
+}
 
-    type NonTSPseudoClass = PseudoClass<'i>;
-    type PseudoElement = PseudoElement<'i>;
+impl<'a> std::convert::From<CowRcStr<'a>> for SelectorIdent {
+    fn from(s: CowRcStr<'a>) -> SelectorIdent {
+        SelectorIdent(s.to_string())
+    }
+}
+
+impl SelectorImpl for Selectors {
+    type AttrValue = SelectorString;
+    type Identifier = SelectorIdent;
+    type LocalName = SelectorIdent;
+    type NamespacePrefix = SelectorIdent;
+    type NamespaceUrl = SelectorIdent;
+    type BorrowedNamespaceUrl = SelectorIdent;
+    type BorrowedLocalName = SelectorIdent;
+
+    type NonTSPseudoClass = PseudoClass;
+    type PseudoElement = PseudoElement;
 
     type ExtraMatchingData = ();
 }
@@ -52,7 +82,7 @@ impl<'a, 'i> selectors::parser::Parser<'i> for SelectorParser<'a, 'i> {
         &self,
         _: SourceLocation,
         name: CowRcStr<'i>,
-    ) -> Result<PseudoClass<'i>, ParseError<'i, Self::Error>> {
+    ) -> Result<PseudoClass, ParseError<'i, Self::Error>> {
         use PseudoClass::*;
         let pseudo_class = match_ignore_ascii_case! { &name,
             "hover" => Hover,
@@ -75,7 +105,7 @@ impl<'a, 'i> selectors::parser::Parser<'i> for SelectorParser<'a, 'i> {
             "user-valid" => UserValid,
             "user-invalid" => UserInvalid,
 
-            _ => Custom(name.into())
+            _ => Custom(name.to_string())
 
         };
 
@@ -86,14 +116,13 @@ impl<'a, 'i> selectors::parser::Parser<'i> for SelectorParser<'a, 'i> {
         &self,
         name: CowRcStr<'i>,
         parser: &mut Parser<'i, 't>,
-    ) -> Result<<Self::Impl as SelectorImpl<'i>>::NonTSPseudoClass, ParseError<'i, Self::Error>>
-    {
+    ) -> Result<<Self::Impl as SelectorImpl>::NonTSPseudoClass, ParseError<'i, Self::Error>> {
         use PseudoClass::*;
         let pseudo_class = match_ignore_ascii_case! { &name,
             "lang" => {
                 let langs = parser.parse_comma_separated(|parser|{
                     parser.expect_ident_or_string()
-                        .map(|s| s.clone())
+                        .map(|s| s.to_string())
                         .map_err(|e| e.into())
                 })?;
                 Lang(langs)
@@ -113,13 +142,13 @@ impl<'a, 'i> selectors::parser::Parser<'i> for SelectorParser<'a, 'i> {
         &self,
         location: SourceLocation,
         name: CowRcStr<'i>,
-    ) -> Result<<Self::Impl as SelectorImpl<'i>>::PseudoElement, ParseError<'i, Self::Error>> {
+    ) -> Result<<Self::Impl as SelectorImpl>::PseudoElement, ParseError<'i, Self::Error>> {
         use PseudoElement::*;
         let pseudo_element = match_ignore_ascii_case! { &name,
             "before" => Before,
             "after" => After,
             "selection" => Selection,
-            _=> Custom(name.into())
+            _=> Custom(name.to_string())
         };
 
         Ok(pseudo_element)
@@ -143,7 +172,6 @@ mod tests {
         SelectorList::parse(
             &SelectorParser { default_namespace: &None, is_nesting_allowed: true },
             &mut parser,
-            selectors::parser::NestingRequirement::None,
         )
     }
 
@@ -158,7 +186,6 @@ mod tests {
         let result = SelectorList::parse(
             &SelectorParser { default_namespace: &None, is_nesting_allowed: true },
             &mut parser,
-            selectors::parser::NestingRequirement::None,
         );
         assert!(result.is_ok());
     }

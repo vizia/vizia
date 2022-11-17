@@ -4,7 +4,6 @@
 
 // Make |cargo bench| work.
 #![cfg_attr(feature = "bench", feature(test))]
-#![allow(unused_imports)]
 
 #[macro_use]
 extern crate bitflags;
@@ -31,5 +30,5 @@ mod tree;
 pub mod visitor;
 
 pub use crate::nth_index_cache::NthIndexCache;
-pub use crate::parser::{Parser, Selector, SelectorImpl, SelectorList};
+pub use crate::parser::{Parser, SelectorImpl, SelectorList};
 pub use crate::tree::{Element, OpaqueElement};

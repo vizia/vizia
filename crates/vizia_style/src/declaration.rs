@@ -29,10 +29,7 @@ impl<'i> DeclarationBlock<'i> {
             }
         }
 
-        Ok(DeclarationBlock {
-            important_declarations,
-            declarations,
-        })
+        Ok(DeclarationBlock { important_declarations, declarations })
     }
 }
 

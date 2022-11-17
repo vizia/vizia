@@ -3,7 +3,7 @@ use cssparser::*;
 use crate::{Direction, Selectors};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum PseudoClass<'i> {
+pub enum PseudoClass {
     Hover,
     Active,
     Focus,
@@ -28,13 +28,47 @@ pub enum PseudoClass<'i> {
     UserValid,
     UserInvalid,
 
-    Lang(Vec<CowRcStr<'i>>),
+    Lang(Vec<String>),
     Dir(Direction),
-
-    Custom(CowRcStr<'i>),
+    Custom(String),
 }
 
-impl<'i> selectors::parser::NonTSPseudoClass<'i> for PseudoClass<'i> {
+impl ToCss for PseudoClass {
+    fn to_css<W>(&self, dest: &mut W) -> std::fmt::Result
+    where
+        W: std::fmt::Write,
+    {
+        match *self {
+            PseudoClass::Hover => dest.write_str(":hover"),
+            PseudoClass::Active => dest.write_str(":active"),
+            PseudoClass::Lang(ref lang) => todo!(),
+            PseudoClass::Focus => todo!(),
+            PseudoClass::FocusVisible => todo!(),
+            PseudoClass::FocusWithin => todo!(),
+            PseudoClass::Enabled => todo!(),
+            PseudoClass::Disabled => todo!(),
+            PseudoClass::ReadOnly => todo!(),
+            PseudoClass::ReadWrite => todo!(),
+            PseudoClass::PlaceHolderShown => todo!(),
+            PseudoClass::Default => todo!(),
+            PseudoClass::Checked => todo!(),
+            PseudoClass::Indeterminate => todo!(),
+            PseudoClass::Blank => todo!(),
+            PseudoClass::Valid => todo!(),
+            PseudoClass::Invalid => todo!(),
+            PseudoClass::InRange => todo!(),
+            PseudoClass::OutOfRange => todo!(),
+            PseudoClass::Required => todo!(),
+            PseudoClass::Optional => todo!(),
+            PseudoClass::UserValid => todo!(),
+            PseudoClass::UserInvalid => todo!(),
+            PseudoClass::Dir(_) => todo!(),
+            PseudoClass::Custom(_) => todo!(),
+        }
+    }
+}
+
+impl selectors::parser::NonTSPseudoClass for PseudoClass {
     type Impl = Selectors;
 
     fn is_active_or_hover(&self) -> bool {

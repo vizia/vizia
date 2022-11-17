@@ -120,8 +120,8 @@ impl<'i> From<SelectorParseErrorKind<'i>> for SelectorError<'i> {
                 SelectorError::InvalidPseudoElementInsideWhere
             }
             SelectorParseErrorKind::InvalidState => SelectorError::InvalidState,
-            SelectorParseErrorKind::MissingNestingSelector => SelectorError::MissingNestingSelector,
-            SelectorParseErrorKind::MissingNestingPrefix => SelectorError::MissingNestingPrefix,
+            //SelectorParseErrorKind::MissingNestingSelector => SelectorError::MissingNestingSelector,
+            //SelectorParseErrorKind::MissingNestingPrefix => SelectorError::MissingNestingPrefix,
             SelectorParseErrorKind::UnexpectedTokenInAttributeSelector(t) => {
                 SelectorError::UnexpectedTokenInAttributeSelector(t.clone())
             }

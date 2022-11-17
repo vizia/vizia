@@ -28,8 +28,8 @@ impl OpaqueElement {
     }
 }
 
-pub trait Element<'i>: Sized + Clone + Debug {
-    type Impl: SelectorImpl<'i>;
+pub trait Element: Sized + Clone + Debug {
+    type Impl: SelectorImpl;
 
     /// Converts self into an opaque representation.
     fn opaque(&self) -> OpaqueElement;
@@ -62,25 +62,25 @@ pub trait Element<'i>: Sized + Clone + Debug {
 
     fn is_html_element_in_html_document(&self) -> bool;
 
-    fn has_local_name(&self, local_name: &<Self::Impl as SelectorImpl<'i>>::BorrowedLocalName) -> bool;
+    fn has_local_name(&self, local_name: &<Self::Impl as SelectorImpl>::BorrowedLocalName) -> bool;
 
     /// Empty string for no namespace
-    fn has_namespace(&self, ns: &<Self::Impl as SelectorImpl<'i>>::BorrowedNamespaceUrl) -> bool;
+    fn has_namespace(&self, ns: &<Self::Impl as SelectorImpl>::BorrowedNamespaceUrl) -> bool;
 
     /// Whether this element and the `other` element have the same local name and namespace.
     fn is_same_type(&self, other: &Self) -> bool;
 
     fn attr_matches(
         &self,
-        ns: &NamespaceConstraint<&<Self::Impl as SelectorImpl<'i>>::NamespaceUrl>,
-        local_name: &<Self::Impl as SelectorImpl<'i>>::LocalName,
-        operation: &AttrSelectorOperation<&<Self::Impl as SelectorImpl<'i>>::AttrValue>,
+        ns: &NamespaceConstraint<&<Self::Impl as SelectorImpl>::NamespaceUrl>,
+        local_name: &<Self::Impl as SelectorImpl>::LocalName,
+        operation: &AttrSelectorOperation<&<Self::Impl as SelectorImpl>::AttrValue>,
     ) -> bool;
 
     fn match_non_ts_pseudo_class<F>(
         &self,
-        pc: &<Self::Impl as SelectorImpl<'i>>::NonTSPseudoClass,
-        context: &mut MatchingContext<'_, 'i, Self::Impl>,
+        pc: &<Self::Impl as SelectorImpl>::NonTSPseudoClass,
+        context: &mut MatchingContext<Self::Impl>,
         flags_setter: &mut F,
     ) -> bool
     where
@@ -88,8 +88,8 @@ pub trait Element<'i>: Sized + Clone + Debug {
 
     fn match_pseudo_element(
         &self,
-        pe: &<Self::Impl as SelectorImpl<'i>>::PseudoElement,
-        context: &mut MatchingContext<'_, 'i, Self::Impl>,
+        pe: &<Self::Impl as SelectorImpl>::PseudoElement,
+        context: &mut MatchingContext<Self::Impl>,
     ) -> bool;
 
     /// Whether this element is a `link`.
@@ -107,13 +107,13 @@ pub trait Element<'i>: Sized + Clone + Debug {
 
     fn has_id(
         &self,
-        id: &<Self::Impl as SelectorImpl<'i>>::Identifier,
+        id: &<Self::Impl as SelectorImpl>::Identifier,
         case_sensitivity: CaseSensitivity,
     ) -> bool;
 
     fn has_class(
         &self,
-        name: &<Self::Impl as SelectorImpl<'i>>::Identifier,
+        name: &<Self::Impl as SelectorImpl>::Identifier,
         case_sensitivity: CaseSensitivity,
     ) -> bool;
 
@@ -121,10 +121,10 @@ pub trait Element<'i>: Sized + Clone + Debug {
     /// direction, that is, in an outer-tree -> inner-tree direction.
     fn imported_part(
         &self,
-        name: &<Self::Impl as SelectorImpl<'i>>::Identifier,
-    ) -> Option<<Self::Impl as SelectorImpl<'i>>::Identifier>;
+        name: &<Self::Impl as SelectorImpl>::Identifier,
+    ) -> Option<<Self::Impl as SelectorImpl>::Identifier>;
 
-    fn is_part(&self, name: &<Self::Impl as SelectorImpl<'i>>::Identifier) -> bool;
+    fn is_part(&self, name: &<Self::Impl as SelectorImpl>::Identifier) -> bool;
 
     /// Returns whether this element matches `:empty`.
     ///

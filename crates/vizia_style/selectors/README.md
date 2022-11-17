@@ -1,8 +1,6 @@
 rust-selectors
 ==============
 
-This is a fork of the `selectors` crate, updated to use the latest version of `cssparser`.
-
 * [![Build Status](https://travis-ci.com/servo/rust-selectors.svg?branch=master)](
   https://travis-ci.com/servo/rust-selectors)
 * [Documentation](https://docs.rs/selectors/)
