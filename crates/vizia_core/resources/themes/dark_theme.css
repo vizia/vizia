@@ -91,6 +91,22 @@ button:disabled label {
     color: #888;
 }
 
+button.icon {
+    background-color: transparent;
+}
+
+button.icon:over {
+    background-color: #ffffff11;
+}
+
+button.icon:over label {
+    color: #fff;
+}
+
+button.icon:active {
+    background-color: transparent;
+}
+
 /* Checkbox */
 
 checkbox {
