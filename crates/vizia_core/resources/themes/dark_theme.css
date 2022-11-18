@@ -722,51 +722,78 @@ timepicker .timepicker-dot {
 
 /* Radial Time Picker */
 
-radial_timepicker {
+radialtimepicker {
     background-color: #343434;
     border-radius: 4px;
 }
 
-radial_timepicker .clock-face {
-    background-color: #404040;
+radialtimepicker .clock-face {
+    child-space: 1s;
+    border-radius: 50%;
+    background-color: #484848;
 }
 
-radial_timepicker .clock-hand {
+radialtimepicker .clock-hand {
+    width: 1px;
+    height: 100px;
     background-color: #51afef;
 }
 
-radial_timepicker .center-dot {
+radialtimepicker .center-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
     background-color: #51afef;
 }
 
-radial_timepicker .marker {
+radialtimepicker .marker {
+    width: 32px;
+    height: 32px;
+    child-space: 1s;
+    border-radius: 50%;
+    cursor: hand;
     background-color: transparent;
 }
 
-radial_timepicker .marker:checked {
+radialtimepicker .marker:checked {
     background-color: #51afef;
     color: #181818;
 }
 
-radial_timepicker .switch-page-button {
+radialtimepicker .switch-page-button {
+    width: 30px;
+    height: 30px;
+    space: 1s;
+    left: 8px;
+    top: 8px;
+    child-space: 1s;
+    border-radius: 50%;
+    font: "icons";
     background-color: #32323200;
     color: #fff;
     cursor: hand;
     transition: background-color 0.1 0;
 }
 
-radial_timepicker .switch-page-button:over {
+radialtimepicker .switch-page-button:over {
     background-color: #323232;
     transition: background-color 0.1 0;
 }
 
-radial_timepicker .switch-page-button:disabled {
+radialtimepicker .switch-page-button:disabled {
     background-color: #32323200;
     color: #888;
     transition: background-color 0.1 0;
 }
 
-radial_timepicker .switch-zone-button {
+radialtimepicker .switch-zone-button {
+    width: 30px;
+    height: 30px;
+    space: 1s;
+    left: 8px;
+    bottom: 8px;
+    child-space: 1s;
+    border-radius: 50%;
     background-color: #32323200;
     color: #fff;
     cursor: hand;
@@ -774,16 +801,75 @@ radial_timepicker .switch-zone-button {
     transition: color 0.1 0;
 }
 
-radial_timepicker .switch-zone-button:over {
+radialtimepicker .switch-zone-button:over {
     background-color: #323232;
     transition: background-color 0.1 0;
 }
 
-radial_timepicker .switch-zone-button:checked {
+radialtimepicker .switch-zone-button:checked {
     background-color: #51afef;
     color: #181818;
     transition: background-color 0.1 0;
     transition: color 0.1 0;
+}
+
+radialtimepicker .controls-wrapper {
+    top: 1s;
+    bottom: 1s;
+    right: 1s;
+    left: 1s;
+    width: auto;
+    height: 100px;
+    row-between: 1s;
+    child-left: 1s;
+    child-right: 1s;
+}
+
+radialtimepicker .time-selector-wrapper {
+    background-color: #343434;
+    border-radius: 4px;
+    height: auto;
+    overflow: hidden;
+}
+
+radialtimepicker .time-selector-wrapper button {
+    width: 30px;
+    border-radius: 0px;
+    background-color: transparent;
+    child-left: 0px;
+    child-right: 0px;
+    child-top: 0px;
+    child-bottom: 0px;
+}
+
+radialtimepicker .time-selector-wrapper button label {
+    width: 1s;
+    height: 1s;
+    color: #888;
+    child-space: 1s;
+    left: 4px;
+    right: 4px;
+    top: 1s;
+    bottom: 1s;
+}
+
+radialtimepicker .time-selector-wrapper button label {
+    color: #888;
+}
+
+radialtimepicker .time-selector-wrapper button:hover label {
+    color: #fff;
+}
+
+radialtimepicker .time-selector-wrapper button .indicator {
+    height: 2px;
+    width: 100%;
+    background-color: transparent;
+    top: 1s;
+}
+
+radialtimepicker .time-selector-wrapper button:checked .indicator {
+    background-color: #51afef;
 }
 
 /* Tooltip */

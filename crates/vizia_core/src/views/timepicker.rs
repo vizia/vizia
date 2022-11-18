@@ -5,9 +5,6 @@ use chrono::{NaiveTime, Timelike};
 
 use super::spinbox::SpinboxIcons;
 
-const ICON_LEFT_OPEN: &str = "\u{e75d}";
-const ICON_RIGHT_OPEN: &str = "\u{e75e}";
-
 #[derive(PartialEq, Data, Clone, Copy, Debug)]
 pub enum AMOrPM {
     AM,
@@ -30,6 +27,7 @@ pub enum TimepickerEvent {
     ToggleAMOrPM,
     SetHours(u8),
     SetMinutes(u8),
+    SetSeconds(u8),
     SetPage(RadialTimepickerPage),
     SetZone(bool),
 }
@@ -220,6 +218,7 @@ where
 pub enum RadialTimepickerPage {
     Hours,
     Minutes,
+    Seconds,
 }
 
 #[derive(Lens)]
@@ -254,8 +253,6 @@ where
                                 transform
                                     .premultiply(&Transform2D::identity().translate(0.0, -50.0));
                                 Element::new(cx)
-                                    .width(Pixels(1.0))
-                                    .height(Pixels(100.0))
                                     .transform(transform)
                                     .position_type(PositionType::SelfDirected)
                                     .class("clock-hand");
@@ -265,18 +262,14 @@ where
                                 let mut transform = Transform2D::identity();
                                 transform.rotate(30.0 * (i + 1) as f32);
                                 transform
-                                    .premultiply(&Transform2D::identity().translate(0.0, -100.0));
+                                    .premultiply(&Transform2D::identity().translate(0.0, -94.0));
                                 transform.premultiply(
                                     &Transform2D::identity().rotate(-30.0 * (i + 1) as f32),
                                 );
 
                                 Label::new(cx, i + 1)
-                                    .size(Pixels(32.0))
                                     .transform(transform)
                                     .position_type(PositionType::SelfDirected)
-                                    .child_space(Stretch(1.0))
-                                    .border_radius(Percentage(50.0))
-                                    .cursor(CursorIcon::Hand)
                                     .on_press(move |ex| ex.emit(TimepickerEvent::SetHours(i + 1)))
                                     .class("marker")
                                     .checked(
@@ -296,8 +289,6 @@ where
                                 transform
                                     .premultiply(&Transform2D::identity().translate(0.0, -50.0));
                                 Element::new(cx)
-                                    .width(Pixels(1.0))
-                                    .height(Pixels(100.0))
                                     .transform(transform)
                                     .position_type(PositionType::SelfDirected)
                                     .class("clock-hand");
@@ -307,91 +298,116 @@ where
                                 let mut transform = Transform2D::identity();
                                 transform.rotate(30.0 * i as f32);
                                 transform
-                                    .premultiply(&Transform2D::identity().translate(0.0, -100.0));
+                                    .premultiply(&Transform2D::identity().translate(0.0, -94.0));
                                 transform
                                     .premultiply(&Transform2D::identity().rotate(-30.0 * i as f32));
 
                                 Label::new(cx, &format!("{:#02}", i * 5))
-                                    .size(Pixels(32.0))
                                     .transform(transform)
                                     .position_type(PositionType::SelfDirected)
-                                    .child_space(Stretch(1.0))
-                                    .border_radius(Percentage(50.0))
-                                    .cursor(CursorIcon::Hand)
                                     .on_press(move |ex| ex.emit(TimepickerEvent::SetMinutes(i * 5)))
                                     .class("marker")
                                     .checked(lens.map(move |time| time.minute() / 5 == i as u32));
                             }
                         }
+
+                        RadialTimepickerPage::Seconds => {
+                            Binding::new(cx, lens.map(|time| time.second()), |cx, seconds| {
+                                let seconds = seconds.get(cx);
+
+                                let angle = (seconds / 5) as f32 * 30.0;
+
+                                let mut transform = Transform2D::identity();
+                                transform.rotate(angle);
+                                transform
+                                    .premultiply(&Transform2D::identity().translate(0.0, -50.0));
+                                Element::new(cx)
+                                    .transform(transform)
+                                    .position_type(PositionType::SelfDirected)
+                                    .class("clock-hand");
+                            });
+
+                            for i in 0..12 {
+                                let mut transform = Transform2D::identity();
+                                transform.rotate(30.0 * i as f32);
+                                transform
+                                    .premultiply(&Transform2D::identity().translate(0.0, -94.0));
+                                transform
+                                    .premultiply(&Transform2D::identity().rotate(-30.0 * i as f32));
+
+                                Label::new(cx, &format!("{:#02}", i * 5))
+                                    .transform(transform)
+                                    .position_type(PositionType::SelfDirected)
+                                    .on_press(move |ex| ex.emit(TimepickerEvent::SetSeconds(i * 5)))
+                                    .class("marker")
+                                    .checked(lens.map(move |time| time.second() / 5 == i as u32));
+                            }
+                        }
                     });
 
-                    Element::new(cx)
-                        .size(Pixels(4.0))
-                        .border_radius(Percentage(50.0))
-                        .position_type(PositionType::SelfDirected)
-                        .class("center-dot");
+                    Element::new(cx).position_type(PositionType::SelfDirected).class("center-dot");
                 })
-                .child_space(Stretch(1.0))
-                .border_radius(Percentage(50.0))
                 .class("clock-face");
 
-                Label::new(cx, ICON_LEFT_OPEN)
-                    .position_type(PositionType::SelfDirected)
-                    .size(Pixels(30.0))
-                    .space(Stretch(1.0))
-                    .left(Pixels(8.0))
-                    .top(Pixels(8.0))
-                    .child_space(Stretch(1.0))
-                    //.background_color(Color::rgb(200, 200, 200))
-                    .border_radius(Percentage(50.0))
-                    .font("icons")
-                    .disabled(Self::page.map(|page| page == &RadialTimepickerPage::Hours))
-                    .class("switch-page-button")
-                    .on_press(|cx| cx.emit(TimepickerEvent::SetPage(RadialTimepickerPage::Hours)));
+                VStack::new(cx, |cx| {
+                    Binding::new(cx, lens, |cx, lens| {
+                        let (hour, minute, second) =
+                            (lens.get(cx).hour(), lens.get(cx).minute(), lens.get(cx).second());
 
-                Label::new(cx, ICON_RIGHT_OPEN)
-                    .position_type(PositionType::SelfDirected)
-                    .size(Pixels(30.0))
-                    .space(Stretch(1.0))
-                    .right(Pixels(8.0))
-                    .top(Pixels(8.0))
-                    .child_space(Stretch(1.0))
-                    //.background_color(Color::rgb(200, 200, 200))
-                    .border_radius(Percentage(50.0))
-                    .font("icons")
-                    .disabled(Self::page.map(|page| page == &RadialTimepickerPage::Minutes))
-                    .class("switch-page-button")
-                    .on_press(|cx| {
-                        cx.emit(TimepickerEvent::SetPage(RadialTimepickerPage::Minutes))
-                    });
+                        HStack::new(cx, |cx| {
+                            Button::new(
+                                cx,
+                                |ex| ex.emit(TimepickerEvent::SetPage(RadialTimepickerPage::Hours)),
+                                |cx| {
+                                    Label::new(cx, hour).hoverable(false);
+                                    Element::new(cx).class("indicator")
+                                },
+                            )
+                            .checked(Self::page.map(|page| page == &RadialTimepickerPage::Hours));
+                            Button::new(
+                                cx,
+                                |ex| {
+                                    ex.emit(TimepickerEvent::SetPage(RadialTimepickerPage::Minutes))
+                                },
+                                |cx| {
+                                    Label::new(cx, minute).hoverable(false);
+                                    Element::new(cx).class("indicator")
+                                },
+                            )
+                            .checked(Self::page.map(|page| page == &RadialTimepickerPage::Minutes));
+                            Button::new(
+                                cx,
+                                |ex| {
+                                    ex.emit(TimepickerEvent::SetPage(RadialTimepickerPage::Seconds))
+                                },
+                                |cx| {
+                                    Label::new(cx, second).hoverable(false);
+                                    Element::new(cx).class("indicator")
+                                },
+                            )
+                            .checked(Self::page.map(|page| page == &RadialTimepickerPage::Seconds));
+                        })
+                        .class("time-selector-wrapper");
 
-                Label::new(cx, "AM")
-                    .position_type(PositionType::SelfDirected)
-                    .size(Pixels(30.0))
-                    .space(Stretch(1.0))
-                    .left(Pixels(8.0))
-                    .bottom(Pixels(8.0))
-                    .child_space(Stretch(1.0))
-                    //.background_color(Color::rgb(200, 200, 200))
-                    .border_radius(Percentage(50.0))
-                    .checked(lens.map(|time| !time.hour12().0))
-                    .class("switch-zone-button")
-                    .on_press(|cx| cx.emit(TimepickerEvent::SetZone(false)));
-
-                Label::new(cx, "PM")
-                    .position_type(PositionType::SelfDirected)
-                    .size(Pixels(30.0))
-                    .space(Stretch(1.0))
-                    .right(Pixels(8.0))
-                    .bottom(Pixels(8.0))
-                    .child_space(Stretch(1.0))
-                    //.background_color(Color::rgb(200, 200, 200))
-                    .border_radius(Percentage(50.0))
-                    .checked(lens.map(|time| time.hour12().0))
-                    .class("switch-zone-button")
-                    .on_press(|cx| cx.emit(TimepickerEvent::SetZone(true)));
+                        Button::new(
+                            cx,
+                            |ex| ex.emit(TimepickerEvent::ToggleAMOrPM),
+                            |cx| {
+                                Label::new(cx, "AM").bind(lens, |h, lens| {
+                                    if lens.get(h.cx).hour12().0 {
+                                        h.text("PM");
+                                    } else {
+                                        h.text("AM");
+                                    }
+                                })
+                            },
+                        )
+                        .class("accent");
+                    })
+                })
+                .position_type(PositionType::SelfDirected)
+                .class("controls-wrapper");
             })
-            // .child_space(Stretch(1.0))
             .size(Pixels(220.0))
     }
 }
@@ -402,7 +418,7 @@ where
     T: Timelike + Data + Copy,
 {
     fn element(&self) -> Option<&'static str> {
-        Some("radial_timepicker")
+        Some("radialtimepicker")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -431,10 +447,26 @@ where
                         NaiveTime::from_hms(current.hour(), *minutes as u32, current.second()),
                     );
                 }
+                self.page = RadialTimepickerPage::Seconds;
+            }
+
+            TimepickerEvent::SetSeconds(seconds) => {
+                if let Some(callback) = &self.on_change {
+                    let current = self.lens.get(cx);
+                    (callback)(
+                        cx,
+                        NaiveTime::from_hms(current.hour(), current.minute(), *seconds as u32),
+                    );
+                }
             }
 
             TimepickerEvent::SetPage(page) => {
                 self.page = *page;
+            }
+
+            TimepickerEvent::ToggleAMOrPM => {
+                println!("{}", !self.lens.get(cx).hour12().0);
+                cx.emit(TimepickerEvent::SetZone(!self.lens.get(cx).hour12().0))
             }
 
             TimepickerEvent::SetZone(zone) => {

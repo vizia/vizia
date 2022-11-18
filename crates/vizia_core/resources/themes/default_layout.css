@@ -775,17 +775,17 @@ timepicker .timepicker-dot {
 
 /* Radial Time Picker */
 
-radial_timepicker {
+radialtimepicker {
     child-space: 1s;
     border-radius: 4px;
 }
 
-radial_timepicker .clock-face {
+radialtimepicker .clock-face {
     width: 230px;
     height: 230px;
 }
 
-radial_timepicker .switch-page-button {
+radialtimepicker .switch-page-button {
     cursor: hand;
     transition: background-color 0.1 0;
 }
