@@ -665,11 +665,12 @@ table {
 
 textbox {
     border-width: 1px;
-    border-color: #2f2f2f;
     border-radius: 4px;
-    background-color: #242424;
+    border-color: #282828;
+    background-color: #282828;
     transition: border-color 0.1 0;
     transition: background-color 0.1 0;
+    /* outer-shadow: 0 0 0 transparent; */
 }
 
 textbox textboxlabel {
@@ -678,8 +679,12 @@ textbox textboxlabel {
 }
 
 textbox:checked {
+    border-width: 1px;
     border-color: #51afef;
+    background-color: #1d1d1d;
+    outer-shadow: 0 4 4 #00000026;
     transition: border-color 0.1 0;
+    transition: outer-shadow 0.1 0;
 }
 
 textbox:checked .textbox_content {
