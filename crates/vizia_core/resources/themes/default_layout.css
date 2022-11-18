@@ -781,13 +781,66 @@ radialtimepicker {
 }
 
 radialtimepicker .clock-face {
+    child-space: 1s;
     width: 230px;
     height: 230px;
 }
 
-radialtimepicker .switch-page-button {
-    cursor: hand;
-    transition: background-color 0.1 0;
+radialtimepicker .clock-hand {
+    width: 1px;
+    height: 100px;
+}
+
+radialtimepicker .center-dot {
+    width: 4px;
+    height: 4px;
+}
+
+radialtimepicker .marker {
+    width: 32px;
+    height: 32px;
+    child-space: 1s;
+}
+
+radialtimepicker .controls-wrapper {
+    top: 1s;
+    bottom: 1s;
+    right: 1s;
+    left: 1s;
+    width: auto;
+    height: 100px;
+    row-between: 1s;
+    child-left: 1s;
+    child-right: 1s;
+}
+
+radialtimepicker .time-selector-wrapper {
+    height: auto;
+    overflow: hidden;
+}
+
+radialtimepicker .time-selector-wrapper button {
+    width: 30px;
+    child-left: 0px;
+    child-right: 0px;
+    child-top: 0px;
+    child-bottom: 0px;
+}
+
+radialtimepicker .time-selector-wrapper button label {
+    left: 4px;
+    right: 4px;
+    top: 1s;
+    bottom: 1s;
+    width: 1s;
+    height: 1s;
+    child-space: 1s;
+}
+
+radialtimepicker .time-selector-wrapper button .indicator {
+    top: 1s;
+    width: 100%;
+    height: 2px;
 }
 
 /* Tooltip */
