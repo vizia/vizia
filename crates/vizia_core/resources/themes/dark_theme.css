@@ -38,8 +38,6 @@ root {
 
 button {
     border-radius: 4px;
-    border-width: 1px;
-    border-color: #424242;
     background-color: #323232;
     transition: background-color 0.1 0;
 }
@@ -58,7 +56,6 @@ button:active {
 }
 
 button.accent {
-    border-width: 0px;
     background-color: #51afef;
     transition: background-color 0.1 0;
 }
@@ -84,7 +81,6 @@ button:focus-visible {
 
 button:disabled {
     background-color: transparent;
-    border-color: #404040;
 }
 
 button:disabled label {

@@ -3,12 +3,11 @@
 button {
     width: auto;
     height: 32px;
-    child-left: 12px;
-    child-right: 12px;
+    child-left: 8px;
+    child-right: 8px;
     child-top: 4px;
     child-bottom: 4px;
     overflow: visible;
-    child-space: 1s;
 }
 
 button label {
