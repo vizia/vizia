@@ -60,6 +60,7 @@ impl<'a> BackendContext<'a> {
         let emoji_font = fonts::OPEN_SANS_EMOJI;
         let arabic_font = fonts::AMIRI_REGULAR;
         let material_font = fonts::MATERIAL_ICONS_REGULAR;
+        let vizia_icons = fonts::VIZIA_ICONS;
 
         self.0.add_font_mem("roboto", regular_font);
         self.0.add_font_mem("roboto-bold", bold_font);
@@ -67,6 +68,7 @@ impl<'a> BackendContext<'a> {
         self.0.add_font_mem("emoji", emoji_font);
         self.0.add_font_mem("arabic", arabic_font);
         self.0.add_font_mem("material", material_font);
+        self.0.add_font_mem("vizia_icons", vizia_icons);
 
         self.0.style.default_font = String::from("roboto");
 
