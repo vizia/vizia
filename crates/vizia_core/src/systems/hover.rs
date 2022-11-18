@@ -64,7 +64,7 @@ pub fn hover_system(cx: &mut Context) {
                 .get(entity)
                 .cloned()
                 .unwrap_or_default()
-                .contains(PseudoClass::OVER)
+                .contains(PseudoClassFlags::OVER)
                 == false
             {
                 cx.event_queue.push_back(
@@ -74,7 +74,7 @@ pub fn hover_system(cx: &mut Context) {
                 );
 
                 if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(entity) {
-                    pseudo_class.set(PseudoClass::OVER, true);
+                    pseudo_class.set(PseudoClassFlags::OVER, true);
                 }
             }
         } else {
@@ -84,7 +84,7 @@ pub fn hover_system(cx: &mut Context) {
                 .get(entity)
                 .cloned()
                 .unwrap_or_default()
-                .contains(PseudoClass::OVER)
+                .contains(PseudoClassFlags::OVER)
                 == true
             {
                 cx.event_queue.push_back(
@@ -92,7 +92,7 @@ pub fn hover_system(cx: &mut Context) {
                 );
 
                 if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(entity) {
-                    pseudo_class.set(PseudoClass::OVER, false);
+                    pseudo_class.set(PseudoClassFlags::OVER, false);
                 }
             }
         }
@@ -125,13 +125,13 @@ pub fn hover_system(cx: &mut Context) {
 
         // Set current hovered pseudoclass to true
         if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(hovered_widget) {
-            pseudo_classes.set(PseudoClass::HOVER, true);
+            pseudo_classes.set(PseudoClassFlags::HOVER, true);
         }
 
         // Set previous hovered pseudoclass to false
         let hovered = cx.hovered;
         if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(hovered) {
-            pseudo_classes.set(PseudoClass::HOVER, false);
+            pseudo_classes.set(PseudoClassFlags::HOVER, false);
         }
 
         cx.event_queue.push_back(Event::new(WindowEvent::MouseEnter).target(hovered_widget));

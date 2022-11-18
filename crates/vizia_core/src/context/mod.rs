@@ -184,7 +184,7 @@ impl Context {
         self.style.needs_relayout = true;
     }
 
-    /// Enables or disables pseudoclasses for the focus of an entity
+    /// Enables or disables PseudoClasses for the focus of an entity
     pub(crate) fn set_focus_pseudo_classes(
         &mut self,
         focused: Entity,
@@ -208,16 +208,16 @@ impl Context {
         }
 
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {
-            pseudo_classes.set(PseudoClass::FOCUS, enabled);
+            pseudo_classes.set(PseudoClassFlags::FOCUS, enabled);
             if !enabled || focus_visible {
-                pseudo_classes.set(PseudoClass::FOCUS_VISIBLE, enabled);
+                pseudo_classes.set(PseudoClassFlags::FOCUS_VISIBLE, enabled);
             }
         }
 
         for ancestor in focused.parent_iter(&self.tree) {
             let entity = ancestor;
             if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
-                pseudo_classes.set(PseudoClass::FOCUS_WITHIN, enabled);
+                pseudo_classes.set(PseudoClassFlags::FOCUS_WITHIN, enabled);
             }
         }
     }
@@ -246,7 +246,7 @@ impl Context {
             .style
             .pseudo_classes
             .get_mut(focused)
-            .filter(|class| class.contains(PseudoClass::FOCUS_VISIBLE))
+            .filter(|class| class.contains(PseudoClassFlags::FOCUS_VISIBLE))
             .is_some();
         self.focus_with_visibility(old_focus_visible)
     }
@@ -255,7 +255,7 @@ impl Context {
     pub fn set_selected(&mut self, flag: bool) {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClass::SELECTED, flag);
+            pseudo_classes.set(PseudoClassFlags::SELECTED, flag);
         }
 
         self.style.needs_restyle = true;

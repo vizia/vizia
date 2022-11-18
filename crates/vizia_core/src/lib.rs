@@ -62,8 +62,9 @@ pub mod prelude {
     pub use vizia_window::{CursorIcon, WindowDescription, WindowEvent, WindowSize};
 
     pub use super::style::{
-        Abilities, BorderCornerShape, Color, Display, GradientDirection, GradientStop,
-        LinearGradient, Opacity, Overflow, PseudoClass, Visibility, LengthOrPercentage, Length, LengthValue,
+        Abilities, BorderCornerShape, Color, Display, GradientDirection, GradientStop, Length,
+        LengthOrPercentage, LengthValue, LinearGradient, Opacity, Overflow, PseudoClassFlags,
+        Visibility,
     };
 
     pub use morphorm::Units::*;

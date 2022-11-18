@@ -127,7 +127,7 @@ impl<'a> EventContext<'a> {
     /// Set the active state for the current entity.
     pub fn set_active(&mut self, active: bool) {
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(self.current) {
-            pseudo_classes.set(PseudoClass::ACTIVE, active);
+            pseudo_classes.set(PseudoClassFlags::ACTIVE, active);
         }
 
         self.style.needs_restyle = true;
@@ -147,7 +147,7 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    /// Enables or disables pseudoclasses for the focus of an entity
+    /// Enables or disables PseudoClassFlagses for the focus of an entity
     fn set_focus_pseudo_classes(&mut self, focused: Entity, enabled: bool, focus_visible: bool) {
         #[cfg(debug_assertions)]
         if enabled {
@@ -166,16 +166,16 @@ impl<'a> EventContext<'a> {
         }
 
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {
-            pseudo_classes.set(PseudoClass::FOCUS, enabled);
+            pseudo_classes.set(PseudoClassFlags::FOCUS, enabled);
             if !enabled || focus_visible {
-                pseudo_classes.set(PseudoClass::FOCUS_VISIBLE, enabled);
+                pseudo_classes.set(PseudoClassFlags::FOCUS_VISIBLE, enabled);
             }
         }
 
         for ancestor in focused.parent_iter(&self.tree) {
             let entity = ancestor;
             if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
-                pseudo_classes.set(PseudoClass::FOCUS_WITHIN, enabled);
+                pseudo_classes.set(PseudoClassFlags::FOCUS_WITHIN, enabled);
             }
         }
     }
@@ -204,7 +204,7 @@ impl<'a> EventContext<'a> {
             .style
             .pseudo_classes
             .get_mut(focused)
-            .filter(|class| class.contains(PseudoClass::FOCUS_VISIBLE))
+            .filter(|class| class.contains(PseudoClassFlags::FOCUS_VISIBLE))
             .is_some();
         self.focus_with_visibility(old_focus_visible)
     }
@@ -227,7 +227,7 @@ impl<'a> EventContext<'a> {
     /// Returns true if the mouse cursor is over the current entity.
     pub fn is_over(&self) -> bool {
         if let Some(pseudo_classes) = self.style.pseudo_classes.get(self.current) {
-            pseudo_classes.contains(PseudoClass::OVER)
+            pseudo_classes.contains(PseudoClassFlags::OVER)
         } else {
             false
         }
@@ -255,7 +255,7 @@ impl<'a> EventContext<'a> {
     pub fn set_hover(&mut self, flag: bool) {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClass::HOVER, flag);
+            pseudo_classes.set(PseudoClassFlags::HOVER, flag);
         }
 
         self.style.needs_restyle = true;
@@ -267,7 +267,7 @@ impl<'a> EventContext<'a> {
     pub fn set_checked(&mut self, flag: bool) {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClass::CHECKED, flag);
+            pseudo_classes.set(PseudoClassFlags::CHECKED, flag);
         }
 
         self.style.needs_restyle = true;
@@ -279,7 +279,7 @@ impl<'a> EventContext<'a> {
     pub fn set_selected(&mut self, flag: bool) {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClass::SELECTED, flag);
+            pseudo_classes.set(PseudoClassFlags::SELECTED, flag);
         }
 
         self.style.needs_restyle = true;

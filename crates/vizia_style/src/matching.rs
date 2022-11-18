@@ -1,5 +1,11 @@
 pub use selectors::SelectorList;
 
+pub use selectors::{
+    context::{MatchingContext, MatchingMode, QuirksMode},
+    matching::matches_selector_list,
+    Element,
+};
+
 #[cfg(test)]
 mod test {
     use std::{

@@ -89,7 +89,7 @@ pub struct Style {
     pub(crate) animation_manager: IdManager<Animation>,
 
     // pub(crate) rules: Vec<StyleRule>,
-    // pub selectors: HashMap<Rule, SelectorList<Selectors>>,
+    pub selectors: HashMap<Rule, (u32, SelectorList<Selectors>)>,
     pub transitions: HashMap<Rule, Animation>,
 
     pub default_font: String,
@@ -97,7 +97,7 @@ pub struct Style {
     pub elements: SparseSet<String>,
     pub ids: SparseSet<String>,
     pub classes: SparseSet<HashSet<String>>,
-    pub pseudo_classes: SparseSet<PseudoClass>,
+    pub pseudo_classes: SparseSet<PseudoClassFlags>,
     pub disabled: StyleSet<bool>,
     pub abilities: SparseSet<Abilities>,
 
@@ -268,15 +268,18 @@ impl Style {
     pub fn parse_theme(&mut self, stylesheet: &str) {
         if let Ok(theme) = StyleSheet::parse("test.css", stylesheet, ParserOptions::default()) {
             let rules = theme.rules.0;
+
             for rule in rules {
                 match rule {
                     CssRule::Style(style_rule) => {
                         let rule_id = self.rule_manager.create();
 
                         //TODO: Store map of selectors
-                        //let selectors = style_rule.selectors;
+                        let selectors = style_rule.selectors;
 
-                        //self.selectors.insert(rule_id, selectors);
+                        let specificity = selectors.0.first().unwrap().specificity();
+
+                        self.selectors.insert(rule_id, (specificity, selectors));
 
                         for property in style_rule.declarations.declarations {
                             self.insert_property(rule_id, property);
@@ -333,6 +336,10 @@ impl Style {
         match property {
             Property::Display(display) => {
                 self.display.insert_rule(rule_id, display);
+            }
+
+            Property::BackgroundColor(color) => {
+                self.background_color.insert_rule(rule_id, color);
             }
 
             _ => {}
@@ -979,7 +986,7 @@ impl Style {
     // Add style data to an entity
     pub fn add(&mut self, entity: Entity) {
         self.pseudo_classes
-            .insert(entity, PseudoClass::default())
+            .insert(entity, PseudoClassFlags::default())
             .expect("Failed to add pseudoclasses");
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");

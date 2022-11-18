@@ -1,0 +1,7 @@
+.foo {
+    background-color: blue;
+}
+
+.foo:hover {
+    background-color: red;
+}

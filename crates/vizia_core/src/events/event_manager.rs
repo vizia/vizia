@@ -1,7 +1,7 @@
 use crate::context::InternalEvent;
 use crate::events::EventMeta;
 use crate::prelude::*;
-use crate::systems::{hover_system};
+use crate::systems::hover_system;
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use instant::{Duration, Instant};
 use std::any::Any;
@@ -203,7 +203,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     if let Some(pseudo_classes) =
                         context.style.pseudo_classes.get_mut(context.triggered)
                     {
-                        pseudo_classes.set(PseudoClass::ACTIVE, true);
+                        pseudo_classes.set(PseudoClassFlags::ACTIVE, true);
                     }
                     let focusable = context
                         .style
@@ -298,7 +298,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 if let Some(pseudo_classes) =
                     context.style.pseudo_classes.get_mut(context.triggered)
                 {
-                    pseudo_classes.set(PseudoClass::ACTIVE, false);
+                    pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
                 }
                 context.need_restyle();
 
@@ -446,7 +446,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                         if let Some(pseudo_classes) =
                             context.style.pseudo_classes.get_mut(context.triggered)
                         {
-                            pseudo_classes.set(PseudoClass::ACTIVE, false);
+                            pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
                         }
                         context.need_restyle();
                         context.triggered = Entity::null();
@@ -478,7 +478,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                         if let Some(pseudo_classes) =
                             context.style.pseudo_classes.get_mut(context.triggered)
                         {
-                            pseudo_classes.set(PseudoClass::ACTIVE, false);
+                            pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
                         }
                         context.need_restyle();
                         context.triggered = Entity::null();
@@ -495,7 +495,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 if let Some(pseudo_classes) =
                     context.style.pseudo_classes.get_mut(context.triggered)
                 {
-                    pseudo_classes.set(PseudoClass::ACTIVE, true);
+                    pseudo_classes.set(PseudoClassFlags::ACTIVE, true);
                 }
                 context.with_current(context.focused, |cx| {
                     cx.emit(WindowEvent::PressDown { mouse: false })
@@ -513,7 +513,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 if let Some(pseudo_classes) =
                     context.style.pseudo_classes.get_mut(context.triggered)
                 {
-                    pseudo_classes.set(PseudoClass::ACTIVE, false);
+                    pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
                 }
                 context.need_restyle();
                 context.triggered = Entity::null();

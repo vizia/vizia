@@ -62,7 +62,7 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
-    // Pseudoclass
+    // PseudoClassFlags
     // TODO: Should these have their own modifiers trait?
 
     /// Sets the state of the view to checked.
@@ -70,11 +70,11 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, entity, val| {
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
-                pseudo_classes.set(PseudoClass::CHECKED, val.into());
+                pseudo_classes.set(PseudoClassFlags::CHECKED, val.into());
             } else {
-                let mut pseudoclass = PseudoClass::empty();
-                pseudoclass.set(PseudoClass::CHECKED, val.into());
-                cx.style.pseudo_classes.insert(entity, pseudoclass).unwrap();
+                let mut PseudoClassFlags = PseudoClassFlags::empty();
+                PseudoClassFlags.set(PseudoClassFlags::CHECKED, val.into());
+                cx.style.pseudo_classes.insert(entity, PseudoClassFlags).unwrap();
             }
 
             cx.need_restyle();

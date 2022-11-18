@@ -11,7 +11,7 @@ bitflags! {
     /// A bitflag of possible pseudoclasses.
     ///
     /// This type is part of the prelude.
-    pub struct PseudoClass: u16 {
+    pub struct PseudoClassFlags: u16 {
         const HOVER = 1;
         const OVER = 1 << 1;
         const ACTIVE = 1 << 2;
@@ -26,42 +26,42 @@ bitflags! {
     }
 }
 
-impl Default for PseudoClass {
+impl Default for PseudoClassFlags {
     fn default() -> Self {
-        PseudoClass::empty()
+        PseudoClassFlags::empty()
     }
 }
 
-impl std::fmt::Display for PseudoClass {
+impl std::fmt::Display for PseudoClassFlags {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.contains(PseudoClass::HOVER) {
+        if self.contains(PseudoClassFlags::HOVER) {
             write!(f, ":hover")?;
         }
-        if self.contains(PseudoClass::OVER) {
+        if self.contains(PseudoClassFlags::OVER) {
             write!(f, ":over")?;
         }
-        if self.contains(PseudoClass::ACTIVE) {
+        if self.contains(PseudoClassFlags::ACTIVE) {
             write!(f, ":active")?;
         }
-        if self.contains(PseudoClass::FOCUS) {
+        if self.contains(PseudoClassFlags::FOCUS) {
             write!(f, ":focus")?;
         }
-        if self.contains(PseudoClass::DISABLED) {
+        if self.contains(PseudoClassFlags::DISABLED) {
             write!(f, ":disabled")?;
         }
-        if self.contains(PseudoClass::CHECKED) {
+        if self.contains(PseudoClassFlags::CHECKED) {
             write!(f, ":checked")?;
         }
-        if self.contains(PseudoClass::SELECTED) {
+        if self.contains(PseudoClassFlags::SELECTED) {
             write!(f, ":selected")?;
         }
-        if self.contains(PseudoClass::FOCUS_WITHIN) {
+        if self.contains(PseudoClassFlags::FOCUS_WITHIN) {
             write!(f, ":focus-within")?;
         }
-        if self.contains(PseudoClass::FOCUS_VISIBLE) {
+        if self.contains(PseudoClassFlags::FOCUS_VISIBLE) {
             write!(f, ":focus-visible")?;
         }
-        if self.contains(PseudoClass::ROOT) {
+        if self.contains(PseudoClassFlags::ROOT) {
             write!(f, ":root")?;
         }
 

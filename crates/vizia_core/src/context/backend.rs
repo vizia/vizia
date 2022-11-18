@@ -97,7 +97,7 @@ impl<'a> BackendContext<'a> {
             .height
             .insert(Entity::root(), Units::Pixels(window_description.inner_size.height as f32));
 
-        self.0.style.pseudo_classes.insert(Entity::root(), PseudoClass::ROOT).unwrap();
+        self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::ROOT).unwrap();
         self.0.style.disabled.insert(Entity::root(), false);
 
         let bounding_box =
