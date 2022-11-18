@@ -125,7 +125,7 @@ pub struct Style {
     //pub scroll: DenseStorage<Scroll>,     // TODO
 
     // Border
-    pub border_width: StyleSet<LengthOrPercentage>,
+    pub border_width: AnimatableSet<LengthOrPercentage>,
     pub border_color: AnimatableSet<Color>,
 
     // Border Shape
@@ -135,15 +135,15 @@ pub struct Style {
     pub border_bottom_right_shape: StyleSet<BorderCornerShape>,
 
     // Border Radius
-    pub border_top_left_radius: StyleSet<LengthOrPercentage>,
-    pub border_top_right_radius: StyleSet<LengthOrPercentage>,
-    pub border_bottom_left_radius: StyleSet<LengthOrPercentage>,
-    pub border_bottom_right_radius: StyleSet<LengthOrPercentage>,
+    pub border_top_left_radius: AnimatableSet<LengthOrPercentage>,
+    pub border_top_right_radius: AnimatableSet<LengthOrPercentage>,
+    pub border_bottom_left_radius: AnimatableSet<LengthOrPercentage>,
+    pub border_bottom_right_radius: AnimatableSet<LengthOrPercentage>,
 
     // Outline
-    pub outline_width: StyleSet<LengthOrPercentage>,
-    pub outline_color: StyleSet<Color>,
-    pub outline_offset: StyleSet<LengthOrPercentage>,
+    pub outline_width: AnimatableSet<LengthOrPercentage>,
+    pub outline_color: AnimatableSet<Color>,
+    pub outline_offset: AnimatableSet<LengthOrPercentage>,
 
     // Focus Order
     // pub focus_order: SparseSet<FocusOrder>,
@@ -154,15 +154,15 @@ pub struct Style {
     pub background_gradient: StyleSet<LinearGradient>,
 
     // Outer Shadow
-    pub outer_shadow_h_offset: AnimatableSet<Units>,
-    pub outer_shadow_v_offset: AnimatableSet<Units>,
-    pub outer_shadow_blur: AnimatableSet<Units>,
+    pub outer_shadow_h_offset: AnimatableSet<LengthOrPercentage>,
+    pub outer_shadow_v_offset: AnimatableSet<LengthOrPercentage>,
+    pub outer_shadow_blur: AnimatableSet<LengthOrPercentage>,
     pub outer_shadow_color: AnimatableSet<Color>,
 
     // Inner Shadow (TODO)
-    pub inner_shadow_h_offset: StyleSet<LengthOrPercentage>,
-    pub inner_shadow_v_offset: StyleSet<LengthOrPercentage>,
-    pub inner_shadow_blur: StyleSet<LengthOrPercentage>,
+    pub inner_shadow_h_offset: AnimatableSet<LengthOrPercentage>,
+    pub inner_shadow_v_offset: AnimatableSet<LengthOrPercentage>,
+    pub inner_shadow_blur: AnimatableSet<LengthOrPercentage>,
     pub inner_shadow_color: AnimatableSet<Color>,
 
     // Text & Font
@@ -350,6 +350,16 @@ impl Style {
                 self.background_color.insert_transition(rule_id, animation);
                 self.transitions.insert(rule_id, animation);
             }
+            "border-color" => {
+                self.border_color.insert_animation(animation, self.add_transition(transition));
+                self.border_color.insert_transition(rule_id, animation);
+                self.transitions.insert(rule_id, animation);
+            }
+            "outline-color" => {
+                self.outline_color.insert_animation(animation, self.add_transition(transition));
+                self.outline_color.insert_transition(rule_id, animation);
+                self.transitions.insert(rule_id, animation);
+            }
 
             _ => {}
         }
@@ -411,6 +421,14 @@ impl Style {
             // Background
             Property::BackgroundColor(color) => {
                 self.background_color.insert_rule(rule_id, color);
+            }
+
+            // Border
+            Property::BorderWidth(border_width) => {
+                self.border_width.insert_rule(rule_id, border_width.top.0);
+            }
+            Property::BorderColor(color) => {
+                self.border_color.insert_rule(rule_id, color);
             }
 
             _ => {}

@@ -1,5 +1,5 @@
 use morphorm::Units;
-use vizia_style::{Color, Opacity, Length};
+use vizia_style::{Color, Length, LengthOrPercentage, LengthValue, Opacity};
 
 /// A trait which describes a property which can be interpolated for animations.
 pub trait Interpolator {
@@ -60,8 +60,51 @@ impl Interpolator for Color {
     }
 }
 
-// impl Interpolator for Length {
-//     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        
-//     }
-// }
+impl Interpolator for LengthValue {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (end, start) {
+            (LengthValue::Px(end_val), LengthValue::Px(start_val)) => {
+                return LengthValue::Px(f32::interpolate(start_val, end_val, t));
+            }
+
+            _ => {}
+        }
+
+        LengthValue::default()
+    }
+}
+
+impl Interpolator for Length {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (end, start) {
+            (Length::Value(end_val), Length::Value(start_val)) => {
+                return Length::Value(LengthValue::interpolate(end_val, start_val, t));
+            }
+
+            _ => {}
+        }
+
+        Length::default()
+    }
+}
+
+impl Interpolator for LengthOrPercentage {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (LengthOrPercentage::Length(start_val), LengthOrPercentage::Length(end_val)) => {
+                return LengthOrPercentage::Length(Length::interpolate(start_val, end_val, t));
+            }
+
+            (
+                LengthOrPercentage::Percentage(start_val),
+                LengthOrPercentage::Percentage(end_val),
+            ) => {
+                return LengthOrPercentage::Percentage(f32::interpolate(start_val, end_val, t));
+            }
+
+            _ => {}
+        }
+
+        LengthOrPercentage::default()
+    }
+}

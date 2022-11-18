@@ -1,5 +1,7 @@
 .foo {
     background-color: blue;
+    border-color: green;
+    border-width: thick;
     space: 100px;
     size: 200px;
     left: 50%;
@@ -8,5 +10,6 @@
 
 .foo:hover {
     background-color: red;
-    transition: background-color 1s;
+    border-color: black;
+    transition: background-color 2s, border-color 4s;
 }

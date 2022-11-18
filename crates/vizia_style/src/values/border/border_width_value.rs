@@ -1,8 +1,8 @@
-use crate::{impl_parse, BorderWidthKeyword, Length, Parse};
+use crate::{impl_parse, BorderWidthKeyword, Length, LengthOrPercentage, Parse};
 
-/// A border width value either being a [`BorderWidthKeyword`] or a [`Length`].
+/// A border width value either being a [`BorderWidthKeyword`] or a [`LengthOrPercentage`].
 #[derive(Debug, Clone, PartialEq)]
-pub struct BorderWidthValue(pub Length);
+pub struct BorderWidthValue(pub LengthOrPercentage);
 
 impl_parse! {
     BorderWidthValue,
@@ -16,20 +16,26 @@ impl_parse! {
 impl From<BorderWidthKeyword> for BorderWidthValue {
     fn from(border_width_keyword: BorderWidthKeyword) -> Self {
         match border_width_keyword {
-            BorderWidthKeyword::Thin => BorderWidthValue(Length::px(1.0)),
-            BorderWidthKeyword::Medium => BorderWidthValue(Length::px(3.0)),
-            BorderWidthKeyword::Thick => BorderWidthValue(Length::px(5.0)),
+            BorderWidthKeyword::Thin => {
+                BorderWidthValue(LengthOrPercentage::Length(Length::px(1.0)))
+            }
+            BorderWidthKeyword::Medium => {
+                BorderWidthValue(LengthOrPercentage::Length(Length::px(3.0)))
+            }
+            BorderWidthKeyword::Thick => {
+                BorderWidthValue(LengthOrPercentage::Length(Length::px(5.0)))
+            }
         }
     }
 }
 
 impl From<Length> for BorderWidthValue {
     fn from(length: Length) -> Self {
-        BorderWidthValue(length)
+        BorderWidthValue(LengthOrPercentage::Length(length))
     }
 }
 
-impl From<BorderWidthValue> for Length {
+impl From<BorderWidthValue> for LengthOrPercentage {
     fn from(border_width_value: BorderWidthValue) -> Self {
         border_width_value.0
     }
@@ -37,7 +43,7 @@ impl From<BorderWidthValue> for Length {
 
 impl Default for BorderWidthValue {
     fn default() -> Self {
-        Self(Length::px(3.0))
+        Self(LengthOrPercentage::Length(Length::px(3.0)))
     }
 }
 
@@ -55,9 +61,9 @@ mod tests {
 
         custom {
             success {
-                "thin" => BorderWidthValue(Length::px(1.0)),
-                "medium" => BorderWidthValue(Length::px(3.0)),
-                "thick" => BorderWidthValue(Length::px(5.0)),
+                "thin" => BorderWidthValue(Length::px(1.0).into()),
+                "medium" => BorderWidthValue(Length::px(3.0).into()),
+                "thick" => BorderWidthValue(Length::px(5.0).into()),
             }
 
             failure {
