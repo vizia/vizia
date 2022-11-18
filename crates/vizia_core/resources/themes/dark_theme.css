@@ -42,7 +42,7 @@ root {
 
 button {
     border-radius: 4px;
-    background-color: #323232;
+    background-color: #484848;
     transition: background-color 0.1 0;
 }
 
@@ -51,12 +51,12 @@ button label {
 }
 
 button:over {
-    background-color: #424242;
+    background-color: #666;
     transition: background-color 0.1 0;
 }
 
 button:active {
-    background-color: #242424;
+    background-color: #323232;
 }
 
 button.accent {
@@ -373,7 +373,7 @@ notification .icon:checked label {
 /* Popup */
 
 popup {
-    outer-shadow: 0 2 4 #00000055;
+    outer-shadow: 0 0 8 #00000026;
     opacity: 0%;
     transition: opacity 0.1 0;
 }

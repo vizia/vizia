@@ -406,18 +406,17 @@ scrollview > scrollbar.horizontal {
     width: 1s;
     height: 8px;
     left: 0px;
-    right: 14px;
+    right: 0px;
     top: 1s;
     bottom: 0px;
 }
 
 scrollview > scrollbar.vertical {
-    top: 0px;
-    height: 1s;
-    bottom: 0px;
-
-    left: 1s;
     width: 8px;
+    height: 1s;
+    left: 1s;
+    top: 0px;
+    bottom: 0px;
     right: 0px;
 }
 
@@ -437,11 +436,11 @@ scrollbar .thumb {
 }
 
 scrollbar.horizontal .thumb {
-    height: 8px;
+    height: 1s;
 }
 
 scrollbar.vertical .thumb {
-    width: 8px;
+    width: 1s;
 }
 
 /* Slider */
