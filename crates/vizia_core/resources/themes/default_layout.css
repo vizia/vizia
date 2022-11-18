@@ -149,16 +149,17 @@ datetimepicker tabheader .indicator {
 /* Dropdown */
 
 dropdown {
-    height: auto;
+    width: 1s;
+    height: 32px;
 }
 
 dropdown .title {
     width: 1s;
-    height: 28px;
+    height: 1s;
+    child-left: 8px;
+    child-right: 4px;
     child-top: 1s;
     child-bottom: 1s;
-    child-right: 5px;
-    child-left: 5px;
 }
 
 dropdown popup {
@@ -175,8 +176,10 @@ dropdown popup list {
 
 dropdown list label {
     width: 1s;
-    height: 30px;
+    height: 32px;
     child-left: 6px;
+    child-top: 1s;
+    child-bottom: 1s;
 }
 
 dropdown vstack {
