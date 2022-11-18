@@ -3,6 +3,8 @@ use std::marker::PhantomData;
 use crate::{prelude::*, style::Transform2D};
 use chrono::{NaiveTime, Timelike};
 
+use super::spinbox::SpinboxIcons;
+
 const ICON_LEFT_OPEN: &str = "\u{e75d}";
 const ICON_RIGHT_OPEN: &str = "\u{e75e}";
 
@@ -50,6 +52,7 @@ where
                     cx,
                     lens.map(|time| format!("{:#02}", time.hour12().1)),
                     SpinboxKind::Vertical,
+                    SpinboxIcons::Math,
                 )
                 .on_increment(|ex| ex.emit(TimepickerEvent::IncrementHour))
                 .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementHour));
@@ -62,6 +65,7 @@ where
                     cx,
                     lens.map(|time| format!("{:#02}", time.minute())),
                     SpinboxKind::Vertical,
+                    SpinboxIcons::Math,
                 )
                 .on_increment(|ex| ex.emit(TimepickerEvent::IncrementMinutes))
                 .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementMinutes));

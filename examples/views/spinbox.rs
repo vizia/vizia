@@ -51,9 +51,14 @@ fn main() {
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
         HStack::new(cx, |cx| {
-            Spinbox::new(cx, AppState::spinbox_value_1, SpinboxKind::Horizontal)
-                .on_increment(|ex| ex.emit(AppEvent::Increment1))
-                .on_decrement(|ex| ex.emit(AppEvent::Decrement1));
+            Spinbox::new(
+                cx,
+                AppState::spinbox_value_1,
+                SpinboxKind::Horizontal,
+                SpinboxIcons::Math,
+            )
+            .on_increment(|ex| ex.emit(AppEvent::Increment1))
+            .on_decrement(|ex| ex.emit(AppEvent::Decrement1));
 
             Spinbox::custom(
                 cx,
@@ -62,6 +67,7 @@ fn main() {
                         .on_edit(|ex, v| ex.emit(AppEvent::Set2(v)))
                 },
                 SpinboxKind::Vertical,
+                SpinboxIcons::Math,
             )
             .on_increment(|ex| ex.emit(AppEvent::Increment2))
             .on_decrement(|ex| ex.emit(AppEvent::Decrement2));
@@ -94,6 +100,7 @@ fn main() {
                     .width(Pixels(50.0))
                 },
                 SpinboxKind::Horizontal,
+                SpinboxIcons::Chevrons,
             )
             .on_increment(|ex| ex.emit(AppEvent::Increment3))
             .on_decrement(|ex| ex.emit(AppEvent::Decrement3));

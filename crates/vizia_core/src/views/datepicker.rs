@@ -2,6 +2,8 @@ use chrono::{Datelike, NaiveDate, Weekday};
 
 use crate::prelude::*;
 
+use super::spinbox::SpinboxIcons;
+
 #[derive(Lens)]
 pub struct Datepicker {
     view_date: NaiveDate,
@@ -123,6 +125,7 @@ impl Datepicker {
                             .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
                     },
                     SpinboxKind::Horizontal,
+                    SpinboxIcons::Chevrons,
                 )
                 .width(Pixels(131.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
@@ -134,6 +137,7 @@ impl Datepicker {
                             .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
                     },
                     SpinboxKind::Horizontal,
+                    SpinboxIcons::Math,
                 )
                 .width(Stretch(1.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))

@@ -149,7 +149,6 @@ datetimepicker tabheader .indicator {
 /* Dropdown */
 
 dropdown {
-    width: 1s;
     height: 32px;
 }
 
@@ -163,19 +162,19 @@ dropdown .title {
 }
 
 dropdown popup {
-    width: 1s;
+    width: 100%;
     height: auto;
 }
 
 dropdown popup list {
-    width: 1s;
+    width: 100%;
     height: auto;
     child-top: 4px;
     child-bottom: 4px;
 }
 
 dropdown list label {
-    width: 1s;
+    width: 100%;
     height: 32px;
     child-left: 6px;
     child-top: 1s;
@@ -484,6 +483,11 @@ spinbox.vertical {
     width: 32px;
 }
 
+spinbox.vertical {
+    child-top: 4px;
+    child-bottom: 4px;
+}
+
 spinbox .container {
     width: auto;
 }
@@ -503,12 +507,14 @@ spinbox.vertical .spinbox-button {
 
 spinbox .spinbox-value {
     width: 1s;
-    height: 24px;
+    height: 1s;
     child-space: 1s;
 }
 
 spinbox label.spinbox-value {
     width: auto;
+    left: 1s;
+    right: 1s;
 }
 
 spinbox textbox.spinbox-value {

@@ -175,7 +175,7 @@ chip {
 /* Datepicker */
 
 datepicker {
-    background-color: #242424;
+    background-color: #343434;
     border-radius: 4px;
     child-space: 8px;
     row-between: 8px;
@@ -204,7 +204,7 @@ datepicker {
 }
 
 .datepicker-calendar-day-disabled {
-    color: #404040;
+    color: #585858;
     cursor: arrow;
 }
 
@@ -237,7 +237,7 @@ datepicker {
 
 datetimepicker {
     border-radius: 4px;
-    background-color: #242424;
+    background-color: #343434;
 }
 
 datetimepicker tabheader label {
@@ -276,6 +276,7 @@ dropdown popup {
 
 dropdown list label {
     color: #888;
+    cursor: hand;
 }
 
 dropdown list label:checked {
@@ -504,10 +505,8 @@ slider .thumb:hover {
 /* Spinbox */
 
 spinbox {
-    background-color: #242424;
+    background-color: #282828;
     border-radius: 4px;
-    border-width: 1px;
-    border-color: #2f2f2f;
 }
 
 spinbox .spinbox-button {
@@ -720,19 +719,19 @@ textbox.error {
 /* Time Picker */
 
 timepicker {
-    background-color: #242424;
+    background-color: #343434;
     border-radius: 4px;
 }
 
 timepicker .timepicker-dot {
     border-radius: 4px;
-    background-color: #404040;
+    background-color: #282828;
 }
 
 /* Radial Time Picker */
 
 radial_timepicker {
-    background-color: #242424;
+    background-color: #343434;
     border-radius: 4px;
 }
 
