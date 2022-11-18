@@ -446,7 +446,7 @@ scrollbar.vertical .thumb {
 /* Slider */
 
 slider {
-    height: 4px;
+    height: 6px;
     width: 1s;
     border-radius: 2px;
 }
@@ -455,7 +455,7 @@ slider.vertical {
     top: auto;
     bottom: auto;
     height: 1s;
-    width: 4px;
+    width: 6px;
 }
 
 slider .thumb {

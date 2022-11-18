@@ -477,7 +477,7 @@ scrollbar .thumb:focus {
 
 slider * {
     background-color: #51afef20;
-    border-radius: 2px;
+    border-radius: 3px;
 }
 
 slider:focus-visible {
