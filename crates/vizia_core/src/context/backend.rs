@@ -260,12 +260,12 @@ impl<'a> BackendContext<'a> {
         let tree = self.0.tree.clone();
 
         // Apply any inline style inheritance.
-        //inline_inheritance_system(self.0, &tree);
+        inline_inheritance_system(self.0, &tree);
 
         //
         style_system(self.0, &tree);
 
-        //shared_inheritance_system(self.0, &tree);
+        shared_inheritance_system(self.0, &tree);
 
         // Load any unloaded images and remove unused images.
         image_system(self.0);
@@ -280,7 +280,7 @@ impl<'a> BackendContext<'a> {
         animation_system(self.0);
 
         // Apply z-order inheritance.
-        z_ordering_system(self.0, &tree);
+        z_indexing_system(self.0, &tree);
 
         // Apply visibility inheritance.
         visibility_system(self.0, &tree);

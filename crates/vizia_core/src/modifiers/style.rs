@@ -118,7 +118,7 @@ pub trait StyleModifiers: internal::Modifiable {
         ///
         /// Views with a higher z-order will be rendered on top of those with a lower z-order.
         /// Views with the same z-order are rendered in tree order.
-        z_order,
+        z_index,
         i32
     );
 

@@ -1,6 +1,6 @@
 use crate::{macros::impl_parse, AutoKeyword, LengthPixels, Parse, Percentage, Stretch};
-pub use morphorm::Units;
 use cssparser::*;
+pub use morphorm::Units;
 
 impl_parse! {
     Units,
@@ -61,7 +61,7 @@ mod tests {
             "q" => Units::Pixels(LengthValue::PX_PER_Q),
             "pt" => Units::Pixels(LengthValue::PX_PER_PT),
             "pc" => Units::Pixels(LengthValue::PX_PER_PC),
-            "st" => Units::Stretch,
+            "s" => Units::Stretch,
         }
     }
 }

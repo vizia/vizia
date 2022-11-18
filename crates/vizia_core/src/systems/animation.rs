@@ -13,7 +13,7 @@ pub fn has_animations(cx: &Context) -> bool {
     //     | cx.style.border_radius_top_right.has_animations()
     //     | cx.style.border_radius_bottom_left.has_animations()
     //     | cx.style.border_radius_bottom_right.has_animations()
-    //     | cx.style.background_color.has_animations()
+    cx.style.background_color.has_animations()
     //     | cx.style.outer_shadow_h_offset.has_animations()
     //     | cx.style.outer_shadow_v_offset.has_animations()
     //     | cx.style.outer_shadow_blur.has_animations()
@@ -44,7 +44,6 @@ pub fn has_animations(cx: &Context) -> bool {
     //     | cx.style.child_right.has_animations()
     //     | cx.style.child_top.has_animations()
     //     | cx.style.child_bottom.has_animations()
-    false
 }
 
 pub fn animation_system(cx: &mut Context) {
@@ -62,7 +61,7 @@ pub fn animation_system(cx: &mut Context) {
     // cx.style.border_radius_top_right.tick(time);
     // cx.style.border_radius_bottom_left.tick(time);
     // cx.style.border_radius_bottom_right.tick(time);
-    // cx.style.background_color.tick(time);
+    cx.style.background_color.tick(time);
     // cx.style.outer_shadow_h_offset.tick(time);
     // cx.style.outer_shadow_v_offset.tick(time);
     // cx.style.outer_shadow_blur.tick(time);

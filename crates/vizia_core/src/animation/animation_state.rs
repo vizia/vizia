@@ -72,8 +72,10 @@ where
         self
     }
 
-    pub fn with_delay(mut self, delay: Duration) -> Self {
-        self.delay = delay.as_secs_f32() / self.duration.as_secs_f32();
+    pub fn with_delay(mut self, delay: Option<Duration>) -> Self {
+        if let Some(delay) = delay {
+            self.delay = delay.as_secs_f32() / self.duration.as_secs_f32();
+        }
 
         self
     }

@@ -9,7 +9,7 @@ impl_parse! {
 
     tokens {
         dimension {
-            "st" => Stretch,
+            "s" => Stretch,
         }
     }
 }
@@ -35,7 +35,7 @@ mod tests {
         Stretch, assert_stretch,
 
         dimension {
-            "st" => Stretch,
+            "s" => Stretch,
         }
     }
 }

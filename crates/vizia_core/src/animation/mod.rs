@@ -51,8 +51,8 @@ pub(crate) use animation_state::AnimationState;
 mod interpolator;
 pub(crate) use interpolator::Interpolator;
 
-mod transition;
-pub(crate) use transition::Transition;
+// mod transition;
+// pub(crate) use transition::Transition;
 
 mod animation_builder;
 pub use animation_builder::*;

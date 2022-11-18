@@ -1,7 +1,7 @@
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
-use vizia_style::CssRule;
+use vizia_style::{CssRule, Transition};
 
 use cssparser::{Parser, ParserInput};
 
@@ -51,7 +51,7 @@ pub use gradient::*;
 // mod prop;
 // pub use prop::*;
 
-use crate::animation::{AnimationState, Interpolator, Transition};
+use crate::animation::{AnimationState, Interpolator};
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
 use crate::text::Selection;
@@ -111,7 +111,7 @@ pub struct Style {
     pub opacity: AnimatableSet<Opacity>,
 
     // Z Order
-    pub z_order: StyleSet<i32>,
+    pub z_index: StyleSet<i32>,
 
     // Clipping
     pub clip_widget: SparseSet<Entity>,
@@ -282,7 +282,17 @@ impl Style {
                         self.selectors.insert(rule_id, (specificity, selectors));
 
                         for property in style_rule.declarations.declarations {
-                            self.insert_property(rule_id, property);
+                            match property {
+                                Property::Transition(transitions) => {
+                                    for transition in transitions.iter() {
+                                        self.insert_transition(rule_id, transition);
+                                    }
+                                }
+
+                                _ => {
+                                    self.insert_property(rule_id, property);
+                                }
+                            }
                         }
                     }
 
@@ -332,12 +342,73 @@ impl Style {
         // self.set_style_properties();
     }
 
+    fn insert_transition(&mut self, rule_id: Rule, transition: &Transition) {
+        let animation = self.animation_manager.create();
+        match transition.property.as_ref() {
+            "background-color" => {
+                self.background_color.insert_animation(animation, self.add_transition(transition));
+                self.background_color.insert_transition(rule_id, animation);
+                self.transitions.insert(rule_id, animation);
+            }
+
+            _ => {}
+        }
+    }
+
     fn insert_property(&mut self, rule_id: Rule, property: Property) {
         match property {
+            // Display
             Property::Display(display) => {
                 self.display.insert_rule(rule_id, display);
             }
 
+            Property::Visibility(visibility) => {
+                self.visibility.insert_rule(rule_id, visibility);
+            }
+
+            Property::Opacity(opacity) => {
+                self.opacity.insert_rule(rule_id, opacity);
+            }
+
+            // Space
+            Property::Space(space) => {
+                self.left.insert_rule(rule_id, space);
+                self.right.insert_rule(rule_id, space);
+                self.top.insert_rule(rule_id, space);
+                self.bottom.insert_rule(rule_id, space);
+            }
+
+            Property::Left(left) => {
+                self.left.insert_rule(rule_id, left);
+            }
+
+            Property::Right(right) => {
+                self.right.insert_rule(rule_id, right);
+            }
+
+            Property::Top(top) => {
+                self.top.insert_rule(rule_id, top);
+            }
+
+            Property::Bottom(bottom) => {
+                self.bottom.insert_rule(rule_id, bottom);
+            }
+
+            // Size
+            Property::Size(size) => {
+                self.width.insert_rule(rule_id, size);
+                self.height.insert_rule(rule_id, size);
+            }
+
+            Property::Width(width) => {
+                self.width.insert_rule(rule_id, width);
+            }
+
+            Property::Height(height) => {
+                self.height.insert_rule(rule_id, height);
+            }
+
+            // Background
             Property::BackgroundColor(color) => {
                 self.background_color.insert_rule(rule_id, color);
             }
@@ -974,11 +1045,11 @@ impl Style {
 
     fn add_transition<T: Default + Interpolator>(
         &self,
-        transition: Transition,
+        transition: &Transition,
     ) -> AnimationState<T> {
         AnimationState::new(Animation::null())
-            .with_duration(instant::Duration::from_secs_f32(transition.duration))
-            .with_delay(instant::Duration::from_secs_f32(transition.delay))
+            .with_duration(transition.duration)
+            .with_delay(transition.delay)
             .with_keyframe((0.0, Default::default()))
             .with_keyframe((1.0, Default::default()))
     }
@@ -1011,7 +1082,7 @@ impl Style {
         // Opacity
         self.opacity.remove(entity);
         // Z Order
-        self.z_order.remove(entity);
+        self.z_index.remove(entity);
         // Clipping
         self.clip_widget.remove(entity);
 
@@ -1132,7 +1203,7 @@ impl Style {
         // Opacity
         self.opacity.clear_rules();
         // Z Order
-        self.z_order.clear_rules();
+        self.z_index.clear_rules();
 
         // Transform
         self.translate.clear_rules();

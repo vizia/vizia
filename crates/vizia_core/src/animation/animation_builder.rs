@@ -5,7 +5,7 @@ use crate::prelude::*;
 
 pub(crate) struct AnimationDescription {
     duration: instant::Duration,
-    delay: instant::Duration,
+    delay: Option<instant::Duration>,
     persistent: bool,
 }
 
@@ -43,7 +43,7 @@ impl<'a> AnimationBuilder<'a> {
             cx,
             animation_description: AnimationDescription {
                 duration,
-                delay: instant::Duration::from_secs(0),
+                delay: None,
                 persistent: false,
             },
         }
@@ -53,7 +53,7 @@ impl<'a> AnimationBuilder<'a> {
     ///
     ///
     pub fn with_delay(mut self, delay: instant::Duration) -> Self {
-        self.animation_description.delay = delay;
+        self.animation_description.delay = Some(delay);
 
         self
     }
@@ -120,7 +120,7 @@ impl<'a> KeyframeBuilder<'a> {
 
     /// Sets the delay before the animation will play.
     pub fn with_delay(mut self, delay: instant::Duration) -> Self {
-        self.animation_description.delay = delay;
+        self.animation_description.delay = Some(delay);
 
         self
     }

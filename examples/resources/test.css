@@ -1,7 +1,12 @@
 .foo {
     background-color: blue;
+    space: 100px;
+    size: 200px;
+    left: 50%;
+    height: 1s;
 }
 
 .foo:hover {
     background-color: red;
+    transition: background-color 1s;
 }
