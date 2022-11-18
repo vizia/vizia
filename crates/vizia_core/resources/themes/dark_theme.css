@@ -599,8 +599,25 @@ switch:checked:disabled .switch-handle {
 
 /* Tab */
 
-tabheader {
+tabview {
+    background-color: #343434;
+    border-radius: 4px;
+}
+
+tabheader label {
+    color: #888;
+}
+
+tabheader:checked label {
     color: #fff;
+}
+
+tabheader .indicator {
+    background-color: transparent;
+}
+
+tabheader:checked .indicator {
+    background-color: #51afef;
 }
 
 /* tabheader:disabled {

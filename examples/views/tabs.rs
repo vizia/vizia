@@ -23,7 +23,8 @@ fn main() {
         TabView::new(cx, AppData::list, |cx, item| match item.get(cx) {
             "Tab1" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item);
+                    Label::new(cx, item).hoverable(false);
+                    Element::new(cx).class("indicator");
                 },
                 |cx| {
                     Element::new(cx).size(Pixels(200.0)).background_color(Color::red());
@@ -32,7 +33,8 @@ fn main() {
 
             "Tab2" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item);
+                    Label::new(cx, item).hoverable(false);
+                    Element::new(cx).class("indicator");
                 },
                 |cx| {
                     Element::new(cx).size(Pixels(200.0)).background_color(Color::blue());

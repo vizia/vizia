@@ -579,6 +579,7 @@ switch {
     height: 8px;
     top: 1s;
     bottom: 1s;
+    transition: background-color 0.1 0;
 }
 
 switch:checked .switch-handle {
@@ -599,7 +600,19 @@ tabview {
 
 tabheader {
     width: auto;
-    height: auto;
+    height: 32px;
+}
+
+tabheader label {
+    height: 1s;
+    child-left: 4px;
+    child-right: 4px;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+tabheader .indicator {
+    height: 2px;
 }
 
 /* tabheader label {
