@@ -542,31 +542,21 @@ spinbox picklist.spinbox-value .title {
 
 /* Switch */
 
-switch {
-    border-radius: 8px;
-    border-width: 2px;
-    border-color: #888888;
-    background-color: transparent;
-    transition: border-color 0.1 0;
-    transition: background-color 0.1 0;
-}
-
-.switch-handle-container {
+.switch-handle-bg {
     border-radius: 4px;
-    background-color: transparent;
-    transition: left 0.1 0;
+    background-color: #343434;
     transition: background-color 0.1 0;
 }
 
 .switch-handle {
     background-color: #888888;
-    border-radius: 4px;
+    border-radius: 6px;
     transition: background-color 0.1 0;
     transition: left 0.1 0;
 }
 
-switch:hover .switch-handle-container .switch-handle {
-    background-color: #51afef;
+switch:hover .switch-handle {
+    background-color: #c4c4c4;
     transition: background-color 0.1 0;
 }
 
@@ -576,54 +566,34 @@ switch:focus-visible {
     outline-offset: 3px;
 }
 
-switch:checked {
-    border-color: #51afef;
-    transition: border-color 0.1 0;
-}
-
-switch:checked .switch-handle-container {
+switch:checked .switch-handle-bg {
     background-color: #51afef40;
     transition: background-color 0.1 0;
 }
 
-switch:checked .switch-handle-container .switch-handle {
+switch:checked .switch-handle {
     background-color: #51afef;
     transition: background-color 0.1 0;
     transition: left 0.1 0;
 }
 
-switch:checked:hover .switch-handle-container .switch-handle {
-    background-color: #80caff;
+switch:checked:hover .switch-handle {
+    background-color: #9fd5fb;
     transition: background-color 0.1 0;
 }
 
-switch:disabled {
-    border-color: #404040;
-    transition: border-color 0.1 0;
-}
-
-switch:disabled .switch-handle-container .switch-handle {
-    background-color: #404040;
+switch:disabled .switch-handle {
+    background-color: #585858;
     transition: background-color 0.1 0;
 }
 
-switch:hover:disabled {
-    background-color: transparent;
+switch:checked:disabled .switch-handle-bg {
+    background-color: #343434;
     transition: background-color 0.1 0;
 }
 
-switch:hover:disabled .switch-handle-container .switch-handle {
-    background-color: #404040;
-    transition: background-color 0.1 0;
-}
-
-switch:checked:disabled .switch-handle-container {
-    background-color: #40404040;
-    transition: background-color 0.1 0;
-}
-
-switch:checked:disabled .switch-handle-container .switch-handle {
-    background-color: #404040;
+switch:checked:disabled .switch-handle {
+    background-color: #585858;
     transition: background-color 0.1 0;
 }
 
