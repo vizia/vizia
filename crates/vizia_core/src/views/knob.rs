@@ -60,18 +60,13 @@ impl<L: Lens<Target = f32>> Knob<L> {
                     KnobMode::Continuous,
                 )
                 .value(lens)
-                .width(Stretch(1.0))
-                .height(Stretch(1.0))
-                .class("track");
+                .class("knob-track");
 
-                // TODO
-                // Element::new(cx)
-                //     .width(Pixels(10.0))
-                //     .height(Pixels(10.0))
-                //     .space(Stretch(1.0))
-                //     .background_color(Color::red())
-                //     .translate((30.0,0.0))
-                //     .rotate(30.0);
+                HStack::new(cx, |cx| {
+                    Element::new(cx).class("knob-tick");
+                })
+                .rotate(lens.clone().map(|v| *v * 300.0 - 150.0))
+                .class("knob-head");
             });
         })
         .navigable(true)
@@ -377,7 +372,6 @@ impl View for TickKnob {
             cx.background_color().cloned().unwrap_or_default().into();
         foreground_color.set_alphaf(foreground_color.a * opacity);
 
-        let background_color = femtovg::Color::rgb(127, 127, 127);
         //et mut foreground_color = femtovg::Color::rgb(50, 50, 200);
 
         let bounds = cx.bounds();
@@ -403,10 +397,6 @@ impl View for TickKnob {
         let mut path = Path::new();
         path.circle(centerx, centery, radius);
         // path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
-        let mut paint = Paint::color(background_color);
-        paint.set_line_width(tick_width);
-        paint.set_line_cap(LineCap::Round);
-        canvas.fill_path(&mut path, &paint);
 
         // Draw the tick
         let mut path = Path::new();
@@ -534,7 +524,7 @@ impl View for ArcTrack {
         path.arc(centerx, centery, radius - span / 2.0, end, start, Solidity::Solid);
         let mut paint = Paint::color(background_color);
         paint.set_line_width(span);
-        paint.set_line_cap(LineCap::Round);
+        // paint.set_line_cap(LineCap::Round);
         canvas.stroke_path(&mut path, &paint);
 
         // Draw the active arc
@@ -565,7 +555,7 @@ impl View for ArcTrack {
 
         let mut paint = Paint::color(foreground_color);
         paint.set_line_width(span);
-        paint.set_line_cap(LineCap::Round);
+        // paint.set_line_cap(LineCap::Round);
         canvas.stroke_path(&mut path, &paint);
     }
 }

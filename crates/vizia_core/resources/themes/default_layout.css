@@ -197,8 +197,19 @@ image {
 /* Knob */
 
 knob {
-    width: 48px;
-    height: 48;
+    width: 32px;
+    height: 32px;
+}
+
+.knob-track {
+    width: 1s;
+    height: 1s;
+}
+
+.knob-head {
+    width: 28px;
+    height: 28px;
+    space: 1s;
 }
 
 /* Label */
