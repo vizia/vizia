@@ -315,12 +315,6 @@ knob:focus-visible {
 }
 
 .knob-head {
-    width: 1s;
-    height: 1s;
-    top: 2px;
-    left: 2px;
-    right: 2px;
-    bottom: 2px;
     background-color: #343434;
     border-width: 2px;
     border-color: #1d1d1d;
@@ -329,12 +323,6 @@ knob:focus-visible {
 }
 
 .knob-tick {
-    width: 2px;
-    height: 8px;
-    left: 1s;
-    right: 1s;
-    top: 2px;
-    bottom: 1s;
     background-color: #fff;
     border-radius: 1px;
 }
