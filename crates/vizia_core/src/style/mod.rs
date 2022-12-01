@@ -1,7 +1,7 @@
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
-use vizia_style::{CssRule, Transition};
+use vizia_style::{CssRule, Transform, Transition};
 
 use cssparser::{Parser, ParserInput};
 
@@ -117,10 +117,11 @@ pub struct Style {
     pub clip_widget: SparseSet<Entity>,
 
     // Transform
-    pub rotate: AnimatableSet<f32>,
-    pub translate: AnimatableSet<(f32, f32)>,
-    pub scale: AnimatableSet<(f32, f32)>,
-
+    pub transform: AnimatableSet<Vec<Transform>>,
+    // pub computed_transform: AnimatableSet<Transform2D>,
+    // pub rotate: AnimatableSet<f32>,
+    // pub translate: AnimatableSet<(f32, f32)>,
+    // pub scale: AnimatableSet<(f32, f32)>,
     pub overflow: StyleSet<Overflow>, // TODO
     //pub scroll: DenseStorage<Scroll>,     // TODO
 
@@ -361,6 +362,12 @@ impl Style {
                 self.transitions.insert(rule_id, animation);
             }
 
+            "transform" => {
+                self.transform.insert_animation(animation, self.add_transition(transition));
+                self.transform.insert_transition(rule_id, animation);
+                self.transitions.insert(rule_id, animation);
+            }
+
             _ => {}
         }
     }
@@ -429,6 +436,12 @@ impl Style {
             }
             Property::BorderColor(color) => {
                 self.border_color.insert_rule(rule_id, color);
+            }
+
+            // Transform
+            Property::Transform(transforms) => {
+                println!("Insert transform: {:?}", transforms);
+                self.transform.insert_rule(rule_id, transforms);
             }
 
             _ => {}
@@ -1105,9 +1118,10 @@ impl Style {
         self.clip_widget.remove(entity);
 
         // Transform
-        self.translate.remove(entity);
-        self.rotate.remove(entity);
-        self.scale.remove(entity);
+        self.transform.remove(entity);
+        // self.translate.remove(entity);
+        // self.rotate.remove(entity);
+        // self.scale.remove(entity);
 
         self.overflow.remove(entity);
 
@@ -1224,9 +1238,10 @@ impl Style {
         self.z_index.clear_rules();
 
         // Transform
-        self.translate.clear_rules();
-        self.rotate.clear_rules();
-        self.scale.clear_rules();
+        self.transform.clear_rules();
+        // self.translate.clear_rules();
+        // self.rotate.clear_rules();
+        // self.scale.clear_rules();
 
         self.overflow.clear_rules();
 

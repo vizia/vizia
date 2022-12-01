@@ -1,5 +1,5 @@
 use crate::{
-    Angle, CustomParseError, Length, LengthOrPercentage, Matrix, Parse, PercentageOrNumber, Scale,
+    Angle, CustomParseError, LengthOrPercentage, Matrix, Parse, PercentageOrNumber, Scale,
     Translate,
 };
 use cssparser::{
@@ -23,18 +23,18 @@ pub enum Transform {
     ScaleY(PercentageOrNumber),
     /// A 2D rotation.
     Rotate(Angle),
-    /// A rotation around the X axis.
-    RotateX(Angle),
-    /// A rotation around the Y axis.
-    RotateY(Angle),
+    // /// A rotation around the X axis.
+    // RotateX(Angle),
+    // /// A rotation around the Y axis.
+    // RotateY(Angle),
     /// A 2D skew.
     Skew(Angle, Angle),
     /// A skew along the X axis.
     SkewX(Angle),
     /// A skew along the Y axis.
     SkewY(Angle),
-    /// A perspective transform.
-    Perspective(Length),
+    // /// A perspective transform.
+    // Perspective(Length),
     /// A 2D matrix transform.
     Matrix(Matrix<f32>),
 }
@@ -75,14 +75,14 @@ impl<'i> Parse<'i> for Transform {
                     let angle = Angle::parse(input)?;
                     Ok(Transform::Rotate(angle))
                 },
-                "rotatex" => {
-                    let x = Angle::parse(input)?;
-                    Ok(Transform::RotateX(x))
-                },
-                "rotatey" => {
-                    let y = Angle::parse(input)?;
-                    Ok(Transform::RotateY(y))
-                },
+                // "rotatex" => {
+                //     let x = Angle::parse(input)?;
+                //     Ok(Transform::RotateX(x))
+                // },
+                // "rotatey" => {
+                //     let y = Angle::parse(input)?;
+                //     Ok(Transform::RotateY(y))
+                // },
                 "skew" => {
                     let x = Angle::parse(input)?;
                     input.expect_comma()?;
@@ -97,15 +97,18 @@ impl<'i> Parse<'i> for Transform {
                     let y = Angle::parse(input)?;
                     Ok(Transform::SkewY(y))
                 },
-                "perspective" => {
-                    let length = Length::parse(input)?;
-                    Ok(Transform::Perspective(length))
-                },
+                // "perspective" => {
+                //     let length = Length::parse(input)?;
+                //     Ok(Transform::Perspective(length))
+                // },
                 "matrix" => {
                     let matrix = Matrix::parse(input)?;
                     Ok(Transform::Matrix(matrix))
                 },
-                _ => Err(location.new_unexpected_token_error(Token::Ident(function)))
+                _ => {
+                    println!("Error in transform");
+                    Err(location.new_unexpected_token_error(Token::Ident(function)))
+                }
             }
         })
     }
@@ -138,6 +141,7 @@ impl<'i> Parse<'i> for Vec<Transform> {
 mod tests {
     use super::*;
     use crate::tests::assert_parse;
+    use crate::Length;
     use crate::LengthValue;
 
     assert_parse! {
@@ -154,14 +158,14 @@ mod tests {
                 "scaley(50%)" => Transform::ScaleY(PercentageOrNumber::Percentage(0.5)),
 
                 "rotate(50deg)" => Transform::Rotate(Angle::Deg(50.0)),
-                "rotatex(30grad)" => Transform::RotateX(Angle::Grad(30.0)),
-                "rotatey(20turn)" => Transform::RotateY(Angle::Turn(20.0)),
+                // "rotatex(30grad)" => Transform::RotateX(Angle::Grad(30.0)),
+                // "rotatey(20turn)" => Transform::RotateY(Angle::Turn(20.0)),
 
                 "skew(60rad, 70turn)" => Transform::Skew(Angle::Rad(60.0), Angle::Turn(70.0)),
                 "skewx(90grad)" => Transform::SkewX(Angle::Grad(90.0)),
                 "skewy(120deg)" => Transform::SkewY(Angle::Deg(120.0)),
 
-                "perspective(20px)" => Transform::Perspective(Length::px(20.0)),
+                // "perspective(20px)" => Transform::Perspective(Length::px(20.0)),
                 "matrix(1, 2, 3, 4, 5, 6)" => Transform::Matrix(Matrix::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)),
             }
 
@@ -182,13 +186,12 @@ mod tests {
 
         custom {
             success {
-                "translate(10px, 20%) scale(30%, 40) rotate(50grad) skew(60turn, 70rad) perspective(80cm) matrix(10, 20, 30, 40, 50, 60)" =>
+                "translate(10px, 20%) scale(30%, 40) rotate(50grad) skew(60turn, 70rad) matrix(10, 20, 30, 40, 50, 60)" =>
                     vec![
                         Transform::Translate(Translate::new(LengthOrPercentage::Length(Length::px(10.0)), LengthOrPercentage::Percentage(0.2))),
                         Transform::Scale(Scale::new(PercentageOrNumber::Percentage(0.3), PercentageOrNumber::Number(40.0))),
                         Transform::Rotate(Angle::Grad(50.0)),
                         Transform::Skew(Angle::Turn(60.0), Angle::Rad(70.0)),
-                        Transform::Perspective(Length::Value(LengthValue::Cm(80.0))),
                         Transform::Matrix(Matrix::new(10.0, 20.0, 30.0, 40.0, 50.0, 60.0)),
                     ],
             }

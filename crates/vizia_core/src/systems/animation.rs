@@ -4,6 +4,7 @@ pub fn has_animations(cx: &Context) -> bool {
     // cx.style.display.has_animations()
     //     | cx.style.visibility.has_animations()
     cx.style.opacity.has_animations()
+        | cx.style.transform.has_animations()
     //     | cx.style.rotate.has_animations()
     //     | cx.style.translate.has_animations()
     //     | cx.style.scale.has_animations()
@@ -55,6 +56,7 @@ pub fn animation_system(cx: &mut Context) {
     // cx.style.display.tick(time);
     // cx.style.visibility.tick(time);
     cx.style.opacity.tick(time);
+    cx.style.transform.tick(time);
     // cx.style.rotate.tick(time);
     // cx.style.translate.tick(time);
     // cx.style.scale.tick(time);

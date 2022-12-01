@@ -9,6 +9,15 @@ pub enum PercentageOrNumber {
     Number(f32),
 }
 
+impl PercentageOrNumber {
+    pub fn to_factor(&self) -> f32 {
+        match self {
+            PercentageOrNumber::Percentage(val) => *val,
+            PercentageOrNumber::Number(val) => *val,
+        }
+    }
+}
+
 impl_parse! {
     PercentageOrNumber,
 

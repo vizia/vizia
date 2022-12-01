@@ -1,5 +1,7 @@
 use morphorm::Units;
-use vizia_style::{Color, Length, LengthOrPercentage, LengthValue, Opacity};
+use vizia_style::{Color, Length, LengthOrPercentage, LengthValue, Opacity, Transform};
+
+use crate::style::Transform2D;
 
 /// A trait which describes a property which can be interpolated for animations.
 pub trait Interpolator {
@@ -106,5 +108,34 @@ impl Interpolator for LengthOrPercentage {
         }
 
         LengthOrPercentage::default()
+    }
+}
+
+impl Interpolator for Transform {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        end.clone()
+    }
+}
+
+impl Interpolator for Transform2D {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        let mut transform = *start;
+        transform[0] = f32::interpolate(&start[0], &end[0], t);
+        transform[1] = f32::interpolate(&start[1], &end[1], t);
+        transform[2] = f32::interpolate(&start[2], &end[2], t);
+        transform[3] = f32::interpolate(&start[3], &end[3], t);
+        transform[4] = f32::interpolate(&start[4], &end[4], t);
+        transform[5] = f32::interpolate(&start[5], &end[5], t);
+        transform
+    }
+}
+
+impl<T: Interpolator> Interpolator for Vec<T> {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        start
+            .iter()
+            .zip(end.iter())
+            .map(|(start, end)| T::interpolate(start, end, t))
+            .collect::<Vec<T>>()
     }
 }

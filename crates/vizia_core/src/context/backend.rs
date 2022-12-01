@@ -289,7 +289,7 @@ impl<'a> BackendContext<'a> {
         layout_system(self.0, &tree);
 
         // Apply transform inheritance.
-        transform_system(self.0, &tree);
+        // transform_system(self.0, &tree);
 
         // Determine hovered entity.
         hover_system(self.0);

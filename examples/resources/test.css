@@ -1,15 +1,23 @@
-.foo {
-    background-color: blue;
-    border-color: green;
-    border-width: thick;
-    space: 100px;
-    size: 200px;
-    left: 50%;
-    height: 1s;
+:root {
+    background-color: gray;
 }
 
-.foo:hover {
+.bar {
+    background-color: white;
+    width: 500px;
+    height: 500px;
+}
+
+.foo {
     background-color: red;
-    border-color: black;
-    transition: background-color 2s, border-color 4s;
+    size: 200px;
+    transform: skew(-15deg, 0deg);
+}
+
+.bar:hover .foo {
+    background-color: blue;
+    transform: translate(50%, 0px) rotate(30deg) translateX(200px);
+    /* transform: translate(50%, 0px); */
+    transition: transform 1s;
+    transition: background-color 1s;
 }

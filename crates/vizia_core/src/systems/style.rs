@@ -500,6 +500,10 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
         should_redraw = true;
     }
 
+    if cx.style.transform.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
     if should_relayout {
         cx.style.needs_relayout = true;
     }

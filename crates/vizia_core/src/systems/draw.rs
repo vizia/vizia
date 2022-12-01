@@ -1,5 +1,8 @@
+use crate::animation::Interpolator;
+use crate::cache::BoundingBox;
 use crate::context::Context;
 use crate::prelude::*;
+use crate::style::Transform2D;
 use vizia_id::GenerationalId;
 
 pub fn draw_system(cx: &mut Context) {
@@ -37,6 +40,9 @@ pub fn draw_system(cx: &mut Context) {
     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 
     for entity in draw_tree.into_iter() {
+        let parent = cx.tree.get_layout_parent(entity).unwrap();
+        let parent_bounds = cx.cache.get_bounds(parent);
+
         // Apply clipping
         let clip_region = cx.cache.get_clip_region(entity);
 
@@ -46,19 +52,52 @@ pub fn draw_system(cx: &mut Context) {
             continue;
         }
 
+        let bounds = cx.cache.get_bounds(entity);
+
+        let x = bounds.x + (bounds.w / 2.0);
+        let y = bounds.y + (bounds.h / 2.0);
+        let mut translate = Transform2D::with_translate(x, y);
+
+        let mut transform = Transform2D::identity();
+        transform.premultiply(&translate);
+
+        translate.inverse();
+
         // canvas.scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
+        if let Some(transforms) = cx.style.transform.get(entity) {
+            // Check if the transform is currently animating
+            // Get the animation state
+            // Manually interpolate the value to get the overall transform for the current frame
+
+            if let Some(animation_state) = cx.style.transform.get_active_animation(entity) {
+                if let Some(start) = animation_state.keyframes.first() {
+                    if let Some(end) = animation_state.keyframes.last() {
+                        let start_transform = Transform2D::from_style_transforms(&start.1, bounds);
+                        let end_transform = Transform2D::from_style_transforms(&end.1, bounds);
+                        let t = animation_state.t;
+                        let animated_transform =
+                            Transform2D::interpolate(&start_transform, &end_transform, t);
+                        transform.premultiply(&animated_transform);
+                    }
+                }
+            } else {
+                transform.premultiply(&Transform2D::from_style_transforms(transforms, bounds));
+            }
+        }
+
+        transform.premultiply(&translate);
 
         // Apply transform
-        let transform = cx.cache.get_transform(entity);
+        // let transform = cx.cache.get_transform(entity);
         canvas.save();
-        // canvas.set_transform(
-        //     transform[0],
-        //     transform[1],
-        //     transform[2],
-        //     transform[3],
-        //     transform[4],
-        //     transform[5],
-        // );
+        canvas.set_transform(
+            transform[0],
+            transform[1],
+            transform[2],
+            transform[3],
+            transform[4],
+            transform[5],
+        );
 
         if let Some(view) = cx.views.remove(&entity) {
             cx.current = entity;

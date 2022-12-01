@@ -411,18 +411,22 @@ where
         self.remove_innactive_animations();
     }
 
-    pub fn is_animating(&mut self, entity: Entity, animation: Animation) -> bool {
-        if self.animations.contains(animation) {
-            let entity_index = entity.index();
-            if entity_index < self.inline_data.sparse.len() {
-                let anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
-                if anim_index < self.active_animations.len() {
-                    return true;
-                }
+    /// Returns true if the given entity is linked to an active animation
+    pub fn is_animating(&mut self, entity: Entity) -> bool {
+        let entity_index = entity.index();
+        if entity_index < self.inline_data.sparse.len() {
+            let anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
+            if anim_index < self.active_animations.len() {
+                return true;
             }
         }
 
         false
+    }
+
+    /// Returns true if there is an animation with the given id
+    pub fn has_animation(&mut self, animation: Animation) -> bool {
+        self.animations.contains(animation)
     }
 
     pub fn remove_innactive_animations(&mut self) {
@@ -495,6 +499,20 @@ where
     /// Returns a mutable reference to any shared data for a given rule if it exists.
     pub fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut T> {
         self.shared_data.get_mut(rule)
+    }
+
+    /// Returns a reference to the active animation linked to the given entity if it exists,
+    /// else returns None.
+    pub fn get_active_animation(&self, entity: Entity) -> Option<&AnimationState<T>> {
+        let entity_index = entity.index();
+        if entity_index < self.inline_data.sparse.len() {
+            let anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
+            if anim_index < self.active_animations.len() {
+                return Some(&self.active_animations[anim_index]);
+            }
+        }
+
+        None
     }
 
     pub fn get_animation(&self, animation: Animation) -> Option<&AnimationState<T>> {

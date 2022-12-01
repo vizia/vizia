@@ -1,5 +1,9 @@
 use std::ops::{Index, IndexMut};
 
+use vizia_style::Transform;
+
+use crate::{cache::BoundingBox, systems::transform};
+
 /// A 2D transform matrix.
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct Transform2D(pub [f32; 6]);
@@ -7,6 +11,81 @@ pub struct Transform2D(pub [f32; 6]);
 impl Transform2D {
     pub fn new(a: f32, b: f32, c: f32, d: f32, e: f32, f: f32) -> Self {
         Self([a, b, c, d, e, f])
+    }
+
+    pub fn from_style_transforms(transforms: &Vec<Transform>, parent_bounds: BoundingBox) -> Self {
+        let mut result = Transform2D::identity();
+        for transform in transforms.iter() {
+            let t = match transform {
+                Transform::Translate(translate) => {
+                    let tx = translate.x.to_pixels(parent_bounds.w);
+                    let ty = translate.y.to_pixels(parent_bounds.h);
+
+                    Transform2D::with_translate(tx, ty)
+                }
+
+                Transform::TranslateX(x) => {
+                    let tx = x.to_pixels(parent_bounds.h);
+
+                    Transform2D::with_translate(tx, 0.0)
+                }
+
+                Transform::TranslateY(y) => {
+                    let ty = y.to_pixels(parent_bounds.h);
+
+                    Transform2D::with_translate(0.0, ty)
+                }
+
+                Transform::Scale(scale) => {
+                    let sx = scale.x.to_factor();
+                    let sy = scale.y.to_factor();
+
+                    Transform2D::with_scale(sx, sy)
+                }
+
+                Transform::ScaleX(x) => {
+                    let sx = x.to_factor();
+
+                    Transform2D::with_scale(sx, 1.0)
+                }
+
+                Transform::ScaleY(y) => {
+                    let sy = y.to_factor();
+
+                    Transform2D::with_scale(1.0, sy)
+                }
+
+                Transform::Rotate(angle) => Transform2D::with_rotate(angle.to_radians()),
+
+                Transform::Skew(x, y) => {
+                    let cx = x.to_radians().tan();
+                    let cy = y.to_radians().tan();
+
+                    Transform2D::with_skew(cx, cy)
+                }
+
+                Transform::SkewX(angle) => {
+                    let cx = angle.to_radians().tan();
+
+                    Transform2D::with_skew(cx, 0.0)
+                }
+
+                Transform::SkewY(angle) => {
+                    let cy = angle.to_radians().tan();
+
+                    Transform2D::with_skew(0.0, cy)
+                }
+
+                Transform::Matrix(matrix) => {
+                    Transform2D::new(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f)
+                }
+                _ => Transform2D::identity(),
+            };
+
+            result.premultiply(&t);
+        }
+
+        result
     }
 
     pub fn identity() -> Self {
@@ -55,6 +134,35 @@ impl Transform2D {
     pub fn scale(&mut self, sx: f32, sy: f32) {
         self[0] = sx;
         self[3] = sy;
+    }
+
+    pub fn skew(&mut self, cx: f32, cy: f32) {
+        self[1] = cy;
+        self[2] = cx;
+    }
+
+    pub fn with_translate(tx: f32, ty: f32) -> Self {
+        let mut t = Self::identity();
+        t.translate(tx, ty);
+        t
+    }
+
+    pub fn with_rotate(angle: f32) -> Self {
+        let mut t = Self::identity();
+        t.rotate(angle);
+        t
+    }
+
+    pub fn with_scale(sx: f32, sy: f32) -> Self {
+        let mut t = Self::identity();
+        t.scale(sx, sy);
+        t
+    }
+
+    pub fn with_skew(cx: f32, cy: f32) -> Self {
+        let mut t = Self::identity();
+        t.skew(cx, cy);
+        t
     }
 
     pub fn transform_point(&self, sx: f32, sy: f32) -> (f32, f32) {
