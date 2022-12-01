@@ -2,6 +2,7 @@
 #[macro_use]
 extern crate serde;
 
+pub mod accessibility;
 pub mod animation;
 pub mod cache;
 pub mod context;
@@ -49,12 +50,14 @@ pub mod prelude {
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     pub use super::localization::Localized;
     pub use super::modifiers::{
-        AbilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers, TextModifiers,
+        AbilityModifiers, AccessibilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers,
+        TextModifiers,
     };
     pub use super::state::{Binding, Data, Lens, LensExt, Model, Res, Setter};
     pub use super::view::{Canvas, View};
     pub use super::views::*;
     pub use super::window::WindowModifiers;
+    pub use accesskit::Role;
     pub use vizia_derive::{Data, Lens, Model, Setter};
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};

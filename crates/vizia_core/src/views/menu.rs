@@ -275,7 +275,7 @@ impl MenuButton {
 
     pub fn new_simple<U: ToString, A>(
         cx: &mut Context,
-        text: impl 'static + Res<U>,
+        text: impl 'static + Res<U> + Clone,
         action: A,
     ) -> Handle<'_, Self>
     where
@@ -313,7 +313,7 @@ impl MenuButton {
 
     pub fn new_check_simple<U: ToString, A, L>(
         cx: &mut Context,
-        text: impl 'static + Res<U>,
+        text: impl 'static + Res<U> + Clone,
         action: A,
         lens: L,
     ) -> Handle<'_, Self>

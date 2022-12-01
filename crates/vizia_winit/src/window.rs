@@ -1,3 +1,4 @@
+use crate::application::UserEvent;
 use crate::convert::cursor_icon_to_cursor_icon;
 use femtovg::{renderer::OpenGl, Canvas, Color};
 #[cfg(not(target_arch = "wasm32"))]
@@ -87,7 +88,7 @@ impl Window {
 #[cfg(not(target_arch = "wasm32"))]
 impl Window {
     pub fn new(
-        events_loop: &EventLoop<Event>,
+        events_loop: &EventLoop<UserEvent>,
         window_description: &WindowDescription,
     ) -> (Self, Canvas<OpenGl>) {
         let window_builder = WindowBuilder::new();

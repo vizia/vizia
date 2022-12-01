@@ -3,6 +3,8 @@ mod draw;
 mod event;
 mod proxy;
 
+use accesskit::kurbo::Rect;
+use accesskit::Node;
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
@@ -22,6 +24,7 @@ pub use draw::*;
 pub use event::*;
 pub use proxy::*;
 
+use crate::accessibility::IntoNode;
 use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
@@ -50,6 +53,7 @@ pub struct Context {
     pub(crate) data: SparseSet<ModelDataStore>,
     pub(crate) bindings: FnvHashMap<Entity, Box<dyn BindingHandler>>,
     pub(crate) event_queue: VecDeque<Event>,
+    pub(crate) tree_updates: Vec<accesskit::TreeUpdate>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,
@@ -104,6 +108,7 @@ impl Context {
             canvases: HashMap::new(),
             // environment: Environment::new(),
             event_queue: VecDeque::new(),
+            tree_updates: Vec::new(),
             listeners: HashMap::default(),
             global_listeners: vec![],
             mouse: MouseState::default(),
@@ -515,6 +520,24 @@ impl Context {
         };
 
         std::thread::spawn(move || target(&mut cxp));
+    }
+
+    pub(crate) fn get_node(&self, entity: Entity) -> Node {
+        let id = entity;
+        let bounds = self.cache.get_bounds(id);
+        Node {
+            role: self.style.roles.get(id).copied().unwrap_or(Role::Unknown),
+            transform: None,
+            bounds: Some(Rect {
+                x0: bounds.x as f64,
+                y0: bounds.y as f64,
+                x1: (bounds.x + bounds.w) as f64,
+                y1: (bounds.y + bounds.h) as f64,
+            }),
+            children: id.child_iter(&self.tree).map(|e| e.accesskit_id()).collect(),
+            name: self.style.name.get(id).map(|name| name.clone().into_boxed_str()),
+            ..Default::default()
+        }
     }
 }
 

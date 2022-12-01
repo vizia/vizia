@@ -1,10 +1,14 @@
+use crate::accessibility::IntoNode;
+use crate::layout::node;
 use crate::prelude::*;
+use std::sync::Arc;
 use std::{any::Any, collections::HashMap};
 
 use crate::events::ViewHandler;
 use crate::resource::ImageOrId;
 use crate::state::ModelDataStore;
 use crate::text::{idx_to_pos, measure_text_lines, text_layout, text_paint_draw};
+use accesskit::{Node, Role, TreeUpdate};
 use femtovg::{
     renderer::OpenGl, Align, Baseline, ImageFlags, Paint, Path, PixelFormat, RenderTarget,
     TextMetrics,
@@ -33,6 +37,19 @@ pub trait View: 'static + Sized {
         cx.cache.add(id).expect("Failed to add to cache");
         cx.style.add(id);
         cx.views.insert(id, Box::new(self));
+        let parent_node_id = current.accesskit_id();
+        let parent_node = cx.get_node(current);
+        let node_id = id.accesskit_id();
+        let children =
+            current.child_iter(&cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
+        cx.tree_updates.push(TreeUpdate {
+            nodes: vec![
+                (parent_node_id, Arc::new(Node { role: Role::Window, children, ..parent_node })),
+                (node_id, Arc::new(Node { ..Default::default() })),
+            ],
+            tree: None,
+            focus: None,
+        });
 
         cx.data
             .insert(id, ModelDataStore { models: HashMap::default(), stores: HashMap::default() })

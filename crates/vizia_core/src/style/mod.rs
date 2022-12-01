@@ -94,6 +94,7 @@ pub struct Style {
     pub pseudo_classes: SparseSet<PseudoClass>,
     pub disabled: StyleSet<bool>,
     pub abilities: SparseSet<Abilities>,
+    pub roles: SparseSet<Role>,
 
     // Display
     pub display: AnimatableSet<Display>,

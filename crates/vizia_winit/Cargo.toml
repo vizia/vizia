@@ -19,6 +19,8 @@ vizia_core = { path = "../vizia_core" }
 vizia_id = { path = "../vizia_id" }
 vizia_window = { path = "../vizia_window" }
 
+accesskit_winit = "0.7.0"
+accesskit = "0.8.0"
 winit = { version = "0.27.2", default-features = false }
 femtovg = { git = "https://github.com/femtovg/femtovg", rev = "20dc7ef142004736f1ba1c626dd9c5bb556dde14", default-features = false }
 glutin = { version = "0.29.1", default-features = false, optional = true }
