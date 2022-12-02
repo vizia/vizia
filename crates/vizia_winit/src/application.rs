@@ -2,7 +2,7 @@ use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
     window::Window,
 };
-use accesskit;
+use accesskit::{self, Action};
 use accesskit_winit;
 use std::cell::RefCell;
 use vizia_core::accessibility::IntoNode;
@@ -236,6 +236,18 @@ impl Application {
                     UserEvent::AccessKitActionRequest(action_request_event) => {
                         let node_id = action_request_event.request.target;
                         let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
+
+                        // Handle focus action from screen reader
+                        match action_request_event.request.action {
+                            Action::Focus => {
+                                cx.0.with_current(entity, |cx| {
+                                    cx.focus();
+                                });
+                            }
+
+                            _ => {}
+                        }
+
                         // TODO - Where should this event be sent to?
                         cx.send_event(
                             Event::new(WindowEvent::ActionRequest(

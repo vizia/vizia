@@ -163,7 +163,7 @@ impl Context {
     }
 
     /// Makes the above black magic more explicit
-    pub(crate) fn with_current(&mut self, e: Entity, f: impl FnOnce(&mut Context)) {
+    pub fn with_current(&mut self, e: Entity, f: impl FnOnce(&mut Context)) {
         let prev = self.current;
         self.current = e;
         f(self);
@@ -543,6 +543,12 @@ impl Context {
                 .map(|flags| flags.contains(PseudoClass::CHECKED))
                 .map(|checked| if checked { CheckedState::True } else { CheckedState::False }),
             default_action_verb: self.style.default_action_verb.get(id).copied(),
+            focusable: self
+                .style
+                .abilities
+                .get(id)
+                .map(|flags| flags.contains(Abilities::NAVIGABLE))
+                .unwrap_or(false),
             ..Default::default()
         }
     }
