@@ -57,7 +57,7 @@ pub mod prelude {
     pub use super::view::{Canvas, View};
     pub use super::views::*;
     pub use super::window::WindowModifiers;
-    pub use accesskit::Role;
+    pub use accesskit::{Action, DefaultActionVerb, Role};
     pub use vizia_derive::{Data, Lens, Model, Setter};
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};

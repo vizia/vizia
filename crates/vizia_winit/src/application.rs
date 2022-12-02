@@ -234,10 +234,15 @@ impl Application {
                     }
 
                     UserEvent::AccessKitActionRequest(action_request_event) => {
+                        let node_id = action_request_event.request.target;
+                        let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
                         // TODO - Where should this event be sent to?
-                        cx.send_event(Event::new(WindowEvent::ActionRequest(
-                            action_request_event.request.clone(),
-                        )));
+                        cx.send_event(
+                            Event::new(WindowEvent::ActionRequest(
+                                action_request_event.request.clone(),
+                            ))
+                            .direct(entity),
+                        );
                     }
                 },
 

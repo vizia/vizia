@@ -1,4 +1,4 @@
-use crate::{ChildIterator, ParentIterator, Tree, TreeIterator};
+use crate::{ChildIterator, LayoutChildIterator, ParentIterator, Tree, TreeIterator};
 use vizia_id::GenerationalId;
 
 /// Trait which provides methods for querying the tree.
@@ -12,7 +12,7 @@ where
     fn is_descendant_of(&self, tree: &Tree<I>, entity: I) -> bool;
 
     fn parent_iter<'a>(&self, tree: &'a Tree<I>) -> ParentIterator<'a, I>;
-    fn child_iter<'a>(&self, tree: &'a Tree<I>) -> ChildIterator<'a, I>;
+    fn child_iter<'a>(&self, tree: &'a Tree<I>) -> LayoutChildIterator<'a, I>;
     fn tree_iter<'a>(&self, tree: &'a Tree<I>) -> TreeIterator<'a, I>;
     fn branch_iter<'a>(&self, tree: &'a Tree<I>) -> TreeIterator<'a, I>;
 }
@@ -63,8 +63,8 @@ where
         ParentIterator::new(tree, Some(*self))
     }
 
-    fn child_iter<'a>(&self, tree: &'a Tree<Self>) -> ChildIterator<'a, I> {
-        ChildIterator::new(tree, *self)
+    fn child_iter<'a>(&self, tree: &'a Tree<Self>) -> LayoutChildIterator<'a, I> {
+        LayoutChildIterator::new(tree, *self)
     }
 
     // XXX(ollpu): Why is this defined on Entity when self isn't used?

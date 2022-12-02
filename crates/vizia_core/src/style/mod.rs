@@ -1,3 +1,4 @@
+use accesskit::DefaultActionVerb;
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
@@ -95,6 +96,7 @@ pub struct Style {
     pub disabled: StyleSet<bool>,
     pub abilities: SparseSet<Abilities>,
     pub roles: SparseSet<Role>,
+    pub default_action_verb: SparseSet<DefaultActionVerb>,
 
     // Display
     pub display: AnimatableSet<Display>,

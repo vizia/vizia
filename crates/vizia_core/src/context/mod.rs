@@ -4,7 +4,7 @@ mod event;
 mod proxy;
 
 use accesskit::kurbo::Rect;
-use accesskit::Node;
+use accesskit::{CheckedState, Node};
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
@@ -536,6 +536,13 @@ impl Context {
             }),
             children: id.child_iter(&self.tree).map(|e| e.accesskit_id()).collect(),
             name: self.style.name.get(id).map(|name| name.clone().into_boxed_str()),
+            checked_state: self
+                .style
+                .pseudo_classes
+                .get(id)
+                .map(|flags| flags.contains(PseudoClass::CHECKED))
+                .map(|checked| if checked { CheckedState::True } else { CheckedState::False }),
+            default_action_verb: self.style.default_action_verb.get(id).copied(),
             ..Default::default()
         }
     }

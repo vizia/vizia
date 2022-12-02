@@ -17,6 +17,13 @@ pub trait AccessibilityModifiers: internal::Modifiable {
 
         self
     }
+
+    fn default_action_verb(mut self, action_verb: DefaultActionVerb) -> Self {
+        let id = self.entity();
+        self.context().style.default_action_verb.insert(id, action_verb).unwrap();
+
+        self
+    }
 }
 
 impl<'a, V: View> AccessibilityModifiers for Handle<'a, V> {}
