@@ -4,13 +4,13 @@ mod event;
 mod proxy;
 
 use accesskit::kurbo::Rect;
-use accesskit::{CheckedState, Live, Node};
+use accesskit::{CheckedState, Live, Node, TreeUpdate};
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::Path;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
 use copypasta::ClipboardContext;
@@ -308,6 +308,8 @@ impl Context {
                 }
             }
 
+            let parent = self.tree.get_layout_parent(*entity).unwrap();
+
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.draw_cache.remove(*entity);
@@ -315,6 +317,27 @@ impl Context {
             self.data.remove(*entity);
             self.views.remove(entity);
             self.entity_manager.destroy(*entity);
+
+            let children = parent
+                .child_iter(&self.tree)
+                .map(|entity| entity.accesskit_id())
+                .collect::<Vec<_>>();
+            let parent_node = self.get_node(parent);
+
+            let c = parent.child_iter(&self.tree).collect::<Vec<_>>();
+
+            // println!("remove parent: {} {:?}", parent, c);
+            // self.tree_updates.push(TreeUpdate {
+            //     nodes: vec![
+            //         (
+            //             parent.accesskit_id(),
+            //             Arc::new(Node { role: Role::Window, children, ..parent_node }),
+            //         ),
+            //         (entity.accesskit_id(), Arc::new(Node { ..Default::default() })),
+            //     ],
+            //     tree: None,
+            //     focus: None,
+            // });
 
             if self.captured == *entity {
                 self.captured = Entity::null();

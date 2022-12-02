@@ -37,12 +37,15 @@ pub trait View: 'static + Sized {
         cx.cache.add(id).expect("Failed to add to cache");
         cx.style.add(id);
         cx.views.insert(id, Box::new(self));
-        let parent_node_id = current.accesskit_id();
-        let parent_node = cx.get_node(current);
+        let parent_id = cx.tree.get_layout_parent(id).unwrap();
+        let parent_node_id = parent_id.accesskit_id();
+        let parent_node = cx.get_node(parent_id);
         let node_id = id.accesskit_id();
         let children =
             current.child_iter(&cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
+        let c = current.child_iter(&cx.tree).collect::<Vec<_>>();
 
+        println!("add parent: {} {:?}", parent_id, c);
         cx.tree_updates.push(TreeUpdate {
             nodes: vec![
                 (parent_node_id, Arc::new(Node { role: Role::Window, children, ..parent_node })),

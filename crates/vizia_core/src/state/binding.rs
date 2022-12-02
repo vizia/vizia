@@ -43,6 +43,7 @@ where
         cx.tree.add(id, current).expect("Failed to add to tree");
         cx.cache.add(id).expect("Failed to add to cache");
         cx.style.add(id);
+        cx.tree.set_ignored(id, true);
 
         let binding = Self { entity: id, lens: lens.clone(), content: Some(Box::new(builder)) };
 
