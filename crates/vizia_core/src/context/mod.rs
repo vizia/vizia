@@ -600,6 +600,13 @@ impl Context {
                 .unwrap_or(false),
             live: self.style.live.get(entity).copied(),
             labelled_by: labelled_by.and_then(|l| Some(vec![l])).unwrap_or(vec![]),
+            numeric_value: self.style.numeric_value.get(id).copied(),
+            value: self.style.text_value.get(id).map(|s| s.clone().into_boxed_str()),
+            min_numeric_value: self.style.min_numeric_value.get(id).copied(),
+            max_numeric_value: self.style.max_numeric_value.get(id).copied(),
+            numeric_value_step: self.style.numeric_value_step.get(id).copied(),
+            actions: Action::Increment | Action::Decrement,
+
             ..Default::default()
         }
     }

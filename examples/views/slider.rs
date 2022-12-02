@@ -3,10 +3,11 @@ use vizia::prelude::*;
 fn main() {
     Application::new(|cx| {
         AppData { value: 0.0 }.build(cx);
-        Slider::new(cx, AppData::value.map(|val| (val + 50.0) / 100.0))
-            .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(-50.0 + (val * 100.0))))
-            .width(Pixels(200.0))
-            .space(Pixels(20.0));
+        // Slider::new(cx, AppData::value)
+        //     .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)))
+        //     .width(Pixels(200.0))
+        //     .space(Pixels(20.0))
+        //     .name("Adjust the master volume");
         // HStack::new(cx, |cx| {
         //     VStack::new(cx, |cx| {
         //         HStack::new(cx, |cx| {
@@ -24,17 +25,17 @@ fn main() {
         //         .child_bottom(Stretch(1.0))
         //         .col_between(Pixels(10.0));
 
-        //         HStack::new(cx, |cx| {
-        //             Slider::new(cx, AppData::value)
-        //                 .range(-50.0..50.0)
-        //                 .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
-        //             Label::new(cx, AppData::value.map(|val| format!("{:.2}", val)))
-        //                 .width(Pixels(50.0));
-        //         })
-        //         .height(Pixels(50.0))
-        //         .child_top(Stretch(1.0))
-        //         .child_bottom(Stretch(1.0))
-        //         .col_between(Pixels(10.0));
+        HStack::new(cx, |cx| {
+            Slider::new(cx, AppData::value)
+                .range(0.0..100.0)
+                .step(1.0)
+                .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
+            Label::new(cx, AppData::value.map(|val| format!("{}", val))).width(Pixels(50.0));
+        })
+        .height(Pixels(50.0))
+        .child_top(Stretch(1.0))
+        .child_bottom(Stretch(1.0))
+        .col_between(Pixels(10.0));
         //     });
 
         //     VStack::new(cx, |cx| {

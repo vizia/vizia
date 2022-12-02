@@ -237,6 +237,13 @@ impl Application {
                         let node_id = action_request_event.request.target;
                         let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
 
+                        println!(
+                            "Received Action: {:?} {:?} {:?}",
+                            entity,
+                            action_request_event.request.action,
+                            action_request_event.request.data,
+                        );
+
                         // Handle focus action from screen reader
                         match action_request_event.request.action {
                             Action::Focus => {

@@ -40,6 +40,25 @@ pub trait AccessibilityModifiers: internal::Modifiable {
 
         self
     }
+
+    fn numeric_value<U: Into<f64>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, id, val| {
+            let v = val.into();
+            cx.style.numeric_value.insert(id, v).unwrap();
+        });
+
+        self
+    }
+
+    fn text_value<U: ToString>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, id, val| {
+            cx.style.text_value.insert(id, val.to_string()).unwrap();
+        });
+
+        self
+    }
 }
 
 impl<'a, V: View> AccessibilityModifiers for Handle<'a, V> {}

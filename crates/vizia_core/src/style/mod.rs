@@ -101,10 +101,18 @@ pub struct Style {
     pub pseudo_classes: SparseSet<PseudoClass>,
     pub disabled: StyleSet<bool>,
     pub abilities: SparseSet<Abilities>,
+
+    // Accessibility properties
     pub roles: SparseSet<Role>,
     pub default_action_verb: SparseSet<DefaultActionVerb>,
     pub live: SparseSet<Live>,
     pub labelled_by: SparseSet<LabelledBy>,
+    // TODO: Should we store these or somehow derive them from app state?
+    pub text_value: SparseSet<String>,
+    pub numeric_value: SparseSet<f64>,
+    pub min_numeric_value: SparseSet<f64>,
+    pub max_numeric_value: SparseSet<f64>,
+    pub numeric_value_step: SparseSet<f64>,
 
     // Display
     pub display: AnimatableSet<Display>,
