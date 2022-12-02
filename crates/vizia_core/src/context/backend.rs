@@ -100,6 +100,8 @@ impl<'a> BackendContext<'a> {
         self.0.style.pseudo_classes.insert(Entity::root(), PseudoClass::ROOT).unwrap();
         self.0.style.disabled.insert(Entity::root(), false);
 
+        self.0.style.roles.insert(Entity::root(), Role::Window);
+
         let bounding_box =
             BoundingBox { w: physical_width, h: physical_height, ..Default::default() };
 

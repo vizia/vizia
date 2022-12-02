@@ -11,6 +11,10 @@ rust-version = "1.60"
 members = [ "crates/*", "run-wasm" ]
 
 [[example]]
+name = "accesskit"
+path = "examples/accesskit.rs"
+
+[[example]]
 name = "action_modifier"
 path = "examples/action_modifier.rs"
 

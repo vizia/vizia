@@ -13,7 +13,7 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
         cx.tree_updates.push(TreeUpdate {
             nodes: vec![(node_id, Arc::new(node))],
             tree: None,
-            focus: None,
+            focus: Some(cx.focused.accesskit_id()),
         });
     }
 }
