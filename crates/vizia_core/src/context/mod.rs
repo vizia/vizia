@@ -4,7 +4,7 @@ mod event;
 mod proxy;
 
 use accesskit::kurbo::Rect;
-use accesskit::{CheckedState, Node};
+use accesskit::{CheckedState, Live, Node};
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
@@ -31,7 +31,7 @@ use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
-use crate::style::Style;
+use crate::style::{LabelledBy, Style};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -525,6 +525,37 @@ impl Context {
     pub(crate) fn get_node(&self, entity: Entity) -> Node {
         let id = entity;
         let bounds = self.cache.get_bounds(id);
+
+        let is_checkable = self
+            .style
+            .abilities
+            .get(entity)
+            .map(|abilities| abilities.contains(Abilities::CHECKABLE))
+            .unwrap_or(false);
+        let checked_state = if is_checkable {
+            self.style
+                .pseudo_classes
+                .get(id)
+                .map(|flags| flags.contains(PseudoClass::CHECKED))
+                .map(|checked| if checked { CheckedState::True } else { CheckedState::False })
+        } else {
+            None
+        };
+
+        let labelled_by = self
+            .style
+            .labelled_by
+            .get(entity)
+            .map(|labelled_by| match labelled_by {
+                LabelledBy::FirstChild => self
+                    .tree
+                    .get_first_child(entity)
+                    .and_then(|first_child| Some(first_child.accesskit_id())),
+
+                _ => None,
+            })
+            .flatten();
+
         Node {
             role: self.style.roles.get(id).copied().unwrap_or(Role::Unknown),
             transform: None,
@@ -536,12 +567,7 @@ impl Context {
             }),
             children: id.child_iter(&self.tree).map(|e| e.accesskit_id()).collect(),
             name: self.style.name.get(id).map(|name| name.clone().into_boxed_str()),
-            checked_state: self
-                .style
-                .pseudo_classes
-                .get(id)
-                .map(|flags| flags.contains(PseudoClass::CHECKED))
-                .map(|checked| if checked { CheckedState::True } else { CheckedState::False }),
+            checked_state,
             default_action_verb: self.style.default_action_verb.get(id).copied(),
             focusable: self
                 .style
@@ -549,6 +575,8 @@ impl Context {
                 .get(id)
                 .map(|flags| flags.contains(Abilities::NAVIGABLE))
                 .unwrap_or(false),
+            live: self.style.live.get(entity).copied(),
+            labelled_by: labelled_by.and_then(|l| Some(vec![l])).unwrap_or(vec![]),
             ..Default::default()
         }
     }

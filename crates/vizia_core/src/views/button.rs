@@ -82,8 +82,11 @@ impl Button {
             .build(cx, move |cx| {
                 (content)(cx).hoverable(false);
             })
+            .role(Role::Button)
+            .default_action_verb(DefaultActionVerb::Click)
             .cursor(CursorIcon::Hand)
             .navigable(true)
+            .labelled_by(crate::style::LabelledBy::FirstChild)
     }
 }
 
@@ -107,6 +110,16 @@ impl View for Button {
                     cx.release();
                 }
             }
+
+            WindowEvent::ActionRequest(action) => match action.action {
+                Action::Default => {
+                    if let Some(callback) = &self.action {
+                        (callback)(cx);
+                    }
+                }
+
+                _ => {}
+            },
 
             _ => {}
         });

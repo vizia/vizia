@@ -1,4 +1,4 @@
-use accesskit::DefaultActionVerb;
+use accesskit::{DefaultActionVerb, Live};
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
@@ -75,6 +75,12 @@ impl Default for Abilities {
     }
 }
 
+pub enum LabelledBy {
+    FirstChild,
+    NextSibling,
+    PrevSibling,
+}
+
 /// Stores the style properties of all entities in the application.
 #[derive(Default)]
 pub struct Style {
@@ -97,6 +103,8 @@ pub struct Style {
     pub abilities: SparseSet<Abilities>,
     pub roles: SparseSet<Role>,
     pub default_action_verb: SparseSet<DefaultActionVerb>,
+    pub live: SparseSet<Live>,
+    pub labelled_by: SparseSet<LabelledBy>,
 
     // Display
     pub display: AnimatableSet<Display>,

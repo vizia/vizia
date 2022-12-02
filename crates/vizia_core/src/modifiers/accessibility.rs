@@ -1,5 +1,5 @@
 use super::internal;
-use crate::prelude::*;
+use crate::{prelude::*, style::LabelledBy};
 
 pub trait AccessibilityModifiers: internal::Modifiable {
     fn role(mut self, role: Role) -> Self {
@@ -21,6 +21,22 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     fn default_action_verb(mut self, action_verb: DefaultActionVerb) -> Self {
         let id = self.entity();
         self.context().style.default_action_verb.insert(id, action_verb).unwrap();
+
+        self
+    }
+
+    fn live(mut self, live: Live) -> Self {
+        let id = self.entity();
+
+        self.context().style.live.insert(id, live).unwrap();
+
+        self
+    }
+
+    fn labelled_by(mut self, labelled_by: LabelledBy) -> Self {
+        let id = self.entity();
+
+        self.context().style.labelled_by.insert(id, labelled_by).unwrap();
 
         self
     }
