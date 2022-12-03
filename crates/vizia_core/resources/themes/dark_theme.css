@@ -287,20 +287,50 @@ dropdown list label:hover {
 /* Knob */
 
 knob {
-    background-color: #242424;
-    border-radius: 38px;
-    border-width: 2px;
-    border-color: #2f2f2f;
+    border-radius: 500px;
 }
 
-knob .track {
-    background-color: #51afef;
+knob .knob-track {
+    background-color: #343434;
+    border-color: #3995d6;
 }
 
 knob:focus-visible {
     outline-width: 1px;
     outline-color: #51afef80;
     outline-offset: 3px;
+}
+
+.knob-head {
+    background-color: #343434;
+    border-radius: 500px;
+    border-width: 2px;
+    border-color: #1d1d1d;
+}
+
+.knob-head-tick {
+    background-color: white;
+    border-radius: 1px;
+}
+
+ticks {
+    border-width: 2px;
+    background-color: #888;
+    border-color: #3995d6;
+}
+
+ticks .knob-tick {
+    border-radius: 1px;
+    background-color: white;
+}
+
+ticks .knob-tick {
+    height: 100%;
+    width: 2px;
+    left: 1s;
+    top: 1s;
+    right: 1s;
+    bottom: 1s;
 }
 
 /* Label */
