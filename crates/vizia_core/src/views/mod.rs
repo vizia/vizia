@@ -32,6 +32,7 @@ mod table;
 mod textbox;
 mod timepicker;
 mod tooltip;
+mod xypad;
 
 pub use self::image::Image;
 pub use button::Button;
@@ -62,6 +63,7 @@ pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};
 pub use timepicker::{AMOrPM, DayTime, RadialTimepicker, Timepicker, TimepickerEvent};
 pub use tooltip::{Tooltip, TooltipEvent, TooltipSeq};
+pub use xypad::XYPad;
 
 use crate::prelude::*;
 
