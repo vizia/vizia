@@ -106,6 +106,7 @@ where
 }
 
 // TODO: Think of a better name for this
+// Selects the saturation and value
 #[derive(Lens)]
 pub struct ColorSelector<L: Lens> {
     lens: L,
@@ -115,6 +116,9 @@ pub struct ColorSelector<L: Lens> {
     thumb_checked: bool,
     is_dragging: bool,
 
+    value: f32,
+    saturation: f32,
+
     on_change: Option<Box<dyn Fn(&mut EventContext, Color)>>,
 }
 
@@ -123,6 +127,13 @@ where
     L: Lens<Target = Color>,
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
+        let color = lens.get(cx);
+        let (h, s, v) = rgb_to_hsv(
+            color.r() as f64 / 255.0,
+            color.g() as f64 / 255.0,
+            color.b() as f64 / 255.0,
+        );
+
         Self {
             lens,
             image: Rc::new(RefCell::new(None)),
@@ -130,37 +141,39 @@ where
             thumb_top: Pixels(0.0),
             thumb_checked: false,
             is_dragging: false,
+            value: 0.0,
+            saturation: 0.0,
             on_change: None,
         }
         .build(cx, |cx| {
             Element::new(cx)
                 .position_type(PositionType::SelfDirected)
-                //.left(Self::thumb_left)
-                //.top(Self::thumb_top)
+                .left(Self::saturation.map(|s| Percentage(*s * 100.0)))
+                .top(Self::value.map(|v| Percentage((1.0 - v) * 100.0)))
                 .translate((-5.0, -5.0))
                 .checked(Self::thumb_checked)
                 .size(Pixels(10.0))
                 .border_radius(Percentage(50.0))
                 .border_width(Pixels(2.0))
                 .border_color(Color::white())
-                .hoverable(false)
-                .bind(lens, |handle, color| {
-                    let color = color.get(handle.cx);
-                    let (h, s, v) = rgb_to_hsv(
-                        color.r() as f64 / 255.0,
-                        color.g() as f64 / 255.0,
-                        color.b() as f64 / 255.0,
-                    );
+                .hoverable(false);
+            // .bind(lens, |handle, color| {
+            //     let color = color.get(handle.cx);
+            //     let (h, s, v) = rgb_to_hsv(
+            //         color.r() as f64 / 255.0,
+            //         color.g() as f64 / 255.0,
+            //         color.b() as f64 / 255.0,
+            //     );
 
-                    //println!("h {} s {} v {}", h, s, v);
+            //     //println!("h {} s {} v {}", h, s, v);
 
-                    //let bounds = handle.bounds();
-                    // let dx = s as f32 * bounds.w - 5.0;
-                    // let dy = v as f32 * bounds.h - 5.0;
-                    handle
-                        .left(Percentage(s as f32 * 100.0))
-                        .top(Percentage((1.0 - v) as f32 * 100.0));
-                });
+            //     //let bounds = handle.bounds();
+            //     // let dx = s as f32 * bounds.w - 5.0;
+            //     // let dy = v as f32 * bounds.h - 5.0;
+            //     handle
+            //         .left(Percentage(s as f32 * 100.0))
+            //         .top(Percentage((1.0 - v) as f32 * 100.0));
+            // });
         })
         .overflow(Overflow::Hidden)
     }
@@ -194,8 +207,8 @@ where
                     let saturation = dx;
                     let value = 1.0 - dy;
 
-                    // self.saturation = dx;
-                    // self.value = 1.0 - dy;
+                    self.saturation = dx;
+                    self.value = 1.0 - dy;
 
                     // self.thumb
                     //     .set_left(state, Pixels(dx * width - 5.0))
@@ -212,17 +225,17 @@ where
 
                     self.is_dragging = true;
 
-                    if let Some(callback) = &self.on_change {
-                        let current = self.lens.get(cx);
-                        let (h, _, _) = rgb_to_hsv(
-                            current.r() as f64 / 255.0,
-                            current.g() as f64 / 255.0,
-                            current.b() as f64 / 255.0,
-                        );
-                        let (h, s, l) = hsv_to_hsl(h, saturation as f64, value as f64);
-                        let new = Color::hsl(h as f32, s as f32, l as f32);
-                        (callback)(cx, new);
-                    }
+                    // if let Some(callback) = &self.on_change {
+                    //     let current = self.lens.get(cx);
+                    //     let (h, _, _) = rgb_to_hsv(
+                    //         current.r() as f64 / 255.0,
+                    //         current.g() as f64 / 255.0,
+                    //         current.b() as f64 / 255.0,
+                    //     );
+                    //     let (h, s, l) = hsv_to_hsl(h, saturation as f64, value as f64);
+                    //     let new = Color::hsl(h as f32, s as f32, l as f32);
+                    //     (callback)(cx, new);
+                    // }
                 }
             }
 
@@ -247,6 +260,9 @@ where
                     let saturation = dx;
                     let value = 1.0 - dy;
 
+                    self.saturation = dx;
+                    self.value = 1.0 - dy;
+
                     // let width = cx.cache.get_width(current);
                     // let height = cx.cache.get_height(current);
 
@@ -260,17 +276,17 @@ where
                     //     self.thumb_checked = false;
                     // }
 
-                    if let Some(callback) = &self.on_change {
-                        let current = self.lens.get(cx);
-                        let (h, _, _) = rgb_to_hsv(
-                            current.r() as f64 / 255.0,
-                            current.g() as f64 / 255.0,
-                            current.b() as f64 / 255.0,
-                        );
-                        let (h, s, l) = hsv_to_hsl(h, saturation as f64, value as f64);
-                        let new = Color::hsl(h as f32, s as f32, l as f32);
-                        (callback)(cx, new);
-                    }
+                    // if let Some(callback) = &self.on_change {
+                    //     let current = self.lens.get(cx);
+                    //     let (h, _, _) = rgb_to_hsv(
+                    //         current.r() as f64 / 255.0,
+                    //         current.g() as f64 / 255.0,
+                    //         current.b() as f64 / 255.0,
+                    //     );
+                    //     let (h, s, l) = hsv_to_hsl(h, saturation as f64, value as f64);
+                    //     let new = Color::hsl(h as f32, s as f32, l as f32);
+                    //     (callback)(cx, new);
+                    // }
                 }
             }
 
