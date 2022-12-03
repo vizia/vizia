@@ -320,7 +320,6 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             }
 
             WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
-                println!("Increment");
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
                 let step = self.internal.step;
@@ -333,7 +332,6 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             }
 
             WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
-                println!("Decrement");
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
                 let step = self.internal.step;
@@ -347,7 +345,6 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
 
             WindowEvent::ActionRequest(action) => match action.action {
                 Action::Increment => {
-                    println!("Increment");
                     let min = self.internal.range.start;
                     let max = self.internal.range.end;
                     let step = self.internal.step;
@@ -360,7 +357,6 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                 }
 
                 Action::Decrement => {
-                    println!("Decrement");
                     let min = self.internal.range.start;
                     let max = self.internal.range.end;
                     let step = self.internal.step;
