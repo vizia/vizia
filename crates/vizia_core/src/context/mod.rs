@@ -87,6 +87,7 @@ pub struct Context {
     pub(crate) click_pos: (f32, f32),
 
     pub ignore_default_theme: bool,
+    pub window_has_focus: bool,
 }
 
 impl Context {
@@ -140,6 +141,7 @@ impl Context {
             click_pos: (0.0, 0.0),
 
             ignore_default_theme: false,
+            window_has_focus: true,
         };
 
         Environment::new().build(&mut result);
