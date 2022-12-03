@@ -1,5 +1,4 @@
 use crate::accessibility::IntoNode;
-use crate::layout::node;
 use crate::prelude::*;
 use std::sync::Arc;
 use std::{any::Any, collections::HashMap};
@@ -43,9 +42,7 @@ pub trait View: 'static + Sized {
         let node_id = id.accesskit_id();
         let children =
             current.child_iter(&cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
-        let c = current.child_iter(&cx.tree).collect::<Vec<_>>();
 
-        // println!("add parent: {} {:?}", parent_id, c);
         cx.tree_updates.push(TreeUpdate {
             nodes: vec![
                 (parent_node_id, Arc::new(Node { role: Role::Window, children, ..parent_node })),

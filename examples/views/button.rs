@@ -5,7 +5,7 @@ fn main() {
     Application::new(|cx| {
         HStack::new(cx, |cx| {
             // Basic Button
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Press Me"));
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
             // Accent Button
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Another Button")).class("accent");
             // Button with Icon

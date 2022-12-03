@@ -1,4 +1,4 @@
-use crate::{ChildIterator, LayoutChildIterator, ParentIterator, Tree, TreeIterator};
+use crate::{LayoutChildIterator, ParentIterator, Tree, TreeIterator};
 use vizia_id::GenerationalId;
 
 /// Trait which provides methods for querying the tree.

@@ -12,7 +12,7 @@ members = [ "crates/*", "run-wasm" ]
 
 [[example]]
 name = "accesskit"
-path = "examples/accesskit.rs"
+path = "examples/accessibility/accesskit.rs"
 
 [[example]]
 name = "action_modifier"
@@ -175,10 +175,6 @@ path = "examples/7GUIs/crud.rs"
 [[example]]
 name = "focus_order"
 path = "examples/accessibility/focus_order.rs"
-
-[[example]]
-name = "settings"
-path = "examples/accessibility/settings.rs"
 
 [[example]]
 name = "keymap_basic"

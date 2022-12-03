@@ -45,6 +45,12 @@ impl From<accesskit_winit::ActionRequestEvent> for UserEvent {
     }
 }
 
+impl From<vizia_core::events::Event> for UserEvent {
+    fn from(event: vizia_core::events::Event) -> Self {
+        UserEvent::Event(event)
+    }
+}
+
 pub struct Application {
     context: Context,
     event_loop: EventLoop<UserEvent>,
@@ -163,7 +169,7 @@ impl Application {
             window.window(),
             move || {
                 // TODO: set a flag to signify that a screen reader has been attached
-                use accesskit::{Node, Tree, TreeUpdate};
+                use accesskit::{Node, Tree};
                 use std::sync::Arc;
 
                 let root_id = Entity::root().accesskit_id();

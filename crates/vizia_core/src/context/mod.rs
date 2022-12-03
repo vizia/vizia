@@ -4,13 +4,13 @@ mod event;
 mod proxy;
 
 use accesskit::kurbo::Rect;
-use accesskit::{CheckedState, Live, Node, TreeUpdate};
+use accesskit::{CheckedState, Node};
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::Path;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
 use copypasta::ClipboardContext;
@@ -310,8 +310,6 @@ impl Context {
                 }
             }
 
-            let parent = self.tree.get_layout_parent(*entity).unwrap();
-
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.draw_cache.remove(*entity);
@@ -319,27 +317,6 @@ impl Context {
             self.data.remove(*entity);
             self.views.remove(entity);
             self.entity_manager.destroy(*entity);
-
-            let children = parent
-                .child_iter(&self.tree)
-                .map(|entity| entity.accesskit_id())
-                .collect::<Vec<_>>();
-            let parent_node = self.get_node(parent);
-
-            let c = parent.child_iter(&self.tree).collect::<Vec<_>>();
-
-            // println!("remove parent: {} {:?}", parent, c);
-            // self.tree_updates.push(TreeUpdate {
-            //     nodes: vec![
-            //         (
-            //             parent.accesskit_id(),
-            //             Arc::new(Node { role: Role::Window, children, ..parent_node }),
-            //         ),
-            //         (entity.accesskit_id(), Arc::new(Node { ..Default::default() })),
-            //     ],
-            //     tree: None,
-            //     focus: None,
-            // });
 
             if self.captured == *entity {
                 self.captured = Entity::null();
@@ -547,24 +524,36 @@ impl Context {
         std::thread::spawn(move || target(&mut cxp));
     }
 
+    /// Generates an accesskit node for the given entity using properties stored in context
     pub(crate) fn get_node(&self, entity: Entity) -> Node {
-        let id = entity;
-        let bounds = self.cache.get_bounds(id);
+        // The bounds of the entity
+        let bounds = {
+            let bounds = self.cache.get_bounds(entity);
+            Some(Rect {
+                x0: bounds.x as f64,
+                y0: bounds.y as f64,
+                x1: (bounds.x + bounds.w) as f64,
+                y1: (bounds.y + bounds.h) as f64,
+            })
+        };
 
-        let is_checkable = self
-            .style
-            .abilities
-            .get(entity)
-            .map(|abilities| abilities.contains(Abilities::CHECKABLE))
-            .unwrap_or(false);
-        let checked_state = if is_checkable {
-            self.style
-                .pseudo_classes
-                .get(id)
-                .map(|flags| flags.contains(PseudoClass::CHECKED))
-                .map(|checked| if checked { CheckedState::True } else { CheckedState::False })
-        } else {
-            None
+        // The CheckedState of the entity
+        let checked_state = {
+            let is_checkable = self
+                .style
+                .abilities
+                .get(entity)
+                .map(|abilities| abilities.contains(Abilities::CHECKABLE))
+                .unwrap_or(false);
+            if is_checkable {
+                self.style
+                    .pseudo_classes
+                    .get(entity)
+                    .map(|flags| flags.contains(PseudoClass::CHECKED))
+                    .map(|checked| if checked { CheckedState::True } else { CheckedState::False })
+            } else {
+                None
+            }
         };
 
         let labelled_by = self
@@ -582,33 +571,26 @@ impl Context {
             .flatten();
 
         Node {
-            role: self.style.roles.get(id).copied().unwrap_or(Role::Unknown),
+            role: self.style.roles.get(entity).copied().unwrap_or(Role::Unknown),
             transform: None,
-            bounds: Some(Rect {
-                x0: bounds.x as f64,
-                y0: bounds.y as f64,
-                x1: (bounds.x + bounds.w) as f64,
-                y1: (bounds.y + bounds.h) as f64,
-            }),
-            children: id.child_iter(&self.tree).map(|e| e.accesskit_id()).collect(),
-            name: self.style.name.get(id).map(|name| name.clone().into_boxed_str()),
+            bounds,
+            children: entity.child_iter(&self.tree).map(|e| e.accesskit_id()).collect(),
+            name: self.style.name.get(entity).map(|name| name.clone().into_boxed_str()),
             checked_state,
-            default_action_verb: self.style.default_action_verb.get(id).copied(),
+            default_action_verb: self.style.default_action_verb.get(entity).copied(),
             focusable: self
                 .style
                 .abilities
-                .get(id)
+                .get(entity)
                 .map(|flags| flags.contains(Abilities::NAVIGABLE))
                 .unwrap_or(false),
             live: self.style.live.get(entity).copied(),
             labelled_by: labelled_by.and_then(|l| Some(vec![l])).unwrap_or(vec![]),
-            numeric_value: self.style.numeric_value.get(id).copied(),
-            value: self.style.text_value.get(id).map(|s| s.clone().into_boxed_str()),
-            min_numeric_value: self.style.min_numeric_value.get(id).copied(),
-            max_numeric_value: self.style.max_numeric_value.get(id).copied(),
-            numeric_value_step: self.style.numeric_value_step.get(id).copied(),
-            actions: Action::Increment | Action::Decrement,
-
+            numeric_value: self.style.numeric_value.get(entity).copied(),
+            value: self.style.text_value.get(entity).map(|s| s.clone().into_boxed_str()),
+            min_numeric_value: self.style.min_numeric_value.get(entity).copied(),
+            max_numeric_value: self.style.max_numeric_value.get(entity).copied(),
+            numeric_value_step: self.style.numeric_value_step.get(entity).copied(),
             ..Default::default()
         }
     }

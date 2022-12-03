@@ -126,7 +126,6 @@ where
                     let orientation = slider_data.orientation;
                     let size = slider_data.size;
                     let range = slider_data.range;
-                    let step = slider_data.step;
 
                     // Active track
                     Element::new(cx).class("active").bind(lens.clone(), move |handle, value| {
