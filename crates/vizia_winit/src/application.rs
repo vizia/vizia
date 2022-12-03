@@ -2,7 +2,7 @@ use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
     window::Window,
 };
-use accesskit::{self, Action};
+use accesskit::{self, Action, TreeUpdate};
 use accesskit_winit;
 use std::cell::RefCell;
 use vizia_core::accessibility::IntoNode;
@@ -173,11 +173,13 @@ impl Application {
                         Arc::new(Node { role: Role::Window, ..Default::default() }),
                     )],
                     tree: Some(Tree::new(root_id)),
-                    focus: None,
+                    focus: Some(Entity::root().accesskit_id()),
                 }
             },
             event_loop_proxy,
         );
+
+        window.window().set_visible(true);
 
         #[cfg(all(
             feature = "clipboard",
@@ -341,6 +343,14 @@ impl Application {
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
                             *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                        }
+
+                        winit::event::WindowEvent::Focused(is_focused) => {
+                            accesskit.update_if_active(|| TreeUpdate {
+                                nodes: vec![],
+                                tree: None,
+                                focus: is_focused.then_some(cx.focused().accesskit_id()),
+                            });
                         }
 
                         winit::event::WindowEvent::ScaleFactorChanged {

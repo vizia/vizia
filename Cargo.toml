@@ -177,6 +177,10 @@ name = "focus_order"
 path = "examples/accessibility/focus_order.rs"
 
 [[example]]
+name = "settings"
+path = "examples/accessibility/settings.rs"
+
+[[example]]
 name = "keymap_basic"
 path = "examples/keymap_basic.rs"
 

@@ -5,10 +5,13 @@ pub struct AppData {
     flag1: bool,
     flag2: bool,
     flag3: bool,
+
+    value: f32,
 }
 
 pub enum AppEvent {
     ToggleFlag(u32),
+    SetValue(f32),
 }
 
 impl Model for AppData {
@@ -20,13 +23,17 @@ impl Model for AppData {
                 2 => self.flag3 ^= true,
                 _ => {}
             },
+
+            AppEvent::SetValue(val) => {
+                self.value = *val;
+            }
         });
     }
 }
 
 fn main() {
     Application::new(|cx| {
-        AppData { flag1: false, flag2: false, flag3: false }.build(cx);
+        AppData { flag1: false, flag2: false, flag3: false, value: 25.0 }.build(cx);
 
         VStack::new(cx, |cx| {
             Label::new(cx, "Hello");
@@ -50,6 +57,14 @@ fn main() {
         })
         .child_space(Pixels(10.0))
         .col_between(Pixels(10.0));
+
+        HStack::new(cx, |cx| {
+            Slider::new(cx, AppData::value)
+                .name("Volume Control")
+                .range(0.0..100.0)
+                .step(1.0)
+                .on_changing(|cx, val| cx.emit(AppEvent::SetValue(val)));
+        });
     })
     .title("AccessKit")
     .run();

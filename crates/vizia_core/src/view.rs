@@ -45,7 +45,7 @@ pub trait View: 'static + Sized {
             current.child_iter(&cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
         let c = current.child_iter(&cx.tree).collect::<Vec<_>>();
 
-        println!("add parent: {} {:?}", parent_id, c);
+        // println!("add parent: {} {:?}", parent_id, c);
         cx.tree_updates.push(TreeUpdate {
             nodes: vec![
                 (parent_node_id, Arc::new(Node { role: Role::Window, children, ..parent_node })),

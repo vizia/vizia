@@ -246,7 +246,7 @@ fn apply_window_description(
     builder
         .with_resizable(description.resizable)
         .with_maximized(description.maximized)
-        .with_visible(description.visible)
+        .with_visible(false)
         .with_transparent(description.transparent)
         .with_decorations(description.decorations)
         .with_always_on_top(description.always_on_top)

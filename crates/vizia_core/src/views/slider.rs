@@ -119,7 +119,6 @@ where
         }
         .build(cx, move |cx| {
             Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
-                println!("REBUILD");
                 let lens = lens.clone();
                 ZStack::new(cx, move |cx| {
                     let slider_data = slider_data.get(cx);

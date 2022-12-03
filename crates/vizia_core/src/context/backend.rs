@@ -47,6 +47,10 @@ impl<'a> BackendContext<'a> {
         &mut self.0.modifiers
     }
 
+    pub fn focused(&self) -> Entity {
+        self.0.focused
+    }
+
     pub fn add_main_window(
         &mut self,
         window_description: &WindowDescription,
