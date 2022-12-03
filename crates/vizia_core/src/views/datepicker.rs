@@ -112,7 +112,7 @@ impl Datepicker {
 
         Self {
             months: MONTHS.to_vec().iter_mut().map(|v| v.to_string()).collect(),
-            selected_month: view_date.month() as usize,
+            selected_month: view_date.month() as usize - 1,
             view_date: NaiveDate::from_ymd(view_date.year(), view_date.month(), 1),
             on_select: None,
         }
