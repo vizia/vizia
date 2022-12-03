@@ -319,20 +319,6 @@ ticks {
     border-color: #3995d6;
 }
 
-ticks .knob-tick {
-    border-radius: 1px;
-    background-color: white;
-}
-
-ticks .knob-tick {
-    height: 100%;
-    width: 2px;
-    left: 1s;
-    top: 1s;
-    right: 1s;
-    bottom: 1s;
-}
-
 /* Label */
 
 /* List */
