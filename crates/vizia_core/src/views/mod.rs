@@ -60,7 +60,10 @@ pub use switch::Switch;
 pub use tab::{TabPair, TabView};
 pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};
-pub use timepicker::{AMOrPM, DayTime, RadialTimepicker, Timepicker, TimepickerEvent};
+pub use timepicker::{
+    AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,
+    DigitalTimepicker, DigitalTimepickerEvent, Timepicker,
+};
 pub use tooltip::{Tooltip, TooltipEvent, TooltipSeq};
 
 use crate::prelude::*;

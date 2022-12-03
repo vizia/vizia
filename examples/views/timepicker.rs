@@ -38,7 +38,10 @@ fn main() {
             Timepicker::new(cx, AppState::time).on_change(|cx, time| {
                 cx.emit(AppEvent::SetTime(time));
             });
-            RadialTimepicker::new(cx, AppState::time)
+            DigitalTimepicker::new(cx, AppState::time).on_change(|cx, time| {
+                cx.emit(AppEvent::SetTime(time));
+            });
+            AnalogTimepicker::new(cx, AppState::time)
                 .on_change(|cx, time| cx.emit(AppEvent::SetTime(time)));
         })
         .class("container");

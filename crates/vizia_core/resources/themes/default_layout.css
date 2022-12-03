@@ -781,77 +781,90 @@ textbox.multi_line_unwrapped {
 
 /* Time Picker */
 
-timepicker {
-    child-space: 8px;
+timepicker digitaltimepicker {
+    width: 1s;
 }
 
-timepicker .timepicker-wrapper {
+timepicker digitaltimepicker .digitaltimepicker-button-wrapper {
+    left: 1s;
+}
+
+/* Digital Time Picker */
+
+digitaltimepicker {
+    height: auto;
+    width: auto;
+    child-space: 8px;
     col-between: 8px;
 }
 
-timepicker .timepicker-button-wrapper {
-    row-between: 1s;
+digitaltimepicker > spinbox {
+    width: 120px;
 }
 
-timepicker .timepicker-dots-wrapper {
+digitaltimepicker .digitaltimepicker-button-wrapper {
+    child-top: 1s;
+    child-bottom: 1s;
+    height: 1s;
+}
+
+digitaltimepicker .digitaltimepicker-dots-wrapper {
     width: auto;
     height: 1s;
     child-space: 1s;
     row-between: 8px;
 }
 
-timepicker .timepicker-dot {
+digitaltimepicker .digitaltimepicker-dot {
     width: 6px;
     height: 6px;
 }
 
 /* Radial Time Picker */
 
-radialtimepicker {
-    child-space: 1s;
+analogtimepicker {
+    child-space: 8px;
     border-radius: 4px;
 }
 
-radialtimepicker .clock-face {
+analogtimepicker .clock-face {
     child-space: 1s;
-    width: 230px;
-    height: 230px;
 }
 
-radialtimepicker .clock-hand {
+analogtimepicker .clock-hand {
     width: 1px;
-    height: 100px;
+    height: 80px;
 }
 
-radialtimepicker .center-dot {
+analogtimepicker .center-dot {
     width: 4px;
     height: 4px;
 }
 
-radialtimepicker .marker {
+analogtimepicker .marker {
     width: 32px;
     height: 32px;
     child-space: 1s;
 }
 
-radialtimepicker .controls-wrapper {
+analogtimepicker .controls-wrapper {
     top: 1s;
     bottom: 1s;
     right: 1s;
     left: 1s;
     width: auto;
-    height: 100px;
+    height: 80px;
     row-between: 1s;
     child-left: 1s;
     child-right: 1s;
 }
 
-radialtimepicker .time-selector-wrapper {
+analogtimepicker .time-selector-wrapper {
     height: auto;
     overflow: hidden;
 }
 
-radialtimepicker .time-selector-wrapper button {
+analogtimepicker .time-selector-wrapper button {
     width: 30px;
     child-left: 0px;
     child-right: 0px;
@@ -859,7 +872,7 @@ radialtimepicker .time-selector-wrapper button {
     child-bottom: 0px;
 }
 
-radialtimepicker .time-selector-wrapper button label {
+analogtimepicker .time-selector-wrapper button label {
     left: 4px;
     right: 4px;
     top: 1s;
@@ -869,7 +882,7 @@ radialtimepicker .time-selector-wrapper button label {
     child-space: 1s;
 }
 
-radialtimepicker .time-selector-wrapper button .indicator {
+analogtimepicker .time-selector-wrapper button .indicator {
     top: 1s;
     width: 100%;
     height: 2px;

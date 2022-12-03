@@ -726,72 +726,91 @@ timepicker {
     border-radius: 4px;
 }
 
-timepicker .timepicker-dot {
-    border-radius: 4px;
-    background-color: #282828;
-}
+/* Digital Time Picker */
 
-/* Radial Time Picker */
-
-radialtimepicker {
+digitaltimepicker {
     background-color: #343434;
     border-radius: 4px;
 }
 
-radialtimepicker .clock-face {
+digitaltimepicker .digitaltimepicker-dot {
+    border-radius: 4px;
+    background-color: #282828;
+}
+
+digitaltimepicker textbox {
+    font-size: 24px;
+}
+
+/* Radial Time Picker */
+
+analogtimepicker {
+    background-color: #343434;
+    border-radius: 4px;
+    width: 160px;
+    height: 160px;
+}
+
+analogtimepicker .clock-face {
     border-radius: 50%;
     background-color: #484848;
+    width: 180px;
+    height: 180px;
 }
 
-radialtimepicker .clock-hand {
+analogtimepicker .clock-hand {
     background-color: #51afef;
 }
 
-radialtimepicker .center-dot {
+analogtimepicker .center-dot {
     border-radius: 50%;
     background-color: #51afef;
 }
 
-radialtimepicker .marker {
+analogtimepicker .marker {
     border-radius: 50%;
     cursor: hand;
     background-color: transparent;
 }
 
-radialtimepicker .marker:checked {
+analogtimepicker .marker:checked {
     background-color: #51afef;
     color: #181818;
 }
 
-radialtimepicker .time-selector-wrapper {
+analogtimepicker .time-selector-wrapper {
     background-color: #343434;
     border-radius: 4px;
     overflow: hidden;
 }
 
-radialtimepicker .time-selector-wrapper button {
+analogtimepicker .time-selector-wrapper button {
     border-radius: 0px;
     background-color: transparent;
 }
 
-radialtimepicker .time-selector-wrapper button label {
+analogtimepicker .time-selector-wrapper button label {
     color: #888;
 }
 
-radialtimepicker .time-selector-wrapper button label {
+analogtimepicker .time-selector-wrapper button label {
     color: #888;
 }
 
-radialtimepicker .time-selector-wrapper button:hover label {
+analogtimepicker .time-selector-wrapper button:hover label {
     color: #fff;
 }
 
-radialtimepicker .time-selector-wrapper button .indicator {
+analogtimepicker .time-selector-wrapper button:checked label {
+    color: #fff;
+}
+
+analogtimepicker .time-selector-wrapper button .indicator {
     background-color: transparent;
     top: 1s;
 }
 
-radialtimepicker .time-selector-wrapper button:checked .indicator {
+analogtimepicker .time-selector-wrapper button:checked .indicator {
     background-color: #51afef;
 }
 

@@ -41,7 +41,7 @@ where
                         Element::new(cx).class("indicator");
                     },
                     move |cx| {
-                        RadialTimepicker::new(cx, lens.map(|datetime| datetime.time()))
+                        AnalogTimepicker::new(cx, lens.map(|datetime| datetime.time()))
                             .on_change(|cx, time| {
                                 cx.emit(DatetimePickerEvent::SetTime(time));
                             })
