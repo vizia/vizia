@@ -142,6 +142,7 @@ impl Checkbox {
                     handle.text(if flag { CHECK } else { "" }).checked(flag);
                 }
             })
+            .checkable(true)
             .role(Role::CheckBox)
             .default_action_verb(DefaultActionVerb::Click)
             .cursor(CursorIcon::Hand)

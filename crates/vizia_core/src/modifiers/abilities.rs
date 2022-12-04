@@ -39,6 +39,21 @@ pub trait AbilityModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets whether the view can be checked.
+    fn checkable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
+        let entity = self.entity();
+        state.set_or_bind(self.context(), entity, |cx, entity, v| {
+            if let Some(abilities) = cx.style.abilities.get_mut(entity) {
+                let state = v.into();
+                abilities.set(Abilities::CHECKABLE, state);
+
+                cx.need_restyle();
+            }
+        });
+
+        self
+    }
+
     /// Sets whether the view can be navigated to, i.e. focused, by the keyboard.
     ///
     /// Navigating to a view with the keyboard gives the view keyboard focus and is typically done with `tab` and `shift + tab` key combinations.
