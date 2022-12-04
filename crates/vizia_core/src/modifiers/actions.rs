@@ -62,8 +62,8 @@ impl<'a, 'b, V> DataContext for EventHandle<'a, 'b, V> {
         }
 
         for entity in self.entity.parent_iter(&self.cx.tree) {
-            if let Some(model_data_store) = self.cx.data.get(entity) {
-                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+            if let Some(models) = self.cx.data.get(entity) {
+                if let Some(model) = models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }
@@ -435,11 +435,7 @@ pub trait ActionModifiers<V> {
 
 // If the entity doesn't have an `ActionsModel` then add one to the entity
 fn build_action_model<V: 'static>(cx: &mut Context, entity: Entity) {
-    if cx
-        .data
-        .get(entity)
-        .and_then(|model_data_store| model_data_store.models.get(&TypeId::of::<ActionsModel<V>>()))
-        .is_none()
+    if cx.data.get(entity).and_then(|models| models.get(&TypeId::of::<ActionsModel<V>>())).is_none()
     {
         cx.with_current(entity, |cx| {
             ActionsModel::<V>::new().build(cx);
