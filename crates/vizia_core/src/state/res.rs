@@ -54,6 +54,7 @@ impl_res_simple!(f64);
 impl_res_simple!(CursorIcon);
 impl_res_simple!(Overflow);
 
+#[derive(Clone)]
 pub struct BindMap<B, F, T> {
     b: B,
     map: Rc<F>,
@@ -67,6 +68,25 @@ impl<B, F, T> BindMap<B, F, T> {
         F: Fn(&B::Output) -> T,
     {
         Self { b, map: Rc::new(map), p: PhantomData::default() }
+    }
+}
+
+impl<B, F, T> Bindable for BindMap<B, F, T>
+where
+    B: 'static + Bindable + Clone,
+    F: 'static + Fn(&B::Output) -> T,
+{
+    type Output = T;
+    fn get_val<C: DataContext>(&self, cx: &C) -> Self::Output {
+        (self.map)(&self.b.get_val(cx))
+    }
+
+    fn insert_store(self, cx: &mut Context, entity: Entity) {
+        self.b.insert_store(cx, entity);
+    }
+
+    fn name(&self) -> Option<&'static str> {
+        self.b.name()
     }
 }
 
