@@ -19,8 +19,8 @@ name = "animation"
 path = "examples/animation.rs"
 
 [[example]]
-name = "binding"
-path = "examples/binding.rs"
+name = "multibinding"
+path = "examples/multibinding.rs"
 
 [[example]]
 name = "cursor_icon"

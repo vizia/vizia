@@ -1,14 +1,37 @@
 use vizia::prelude::*;
 use vizia::state::BindableExt;
 
-#[derive(Lens, Setter, Model)]
+#[derive(Lens)]
 pub struct AppData {
     flag: bool,
 }
 
-#[derive(Lens, Setter, Model)]
+#[derive(Lens)]
 pub struct MoreData {
     flag: bool,
+}
+
+pub enum AppEvent {
+    ToggleFlagOne,
+    ToggleFlagTwo,
+}
+
+impl Model for AppData {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::ToggleFlagOne => self.flag ^= true,
+            _ => {}
+        });
+    }
+}
+
+impl Model for MoreData {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::ToggleFlagTwo => self.flag ^= true,
+            _ => {}
+        });
+    }
 }
 
 fn main() {
@@ -16,16 +39,8 @@ fn main() {
         AppData { flag: false }.build(cx);
         MoreData { flag: false }.build(cx);
 
-        Checkbox::new(cx, AppData::flag).on_toggle(|cx| cx.emit(AppDataSetter::Flag(true)));
-        Checkbox::new(cx, MoreData::flag).on_toggle(|cx| cx.emit(MoreDataSetter::Flag(true)));
-
-        Binding::new(cx, AppData::flag, |cx, flag1| {
-            Binding::new(cx, MoreData::flag, move |cx, flag2| {
-                if flag1.get(cx) && flag2.get(cx) {
-                    Label::new(cx, "Hello World");
-                }
-            });
-        });
+        Checkbox::new(cx, AppData::flag).on_toggle(|cx| cx.emit(AppEvent::ToggleFlagOne));
+        Checkbox::new(cx, MoreData::flag).on_toggle(|cx| cx.emit(AppEvent::ToggleFlagTwo));
 
         Binding::new(cx, (AppData::flag, MoreData::flag), move |cx, (flag1, flag2)| {
             if flag1.get(cx) && flag2.get(cx) {
