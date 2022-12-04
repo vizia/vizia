@@ -42,21 +42,29 @@ fn main() {
         Checkbox::new(cx, AppData::flag).on_toggle(|cx| cx.emit(AppEvent::ToggleFlagOne));
         Checkbox::new(cx, MoreData::flag).on_toggle(|cx| cx.emit(AppEvent::ToggleFlagTwo));
 
-        Binding::new(cx, (AppData::flag, MoreData::flag), move |cx, (flag1, flag2)| {
-            if flag1.get(cx) && flag2.get(cx) {
-                Label::new(cx, "Hello Multibinding");
-            }
-        });
+        // Binding::new(cx, (AppData::flag, MoreData::flag), move |cx, (flag1, flag2)| {
+        //     if flag1.get(cx) && flag2.get(cx) {
+        //         Label::new(cx, "Hello Multibinding");
+        //     }
+        // });
 
-        Label::new(cx, "Test").background_color((AppData::flag, MoreData::flag).bind_map(
+        Label::new(cx, "Test").background_color((AppData::flag, MoreData::flag).map(
             |(flag1, flag2)| {
-                if flag1 && flag2 {
+                if *flag1 && *flag2 {
                     Color::red()
                 } else {
                     Color::blue()
                 }
             },
         ));
+
+        Label::new(cx, "Test").background_color(AppData::flag.map(|flag| {
+            if *flag {
+                Color::red()
+            } else {
+                Color::blue()
+            }
+        }));
     })
     .run();
 }

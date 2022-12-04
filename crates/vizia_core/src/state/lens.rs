@@ -94,13 +94,6 @@ pub trait LensExt: Lens {
         self.then(Index::new(index))
     }
 
-    fn map<G: Clone, B: 'static + Clone>(self, get: G) -> Then<Self, Map<G, Self::Target, B>>
-    where
-        G: 'static + Fn(&Self::Target) -> B,
-    {
-        self.then(Map::new(get))
-    }
-
     fn unwrap<T: 'static>(self) -> Then<Self, UnwrapLens<T>>
     where
         Self: Lens<Target = Option<T>>,

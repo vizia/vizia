@@ -64,30 +64,59 @@ impl<B, F, T> BindMap<B, F, T> {
     pub fn new(b: B, map: F) -> Self
     where
         B: Bindable + Clone,
-        F: Fn(B::Output) -> T,
+        F: Fn(&B::Output) -> T,
     {
         Self { b, map: Rc::new(map), p: PhantomData::default() }
     }
 }
 
-pub trait BindableExt: Bindable + Clone {
-    fn bind_map<F, T>(self, f: F) -> BindMap<Self, F, T>
+pub trait BindableExt: Clone {
+    type Map<S, F, T>;
+    type Output;
+    fn map<F, T: 'static>(self, f: F) -> Self::Map<Self, F, T>
     where
-        F: Fn(Self::Output) -> T,
+        F: 'static + Clone + Fn(&Self::Output) -> T;
+}
+
+// impl<B: Bindable + Clone> BindableExt for B {}
+
+impl<L: Lens> BindableExt for L
+// where
+//     L::Target: Data,
+{
+    type Output = L::Target;
+    type Map<S, F, T> = crate::state::lens::Then<S, crate::state::lens::Map<F, L::Target, T>>;
+
+    fn map<F, T: 'static>(self, f: F) -> Self::Map<Self, F, T>
+    where
+        F: 'static + Clone + Fn(&Self::Output) -> T,
+    {
+        self.then(crate::state::lens::Map::new(f))
+    }
+}
+
+impl<L1: Lens, L2: Lens> BindableExt for (L1, L2)
+where
+    L1::Target: Data,
+    L2::Target: Data,
+{
+    type Output = (L1::Target, L2::Target);
+    type Map<S, F, T> = BindMap<S, F, T>;
+    fn map<F, T: 'static>(self, f: F) -> BindMap<Self, F, T>
+    where
+        F: 'static + Clone + Fn(&Self::Output) -> T,
     {
         BindMap::new(self, f)
     }
 }
 
-impl<B: Bindable + Clone> BindableExt for B {}
-
 impl<B, F, T> Res<T> for BindMap<B, F, T>
 where
     B: 'static + Bindable + Clone,
-    F: 'static + Fn(B::Output) -> T,
+    F: 'static + Fn(&B::Output) -> T,
 {
     fn get_val(&self, cx: &Context) -> T {
-        (self.map)(self.b.get_val(cx))
+        (self.map)(&self.b.get_val(cx))
     }
 
     fn set_or_bind<G>(&self, cx: &mut Context, entity: Entity, closure: G)
@@ -97,7 +126,7 @@ where
         cx.with_current(entity, |cx| {
             let map = self.map.clone();
             Binding::new(cx, self.b.clone(), move |cx, b| {
-                let val = (map)(b.get_val(cx));
+                let val = (map)(&b.get_val(cx));
 
                 (closure)(cx, entity, val)
             });
