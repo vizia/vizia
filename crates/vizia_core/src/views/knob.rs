@@ -43,21 +43,15 @@ impl<L> Knob<L, f32>
 where
     L: Lens<Target = f32>,
 {
-    pub fn construct(
-        cx: &mut Context,
-        lens: L,
-        normalized_default: impl Res<f32>,
-        min_value: f32,
-        max_value: f32,
-    ) -> Self {
+    pub fn construct(cx: &mut Context, lens: L, normalized_default: impl Res<f32>) -> Self {
         Self {
             lens: lens.clone(),
             is_dragging: false,
             prev_drag_y: 0.0,
-            cursor: (lens.get(cx) - min_value) / (max_value - min_value),
+            cursor: lens.get(cx),
             default_normal: normalized_default.get_val(cx),
-            min_value,
-            max_value,
+            min_value: 0.0,
+            max_value: 1.0,
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
@@ -79,7 +73,7 @@ where
         arc_offset: f32,
         centered: bool,
     ) -> Handle<Self> {
-        Self::construct(cx, lens, normalized_default, 0.0, 1.0)
+        Self::construct(cx, lens, normalized_default)
             .build(cx, move |cx| {
                 ZStack::new(cx, move |cx| {
                     ArcTrack::new(
@@ -107,14 +101,12 @@ where
         cx: &mut Context,
         lens: L,
         normalized_default: impl Res<f32>,
-        min_value: f32,
-        max_value: f32,
         content: F,
     ) -> Handle<'_, Self>
     where
         F: 'static + Fn(&mut Context, L) -> Handle<V>,
     {
-        Self::construct(cx, lens, normalized_default, min_value, max_value).build(cx, move |cx| {
+        Self::construct(cx, lens, normalized_default).build(cx, move |cx| {
             ZStack::new(cx, move |cx| {
                 (content)(cx, lens).width(Percentage(100.0)).height(Percentage(100.0));
             });
