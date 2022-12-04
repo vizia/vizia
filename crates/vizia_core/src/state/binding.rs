@@ -5,18 +5,18 @@ use super::Bindable;
 /// A binding view which rebuilds its contents when its observed data changes.
 ///
 /// This type is part of the prelude.
-pub struct Binding<L>
+pub struct Binding<B>
 where
-    L: Bindable,
+    B: Bindable,
 {
     _entity: Entity,
-    lens: L,
-    content: Option<Box<dyn Fn(&mut Context, L)>>,
+    binding: B,
+    content: Option<Box<dyn Fn(&mut Context, B)>>,
 }
 
-impl<L> Binding<L>
+impl<B> Binding<B>
 where
-    L: 'static + Bindable + Clone,
+    B: 'static + Bindable + Clone,
     // <L as Lens>::Source: 'static,
     // <L as Lens>::Target: Data,
 {
@@ -32,9 +32,9 @@ where
     ///     let value = *lens.get(cx);
     ///     Label::new(cx, value.to_string());
     /// });
-    pub fn new<F>(cx: &mut Context, lens: L, builder: F)
+    pub fn new<F>(cx: &mut Context, binding: B, builder: F)
     where
-        F: 'static + Fn(&mut Context, L),
+        F: 'static + Fn(&mut Context, B),
     {
         let id = cx.entity_manager.create();
         let current = cx.current();
@@ -42,9 +42,10 @@ where
         cx.cache.add(id).expect("Failed to add to cache");
         cx.style.add(id);
 
-        let binding = Self { _entity: id, lens: lens.clone(), content: Some(Box::new(builder)) };
+        let binding_view =
+            Self { _entity: id, binding: binding.clone(), content: Some(Box::new(builder)) };
 
-        lens.insert_store(cx, id);
+        binding.insert_store(cx, id);
 
         // let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
         // let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
@@ -118,7 +119,7 @@ where
         //     }
         // }
 
-        cx.bindings.insert(id, Box::new(binding));
+        cx.bindings.insert(id, Box::new(binding_view));
 
         cx.with_current(id, |cx| {
             // Call the body of the binding
@@ -142,7 +143,7 @@ impl<L: 'static + Bindable + Clone> BindingHandler for Binding<L> {
     fn update<'a>(&mut self, cx: &'a mut Context) {
         cx.remove_children(cx.current());
         if let Some(builder) = &self.content {
-            (builder)(cx, self.lens.clone());
+            (builder)(cx, self.binding.clone());
         }
     }
 
@@ -183,8 +184,6 @@ impl<L: 'static + Bindable + Clone> BindingHandler for Binding<L> {
     }
 
     fn name(&self) -> Option<&'static str> {
-        // TODO: Add method to Bindable to query name
-        // self.lens.name()
-        None
+        self.binding.name()
     }
 }

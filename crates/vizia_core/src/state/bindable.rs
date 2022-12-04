@@ -17,6 +17,7 @@ pub trait Bindable {
     type Output;
     fn get_val(&self, cx: &mut Context) -> Self::Output;
     fn insert_store(self, cx: &mut Context, entity: Entity);
+    fn name(&self) -> Option<&'static str>;
 }
 
 impl<L: Lens> Bindable for L
@@ -110,6 +111,10 @@ where
                 }
             }
         }
+    }
+
+    fn name(&self) -> Option<&'static str> {
+        self.name()
     }
 }
 
@@ -257,6 +262,12 @@ where
                 }
             }
         }
+    }
+
+    fn name(&self) -> Option<&'static str> {
+        // TODO: It's not possible to concatenate two static str's so to return a combination of the stored names
+        // we may need to change the signature of `name()` to return String or maybe CowStr.
+        self.0.name()
     }
 }
 
