@@ -38,9 +38,25 @@ fn main() {
         AppData { value: 0.2, tick: 3 }.build(cx);
 
         HStack::new(cx, |cx| {
+            // Continuous
             Knob::new(cx, AppData::value, 0.5, 300.0, 0.0, false).on_changing(|cx, val| {
                 cx.emit(AppEvent::SetValue(val));
             });
+
+            Knob::custom(cx, AppData::value.clone(), 0.5, move |cx, v| {
+                Label::new(cx, v.map(|v| format!("{:.2}", v))).hoverable(false)
+            })
+            .on_changing(|cx, val| {
+                cx.emit(AppEvent::SetValue(val));
+            })
+            .background_color(Color::from("#343434"));
+            Knob::new(cx, AppData::value, 0.5, 300.0, 0.0, true)
+                .on_changing(|cx, val| {
+                    cx.emit(AppEvent::SetValue(val));
+                })
+                .class("small");
+
+            // Discrete
             Knob::new_discrete(cx, AppData::tick, 3, 120.0, 0.0, KNOB_TICKS, false).on_changing(
                 |cx, val| {
                     cx.emit(AppEvent::SetTick(val));
@@ -51,18 +67,19 @@ fn main() {
                     cx.emit(AppEvent::SetTick(val));
                 })
                 .knob_type(KnobType::Arc);
-            Knob::new(cx, AppData::value, 0.5, 300.0, 0.0, true)
-                .on_changing(|cx, val| {
-                    cx.emit(AppEvent::SetValue(val));
-                })
-                .class("small");
-
             Knob::new_discrete(cx, AppData::tick, 3, 120.0, 45.0, KNOB_TICKS, false)
                 .on_changing(|cx, val| {
                     cx.emit(AppEvent::SetTick(val));
                 })
                 .knob_type(KnobType::Tick)
                 .class("small");
+            Knob::custom_discrete(cx, AppData::tick.clone(), 3, 0, KNOB_TICKS, move |cx, v| {
+                Label::new(cx, v.map(|v| format!("{:.2}", v))).hoverable(false)
+            })
+            .on_changing(|cx, val| {
+                cx.emit(AppEvent::SetTick(val));
+            })
+            .background_color(Color::from("#343434"));
         })
         .class("container");
     })

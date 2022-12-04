@@ -106,11 +106,13 @@ where
     where
         F: 'static + Fn(&mut Context, L) -> Handle<V>,
     {
-        Self::construct(cx, lens, normalized_default).build(cx, move |cx| {
-            ZStack::new(cx, move |cx| {
-                (content)(cx, lens).width(Percentage(100.0)).height(Percentage(100.0));
-            });
-        })
+        Self::construct(cx, lens, normalized_default)
+            .build(cx, move |cx| {
+                ZStack::new(cx, move |cx| {
+                    (content)(cx, lens).width(Percentage(100.0)).height(Percentage(100.0));
+                });
+            })
+            .navigable(true)
     }
 }
 
@@ -119,7 +121,7 @@ impl<L> Knob<L, u8>
 where
     L: Lens<Target = u8>,
 {
-    pub fn construct(
+    pub fn construct_discrete(
         cx: &mut Context,
         lens: L,
         normalized_default: impl Res<u8>,
@@ -156,7 +158,7 @@ where
         ticks: u8,
         centered: bool,
     ) -> Handle<Self> {
-        Self::construct(cx, lens, normalized_default, 0, ticks - 1)
+        Self::construct_discrete(cx, lens, normalized_default, 0, ticks - 1)
             .build(cx, move |cx| {
                 ZStack::new(cx, move |cx| {
                     Binding::new(cx, Knob::<L, u8>::knob_type, move |cx, knob_type| {
@@ -196,7 +198,7 @@ where
             .navigable(true)
     }
 
-    pub fn custom<F, V: View>(
+    pub fn custom_discrete<F, V: View>(
         cx: &mut Context,
         lens: L,
         normalized_default: impl Res<u8>,
@@ -207,11 +209,14 @@ where
     where
         F: 'static + Fn(&mut Context, L) -> Handle<V>,
     {
-        Self::construct(cx, lens, normalized_default, min_value, max_value).build(cx, move |cx| {
-            ZStack::new(cx, move |cx| {
-                (content)(cx, lens).width(Percentage(100.0)).height(Percentage(100.0));
-            });
-        })
+        Self::construct_discrete(cx, lens, normalized_default, min_value, max_value).build(
+            cx,
+            move |cx| {
+                ZStack::new(cx, move |cx| {
+                    (content)(cx, lens).width(Percentage(100.0)).height(Percentage(100.0));
+                });
+            },
+        )
     }
 }
 
