@@ -15,7 +15,7 @@ use super::{BasicStore, Data, Lens, LensExt, Store};
 
 pub trait Bindable {
     type Output;
-    fn get_val(&self, cx: &mut Context) -> Self::Output;
+    fn get_val(&self, cx: &Context) -> Self::Output;
     fn insert_store(self, cx: &mut Context, entity: Entity);
     fn name(&self) -> Option<&'static str>;
 }
@@ -26,7 +26,7 @@ where
 {
     type Output = L::Target;
 
-    fn get_val(&self, cx: &mut Context) -> Self::Output {
+    fn get_val(&self, cx: &Context) -> Self::Output {
         self.get(cx)
     }
 
@@ -125,7 +125,7 @@ where
 {
     type Output = (L1::Target, L2::Target);
 
-    fn get_val(&self, cx: &mut Context) -> Self::Output {
+    fn get_val(&self, cx: &Context) -> Self::Output {
         (self.0.get(cx), self.1.get(cx))
     }
 

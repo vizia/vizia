@@ -1,5 +1,5 @@
 use vizia::prelude::*;
-use vizia::state::{Bindable, BindableExt};
+use vizia::state::BindableExt;
 
 #[derive(Lens, Setter, Model)]
 pub struct AppData {

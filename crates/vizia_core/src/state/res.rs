@@ -87,7 +87,7 @@ where
     F: 'static + Fn(B::Output) -> T,
 {
     fn get_val(&self, cx: &Context) -> T {
-        todo!()
+        (self.map)(self.b.get_val(cx))
     }
 
     fn set_or_bind<G>(&self, cx: &mut Context, entity: Entity, closure: G)
@@ -95,9 +95,8 @@ where
         G: 'static + Clone + Fn(&mut Context, Entity, T),
     {
         cx.with_current(entity, |cx| {
-            let b = self.b.clone();
             let map = self.map.clone();
-            Binding::new(cx, self.b.clone(), move |cx, val| {
+            Binding::new(cx, self.b.clone(), move |cx, b| {
                 let val = (map)(b.get_val(cx));
 
                 (closure)(cx, entity, val)
