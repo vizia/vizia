@@ -1,5 +1,5 @@
 use femtovg::{LineCap, Paint, Path, Solidity};
-use morphorm::{Hierarchy, Units};
+use morphorm::Hierarchy;
 
 use crate::prelude::*;
 
@@ -74,16 +74,9 @@ where
         Self::construct(cx, lens, normalized_default)
             .build(cx, move |cx| {
                 ZStack::new(cx, move |cx| {
-                    ArcTrack::new(
-                        cx,
-                        centered,
-                        Percentage(100.0),
-                        Percentage(15.0),
-                        arc_length,
-                        arc_offset,
-                    )
-                    .value(lens)
-                    .class("knob-track");
+                    ArcTrack::new(cx, centered, arc_length, arc_offset)
+                        .value(lens)
+                        .class("knob-track");
 
                     HStack::new(cx, |cx| {
                         Element::new(cx).class("knob-head-tick");
@@ -161,16 +154,13 @@ where
                         let knob_type = knob_type.get(cx);
                         match knob_type {
                             KnobType::Arc => {
-                                ArcTrack::new(
-                                    cx,
-                                    centered,
-                                    Percentage(100.0),
-                                    Percentage(15.0),
-                                    arc_length,
-                                    arc_offset,
-                                )
-                                .value(lens.map(move |v| *v as f32 / (discrete_steps as f32 - 1.0)))
-                                .class("knob-track");
+                                ArcTrack::new(cx, centered, arc_length, arc_offset)
+                                    .value(
+                                        lens.map(move |v| {
+                                            *v as f32 / (discrete_steps as f32 - 1.0)
+                                        }),
+                                    )
+                                    .class("knob-track");
                             }
                             KnobType::Tick => {
                                 Ticks::new(cx, arc_length, arc_offset, discrete_steps).value(lens);
@@ -547,24 +537,14 @@ impl Handle<'_, Ticks> {
 pub struct ArcTrack {
     arc_length: f32,
     arc_offset: f32,
-    radius: Units,
-    span: Units,
     normalized_value: f32,
 
     center: bool,
 }
 
 impl ArcTrack {
-    pub fn new(
-        cx: &mut Context,
-        center: bool,
-        radius: Units,
-        span: Units,
-        arc_length: f32,
-        arc_offset: f32,
-    ) -> Handle<Self> {
-        Self { arc_length, arc_offset, radius, span, normalized_value: 0.5, center }
-            .build(cx, |_| {})
+    pub fn new(cx: &mut Context, center: bool, arc_length: f32, arc_offset: f32) -> Handle<Self> {
+        Self { arc_length, arc_offset, normalized_value: 0.5, center }.build(cx, |_| {})
     }
 }
 
@@ -599,9 +579,9 @@ impl View for ArcTrack {
         let parent_width = cx.cache.get_width(parent);
 
         // Convert radius and span into screen coordinates
-        let radius = self.radius.value_or(parent_width / 2.0, 0.0);
+        let radius = parent_width / 2.0;
         // default value of span is 15 % of radius. Original span value was 16.667%
-        let span = self.span.value_or(radius, 0.0);
+        let span = radius * 0.15;
 
         // Draw the track arc
         let mut path = Path::new();
