@@ -100,9 +100,6 @@ where
                 let val = (map)(b.get_val(cx));
 
                 (closure)(cx, entity, val)
-                // if let Some(v) = val.get_val_fallible(cx) {
-                //     (closure)(cx, entity, v);
-                // }
             });
         });
     }

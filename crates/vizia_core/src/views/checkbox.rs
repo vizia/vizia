@@ -139,7 +139,6 @@ impl Checkbox {
             .build(cx, |_| {})
             .bind(checked, |handle, checked| {
                 if let Some(flag) = checked.get_val_fallible(handle.cx) {
-                    println!("Checkbox is checked? {}", flag);
                     handle.text(if flag { CHECK } else { "" }).checked(flag);
                 }
             })

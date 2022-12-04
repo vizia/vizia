@@ -53,7 +53,6 @@ where
             });
             if let Some(new_data) = result {
                 self.old = new_data;
-                println!("Update data");
                 return true;
             }
         }
