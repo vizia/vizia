@@ -64,7 +64,7 @@ bitflags! {
         const SELECTABLE = 1 << 3;
         /// The element should be focusable in sequential keyboard navigation -
         /// allowing the equivilant of a negative tabindex in html.
-        const KEYBOARD_NAVIGATABLE = 1 << 4;
+        const NAVIGABLE = 1 << 4;
     }
 }
 
@@ -605,6 +605,16 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.background_color.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
+                                }
+
+                                "color" => {
+                                    let animation = self.animation_manager.create();
+                                    self.font_color.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
+                                    self.font_color.insert_transition(rule_id, animation);
                                     self.transitions.insert(rule_id, animation);
                                 }
 

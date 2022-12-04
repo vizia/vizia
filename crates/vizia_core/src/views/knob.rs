@@ -74,17 +74,17 @@ impl<L: Lens<Target = f32>> Knob<L> {
                 //     .rotate(30.0);
             });
         })
-        .keyboard_navigatable(true)
+        .navigable(true)
     }
 
-    pub fn custom<F, T>(
+    pub fn custom<F, V: View>(
         cx: &mut Context,
         default_normal: f32,
         lens: L,
         content: F,
     ) -> Handle<'_, Self>
     where
-        F: 'static + Fn(&mut Context, L) -> Handle<T>,
+        F: 'static + Fn(&mut Context, L) -> Handle<V>,
     {
         Self {
             lens: lens.clone(),
@@ -324,7 +324,7 @@ impl View for Ticks {
         let mut paint = Paint::color(foreground_color);
         paint.set_line_width(line_width);
         paint.set_line_cap(LineCap::Round);
-        canvas.stroke_path(&mut path, paint);
+        canvas.stroke_path(&mut path, &paint);
     }
 }
 /// Makes a round knob with a tick to show the current value
@@ -406,7 +406,7 @@ impl View for TickKnob {
         let mut paint = Paint::color(background_color);
         paint.set_line_width(tick_width);
         paint.set_line_cap(LineCap::Round);
-        canvas.fill_path(&mut path, paint);
+        canvas.fill_path(&mut path, &paint);
 
         // Draw the tick
         let mut path = Path::new();
@@ -434,7 +434,7 @@ impl View for TickKnob {
         let mut paint = Paint::color(foreground_color);
         paint.set_line_width(tick_width);
         paint.set_line_cap(LineCap::Round);
-        canvas.stroke_path(&mut path, paint);
+        canvas.stroke_path(&mut path, &paint);
     }
 }
 impl Handle<'_, TickKnob> {
@@ -535,7 +535,7 @@ impl View for ArcTrack {
         let mut paint = Paint::color(background_color);
         paint.set_line_width(span);
         paint.set_line_cap(LineCap::Round);
-        canvas.stroke_path(&mut path, paint);
+        canvas.stroke_path(&mut path, &paint);
 
         // Draw the active arc
         let mut path = Path::new();
@@ -566,7 +566,7 @@ impl View for ArcTrack {
         let mut paint = Paint::color(foreground_color);
         paint.set_line_width(span);
         paint.set_line_cap(LineCap::Round);
-        canvas.stroke_path(&mut path, paint);
+        canvas.stroke_path(&mut path, &paint);
     }
 }
 

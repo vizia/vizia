@@ -51,6 +51,8 @@ impl_res_simple!(char);
 impl_res_simple!(bool);
 impl_res_simple!(f32);
 impl_res_simple!(f64);
+impl_res_simple!(CursorIcon);
+impl_res_simple!(Overflow);
 
 pub struct BindMap<B, F, T> {
     b: B,

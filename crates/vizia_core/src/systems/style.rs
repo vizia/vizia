@@ -29,37 +29,32 @@ pub fn shared_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
     }
 }
 
-// pub fn apply_abilities(cx: &mut Context, tree: &Tree) {
-//     let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
-//     draw_tree.sort_by_cached_key(|entity| cx.cache().get_z_index(*entity));
+pub fn hoverability_system(cx: &mut Context, tree: &Tree<Entity>) {
+    let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
+    draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 
-//     for entity in draw_tree.into_iter() {
+    for entity in draw_tree.into_iter() {
+        if entity == Entity::root() {
+            continue;
+        }
 
-//         if entity == Entity::root() {
-//             continue;
-//         }
+        if tree.is_ignored(entity) {
+            continue;
+        }
 
-//         let parent= entity.parent(tree).unwrap();
+        let parent = tree.get_layout_parent(entity).unwrap();
 
-//         let parent_abilities = cx.cache().abilities.get(parent).cloned().unwrap_or_default();
-
-//         if !cx.style().abilities.get(parent).contains(Abilities::HOVERABLE) {
-//             if let Some(abilities) = cx.style().abilities.get_mut(entity) {
-//                 abilities.set(Abilities::HOVERABLE, false);
-//             }
-//         }
-
-//         if cx.cache().get_visibility(parent) == Visibility::Invisible {
-//             cx.cache().set_visibility(entity, Visibility::Invisible);
-//         } else {
-//             if let Some(visibility) = cx.style().visibility.get(entity) {
-//                 cx.cache().set_visibility(entity, *visibility);
-//             } else {
-//                 cx.cache().set_visibility(entity, Visibility::Visible);
-//             }
-//         }
-//     }
-// }
+        if !cx.cache.get_hoverability(parent) {
+            cx.cache.set_hoverability(entity, false);
+        } else {
+            if let Some(abilities) = cx.style.abilities.get(entity) {
+                cx.cache.set_hoverability(entity, abilities.contains(Abilities::HOVERABLE));
+            } else {
+                cx.cache.set_hoverability(entity, false);
+            }
+        }
+    }
+}
 
 // Returns the selector of an entity
 fn entity_selector(cx: &Context, entity: Entity) -> Selector {
@@ -110,6 +105,10 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     if let Some(selector_element) = &selector.element {
         if let Some(element) = cx.views.get(&entity).and_then(|view| view.element()) {
             if selector_element != &element {
+                return false;
+            }
+        } else if entity == Entity::root() {
+            if selector_element != "root" {
                 return false;
             }
         } else {
@@ -502,6 +501,8 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
 // Iterate tree and determine the matched style rules for each entity. Link the entity to the style data.
 pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
     if cx.style.needs_restyle {
+        hoverability_system(cx, tree);
+
         let mut prev_entity = None;
 
         let mut matched_rule_ids = Vec::with_capacity(100);
@@ -511,11 +512,6 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
 
         // Loop through all entities
         'ent: for entity in iterator {
-            // Skip the root
-            if entity == Entity::root() {
-                continue;
-            }
-
             // If the entity and the previous entity have the same parent and selectors then they share the same rules
             if let Some(prev) = prev_entity {
                 if let Some(parent) = tree.get_layout_parent(entity) {

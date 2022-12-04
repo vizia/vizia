@@ -279,6 +279,18 @@ impl Data for morphorm::Units {
     }
 }
 
+impl Data for morphorm::LayoutType {
+    fn same(&self, other: &Self) -> bool {
+        *self == *other
+    }
+}
+
+impl Data for morphorm::PositionType {
+    fn same(&self, other: &Self) -> bool {
+        *self == *other
+    }
+}
+
 impl Data for Color {
     fn same(&self, other: &Self) -> bool {
         *self == *other

@@ -24,15 +24,30 @@ impl ViziaWindow {
         builder: Option<Box<dyn FnOnce(&mut Context) + Send>>,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ) -> ViziaWindow {
-        if let Some(builder) = builder {
-            (builder)(&mut cx);
-        }
-
         let context = window.gl_context().expect("Window was created without OpenGL support");
         let renderer = load_renderer(window);
 
         unsafe { context.make_current() };
-        let application = ApplicationRunner::new(cx, win_desc, scale_policy, renderer);
+
+        let canvas = Canvas::new(renderer).expect("Cannot create canvas");
+
+        // Assume scale for now until there is an event with a new one.
+        let scale_factor = match scale_policy {
+            WindowScalePolicy::ScaleFactor(scale) => scale,
+            WindowScalePolicy::SystemScaleFactor => 1.0,
+        };
+
+        BackendContext::new(&mut cx).add_main_window(&win_desc, canvas, scale_factor as f32);
+
+        cx.remove_user_themes();
+        if let Some(builder) = builder {
+            (builder)(&mut cx);
+        }
+
+        let mut backend_cx = BackendContext::new(&mut cx);
+        backend_cx.synchronize_fonts();
+
+        let application = ApplicationRunner::new(cx, scale_policy);
         unsafe { context.make_not_current() };
 
         ViziaWindow { application, on_idle }

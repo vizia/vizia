@@ -275,6 +275,7 @@ fn parse_selectors<'i, 't>(
                     "custom" => selector.pseudo_classes.insert(PseudoClass::CUSTOM),
                     "focus-within" => selector.pseudo_classes.insert(PseudoClass::FOCUS_WITHIN),
                     "focus-visible" => selector.pseudo_classes.insert(PseudoClass::FOCUS_VISIBLE),
+                    "root" => selector.pseudo_classes.insert(PseudoClass::ROOT),
 
                     _ => {
                         let parse_error = ParseError {

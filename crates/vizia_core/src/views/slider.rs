@@ -151,8 +151,8 @@ where
                         .on_geo_changed(|cx, geo| {
                             if geo.contains(GeometryChanged::WIDTH_CHANGED) {
                                 let current = cx.current();
-                                let width = cx.cache.get_width(current);
-                                let height = cx.cache.get_height(current);
+                                let width = cx.cache().get_width(current);
+                                let height = cx.cache().get_height(current);
                                 cx.emit(SliderEventInternal::SetThumbSize(width, height));
                             }
                         })
@@ -177,7 +177,7 @@ where
                 });
             });
         })
-        .keyboard_navigatable(true)
+        .navigable(true)
     }
 }
 
@@ -225,7 +225,6 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 self.is_dragging = true;
                 cx.capture();
-                cx.set_active(true);
                 cx.focus_with_visibility(false);
 
                 let thumb_size = self.internal.thumb_size;
@@ -263,7 +262,6 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
                 cx.release();
-                cx.set_active(false);
             }
 
             WindowEvent::MouseMove(x, y) => {
