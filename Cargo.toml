@@ -47,10 +47,6 @@ name = "modal"
 path = "examples/modal.rs"
 
 [[example]]
-name = "more_knobs"
-path = "examples/more_knobs.rs"
-
-[[example]]
 name = "proxy"
 path = "examples/proxy.rs"
 
