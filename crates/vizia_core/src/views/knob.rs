@@ -24,8 +24,7 @@ pub struct Knob<L: Lens<Target = D>, D: Copy + Clone + Into<f32> + 'static> {
     prev_drag_y: f32,
     cursor: D,
     default_normal: D,
-    min_value: D,
-    max_value: D,
+    discrete_steps: u8,
 
     drag_scalar: f32,
     wheel_scalar: D,
@@ -50,8 +49,7 @@ where
             prev_drag_y: 0.0,
             cursor: lens.get(cx),
             default_normal: normalized_default.get_val(cx),
-            min_value: 0.0,
-            max_value: 1.0,
+            discrete_steps: 0,
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: DEFAULT_WHEEL_SCALAR,
@@ -125,8 +123,7 @@ where
         cx: &mut Context,
         lens: L,
         normalized_default: impl Res<u8>,
-        min_value: u8,
-        max_value: u8,
+        discrete_steps: u8,
     ) -> Self {
         Self {
             lens: lens.clone(),
@@ -134,8 +131,7 @@ where
             prev_drag_y: 0.0,
             cursor: lens.get(cx),
             default_normal: normalized_default.get_val(cx),
-            min_value,
-            max_value,
+            discrete_steps,
 
             drag_scalar: DEFAULT_DRAG_SCALAR,
             wheel_scalar: 1,
@@ -155,10 +151,10 @@ where
         normalized_default: impl Res<u8>,
         arc_length: f32,
         arc_offset: f32,
-        ticks: u8,
+        discrete_steps: u8,
         centered: bool,
     ) -> Handle<Self> {
-        Self::construct_discrete(cx, lens, normalized_default, 0, ticks - 1)
+        Self::construct_discrete(cx, lens, normalized_default, discrete_steps)
             .build(cx, move |cx| {
                 ZStack::new(cx, move |cx| {
                     Binding::new(cx, Knob::<L, u8>::knob_type, move |cx, knob_type| {
@@ -173,18 +169,18 @@ where
                                     arc_length,
                                     arc_offset,
                                 )
-                                .value(lens.map(move |v| *v as f32 / (ticks as f32 - 1.0)))
+                                .value(lens.map(move |v| *v as f32 / (discrete_steps as f32 - 1.0)))
                                 .class("knob-track");
                             }
                             KnobType::Tick => {
-                                Ticks::new(cx, arc_length, arc_offset, ticks).value(lens);
+                                Ticks::new(cx, arc_length, arc_offset, discrete_steps).value(lens);
                             }
                         }
                         let head = HStack::new(cx, |cx| {
                             Element::new(cx).class("knob-head-tick");
                         })
                         .rotate(lens.clone().map(move |v| {
-                            (*v as f32 / (ticks as f32 - 1.0)) * arc_length + arc_offset
+                            (*v as f32 / (discrete_steps as f32 - 1.0)) * arc_length + arc_offset
                                 - arc_length / 2.0
                         }))
                         .class("knob-head");
@@ -202,14 +198,13 @@ where
         cx: &mut Context,
         lens: L,
         normalized_default: impl Res<u8>,
-        min_value: u8,
-        max_value: u8,
+        discrete_steps: u8,
         content: F,
     ) -> Handle<'_, Self>
     where
         F: 'static + Fn(&mut Context, L) -> Handle<V>,
     {
-        Self::construct_discrete(cx, lens, normalized_default, min_value, max_value).build(
+        Self::construct_discrete(cx, lens, normalized_default, discrete_steps).build(
             cx,
             move |cx| {
                 ZStack::new(cx, move |cx| {
@@ -263,15 +258,13 @@ where
                 cx.capture();
                 cx.focus_with_visibility(false);
 
-                self.cursor =
-                    (self.lens.get(cx) - self.min_value) / (self.max_value - self.min_value);
+                self.cursor = self.lens.get(cx);
             }
 
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
 
-                self.cursor =
-                    (self.lens.get(cx) - self.min_value) / (self.max_value - self.min_value);
+                self.cursor = self.lens.get(cx);
 
                 cx.release();
             }
@@ -333,7 +326,7 @@ where
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         let move_virtual_slider = |self_ref: &mut Self, cx: &mut EventContext, new_normal: u8| {
-            self_ref.cursor = new_normal.clamp(0, self_ref.max_value);
+            self_ref.cursor = new_normal.clamp(0, self_ref.discrete_steps - 1);
 
             if let Some(callback) = &self_ref.on_changing_discrete {
                 (callback)(cx, self_ref.cursor);

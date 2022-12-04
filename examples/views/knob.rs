@@ -73,7 +73,7 @@ fn main() {
                 })
                 .knob_type(KnobType::Tick)
                 .class("small");
-            Knob::custom_discrete(cx, AppData::tick.clone(), 3, 0, KNOB_TICKS, move |cx, v| {
+            Knob::custom_discrete(cx, AppData::tick.clone(), 3, KNOB_TICKS, move |cx, v| {
                 Label::new(cx, v.map(|v| format!("{:.2}", v))).hoverable(false)
             })
             .on_changing(|cx, val| {
