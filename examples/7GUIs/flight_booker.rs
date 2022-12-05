@@ -19,14 +19,8 @@ const STYLE: &str = r#"
     }
 "#;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct SimpleDate(NaiveDate);
-
-impl Data for SimpleDate {
-    fn same(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
-}
 
 impl std::fmt::Display for SimpleDate {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
