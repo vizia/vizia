@@ -95,6 +95,8 @@ impl RadioButton {
             .checked(checked)
             .cursor(CursorIcon::Hand)
             .navigable(true)
+            .checkable(true)
+            .role(Role::RadioButton)
     }
 }
 
@@ -113,6 +115,16 @@ impl View for RadioButton {
                     }
                 }
             }
+
+            WindowEvent::ActionRequest(request) => match request.action {
+                Action::Default => {
+                    if let Some(callback) = &self.on_select {
+                        (callback)(cx);
+                    }
+                }
+
+                _ => {}
+            },
 
             _ => {}
         });

@@ -1,29 +1,36 @@
 use vizia::fonts::unicode_names::CHECK;
 use vizia::prelude::*;
 
+static NAMES: [&str; 3] = ["First", "Second", "Third"];
+
 #[derive(Lens)]
 pub struct AppData {
-    flag1: bool,
-    flag2: bool,
-    flag3: bool,
+    flags: [bool; 3],
+    radio_flags: [bool; 3],
 
     value: f32,
 }
 
 pub enum AppEvent {
-    ToggleFlag(u32),
+    ToggleFlag(usize),
+    ToggleRadio(usize),
     SetValue(f32),
 }
 
 impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::ToggleFlag(index) => match index {
-                0 => self.flag1 ^= true,
-                1 => self.flag2 ^= true,
-                2 => self.flag3 ^= true,
-                _ => {}
-            },
+            AppEvent::ToggleFlag(index) => {
+                self.flags[*index] ^= true;
+            }
+
+            AppEvent::ToggleRadio(index) => {
+                for flag in self.radio_flags.iter_mut() {
+                    *flag = false;
+                }
+
+                self.radio_flags[*index] = true;
+            }
 
             AppEvent::SetValue(val) => {
                 self.value = *val;
@@ -34,7 +41,8 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        AppData { flag1: false, flag2: false, flag3: false, value: 25.0 }.build(cx);
+        AppData { flags: [false, false, false], radio_flags: [true, false, false], value: 25.0 }
+            .build(cx);
 
         VStack::new(cx, |cx| {
             VStack::new(cx, |cx| {
@@ -46,36 +54,35 @@ fn main() {
 
             VStack::new(cx, |cx| {
                 Label::new(cx, "Checkboxes").font_size(24.0);
-                HStack::new(cx, |cx| {
-                    Checkbox::new(cx, AppData::flag1)
-                        .on_toggle(|cx| cx.emit(AppEvent::ToggleFlag(0)))
-                        .id("first");
-                    Label::new(cx, "First").describing("first").hidden(true);
-                })
-                .height(Auto)
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .col_between(Pixels(5.0));
-                HStack::new(cx, |cx| {
-                    Checkbox::new(cx, AppData::flag2)
-                        .on_toggle(|cx| cx.emit(AppEvent::ToggleFlag(1)))
-                        .id("second");
-                    Label::new(cx, "Second").describing("second").hidden(true);
-                })
-                .height(Auto)
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .col_between(Pixels(5.0));
-                HStack::new(cx, |cx| {
-                    Checkbox::new(cx, AppData::flag3)
-                        .on_toggle(|cx| cx.emit(AppEvent::ToggleFlag(2)))
-                        .id("third");
-                    Label::new(cx, "Third").describing("third").hidden(true);
-                })
-                .height(Auto)
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .col_between(Pixels(5.0));
+                for i in 0..3 {
+                    HStack::new(cx, move |cx| {
+                        Checkbox::new(cx, AppData::flags.map(move |flags| flags[i]))
+                            .on_toggle(move |cx| cx.emit(AppEvent::ToggleFlag(i)))
+                            .id(format!("check_{}", i));
+                        Label::new(cx, NAMES[i]).describing(format!("check_{}", i)).hidden(true);
+                    })
+                    .height(Auto)
+                    .child_top(Stretch(1.0))
+                    .child_bottom(Stretch(1.0))
+                    .col_between(Pixels(5.0));
+                }
+            })
+            .height(Auto)
+            .row_between(Pixels(10.0));
+
+            VStack::new(cx, |cx| {
+                for i in 0..3 {
+                    HStack::new(cx, move |cx| {
+                        RadioButton::new(cx, AppData::radio_flags.map(move |flags| flags[i]))
+                            .on_select(move |cx| cx.emit(AppEvent::ToggleRadio(i)))
+                            .id(format!("check_{}", i));
+                        Label::new(cx, NAMES[i]).describing(format!("check_{}", i)).hidden(true);
+                    })
+                    .size(Auto)
+                    .child_top(Stretch(1.0))
+                    .child_bottom(Stretch(1.0))
+                    .col_between(Pixels(5.0));
+                }
             })
             .height(Auto)
             .row_between(Pixels(10.0));
@@ -104,7 +111,7 @@ fn main() {
                 Label::new(cx, "Slider").font_size(24.0);
                 HStack::new(cx, |cx| {
                     Slider::new(cx, AppData::value)
-                        .name("Volume Control")
+                        .name("Value Control")
                         .range(0.0..100.0)
                         .step(1.0)
                         .on_changing(|cx, val| cx.emit(AppEvent::SetValue(val)))
