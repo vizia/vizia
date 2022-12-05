@@ -1,6 +1,6 @@
 use morphorm::PositionType;
 
-use crate::prelude::*;
+use crate::{prelude::*, state::Bindable};
 
 #[derive(Debug, Default, Data, Lens, Clone)]
 pub struct PopupData {
@@ -65,10 +65,10 @@ where
     }
 }
 
-impl<'a, L> Handle<'a, Popup<L>>
+impl<'a, B> Handle<'a, Popup<B>>
 where
-    L: Lens,
-    L::Target: Clone + Into<bool>,
+    B: Bindable,
+    B::Output: Clone + Into<bool>,
 {
     /// Registers a callback for when the user clicks off of the popup, usually with the intent of
     /// closing it.
@@ -78,7 +78,7 @@ where
     {
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
-            cx.add_listener(move |popup: &mut Popup<L>, cx, event| {
+            cx.add_listener(move |popup: &mut Popup<B>, cx, event| {
                 let flag: bool = popup.lens.get(cx).clone().into();
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
@@ -109,10 +109,10 @@ where
     }
 }
 
-impl<L> View for Popup<L>
+impl<B> View for Popup<B>
 where
-    L: Lens,
-    L::Target: Into<bool>,
+    B: Bindable,
+    B::Output: Into<bool>,
 {
     fn element(&self) -> Option<&'static str> {
         Some("popup")

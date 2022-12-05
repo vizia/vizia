@@ -62,8 +62,8 @@ impl Model for ScrollData {
     }
 }
 
-pub struct ScrollView<L> {
-    data: L,
+pub struct ScrollView<B> {
+    data: B,
 }
 
 impl ScrollView<scroll_data_derived_lenses::root> {
@@ -94,12 +94,12 @@ impl ScrollView<scroll_data_derived_lenses::root> {
     }
 }
 
-impl<L: Lens<Target = ScrollData>> ScrollView<L> {
+impl<B: Bindable<Output = ScrollData>> ScrollView<B> {
     pub fn custom<F>(
         cx: &mut Context,
         scroll_x: bool,
         scroll_y: bool,
-        data: L,
+        data: B,
         content: F,
     ) -> Handle<Self>
     where
@@ -114,7 +114,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         })
     }
 
-    fn common_builder<F>(cx: &mut Context, data: L, content: F, scroll_x: bool, scroll_y: bool)
+    fn common_builder<F>(cx: &mut Context, data: B, content: F, scroll_x: bool, scroll_y: bool)
     where
         F: 'static + FnOnce(&mut Context),
     {
@@ -168,7 +168,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
     }
 }
 
-impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
+impl<B: Bindable<Output = ScrollData>> View for ScrollView<B> {
     fn element(&self) -> Option<&'static str> {
         Some("scrollview")
     }

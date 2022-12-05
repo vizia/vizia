@@ -1,25 +1,24 @@
 use crate::prelude::*;
-use crate::state::{Index, Then};
+use crate::state::{BindIndex, Bindable, BindableExt, Index, Then};
 use std::marker::PhantomData;
 use vizia_input::Code;
 
 /// A view for creating a list of items from a binding to a Vec<T>
-pub struct List<L, T: 'static>
+pub struct List<B, T: 'static>
 where
-    L: Lens<Target = Vec<T>>,
+    B: Bindable<Output = Vec<T>>,
 {
-    p: PhantomData<L>,
+    p: PhantomData<B>,
     increment_callback: Option<Box<dyn Fn(&mut EventContext)>>,
     decrement_callback: Option<Box<dyn Fn(&mut EventContext)>>,
     clear_callback: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
+impl<B: 'static + Clone + Bindable<Output = Vec<T>>, T: Clone> List<B, T> {
     /// Creates a new List view with a binding to the given lens and a template for constructing the list items
-    pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
+    pub fn new<F>(cx: &mut Context, lens: B, item: F) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, T>>),
-        <L as Lens>::Source: Model,
+        F: 'static + Fn(&mut Context, usize, BindIndex<B, T>),
     {
         //let item_template = Rc::new(item);
         List {
@@ -34,7 +33,8 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
             Binding::new(cx, lens.clone().map(|lst| lst.len()), move |cx, list_len| {
                 // If the number of list items is different to the number of children of the ListView
                 // then remove and rebuild all the children
-                let list_len = list_len.get_fallible(cx).map_or(0, |d| d);
+                // let list_len = list_len.get_fallible(cx).map_or(0, |d| d);
+                let list_len = list_len.get_val(cx);
 
                 for index in 0..list_len {
                     let ptr = lens.clone().index(index);
@@ -45,7 +45,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
     }
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
+impl<B: 'static + Bindable<Output = Vec<T>>, T> View for List<B, T> {
     fn element(&self) -> Option<&'static str> {
         Some("list")
     }

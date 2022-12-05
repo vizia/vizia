@@ -47,18 +47,18 @@ pub trait LensExt: Lens {
     /// ```ignore
     /// let value = lens.get(cx);
     /// ```
-    fn get<C: DataContext>(&self, cx: &C) -> Self::Target
-    where
-        Self::Target: Clone,
-    {
-        self.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| {
-                t.expect("Lens failed to resolve. Do you want to use LensExt::get_fallible?")
-                    .clone()
-            },
-        )
-    }
+    // fn get<C: DataContext>(&self, cx: &C) -> Self::Target
+    // where
+    //     Self::Target: Clone,
+    // {
+    //     self.view(
+    //         cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
+    //         |t| {
+    //             t.expect("Lens failed to resolve. Do you want to use LensExt::get_fallible?")
+    //                 .clone()
+    //         },
+    //     )
+    // }
 
     fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Target>
     where
@@ -86,13 +86,13 @@ pub trait LensExt: Lens {
         Then::new(self, other)
     }
 
-    fn index<T>(self, index: usize) -> Then<Self, Index<Self::Target, T>>
-    where
-        T: 'static,
-        Self::Target: Deref<Target = [T]>,
-    {
-        self.then(Index::new(index))
-    }
+    // fn index<T>(self, index: usize) -> Then<Self, Index<Self::Target, T>>
+    // where
+    //     T: 'static,
+    //     Self::Target: Deref<Target = [T]>,
+    // {
+    //     self.then(Index::new(index))
+    // }
 
     fn unwrap<T: 'static>(self) -> Then<Self, UnwrapLens<T>>
     where

@@ -10,8 +10,8 @@ static DEFAULT_MODIFIER_SCALAR: f32 = 0.04;
 
 use std::f32::consts::PI;
 
-pub struct Knob<L> {
-    lens: L,
+pub struct Knob<B> {
+    lens: B,
     default_normal: f32,
 
     is_dragging: bool,
@@ -26,11 +26,11 @@ pub struct Knob<L> {
     on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
 }
 
-impl<L: Lens<Target = f32>> Knob<L> {
+impl<B: Bindable<Output = f32>> Knob<B> {
     pub fn new(
         cx: &mut Context,
         normalized_default: impl Res<f32>,
-        lens: L,
+        lens: B,
         centered: bool,
     ) -> Handle<Self> {
         Self {
@@ -80,11 +80,11 @@ impl<L: Lens<Target = f32>> Knob<L> {
     pub fn custom<F, V: View>(
         cx: &mut Context,
         default_normal: f32,
-        lens: L,
+        lens: B,
         content: F,
     ) -> Handle<'_, Self>
     where
-        F: 'static + Fn(&mut Context, L) -> Handle<V>,
+        F: 'static + Fn(&mut Context, B) -> Handle<V>,
     {
         Self {
             lens: lens.clone(),
@@ -109,13 +109,13 @@ impl<L: Lens<Target = f32>> Knob<L> {
     }
 }
 
-impl<'a, L: Lens<Target = f32>> Handle<'a, Knob<L>> {
+impl<'a, B: Bindable<Output = f32>> Handle<'a, Knob<B>> {
     pub fn on_changing<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, f32),
     {
         if let Some(view) = self.cx.views.get_mut(&self.entity) {
-            if let Some(knob) = view.downcast_mut::<Knob<L>>() {
+            if let Some(knob) = view.downcast_mut::<Knob<B>>() {
                 knob.on_changing = Some(Box::new(callback));
             }
         }
@@ -124,7 +124,7 @@ impl<'a, L: Lens<Target = f32>> Handle<'a, Knob<L>> {
     }
 }
 
-impl<L: Lens<Target = f32>> View for Knob<L> {
+impl<B: Bindable<Output = f32>> View for Knob<B> {
     fn element(&self) -> Option<&'static str> {
         Some("knob")
     }
@@ -438,7 +438,7 @@ impl View for TickKnob {
     }
 }
 impl Handle<'_, TickKnob> {
-    pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
+    pub fn value<B: Bindable<Output = f32>>(self, lens: B) -> Self {
         let entity = self.entity;
         Binding::new(self.cx, lens, move |cx, value| {
             let value = value.get(cx);
@@ -571,7 +571,7 @@ impl View for ArcTrack {
 }
 
 impl Handle<'_, ArcTrack> {
-    pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
+    pub fn value<B: Bindable<Output = f32>>(self, lens: B) -> Self {
         let entity = self.entity;
         Binding::new(self.cx, lens, move |cx, value| {
             let value = value.get(cx);

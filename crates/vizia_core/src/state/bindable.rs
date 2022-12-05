@@ -13,9 +13,9 @@ use crate::{
 
 use super::{BasicStore, Data, Lens, LensExt, Store};
 
-pub trait Bindable {
+pub trait Bindable: 'static + Clone {
     type Output;
-    fn get_val<C: DataContext>(&self, cx: &C) -> Self::Output;
+    fn get_val2<C: DataContext>(&self, cx: &C) -> Self::Output;
     fn insert_store(self, cx: &mut Context, entity: Entity);
     fn name(&self) -> Option<&'static str>;
 }
@@ -26,8 +26,14 @@ where
 {
     type Output = L::Target;
 
-    fn get_val<C: DataContext>(&self, cx: &C) -> Self::Output {
-        self.get(cx)
+    fn get_val2<C: DataContext>(&self, cx: &C) -> Self::Output {
+        self.view(
+            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
+            |t| {
+                t.expect("Lens failed to resolve. Do you want to use LensExt::get_fallible?")
+                    .clone()
+            },
+        )
     }
 
     fn insert_store(self, cx: &mut Context, id: Entity) {
@@ -125,8 +131,8 @@ where
 {
     type Output = (L1::Target, L2::Target);
 
-    fn get_val<C: DataContext>(&self, cx: &C) -> Self::Output {
-        (self.0.get(cx), self.1.get(cx))
+    fn get_val2<C: DataContext>(&self, cx: &C) -> Self::Output {
+        (self.0.get_val2(cx), self.1.get_val2(cx))
     }
 
     fn insert_store(self, cx: &mut Context, id: Entity) {

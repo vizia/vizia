@@ -2,23 +2,22 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 
 use crate::prelude::*;
-use crate::state::{Index, Then};
+use crate::state::{BindIndex, BindThen, Index, Then};
 
 // TODO
 
-pub struct Table<L, T: 'static>
+pub struct Table<B, T: 'static>
 where
-    L: Lens<Target = Vec<T>>,
+    B: Bindable<Output = Vec<T>>,
     T: Data,
 {
-    p: PhantomData<L>,
+    p: PhantomData<B>,
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T: Data> Table<L, T> {
-    pub fn new<'a, F>(cx: &'a mut Context, lens: L, list_builder: F) -> Handle<'a, Self>
+impl<B: 'static + Bindable<Output = Vec<T>>, T: Data> Table<B, T> {
+    pub fn new<'a, F>(cx: &'a mut Context, lens: B, list_builder: F) -> Handle<'a, Self>
     where
-        F: 'static + Fn(&mut Context, L),
-        <L as Lens>::Source: Model,
+        F: 'static + Fn(&mut Context, B),
     {
         Self { p: PhantomData::default() }.build(cx, move |cx| {
             HStack::new(cx, move |cx| {
@@ -28,9 +27,9 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> Table<L, T> {
     }
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for Table<L, T>
+impl<B: 'static + Bindable<Output = Vec<T>>, T: Data> View for Table<B, T>
 where
-    L: 'static + Lens<Target = Vec<T>>,
+    B: 'static + Bindable<Output = Vec<T>>,
 {
     fn element(&self) -> Option<&'static str> {
         Some("table")
@@ -39,7 +38,7 @@ where
 
 pub struct TableColumn<R, L, T, U>
 where
-    R: Lens<Target = Vec<T>>,
+    R: Bindable<Output = Vec<T>>,
     L: Lens<Source = T, Target = U>,
     T: Data,
     U: Data,
@@ -50,7 +49,7 @@ where
 
 impl<R, L, T: Data, U: Data> TableColumn<R, L, T, U>
 where
-    R: Lens<Target = Vec<T>>,
+    R: Bindable<Output = Vec<T>>,
     L: Lens<Source = T, Target = U>,
 {
     pub fn new<F, Label>(
@@ -61,9 +60,8 @@ where
         content: F,
     ) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, usize, Then<Then<R, Index<<R as Lens>::Target, T>>, L>),
+        F: 'static + Fn(&mut Context, usize, BindThen<BindIndex<R, T>, L, U>),
         Label: 'static + Fn(&mut Context),
-        <R as Lens>::Source: Model,
     {
         Self { p1: PhantomData::default(), p2: PhantomData::default() }.build(cx, move |cx| {
             //VStack::new(cx, move |cx|{
@@ -77,7 +75,7 @@ where
                 let content = content.clone();
                 let item = item.clone();
                 VStack::new(cx, move |cx| {
-                    //let item = item.clone();
+                    let item = item.clone();
                     Binding::new(cx, it.then(item), move |cx, l| {
                         (content)(cx, index, l.clone());
                     });
@@ -90,7 +88,7 @@ where
 
 impl<R, L, T: Data, U: Data> View for TableColumn<R, L, T, U>
 where
-    R: Lens<Target = Vec<T>>,
+    R: Bindable<Output = Vec<T>>,
     L: Lens<Source = T, Target = U>,
 {
     fn element(&self) -> Option<&'static str> {

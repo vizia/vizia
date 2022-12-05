@@ -10,8 +10,8 @@ pub struct Scrollbar<L1> {
     on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
 }
 
-impl<L1: Lens<Target = f32>> Scrollbar<L1> {
-    pub fn new<F, L2: Lens<Target = f32>>(
+impl<L1: Bindable<Output = f32>> Scrollbar<L1> {
+    pub fn new<F, L2: Bindable<Output = f32>>(
         cx: &mut Context,
         value: L1,
         ratio: L2,
@@ -96,7 +96,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
     }
 }
 
-impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
+impl<L1: 'static + Bindable<Output = f32>> View for Scrollbar<L1> {
     fn element(&self) -> Option<&'static str> {
         Some("scrollbar")
     }

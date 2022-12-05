@@ -497,7 +497,7 @@ where
             Binding::new(cx, binding.clone(), |cx, text| {
                 // let text =
                 //     text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
-                let text = text.get_val(cx).to_string();
+                let text = text.get_val2(cx).to_string();
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
                         let td = TextboxData {
@@ -612,7 +612,7 @@ where
                     //     cx.emit(TextEvent::InsertText(text));
                     // };
 
-                    let text = self.binding.get_val(cx).to_string();
+                    let text = self.binding.get_val2(cx).to_string();
                     cx.emit(TextEvent::SelectAll);
                     cx.emit(TextEvent::InsertText(text));
 
@@ -696,7 +696,7 @@ where
                         //     cx.emit(TextEvent::InsertText(text));
                         // };
 
-                        let text = self.binding.get_val(cx).to_string();
+                        let text = self.binding.get_val2(cx).to_string();
                         cx.emit(TextEvent::SelectAll);
                         cx.emit(TextEvent::InsertText(text));
 

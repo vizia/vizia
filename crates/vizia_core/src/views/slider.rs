@@ -68,16 +68,16 @@ pub struct SliderDataInternal {
 /// });
 /// ```
 #[derive(Lens)]
-pub struct Slider<L: Lens> {
-    lens: L,
+pub struct Slider<B: Bindable> {
+    lens: B,
     is_dragging: bool,
     internal: SliderDataInternal,
     on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
 }
 
-impl<L> Slider<L>
+impl<B> Slider<B>
 where
-    L: Lens<Target = f32>,
+    B: Bindable<Output = f32>,
 {
     /// Creates a new slider bound to the value targeted by the lens.
     ///
@@ -97,7 +97,7 @@ where
     ///         println!("Slider on_changing: {}", value);
     ///     });
     /// ```
-    pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
+    pub fn new(cx: &mut Context, lens: B) -> Handle<Self> {
         Self {
             lens: lens.clone(),
             is_dragging: false,
@@ -113,7 +113,7 @@ where
             on_changing: None,
         }
         .build(cx, move |cx| {
-            Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
+            Binding::new(cx, Slider::<B>::internal, move |cx, slider_data| {
                 let lens = lens.clone();
                 ZStack::new(cx, move |cx| {
                     let slider_data = slider_data.get(cx);
@@ -181,7 +181,7 @@ where
     }
 }
 
-impl<L: Lens<Target = f32>> View for Slider<L> {
+impl<B: Bindable<Output = f32>> View for Slider<B> {
     fn element(&self) -> Option<&'static str> {
         Some("slider")
     }
@@ -320,7 +320,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
     }
 }
 
-impl<L: Lens> Handle<'_, Slider<L>> {
+impl<B: Bindable> Handle<'_, Slider<B>> {
     /// Sets the callback triggered when the slider value is changing (dragging).
     ///
     /// Takes a closure which triggers when the slider value is changing,
