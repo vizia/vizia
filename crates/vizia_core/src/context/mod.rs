@@ -524,6 +524,11 @@ impl Context {
         std::thread::spawn(move || target(&mut cxp));
     }
 
+    /// Finds the entity that identifier identifies
+    pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
+        self.entity_identifiers.get(identity).cloned()
+    }
+
     /// Generates an accesskit node for the given entity using properties stored in context
     pub(crate) fn get_node(&self, entity: Entity) -> Node {
         // The bounds of the entity
@@ -556,19 +561,8 @@ impl Context {
             }
         };
 
-        let labelled_by = self
-            .style
-            .labelled_by
-            .get(entity)
-            .map(|labelled_by| match labelled_by {
-                LabelledBy::FirstChild => self
-                    .tree
-                    .get_first_child(entity)
-                    .and_then(|first_child| Some(first_child.accesskit_id())),
-
-                _ => None,
-            })
-            .flatten();
+        let labelled_by =
+            self.style.labelled_by.get(entity).map(|labelled_by| labelled_by.accesskit_id());
 
         Node {
             role: self.style.roles.get(entity).copied().unwrap_or(Role::Unknown),
@@ -577,6 +571,7 @@ impl Context {
             children: entity.child_iter(&self.tree).map(|e| e.accesskit_id()).collect(),
             name: self.style.name.get(entity).map(|name| name.clone().into_boxed_str()),
             checked_state,
+            disabled: self.style.disabled.get(entity).copied().unwrap_or_default(),
             default_action_verb: self.style.default_action_verb.get(entity).copied(),
             focusable: self
                 .style

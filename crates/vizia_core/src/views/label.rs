@@ -138,7 +138,11 @@ impl Handle<'_, Label> {
     /// Label::new(cx, "hello").describing("checkbox_identifier");
     /// ```
     pub fn describing(self, entity_identifier: impl Into<String>) -> Self {
-        self.modify(|label| label.describing = Some(entity_identifier.into())).class("describing")
+        let identifier = entity_identifier.into();
+        if let Some(id) = self.cx.resolve_entity_identifier(&identifier) {
+            self.cx.style.labelled_by.insert(id, self.entity);
+        }
+        self.modify(|label| label.describing = Some(identifier)).class("describing")
     }
 }
 

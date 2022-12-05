@@ -33,13 +33,13 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self
     }
 
-    fn labelled_by(mut self, labelled_by: LabelledBy) -> Self {
-        let id = self.entity();
+    // fn labelled_by(mut self, labelled_by: LabelledBy) -> Self {
+    //     let id = self.entity();
 
-        self.context().style.labelled_by.insert(id, labelled_by).unwrap();
+    //     self.context().style.labelled_by.insert(id, labelled_by).unwrap();
 
-        self
-    }
+    //     self
+    // }
 
     fn numeric_value<U: Into<f64>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();

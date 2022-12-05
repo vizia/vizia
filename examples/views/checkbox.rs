@@ -75,7 +75,7 @@ fn main() {
             .child_top(Stretch(1.0))
             .child_bottom(Stretch(1.0));
 
-            Label::new(cx, "Checkbox with Label").top(Pixels(20.0)).top(Pixels(20.0));
+            Label::new(cx, "Custom Checkbox").top(Pixels(20.0)).top(Pixels(20.0));
 
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, AppData::option1)

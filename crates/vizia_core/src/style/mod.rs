@@ -106,7 +106,7 @@ pub struct Style {
     pub roles: SparseSet<Role>,
     pub default_action_verb: SparseSet<DefaultActionVerb>,
     pub live: SparseSet<Live>,
-    pub labelled_by: SparseSet<LabelledBy>,
+    pub labelled_by: SparseSet<Entity>,
     // TODO: Should we store these or somehow derive them from app state?
     pub text_value: SparseSet<String>,
     pub numeric_value: SparseSet<f64>,
