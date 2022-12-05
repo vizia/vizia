@@ -39,9 +39,7 @@ impl HStack {
                 (content)(cx);
             })
             .layout_type(LayoutType::Row)
-            .role(Role::Header)
-            .name("something")
-        // .role(Role::GenericContainer)
+            .role(Role::GenericContainer)
     }
 }
 
