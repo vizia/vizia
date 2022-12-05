@@ -31,7 +31,7 @@ use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
-use crate::style::{LabelledBy, Style};
+use crate::style::Style;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -586,6 +586,7 @@ impl Context {
             min_numeric_value: self.style.min_numeric_value.get(entity).copied(),
             max_numeric_value: self.style.max_numeric_value.get(entity).copied(),
             numeric_value_step: self.style.numeric_value_step.get(entity).copied(),
+            hidden: self.style.hidden.get(entity).copied().unwrap_or_default(),
             ..Default::default()
         }
     }

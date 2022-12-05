@@ -45,12 +45,12 @@ fn main() {
             .height(Auto);
 
             VStack::new(cx, |cx| {
-                Label::new(cx, "Checkoboxes").font_size(24.0);
+                Label::new(cx, "Checkboxes").font_size(24.0);
                 HStack::new(cx, |cx| {
                     Checkbox::new(cx, AppData::flag1)
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleFlag(0)))
                         .id("first");
-                    Label::new(cx, "First").describing("first");
+                    Label::new(cx, "First").describing("first").hidden(true);
                 })
                 .height(Auto)
                 .child_top(Stretch(1.0))
@@ -60,7 +60,7 @@ fn main() {
                     Checkbox::new(cx, AppData::flag2)
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleFlag(1)))
                         .id("second");
-                    Label::new(cx, "Second").describing("second");
+                    Label::new(cx, "Second").describing("second").hidden(true);
                 })
                 .height(Auto)
                 .child_top(Stretch(1.0))
@@ -70,7 +70,7 @@ fn main() {
                     Checkbox::new(cx, AppData::flag3)
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleFlag(2)))
                         .id("third");
-                    Label::new(cx, "Third").describing("third");
+                    Label::new(cx, "Third").describing("third").hidden(true);
                 })
                 .height(Auto)
                 .child_top(Stretch(1.0))
@@ -81,7 +81,7 @@ fn main() {
             .row_between(Pixels(10.0));
 
             VStack::new(cx, |cx| {
-                Label::new(cx, "Button").font_size(24.0);
+                Label::new(cx, "Buttons").font_size(24.0);
                 Button::new(cx, |_| {}, |cx| Label::new(cx, "Push"));
                 Button::new(
                     cx,

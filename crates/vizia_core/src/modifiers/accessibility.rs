@@ -1,5 +1,5 @@
 use super::internal;
-use crate::{prelude::*, style::LabelledBy};
+use crate::prelude::*;
 
 pub trait AccessibilityModifiers: internal::Modifiable {
     fn role(mut self, role: Role) -> Self {
@@ -33,6 +33,16 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self
     }
 
+    fn hidden<U: Into<bool>>(mut self, name: impl Res<U>) -> Self {
+        let entity = self.entity();
+        name.set_or_bind(self.context(), entity, |cx, id, hidden| {
+            cx.style.hidden.insert(id, hidden.into()).unwrap();
+        });
+
+        self
+    }
+
+    // TODO
     // fn labelled_by(mut self, labelled_by: LabelledBy) -> Self {
     //     let id = self.entity();
 

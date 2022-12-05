@@ -75,12 +75,6 @@ impl Default for Abilities {
     }
 }
 
-pub enum LabelledBy {
-    FirstChild,
-    NextSibling,
-    PrevSibling,
-}
-
 /// Stores the style properties of all entities in the application.
 #[derive(Default)]
 pub struct Style {
@@ -107,6 +101,7 @@ pub struct Style {
     pub default_action_verb: SparseSet<DefaultActionVerb>,
     pub live: SparseSet<Live>,
     pub labelled_by: SparseSet<Entity>,
+    pub hidden: SparseSet<bool>,
     // TODO: Should we store these or somehow derive them from app state?
     pub text_value: SparseSet<String>,
     pub numeric_value: SparseSet<f64>,
