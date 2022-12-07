@@ -2,10 +2,12 @@ use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
     window::Window,
 };
-use accesskit::{self, Action, TreeUpdate};
+#[cfg(not(target_arch = "wasm32"))]
+use accesskit::TreeUpdate;
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit_winit;
 use std::cell::RefCell;
+#[cfg(not(target_arch = "wasm32"))]
 use vizia_core::accessibility::IntoNode;
 use vizia_core::cache::BoundingBox;
 use vizia_core::context::backend::*;
@@ -166,6 +168,7 @@ impl Application {
 
         let (window, canvas) = Window::new(&event_loop, &self.window_description);
 
+        #[cfg(not(target_arch = "wasm32"))]
         let event_loop_proxy = event_loop.create_proxy();
 
         #[cfg(not(target_arch = "wasm32"))]

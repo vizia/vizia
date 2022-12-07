@@ -19,7 +19,7 @@ pub struct Window {
 #[cfg(target_arch = "wasm32")]
 impl Window {
     pub fn new(
-        events_loop: &EventLoop<Event>,
+        events_loop: &EventLoop<UserEvent>,
         window_description: &WindowDescription,
     ) -> (Self, Canvas<OpenGl>) {
         let window_builder = WindowBuilder::new();
