@@ -138,6 +138,8 @@ pub struct BindThen<B, L, T> {
     p: PhantomData<T>,
 }
 
+impl<B: Copy, L: Copy, T: Clone> Copy for BindThen<B, L, T> {}
+
 impl<B, L, T> BindThen<B, L, T> {
     pub fn new(b: B, l: L) -> Self {
         Self { b, l, p: PhantomData::default() }
