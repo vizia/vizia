@@ -155,7 +155,7 @@ where
 
     /// Insert an inline value for an entity.
     pub fn insert(&mut self, entity: Entity, value: T) {
-        self.inline_data.insert(entity, value).unwrap();
+        self.inline_data.insert(entity, value);
     }
 
     /// Remove an entity and any inline data.
@@ -269,7 +269,7 @@ where
         animation: Animation,
         animation_description: AnimationState<T>,
     ) {
-        self.animations.insert(animation, animation_description).unwrap();
+        self.animations.insert(animation, animation_description);
     }
 
     pub fn remove_animation(&mut self, animation: Animation) -> Option<AnimationState<T>> {
@@ -277,7 +277,7 @@ where
     }
 
     pub fn insert_rule(&mut self, rule: Rule, value: T) {
-        self.shared_data.insert(rule, value).unwrap();
+        self.shared_data.insert(rule, value);
     }
 
     pub fn remove_rule(&mut self, rule: Rule) -> Option<T> {

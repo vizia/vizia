@@ -23,7 +23,7 @@ pub trait StyleModifiers: internal::Modifiable {
     fn id(mut self, id: impl Into<String>) -> Self {
         let id = id.into();
         let entity = self.entity();
-        self.context().style.ids.insert(entity, id.clone()).expect("Could not insert id");
+        self.context().style.ids.insert(entity, id.clone());
         self.context().need_restyle();
 
         self.context().entity_identifiers.insert(id, entity);
@@ -75,7 +75,7 @@ pub trait StyleModifiers: internal::Modifiable {
             } else {
                 let mut pseudoclass = PseudoClass::empty();
                 pseudoclass.set(PseudoClass::CHECKED, val.into());
-                cx.style.pseudo_classes.insert(entity, pseudoclass).unwrap();
+                cx.style.pseudo_classes.insert(entity, pseudoclass);
             }
 
             if val {
@@ -85,7 +85,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 } else {
                     let mut abilities = Abilities::empty();
                     abilities.set(Abilities::CHECKABLE, true);
-                    cx.style.abilities.insert(entity, abilities).unwrap();
+                    cx.style.abilities.insert(entity, abilities);
                 }
             }
 

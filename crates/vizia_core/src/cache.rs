@@ -7,7 +7,6 @@ use std::fmt::Debug;
 use crate::prelude::*;
 use crate::style::Transform2D;
 use vizia_storage::SparseSet;
-use vizia_storage::SparseSetError;
 
 /// Computed properties used for layout and drawing.
 
@@ -301,42 +300,40 @@ pub struct CachedData {
 }
 
 impl CachedData {
-    pub fn add(&mut self, entity: Entity) -> Result<(), SparseSetError> {
-        self.bounds.insert(entity, Default::default())?;
-        self.visibility.insert(entity, Default::default())?;
-        self.display.insert(entity, Default::default())?;
-        self.child_sum.insert(entity, (0.0, 0.0))?;
-        self.child_max.insert(entity, (0.0, 0.0))?;
+    pub fn add(&mut self, entity: Entity) {
+        self.bounds.insert(entity, Default::default());
+        self.visibility.insert(entity, Default::default());
+        self.display.insert(entity, Default::default());
+        self.child_sum.insert(entity, (0.0, 0.0));
+        self.child_max.insert(entity, (0.0, 0.0));
 
-        self.opacity.insert(entity, 1.0)?;
+        self.opacity.insert(entity, 1.0);
 
-        self.rotate.insert(entity, 0.0)?;
-        self.scale.insert(entity, (1.0, 1.0))?;
-        self.transform.insert(entity, Transform2D::identity())?;
-        self.origin.insert(entity, (0.0, 0.0))?;
+        self.rotate.insert(entity, 0.0);
+        self.scale.insert(entity, (1.0, 1.0));
+        self.transform.insert(entity, Transform2D::identity());
+        self.origin.insert(entity, (0.0, 0.0));
 
-        self.z_index.insert(entity, 0)?;
+        self.z_index.insert(entity, 0);
 
-        self.clip_region.insert(entity, Default::default())?;
-        self.space.insert(entity, Default::default())?;
-        self.size.insert(entity, Default::default())?;
-        self.cross_stretch_sum.insert(entity, Default::default())?;
-        self.cross_free_space.insert(entity, Default::default())?;
+        self.clip_region.insert(entity, Default::default());
+        self.space.insert(entity, Default::default());
+        self.size.insert(entity, Default::default());
+        self.cross_stretch_sum.insert(entity, Default::default());
+        self.cross_free_space.insert(entity, Default::default());
 
-        self.horizontal_free_space.insert(entity, Default::default())?;
-        self.horizontal_stretch_sum.insert(entity, Default::default())?;
-        self.vertical_free_space.insert(entity, Default::default())?;
-        self.vertical_stretch_sum.insert(entity, Default::default())?;
-        self.stack_child.insert(entity, (false, false))?;
+        self.horizontal_free_space.insert(entity, Default::default());
+        self.horizontal_stretch_sum.insert(entity, Default::default());
+        self.vertical_free_space.insert(entity, Default::default());
+        self.vertical_stretch_sum.insert(entity, Default::default());
+        self.stack_child.insert(entity, (false, false));
 
-        self.grid_row_max.insert(entity, 0.0)?;
-        self.grid_col_max.insert(entity, 0.0)?;
+        self.grid_row_max.insert(entity, 0.0);
+        self.grid_col_max.insert(entity, 0.0);
 
-        self.geometry_changed.insert(entity, Default::default())?;
+        self.geometry_changed.insert(entity, Default::default());
 
-        self.abilities.insert(entity, Default::default())?;
-
-        Ok(())
+        self.abilities.insert(entity, Default::default());
     }
 
     pub fn remove(&mut self, entity: Entity) {

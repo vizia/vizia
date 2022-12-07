@@ -315,7 +315,7 @@ impl<'a> EventContext<'a> {
         } else if applied {
             let mut class_list = HashSet::new();
             class_list.insert(class_name.to_string());
-            self.style.classes.insert(current, class_list).expect("Failed to insert class name");
+            self.style.classes.insert(current, class_list);
         }
 
         self.style.needs_restyle = true;
