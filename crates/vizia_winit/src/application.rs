@@ -3,6 +3,7 @@ use crate::{
     window::Window,
 };
 use accesskit::{self, Action, TreeUpdate};
+#[cfg(not(target_arch = "wasm32"))]
 use accesskit_winit;
 use std::cell::RefCell;
 use vizia_core::accessibility::IntoNode;
@@ -36,9 +37,11 @@ use winit::{
 #[derive(Debug)]
 pub enum UserEvent {
     Event(Event),
+    #[cfg(not(target_arch = "wasm32"))]
     AccessKitActionRequest(accesskit_winit::ActionRequestEvent),
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<accesskit_winit::ActionRequestEvent> for UserEvent {
     fn from(action_request_event: accesskit_winit::ActionRequestEvent) -> Self {
         UserEvent::AccessKitActionRequest(action_request_event)
@@ -165,7 +168,7 @@ impl Application {
 
         let event_loop_proxy = event_loop.create_proxy();
 
-        #[cfg(target_os = "windows")]
+        #[cfg(not(target_arch = "wasm32"))]
         let accesskit = accesskit_winit::Adapter::new(
             window.window(),
             move || {
@@ -242,6 +245,7 @@ impl Application {
                         cx.send_event(event);
                     }
 
+                    #[cfg(not(target_arch = "wasm32"))]
                     UserEvent::AccessKitActionRequest(action_request_event) => {
                         let node_id = action_request_event.request.target;
                         let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
@@ -291,6 +295,7 @@ impl Application {
 
                     cx.process_data_updates();
 
+                    #[cfg(not(target_arch = "wasm32"))]
                     cx.process_tree_updates(|tree_updates| {
                         for update in tree_updates.iter() {
                             #[cfg(target_os = "windows")]
