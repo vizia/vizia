@@ -301,7 +301,6 @@ impl Application {
                     #[cfg(not(target_arch = "wasm32"))]
                     cx.process_tree_updates(|tree_updates| {
                         for update in tree_updates.iter() {
-                            #[cfg(target_os = "windows")]
                             accesskit.update(update.clone());
                         }
                     });
@@ -363,7 +362,6 @@ impl Application {
 
                         winit::event::WindowEvent::Focused(is_focused) => {
                             cx.0.window_has_focus = is_focused;
-                            #[cfg(target_os = "windows")]
                             accesskit.update_if_active(|| TreeUpdate {
                                 nodes: vec![],
                                 tree: None,
