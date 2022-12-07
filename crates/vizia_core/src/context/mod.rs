@@ -93,7 +93,7 @@ pub struct Context {
 impl Context {
     pub fn new() -> Self {
         let mut cache = CachedData::default();
-        cache.add(Entity::root());
+        cache.add(Entity::root()).expect("Failed to add entity to cache");
 
         let mut result = Self {
             entity_manager: IdManager::new(),

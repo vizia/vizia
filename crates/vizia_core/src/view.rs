@@ -33,7 +33,7 @@ pub trait View: 'static + Sized {
         let id = cx.entity_manager.create();
         let current = cx.current();
         cx.tree.add(id, current).expect("Failed to add to tree");
-        cx.cache.add(id);
+        cx.cache.add(id).expect("Failed to add to cache");
         cx.style.add(id);
         cx.views.insert(id, Box::new(self));
         let parent_id = cx.tree.get_layout_parent(id).unwrap();
@@ -53,7 +53,9 @@ pub trait View: 'static + Sized {
         });
 
         cx.data
-            .insert(id, ModelDataStore { models: HashMap::default(), stores: HashMap::default() });
+            .insert(id, ModelDataStore { models: HashMap::default(), stores: HashMap::default() })
+            .expect("Failed to insert model data store");
+
         let handle = Handle { entity: id, p: Default::default(), cx };
 
         handle.cx.with_current(handle.entity, content);
@@ -389,7 +391,7 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
                 (shadow_image.0, shadow_image.1)
             };
 
-        cx.draw_cache.shadow_image.insert(cx.current, (source, target));
+        cx.draw_cache.shadow_image.insert(cx.current, (source, target)).unwrap();
 
         canvas.set_render_target(RenderTarget::Image(source));
         canvas.clear_rect(0, 0, size.0 as u32, size.1 as u32, femtovg::Color::rgba(0, 0, 0, 0));
@@ -703,7 +705,7 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
                     canvas.fill_text(x, y, &text[range.clone()], &paint).ok();
                 }
 
-                cx.draw_cache.text_lines.insert(cx.current, cached);
+                cx.draw_cache.text_lines.insert(cx.current, cached).unwrap();
             }
         }
     }

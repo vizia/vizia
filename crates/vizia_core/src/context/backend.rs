@@ -101,10 +101,10 @@ impl<'a> BackendContext<'a> {
             .height
             .insert(Entity::root(), Units::Pixels(window_description.inner_size.height as f32));
 
-        self.0.style.pseudo_classes.insert(Entity::root(), PseudoClass::ROOT);
+        self.0.style.pseudo_classes.insert(Entity::root(), PseudoClass::ROOT).unwrap();
         self.0.style.disabled.insert(Entity::root(), false);
 
-        self.0.style.roles.insert(Entity::root(), Role::Window);
+        self.0.style.roles.insert(Entity::root(), Role::Window).unwrap();
 
         let bounding_box =
             BoundingBox { w: physical_width, h: physical_height, ..Default::default() };

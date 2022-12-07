@@ -68,7 +68,9 @@ pub trait Model: 'static + Sized {
         } else {
             let mut models: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
             models.insert(TypeId::of::<Self>(), Box::new(self));
-            cx.data.insert(cx.current(), ModelDataStore { models, stores: HashMap::default() });
+            cx.data
+                .insert(cx.current(), ModelDataStore { models, stores: HashMap::default() })
+                .expect("Failed to add data");
         }
     }
 

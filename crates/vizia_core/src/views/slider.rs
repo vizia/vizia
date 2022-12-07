@@ -211,8 +211,8 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
 
             SliderEventInternal::SetRange(range) => {
                 self.internal.range = range.clone();
-                cx.style.min_numeric_value.insert(cx.current(), range.start as f64);
-                cx.style.max_numeric_value.insert(cx.current(), range.end as f64);
+                cx.style.min_numeric_value.insert(cx.current(), range.start as f64).unwrap();
+                cx.style.max_numeric_value.insert(cx.current(), range.end as f64).unwrap();
             }
 
             SliderEventInternal::SetKeyboardFraction(keyboard_fraction) => {
@@ -445,7 +445,7 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     }
 
     pub fn step(self, step: f32) -> Self {
-        self.cx.style.numeric_value_step.insert(self.entity, step as f64);
+        self.cx.style.numeric_value_step.insert(self.entity, step as f64).unwrap();
         self.modify(|slider: &mut Slider<L>| slider.internal.step = step)
     }
 

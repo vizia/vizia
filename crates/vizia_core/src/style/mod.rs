@@ -952,11 +952,13 @@ impl Style {
 
     // Add style data to an entity
     pub fn add(&mut self, entity: Entity) {
-        self.pseudo_classes.insert(entity, PseudoClass::default());
-        self.classes.insert(entity, HashSet::new());
-        self.abilities.insert(entity, Abilities::default());
+        self.pseudo_classes
+            .insert(entity, PseudoClass::default())
+            .expect("Failed to add pseudoclasses");
+        self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
+        self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
         self.visibility.insert(entity, Default::default());
-        self.focus_order.insert(entity, Default::default());
+        self.focus_order.insert(entity, Default::default()).unwrap();
         self.needs_restyle = true;
         self.needs_relayout = true;
         self.needs_redraw = true;
