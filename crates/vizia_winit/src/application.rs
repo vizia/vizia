@@ -362,6 +362,7 @@ impl Application {
 
                         winit::event::WindowEvent::Focused(is_focused) => {
                             cx.0.window_has_focus = is_focused;
+                            #[cfg(not(target_arch = "wasm32"))]
                             accesskit.update_if_active(|| TreeUpdate {
                                 nodes: vec![],
                                 tree: None,
