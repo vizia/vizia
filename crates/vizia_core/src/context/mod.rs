@@ -4,7 +4,7 @@ mod event;
 mod proxy;
 
 use accesskit::kurbo::Rect;
-use accesskit::{CheckedState, Node};
+use accesskit::{CheckedState, Node, TextPosition, TextSelection};
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
@@ -32,6 +32,7 @@ use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
+use crate::text::text_paint_general;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -531,16 +532,7 @@ impl Context {
 
     /// Generates an accesskit node for the given entity using properties stored in context
     pub(crate) fn get_node(&self, entity: Entity) -> Node {
-        // The bounds of the entity
-        let bounds = {
-            let bounds = self.cache.get_bounds(entity);
-            Some(Rect {
-                x0: bounds.x as f64,
-                y0: bounds.y as f64,
-                x1: (bounds.x + bounds.w) as f64,
-                y1: (bounds.y + bounds.h) as f64,
-            })
-        };
+        let bounds = self.cache.get_bounds(entity);
 
         // The CheckedState of the entity
         let checked_state = {
@@ -564,10 +556,47 @@ impl Context {
         let labelled_by =
             self.style.labelled_by.get(entity).map(|labelled_by| labelled_by.accesskit_id());
 
+        let (character_lengths, character_positions, character_widths) = if let Some(text) =
+            self.style.text_value.get(entity)
+        {
+            let text_paint = text_paint_general(&self.style, &self.resource_manager, entity);
+            let metrics =
+                self.text_context.measure_text(bounds.x, bounds.y, text, &text_paint).unwrap();
+
+            let mut character_lengths = Vec::with_capacity(metrics.glyphs.len());
+            let mut character_positions = Vec::with_capacity(metrics.glyphs.len());
+            let mut character_widths = Vec::with_capacity(metrics.glyphs.len());
+
+            for glyph in metrics.glyphs {
+                let length = glyph.c.len_utf8() as u8;
+                let position = glyph.x - bounds.x;
+                let width = glyph.width;
+
+                character_lengths.push(length);
+                character_positions.push(position);
+                character_widths.push(width);
+            }
+
+            println!("{:?} {:?} {:?}", character_lengths, character_positions, character_widths);
+
+            (
+                character_lengths.into(),
+                Some(character_positions.into()),
+                Some(character_widths.into()),
+            )
+        } else {
+            (Box::default(), None, None)
+        };
+
         Node {
             role: self.style.roles.get(entity).copied().unwrap_or(Role::Unknown),
             transform: None,
-            bounds,
+            bounds: Some(Rect {
+                x0: bounds.x as f64,
+                y0: bounds.y as f64,
+                x1: (bounds.x + bounds.w) as f64,
+                y1: (bounds.y + bounds.h) as f64,
+            }),
             children: entity.child_iter(&self.tree).map(|e| e.accesskit_id()).collect(),
             name: self.style.name.get(entity).map(|name| name.clone().into_boxed_str()),
             checked_state,
@@ -587,6 +616,20 @@ impl Context {
             max_numeric_value: self.style.max_numeric_value.get(entity).copied(),
             numeric_value_step: self.style.numeric_value_step.get(entity).copied(),
             hidden: self.style.hidden.get(entity).copied().unwrap_or_default(),
+            character_lengths,
+            character_positions,
+            character_widths,
+            text_direction: Some(accesskit::TextDirection::LeftToRight),
+            text_selection: self.style.text_selection.get(entity).map(|selection| TextSelection {
+                anchor: TextPosition {
+                    node: entity.accesskit_id(),
+                    character_index: selection.anchor,
+                },
+                focus: TextPosition {
+                    node: entity.accesskit_id(),
+                    character_index: selection.active,
+                },
+            }),
             ..Default::default()
         }
     }

@@ -4,6 +4,7 @@ use crate::text::{
     idx_to_pos, measure_text_lines, pos_to_idx, text_layout, text_paint_general, Direction,
     EditableText, Movement, Selection,
 };
+use accesskit::{ActionData, ActionRequest};
 use std::sync::Arc;
 use vizia_id::GenerationalId;
 use vizia_input::Code;
@@ -292,6 +293,7 @@ pub enum TextEvent {
     SelectAll,
     SelectWord,
     SelectParagraph,
+    SetSelection(Selection),
     StartEdit,
     EndEdit,
     Submit(bool),
@@ -386,6 +388,10 @@ impl Model for TextboxData {
             TextEvent::SelectParagraph => {
                 self.select_range(cx, &self.text.paragraph_around(self.selection.active));
                 self.set_caret(cx);
+            }
+
+            TextEvent::SetSelection(selection) => {
+                self.selection = *selection;
             }
 
             TextEvent::Hit(posx, posy) => {
@@ -529,8 +535,10 @@ where
                     let lbl = TextboxLabel {}
                         .build(cx, |_| {})
                         .hoverable(false)
+                        .role(Role::InlineTextBox)
                         .class("textbox_content")
                         .text(TextboxData::text)
+                        .text_value(TextboxData::text)
                         .text_selection(TextboxData::selection)
                         .translate(TextboxData::transform)
                         .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
@@ -548,6 +556,8 @@ where
                 TextboxKind::MultiLineUnwrapped => "multi_line_unwrapped",
                 TextboxKind::MultiLineWrapped => "multi_line_wrapped",
             })
+            .role(Role::TextField)
+            // .text_value(TextboxData::text)
             .cursor(CursorIcon::Text)
             .navigable(true)
     }
@@ -814,6 +824,19 @@ where
 
                 _ => {}
             },
+
+            WindowEvent::ActionRequest(ActionRequest {
+                action: Action::SetTextSelection,
+                target: _,
+                data: Some(ActionData::SetTextSelection(selection)),
+            }) => {
+                println!("Received selectio: {:?}", selection);
+                let text_selection = Selection::new(
+                    selection.anchor.character_index,
+                    selection.focus.character_index,
+                );
+                cx.emit(TextEvent::SetSelection(text_selection));
+            }
 
             _ => {}
         });
