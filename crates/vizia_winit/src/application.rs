@@ -238,6 +238,12 @@ impl Application {
 
         let mut cx = BackendContext::new(&mut context);
         cx.synchronize_fonts();
+        #[cfg(not(target_arch = "wasm32"))]
+        cx.process_tree_updates(|tree_updates| {
+            for update in tree_updates.iter() {
+                accesskit.update(update.clone());
+            }
+        });
 
         event_loop.run(move |event, _, control_flow| {
             let mut cx = BackendContext::new(&mut context);
@@ -301,6 +307,9 @@ impl Application {
                     #[cfg(not(target_arch = "wasm32"))]
                     cx.process_tree_updates(|tree_updates| {
                         for update in tree_updates.iter() {
+                            // println!("");
+                            // println!("Tree Update: {:?}", update);
+                            // println!("");
                             accesskit.update(update.clone());
                         }
                     });

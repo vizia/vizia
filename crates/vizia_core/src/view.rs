@@ -41,7 +41,7 @@ pub trait View: 'static + Sized {
         let parent_node = cx.get_node(parent_id);
         let node_id = id.accesskit_id();
         let children =
-            current.child_iter(&cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
+            parent_id.child_iter(&cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
 
         cx.tree_updates.push(TreeUpdate {
             nodes: vec![

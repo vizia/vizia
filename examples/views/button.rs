@@ -22,6 +22,21 @@ fn main() {
                     .col_between(Pixels(2.0))
                 },
             );
+
+            Button::new(
+                cx,
+                |_| {},
+                |cx| {
+                    HStack::new(cx, |cx| {
+                        Label::new(cx, CHECK).class("icon");
+                        // Hidden from layout and display but used for accessibility
+                        Label::new(cx, "Icon Button").display(Display::None);
+                    })
+                    .size(Auto)
+                    .child_space(Stretch(1.0))
+                    .col_between(Pixels(2.0))
+                },
+            );
         })
         .size(Auto)
         .space(Stretch(1.0))

@@ -97,6 +97,7 @@ impl RadioButton {
             .navigable(true)
             .checkable(true)
             .role(Role::RadioButton)
+            .default_action_verb(DefaultActionVerb::Click)
     }
 }
 

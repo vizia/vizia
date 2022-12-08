@@ -44,12 +44,13 @@ fn main() {
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, Environment::locale.map(|locale| locale.to_string() == "en-US"))
+                    .id("toggle-language")
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleLanguage));
-                Label::new(cx, "Toggle Language");
+                Label::new(cx, "Toggle Language").describing("toggle-language").hidden(true);
             })
             .child_top(Stretch(1.0))
             .child_bottom(Stretch(1.0))
-            .col_between(Pixels(20.0))
+            .col_between(Pixels(10.0))
             .height(Auto);
 
             Label::new(cx, Localized::new("hello-world"));
