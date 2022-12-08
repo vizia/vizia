@@ -71,11 +71,11 @@ where
         arc_offset: f32,
         centered: bool,
     ) -> Handle<Self> {
-        Self::construct(cx, lens, normalized_default)
+        Self::construct(cx, lens.clone(), normalized_default)
             .build(cx, move |cx| {
                 ZStack::new(cx, move |cx| {
                     ArcTrack::new(cx, centered, arc_length, arc_offset)
-                        .value(lens)
+                        .value(lens.clone())
                         .class("knob-track");
 
                     HStack::new(cx, |cx| {
@@ -97,10 +97,10 @@ where
     where
         F: 'static + Fn(&mut Context, L) -> Handle<V>,
     {
-        Self::construct(cx, lens, normalized_default)
+        Self::construct(cx, lens.clone(), normalized_default)
             .build(cx, move |cx| {
                 ZStack::new(cx, move |cx| {
-                    (content)(cx, lens).width(Percentage(100.0)).height(Percentage(100.0));
+                    (content)(cx, lens.clone()).width(Percentage(100.0)).height(Percentage(100.0));
                 });
             })
             .navigable(true)
@@ -147,7 +147,7 @@ where
         discrete_steps: u8,
         centered: bool,
     ) -> Handle<Self> {
-        Self::construct_discrete(cx, lens, normalized_default, discrete_steps)
+        Self::construct_discrete(cx, lens.clone(), normalized_default, discrete_steps)
             .build(cx, move |cx| {
                 ZStack::new(cx, move |cx| {
                     Binding::new(cx, Knob::<L, u8>::knob_type, move |cx, knob_type| {
@@ -156,14 +156,15 @@ where
                             KnobType::Arc => {
                                 ArcTrack::new(cx, centered, arc_length, arc_offset)
                                     .value(
-                                        lens.map(move |v| {
+                                        lens.clone().map(move |v| {
                                             *v as f32 / (discrete_steps as f32 - 1.0)
                                         }),
                                     )
                                     .class("knob-track");
                             }
                             KnobType::Tick => {
-                                Ticks::new(cx, arc_length, arc_offset, discrete_steps).value(lens);
+                                Ticks::new(cx, arc_length, arc_offset, discrete_steps)
+                                    .value(lens.clone());
                             }
                         }
                         let head = HStack::new(cx, |cx| {
@@ -194,7 +195,7 @@ where
     where
         F: 'static + Fn(&mut Context, L) -> Handle<V>,
     {
-        Self::construct_discrete(cx, lens, normalized_default, discrete_steps).build(
+        Self::construct_discrete(cx, lens.clone(), normalized_default, discrete_steps).build(
             cx,
             move |cx| {
                 ZStack::new(cx, move |cx| {
