@@ -24,7 +24,7 @@ impl Spinbox {
     where
         <L as Lens>::Target: Data + ToString,
     {
-        Self::custom(cx, move |cx| Label::new(cx, lens), kind)
+        Self::custom(cx, move |cx| Label::new(cx, lens.clone()), kind)
     }
 
     pub fn custom<F, V>(cx: &mut Context, content: F, kind: SpinboxKind) -> Handle<Spinbox>
