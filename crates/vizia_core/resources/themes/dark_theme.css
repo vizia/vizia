@@ -715,8 +715,9 @@ textbox:focus-visible {
 
 textbox.error {
     border-color: #ef5151;
-    border-width: 2px;
+    border-width: 1px;
     transition: border-color 0.1 0;
+    background-color: #3c2c2c;
 }
 
 /* Time Picker */
