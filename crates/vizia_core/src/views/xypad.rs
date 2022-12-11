@@ -12,8 +12,8 @@ impl XYPad {
             .build(cx, |cx| {
                 Element::new(cx)
                     .position_type(PositionType::SelfDirected)
-                    .left(lens.map(|(x, _)| Percentage(*x * 100.0)))
-                    .top(lens.map(|(_, y)| Percentage((1.0 - *y) * 100.0)))
+                    .left(lens.clone().map(|(x, _)| Percentage(*x * 100.0)))
+                    .top(lens.clone().map(|(_, y)| Percentage((1.0 - *y) * 100.0)))
                     .translate((-5.0, -5.0))
                     .size(Pixels(10.0))
                     .border_radius(Percentage(50.0))
