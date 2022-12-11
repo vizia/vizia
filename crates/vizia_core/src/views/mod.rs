@@ -53,7 +53,7 @@ pub use popup::{Popup, PopupData, PopupEvent};
 pub use radio_buttons::RadioButton;
 pub use scrollbar::Scrollbar;
 pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
-pub use slider::Slider;
+pub use slider::{NamedSlider, Slider};
 pub use spinbox::{Spinbox, SpinboxIcons, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
 pub use switch::Switch;

@@ -35,6 +35,16 @@ fn main() {
             .child_bottom(Stretch(1.0))
             .height(Auto)
             .col_between(Pixels(8.0));
+
+            HStack::new(cx, |cx| {
+                NamedSlider::new(cx, AppData::value, "Slider Name")
+                    .range(-50.0..50.0)
+                    .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
+            })
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0))
+            .height(Auto)
+            .col_between(Pixels(8.0));
         })
         .col_between(Pixels(18.0));
 
