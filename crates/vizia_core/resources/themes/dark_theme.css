@@ -515,36 +515,16 @@ slider .thumb:hover {
 /* Named Slider */
 
 namedslider {
-    height: 28px;
-    child-top: 1s;
-    child-bottom: 1s;
-    child-space: 2px;
-    child-left: 2px;
-    child-right: 0px;
     background-color: #282828;
     border-radius: 4px;
-    col-between: 4px;
 }
 
 namedslider > textbox {
-    min-width: 55px;
     color: #888;
-}
-
-namedslider slider {
-    height: 1s;
-
-    width: 1s;
-    top: 0px;
-    bottom: 0px;
 }
 
 namedslider slider label {
     background-color: transparent;
-    left: 4px;
-    top: 1s;
-    bottom: 1s;
-    right: 4px;
 }
 
 /* Spinbox */
