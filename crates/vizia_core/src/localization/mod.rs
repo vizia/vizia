@@ -38,7 +38,7 @@ where
         Box::new(self.clone())
     }
     fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>) {
-        Binding::new(cx, self.lens, move |cx, _| closure(cx));
+        Binding::new(cx, self.lens.clone(), move |cx, _| closure(cx));
     }
 }
 

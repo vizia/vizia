@@ -34,7 +34,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
         centered: bool,
     ) -> Handle<Self> {
         Self {
-            lens,
+            lens: lens.clone(),
             default_normal: normalized_default.get_val(cx),
 
             is_dragging: false,
@@ -87,7 +87,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
         F: 'static + Fn(&mut Context, L) -> Handle<V>,
     {
         Self {
-            lens,
+            lens: lens.clone(),
             default_normal,
 
             is_dragging: false,

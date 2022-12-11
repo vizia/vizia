@@ -18,9 +18,9 @@ where
     L: Lens<Target = Color>,
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
-        Self { lens, on_change: None }
-            .build(cx, |cx| {
-                ColorSelector::new(cx, lens)
+        Self { lens: lens.clone(), on_change: None }
+            .build(cx, move |cx| {
+                ColorSelector::new(cx, lens.clone())
                     .on_change(|cx, color| cx.emit(ColorPickerEvent::SetColor(color)))
                     .size(Pixels(200.0))
                     .background_color(Color::red());
@@ -31,7 +31,7 @@ where
                     //Dropdown
                     Textbox::new(
                         cx,
-                        lens.map(|color| {
+                        lens.clone().map(|color| {
                             let (h, s, v) = rgb_to_hsv(
                                 color.r() as f64 / 255.0,
                                 color.g() as f64 / 255.0,
@@ -43,7 +43,7 @@ where
                     .width(Stretch(1.0));
                     Textbox::new(
                         cx,
-                        lens.map(|color| {
+                        lens.clone().map(|color| {
                             let (h, s, v) = rgb_to_hsv(
                                 color.r() as f64 / 255.0,
                                 color.g() as f64 / 255.0,
@@ -55,7 +55,7 @@ where
                     .width(Stretch(1.0));
                     Textbox::new(
                         cx,
-                        lens.map(|color| {
+                        lens.clone().map(|color| {
                             let (h, s, v) = rgb_to_hsv(
                                 color.r() as f64 / 255.0,
                                 color.g() as f64 / 255.0,
@@ -135,7 +135,7 @@ where
         );
 
         Self {
-            lens,
+            lens: lens.clone(),
             image: Rc::new(RefCell::new(None)),
             thumb_left: Pixels(0.0),
             thumb_top: Pixels(0.0),
@@ -145,7 +145,7 @@ where
             saturation: 0.0,
             on_change: None,
         }
-        .build(cx, |cx| {
+        .build(cx, move |cx| {
             Element::new(cx)
                 .position_type(PositionType::SelfDirected)
                 .left(Self::saturation.map(|s| Percentage(*s * 100.0)))
