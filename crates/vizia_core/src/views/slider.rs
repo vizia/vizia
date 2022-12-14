@@ -124,6 +124,7 @@ where
                     // Active track
                     Element::new(cx).class("active").bind(lens, move |handle, value| {
                         let val = value.get(handle.cx);
+
                         let normal_val = (val - range.start) / (range.end - range.start);
                         let min = thumb_size / size;
                         let max = 1.0;
@@ -210,7 +211,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|slider_event_internal, _| match slider_event_internal {
+        event.map(|slider_event_internal, meta| match slider_event_internal {
             SliderEventInternal::SetThumbSize(width, height) => match self.internal.orientation {
                 Orientation::Horizontal => {
                     self.internal.thumb_size = *width;
@@ -446,12 +447,18 @@ impl NamedSlider {
         Self { on_changing: None }
             .build(cx, move |cx| {
                 Binding::new(cx, lens.clone(), move |cx, lens| {
-                    Textbox::new(cx, lens.clone().map(|v| format!("{:.2}", v)));
+                    Textbox::new(cx, lens.clone().map(|v| format!("{:.2}", v))).on_submit(
+                        |cx, txt, _| {
+                            if let Ok(val) = txt.parse() {
+                                cx.emit(NamedSliderEvent::Change(val));
+                            }
+                        },
+                    );
                 });
                 Slider::custom(cx, lens.clone(), move |cx| {
-                    Binding::new(cx, lens.clone(), move |cx, _lens| {
+                    Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
                         ZStack::new(cx, |cx| {
-                            let slider_data = Slider::<L>::internal.get(cx);
+                            let slider_data = slider_data.get(cx);
                             let thumb_size = slider_data.thumb_size;
                             let size = slider_data.size;
                             let range = slider_data.range;
@@ -510,6 +517,7 @@ impl Handle<'_, NamedSlider> {
     pub fn range(self, range: Range<f32>) -> Self {
         self.cx.emit_custom(
             Event::new(SliderEventInternal::SetRange(range))
+                .target(self.entity())
                 .origin(self.entity())
                 .propagate(Propagation::Subtree),
         );
