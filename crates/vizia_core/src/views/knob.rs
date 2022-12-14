@@ -59,7 +59,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
                     150.,
                     KnobMode::Continuous,
                 )
-                .value(lens)
+                .value(lens.clone())
                 .class("knob-track");
 
                 HStack::new(cx, |cx| {

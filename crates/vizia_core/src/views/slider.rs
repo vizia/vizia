@@ -465,19 +465,23 @@ impl NamedSlider {
                             let range = slider_data.range;
 
                             // Active track
-                            Element::new(cx).class("active").bind(lens, move |handle, value| {
-                                let val = value.get(handle.cx);
-                                let normal_val = (val - range.start) / (range.end - range.start);
-                                let min = thumb_size / size;
-                                let max = 1.0;
-                                let dx = min + normal_val * (max - min);
+                            Element::new(cx).class("active").bind(
+                                lens.clone(),
+                                move |handle, value| {
+                                    let val = value.get(handle.cx);
+                                    let normal_val =
+                                        (val - range.start) / (range.end - range.start);
+                                    let min = thumb_size / size;
+                                    let max = 1.0;
+                                    let dx = min + normal_val * (max - min);
 
-                                handle
-                                    .height(Stretch(1.0))
-                                    .left(Pixels(0.0))
-                                    .right(Stretch(1.0))
-                                    .width(Percentage(dx * 100.0));
-                            });
+                                    handle
+                                        .height(Stretch(1.0))
+                                        .left(Pixels(0.0))
+                                        .right(Stretch(1.0))
+                                        .width(Percentage(dx * 100.0));
+                                },
+                            );
 
                             Label::new(cx, &name);
                         });
