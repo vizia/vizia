@@ -108,7 +108,7 @@ impl Datepicker {
         L: Lens<Target = D>,
         D: Datelike + Data,
     {
-        let view_date = lens.get(cx);
+        let view_date = lens.clone().get(cx);
 
         Self {
             months: MONTHS.to_vec().iter_mut().map(|v| v.to_string()).collect(),
@@ -116,7 +116,7 @@ impl Datepicker {
             view_date: NaiveDate::from_ymd(view_date.year(), view_date.month(), 1),
             on_select: None,
         }
-        .build(cx, |cx| {
+        .build(cx, move |cx| {
             HStack::new(cx, |cx| {
                 Spinbox::custom(
                     cx,
@@ -147,7 +147,7 @@ impl Datepicker {
 
             Element::new(cx).class("datepicker-divisor");
 
-            VStack::new(cx, |cx| {
+            VStack::new(cx, move |cx| {
                 // Days of the week
                 HStack::new(cx, |cx| {
                     for h in DAYS_HEADER {
@@ -160,6 +160,7 @@ impl Datepicker {
                 HStack::new(cx, move |cx| {
                     for y in 0..6 {
                         for x in 0..7 {
+                            let l = lens.clone();
                             Label::new(cx, "")
                                 .bind(Datepicker::view_date, move |handle, view_date| {
                                     let view_date = view_date.get(handle.cx);
@@ -167,7 +168,7 @@ impl Datepicker {
                                     let (day_number, disabled) =
                                         Self::get_day_number(y, x, &view_date);
 
-                                    handle.bind(lens, move |handle, selected_date| {
+                                    handle.bind(l.clone(), move |handle, selected_date| {
                                         let selected_date = selected_date.get(handle.cx);
 
                                         handle

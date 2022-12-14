@@ -47,9 +47,9 @@ where
     where
         F: 'static + Fn(&mut Context),
     {
-        Self { lens }
+        Self { lens: lens.clone() }
             .build(cx, |cx| {
-                Binding::new(cx, lens, move |cx, lens| {
+                Binding::new(cx, lens.clone(), move |cx, lens| {
                     if lens.get(cx) {
                         if capture_focus {
                             VStack::new(cx, &content).lock_focus_to_within();

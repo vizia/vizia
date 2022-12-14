@@ -22,15 +22,19 @@ impl PickList {
         L2: Lens<Target = usize>,
     {
         Self { on_select: None }.build(cx, |cx| {
+            let s = selected.clone();
+            let l = list_lens.clone();
             // Dropdown List
             Dropdown::new(
                 cx,
                 move |cx| {
+                    let l = l.clone();
+                    let s = s.clone();
                     // A Label and an Icon
                     HStack::new(cx, move |cx| {
-                        Label::new(cx, "").bind(list_lens, move |handle, list| {
-                            handle.bind(selected, move |handle, selected| {
-                                let selected_index = selected.get(handle.cx);
+                        Label::new(cx, "").bind(l.clone(), move |handle, list| {
+                            handle.bind(s.clone(), move |handle, sel| {
+                                let selected_index = sel.get(handle.cx);
 
                                 handle.text(list.clone().index(selected_index));
                             });
@@ -45,11 +49,13 @@ impl PickList {
                     .col_between(Stretch(1.0))
                 },
                 move |cx| {
-                    List::new(cx, list_lens, move |cx, index, item| {
+                    let s = selected.clone();
+                    let l = list_lens.clone();
+                    List::new(cx, l.clone(), move |cx, index, item| {
                         Label::new(cx, item)
                             .child_top(Stretch(1.0))
                             .child_bottom(Stretch(1.0))
-                            .checked(selected.map(move |selected| *selected == index))
+                            .checked(s.clone().map(move |selected| *selected == index))
                             .on_press(move |cx| {
                                 cx.emit(PickListEvent::SetOption(index));
                                 cx.emit(PopupEvent::Close);

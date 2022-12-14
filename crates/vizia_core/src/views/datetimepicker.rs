@@ -22,36 +22,50 @@ where
     L: Lens<Target = NaiveDateTime>,
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
-        Self { lens, tabs: vec!["calendar", "clock"], on_change: None }.build(cx, |cx| {
-            TabView::new(cx, Self::tabs, move |cx, item| match item.get(cx) {
-                "calendar" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, ICON_CALENDAR).hoverable(false);
-                        Element::new(cx).class("indicator");
-                    },
-                    move |cx| {
-                        Datepicker::new(cx, lens.map(|datetime| datetime.date()))
-                            .on_select(|cx, date| cx.emit(DatetimePickerEvent::SetDate(date)));
-                    },
-                ),
+        Self { lens: lens.clone(), tabs: vec!["calendar", "clock"], on_change: None }.build(
+            cx,
+            |cx| {
+                TabView::new(cx, Self::tabs, move |cx, item| match item.get(cx) {
+                    "calendar" => {
+                        let lens1 = lens.clone();
+                        TabPair::new(
+                            move |cx| {
+                                Label::new(cx, ICON_CALENDAR).hoverable(false);
+                                Element::new(cx).class("indicator");
+                            },
+                            move |cx| {
+                                Datepicker::new(cx, lens1.clone().map(|datetime| datetime.date()))
+                                    .on_select(|cx, date| {
+                                        cx.emit(DatetimePickerEvent::SetDate(date))
+                                    });
+                            },
+                        )
+                    }
 
-                "clock" => TabPair::new(
-                    move |cx| {
-                        Label::new(cx, ICON_CLOCK).font("icons").hoverable(false);
-                        Element::new(cx).class("indicator");
-                    },
-                    move |cx| {
-                        AnalogTimepicker::new(cx, lens.map(|datetime| datetime.time()))
-                            .on_change(|cx, time| {
-                                cx.emit(DatetimePickerEvent::SetTime(time));
-                            })
-                            .size(Stretch(1.0));
-                    },
-                ),
+                    "clock" => {
+                        let lens1 = lens.clone();
+                        TabPair::new(
+                            move |cx| {
+                                Label::new(cx, ICON_CLOCK).font("icons").hoverable(false);
+                                Element::new(cx).class("indicator");
+                            },
+                            move |cx| {
+                                AnalogTimepicker::new(
+                                    cx,
+                                    lens1.clone().map(|datetime| datetime.time()),
+                                )
+                                .on_change(|cx, time| {
+                                    cx.emit(DatetimePickerEvent::SetTime(time));
+                                })
+                                .size(Stretch(1.0));
+                            },
+                        )
+                    }
 
-                _ => TabPair::new(|_| {}, |_| {}),
-            });
-        })
+                    _ => TabPair::new(|_| {}, |_| {}),
+                });
+            },
+        )
     }
 }
 
