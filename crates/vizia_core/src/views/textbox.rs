@@ -476,7 +476,7 @@ pub enum TextboxKind {
 
 impl<L: Lens> Textbox<L>
 where
-    <L as Lens>::Target: Data + Clone + ToString,
+    <L as Lens>::Target: PartialEq + Clone + ToString,
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
         Self::new_core(cx, lens, TextboxKind::SingleLine)
@@ -575,7 +575,7 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
 
 impl<L: Lens> View for Textbox<L>
 where
-    <L as Lens>::Target: Data + ToString,
+    <L as Lens>::Target: PartialEq + ToString,
 {
     fn element(&self) -> Option<&'static str> {
         Some("textbox")

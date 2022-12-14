@@ -37,10 +37,8 @@ pub use stack::{HStack, VStack, ZStack};
 pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};
 
-use crate::prelude::*;
-
 /// The orientation of a widget, such as a slider or scrollbar
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Data)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Orientation {
     Horizontal,
     Vertical,

@@ -7,12 +7,12 @@ use crate::prelude::*;
 pub struct Table<L, T: 'static>
 where
     L: Lens<Target = Vec<T>>,
-    T: Data,
+    T: PartialEq,
 {
     p: PhantomData<L>,
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T: Data> Table<L, T> {
+impl<L: 'static + Lens<Target = Vec<T>>, T: PartialEq> Table<L, T> {
     pub fn new<'a, F>(cx: &'a mut Context, lens: L, list_builder: F) -> Handle<'a, Self>
     where
         F: 'static + Fn(&mut Context, L),
@@ -26,7 +26,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Data> Table<L, T> {
     }
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T: Data> View for Table<L, T>
+impl<L: 'static + Lens<Target = Vec<T>>, T: PartialEq> View for Table<L, T>
 where
     L: 'static + Lens<Target = Vec<T>>,
 {
@@ -39,8 +39,8 @@ pub struct TableColumn<R, L, T, U>
 where
     R: Lens<Target = Vec<T>>,
     L: Lens<Source = T, Target = U>,
-    T: Data,
-    U: Data,
+    T: PartialEq,
+    U: PartialEq,
 {
     p1: PhantomData<R>,
     p2: PhantomData<L>,
@@ -86,7 +86,7 @@ where
     }
 }
 
-impl<R, L, T: Data, U: Data> View for TableColumn<R, L, T, U>
+impl<R, L, T: 'static + PartialEq, U: 'static + PartialEq> View for TableColumn<R, L, T, U>
 where
     R: Lens<Target = Vec<T>>,
     L: Lens<Source = T, Target = U>,

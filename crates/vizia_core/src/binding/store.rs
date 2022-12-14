@@ -38,7 +38,7 @@ pub(crate) struct BasicStore<L: Lens, T> {
 impl<L: Lens, T> Store for BasicStore<L, T>
 where
     L: Lens<Target = T>,
-    <L as Lens>::Target: Data,
+    <L as Lens>::Target: Clone + PartialEq,
 {
     fn entity(&self) -> Entity {
         self.entity
@@ -47,7 +47,7 @@ where
     fn update(&mut self, model: ModelOrView) -> bool {
         if let Some(data) = model.downcast_ref::<L::Source>() {
             let result = self.lens.view(data, |t| match (&self.old, t) {
-                (Some(a), Some(b)) if a.same(b) => None,
+                (Some(a), Some(b)) if a.eq(b) => None,
                 (None, None) => None,
                 _ => Some(t.cloned()),
             });

@@ -82,30 +82,25 @@ impl Model for AppData {
         });
     }
 }
+fn main() {
+    Application::new(|cx| {
+        // Build the model data into the tree
+        AppData { count: 0 }.build(cx);
 
-// Create an application with a single default window
-Application::new(|cx| {
-    
-    // Build the model data into the tree
-    AppData { count: 0 }.build(cx);
+        HStack::new(cx, |cx| {
+            // Declare a button which emits an event
+            Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx| Label::new(cx, "Increment"));
 
-    HStack::new(cx, |cx| {
-        // Declare a button which emits an event
-        Button::new(cx, 
-          |cx| cx.emit(AppEvent::Increment), 
-          |cx| Label::new(cx, "Increment")
-        );
-        
-        // Declare a label which is bound to part of the model, updating if it changes
-        Label::new(cx, AppData::count)
-            .width(Pixels(50.0));
+            // Declare a label which is bound to part of the model, updating if it changes
+            Label::new(cx, AppData::count).width(Pixels(50.0));
+        })
+        .child_space(Stretch(1.0))
+        .col_between(Pixels(50.0));
     })
-    .child_space(Stretch(1.0))
-    .col_between(Pixels(50.0));
-})
-.title("Counter")
-.inner_size((400, 100))
-.run();
+    .title("Counter")
+    .inner_size((400, 100))
+    .run();
+}
 ```
 
 <br/>

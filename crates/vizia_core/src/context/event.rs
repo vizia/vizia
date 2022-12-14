@@ -65,7 +65,7 @@ pub struct EventContext<'a> {
     pub draw_cache: &'a DrawCache,
     pub tree: &'a Tree<Entity>,
     pub(crate) data: &'a SparseSet<ModelDataStore>,
-    pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
     listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub resource_manager: &'a ResourceManager,
@@ -92,7 +92,7 @@ impl<'a> EventContext<'a> {
             draw_cache: &cx.draw_cache,
             tree: &cx.tree,
             data: &cx.data,
-            views: &cx.views,
+            views: &mut cx.views,
             listeners: &mut cx.listeners,
             resource_manager: &cx.resource_manager,
             text_context: &cx.text_context,
