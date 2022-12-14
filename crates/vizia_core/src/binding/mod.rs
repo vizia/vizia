@@ -205,8 +205,8 @@ pub use crate::model::*;
 mod store;
 pub(crate) use store::*;
 
-mod binding;
-pub use binding::*;
+mod binding_view;
+pub use binding_view::*;
 
 mod res;
 pub use res::*;
