@@ -4,7 +4,7 @@ mod event;
 mod proxy;
 
 use accesskit::kurbo::Rect;
-use accesskit::{CheckedState, Node, TextPosition, TextSelection};
+use accesskit::{CheckedState, Node};
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
@@ -32,7 +32,6 @@ use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
-use crate::text::text_paint_general;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;

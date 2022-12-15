@@ -74,13 +74,15 @@ pub fn text_layout(
     text: &str,
     paint: &Paint,
     text_context: &TextContext,
-) -> Result<Vec<Range<usize>>, ErrorKind> {
+) -> Result<(Vec<Range<usize>>, Vec<bool>), ErrorKind> {
     let mut lines = text_context.break_text_vec(width, text, paint)?;
+    let mut new_lines = Vec::new();
     if lines.len() == 0 {
         lines.push(0..0)
     }
     let mut soft_break = false;
     for line_range in lines.iter_mut() {
+        let mut has_newline = false;
         if soft_break {
             // trim start spaces
             let mut broken = false;
@@ -103,10 +105,13 @@ pub fn text_layout(
             if bidi_class(ch) == BidiClass::B {
                 soft_break = false;
                 line_range.end = idx + line_range.start;
+                has_newline = true;
             } else {
                 break;
             }
         }
+
+        new_lines.push(has_newline);
     }
 
     // if the text ends with a newline, add a blank line
@@ -114,7 +119,7 @@ pub fn text_layout(
         lines.push(text.len()..text.len());
     }
 
-    Ok(lines)
+    Ok((lines, new_lines))
 }
 
 pub fn measure_text_lines(

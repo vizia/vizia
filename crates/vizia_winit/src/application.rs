@@ -315,11 +315,11 @@ impl Application {
                     #[cfg(not(target_arch = "wasm32"))]
                     cx.process_tree_updates(|tree_updates| {
                         for update in tree_updates.iter() {
-                            println!("");
-                            update.nodes.iter().for_each(|(node_id, node)| {
-                                println!("{:?} {:?}", node_id, node.value)
-                            });
-                            println!("");
+                            // println!("");
+                            // update.nodes.iter().for_each(|(node_id, node)| {
+                            //     println!("{:?} {:?}", node_id, node.value)
+                            // });
+                            // println!("");
                             accesskit.update(update.clone());
                         }
                     });

@@ -629,7 +629,7 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
 
             let text_width = if text_wrap { w } else { f32::MAX };
 
-            if let Ok(lines) = text_layout(text_width, &text, &paint, &cx.text_context) {
+            if let Ok((lines, _)) = text_layout(text_width, &text, &paint, &cx.text_context) {
                 // difference between first line and last line
                 let delta_height = font_metrics.height() * (lines.len() - 1) as f32;
                 let first_line_y = match baseline {

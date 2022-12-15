@@ -67,7 +67,7 @@ impl TextboxData {
             TextboxKind::MultiLineWrapped => parent_bounds.w,
             _ => f32::MAX,
         };
-        let ranges = text_layout(render_width, &self.text, &paint, &cx.text_context).unwrap();
+        let (ranges, _) = text_layout(render_width, &self.text, &paint, &cx.text_context).unwrap();
         let metrics =
             measure_text_lines(&self.text, &paint, &ranges, bounds.x, bounds.y, &cx.text_context);
         let ranges_metrics = ranges.into_iter().zip(metrics.into_iter()).collect::<Vec<_>>();
@@ -563,7 +563,7 @@ where
                 TextboxKind::MultiLineWrapped => "multi_line_wrapped",
             })
             .role(Role::TextField)
-            .text_selection(TextboxData::selection)
+            //.text_selection(TextboxData::selection)
             .text_value(TextboxData::text)
             .cursor(CursorIcon::Text)
             .default_action_verb(DefaultActionVerb::Focus)

@@ -152,7 +152,7 @@ impl<'w> Node<'w> for Entity {
             }
             let child_width = (width - child_space_x).max(0.0);
 
-            if let Ok(lines) = text_layout(child_width, text, &paint, &store.1) {
+            if let Ok((lines, _)) = text_layout(child_width, text, &paint, &store.1) {
                 Some(font_metrics.height() * lines.len() as f32)
             } else {
                 None
