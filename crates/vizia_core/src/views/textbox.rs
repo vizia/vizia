@@ -534,11 +534,11 @@ where
                 .build(cx, move |cx| {
                     let lbl = TextboxLabel {}
                         .build(cx, |_| {})
+                        .hidden(true)
+                        .navigable(false)
                         .hoverable(false)
-                        .role(Role::InlineTextBox)
                         .class("textbox_content")
                         .text(TextboxData::text)
-                        .text_value(TextboxData::text)
                         .text_selection(TextboxData::selection)
                         .translate(TextboxData::transform)
                         .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
@@ -546,6 +546,12 @@ where
 
                     cx.emit(TextEvent::InitContent(lbl, kind));
                 })
+                .hidden(true)
+                .navigable(false)
+                // Added the InlineTextBox role to the container because it's using the first child of the textbox
+                // as the node id of the text selection for accesskit.
+                // .role(Role::InlineTextBox)
+                // .text_value(TextboxData::text)
                 .hoverable(false)
                 .class("textbox_container");
         });
@@ -557,8 +563,10 @@ where
                 TextboxKind::MultiLineWrapped => "multi_line_wrapped",
             })
             .role(Role::TextField)
-            // .text_value(TextboxData::text)
+            .text_selection(TextboxData::selection)
+            .text_value(TextboxData::text)
             .cursor(CursorIcon::Text)
+            .default_action_verb(DefaultActionVerb::Focus)
             .navigable(true)
     }
 }

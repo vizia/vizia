@@ -136,6 +136,18 @@ where
         self.first_child.get(entity.index()).map_or(None, |&first_child| first_child)
     }
 
+    pub fn get_layout_first_child(&self, entity: I) -> Option<I> {
+        let mut i = self.get_first_child(entity);
+        while let Some(child) = i {
+            if !self.is_ignored(child) {
+                return Some(child);
+            }
+
+            i = self.get_next_sibling(child);
+        }
+        None
+    }
+
     /// Returns the next sibling of an entity or `None` if t here isn't one.
     pub fn get_next_sibling(&self, entity: I) -> Option<I> {
         self.next_sibling.get(entity.index()).map_or(None, |&next_sibling| next_sibling)

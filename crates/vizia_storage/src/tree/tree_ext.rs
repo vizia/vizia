@@ -7,6 +7,7 @@ where
     I: GenerationalId,
 {
     fn parent(&self, tree: &Tree<I>) -> Option<I>;
+    fn first_child(&self, tree: &Tree<I>) -> Option<I>;
     fn is_sibling(&self, tree: &Tree<I>, entity: I) -> bool;
     fn is_child_of(&self, tree: &Tree<I>, entity: I) -> bool;
     fn is_descendant_of(&self, tree: &Tree<I>, entity: I) -> bool;
@@ -23,6 +24,10 @@ where
 {
     fn parent(&self, tree: &Tree<Self>) -> Option<Self> {
         tree.get_parent(*self)
+    }
+
+    fn first_child(&self, tree: &Tree<Self>) -> Option<Self> {
+        tree.get_first_child(*self)
     }
 
     fn is_sibling(&self, tree: &Tree<Self>, entity: Self) -> bool {
