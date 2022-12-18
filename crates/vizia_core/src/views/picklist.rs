@@ -38,7 +38,7 @@ impl PickList {
 
                                 handle.text(list.clone().index(selected_index));
                             });
-                        });
+                        }).hoverable(false);
                         if show_handle {
                             Label::new(cx, CHEVRON_DOWN)
                                 .class("icon")
