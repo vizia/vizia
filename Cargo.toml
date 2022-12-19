@@ -213,7 +213,7 @@ name = "fluent_variables"
 path = "examples/localization/fluent_variables.rs"
 
 [features]
-default = ["winit", "clipboard", "x11", "wayland"]
+default = ["winit", "clipboard", "x11", "wayland", "localization"]
 localization = ["vizia_core/localization"]
 clipboard = ["vizia_core/clipboard", "vizia_winit/clipboard"]
 serde = ["vizia_core/serde"]
