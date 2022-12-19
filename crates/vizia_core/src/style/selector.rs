@@ -9,8 +9,6 @@ use bitflags::bitflags;
 
 bitflags! {
     /// A bitflag of possible pseudoclasses.
-    ///
-    /// This type is part of the prelude.
     pub(crate) struct PseudoClass: u16 {
         const HOVER = 1;
         const OVER = 1 << 1;

@@ -119,8 +119,6 @@ use vizia_storage::SparseSet;
 
 bitflags! {
     /// Describes the capabilities of a view with respect to user interaction.
-    ///
-    /// This type is part of the prelude.
     pub(crate) struct Abilities: u8 {
         const HOVERABLE = 1;
         const FOCUSABLE = 1 << 1;

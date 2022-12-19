@@ -42,8 +42,6 @@ static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 
 /// The main storage and control object for a Vizia application.
-///
-/// This type is part of the prelude.
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
     pub(crate) entity_identifiers: HashMap<String, Entity>,
@@ -535,8 +533,6 @@ pub(crate) enum InternalEvent {
 /// A trait for any Context-like object that lets you access stored model data.
 ///
 /// This lets e.g Lens::get be generic over any of these types.
-///
-/// This type is part of the prelude.
 pub trait DataContext {
     /// Get stored data from the context.
     fn data<T: 'static>(&self) -> Option<&T>;

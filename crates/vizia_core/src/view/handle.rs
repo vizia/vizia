@@ -5,8 +5,6 @@ use vizia_id::GenerationalId;
 use crate::prelude::*;
 
 /// A handle to a view which has been already built into the tree.
-///
-/// This type is part of the prelude.
 pub struct Handle<'a, V> {
     pub entity: Entity,
     pub p: PhantomData<V>,

@@ -15,8 +15,6 @@ use vizia_id::{
 /// [root entity]: GenerationalId::root()
 /// [`Restyle`]: crate::prelude::WindowEvent::Restyle
 /// [`Redraw`]: crate::prelude::WindowEvent::Redraw
-///
-/// This type is part of the prelude.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Entity(u32);
 

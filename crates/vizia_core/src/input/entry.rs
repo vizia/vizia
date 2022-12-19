@@ -4,8 +4,6 @@ use crate::{binding::Data, context::EventContext};
 ///
 /// It consists of an action which is usually just an enum variant
 /// and a callback function that gets called if the action got triggered.
-///
-/// This type is part of the prelude.
 #[derive(Copy, Clone)]
 pub struct KeymapEntry<T>
 where

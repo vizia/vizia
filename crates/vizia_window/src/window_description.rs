@@ -1,6 +1,4 @@
 /// The logical size of an application window.
-///
-/// This type is part of the prelude.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WindowSize {
     /// The width of the window.
@@ -45,8 +43,6 @@ impl From<(u32, u32)> for Position {
 }
 
 /// Passed to the window to set initial window properties.
-///
-/// This type is part of the prelude.
 pub struct WindowDescription {
     pub title: String,
     pub inner_size: WindowSize,
