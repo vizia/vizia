@@ -46,7 +46,7 @@ fn main() {
         .col_between(Pixels(5.0))
         .size(Auto);
 
-        VStack::new(cx, |cx| {
+        HStack::new(cx, |cx| {
             // Basic Button
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Button")).disabled(AppData::disabled);
             // Accent Button
@@ -81,5 +81,6 @@ fn main() {
     })
     .ignore_default_theme()
     .title("Button")
+    .inner_size((800, 300))
     .run();
 }

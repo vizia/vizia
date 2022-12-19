@@ -137,7 +137,7 @@ impl Checkbox {
         //let checked = checked.get_val_fallible(cx).unwrap_or(false);
         Self { on_toggle: None }
             .build(cx, |_| {})
-            .text(checked.clone().map(|flag| if *flag {CHECK} else {""}))
+            .text(checked.clone().map(|flag| if *flag { CHECK } else { "" }))
             .checked(checked.clone())
             .cursor(CursorIcon::Hand)
             .navigable(true)

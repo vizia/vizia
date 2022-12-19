@@ -32,13 +32,15 @@ impl PickList {
                     let s = s.clone();
                     // A Label and an Icon
                     HStack::new(cx, move |cx| {
-                        Label::new(cx, "").bind(l.clone(), move |handle, list| {
-                            handle.bind(s.clone(), move |handle, sel| {
-                                let selected_index = sel.get(handle.cx);
+                        Label::new(cx, "")
+                            .bind(l.clone(), move |handle, list| {
+                                handle.bind(s.clone(), move |handle, sel| {
+                                    let selected_index = sel.get(handle.cx);
 
-                                handle.text(list.clone().index(selected_index));
-                            });
-                        }).hoverable(false);
+                                    handle.text(list.clone().index(selected_index));
+                                });
+                            })
+                            .hoverable(false);
                         if show_handle {
                             Label::new(cx, CHEVRON_DOWN)
                                 .class("icon")

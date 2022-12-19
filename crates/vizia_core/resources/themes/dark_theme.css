@@ -136,6 +136,16 @@ button:disabled:active {
     background-color: #606060;
 }
 
+button.outline:disabled {
+    background-color: transparent;
+    border-width: 1px;
+    border-color: #606060;
+}
+
+button.ghost:disabled {
+    background-color: transparent;
+}
+
 button:disabled label {
     color: #888;
 }
