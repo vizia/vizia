@@ -80,7 +80,11 @@ pub struct DrawContext<'a> {
 }
 
 macro_rules! style_getter_units {
-    ($name:ident) => {
+    (
+        $(#[$meta:meta])*
+        $name:ident
+    ) => {
+        $(#[$meta])*
         pub fn $name(&self) -> Option<Units> {
             let result = self.style.$name.get(self.current);
             if let Some(Units::Pixels(p)) = result {
@@ -93,7 +97,11 @@ macro_rules! style_getter_units {
 }
 
 macro_rules! style_getter_untranslated {
-    ($ty:ty, $name:ident) => {
+    (
+        $(#[$meta:meta])*
+        $ty:ty, $name:ident
+    ) => {
+        $(#[$meta])*
         pub fn $name(&self) -> Option<&$ty> {
             self.style.$name.get(self.current)
         }
@@ -121,7 +129,7 @@ impl<'a> DrawContext<'a> {
         }
     }
 
-    // Returns the bounding box of the current view.
+    /// Returns the bounding box of the current view.
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
     }
@@ -136,7 +144,7 @@ impl<'a> DrawContext<'a> {
         &self.style.default_font
     }
 
-    /// Returns the font-size of the current entity in physical coordinates.
+    /// Returns the font-size of the current view in physical pixels.
     pub fn font_size(&self, entity: Entity) -> f32 {
         self.logical_to_physical(self.style.font_size.get(entity).copied().unwrap_or(16.0))
     }
@@ -151,31 +159,102 @@ impl<'a> DrawContext<'a> {
         physical * self.style.dpi_factor as f32
     }
 
-    style_getter_units!(border_width);
-    style_getter_units!(border_radius_top_right);
-    style_getter_units!(border_radius_top_left);
-    style_getter_units!(border_radius_bottom_right);
-    style_getter_units!(border_radius_bottom_left);
-    style_getter_units!(outline_width);
-    style_getter_units!(outline_offset);
-    style_getter_units!(outer_shadow_h_offset);
-    style_getter_units!(outer_shadow_v_offset);
-    style_getter_units!(outer_shadow_blur);
-    style_getter_units!(inner_shadow_h_offset);
-    style_getter_units!(inner_shadow_v_offset);
-    style_getter_units!(inner_shadow_blur);
-    style_getter_units!(child_left);
-    style_getter_units!(child_right);
-    style_getter_units!(child_top);
-    style_getter_units!(child_bottom);
-    style_getter_untranslated!(Color, background_color);
-    style_getter_untranslated!(Color, font_color);
-    style_getter_untranslated!(Color, border_color);
-    style_getter_untranslated!(Color, outline_color);
-    style_getter_untranslated!(Color, outer_shadow_color);
-    style_getter_untranslated!(Color, inner_shadow_color);
-    style_getter_untranslated!(Color, selection_color);
-    style_getter_untranslated!(Color, caret_color);
+    /// Returns the scale factor for the root window.
+    pub fn scale_factor(&self) -> f32 {
+        self.style.dpi_factor as f32
+    }
+
+    style_getter_units!(
+        /// Returns the computed border width of the current view in physical pixels.
+        border_width
+    );
+    style_getter_units!(
+        /// Returns the computed border radius of the top-right corner of the current view in physical pixels.
+        border_radius_top_right
+    );
+    style_getter_units!(
+        /// Returns the computed border radius of the top-left corner of the current view in physical pixels.
+        border_radius_top_left
+    );
+    style_getter_units!(
+        /// Returns the computed border radius of the bottom-right corner of the current view in physical pixels.
+        border_radius_bottom_right
+    );
+    style_getter_units!(
+        /// Returns the computed border radius of the bottom-left corner of the current view in physical pixels.
+        border_radius_bottom_left
+    );
+    style_getter_units!(
+        /// Returns the computed outline width of the current view in physical pixels.
+        outline_width
+    );
+    style_getter_units!(
+        /// Returns the computed outline offset of the current view in physical pixels.
+        outline_offset
+    );
+    style_getter_units!(
+        /// Returns the computed outer-shadow horizontal offset of the current view in physical pixels.
+        outer_shadow_h_offset
+    );
+    style_getter_units!(
+        /// Returns the computed outer-shadow vertical offset of the current view in physical pixels.
+        outer_shadow_v_offset
+    );
+    style_getter_units!(
+        /// Returns the computed outer-shadow blur radius of the current view in physical pixels.
+        outer_shadow_blur
+    );
+    style_getter_units!(
+        /// Returns the child_left style property of the current view.
+        child_left
+    );
+    style_getter_units!(
+        /// Returns the child_right style property of the current view.
+        child_right
+    );
+    style_getter_units!(
+        /// Returns the child_top style property of the current view.
+        child_top
+    );
+    style_getter_units!(
+        /// Returns the child_bottom style property of the current view.
+        child_bottom
+    );
+    style_getter_untranslated!(
+        /// Returns the computed background color of the current view.
+        Color,
+        background_color
+    );
+    style_getter_untranslated!(
+        /// Returns the computed font color of the current view.
+        Color,
+        font_color
+    );
+    style_getter_untranslated!(
+        /// Returns the computed border color of the current view.
+        Color,
+        border_color
+    );
+    style_getter_untranslated!(
+        /// Returns the computed outline color of the current view.
+        Color,
+        outline_color
+    );
+    style_getter_untranslated!(
+        /// Returns the computed outer-shadow color of the current view.
+        Color,
+        outer_shadow_color
+    );
+    style_getter_untranslated!(
+        /// Returns the computed text selection color of the current view.
+        Color,
+        selection_color
+    );
+    style_getter_untranslated!(
+        /// Returns the computed text caret color of the current view.
+        Color,
+        caret_color
+    );
     style_getter_untranslated!(LinearGradient, background_gradient);
     style_getter_untranslated!(BorderCornerShape, border_shape_top_right);
     style_getter_untranslated!(BorderCornerShape, border_shape_top_left);

@@ -337,60 +337,6 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     let mut outer_shadow_color: femtovg::Color = outer_shadow_color.into();
     outer_shadow_color.set_alphaf(outer_shadow_color.a * opacity);
 
-    let _inner_shadow_h_offset =
-        cx.inner_shadow_h_offset().unwrap_or_default().value_or(bounds.w, 0.0);
-
-    let _inner_shadow_v_offset =
-        cx.inner_shadow_v_offset().unwrap_or_default().value_or(bounds.w, 0.0);
-
-    let _inner_shadow_blur = cx.inner_shadow_blur().unwrap_or_default().value_or(bounds.w, 0.0);
-
-    let inner_shadow_color = cx.inner_shadow_color().cloned().unwrap_or_default();
-
-    let mut inner_shadow_color: femtovg::Color = inner_shadow_color.into();
-    inner_shadow_color.set_alphaf(inner_shadow_color.a * opacity);
-
-    // // Draw outer shadow
-    // let mut path = Path::new();
-    // path.rounded_rect_varying(
-    //     bounds.x - outer_shadow_blur + outer_shadow_h_offset,
-    //     bounds.y - outer_shadow_blur + outer_shadow_v_offset,
-    //     bounds.w + 2.0 * outer_shadow_blur,
-    //     bounds.h + 2.0 * outer_shadow_blur,
-    //     border_radius_top_left,
-    //     border_radius_top_right,
-    //     border_radius_bottom_right,
-    //     border_radius_bottom_left,
-    // );
-    // path.rounded_rect_varying(
-    //     bounds.x,
-    //     bounds.y,
-    //     bounds.w,
-    //     bounds.h,
-    //     border_radius_top_left,
-    //     border_radius_top_right,
-    //     border_radius_bottom_right,
-    //     border_radius_bottom_left,
-    // );
-    // path.solidity(Solidity::Hole);
-
-    // let mut paint = Paint::box_gradient(
-    //     bounds.x + outer_shadow_h_offset,
-    //     bounds.y + outer_shadow_v_offset,
-    //     bounds.w,
-    //     bounds.h,
-    //     border_radius_top_left
-    //         .max(border_radius_top_right)
-    //         .max(border_radius_bottom_left)
-    //         .max(border_radius_bottom_right),
-    //     outer_shadow_blur,
-    //     outer_shadow_color,
-    //     femtovg::Color::rgba(0, 0, 0, 0),
-    // );
-
-    // canvas.fill_path(&mut path, paint);
-
-    //let start = instant::Instant::now();
     let mut path = Path::new();
 
     if bounds.w == bounds.h
@@ -496,7 +442,6 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     }
 
     // Draw outer shadow
-
     if cx.outer_shadow_color().is_some() {
         let sigma = outer_shadow_blur / 2.0;
         let d = (sigma * 5.0).ceil();
@@ -666,34 +611,6 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     let mut outline_paint = Paint::color(outline_color);
     outline_paint.set_line_width(outline_width);
     canvas.stroke_path(&mut outline_path, &outline_paint);
-
-    // // Draw inner shadow
-    // let mut path = Path::new();
-    // path.rounded_rect_varying(
-    //     0.0 + border_width,
-    //     0.0 + border_width,
-    //     bounds.w - border_width * 2.0,
-    //     bounds.h - border_width * 2.0,
-    //     border_radius_top_left,
-    //     border_radius_top_right,
-    //     border_radius_bottom_right,
-    //     border_radius_bottom_left,
-    // );
-
-    // let mut paint = Paint::box_gradient(
-    //     0.0 + inner_shadow_h_offset + border_width,
-    //     0.0 + inner_shadow_v_offset + border_width,
-    //     bounds.w - border_width * 2.0,
-    //     bounds.h - border_width * 2.0,
-    //     border_radius_top_left
-    //         .max(border_radius_top_right)
-    //         .max(border_radius_bottom_left)
-    //         .max(border_radius_bottom_right),
-    //     inner_shadow_blur,
-    //     femtovg::Color::rgba(0, 0, 0, 0),
-    //     inner_shadow_color,
-    // );
-    // canvas.fill_path(&mut path, paint);
 
     // Draw text and image
     if cx.text().is_some() || cx.image().is_some() {
