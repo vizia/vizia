@@ -10,7 +10,7 @@ enum SliderEventInternal {
     SetKeyboardFraction(f32),
 }
 
-#[derive(Clone, Debug, Default, Data)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct SliderDataInternal {
     pub orientation: Orientation,
     pub size: f32,
@@ -152,8 +152,8 @@ where
                         .on_geo_changed(|cx, geo| {
                             if geo.contains(GeometryChanged::WIDTH_CHANGED) {
                                 let current = cx.current();
-                                let width = cx.cache.get_width(current);
-                                let height = cx.cache.get_height(current);
+                                let width = cx.cache().get_width(current);
+                                let height = cx.cache().get_height(current);
                                 cx.emit(SliderEventInternal::SetThumbSize(width, height));
                             }
                         })

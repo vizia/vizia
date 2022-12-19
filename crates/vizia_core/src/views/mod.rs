@@ -68,10 +68,8 @@ pub use timepicker::{
 pub use tooltip::{Tooltip, TooltipEvent, TooltipSeq};
 pub use xypad::XYPad;
 
-use crate::prelude::*;
-
 /// The orientation of a widget, such as a slider or scrollbar
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Data)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Orientation {
     Horizontal,
     Vertical,

@@ -153,7 +153,7 @@ fn main() {
     .run();
 }
 
-#[derive(Debug, Clone, Lens, Data)]
+#[derive(Debug, Clone, Lens, PartialEq)]
 pub struct Person {
     first_name: String,
     last_name: String,
@@ -182,7 +182,7 @@ pub enum AppEvent {
     ToggleSortEmail,
 }
 
-#[derive(Debug, Clone, PartialEq, Data)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Sorted {
     Forward,
     Reverse,

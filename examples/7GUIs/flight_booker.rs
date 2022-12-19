@@ -11,22 +11,16 @@ const STYLE: &str = r#"
         border-width: 1px;
         border-color: red;
     }
-    */ 
-    
+    */
+
 
     textbox.invalid {
         background-color: #AA0000;
     }
 "#;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct SimpleDate(NaiveDate);
-
-impl Data for SimpleDate {
-    fn same(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
-}
 
 impl std::fmt::Display for SimpleDate {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
