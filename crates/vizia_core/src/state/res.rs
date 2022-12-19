@@ -233,3 +233,16 @@ impl Res<LengthOrPercentage> for LengthOrPercentage {
         (closure)(cx, entity, self.clone())
     }
 }
+
+impl Res<RGBA> for RGBA {
+    fn get_val(&self, _: &Context) -> Self {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, Self),
+    {
+        (closure)(cx, entity, self.clone())
+    }
+}

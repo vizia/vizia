@@ -9,7 +9,7 @@ use crate::prelude::*;
 
 pub use vizia_style::{
     BorderCornerShape, Color, Display, Length, LengthOrPercentage, LengthValue, Opacity, Overflow,
-    ParserOptions, Property, SelectorList, Selectors, StyleSheet, Visibility,
+    ParserOptions, Property, SelectorList, Selectors, StyleSheet, Visibility, RGBA,
 };
 
 // mod color;

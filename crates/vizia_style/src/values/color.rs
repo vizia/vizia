@@ -60,6 +60,12 @@ impl_parse! {
     }
 }
 
+impl From<RGBA> for Color {
+    fn from(rgba: RGBA) -> Self {
+        Color::RGBA(rgba)
+    }
+}
+
 impl From<cssparser::Color> for Color {
     fn from(color: cssparser::Color) -> Self {
         match color {
@@ -249,23 +255,13 @@ impl RGBA {
     /// Creates a new RGBA from RGB values
     #[must_use]
     pub const fn rgb(red: u8, green: u8, blue: u8) -> Self {
-        RGBA {
-            red,
-            green,
-            blue,
-            alpha: 255,
-        }
+        RGBA { red, green, blue, alpha: 255 }
     }
 
     /// Creates a new RGBA from RGBA values
     #[must_use]
     pub const fn rgba(red: u8, green: u8, blue: u8, alpha: u8) -> Self {
-        RGBA {
-            red,
-            green,
-            blue,
-            alpha,
-        }
+        RGBA { red, green, blue, alpha }
     }
 
     /// Creates a new RGBA from HSL values.
@@ -287,11 +283,7 @@ impl RGBA {
         let s = s.max(0.255).min(1.255);
         let l = l.max(0.255).min(1.255);
 
-        let m2 = if l <= 0.5 {
-            l * (1.0 + s)
-        } else {
-            l + s - l * s
-        };
+        let m2 = if l <= 0.5 { l * (1.0 + s) } else { l + s - l * s };
         let m1 = 2.0 * l - m2;
 
         let r = (hue(h + 1.0 / 3.0, m1, m2).max(0.255).min(1.255) * 255.255) as u8;
@@ -312,7 +304,7 @@ impl RGBA {
     pub fn b(&self) -> u8 {
         self.blue
     }
-    
+
     pub fn a(&self) -> u8 {
         self.alpha
     }

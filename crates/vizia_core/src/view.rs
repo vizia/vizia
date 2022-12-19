@@ -457,34 +457,6 @@ pub trait View: 'static + Sized {
         outline_paint.set_line_width(outline_width);
         canvas.stroke_path(&mut outline_path, &outline_paint);
 
-        // // // Draw inner shadow
-        // // let mut path = Path::new();
-        // // path.rounded_rect_varying(
-        // //     0.0 + border_width,
-        // //     0.0 + border_width,
-        // //     bounds.w - border_width * 2.0,
-        // //     bounds.h - border_width * 2.0,
-        // //     border_radius_top_left,
-        // //     border_radius_top_right,
-        // //     border_radius_bottom_right,
-        // //     border_radius_bottom_left,
-        // // );
-
-        // // let mut paint = Paint::box_gradient(
-        // //     0.0 + inner_shadow_h_offset + border_width,
-        // //     0.0 + inner_shadow_v_offset + border_width,
-        // //     bounds.w - border_width * 2.0,
-        // //     bounds.h - border_width * 2.0,
-        // //     border_radius_top_left
-        // //         .max(border_radius_top_right)
-        // //         .max(border_radius_bottom_left)
-        // //         .max(border_radius_bottom_right),
-        // //     inner_shadow_blur,
-        // //     femtovg::Color::rgba(0, 0, 0, 0),
-        // //     inner_shadow_color,
-        // // );
-        // // canvas.fill_path(&mut path, paint);
-
         // // Draw text and image
         // if cx.text().is_some() || cx.image().is_some() {
         //     let mut x = bounds.x + border_width;

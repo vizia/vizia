@@ -64,7 +64,7 @@ macro_rules! style_getter_units {
     };
 }
 
-macro_rules! style_getter_untranslated {
+macro_rules! get_property {
     ($ty:ty, $name:ident) => {
         pub fn $name(&self) -> $ty {
             self.style.$name.get(self.current).copied().unwrap_or_default()
@@ -186,10 +186,10 @@ impl<'a> DrawContext<'a> {
     // style_getter_untranslated!(LengthOrPercentage, inner_shadow_h_offset);
     // style_getter_untranslated!(LengthOrPercentage, inner_shadow_v_offset);
     // style_getter_untranslated!(LengthOrPercentage, inner_shadow_blur);
-    // style_getter_units!(child_left);
-    // style_getter_units!(child_right);
-    // style_getter_units!(child_top);
-    // style_getter_units!(child_bottom);
+    get_property!(Units, child_left);
+    get_property!(Units, child_right);
+    get_property!(Units, child_top);
+    get_property!(Units, child_bottom);
     get_color_property!(Color, background_color);
     get_color_property!(Color, font_color);
     get_color_property!(Color, border_color);
@@ -209,6 +209,10 @@ impl<'a> DrawContext<'a> {
     // style_getter_untranslated!(String, font);
     // style_getter_untranslated!(bool, text_wrap);
     // style_getter_untranslated!(Selection, text_selection);
+
+    pub fn text(&self) -> Option<&String> {
+        self.style.text.get(self.current)
+    }
 
     pub fn opacity(&self) -> f32 {
         self.cache.get_opacity(self.current)
