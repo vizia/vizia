@@ -212,7 +212,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|slider_event_internal, meta| match slider_event_internal {
+        event.map(|slider_event_internal, _| match slider_event_internal {
             SliderEventInternal::SetThumbSize(width, height) => match self.internal.orientation {
                 Orientation::Horizontal => {
                     self.internal.thumb_size = *width;

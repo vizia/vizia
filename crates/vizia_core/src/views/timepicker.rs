@@ -216,7 +216,8 @@ where
                         hour = 12;
                     }
 
-                    let new = NaiveTime::from_hms(hour, current.minute(), current.second());
+                    let new =
+                        NaiveTime::from_hms_opt(hour, current.minute(), current.second()).unwrap();
 
                     (callback)(cx, new);
                 }
@@ -226,7 +227,8 @@ where
                 if let Some(callback) = &self.on_change {
                     let current = self.lens.get(cx);
 
-                    let new = NaiveTime::from_hms(current.hour(), *minutes, current.second());
+                    let new = NaiveTime::from_hms_opt(current.hour(), *minutes, current.second())
+                        .unwrap();
 
                     (callback)(cx, new);
                 }
@@ -246,7 +248,8 @@ where
                         hours = 12;
                     }
 
-                    let new = NaiveTime::from_hms(hours, current.minute(), current.second());
+                    let new =
+                        NaiveTime::from_hms_opt(hours, current.minute(), current.second()).unwrap();
 
                     (callback)(cx, new);
                 }
@@ -262,7 +265,8 @@ where
                         minutes -= 60;
                     }
 
-                    let new = NaiveTime::from_hms(current.hour(), minutes, current.second());
+                    let new =
+                        NaiveTime::from_hms_opt(current.hour(), minutes, current.second()).unwrap();
 
                     (callback)(cx, new);
                 }
@@ -282,7 +286,9 @@ where
                         hours += 12;
                     }
 
-                    let new = NaiveTime::from_hms(hours as u32, current.minute(), current.second());
+                    let new =
+                        NaiveTime::from_hms_opt(hours as u32, current.minute(), current.second())
+                            .unwrap();
 
                     (callback)(cx, new);
                 }
@@ -298,7 +304,9 @@ where
                         minutes += 60;
                     }
 
-                    let new = NaiveTime::from_hms(current.hour(), minutes as u32, current.second());
+                    let new =
+                        NaiveTime::from_hms_opt(current.hour(), minutes as u32, current.second())
+                            .unwrap();
 
                     (callback)(cx, new);
                 }
@@ -309,18 +317,19 @@ where
                     let current = self.lens.get(cx);
 
                     let new = match current.hour12().0 {
-                        false => NaiveTime::from_hms(
+                        false => NaiveTime::from_hms_opt(
                             current.hour() + 12,
                             current.minute(),
                             current.second(),
                         ),
 
-                        true => NaiveTime::from_hms(
+                        true => NaiveTime::from_hms_opt(
                             current.hour() - 12,
                             current.minute(),
                             current.second(),
                         ),
-                    };
+                    }
+                    .unwrap();
 
                     (callback)(cx, new)
                 }
@@ -587,7 +596,8 @@ where
                     }
                     (callback)(
                         cx,
-                        NaiveTime::from_hms(new_hours, current.minute(), current.second()),
+                        NaiveTime::from_hms_opt(new_hours, current.minute(), current.second())
+                            .unwrap(),
                     );
                 }
                 if self.change_page_on_select {
@@ -600,7 +610,8 @@ where
                     let current = self.lens.get(cx);
                     (callback)(
                         cx,
-                        NaiveTime::from_hms(current.hour(), *minutes as u32, current.second()),
+                        NaiveTime::from_hms_opt(current.hour(), *minutes as u32, current.second())
+                            .unwrap(),
                     );
                 }
                 if self.change_page_on_select {
@@ -613,7 +624,8 @@ where
                     let current = self.lens.get(cx);
                     (callback)(
                         cx,
-                        NaiveTime::from_hms(current.hour(), current.minute(), *seconds as u32),
+                        NaiveTime::from_hms_opt(current.hour(), current.minute(), *seconds as u32)
+                            .unwrap(),
                     );
                 }
             }
@@ -634,22 +646,24 @@ where
                         (false, true) => {
                             (callback)(
                                 cx,
-                                NaiveTime::from_hms(
+                                NaiveTime::from_hms_opt(
                                     current.hour() + 12,
                                     current.minute(),
                                     current.second(),
-                                ),
+                                )
+                                .unwrap(),
                             );
                         }
 
                         (true, false) => {
                             (callback)(
                                 cx,
-                                NaiveTime::from_hms(
+                                NaiveTime::from_hms_opt(
                                     current.hour() - 12,
                                     current.minute(),
                                     current.second(),
-                                ),
+                                )
+                                .unwrap(),
                             );
                         }
 

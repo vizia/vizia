@@ -78,8 +78,8 @@ impl AppData {
         Self {
             options: vec!["one-way flight", "return flight"],
             choice: "one-way flight".to_string(),
-            start_date: SimpleDate(NaiveDate::from_ymd(2022, 02, 12)),
-            end_date: SimpleDate(NaiveDate::from_ymd(2022, 02, 26)),
+            start_date: SimpleDate(NaiveDate::from_ymd_opt(2022, 02, 12).unwrap()),
+            end_date: SimpleDate(NaiveDate::from_ymd_opt(2022, 02, 26).unwrap()),
         }
     }
 }
