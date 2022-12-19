@@ -40,6 +40,11 @@ fn main() {
             Knob::new(cx, 0.5, AppData::value, true).on_changing(|cx, val| {
                 cx.emit(AppEvent::SetValue(val));
             });
+            Knob::new(cx, 0.5, AppData::value, false)
+                .on_changing(|cx, val| {
+                    cx.emit(AppEvent::SetValue(val));
+                })
+                .class("small");
         })
         .class("container");
     })

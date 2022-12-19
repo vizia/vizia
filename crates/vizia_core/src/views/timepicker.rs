@@ -3,8 +3,7 @@ use std::marker::PhantomData;
 use crate::{prelude::*, style::Transform2D};
 use chrono::{NaiveTime, Timelike};
 
-const ICON_LEFT_OPEN: &str = "\u{e75d}";
-const ICON_RIGHT_OPEN: &str = "\u{e75e}";
+use super::spinbox::SpinboxIcons;
 
 #[derive(PartialEq, Data, Clone, Copy, Debug)]
 pub enum AMOrPM {
@@ -19,78 +18,167 @@ pub struct DayTime {
     pub zone: AMOrPM,
 }
 
+#[derive(Lens)]
+pub struct Timepicker {
+    on_change: Option<Box<dyn Fn(&mut EventContext, NaiveTime)>>,
+}
+
 pub enum TimepickerEvent {
-    Ok,
+    Change(NaiveTime),
+    ChangePage(AnalogTimepickerPage),
+}
+
+impl Timepicker {
+    pub fn new<L, T>(cx: &mut Context, lens: L) -> Handle<Self>
+    where
+        L: Lens<Target = T>,
+        T: Timelike + Data + Copy,
+    {
+        Self { on_change: None }
+            .build(cx, move |cx| {
+                DigitalTimepicker::new(cx, lens.clone())
+                    .on_change(|cx, time| cx.emit(TimepickerEvent::Change(time)));
+                AnalogTimepicker::new(cx, lens)
+                    .on_change(|cx, time| cx.emit(TimepickerEvent::Change(time)))
+                    .show_controls(false)
+                    .change_page_on_select(false);
+            })
+            .layout_type(LayoutType::Column)
+    }
+}
+
+impl View for Timepicker {
+    fn element(&self) -> Option<&'static str> {
+        Some("timepicker")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|e, _| match e {
+            TimepickerEvent::Change(time) => {
+                if let Some(callback) = &self.on_change {
+                    (callback)(cx, *time)
+                }
+            }
+
+            TimepickerEvent::ChangePage(page) => {
+                cx.emit_custom(
+                    Event::new(AnalogTimepickerEvent::SetPage(*page))
+                        .origin(cx.current())
+                        .propagate(Propagation::Subtree),
+                );
+            }
+        })
+    }
+}
+
+impl<'a> Handle<'a, Timepicker> {
+    pub fn on_change<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, NaiveTime),
+    {
+        self.modify(|timepicker: &mut Timepicker| timepicker.on_change = Some(Box::new(callback)))
+    }
+}
+
+#[derive(PartialEq, Data, Clone, Copy, Debug)]
+pub enum DigitalTimepickerEvent {
     IncrementHour,
     IncrementMinutes,
     DecrementHour,
     DecrementMinutes,
+    SetHour(u32),
+    SetMinutes(u32),
     ToggleAMOrPM,
-    SetHours(u8),
-    SetMinutes(u8),
-    SetPage(RadialTimepickerPage),
-    SetZone(bool),
 }
 
-pub struct Timepicker<L: Lens, T: Timelike + Data> {
+pub struct DigitalTimepicker<L: Lens, T: Timelike + Data> {
     lens: L,
     p: PhantomData<T>,
     on_change: Option<Box<dyn Fn(&mut EventContext, NaiveTime)>>,
 }
 
-impl<L, T> Timepicker<L, T>
+impl<L, T> DigitalTimepicker<L, T>
 where
     L: Lens<Target = T>,
     T: Timelike + Data,
 {
-    pub fn new<'v>(cx: &'v mut Context, lens: L) -> Handle<'v, Self> {
-        Self { lens: lens.clone(), p: PhantomData::default(), on_change: None }.build(
-            cx,
-            move |cx| {
-                HStack::new(cx, |cx| {
-                    Spinbox::new(
-                        cx,
-                        lens.clone().map(|time| format!("{:#02}", time.hour12().1)),
-                        SpinboxKind::Vertical,
-                    )
-                    .on_increment(|ex| ex.emit(TimepickerEvent::IncrementHour))
-                    .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementHour));
-                    VStack::new(cx, |cx| {
-                        Element::new(cx).class("timepicker-dot");
-                        Element::new(cx).class("timepicker-dot");
-                    })
-                    .class("timepicker-dots-wrapper");
-                    Spinbox::new(
-                        cx,
-                        lens.clone().map(|time| format!("{:#02}", time.minute())),
-                        SpinboxKind::Vertical,
-                    )
-                    .on_increment(|ex| ex.emit(TimepickerEvent::IncrementMinutes))
-                    .on_decrement(|ex| ex.emit(TimepickerEvent::DecrementMinutes));
-                    VStack::new(cx, |cx| {
-                        Button::new(
+    pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
+        Self { lens: lens.clone(), p: PhantomData::default(), on_change: None }
+            .build(cx, move |cx| {
+                Spinbox::custom(
+                    cx,
+                    |cx| {
+                        Textbox::new(
                             cx,
-                            |cx| cx.emit(TimepickerEvent::ToggleAMOrPM),
-                            |cx| {
-                                Label::new(
-                                    cx,
-                                    lens.clone().map(|time| match time.hour12().0 {
-                                        false => "AM",
-                                        true => "PM",
-                                    }),
-                                )
-                            },
-                        );
-                    })
-                    .class("timepicker-button-wrapper");
+                            lens.clone().map(|time| format!("{:#02}", time.hour12().1)),
+                        )
+                        .on_submit(|cx, text, _| {
+                            if let Ok(parsed) = text.parse::<u32>() {
+                                if parsed < 24 {
+                                    cx.emit(DigitalTimepickerEvent::SetHour(parsed))
+                                }
+                            }
+                        })
+                        .width(Pixels(38.))
+                        .overflow(Overflow::Hidden)
+                    },
+                    SpinboxKind::Vertical,
+                    SpinboxIcons::Math,
+                )
+                .on_increment(|ex| ex.emit(DigitalTimepickerEvent::IncrementHour))
+                .on_decrement(|ex| ex.emit(DigitalTimepickerEvent::DecrementHour))
+                .on_press_down(|cx| {
+                    cx.emit(TimepickerEvent::ChangePage(AnalogTimepickerPage::Hours))
+                });
+                VStack::new(cx, |cx| {
+                    Element::new(cx).class("digitaltimepicker-dot");
+                    Element::new(cx).class("digitaltimepicker-dot");
                 })
-                .class("timepicker-wrapper");
-            },
-        )
+                .class("digitaltimepicker-dots-wrapper");
+                Spinbox::custom(
+                    cx,
+                    |cx| {
+                        Textbox::new(cx, lens.clone().map(|time| format!("{:#02}", time.minute())))
+                            .on_submit(|cx, text, _| {
+                                if let Ok(parsed) = text.parse::<u32>() {
+                                    if parsed < 60 {
+                                        cx.emit(DigitalTimepickerEvent::SetMinutes(parsed))
+                                    }
+                                }
+                            })
+                            .width(Pixels(38.))
+                            .overflow(Overflow::Hidden)
+                    },
+                    SpinboxKind::Vertical,
+                    SpinboxIcons::Math,
+                )
+                .on_increment(|ex| ex.emit(DigitalTimepickerEvent::IncrementMinutes))
+                .on_decrement(|ex| ex.emit(DigitalTimepickerEvent::DecrementMinutes))
+                .on_press_down(|cx| {
+                    cx.emit(TimepickerEvent::ChangePage(AnalogTimepickerPage::Minutes))
+                });
+                VStack::new(cx, |cx| {
+                    Button::new(
+                        cx,
+                        |cx| cx.emit(DigitalTimepickerEvent::ToggleAMOrPM),
+                        |cx| {
+                            Label::new(
+                                cx,
+                                lens.map(|time| match time.hour12().0 {
+                                    false => "AM",
+                                    true => "PM",
+                                }),
+                            )
+                        },
+                    );
+                })
+                .class("digitaltimepicker-button-wrapper");
+            })
+            .layout_type(LayoutType::Row)
     }
 }
 
-impl<'a, L, T> Handle<'a, Timepicker<L, T>>
+impl<'a, L, T> Handle<'a, DigitalTimepicker<L, T>>
 where
     L: Lens<Target = T>,
     T: Timelike + Data,
@@ -99,24 +187,54 @@ where
     where
         F: 'static + Fn(&mut EventContext, NaiveTime),
     {
-        self.modify(|timepicker: &mut Timepicker<L, T>| {
+        self.modify(|timepicker: &mut DigitalTimepicker<L, T>| {
             timepicker.on_change = Some(Box::new(callback))
         })
     }
 }
 
-impl<L, T> View for Timepicker<L, T>
+impl<L, T> View for DigitalTimepicker<L, T>
 where
     L: Lens<Target = T>,
     T: Timelike + Data,
 {
     fn element(&self) -> Option<&'static str> {
-        Some("timepicker")
+        Some("digitaltimepicker")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|e, _| match e {
-            TimepickerEvent::IncrementHour => {
+            DigitalTimepickerEvent::SetHour(mut hour) => {
+                if let Some(callback) = &self.on_change {
+                    let current = self.lens.get(cx);
+
+                    if hour == 12 {
+                        hour = 0;
+                    }
+
+                    if hour == 24 {
+                        hour = 12;
+                    }
+
+                    let new =
+                        NaiveTime::from_hms_opt(hour, current.minute(), current.second()).unwrap();
+
+                    (callback)(cx, new);
+                }
+            }
+
+            DigitalTimepickerEvent::SetMinutes(minutes) => {
+                if let Some(callback) = &self.on_change {
+                    let current = self.lens.get(cx);
+
+                    let new = NaiveTime::from_hms_opt(current.hour(), *minutes, current.second())
+                        .unwrap();
+
+                    (callback)(cx, new);
+                }
+            }
+
+            DigitalTimepickerEvent::IncrementHour => {
                 if let Some(callback) = &self.on_change {
                     let current = self.lens.get(cx);
 
@@ -130,13 +248,14 @@ where
                         hours = 12;
                     }
 
-                    let new = NaiveTime::from_hms(hours, current.minute(), current.second());
+                    let new =
+                        NaiveTime::from_hms_opt(hours, current.minute(), current.second()).unwrap();
 
                     (callback)(cx, new);
                 }
             }
 
-            TimepickerEvent::IncrementMinutes => {
+            DigitalTimepickerEvent::IncrementMinutes => {
                 if let Some(callback) = &self.on_change {
                     let current = self.lens.get(cx);
 
@@ -146,13 +265,14 @@ where
                         minutes -= 60;
                     }
 
-                    let new = NaiveTime::from_hms(current.hour(), minutes, current.second());
+                    let new =
+                        NaiveTime::from_hms_opt(current.hour(), minutes, current.second()).unwrap();
 
                     (callback)(cx, new);
                 }
             }
 
-            TimepickerEvent::DecrementHour => {
+            DigitalTimepickerEvent::DecrementHour => {
                 if let Some(callback) = &self.on_change {
                     let current = self.lens.get(cx);
 
@@ -166,13 +286,15 @@ where
                         hours += 12;
                     }
 
-                    let new = NaiveTime::from_hms(hours as u32, current.minute(), current.second());
+                    let new =
+                        NaiveTime::from_hms_opt(hours as u32, current.minute(), current.second())
+                            .unwrap();
 
                     (callback)(cx, new);
                 }
             }
 
-            TimepickerEvent::DecrementMinutes => {
+            DigitalTimepickerEvent::DecrementMinutes => {
                 if let Some(callback) = &self.on_change {
                     let current = self.lens.get(cx);
 
@@ -182,57 +304,71 @@ where
                         minutes += 60;
                     }
 
-                    let new = NaiveTime::from_hms(current.hour(), minutes as u32, current.second());
+                    let new =
+                        NaiveTime::from_hms_opt(current.hour(), minutes as u32, current.second())
+                            .unwrap();
 
                     (callback)(cx, new);
                 }
             }
 
-            TimepickerEvent::ToggleAMOrPM => {
+            DigitalTimepickerEvent::ToggleAMOrPM => {
                 if let Some(callback) = &self.on_change {
                     let current = self.lens.get(cx);
 
                     let new = match current.hour12().0 {
-                        false => NaiveTime::from_hms(
+                        false => NaiveTime::from_hms_opt(
                             current.hour() + 12,
                             current.minute(),
                             current.second(),
                         ),
 
-                        true => NaiveTime::from_hms(
+                        true => NaiveTime::from_hms_opt(
                             current.hour() - 12,
                             current.minute(),
                             current.second(),
                         ),
-                    };
+                    }
+                    .unwrap();
 
                     (callback)(cx, new)
                 }
             }
-
-            _ => {}
         })
     }
 }
 
 #[derive(PartialEq, Data, Clone, Copy, Debug)]
-pub enum RadialTimepickerPage {
+pub enum AnalogTimepickerPage {
     Hours,
     Minutes,
+    Seconds,
+}
+
+#[derive(PartialEq, Data, Clone, Copy, Debug)]
+pub enum AnalogTimepickerEvent {
+    ToggleAMOrPM,
+    SetHours(u8),
+    SetMinutes(u8),
+    SetSeconds(u8),
+    SetPage(AnalogTimepickerPage),
+    SetZone(bool),
 }
 
 #[derive(Lens)]
-pub struct RadialTimepicker<L: Lens, T: Copy + Timelike + Data> {
+pub struct AnalogTimepicker<L: Lens, T: Copy + Timelike + Data> {
     #[lens(ignore)]
     lens: L,
     #[lens(ignore)]
     p: PhantomData<T>,
-    page: RadialTimepickerPage,
+    page: AnalogTimepickerPage,
+    show_controls: bool,
+    change_page_on_select: bool,
     #[lens(ignore)]
     on_change: Option<Box<dyn Fn(&mut EventContext, NaiveTime)>>,
 }
 
-impl<L, T> RadialTimepicker<L, T>
+impl<L, T> AnalogTimepicker<L, T>
 where
     L: Lens<Target = T>,
     T: Timelike + Data + Copy,
@@ -241,14 +377,16 @@ where
         Self {
             lens: lens.clone(),
             p: PhantomData::default(),
-            page: RadialTimepickerPage::Hours,
+            page: AnalogTimepickerPage::Hours,
             on_change: None,
+            show_controls: true,
+            change_page_on_select: true,
         }
         .build(cx, move |cx| {
-            let l = lens.clone();
+            let lens1 = lens.clone();
             HStack::new(cx, move |cx| {
                 Binding::new(cx, Self::page, move |cx, page| match page.get(cx) {
-                    RadialTimepickerPage::Hours => {
+                    AnalogTimepickerPage::Hours => {
                         Binding::new(cx, lens.clone().map(|time| time.hour()), |cx, hours| {
                             let hours = hours.get(cx);
 
@@ -256,10 +394,8 @@ where
 
                             let mut transform = Transform2D::identity();
                             transform.rotate(angle);
-                            transform.premultiply(&Transform2D::identity().translate(0.0, -50.0));
+                            transform.premultiply(&Transform2D::identity().translate(0.0, -44.0));
                             Element::new(cx)
-                                .width(Pixels(1.0))
-                                .height(Pixels(100.0))
                                 .transform(transform)
                                 .position_type(PositionType::SelfDirected)
                                 .class("clock-hand");
@@ -268,19 +404,15 @@ where
                         for i in 0..12 {
                             let mut transform = Transform2D::identity();
                             transform.rotate(30.0 * (i + 1) as f32);
-                            transform.premultiply(&Transform2D::identity().translate(0.0, -100.0));
+                            transform.premultiply(&Transform2D::identity().translate(0.0, -74.0));
                             transform.premultiply(
                                 &Transform2D::identity().rotate(-30.0 * (i + 1) as f32),
                             );
 
                             Label::new(cx, i + 1)
-                                .size(Pixels(32.0))
                                 .transform(transform)
                                 .position_type(PositionType::SelfDirected)
-                                .child_space(Stretch(1.0))
-                                .border_radius(Percentage(50.0))
-                                .cursor(CursorIcon::Hand)
-                                .on_press(move |ex| ex.emit(TimepickerEvent::SetHours(i + 1)))
+                                .on_press(move |ex| ex.emit(AnalogTimepickerEvent::SetHours(i + 1)))
                                 .class("marker")
                                 .checked(
                                     lens.clone().map(move |time| time.hour12().1 == (i + 1) as u32),
@@ -288,7 +420,7 @@ where
                         }
                     }
 
-                    RadialTimepickerPage::Minutes => {
+                    AnalogTimepickerPage::Minutes => {
                         Binding::new(cx, lens.clone().map(|time| time.minute()), |cx, minutes| {
                             let minutes = minutes.get(cx);
 
@@ -296,10 +428,8 @@ where
 
                             let mut transform = Transform2D::identity();
                             transform.rotate(angle);
-                            transform.premultiply(&Transform2D::identity().translate(0.0, -50.0));
+                            transform.premultiply(&Transform2D::identity().translate(0.0, -44.0));
                             Element::new(cx)
-                                .width(Pixels(1.0))
-                                .height(Pixels(100.0))
                                 .transform(transform)
                                 .position_type(PositionType::SelfDirected)
                                 .class("clock-hand");
@@ -308,107 +438,155 @@ where
                         for i in 0..12 {
                             let mut transform = Transform2D::identity();
                             transform.rotate(30.0 * i as f32);
-                            transform.premultiply(&Transform2D::identity().translate(0.0, -100.0));
+                            transform.premultiply(&Transform2D::identity().translate(0.0, -74.0));
                             transform
                                 .premultiply(&Transform2D::identity().rotate(-30.0 * i as f32));
 
                             Label::new(cx, &format!("{:#02}", i * 5))
-                                .size(Pixels(32.0))
                                 .transform(transform)
                                 .position_type(PositionType::SelfDirected)
-                                .child_space(Stretch(1.0))
-                                .border_radius(Percentage(50.0))
-                                .cursor(CursorIcon::Hand)
-                                .on_press(move |ex| ex.emit(TimepickerEvent::SetMinutes(i * 5)))
+                                .on_press(move |ex| {
+                                    ex.emit(AnalogTimepickerEvent::SetMinutes(i * 5))
+                                })
                                 .class("marker")
                                 .checked(
                                     lens.clone().map(move |time| time.minute() / 5 == i as u32),
                                 );
                         }
                     }
+
+                    AnalogTimepickerPage::Seconds => {
+                        Binding::new(cx, lens.clone().map(|time| time.second()), |cx, seconds| {
+                            let seconds = seconds.get(cx);
+
+                            let angle = (seconds / 5) as f32 * 30.0;
+
+                            let mut transform = Transform2D::identity();
+                            transform.rotate(angle);
+                            transform.premultiply(&Transform2D::identity().translate(0.0, -44.0));
+                            Element::new(cx)
+                                .transform(transform)
+                                .position_type(PositionType::SelfDirected)
+                                .class("clock-hand");
+                        });
+
+                        for i in 0..12 {
+                            let mut transform = Transform2D::identity();
+                            transform.rotate(30.0 * i as f32);
+                            transform.premultiply(&Transform2D::identity().translate(0.0, -74.0));
+                            transform
+                                .premultiply(&Transform2D::identity().rotate(-30.0 * i as f32));
+
+                            Label::new(cx, &format!("{:#02}", i * 5))
+                                .transform(transform)
+                                .position_type(PositionType::SelfDirected)
+                                .on_press(move |ex| {
+                                    ex.emit(AnalogTimepickerEvent::SetSeconds(i * 5))
+                                })
+                                .class("marker")
+                                .checked(
+                                    lens.clone().map(move |time| time.second() / 5 == i as u32),
+                                );
+                        }
+                    }
                 });
 
-                Element::new(cx)
-                    .size(Pixels(4.0))
-                    .border_radius(Percentage(50.0))
-                    .position_type(PositionType::SelfDirected)
-                    .class("center-dot");
+                Element::new(cx).position_type(PositionType::SelfDirected).class("center-dot");
             })
-            .child_space(Stretch(1.0))
-            .border_radius(Percentage(50.0))
             .class("clock-face");
 
-            Label::new(cx, ICON_LEFT_OPEN)
-                .position_type(PositionType::SelfDirected)
-                .size(Pixels(30.0))
-                .space(Stretch(1.0))
-                .left(Pixels(8.0))
-                .top(Pixels(8.0))
-                .child_space(Stretch(1.0))
-                //.background_color(Color::rgb(200, 200, 200))
-                .border_radius(Percentage(50.0))
-                .font("icons")
-                .disabled(Self::page.map(|page| page == &RadialTimepickerPage::Hours))
-                .class("switch-page-button")
-                .on_press(|cx| cx.emit(TimepickerEvent::SetPage(RadialTimepickerPage::Hours)));
+            Binding::new(cx, Self::show_controls, move |cx, show_controls| {
+                if show_controls.get(cx) {
+                    VStack::new(cx, |cx| {
+                        Binding::new(cx, lens1.clone(), |cx, lens| {
+                            let (hour, minute, second) =
+                                (lens.get(cx).hour(), lens.get(cx).minute(), lens.get(cx).second());
 
-            Label::new(cx, ICON_RIGHT_OPEN)
-                .position_type(PositionType::SelfDirected)
-                .size(Pixels(30.0))
-                .space(Stretch(1.0))
-                .right(Pixels(8.0))
-                .top(Pixels(8.0))
-                .child_space(Stretch(1.0))
-                //.background_color(Color::rgb(200, 200, 200))
-                .border_radius(Percentage(50.0))
-                .font("icons")
-                .disabled(Self::page.map(|page| page == &RadialTimepickerPage::Minutes))
-                .class("switch-page-button")
-                .on_press(|cx| cx.emit(TimepickerEvent::SetPage(RadialTimepickerPage::Minutes)));
+                            HStack::new(cx, |cx| {
+                                Button::new(
+                                    cx,
+                                    |ex| {
+                                        ex.emit(AnalogTimepickerEvent::SetPage(
+                                            AnalogTimepickerPage::Hours,
+                                        ))
+                                    },
+                                    |cx| {
+                                        Label::new(cx, hour).hoverable(false);
+                                        Element::new(cx).class("indicator")
+                                    },
+                                )
+                                .checked(
+                                    Self::page.map(|page| page == &AnalogTimepickerPage::Hours),
+                                );
+                                Button::new(
+                                    cx,
+                                    |ex| {
+                                        ex.emit(AnalogTimepickerEvent::SetPage(
+                                            AnalogTimepickerPage::Minutes,
+                                        ))
+                                    },
+                                    |cx| {
+                                        Label::new(cx, minute).hoverable(false);
+                                        Element::new(cx).class("indicator")
+                                    },
+                                )
+                                .checked(
+                                    Self::page.map(|page| page == &AnalogTimepickerPage::Minutes),
+                                );
+                                Button::new(
+                                    cx,
+                                    |ex| {
+                                        ex.emit(AnalogTimepickerEvent::SetPage(
+                                            AnalogTimepickerPage::Seconds,
+                                        ))
+                                    },
+                                    |cx| {
+                                        Label::new(cx, second).hoverable(false);
+                                        Element::new(cx).class("indicator")
+                                    },
+                                )
+                                .checked(
+                                    Self::page.map(|page| page == &AnalogTimepickerPage::Seconds),
+                                );
+                            })
+                            .class("time-selector-wrapper");
 
-            Label::new(cx, "AM")
-                .position_type(PositionType::SelfDirected)
-                .size(Pixels(30.0))
-                .space(Stretch(1.0))
-                .left(Pixels(8.0))
-                .bottom(Pixels(8.0))
-                .child_space(Stretch(1.0))
-                //.background_color(Color::rgb(200, 200, 200))
-                .border_radius(Percentage(50.0))
-                .checked(l.clone().map(|time| !time.hour12().0))
-                .class("switch-zone-button")
-                .on_press(|cx| cx.emit(TimepickerEvent::SetZone(false)));
-
-            Label::new(cx, "PM")
-                .position_type(PositionType::SelfDirected)
-                .size(Pixels(30.0))
-                .space(Stretch(1.0))
-                .right(Pixels(8.0))
-                .bottom(Pixels(8.0))
-                .child_space(Stretch(1.0))
-                //.background_color(Color::rgb(200, 200, 200))
-                .border_radius(Percentage(50.0))
-                .checked(l.clone().map(|time| time.hour12().0))
-                .class("switch-zone-button")
-                .on_press(|cx| cx.emit(TimepickerEvent::SetZone(true)));
+                            Button::new(
+                                cx,
+                                |ex| ex.emit(AnalogTimepickerEvent::ToggleAMOrPM),
+                                |cx| {
+                                    Label::new(cx, "AM").bind(lens, |h, lens| {
+                                        if lens.get(h.cx).hour12().0 {
+                                            h.text("PM");
+                                        } else {
+                                            h.text("AM");
+                                        }
+                                    })
+                                },
+                            )
+                            .class("accent");
+                        })
+                    })
+                    .position_type(PositionType::SelfDirected)
+                    .class("controls-wrapper");
+                }
+            })
         })
-        // .child_space(Stretch(1.0))
-        .size(Pixels(220.0))
     }
 }
 
-impl<L, T> View for RadialTimepicker<L, T>
+impl<L, T> View for AnalogTimepicker<L, T>
 where
     L: Lens<Target = T>,
     T: Timelike + Data + Copy,
 {
     fn element(&self) -> Option<&'static str> {
-        Some("radial_timepicker")
+        Some("analogtimepicker")
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|timepicker_event, _| match timepicker_event {
-            TimepickerEvent::SetHours(hours) => {
+            AnalogTimepickerEvent::SetHours(hours) => {
                 if let Some(callback) = &self.on_change {
                     let current = self.lens.get(cx);
                     let mut new_hours =
@@ -418,27 +596,49 @@ where
                     }
                     (callback)(
                         cx,
-                        NaiveTime::from_hms(new_hours, current.minute(), current.second()),
+                        NaiveTime::from_hms_opt(new_hours, current.minute(), current.second())
+                            .unwrap(),
                     );
                 }
-                self.page = RadialTimepickerPage::Minutes;
+                if self.change_page_on_select {
+                    self.page = AnalogTimepickerPage::Minutes;
+                }
             }
 
-            TimepickerEvent::SetMinutes(minutes) => {
+            AnalogTimepickerEvent::SetMinutes(minutes) => {
                 if let Some(callback) = &self.on_change {
                     let current = self.lens.get(cx);
                     (callback)(
                         cx,
-                        NaiveTime::from_hms(current.hour(), *minutes as u32, current.second()),
+                        NaiveTime::from_hms_opt(current.hour(), *minutes as u32, current.second())
+                            .unwrap(),
+                    );
+                }
+                if self.change_page_on_select {
+                    self.page = AnalogTimepickerPage::Seconds;
+                }
+            }
+
+            AnalogTimepickerEvent::SetSeconds(seconds) => {
+                if let Some(callback) = &self.on_change {
+                    let current = self.lens.get(cx);
+                    (callback)(
+                        cx,
+                        NaiveTime::from_hms_opt(current.hour(), current.minute(), *seconds as u32)
+                            .unwrap(),
                     );
                 }
             }
 
-            TimepickerEvent::SetPage(page) => {
+            AnalogTimepickerEvent::SetPage(page) => {
                 self.page = *page;
             }
 
-            TimepickerEvent::SetZone(zone) => {
+            AnalogTimepickerEvent::ToggleAMOrPM => {
+                cx.emit(AnalogTimepickerEvent::SetZone(!self.lens.get(cx).hour12().0))
+            }
+
+            AnalogTimepickerEvent::SetZone(zone) => {
                 if let Some(callback) = &self.on_change {
                     let current = self.lens.get(cx);
 
@@ -446,22 +646,24 @@ where
                         (false, true) => {
                             (callback)(
                                 cx,
-                                NaiveTime::from_hms(
+                                NaiveTime::from_hms_opt(
                                     current.hour() + 12,
                                     current.minute(),
                                     current.second(),
-                                ),
+                                )
+                                .unwrap(),
                             );
                         }
 
                         (true, false) => {
                             (callback)(
                                 cx,
-                                NaiveTime::from_hms(
+                                NaiveTime::from_hms_opt(
                                     current.hour() - 12,
                                     current.minute(),
                                     current.second(),
-                                ),
+                                )
+                                .unwrap(),
                             );
                         }
 
@@ -469,12 +671,11 @@ where
                     }
                 }
             }
-            _ => {}
         });
     }
 }
 
-impl<'v, L, T> Handle<'v, RadialTimepicker<L, T>>
+impl<'v, L, T> Handle<'v, AnalogTimepicker<L, T>>
 where
     L: Lens<Target = T>,
     T: Timelike + Data + Copy,
@@ -483,8 +684,16 @@ where
     where
         F: 'static + Fn(&mut EventContext, NaiveTime),
     {
-        self.modify(|timepicker: &mut RadialTimepicker<L, T>| {
+        self.modify(|timepicker: &mut AnalogTimepicker<L, T>| {
             timepicker.on_change = Some(Box::new(callback))
         })
+    }
+
+    pub fn show_controls(self, value: bool) -> Self {
+        self.modify(|timepicker| timepicker.show_controls = value)
+    }
+
+    pub fn change_page_on_select(self, value: bool) -> Self {
+        self.modify(|timepicker| timepicker.change_page_on_select = value)
     }
 }

@@ -54,14 +54,17 @@ pub use popup::{Popup, PopupData, PopupEvent};
 pub use radio_buttons::RadioButton;
 pub use scrollbar::Scrollbar;
 pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
-pub use slider::Slider;
-pub use spinbox::{Spinbox, SpinboxKind};
+pub use slider::{NamedSlider, Slider};
+pub use spinbox::{Spinbox, SpinboxIcons, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
 pub use switch::Switch;
 pub use tab::{TabPair, TabView};
 pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};
-pub use timepicker::{AMOrPM, DayTime, RadialTimepicker, Timepicker, TimepickerEvent};
+pub use timepicker::{
+    AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,
+    DigitalTimepicker, DigitalTimepickerEvent, Timepicker,
+};
 pub use tooltip::{Tooltip, TooltipEvent, TooltipSeq};
 pub use xypad::XYPad;
 

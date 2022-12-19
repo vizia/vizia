@@ -1,4 +1,4 @@
-use crate::fonts::icons_names::DOWN;
+use crate::fonts::vizia_icons::CHEVRON_DOWN;
 use crate::prelude::*;
 
 pub struct PickList {
@@ -38,13 +38,14 @@ impl PickList {
 
                                 handle.text(list.clone().index(selected_index));
                             });
-                        });
+                        }).hoverable(false);
                         if show_handle {
-                            Label::new(cx, DOWN).font("icons");
+                            Label::new(cx, CHEVRON_DOWN)
+                                .class("icon")
+                                .font("vizia_icons")
+                                .hoverable(false);
                         }
                     })
-                    .child_left(Pixels(5.0))
-                    .child_right(Pixels(5.0))
                     .col_between(Stretch(1.0))
                 },
                 move |cx| {

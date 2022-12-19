@@ -16,8 +16,9 @@ fn main() {
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 Slider::new(cx, AppData::value.map(|val| (val + 50.0) / 100.0))
+                    .range(0.0..1.0)
                     .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(-50.0 + (val * 100.0))));
-                Label::new(cx, AppData::value.map(|val| format!("{:.2}", (val - 50.0) / 100.0)))
+                Label::new(cx, AppData::value.map(|val| format!("{:.2}", (val + 50.0) / 100.0)))
                     .width(Pixels(50.0));
             })
             .child_top(Stretch(1.0))
@@ -30,6 +31,16 @@ fn main() {
                     .range(-50.0..50.0)
                     .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
                 Label::new(cx, AppData::value.map(|val| format!("{:.2}", val))).width(Pixels(50.0));
+            })
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0))
+            .height(Auto)
+            .col_between(Pixels(8.0));
+
+            HStack::new(cx, |cx| {
+                NamedSlider::new(cx, AppData::value, "Slider Name")
+                    .range(-50.0..50.0)
+                    .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
             })
             .child_top(Stretch(1.0))
             .child_bottom(Stretch(1.0))

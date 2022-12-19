@@ -50,7 +50,7 @@ where
                                 Element::new(cx).class("indicator");
                             },
                             move |cx| {
-                                RadialTimepicker::new(
+                                AnalogTimepicker::new(
                                     cx,
                                     lens1.clone().map(|datetime| datetime.time()),
                                 )

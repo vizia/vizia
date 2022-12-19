@@ -5,7 +5,7 @@ use crate::prelude::*;
 use crate::vg;
 
 pub struct ColorPicker<L> {
-    lens: L,
+    _lens: L,
     on_change: Option<Box<dyn Fn(&mut EventContext, Color)>>,
 }
 
@@ -18,7 +18,7 @@ where
     L: Lens<Target = Color>,
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
-        Self { lens: lens.clone(), on_change: None }
+        Self { _lens: lens.clone(), on_change: None }
             .build(cx, move |cx| {
                 ColorSelector::new(cx, lens.clone())
                     .on_change(|cx, color| cx.emit(ColorPickerEvent::SetColor(color)))
@@ -32,7 +32,7 @@ where
                     Textbox::new(
                         cx,
                         lens.clone().map(|color| {
-                            let (h, s, v) = rgb_to_hsv(
+                            let (h, _, _) = rgb_to_hsv(
                                 color.r() as f64 / 255.0,
                                 color.g() as f64 / 255.0,
                                 color.b() as f64 / 255.0,
@@ -44,7 +44,7 @@ where
                     Textbox::new(
                         cx,
                         lens.clone().map(|color| {
-                            let (h, s, v) = rgb_to_hsv(
+                            let (_, s, _) = rgb_to_hsv(
                                 color.r() as f64 / 255.0,
                                 color.g() as f64 / 255.0,
                                 color.b() as f64 / 255.0,
@@ -56,7 +56,7 @@ where
                     Textbox::new(
                         cx,
                         lens.clone().map(|color| {
-                            let (h, s, v) = rgb_to_hsv(
+                            let (_, _, v) = rgb_to_hsv(
                                 color.r() as f64 / 255.0,
                                 color.g() as f64 / 255.0,
                                 color.b() as f64 / 255.0,
@@ -127,12 +127,12 @@ where
     L: Lens<Target = Color>,
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
-        let color = lens.get(cx);
-        let (h, s, v) = rgb_to_hsv(
-            color.r() as f64 / 255.0,
-            color.g() as f64 / 255.0,
-            color.b() as f64 / 255.0,
-        );
+        // let color = lens.get(cx);
+        // let (h, s, v) = rgb_to_hsv(
+        //     color.r() as f64 / 255.0,
+        //     color.g() as f64 / 255.0,
+        //     color.b() as f64 / 255.0,
+        // );
 
         Self {
             lens: lens.clone(),
@@ -193,8 +193,8 @@ where
                 let current = cx.current();
                 if meta.target == current {
                     cx.capture();
-                    let width = cx.cache.get_width(current);
-                    let height = cx.cache.get_height(current);
+                    // let width = cx.cache.get_width(current);
+                    // let height = cx.cache.get_height(current);
 
                     let mut dx = (cx.mouse.left.pos_down.0 - cx.cache.get_posx(current))
                         / cx.cache.get_width(current);
@@ -204,8 +204,8 @@ where
                     dx = dx.clamp(0.0, 1.0);
                     dy = dy.clamp(0.0, 1.0);
 
-                    let saturation = dx;
-                    let value = 1.0 - dy;
+                    // let saturation = dx;
+                    // let value = 1.0 - dy;
 
                     self.saturation = dx;
                     self.value = 1.0 - dy;
@@ -257,8 +257,8 @@ where
                     dx = dx.clamp(0.0, 1.0);
                     dy = dy.clamp(0.0, 1.0);
 
-                    let saturation = dx;
-                    let value = 1.0 - dy;
+                    // let saturation = dx;
+                    // let value = 1.0 - dy;
 
                     self.saturation = dx;
                     self.value = 1.0 - dy;

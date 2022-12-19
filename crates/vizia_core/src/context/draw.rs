@@ -8,7 +8,7 @@ use morphorm::Units;
 use crate::cache::{BoundingBox, CachedData};
 use crate::events::ViewHandler;
 use crate::prelude::*;
-use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager};
+use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
 use crate::style::{LinearGradient, Style};
 use crate::text::Selection;

@@ -2,6 +2,8 @@ use chrono::{Datelike, NaiveDate, Weekday};
 
 use crate::prelude::*;
 
+use super::spinbox::SpinboxIcons;
+
 #[derive(Lens)]
 pub struct Datepicker {
     view_date: NaiveDate,
@@ -42,18 +44,20 @@ pub enum DatepickerEvent {
 }
 
 impl Datepicker {
-    fn first_day_of_month(year: i32, month: u32) -> Weekday {
-        NaiveDate::from_ymd(year, month, 1).weekday()
+    fn first_day_of_month(year: i32, month: u32) -> Option<Weekday> {
+        NaiveDate::from_ymd_opt(year, month, 1).map(|date| date.weekday())
     }
 
-    fn last_day_of_month(year: i32, month: u32) -> u32 {
+    fn last_day_of_month(year: i32, month: u32) -> Option<u32> {
         if month == 12 {
-            NaiveDate::from_ymd(year + 1, 1, 1)
+            NaiveDate::from_ymd_opt(year + 1, 1, 1)
         } else {
-            NaiveDate::from_ymd(year, month + 1, 1)
+            NaiveDate::from_ymd_opt(year, month + 1, 1)
         }
-        .signed_duration_since(NaiveDate::from_ymd(year, month, 1))
-        .num_days() as u32
+        .map(|date| {
+            date.signed_duration_since(NaiveDate::from_ymd_opt(year, month, 1).unwrap()).num_days()
+                as u32
+        })
     }
 
     // Given a date and a month offset, returns the first day of the month and the number of days in the month
@@ -73,7 +77,10 @@ impl Datepicker {
 
         let month = month as u32;
 
-        (Self::first_day_of_month(year, month), Self::last_day_of_month(year, month))
+        (
+            Self::first_day_of_month(year, month).unwrap(),
+            Self::last_day_of_month(year, month).unwrap(),
+        )
     }
 
     fn get_day_number(y: u32, x: u32, view_date: &NaiveDate) -> (u32, bool) {
@@ -110,8 +117,8 @@ impl Datepicker {
 
         Self {
             months: MONTHS.to_vec().iter_mut().map(|v| v.to_string()).collect(),
-            selected_month: view_date.month() as usize,
-            view_date: NaiveDate::from_ymd(view_date.year(), view_date.month(), 1),
+            selected_month: view_date.month() as usize - 1,
+            view_date: NaiveDate::from_ymd_opt(view_date.year(), view_date.month(), 1).unwrap(),
             on_select: None,
         }
         .build(cx, move |cx| {
@@ -123,6 +130,7 @@ impl Datepicker {
                             .on_select(|ex, index| ex.emit(DatepickerEvent::SelectMonth(index)))
                     },
                     SpinboxKind::Horizontal,
+                    SpinboxIcons::Chevrons,
                 )
                 .width(Pixels(131.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementMonth))
@@ -134,6 +142,7 @@ impl Datepicker {
                             .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
                     },
                     SpinboxKind::Horizontal,
+                    SpinboxIcons::Math,
                 )
                 .width(Stretch(1.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))
@@ -177,11 +186,12 @@ impl Datepicker {
                                             .on_press(move |ex| {
                                                 if !disabled {
                                                     ex.emit(DatepickerEvent::SelectDate(
-                                                        NaiveDate::from_ymd(
+                                                        NaiveDate::from_ymd_opt(
                                                             view_date.year(),
                                                             view_date.month(),
                                                             day_number,
-                                                        ),
+                                                        )
+                                                        .unwrap(),
                                                     ))
                                                 }
                                             })
@@ -221,37 +231,45 @@ impl View for Datepicker {
             DatepickerEvent::IncrementMonth => {
                 if self.view_date.month() == 12 {
                     self.view_date =
-                        NaiveDate::from_ymd(self.view_date.year() + 1, 1, self.view_date.day());
+                        NaiveDate::from_ymd_opt(self.view_date.year() + 1, 1, self.view_date.day())
+                            .unwrap();
                 } else {
-                    self.view_date = NaiveDate::from_ymd(
+                    self.view_date = NaiveDate::from_ymd_opt(
                         self.view_date.year(),
                         self.view_date.month() + 1,
                         self.view_date.day(),
-                    );
+                    )
+                    .unwrap();
                 }
                 self.selected_month = self.view_date.month() as usize;
             }
 
             DatepickerEvent::DecrementMonth => {
                 if self.view_date.month() == 1 {
-                    self.view_date =
-                        NaiveDate::from_ymd(self.view_date.year() - 1, 12, self.view_date.day());
+                    self.view_date = NaiveDate::from_ymd_opt(
+                        self.view_date.year() - 1,
+                        12,
+                        self.view_date.day(),
+                    )
+                    .unwrap();
                 } else {
-                    self.view_date = NaiveDate::from_ymd(
+                    self.view_date = NaiveDate::from_ymd_opt(
                         self.view_date.year(),
                         self.view_date.month() - 1,
                         self.view_date.day(),
-                    );
+                    )
+                    .unwrap();
                 }
                 self.selected_month = self.view_date.month() as usize;
             }
 
             DatepickerEvent::SelectMonth(month) => {
-                self.view_date = NaiveDate::from_ymd(
+                self.view_date = NaiveDate::from_ymd_opt(
                     self.view_date.year(),
                     *month as u32 + 1,
                     self.view_date.day(),
-                );
+                )
+                .unwrap();
                 self.selected_month = *month;
             }
 
@@ -266,7 +284,8 @@ impl View for Datepicker {
             DatepickerEvent::SelectYear(year) => {
                 if let Ok(year) = year.parse::<i32>() {
                     self.view_date =
-                        NaiveDate::from_ymd(year, self.view_date.month(), self.view_date.day());
+                        NaiveDate::from_ymd_opt(year, self.view_date.month(), self.view_date.day())
+                            .unwrap();
                 }
             }
 

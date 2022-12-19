@@ -8,7 +8,7 @@ fn main() {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    use vizia::style::Transform2D;
+    // use vizia::style::Transform2D;
 
     Application::new(|cx| {
         // cx.add_stylesheet("examples/resources/test.css").expect("Failed to find file");
