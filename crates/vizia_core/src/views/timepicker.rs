@@ -5,13 +5,13 @@ use chrono::{NaiveTime, Timelike};
 
 use super::spinbox::SpinboxIcons;
 
-#[derive(PartialEq, Data, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum AMOrPM {
     AM,
     PM,
 }
 
-#[derive(PartialEq, Data, Lens, Clone, Copy, Debug)]
+#[derive(PartialEq, Lens, Clone, Copy, Debug)]
 pub struct DayTime {
     pub hour: u8,
     pub minutes: u8,
@@ -80,7 +80,7 @@ impl<'a> Handle<'a, Timepicker> {
     }
 }
 
-#[derive(PartialEq, Data, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum DigitalTimepickerEvent {
     IncrementHour,
     IncrementMinutes,
@@ -338,14 +338,14 @@ where
     }
 }
 
-#[derive(PartialEq, Data, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum AnalogTimepickerPage {
     Hours,
     Minutes,
     Seconds,
 }
 
-#[derive(PartialEq, Data, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum AnalogTimepickerEvent {
     ToggleAMOrPM,
     SetHours(u8),

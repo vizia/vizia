@@ -626,26 +626,26 @@ zstack > * {
 /* Switch */
 
 switch {
-    width: 24px;
-    height: 12px;
+    width: 32px;
+    height: 18px;
 }
 
 .switch-handle {
     left: 0px;
-    width: 12px;
-    height: 12px;
+    width: 18px;
+    height: 18px;
 }
 
 .switch-handle-bg {
-    width: 20px;
-    height: 8px;
+    width: 30px;
+    height: 12px;
     top: 1s;
     bottom: 1s;
     transition: background-color 0.1 0;
 }
 
 switch:checked .switch-handle {
-    left: 8px;
+    left: 12px;
 }
 
 /* Tab */

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use vizia::prelude::*;
 
-#[derive(Clone, Data, Lens)]
+#[derive(Clone, Lens)]
 struct AppState {
     spinbox_value_1: i64,
     spinbox_value_2: usize,
@@ -10,7 +10,7 @@ struct AppState {
     spinbox_value_3: Spinbox3Values,
 }
 
-#[derive(Clone, PartialEq, Data, Copy)]
+#[derive(Clone, PartialEq, Copy)]
 enum Spinbox3Values {
     One,
     Two,

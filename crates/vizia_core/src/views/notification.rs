@@ -3,12 +3,12 @@ use crate::{
     prelude::*,
 };
 
-#[derive(Clone, Debug, PartialEq, Data, Lens)]
+#[derive(Clone, Debug, PartialEq, Lens)]
 pub struct Notification {
     container_open: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Data)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum NotificationEvent {
     ToggleContainer,
 }

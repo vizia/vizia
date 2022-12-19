@@ -13,13 +13,13 @@ pub struct Spinbox {
     on_increment: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
 }
 
-#[derive(Clone, Copy, Debug, Data, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SpinboxKind {
     Horizontal,
     Vertical,
 }
 
-#[derive(Clone, Copy, Debug, Data, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SpinboxIcons {
     Math, //Don't know how to call this tbh
     Chevrons,
