@@ -16,9 +16,9 @@ use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 
+use crate::context::EmitContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
-use crate::context::EmitContext;
 
 use super::DrawCache;
 

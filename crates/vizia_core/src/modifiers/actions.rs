@@ -1,9 +1,9 @@
+use crate::context::EmitContext;
 use crate::{cache::CachedData, prelude::*};
 use std::{
     any::{Any, TypeId},
     marker::PhantomData,
 };
-use crate::context::EmitContext;
 
 pub struct EventHandle<'a, 'b, V> {
     cx: &'a mut EventContext<'b>,
@@ -50,7 +50,7 @@ impl<'a, 'b, V> EventHandle<'a, 'b, V> {
     }
 }
 
-impl <'a, 'b, V> AsMut<EventContext<'b>> for EventHandle<'a, 'b, V> {
+impl<'a, 'b, V> AsMut<EventContext<'b>> for EventHandle<'a, 'b, V> {
     fn as_mut(&mut self) -> &mut EventContext<'b> {
         self.cx
     }
