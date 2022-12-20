@@ -16,6 +16,7 @@ use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 
+use crate::context::EmitContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
@@ -80,28 +81,6 @@ impl<'a> EventContext<'a> {
 
     pub fn current(&self) -> Entity {
         self.current
-    }
-
-    /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Any + Send>(&mut self, message: M) {
-        self.event_queue.push_back(
-            Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up),
-        );
-    }
-
-    /// Send an event containing a message directly to a specified entity.
-    pub fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
-        self.event_queue.push_back(
-            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
-        );
-    }
-
-    /// Send an event with custom origin and propagation information.
-    pub fn emit_custom(&mut self, event: Event) {
-        self.event_queue.push_back(event);
     }
 
     /// Add a listener to an entity.
@@ -374,5 +353,26 @@ impl<'a> DataContext for EventContext<'a> {
         }
 
         None
+    }
+}
+
+impl<'a> EmitContext for EventContext<'a> {
+    fn emit<M: Any + Send>(&mut self, message: M) {
+        self.event_queue.push_back(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+        );
+    }
+
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
+        self.event_queue.push_back(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+        );
+    }
+
+    fn emit_custom(&mut self, event: Event) {
+        self.event_queue.push_back(event);
     }
 }
