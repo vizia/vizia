@@ -1,11 +1,14 @@
 use crate::cache::BoundingBox;
 use crate::prelude::*;
-use crate::text::{idx_to_pos, measure_text_lines, pos_to_idx, text_layout, text_paint_general, Direction, EditableText, Movement, Selection, enforce_text_bounds, ensure_visible};
+use crate::text::{
+    enforce_text_bounds, ensure_visible, idx_to_pos, measure_text_lines, pos_to_idx, text_layout,
+    text_paint_general, Direction, EditableText, Movement, Selection,
+};
+use crate::views::scrollview::SCROLL_SENSITIVITY;
 use std::sync::Arc;
 use vizia_id::GenerationalId;
 use vizia_input::Code;
 use vizia_storage::TreeExt;
-use crate::views::scrollview::SCROLL_SENSITIVITY;
 
 #[derive(Lens)]
 pub struct TextboxData {
@@ -246,11 +249,11 @@ impl TextboxData {
                 } else {
                     let new_y = y + parent_bounds.h
                         * match dir {
-                        Direction::Upstream => -1.0,
-                        Direction::Downstream => 1.0,
-                        Direction::Left => 0.0,
-                        Direction::Right => 0.0,
-                    };
+                            Direction::Upstream => -1.0,
+                            Direction::Downstream => 1.0,
+                            Direction::Left => 0.0,
+                            Direction::Right => 0.0,
+                        };
 
                     self.selection.active = pos_to_idx(
                         self.sel_x,
@@ -830,7 +833,11 @@ where
                         Direction::Downstream
                     };
                     cx.emit(TextEvent::MoveCursor(
-                        if cx.modifiers.contains(Modifiers::CTRL) { Movement::Body(direction) } else { Movement::Page(direction) },
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            Movement::Body(direction)
+                        } else {
+                            Movement::Page(direction)
+                        },
                         cx.modifiers.contains(Modifiers::SHIFT),
                     ));
                 }
