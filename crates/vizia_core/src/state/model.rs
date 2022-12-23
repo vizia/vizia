@@ -3,10 +3,7 @@ use std::{
     collections::HashMap,
 };
 
-use crate::state::Store;
 use crate::{events::ViewHandler, prelude::*};
-
-use super::StoreId;
 
 /// A trait implemented by application data in order to mutate in response to events.
 ///
@@ -63,14 +60,12 @@ pub trait Model: 'static + Sized {
     /// }
     /// ```
     fn build(self, cx: &mut Context) {
-        if let Some(model_data_store) = cx.data.get_mut(cx.current()) {
-            model_data_store.models.insert(TypeId::of::<Self>(), Box::new(self));
+        if let Some(models) = cx.data.get_mut(cx.current()) {
+            models.insert(TypeId::of::<Self>(), Box::new(self));
         } else {
             let mut models: HashMap<TypeId, Box<dyn ModelData>> = HashMap::new();
             models.insert(TypeId::of::<Self>(), Box::new(self));
-            cx.data
-                .insert(cx.current(), ModelDataStore { models, stores: HashMap::default() })
-                .expect("Failed to add data");
+            cx.data.insert(cx.current(), models).expect("Failed to add data");
         }
     }
 
@@ -132,12 +127,6 @@ impl<T: Model> ModelData for T {
     fn as_any_ref(&self) -> &dyn Any {
         self
     }
-}
-
-#[derive(Default)]
-pub(crate) struct ModelDataStore {
-    pub models: HashMap<TypeId, Box<dyn ModelData>>,
-    pub stores: HashMap<StoreId, Box<dyn Store>>,
 }
 
 impl Model for () {}

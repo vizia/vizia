@@ -204,25 +204,27 @@ impl<'a> BackendContext<'a> {
         let mut observers: HashSet<Entity> = HashSet::new();
 
         for entity in self.0.tree.into_iter() {
-            if let Some(model_data_store) = self.0.data.get_mut(entity) {
-                // Determine observers of model data
-                for (_, model) in model_data_store.models.iter() {
-                    let model = ModelOrView::Model(model.as_ref());
+            if let Some(models) = self.0.data.get_mut(entity) {
+                if let Some(stores) = self.0.stores.get_mut(entity) {
+                    // Determine observers of model data
+                    for (_, model) in models.iter() {
+                        let model = ModelOrView::Model(model.as_ref());
 
-                    for (_, store) in model_data_store.stores.iter_mut() {
-                        if store.update(model) {
-                            observers.extend(store.observers().iter())
+                        for (_, store) in stores.iter_mut() {
+                            if store.update(model) {
+                                observers.extend(store.observers().iter());
+                            }
                         }
                     }
-                }
 
-                // Determine observers of view data
-                for (_, store) in model_data_store.stores.iter_mut() {
-                    if let Some(view_handler) = self.0.views.get(&entity) {
-                        let view_model = ModelOrView::View(view_handler.as_ref());
+                    // Determine observers of view data
+                    for (_, store) in stores.iter_mut() {
+                        if let Some(view_handler) = self.0.views.get(&entity) {
+                            let view_model = ModelOrView::View(view_handler.as_ref());
 
-                        if store.update(view_model) {
-                            observers.extend(store.observers().iter())
+                            if store.update(view_model) {
+                                observers.extend(store.observers().iter())
+                            }
                         }
                     }
                 }
@@ -238,6 +240,8 @@ impl<'a> BackendContext<'a> {
 
         let ordered_observers =
             self.0.tree.into_iter().filter(|ent| observers.contains(&ent)).collect::<Vec<_>>();
+
+        //println!("Observers that need updating: {:?}", ordered_observers);
 
         // Update observers in tree order
         for observer in ordered_observers.into_iter() {

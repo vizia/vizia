@@ -55,7 +55,7 @@ use crate::views::popup::PopupData;
 /// set of views in either location. Here's an example where you can use a textbox to filter a list
 /// of checkboxes which pop up when you click the textbox:
 ///
-/// ```
+/// ```compile_fail
 /// # use vizia_core::prelude::*;
 /// # let cx = &mut Context::new();
 /// #
@@ -91,7 +91,7 @@ use crate::views::popup::PopupData;
 /// # const LABELS: [&str; 6] = ["Bees", "Butterflies", "Dragonflies", "Crickets", "Moths", "Ladybugs"];
 /// #
 /// # AppData {
-/// #     values: [true, false, true, false, true, false],
+/// #     values: vec![true, false, true, false, true, false],
 /// #     filter: "".to_owned(),
 /// # }.build(cx);
 ///

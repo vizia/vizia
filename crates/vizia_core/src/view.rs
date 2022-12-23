@@ -3,7 +3,6 @@ use std::{any::Any, collections::HashMap};
 
 use crate::events::ViewHandler;
 use crate::resource::ImageOrId;
-use crate::state::ModelDataStore;
 use crate::text::{idx_to_pos, measure_text_lines, text_layout, text_paint_draw};
 use femtovg::{
     renderer::OpenGl, Align, Baseline, ImageFlags, Paint, Path, PixelFormat, RenderTarget,
@@ -34,9 +33,7 @@ pub trait View: 'static + Sized {
         cx.style.add(id);
         cx.views.insert(id, Box::new(self));
 
-        cx.data
-            .insert(id, ModelDataStore { models: HashMap::default(), stores: HashMap::default() })
-            .expect("Failed to insert model data store");
+        cx.data.insert(id, HashMap::new()).expect("Failed to insert model data store");
 
         let handle = Handle { entity: id, p: Default::default(), cx };
 

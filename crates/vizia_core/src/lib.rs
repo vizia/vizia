@@ -51,7 +51,9 @@ pub mod prelude {
     pub use super::modifiers::{
         AbilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers, TextModifiers,
     };
-    pub use super::state::{Binding, Data, Lens, LensExt, Model, Res, Setter};
+    pub use super::state::{
+        Bindable, BindableExt, Binding, Data, Lens, LensExt, Model, Res, Setter,
+    };
     pub use super::view::{Canvas, View};
     pub use super::views::*;
     pub use super::window::WindowModifiers;

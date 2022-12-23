@@ -1,11 +1,10 @@
 use std::any::TypeId;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
-use std::ops::Deref;
 
 use crate::prelude::*;
 
-use super::{next_uuid, StoreId};
+use super::{next_uuid, BindThen, StoreId};
 
 /// A Lens allows the construction of a reference to a piece of some data, e.g. a field of a struct.
 ///
@@ -47,73 +46,66 @@ pub trait LensExt: Lens {
     /// ```ignore
     /// let value = lens.get(cx);
     /// ```
-    fn get<C: DataContext>(&self, cx: &C) -> Self::Target
-    where
-        Self::Target: Clone,
-    {
-        self.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| {
-                t.expect("Lens failed to resolve. Do you want to use LensExt::get_fallible?")
-                    .clone()
-            },
-        )
-    }
+    // fn get<C: DataContext>(&self, cx: &C) -> Self::Target
+    // where
+    //     Self::Target: Clone,
+    // {
+    //     self.view(
+    //         cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
+    //         |t| {
+    //             t.expect("Lens failed to resolve. Do you want to use LensExt::get_fallible?")
+    //                 .clone()
+    //         },
+    //     )
+    // }
 
-    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Target>
-    where
-        Self::Target: Clone,
-    {
-        self.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| t.cloned().map(|v| v),
-        )
-    }
+    // fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Target>
+    // where
+    //     Self::Target: Clone,
+    // {
+    //     self.view(
+    //         cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
+    //         |t| t.cloned().map(|v| v),
+    //     )
+    // }
 
-    /// Used to construct a lens to some data contained within some other lensed data.
-    ///
-    /// # Example
-    /// Binds a label to `other_data`, which is a field of a struct `SomeData`, which is a field of the root `AppData` model:
-    /// ```compile_fail
-    /// Binding::new(cx, AppData::some_data.then(SomeData::other_data), |cx, data|{
-    ///
-    /// });
-    /// ```
-    fn then<Other>(self, other: Other) -> Then<Self, Other>
-    where
-        Other: Lens<Source = Self::Target>,
-    {
-        Then::new(self, other)
-    }
+    // /// Used to construct a lens to some data contained within some other lensed data.
+    // ///
+    // /// # Example
+    // /// Binds a label to `other_data`, which is a field of a struct `SomeData`, which is a field of the root `AppData` model:
+    // /// ```compile_fail
+    // /// Binding::new(cx, AppData::some_data.then(SomeData::other_data), |cx, data|{
+    // ///
+    // /// });
+    // /// ```
+    // fn then<Other>(self, other: Other) -> Then<Self, Other>
+    // where
+    //     Other: Lens<Source = Self::Target>,
+    // {
+    //     Then::new(self, other)
+    // }
 
-    fn index<T>(self, index: usize) -> Then<Self, Index<Self::Target, T>>
-    where
-        T: 'static,
-        Self::Target: Deref<Target = [T]>,
-    {
-        self.then(Index::new(index))
-    }
+    // fn index<T>(self, index: usize) -> Then<Self, Index<Self::Target, T>>
+    // where
+    //     T: 'static,
+    //     Self::Target: Deref<Target = [T]>,
+    // {
+    //     self.then(Index::new(index))
+    // }
 
-    fn map<G: Clone, B: 'static + Clone>(self, get: G) -> Then<Self, Map<G, Self::Target, B>>
+    fn unwrap<T: 'static>(self) -> BindThen<Self, UnwrapLens<T>, Option<T>>
     where
-        G: 'static + Fn(&Self::Target) -> B,
-    {
-        self.then(Map::new(get))
-    }
-
-    fn unwrap<T: 'static>(self) -> Then<Self, UnwrapLens<T>>
-    where
-        Self: Lens<Target = Option<T>>,
+        Self: Bindable<Output = Option<T>>,
     {
         self.then(UnwrapLens::new())
     }
 
-    fn into_lens<T: 'static>(self) -> Then<Self, IntoLens<Self::Target, T>>
-    where
-        Self::Target: Clone + Into<T>,
-    {
-        self.then(IntoLens::new())
-    }
+    // fn into_lens<T: 'static>(self) -> BindThen<Self, IntoLens<Self::Target, T>, T>
+    // where
+    //     Self::Target: Clone + Into<T>,
+    // {
+    //     self.then(IntoLens::new())
+    // }
 }
 
 // Implement LensExt for all types which implement Lens

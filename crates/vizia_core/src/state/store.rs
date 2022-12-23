@@ -7,7 +7,7 @@ use super::ModelOrView;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 // Generates a unique ID
-pub fn next_uuid() -> u64 {
+pub(crate) fn next_uuid() -> u64 {
     static UUID: AtomicU64 = AtomicU64::new(0);
     UUID.fetch_add(1, Ordering::Relaxed)
 }

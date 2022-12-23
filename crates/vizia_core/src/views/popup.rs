@@ -1,6 +1,6 @@
 use morphorm::PositionType;
 
-use crate::prelude::*;
+use crate::{prelude::*, state::Bindable};
 
 #[derive(Debug, Default, Lens, Clone)]
 pub struct PopupData {
@@ -35,21 +35,21 @@ pub enum PopupEvent {
     Switch,
 }
 
-pub struct Popup<L> {
-    lens: L,
+pub struct Popup<B> {
+    binding: B,
 }
 
-impl<L> Popup<L>
+impl<B> Popup<B>
 where
-    L: Lens<Target = bool>,
+    B: Bindable<Output = bool>,
 {
-    pub fn new<F>(cx: &mut Context, lens: L, capture_focus: bool, content: F) -> Handle<Self>
+    pub fn new<F>(cx: &mut Context, binding: B, capture_focus: bool, content: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context),
     {
-        Self { lens: lens.clone() }
+        Self { binding: binding.clone() }
             .build(cx, |cx| {
-                Binding::new(cx, lens.clone(), move |cx, lens| {
+                Binding::new(cx, binding.clone(), move |cx, lens| {
                     if lens.get(cx) {
                         if capture_focus {
                             VStack::new(cx, &content).lock_focus_to_within();
@@ -59,16 +59,16 @@ where
                     }
                 });
             })
-            .checked(lens.clone())
+            .checked(binding.clone())
             .position_type(PositionType::SelfDirected)
             .z_order(100)
     }
 }
 
-impl<'a, L> Handle<'a, Popup<L>>
+impl<'a, B> Handle<'a, Popup<B>>
 where
-    L: Lens,
-    L::Target: Clone + Into<bool>,
+    B: Bindable,
+    B::Output: Clone + Into<bool>,
 {
     /// Registers a callback for when the user clicks off of the popup, usually with the intent of
     /// closing it.
@@ -78,8 +78,8 @@ where
     {
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
-            cx.add_listener(move |popup: &mut Popup<L>, cx, event| {
-                let flag: bool = popup.lens.get(cx).clone().into();
+            cx.add_listener(move |popup: &mut Popup<B>, cx, event| {
+                let flag: bool = popup.binding.get(cx).clone().into();
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag {
@@ -109,10 +109,10 @@ where
     }
 }
 
-impl<L> View for Popup<L>
+impl<B> View for Popup<B>
 where
-    L: Lens,
-    L::Target: Into<bool>,
+    B: Bindable,
+    B::Output: Into<bool>,
 {
     fn element(&self) -> Option<&'static str> {
         Some("popup")

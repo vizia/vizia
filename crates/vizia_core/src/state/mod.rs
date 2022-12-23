@@ -140,6 +140,9 @@ pub(crate) use store::*;
 mod binding;
 pub use binding::*;
 
+mod bindable;
+pub use bindable::*;
+
 mod res;
 pub use res::*;
 

@@ -1,5 +1,6 @@
 use crate::cache::BoundingBox;
 use crate::prelude::*;
+use crate::state::Bindable;
 use crate::text::{
     enforce_text_bounds, ensure_visible, idx_to_pos, measure_text_lines, pos_to_idx, text_layout,
     text_paint_general, Direction, EditableText, Movement, Selection,
@@ -492,8 +493,8 @@ impl Model for TextboxData {
     }
 }
 
-pub struct Textbox<L: Lens> {
-    lens: L,
+pub struct Textbox<B: Bindable> {
+    binding: B,
     kind: TextboxKind,
 }
 
@@ -504,15 +505,16 @@ pub enum TextboxKind {
     MultiLineWrapped,
 }
 
-impl<L: Lens> Textbox<L>
+impl<B> Textbox<B>
 where
-    <L as Lens>::Target: PartialEq + Clone + ToString,
+    B: 'static + Bindable + Clone,
+    <B as Bindable>::Output: Data + ToString,
 {
-    pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
+    pub fn new(cx: &mut Context, lens: B) -> Handle<Self> {
         Self::new_core(cx, lens, TextboxKind::SingleLine)
     }
 
-    pub fn new_multiline(cx: &mut Context, lens: L, wrap: bool) -> Handle<Self> {
+    pub fn new_multiline(cx: &mut Context, lens: B, wrap: bool) -> Handle<Self> {
         Self::new_core(
             cx,
             lens,
@@ -520,11 +522,12 @@ where
         )
     }
 
-    fn new_core(cx: &mut Context, lens: L, kind: TextboxKind) -> Handle<Self> {
-        let result = Self { lens: lens.clone(), kind }.build(cx, move |cx| {
-            Binding::new(cx, lens.clone(), |cx, text| {
-                let text =
-                    text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
+    fn new_core(cx: &mut Context, binding: B, kind: TextboxKind) -> Handle<Self> {
+        let result = Self { binding: binding.clone(), kind }.build(cx, move |cx| {
+            Binding::new(cx, binding.clone(), |cx, text| {
+                // let text =
+                //     text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
+                let text = text.get(cx).to_string();
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
                         let td = TextboxData {
@@ -583,7 +586,7 @@ where
     }
 }
 
-impl<'a, L: Lens> Handle<'a, Textbox<L>> {
+impl<'a, L: Bindable> Handle<'a, Textbox<L>> {
     pub fn on_edit<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, String) + Send + Sync,
@@ -603,9 +606,9 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
     }
 }
 
-impl<L: Lens> View for Textbox<L>
+impl<L: 'static + Bindable> View for Textbox<L>
 where
-    <L as Lens>::Target: PartialEq + ToString,
+    <L as Bindable>::Output: Data + ToString,
 {
     fn element(&self) -> Option<&'static str> {
         Some("textbox")
@@ -626,18 +629,23 @@ where
                     cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
                 } else {
                     cx.emit(TextEvent::Submit(false));
-                    if let Some(source) = cx.data::<L::Source>() {
-                        let text = self.lens.view(source, |t| {
-                            if let Some(t) = t {
-                                t.to_string()
-                            } else {
-                                "".to_owned()
-                            }
-                        });
+                    // if let Some(source) = cx.data::<L::Source>() {
+                    //     let text = self.lens.view(source, |t| {
+                    //         if let Some(t) = t {
+                    //             t.to_string()
+                    //         } else {
+                    //             "".to_owned()
+                    //         }
+                    //     });
 
-                        cx.emit(TextEvent::SelectAll);
-                        cx.emit(TextEvent::InsertText(text));
-                    };
+                    //     cx.emit(TextEvent::SelectAll);
+                    //     cx.emit(TextEvent::InsertText(text));
+                    // };
+
+                    let text = self.binding.get(cx).to_string();
+                    cx.emit(TextEvent::SelectAll);
+                    cx.emit(TextEvent::InsertText(text));
+
                     cx.release();
                     cx.set_checked(false);
 
@@ -709,18 +717,22 @@ where
 
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
-                        if let Some(source) = cx.data::<L::Source>() {
-                            let text = self.lens.view(source, |t| {
-                                if let Some(t) = t {
-                                    t.to_string()
-                                } else {
-                                    "".to_owned()
-                                }
-                            });
+                        // if let Some(source) = cx.data::<L::Source>() {
+                        //     let text = self.lens.view(source, |t| {
+                        //         if let Some(t) = t {
+                        //             t.to_string()
+                        //         } else {
+                        //             "".to_owned()
+                        //         }
+                        //     });
 
-                            cx.emit(TextEvent::SelectAll);
-                            cx.emit(TextEvent::InsertText(text));
-                        };
+                        //     cx.emit(TextEvent::SelectAll);
+                        //     cx.emit(TextEvent::InsertText(text));
+                        // };
+
+                        let text = self.binding.get(cx).to_string();
+                        cx.emit(TextEvent::SelectAll);
+                        cx.emit(TextEvent::InsertText(text));
 
                         cx.set_checked(false);
                         cx.release();

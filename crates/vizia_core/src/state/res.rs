@@ -1,5 +1,7 @@
 use crate::prelude::*;
 
+use super::Bindable;
+
 macro_rules! impl_res_simple {
     ($t:ty) => {
         impl Res<$t> for $t {
@@ -50,17 +52,17 @@ impl_res_simple!(f64);
 impl_res_simple!(CursorIcon);
 impl_res_simple!(Overflow);
 
-impl<T, L> Res<T> for L
+impl<T, B> Res<T> for B
 where
-    L: Lens<Target = T> + LensExt,
-    T: Clone + PartialEq,
+    B: 'static + Clone + Bindable<Output = T>,
+    T: Data,
 {
     fn get_val(&self, cx: &Context) -> T {
         self.get(cx)
     }
 
     fn get_val_fallible(&self, cx: &Context) -> Option<T> {
-        self.get_fallible(cx).map(|x| x)
+        self.get_fallible(cx)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -181,8 +183,8 @@ impl Res<PositionType> for PositionType {
     }
 }
 
-impl<T: Copy> Res<(T, T)> for (T, T) {
-    fn get_val(&self, _: &Context) -> (T, T) {
+impl Res<(u32, u32)> for (u32, u32) {
+    fn get_val(&self, _: &Context) -> (u32, u32) {
         *self
     }
 
