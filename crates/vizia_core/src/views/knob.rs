@@ -440,8 +440,8 @@ impl View for TickKnob {
 impl Handle<'_, TickKnob> {
     pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
         let entity = self.entity;
-        Binding::new(self.cx, lens, move |cx, value| {
-            let value = value.get(cx);
+        Binding::new(self.cx, lens.map(|f| f.to_bits()), move |cx, value| {
+            let value = f32::from_bits(value.get(cx));
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<TickKnob>() {
                     knob.normalized_value = value;
@@ -573,8 +573,8 @@ impl View for ArcTrack {
 impl Handle<'_, ArcTrack> {
     pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
         let entity = self.entity;
-        Binding::new(self.cx, lens, move |cx, value| {
-            let value = value.get(cx);
+        Binding::new(self.cx, lens.map(|f| f.to_bits()), move |cx, value| {
+            let value = f32::from_bits(value.get(cx));
             if let Some(view) = cx.views.get_mut(&entity) {
                 if let Some(knob) = view.downcast_mut::<ArcTrack>() {
                     knob.normalized_value = value;

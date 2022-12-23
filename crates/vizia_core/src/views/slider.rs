@@ -10,13 +10,43 @@ enum SliderEventInternal {
     SetKeyboardFraction(f32),
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct SliderDataInternal {
     pub orientation: Orientation,
-    pub size: f32,
-    pub thumb_size: f32,
-    pub range: Range<f32>,
-    pub keyboard_fraction: f32,
+    size_bits: u32,
+    thumb_size_bits: u32,
+    range_start_bits: u32,
+    range_end_bits: u32,
+    keyboard_fraction_bits: u32,
+}
+
+impl SliderDataInternal {
+    pub fn new(orientation: Orientation, size: f32, thumb_size: f32, range: Range<f32>, keyboard_fraction: f32) -> Self {
+        Self {
+            orientation,
+            size_bits: size.to_bits(),
+            thumb_size_bits: thumb_size.to_bits(),
+            range_start_bits: range.start.to_bits(),
+            range_end_bits: range.end.to_bits(),
+            keyboard_fraction_bits: keyboard_fraction.to_bits(),
+        }
+    }
+
+    pub fn size(&self) -> f32 {
+        f32::from_bits(self.size_bits)
+    }
+
+    pub fn thumb_size(&self) -> f32 {
+        f32::from_bits(self.size_bits)
+    }
+
+    pub fn range(&self) -> Range<f32> {
+        f32::from_bits(self.range_start_bits)..f32::from_bits(self.range_end_bits)
+    }
+
+    pub fn fraction_keyboard(&self) -> f32 {
+        f32::from_bits(self.keyboard_fraction_bits)
+    }
 }
 
 /// The slider control can be used to select from a continuous set of values.
@@ -102,13 +132,13 @@ where
             lens: lens.clone(),
             is_dragging: false,
 
-            internal: SliderDataInternal {
-                orientation: Orientation::Horizontal,
-                thumb_size: 0.0,
-                size: 0.0,
-                range: 0.0..1.0,
-                keyboard_fraction: 0.1,
-            },
+            internal: SliderDataInternal::new(
+                Orientation::Horizontal,
+                0.0,
+                0.0,
+                0.0..1.0,
+                0.1,
+            ),
 
             on_changing: None,
         }

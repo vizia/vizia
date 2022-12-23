@@ -20,7 +20,7 @@ impl<L> Binding<L>
 where
     L: 'static + Lens,
     <L as Lens>::Source: 'static,
-    <L as Lens>::Target: PartialEq,
+    <L as Lens>::Target: Eq,
 {
     /// Creates a new binding view.
     ///
@@ -57,7 +57,7 @@ where
             lens: L,
             id: Entity,
         ) where
-            L::Target: Clone + PartialEq,
+            L::Target: Clone + Eq,
         {
             let key = lens.cache_key();
 

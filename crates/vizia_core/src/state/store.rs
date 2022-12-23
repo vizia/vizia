@@ -38,7 +38,7 @@ pub(crate) struct BasicStore<L: Lens, T> {
 impl<L: Lens, T> Store for BasicStore<L, T>
 where
     L: Lens<Target = T>,
-    <L as Lens>::Target: Clone + PartialEq,
+    <L as Lens>::Target: Clone + Eq,
 {
     fn entity(&self) -> Entity {
         self.entity

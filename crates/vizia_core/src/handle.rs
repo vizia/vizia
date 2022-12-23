@@ -69,7 +69,7 @@ impl<'a, V> Handle<'a, V> {
     pub fn bind<L, F>(self, lens: L, closure: F) -> Self
     where
         L: Lens,
-        <L as Lens>::Target: Clone + PartialEq,
+        <L as Lens>::Target: Clone + Eq,
         F: 'static + Fn(Handle<'_, V>, L),
     {
         let entity = self.entity();

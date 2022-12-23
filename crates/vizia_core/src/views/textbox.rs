@@ -506,7 +506,7 @@ pub enum TextboxKind {
 
 impl<L: Lens> Textbox<L>
 where
-    <L as Lens>::Target: PartialEq + Clone + ToString,
+    <L as Lens>::Target: Eq + Clone + ToString,
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
         Self::new_core(cx, lens, TextboxKind::SingleLine)

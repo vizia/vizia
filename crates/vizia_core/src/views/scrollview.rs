@@ -3,17 +3,18 @@ use morphorm::{GeometryChanged, PositionType};
 use crate::prelude::*;
 use crate::state::RatioLens;
 use crate::views::Orientation;
+use crate::views::scrollview::scroll_data_derived_lenses::scroll_y_bits;
 
 pub(crate) const SCROLL_SENSITIVITY: f32 = 35.0;
 
 #[derive(Lens, Clone, Debug, PartialEq)]
 pub struct ScrollData {
-    pub scroll_x: f32,
-    pub scroll_y: f32,
-    pub child_x: f32,
-    pub child_y: f32,
-    pub parent_x: f32,
-    pub parent_y: f32,
+    scroll_x_bits: u32,
+    scroll_y_bits: u32,
+    child_x_bits: u32,
+    child_y_bits: u32,
+    parent_x_bits: u32,
+    parent_y_bits: u32,
 }
 
 pub enum ScrollEvent {
@@ -26,6 +27,41 @@ pub enum ScrollEvent {
 }
 
 impl ScrollData {
+    pub fn new(scroll_x: f32, scroll_y: f32, child_x: f32, child_y: f32, parent_x: f32, parent_y: f32) -> Self {
+        Self {
+            scroll_x_bits: scroll_x.to_bits(),
+            scroll_y_bits: scroll_y.to_bits(),
+            child_x_bits: child_x.to_bits(),
+            child_y_bits: child_y.to_bits(),
+            parent_x_bits: parent_x.to_bits(),
+            parent_y_bits: parent_y.to_bits(),
+        }
+    }
+
+    pub fn scroll_x(&self) -> f32 {
+        f32::from_bits(self.scroll_x_bits)
+    }
+
+    pub fn scroll_y(&self) -> f32 {
+        f32::from_bits(self.scroll_y_bits)
+    }
+
+    pub fn parent_x(&self) -> f32 {
+        f32::from_bits(self.parent_x_bits)
+    }
+
+    pub fn parent_y(&self) -> f32 {
+        f32::from_bits(self.parent_y_bits)
+    }
+
+    pub fn child_x(&self) -> f32 {
+        f32::from_bits(self.child_x_bits)
+    }
+
+    pub fn child_y(&self) -> f32 {
+        f32::from_bits(self.child_y_bits)
+    }
+
     fn reset(&mut self) {
         if self.child_x == self.parent_x {
             self.scroll_x = 0.0;
@@ -79,15 +115,7 @@ impl ScrollView<scroll_data_derived_lenses::root> {
         F: 'static + FnOnce(&mut Context),
     {
         Self { data: ScrollData::root }.build(cx, move |cx| {
-            ScrollData {
-                scroll_x: initial_x,
-                scroll_y: initial_y,
-                child_x: 0.0,
-                child_y: 0.0,
-                parent_x: 0.0,
-                parent_y: 0.0,
-            }
-            .build(cx);
+            ScrollData::new(initial_x, initial_y, 0.0, 0.0, 0.0, 0.0).build(cx);
 
             Self::common_builder(cx, ScrollData::root, content, scroll_x, scroll_y);
         })
