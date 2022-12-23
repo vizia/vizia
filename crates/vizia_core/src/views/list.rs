@@ -88,13 +88,13 @@ impl<B: 'static + Bindable<Output = Vec<T>>, T> View for List<B, T> {
     }
 }
 
-impl<L: Lens<Target = Vec<T>>, T: PartialEq> Handle<'_, List<L, T>> {
+impl<B: Bindable<Output = Vec<T>>, T: Data> Handle<'_, List<B, T>> {
     pub fn on_increment<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext),
     {
         if let Some(list) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L, T>>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<B, T>>())
         {
             list.increment_callback = Some(Box::new(callback));
         }
@@ -107,7 +107,7 @@ impl<L: Lens<Target = Vec<T>>, T: PartialEq> Handle<'_, List<L, T>> {
         F: 'static + Fn(&mut EventContext),
     {
         if let Some(list) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L, T>>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<B, T>>())
         {
             list.decrement_callback = Some(Box::new(callback));
         }
@@ -120,7 +120,7 @@ impl<L: Lens<Target = Vec<T>>, T: PartialEq> Handle<'_, List<L, T>> {
         F: 'static + Fn(&mut EventContext),
     {
         if let Some(list) =
-            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<L, T>>())
+            self.cx.views.get_mut(&self.entity).and_then(|f| f.downcast_mut::<List<B, T>>())
         {
             list.clear_callback = Some(Box::new(callback));
         }
