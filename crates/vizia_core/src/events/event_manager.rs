@@ -1,7 +1,9 @@
 use crate::context::InternalEvent;
 use crate::events::EventMeta;
 use crate::prelude::*;
-use crate::systems::{compute_matched_rules, hover_system};
+#[cfg(debug_assertions)]
+use crate::systems::compute_matched_rules;
+use crate::systems::hover_system;
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use instant::{Duration, Instant};
 use std::any::Any;
