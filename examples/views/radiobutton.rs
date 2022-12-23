@@ -1,6 +1,6 @@
 use vizia::prelude::*;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Data)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Options {
     First,
     Second,

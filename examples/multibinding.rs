@@ -1,12 +1,12 @@
 use vizia::prelude::*;
 
-#[derive(Lens, Clone, Data)]
+#[derive(Lens, Clone, PartialEq)]
 pub struct AppData {
     t1: String,
     flag: bool,
 }
 
-#[derive(Lens, Clone, Data)]
+#[derive(Lens, Clone, PartialEq)]
 pub struct MoreData {
     t2: String,
     flag: bool,
