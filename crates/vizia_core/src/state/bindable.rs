@@ -16,6 +16,11 @@ use super::{BasicStore, Data, Lens, Store};
 
 pub trait Bindable: 'static + Clone {
     type Output;
+    fn view<'a, C: DataContext, O, F: FnOnce(Option<&Self::Output>) -> O>(
+        &self,
+        cx: &'a C,
+        map: F,
+    ) -> O;
     fn get<C: DataContext>(&self, cx: &C) -> Self::Output;
     fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Output>;
     fn insert_store(self, cx: &mut Context, entity: Entity);
@@ -27,6 +32,18 @@ where
     L::Target: Data,
 {
     type Output = L::Target;
+
+    fn view<'a, C: DataContext, O, F: FnOnce(Option<&Self::Output>) -> O>(
+        &self,
+        cx: &'a C,
+        map: F,
+    ) -> O {
+        // Not sure why there's an error here. The lifetime of `t` should be tied to the lifetime of `cx` which is `'a`.
+        (map)(self.view(
+            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
+            |t| t,
+        ))
+    }
 
     fn get<C: DataContext>(&self, cx: &C) -> Self::Output {
         self.view(
@@ -140,6 +157,32 @@ where
 {
     type Output = (L1::Target, L2::Target);
 
+    fn view<'a, C: DataContext, O, F: FnOnce(Option<&Self::Output>) -> O>(
+        &self,
+        cx: &'a C,
+        map: F,
+    ) -> O {
+        todo!()
+        // (map)(Some(&(
+        //     self.0
+        //         .view(
+        //             cx.data().expect(
+        //                 "Failed to get data from context. Has it been built into the tree?",
+        //             ),
+        //             |t| t.unwrap(),
+        //         )
+        //         .clone(),
+        //     self.1
+        //         .view(
+        //             cx.data().expect(
+        //                 "Failed to get data from context. Has it been built into the tree?",
+        //             ),
+        //             |t| t.unwrap(),
+        //         )
+        //         .clone(),
+        // )))
+    }
+
     fn get<C: DataContext>(&self, cx: &C) -> Self::Output {
         (self.0.get(cx), self.1.get(cx))
     }
@@ -185,6 +228,15 @@ where
     F: 'static + Clone + Fn(&B::Output) -> T,
 {
     type Output = T;
+
+    fn view<'a, C: DataContext, O, G: FnOnce(Option<&Self::Output>) -> O>(
+        &self,
+        cx: &'a C,
+        map: G,
+    ) -> O {
+        (map)(Some(&(self.map)(self.b.view(cx, |t| t.expect("Failed")))))
+    }
+
     fn get<C: DataContext>(&self, cx: &C) -> Self::Output {
         (self.map)(&self.b.get(cx))
     }
@@ -224,6 +276,13 @@ where
     T: Clone,
 {
     type Output = T;
+    fn view<'a, C: DataContext, O, F: FnOnce(Option<&Self::Output>) -> O>(
+        &self,
+        cx: &'a C,
+        map: F,
+    ) -> O {
+        (map)(self.b.view(cx, |t| t.expect("Failed").get(self.index)))
+    }
     fn get<C: DataContext>(&self, cx: &C) -> Self::Output {
         if let Some(val) = self.b.get(cx).get(self.index) {
             val.clone()
@@ -273,6 +332,15 @@ where
     T: Clone,
 {
     type Output = L::Target;
+
+    fn view<'a, C: DataContext, O, F: FnOnce(Option<&Self::Output>) -> O>(
+        &self,
+        cx: &'a C,
+        map: F,
+    ) -> O {
+        (map)(self.l.view(self.b.view(cx, |t| t.expect("Failed")), |t| t))
+    }
+
     fn get<C: DataContext>(&self, cx: &C) -> Self::Output {
         self.l.view(&self.b.get(cx), |t| t.cloned().expect("Failed")).clone()
     }
@@ -307,6 +375,18 @@ where
     T2: 'static + Clone,
 {
     type Output = (L1::Target, L2::Target);
+
+    fn view<'a, C: DataContext, O, F: FnOnce(Option<&Self::Output>) -> O>(
+        &self,
+        cx: &'a C,
+        map: F,
+    ) -> O {
+        todo!()
+        // (map)(Some(&(
+        //     self.0.view(cx, |t| t.expect("Failed")).clone(),
+        //     self.1.view(cx, |t| t.expect("Failed")).clone(),
+        // )))
+    }
 
     fn get<C: DataContext>(&self, cx: &C) -> Self::Output {
         (self.0.get(cx), self.1.get(cx))
