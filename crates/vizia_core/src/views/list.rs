@@ -88,7 +88,7 @@ impl<B: 'static + Bindable<Output = Vec<T>>, T> View for List<B, T> {
     }
 }
 
-impl<L: Lens<Target = Vec<T>>, T: Data> Handle<'_, List<L, T>> {
+impl<L: Lens<Target = Vec<T>>, T: PartialEq> Handle<'_, List<L, T>> {
     pub fn on_increment<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext),

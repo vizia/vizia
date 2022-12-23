@@ -478,7 +478,7 @@ pub enum TextboxKind {
 impl<B> Textbox<B>
 where
     B: 'static + Bindable + Clone,
-    <B as Bindable>::Output: Data + Clone + ToString,
+    <B as Bindable>::Output: Data + ToString,
 {
     pub fn new(cx: &mut Context, lens: B) -> Handle<Self> {
         Self::new_core(cx, lens, TextboxKind::SingleLine)

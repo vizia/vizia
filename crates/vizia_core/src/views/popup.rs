@@ -2,7 +2,7 @@ use morphorm::PositionType;
 
 use crate::{prelude::*, state::Bindable};
 
-#[derive(Debug, Default, Data, Lens, Clone)]
+#[derive(Debug, Default, Lens, Clone)]
 pub struct PopupData {
     pub is_open: bool,
 }

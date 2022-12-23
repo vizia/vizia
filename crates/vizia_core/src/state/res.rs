@@ -55,7 +55,7 @@ impl_res_simple!(Overflow);
 impl<T, B> Res<T> for B
 where
     B: 'static + Clone + Bindable<Output = T>,
-    T: Clone + Data,
+    T: Data,
 {
     fn get_val(&self, cx: &Context) -> T {
         self.get(cx)

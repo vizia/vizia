@@ -40,8 +40,8 @@ pub struct TableColumn<R, L, T, U>
 where
     R: Bindable<Output = Vec<T>>,
     L: Lens<Source = T, Target = U>,
-    T: Data,
-    U: Data,
+    T: PartialEq,
+    U: PartialEq,
 {
     p1: PhantomData<R>,
     p2: PhantomData<L>,
@@ -86,7 +86,7 @@ where
     }
 }
 
-impl<R, L, T: Data, U: Data> View for TableColumn<R, L, T, U>
+impl<R, L, T: 'static + PartialEq, U: 'static + PartialEq> View for TableColumn<R, L, T, U>
 where
     R: Bindable<Output = Vec<T>>,
     L: Lens<Source = T, Target = U>,

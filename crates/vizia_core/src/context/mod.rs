@@ -320,28 +320,6 @@ impl Context {
         }
     }
 
-    /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Any + Send>(&mut self, message: M) {
-        self.event_queue.push_back(
-            Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up),
-        );
-    }
-
-    /// Send an event containing a message directly to a specified entity.
-    pub fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
-        self.event_queue.push_back(
-            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
-        );
-    }
-
-    /// Send an event with custom origin and propagation information.
-    pub fn emit_custom(&mut self, event: Event) {
-        self.event_queue.push_back(event);
-    }
-
     /// Check whether there are any events in the queue waiting for the next event dispatch cycle.
     // pub fn has_queued_events(&self) -> bool {
     //     !self.event_queue.is_empty()
@@ -540,6 +518,12 @@ pub trait DataContext {
     fn data<T: 'static>(&self) -> Option<&T>;
 }
 
+pub trait EmitContext {
+    fn emit<M: Any + Send>(&mut self, message: M);
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
+    fn emit_custom(&mut self, event: Event);
+}
+
 impl DataContext for Context {
     fn data<T: 'static>(&self) -> Option<&T> {
         // return data for the static model
@@ -562,5 +546,29 @@ impl DataContext for Context {
         }
 
         None
+    }
+}
+
+impl EmitContext for Context {
+    /// Send an event containing a message up the tree from the current entity.
+    fn emit<M: Any + Send>(&mut self, message: M) {
+        self.event_queue.push_back(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+        );
+    }
+
+    /// Send an event containing a message directly to a specified entity.
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
+        self.event_queue.push_back(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+        );
+    }
+
+    /// Send an event with custom origin and propagation information.
+    fn emit_custom(&mut self, event: Event) {
+        self.event_queue.push_back(event);
     }
 }
