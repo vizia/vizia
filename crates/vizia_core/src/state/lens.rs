@@ -114,6 +114,20 @@ pub trait LensExt: Lens {
     {
         self.then(IntoLens::new())
     }
+
+    fn to_bits32(self) -> Then<Self, F32ToBitsLens>
+    where
+        Self: Lens<Target = f32>,
+    {
+        self.then(F32ToBitsLens())
+    }
+
+    fn to_f32(self) -> Then<Self, F32FromBitsLens>
+    where
+        Self: Lens<Target = u32>,
+    {
+        self.then(F32FromBitsLens())
+    }
 }
 
 // Implement LensExt for all types which implement Lens
@@ -363,5 +377,29 @@ where
         } else {
             map(None)
         }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct F32FromBitsLens();
+
+impl Lens for F32FromBitsLens {
+    type Source = u32;
+    type Target = f32;
+
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
+        map(Some(&f32::from_bits(*source)))
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct F32ToBitsLens();
+
+impl Lens for F32ToBitsLens {
+    type Source = f32;
+    type Target = u32;
+
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
+        map(Some(&f32::to_bits(*source)))
     }
 }

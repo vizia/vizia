@@ -562,7 +562,13 @@ where
                         .class("textbox_content")
                         .text(TextboxData::text)
                         .text_selection(TextboxData::selection)
-                        .translate(TextboxData::transform)
+                        .bind(
+                            TextboxData::transform.map(|(f1, f2)| (f1.to_bits(), f2.to_bits())),
+                            |handle, lens| {
+                                let (f1, f2) = lens.get(handle.cx);
+                                handle.translate((f32::from_bits(f1), f32::from_bits(f2)));
+                            },
+                        )
                         .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
                         .entity;
 

@@ -21,7 +21,13 @@ pub struct SliderDataInternal {
 }
 
 impl SliderDataInternal {
-    pub fn new(orientation: Orientation, size: f32, thumb_size: f32, range: Range<f32>, keyboard_fraction: f32) -> Self {
+    pub fn new(
+        orientation: Orientation,
+        size: f32,
+        thumb_size: f32,
+        range: Range<f32>,
+        keyboard_fraction: f32,
+    ) -> Self {
         Self {
             orientation,
             size_bits: size.to_bits(),
@@ -44,7 +50,7 @@ impl SliderDataInternal {
         f32::from_bits(self.range_start_bits)..f32::from_bits(self.range_end_bits)
     }
 
-    pub fn fraction_keyboard(&self) -> f32 {
+    pub fn keyboard_fraction(&self) -> f32 {
         f32::from_bits(self.keyboard_fraction_bits)
     }
 }
@@ -132,13 +138,7 @@ where
             lens: lens.clone(),
             is_dragging: false,
 
-            internal: SliderDataInternal::new(
-                Orientation::Horizontal,
-                0.0,
-                0.0,
-                0.0..1.0,
-                0.1,
-            ),
+            internal: SliderDataInternal::new(Orientation::Horizontal, 0.0, 0.0, 0.0..1.0, 0.1),
 
             on_changing: None,
         }
@@ -147,33 +147,36 @@ where
                 let lens = lens.clone();
                 ZStack::new(cx, move |cx| {
                     let slider_data = slider_data.get(cx);
-                    let thumb_size = slider_data.thumb_size;
+                    let thumb_size = slider_data.thumb_size();
                     let orientation = slider_data.orientation;
-                    let size = slider_data.size;
-                    let range = slider_data.range;
+                    let size = slider_data.size();
+                    let range = slider_data.range();
 
                     // Active track
-                    Element::new(cx).class("active").bind(lens.clone(), move |handle, value| {
-                        let val = value.get(handle.cx);
-                        let normal_val = (val - range.start) / (range.end - range.start);
-                        let min = thumb_size / size;
-                        let max = 1.0;
-                        let dx = min + normal_val * (max - min);
+                    Element::new(cx).class("active").bind(
+                        lens.clone().to_bits32(),
+                        move |handle, value| {
+                            let val = value.to_f32().get(handle.cx);
+                            let normal_val = (val - range.start) / (range.end - range.start);
+                            let min = thumb_size / size;
+                            let max = 1.0;
+                            let dx = min + normal_val * (max - min);
 
-                        if orientation == Orientation::Horizontal {
-                            handle
-                                .height(Stretch(1.0))
-                                .left(Pixels(0.0))
-                                .right(Stretch(1.0))
-                                .width(Percentage(dx * 100.0));
-                        } else {
-                            handle
-                                .width(Stretch(1.0))
-                                .top(Stretch(1.0))
-                                .bottom(Pixels(0.0))
-                                .height(Percentage(dx * 100.0));
-                        }
-                    });
+                            if orientation == Orientation::Horizontal {
+                                handle
+                                    .height(Stretch(1.0))
+                                    .left(Pixels(0.0))
+                                    .right(Stretch(1.0))
+                                    .width(Percentage(dx * 100.0));
+                            } else {
+                                handle
+                                    .width(Stretch(1.0))
+                                    .top(Stretch(1.0))
+                                    .bottom(Pixels(0.0))
+                                    .height(Percentage(dx * 100.0));
+                            }
+                        },
+                    );
 
                     // Thumb
                     Element::new(cx)
@@ -186,8 +189,8 @@ where
                                 cx.emit(SliderEventInternal::SetThumbSize(width, height));
                             }
                         })
-                        .bind(lens.clone(), move |handle, value| {
-                            let val = value.get(handle.cx);
+                        .bind(lens.clone().to_bits32(), move |handle, value| {
+                            let val = value.to_f32().get(handle.cx);
                             let normal_val = (val - range.start) / (range.end - range.start);
                             let px = normal_val * (1.0 - (thumb_size / size));
                             if orientation == Orientation::Horizontal {
@@ -220,20 +223,21 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
         event.map(|slider_event_internal, _| match slider_event_internal {
             SliderEventInternal::SetThumbSize(width, height) => match self.internal.orientation {
                 Orientation::Horizontal => {
-                    self.internal.thumb_size = *width;
+                    self.internal.thumb_size_bits = (*width).to_bits();
                 }
 
                 Orientation::Vertical => {
-                    self.internal.thumb_size = *height;
+                    self.internal.thumb_size_bits = (*height).to_bits();
                 }
             },
 
             SliderEventInternal::SetRange(range) => {
-                self.internal.range = range.clone();
+                self.internal.range_start_bits = range.start.to_bits();
+                self.internal.range_end_bits = range.end.to_bits();
             }
 
             SliderEventInternal::SetKeyboardFraction(keyboard_fraction) => {
-                self.internal.keyboard_fraction = *keyboard_fraction;
+                self.internal.keyboard_fraction_bits = (*keyboard_fraction).to_bits();
             }
         });
 
@@ -245,10 +249,10 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
 
                 if width >= height {
                     self.internal.orientation = Orientation::Horizontal;
-                    self.internal.size = width;
+                    self.internal.size_bits = width.to_bits();
                 } else {
                     self.internal.orientation = Orientation::Vertical;
-                    self.internal.size = height;
+                    self.internal.size_bits = height.to_bits();
                 }
             }
 
@@ -257,9 +261,9 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                 cx.capture();
                 cx.focus_with_visibility(false);
 
-                let thumb_size = self.internal.thumb_size;
-                let min = self.internal.range.start;
-                let max = self.internal.range.end;
+                let thumb_size = self.internal.thumb_size();
+                let min = self.internal.range().start;
+                let max = self.internal.range().end;
 
                 let current = cx.current();
                 let width = cx.cache.get_width(current);
@@ -296,10 +300,10 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
 
             WindowEvent::MouseMove(x, y) => {
                 if self.is_dragging {
-                    let thumb_size = self.internal.thumb_size;
+                    let thumb_size = self.internal.thumb_size();
 
-                    let min = self.internal.range.start;
-                    let max = self.internal.range.end;
+                    let min = self.internal.range().start;
+                    let max = self.internal.range().end;
 
                     let current = cx.current();
                     let width = cx.cache.get_width(current);
@@ -328,18 +332,20 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             }
 
             WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
-                let min = self.internal.range.start;
-                let max = self.internal.range.end;
-                let val = (self.lens.get(cx) + 0.1 * (max - min)).clamp(min, max);
+                let min = self.internal.range().start;
+                let max = self.internal.range().end;
+                let fraction = self.internal.keyboard_fraction();
+                let val = (self.lens.get(cx) + fraction * (max - min)).clamp(min, max);
                 if let Some(callback) = &self.on_changing {
                     (callback)(cx, val);
                 }
             }
 
             WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
-                let min = self.internal.range.start;
-                let max = self.internal.range.end;
-                let val = (self.lens.get(cx) - 0.1 * (max - min)).clamp(min, max);
+                let min = self.internal.range().start;
+                let max = self.internal.range().end;
+                let fraction = self.internal.keyboard_fraction();
+                let val = (self.lens.get(cx) - fraction * (max - min)).clamp(min, max);
                 if let Some(callback) = &self.on_changing {
                     (callback)(cx, val);
                 }

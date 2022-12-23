@@ -3,11 +3,10 @@ use morphorm::{GeometryChanged, PositionType};
 use crate::prelude::*;
 use crate::state::RatioLens;
 use crate::views::Orientation;
-use crate::views::scrollview::scroll_data_derived_lenses::scroll_y_bits;
 
 pub(crate) const SCROLL_SENSITIVITY: f32 = 35.0;
 
-#[derive(Lens, Clone, Debug, PartialEq)]
+#[derive(Lens, Clone, Debug, PartialEq, Eq)]
 pub struct ScrollData {
     scroll_x_bits: u32,
     scroll_y_bits: u32,
@@ -27,7 +26,14 @@ pub enum ScrollEvent {
 }
 
 impl ScrollData {
-    pub fn new(scroll_x: f32, scroll_y: f32, child_x: f32, child_y: f32, parent_x: f32, parent_y: f32) -> Self {
+    pub fn new(
+        scroll_x: f32,
+        scroll_y: f32,
+        child_x: f32,
+        child_y: f32,
+        parent_x: f32,
+        parent_y: f32,
+    ) -> Self {
         Self {
             scroll_x_bits: scroll_x.to_bits(),
             scroll_y_bits: scroll_y.to_bits(),
@@ -63,12 +69,12 @@ impl ScrollData {
     }
 
     fn reset(&mut self) {
-        if self.child_x == self.parent_x {
-            self.scroll_x = 0.0;
+        if self.child_x() == self.parent_x() {
+            self.scroll_x_bits = 0.0f32.to_bits();
         }
 
-        if self.child_y == self.parent_y {
-            self.scroll_y = 0.0;
+        if self.child_y_bits == self.parent_y_bits {
+            self.scroll_y_bits = 0.0f32.to_bits();
         }
     }
 }
@@ -77,18 +83,24 @@ impl Model for ScrollData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|scroll_update, meta| {
             match scroll_update {
-                ScrollEvent::ScrollX(f) => self.scroll_x = (self.scroll_x + *f).clamp(0.0, 1.0),
-                ScrollEvent::ScrollY(f) => self.scroll_y = (self.scroll_y + *f).clamp(0.0, 1.0),
-                ScrollEvent::SetX(f) => self.scroll_x = *f,
-                ScrollEvent::SetY(f) => self.scroll_y = *f,
+                ScrollEvent::ScrollX(f) => {
+                    self.scroll_x_bits =
+                        (f32::from_bits(self.scroll_x_bits) + *f).clamp(0.0, 1.0).to_bits()
+                }
+                ScrollEvent::ScrollY(f) => {
+                    self.scroll_y_bits =
+                        (f32::from_bits(self.scroll_y_bits) + *f).clamp(0.0, 1.0).to_bits()
+                }
+                ScrollEvent::SetX(f) => self.scroll_x_bits = (*f).to_bits(),
+                ScrollEvent::SetY(f) => self.scroll_y_bits = (*f).to_bits(),
                 ScrollEvent::ChildGeo(x, y) => {
-                    self.child_x = *x;
-                    self.child_y = *y;
+                    self.child_x_bits = (*x).to_bits();
+                    self.child_y_bits = (*y).to_bits();
                     self.reset();
                 }
                 ScrollEvent::ParentGeo(x, y) => {
-                    self.parent_x = *x;
-                    self.parent_y = *y;
+                    self.parent_x_bits = (*x).to_bits();
+                    self.parent_y_bits = (*y).to_bits();
                     self.reset();
                 }
             }
@@ -152,11 +164,11 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                 let dpi_factor = handle.cx.style.dpi_factor;
                 if dpi_factor > 0.0 {
                     let data = data.get(handle.cx);
-                    let left = ((data.child_x - data.parent_x) * data.scroll_x).round()
+                    let left = ((data.child_x() - data.parent_x()) * data.scroll_x()).round()
                         / handle.cx.style.dpi_factor as f32;
-                    let top = ((data.child_y - data.parent_y) * data.scroll_y).round()
+                    let top = ((data.child_y() - data.parent_y()) * data.scroll_y()).round()
                         / handle.cx.style.dpi_factor as f32;
-                    handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
+                    handle.left(Pixels(-left.abs())).top(Pixels(-top.abs()));
                 }
             })
             .on_geo_changed(|cx, geo| {
@@ -172,8 +184,11 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         if scroll_y {
             Scrollbar::new(
                 cx,
-                data.clone().then(ScrollData::scroll_y),
-                data.clone().then(RatioLens::new(ScrollData::parent_y, ScrollData::child_y)),
+                data.clone().then(ScrollData::scroll_y_bits).to_f32(),
+                data.clone().then(RatioLens::new(
+                    ScrollData::parent_y_bits.to_f32(),
+                    ScrollData::child_y_bits.to_f32(),
+                )),
                 Orientation::Vertical,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetY(value));
@@ -184,8 +199,11 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         if scroll_x {
             Scrollbar::new(
                 cx,
-                data.clone().then(ScrollData::scroll_x),
-                data.clone().then(RatioLens::new(ScrollData::parent_x, ScrollData::child_x)),
+                data.clone().then(ScrollData::scroll_x_bits).to_f32(),
+                data.clone().then(RatioLens::new(
+                    ScrollData::parent_x_bits.to_f32(),
+                    ScrollData::child_x_bits.to_f32(),
+                )),
                 Orientation::Horizontal,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetX(value));
@@ -221,13 +239,13 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
                 // what percentage of the negative space does this cross?
                 let data = self.data.get(cx);
                 if x != 0.0 {
-                    let negative_space = data.child_x - data.parent_x;
+                    let negative_space = data.child_x() - data.parent_x();
                     let logical_delta = x * SCROLL_SENSITIVITY / negative_space;
                     cx.emit(ScrollEvent::ScrollX(logical_delta));
                 }
                 let data = cx.data::<ScrollData>().unwrap();
                 if y != 0.0 {
-                    let negative_space = data.child_y - data.parent_y;
+                    let negative_space = data.child_y() - data.parent_y();
                     let logical_delta = y * SCROLL_SENSITIVITY / negative_space;
                     cx.emit(ScrollEvent::ScrollY(logical_delta));
                 }

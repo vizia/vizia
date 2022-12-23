@@ -30,22 +30,22 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
         .build(cx, move |cx| {
             Element::new(cx)
                 .class("thumb")
-                .bind(value.map(|f| f.to_bits()), move |handle, value| {
-                    let value = f32::from_bits(value.get(handle.cx));
+                .bind(value.to_bits32(), move |handle, value| {
+                    let value = value.to_f32().get(handle.cx);
                     match orientation {
                         Orientation::Horizontal => {
-                            handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value))
+                            handle.left(Stretch(value)).right(Stretch(1.0 - value))
                         }
                         Orientation::Vertical => {
-                            handle.top(Units::Stretch(value)).bottom(Units::Stretch(1.0 - value))
+                            handle.top(Stretch(value)).bottom(Stretch(1.0 - value))
                         }
                     };
                 })
-                .bind(ratio.map(|f| f.to_bits()), move |handle, ratio| {
-                    let ratio = f32::from_bits(ratio.get(handle.cx));
+                .bind(ratio.to_bits32(), move |handle, ratio| {
+                    let ratio = ratio.to_f32().get(handle.cx);
                     match orientation {
-                        Orientation::Horizontal => handle.width(Units::Percentage(ratio * 100.0)),
-                        Orientation::Vertical => handle.height(Units::Percentage(ratio * 100.0)),
+                        Orientation::Horizontal => handle.width(Percentage(ratio * 100.0)),
+                        Orientation::Vertical => handle.height(Percentage(ratio * 100.0)),
                     };
                 });
         });
