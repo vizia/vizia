@@ -495,6 +495,7 @@ where
     fn new_core(cx: &mut Context, binding: B, kind: TextboxKind) -> Handle<Self> {
         let result = Self { binding: binding.clone(), kind }.build(cx, move |cx| {
             Binding::new(cx, binding.clone(), |cx, text| {
+                println!("Rebuild textbox content");
                 // let text =
                 //     text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
                 let text = text.get_val2(cx).to_string();

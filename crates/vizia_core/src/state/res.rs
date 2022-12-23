@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, process::Output, rc::Rc};
+use std::marker::PhantomData;
 
 use crate::prelude::*;
 
@@ -174,6 +174,31 @@ where
 //     where
 //         F: 'static + Clone + Fn(&Self::Output) -> T;
 // }
+
+impl<B1, L1, T1, B2, L2, T2> Bindable for (BindThen<B1, L1, T1>, BindThen<B2, L2, T2>)
+where
+    B1: Bindable,
+    B2: Bindable,
+    L1: Lens<Source = B1::Output, Target = T1>,
+    L2: Lens<Source = B2::Output, Target = T2>,
+    T1: 'static + Clone,
+    T2: 'static + Clone,
+{
+    type Output = (L1::Target, L2::Target);
+
+    fn get_val2<C: DataContext>(&self, cx: &C) -> Self::Output {
+        (self.0.get_val2(cx), self.1.get_val2(cx))
+    }
+
+    fn insert_store(self, cx: &mut Context, entity: Entity) {
+        self.0.insert_store(cx, entity);
+        self.1.insert_store(cx, entity);
+    }
+
+    fn name(&self) -> Option<&'static str> {
+        todo!()
+    }
+}
 
 pub trait BindableExt: Bindable + Clone {
     fn get<C: DataContext>(&self, cx: &C) -> Self::Output {

@@ -1,7 +1,6 @@
 use std::any::TypeId;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
-use std::ops::Deref;
 
 use crate::prelude::*;
 

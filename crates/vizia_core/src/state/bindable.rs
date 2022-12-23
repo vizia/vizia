@@ -11,7 +11,7 @@ use crate::{
     state::{LensCache, ModelOrView, StoreId},
 };
 
-use super::{BasicStore, Data, Lens, LensExt, Store};
+use super::{BasicStore, Data, Lens, Store};
 
 pub trait Bindable: 'static + Clone {
     type Output;
@@ -136,138 +136,8 @@ where
     }
 
     fn insert_store(self, cx: &mut Context, id: Entity) {
-        let ancestors = cx.current().parent_iter(&cx.tree).collect::<HashSet<_>>();
-        let new_ancestors = id.parent_iter(&cx.tree).collect::<Vec<_>>();
-
-        let data = &mut cx.data;
-        let storages = &mut cx.stores;
-
-        fn insert_store<L1: Lens, L2: Lens>(
-            ancestors: &HashSet<Entity>,
-            stores: &mut HashMap<StoreId, Box<dyn Store>>,
-            model_data: ModelOrView,
-            lens1: L1,
-            lens2: L2,
-            id: Entity,
-        ) where
-            L1::Target: Data,
-            L2::Target: Data,
-        {
-            // let key = lens1.cache_key();
-
-            // TODO: This won't work if one of the lenses returns a UUID StoreId. Instead this should be some combination of lens1.cache_key() and lens2.cache_key().
-            let key = StoreId::Type(TypeId::of::<(L1, L2)>());
-
-            if let Some(store) = stores.get_mut(&key) {
-                let observers = store.observers();
-
-                if ancestors.intersection(observers).next().is_none() {
-                    store.add_observer(id);
-                }
-            } else {
-                let mut observers = HashSet::new();
-                observers.insert(id);
-
-                let model = model_data.downcast_ref::<L1::Source>().unwrap();
-                //let model2 = model_data.downcast_ref::<L2::Source>().unwrap();
-
-                // TODO: Instead of setting old.1 to None, find a way to get the value for both lenses.
-                let old = (lens1.view(model, |t| t.cloned()), None);
-
-                let store = Box::new(DualStore { entity: id, lens1, lens2, old, observers });
-
-                stores.insert(key, store);
-            }
-        }
-
-        // Iterate up the tree and find the first matching model/view for either of the lenses
-        for entity in new_ancestors {
-            if let Some(models) = data.get_mut(entity) {
-                // Check for model store for first lens
-                if let Some(model_data) = models.get(&TypeId::of::<L1::Source>()) {
-                    if !storages.contains(entity) {
-                        storages.insert(entity, HashMap::new()).unwrap();
-                    }
-
-                    if let Some(stores) = storages.get_mut(entity) {
-                        insert_store(
-                            &ancestors,
-                            stores,
-                            ModelOrView::Model(model_data.as_ref()),
-                            self.0,
-                            self.1,
-                            id,
-                        );
-                    }
-
-                    break;
-                }
-
-                // Check for model store for second lens
-                if let Some(model_data) = models.get(&TypeId::of::<L2::Source>()) {
-                    if !storages.contains(entity) {
-                        storages.insert(entity, HashMap::new()).unwrap();
-                    }
-
-                    if let Some(stores) = storages.get_mut(entity) {
-                        insert_store(
-                            &ancestors,
-                            stores,
-                            ModelOrView::Model(model_data.as_ref()),
-                            self.0,
-                            self.1,
-                            id,
-                        );
-                    }
-
-                    break;
-                }
-
-                // Check for view store for first lens
-                if let Some(view_handler) = cx.views.get(&entity) {
-                    if view_handler.as_any_ref().is::<L1::Source>() {
-                        if !storages.contains(entity) {
-                            storages.insert(entity, HashMap::new()).unwrap();
-                        }
-
-                        if let Some(stores) = storages.get_mut(entity) {
-                            insert_store(
-                                &ancestors,
-                                stores,
-                                ModelOrView::View(view_handler.as_ref()),
-                                self.0,
-                                self.1,
-                                id,
-                            );
-                        }
-
-                        break;
-                    }
-                }
-
-                // Check for view store for second lens
-                if let Some(view_handler) = cx.views.get(&entity) {
-                    if view_handler.as_any_ref().is::<L2::Source>() {
-                        if !storages.contains(entity) {
-                            storages.insert(entity, HashMap::new()).unwrap();
-                        }
-
-                        if let Some(stores) = storages.get_mut(entity) {
-                            insert_store(
-                                &ancestors,
-                                stores,
-                                ModelOrView::View(view_handler.as_ref()),
-                                self.0,
-                                self.1,
-                                id,
-                            );
-                        }
-
-                        break;
-                    }
-                }
-            }
-        }
+        self.0.insert_store(cx, id);
+        self.1.insert_store(cx, id);
     }
 
     fn name(&self) -> Option<&'static str> {

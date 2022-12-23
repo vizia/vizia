@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::state::{BindIndex, Bindable, BindableExt, Index, Then};
+use crate::state::{BindIndex, Bindable, BindableExt};
 use std::marker::PhantomData;
 use vizia_input::Code;
 

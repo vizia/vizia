@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 
 use crate::prelude::*;
-use crate::state::{BindIndex, BindThen, Index, Then};
+use crate::state::{BindIndex, BindThen};
 
 // TODO
 
