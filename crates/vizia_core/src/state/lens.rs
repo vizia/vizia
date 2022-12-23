@@ -59,15 +59,15 @@ pub trait LensExt: Lens {
     //     )
     // }
 
-    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Target>
-    where
-        Self::Target: Clone,
-    {
-        self.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| t.cloned().map(|v| v),
-        )
-    }
+    // fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Target>
+    // where
+    //     Self::Target: Clone,
+    // {
+    //     self.view(
+    //         cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
+    //         |t| t.cloned().map(|v| v),
+    //     )
+    // }
 
     // /// Used to construct a lens to some data contained within some other lensed data.
     // ///

@@ -17,6 +17,7 @@ use super::{BasicStore, Data, Lens, Store};
 pub trait Bindable: 'static + Clone {
     type Output;
     fn get<C: DataContext>(&self, cx: &C) -> Self::Output;
+    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Output>;
     fn insert_store(self, cx: &mut Context, entity: Entity);
     fn name(&self) -> Option<&'static str>;
 }
@@ -34,6 +35,13 @@ where
                 t.expect("Lens failed to resolve. Do you want to use LensExt::get_fallible?")
                     .clone()
             },
+        )
+    }
+
+    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Output> {
+        self.view(
+            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
+            |t| t.cloned().map(|v| v),
         )
     }
 
@@ -136,6 +144,10 @@ where
         (self.0.get(cx), self.1.get(cx))
     }
 
+    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Output> {
+        Some((self.0.get_fallible(cx)?, self.1.get_fallible(cx)?))
+    }
+
     fn insert_store(self, cx: &mut Context, id: Entity) {
         self.0.insert_store(cx, id);
         self.1.insert_store(cx, id);
@@ -177,6 +189,10 @@ where
         (self.map)(&self.b.get(cx))
     }
 
+    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Output> {
+        Some((self.map)(&self.b.get_fallible(cx)?))
+    }
+
     fn insert_store(self, cx: &mut Context, entity: Entity) {
         self.b.insert_store(cx, entity);
     }
@@ -211,6 +227,14 @@ where
     fn get<C: DataContext>(&self, cx: &C) -> Self::Output {
         if let Some(val) = self.b.get(cx).get(self.index) {
             val.clone()
+        } else {
+            panic!("Failed");
+        }
+    }
+
+    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Output> {
+        if let Some(val) = self.b.get_fallible(cx)?.get(self.index) {
+            Some(val.clone())
         } else {
             panic!("Failed");
         }
@@ -253,6 +277,10 @@ where
         self.l.view(&self.b.get(cx), |t| t.cloned().expect("Failed")).clone()
     }
 
+    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Output> {
+        Some(self.l.view(&self.b.get_fallible(cx)?, |t| t.cloned().expect("Failed")).clone())
+    }
+
     fn insert_store(self, cx: &mut Context, entity: Entity) {
         self.b.insert_store(cx, entity);
     }
@@ -282,6 +310,10 @@ where
 
     fn get<C: DataContext>(&self, cx: &C) -> Self::Output {
         (self.0.get(cx), self.1.get(cx))
+    }
+
+    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Output> {
+        Some((self.0.get_fallible(cx)?, self.1.get_fallible(cx)?))
     }
 
     fn insert_store(self, cx: &mut Context, entity: Entity) {

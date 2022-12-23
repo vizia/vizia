@@ -61,6 +61,10 @@ where
         self.get(cx)
     }
 
+    fn get_val_fallible(&self, cx: &Context) -> Option<T> {
+        self.get_fallible(cx)
+    }
+
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
         F: 'static + Fn(&mut Context, Entity, T),
