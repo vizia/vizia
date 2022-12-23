@@ -35,21 +35,21 @@ pub enum PopupEvent {
     Switch,
 }
 
-pub struct Popup<L> {
-    lens: L,
+pub struct Popup<B> {
+    binding: B,
 }
 
-impl<L> Popup<L>
+impl<B> Popup<B>
 where
-    L: Lens<Target = bool>,
+    B: Bindable<Output = bool>,
 {
-    pub fn new<F>(cx: &mut Context, lens: L, capture_focus: bool, content: F) -> Handle<Self>
+    pub fn new<F>(cx: &mut Context, binding: B, capture_focus: bool, content: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context),
     {
-        Self { lens: lens.clone() }
+        Self { binding: binding.clone() }
             .build(cx, |cx| {
-                Binding::new(cx, lens.clone(), move |cx, lens| {
+                Binding::new(cx, binding.clone(), move |cx, lens| {
                     if lens.get(cx) {
                         if capture_focus {
                             VStack::new(cx, &content).lock_focus_to_within();
@@ -59,7 +59,7 @@ where
                     }
                 });
             })
-            .checked(lens.clone())
+            .checked(binding.clone())
             .position_type(PositionType::SelfDirected)
             .z_order(100)
     }
@@ -79,7 +79,7 @@ where
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
             cx.add_listener(move |popup: &mut Popup<B>, cx, event| {
-                let flag: bool = popup.lens.get(cx).clone().into();
+                let flag: bool = popup.binding.get(cx).clone().into();
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag {

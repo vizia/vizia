@@ -290,36 +290,44 @@ impl MenuButton {
         )
     }
 
-    pub fn new_check<F, A, L>(cx: &mut Context, builder: F, action: A, lens: L) -> Handle<'_, Self>
+    pub fn new_check<F, A, B>(
+        cx: &mut Context,
+        builder: F,
+        action: A,
+        binding: B,
+    ) -> Handle<'_, Self>
     where
         F: 'static + FnOnce(&mut Context),
         A: 'static + Fn(&mut EventContext),
-        L: Lens<Target = bool>,
+        B: Bindable<Output = bool>,
     {
         Self::new(
             cx,
             move |cx| {
                 HStack::new(cx, move |cx| {
                     builder(cx);
-                    Label::new(cx, "").left(Units::Stretch(1.0)).bind(lens, move |handle, lens| {
-                        let val = lens.get_fallible(handle.cx);
-                        handle.text(if val == Some(true) { CHECK } else { "" });
-                    });
+                    Label::new(cx, "").left(Units::Stretch(1.0)).bind(
+                        binding,
+                        move |handle, binding| {
+                            let val = binding.get(handle.cx);
+                            handle.text(if val { CHECK } else { "" });
+                        },
+                    );
                 });
             },
             action,
         )
     }
 
-    pub fn new_check_simple<U: ToString, A, L>(
+    pub fn new_check_simple<U: ToString, A, B>(
         cx: &mut Context,
         text: impl 'static + Res<U>,
         action: A,
-        lens: L,
+        binding: B,
     ) -> Handle<'_, Self>
     where
         A: 'static + Fn(&mut EventContext),
-        L: 'static + Lens<Target = bool>,
+        B: 'static + Bindable<Output = bool>,
     {
         Self::new_check(
             cx,
@@ -327,7 +335,7 @@ impl MenuButton {
                 Label::new(cx, text);
             },
             action,
-            lens,
+            binding,
         )
     }
 }
