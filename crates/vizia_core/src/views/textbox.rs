@@ -27,7 +27,6 @@ pub struct TextboxData {
 
 impl TextboxData {
     pub fn new(text: String) -> Self {
-        let text_length = text.as_str().len();
         Self {
             text: text.clone(),
             selection: Selection::new(0, 0),
