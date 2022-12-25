@@ -27,10 +27,9 @@ pub struct TextboxData {
 
 impl TextboxData {
     pub fn new(text: String) -> Self {
-        let text_length = text.as_str().len();
         Self {
             text: text.clone(),
-            selection: Selection::new(0, text_length),
+            selection: Selection::new(0, 0),
             sel_x: -1.0,
             re_sel_x: false,
             edit: false,
@@ -301,6 +300,7 @@ impl TextboxData {
 
 pub enum TextEvent {
     InsertText(String),
+    ResetText(String),
     DeleteText(Movement),
     MoveCursor(Movement, bool),
     SelectAll,
@@ -322,6 +322,10 @@ pub enum TextEvent {
     GeometryChanged,
 }
 
+enum TextEventInternal {
+    Reset,
+}
+
 impl Model for TextboxData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|text_event, _| match text_event {
@@ -336,6 +340,10 @@ impl Model for TextboxData {
                         self.on_edit = Some(callback);
                     }
                 }
+            }
+
+            TextEvent::ResetText(text) => {
+                self.text = text.clone();
             }
 
             TextEvent::DeleteText(movement) => {
@@ -365,9 +373,6 @@ impl Model for TextboxData {
                         cx.focus_with_visibility(false);
                         cx.capture();
                         cx.set_checked(true);
-                        if self.selection.active == self.selection.anchor {
-                            cx.emit(TextEvent::SelectAll);
-                        }
                     }
                 }
             }
@@ -377,6 +382,7 @@ impl Model for TextboxData {
                 self.edit = false;
                 cx.set_checked(false);
                 cx.release();
+                cx.emit(TextEventInternal::Reset);
             }
 
             TextEvent::Submit(reason) => {
@@ -626,20 +632,6 @@ where
                     cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
                 } else {
                     cx.emit(TextEvent::Submit(false));
-                    if let Some(source) = cx.data::<L::Source>() {
-                        let text = self.lens.view(source, |t| {
-                            if let Some(t) = t {
-                                t.to_string()
-                            } else {
-                                "".to_owned()
-                            }
-                        });
-
-                        cx.emit(TextEvent::SelectAll);
-                        cx.emit(TextEvent::InsertText(text));
-                    };
-                    cx.release();
-                    cx.set_checked(false);
 
                     // Forward event to hovered
                     cx.event_queue.push_back(
@@ -709,21 +701,6 @@ where
 
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
-                        if let Some(source) = cx.data::<L::Source>() {
-                            let text = self.lens.view(source, |t| {
-                                if let Some(t) = t {
-                                    t.to_string()
-                                } else {
-                                    "".to_owned()
-                                }
-                            });
-
-                            cx.emit(TextEvent::SelectAll);
-                            cx.emit(TextEvent::InsertText(text));
-                        };
-
-                        cx.set_checked(false);
-                        cx.release();
                     } else {
                         cx.emit(TextEvent::InsertText("\n".to_owned()));
                     }
@@ -861,6 +838,21 @@ where
 
             _ => {}
         });
+
+        if let Some(msg) = event.take::<TextEventInternal>() {
+            let TextEventInternal::Reset = msg;
+            if let Some(source) = cx.data::<L::Source>() {
+                let text = self.lens.view(source, |t| {
+                    if let Some(t) = t {
+                        t.to_string()
+                    } else {
+                        "".to_owned()
+                    }
+                });
+
+                cx.emit(TextEvent::ResetText(text));
+            };
+        }
     }
 }
 
