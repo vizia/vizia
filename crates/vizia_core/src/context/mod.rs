@@ -33,6 +33,7 @@ use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 use vizia_storage::TreeExt;
+use crate::text::CosmicContext;
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
@@ -72,6 +73,7 @@ pub struct Context {
     pub(crate) resource_manager: ResourceManager,
 
     pub(crate) text_context: TextContext,
+    pub(crate) cosmic_context: CosmicContext,
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
@@ -116,6 +118,7 @@ impl Context {
             cursor_icon_locked: false,
             resource_manager: ResourceManager::new(),
             text_context: TextContext::default(),
+            cosmic_context: CosmicContext::default(),
 
             event_proxy: None,
 
