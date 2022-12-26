@@ -60,6 +60,7 @@ impl Window {
         let window = Window {
             id: handle.id(),
             handle,
+            should_close: false,
             //canvas: Canvas::new(renderer).expect("Cannot create canvas"),
         };
 
