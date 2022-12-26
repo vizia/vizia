@@ -416,7 +416,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             }
 
             if *code == Code::F5 {
-                context.reload_styles().unwrap();
+                EventContext::new(context).reload_styles().unwrap();
             }
 
             if *code == Code::Tab {
