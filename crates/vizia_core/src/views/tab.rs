@@ -19,39 +19,37 @@ impl TabView {
         T: Clone + 'static,
         F: 'static + Clone + Fn(&mut Context, Then<L, Index<Vec<T>, T>>) -> TabPair,
     {
-        Self { selected_index: 0 }
-            .build(cx, move |cx| {
-                let lens2 = lens.clone();
-                let content2 = content.clone();
-                // Tab headers
-                HStack::new(cx, move |cx| {
-                    Binding::new(cx, lens.clone().map(|list| list.len()), move |cx, list_length| {
-                        let list_length = list_length.get_fallible(cx).map_or(0, |d| d);
-                        for index in 0..list_length {
-                            let l = lens.clone().index(index);
-                            let builder = (content2)(cx, l).header;
-                            TabHeader::new(cx, index, builder)
-                                .bind(TabView::selected_index, move |handle, selected_index| {
-                                    let selected_index = selected_index.get(handle.cx);
-                                    handle.checked(selected_index == index);
-                                })
-                                .cursor(CursorIcon::Hand);
-                        }
-                    })
+        Self { selected_index: 0 }.build(cx, move |cx| {
+            let lens2 = lens.clone();
+            let content2 = content.clone();
+            // Tab headers
+            VStack::new(cx, move |cx| {
+                Binding::new(cx, lens.clone().map(|list| list.len()), move |cx, list_length| {
+                    let list_length = list_length.get_fallible(cx).map_or(0, |d| d);
+                    for index in 0..list_length {
+                        let l = lens.clone().index(index);
+                        let builder = (content2)(cx, l).header;
+                        TabHeader::new(cx, index, builder)
+                            .bind(TabView::selected_index, move |handle, selected_index| {
+                                let selected_index = selected_index.get(handle.cx);
+                                handle.checked(selected_index == index);
+                            })
+                            .cursor(CursorIcon::Hand);
+                    }
                 })
-                .class("tabview-tabheader-wrapper");
-
-                // Tab content
-                HStack::new(cx, |cx| {
-                    Binding::new(cx, TabView::selected_index, move |cx, selected| {
-                        let selected = selected.get(cx);
-                        let l = lens2.clone().index(selected);
-                        ((content)(cx, l).content)(cx);
-                    });
-                })
-                .class("tabview-content-wrapper");
             })
-            .layout_type(LayoutType::Column)
+            .class("tabview-tabheader-wrapper");
+
+            // Tab content
+            VStack::new(cx, |cx| {
+                Binding::new(cx, TabView::selected_index, move |cx, selected| {
+                    let selected = selected.get(cx);
+                    let l = lens2.clone().index(selected);
+                    ((content)(cx, l).content)(cx);
+                });
+            })
+            .class("tabview-content-wrapper");
+        })
     }
 }
 

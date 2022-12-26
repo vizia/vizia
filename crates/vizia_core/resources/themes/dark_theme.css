@@ -686,22 +686,55 @@ switch:checked:disabled .switch-handle {
 tabview {
     background-color: #343434;
     border-radius: 4px;
+    layout-type: column;
 }
 
-tabheader label {
+tabview.vertical {
+    layout-type: row;
+}
+
+tabview tabheader label {
     color: #888;
 }
 
-tabheader:checked label {
+tabview tabheader:checked label {
     color: #fff;
 }
 
-tabheader .indicator {
-    background-color: transparent;
+tabview.vertical tabheader label {
+    color: #888;
 }
 
-tabheader:checked .indicator {
+tabview.vertical tabheader:checked label {
+    color: #fff;
+}
+
+tabview tabheader .indicator {
+    background-color: transparent;
+    height: 2px;
+    width: 1s;
+}
+
+tabview.vertical tabheader .indicator {
+    background-color: transparent;
+    height: 1s;
+    width: 2px;
+}
+
+tabview tabheader:checked .indicator {
     background-color: #51afef;
+}
+
+tabview.vertical tabheader {
+    layout-type: row;
+}
+
+tabview .tabview-tabheader-wrapper {
+    layout-type: row;
+}
+
+tabview.vertical .tabview-tabheader-wrapper {
+    layout-type: column;
 }
 
 /* tabheader:disabled {

@@ -1,21 +1,75 @@
-use vizia::prelude::*;
+use vizia::{prelude::*, state::StaticLens};
+
+#[allow(dead_code)]
+const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
+#[allow(dead_code)]
+const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
 
 const ICON_PLUS: &str = "\u{2b}";
 
+const STYLE: &str = r#"
+
+    .tabview-tabheader-wrapper {
+        width: 200px;
+    }
+
+    tabheader {
+        width: 1s;
+    }
+
+    tabheader label {
+        width: 1s;
+    }
+
+"#;
+
 #[derive(Lens)]
-pub struct AppData {}
+pub struct AppData {
+    items: Vec<&'static str>,
+}
+
+impl Model for AppData {}
 
 fn main() {
     Application::new(|cx| {
+        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
+        cx.add_theme(STYLE);
+        AppData { items: vec!["Button", "Checkbox"] }.build(cx);
         //cx.add_stylesheet("examples/test_style.css").unwrap();
+
+        TabView::new(cx, AppData::items, |cx, item| match item.get(cx) {
+            "Button" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item);
+                    Element::new(cx).class("indicator");
+                },
+                |cx| {
+                    buttons(cx).child_space(Pixels(20.0));
+                },
+            ),
+
+            "Checkbox" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item);
+                    Element::new(cx).class("indicator");
+                },
+                |cx| {
+                    checkbox(cx).child_space(Pixels(20.0));
+                },
+            ),
+
+            _ => TabPair::new(|_| {}, |_| {}),
+        })
+        .class("vertical");
 
         //buttons(cx)
         //    .space(Pixels(30.0));
-        checkbox(cx).space(Pixels(30.0));
+        // checkbox(cx).space(Pixels(30.0));
         // label(cx);
     })
     .title("Widget Gallery")
     //.background_color(Color::rgb(249, 249, 249))
+    .ignore_default_theme()
     .run();
 }
 

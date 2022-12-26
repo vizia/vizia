@@ -19,6 +19,8 @@ fn main() {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
+    use vizia::{resource::ImageOrId, vg::ImageFlags};
+
     Application::new(|cx| {
         cx.add_theme(STYLE);
         cx.set_image_loader(|cx, path| {
@@ -40,11 +42,11 @@ fn main() {
             } else if path == "sample.png" {
                 cx.load_image(
                     path.to_owned(),
-                    image::load_from_memory_with_format(
+                    ImageOrId::Image(image::load_from_memory_with_format(
                         include_bytes!("../resources/sample-hut-400x300.png"),
                         image::ImageFormat::Png,
                     )
-                    .unwrap(),
+                    .unwrap(), ImageFlags::REPEAT_X | ImageFlags::REPEAT_Y),
                     ImageRetentionPolicy::DropWhenUnusedForOneFrame,
                 );
             } else {
