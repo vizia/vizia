@@ -64,7 +64,7 @@ pub trait View: 'static + Sized {
 
         let background_color = cx.background_color();
 
-        // let font_color = cx.font_color().cloned().unwrap_or(Color::rgb(0, 0, 0));
+        let font_color = cx.font_color();
 
         let border_color = cx.border_color();
         let outline_color = cx.outline_color();
@@ -90,20 +90,9 @@ pub trait View: 'static + Sized {
         let border_bottom_left_radius = cx.border_bottom_left_radius();
         let border_bottom_right_radius = cx.border_bottom_right_radius();
 
-        // let opacity = cx.opacity();
-
-        // let mut background_color: femtovg::Color = background_color.into();
-        // background_color.set_alphaf(background_color.a * opacity);
-
-        // let mut border_color: femtovg::Color = border_color.into();
-        // border_color.set_alphaf(border_color.a * opacity);
-
         let border_width = cx.border_width();
 
         let outline_width = cx.outline_width();
-
-        // let mut outline_color: femtovg::Color = outline_color.into();
-        // outline_color.set_alphaf(outline_color.a * opacity);
 
         let outline_offset = cx.outline_offset();
 
@@ -465,10 +454,10 @@ pub trait View: 'static + Sized {
         //     let mut h = bounds.h - border_width * 2.0;
 
         //     // TODO - Move this to a text layout system and include constraints
-        //     let child_left = cx.child_left().unwrap_or_default();
-        //     let child_right = cx.child_right().unwrap_or_default();
-        //     let child_top = cx.child_top().unwrap_or_default();
-        //     let child_bottom = cx.child_bottom().unwrap_or_default();
+        //     let child_left = cx.child_left();
+        //     let child_right = cx.child_right();
+        //     let child_top = cx.child_top();
+        //     let child_bottom = cx.child_bottom();
 
         //     // shrink the bounding box based on pixel values
         //     if let Units::Pixels(val) = child_left {

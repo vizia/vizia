@@ -1,7 +1,7 @@
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
-use vizia_style::{CssRule, Transform, Transition};
+use vizia_style::{border, CssRule, Transform, Transition};
 
 use cssparser::{Parser, ParserInput};
 
@@ -436,6 +436,35 @@ impl Style {
             }
             Property::BorderColor(color) => {
                 self.border_color.insert_rule(rule_id, color);
+            }
+
+            // Border Radius
+            Property::BorderRadius(border_radius) => {
+                self.border_bottom_left_radius.insert_rule(rule_id, border_radius.bottom_left);
+                self.border_bottom_right_radius.insert_rule(rule_id, border_radius.bottom_right);
+                self.border_top_left_radius.insert_rule(rule_id, border_radius.top_left);
+                self.border_top_right_radius.insert_rule(rule_id, border_radius.top_right);
+            }
+
+            Property::BorderBottomLeftRadius(border_radius) => {
+                self.border_bottom_left_radius.insert_rule(rule_id, border_radius);
+            }
+
+            Property::BorderTopLeftRadius(border_radius) => {
+                self.border_top_left_radius.insert_rule(rule_id, border_radius);
+            }
+
+            Property::BorderBottomRightRadius(border_radius) => {
+                self.border_bottom_right_radius.insert_rule(rule_id, border_radius);
+            }
+
+            Property::BorderTopRightRadius(border_radius) => {
+                self.border_top_right_radius.insert_rule(rule_id, border_radius);
+            }
+
+            // Border Corner Shape
+            Property::BorderCornerShape(border_corner_shape) => {
+                todo!()
             }
 
             // Transform

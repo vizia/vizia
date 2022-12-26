@@ -34,13 +34,13 @@ fn main() {
         Element::new(cx)
             .size(Pixels(100.0))
             .space(Pixels(20.0))
-            .background_color(Color::blue())
-            .border_width(Pixels(2.0))
-            .border_color(Color::green())
-            .border_radius(Pixels(5.0))
-            .outline_width(Pixels(2.0))
-            .outline_color(Color::red())
-            .outline_offset(Pixels(2.0));
+            .background_color("blue")
+            .border_width("2px")
+            .border_color("green")
+            .border_radius("5px")
+            .outline_width("2px")
+            .outline_color("red")
+            .outline_offset("2px");
     })
     .run();
 }

@@ -6,6 +6,7 @@ use crate::{Direction, Selectors};
 pub enum PseudoClass {
     Hover,
     Active,
+    Over,
     Focus,
     FocusVisible,
     FocusWithin,
@@ -41,6 +42,7 @@ impl ToCss for PseudoClass {
         match *self {
             PseudoClass::Hover => dest.write_str(":hover"),
             PseudoClass::Active => dest.write_str(":active"),
+            PseudoClass::Over => todo!(),
             PseudoClass::Lang(ref lang) => todo!(),
             PseudoClass::Focus => todo!(),
             PseudoClass::FocusVisible => todo!(),

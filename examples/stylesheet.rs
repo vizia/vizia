@@ -3,7 +3,9 @@ use vizia::prelude::*;
 
 const STYLE: &str = r#"
     element {
-        background-color: blue;
+        width: 100px;
+        height: 100px;
+        background-color: green;
     }
 "#;
 
@@ -17,13 +19,14 @@ fn main() {
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet("examples/resources/test.css").expect("Failed");
+        // cx.add_stylesheet("examples/resources/test.css").expect("Failed");
+        cx.add_theme(STYLE);
 
         HStack::new(cx, |cx| {
-            Element::new(cx)
-                //.size(Pixels(100.0))
-                //.space(Pixels(100.0))
-                .class("foo");
+            Element::new(cx);
+            //.size(Pixels(100.0))
+            //.space(Pixels(100.0))
+            // .class("foo");
             //.background_color("red")
             //.border_width("10px")
             //.border_radius("10px")

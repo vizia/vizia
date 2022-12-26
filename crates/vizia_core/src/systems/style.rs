@@ -1,7 +1,9 @@
 use crate::{
+    events::ViewHandler,
     prelude::*,
     style::{Rule, Style},
 };
+use fnv::FnvHashMap;
 // use crate::style::{Rule, Selector, SelectorRelation, StyleRule};
 use vizia_id::GenerationalId;
 use vizia_storage::{LayoutTreeIterator, TreeExt};
@@ -16,19 +18,20 @@ use vizia_style::{
 };
 
 #[derive(Clone)]
-pub struct Node<'s, 't> {
+pub struct Node<'s, 't, 'v> {
     entity: Entity,
     store: &'s Style,
     tree: &'t Tree<Entity>,
+    views: &'v FnvHashMap<Entity, Box<dyn ViewHandler>>,
 }
 
-impl<'s, 't> std::fmt::Debug for Node<'s, 't> {
+impl<'s, 't, 'v> std::fmt::Debug for Node<'s, 't, 'v> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.entity)
     }
 }
 
-impl<'s, 't> Element for Node<'s, 't> {
+impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     type Impl = Selectors;
 
     fn opaque(&self) -> OpaqueElement {
@@ -52,6 +55,7 @@ impl<'s, 't> Element for Node<'s, 't> {
             entity: parent,
             store: self.store,
             tree: self.tree,
+            views: self.views,
         })
     }
 
@@ -60,6 +64,7 @@ impl<'s, 't> Element for Node<'s, 't> {
             entity: parent,
             store: self.store,
             tree: self.tree,
+            views: self.views,
         })
     }
 
@@ -68,6 +73,7 @@ impl<'s, 't> Element for Node<'s, 't> {
             entity: parent,
             store: self.store,
             tree: self.tree,
+            views: self.views,
         })
     }
 
@@ -84,8 +90,7 @@ impl<'s, 't> Element for Node<'s, 't> {
     }
 
     fn has_local_name(&self, local_name: &SelectorIdent) -> bool {
-        if let Some(element) = self.store.elements.get(self.entity) {
-            println!("local name: {} {:?}", element, local_name);
+        if let Some(element) = self.views.get(&self.entity).and_then(|view| view.element()) {
             return element == &local_name.0;
         }
 
@@ -168,17 +173,22 @@ impl<'s, 't> Element for Node<'s, 't> {
         if let Some(psudeo_class_flag) = self.store.pseudo_classes.get(self.entity) {
             match pc {
                 PseudoClass::Hover => psudeo_class_flag.contains(PseudoClassFlags::HOVER),
-                PseudoClass::Active => todo!(),
-                PseudoClass::Focus => todo!(),
-                PseudoClass::FocusVisible => todo!(),
+                PseudoClass::Active => psudeo_class_flag.contains(PseudoClassFlags::ACTIVE),
+                PseudoClass::Over => psudeo_class_flag.contains(PseudoClassFlags::OVER),
+                PseudoClass::Focus => psudeo_class_flag.contains(PseudoClassFlags::FOCUS),
+                PseudoClass::FocusVisible => {
+                    psudeo_class_flag.contains(PseudoClassFlags::FOCUS_VISIBLE)
+                }
                 PseudoClass::FocusWithin => todo!(),
                 PseudoClass::Enabled => todo!(),
-                PseudoClass::Disabled => todo!(),
+                PseudoClass::Disabled => {
+                    self.store.disabled.get(self.entity).copied().unwrap_or_default()
+                }
                 PseudoClass::ReadOnly => todo!(),
                 PseudoClass::ReadWrite => todo!(),
                 PseudoClass::PlaceHolderShown => todo!(),
                 PseudoClass::Default => todo!(),
-                PseudoClass::Checked => todo!(),
+                PseudoClass::Checked => psudeo_class_flag.contains(PseudoClassFlags::CHECKED),
                 PseudoClass::Indeterminate => todo!(),
                 PseudoClass::Blank => todo!(),
                 PseudoClass::Valid => todo!(),
@@ -191,7 +201,10 @@ impl<'s, 't> Element for Node<'s, 't> {
                 PseudoClass::UserInvalid => todo!(),
                 PseudoClass::Lang(_) => todo!(),
                 PseudoClass::Dir(_) => todo!(),
-                PseudoClass::Custom(_) => todo!(),
+                PseudoClass::Custom(name) => {
+                    println!("{}", name);
+                    todo!()
+                }
             }
         } else {
             false
@@ -527,6 +540,7 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
 
         // Loop through all entities
         'ent: for entity in iterator {
+            let element_name = cx.views.get(&entity).and_then(|view| view.element());
             // If the entity and the previous entity have the same parent and selectors then they share the same rules
             // if let Some(prev) = prev_entity {
             //     if let Some(parent) = tree.get_layout_parent(entity) {
@@ -549,7 +563,7 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
                     MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
                 if matches_selector_list(
                     selector_list,
-                    &Node { entity, store: &cx.style, tree: &cx.tree },
+                    &Node { entity, store: &cx.style, tree: &cx.tree, views: &cx.views },
                     &mut context,
                 ) {
                     matched_rules.push((*rule, specificity));
