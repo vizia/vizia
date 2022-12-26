@@ -191,7 +191,7 @@ fn main() {
     .run();
 }
 
-#[derive(Debug, Clone, Lens, PartialEq)]
+#[derive(Debug, Clone, Lens, Data)]
 pub struct Person {
     first_name: String,
     last_name: String,
@@ -216,7 +216,7 @@ pub enum AppEvent {
     ToggleSortAge,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Data)]
 pub enum Sorted {
     Forward,
     Reverse,

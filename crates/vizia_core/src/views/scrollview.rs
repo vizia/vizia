@@ -6,7 +6,7 @@ use crate::views::Orientation;
 
 pub(crate) const SCROLL_SENSITIVITY: f32 = 35.0;
 
-#[derive(Lens, Clone, Debug, PartialEq)]
+#[derive(Lens, Data, Clone, Debug)]
 pub struct ScrollData {
     pub scroll_x: f32,
     pub scroll_y: f32,

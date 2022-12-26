@@ -1,4 +1,4 @@
-use crate::{context::EventContext, state::Data};
+use crate::context::EventContext;
 
 /// An entry inside of a [`Keymap`](crate::prelude::Keymap).
 ///
@@ -9,7 +9,7 @@ use crate::{context::EventContext, state::Data};
 #[derive(Copy, Clone)]
 pub struct KeymapEntry<T>
 where
-    T: Data + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     action: T,
     on_action: fn(&mut EventContext),
@@ -17,7 +17,7 @@ where
 
 impl<T> KeymapEntry<T>
 where
-    T: Data + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     /// Creates a new keymap entry.
     ///
@@ -50,7 +50,7 @@ where
 
 impl<T> PartialEq for KeymapEntry<T>
 where
-    T: Data + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     fn eq(&self, other: &Self) -> bool {
         self.action == other.action
@@ -59,7 +59,7 @@ where
 
 impl<T> PartialEq<T> for KeymapEntry<T>
 where
-    T: Data + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     fn eq(&self, other: &T) -> bool {
         self.action == *other
