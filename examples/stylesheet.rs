@@ -13,7 +13,7 @@ fn main() {
 
         VStack::new(cx, |cx| {
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
-            Button::new(cx, |cx| cx.emit(WindowEvent::Reload), |cx| Label::new(cx, "Reload"));
+            Button::new(cx, |cx| cx.emit(WindowEvent::ReloadStyles), |cx| Label::new(cx, "Reload"));
         })
         .row_between(Pixels(10.0))
         .space(Pixels(20.0));

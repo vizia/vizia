@@ -94,5 +94,5 @@ pub enum WindowEvent {
     /// Prints the debug message to the console.
     Debug(String),
     /// Reloads all application stylesheets.
-    Reload,
+    ReloadStyles,
 }

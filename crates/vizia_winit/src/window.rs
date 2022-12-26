@@ -214,7 +214,7 @@ impl View for Window {
                 self.window().set_always_on_top(*flag);
             }
 
-            WindowEvent::Reload => {
+            WindowEvent::ReloadStyles => {
                 cx.reload_styles().unwrap();
             }
 
