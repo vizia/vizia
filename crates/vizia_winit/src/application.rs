@@ -249,6 +249,16 @@ impl Application {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
                         event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
                     }
+
+                    if let Some(window_event_handler) = cx.views().remove(&Entity::root()) {
+                        if let Some(window) = window_event_handler.downcast_ref::<Window>() {
+                            if window.should_close {
+                                *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                            }
+                        }
+
+                        cx.views().insert(Entity::root(), window_event_handler);
+                    }
                 }
 
                 winit::event::Event::RedrawRequested(_) => {
@@ -259,7 +269,7 @@ impl Application {
                 winit::event::Event::WindowEvent { window_id: _, event } => {
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
-                            *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                            cx.0.emit(WindowEvent::WindowClose);
                         }
 
                         winit::event::WindowEvent::ScaleFactorChanged {
