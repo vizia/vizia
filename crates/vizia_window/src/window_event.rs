@@ -93,4 +93,6 @@ pub enum WindowEvent {
     Relayout,
     /// Prints the debug message to the console.
     Debug(String),
+    /// Reloads all application stylesheets.
+    Reload,
 }

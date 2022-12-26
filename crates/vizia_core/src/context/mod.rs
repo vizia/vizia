@@ -373,7 +373,7 @@ impl Context {
     pub fn add_theme(&mut self, theme: &str) {
         self.resource_manager.themes.push(theme.to_owned());
 
-        self.reload_styles().expect("Failed to reload styles");
+        EventContext::new(self).reload_styles().expect("Failed to reload styles");
     }
 
     pub fn remove_user_themes(&mut self) {
@@ -407,39 +407,6 @@ impl Context {
     pub fn add_animation(&mut self, duration: std::time::Duration) -> AnimationBuilder {
         let id = self.style.animation_manager.create();
         AnimationBuilder::new(id, self, duration)
-    }
-
-    pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
-        if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
-            return Ok(());
-        }
-
-        self.style.remove_rules();
-
-        self.style.rules.clear();
-
-        self.style.clear_style_rules();
-
-        let mut overall_theme = String::new();
-
-        // Reload the stored themes
-        for theme in self.resource_manager.themes.iter() {
-            overall_theme += theme;
-        }
-
-        // Reload the stored stylesheets
-        for stylesheet in self.resource_manager.stylesheets.iter() {
-            let theme = std::fs::read_to_string(stylesheet)?;
-            overall_theme += &theme;
-        }
-
-        self.style.parse_theme(&overall_theme);
-
-        self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
-
-        Ok(())
     }
 
     pub fn set_image_loader<F: 'static + Fn(&mut Context, &str)>(&mut self, loader: F) {

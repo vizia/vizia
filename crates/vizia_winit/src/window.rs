@@ -144,7 +144,7 @@ impl Window {
 }
 
 impl View for Window {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::GrabCursor(flag) => {
                 let grab_mode = if *flag { CursorGrabMode::Locked } else { CursorGrabMode::None };
@@ -212,6 +212,10 @@ impl View for Window {
 
             WindowEvent::SetAlwaysOnTop(flag) => {
                 self.window().set_always_on_top(*flag);
+            }
+
+            WindowEvent::Reload => {
+                cx.reload_styles().unwrap();
             }
 
             _ => {}
