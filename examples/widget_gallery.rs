@@ -1,4 +1,4 @@
-use vizia::{prelude::*, state::StaticLens};
+use vizia::prelude::*;
 
 #[allow(dead_code)]
 const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
