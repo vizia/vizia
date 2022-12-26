@@ -13,6 +13,7 @@ pub struct Window {
     handle: glutin::WindowedContext<glutin::PossiblyCurrent>,
     #[cfg(target_arch = "wasm32")]
     handle: winit::window::Window,
+    pub should_close: bool,
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -59,6 +60,7 @@ impl Window {
         let window = Window {
             id: handle.id(),
             handle,
+            should_close: false,
             //canvas: Canvas::new(renderer).expect("Cannot create canvas"),
         };
 
@@ -125,7 +127,7 @@ impl Window {
         //cx.canvases.insert(Entity::root(), canvas);
 
         // Build our window
-        let window = Window { id: handle.window().id(), handle };
+        let window = Window { id: handle.window().id(), handle, should_close: false };
 
         (window, canvas)
     }
@@ -216,6 +218,10 @@ impl View for Window {
 
             WindowEvent::ReloadStyles => {
                 cx.reload_styles().unwrap();
+            }
+
+            WindowEvent::WindowClose => {
+                self.should_close = true;
             }
 
             _ => {}
