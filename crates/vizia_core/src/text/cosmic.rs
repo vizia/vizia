@@ -1,17 +1,22 @@
-use std::collections::HashMap;
-use std::sync::Arc;
-use ouroboros::self_referencing;
-use cosmic_text::{Attrs, AttrsList, Buffer, CacheKey, Edit, Editor, Family, Font, FontSystem, Metrics, Wrap};
-use swash::scale::{Render, ScaleContext, Source, StrikeWith};
-use femtovg::{Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource, PixelFormat, Quad, Renderer};
-use femtovg::imgref::ImgRef;
-use femtovg::rgb::{RGBA8};
-use fnv::FnvHashMap;
-use swash::scale::image::Content;
-use swash::zeno::{Format, Vector};
 use crate::cache::CachedData;
 use crate::entity::Entity;
 use crate::style::Style;
+use cosmic_text::{
+    Attrs, AttrsList, Buffer, CacheKey, Edit, Editor, Family, Font, FontSystem, Metrics, Wrap,
+};
+use femtovg::imgref::ImgRef;
+use femtovg::rgb::RGBA8;
+use femtovg::{
+    Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource,
+    PixelFormat, Quad, Renderer,
+};
+use fnv::FnvHashMap;
+use ouroboros::self_referencing;
+use std::collections::HashMap;
+use std::sync::Arc;
+use swash::scale::image::Content;
+use swash::scale::{Render, ScaleContext, Source, StrikeWith};
+use swash::zeno::{Format, Vector};
 
 const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
@@ -22,7 +27,7 @@ pub struct CosmicContext {
     font_system: FontSystem,
     #[borrows(font_system)]
     #[covariant]
-    int: CosmicContextInternal<'this>
+    int: CosmicContextInternal<'this>,
 }
 
 struct CosmicContextInternal<'a> {
@@ -32,9 +37,8 @@ struct CosmicContextInternal<'a> {
     rendered_glyphs: FnvHashMap<CacheKey, Option<RenderedGlyph>>,
     glyph_textures: Vec<FontTexture>,
     default_font: Arc<Font<'a>>,
-    buffers: HashMap<Entity, Editor<'a>>
+    buffers: HashMap<Entity, Editor<'a>>,
 }
-
 
 impl CosmicContext {
     pub fn clear_buffer(&mut self, entity: Entity) {
@@ -44,23 +48,19 @@ impl CosmicContext {
     }
 
     pub fn has_buffer(&self, entity: Entity) -> bool {
-        self.with_int(move |int: &CosmicContextInternal| {
-            int.buffers.contains_key(&entity)
-        })
+        self.with_int(move |int: &CosmicContextInternal| int.buffers.contains_key(&entity))
     }
 
     pub fn with_editor<O>(&mut self, entity: Entity, f: impl FnOnce(&mut Editor) -> O) -> O {
         self.with_int_mut(move |int: &mut CosmicContextInternal| {
             f(int.buffers.entry(entity).or_insert_with(|| {
-                Editor::new(Buffer::new(&int.font_system, Metrics::default()))
+                Editor::new(Buffer::new(&int.font_system, Metrics::new(18, 20)))
             }))
         })
     }
 
     pub fn with_buffer<O>(&mut self, entity: Entity, f: impl FnOnce(&mut Buffer) -> O) -> O {
-        self.with_editor(entity, |ed| {
-            f(ed.buffer_mut())
-        })
+        self.with_editor(entity, |ed| f(ed.buffer_mut()))
     }
 
     pub fn sync_styles(&mut self, entity: Entity, style: &Style, cache: &CachedData) {
@@ -71,8 +71,7 @@ impl CosmicContext {
             let font_size = style.font_size.get(entity).copied().unwrap_or(12.0);
             buf.set_metrics(Metrics::new(font_size as i32, font_size as i32));
             let family = style.font.get(entity).unwrap_or(&style.default_font);
-            let attrs = Attrs::new()
-                .family(Family::Name(family));
+            let attrs = Attrs::new().family(Family::Name(family));
             let wrap = if style.text_wrap.get(entity).copied().unwrap_or_default() {
                 Wrap::Word
             } else {
@@ -85,15 +84,27 @@ impl CosmicContext {
         });
     }
 
-    pub(crate) fn fill_to_cmds<T: Renderer>(&mut self, canvas: &mut Canvas<T>, entity: Entity) -> Result<GlyphDrawCommands, ErrorKind> {
+    pub(crate) fn fill_to_cmds<T: Renderer>(
+        &mut self,
+        canvas: &mut Canvas<T>,
+        entity: Entity,
+    ) -> Result<GlyphDrawCommands, ErrorKind> {
         self.with_int_mut(move |int: &mut CosmicContextInternal| {
             let buffer = int.buffers.get_mut(&entity).unwrap().buffer_mut();
+
+            println!("Size: {:?}", buffer.visible_lines());
+
+            for line in buffer.lines.iter() {
+                println!("line: {}", line.text())
+            }
 
             let mut alpha_cmd_map = FnvHashMap::default();
             let mut color_cmd_map = FnvHashMap::default();
 
             for run in buffer.layout_runs() {
+                println!("run: {:?}", run.text);
                 for glyph in run.glyphs.iter() {
+                    println!("glyph: {:?}", glyph);
                     // perform cache lookup for rendered glyph
                     let Some(rendered) = int.rendered_glyphs.entry(glyph.cache_key).or_insert_with(|| {
                         // ...or insert it
@@ -217,17 +228,16 @@ impl Default for CosmicContext {
     fn default() -> Self {
         CosmicContextBuilder {
             font_system: FontSystem::new(),
-            int_builder: |font_system| {
-                CosmicContextInternal {
-                    font_system,
-                    scale_context: Default::default(),
-                    rendered_glyphs: FnvHashMap::default(),
-                    glyph_textures: vec![],
-                    default_font: font_system.get_font_matches(Attrs::new()).fonts[0].clone(),
-                    buffers: HashMap::new(),
-                }
+            int_builder: |font_system| CosmicContextInternal {
+                font_system,
+                scale_context: Default::default(),
+                rendered_glyphs: FnvHashMap::default(),
+                glyph_textures: vec![],
+                default_font: font_system.get_font_matches(Attrs::new()).fonts[0].clone(),
+                buffers: HashMap::new(),
             },
-        }.build()
+        }
+        .build()
     }
 }
 

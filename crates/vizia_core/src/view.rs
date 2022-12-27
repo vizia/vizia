@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::systems::draw;
 use std::{any::Any, collections::HashMap};
 
 use crate::events::ViewHandler;
@@ -514,179 +515,193 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     // );
     // canvas.fill_path(&mut path, paint);
 
-    // Draw text and image
-    if cx.text().is_some() || cx.image().is_some() {
-        let mut x = bounds.x + border_width;
-        let mut y = bounds.y + border_width;
-        let mut w = bounds.w - border_width * 2.0;
-        let mut h = bounds.h - border_width * 2.0;
+    let temp_paint = Paint::color(Color::rgb(0, 0, 0).into());
 
-        // TODO - Move this to a text layout system and include constraints
-        let child_left = cx.child_left().unwrap_or_default();
-        let child_right = cx.child_right().unwrap_or_default();
-        let child_top = cx.child_top().unwrap_or_default();
-        let child_bottom = cx.child_bottom().unwrap_or_default();
-
-        // shrink the bounding box based on pixel values
-        if let Units::Pixels(val) = child_left {
-            x += val;
-            w -= val;
-        }
-        if let Units::Pixels(val) = child_right {
-            w -= val;
-        }
-        if let Units::Pixels(val) = child_top {
-            y += val;
-            h -= val;
-        }
-        if let Units::Pixels(val) = child_bottom {
-            h -= val;
-        }
-
-        // set align/baseline and move the start coordinate to the appropriate place in the box
-        let align = match (child_left, child_right) {
-            (Units::Stretch(_), Units::Stretch(_)) => {
-                x += w / 2.0;
-                Align::Center
-            }
-            (Units::Stretch(_), _) => {
-                x += w;
-                Align::Right
-            }
-            _ => Align::Left,
-        };
-        let baseline = match (child_top, child_bottom) {
-            (Units::Stretch(_), Units::Stretch(_)) => {
-                y += h / 2.0;
-                Baseline::Middle
-            }
-            (Units::Stretch(_), _) => {
-                y += h;
-                Baseline::Bottom
-            }
-            _ => Baseline::Top,
-        };
-
-        // Draw image
-        if let Some(image_name) = cx.image() {
-            if let Some(img) = cx.resource_manager.images.get(image_name) {
-                match img.image {
-                    ImageOrId::Id(id, _) => {
-                        let x = match align {
-                            Align::Left => x,
-                            Align::Center => x - w * 0.5,
-                            Align::Right => x - w,
-                        };
-                        let y = match baseline {
-                            Baseline::Top => y,
-                            Baseline::Middle => y - h * 0.5,
-                            Baseline::Alphabetic | Baseline::Bottom => y - h,
-                        };
-
-                        let mut path = Path::new();
-                        path.rect(x, y, w, h);
-
-                        let paint = Paint::image(id, x, y, w, h, 0.0, 1.0);
-                        canvas.fill_path(&mut path, &paint);
-                    }
-
-                    _ => {}
-                }
-            }
-        }
-
-        if let Some(text) = cx.text().cloned() {
-            let mut font_color: femtovg::Color = font_color.into();
-            font_color.set_alphaf(font_color.a * opacity);
-
-            let text_wrap = cx.text_wrap().cloned().unwrap_or(true);
-
-            let mut paint = text_paint_draw(cx, cx.current);
-            paint.set_color(font_color);
-            paint.set_text_align(align);
-            paint.set_text_baseline(baseline);
-
-            let font_metrics =
-                cx.text_context.measure_font(&paint).expect("Failed to read font metrics");
-
-            let text_width = if text_wrap { w } else { f32::MAX };
-
-            if let Ok(lines) = text_layout(text_width, &text, &paint, &cx.text_context) {
-                // difference between first line and last line
-                let delta_height = font_metrics.height() * (lines.len() - 1) as f32;
-                let first_line_y = match baseline {
-                    Baseline::Top => y,
-                    Baseline::Middle => y - delta_height / 2.0,
-                    Baseline::Alphabetic | Baseline::Bottom => y - delta_height,
-                };
-                let metrics =
-                    measure_text_lines(&text, &paint, &lines, x, first_line_y, &cx.text_context);
-                let cached: Vec<(std::ops::Range<usize>, TextMetrics)> =
-                    lines.into_iter().zip(metrics.into_iter()).collect();
-                let selection = cx.text_selection();
-                let (anchor, active) = if let Some(cursor) = selection {
-                    (
-                        idx_to_pos(cursor.anchor, cached.iter()),
-                        idx_to_pos(cursor.active, cached.iter()),
-                    )
-                } else {
-                    ((usize::MAX, (f32::MAX, f32::MAX)), (usize::MAX, (f32::MAX, f32::MAX)))
-                };
-                let (first, last) = if let Some(cursor) = &selection {
-                    if cursor.anchor < cursor.active {
-                        (anchor, active)
-                    } else {
-                        (active, anchor)
-                    }
-                } else {
-                    (anchor, active)
-                };
-                let selection_color = cx.selection_color();
-                let cursor_color = cx.caret_color();
-                for (line, (range, metrics)) in cached.iter().enumerate() {
-                    let y = first_line_y + line as f32 * font_metrics.height();
-                    let min_y = match baseline {
-                        Baseline::Top => y,
-                        Baseline::Middle => y - font_metrics.height() / 2.0,
-                        Baseline::Alphabetic | Baseline::Bottom => y - font_metrics.height(),
-                    };
-                    // should we draw part of the selection?
-                    if let Some(color) = selection_color {
-                        if line >= first.0 && line <= last.0 && first != last {
-                            let first_x = if line == first.0 {
-                                first.1 .0
-                            } else if let Some(glyph) = metrics.glyphs.first() {
-                                glyph.x
-                            } else {
-                                x
-                            };
-                            let last_x = if line == last.0 {
-                                last.1 .0
-                            } else if let Some(glyph) = metrics.glyphs.last() {
-                                glyph.x + glyph.advance_x
-                            } else {
-                                x + 10.0
-                            };
-                            let min_x = first_x.min(last_x).round();
-                            let max_x = first_x.max(last_x).round();
-                            let mut path = Path::new();
-                            path.rect(min_x, min_y, max_x - min_x, font_metrics.height());
-                            canvas.fill_path(&mut path, &Paint::color(color.clone().into()));
-                        }
-                    }
-                    // should we draw the cursor?
-                    if let Some(color) = cursor_color {
-                        if line == active.0 {
-                            let (x, _) = active.1;
-                            let x = x.round();
-                            let mut path = Path::new();
-                            path.rect(x, min_y, cx.logical_to_physical(1.0), font_metrics.height());
-                            canvas.fill_path(&mut path, &Paint::color(color.clone().into()));
-                        }
-                    }
-                    canvas.fill_text(x, y, &text[range.clone()], &paint).ok();
-                }
-            }
+    if cx.cosmic_context.has_buffer(cx.current) {
+        println!("We have a buffer: {}", cx.current);
+        cx.cosmic_context.sync_styles(cx.current, &cx.style, &cx.cache);
+        if let Ok(draw_commands) = cx.cosmic_context.fill_to_cmds(canvas, cx.current) {
+            println!("Draw commands: {:?}", draw_commands.alpha_glyphs);
+            println!("Draw commands: {:?}", draw_commands.color_glyphs);
+            canvas.draw_glyph_cmds(draw_commands, &temp_paint);
         }
     }
+
+    // // Draw text and image
+    // if cx.text().is_some() || cx.image().is_some() {
+    //     let mut x = bounds.x + border_width;
+    //     let mut y = bounds.y + border_width;
+    //     let mut w = bounds.w - border_width * 2.0;
+    //     let mut h = bounds.h - border_width * 2.0;
+
+    //     // TODO - Move this to a text layout system and include constraints
+    //     let child_left = cx.child_left().unwrap_or_default();
+    //     let child_right = cx.child_right().unwrap_or_default();
+    //     let child_top = cx.child_top().unwrap_or_default();
+    //     let child_bottom = cx.child_bottom().unwrap_or_default();
+
+    //     // shrink the bounding box based on pixel values
+    //     if let Units::Pixels(val) = child_left {
+    //         x += val;
+    //         w -= val;
+    //     }
+    //     if let Units::Pixels(val) = child_right {
+    //         w -= val;
+    //     }
+    //     if let Units::Pixels(val) = child_top {
+    //         y += val;
+    //         h -= val;
+    //     }
+    //     if let Units::Pixels(val) = child_bottom {
+    //         h -= val;
+    //     }
+
+    //     // set align/baseline and move the start coordinate to the appropriate place in the box
+    //     let align = match (child_left, child_right) {
+    //         (Units::Stretch(_), Units::Stretch(_)) => {
+    //             x += w / 2.0;
+    //             Align::Center
+    //         }
+    //         (Units::Stretch(_), _) => {
+    //             x += w;
+    //             Align::Right
+    //         }
+    //         _ => Align::Left,
+    //     };
+    //     let baseline = match (child_top, child_bottom) {
+    //         (Units::Stretch(_), Units::Stretch(_)) => {
+    //             y += h / 2.0;
+    //             Baseline::Middle
+    //         }
+    //         (Units::Stretch(_), _) => {
+    //             y += h;
+    //             Baseline::Bottom
+    //         }
+    //         _ => Baseline::Top,
+    //     };
+
+    //     // Draw image
+    //     if let Some(image_name) = cx.image() {
+    //         if let Some(img) = cx.resource_manager.images.get(image_name) {
+    //             match img.image {
+    //                 ImageOrId::Id(id, _) => {
+    //                     let x = match align {
+    //                         Align::Left => x,
+    //                         Align::Center => x - w * 0.5,
+    //                         Align::Right => x - w,
+    //                     };
+    //                     let y = match baseline {
+    //                         Baseline::Top => y,
+    //                         Baseline::Middle => y - h * 0.5,
+    //                         Baseline::Alphabetic | Baseline::Bottom => y - h,
+    //                     };
+
+    //                     let mut path = Path::new();
+    //                     path.rect(x, y, w, h);
+
+    //                     let paint = Paint::image(id, x, y, w, h, 0.0, 1.0);
+    //                     canvas.fill_path(&mut path, &paint);
+    //                 }
+
+    //                 _ => {}
+    //             }
+    //         }
+    //     }
+
+    //     if let Some(text) = cx.text().cloned() {
+    //         let mut font_color: femtovg::Color = font_color.into();
+    //         font_color.set_alphaf(font_color.a * opacity);
+
+    //         let text_wrap = cx.text_wrap().cloned().unwrap_or(true);
+
+    //         let mut paint = text_paint_draw(cx, cx.current);
+    //         paint.set_color(font_color);
+    //         paint.set_text_align(align);
+    //         paint.set_text_baseline(baseline);
+
+    //         let font_metrics =
+    //             cx.text_context.measure_font(&paint).expect("Failed to read font metrics");
+
+    //         let text_width = if text_wrap { w } else { f32::MAX };
+
+    //         if let Ok(lines) = text_layout(text_width, &text, &paint, &cx.text_context) {
+    //             // difference between first line and last line
+    //             let delta_height = font_metrics.height() * (lines.len() - 1) as f32;
+    //             let first_line_y = match baseline {
+    //                 Baseline::Top => y,
+    //                 Baseline::Middle => y - delta_height / 2.0,
+    //                 Baseline::Alphabetic | Baseline::Bottom => y - delta_height,
+    //             };
+    //             let metrics =
+    //                 measure_text_lines(&text, &paint, &lines, x, first_line_y, &cx.text_context);
+    //             let cached: Vec<(std::ops::Range<usize>, TextMetrics)> =
+    //                 lines.into_iter().zip(metrics.into_iter()).collect();
+    //             let selection = cx.text_selection();
+    //             let (anchor, active) = if let Some(cursor) = selection {
+    //                 (
+    //                     idx_to_pos(cursor.anchor, cached.iter()),
+    //                     idx_to_pos(cursor.active, cached.iter()),
+    //                 )
+    //             } else {
+    //                 ((usize::MAX, (f32::MAX, f32::MAX)), (usize::MAX, (f32::MAX, f32::MAX)))
+    //             };
+    //             let (first, last) = if let Some(cursor) = &selection {
+    //                 if cursor.anchor < cursor.active {
+    //                     (anchor, active)
+    //                 } else {
+    //                     (active, anchor)
+    //                 }
+    //             } else {
+    //                 (anchor, active)
+    //             };
+    //             let selection_color = cx.selection_color();
+    //             let cursor_color = cx.caret_color();
+    //             for (line, (range, metrics)) in cached.iter().enumerate() {
+    //                 let y = first_line_y + line as f32 * font_metrics.height();
+    //                 let min_y = match baseline {
+    //                     Baseline::Top => y,
+    //                     Baseline::Middle => y - font_metrics.height() / 2.0,
+    //                     Baseline::Alphabetic | Baseline::Bottom => y - font_metrics.height(),
+    //                 };
+    //                 // should we draw part of the selection?
+    //                 if let Some(color) = selection_color {
+    //                     if line >= first.0 && line <= last.0 && first != last {
+    //                         let first_x = if line == first.0 {
+    //                             first.1 .0
+    //                         } else if let Some(glyph) = metrics.glyphs.first() {
+    //                             glyph.x
+    //                         } else {
+    //                             x
+    //                         };
+    //                         let last_x = if line == last.0 {
+    //                             last.1 .0
+    //                         } else if let Some(glyph) = metrics.glyphs.last() {
+    //                             glyph.x + glyph.advance_x
+    //                         } else {
+    //                             x + 10.0
+    //                         };
+    //                         let min_x = first_x.min(last_x).round();
+    //                         let max_x = first_x.max(last_x).round();
+    //                         let mut path = Path::new();
+    //                         path.rect(min_x, min_y, max_x - min_x, font_metrics.height());
+    //                         canvas.fill_path(&mut path, &Paint::color(color.clone().into()));
+    //                     }
+    //                 }
+    //                 // should we draw the cursor?
+    //                 if let Some(color) = cursor_color {
+    //                     if line == active.0 {
+    //                         let (x, _) = active.1;
+    //                         let x = x.round();
+    //                         let mut path = Path::new();
+    //                         path.rect(x, min_y, cx.logical_to_physical(1.0), font_metrics.height());
+    //                         canvas.fill_path(&mut path, &Paint::color(color.clone().into()));
+    //                     }
+    //                 }
+    //                 canvas.fill_text(x, y, &text[range.clone()], &paint).ok();
+    //             }
+
+    //             cx.draw_cache.text_lines.insert(cx.current, cached).unwrap();
+    //         }
+    //     }
+    // }
 }

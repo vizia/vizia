@@ -19,7 +19,7 @@ mod scrollview;
 mod slider;
 mod stack;
 mod table;
-mod textbox;
+// mod textbox;
 
 pub use self::image::Image;
 pub use button::Button;
@@ -37,7 +37,7 @@ pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
 pub use slider::Slider;
 pub use stack::{HStack, VStack, ZStack};
 pub use table::{Table, TableColumn};
-pub use textbox::{TextEvent, Textbox};
+// pub use textbox::{TextEvent, Textbox};
 
 use crate::prelude::*;
 
