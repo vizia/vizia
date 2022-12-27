@@ -1,6 +1,6 @@
-use cosmic_text::Attrs;
 use super::internal;
 use crate::{prelude::*, text::Selection};
+use cosmic_text::Attrs;
 
 /// Modifiers for changing the text properties of a view.
 pub trait TextModifiers: internal::Modifiable {
@@ -9,19 +9,29 @@ pub trait TextModifiers: internal::Modifiable {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, val| {
             let text_data = val.to_string();
-            if let Some(prev_data) = cx.style.text.get(entity) {
-                if prev_data != &text_data {
-                    cx.style.text.insert(entity, text_data);
 
-                    cx.need_relayout();
-                    cx.need_redraw();
-                }
-            } else {
-                cx.style.text.insert(entity, text_data);
+            cx.cosmic_context.with_buffer(entity, |buffer| {
+                buffer.set_text(&text_data, Attrs::new());
+            });
 
-                cx.need_relayout();
-                cx.need_redraw();
-            }
+            cx.need_relayout();
+            cx.need_redraw();
+
+            // if let Some(prev_data) = cx.style.text.get(entity) {
+            //     if prev_data != &text_data {
+            //         cx.style.text.insert(entity, text_data);
+
+            //         cx.cosmic_context.with_buffer(entity, f)
+
+            //         cx.need_relayout();
+            //         cx.need_redraw();
+            //     }
+            // } else {
+            //     cx.style.text.insert(entity, text_data);
+
+            //     cx.need_relayout();
+            //     cx.need_redraw();
+            // }
         });
 
         self

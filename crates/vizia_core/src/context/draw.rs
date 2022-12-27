@@ -11,7 +11,7 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
 use crate::style::{LinearGradient, Style};
-use crate::text::Selection;
+use crate::text::{CosmicContext, Selection};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 
@@ -44,6 +44,7 @@ pub struct DrawContext<'a> {
     pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub resource_manager: &'a ResourceManager,
     pub text_context: &'a TextContext,
+    pub cosmic_context: &'a mut CosmicContext,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState<Entity>,
 }
@@ -85,6 +86,7 @@ impl<'a> DrawContext<'a> {
             views: &cx.views,
             resource_manager: &cx.resource_manager,
             text_context: &cx.text_context,
+            cosmic_context: &mut cx.cosmic_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
         }
