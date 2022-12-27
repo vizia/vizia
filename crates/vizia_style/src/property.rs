@@ -136,7 +136,7 @@ define_property! {
 
         // Font
         "font-size": FontSize(FontSize),
-        "font-color": FontColor(Color),
+        "color": FontColor(Color),
         "font": Font(String),
         "selection-color": SelectionColor(Color), // TODO: Remove this once we have the pseudoselector version.
         "caret-color": CaretColor(Color),
