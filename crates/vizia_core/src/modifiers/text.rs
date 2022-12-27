@@ -1,3 +1,4 @@
+use cosmic_text::Attrs;
 use super::internal;
 use crate::{prelude::*, text::Selection};
 
@@ -7,15 +8,16 @@ pub trait TextModifiers: internal::Modifiable {
     fn text<U: ToString>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, val| {
+            let text_data = val.to_string();
             if let Some(prev_data) = cx.style.text.get(entity) {
-                if prev_data != &val.to_string() {
-                    cx.style.text.insert(entity, val.to_string());
+                if prev_data != &text_data {
+                    cx.style.text.insert(entity, text_data);
 
                     cx.need_relayout();
                     cx.need_redraw();
                 }
             } else {
-                cx.style.text.insert(entity, val.to_string());
+                cx.style.text.insert(entity, text_data);
 
                 cx.need_relayout();
                 cx.need_redraw();

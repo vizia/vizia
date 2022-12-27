@@ -19,6 +19,7 @@ use vizia_storage::SparseSet;
 use crate::context::EmitContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
+use crate::text::CosmicContext;
 
 use super::DrawCache;
 
@@ -38,6 +39,7 @@ pub struct EventContext<'a> {
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub resource_manager: &'a ResourceManager,
     pub text_context: &'a TextContext,
+    pub cosmic_context: &'a mut CosmicContext,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
@@ -64,6 +66,7 @@ impl<'a> EventContext<'a> {
             listeners: &mut cx.listeners,
             resource_manager: &cx.resource_manager,
             text_context: &cx.text_context,
+            cosmic_context: &mut cx.cosmic_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,

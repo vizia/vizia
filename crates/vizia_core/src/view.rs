@@ -686,8 +686,6 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
                     }
                     canvas.fill_text(x, y, &text[range.clone()], &paint).ok();
                 }
-
-                cx.draw_cache.text_lines.insert(cx.current, cached).unwrap();
             }
         }
     }
