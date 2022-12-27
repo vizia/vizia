@@ -43,3 +43,9 @@ impl Data for Selection {
         *self == *other
     }
 }
+
+impl Default for Selection {
+    fn default() -> Self {
+        Selection::caret(0)
+    }
+}

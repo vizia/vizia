@@ -53,12 +53,12 @@ pub struct DrawContext<'a> {
 
 macro_rules! style_getter_units {
     ($name:ident) => {
-        pub fn $name(&self) -> Option<Units> {
+        pub fn $name(&self) -> Units {
             let result = self.style.$name.get(self.current);
             if let Some(Units::Pixels(p)) = result {
-                Some(Units::Pixels(self.logical_to_physical(*p)))
+                Units::Pixels(self.logical_to_physical(*p))
             } else {
-                result.copied()
+                result.copied().unwrap_or_default()
             }
         }
     };
@@ -186,12 +186,12 @@ impl<'a> DrawContext<'a> {
     // style_getter_untranslated!(LengthOrPercentage, inner_shadow_h_offset);
     // style_getter_untranslated!(LengthOrPercentage, inner_shadow_v_offset);
     // style_getter_untranslated!(LengthOrPercentage, inner_shadow_blur);
-    get_property!(Units, child_left);
-    get_property!(Units, child_right);
-    get_property!(Units, child_top);
-    get_property!(Units, child_bottom);
+    style_getter_units!(child_left);
+    style_getter_units!(child_right);
+    style_getter_units!(child_top);
+    style_getter_units!(child_bottom);
     get_color_property!(Color, background_color);
-    get_color_property!(Color, font_color);
+    // get_color_property!(Color, font_color);
     get_color_property!(Color, border_color);
     get_color_property!(Color, outline_color);
     // style_getter_untranslated!(Color, outer_shadow_color);
@@ -205,10 +205,31 @@ impl<'a> DrawContext<'a> {
     // style_getter_untranslated!(BorderCornerShape, border_bottom_left_shape);
     // style_getter_untranslated!(String, background_image);
     // style_getter_untranslated!(String, text);
-    // style_getter_untranslated!(String, image);
+    // get_property!(String, image);
     // style_getter_untranslated!(String, font);
-    // style_getter_untranslated!(bool, text_wrap);
-    // style_getter_untranslated!(Selection, text_selection);
+    // get_property!(bool, text_wrap);
+    get_property!(Selection, text_selection);
+
+    pub fn font_color(&self) -> Color {
+        let opacity = self.cache.get_opacity(self.current);
+        if let Some(col) = self.style.font_color.get(self.current) {
+            Color::rgba(col.r(), col.g(), col.b(), (opacity * col.a() as f32) as u8)
+        } else {
+            Color::rgba(0, 0, 0, 255)
+        }
+    }
+
+    pub fn text_wrap(&self) -> bool {
+        self.style.text_wrap.get(self.current).copied().unwrap_or(true)
+    }
+
+    pub fn font(&self) -> Option<&String> {
+        self.style.font.get(self.current)
+    }
+
+    pub fn image(&self) -> Option<&String> {
+        self.style.image.get(self.current)
+    }
 
     pub fn text(&self) -> Option<&String> {
         self.style.text.get(self.current)

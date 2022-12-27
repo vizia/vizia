@@ -59,12 +59,12 @@ pub mod prelude {
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};
     pub use vizia_storage::{Tree, TreeExt};
-    pub use vizia_window::{CursorIcon, WindowDescription, WindowEvent, WindowSize};
+    pub use vizia_window::{WindowDescription, WindowEvent, WindowSize};
 
     pub use super::style::{
-        Abilities, BorderCornerShape, Color, Display, GradientDirection, GradientStop, Length,
-        LengthOrPercentage, LengthValue, LinearGradient, Opacity, Overflow, PseudoClassFlags,
-        Visibility, RGBA,
+        Abilities, BorderCornerShape, Color, CursorIcon, Display, GradientDirection, GradientStop,
+        Length, LengthOrPercentage, LengthValue, LinearGradient, Opacity, Overflow,
+        PseudoClassFlags, Visibility, RGBA,
     };
 
     pub use morphorm::Units::*;

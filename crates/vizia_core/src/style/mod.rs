@@ -1,15 +1,16 @@
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
-use vizia_style::{border, CssRule, Transform, Transition};
+use vizia_style::{border, overflow, CssRule, Transform, Transition};
 
 use cssparser::{Parser, ParserInput};
 
 use crate::prelude::*;
 
 pub use vizia_style::{
-    BorderCornerShape, Color, Display, Length, LengthOrPercentage, LengthValue, Opacity, Overflow,
-    ParserOptions, Property, SelectorList, Selectors, StyleSheet, Visibility, RGBA,
+    BorderCornerShape, Color, CursorIcon, Display, Length, LengthOrPercentage, LengthValue,
+    Opacity, Overflow, ParserOptions, Property, SelectorList, Selectors, StyleSheet, Visibility,
+    RGBA,
 };
 
 // mod color;
@@ -387,6 +388,16 @@ impl Style {
                 self.opacity.insert_rule(rule_id, opacity);
             }
 
+            // Layout Type
+            Property::LayoutType(layout_type) => {
+                self.layout_type.insert_rule(rule_id, layout_type);
+            }
+
+            // Position Type
+            Property::PositionType(position_type) => {
+                self.position_type.insert_rule(rule_id, position_type);
+            }
+
             // Space
             Property::Space(space) => {
                 self.left.insert_rule(rule_id, space);
@@ -423,6 +434,30 @@ impl Style {
 
             Property::Height(height) => {
                 self.height.insert_rule(rule_id, height);
+            }
+
+            // Child Space
+            Property::ChildSpace(child_space) => {
+                self.child_left.insert_rule(rule_id, child_space);
+                self.child_right.insert_rule(rule_id, child_space);
+                self.child_top.insert_rule(rule_id, child_space);
+                self.child_bottom.insert_rule(rule_id, child_space);
+            }
+
+            Property::ChildLeft(child_left) => {
+                self.child_left.insert_rule(rule_id, child_left);
+            }
+
+            Property::ChildRight(child_right) => {
+                self.child_right.insert_rule(rule_id, child_right);
+            }
+
+            Property::ChildTop(child_top) => {
+                self.child_top.insert_rule(rule_id, child_top);
+            }
+
+            Property::ChildBottom(child_bottom) => {
+                self.child_bottom.insert_rule(rule_id, child_bottom);
             }
 
             // Background
@@ -467,10 +502,92 @@ impl Style {
                 todo!()
             }
 
+            // Font
+            Property::Font(font) => {
+                self.font.insert_rule(rule_id, font);
+            }
+
+            // Font Color
+            Property::FontColor(font_color) => {
+                self.font_color.insert_rule(rule_id, font_color);
+            }
+
+            // Font Size
+            Property::FontSize(font_size) => {
+                self.font_size.insert_rule(rule_id, font_size.0);
+            }
+
+            // Caret Color
+            Property::CaretColor(caret_color) => {
+                self.caret_color.insert_rule(rule_id, caret_color);
+            }
+
+            // Selection Color
+            Property::SelectionColor(selection_color) => {
+                self.selection_color.insert_rule(rule_id, selection_color);
+            }
+
             // Transform
             Property::Transform(transforms) => {
-                println!("Insert transform: {:?}", transforms);
                 self.transform.insert_rule(rule_id, transforms);
+            }
+
+            Property::Overflow(overflow) => self.overflow.insert_rule(rule_id, overflow),
+            Property::ZIndex(z_index) => self.z_index.insert_rule(rule_id, z_index),
+
+            // Property::MinLeft(min_left) => self.min_left.insert_rule(rule_id, min_left),
+            // Property::MaxLeft(max_left) => self.max_left.insert_rule(rule_id, max_left),
+            // Property::MinWidth(min_width) => self.min_width.insert_rule(rule_id, min_width),
+            // Property::MaxWidth(max_width) => self.max_width.insert_rule(rule_id, max_width),
+            // Property::MinRight(min_right) => self.min_right.insert_rule(rule_id, min_right),
+            // Property::MaxRight(max_right) => self.max_right.insert_rule(rule_id, max_right),
+            // Property::MinTop(min_top) => self.min_top.insert_rule(rule_id, min_top),
+            // Property::MaxTop(max_top) => self.max_top.insert_rule(rule_id, max_top),
+            // Property::MinHeight(min_height) => self.min_height.insert_rule(rule_id, min_height),
+            // Property::MaxHeight(max_height) => self.max_height.insert_rule(rule_id, max_height),
+            // Property::MinBottom(min_bottom) => self.min_bottom.insert_rule(rule_id, min_bottom),
+            // Property::MaxBottom(max_bottom) => self.max_bottom.insert_rule(rule_id, max_bottom),
+            Property::RowBetween(row_between) => {
+                self.row_between.insert_rule(rule_id, row_between);
+            }
+
+            Property::ColBetween(col_between) => {
+                self.col_between.insert_rule(rule_id, col_between);
+            }
+
+            Property::OutlineColor(outline_color) => {
+                self.outline_color.insert_rule(rule_id, outline_color);
+            }
+
+            Property::OutlineWidth(outline_width) => {
+                self.outline_width.insert_rule(rule_id, outline_width.left.0);
+            }
+
+            Property::OutlineOffset(outline_offset) => {
+                self.outline_offset.insert_rule(rule_id, outline_offset);
+            }
+
+            Property::BackgroundImage(_) => todo!(),
+            // Property::TextWrap(_) => todo!(),
+            Property::BoxShadow(_) => todo!(),
+            Property::BoxShadowXOffset(_) => todo!(),
+            Property::BoxShadowYOffset(_) => todo!(),
+            Property::BoxShadowBlurRadius(_) => todo!(),
+            Property::BoxShadowSpreadRadius(_) => todo!(),
+            Property::BoxShadowColor(_) => todo!(),
+            Property::BoxShadowInset(_) => todo!(),
+            Property::Transition(_) => todo!(),
+            Property::Translate(_) => todo!(),
+            Property::Rotate(_) => todo!(),
+            Property::Scale(_) => todo!(),
+            Property::Cursor(cursor) => {
+                self.cursor.insert_rule(rule_id, cursor);
+            }
+            Property::Unparsed(unparsed) => {
+                println!("Unparsed: {}", unparsed.name);
+            }
+            Property::Custom(custom) => {
+                println!("Custom Property: {}", custom.name);
             }
 
             _ => {}
