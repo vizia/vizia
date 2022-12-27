@@ -313,6 +313,7 @@ impl Context {
             self.data.remove(*entity);
             self.views.remove(entity);
             self.entity_manager.destroy(*entity);
+            self.cosmic_context.clear_buffer(*entity);
 
             if self.captured == *entity {
                 self.captured = Entity::null();

@@ -18,17 +18,15 @@ use vizia_storage::SparseSet;
 /// Cached data used for drawing.
 pub struct DrawCache {
     pub shadow_image: SparseSet<(ImageId, ImageId)>,
-    pub text_lines: SparseSet<Vec<(Range<usize>, femtovg::TextMetrics)>>,
 }
 
 impl DrawCache {
     pub fn new() -> Self {
-        Self { shadow_image: SparseSet::new(), text_lines: SparseSet::new() }
+        Self { shadow_image: SparseSet::new() }
     }
 
     pub fn remove(&mut self, entity: Entity) {
         self.shadow_image.remove(entity);
-        self.text_lines.remove(entity);
     }
 }
 

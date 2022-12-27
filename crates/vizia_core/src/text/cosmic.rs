@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use ouroboros::self_referencing;
-use cosmic_text::{Attrs, Buffer, CacheKey, Font, FontSystem, Metrics};
+use cosmic_text::{Attrs, AttrsList, Buffer, CacheKey, Edit, Editor, Family, Font, FontSystem, Metrics, Wrap};
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use femtovg::{Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource, PixelFormat, Quad, Renderer};
 use femtovg::imgref::ImgRef;
@@ -9,14 +9,16 @@ use femtovg::rgb::{RGBA8};
 use fnv::FnvHashMap;
 use swash::scale::image::Content;
 use swash::zeno::{Format, Vector};
+use crate::cache::CachedData;
 use crate::entity::Entity;
+use crate::style::Style;
 
 const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
 const TEXTURE_SIZE: usize = 512;
 
 #[self_referencing]
-pub(crate) struct CosmicContext {
+pub struct CosmicContext {
     font_system: FontSystem,
     #[borrows(font_system)]
     #[covariant]
@@ -30,38 +32,62 @@ struct CosmicContextInternal<'a> {
     rendered_glyphs: FnvHashMap<CacheKey, Option<RenderedGlyph>>,
     glyph_textures: Vec<FontTexture>,
     default_font: Arc<Font<'a>>,
-    buffers: HashMap<Entity, Buffer<'a>>
+    buffers: HashMap<Entity, Editor<'a>>
 }
 
 
 impl CosmicContext {
-    pub(crate) fn make_buffer(&mut self, entity: Entity, metrics: Metrics) {
-        self.with_int_mut(move |int: &mut CosmicContextInternal| {
-            int.buffers.insert(entity, Buffer::new(&int.font_system, metrics));
-        });
-    }
-
-    pub(crate) fn clear_buffer(&mut self, entity: Entity) {
+    pub fn clear_buffer(&mut self, entity: Entity) {
         self.with_int_mut(move |int: &mut CosmicContextInternal| {
             int.buffers.remove(&entity);
         });
     }
 
-    pub(crate) fn has_buffer(&self, entity: Entity) -> bool {
+    pub fn has_buffer(&self, entity: Entity) -> bool {
         self.with_int(move |int: &CosmicContextInternal| {
             int.buffers.contains_key(&entity)
         })
     }
 
-    pub(crate) fn with_buffer<O>(&mut self, entity: Entity, f: impl FnOnce(&mut Buffer) -> O) -> O {
+    pub fn with_editor<O>(&mut self, entity: Entity, f: impl FnOnce(&mut Editor) -> O) -> O {
         self.with_int_mut(move |int: &mut CosmicContextInternal| {
-            f(int.buffers.get_mut(&entity).unwrap()) // TODO errors
+            f(int.buffers.entry(entity).or_insert_with(|| {
+                Editor::new(Buffer::new(&int.font_system, Metrics::default()))
+            }))
         })
+    }
+
+    pub fn with_buffer<O>(&mut self, entity: Entity, f: impl FnOnce(&mut Buffer) -> O) -> O {
+        self.with_editor(entity, |ed| {
+            f(ed.buffer_mut())
+        })
+    }
+
+    pub fn sync_styles(&mut self, entity: Entity, style: &Style, cache: &CachedData) {
+        self.with_buffer(entity, |buf| {
+            if let Some(size) = cache.size.get(entity) {
+                buf.set_size(size.width as i32, size.height as i32);
+            }
+            let font_size = style.font_size.get(entity).copied().unwrap_or(12.0);
+            buf.set_metrics(Metrics::new(font_size as i32, font_size as i32));
+            let family = style.font.get(entity).unwrap_or(&style.default_font);
+            let attrs = Attrs::new()
+                .family(Family::Name(family));
+            let wrap = if style.text_wrap.get(entity).copied().unwrap_or_default() {
+                Wrap::Word
+            } else {
+                Wrap::None
+            };
+            for line in buf.lines.iter_mut() {
+                line.set_attrs_list(AttrsList::new(attrs));
+                line.set_wrap(wrap);
+            }
+        });
     }
 
     pub(crate) fn fill_to_cmds<T: Renderer>(&mut self, canvas: &mut Canvas<T>, entity: Entity) -> Result<GlyphDrawCommands, ErrorKind> {
         self.with_int_mut(move |int: &mut CosmicContextInternal| {
-            let buffer = int.buffers.get_mut(&entity).unwrap();
+            let buffer = int.buffers.get_mut(&entity).unwrap().buffer_mut();
 
             let mut alpha_cmd_map = FnvHashMap::default();
             let mut color_cmd_map = FnvHashMap::default();
@@ -220,8 +246,8 @@ pub struct RenderedGlyph {
     color_glyph: bool,
 }
 
-#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
-enum RenderMode {
-    Fill,
-    Stroke(u32),
-}
+//#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
+//enum RenderMode {
+//    Fill,
+//    Stroke(u32),
+//}
