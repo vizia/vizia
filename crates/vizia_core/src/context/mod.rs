@@ -14,8 +14,10 @@ use std::sync::Mutex;
 use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
+use cosmic_text::{Attrs, AttrsList, BufferLine, Database, FamilyOwned, FontSystem};
 use femtovg::TextContext;
 use fnv::FnvHashMap;
+use replace_with::replace_with_or_abort;
 use unic_langid::LanguageIdentifier;
 
 pub use draw::*;
@@ -25,15 +27,16 @@ pub use proxy::*;
 use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
+use crate::fonts;
 use crate::prelude::*;
-use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
+use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
+use crate::text::CosmicContext;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 use vizia_storage::TreeExt;
-use crate::text::CosmicContext;
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
@@ -72,7 +75,6 @@ pub struct Context {
 
     pub(crate) resource_manager: ResourceManager,
 
-    pub(crate) text_context: TextContext,
     pub(crate) cosmic_context: CosmicContext,
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
@@ -91,6 +93,18 @@ impl Context {
     pub fn new() -> Self {
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
+
+        // Add default fonts
+        let mut db = Database::new();
+        db.load_system_fonts();
+        db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
+        db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
+        db.load_font_data(Vec::from(fonts::ENTYPO));
+        db.load_font_data(Vec::from(fonts::OPEN_SANS_EMOJI));
+        db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));
+        db.load_font_data(Vec::from(fonts::MATERIAL_ICONS_REGULAR));
+
+        db.set_sans_serif_family("roboto");
 
         let mut result = Self {
             entity_manager: IdManager::new(),
@@ -117,8 +131,10 @@ impl Context {
             focus_stack: Vec::new(),
             cursor_icon_locked: false,
             resource_manager: ResourceManager::new(),
-            text_context: TextContext::default(),
-            cosmic_context: CosmicContext::default(),
+            cosmic_context: CosmicContext::new_from_locale_and_db(
+                sys_locale::get_locale().unwrap_or_else(|| "en-US".to_owned()),
+                db,
+            ),
 
             event_proxy: None,
 
@@ -359,19 +375,30 @@ impl Context {
     }
 
     /// Add a font from memory to the application.
-    pub fn add_font_mem(&mut self, name: &str, data: &[u8]) {
-        // TODO - return error
-        if self.resource_manager.fonts.contains_key(name) {
-            println!("Font already exists");
-            return;
-        }
-
-        self.resource_manager.fonts.insert(name.to_owned(), FontOrId::Font(data.to_vec()));
+    pub fn add_fonts_mem(&mut self, data: &[&[u8]]) {
+        self.cosmic_context.take_buffers();
+        replace_with_or_abort(&mut self.cosmic_context, |mut ccx| {
+            let buffers = ccx.take_buffers();
+            let (locale, mut db) = ccx.into_font_system().into_locale_and_db();
+            for font_data in data {
+                db.load_font_data(Vec::from(*font_data));
+            }
+            let mut new_ccx = CosmicContext::new_from_locale_and_db(locale, db);
+            for (entity, lines) in buffers {
+                new_ccx.with_buffer(entity, move |buf| {
+                    buf.lines = lines
+                        .into_iter()
+                        .map(|line| BufferLine::new(line, AttrsList::new(Attrs::new())))
+                        .collect();
+                });
+            }
+            new_ccx
+        });
     }
 
     /// Sets the global default font for the application.
     pub fn set_default_font(&mut self, name: &str) {
-        self.style.default_font = name.to_string();
+        self.style.default_font = Some(FamilyOwned::Name(name.to_owned()));
     }
 
     pub fn add_theme(&mut self, theme: &str) {

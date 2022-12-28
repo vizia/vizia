@@ -53,11 +53,6 @@ pub enum ImageRetentionPolicy {
     DropWhenNoObservers,
 }
 
-pub enum FontOrId {
-    Font(Vec<u8>),
-    Id(femtovg::FontId),
-}
-
 // #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 // pub struct Resource(u32);
 
@@ -66,7 +61,6 @@ pub struct ResourceManager {
     pub stylesheets: Vec<PathBuf>, // Stylesheets refer to a file path
     pub themes: Vec<String>,       // Themes are the string content stylesheets
     pub(crate) images: HashMap<String, StoredImage>,
-    pub fonts: HashMap<String, FontOrId>,
     pub translations: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
     pub language: LanguageIdentifier,
 
@@ -82,7 +76,6 @@ impl ResourceManager {
         ResourceManager {
             stylesheets: Vec::new(),
             themes: Vec::new(),
-            fonts: HashMap::new(),
             images: HashMap::new(),
             translations: HashMap::from([(
                 LanguageIdentifier::default(),

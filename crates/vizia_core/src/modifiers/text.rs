@@ -1,6 +1,6 @@
 use super::internal;
 use crate::{prelude::*, text::Selection};
-use cosmic_text::Attrs;
+use cosmic_text::{Attrs, Family, FamilyOwned};
 
 /// Modifiers for changing the text properties of a view.
 pub trait TextModifiers: internal::Modifiable {
@@ -42,7 +42,7 @@ pub trait TextModifiers: internal::Modifiable {
         ///
         /// The font name refers to the name assigned when the font is added to context.
         font,
-        String
+        FamilyOwned
     );
 
     /// Sets the text color of the view.

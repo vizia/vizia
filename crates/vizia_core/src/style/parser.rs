@@ -403,7 +403,7 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "row-between" => Property::RowBetween(parse_units(input)?),
             "col-between" => Property::ColBetween(parse_units(input)?),
             "font-size" => Property::FontSize(parse_font_size(input)?),
-            "font" => Property::Font(parse_string(input)?),
+            "font" => Property::Font(parse_font_family(input)?),
             "text-wrap" => Property::TextWrap(parse_bool(input)?),
             "selection-color" => Property::SelectionColor(parse_color(input)?),
             "caret-color" => Property::CaretColor(parse_color(input)?),
@@ -1137,6 +1137,27 @@ fn parse_color2<'i>(token: &Token<'i>) -> Result<Color, ParseError<'i, CustomPar
             };
             return Err(basic_error.into());
         }
+    }
+}
+
+fn parse_font_family<'i, 't>(
+    input: &mut Parser<'i, 't>,
+) -> Result<FamilyOwned, ParseError<'i, CustomParseError>> {
+    let location = input.current_source_location();
+    match input.next()? {
+        Token::Ident(name) | Token::QuotedString(name) => Ok(match name.as_ref() {
+            "serif" => FamilyOwned::Serif,
+            "sans-serif" => FamilyOwned::SansSerif,
+            "monospace" => FamilyOwned::Monospace,
+            "cursive" => FamilyOwned::Cursive,
+            "fantasy" => FamilyOwned::Fantasy,
+            name => FamilyOwned::Name(name.to_owned()),
+        }),
+        t => Err(BasicParseError {
+            kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
+            location,
+        }
+        .into()),
     }
 }
 
