@@ -155,6 +155,7 @@ impl<'a> DrawContext<'a> {
     style_getter_untranslated!(String, image);
     style_getter_untranslated!(Vec<FamilyOwned>, font_family);
     style_getter_untranslated!(Weight, font_weight);
+    style_getter_untranslated!(FontStyle, font_style);
     style_getter_untranslated!(bool, text_wrap);
     style_getter_untranslated!(Selection, text_selection);
 

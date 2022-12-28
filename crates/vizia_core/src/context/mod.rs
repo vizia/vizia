@@ -99,6 +99,7 @@ impl Context {
         db.load_system_fonts();
         db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
         db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
+        db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
         db.load_font_data(Vec::from(fonts::ENTYPO));
         db.load_font_data(Vec::from(fonts::OPEN_SANS_EMOJI));
         db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));

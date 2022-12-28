@@ -166,6 +166,7 @@ pub struct Style {
     pub font_color: AnimatableSet<Color>,
     pub font_size: AnimatableSet<f32>,
     pub font_weight: StyleSet<Weight>,
+    pub font_style: StyleSet<FontStyle>,
     pub text_selection: StyleSet<Selection>,
     pub caret_color: AnimatableSet<Color>,
     pub selection_color: AnimatableSet<Color>,
@@ -496,6 +497,10 @@ impl Style {
 
                     Property::FontWeight(value) => {
                         self.font_weight.insert_rule(rule_id, value);
+                    }
+
+                    Property::FontStyle(value) => {
+                        self.font_style.insert_rule(rule_id, value);
                     }
 
                     Property::TextWrap(value) => {
@@ -1068,6 +1073,7 @@ impl Style {
         self.text_wrap.remove(entity);
         self.font_family.remove(entity);
         self.font_weight.remove(entity);
+        self.font_style.remove(entity);
         self.font_color.remove(entity);
         self.font_size.remove(entity);
         self.text_selection.remove(entity);
@@ -1186,6 +1192,7 @@ impl Style {
         self.text_wrap.clear_rules();
         self.font_family.clear_rules();
         self.font_weight.clear_rules();
+        self.font_style.clear_rules();
         self.font_color.clear_rules();
         self.font_size.clear_rules();
         self.text_selection.clear_rules();

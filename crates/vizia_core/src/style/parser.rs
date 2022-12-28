@@ -405,6 +405,7 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "font-size" => Property::FontSize(parse_font_size(input)?),
             "font-family" => Property::FontFamily(input.parse_comma_separated(parse_font_family)?),
             "font-weight" => Property::FontWeight(parse_font_weight(input)?),
+            "font-style" => Property::FontStyle(parse_font_style(input)?),
             "text-wrap" => Property::TextWrap(parse_bool(input)?),
             "selection-color" => Property::SelectionColor(parse_color(input)?),
             "caret-color" => Property::CaretColor(parse_color(input)?),
@@ -1164,6 +1165,24 @@ fn parse_font_weight<'i, 't>(
                 location,
             }
             .into())
+        }
+    })
+}
+
+fn parse_font_style<'i, 't>(
+    input: &mut Parser<'i, 't>,
+) -> Result<FontStyle, ParseError<'i, CustomParseError>> {
+    let location = input.current_source_location();
+    Ok(match input.next()? {
+        Token::Ident(name) if name.as_ref() == "normal" => FontStyle::Normal,
+        Token::Ident(name) if name.as_ref() == "italic" => FontStyle::Italic,
+        Token::Ident(name) if name.as_ref() == "oblique" => FontStyle::Oblique,
+        t => {
+            return Err(BasicParseError {
+                kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
+                location,
+            }
+                .into())
         }
     })
 }

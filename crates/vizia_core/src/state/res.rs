@@ -50,6 +50,7 @@ impl_res_simple!(f64);
 impl_res_simple!(CursorIcon);
 impl_res_simple!(Overflow);
 impl_res_simple!(Weight);
+impl_res_simple!(FontStyle);
 
 impl<T, L> Res<T> for L
 where

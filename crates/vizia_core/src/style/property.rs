@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use cosmic_text::{FamilyOwned, Weight};
+use cosmic_text::{FamilyOwned, Style, Weight};
 
 use crate::animation::Transition;
 use crate::style::shadow::BoxShadow;
@@ -94,6 +94,7 @@ pub(crate) enum Property {
     FontColor(Color),
     FontFamily(Vec<FamilyOwned>),
     FontWeight(Weight),
+    FontStyle(FontStyle),
     SelectionColor(Color),
     CaretColor(Color),
     TextWrap(bool),
@@ -250,6 +251,7 @@ impl std::fmt::Display for Property {
                 val.iter().map(fmt_font_family).collect::<Vec<_>>().join(", ")
             ),
             Property::FontWeight(val) => write!(f, "font-weight: {}", val.0),
+            Property::FontStyle(val) => write!(f, "font-style: {}", fmt_font_style(val)),
             Property::SelectionColor(val) => write!(f, "selection-color: {}", val),
             Property::CaretColor(val) => write!(f, "caret-color: {}", val),
             Property::TextWrap(val) => write!(f, "text-wrap: {}", val),
@@ -281,6 +283,14 @@ impl std::fmt::Display for Property {
             Property::Cursor(val) => write!(f, "cursor: {};", val),
         }
     }
+}
+
+fn fmt_font_style(val: &Style) -> String {
+    match val {
+        Style::Normal => "normal",
+        Style::Italic => "italic",
+        Style::Oblique => "oblique",
+    }.to_owned()
 }
 
 fn fmt_font_family(val: &FamilyOwned) -> String {

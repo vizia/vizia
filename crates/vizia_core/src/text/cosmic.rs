@@ -64,7 +64,7 @@ impl CosmicContext {
     }
 
     pub fn sync_styles(&mut self, entity: Entity, style: &Style) {
-        let (family, weight) = self.with_int(|int: &CosmicContextInternal| {
+        let (family, weight, font_style) = self.with_int(|int: &CosmicContextInternal| {
             let families = style
                 .font_family
                 .get(entity)
@@ -76,14 +76,14 @@ impl CosmicContext {
                 families: families.as_slice(),
                 weight: style.font_weight.get(entity).copied().unwrap_or_default(),
                 stretch: Default::default(),
-                style: Default::default(),
+                style: style.font_style.get(entity).copied().unwrap_or_default(),
             };
             let id = int.font_system.db().query(&query).unwrap(); // TODO worst-case default handling
             let font = int.font_system.get_font(id).unwrap();
-            (font.info.family.clone(), font.info.weight)
+            (font.info.family.clone(), font.info.weight, font.info.style)
         });
         self.with_buffer(entity, |buf| {
-            let attrs = Attrs::new().family(Family::Name(&family)).weight(weight);
+            let attrs = Attrs::new().family(Family::Name(&family)).weight(weight).style(font_style);
             let wrap = if style.text_wrap.get(entity).copied().unwrap_or_default() {
                 Wrap::Word
             } else {
