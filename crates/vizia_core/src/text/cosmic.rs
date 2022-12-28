@@ -2,8 +2,9 @@ use crate::cache::CachedData;
 use crate::entity::Entity;
 use crate::style::Style;
 use cosmic_text::{
-    Attrs, AttrsList, Buffer, CacheKey, Database, Edit, Editor, Family, FamilyOwned, Font,
-    FontSystem, Metrics, Wrap,
+    fontdb::{Database, Query},
+    Attrs, AttrsList, Buffer, CacheKey, Edit, Editor, Family, FamilyOwned, FontSystem, Metrics,
+    SubpixelBin, Wrap,
 };
 use femtovg::imgref::ImgRef;
 use femtovg::rgb::RGBA8;
@@ -14,7 +15,6 @@ use femtovg::{
 use fnv::FnvHashMap;
 use ouroboros::self_referencing;
 use std::collections::HashMap;
-use std::sync::Arc;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
@@ -63,13 +63,27 @@ impl CosmicContext {
         self.with_editor(entity, |ed| f(ed.buffer_mut()))
     }
 
-    pub fn sync_styles(&mut self, entity: Entity, style: &Style, cache: &CachedData) {
-        self.with_buffer(entity, |buf| {
-            let family = style
-                .font
+    pub fn sync_styles(&mut self, entity: Entity, style: &Style) {
+        let (family, weight) = self.with_int(|int: &CosmicContextInternal| {
+            let families = style
+                .font_family
                 .get(entity)
-                .unwrap_or(style.default_font.as_ref().unwrap_or(&FamilyOwned::SansSerif));
-            let attrs = Attrs::new().family(family.as_family());
+                .unwrap_or(&style.default_font)
+                .iter()
+                .map(|x| x.as_family())
+                .collect::<Vec<_>>();
+            let query = Query {
+                families: families.as_slice(),
+                weight: style.font_weight.get(entity).copied().unwrap_or_default(),
+                stretch: Default::default(),
+                style: Default::default(),
+            };
+            let id = int.font_system.db().query(&query).unwrap(); // TODO worst-case default handling
+            let font = int.font_system.get_font(id).unwrap();
+            (font.info.family.clone(), font.info.weight)
+        });
+        self.with_buffer(entity, |buf| {
+            let attrs = Attrs::new().family(Family::Name(&family)).weight(weight);
             let wrap = if style.text_wrap.get(entity).copied().unwrap_or_default() {
                 Wrap::Word
             } else {
@@ -80,12 +94,14 @@ impl CosmicContext {
                 line.set_attrs_list(AttrsList::new(attrs));
                 line.set_wrap(wrap);
             }
-            if let Some(size) = cache.size.get(entity) {
-                buf.set_size(size.width as i32, size.height as i32);
-            }
+            //if let Some(size) = cache.size.get(entity) {
+            //    buf.set_size(size.width as i32, size.height as i32);
+            //}
             let font_size =
                 style.font_size.get(entity).copied().unwrap_or(16.0) * style.dpi_factor as f32;
-            buf.set_metrics(Metrics::new(font_size as i32, (font_size * 1.1) as i32));
+            // TODO configurable line spacing
+            buf.set_metrics(Metrics::new(font_size as i32, (font_size * 1.25) as i32));
+            buf.shape_until_scroll();
         });
     }
 
@@ -93,34 +109,38 @@ impl CosmicContext {
         &mut self,
         canvas: &mut Canvas<T>,
         entity: Entity,
+        position: (f32, f32),
+        justify: (f32, f32),
     ) -> Result<GlyphDrawCommands, ErrorKind> {
         self.with_int_mut(move |int: &mut CosmicContextInternal| {
             let buffer = int.buffers.get_mut(&entity).unwrap().buffer_mut();
 
-            println!("Size: {:?}", buffer.visible_lines());
-
-            for line in buffer.lines.iter() {
-                println!("line: {}", line.text())
-            }
-
             let mut alpha_cmd_map = FnvHashMap::default();
             let mut color_cmd_map = FnvHashMap::default();
 
+            let total_height = buffer.layout_runs().len() as i32 * buffer.metrics().line_height;
             for run in buffer.layout_runs() {
-                println!("run: {:?}", run.text);
                 for glyph in run.glyphs.iter() {
-                    println!("glyph: {:?}", glyph);
+                    let mut cache_key = glyph.cache_key;
+                    let position_x = position.0 + cache_key.x_bin.as_float();
+                    let position_y = position.1 + cache_key.y_bin.as_float();
+                    let position_x = position_x - run.line_w * justify.0;
+                    let position_y = position_y - total_height as f32 * justify.1;
+                    let (position_x, subpixel_x) = SubpixelBin::new(position_x);
+                    let (position_y, subpixel_y) = SubpixelBin::new(position_y);
+                    cache_key.x_bin = subpixel_x;
+                    cache_key.y_bin = subpixel_y;
                     // perform cache lookup for rendered glyph
-                    let Some(rendered) = int.rendered_glyphs.entry(glyph.cache_key).or_insert_with(|| {
+                    let Some(rendered) = int.rendered_glyphs.entry(cache_key).or_insert_with(|| {
                         // ...or insert it
 
                         // do the actual rasterization
-                        let font = int.font_system.get_font(glyph.cache_key.font_id).expect("Somehow shaped a font that doesn't exist");
+                        let font = int.font_system.get_font(cache_key.font_id).expect("Somehow shaped a font that doesn't exist");
                         let mut scaler = int.scale_context.builder(font.as_swash())
-                            .size(glyph.cache_key.font_size as f32)
+                            .size(cache_key.font_size as f32)
                             .hint(true)
                             .build();
-                        let offset = Vector::new(glyph.cache_key.x_bin.as_float(), glyph.cache_key.y_bin.as_float());
+                        let offset = Vector::new(cache_key.x_bin.as_float(), cache_key.y_bin.as_float());
                         let rendered = Render::new(&[
                             Source::ColorOutline(0),
                             Source::ColorBitmap(StrikeWith::BestFit),
@@ -128,7 +148,7 @@ impl CosmicContext {
                         ])
                             .format(Format::Alpha)
                             .offset(offset)
-                            .render(&mut scaler, glyph.cache_key.glyph_id);
+                            .render(&mut scaler, cache_key.glyph_id);
 
                         // upload it to the GPU
                         rendered.map(|rendered| {
@@ -209,8 +229,8 @@ impl CosmicContext {
                     let mut q = Quad::default();
                     let it = 1.0 / TEXTURE_SIZE as f32;
 
-                    q.x0 = (glyph.x_int + rendered.offset_x - GLYPH_PADDING as i32) as f32;
-                    q.y0 = (run.line_y + glyph.y_int - rendered.offset_y - GLYPH_PADDING as i32) as f32;
+                    q.x0 = (position_x + glyph.x_int + rendered.offset_x - GLYPH_PADDING as i32) as f32;
+                    q.y0 = (position_y + run.line_y + glyph.y_int - rendered.offset_y - GLYPH_PADDING as i32) as f32;
                     q.x1 = q.x0 + rendered.width as f32;
                     q.y1 = q.y0 + rendered.height as f32;
 

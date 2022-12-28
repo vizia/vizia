@@ -34,11 +34,10 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
         let desired_width = cx.style.width.get(entity).cloned().unwrap_or_default();
         let desired_height = cx.style.height.get(entity).cloned().unwrap_or_default();
         let style = &cx.style;
-        let text = style.text.get(entity);
         let image = style.image.get(entity);
 
-        if (text.is_some() || image.is_some())
-            && (desired_width == Units::Auto || desired_height == Units::Auto)
+        if (cx.cosmic_context.has_buffer(entity) || image.is_some())
+            && (desired_width == Auto || desired_height == Auto)
         {
             let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
             let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();
@@ -49,19 +48,19 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
             let mut child_space_y = 0.0;
 
             // shrink the bounding box based on pixel values
-            if let Units::Pixels(val) = child_left {
+            if let Pixels(val) = child_left {
                 let val = val * cx.style.dpi_factor as f32;
                 child_space_x += val;
             }
-            if let Units::Pixels(val) = child_right {
+            if let Pixels(val) = child_right {
                 let val = val * cx.style.dpi_factor as f32;
                 child_space_x += val;
             }
-            if let Units::Pixels(val) = child_top {
+            if let Pixels(val) = child_top {
                 let val = val * cx.style.dpi_factor as f32;
                 child_space_y += val;
             }
-            if let Units::Pixels(val) = child_bottom {
+            if let Pixels(val) = child_bottom {
                 let val = val * cx.style.dpi_factor as f32;
                 child_space_y += val;
             }
@@ -70,7 +69,7 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
             let mut content_height = 0.0;
 
             if cx.cosmic_context.has_buffer(entity) {
-                cx.cosmic_context.sync_styles(entity, &cx.style, &cx.cache);
+                cx.cosmic_context.sync_styles(entity, &cx.style);
                 let (text_width, text_height) = cx.cosmic_context.with_buffer(entity, |buf| {
                     buf.set_size(i32::MAX, i32::MAX);
                     let w = buf
@@ -78,7 +77,7 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
                         .filter_map(|r| (!r.line_w.is_nan()).then_some(r.line_w))
                         .max_by(|f1, f2| f1.partial_cmp(f2).unwrap())
                         .unwrap_or_default();
-                    let h = buf.layout_runs().count() as f32 * buf.metrics().line_height as f32;
+                    let h = buf.layout_runs().len() as f32 * buf.metrics().line_height as f32;
                     (w, h)
                 });
 

@@ -49,6 +49,7 @@ impl_res_simple!(f32);
 impl_res_simple!(f64);
 impl_res_simple!(CursorIcon);
 impl_res_simple!(Overflow);
+impl_res_simple!(Weight);
 
 impl<T, L> Res<T> for L
 where

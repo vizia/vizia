@@ -1,8 +1,8 @@
-use cosmic_text::{Attrs, AttrsOwned, FamilyOwned};
+use cosmic_text::{FamilyOwned, Weight};
 use std::any::{Any, TypeId};
 use std::ops::Range;
 
-use femtovg::{ImageId, TextContext};
+use femtovg::ImageId;
 use fnv::FnvHashMap;
 use morphorm::Units;
 
@@ -101,9 +101,9 @@ impl<'a> DrawContext<'a> {
         self.cache.get_clip_region(self.current)
     }
 
-    /// Returns the name of the default font.
-    pub fn default_font(&self) -> FamilyOwned {
-        self.style.default_font.as_ref().cloned().unwrap_or(FamilyOwned::SansSerif)
+    /// Returns the lookup pattern to pick the default font.
+    pub fn default_font(&self) -> Vec<FamilyOwned> {
+        self.style.default_font.clone()
     }
 
     /// Returns the font-size of the current entity in physical coordinates.
@@ -152,9 +152,9 @@ impl<'a> DrawContext<'a> {
     style_getter_untranslated!(BorderCornerShape, border_shape_bottom_right);
     style_getter_untranslated!(BorderCornerShape, border_shape_bottom_left);
     style_getter_untranslated!(String, background_image);
-    style_getter_untranslated!(String, text);
     style_getter_untranslated!(String, image);
-    style_getter_untranslated!(FamilyOwned, font);
+    style_getter_untranslated!(Vec<FamilyOwned>, font_family);
+    style_getter_untranslated!(Weight, font_weight);
     style_getter_untranslated!(bool, text_wrap);
     style_getter_untranslated!(Selection, text_selection);
 

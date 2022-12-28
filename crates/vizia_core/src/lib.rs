@@ -66,6 +66,7 @@ pub mod prelude {
         LinearGradient, Opacity, Overflow, PseudoClass, Visibility,
     };
 
+    pub use cosmic_text::Weight;
     pub use morphorm::Units::*;
     pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
     pub use unic_langid::LanguageIdentifier;
