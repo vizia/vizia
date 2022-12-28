@@ -338,7 +338,7 @@ where
     }
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Clone, Copy, Debug, Eq, Data)]
 pub enum AnalogTimepickerPage {
     Hours,
     Minutes,

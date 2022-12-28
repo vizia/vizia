@@ -13,7 +13,7 @@ pub struct Spinbox {
     on_increment: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Data)]
 pub enum SpinboxKind {
     Horizontal,
     Vertical,
