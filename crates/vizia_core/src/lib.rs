@@ -70,6 +70,7 @@ pub mod prelude {
     pub use morphorm::Units::*;
     pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
     pub use unic_langid::LanguageIdentifier;
+    pub use cosmic_text::Style as FontStyle;
 }
 
 /// One very small function for abstracting debugging between web and desktop programming.

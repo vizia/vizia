@@ -51,6 +51,12 @@ pub trait TextModifiers: internal::Modifiable {
         Weight
     );
 
+    modifier!(
+        /// Sets the font style that should be used by the view.
+        font_style,
+        FontStyle
+    );
+
     /// Sets the text color of the view.
     fn color<U: Into<Color>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();

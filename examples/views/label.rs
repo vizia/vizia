@@ -44,7 +44,7 @@ fn main() {
             Label::new(cx, "Unless text wrapping is disabled.")
                 .width(Pixels(200.0))
                 .text_wrap(false)
-                .font_weight(Weight::BOLD);
+                .font_style(FontStyle::Italic);
 
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, AppData::checked)
