@@ -50,6 +50,7 @@ use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
 use crate::text::Selection;
 use bitflags::bitflags;
+use cosmic_text::{Family, FamilyOwned};
 use vizia_id::IdManager;
 use vizia_storage::SparseSet;
 
@@ -86,7 +87,7 @@ pub struct Style {
 
     pub transitions: HashMap<Rule, Animation>,
 
-    pub default_font: String,
+    pub default_font: Option<FamilyOwned>,
 
     pub elements: SparseSet<String>,
     pub ids: SparseSet<String>,
@@ -162,7 +163,7 @@ pub struct Style {
     // Text & Font
     pub text: StyleSet<String>,
     pub text_wrap: StyleSet<bool>,
-    pub font: StyleSet<String>,
+    pub font: StyleSet<FamilyOwned>,
     pub font_color: AnimatableSet<Color>,
     pub font_size: AnimatableSet<f32>,
     pub text_selection: StyleSet<Selection>,

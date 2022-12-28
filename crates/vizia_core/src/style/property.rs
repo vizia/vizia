@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use cosmic_text::FamilyOwned;
 
 use crate::animation::Transition;
 use crate::style::shadow::BoxShadow;
@@ -91,7 +92,7 @@ pub(crate) enum Property {
     // Font
     FontSize(f32),
     FontColor(Color),
-    Font(String),
+    Font(FamilyOwned),
     SelectionColor(Color),
     CaretColor(Color),
     TextWrap(bool),
@@ -242,7 +243,7 @@ impl std::fmt::Display for Property {
             // Text
             Property::FontSize(val) => write!(f, "font-size: {};", val),
             Property::FontColor(val) => write!(f, "color: {};", val),
-            Property::Font(val) => write!(f, "font: {}", val),
+            Property::Font(val) => write!(f, "font: {}", fmt_font_family(val)),
             Property::SelectionColor(val) => write!(f, "selection-color: {}", val),
             Property::CaretColor(val) => write!(f, "caret-color: {}", val),
             Property::TextWrap(val) => write!(f, "text-wrap: {}", val),
@@ -273,5 +274,16 @@ impl std::fmt::Display for Property {
 
             Property::Cursor(val) => write!(f, "cursor: {};", val),
         }
+    }
+}
+
+fn fmt_font_family(val: &FamilyOwned) -> String {
+    match val {
+        FamilyOwned::Name(name) => format!("\"{}\"", name),
+        FamilyOwned::Serif => "serif".to_owned(),
+        FamilyOwned::SansSerif => "sans-serif".to_owned(),
+        FamilyOwned::Cursive => "cursive".to_owned(),
+        FamilyOwned::Fantasy => "fantasy".to_owned(),
+        FamilyOwned::Monospace => "monospace".to_owned(),
     }
 }

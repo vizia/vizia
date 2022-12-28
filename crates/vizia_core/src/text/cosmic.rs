@@ -2,7 +2,8 @@ use crate::cache::CachedData;
 use crate::entity::Entity;
 use crate::style::Style;
 use cosmic_text::{
-    Attrs, AttrsList, Buffer, CacheKey, Edit, Editor, Family, Font, FontSystem, Metrics, Wrap,
+    Attrs, AttrsList, Buffer, CacheKey, Database, Edit, Editor, Family, FamilyOwned, Font,
+    FontSystem, Metrics, Wrap,
 };
 use femtovg::imgref::ImgRef;
 use femtovg::rgb::RGBA8;
@@ -36,7 +37,6 @@ struct CosmicContextInternal<'a> {
     scale_context: ScaleContext,
     rendered_glyphs: FnvHashMap<CacheKey, Option<RenderedGlyph>>,
     glyph_textures: Vec<FontTexture>,
-    default_font: Arc<Font<'a>>,
     buffers: HashMap<Entity, Editor<'a>>,
 }
 
@@ -65,22 +65,27 @@ impl CosmicContext {
 
     pub fn sync_styles(&mut self, entity: Entity, style: &Style, cache: &CachedData) {
         self.with_buffer(entity, |buf| {
-            if let Some(size) = cache.size.get(entity) {
-                buf.set_size(size.width as i32, size.height as i32);
-            }
-            let font_size = style.font_size.get(entity).copied().unwrap_or(12.0);
-            buf.set_metrics(Metrics::new(font_size as i32, font_size as i32));
-            let family = style.font.get(entity).unwrap_or(&style.default_font);
-            let attrs = Attrs::new().family(Family::Name(family));
+            let family = style
+                .font
+                .get(entity)
+                .unwrap_or(style.default_font.as_ref().unwrap_or(&FamilyOwned::SansSerif));
+            let attrs = Attrs::new().family(family.as_family());
             let wrap = if style.text_wrap.get(entity).copied().unwrap_or_default() {
                 Wrap::Word
             } else {
                 Wrap::None
             };
             for line in buf.lines.iter_mut() {
+                // TODO spans
                 line.set_attrs_list(AttrsList::new(attrs));
                 line.set_wrap(wrap);
             }
+            if let Some(size) = cache.size.get(entity) {
+                buf.set_size(size.width as i32, size.height as i32);
+            }
+            let font_size =
+                style.font_size.get(entity).copied().unwrap_or(16.0) * style.dpi_factor as f32;
+            buf.set_metrics(Metrics::new(font_size as i32, (font_size * 1.1) as i32));
         });
     }
 
@@ -110,7 +115,7 @@ impl CosmicContext {
                         // ...or insert it
 
                         // do the actual rasterization
-                        let font = int.font_system.get_font(glyph.cache_key.font_id).unwrap_or(int.default_font.clone());
+                        let font = int.font_system.get_font(glyph.cache_key.font_id).expect("Somehow shaped a font that doesn't exist");
                         let mut scaler = int.scale_context.builder(font.as_swash())
                             .size(glyph.cache_key.font_size as f32)
                             .hint(true)
@@ -181,6 +186,8 @@ impl CosmicContext {
                                 texture_index,
                                 width: used_w,
                                 height: used_h,
+                                offset_x: rendered.placement.left,
+                                offset_y: rendered.placement.top,
                                 atlas_x: atlas_used_x as u32,
                                 atlas_y: atlas_used_y as u32,
                                 color_glyph: matches!(rendered.content, Content::Color),
@@ -202,8 +209,8 @@ impl CosmicContext {
                     let mut q = Quad::default();
                     let it = 1.0 / TEXTURE_SIZE as f32;
 
-                    q.x0 = (glyph.x_int - GLYPH_PADDING as i32) as f32;
-                    q.y0 = (run.line_y + glyph.y_int - GLYPH_PADDING as i32) as f32;
+                    q.x0 = (glyph.x_int + rendered.offset_x - GLYPH_PADDING as i32) as f32;
+                    q.y0 = (run.line_y + glyph.y_int - rendered.offset_y - GLYPH_PADDING as i32) as f32;
                     q.x1 = q.x0 + rendered.width as f32;
                     q.y1 = q.y0 + rendered.height as f32;
 
@@ -222,18 +229,33 @@ impl CosmicContext {
             })
         })
     }
+
+    pub(crate) fn take_buffers(&mut self) -> HashMap<Entity, Vec<String>> {
+        self.with_int_mut(move |int: &mut CosmicContextInternal| {
+            // TODO no clone please
+            int.buffers
+                .drain()
+                .map(|(k, mut v)| {
+                    (k, v.buffer_mut().lines.drain(..).map(|l| l.text().to_owned()).collect())
+                })
+                .collect()
+        })
+    }
+
+    pub(crate) fn into_font_system(self) -> FontSystem {
+        self.into_heads().font_system
+    }
 }
 
-impl Default for CosmicContext {
-    fn default() -> Self {
+impl CosmicContext {
+    pub fn new_from_locale_and_db(locale: String, font_db: Database) -> Self {
         CosmicContextBuilder {
-            font_system: FontSystem::new(),
+            font_system: FontSystem::new_with_locale_and_db(locale, font_db),
             int_builder: |font_system| CosmicContextInternal {
                 font_system,
                 scale_context: Default::default(),
                 rendered_glyphs: FnvHashMap::default(),
                 glyph_textures: vec![],
-                default_font: font_system.get_font_matches(Attrs::new()).fonts[0].clone(),
                 buffers: HashMap::new(),
             },
         }
@@ -251,6 +273,8 @@ pub struct RenderedGlyph {
     texture_index: usize,
     width: u32,
     height: u32,
+    offset_x: i32,
+    offset_y: i32,
     atlas_x: u32,
     atlas_y: u32,
     color_glyph: bool,

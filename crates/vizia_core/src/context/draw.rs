@@ -1,3 +1,4 @@
+use cosmic_text::{Attrs, AttrsOwned, FamilyOwned};
 use std::any::{Any, TypeId};
 use std::ops::Range;
 
@@ -18,15 +19,17 @@ use vizia_storage::SparseSet;
 /// Cached data used for drawing.
 pub struct DrawCache {
     pub shadow_image: SparseSet<(ImageId, ImageId)>,
+    pub text_lines: SparseSet<Vec<(Range<usize>, femtovg::TextMetrics)>>,
 }
 
 impl DrawCache {
     pub fn new() -> Self {
-        Self { shadow_image: SparseSet::new() }
+        Self { shadow_image: SparseSet::new(), text_lines: SparseSet::new() }
     }
 
     pub fn remove(&mut self, entity: Entity) {
         self.shadow_image.remove(entity);
+        self.text_lines.remove(entity);
     }
 }
 
@@ -43,7 +46,6 @@ pub struct DrawContext<'a> {
     pub(crate) data: &'a SparseSet<ModelDataStore>,
     pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub resource_manager: &'a ResourceManager,
-    pub text_context: &'a TextContext,
     pub cosmic_context: &'a mut CosmicContext,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState<Entity>,
@@ -85,7 +87,6 @@ impl<'a> DrawContext<'a> {
             data: &cx.data,
             views: &cx.views,
             resource_manager: &cx.resource_manager,
-            text_context: &cx.text_context,
             cosmic_context: &mut cx.cosmic_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
@@ -101,8 +102,8 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Returns the name of the default font.
-    pub fn default_font(&self) -> &str {
-        &self.style.default_font
+    pub fn default_font(&self) -> FamilyOwned {
+        self.style.default_font.as_ref().cloned().unwrap_or(FamilyOwned::SansSerif)
     }
 
     /// Returns the font-size of the current entity in physical coordinates.
@@ -153,7 +154,7 @@ impl<'a> DrawContext<'a> {
     style_getter_untranslated!(String, background_image);
     style_getter_untranslated!(String, text);
     style_getter_untranslated!(String, image);
-    style_getter_untranslated!(String, font);
+    style_getter_untranslated!(FamilyOwned, font);
     style_getter_untranslated!(bool, text_wrap);
     style_getter_untranslated!(Selection, text_selection);
 

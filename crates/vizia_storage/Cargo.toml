@@ -11,4 +11,5 @@ rust-version = "1.60"
 [dependencies]
 vizia_id = { path = "../vizia_id" }
 
-morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "c14e888b1d66719fc3f13ccdb1ea01a10368ef9e" }
+#morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "c14e888b1d66719fc3f13ccdb1ea01a10368ef9e" }
+morphorm = { path = "../../../morphorm", features = ["rounding"] }
