@@ -1,4 +1,5 @@
 use vizia::prelude::*;
+use vizia_core::state::StaticLens;
 
 #[derive(Lens, Setter, Model)]
 pub struct AppData {
@@ -18,31 +19,21 @@ fn main() {
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
-        VStack::new(cx, |cx| {
-            Textbox::new(cx, AppData::text)
-                .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
-                .width(Pixels(200.0))
-                .on_build(|cx| {
-                    cx.emit(TextEvent::StartEdit);
-                });
+        Textbox::new_multiline(cx, AppData::text, true)
+            .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
+            .width(Pixels(200.0))
+            .on_build(|cx| {
+                cx.emit(TextEvent::StartEdit);
+            });
 
-            Textbox::new(cx, AppData::text)
-                .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
-                .width(Pixels(200.0))
-                .on_build(|cx| {
-                    cx.emit(TextEvent::StartEdit);
-                })
-                .disabled(true);
-
-            Textbox::new(cx, AppData::text)
-                .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
-                .width(Pixels(200.0))
-                .on_build(|cx| {
-                    cx.emit(TextEvent::StartEdit);
-                })
-                .class("error");
-        })
-        .class("container");
+        Textbox::new_multiline(
+            cx,
+            StaticLens::new(
+                &"This text is editable, but will reset on blur. Good luck editing it, haha!",
+            ),
+            true,
+        )
+        .width(Pixels(200.0));
     })
     .ignore_default_theme()
     .title("Textbox")

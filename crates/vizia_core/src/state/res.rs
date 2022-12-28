@@ -54,7 +54,7 @@ impl_res_simple!(Transform2D);
 impl<T, L> Res<T> for L
 where
     L: Lens<Target = T> + LensExt,
-    T: Clone + PartialEq,
+    T: Clone + Data,
 {
     fn get_val(&self, cx: &Context) -> T {
         self.get(cx)

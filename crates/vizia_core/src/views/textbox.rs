@@ -1,9 +1,10 @@
 use crate::cache::BoundingBox;
 use crate::prelude::*;
 use crate::text::{
-    idx_to_pos, measure_text_lines, pos_to_idx, text_layout, text_paint_general, Direction,
-    EditableText, Movement, Selection,
+    enforce_text_bounds, ensure_visible, idx_to_pos, measure_text_lines, pos_to_idx, text_layout,
+    text_paint_general, Direction, EditableText, Movement, Selection,
 };
+use crate::views::scrollview::SCROLL_SENSITIVITY;
 use std::sync::Arc;
 use vizia_id::GenerationalId;
 use vizia_input::Code;
@@ -26,10 +27,9 @@ pub struct TextboxData {
 
 impl TextboxData {
     pub fn new(text: String) -> Self {
-        let text_length = text.as_str().len();
         Self {
             text: text.clone(),
-            selection: Selection::new(0, text_length),
+            selection: Selection::new(0, 0),
             sel_x: -1.0,
             re_sel_x: false,
             edit: false,
@@ -75,58 +75,21 @@ impl TextboxData {
             self.re_sel_x = false;
             self.sel_x = x;
         }
+        let caret_box = BoundingBox {
+            x: x.round(),
+            y: bounds.y + line as f32 * line_height,
+            w: 1.0,
+            h: line_height,
+        };
 
         // do the computation
         let (mut tx, mut ty) = self.transform;
         tx *= scale;
         ty *= scale;
-        let text_box = BoundingBox { x: bounds.x + tx, y: bounds.y + ty, w: bounds.w, h: bounds.h };
-        if text_box.x < parent_bounds.x
-            && text_box.x + text_box.w < parent_bounds.x + parent_bounds.w
-        {
-            tx += parent_bounds.x - text_box.x;
-        }
-        if text_box.x > parent_bounds.x
-            && text_box.x + text_box.w > parent_bounds.x + parent_bounds.w
-        {
-            tx -= (text_box.x + text_box.w) - (parent_bounds.x + parent_bounds.w);
-        }
-        if text_box.w < parent_bounds.w {
-            tx = 0.0;
-        }
-        if text_box.y < parent_bounds.y
-            && text_box.y + text_box.h < parent_bounds.y + parent_bounds.h
-        {
-            ty += parent_bounds.y - text_box.y;
-        }
-        if text_box.y > parent_bounds.y
-            && text_box.y + text_box.h > parent_bounds.y + parent_bounds.h
-        {
-            ty -= (text_box.y + text_box.h) - (parent_bounds.y + parent_bounds.h);
-        }
-        if text_box.h < parent_bounds.h {
-            ty = 0.0;
-        }
-        let caret_box = BoundingBox {
-            x: x.round() + tx,
-            y: bounds.y + line as f32 * line_height + ty,
-            w: 1.0,
-            h: line_height,
-        };
+        (tx, ty) = enforce_text_bounds(&bounds, &parent_bounds, (tx, ty));
         parent_bounds.x -= 1.0;
         parent_bounds.w += 2.0;
-        if caret_box.x < parent_bounds.x {
-            tx += parent_bounds.x - caret_box.x;
-        }
-        if caret_box.x + caret_box.w >= parent_bounds.x + parent_bounds.w {
-            tx -= caret_box.x + caret_box.w - (parent_bounds.x + parent_bounds.w);
-        }
-        if caret_box.y < parent_bounds.y {
-            ty += parent_bounds.y - caret_box.y;
-        }
-        if caret_box.y + caret_box.h >= parent_bounds.y + parent_bounds.h {
-            ty -= caret_box.y + caret_box.h - (parent_bounds.y + parent_bounds.h);
-        }
+        (tx, ty) = ensure_visible(&caret_box, &parent_bounds, (tx, ty));
         self.transform = (tx.round() / scale, ty.round() / scale);
     }
 
@@ -250,7 +213,57 @@ impl TextboxData {
                 }
             }
 
-            Movement::ParagraphStart => {
+            Movement::LineStart => {
+                self.re_sel_x = true;
+                let entity = self.content_entity;
+                let default = vec![];
+                let lines = cx.draw_cache.text_lines.get(entity).unwrap_or(&default);
+                if !lines.is_empty() {
+                    let (line, _) = idx_to_pos(self.selection.active, lines.iter());
+                    self.selection.active = lines[line].0.start;
+                }
+            }
+
+            Movement::LineEnd => {
+                self.re_sel_x = true;
+                let entity = self.content_entity;
+                let default = vec![];
+                let lines = cx.draw_cache.text_lines.get(entity).unwrap_or(&default);
+                if !lines.is_empty() {
+                    let (line, _) = idx_to_pos(self.selection.active, lines.iter());
+                    self.selection.active = lines[line].0.end;
+                }
+            }
+
+            Movement::Page(dir) => {
+                let entity = self.content_entity;
+                let parent = entity.parent(cx.tree).unwrap();
+                let default = vec![];
+                let lines = cx.draw_cache.text_lines.get(entity).unwrap_or(&default);
+                let (line, (_, y)) = idx_to_pos(self.selection.active, lines.iter());
+                let parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
+
+                if line == 0 && matches!(dir, Direction::Upstream) {
+                    self.selection.active = 0;
+                } else {
+                    let new_y = y + parent_bounds.h
+                        * match dir {
+                            Direction::Upstream => -1.0,
+                            Direction::Downstream => 1.0,
+                            Direction::Left => 0.0,
+                            Direction::Right => 0.0,
+                        };
+
+                    self.selection.active = pos_to_idx(
+                        self.sel_x,
+                        new_y,
+                        lines.iter(),
+                        self.kind == TextboxKind::SingleLine,
+                    );
+                }
+            }
+
+            Movement::Body(Direction::Upstream) => {
                 if selection {
                     self.selection.active = 0;
                 } else {
@@ -259,7 +272,7 @@ impl TextboxData {
                 }
             }
 
-            Movement::ParagraphEnd => {
+            Movement::Body(Direction::Downstream) => {
                 if selection {
                     self.selection.active = self.text.len();
                 } else {
@@ -287,6 +300,7 @@ impl TextboxData {
 
 pub enum TextEvent {
     InsertText(String),
+    ResetText(String),
     DeleteText(Movement),
     MoveCursor(Movement, bool),
     SelectAll,
@@ -297,6 +311,7 @@ pub enum TextEvent {
     Submit(bool),
     Hit(f32, f32),
     Drag(f32, f32),
+    Scroll(f32, f32),
     Copy,
     Paste,
 
@@ -305,6 +320,10 @@ pub enum TextEvent {
     SetOnSubmit(Option<Arc<dyn Fn(&mut EventContext, String, bool) + Send + Sync>>),
     InitContent(Entity, TextboxKind),
     GeometryChanged,
+}
+
+enum TextEventInternal {
+    Reset,
 }
 
 impl Model for TextboxData {
@@ -321,6 +340,10 @@ impl Model for TextboxData {
                         self.on_edit = Some(callback);
                     }
                 }
+            }
+
+            TextEvent::ResetText(text) => {
+                self.text = text.clone();
             }
 
             TextEvent::DeleteText(movement) => {
@@ -350,9 +373,6 @@ impl Model for TextboxData {
                         cx.focus_with_visibility(false);
                         cx.capture();
                         cx.set_checked(true);
-                        if self.selection.active == self.selection.anchor {
-                            cx.emit(TextEvent::SelectAll);
-                        }
                     }
                 }
             }
@@ -362,6 +382,7 @@ impl Model for TextboxData {
                 self.edit = false;
                 cx.set_checked(false);
                 cx.release();
+                cx.emit(TextEventInternal::Reset);
             }
 
             TextEvent::Submit(reason) => {
@@ -414,6 +435,21 @@ impl Model for TextboxData {
                 self.selection = Selection::new(self.selection.anchor, idx);
                 self.sel_x = posx;
                 self.set_caret(cx);
+            }
+
+            TextEvent::Scroll(x, y) => {
+                let entity = self.content_entity;
+                let parent = cx.tree.get_parent(entity).unwrap();
+                let bounds = cx.cache.bounds.get(entity).unwrap().clone();
+                let parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
+                let (mut tx, mut ty) = self.transform;
+                let scale = cx.style.dpi_factor as f32;
+                tx *= scale;
+                ty *= scale;
+                tx += *x * SCROLL_SENSITIVITY;
+                ty += *y * SCROLL_SENSITIVITY;
+                (tx, ty) = enforce_text_bounds(&bounds, &parent_bounds, (tx, ty));
+                self.transform = (tx / scale, ty / scale);
             }
 
             TextEvent::Copy =>
@@ -476,7 +512,7 @@ pub enum TextboxKind {
 
 impl<L: Lens> Textbox<L>
 where
-    <L as Lens>::Target: PartialEq + Clone + ToString,
+    <L as Lens>::Target: Data + Clone + ToString,
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
         Self::new_core(cx, lens, TextboxKind::SingleLine)
@@ -575,7 +611,7 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
 
 impl<L: Lens> View for Textbox<L>
 where
-    <L as Lens>::Target: PartialEq + ToString,
+    <L as Lens>::Target: Data + ToString,
 {
     fn element(&self) -> Option<&'static str> {
         Some("textbox")
@@ -596,20 +632,6 @@ where
                     cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
                 } else {
                     cx.emit(TextEvent::Submit(false));
-                    if let Some(source) = cx.data::<L::Source>() {
-                        let text = self.lens.view(source, |t| {
-                            if let Some(t) = t {
-                                t.to_string()
-                            } else {
-                                "".to_owned()
-                            }
-                        });
-
-                        cx.emit(TextEvent::SelectAll);
-                        cx.emit(TextEvent::InsertText(text));
-                    };
-                    cx.release();
-                    cx.set_checked(false);
 
                     // Forward event to hovered
                     cx.event_queue.push_back(
@@ -654,6 +676,10 @@ where
                 }
             }
 
+            WindowEvent::MouseScroll(x, y) => {
+                cx.emit(TextEvent::Scroll(*x, *y));
+            }
+
             WindowEvent::CharInput(c) => {
                 if *c != '\u{1b}' && // Escape
                             *c != '\u{8}' && // Backspace
@@ -675,21 +701,6 @@ where
 
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
-                        if let Some(source) = cx.data::<L::Source>() {
-                            let text = self.lens.view(source, |t| {
-                                if let Some(t) = t {
-                                    t.to_string()
-                                } else {
-                                    "".to_owned()
-                                }
-                            });
-
-                            cx.emit(TextEvent::SelectAll);
-                            cx.emit(TextEvent::InsertText(text));
-                        };
-
-                        cx.set_checked(false);
-                        cx.release();
                     } else {
                         cx.emit(TextEvent::InsertText("\n".to_owned()));
                     }
@@ -780,23 +791,33 @@ where
 
                 Code::Home => {
                     cx.emit(TextEvent::MoveCursor(
-                        Movement::ParagraphStart,
+                        Movement::LineStart,
                         cx.modifiers.contains(Modifiers::SHIFT),
                     ));
                 }
 
                 Code::End => {
                     cx.emit(TextEvent::MoveCursor(
-                        Movement::ParagraphEnd,
+                        Movement::LineEnd,
                         cx.modifiers.contains(Modifiers::SHIFT),
                     ));
                 }
 
-                // TODO
-                Code::PageUp => {}
-
-                // TODO
-                Code::PageDown => {}
+                Code::PageUp | Code::PageDown => {
+                    let direction = if *code == Code::PageUp {
+                        Direction::Upstream
+                    } else {
+                        Direction::Downstream
+                    };
+                    cx.emit(TextEvent::MoveCursor(
+                        if cx.modifiers.contains(Modifiers::CTRL) {
+                            Movement::Body(direction)
+                        } else {
+                            Movement::Page(direction)
+                        },
+                        cx.modifiers.contains(Modifiers::SHIFT),
+                    ));
+                }
 
                 Code::KeyA => {
                     if cx.modifiers.contains(Modifiers::CTRL) {
@@ -817,6 +838,21 @@ where
 
             _ => {}
         });
+
+        if let Some(msg) = event.take::<TextEventInternal>() {
+            let TextEventInternal::Reset = msg;
+            if let Some(source) = cx.data::<L::Source>() {
+                let text = self.lens.view(source, |t| {
+                    if let Some(t) = t {
+                        t.to_string()
+                    } else {
+                        "".to_owned()
+                    }
+                });
+
+                cx.emit(TextEvent::ResetText(text));
+            };
+        }
     }
 }
 

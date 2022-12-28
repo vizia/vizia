@@ -10,7 +10,7 @@ enum SliderEventInternal {
     SetKeyboardFraction(f32),
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, Data)]
 pub struct SliderDataInternal {
     pub orientation: Orientation,
     pub size: f32,

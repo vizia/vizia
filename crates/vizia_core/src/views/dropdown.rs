@@ -71,6 +71,12 @@ use crate::views::popup::PopupData;
 ///     filter: String,
 /// }
 ///
+/// # impl Data for AppData {
+/// #     fn same(&self, other: &Self) -> bool {
+/// #         self == other
+/// #     }
+/// # }
+/// #
 /// # #[derive(Debug)]
 /// # enum AppEvent {
 /// #     SetFilter(String),

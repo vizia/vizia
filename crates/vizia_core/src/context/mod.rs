@@ -320,28 +320,6 @@ impl Context {
         }
     }
 
-    /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Any + Send>(&mut self, message: M) {
-        self.event_queue.push_back(
-            Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up),
-        );
-    }
-
-    /// Send an event containing a message directly to a specified entity.
-    pub fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
-        self.event_queue.push_back(
-            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
-        );
-    }
-
-    /// Send an event with custom origin and propagation information.
-    pub fn emit_custom(&mut self, event: Event) {
-        self.event_queue.push_back(event);
-    }
-
     /// Check whether there are any events in the queue waiting for the next event dispatch cycle.
     // pub fn has_queued_events(&self) -> bool {
     //     !self.event_queue.is_empty()
@@ -398,7 +376,7 @@ impl Context {
     pub fn add_theme(&mut self, theme: &str) {
         self.resource_manager.themes.push(theme.to_owned());
 
-        self.reload_styles().expect("Failed to reload styles");
+        EventContext::new(self).reload_styles().expect("Failed to reload styles");
     }
 
     pub fn remove_user_themes(&mut self) {
@@ -432,39 +410,6 @@ impl Context {
     pub fn add_animation(&mut self, duration: std::time::Duration) -> AnimationBuilder {
         let id = self.style.animation_manager.create();
         AnimationBuilder::new(id, self, duration)
-    }
-
-    pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
-        if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
-            return Ok(());
-        }
-
-        self.style.remove_rules();
-
-        self.style.rules.clear();
-
-        self.style.clear_style_rules();
-
-        let mut overall_theme = String::new();
-
-        // Reload the stored themes
-        for theme in self.resource_manager.themes.iter() {
-            overall_theme += theme;
-        }
-
-        // Reload the stored stylesheets
-        for stylesheet in self.resource_manager.stylesheets.iter() {
-            let theme = std::fs::read_to_string(stylesheet)?;
-            overall_theme += &theme;
-        }
-
-        self.style.parse_theme(&overall_theme);
-
-        self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
-
-        Ok(())
     }
 
     pub fn set_image_loader<F: 'static + Fn(&mut Context, &str)>(&mut self, loader: F) {
@@ -529,6 +474,12 @@ pub trait DataContext {
     fn data<T: 'static>(&self) -> Option<&T>;
 }
 
+pub trait EmitContext {
+    fn emit<M: Any + Send>(&mut self, message: M);
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
+    fn emit_custom(&mut self, event: Event);
+}
+
 impl DataContext for Context {
     fn data<T: 'static>(&self) -> Option<&T> {
         // return data for the static model
@@ -551,5 +502,29 @@ impl DataContext for Context {
         }
 
         None
+    }
+}
+
+impl EmitContext for Context {
+    /// Send an event containing a message up the tree from the current entity.
+    fn emit<M: Any + Send>(&mut self, message: M) {
+        self.event_queue.push_back(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+        );
+    }
+
+    /// Send an event containing a message directly to a specified entity.
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
+        self.event_queue.push_back(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+        );
+    }
+
+    /// Send an event with custom origin and propagation information.
+    fn emit_custom(&mut self, event: Event) {
+        self.event_queue.push_back(event);
     }
 }

@@ -61,7 +61,11 @@ fn entity_selector(cx: &Context, entity: Entity) -> Selector {
     Selector {
         asterisk: false,
         id: cx.style.ids.get(entity).cloned(),
-        element: cx.style.elements.get(entity).cloned(),
+        element: cx
+            .views
+            .get(&entity)
+            .and_then(|view| view.element())
+            .map(|element| element.to_owned()),
         classes: cx.style.classes.get(entity).cloned().unwrap_or_default(),
         pseudo_classes: {
             let mut pseudo_classes =

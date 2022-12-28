@@ -40,7 +40,7 @@ pub mod image {
 pub mod prelude {
     pub use super::animation::{AnimExt, Animation, AnimationBuilder};
     pub use super::context::{
-        Context, ContextProxy, DataContext, DrawContext, EventContext, ProxyEmitError,
+        Context, ContextProxy, DataContext, DrawContext, EmitContext, EventContext, ProxyEmitError,
     };
     pub use super::context::{DARK_THEME, LIGHT_THEME};
     pub use super::entity::Entity;
@@ -56,7 +56,7 @@ pub mod prelude {
     pub use super::view::{Canvas, View};
     pub use super::views::*;
     pub use super::window::WindowModifiers;
-    pub use vizia_derive::{Lens, Model, Setter};
+    pub use vizia_derive::{Data, Lens, Model, Setter};
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};
     pub use vizia_storage::{Tree, TreeExt};

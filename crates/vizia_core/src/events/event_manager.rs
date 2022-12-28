@@ -2,7 +2,9 @@ use crate::context::InternalEvent;
 use crate::events::EventMeta;
 use crate::prelude::*;
 use crate::resource::ImageOrId;
-use crate::systems::{compute_matched_rules, hover_system};
+#[cfg(debug_assertions)]
+use crate::systems::compute_matched_rules;
+use crate::systems::hover_system;
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use femtovg::ImageFlags;
 use instant::{Duration, Instant};
@@ -59,6 +61,7 @@ impl EventManager {
                     }
                 }
             });
+
             // handle state updates for window events
             event.map(|window_event, meta| {
                 if meta.origin == Entity::root() {
@@ -156,14 +159,7 @@ impl EventManager {
 }
 
 fn visit_entity(cx: &mut Context, entity: Entity, event: &mut Event) {
-    if let Some(mut view) = cx.views.remove(&entity) {
-        cx.with_current(entity, |cx| {
-            view.event(&mut EventContext::new(cx), event);
-        });
-
-        cx.views.insert(entity, view);
-    }
-
+    // Send event to models attached to the entity
     if let Some(ids) = cx.data.get(entity).and_then(|model_data_store| {
         Some(model_data_store.models.keys().cloned().collect::<Vec<_>>())
     }) {
@@ -183,6 +179,20 @@ fn visit_entity(cx: &mut Context, entity: Entity, event: &mut Event) {
                     .and_then(|model_data_store| model_data_store.models.insert(id, model));
             }
         }
+    }
+
+    // Return early if the event was consumed by a model
+    if event.meta.consumed {
+        return;
+    }
+
+    // Send event to the view attached to the entity
+    if let Some(mut view) = cx.views.remove(&entity) {
+        cx.with_current(entity, |cx| {
+            view.event(&mut EventContext::new(cx), event);
+        });
+
+        cx.views.insert(entity, view);
     }
 }
 
@@ -420,7 +430,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             }
 
             if *code == Code::F5 {
-                context.reload_styles().unwrap();
+                EventContext::new(context).reload_styles().unwrap();
             }
 
             if *code == Code::Tab {
