@@ -7,6 +7,7 @@ use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::iter::once;
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -14,8 +15,7 @@ use std::sync::Mutex;
 use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
-use cosmic_text::{Attrs, AttrsList, BufferLine, Database, FamilyOwned, FontSystem};
-use femtovg::TextContext;
+use cosmic_text::{fontdb::Database, Attrs, AttrsList, BufferLine, FamilyOwned};
 use fnv::FnvHashMap;
 use replace_with::replace_with_or_abort;
 use unic_langid::LanguageIdentifier;
@@ -104,8 +104,6 @@ impl Context {
         db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));
         db.load_font_data(Vec::from(fonts::MATERIAL_ICONS_REGULAR));
 
-        db.set_sans_serif_family("roboto");
-
         let mut result = Self {
             entity_manager: IdManager::new(),
             entity_identifiers: HashMap::new(),
@@ -159,6 +157,7 @@ impl Context {
         Environment::new().build(&mut result);
 
         result.entity_manager.create();
+        result.set_default_font(&["Roboto"]);
 
         result
     }
@@ -397,8 +396,12 @@ impl Context {
     }
 
     /// Sets the global default font for the application.
-    pub fn set_default_font(&mut self, name: &str) {
-        self.style.default_font = Some(FamilyOwned::Name(name.to_owned()));
+    pub fn set_default_font(&mut self, names: &[&str]) {
+        self.style.default_font = names
+            .iter()
+            .map(|x| FamilyOwned::Name(x.to_string()))
+            .chain(once(FamilyOwned::SansSerif))
+            .collect();
     }
 
     pub fn add_theme(&mut self, theme: &str) {

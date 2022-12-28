@@ -1,7 +1,11 @@
-/* * {
+* {
     border-width: 1px;
     border-color: red;
-} */
+}
+
+* {
+    font-family: Roboto, sans-serif;
+}
 
 button {
     background-color: white;
