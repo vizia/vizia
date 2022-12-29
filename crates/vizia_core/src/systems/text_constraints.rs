@@ -110,6 +110,10 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
 
             cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
             cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
+        } else if cx.cosmic_context.has_buffer(entity) {
+            cx.cosmic_context.with_buffer(entity, |buf| {
+                buf.set_size(i32::MAX, i32::MAX)
+            });
         }
     }
 }

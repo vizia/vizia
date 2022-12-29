@@ -12,6 +12,8 @@ pub mod icons_names {
     pub const LEFT: &str = "\u{e75d}";
     pub const RIGHT: &str = "\u{e75e}";
     pub const UP: &str = "\u{e75f}";
+    pub const CHECK: &str = "\u{2713}";
+    pub const CANCEL: &str = "\u{2715}";
 }
 
 pub mod material_names {
@@ -23,6 +25,4 @@ pub mod material_names {
 
 pub mod unicode_names {
     pub const PLUS: &str = "\u{2b}";
-    pub const CHECK: &str = "\u{2713}";
-    pub const CANCEL: &str = "\u{2715}";
 }

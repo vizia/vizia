@@ -1,7 +1,7 @@
 use std::any::Any;
 use std::collections::HashSet;
 
-use femtovg::{renderer::OpenGl, Canvas, TextContext};
+use femtovg::{renderer::OpenGl, Canvas};
 use fnv::FnvHashMap;
 
 use super::EventProxy;
@@ -9,7 +9,6 @@ use crate::{
     cache::{BoundingBox, CachedData},
     environment::Environment,
     events::ViewHandler,
-    fonts,
     layout::geometry_changed,
     prelude::*,
     state::ModelOrView,

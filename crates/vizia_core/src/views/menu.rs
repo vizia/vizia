@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use crate::fonts::{material_names::RIGHT, unicode_names::CHECK};
+use crate::fonts::{material_names::RIGHT, icons_names::CHECK};
 use crate::prelude::*;
 use vizia_storage::TreeExt;
 

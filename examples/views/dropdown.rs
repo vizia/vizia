@@ -23,7 +23,7 @@ fn main() {
                 // A Label and an Icon
                 HStack::new(cx, move |cx|{
                     Label::new(cx, AppData::choice);
-                    Label::new(cx, DOWN).font("icons");
+                    Label::new(cx, DOWN).class("icon");
                 })
                 .child_left(Pixels(5.0))
                 .child_right(Pixels(5.0))

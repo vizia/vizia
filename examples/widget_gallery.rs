@@ -29,7 +29,7 @@ pub fn buttons(cx: &mut Context) -> Handle<impl View> {
 
         Label::new(cx, "A simple Button with an icon label").font_size(24.0).font("roboto-bold");
 
-        Button::new(cx, |_| {}, |cx| Label::new(cx, ICON_PLUS).font("icons"));
+        Button::new(cx, |_| {}, |cx| Label::new(cx, ICON_PLUS).class("icon"));
 
         Label::new(cx, "A simple Button with icon and text labels")
             .font_size(24.0)
@@ -40,7 +40,7 @@ pub fn buttons(cx: &mut Context) -> Handle<impl View> {
             |_| {},
             |cx| {
                 HStack::new(cx, |cx| {
-                    Label::new(cx, ICON_PLUS).font("icons");
+                    Label::new(cx, ICON_PLUS).class("icon");
                     Label::new(cx, "Button");
                 })
                 .size(Auto)
