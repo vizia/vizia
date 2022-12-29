@@ -290,7 +290,8 @@ fn fmt_font_style(val: &Style) -> String {
         Style::Normal => "normal",
         Style::Italic => "italic",
         Style::Oblique => "oblique",
-    }.to_owned()
+    }
+    .to_owned()
 }
 
 fn fmt_font_family(val: &FamilyOwned) -> String {
