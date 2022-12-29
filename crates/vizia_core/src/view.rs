@@ -509,8 +509,6 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     // );
     // canvas.fill_path(&mut path, paint);
 
-    let temp_paint = Paint::color(Color::rgb(0, 0, 0).into());
-
     // Draw text and image
     if cx.cosmic_context.has_buffer(cx.current) || cx.image().is_some() {
         let mut box_x = bounds.x + border_width;
@@ -577,7 +575,6 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
             let origin_x = box_x + box_w * justify_x;
             let origin_y = box_y + box_h * justify_y;
 
-            println!("Drawing text buffer: {}", cx.current);
             cx.cosmic_context.sync_styles(cx.current, &cx.style);
             // TODO cursor, selection
             if let Ok(draw_commands) = cx.cosmic_context.fill_to_cmds(
@@ -586,7 +583,10 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
                 (origin_x, origin_y),
                 (justify_x, justify_y),
             ) {
-                canvas.draw_glyph_cmds(draw_commands, &temp_paint);
+                for (color, cmds) in draw_commands.into_iter() {
+                    let temp_paint = Paint::color(femtovg::Color::rgba(color.r(), color.g(), color.b(), color.a()));
+                    canvas.draw_glyph_cmds(cmds, &temp_paint);
+                }
             }
         }
 

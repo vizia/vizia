@@ -1,5 +1,9 @@
 label.icon {
-    font-family: "icons";
+    font-family: "Entypo", sans-serif;
+}
+
+label.material-icon {
+    font-family: "Material Icons", sans-serif;
 }
 
 textbox {
@@ -76,6 +80,10 @@ label {
     layout-type: row;
     child-space: auto;
     child-left: 0px;
+}
+
+checkbox {
+    /*font-family: Entypo, sans-serif;*/
 }
 
 image {
@@ -198,7 +206,7 @@ menustack.horizontal > menu > menustack {
 
 menustack.vertical > menu > hstack > .menu_arrow {
     display: flex;
-    font-family: "material";
+    font-family: "Material Icons";
     left: 1s;
     top: 1s;
     bottom: 1s;

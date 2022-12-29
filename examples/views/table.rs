@@ -43,7 +43,7 @@ fn main() {
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
                                     .text(icon)
-                                    .font("icons")
+                                    .class("icon")
                                     .visibility(visible);
                             });
 
@@ -101,7 +101,7 @@ fn main() {
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
                                     .text(icon)
-                                    .font("icons")
+                                    .class("icon")
                                     .visibility(visible);
                             });
                             Element::new(cx)
@@ -157,7 +157,7 @@ fn main() {
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
                                     .text(icon)
-                                    .font("icons")
+                                    .class("icon")
                                     .visibility(visible);
                             });
                         })

@@ -1,11 +1,6 @@
-use crate::cache::CachedData;
 use crate::entity::Entity;
 use crate::style::Style;
-use cosmic_text::{
-    fontdb::{Database, Query},
-    Attrs, AttrsList, Buffer, CacheKey, Edit, Editor, Family, FamilyOwned, FontSystem, Metrics,
-    SubpixelBin, Wrap,
-};
+use cosmic_text::{fontdb::{Database, Query}, Attrs, AttrsList, Buffer, CacheKey, Edit, Editor, Family, FontSystem, Metrics, SubpixelBin, Wrap, Color as FontColor};
 use femtovg::imgref::ImgRef;
 use femtovg::rgb::RGBA8;
 use femtovg::{
@@ -18,6 +13,7 @@ use std::collections::HashMap;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
+use crate::prelude::Color;
 
 const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
@@ -82,8 +78,9 @@ impl CosmicContext {
             let font = int.font_system.get_font(id).unwrap();
             (font.info.family.clone(), font.info.weight, font.info.style)
         });
+        let color = style.font_color.get(entity).copied().unwrap_or(Color::rgb(0, 0, 0));
         self.with_buffer(entity, |buf| {
-            let attrs = Attrs::new().family(Family::Name(&family)).weight(weight).style(font_style);
+            let attrs = Attrs::new().family(Family::Name(&family)).weight(weight).style(font_style).color(FontColor::rgba(color.r(), color.g(), color.b(), color.a()));
             let wrap = if style.text_wrap.get(entity).copied().unwrap_or_default() {
                 Wrap::Word
             } else {
@@ -111,7 +108,7 @@ impl CosmicContext {
         entity: Entity,
         position: (f32, f32),
         justify: (f32, f32),
-    ) -> Result<GlyphDrawCommands, ErrorKind> {
+    ) -> Result<Vec<(FontColor, GlyphDrawCommands)>, ErrorKind> {
         self.with_int_mut(move |int: &mut CosmicContextInternal| {
             let buffer = int.buffers.get_mut(&entity).unwrap().buffer_mut();
 
@@ -218,7 +215,7 @@ impl CosmicContext {
                     let cmd_map = if rendered.color_glyph {
                         &mut color_cmd_map
                     } else {
-                        &mut alpha_cmd_map
+                        alpha_cmd_map.entry(glyph.color_opt.unwrap()).or_insert_with(FnvHashMap::default)
                     };
 
                     let cmd = cmd_map.entry(rendered.texture_index).or_insert_with(|| DrawCmd {
@@ -243,10 +240,10 @@ impl CosmicContext {
                 }
             }
 
-            Ok(GlyphDrawCommands {
-                alpha_glyphs: alpha_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
+            Ok(alpha_cmd_map.into_iter().map(|(color, map)| (color, GlyphDrawCommands {
+                alpha_glyphs: map.into_iter().map(|(_, cmd)| cmd).collect(),
                 color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
-            })
+            })).collect())
         })
     }
 
