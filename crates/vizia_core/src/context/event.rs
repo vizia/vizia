@@ -7,6 +7,7 @@ use femtovg::TextContext;
 use fnv::FnvHashMap;
 
 use crate::cache::CachedData;
+use crate::environment::ThemeMode;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
@@ -20,7 +21,7 @@ use crate::context::EmitContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
-use super::DrawCache;
+use super::{DrawCache, DARK_THEME, LIGHT_THEME};
 
 pub struct EventContext<'a> {
     pub(crate) current: Entity,
@@ -36,7 +37,7 @@ pub struct EventContext<'a> {
     pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
     listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
-    pub resource_manager: &'a ResourceManager,
+    pub resource_manager: &'a mut ResourceManager,
     pub text_context: &'a TextContext,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState<Entity>,
@@ -45,6 +46,7 @@ pub struct EventContext<'a> {
     #[cfg(feature = "clipboard")]
     clipboard: &'a mut Box<dyn ClipboardProvider>,
     event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
+    pub(crate) ignore_default_theme: &'a bool,
 }
 
 impl<'a> EventContext<'a> {
@@ -62,7 +64,7 @@ impl<'a> EventContext<'a> {
             data: &cx.data,
             views: &mut cx.views,
             listeners: &mut cx.listeners,
-            resource_manager: &cx.resource_manager,
+            resource_manager: &mut cx.resource_manager,
             text_context: &cx.text_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
@@ -71,6 +73,7 @@ impl<'a> EventContext<'a> {
             #[cfg(feature = "clipboard")]
             clipboard: &mut cx.clipboard,
             event_proxy: &mut cx.event_proxy,
+            ignore_default_theme: &cx.ignore_default_theme,
         }
     }
 
@@ -312,6 +315,20 @@ impl<'a> EventContext<'a> {
 
     pub fn needs_redraw(&mut self) {
         self.style.needs_redraw = true;
+    }
+
+    pub fn set_theme_mode(&mut self, theme_mode: ThemeMode) {
+        if !self.ignore_default_theme {
+            match theme_mode {
+                ThemeMode::LightMode => {
+                    self.resource_manager.themes[1] = String::from(LIGHT_THEME);
+                }
+
+                ThemeMode::DarkMode => {
+                    self.resource_manager.themes[1] = String::from(DARK_THEME);
+                }
+            }
+        }
     }
 
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {

@@ -1,3 +1,5 @@
+mod helpers;
+pub use helpers::*;
 use vizia::prelude::*;
 
 #[derive(Clone, Lens)]
@@ -21,23 +23,19 @@ impl Model for AppState {
     }
 }
 
-const CENTER_LAYOUT: &str = "crates/vizia_core/resources/themes/center_layout.css";
-#[allow(dead_code)]
-const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
-#[allow(dead_code)]
-const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
-
 fn main() {
     Application::new(|cx| {
         AppState { x: 0.2, y: 0.5 }.build(cx);
 
-        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
-        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
+        view_controls(cx);
 
-        XYPad::new(cx, AppState::root.map(|app_state| (app_state.x, app_state.y)))
-            .on_change(|cx, x, y| cx.emit(AppEvent::SetValue(x, y)));
+        VStack::new(cx, |cx| {
+            XYPad::new(cx, AppState::root.map(|app_state| (app_state.x, app_state.y)))
+                .on_change(|cx, x, y| cx.emit(AppEvent::SetValue(x, y)));
+        })
+        .disabled(ControlsData::disabled)
+        .class("container");
     })
-    .ignore_default_theme()
-    .title("Colorpicker")
+    .title("XYPad")
     .run();
 }

@@ -2,8 +2,8 @@
 
 * {
     color: #ffffff;
-    border-color: blue;
-    /* border-width: 1px; */
+    /* border-color: blue;
+    border-width: 1px; */
 }
 
 .icon {
@@ -12,9 +12,6 @@
 
 root {
     background-color: #1d1d1d;
-    width: 1s;
-    height: 1s;
-    /* child-space: 1s; */
 }
 
 .container {
@@ -48,6 +45,7 @@ button {
 
 button label {
     color: #fff;
+    child-space: 1s;
 }
 
 button:over {
@@ -123,7 +121,8 @@ button:focus-visible {
 
 button:disabled {
     border-width: 0px;
-    background-color: #606060;
+    background-color: #404040;
+    border-color: #404040;
 }
 
 button:disabled:over {
@@ -201,10 +200,12 @@ checkbox:checked {
 
 checkbox:disabled {
     border-color: #404040;
+    transition: border-color 0.1 0;
 }
 
 checkbox:hover:disabled {
     background-color: transparent;
+    transition: border-color 0.1 0;
 }
 
 checkbox:checked:hover {
@@ -322,11 +323,16 @@ dropdown {
     border-radius: 4px;
 }
 
-dropdown .title:focus-visible {
+dropdown:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef80;
+    outline-color: #51afef;
     outline-offset: 3px;
 }
+
+/* dropdown label {
+    child-space: 1s;
+    background-color: red;
+} */
 
 dropdown popup {
     background-color: #282828;
@@ -611,12 +617,12 @@ spinbox textbox.spinbox-value {
     border-radius: 0px;
 }
 
-spinbox dropdown.spinbox-value .title {
-    background-color: transparent;
+spinbox dropdown.spinbox-value {
+    background-color: red;
     border-width: 0px;
 }
 
-spinbox picklist.spinbox-value .title {
+spinbox picklist.spinbox-value {
     background-color: transparent;
     border-width: 0px;
     col-between: 4px;

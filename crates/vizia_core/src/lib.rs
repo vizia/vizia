@@ -42,9 +42,8 @@ pub mod prelude {
     pub use super::context::{
         Context, ContextProxy, DataContext, DrawContext, EmitContext, EventContext, ProxyEmitError,
     };
-    pub use super::context::{DARK_THEME, LIGHT_THEME};
     pub use super::entity::Entity;
-    pub use super::environment::{Environment, EnvironmentEvent};
+    pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};
     pub use super::events::{Event, Propagation};
     pub use super::handle::Handle;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
@@ -52,7 +51,7 @@ pub mod prelude {
     pub use super::modifiers::{
         AbilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers, TextModifiers,
     };
-    pub use super::state::{Binding, Data, Lens, LensExt, Model, Res, Setter};
+    pub use super::state::{Binding, Data, Lens, LensExt, Model, Res, Setter, StaticLens};
     pub use super::view::{Canvas, View};
     pub use super::views::*;
     pub use super::window::WindowModifiers;

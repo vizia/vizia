@@ -1,3 +1,15 @@
+/* General */
+
+* {
+    color: #000;
+    /* border-color: blue; */
+    /* border-width: 1px; */
+}
+
+.icon {
+    font: "icons";
+}
+
 root {
     background-color: #e4e4e4;
 }
@@ -12,16 +24,10 @@ root {
 /* Button  */
 
 button {
-    width: auto;
-    height: 28px;
     border-radius: 4px;
-    child-space: 1s;
-    child-left: 10px;
-    child-right: 10px;
     border-width: 1px;
     border-color: #d9d9d9;
     background-color: #ececec;
-    overflow: visible;
     transition: background-color 0.1 0;
 }
 
@@ -42,6 +48,7 @@ button:active {
 button.accent {
     border-width: 0px;
     background-color: #51afef;
+    transition: background-color 0.1 0;
 }
 
 button.accent label {
@@ -50,10 +57,49 @@ button.accent label {
 
 button.accent:over {
     background-color: #80caff;
+    transition: background-color 0.1 0;
 }
 
 button.accent:active {
     background-color: #3995d6;
+}
+
+button.outline {
+    background-color: transparent;
+    border-width: 1px;
+    border-color: #51afef;
+    transition: background-color 0.1 0;
+}
+
+button.outline label {
+    color: #51afef;
+}
+
+button.outline:over {
+    background-color: #80caff10;
+    transition: background-color 0.1 0;
+}
+
+button.outline:active {
+    background-color: #3995d610;
+}
+
+button.ghost {
+    background-color: transparent;
+    transition: background-color 0.1 0;
+}
+
+button.ghost label {
+    color: #51afef;
+}
+
+button.ghost:over {
+    background-color: #80caff10;
+    transition: background-color 0.1 0;
+}
+
+button.ghost:active {
+    background-color: #3995d610;
 }
 
 button:focus-visible {
@@ -63,7 +109,8 @@ button:focus-visible {
 }
 
 button:disabled {
-    background-color: transparent;
+    border-width: 0px;
+    background-color: #404040;
     border-color: #404040;
 }
 
@@ -71,9 +118,9 @@ button:disabled label {
     color: #888;
 }
 
+/* Checkbox */
+
 checkbox {
-    width: 16px;
-    height: 16px;
     border-radius: 4px;
     border-width: 2px;
     border-color: #888;
@@ -131,6 +178,151 @@ checkbox:checked:disabled {
     transition: border-color 0.1 0;
 }
 
+/* Chip */
+
+chip {
+    border-radius: 16px;
+}
+
+/* Datepicker */
+
+datepicker {
+    background-color: #343434;
+    border-radius: 4px;
+    child-space: 8px;
+    row-between: 8px;
+}
+
+.datepicker-divisor {
+    background-color: #2f2f2f;
+}
+
+.datepicker-calendar {
+    width: auto;
+    height: auto;
+    left: 1s;
+    right: 1s;
+}
+
+.datepicker-calendar-day {
+    color: #888;
+    cursor: hand;
+}
+
+.datepicker-calendar-day:checked {
+    color: #181818;
+    background-color: #51afef;
+    border-radius: 4px;
+}
+
+.datepicker-calendar-day-disabled {
+    color: #585858;
+    cursor: arrow;
+}
+
+.datepicker-selected-date {
+    color: #b0b0b0;
+}
+
+.datepicker-cancel {
+    border-width: 2px;
+    border-color: #ef5151;
+    border-radius: 4px;
+}
+
+.datepicker-cancel label {
+    color: #ef5151;
+}
+
+.datepicker-apply {
+    border-radius: 4px;
+    border-width: 2px;
+    border-color: #51afef;
+    background-color: #51afef;
+}
+
+.datepicker-apply label {
+    color: #181818;
+}
+
+/* Date Time Picker */
+
+datetimepicker {
+    border-radius: 4px;
+    background-color: #343434;
+}
+
+datetimepicker tabheader label {
+    font: "icons";
+}
+
+datetimepicker tabheader:checked label {
+    color: #51afef;
+}
+
+datetimepicker tabheader .indicator {
+    background-color: #2f2f2f;
+}
+
+datetimepicker tabheader:checked .indicator {
+    background-color: #51afef;
+}
+
+/* Dropdown */
+
+dropdown {
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #d9d9d9;
+    background-color: #ececec;
+}
+
+dropdown .title:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+dropdown popup {
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #d9d9d9;
+    background-color: #ececec;
+}
+
+dropdown list label {
+    color: #808080;
+    cursor: hand;
+}
+
+dropdown list label:checked {
+    color: #000;
+}
+
+dropdown list label:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+dropdown list label:hover {
+    background-color: #51afef11;
+}
+
+/* Popup */
+
+popup {
+    outer-shadow: 0 0 8 #00000026;
+    opacity: 0%;
+    transition: opacity 0.1 0;
+}
+
+popup:checked {
+    opacity: 100%;
+    transition: opacity 0.1 0;
+}
+
+/*
 dropdown .title {
     width: auto;
     height: 30px;
@@ -180,7 +372,7 @@ dropdown list label:focus-visible {
 
 dropdown vstack {
     child-space: auto;
-}
+} */
 
 knob {
     width: 48px;
@@ -315,88 +507,42 @@ slider .thumb {
     child-space: 1s;
 }
 
+/* Spinbox */
+
 spinbox {
     background-color: #fff;
     border-radius: 4px;
     border-width: 1px;
     border-color: #e4e4e4;
-    child-space: 1s;
-}
-
-spinbox.horizontal {
-    layout-type: row;
-    height: 32px;
-}
-
-spinbox.vertical {
-    layout-type: column;
-    width: 32px;
-}
-
-spinbox .container {
-    width: auto;
 }
 
 spinbox .spinbox-button {
-    height: 24px;
-    child-space: 1s;
-    color: #888888;
-}
-
-spinbox.horizontal .spinbox-button {
-    width: 24px;
-}
-
-spinbox.vertical .spinbox-button {
-    width: 1s;
+    color: #505050;
+    cursor: hand;
 }
 
 spinbox .spinbox-button:hover {
     color: #000;
 }
 
-spinbox label.spinbox-value {
-    space: 1s;
-    width: auto;
-    height: 24px;
-    child-space: 1s;
+spinbox .spinbox-value {
+    color: #000;
 }
 
 spinbox textbox.spinbox-value {
-    width: auto;
-    min-width: 24px;
-    height: 24px;
-    child-space: 1s;
-    left: 4px;
-    right: 4px;
     border-width: 0px;
     border-radius: 0px;
 }
 
-spinbox textbox.spinbox-value textboxcontainer {
-    child-space: 1s;
-    width: auto;
-}
-
-spinbox textbox.spinbox-value textboxlabel {
-    width: auto;
-}
-
 spinbox dropdown.spinbox-value {
-    width: 100px;
-}
-
-spinbox dropdown.spinbox-value .title {
     background-color: transparent;
     border-width: 0px;
 }
 
-spinbox dropdown.spinbox-value popup {
-    width: auto;
-}
-
-spinbox dropdown.spinbox-value popup * {
-    width: auto;
+spinbox picklist.spinbox-value .title {
+    background-color: transparent;
+    border-width: 0px;
+    col-between: 4px;
 }
 
 switch {

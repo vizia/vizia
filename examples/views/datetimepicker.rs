@@ -1,4 +1,6 @@
+mod helpers;
 use chrono::{NaiveDateTime, Utc};
+use helpers::*;
 use vizia::prelude::*;
 
 const ICON_CALENDAR: &str = "\u{1f4c5}";
@@ -18,7 +20,6 @@ impl Model for AppState {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetDateTime(datetime) => {
-                println!("Datetime changed to: {}", datetime);
                 self.datetime = *datetime;
             }
 
@@ -29,20 +30,13 @@ impl Model for AppState {
     }
 }
 
-const CENTER_LAYOUT: &str = "crates/vizia_core/resources/themes/center_layout.css";
-#[allow(dead_code)]
-const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
-#[allow(dead_code)]
-const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
-
 fn main() {
     Application::new(|cx| {
         AppState { datetime: Utc::now().naive_utc(), show_popup: false }.build(cx);
 
         PopupData::default().build(cx);
 
-        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
-        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
+        view_controls(cx);
 
         VStack::new(cx, |cx| {
             ZStack::new(cx, |cx| {
@@ -78,7 +72,6 @@ fn main() {
         })
         .row_between(Pixels(8.0));
     })
-    .ignore_default_theme()
     .title("Datepicker")
     .run();
 }

@@ -23,7 +23,7 @@ pub use event::*;
 pub use proxy::*;
 
 use crate::cache::CachedData;
-use crate::environment::Environment;
+use crate::environment::{Environment, ThemeMode};
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
@@ -34,7 +34,6 @@ use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 use vizia_storage::TreeExt;
 
-static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 
 pub static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
@@ -384,15 +383,17 @@ impl Context {
 
         self.add_theme(DEFAULT_LAYOUT);
         if !self.ignore_default_theme {
-            self.add_theme(DEFAULT_THEME);
+            let environment = self.data::<Environment>().expect("Failed to get environment");
+            match environment.theme_mode {
+                ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
+                ThemeMode::DarkMode => self.add_theme(DARK_THEME),
+            }
         }
     }
 
     pub fn add_stylesheet(&mut self, path: impl AsRef<Path>) -> Result<(), std::io::Error> {
-        let style_string = std::fs::read_to_string(path.as_ref())?;
         self.resource_manager.stylesheets.push(path.as_ref().to_owned());
-        self.style.parse_theme(&style_string);
-
+        EventContext::new(self).reload_styles().expect("Failed to reload styles");
         Ok(())
     }
 
