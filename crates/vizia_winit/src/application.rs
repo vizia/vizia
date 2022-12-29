@@ -419,14 +419,14 @@ impl Application {
     }
 
     /// Resize the cache used for rendering text lines
-    pub fn text_shaping_run_cache(mut self, _size: usize) -> Self {
+    pub fn text_shaping_run_cache(self, _size: usize) -> Self {
         // TODO - does this matter anymore?
         //BackendContext::new(&mut self.context).text_context().resize_shaping_run_cache(size);
         self
     }
 
     /// Resize the cache used for rendering words
-    pub fn text_shaped_words_cache(mut self, _size: usize) -> Self {
+    pub fn text_shaped_words_cache(self, _size: usize) -> Self {
         // TODO - does this matter anymore?
         //BackendContext::new(&mut self.context).text_context().resize_shaped_words_cache(size);
         self
