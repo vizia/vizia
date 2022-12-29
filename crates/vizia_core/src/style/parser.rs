@@ -1182,7 +1182,7 @@ fn parse_font_style<'i, 't>(
                 kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
                 location,
             }
-                .into())
+            .into())
         }
     })
 }

@@ -584,7 +584,12 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
                 (justify_x, justify_y),
             ) {
                 for (color, cmds) in draw_commands.into_iter() {
-                    let temp_paint = Paint::color(femtovg::Color::rgba(color.r(), color.g(), color.b(), color.a()));
+                    let temp_paint = Paint::color(femtovg::Color::rgba(
+                        color.r(),
+                        color.g(),
+                        color.b(),
+                        color.a(),
+                    ));
                     canvas.draw_glyph_cmds(cmds, &temp_paint);
                 }
             }

@@ -1,6 +1,11 @@
 use crate::entity::Entity;
+use crate::prelude::Color;
 use crate::style::Style;
-use cosmic_text::{fontdb::{Database, Query}, Attrs, AttrsList, Buffer, CacheKey, Edit, Editor, Family, FontSystem, Metrics, SubpixelBin, Wrap, Color as FontColor};
+use cosmic_text::{
+    fontdb::{Database, Query},
+    Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor, Family, FontSystem,
+    Metrics, SubpixelBin, Wrap,
+};
 use femtovg::imgref::ImgRef;
 use femtovg::rgb::RGBA8;
 use femtovg::{
@@ -13,7 +18,6 @@ use std::collections::HashMap;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
-use crate::prelude::Color;
 
 const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
@@ -80,7 +84,11 @@ impl CosmicContext {
         });
         let color = style.font_color.get(entity).copied().unwrap_or(Color::rgb(0, 0, 0));
         self.with_buffer(entity, |buf| {
-            let attrs = Attrs::new().family(Family::Name(&family)).weight(weight).style(font_style).color(FontColor::rgba(color.r(), color.g(), color.b(), color.a()));
+            let attrs = Attrs::new()
+                .family(Family::Name(&family))
+                .weight(weight)
+                .style(font_style)
+                .color(FontColor::rgba(color.r(), color.g(), color.b(), color.a()));
             let wrap = if style.text_wrap.get(entity).copied().unwrap_or_default() {
                 Wrap::Word
             } else {
