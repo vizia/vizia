@@ -1,3 +1,7 @@
+#![allow(unused_variables)]
+#![allow(unused_assignments)]
+#![allow(unused_labels)]
+#![allow(dead_code)]
 use crate::prelude::*;
 use crate::style::{Rule, Selector, SelectorRelation, StyleRule};
 use vizia_id::GenerationalId;
@@ -517,19 +521,20 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
         // Loop through all entities
         'ent: for entity in iterator {
             // If the entity and the previous entity have the same parent and selectors then they share the same rules
-            if let Some(prev) = prev_entity {
-                if let Some(parent) = tree.get_layout_parent(entity) {
-                    if let Some(prev_parent) = tree.get_layout_parent(prev) {
-                        if parent == prev_parent {
-                            if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
-                                prev_entity = Some(entity);
-                                link_style_data(cx, entity, &prev_matched_rule_ids);
-                                continue 'ent;
-                            }
-                        }
-                    }
-                }
-            }
+            // FIXME: This is causing some problems with font size
+            // if let Some(prev) = prev_entity {
+            //     if let Some(parent) = tree.get_layout_parent(entity) {
+            //         if let Some(prev_parent) = tree.get_layout_parent(prev) {
+            //             if parent == prev_parent {
+            //                 if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
+            //                     prev_entity = Some(entity);
+            //                     link_style_data(cx, entity, &prev_matched_rule_ids);
+            //                     continue 'ent;
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
 
             let mut matched_rules = Vec::with_capacity(100);
             compute_matched_rules(cx, tree, entity, &mut matched_rules);
