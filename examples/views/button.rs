@@ -29,7 +29,7 @@ impl Model for AppData {
 fn main() {
     Application::new(|cx| {
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
-        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
+        cx.add_stylesheet(LIGHT_THEME).expect("Failed to find stylesheet");
 
         AppData { disabled: false }.build(cx);
 

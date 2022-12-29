@@ -42,7 +42,7 @@ fn main() {
 
         VStack::new(cx, |cx| {
             VStack::new(cx, |cx| {
-                Label::new(cx, "Basic Checkboxes");
+                Label::new(cx, "Basic checkboxes");
 
                 HStack::new(cx, |cx| {
                     // CBasic Checkboxes
@@ -59,7 +59,7 @@ fn main() {
                 })
                 .col_between(Pixels(4.0));
 
-                Label::new(cx, "Checkbox with Label").top(Pixels(20.0));
+                Label::new(cx, "Checkbox with label").top(Pixels(20.0));
 
                 // Checkboxes with label
                 HStack::new(cx, |cx| {
@@ -85,7 +85,9 @@ fn main() {
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0));
 
-                Label::new(cx, "Checkbox with Label").top(Pixels(20.0)).top(Pixels(20.0));
+                Label::new(cx, "Checkbox with custom icon and label")
+                    .top(Pixels(20.0))
+                    .top(Pixels(20.0));
 
                 HStack::new(cx, |cx| {
                     Checkbox::new(cx, AppData::option1)
@@ -105,5 +107,6 @@ fn main() {
     })
     .ignore_default_theme()
     .title("Checkbox")
+    .inner_size((300, 250))
     .run();
 }

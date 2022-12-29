@@ -17,7 +17,7 @@ fn main() {
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
-        AppData { chip1: "Something".to_string(), chip2: "Other something".to_string() }.build(cx);
+        AppData { chip1: "Chip".to_string(), chip2: "Another Chip".to_string() }.build(cx);
 
         VStack::new(cx, |cx| {
             VStack::new(cx, |cx| {

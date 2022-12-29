@@ -53,7 +53,20 @@ fn main() {
     Application::new(|cx| {
         cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
         cx.add_theme(STYLE);
-        AppData { items: vec!["Label", "Button", "Checkbox", "Slider"] }.build(cx);
+        AppData {
+            items: vec![
+                "Label",
+                "Button",
+                "Checkbox",
+                "Slider",
+                "Datepicker",
+                "Picklist",
+                "Switch",
+                "Spinbox",
+                "Tabs",
+            ],
+        }
+        .build(cx);
         //cx.add_stylesheet("examples/test_style.css").unwrap();
 
         TabView::new(cx, AppData::items, |cx, item| match item.get(cx) {
@@ -80,6 +93,19 @@ fn main() {
                 slider,
             ),
 
+            "Switch" => TabPair::new(
+                move |cx| {
+                    tab(cx, item);
+                },
+                switch,
+            ),
+
+            // "Spinbox" => TabPair::new(
+            //     move |cx| {
+            //         tab(cx, item);
+            //     },
+            //     spinbox,
+            // ),
             _ => TabPair::new(|_| {}, |_| {}),
         })
         .class("vertical");
@@ -238,12 +264,52 @@ pub fn slider(cx: &mut Context) {
         .child_top(Stretch(1.0))
         .child_bottom(Stretch(1.0))
         .col_between(Pixels(10.0));
+    })
+    .child_space(Pixels(10.0))
+    .class("bg-darker");
+}
 
-        Label::new(cx, "A multiline label").class("heading");
+#[derive(Lens)]
+pub struct SwitchData {
+    flag: bool,
+}
 
-        Label::new(cx, "This is some text which is wrapped")
-            .width(Pixels(100.0))
-            .bottom(Pixels(10.0));
+pub enum SwitchEvent {
+    Toggle,
+}
+
+impl Model for SwitchData {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        event.map(|switch_event, _| match switch_event {
+            SwitchEvent::Toggle => {
+                self.flag ^= true;
+            }
+        });
+    }
+}
+
+pub fn switch(cx: &mut Context) {
+    SwitchData { flag: false }.build(cx);
+
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Switch").class("title");
+
+        Label::new(cx, "A simple switch").class("heading");
+
+        Switch::new(cx, SwitchData::flag).on_toggle(|cx| cx.emit(SwitchEvent::Toggle));
+        // Slider::new(cx, SliderData::val).on_changing(|cx, val| cx.emit(SliderEvent::SetValue(val)));
+
+        // Label::new(cx, "A slider and label").class("heading");
+
+        // HStack::new(cx, |cx| {
+        //     Slider::new(cx, SliderData::val)
+        //         .on_changing(|cx, val| cx.emit(SliderEvent::SetValue(val)));
+        //     Label::new(cx, SliderData::val.map(|val| format!("{:.2}", val))).width(Pixels(50.0));
+        // })
+        // .height(Auto)
+        // .child_top(Stretch(1.0))
+        // .child_bottom(Stretch(1.0))
+        // .col_between(Pixels(10.0));
     })
     .child_space(Pixels(10.0))
     .class("bg-darker");
