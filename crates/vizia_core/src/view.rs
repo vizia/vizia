@@ -89,8 +89,6 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
 
     let background_color = cx.background_color().cloned().unwrap_or_default();
 
-    let font_color = cx.font_color().cloned().unwrap_or(Color::rgb(0, 0, 0));
-
     let border_color = cx.border_color().cloned().unwrap_or_default();
     let outline_color = cx.outline_color().cloned().unwrap_or_default();
 
