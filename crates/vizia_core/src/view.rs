@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use std::{any::Any, collections::HashMap};
+use cosmic_text::Edit;
 
 use crate::events::ViewHandler;
 use crate::resource::ImageOrId;
@@ -574,7 +575,38 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
             let origin_y = box_y + box_h * justify_y;
 
             cx.cosmic_context.sync_styles(cx.current, &cx.style);
-            // TODO cursor, selection
+
+            let selection_color = cx.style.selection_color.get(cx.current).copied().unwrap_or_default();
+            let caret_color = cx.style.caret_color.get(cx.current).copied().unwrap_or_default();
+            if selection_color.a() != 0 || caret_color.a() != 0 {
+                let cursor_width = cx.logical_to_physical(1.0) as u32;
+                let select_offset = cx.logical_to_physical(0.5) as u32;
+                cx.cosmic_context.with_editor(cx.current, |buf| {
+                    if selection_color.a() != 0 {
+                        if let Some(cursor_end) = buf.select_opt() {
+                            let mut path = Path::new();
+                            let (cursor_start, cursor_end) = if buf.cursor() < cursor_end {
+                                (buf.cursor(), cursor_end)
+                            } else {
+                                (cursor_end, buf.cursor())
+                            };
+                            for (sel_x, sel_y, sel_w, sel_h) in buf.buffer().highlight_blocks(cursor_start, cursor_end) {
+                                let sel_w = if sel_w == 0 { cursor_width } else { sel_w };
+                                path.rect(sel_x as f32 + box_x - select_offset as f32, sel_y as f32 + box_y, sel_w as f32, sel_h as f32);
+                            }
+                            canvas.fill_path(&mut path, &Paint::color(selection_color.into()));
+                        }
+                    }
+                    if caret_color.a() != 0 {
+                        let mut path = Path::new();
+                        for (sel_x, sel_y, sel_w, sel_h) in buf.buffer().highlight_blocks(buf.cursor(), buf.cursor()) {
+                            let sel_w = if sel_w == 0 { cursor_width } else { sel_w };
+                            path.rect(sel_x as f32 + box_x - select_offset as f32, sel_y as f32 + box_y, sel_w as f32, sel_h as f32);
+                        }
+                        canvas.fill_path(&mut path, &Paint::color(caret_color.into()));
+                    }
+                });
+            }
             if let Ok(draw_commands) = cx.cosmic_context.fill_to_cmds(
                 canvas,
                 cx.current,

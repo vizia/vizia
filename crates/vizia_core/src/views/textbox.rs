@@ -124,8 +124,10 @@ impl TextboxData {
 
     pub fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
         cx.cosmic_context.with_editor(self.content_entity, |buf| {
-            if selection && buf.select_opt().is_none() {
-                buf.set_select_opt(Some(buf.cursor()));
+            if selection {
+                if buf.select_opt().is_none() {
+                    buf.set_select_opt(Some(buf.cursor()));
+                }
             } else {
                 buf.set_select_opt(None);
             }
@@ -545,9 +547,6 @@ where
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        //let selection = cx.tree.get_child(cx.current, 0).unwrap();
-        //let caret = cx.tree.get_child(cx.current, 1).unwrap();
-
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseDown(MouseButton::Left) => {
                 if cx.is_over() {
@@ -634,7 +633,6 @@ where
                 }
 
                 Code::ArrowLeft => {
-                    //if self.edit {
                     let movement = if cx.modifiers.contains(Modifiers::CTRL) {
                         Movement::Word(Direction::Upstream)
                     } else {
@@ -645,15 +643,9 @@ where
                         movement,
                         cx.modifiers.contains(Modifiers::SHIFT),
                     ));
-
-                    //self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
-
-                    //self.set_caret(cx, cx.current);
-                    //}
                 }
 
                 Code::ArrowRight => {
-                    //if self.edit {
                     let movement = if cx.modifiers.contains(Modifiers::CTRL) {
                         Movement::Word(Direction::Downstream)
                     } else {
@@ -664,11 +656,6 @@ where
                         movement,
                         cx.modifiers.contains(Modifiers::SHIFT),
                     ));
-
-                    // self.move_cursor(cx, movement, cx.modifiers.contains(Modifiers::SHIFT));
-
-                    // self.set_caret(cx, cx.current);
-                    //}
                 }
 
                 Code::ArrowUp => {
@@ -687,31 +674,21 @@ where
 
                 Code::Backspace => {
                     if cx.modifiers.contains(Modifiers::CTRL) {
-                        //self.delete_text(cx, Movement::Word(Direction::Upstream));
                         cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Upstream)));
                     } else {
-                        //self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
                         cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Upstream)));
                     }
-
-                    //self.set_caret(cx, cx.current);
                 }
 
                 Code::Delete => {
-                    //if self.edit {
                     if cx.modifiers.contains(Modifiers::CTRL) {
-                        //self.delete_text(cx, Movement::Word(Direction::Downstream));
                         cx.emit(TextEvent::DeleteText(Movement::Word(Direction::Downstream)));
                     } else {
-                        //self.delete_text(cx, Movement::Grapheme(Direction::Downstream));
                         cx.emit(TextEvent::DeleteText(Movement::Grapheme(Direction::Downstream)));
                     }
-                    //self.set_caret(cx, cx.current);
-                    //}
                 }
 
                 Code::Escape => {
-                    //self.edit = false;
                     cx.emit(TextEvent::EndEdit);
                     cx.set_checked(false);
                 }
