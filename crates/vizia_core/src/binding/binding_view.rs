@@ -18,7 +18,7 @@ impl<L> Binding<L>
 where
     L: 'static + Lens,
     <L as Lens>::Source: 'static,
-    <L as Lens>::Target: PartialEq,
+    <L as Lens>::Target: Data,
 {
     /// Creates a new binding view.
     ///
@@ -35,7 +35,6 @@ where
     pub fn new<F>(cx: &mut Context, lens: L, builder: F)
     where
         F: 'static + Fn(&mut Context, L),
-        L::Target: Clone,
     {
         let id = cx.entity_manager.create();
         let current = cx.current();
@@ -55,7 +54,7 @@ where
             lens: L,
             id: Entity,
         ) where
-            L::Target: Clone + PartialEq,
+            L::Target: Data,
         {
             let key = lens.cache_key();
 

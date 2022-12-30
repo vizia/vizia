@@ -1,5 +1,7 @@
 use std::ops::Range;
 
+use crate::prelude::*;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Selection {
     pub anchor: usize,
@@ -33,5 +35,11 @@ impl Selection {
 
     pub fn is_caret(&self) -> bool {
         self.active == self.anchor
+    }
+}
+
+impl Data for Selection {
+    fn same(&self, other: &Self) -> bool {
+        *self == *other
     }
 }

@@ -205,14 +205,15 @@ pub use crate::model::*;
 mod store;
 pub(crate) use store::*;
 
+
 mod binding_view;
 pub use binding_view::*;
 
+mod data;
+pub use data::*;
+
 mod res;
 pub use res::*;
-
-mod data;
-pub use data::Data;
 
 mod ray;
 pub use ray::*;

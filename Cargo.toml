@@ -212,6 +212,10 @@ path = "examples/localization/fluent_translation.rs"
 name = "fluent_variables"
 path = "examples/localization/fluent_variables.rs"
 
+[[example]]
+name = "save_dialog"
+path = "examples/save_dialog.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "localization"]
 localization = ["vizia_core/localization"]

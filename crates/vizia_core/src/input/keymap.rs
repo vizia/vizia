@@ -44,14 +44,14 @@ use std::collections::HashMap;
 /// ```
 pub struct Keymap<T>
 where
-    T: Data + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     entries: HashMap<KeyChord, Vec<KeymapEntry<T>>>,
 }
 
 impl<T> Keymap<T>
 where
-    T: Data + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     /// Creates a new keymap.
     ///
@@ -169,7 +169,7 @@ where
 
 impl<T> Model for Keymap<T>
 where
-    T: Data + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|keymap_event, _| match keymap_event {
@@ -191,7 +191,7 @@ where
 
 impl<T> From<Vec<(KeyChord, KeymapEntry<T>)>> for Keymap<T>
 where
-    T: Data + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     fn from(vec: Vec<(KeyChord, KeymapEntry<T>)>) -> Self {
         let mut keymap = Self::new();
@@ -205,7 +205,7 @@ where
 /// An event used to interact with a [`Keymap`] at runtime.
 pub enum KeymapEvent<T>
 where
-    T: Data + Send + Sync,
+    T: 'static + Clone + PartialEq + Send + Sync,
 {
     /// Inserts an entry into the [`Keymap`].
     ///

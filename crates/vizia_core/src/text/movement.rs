@@ -11,8 +11,10 @@ pub enum Movement {
     Grapheme(Direction),
     Word(Direction),
     Line(Direction),
-    ParagraphStart,
-    ParagraphEnd,
+    Page(Direction),
+    Body(Direction),
+    LineStart,
+    LineEnd,
     Vertical(VerticalMovement),
 }
 

@@ -1,3 +1,4 @@
+use crate::context::EmitContext;
 use crate::{cache::CachedData, prelude::*};
 use std::{
     any::{Any, TypeId},
@@ -34,11 +35,6 @@ impl<'a, 'b, V> EventHandle<'a, 'b, V> {
         self.cx.play_animation(animation);
     }
 
-    /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Any + Send>(&mut self, message: M) {
-        self.cx.emit(message);
-    }
-
     pub fn modify<F>(&mut self, f: F)
     where
         F: FnOnce(&mut V),
@@ -52,6 +48,12 @@ impl<'a, 'b, V> EventHandle<'a, 'b, V> {
         {
             (f)(view);
         }
+    }
+}
+
+impl<'a, 'b, V> AsMut<EventContext<'b>> for EventHandle<'a, 'b, V> {
+    fn as_mut(&mut self) -> &mut EventContext<'b> {
+        self.cx
     }
 }
 
@@ -77,6 +79,20 @@ impl<'a, 'b, V> DataContext for EventHandle<'a, 'b, V> {
         }
 
         None
+    }
+}
+
+impl<'a, 'b, V> EmitContext for EventHandle<'a, 'b, V> {
+    fn emit<M: Any + Send>(&mut self, message: M) {
+        self.cx.emit(message);
+    }
+
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
+        self.cx.emit_to(target, message);
+    }
+
+    fn emit_custom(&mut self, event: Event) {
+        self.cx.emit_custom(event);
     }
 }
 
