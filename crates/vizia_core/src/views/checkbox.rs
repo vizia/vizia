@@ -102,7 +102,7 @@ use crate::prelude::*;
 /// # let cx = &mut Context::new();
 /// #
 /// # AppData { value: false }.build(cx);
-/// # use vizia_core::fonts::unicode_names::CANCEL;
+/// # use vizia_core::fonts::icons_names::CANCEL;
 ///
 /// Checkbox::new(cx, AppData::value)
 ///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue))
