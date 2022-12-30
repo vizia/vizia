@@ -262,6 +262,7 @@ pub enum TextEvent {
     Scroll(f32, f32),
     Copy,
     Paste,
+    Cut,
 
     // Helpers
     SetOnEdit(Option<Arc<dyn Fn(&mut EventContext, String) + Send + Sync>>),
@@ -393,6 +394,26 @@ impl Model for TextboxData {
                 if self.edit {
                     if let Ok(text) = cx.get_clipboard() {
                         cx.emit(TextEvent::InsertText(text));
+                    }
+                }
+            }
+
+            TextEvent::Cut =>
+            {
+                #[cfg(feature = "clipboard")]
+                if self.edit {
+                    if let Some(selected_text) = self.clone_selected(cx) {
+                        if selected_text.len() > 0 {
+                            cx.set_clipboard(selected_text)
+                                .expect("Failed to add text to clipboard");
+                            self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
+                            if let Some(callback) = self.on_edit.take() {
+                                let text = self.clone_text(cx);
+                                (callback)(cx, text);
+
+                                self.on_edit = Some(callback);
+                            }
+                        }
                     }
                 }
             }
@@ -729,12 +750,16 @@ where
                     }
                 }
 
-                Code::KeyC => {
+                Code::KeyC if cx.modifiers == &Modifiers::CTRL => {
                     cx.emit(TextEvent::Copy);
                 }
 
-                Code::KeyV => {
+                Code::KeyV if cx.modifiers == &Modifiers::CTRL => {
                     cx.emit(TextEvent::Paste);
+                }
+
+                Code::KeyX if cx.modifiers == &Modifiers::CTRL => {
+                    cx.emit(TextEvent::Cut);
                 }
 
                 _ => {}
