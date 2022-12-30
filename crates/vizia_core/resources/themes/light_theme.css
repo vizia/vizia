@@ -15,6 +15,16 @@ root {
     col-between: 8px;
 }
 
+/* Label */
+
+label {
+    color: #181818;
+}
+
+label.describing {
+    cursor: hand;
+}
+
 /* Button  */
 
 button {
@@ -128,10 +138,10 @@ button.ghost:disabled {
 /* Checkbox */
 
 checkbox {
-    border-radius: 4px;
-    border-width: 2px;
-    border-color: #888;
-    background-color: transparent;
+    border-radius: 2px;
+    border-width: 1px;
+    border-color: #626262;
+    background-color: #f4f4f4;
     child-space: 1s;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
@@ -139,8 +149,22 @@ checkbox {
 }
 
 checkbox:hover {
-    border-color: #51afef;
-    background-color: transparent;
+    border-color: #626262;
+    background-color: #ebebeb;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
+}
+
+checkbox:active {
+    border-color: #c4c4c4;
+    background-color: #e2e2e2;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
+}
+
+checkbox:disabled {
+    border-color: #c4c4c4;
+    background-color: #f4f4f400;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
 }
@@ -159,28 +183,24 @@ checkbox:checked {
     transition: border-color 0.1 0;
 }
 
-checkbox:disabled {
-    border-color: #b6b6b6;
+checkbox:checked:hover {
+    background-color: #73bff2;
+    border-color: #73bff2;
+    transition: background-color 0.1 0;
     transition: border-color 0.1 0;
 }
 
-checkbox:hover:disabled {
-    background-color: transparent;
-    transition: background-color 0.1 0;
-}
-
-checkbox:checked:hover {
-    background-color: #80caff;
-    border-color: #80caff;
-    color: #fff;
+checkbox:checked:active {
+    background-color: #59a4d9;
+    border-color: #59a4d9;
+    color: #e0e0e0;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
 }
 
 checkbox:checked:disabled {
-    background-color: #b6b6b6;
-    border-color: #b6b6b6;
-    color: #fff;
+    background-color: #c4c4c4;
+    border-color: #c4c4c4;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
 }
