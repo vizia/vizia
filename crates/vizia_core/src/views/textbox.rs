@@ -122,6 +122,13 @@ impl TextboxData {
         cx.needs_relayout();
     }
 
+    pub fn reset_text(&mut self, cx: &mut EventContext, text: &str) {
+        cx.cosmic_context.with_buffer(self.content_entity, |buf| {
+            buf.set_text(text, Attrs::new());
+        });
+        cx.needs_relayout();
+    }
+
     pub fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
         cx.cosmic_context.with_editor(self.content_entity, |buf| {
             if selection {
@@ -271,10 +278,6 @@ pub enum TextEvent {
     GeometryChanged,
 }
 
-enum TextEventInternal {
-    Reset,
-}
-
 impl Model for TextboxData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|text_event, _| match text_event {
@@ -293,7 +296,8 @@ impl Model for TextboxData {
             }
 
             TextEvent::ResetText(text) => {
-                self.text = text.clone();
+                self.reset_text(cx, text);
+                self.scroll(cx, 0.0, 0.0); // ensure_visible
             }
 
             TextEvent::DeleteText(movement) => {
@@ -333,7 +337,6 @@ impl Model for TextboxData {
                 self.edit = false;
                 cx.set_checked(false);
                 cx.release();
-                cx.emit(TextEventInternal::Reset);
             }
 
             TextEvent::Submit(reason) => {
@@ -579,6 +582,19 @@ where
                     cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
                 } else {
                     cx.emit(TextEvent::Submit(false));
+                    if let Some(source) = cx.data::<L::Source>() {
+                        let text = self.lens.view(source, |t| {
+                            if let Some(t) = t {
+                                t.to_string()
+                            } else {
+                                "".to_owned()
+                            }
+                        });
+
+                        cx.emit(TextEvent::ResetText(text));
+                    };
+                    cx.release();
+                    cx.set_checked(false);
 
                     // Forward event to hovered
                     cx.event_queue.push_back(
@@ -648,6 +664,21 @@ where
 
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
+                        if let Some(source) = cx.data::<L::Source>() {
+                            let text = self.lens.view(source, |t| {
+                                if let Some(t) = t {
+                                    t.to_string()
+                                } else {
+                                    "".to_owned()
+                                }
+                            });
+
+                            cx.emit(TextEvent::SelectAll);
+                            cx.emit(TextEvent::InsertText(text));
+                        };
+
+                        cx.set_checked(false);
+                        cx.release();
                     } else {
                         cx.emit(TextEvent::InsertText("\n".to_owned()));
                     }
@@ -767,21 +798,6 @@ where
 
             _ => {}
         });
-
-        if let Some(msg) = event.take::<TextEventInternal>() {
-            let TextEventInternal::Reset = msg;
-            if let Some(source) = cx.data::<L::Source>() {
-                let text = self.lens.view(source, |t| {
-                    if let Some(t) = t {
-                        t.to_string()
-                    } else {
-                        "".to_owned()
-                    }
-                });
-
-                cx.emit(TextEvent::ResetText(text));
-            };
-        }
     }
 }
 
