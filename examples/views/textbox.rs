@@ -24,7 +24,7 @@ fn main() {
             ),
             true,
         )
-        .width(Pixels(200.0))
+        .width(Pixels(200.0));
     })
     .title("Textbox")
     .run();
