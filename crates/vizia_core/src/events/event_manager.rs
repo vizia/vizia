@@ -1,6 +1,7 @@
 use crate::context::InternalEvent;
 use crate::events::EventMeta;
 use crate::prelude::*;
+use crate::style::{Abilities, PseudoClass};
 #[cfg(debug_assertions)]
 use crate::systems::compute_matched_rules;
 use crate::systems::hover_system;

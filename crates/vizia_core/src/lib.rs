@@ -43,7 +43,9 @@ pub mod image {
 #[doc(hidden)]
 pub mod prelude {
     pub use super::animation::{AnimExt, Animation, AnimationBuilder};
-    pub use super::binding::{Binding, Data, Index, Lens, LensExt, Model, Res, Setter, Then};
+    pub use super::binding::{
+        Binding, Data, Index, Lens, LensExt, Model, Res, Setter, StaticLens, Then,
+    };
     pub use super::context::{
         Context, ContextProxy, DataContext, DrawContext, EmitContext, EventContext, ProxyEmitError,
     };
