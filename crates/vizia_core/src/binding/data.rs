@@ -1,5 +1,6 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
+#[cfg(feature = "localization")]
 use unic_langid::LanguageIdentifier;
 
 use crate::prelude::*;
