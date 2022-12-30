@@ -41,7 +41,7 @@ serde = { version = "1.0", optional = true, features = ["derive"] }
 ouroboros = "^0.15"
 #cosmic-text = "^0.6"
 #cosmic-text = { git = "https://github.com/pop-os/cosmic-text", rev = "b9fef72f76e702bf1190292c60d567bd7f147361" }
-cosmic-text = { git = "https://github.com/rhelmot/cosmic-text", rev = "23afcaa033fbf06006b930fe7d24fca4e9223787" }
+cosmic-text = { git = "https://github.com/rhelmot/cosmic-text", rev = "6582ce5ff31f34ce51a50b3504e213206f19ce8d" }
 #cosmic-text = { path = "../../../cosmic-text" }
 swash = "^0.1"
 replace_with = "0.1.7"

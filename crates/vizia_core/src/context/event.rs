@@ -314,6 +314,11 @@ impl<'a> EventContext<'a> {
         self.style.needs_redraw = true;
     }
 
+    pub fn needs_relayout(&mut self) {
+        self.style.needs_relayout = true;
+        self.style.needs_redraw = true;
+    }
+
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
         if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
             return Ok(());

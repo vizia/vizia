@@ -1,10 +1,8 @@
 use crate::cache::BoundingBox;
 use crate::prelude::*;
-use crate::text::{
-    enforce_text_bounds, ensure_visible, idx_to_pos, measure_text_lines, pos_to_idx, text_layout,
-    text_paint_general, Direction, EditableText, Movement, Selection,
-};
+use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
+use cosmic_text::{Action, Attrs, Edit, LayoutGlyph};
 use std::sync::Arc;
 use vizia_id::GenerationalId;
 use vizia_input::Code;
@@ -12,29 +10,30 @@ use vizia_storage::TreeExt;
 
 #[derive(Lens)]
 pub struct TextboxData {
-    text: String,
-    selection: Selection,
-    sel_x: f32,
-    re_sel_x: bool,
+    //text: String,
+    //selection: Selection,
+    //sel_x: f32,
+    //re_sel_x: bool,
     edit: bool,
     transform: (f32, f32),
-    line_height: f32,
-    on_edit: Option<Arc<dyn Fn(&mut EventContext, String) + Send + Sync>>,
+    //line_height: f32,
     content_entity: Entity,
     kind: TextboxKind,
+    on_edit: Option<Arc<dyn Fn(&mut EventContext, String) + Send + Sync>>,
     on_submit: Option<Arc<dyn Fn(&mut EventContext, String, bool) + Send + Sync>>,
 }
 
 impl TextboxData {
-    pub fn new(text: String) -> Self {
+    pub fn new() -> Self {
+        //let text_length = text.as_str().len();
         Self {
-            text: text.clone(),
-            selection: Selection::new(0, 0),
-            sel_x: -1.0,
-            re_sel_x: false,
+            //text: text.clone(),
+            //selection: Selection::new(0, text_length),
+            //sel_x: -1.0,
+            //re_sel_x: false,
             edit: false,
             transform: (0.0, 0.0),
-            line_height: 0.0,
+            //line_height: 0.0,
             on_edit: None,
             content_entity: Entity::null(),
             kind: TextboxKind::SingleLine,
@@ -48,6 +47,7 @@ impl TextboxData {
             return;
         }
         let parent = entity.parent(cx.tree).unwrap();
+
         // this is a weird situation - layout and drawing must be done in physical space, but our
         // output (translate) must be in logical space.
         let scale = cx.style.dpi_factor as f32;
@@ -56,245 +56,191 @@ impl TextboxData {
         let bounds = cx.cache.bounds.get(entity).unwrap().clone();
         let mut parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
 
-        // calculate line height - we'll need this
-        let paint = text_paint_general(cx.style, cx.resource_manager, entity);
-        let font_metrics = cx.text_context.measure_font(&paint).unwrap();
-        let line_height = font_metrics.height();
-
-        // we can't just access cache.text_lines because the text could be just-updated
         let render_width = match self.kind {
             TextboxKind::MultiLineWrapped => parent_bounds.w,
             _ => f32::MAX,
         };
-        let ranges = text_layout(render_width, &self.text, &paint, &cx.text_context).unwrap();
-        let metrics =
-            measure_text_lines(&self.text, &paint, &ranges, bounds.x, bounds.y, &cx.text_context);
-        let ranges_metrics = ranges.into_iter().zip(metrics.into_iter()).collect::<Vec<_>>();
-        let (line, (x, _)) = idx_to_pos(self.selection.active, ranges_metrics.iter());
-        if self.re_sel_x {
-            self.re_sel_x = false;
-            self.sel_x = x;
-        }
-        let caret_box = BoundingBox {
-            x: x.round(),
-            y: bounds.y + line as f32 * line_height,
-            w: 1.0,
-            h: line_height,
-        };
 
-        // do the computation
-        let (mut tx, mut ty) = self.transform;
-        tx *= scale;
-        ty *= scale;
-        (tx, ty) = enforce_text_bounds(&bounds, &parent_bounds, (tx, ty));
-        parent_bounds.x -= 1.0;
-        parent_bounds.w += 2.0;
-        (tx, ty) = ensure_visible(&caret_box, &parent_bounds, (tx, ty));
-        self.transform = (tx.round() / scale, ty.round() / scale);
+        cx.cosmic_context.sync_styles(entity, &cx.style);
+
+        cx.cosmic_context.with_editor(entity, |buf| {
+            buf.buffer_mut().set_size(render_width as i32, i32::MAX);
+            let layout = buf.buffer().layout_cursor(&buf.cursor());
+            let glyphs: &Vec<LayoutGlyph> = &buf
+                .buffer_mut()
+                .line_layout(layout.line)
+                .unwrap()
+                .get(layout.layout)
+                .unwrap()
+                .glyphs;
+            let xpos = if let Some(glyph) = glyphs.get(layout.glyph) {
+                glyph.x
+            } else if let Some(glyph) = glyphs.last() {
+                glyph.x + glyph.w // TODO rtl?
+            } else {
+                0.0
+            };
+
+            let line = (0..layout.line)
+                .map(|text_line| buf.buffer_mut().line_layout(text_line).unwrap().len())
+                .sum::<usize>() as i32;
+
+            let line_height = buf.buffer().metrics().line_height;
+            let caret_box = BoundingBox {
+                x: bounds.x + xpos.round(),
+                y: bounds.y + (line * line_height) as f32,
+                w: 1.0,
+                h: line_height as f32,
+            };
+
+            // do the computation
+            let (mut tx, mut ty) = self.transform;
+            tx *= scale;
+            ty *= scale;
+            (tx, ty) = enforce_text_bounds(&bounds, &parent_bounds, (tx, ty));
+            parent_bounds.x -= 1.0;
+            parent_bounds.w += 2.0;
+            (tx, ty) = ensure_visible(&caret_box, &parent_bounds, (tx, ty));
+            self.transform = (tx.round() / scale, ty.round() / scale);
+        });
     }
 
-    pub fn insert_text(&mut self, _cx: &mut EventContext, text: &str) {
-        let text_length = text.len();
-        self.text.edit(self.selection.range(), text);
-
-        self.selection = Selection::caret(self.selection.min() + text_length);
+    pub fn insert_text(&mut self, cx: &mut EventContext, text: &str) {
+        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+            buf.insert_string(text, None);
+        });
+        cx.needs_relayout();
     }
 
-    pub fn delete_text(&mut self, _cx: &mut EventContext, movement: Movement) {
-        if !self.selection.is_caret() {
-            self.text.edit(self.selection.range(), "");
-
-            self.selection = Selection::caret(self.selection.min());
-        } else {
-            match movement {
-                Movement::Grapheme(Direction::Upstream) => {
-                    if let Some(offset) = self.text.prev_grapheme_offset(self.selection.active) {
-                        self.text.edit(offset..self.selection.active, "");
-                        self.selection = Selection::caret(offset);
-                    }
-                }
-
-                Movement::Grapheme(Direction::Downstream) => {
-                    if let Some(offset) = self.text.next_grapheme_offset(self.selection.active) {
-                        self.text.edit(self.selection.active..offset, "");
-                        self.selection = Selection::caret(self.selection.active);
-                    }
-                }
-
-                Movement::Word(Direction::Upstream) => {
-                    if let Some(offset) = self.text.prev_word_offset(self.selection.active) {
-                        self.text.edit(offset..self.selection.active, "");
-                        self.selection = Selection::caret(offset);
-                    }
-                }
-
-                Movement::Word(Direction::Downstream) => {
-                    if let Some(offset) = self.text.next_word_offset(self.selection.active) {
-                        self.text.edit(self.selection.active..offset, "");
-                        self.selection = Selection::caret(self.selection.active);
-                    }
-                }
-
-                _ => {}
-            }
+    pub fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
+        if cx.cosmic_context.with_editor(self.content_entity, |buf| !buf.delete_selection()) {
+            self.move_cursor(cx, movement, true);
+            cx.cosmic_context.with_editor(self.content_entity, |buf| {
+                buf.delete_selection();
+            });
         }
+        cx.needs_relayout();
     }
 
     pub fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
-        match movement {
-            Movement::Grapheme(Direction::Upstream) => {
-                self.re_sel_x = true;
-                if let Some(offset) = self.text.prev_grapheme_offset(self.selection.active) {
-                    self.selection.active = offset;
-                    offset
-                } else {
-                    self.selection.active
-                };
+        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+            if selection && buf.select_opt().is_none() {
+                buf.set_select_opt(Some(buf.cursor()));
+            } else {
+                buf.set_select_opt(None);
             }
 
-            Movement::Grapheme(Direction::Downstream) => {
-                self.re_sel_x = true;
-                if let Some(offset) = self.text.next_grapheme_offset(self.selection.active) {
-                    self.selection.active = offset;
-                    offset
-                } else {
-                    self.selection.active
-                };
-            }
-
-            Movement::Word(Direction::Upstream) => {
-                self.re_sel_x = true;
-                if let Some(offset) = self.text.prev_word_offset(self.selection.active) {
-                    self.selection.active = offset;
-                    offset
-                } else {
-                    self.selection.active
-                };
-            }
-
-            Movement::Word(Direction::Downstream) => {
-                self.re_sel_x = true;
-                if let Some(offset) = self.text.next_word_offset(self.selection.active) {
-                    self.selection.active = offset;
-                    offset
-                } else {
-                    self.selection.active
-                };
-            }
-
-            Movement::Line(dir) => {
-                let entity = self.content_entity;
-                let paint = text_paint_general(&cx.style, &cx.resource_manager, entity);
-                let font_metrics = cx.text_context.measure_font(&paint).unwrap();
-                // this computation happens in physical space
-                let line_height = font_metrics.height();
-
-                let default = vec![];
-                let lines = cx.draw_cache.text_lines.get(entity).unwrap_or(&default);
-                let (line, (_, y)) = idx_to_pos(self.selection.active, lines.iter());
-
-                if line == 0 && matches!(dir, Direction::Upstream) {
-                    self.selection.active = 0;
-                } else {
-                    let new_y = y + line_height
-                        * match dir {
-                            Direction::Upstream => -1.0,
-                            Direction::Downstream => 1.0,
-                            Direction::Left => 0.0,
-                            Direction::Right => 0.0,
-                        };
-
-                    self.selection.active = pos_to_idx(
-                        self.sel_x,
-                        new_y,
-                        lines.iter(),
-                        self.kind == TextboxKind::SingleLine,
-                    );
+            buf.action(match movement {
+                Movement::Grapheme(Direction::Upstream) => Action::Previous,
+                Movement::Grapheme(Direction::Downstream) => Action::Next,
+                Movement::Word(Direction::Upstream) => Action::PreviousWord,
+                Movement::Word(Direction::Downstream) => Action::NextWord,
+                Movement::Line(Direction::Upstream) => Action::Up,
+                Movement::Line(Direction::Downstream) => Action::Down,
+                Movement::LineStart => Action::Home,
+                Movement::LineEnd => Action::End,
+                Movement::Page(dir) => {
+                    let parent = self.content_entity.parent(&cx.tree).unwrap();
+                    let parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
+                    let sign = if let Direction::Upstream = dir { -1 } else { 1 };
+                    Action::Vertical(sign * parent_bounds.h as i32)
                 }
-            }
-
-            Movement::LineStart => {
-                self.re_sel_x = true;
-                let entity = self.content_entity;
-                let default = vec![];
-                let lines = cx.draw_cache.text_lines.get(entity).unwrap_or(&default);
-                if !lines.is_empty() {
-                    let (line, _) = idx_to_pos(self.selection.active, lines.iter());
-                    self.selection.active = lines[line].0.start;
-                }
-            }
-
-            Movement::LineEnd => {
-                self.re_sel_x = true;
-                let entity = self.content_entity;
-                let default = vec![];
-                let lines = cx.draw_cache.text_lines.get(entity).unwrap_or(&default);
-                if !lines.is_empty() {
-                    let (line, _) = idx_to_pos(self.selection.active, lines.iter());
-                    self.selection.active = lines[line].0.end;
-                }
-            }
-
-            Movement::Page(dir) => {
-                let entity = self.content_entity;
-                let parent = entity.parent(cx.tree).unwrap();
-                let default = vec![];
-                let lines = cx.draw_cache.text_lines.get(entity).unwrap_or(&default);
-                let (line, (_, y)) = idx_to_pos(self.selection.active, lines.iter());
-                let parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
-
-                if line == 0 && matches!(dir, Direction::Upstream) {
-                    self.selection.active = 0;
-                } else {
-                    let new_y = y + parent_bounds.h
-                        * match dir {
-                            Direction::Upstream => -1.0,
-                            Direction::Downstream => 1.0,
-                            Direction::Left => 0.0,
-                            Direction::Right => 0.0,
-                        };
-
-                    self.selection.active = pos_to_idx(
-                        self.sel_x,
-                        new_y,
-                        lines.iter(),
-                        self.kind == TextboxKind::SingleLine,
-                    );
-                }
-            }
-
-            Movement::Body(Direction::Upstream) => {
-                if selection {
-                    self.selection.active = 0;
-                } else {
-                    self.selection.active = 0;
-                    self.selection.anchor = 0;
-                }
-            }
-
-            Movement::Body(Direction::Downstream) => {
-                if selection {
-                    self.selection.active = self.text.len();
-                } else {
-                    self.selection.active = self.text.len();
-                    self.selection.anchor = self.text.len();
-                }
-            }
-
-            _ => {}
-        }
-
-        if !selection {
-            self.selection.anchor = self.selection.active;
-        }
+                Movement::Body(Direction::Upstream) => Action::BufferStart,
+                Movement::Body(Direction::Downstream) => Action::BufferEnd,
+                _ => return,
+            });
+        });
+        cx.needs_redraw();
     }
 
-    pub fn select_all(&mut self, _: &mut EventContext) {
-        self.selection = Selection::new(0, self.text.len());
+    pub fn select_all(&mut self, cx: &mut EventContext) {
+        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+            buf.action(Action::BufferStart);
+            buf.set_select_opt(Some(buf.cursor()));
+            buf.action(Action::BufferEnd);
+        });
+        cx.needs_redraw();
     }
 
-    pub fn select_range(&mut self, _: &mut EventContext, range: &core::ops::RangeInclusive<usize>) {
-        self.selection = Selection::new(*range.start(), *range.end());
+    pub fn select_word(&mut self, cx: &mut EventContext) {
+        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+            buf.action(Action::PreviousWord);
+            buf.set_select_opt(Some(buf.cursor()));
+            buf.action(Action::NextWord);
+        });
+        cx.needs_redraw();
+    }
+
+    pub fn select_paragraph(&mut self, cx: &mut EventContext) {
+        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+            buf.action(Action::ParagraphStart);
+            buf.set_select_opt(Some(buf.cursor()));
+            buf.action(Action::ParagraphEnd);
+        });
+        cx.needs_redraw();
+    }
+
+    pub fn deselect(&mut self, cx: &mut EventContext) {
+        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+            buf.set_select_opt(None);
+        });
+        cx.needs_redraw();
+    }
+
+    /// These input coordinates should be physical coordinates, i.e. what the mouse events provide.
+    /// The output text coordinates will also be physical, but relative to the top of the text
+    /// glyphs, appropriate for passage to cosmic.
+    pub fn coordinates_global_to_text(&self, cx: &EventContext, x: f32, y: f32) -> (f32, f32) {
+        let parent = self.content_entity.parent(&cx.tree).unwrap();
+        let parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
+
+        let x = x - self.transform.0 * cx.style.dpi_factor as f32 - parent_bounds.x;
+        let y = y - self.transform.1 * cx.style.dpi_factor as f32 - parent_bounds.y;
+        (x, y)
+    }
+
+    /// This function takes window-global physical coordinates.
+    pub fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32) {
+        let (x, y) = self.coordinates_global_to_text(cx, x, y);
+        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+            buf.action(Action::Click { x: x as i32, y: y as i32 })
+        });
+        cx.needs_redraw();
+    }
+
+    /// This function takes window-global physical coordinates.
+    pub fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
+        let (x, y) = self.coordinates_global_to_text(cx, x, y);
+        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+            buf.action(Action::Drag { x: x as i32, y: y as i32 })
+        });
+        cx.needs_redraw();
+    }
+
+    /// This function takes window-global physical dimensions.
+    pub fn scroll(&mut self, cx: &mut EventContext, x: f32, y: f32) {
+        let entity = self.content_entity;
+        let parent = cx.tree.get_parent(entity).unwrap();
+        let bounds = cx.cache.bounds.get(entity).unwrap().clone();
+        let parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
+        let (mut tx, mut ty) = self.transform;
+        let scale = cx.style.dpi_factor as f32;
+        tx *= scale;
+        ty *= scale;
+        tx += x * SCROLL_SENSITIVITY;
+        ty += y * SCROLL_SENSITIVITY;
+        (tx, ty) = enforce_text_bounds(&bounds, &parent_bounds, (tx, ty));
+        self.transform = (tx / scale, ty / scale);
+    }
+
+    pub fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
+        cx.cosmic_context.with_editor(self.content_entity, |buf| buf.copy_selection())
+    }
+
+    pub fn clone_text(&self, cx: &mut EventContext) -> String {
+        cx.cosmic_context.with_buffer(self.content_entity, |buf| {
+            buf.lines.iter().map(|line| line.text()).collect::<Vec<_>>().join("\n").to_string()
+        })
     }
 }
 
@@ -335,7 +281,8 @@ impl Model for TextboxData {
                     self.set_caret(cx);
 
                     if let Some(callback) = self.on_edit.take() {
-                        (callback)(cx, self.text.as_str().to_owned());
+                        let text = self.clone_text(cx);
+                        (callback)(cx, text);
 
                         self.on_edit = Some(callback);
                     }
@@ -352,7 +299,8 @@ impl Model for TextboxData {
                     self.set_caret(cx);
 
                     if let Some(callback) = self.on_edit.take() {
-                        (callback)(cx, self.text.as_str().to_owned());
+                        let text = self.clone_text(cx);
+                        (callback)(cx, text);
 
                         self.on_edit = Some(callback);
                     }
@@ -378,7 +326,7 @@ impl Model for TextboxData {
             }
 
             TextEvent::EndEdit => {
-                self.selection.active = self.selection.anchor;
+                self.deselect(cx);
                 self.edit = false;
                 cx.set_checked(false);
                 cx.release();
@@ -387,7 +335,8 @@ impl Model for TextboxData {
 
             TextEvent::Submit(reason) => {
                 if let Some(callback) = self.on_submit.take() {
-                    (callback)(cx, self.text.as_str().to_owned(), *reason);
+                    let text = self.clone_text(cx);
+                    (callback)(cx, text, *reason);
 
                     self.on_submit = Some(callback);
                 }
@@ -400,66 +349,36 @@ impl Model for TextboxData {
             }
 
             TextEvent::SelectWord => {
-                self.select_range(cx, &self.text.word_around(self.selection.active));
+                self.select_word(cx);
                 self.set_caret(cx);
             }
 
             TextEvent::SelectParagraph => {
-                self.select_range(cx, &self.text.paragraph_around(self.selection.active));
+                self.select_paragraph(cx);
                 self.set_caret(cx);
             }
 
             TextEvent::Hit(posx, posy) => {
-                let posx = *posx - self.transform.0 * cx.style.dpi_factor as f32;
-                let posy = *posy - self.transform.1 * cx.style.dpi_factor as f32;
-                let idx = pos_to_idx(
-                    posx,
-                    posy,
-                    cx.draw_cache.text_lines.get(self.content_entity).unwrap().iter(),
-                    self.kind == TextboxKind::SingleLine,
-                );
-                self.selection = Selection::new(idx, idx);
-                self.sel_x = posx;
+                self.hit(cx, *posx, *posy);
                 self.set_caret(cx);
             }
 
             TextEvent::Drag(posx, posy) => {
-                let posx = *posx - self.transform.0 * cx.style.dpi_factor as f32;
-                let posy = *posy - self.transform.1 * cx.style.dpi_factor as f32;
-                let idx = pos_to_idx(
-                    posx,
-                    posy,
-                    cx.draw_cache.text_lines.get(self.content_entity).unwrap().iter(),
-                    self.kind == TextboxKind::SingleLine,
-                );
-                self.selection = Selection::new(self.selection.anchor, idx);
-                self.sel_x = posx;
+                self.drag(cx, *posx, *posy);
                 self.set_caret(cx);
             }
 
             TextEvent::Scroll(x, y) => {
-                let entity = self.content_entity;
-                let parent = cx.tree.get_parent(entity).unwrap();
-                let bounds = cx.cache.bounds.get(entity).unwrap().clone();
-                let parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
-                let (mut tx, mut ty) = self.transform;
-                let scale = cx.style.dpi_factor as f32;
-                tx *= scale;
-                ty *= scale;
-                tx += *x * SCROLL_SENSITIVITY;
-                ty += *y * SCROLL_SENSITIVITY;
-                (tx, ty) = enforce_text_bounds(&bounds, &parent_bounds, (tx, ty));
-                self.transform = (tx / scale, ty / scale);
+                self.scroll(cx, *x, *y);
             }
 
             TextEvent::Copy =>
             {
                 #[cfg(feature = "clipboard")]
                 if self.edit {
-                    if cx.modifiers.contains(Modifiers::CTRL) {
-                        let selected_text = &self.text.as_str()[self.selection.range()];
+                    if let Some(selected_text) = self.clone_selected(cx) {
                         if selected_text.len() > 0 {
-                            cx.set_clipboard(selected_text.to_owned())
+                            cx.set_clipboard(selected_text)
                                 .expect("Failed to add text to clipboard");
                         }
                     }
@@ -470,10 +389,8 @@ impl Model for TextboxData {
             {
                 #[cfg(feature = "clipboard")]
                 if self.edit {
-                    if cx.modifiers.contains(Modifiers::CTRL) {
-                        if let Ok(text) = cx.get_clipboard() {
-                            cx.emit(TextEvent::InsertText(text));
-                        }
+                    if let Ok(text) = cx.get_clipboard() {
+                        cx.emit(TextEvent::InsertText(text));
                     }
                 }
             }
@@ -527,25 +444,30 @@ where
     }
 
     fn new_core(cx: &mut Context, lens: L, kind: TextboxKind) -> Handle<Self> {
+        // TODO can this be simplified now that text doesn't live in TextboxData?
         let result = Self { lens: lens.clone(), kind }.build(cx, move |cx| {
             Binding::new(cx, lens.clone(), |cx, text| {
-                let text =
-                    text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
+                let text_str = text.view(cx.data().unwrap(), |text| {
+                    text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned())
+                });
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
                         let td = TextboxData {
-                            text: text.clone(),
-                            selection: text_data.selection,
+                            //text: text.clone(),
+                            //selection: text_data.selection,
                             edit: text_data.edit,
-                            sel_x: text_data.sel_x,
-                            re_sel_x: text_data.re_sel_x,
+                            //sel_x: text_data.sel_x,
+                            //re_sel_x: text_data.re_sel_x,
                             transform: text_data.transform,
-                            line_height: text_data.line_height,
+                            //line_height: text_data.line_height,
                             on_edit: text_data.on_edit.clone(),
                             content_entity: text_data.content_entity,
                             kind: text_data.kind,
                             on_submit: text_data.on_submit.clone(),
                         };
+                        cx.cosmic_context.with_buffer(text_data.content_entity, |buf| {
+                            buf.set_text(&text_str, Attrs::new());
+                        });
                         let parent = cx.current().parent(&cx.tree).unwrap();
                         cx.with_current(parent, |cx| td.build(cx));
                         // push an event into the queue to force an update because the textbox data
@@ -553,12 +475,15 @@ where
                         cx.emit_to(cx.current(), ());
                     }
                 } else {
-                    let mut td = TextboxData::new(text.clone());
+                    let mut td = TextboxData::new();
                     td.set_caret(&mut EventContext::new(cx));
                     let parent = cx.current().parent(&cx.tree).unwrap();
                     cx.with_current(parent, |cx| td.build(cx));
                     cx.emit_to(cx.current(), ());
                 }
+            });
+            let text = lens.view(cx.data().unwrap(), |text| {
+                text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned())
             });
             TextboxContainer {}
                 .build(cx, move |cx| {
@@ -566,13 +491,15 @@ where
                         .build(cx, |_| {})
                         .hoverable(false)
                         .class("textbox_content")
-                        .text(TextboxData::text)
-                        .text_selection(TextboxData::selection)
+                        .text(&text)
                         .translate(TextboxData::transform)
                         .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
                         .entity;
 
                     cx.emit(TextEvent::InitContent(lbl, kind));
+                    cx.cosmic_context.with_buffer(lbl, |buf| {
+                        buf.set_text(&text, Attrs::new());
+                    });
                 })
                 .hoverable(false)
                 .class("textbox_container");

@@ -12,7 +12,7 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
 use crate::style::{LinearGradient, Style};
-use crate::text::{CosmicContext, Selection};
+use crate::text::CosmicContext;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 
@@ -157,7 +157,6 @@ impl<'a> DrawContext<'a> {
     style_getter_untranslated!(Weight, font_weight);
     style_getter_untranslated!(FontStyle, font_style);
     style_getter_untranslated!(bool, text_wrap);
-    style_getter_untranslated!(Selection, text_selection);
 
     pub fn opacity(&self) -> f32 {
         self.cache.get_opacity(self.current)

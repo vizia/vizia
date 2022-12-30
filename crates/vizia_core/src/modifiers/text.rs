@@ -1,5 +1,5 @@
 use super::internal;
-use crate::{prelude::*, text::Selection};
+use crate::prelude::*;
 use cosmic_text::{Attrs, FamilyOwned, Weight};
 
 /// Modifiers for changing the text properties of a view.
@@ -74,12 +74,6 @@ pub trait TextModifiers: internal::Modifiable {
         });
         self
     }
-
-    modifier!(
-        /// Sets the text selection of the view.
-        text_selection,
-        Selection
-    );
 
     modifier!(
         /// Sets the ext caret color of the view.
