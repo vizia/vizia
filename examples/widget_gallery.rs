@@ -23,11 +23,15 @@ pub fn buttons(cx: &mut Context) -> Handle<impl View> {
     VStack::new(cx, |cx| {
         Label::new(cx, "Button").font_size(30.0).font_weight(Weight::BOLD);
 
-        Label::new(cx, "A simple Button with a text label").font_size(24.0).font_weight(Weight::BOLD);
+        Label::new(cx, "A simple Button with a text label")
+            .font_size(24.0)
+            .font_weight(Weight::BOLD);
 
         Button::new(cx, |_| {}, |cx| Label::new(cx, "Simple Button"));
 
-        Label::new(cx, "A simple Button with an icon label").font_size(24.0).font_weight(Weight::BOLD);
+        Label::new(cx, "A simple Button with an icon label")
+            .font_size(24.0)
+            .font_weight(Weight::BOLD);
 
         Button::new(cx, |_| {}, |cx| Label::new(cx, ICON_PLUS).class("icon"));
 
@@ -49,7 +53,9 @@ pub fn buttons(cx: &mut Context) -> Handle<impl View> {
             },
         );
 
-        Label::new(cx, "An accented Button with a text label").font_size(24.0).font_weight(Weight::BOLD);
+        Label::new(cx, "An accented Button with a text label")
+            .font_size(24.0)
+            .font_weight(Weight::BOLD);
 
         Button::new(cx, |_| {}, |cx| Label::new(cx, "Simple Button")).class("accent");
     })
