@@ -40,6 +40,8 @@ button:active {
 button:disabled {
     border-color: #ebebeb;
     color: #626262;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 button:focus-visible {
@@ -50,7 +52,7 @@ button:focus-visible {
 
 button.accent {
     border-width: 0px;
-    background-color: #52b0ef;
+    background-color: #51afef;
     transition: background-color 0.1 0;
     color: #181818;
 }
@@ -58,21 +60,30 @@ button.accent {
 button.accent:over {
     background-color: #73bff2;
     transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 button.accent:active {
-    background-color: #3995d6;
+    background-color: #59a4d9;
+    color: #363636;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
+}
+
+button.accent:disabled {
+    background-color: #c4c4c4;
+    color: white;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 button.outline {
     background-color: transparent;
     border-width: 1px;
     border-color: #51afef;
-    transition: background-color 0.1 0;
-}
-
-button.outline label {
     color: #51afef;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 button.outline:over {
@@ -84,12 +95,17 @@ button.outline:active {
     background-color: #3995d610;
 }
 
-button.ghost {
-    background-color: transparent;
+button.outline:disabled {
+    border-color: #ebebeb;
+    color: #626262;
     transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
-button.ghost label {
+button.ghost {
+    border-width: 0px;
+    background-color: transparent;
+    transition: background-color 0.1 0;
     color: #51afef;
 }
 
@@ -100,6 +116,13 @@ button.ghost:over {
 
 button.ghost:active {
     background-color: #3995d610;
+    transition: background-color 0.1 0;
+}
+
+button.ghost:disabled {
+    color: #626262;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 /* Checkbox */

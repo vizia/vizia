@@ -37,7 +37,7 @@ pub fn hover_system(cx: &mut Context) {
         }
 
         // Skip disabled widgets
-        let is_disabled = cx.style.disabled.get(hovered_widget).copied().unwrap_or_default();
+        let is_disabled = cx.style.disabled.get(entity).copied().unwrap_or_default();
         if is_disabled {
             continue;
         }
