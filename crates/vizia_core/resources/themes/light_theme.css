@@ -1,7 +1,7 @@
 /* General */
 
 * {
-    color: #000;
+    /* color: #000; */
     /* border-color: blue; */
     /* border-width: 1px; */
 }
@@ -11,7 +11,7 @@
 }
 
 root {
-    background-color: #e4e4e4;
+    background-color: #fafafa;
 }
 
 .container {
@@ -26,37 +26,43 @@ root {
 button {
     border-radius: 4px;
     border-width: 1px;
-    border-color: #d9d9d9;
-    background-color: #ececec;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
     transition: background-color 0.1 0;
-}
-
-button label {
     color: #181818;
-    child-space: 1s;
 }
 
 button:over {
-    background-color: #fff;
+    background-color: #f9f9f9;
     transition: background-color 0.1 0;
 }
 
 button:active {
-    background-color: #d9d9d9;
+    background-color: #fafafa;
+    border-color: #ebebeb;
+    color: #626262;
+}
+
+button:disabled {
+    border-color: #ebebeb;
+    color: #626262;
+}
+
+button:focus-visible {
+    outline-width: 2px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
 }
 
 button.accent {
     border-width: 0px;
-    background-color: #51afef;
+    background-color: #52b0ef;
     transition: background-color 0.1 0;
-}
-
-button.accent label {
     color: #181818;
 }
 
 button.accent:over {
-    background-color: #80caff;
+    background-color: #73bff2;
     transition: background-color 0.1 0;
 }
 
@@ -100,22 +106,6 @@ button.ghost:over {
 
 button.ghost:active {
     background-color: #3995d610;
-}
-
-button:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
-}
-
-button:disabled {
-    border-width: 0px;
-    background-color: #404040;
-    border-color: #404040;
-}
-
-button:disabled label {
-    color: #888;
 }
 
 /* Checkbox */
@@ -482,6 +472,8 @@ scrollbar .thumb:focus {
     background-color: #888;
 }
 
+/* slider */
+
 slider * {
     background-color: #51afef20;
     border-radius: 2px;
@@ -545,88 +537,67 @@ spinbox picklist.spinbox-value .title {
     col-between: 4px;
 }
 
-switch {
-    width: 24px;
-    height: 16px;
-    border-radius: 8px;
-    border-width: 2px;
-    border-color: #888888;
-    background-color: transparent;
-    child-space: 1s;
-    transition: border-color 0.1 0;
-}
+/* Switch */
 
-.switch-handle-container {
-    left: 2px;
-    top: 2px;
-    width: 16px;
-    height: 8px;
-    border-radius: 4px;
-    background-color: transparent;
+switch .switch-handle-bg {
+    border-radius: 6px;
+    background-color: #888;
     transition: background-color 0.1 0;
 }
 
-.switch-handle {
-    width: 8px;
-    height: 8px;
-    background-color: #888888;
-    border-radius: 4px;
+switch .switch-handle {
+    border-width: 1px;
+    border-color: #d9d9d9;
+    background-color: #ececec;
+    border-radius: 50%;
     transition: background-color 0.1 0;
+    transition: left 0.1 0;
 }
 
-switch:hover .switch-handle-container .switch-handle {
-    background-color: #51afef;
+switch:hover .switch-handle {
+    background-color: #f0f0f0;
+    transition: background-color 0.1 0;
 }
 
 switch:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef;
+    outline-color: #51afef80;
+    outline-offset: 3px;
 }
 
-switch:active {
-    border-color: #b6b6b6;
-    background-color: #dcdcdc;
-}
-
-switch:checked {
-    border-color: #51afef;
-}
-
-switch:checked .switch-handle-container {
+switch:checked .switch-handle-bg {
     background-color: #51afef40;
+    transition: background-color 0.1 0;
 }
 
-switch:checked .switch-handle-container .switch-handle {
+switch:checked .switch-handle {
     background-color: #51afef;
-    left: 8px;
+    transition: background-color 0.1 0;
 }
 
-switch:checked:hover .switch-handle-container .switch-handle {
+switch:checked:hover .switch-handle {
     background-color: #80caff;
+    transition: background-color 0.1 0;
 }
 
-switch:disabled {
-    border-color: #b6b6b6;
+switch:disabled * {
+    background-color: #cccccc;
+    transition: background-color 0.1 0;
 }
 
-switch:disabled .switch-handle-container .switch-handle {
-    background-color: #b6b6b6;
+switch:hover:disabled * {
+    background-color: #cccccc;
+    transition: background-color 0.1 0;
 }
 
-switch:hover:disabled {
-    background-color: transparent;
+switch:checked:disabled * {
+    background-color: #cccccc;
+    transition: background-color 0.1 0;
 }
 
-switch:hover:disabled .switch-handle-container .switch-handle {
-    background-color: #b6b6b6;
-}
-
-switch:checked:disabled .switch-handle-container {
-    background-color: #b6b6b640;
-}
-
-switch:checked:disabled .switch-handle-container .switch-handle {
-    background-color: #b6b6b6;
+switch:checked:hover:disabled * {
+    background-color: #cccccc;
+    transition: background-color 0.1 0;
 }
 
 table {

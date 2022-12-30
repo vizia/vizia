@@ -552,7 +552,7 @@ scrollbar .thumb:focus {
 
 /* Slider */
 
-slider * {
+slider {
     background-color: #51afef20;
     border-radius: 3px;
 }
@@ -566,15 +566,28 @@ slider:focus-visible {
 
 slider .active {
     background-color: #51afef80;
+    border-radius: 3px;
 }
 
 slider .thumb {
     background-color: #51afef;
-    border-radius: 6px;
+    border-radius: 50%;
 }
 
 slider .thumb:hover {
     background-color: #80caff;
+}
+
+slider:disabled {
+    background-color: #404040;
+}
+
+slider:disabled .active {
+    background-color: #404040;
+}
+
+slider:disabled .thumb {
+    background-color: #404040;
 }
 
 /* Named Slider */
@@ -632,13 +645,13 @@ spinbox picklist.spinbox-value {
 
 /* Switch */
 
-.switch-handle-bg {
+switch .switch-handle-bg {
     border-radius: 6px;
     background-color: #343434;
     transition: background-color 0.1 0;
 }
 
-.switch-handle {
+switch .switch-handle {
     background-color: #888888;
     border-radius: 50%;
     transition: background-color 0.1 0;
@@ -664,39 +677,37 @@ switch:checked .switch-handle-bg {
 switch:checked .switch-handle {
     background-color: #51afef;
     transition: background-color 0.1 0;
-    transition: left 0.1 0;
 }
 
 switch:checked:hover .switch-handle {
-    background-color: #9fd5fb;
+    background-color: #80caff;
     transition: background-color 0.1 0;
 }
 
-switch:disabled .switch-handle {
-    background-color: #585858;
+switch:disabled * {
+    background-color: #404040;
     transition: background-color 0.1 0;
 }
 
-switch:checked:disabled .switch-handle-bg {
-    background-color: #343434;
+switch:hover:disabled * {
+    background-color: #404040;
     transition: background-color 0.1 0;
 }
 
-switch:checked:disabled .switch-handle {
-    background-color: #585858;
+switch:checked:disabled * {
+    background-color: #404040;
     transition: background-color 0.1 0;
 }
 
+switch:checked:hover:disabled * {
+    background-color: #404040;
+    transition: background-color 0.1 0;
+}
 /* Tab */
 
 tabview {
     background-color: #343434;
-    border-radius: 4px;
     layout-type: column;
-}
-
-tabview.vertical {
-    layout-type: row;
 }
 
 tabview tabheader label {
@@ -730,30 +741,6 @@ tabview.vertical tabheader .indicator {
 tabview tabheader:checked .indicator {
     background-color: #51afef;
 }
-
-tabview.vertical tabheader {
-    layout-type: row;
-}
-
-tabview .tabview-tabheader-wrapper {
-    layout-type: row;
-}
-
-tabview.vertical .tabview-tabheader-wrapper {
-    layout-type: column;
-}
-
-/* tabheader:disabled {
-    background-color: transparent;
-}
-
-tabheader:disabled label {
-    color: #888;
-}
-
-.tabview-content-wrapper {
-    background-color: #121212;
-} */
 
 /* Table */
 

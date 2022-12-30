@@ -36,6 +36,12 @@ pub fn hover_system(cx: &mut Context) {
             continue;
         }
 
+        // Skip disabled widgets
+        let is_disabled = cx.style.disabled.get(hovered_widget).copied().unwrap_or_default();
+        if is_disabled {
+            continue;
+        }
+
         let mut transform = cx.cache.get_transform(entity);
         transform.inverse();
 

@@ -477,7 +477,7 @@ scrollbar.vertical .thumb {
 /* Slider */
 
 slider {
-    height: 6px;
+    height: 8px;
     width: 1s;
     border-radius: 2px;
 }
@@ -486,12 +486,12 @@ slider.vertical {
     top: auto;
     bottom: auto;
     height: 1s;
-    width: 6px;
+    width: 8px;
 }
 
 slider .thumb {
-    width: 12px;
-    height: 12px;
+    width: 16px;
+    height: 16px;
     top: 1s;
     bottom: 1s;
     child-space: 1s;
@@ -626,17 +626,18 @@ zstack > * {
 /* Switch */
 
 switch {
-    width: 32px;
+    width: 30px;
     height: 18px;
 }
 
-.switch-handle {
+switch .switch-handle {
     left: 0px;
     width: 18px;
     height: 18px;
+    transition: left 0.1 0;
 }
 
-.switch-handle-bg {
+switch .switch-handle-bg {
     width: 30px;
     height: 12px;
     top: 1s;
@@ -646,6 +647,7 @@ switch {
 
 switch:checked .switch-handle {
     left: 12px;
+    transition: left 0.1 0;
 }
 
 /* Tab */
@@ -653,6 +655,22 @@ switch:checked .switch-handle {
 tabview {
     width: 1s;
     height: 1s;
+}
+
+tabview.vertical {
+    layout-type: row;
+}
+
+tabview.vertical tabheader {
+    layout-type: row;
+}
+
+tabview .tabview-tabheader-wrapper {
+    layout-type: row;
+}
+
+tabview.vertical .tabview-tabheader-wrapper {
+    layout-type: column;
 }
 
 .tabview-tabheader-wrapper {
