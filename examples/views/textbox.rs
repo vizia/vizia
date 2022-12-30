@@ -1,4 +1,5 @@
 use vizia::prelude::*;
+use vizia_core::state::StaticLens;
 
 #[derive(Lens, Setter, Model)]
 pub struct AppData {

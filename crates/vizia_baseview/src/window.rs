@@ -44,9 +44,6 @@ impl ViziaWindow {
             (builder)(&mut cx);
         }
 
-        let mut backend_cx = BackendContext::new(&mut cx);
-        backend_cx.synchronize_fonts();
-
         let application = ApplicationRunner::new(cx, scale_policy);
         unsafe { context.make_not_current() };
 
@@ -160,8 +157,6 @@ impl ViziaWindow {
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
         ignore_default_theme: bool,
-        text_shaping_run_cache_size: Option<usize>,
-        text_shaped_words_cache_size: Option<usize>,
     ) where
         F: Fn(&mut Context),
         F: 'static + Send,
