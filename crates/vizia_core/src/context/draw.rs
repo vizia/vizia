@@ -102,8 +102,8 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Returns the lookup pattern to pick the default font.
-    pub fn default_font(&self) -> Vec<FamilyOwned> {
-        self.style.default_font.clone()
+    pub fn default_font(&self) -> &[FamilyOwned] {
+        &self.style.default_font
     }
 
     /// Returns the font-size of the current entity in physical coordinates.

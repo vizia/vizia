@@ -10,13 +10,8 @@ use vizia_storage::TreeExt;
 
 #[derive(Lens)]
 pub struct TextboxData {
-    //text: String,
-    //selection: Selection,
-    //sel_x: f32,
-    //re_sel_x: bool,
     edit: bool,
     transform: (f32, f32),
-    //line_height: f32,
     content_entity: Entity,
     kind: TextboxKind,
     on_edit: Option<Arc<dyn Fn(&mut EventContext, String) + Send + Sync>>,
@@ -25,15 +20,9 @@ pub struct TextboxData {
 
 impl TextboxData {
     pub fn new() -> Self {
-        //let text_length = text.as_str().len();
         Self {
-            //text: text.clone(),
-            //selection: Selection::new(0, text_length),
-            //sel_x: -1.0,
-            //re_sel_x: false,
             edit: false,
             transform: (0.0, 0.0),
-            //line_height: 0.0,
             on_edit: None,
             content_entity: Entity::null(),
             kind: TextboxKind::SingleLine,
@@ -479,13 +468,8 @@ where
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
                         let td = TextboxData {
-                            //text: text.clone(),
-                            //selection: text_data.selection,
                             edit: text_data.edit,
-                            //sel_x: text_data.sel_x,
-                            //re_sel_x: text_data.re_sel_x,
                             transform: text_data.transform,
-                            //line_height: text_data.line_height,
                             on_edit: text_data.on_edit.clone(),
                             content_entity: text_data.content_entity,
                             kind: text_data.kind,
@@ -658,10 +642,6 @@ where
             WindowEvent::KeyDown(code, _) => match code {
                 Code::Enter => {
                     // Finish editing
-                    // self.edit = false;
-
-                    //cx.emit(TextEvent::EndEdit);
-
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
                         if let Some(source) = cx.data::<L::Source>() {

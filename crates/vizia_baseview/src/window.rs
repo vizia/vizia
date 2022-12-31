@@ -175,14 +175,6 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                //if let Some(size) = text_shaped_words_cache_size {
-                //    BackendContext::new(&mut context)
-                //        .text_context()
-                //        .resize_shaped_words_cache(size);
-                //}
-                //if let Some(size) = text_shaping_run_cache_size {
-                //    BackendContext::new(&mut context).text_context().resize_shaping_run_cache(size);
-                //}
 
                 context.ignore_default_theme = ignore_default_theme;
                 context.remove_user_themes();
@@ -220,8 +212,6 @@ impl WindowHandler for ViziaWindow {
     fn on_event(&mut self, _window: &mut Window<'_>, event: Event) -> EventStatus {
         let mut should_quit = false;
         self.application.handle_event(event, &mut should_quit);
-
-        //self.application.update_data();
 
         self.application.handle_idle(&self.on_idle);
 
