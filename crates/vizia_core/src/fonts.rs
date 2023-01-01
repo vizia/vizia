@@ -8,6 +8,8 @@ pub const MATERIAL_ICONS_REGULAR: &'static [u8] =
     include_bytes!("../resources/fonts/MaterialIcons-Regular.ttf");
 
 pub mod icons_names {
+    pub const PLUS: &str = "\u{2b}";
+    pub const MINUS: &str = "\u{2d}";
     pub const DOWN: &str = "\u{e75c}";
     pub const LEFT: &str = "\u{e75d}";
     pub const RIGHT: &str = "\u{e75e}";
@@ -21,8 +23,10 @@ pub mod material_names {
     pub const LEFT: &str = "\u{e314}";
     pub const RIGHT: &str = "\u{E315}";
     pub const UP: &str = "\u{e316}";
+    pub const PENCIL: &str = "\u{e150}";
 }
 
 pub mod unicode_names {
     pub const PLUS: &str = "\u{2b}";
+    pub const MINUS: &str = "\u{2d}";
 }

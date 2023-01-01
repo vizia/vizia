@@ -1,6 +1,6 @@
 use super::internal;
 use crate::prelude::*;
-use cosmic_text::{Attrs, FamilyOwned, Weight};
+use cosmic_text::{FamilyOwned, Weight};
 
 /// Modifiers for changing the text properties of a view.
 pub trait TextModifiers: internal::Modifiable {
@@ -9,10 +9,7 @@ pub trait TextModifiers: internal::Modifiable {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, val| {
             let text_data = val.to_string();
-
-            cx.text_context.with_buffer(entity, |buffer| {
-                buffer.set_text(&text_data, Attrs::new());
-            });
+            cx.text_context.set_text(entity, &text_data);
 
             cx.need_relayout();
             cx.need_redraw();

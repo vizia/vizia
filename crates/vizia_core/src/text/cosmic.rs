@@ -41,6 +41,10 @@ struct TextContextInternal<'a> {
 }
 
 impl TextContext {
+    pub(crate) fn font_system(&self) -> &FontSystem {
+        self.borrow_font_system()
+    }
+
     pub fn clear_buffer(&mut self, entity: Entity) {
         self.with_int_mut(move |int: &mut TextContextInternal| {
             int.buffers.remove(&entity);
@@ -70,7 +74,7 @@ impl TextContext {
     }
 
     pub fn sync_styles(&mut self, entity: Entity, style: &Style) {
-        let (family, weight, font_style) = self.with_int(|int: &TextContextInternal| {
+        let (family, weight, font_style, monospace) = self.with_int(|int: &TextContextInternal| {
             let families = style
                 .font_family
                 .get(entity)
@@ -86,7 +90,7 @@ impl TextContext {
             };
             let id = int.font_system.db().query(&query).unwrap(); // TODO worst-case default handling
             let font = int.font_system.get_font(id).unwrap();
-            (font.info.family.clone(), font.info.weight, font.info.style)
+            (font.info.family.clone(), font.info.weight, font.info.style, font.info.monospaced)
         });
         let color = style.font_color.get(entity).copied().unwrap_or(Color::rgb(0, 0, 0));
         self.with_buffer(entity, |buf| {
@@ -94,6 +98,7 @@ impl TextContext {
                 .family(Family::Name(&family))
                 .weight(weight)
                 .style(font_style)
+                .monospaced(monospace)
                 .color(FontColor::rgba(color.r(), color.g(), color.b(), color.a()));
             let wrap = if style.text_wrap.get(entity).copied().unwrap_or_default() {
                 Wrap::Word
