@@ -163,19 +163,12 @@ impl<'a> DrawContext<'a> {
     }
 
     pub fn draw_text(&mut self, canvas: &mut Canvas, origin: (f32, f32), justify: (f32, f32)) {
-        if let Ok(draw_commands) = self.text_context.fill_to_cmds(
-            canvas,
-            self.current,
-            origin,
-            justify,
-        ) {
+        if let Ok(draw_commands) =
+            self.text_context.fill_to_cmds(canvas, self.current, origin, justify)
+        {
             for (color, cmds) in draw_commands.into_iter() {
-                let temp_paint = Paint::color(femtovg::Color::rgba(
-                    color.r(),
-                    color.g(),
-                    color.b(),
-                    color.a(),
-                ));
+                let temp_paint =
+                    Paint::color(femtovg::Color::rgba(color.r(), color.g(), color.b(), color.a()));
                 canvas.draw_glyph_cmds(cmds, &temp_paint);
             }
         }

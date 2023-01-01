@@ -215,8 +215,8 @@ impl<T: Clone + Res<T>> Res<Vec<T>> for Vec<T> {
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-        where
-            F: 'static + Clone + Fn(&mut Context, Entity, Vec<T>),
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, Vec<T>),
     {
         (closure)(cx, entity, self.clone())
     }
@@ -227,7 +227,10 @@ impl Res<FamilyOwned> for FamilyOwned {
         self.clone()
     }
 
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F) where F: 'static + Clone + Fn(&mut Context, Entity, FamilyOwned) {
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, FamilyOwned),
+    {
         (closure)(cx, entity, self.clone())
     }
 }
