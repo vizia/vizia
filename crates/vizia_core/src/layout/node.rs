@@ -2,11 +2,11 @@ use morphorm::{Node, Units};
 
 use crate::prelude::*;
 use crate::style::Style;
-use crate::text::CosmicContext;
+use crate::text::TextContext;
 
 impl<'w> Node<'w> for Entity {
     type Data = Style;
-    type Sublayout = CosmicContext;
+    type Sublayout = TextContext;
 
     fn layout_type(&self, store: &Self::Data) -> Option<morphorm::LayoutType> {
         store.layout_type.get(*self).cloned()

@@ -269,7 +269,17 @@ impl<T: std::hash::Hash + Eq + Data> Data for std::collections::HashSet<T> {
             return false;
         }
 
-        *self == *other
+        self.iter().zip(other.iter()).all(|(a, b)| a.same(b))
+    }
+}
+
+impl<T: std::hash::Hash + Eq + Data, V: Data> Data for std::collections::HashMap<T, V> {
+    fn same(&self, other: &Self) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
+        self.iter().zip(other.iter()).all(|(a, b)| a.0.same(&b.0) && a.1.same(&b.1))
     }
 }
 

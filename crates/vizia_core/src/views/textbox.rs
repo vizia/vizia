@@ -50,9 +50,9 @@ impl TextboxData {
             _ => f32::MAX,
         };
 
-        cx.cosmic_context.sync_styles(entity, &cx.style);
+        cx.text_context.sync_styles(entity, &cx.style);
 
-        cx.cosmic_context.with_editor(entity, |buf| {
+        cx.text_context.with_editor(entity, |buf| {
             buf.buffer_mut().set_size(render_width as i32, i32::MAX);
             let layout = buf.buffer().layout_cursor(&buf.cursor());
             let glyphs: &Vec<LayoutGlyph> = &buf
@@ -95,16 +95,16 @@ impl TextboxData {
     }
 
     pub fn insert_text(&mut self, cx: &mut EventContext, text: &str) {
-        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+        cx.text_context.with_editor(self.content_entity, |buf| {
             buf.insert_string(text, None);
         });
         cx.needs_relayout();
     }
 
     pub fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
-        if cx.cosmic_context.with_editor(self.content_entity, |buf| !buf.delete_selection()) {
+        if cx.text_context.with_editor(self.content_entity, |buf| !buf.delete_selection()) {
             self.move_cursor(cx, movement, true);
-            cx.cosmic_context.with_editor(self.content_entity, |buf| {
+            cx.text_context.with_editor(self.content_entity, |buf| {
                 buf.delete_selection();
             });
         }
@@ -112,14 +112,14 @@ impl TextboxData {
     }
 
     pub fn reset_text(&mut self, cx: &mut EventContext, text: &str) {
-        cx.cosmic_context.with_buffer(self.content_entity, |buf| {
+        cx.text_context.with_buffer(self.content_entity, |buf| {
             buf.set_text(text, Attrs::new());
         });
         cx.needs_relayout();
     }
 
     pub fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
-        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+        cx.text_context.with_editor(self.content_entity, |buf| {
             if selection {
                 if buf.select_opt().is_none() {
                     buf.set_select_opt(Some(buf.cursor()));
@@ -152,7 +152,7 @@ impl TextboxData {
     }
 
     pub fn select_all(&mut self, cx: &mut EventContext) {
-        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+        cx.text_context.with_editor(self.content_entity, |buf| {
             buf.action(Action::BufferStart);
             buf.set_select_opt(Some(buf.cursor()));
             buf.action(Action::BufferEnd);
@@ -161,7 +161,7 @@ impl TextboxData {
     }
 
     pub fn select_word(&mut self, cx: &mut EventContext) {
-        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+        cx.text_context.with_editor(self.content_entity, |buf| {
             buf.action(Action::PreviousWord);
             buf.set_select_opt(Some(buf.cursor()));
             buf.action(Action::NextWord);
@@ -170,7 +170,7 @@ impl TextboxData {
     }
 
     pub fn select_paragraph(&mut self, cx: &mut EventContext) {
-        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+        cx.text_context.with_editor(self.content_entity, |buf| {
             buf.action(Action::ParagraphStart);
             buf.set_select_opt(Some(buf.cursor()));
             buf.action(Action::ParagraphEnd);
@@ -179,7 +179,7 @@ impl TextboxData {
     }
 
     pub fn deselect(&mut self, cx: &mut EventContext) {
-        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+        cx.text_context.with_editor(self.content_entity, |buf| {
             buf.set_select_opt(None);
         });
         cx.needs_redraw();
@@ -200,7 +200,7 @@ impl TextboxData {
     /// This function takes window-global physical coordinates.
     pub fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         let (x, y) = self.coordinates_global_to_text(cx, x, y);
-        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+        cx.text_context.with_editor(self.content_entity, |buf| {
             buf.action(Action::Click { x: x as i32, y: y as i32 })
         });
         cx.needs_redraw();
@@ -209,7 +209,7 @@ impl TextboxData {
     /// This function takes window-global physical coordinates.
     pub fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         let (x, y) = self.coordinates_global_to_text(cx, x, y);
-        cx.cosmic_context.with_editor(self.content_entity, |buf| {
+        cx.text_context.with_editor(self.content_entity, |buf| {
             buf.action(Action::Drag { x: x as i32, y: y as i32 })
         });
         cx.needs_redraw();
@@ -232,11 +232,11 @@ impl TextboxData {
     }
 
     pub fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
-        cx.cosmic_context.with_editor(self.content_entity, |buf| buf.copy_selection())
+        cx.text_context.with_editor(self.content_entity, |buf| buf.copy_selection())
     }
 
     pub fn clone_text(&self, cx: &mut EventContext) -> String {
-        cx.cosmic_context.with_buffer(self.content_entity, |buf| {
+        cx.text_context.with_buffer(self.content_entity, |buf| {
             buf.lines.iter().map(|line| line.text()).collect::<Vec<_>>().join("\n").to_string()
         })
     }
@@ -475,7 +475,7 @@ where
                             kind: text_data.kind,
                             on_submit: text_data.on_submit.clone(),
                         };
-                        cx.cosmic_context.with_buffer(text_data.content_entity, |buf| {
+                        cx.text_context.with_buffer(text_data.content_entity, |buf| {
                             buf.set_text(&text_str, Attrs::new());
                         });
                         let parent = cx.current().parent(&cx.tree).unwrap();
@@ -507,7 +507,7 @@ where
                         .entity;
 
                     cx.emit(TextEvent::InitContent(lbl, kind));
-                    cx.cosmic_context.with_buffer(lbl, |buf| {
+                    cx.text_context.with_buffer(lbl, |buf| {
                         buf.set_text(&text, Attrs::new());
                     });
                 })

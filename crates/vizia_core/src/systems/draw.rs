@@ -75,7 +75,7 @@ pub fn draw_system(cx: &mut Context) {
                     data: &cx.data,
                     views: &cx.views,
                     resource_manager: &cx.resource_manager,
-                    cosmic_context: &mut cx.cosmic_context,
+                    text_context: &mut cx.text_context,
                     modifiers: &cx.modifiers,
                     mouse: &cx.mouse,
                 },

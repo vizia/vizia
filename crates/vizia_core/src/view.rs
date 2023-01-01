@@ -509,7 +509,7 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     // canvas.fill_path(&mut path, paint);
 
     // Draw text and image
-    if cx.cosmic_context.has_buffer(cx.current) || cx.image().is_some() {
+    if cx.text_context.has_buffer(cx.current) || cx.image().is_some() {
         let mut box_x = bounds.x + border_width;
         let mut box_y = bounds.y + border_width;
         let mut box_w = bounds.w - border_width * 2.0;
@@ -547,7 +547,7 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
         }
 
         // Draw text
-        if cx.cosmic_context.has_buffer(cx.current) {
+        if cx.text_context.has_buffer(cx.current) {
             let justify_x = match (child_left, child_right) {
                 (Stretch(left), Stretch(right)) => {
                     if left + right == 0.0 {
@@ -574,7 +574,7 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
             let origin_x = box_x + box_w * justify_x;
             let origin_y = box_y + box_h * justify_y;
 
-            cx.cosmic_context.sync_styles(cx.current, &cx.style);
+            cx.text_context.sync_styles(cx.current, &cx.style);
 
             let selection_color =
                 cx.style.selection_color.get(cx.current).copied().unwrap_or_default();
@@ -582,7 +582,7 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
             if selection_color.a() != 0 || caret_color.a() != 0 {
                 let cursor_width = cx.logical_to_physical(1.0) as u32;
                 let select_offset = cx.logical_to_physical(0.5) as u32;
-                cx.cosmic_context.with_editor(cx.current, |buf| {
+                cx.text_context.with_editor(cx.current, |buf| {
                     if selection_color.a() != 0 {
                         if let Some(cursor_end) = buf.select_opt() {
                             let mut path = Path::new();
@@ -622,22 +622,8 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
                     }
                 });
             }
-            if let Ok(draw_commands) = cx.cosmic_context.fill_to_cmds(
-                canvas,
-                cx.current,
-                (origin_x, origin_y),
-                (justify_x, justify_y),
-            ) {
-                for (color, cmds) in draw_commands.into_iter() {
-                    let temp_paint = Paint::color(femtovg::Color::rgba(
-                        color.r(),
-                        color.g(),
-                        color.b(),
-                        color.a(),
-                    ));
-                    canvas.draw_glyph_cmds(cmds, &temp_paint);
-                }
-            }
+
+            cx.draw_text(canvas, (origin_x, origin_y), (justify_x, justify_y));
         }
     }
 }
