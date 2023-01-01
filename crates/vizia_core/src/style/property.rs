@@ -247,7 +247,7 @@ impl std::fmt::Display for Property {
             Property::FontColor(val) => write!(f, "color: {};", val),
             Property::FontFamily(val) => write!(
                 f,
-                "font-family: {}",
+                "font-family: {};",
                 val.iter().map(fmt_font_family).collect::<Vec<_>>().join(", ")
             ),
             Property::FontWeight(val) => write!(f, "font-weight: {}", val.0),
