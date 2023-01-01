@@ -51,6 +51,12 @@ impl CosmicContext {
         self.with_int(move |int: &CosmicContextInternal| int.buffers.contains_key(&entity))
     }
 
+    pub fn set_text(&mut self, entity: Entity, text: &str) {
+        self.with_buffer(entity, |buf| {
+            buf.set_text(text, Attrs::new());
+        });
+    }
+
     pub fn with_editor<O>(&mut self, entity: Entity, f: impl FnOnce(&mut Editor) -> O) -> O {
         self.with_int_mut(move |int: &mut CosmicContextInternal| {
             f(int.buffers.entry(entity).or_insert_with(|| {
