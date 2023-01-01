@@ -36,6 +36,7 @@ fn main() {
                                 }
                             })
                             .on_press(move |cx| {
+                                println!("Do this");
                                 cx.emit(AppDataSetter::Choice(item.get(cx).clone()));
                                 cx.emit(PopupEvent::Close);
                             });

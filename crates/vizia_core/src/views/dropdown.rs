@@ -144,22 +144,25 @@ impl Dropdown {
         F: 'static + Fn(&mut Context),
         V: 'static + View,
     {
-        Self {}.build(cx, move |cx| {
-            PopupData::default().build(cx);
+        Self {}
+            .build(cx, move |cx| {
+                PopupData::default().build(cx);
 
-            (label)(cx)
-                .cursor(CursorIcon::Hand)
-                .class("title")
-                .on_press(|cx| cx.emit(PopupEvent::Switch));
+                (label)(cx)
+                    .class("title")
+                    .cursor(CursorIcon::Hand)
+                    .on_press(|cx| cx.emit(PopupEvent::Switch));
 
-            Popup::new(cx, PopupData::is_open, false, move |cx| {
-                (content)(cx);
+                Popup::new(cx, PopupData::is_open, false, move |cx| {
+                    (content)(cx);
+                })
+                .on_blur(|cx| cx.emit(PopupEvent::Close))
+                .top(Percentage(100.0))
+                .translate((0.0, 4.0))
+                .height(Auto);
             })
-            .on_blur(|cx| cx.emit(PopupEvent::Close))
-            .top(Percentage(100.0))
-            .translate((0.0, 4.0))
-            .height(Auto);
-        })
+            .cursor(CursorIcon::Hand)
+        //.on_press(|cx| cx.emit(PopupEvent::Switch))
     }
 }
 
