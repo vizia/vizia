@@ -61,6 +61,8 @@ pub fn hoverability_system(cx: &mut Context, tree: &Tree<Entity>) {
 }
 
 // Returns the selector of an entity
+#[allow(unused)] // can be used for a potential optimization where styling is cached between
+                 // similar siblings. needs some work.
 fn entity_selector(cx: &Context, entity: Entity) -> Selector {
     Selector {
         asterisk: false,
@@ -522,36 +524,33 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
     if cx.style.needs_restyle {
         hoverability_system(cx, tree);
 
-        let mut prev_entity = None;
-
         let mut matched_rule_ids = Vec::with_capacity(100);
         let mut prev_matched_rule_ids = Vec::with_capacity(100);
 
         let iterator = LayoutTreeIterator::full(tree);
 
         // Loop through all entities
-        'ent: for entity in iterator {
+        for entity in iterator {
             // If the entity and the previous entity have the same parent and selectors then they share the same rules
-            if let Some(prev) = prev_entity {
-                if let Some(parent) = tree.get_layout_parent(entity) {
-                    if let Some(prev_parent) = tree.get_layout_parent(prev) {
-                        if parent == prev_parent {
-                            if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
-                                prev_entity = Some(entity);
-                                link_style_data(cx, entity, &prev_matched_rule_ids);
-                                continue 'ent;
-                            }
-                        }
-                    }
-                }
-            }
+            //if let Some(prev) = prev_entity {
+            //    if let Some(parent) = tree.get_layout_parent(entity) {
+            //        if let Some(prev_parent) = tree.get_layout_parent(prev) {
+            //            if parent == prev_parent {
+            //                if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
+            //                    prev_entity = Some(entity);
+            //                    link_style_data(cx, entity, &prev_matched_rule_ids);
+            //                    continue 'ent;
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
 
             let mut matched_rules = Vec::with_capacity(100);
             compute_matched_rules(cx, tree, entity, &mut matched_rules);
             matched_rule_ids.extend(matched_rules.into_iter().map(|r| r.id));
             link_style_data(cx, entity, &matched_rule_ids);
 
-            prev_entity = Some(entity);
             prev_matched_rule_ids.clear();
             prev_matched_rule_ids.append(&mut matched_rule_ids);
         }
