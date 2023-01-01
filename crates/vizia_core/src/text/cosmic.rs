@@ -24,14 +24,14 @@ const GLYPH_MARGIN: u32 = 1;
 const TEXTURE_SIZE: usize = 512;
 
 #[self_referencing]
-pub struct CosmicContext {
+pub struct TextContext {
     font_system: FontSystem,
     #[borrows(font_system)]
     #[covariant]
-    int: CosmicContextInternal<'this>,
+    int: TextContextInternal<'this>,
 }
 
-struct CosmicContextInternal<'a> {
+struct TextContextInternal<'a> {
     font_system: &'a FontSystem,
 
     scale_context: ScaleContext,
@@ -40,15 +40,15 @@ struct CosmicContextInternal<'a> {
     buffers: HashMap<Entity, Editor<'a>>,
 }
 
-impl CosmicContext {
+impl TextContext {
     pub fn clear_buffer(&mut self, entity: Entity) {
-        self.with_int_mut(move |int: &mut CosmicContextInternal| {
+        self.with_int_mut(move |int: &mut TextContextInternal| {
             int.buffers.remove(&entity);
         });
     }
 
     pub fn has_buffer(&self, entity: Entity) -> bool {
-        self.with_int(move |int: &CosmicContextInternal| int.buffers.contains_key(&entity))
+        self.with_int(move |int: &TextContextInternal| int.buffers.contains_key(&entity))
     }
 
     pub fn set_text(&mut self, entity: Entity, text: &str) {
@@ -58,7 +58,7 @@ impl CosmicContext {
     }
 
     pub fn with_editor<O>(&mut self, entity: Entity, f: impl FnOnce(&mut Editor) -> O) -> O {
-        self.with_int_mut(move |int: &mut CosmicContextInternal| {
+        self.with_int_mut(move |int: &mut TextContextInternal| {
             f(int.buffers.entry(entity).or_insert_with(|| {
                 Editor::new(Buffer::new(&int.font_system, Metrics::new(18, 20)))
             }))
@@ -70,7 +70,7 @@ impl CosmicContext {
     }
 
     pub fn sync_styles(&mut self, entity: Entity, style: &Style) {
-        let (family, weight, font_style) = self.with_int(|int: &CosmicContextInternal| {
+        let (family, weight, font_style) = self.with_int(|int: &TextContextInternal| {
             let families = style
                 .font_family
                 .get(entity)
@@ -123,7 +123,11 @@ impl CosmicContext {
         position: (f32, f32),
         justify: (f32, f32),
     ) -> Result<Vec<(FontColor, GlyphDrawCommands)>, ErrorKind> {
-        self.with_int_mut(move |int: &mut CosmicContextInternal| {
+        if !self.has_buffer(entity) {
+            return Ok(vec![]);
+        }
+
+        self.with_int_mut(move |int: &mut TextContextInternal| {
             let buffer = int.buffers.get_mut(&entity).unwrap().buffer_mut();
 
             let mut alpha_cmd_map = FnvHashMap::default();
@@ -262,7 +266,7 @@ impl CosmicContext {
     }
 
     pub(crate) fn take_buffers(&mut self) -> HashMap<Entity, Vec<String>> {
-        self.with_int_mut(move |int: &mut CosmicContextInternal| {
+        self.with_int_mut(move |int: &mut TextContextInternal| {
             // TODO no clone please
             int.buffers
                 .drain()
@@ -278,11 +282,11 @@ impl CosmicContext {
     }
 }
 
-impl CosmicContext {
+impl TextContext {
     pub fn new_from_locale_and_db(locale: String, font_db: Database) -> Self {
-        CosmicContextBuilder {
+        TextContextBuilder {
             font_system: FontSystem::new_with_locale_and_db(locale, font_db),
-            int_builder: |font_system| CosmicContextInternal {
+            int_builder: |font_system| TextContextInternal {
                 font_system,
                 scale_context: Default::default(),
                 rendered_glyphs: FnvHashMap::default(),

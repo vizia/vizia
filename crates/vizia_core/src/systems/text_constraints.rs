@@ -36,7 +36,7 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
         let style = &cx.style;
         let image = style.image.get(entity);
 
-        if (cx.cosmic_context.has_buffer(entity) || image.is_some())
+        if (cx.text_context.has_buffer(entity) || image.is_some())
             && (desired_width == Auto || desired_height == Auto)
         {
             let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
@@ -68,9 +68,9 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
             let mut content_width = 0.0;
             let mut content_height = 0.0;
 
-            if cx.cosmic_context.has_buffer(entity) {
-                cx.cosmic_context.sync_styles(entity, &cx.style);
-                let (text_width, text_height) = cx.cosmic_context.with_buffer(entity, |buf| {
+            if cx.text_context.has_buffer(entity) {
+                cx.text_context.sync_styles(entity, &cx.style);
+                let (text_width, text_height) = cx.text_context.with_buffer(entity, |buf| {
                     buf.set_size(i32::MAX, i32::MAX);
                     let w = buf
                         .layout_runs()
@@ -110,8 +110,8 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
 
             cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
             cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
-        } else if cx.cosmic_context.has_buffer(entity) {
-            cx.cosmic_context.with_buffer(entity, |buf| buf.set_size(i32::MAX, i32::MAX));
+        } else if cx.text_context.has_buffer(entity) {
+            cx.text_context.with_buffer(entity, |buf| buf.set_size(i32::MAX, i32::MAX));
         }
     }
 }

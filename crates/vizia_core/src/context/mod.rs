@@ -32,7 +32,7 @@ use crate::prelude::*;
 use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
-use crate::text::CosmicContext;
+use crate::text::TextContext;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -75,7 +75,7 @@ pub struct Context {
 
     pub(crate) resource_manager: ResourceManager,
 
-    pub(crate) cosmic_context: CosmicContext,
+    pub(crate) text_context: TextContext,
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
@@ -130,7 +130,7 @@ impl Context {
             focus_stack: Vec::new(),
             cursor_icon_locked: false,
             resource_manager: ResourceManager::new(),
-            cosmic_context: CosmicContext::new_from_locale_and_db(
+            text_context: TextContext::new_from_locale_and_db(
                 sys_locale::get_locale().unwrap_or_else(|| "en-US".to_owned()),
                 db,
             ),
@@ -329,7 +329,7 @@ impl Context {
             self.data.remove(*entity);
             self.views.remove(entity);
             self.entity_manager.destroy(*entity);
-            self.cosmic_context.clear_buffer(*entity);
+            self.text_context.clear_buffer(*entity);
 
             if self.captured == *entity {
                 self.captured = Entity::null();
@@ -376,14 +376,14 @@ impl Context {
 
     /// Add a font from memory to the application.
     pub fn add_fonts_mem(&mut self, data: &[&[u8]]) {
-        self.cosmic_context.take_buffers();
-        replace_with_or_abort(&mut self.cosmic_context, |mut ccx| {
+        self.text_context.take_buffers();
+        replace_with_or_abort(&mut self.text_context, |mut ccx| {
             let buffers = ccx.take_buffers();
             let (locale, mut db) = ccx.into_font_system().into_locale_and_db();
             for font_data in data {
                 db.load_font_data(Vec::from(*font_data));
             }
-            let mut new_ccx = CosmicContext::new_from_locale_and_db(locale, db);
+            let mut new_ccx = TextContext::new_from_locale_and_db(locale, db);
             for (entity, lines) in buffers {
                 new_ccx.with_buffer(entity, move |buf| {
                     buf.lines = lines
