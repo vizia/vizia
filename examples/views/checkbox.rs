@@ -70,7 +70,7 @@ fn main() {
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
                     .text(AppData::option1.map(|flag| if *flag { CANCEL } else { "" }))
                     .id("checkbox_3");
-                Label::new(cx, "Custom").describing("checkbox_3");
+                Label::new(cx, "Checkbox 3").describing("checkbox_3");
             })
             .size(Auto)
             .col_between(Pixels(5.0))

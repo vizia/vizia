@@ -14,6 +14,12 @@ button label {
     child-space: 1s;
 }
 
+button.icon {
+    width: 32px;
+    height: 32px;
+    child-space: 1s;
+}
+
 /* Checkbox */
 
 checkbox {

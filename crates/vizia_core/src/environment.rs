@@ -24,7 +24,7 @@ impl Environment {
     pub fn new() -> Self {
         let locale = sys_locale::get_locale().map(|l| l.parse().ok()).flatten().unwrap_or_default();
 
-        Self { locale, theme_mode: ThemeMode::LightMode }
+        Self { locale, theme_mode: ThemeMode::DarkMode }
     }
 }
 

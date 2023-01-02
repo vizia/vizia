@@ -142,6 +142,30 @@ impl Checkbox {
             .cursor(CursorIcon::Hand)
             .navigable(true)
     }
+
+    pub fn intermediate(
+        cx: &mut Context,
+        checked: impl Lens<Target = bool>,
+        intermediate: impl Lens<Target = bool>,
+    ) -> Handle<Self> {
+        Self { on_toggle: None }
+            .build(cx, |_| {})
+            .bind(checked.clone(), move |handle, c| {
+                let intermediate = intermediate.clone();
+                handle.bind(intermediate, move |handle, i| {
+                    if c.get(handle.cx) {
+                        handle.text(CHECK).toggle_class("intermediate", false);
+                    } else if i.get(handle.cx) {
+                        handle.text("-").toggle_class("intermediate", true);
+                    } else {
+                        handle.text("").toggle_class("intermediate", false);
+                    }
+                });
+            })
+            .checked(checked.clone())
+            .cursor(CursorIcon::Hand)
+            .navigable(true)
+    }
 }
 
 impl Handle<'_, Checkbox> {
