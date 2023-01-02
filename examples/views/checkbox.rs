@@ -1,6 +1,6 @@
 mod helpers;
 use helpers::*;
-use vizia::fonts::unicode_names::CANCEL;
+use vizia::fonts::icons_names::CANCEL;
 use vizia::prelude::*;
 
 #[derive(Debug, Lens)]

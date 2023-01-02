@@ -7,6 +7,7 @@ use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::iter::once;
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -14,8 +15,9 @@ use std::sync::Mutex;
 use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
-use femtovg::TextContext;
+use cosmic_text::{fontdb::Database, Attrs, AttrsList, BufferLine, FamilyOwned};
 use fnv::FnvHashMap;
+use replace_with::replace_with_or_abort;
 use unic_langid::LanguageIdentifier;
 
 pub use draw::*;
@@ -25,10 +27,12 @@ pub use proxy::*;
 use crate::cache::CachedData;
 use crate::environment::{Environment, ThemeMode};
 use crate::events::ViewHandler;
+use crate::fonts;
 use crate::prelude::*;
-use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
+use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
+use crate::text::TextContext;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -92,6 +96,17 @@ impl Context {
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
 
+        // Add default fonts
+        let mut db = Database::new();
+        db.load_system_fonts();
+        db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
+        db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
+        db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
+        db.load_font_data(Vec::from(fonts::ENTYPO));
+        db.load_font_data(Vec::from(fonts::OPEN_SANS_EMOJI));
+        db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));
+        db.load_font_data(Vec::from(fonts::MATERIAL_ICONS_REGULAR));
+
         let mut result = Self {
             entity_manager: IdManager::new(),
             entity_identifiers: HashMap::new(),
@@ -117,7 +132,10 @@ impl Context {
             focus_stack: Vec::new(),
             cursor_icon_locked: false,
             resource_manager: ResourceManager::new(),
-            text_context: TextContext::default(),
+            text_context: TextContext::new_from_locale_and_db(
+                sys_locale::get_locale().unwrap_or_else(|| "en-US".to_owned()),
+                db,
+            ),
 
             event_proxy: None,
 
@@ -142,6 +160,7 @@ impl Context {
         Environment::new().build(&mut result);
 
         result.entity_manager.create();
+        result.set_default_font(&["Roboto"]);
 
         result
     }
@@ -312,6 +331,7 @@ impl Context {
             self.data.remove(*entity);
             self.views.remove(entity);
             self.entity_manager.destroy(*entity);
+            self.text_context.clear_buffer(*entity);
 
             if self.captured == *entity {
                 self.captured = Entity::null();
@@ -357,19 +377,34 @@ impl Context {
     }
 
     /// Add a font from memory to the application.
-    pub fn add_font_mem(&mut self, name: &str, data: &[u8]) {
-        // TODO - return error
-        if self.resource_manager.fonts.contains_key(name) {
-            println!("Font already exists");
-            return;
-        }
-
-        self.resource_manager.fonts.insert(name.to_owned(), FontOrId::Font(data.to_vec()));
+    pub fn add_fonts_mem(&mut self, data: &[&[u8]]) {
+        self.text_context.take_buffers();
+        replace_with_or_abort(&mut self.text_context, |mut ccx| {
+            let buffers = ccx.take_buffers();
+            let (locale, mut db) = ccx.into_font_system().into_locale_and_db();
+            for font_data in data {
+                db.load_font_data(Vec::from(*font_data));
+            }
+            let mut new_ccx = TextContext::new_from_locale_and_db(locale, db);
+            for (entity, lines) in buffers {
+                new_ccx.with_buffer(entity, move |buf| {
+                    buf.lines = lines
+                        .into_iter()
+                        .map(|line| BufferLine::new(line, AttrsList::new(Attrs::new())))
+                        .collect();
+                });
+            }
+            new_ccx
+        });
     }
 
     /// Sets the global default font for the application.
-    pub fn set_default_font(&mut self, name: &str) {
-        self.style.default_font = name.to_string();
+    pub fn set_default_font(&mut self, names: &[&str]) {
+        self.style.default_font = names
+            .iter()
+            .map(|x| FamilyOwned::Name(x.to_string()))
+            .chain(once(FamilyOwned::SansSerif))
+            .collect();
     }
 
     pub fn add_theme(&mut self, theme: &str) {

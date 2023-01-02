@@ -252,7 +252,11 @@ label {
 }
 
 label.icon {
-    font: "icons";
+    font-family: "Entypo", sans-serif;
+}
+
+label.material-icon {
+    font-family: "Material Icons", sans-serif;
 }
 
 /* List */
@@ -839,6 +843,24 @@ timepicker digitaltimepicker {
     width: 1s;
 }
 
+checkbox {
+    font-family: Entypo, sans-serif;
+}
+
+image {
+    width: auto;
+    height: auto;
+}
+
+zstack > * {
+    position-type: self-directed;
+}
+
+slider {
+    height: 5px;
+    width: 1s;
+}
+
 timepicker digitaltimepicker .digitaltimepicker-button-wrapper {
     left: 1s;
 }
@@ -929,6 +951,101 @@ analogtimepicker .time-selector-wrapper button {
 analogtimepicker .time-selector-wrapper button label {
     left: 4px;
     right: 4px;
+    top: 1s;
+    bottom: 1s;
+    width: 1s;
+    height: 1s;
+    child-space: 1s;
+}
+
+scrollview > .scroll_content {
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    position-type: self-directed;
+}
+
+scrollview > scrollbar.horizontal {
+    left: 0px;
+    width: 1s;
+    right: 14px;
+
+    top: 1s;
+    height: 14px;
+    bottom: 0px;
+}
+
+scrollview > scrollbar.vertical {
+    top: 0px;
+    height: 1s;
+    bottom: 0px;
+
+    left: 1s;
+    width: 14px;
+    right: 0px;
+}
+
+popup {
+    display: none;
+    opacity: 0;
+}
+
+popup:checked {
+    display: flex;
+    opacity: 1;
+}
+
+menucontroller {
+    width: 0px;
+    height: 0px;
+    overflow: visible;
+}
+
+menustack {
+    width: auto;
+    height: auto;
+    overflow: visible;
+}
+
+menu {
+    overflow: visible;
+}
+
+menustack.vertical {
+    layout-type: column;
+}
+
+menustack.horizontal {
+    layout-type: row;
+}
+
+menu > menustack {
+    position-type: self-directed;
+    z-index: 1000;
+    display: none;
+}
+
+menu:selected > menustack {
+    display: flex;
+}
+
+menustack.vertical > menu > menustack {
+    left: 100%;
+}
+
+menustack.horizontal > menu > menustack {
+    top: 100%;
+}
+
+.menu_arrow {
+    display: none;
+}
+
+menustack.vertical > menu > hstack > .menu_arrow {
+    display: flex;
+    font-family: "Material Icons";
+    left: 1s;
     top: 1s;
     bottom: 1s;
     width: 1s;
