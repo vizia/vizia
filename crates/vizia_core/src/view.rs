@@ -572,7 +572,7 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
             };
 
             let origin_x = box_x + box_w * justify_x;
-            let origin_y = box_y + box_h * justify_y;
+            let origin_y = box_y + (box_h * justify_y).round();
 
             cx.text_context.sync_styles(cx.current, &cx.style);
 
