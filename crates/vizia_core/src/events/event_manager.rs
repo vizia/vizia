@@ -424,6 +424,24 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 }
             }
 
+            #[cfg(debug_assertions)]
+            if *code == Code::KeyT
+                && context.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
+            {
+                println!("Loaded font face info:");
+                for face in context.text_context.font_system().db().faces().iter() {
+                    println!(
+                        "family: {:?}\npost_script_name: {:?}\nstyle: {:?}\nweight: {:?}\nstretch: {:?}\nmonospaced: {:?}\n",
+                        face.family,
+                        face.post_script_name,
+                        face.style,
+                        face.weight,
+                        face.stretch,
+                        face.monospaced,
+                    );
+                }
+            }
+
             if *code == Code::F5 {
                 EventContext::new(context).reload_styles().unwrap();
             }

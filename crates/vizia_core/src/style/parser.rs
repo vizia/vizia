@@ -403,7 +403,9 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "row-between" => Property::RowBetween(parse_units(input)?),
             "col-between" => Property::ColBetween(parse_units(input)?),
             "font-size" => Property::FontSize(parse_font_size(input)?),
-            "font" => Property::Font(parse_string(input)?),
+            "font-family" => Property::FontFamily(input.parse_comma_separated(parse_font_family)?),
+            "font-weight" => Property::FontWeight(parse_font_weight(input)?),
+            "font-style" => Property::FontStyle(parse_font_style(input)?),
             "text-wrap" => Property::TextWrap(parse_bool(input)?),
             "selection-color" => Property::SelectionColor(parse_color(input)?),
             "caret-color" => Property::CaretColor(parse_color(input)?),
@@ -1137,6 +1139,72 @@ fn parse_color2<'i>(token: &Token<'i>) -> Result<Color, ParseError<'i, CustomPar
             };
             return Err(basic_error.into());
         }
+    }
+}
+
+fn parse_font_weight<'i, 't>(
+    input: &mut Parser<'i, 't>,
+) -> Result<Weight, ParseError<'i, CustomParseError>> {
+    let location = input.current_source_location();
+    Ok(match input.next()? {
+        Token::Number { value, has_sign: false, .. } => {
+            if *value <= 0.0 || *value > 1000.0 {
+                return Err(BasicParseError {
+                    kind: BasicParseErrorKind::QualifiedRuleInvalid,
+                    location,
+                }
+                .into());
+            }
+            Weight(value.trunc() as u16)
+        }
+        Token::Ident(name) if name.as_ref() == "normal" => Weight::NORMAL,
+        Token::Ident(name) if name.as_ref() == "bold" => Weight::BOLD,
+        t => {
+            return Err(BasicParseError {
+                kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
+                location,
+            }
+            .into())
+        }
+    })
+}
+
+fn parse_font_style<'i, 't>(
+    input: &mut Parser<'i, 't>,
+) -> Result<FontStyle, ParseError<'i, CustomParseError>> {
+    let location = input.current_source_location();
+    Ok(match input.next()? {
+        Token::Ident(name) if name.as_ref() == "normal" => FontStyle::Normal,
+        Token::Ident(name) if name.as_ref() == "italic" => FontStyle::Italic,
+        Token::Ident(name) if name.as_ref() == "oblique" => FontStyle::Oblique,
+        t => {
+            return Err(BasicParseError {
+                kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
+                location,
+            }
+            .into())
+        }
+    })
+}
+
+pub(crate) fn parse_font_family<'i, 't>(
+    input: &mut Parser<'i, 't>,
+) -> Result<FamilyOwned, ParseError<'i, CustomParseError>> {
+    let location = input.current_source_location();
+    match input.next()? {
+        Token::Ident(name) | Token::QuotedString(name) => Ok(match name.as_ref() {
+            "serif" => FamilyOwned::Serif,
+            "sans-serif" => FamilyOwned::SansSerif,
+            "monospace" => FamilyOwned::Monospace,
+            "cursive" => FamilyOwned::Cursive,
+            "fantasy" => FamilyOwned::Fantasy,
+            name => FamilyOwned::Name(name.to_owned()),
+        }),
+        t => Err(BasicParseError {
+            kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
+            location,
+        }
+        .into()),
     }
 }
 

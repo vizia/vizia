@@ -74,6 +74,7 @@ pub mod prelude {
         Opacity, Overflow, Visibility,
     };
 
+    pub use cosmic_text::{FamilyOwned, Style as FontStyle, Weight};
     pub use morphorm::Units::*;
     pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
     #[cfg(feature = "localization")]

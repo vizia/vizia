@@ -3,7 +3,6 @@ use std::collections::{HashMap, HashSet, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
 
-use femtovg::TextContext;
 use fnv::FnvHashMap;
 
 use crate::binding::ModelDataStore;
@@ -17,6 +16,7 @@ use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 
 use crate::context::EmitContext;
+use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
@@ -70,7 +70,7 @@ pub struct EventContext<'a> {
     listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub resource_manager: &'a ResourceManager,
-    pub text_context: &'a TextContext,
+    pub text_context: &'a mut TextContext,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
@@ -96,7 +96,7 @@ impl<'a> EventContext<'a> {
             views: &mut cx.views,
             listeners: &mut cx.listeners,
             resource_manager: &cx.resource_manager,
-            text_context: &cx.text_context,
+            text_context: &mut cx.text_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
@@ -347,6 +347,11 @@ impl<'a> EventContext<'a> {
     }
 
     pub fn needs_redraw(&mut self) {
+        self.style.needs_redraw = true;
+    }
+
+    pub fn needs_relayout(&mut self) {
+        self.style.needs_relayout = true;
         self.style.needs_redraw = true;
     }
 

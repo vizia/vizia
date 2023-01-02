@@ -298,7 +298,6 @@ pub struct CachedData {
     stack_child: SparseSet<(bool, bool)>,
 
     pub(crate) geometry_changed: SparseSet<GeometryChanged>,
-    //pub(crate) text_lines: SparseSet<Vec<(Range<usize>, femtovg::TextMetrics)>>,
 }
 
 impl CachedData {
