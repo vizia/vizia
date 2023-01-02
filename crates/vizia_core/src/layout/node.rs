@@ -212,7 +212,7 @@ impl<'w> Node<'w> for Entity {
             grid_rows
                 .iter()
                 .map(|col| match col {
-                    Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+                    Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
                     t => *t,
                 })
                 .collect::<Vec<_>>()
@@ -224,7 +224,7 @@ impl<'w> Node<'w> for Entity {
             grid_rows
                 .iter()
                 .map(|row| match row {
-                    Units::Pixels(val) => Units::Pixels(val * store.0.dpi_factor as f32),
+                    Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
                     t => *t,
                 })
                 .collect::<Vec<_>>()
@@ -247,28 +247,28 @@ impl<'w> Node<'w> for Entity {
 
     fn border_left(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
+            Units::Pixels(val) => Units::Pixels((val * store.dpi_factor as f32).round()),
             t => t,
         })
     }
 
     fn border_right(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
+            Units::Pixels(val) => Units::Pixels((val * store.dpi_factor as f32).round()),
             t => t,
         })
     }
 
     fn border_top(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
+            Units::Pixels(val) => Units::Pixels((val * store.dpi_factor as f32).round()),
             t => t,
         })
     }
 
     fn border_bottom(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels((val * store.0.dpi_factor as f32).round()),
+            Units::Pixels(val) => Units::Pixels((val * store.dpi_factor as f32).round()),
             t => t,
         })
     }

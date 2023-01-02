@@ -38,19 +38,14 @@ impl Notification {
                                                 }
                                             }),
                                         )
-                                        .font("vizia_icons")
                                         .class("icon")
                                     },
                                 )
                                 .class("icon")
                                 .checked(Notification::container_open);
                             }
-                            Button::new(
-                                cx,
-                                |_| (),
-                                |cx| Label::new(cx, CROSS).font("vizia_icons").class("icon"),
-                            )
-                            .class("icon");
+                            Button::new(cx, |_| (), |cx| Label::new(cx, CROSS).class("icon"))
+                                .class("icon");
                         })
                         .class("icon-container");
                     })

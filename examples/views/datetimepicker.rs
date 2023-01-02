@@ -56,7 +56,7 @@ fn main() {
                     .left(Stretch(1.0))
                     .right(Pixels(0.0))
                     .child_space(Stretch(1.0))
-                    .font("icons")
+                    .class("icon")
                     .cursor(CursorIcon::Hand)
                     .on_press(|cx| cx.emit(PopupEvent::Switch));
             })

@@ -175,7 +175,7 @@ pub fn button(cx: &mut Context) {
                     |_| {},
                     |cx| {
                         HStack::new(cx, |cx| {
-                            Label::new(cx, ICON_STAR).font("icons");
+                            Label::new(cx, ICON_STAR).class("icon");
                             Label::new(cx, "Icon before");
                         })
                         .size(Auto)
@@ -189,7 +189,7 @@ pub fn button(cx: &mut Context) {
                     |_| {},
                     |cx| {
                         HStack::new(cx, |cx| {
-                            Label::new(cx, ICON_STAR).font("icons");
+                            Label::new(cx, ICON_STAR).class("icon");
                             Label::new(cx, "Icon before");
                         })
                         .size(Auto)
@@ -204,7 +204,7 @@ pub fn button(cx: &mut Context) {
                     |_| {},
                     |cx| {
                         HStack::new(cx, |cx| {
-                            Label::new(cx, ICON_STAR).font("icons");
+                            Label::new(cx, ICON_STAR).class("icon");
                             Label::new(cx, "Icon before");
                         })
                         .size(Auto)
@@ -219,7 +219,7 @@ pub fn button(cx: &mut Context) {
                     |_| {},
                     |cx| {
                         HStack::new(cx, |cx| {
-                            Label::new(cx, ICON_STAR).font("icons");
+                            Label::new(cx, ICON_STAR).class("icon");
                             Label::new(cx, "Icon before");
                         })
                         .size(Auto)
@@ -244,7 +244,7 @@ pub fn button(cx: &mut Context) {
                     |cx| {
                         HStack::new(cx, |cx| {
                             Label::new(cx, "Icon after");
-                            Label::new(cx, ICON_STAR).font("icons");
+                            Label::new(cx, ICON_STAR).class("icon");
                         })
                         .size(Auto)
                         .child_space(Stretch(1.0))
@@ -258,7 +258,7 @@ pub fn button(cx: &mut Context) {
                     |cx| {
                         HStack::new(cx, |cx| {
                             Label::new(cx, "Icon after");
-                            Label::new(cx, ICON_STAR).font("icons");
+                            Label::new(cx, ICON_STAR).class("icon");
                         })
                         .size(Auto)
                         .child_space(Stretch(1.0))
@@ -273,7 +273,7 @@ pub fn button(cx: &mut Context) {
                     |cx| {
                         HStack::new(cx, |cx| {
                             Label::new(cx, "Icon after");
-                            Label::new(cx, ICON_STAR).font("icons");
+                            Label::new(cx, ICON_STAR).class("icon");
                         })
                         .size(Auto)
                         .child_space(Stretch(1.0))
@@ -288,7 +288,7 @@ pub fn button(cx: &mut Context) {
                     |cx| {
                         HStack::new(cx, |cx| {
                             Label::new(cx, "Icon after");
-                            Label::new(cx, ICON_STAR).font("icons");
+                            Label::new(cx, ICON_STAR).class("icon");
                         })
                         .size(Auto)
                         .child_space(Stretch(1.0))
