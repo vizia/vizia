@@ -236,6 +236,7 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
+        let mut cx = BackendContext::new(&mut context);
         #[cfg(not(target_arch = "wasm32"))]
         cx.process_tree_updates(|tree_updates| {
             for update in tree_updates.iter() {

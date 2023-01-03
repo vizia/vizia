@@ -252,7 +252,7 @@ pub enum TextEvent {
     SelectAll,
     SelectWord,
     SelectParagraph,
-    SetSelection(Selection),
+    //SetSelection(Selection),
     StartEdit,
     EndEdit,
     Submit(bool),
@@ -356,10 +356,9 @@ impl Model for TextboxData {
                 self.set_caret(cx);
             }
 
-            TextEvent::SetSelection(selection) => {
-                self.selection = *selection;
-            }
-
+            // TextEvent::SetSelection(selection) => {
+            //     self.selection = *selection;
+            // }
             TextEvent::Hit(posx, posy) => {
                 self.hit(cx, *posx, *posy);
                 self.set_caret(cx);
@@ -466,6 +465,7 @@ where
     }
 
     fn new_core(cx: &mut Context, lens: L, kind: TextboxKind) -> Handle<Self> {
+        let text_lens = lens.clone();
         // TODO can this be simplified now that text doesn't live in TextboxData?
         let result = Self { lens: lens.clone(), kind }.build(cx, move |cx| {
             Binding::new(cx, lens.clone(), |cx, text| {
@@ -538,7 +538,7 @@ where
             })
             .role(Role::TextField)
             //.text_selection(TextboxData::selection)
-            .text_value(TextboxData::text)
+            .text_value(text_lens)
             .cursor(CursorIcon::Text)
             .default_action_verb(DefaultActionVerb::Focus)
             .navigable(true)
@@ -796,16 +796,17 @@ where
             },
 
             WindowEvent::ActionRequest(ActionRequest {
-                action: Action::SetTextSelection,
+                action: accesskit::Action::SetTextSelection,
                 target: _,
                 data: Some(ActionData::SetTextSelection(selection)),
             }) => {
-                println!("Received selectio: {:?}", selection);
-                let text_selection = Selection::new(
-                    selection.anchor.character_index,
-                    selection.focus.character_index,
-                );
-                cx.emit(TextEvent::SetSelection(text_selection));
+                todo!()
+                // println!("Received selectio: {:?}", selection);
+                // let text_selection = Selection::new(
+                //     selection.anchor.character_index,
+                //     selection.focus.character_index,
+                // );
+                // cx.emit(TextEvent::SetSelection(text_selection));
             }
 
             _ => {}

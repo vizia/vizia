@@ -1,4 +1,4 @@
-use vizia::fonts::unicode_names::CHECK;
+use vizia::fonts::icons_names::CHECK;
 use vizia::prelude::*;
 
 static NAMES: [&str; 3] = ["First", "Second", "Third"];

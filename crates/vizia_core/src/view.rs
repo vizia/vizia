@@ -10,7 +10,6 @@ use crate::state::ModelDataStore;
 
 use accesskit::{Node, Role, TreeUpdate};
 use femtovg::{renderer::OpenGl, ImageFlags, Paint, Path, PixelFormat, RenderTarget};
-use morphorm::Units;
 
 /// The canvas we will be drawing to.
 ///
