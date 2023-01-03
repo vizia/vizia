@@ -105,14 +105,11 @@ impl TextContext {
             } else {
                 Wrap::None
             };
+            buf.set_wrap(wrap);
             for line in buf.lines.iter_mut() {
                 // TODO spans
                 line.set_attrs_list(AttrsList::new(attrs));
-                line.set_wrap(wrap);
             }
-            //if let Some(size) = cache.size.get(entity) {
-            //    buf.set_size(size.width as i32, size.height as i32);
-            //}
             let font_size =
                 style.font_size.get(entity).copied().unwrap_or(16.0) * style.dpi_factor as f32;
             // TODO configurable line spacing
@@ -267,6 +264,58 @@ impl TextContext {
                 alpha_glyphs: map.into_iter().map(|(_, cmd)| cmd).collect(),
                 color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
             })).collect())
+        })
+    }
+
+    pub(crate) fn layout_selection(
+        &mut self,
+        entity: Entity,
+        position: (f32, f32),
+        justify: (f32, f32),
+    ) -> Vec<(f32, f32, f32, f32)> {
+        self.with_editor(entity, |buf| {
+            let mut result = vec![];
+            if let Some(cursor_end) = buf.select_opt() {
+                let (cursor_start, cursor_end) = if buf.cursor() < cursor_end {
+                    (buf.cursor(), cursor_end)
+                } else {
+                    (cursor_end, buf.cursor())
+                };
+                let buffer = buf.buffer();
+                let total_height = buffer.layout_runs().len() as i32 * buffer.metrics().line_height;
+                for run in buffer.layout_runs() {
+                    if let Some((x, w)) = run.highlight(cursor_start, cursor_end) {
+                        let y = run.line_y as f32 - buffer.metrics().font_size as f32;
+                        let x = x + position.0 - run.line_w * justify.0;
+                        let y = y + position.1 - total_height as f32 * justify.1;
+                        result.push((x, y, w, buffer.metrics().line_height as f32));
+                    }
+                }
+            }
+            result
+        })
+    }
+
+    pub(crate) fn layout_caret(
+        &mut self,
+        entity: Entity,
+        position: (f32, f32),
+        justify: (f32, f32),
+        width: f32,
+    ) -> Option<(f32, f32, f32, f32)> {
+        self.with_editor(entity, |buf| {
+            let (cursor_start, cursor_end) = (buf.cursor(), buf.cursor());
+            let buffer = buf.buffer();
+            let total_height = buffer.layout_runs().len() as i32 * buffer.metrics().line_height;
+            for run in buffer.layout_runs() {
+                if let Some((x, _)) = run.highlight(cursor_start, cursor_end) {
+                    let y = run.line_y as f32 - buffer.metrics().font_size as f32;
+                    let x = x + position.0 - run.line_w * justify.0;
+                    let y = y + position.1 - total_height as f32 * justify.1;
+                    return Some((x - width / 2.0, y, width, buffer.metrics().line_height as f32));
+                }
+            }
+            None
         })
     }
 
