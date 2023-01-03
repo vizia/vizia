@@ -10,7 +10,7 @@ fn main() {
     Application::new(|cx| {
         AppData { text: "This text is editable!".to_string() }.build(cx);
 
-        Textbox::new_multiline(cx, AppData::text, true)
+        Textbox::new(cx, AppData::text)
             .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
             .width(Pixels(200.0))
             .on_build(|cx| {
@@ -24,7 +24,8 @@ fn main() {
             ),
             true,
         )
-        .width(Pixels(200.0));
+        .width(Pixels(200.0))
+        .height(Pixels(100.0));
     })
     .title("Textbox")
     .run();

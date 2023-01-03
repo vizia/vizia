@@ -71,7 +71,7 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
             if cx.text_context.has_buffer(entity) {
                 cx.text_context.sync_styles(entity, &cx.style);
                 let (text_width, text_height) = cx.text_context.with_buffer(entity, |buf| {
-                    buf.set_size(i32::MAX, i32::MAX);
+                    buf.set_size(999999, i32::MAX);
                     let w = buf
                         .layout_runs()
                         .filter_map(|r| (!r.line_w.is_nan()).then_some(r.line_w))
@@ -110,8 +110,6 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
 
             cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
             cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
-        } else if cx.text_context.has_buffer(entity) {
-            cx.text_context.with_buffer(entity, |buf| buf.set_size(i32::MAX, i32::MAX));
         }
     }
 }

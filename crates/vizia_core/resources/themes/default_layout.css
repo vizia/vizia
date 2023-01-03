@@ -15,12 +15,13 @@ textbox .textbox_content {
     layout-type: row;
     width: auto;
     height: auto;
-    min-width: 0px;
+    min-width: 100%;
     overflow: visible;
+    text-wrap: false;
     /*
     border-width: 1px;
     border-color: green;
-     */
+    */
 }
 
 textbox .textbox_container {
@@ -54,6 +55,7 @@ textbox.align_center .textbox_content {
 
 textbox.multi_line_wrapped .textbox_content {
     max-width: 100%;
+    text-wrap: true;
 }
 
 textbox.single_line .textbox_container {
