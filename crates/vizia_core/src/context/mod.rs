@@ -32,9 +32,8 @@ use crate::binding::{BindingHandler, ModelDataStore};
 use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
-use crate::fonts;
 use crate::prelude::*;
-use crate::resource::ResourceManager;
+use crate::resource::{fonts, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::style::{PseudoClass, Style};
 use crate::text::TextContext;
 use vizia_id::{GenerationalId, IdManager};
@@ -51,8 +50,7 @@ pub struct Context {
     pub(crate) entity_identifiers: HashMap<String, Entity>,
     pub(crate) tree: Tree<Entity>,
     pub(crate) current: Entity,
-    /// TODO make this private when there's no longer a need to mutate views after building
-    pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) data: SparseSet<ModelDataStore>,
     pub(crate) bindings: FnvHashMap<Entity, Box<dyn BindingHandler>>,
     pub(crate) event_queue: VecDeque<Event>,
@@ -64,7 +62,6 @@ pub struct Context {
     pub(crate) draw_cache: DrawCache,
 
     pub(crate) canvases: HashMap<Entity, crate::prelude::Canvas>,
-    //environment: Environment,
     pub(crate) mouse: MouseState<Entity>,
     pub(crate) modifiers: Modifiers,
 

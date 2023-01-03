@@ -91,4 +91,4 @@ mod event;
 pub use event::{Event, EventMeta, Propagation};
 
 mod event_handler;
-pub use event_handler::ViewHandler;
+pub(crate) use event_handler::ViewHandler;

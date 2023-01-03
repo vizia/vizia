@@ -132,8 +132,7 @@ where
     }
 }
 
-/// A type which formats a localized message
-/// with any number of named arguments.
+/// A type which formats a localized message with any number of named arguments.
 pub struct Localized {
     key: String,
     args: HashMap<String, Box<dyn FluentStore>>,

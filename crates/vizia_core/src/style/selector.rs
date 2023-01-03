@@ -129,64 +129,6 @@ impl std::fmt::Display for Selector {
 }
 
 impl Selector {
-    // pub fn new() -> Self {
-    //     Selector {
-    //         id: None,
-    //         element: None,
-    //         classes: HashSet::new(),
-    //         pseudo_classes: PseudoClass::empty(),
-    //         relation: SelectorRelation::None,
-    //         asterisk: false,
-    //     }
-    // }
-
-    // pub fn element(element: &str) -> Self {
-    //     //let mut s = DefaultHasher::new();
-    //     //element.hash(&mut s);
-
-    //     Selector {
-    //         id: None,
-    //         element: Some(element.to_owned()),
-    //         classes: HashSet::new(),
-    //         pseudo_classes: PseudoClass::empty(),
-    //         relation: SelectorRelation::None,
-    //         asterisk: false,
-    //     }
-    // }
-
-    pub fn is_empty(&self) -> bool {
-        self.id.is_none() && self.element.is_none() && self.classes.is_empty()
-    }
-
-    // Returns true if the selectors are identical unless either are empty
-    pub fn same(&self, entity_selector: &Selector) -> bool {
-        if self.is_empty() || entity_selector.is_empty() {
-            return false;
-        }
-
-        if self.asterisk != entity_selector.asterisk {
-            return false;
-        }
-
-        if self.id.is_some() && self.id != entity_selector.id {
-            return false;
-        }
-
-        if self.element.is_some() && self.element != entity_selector.element {
-            return false;
-        }
-
-        if !self.classes.is_empty() && self.classes != entity_selector.classes {
-            return false;
-        }
-
-        if self.pseudo_classes != entity_selector.pseudo_classes {
-            return false;
-        }
-
-        true
-    }
-
     pub fn matches(&self, entity_selector: &Selector) -> bool {
         // Universal selector always matches
         if self.asterisk {
@@ -234,25 +176,6 @@ impl Selector {
             if self.element.is_some() { 1 } else { 0 },
         ])
     }
-
-    // pub fn id(mut self, id: &str) -> Self {
-    //     let mut s = DefaultHasher::new();
-    //     id.hash(&mut s);
-    //     self.id = Some(s.finish());
-    //     self
-    // }
-
-    // pub fn class(mut self, class: &str) -> Self {
-    //     self.classes.insert(class.to_string());
-    //     self
-    // }
-
-    // pub fn replace_class(&mut self, old: &str, new: &str) -> &mut Self {
-    //     self.classes.remove(old);
-    //     self.classes.insert(new.to_string());
-
-    //     self
-    // }
 
     pub fn set_id(&mut self, id: &str) -> &mut Self {
         self.id = Some(id.to_owned());

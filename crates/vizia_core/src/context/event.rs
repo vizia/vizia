@@ -162,22 +162,6 @@ impl<'a> EventContext<'a> {
 
     /// Enables or disables pseudoclasses for the focus of an entity
     fn set_focus_pseudo_classes(&mut self, focused: Entity, enabled: bool, focus_visible: bool) {
-        #[cfg(debug_assertions)]
-        if enabled {
-            println!(
-                "Focus changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
-                focused,
-                self.tree.get_parent(focused),
-                self.views
-                    .get(&focused)
-                    .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
-                self.cache.get_posx(focused),
-                self.cache.get_posy(focused),
-                self.cache.get_width(focused),
-                self.cache.get_height(focused),
-            );
-        }
-
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {
             pseudo_classes.set(PseudoClass::FOCUS, enabled);
             if !enabled || focus_visible {

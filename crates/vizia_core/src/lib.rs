@@ -17,7 +17,6 @@ pub mod localization;
 pub mod model;
 pub mod modifiers;
 pub mod resource;
-pub use resource::fonts;
 pub mod style;
 mod systems;
 pub(crate) mod text;
@@ -26,6 +25,7 @@ pub mod tree;
 pub mod view;
 pub mod views;
 pub mod window;
+pub use resource::fonts;
 
 mod storage;
 

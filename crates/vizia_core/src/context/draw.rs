@@ -64,16 +64,22 @@ impl DrawCache {
 /// }
 /// ```
 pub struct DrawContext<'a> {
+    /// The current view being drawn.
     pub(crate) current: Entity,
+    /// The view which has captured mouse events.
     pub captured: &'a Entity,
+    /// The view which has keyboard focus.
     pub focused: &'a Entity,
+    /// The currently hovered view.
     pub hovered: &'a Entity,
+    /// Mutable reference to the style store.
     pub style: &'a Style,
+    ///
     pub cache: &'a CachedData,
     pub draw_cache: &'a mut DrawCache,
     pub tree: &'a Tree<Entity>,
     pub(crate) data: &'a SparseSet<ModelDataStore>,
-    pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub resource_manager: &'a ResourceManager,
     pub text_context: &'a mut TextContext,
     pub modifiers: &'a Modifiers,
@@ -288,18 +294,20 @@ impl<'a> DrawContext<'a> {
 
 impl<'a> DataContext for DrawContext<'a> {
     fn data<T: 'static>(&self) -> Option<&T> {
-        // return data for the static model
+        // Returns data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);
         }
 
         for entity in self.current.parent_iter(&self.tree) {
+            // Get model data.
             if let Some(model_data_store) = self.data.get(entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }
 
+            // Get view data.
             if let Some(view_handler) = self.views.get(&entity) {
                 if let Some(data) = view_handler.downcast_ref::<T>() {
                     return Some(data);

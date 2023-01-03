@@ -2,19 +2,14 @@ use std::any::Any;
 use std::collections::HashSet;
 
 use femtovg::{renderer::OpenGl, Canvas};
-use fnv::FnvHashMap;
 
 use super::EventProxy;
 use crate::{
     binding::ModelOrView,
     cache::{BoundingBox, CachedData},
     environment::Environment,
-    events::ViewHandler,
     layout::geometry_changed,
     prelude::*,
-    resource::fonts,
-    resource::FontOrId,
-    state::ModelOrView,
     style::{PseudoClass, Style},
     systems::*,
 };
@@ -34,9 +29,18 @@ impl<'a> BackendContext<'a> {
         Self(cx)
     }
 
-    /// Returns a reference to the views stored in the context.
-    pub fn views(&mut self) -> &mut FnvHashMap<Entity, Box<dyn ViewHandler>> {
-        &mut self.0.views
+    pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &W)>(&mut self, f: F) {
+        if let Some(window_event_handler) = self.0.views.remove(&Entity::root()) {
+            if let Some(window) = window_event_handler.downcast_ref::<W>() {
+                f(self, window);
+            }
+
+            self.0.views.insert(Entity::root(), window_event_handler);
+        }
+    }
+
+    pub fn add_window<W: View>(&mut self, window: W) {
+        self.0.views.insert(Entity::root(), Box::new(window));
     }
 
     /// Returns a mutable reference to the style data.
@@ -44,7 +48,7 @@ impl<'a> BackendContext<'a> {
         &mut self.0.style
     }
 
-    /// Returns a reference to the cache of computed properties data.
+    /// Returns a mutable reference to the cache of computed properties data.
     pub fn cache(&mut self) -> &mut CachedData {
         &mut self.0.cache
     }

@@ -112,7 +112,7 @@ pub trait LensExt: Lens {
     }
 }
 
-// Implement LensExt for all types which implement Lens
+// Implement LensExt for all types which implement Lens.
 impl<T: Lens> LensExt for T {}
 
 pub struct Map<G, I, O> {
