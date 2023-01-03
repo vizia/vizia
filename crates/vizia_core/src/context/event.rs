@@ -3,7 +3,6 @@ use std::collections::{HashMap, HashSet, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
 
-use femtovg::TextContext;
 use fnv::FnvHashMap;
 
 use crate::cache::CachedData;
@@ -16,6 +15,8 @@ use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 
+use crate::context::EmitContext;
+use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
@@ -36,7 +37,7 @@ pub struct EventContext<'a> {
     listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub resource_manager: &'a ResourceManager,
-    pub text_context: &'a TextContext,
+    pub text_context: &'a mut TextContext,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
@@ -62,7 +63,7 @@ impl<'a> EventContext<'a> {
             views: &mut cx.views,
             listeners: &mut cx.listeners,
             resource_manager: &cx.resource_manager,
-            text_context: &cx.text_context,
+            text_context: &mut cx.text_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
@@ -80,28 +81,6 @@ impl<'a> EventContext<'a> {
 
     pub fn current(&self) -> Entity {
         self.current
-    }
-
-    /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Any + Send>(&mut self, message: M) {
-        self.event_queue.push_back(
-            Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up),
-        );
-    }
-
-    /// Send an event containing a message directly to a specified entity.
-    pub fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
-        self.event_queue.push_back(
-            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
-        );
-    }
-
-    /// Send an event with custom origin and propagation information.
-    pub fn emit_custom(&mut self, event: Event) {
-        self.event_queue.push_back(event);
     }
 
     /// Add a listener to an entity.
@@ -335,6 +314,44 @@ impl<'a> EventContext<'a> {
         self.style.needs_redraw = true;
     }
 
+    pub fn needs_relayout(&mut self) {
+        self.style.needs_relayout = true;
+        self.style.needs_redraw = true;
+    }
+
+    pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
+        if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
+            return Ok(());
+        }
+
+        self.style.remove_rules();
+
+        self.style.rules.clear();
+
+        self.style.clear_style_rules();
+
+        let mut overall_theme = String::new();
+
+        // Reload the stored themes
+        for theme in self.resource_manager.themes.iter() {
+            overall_theme += theme;
+        }
+
+        // Reload the stored stylesheets
+        for stylesheet in self.resource_manager.stylesheets.iter() {
+            let theme = std::fs::read_to_string(stylesheet)?;
+            overall_theme += &theme;
+        }
+
+        self.style.parse_theme(&overall_theme);
+
+        self.style.needs_restyle = true;
+        self.style.needs_relayout = true;
+        self.style.needs_redraw = true;
+
+        Ok(())
+    }
+
     pub fn spawn<F>(&self, target: F)
     where
         F: 'static + Send + FnOnce(&mut ContextProxy),
@@ -374,5 +391,26 @@ impl<'a> DataContext for EventContext<'a> {
         }
 
         None
+    }
+}
+
+impl<'a> EmitContext for EventContext<'a> {
+    fn emit<M: Any + Send>(&mut self, message: M) {
+        self.event_queue.push_back(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+        );
+    }
+
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
+        self.event_queue.push_back(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+        );
+    }
+
+    fn emit_custom(&mut self, event: Event) {
+        self.event_queue.push_back(event);
     }
 }

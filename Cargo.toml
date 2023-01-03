@@ -208,6 +208,10 @@ path = "examples/ignore_default_theme.rs"
 name = "outline"
 path = "examples/style/outline.rs"
 
+[[example]]
+name = "save_dialog"
+path = "examples/save_dialog.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard", "vizia_winit/clipboard"]

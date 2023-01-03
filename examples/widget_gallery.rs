@@ -21,26 +21,30 @@ fn main() {
 
 pub fn buttons(cx: &mut Context) -> Handle<impl View> {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Button").font_size(30.0).font("roboto-bold");
+        Label::new(cx, "Button").font_size(30.0).font_weight(Weight::BOLD);
 
-        Label::new(cx, "A simple Button with a text label").font_size(24.0).font("roboto-bold");
+        Label::new(cx, "A simple Button with a text label")
+            .font_size(24.0)
+            .font_weight(Weight::BOLD);
 
         Button::new(cx, |_| {}, |cx| Label::new(cx, "Simple Button"));
 
-        Label::new(cx, "A simple Button with an icon label").font_size(24.0).font("roboto-bold");
+        Label::new(cx, "A simple Button with an icon label")
+            .font_size(24.0)
+            .font_weight(Weight::BOLD);
 
-        Button::new(cx, |_| {}, |cx| Label::new(cx, ICON_PLUS).font("icons"));
+        Button::new(cx, |_| {}, |cx| Label::new(cx, ICON_PLUS).class("icon"));
 
         Label::new(cx, "A simple Button with icon and text labels")
             .font_size(24.0)
-            .font("roboto-bold");
+            .font_weight(Weight::BOLD);
 
         Button::new(
             cx,
             |_| {},
             |cx| {
                 HStack::new(cx, |cx| {
-                    Label::new(cx, ICON_PLUS).font("icons");
+                    Label::new(cx, ICON_PLUS).class("icon");
                     Label::new(cx, "Button");
                 })
                 .size(Auto)
@@ -49,7 +53,9 @@ pub fn buttons(cx: &mut Context) -> Handle<impl View> {
             },
         );
 
-        Label::new(cx, "An accented Button with a text label").font_size(24.0).font("roboto-bold");
+        Label::new(cx, "An accented Button with a text label")
+            .font_size(24.0)
+            .font_weight(Weight::BOLD);
 
         Button::new(cx, |_| {}, |cx| Label::new(cx, "Simple Button")).class("accent");
     })
@@ -79,15 +85,15 @@ pub fn checkbox(cx: &mut Context) -> Handle<impl View> {
     CheckboxData { check: false }.build(cx);
 
     VStack::new(cx, |cx| {
-        Label::new(cx, "Checkbox").font_size(30.0).font("roboto-bold");
+        Label::new(cx, "Checkbox").font_size(30.0).font_weight(Weight::BOLD);
 
-        Label::new(cx, "A simple 2-state checkbox").font_size(24.0).font("roboto-bold");
+        Label::new(cx, "A simple 2-state checkbox").font_size(24.0).font_weight(Weight::BOLD);
 
         Checkbox::new(cx, CheckboxData::check).on_toggle(|cx| cx.emit(CheckboxEvent::Toggle));
 
         Label::new(cx, "A simple 2-state checkbox with a text label")
             .font_size(24.0)
-            .font("roboto-bold");
+            .font_weight(Weight::BOLD);
 
         HStack::new(cx, |cx| {
             Checkbox::new(cx, CheckboxData::check);
@@ -104,11 +110,11 @@ pub fn checkbox(cx: &mut Context) -> Handle<impl View> {
 
 pub fn label(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "A simple label").font_size(20.0).font("roboto-bold");
+        Label::new(cx, "A simple label").font_size(20.0).font_weight(Weight::BOLD);
 
         Label::new(cx, "This is some simple text");
 
-        Label::new(cx, "A styled label").font_size(20.0).font("roboto-bold");
+        Label::new(cx, "A styled label").font_size(20.0).font_weight(Weight::BOLD);
 
         Label::new(cx, "This is some simple text");
     })

@@ -1,6 +1,4 @@
 use crate::prelude::*;
-use crate::text::{measure_text_lines, text_layout, text_paint_general};
-use crate::vg::*;
 use vizia_id::GenerationalId;
 
 // Apply this before layout
@@ -36,112 +34,62 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
         let desired_width = cx.style.width.get(entity).cloned().unwrap_or_default();
         let desired_height = cx.style.height.get(entity).cloned().unwrap_or_default();
         let style = &cx.style;
-        let text = style.text.get(entity);
         let image = style.image.get(entity);
 
-        if (text.is_some() || image.is_some())
-            && (desired_width == Units::Auto || desired_height == Units::Auto)
+        if (cx.text_context.has_buffer(entity) || image.is_some())
+            && (desired_width == Auto || desired_height == Auto)
         {
-            let parent = cx.tree.get_layout_parent(entity).expect("Failed to find parent somehow");
-            let parent_width = cx.cache.get_width(parent);
-
-            let border_width = match cx.style.border_width.get(entity).cloned().unwrap_or_default()
-            {
-                Units::Pixels(val) => val * cx.style.dpi_factor as f32,
-                Units::Percentage(val) => parent_width * val,
-                _ => 0.0,
-            };
-
             let child_left = cx.style.child_left.get(entity).cloned().unwrap_or_default();
             let child_right = cx.style.child_right.get(entity).cloned().unwrap_or_default();
             let child_top = cx.style.child_top.get(entity).cloned().unwrap_or_default();
             let child_bottom = cx.style.child_bottom.get(entity).cloned().unwrap_or_default();
 
-            let mut x = cx.cache.get_posx(entity);
-            let mut y = cx.cache.get_posy(entity);
-            let mut w = cx.cache.get_width(entity) - border_width * 2.0;
-            let mut h = cx.cache.get_height(entity) - border_width * 2.0;
             let mut child_space_x = 0.0;
             let mut child_space_y = 0.0;
 
             // shrink the bounding box based on pixel values
-            if let Units::Pixels(val) = child_left {
+            if let Pixels(val) = child_left {
                 let val = val * cx.style.dpi_factor as f32;
-                x += val;
-                w -= val;
                 child_space_x += val;
             }
-            if let Units::Pixels(val) = child_right {
+            if let Pixels(val) = child_right {
                 let val = val * cx.style.dpi_factor as f32;
-                w -= val;
                 child_space_x += val;
             }
-            if let Units::Pixels(val) = child_top {
+            if let Pixels(val) = child_top {
                 let val = val * cx.style.dpi_factor as f32;
-                y += val;
-                h -= val;
                 child_space_y += val;
             }
-            if let Units::Pixels(val) = child_bottom {
+            if let Pixels(val) = child_bottom {
                 let val = val * cx.style.dpi_factor as f32;
-                h -= val;
                 child_space_y += val;
             }
-
-            // set align/baseline and move the start coordinate to the appropriate place in the box
-            let align = match (child_left, child_right) {
-                (Units::Stretch(_), Units::Stretch(_)) => {
-                    x += w / 2.0;
-                    Align::Center
-                }
-                (Units::Stretch(_), _) => {
-                    x += w;
-                    Align::Right
-                }
-                _ => Align::Left,
-            };
-            let baseline = match (child_top, child_bottom) {
-                (Units::Stretch(_), Units::Stretch(_)) => {
-                    y += h / 2.0;
-                    Baseline::Middle
-                }
-                (Units::Stretch(_), _) => {
-                    y += h;
-                    Baseline::Bottom
-                }
-                _ => Baseline::Top,
-            };
 
             let mut content_width = 0.0;
             let mut content_height = 0.0;
 
-            if let Some(text) = cx.style.text.get(entity).cloned() {
-                let mut paint = text_paint_general(&cx.style, &cx.resource_manager, entity);
-                paint.set_text_align(align);
-                paint.set_text_baseline(baseline);
-
-                let font_metrics =
-                    cx.text_context.measure_font(&paint).expect("Failed to read font metrics");
-
-                if let Ok((lines, _)) = text_layout(f32::MAX, &text, &paint, &cx.text_context) {
-                    let metrics = measure_text_lines(&text, &paint, &lines, x, y, &cx.text_context);
-                    let text_width = metrics
-                        .iter()
-                        .map(|m| m.width())
-                        .reduce(|a, b| a.max(b))
+            if cx.text_context.has_buffer(entity) {
+                cx.text_context.sync_styles(entity, &cx.style);
+                let (text_width, text_height) = cx.text_context.with_buffer(entity, |buf| {
+                    buf.set_size(i32::MAX, i32::MAX);
+                    let w = buf
+                        .layout_runs()
+                        .filter_map(|r| (!r.line_w.is_nan()).then_some(r.line_w))
+                        .max_by(|f1, f2| f1.partial_cmp(f2).unwrap())
                         .unwrap_or_default();
-                    let text_height = font_metrics.height().round() * metrics.len() as f32;
+                    let h = buf.layout_runs().len() as f32 * buf.metrics().line_height as f32;
+                    (w, h)
+                });
 
-                    // Add an extra pixel to account for AA
-                    let text_width = text_width.round() + 1.0 + child_space_x;
-                    let text_height = text_height.round() + 1.0 + child_space_y;
+                // Add an extra pixel to account for AA
+                let text_width = text_width.round() + 1.0 + child_space_x;
+                let text_height = text_height.round() + 1.0 + child_space_y;
 
-                    if content_width < text_width {
-                        content_width = text_width;
-                    }
-                    if content_height < text_height {
-                        content_height = text_height;
-                    }
+                if content_width < text_width {
+                    content_width = text_width;
+                }
+                if content_height < text_height {
+                    content_height = text_height;
                 }
             }
 
@@ -162,6 +110,8 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
 
             cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
             cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
+        } else if cx.text_context.has_buffer(entity) {
+            cx.text_context.with_buffer(entity, |buf| buf.set_size(i32::MAX, i32::MAX));
         }
     }
 }

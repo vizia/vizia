@@ -10,7 +10,9 @@ pub fn inline_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
 
             cx.style.font_color.inherit_inline(entity, parent);
             cx.style.font_size.inherit_inline(entity, parent);
-            cx.style.font.inherit_inline(entity, parent);
+            cx.style.font_family.inherit_inline(entity, parent);
+            cx.style.font_weight.inherit_inline(entity, parent);
+            cx.style.font_style.inherit_inline(entity, parent);
             cx.style.caret_color.inherit_inline(entity, parent);
             cx.style.selection_color.inherit_inline(entity, parent);
         }
@@ -22,7 +24,9 @@ pub fn shared_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
         if let Some(parent) = tree.get_layout_parent(entity) {
             cx.style.font_color.inherit_shared(entity, parent);
             cx.style.font_size.inherit_shared(entity, parent);
-            cx.style.font.inherit_shared(entity, parent);
+            cx.style.font_family.inherit_shared(entity, parent);
+            cx.style.font_weight.inherit_shared(entity, parent);
+            cx.style.font_style.inherit_shared(entity, parent);
             cx.style.caret_color.inherit_shared(entity, parent);
             cx.style.selection_color.inherit_shared(entity, parent);
         }
@@ -57,11 +61,17 @@ pub fn hoverability_system(cx: &mut Context, tree: &Tree<Entity>) {
 }
 
 // Returns the selector of an entity
+#[allow(unused)] // can be used for a potential optimization where styling is cached between
+                 // similar siblings. needs some work.
 fn entity_selector(cx: &Context, entity: Entity) -> Selector {
     Selector {
         asterisk: false,
         id: cx.style.ids.get(entity).cloned(),
-        element: cx.style.elements.get(entity).cloned(),
+        element: cx
+            .views
+            .get(&entity)
+            .and_then(|view| view.element())
+            .map(|element| element.to_owned()),
         classes: cx.style.classes.get(entity).cloned().unwrap_or_default(),
         pseudo_classes: {
             let mut pseudo_classes =
@@ -395,9 +405,20 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
         should_relayout = true;
     }
 
-    if cx.style.font.link(entity, &matched_rules) {
+    if cx.style.font_family.link(entity, &matched_rules) {
         //println!("44");
         should_redraw = true;
+        should_relayout = true;
+    }
+
+    if cx.style.font_weight.link(entity, &matched_rules) {
+        should_redraw = true;
+        should_relayout = true;
+    }
+
+    if cx.style.font_style.link(entity, &matched_rules) {
+        should_redraw = true;
+        should_relayout = true;
     }
 
     if cx.style.text_wrap.link(entity, &matched_rules) {
@@ -503,36 +524,33 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
     if cx.style.needs_restyle {
         hoverability_system(cx, tree);
 
-        let mut prev_entity = None;
-
         let mut matched_rule_ids = Vec::with_capacity(100);
         let mut prev_matched_rule_ids = Vec::with_capacity(100);
 
         let iterator = LayoutTreeIterator::full(tree);
 
         // Loop through all entities
-        'ent: for entity in iterator {
+        for entity in iterator {
             // If the entity and the previous entity have the same parent and selectors then they share the same rules
-            if let Some(prev) = prev_entity {
-                if let Some(parent) = tree.get_layout_parent(entity) {
-                    if let Some(prev_parent) = tree.get_layout_parent(prev) {
-                        if parent == prev_parent {
-                            if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
-                                prev_entity = Some(entity);
-                                link_style_data(cx, entity, &prev_matched_rule_ids);
-                                continue 'ent;
-                            }
-                        }
-                    }
-                }
-            }
+            //if let Some(prev) = prev_entity {
+            //    if let Some(parent) = tree.get_layout_parent(entity) {
+            //        if let Some(prev_parent) = tree.get_layout_parent(prev) {
+            //            if parent == prev_parent {
+            //                if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
+            //                    prev_entity = Some(entity);
+            //                    link_style_data(cx, entity, &prev_matched_rule_ids);
+            //                    continue 'ent;
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
 
             let mut matched_rules = Vec::with_capacity(100);
             compute_matched_rules(cx, tree, entity, &mut matched_rules);
             matched_rule_ids.extend(matched_rules.into_iter().map(|r| r.id));
             link_style_data(cx, entity, &matched_rule_ids);
 
-            prev_entity = Some(entity);
             prev_matched_rule_ids.clear();
             prev_matched_rule_ids.append(&mut matched_rule_ids);
         }

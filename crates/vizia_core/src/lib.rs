@@ -41,7 +41,7 @@ pub mod image {
 pub mod prelude {
     pub use super::animation::{AnimExt, Animation, AnimationBuilder};
     pub use super::context::{
-        Context, ContextProxy, DataContext, DrawContext, EventContext, ProxyEmitError,
+        Context, ContextProxy, DataContext, DrawContext, EmitContext, EventContext, ProxyEmitError,
     };
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent};
@@ -69,6 +69,7 @@ pub mod prelude {
         LinearGradient, Opacity, Overflow, PseudoClass, Visibility,
     };
 
+    pub use cosmic_text::{FamilyOwned, Style as FontStyle, Weight};
     pub use morphorm::Units::*;
     pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
     pub use unic_langid::LanguageIdentifier;
