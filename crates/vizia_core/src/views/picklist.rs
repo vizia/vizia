@@ -42,10 +42,7 @@ impl PickList {
                             })
                             .hoverable(false);
                         if show_handle {
-                            Label::new(cx, CHEVRON_DOWN)
-                                .class("icon")
-                                .font("vizia_icons")
-                                .hoverable(false);
+                            Label::new(cx, CHEVRON_DOWN).class("icon").hoverable(false);
                         }
                     })
                     .col_between(Stretch(1.0))

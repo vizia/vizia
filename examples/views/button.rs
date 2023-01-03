@@ -1,6 +1,7 @@
 mod helpers;
 use helpers::*;
-use vizia::fonts::unicode_names::CHECK;
+use vizia::fonts::icons_names::CHECK;
+
 use vizia::prelude::*;
 
 fn main() {

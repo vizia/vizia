@@ -7,7 +7,7 @@
 }
 
 .icon {
-    font: "icons";
+    font-family: "Entypo", sans-serif;
 }
 
 root {
@@ -125,16 +125,6 @@ button:disabled {
     border-color: #404040;
 }
 
-button:disabled:over {
-    border-width: 0px;
-    background-color: #606060;
-}
-
-button:disabled:active {
-    border-width: 0px;
-    background-color: #606060;
-}
-
 button.outline:disabled {
     background-color: transparent;
     border-width: 1px;
@@ -147,22 +137,6 @@ button.ghost:disabled {
 
 button:disabled label {
     color: #888;
-}
-
-button.icon {
-    background-color: transparent;
-}
-
-button.icon:over {
-    background-color: #ffffff11;
-}
-
-button.icon:over label {
-    color: #fff;
-}
-
-button.icon:active {
-    background-color: transparent;
 }
 
 /* Checkbox */
@@ -219,6 +193,14 @@ checkbox:checked:hover {
 checkbox:checked:disabled {
     background-color: #404040;
     border-color: #404040;
+    color: #181818;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
+}
+
+checkbox.intermediate {
+    background-color: #51afef;
+    border-color: #51afef;
     color: #181818;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;

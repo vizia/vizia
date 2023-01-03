@@ -36,7 +36,7 @@ fn main() {
         theme_selector(cx);
 
         VStack::new(cx, |cx| {
-            Label::new(cx, "A label can display a static string of text.");
+            Label::new(cx, "A label can display a static string of unicode 😂");
 
             Label::new(cx, AppData::text);
 
@@ -47,7 +47,8 @@ fn main() {
 
             Label::new(cx, "Unless text wrapping is disabled.")
                 .width(Pixels(200.0))
-                .text_wrap(false);
+                .text_wrap(false)
+                .font_style(FontStyle::Italic);
 
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, AppData::checked)

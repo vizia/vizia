@@ -46,7 +46,7 @@ where
                         let lens1 = lens.clone();
                         TabPair::new(
                             move |cx| {
-                                Label::new(cx, ICON_CLOCK).font("icons").hoverable(false);
+                                Label::new(cx, ICON_CLOCK).class("icon").hoverable(false);
                                 Element::new(cx).class("indicator");
                             },
                             move |cx| {

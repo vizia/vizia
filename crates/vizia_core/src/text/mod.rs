@@ -7,8 +7,8 @@ pub use movement::*;
 mod selection;
 pub use selection::*;
 
-pub mod layout;
-pub use layout::*;
-
 pub mod scrolling;
 pub use scrolling::*;
+
+pub(crate) mod cosmic;
+pub(crate) use cosmic::*;

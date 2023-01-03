@@ -51,7 +51,7 @@ impl Spinbox {
         Self { kind, on_decrement: None, on_increment: None }
             .build(cx, move |cx| {
                 Label::new(cx, "")
-                    .font("icons")
+                    .class("icon")
                     .bind(Spinbox::kind, move |handle, spinbox_kind| {
                         match spinbox_kind.get(handle.cx) {
                             SpinboxKind::Horizontal => {
@@ -74,11 +74,10 @@ impl Spinbox {
                         }
                     })
                     .class("icon")
-                    .font("vizia_icons")
                     .class("spinbox-button");
                 (content)(cx).class("spinbox-value");
                 Label::new(cx, "")
-                    .font("icons")
+                    .class("icon")
                     .bind(Spinbox::kind, move |handle, spinbox_kind| {
                         match spinbox_kind.get(handle.cx) {
                             SpinboxKind::Horizontal => {
@@ -101,7 +100,6 @@ impl Spinbox {
                         }
                     })
                     .class("icon")
-                    .font("vizia_icons")
                     .class("spinbox-button");
             })
             .toggle_class("horizontal", Spinbox::kind.map(|kind| kind == &SpinboxKind::Horizontal))
