@@ -270,7 +270,7 @@ impl Application {
                             node_id, action_request_event.request.action
                         );
 
-                        if !action_request_event.request.action == Action::ScrollIntoView {
+                        if action_request_event.request.action != Action::ScrollIntoView {
                             let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
 
                             println!(
@@ -283,6 +283,7 @@ impl Application {
                             // Handle focus action from screen reader
                             match action_request_event.request.action {
                                 Action::Focus => {
+                                    println!("Request for focus");
                                     cx.0.with_current(entity, |cx| {
                                         cx.focus();
                                     });
