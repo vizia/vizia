@@ -100,6 +100,12 @@ pub struct Context {
     pub ignore_default_theme: bool,
 }
 
+impl Default for Context {
+    fn default() -> Self {
+        Context::new(WindowSize::new(800, 600), 1.0)
+    }
+}
+
 impl Context {
     pub fn new(window_size: WindowSize, user_scale_factor: f64) -> Self {
         let mut cache = CachedData::default();
