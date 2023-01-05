@@ -47,7 +47,7 @@ impl<'a> BackendContext<'a> {
 
     /// The window's size in logical pixels, before
     /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
-    /// during a frame then the window will be resized and a [`WindowEvent::WindowResize`] will be
+    /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will be
     /// emitted.
     pub fn window_size(&mut self) -> &mut WindowSize {
         &mut self.0.window_size
@@ -56,7 +56,7 @@ impl<'a> BackendContext<'a> {
     /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
     /// `window_size` gets multplied with this factor to get the actual logical window size. If this
     /// changes during a frame, then the window will be resized at the end of the frame and a
-    /// [`WindowEvent::WindowResize`] will be emitted. This can be initialized using
+    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
     /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
     pub fn user_scale_factor(&mut self) -> &mut f64 {
         &mut self.0.user_scale_factor

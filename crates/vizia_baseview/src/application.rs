@@ -237,17 +237,10 @@ impl ApplicationRunner {
             );
 
             cx.0.need_restyle();
+            // This will trigger a `WindowEvent::GeometryChanged`
             cx.0.need_relayout();
             cx.0.need_redraw();
 
-            // After the window is resized, we should let every view know about this so they can act
-            // accordingly
-            cx.0.emit_custom(
-                Event::new(WindowEvent::WindowResize)
-                    .target(Entity::root())
-                    .origin(Entity::root())
-                    .propagate(Propagation::Subtree),
-            );
             self.event_manager.flush_events(cx.context());
         }
 
@@ -434,13 +427,6 @@ impl ApplicationRunner {
                     cx.0.need_restyle();
                     cx.0.need_relayout();
                     cx.0.need_redraw();
-
-                    // TODO: We send an event when changes to `*cx.window_size` or
-                    //       `*cx.user_scale_factor` would trigger a resize, but not when when the
-                    //       window gets resized externally. If we do end up doing this, then these
-                    //       events should be separate from the current `WindowResize` because they
-                    //       may need to be handled differently (and they should not get stuck in a
-                    //       feedback loop).
                 }
                 baseview::WindowEvent::WillClose => {
                     cx.send_event(Event::new(WindowEvent::WindowClose));

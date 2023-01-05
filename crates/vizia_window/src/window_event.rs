@@ -10,12 +10,6 @@ use vizia_input::{Code, Key, MouseButton};
 pub enum WindowEvent {
     /// Emitted when a window is closed. Can also be emitted by a view or model to close the window.
     WindowClose,
-    /// Emitted when the window gets resized at runtime. When this happens you can find the window's
-    /// current scaled logical size (which may have a user scale factor applied to it, so this can
-    /// be different from the window's logical size) through `cx.style.width`/`cx.style.height` and
-    /// the physical size through `cx.cache.get_width(Entity::root())`/
-    /// `cx.cache.get_height(Entity::root())`.
-    WindowResize,
     /// Emitted when a mouse button is double clicked.
     MouseDoubleClick(MouseButton),
     /// Emitted when a mouse button is triple clicked
