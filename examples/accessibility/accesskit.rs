@@ -9,6 +9,7 @@ pub struct AppData {
     radio_flags: [bool; 3],
 
     value: f32,
+    text: String,
 }
 
 pub enum AppEvent {
@@ -41,8 +42,13 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        AppData { flags: [false, false, false], radio_flags: [true, false, false], value: 25.0 }
-            .build(cx);
+        AppData {
+            flags: [false, false, false],
+            radio_flags: [true, false, false],
+            value: 25.0,
+            text: String::from("something"),
+        }
+        .build(cx);
 
         VStack::new(cx, |cx| {
             VStack::new(cx, |cx| {
@@ -86,6 +92,8 @@ fn main() {
             })
             .height(Auto)
             .row_between(Pixels(10.0));
+
+            Textbox::new(cx, AppData::text).width(Pixels(200.0)).height(Pixels(30.0));
 
             VStack::new(cx, |cx| {
                 Label::new(cx, "Buttons").font_size(24.0);

@@ -2,6 +2,7 @@ use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
     window::Window,
 };
+use accesskit::Action;
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit::TreeUpdate;
 #[cfg(not(target_arch = "wasm32"))]
@@ -264,33 +265,40 @@ impl Application {
                     #[cfg(not(target_arch = "wasm32"))]
                     UserEvent::AccessKitActionRequest(action_request_event) => {
                         let node_id = action_request_event.request.target;
-                        let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
-
                         println!(
-                            "Received Action: {:?} {:?} {:?}",
-                            entity,
-                            action_request_event.request.action,
-                            action_request_event.request.data,
+                            "Received action request for node: {:?} {:?}",
+                            node_id, action_request_event.request.action
                         );
 
-                        // Handle focus action from screen reader
-                        match action_request_event.request.action {
-                            Action::Focus => {
-                                cx.0.with_current(entity, |cx| {
-                                    cx.focus();
-                                });
+                        if !action_request_event.request.action == Action::ScrollIntoView {
+                            let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
+
+                            println!(
+                                "Received Action: {:?} {:?} {:?}",
+                                entity,
+                                action_request_event.request.action,
+                                action_request_event.request.data,
+                            );
+
+                            // Handle focus action from screen reader
+                            match action_request_event.request.action {
+                                Action::Focus => {
+                                    cx.0.with_current(entity, |cx| {
+                                        cx.focus();
+                                    });
+                                }
+
+                                _ => {}
                             }
 
-                            _ => {}
+                            // TODO - Where should this event be sent to?
+                            cx.send_event(
+                                Event::new(WindowEvent::ActionRequest(
+                                    action_request_event.request.clone(),
+                                ))
+                                .direct(entity),
+                            );
                         }
-
-                        // TODO - Where should this event be sent to?
-                        cx.send_event(
-                            Event::new(WindowEvent::ActionRequest(
-                                action_request_event.request.clone(),
-                            ))
-                            .direct(entity),
-                        );
                     }
                 },
 

@@ -54,6 +54,10 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                     let mut selection_anchor_cursor = 0;
                     // Compute the rows of text
                     // let text_paint = text_paint_general(&cx.style, &cx.resource_manager, entity);
+                    // let font_metrics = cx
+                    //     .text_context
+                    //     .measure_font(&text_paint)
+                    //     .expect("Failed to read font metrics");
                     // if let Ok((text_layout, new_lines)) =
                     //     text_layout(bounds.width(), &text, &text_paint, &cx.text_context)
                     // {
@@ -105,12 +109,14 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
 
                     //         let mut line_node = Node::default();
 
+                    //         // println!("{} {} {}", line.y, line.height(), bounds.y);
+
                     //         line_node.role = Role::InlineTextBox;
                     //         line_node.bounds = Some(Rect {
-                    //             x0: line.x as f64,
-                    //             y0: line.y as f64,
+                    //             x0: (line.x) as f64,
+                    //             y0: (line.y + line.height()) as f64,
                     //             x1: (line.x + line.width()) as f64,
-                    //             y1: (line.y + line.height()) as f64,
+                    //             y1: (line.y + 2.0 * line.height()) as f64,
                     //         });
                     //         line_node.text_direction = Some(TextDirection::LeftToRight);
 
@@ -153,6 +159,8 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                     //         }
 
                     //         word_lengths.push((character_lengths.len() - last_word_start) as u8);
+
+                    //         // println!("{:?} {:?}", line_id, character_positions);
 
                     //         line_node.value = Some(line_str.into());
                     //         line_node.character_lengths = character_lengths.into();
