@@ -369,7 +369,7 @@ impl<'a> EventContext<'a> {
     }
 
     /// The window's DPI factor. This includes both HiDPI scaling and the user scale factor.
-    pub fn scale_factor(&self) -> f32 {
+    pub fn dpi_factor(&self) -> f32 {
         self.style.dpi_factor as f32
     }
 
