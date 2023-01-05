@@ -189,8 +189,8 @@ name = "window_modifiers"
 path = "examples/window_modifiers.rs"
 
 [[example]]
-name = "window_resize"
-path = "examples/window_resize.rs"
+name = "user_scale"
+path = "examples/user_scale.rs"
 
 [[example]]
 name = "long_list"
