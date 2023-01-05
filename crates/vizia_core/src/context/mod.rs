@@ -202,6 +202,23 @@ impl Context {
         self.data::<Environment>().unwrap()
     }
 
+    /// The window's size in logical pixels, before
+    /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
+    /// during a frame then the window will be resized and a [`WindowEvent::WindowResize`] will be
+    /// emitted.
+    pub fn window_size(&self) -> WindowSize {
+        self.window_size
+    }
+
+    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
+    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
+    /// changes during a frame, then the window will be resized at the end of the frame and a
+    /// [`WindowEvent::WindowResize`] will be emitted. This can be initialized using
+    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    pub fn user_scale_factor(&self) -> f64 {
+        self.user_scale_factor
+    }
+
     /// Mark the application as needing to rerun the draw method
     pub fn need_redraw(&mut self) {
         self.style.needs_redraw = true;
