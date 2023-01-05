@@ -19,8 +19,8 @@ vizia_core = { path = "../vizia_core" }
 vizia_id = { path = "../vizia_id" }
 vizia_window = { path = "../vizia_window" }
 
-# accesskit = "0.8.1"
-accesskit = {git = "https://github.com/AccessKit/accesskit", rev = "9fca13493f9a4377dcb5455f864f1813d5849458"}
+accesskit = "0.8.1"
+# accesskit = {git = "https://github.com/AccessKit/accesskit", rev = "9fca13493f9a4377dcb5455f864f1813d5849458"}
 winit = { version = "0.27.2", default-features = false }
 femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "e1f3f05cc050c0ed69ca702b368bb5d4eb2cabff", default-features = false }
 #femtovg = { path = "../../../femtovg", default-features = false }

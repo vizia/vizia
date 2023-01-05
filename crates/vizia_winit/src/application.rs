@@ -291,6 +291,8 @@ impl Application {
                                 _ => {}
                             }
 
+                            println!("Send event to: {}", entity);
+
                             // TODO - Where should this event be sent to?
                             cx.send_event(
                                 Event::new(WindowEvent::ActionRequest(

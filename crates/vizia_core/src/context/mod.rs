@@ -622,7 +622,7 @@ impl Context {
             max_numeric_value: self.style.max_numeric_value.get(entity).copied(),
             numeric_value_step: self.style.numeric_value_step.get(entity).copied(),
             hidden: self.style.hidden.get(entity).copied().unwrap_or_default(),
-            text_direction: Some(accesskit::TextDirection::LeftToRight),
+            // text_direction: Some(accesskit::TextDirection::LeftToRight),
             // text_selection,
             ..Default::default()
         }
