@@ -187,7 +187,7 @@ impl ApplicationRunner {
 
     /// Handle all reactivity within a frame. The window instance is used to resize the window when
     /// needed.
-    pub fn on_frame_update(&mut self, _window: &mut Window) {
+    pub fn on_frame_update(&mut self, window: &mut Window) {
         let mut cx = BackendContext::new(&mut self.context);
 
         while let Some(event) = queue_get() {
@@ -200,62 +200,55 @@ impl ApplicationRunner {
         if *cx.window_size() != self.current_window_size
             || *cx.user_scale_factor() != self.current_user_scale_factor
         {
-            // TODO: This functionality has not yet been merged into baseview, so we'll just pretend
-            //       nothing happened for now to prevent widgets from relying on the wrong
-            //       information
-            *cx.window_size() = self.current_window_size;
-            *cx.user_scale_factor() = self.current_user_scale_factor;
+            self.current_window_size = *cx.window_size();
+            self.current_user_scale_factor = *cx.user_scale_factor();
 
-            // self.current_window_size = *cx.window_size();
-            // self.current_user_scale_factor = *cx.user_scale_factor();
+            // The user scale factor is not part of the HiDPI scaling, so baseview should treat it
+            // as part of our logical size
+            window.resize(baseview::Size {
+                width: self.current_window_size.width as f64 * self.current_user_scale_factor,
+                height: self.current_window_size.height as f64 * self.current_user_scale_factor,
+            });
 
-            // // The user scale factor is not part of the HiDPI scaling, so baseview should treat it
-            // // as part of our logical size
-            // #[cfg(target_os = "linux")]
-            // window.resize(baseview::Size {
-            //     width: self.current_window_size.width as f64 * self.current_user_scale_factor,
-            //     height: self.current_window_size.height as f64 * self.current_user_scale_factor,
-            // });
+            // TODO: These calculations are now repeated in three places, should probably be moved
+            //       to a function
+            cx.style().dpi_factor = self.window_scale_factor * self.current_user_scale_factor;
+            cx.style()
+                .width
+                .insert(Entity::root(), Units::Pixels(self.current_window_size.width as f32));
+            cx.style()
+                .height
+                .insert(Entity::root(), Units::Pixels(self.current_window_size.height as f32));
 
-            // // TODO: These calculations are now repeated in three places, should probably be moved
-            // //       to a function
-            // cx.style().dpi_factor = self.window_scale_factor * self.current_user_scale_factor;
-            // cx.style()
-            //     .width
-            //     .insert(Entity::root(), Units::Pixels(self.current_window_size.width as f32));
-            // cx.style()
-            //     .height
-            //     .insert(Entity::root(), Units::Pixels(self.current_window_size.height as f32));
+            let new_physical_width =
+                self.current_window_size.width as f32 * cx.style().dpi_factor as f32;
+            let new_physical_height =
+                self.current_window_size.height as f32 * cx.style().dpi_factor as f32;
+            cx.cache().set_width(Entity::root(), new_physical_width);
+            cx.cache().set_height(Entity::root(), new_physical_height);
 
-            // let new_physical_width =
-            //     self.current_window_size.width as f32 * cx.style().dpi_factor as f32;
-            // let new_physical_height =
-            //     self.current_window_size.height as f32 * cx.style().dpi_factor as f32;
-            // cx.cache().set_width(Entity::root(), new_physical_width);
-            // cx.cache().set_height(Entity::root(), new_physical_height);
+            cx.cache().set_clip_region(
+                Entity::root(),
+                BoundingBox {
+                    w: new_physical_width,
+                    h: new_physical_height,
+                    ..BoundingBox::default()
+                },
+            );
 
-            // cx.cache().set_clip_region(
-            //     Entity::root(),
-            //     BoundingBox {
-            //         w: new_physical_width,
-            //         h: new_physical_height,
-            //         ..BoundingBox::default()
-            //     },
-            // );
+            cx.0.need_restyle();
+            cx.0.need_relayout();
+            cx.0.need_redraw();
 
-            // cx.0.need_restyle();
-            // cx.0.need_relayout();
-            // cx.0.need_redraw();
-
-            // // After the window is resized, we should let every view know about this so they can act
-            // // accordingly
-            // cx.0.emit_custom(
-            //     Event::new(WindowEvent::WindowResize)
-            //         .target(Entity::root())
-            //         .origin(Entity::root())
-            //         .propagate(Propagation::Subtree),
-            // );
-            // self.event_manager.flush_events(cx.context());
+            // After the window is resized, we should let every view know about this so they can act
+            // accordingly
+            cx.0.emit_custom(
+                Event::new(WindowEvent::WindowResize)
+                    .target(Entity::root())
+                    .origin(Entity::root())
+                    .propagate(Propagation::Subtree),
+            );
+            self.event_manager.flush_events(cx.context());
         }
 
         cx.load_images();
