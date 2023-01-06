@@ -1,6 +1,3 @@
-mod edit;
-pub use edit::*;
-
 mod movement;
 pub use movement::*;
 
