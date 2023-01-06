@@ -51,6 +51,12 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
 
                     let mut selection_active_line = node_id;
                     let mut selection_anchor_line = node_id;
+                    let mut selection_active_cursor = 0;
+                    let mut selection_anchor_cursor = 0;
+
+                    let mut current_cursor = 0;
+                    let mut total_length = 0;
+                    let mut last_line_length = 0;
 
                     for (index, line) in editor.buffer().layout_runs().enumerate() {
                         // Concatenate the parent id with the index of the text line to form a unique node id
@@ -98,8 +104,13 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                             .map(|word| word.len() as u8)
                             .collect::<Vec<_>>();
 
+                        let mut line_length = 0;
+
                         for glyph in line.glyphs.iter() {
                             let length = (glyph.end - glyph.start) as u8;
+
+                            line_length += length as usize;
+
                             let position = glyph.x;
                             let width = glyph.w;
 
@@ -107,6 +118,8 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                             character_positions.push(position);
                             character_widths.push(width);
                         }
+
+                        println!("{} {}", line_text, current_cursor);
 
                         line_node.value = Some(line_text.into());
                         line_node.character_lengths = character_lengths.into();
@@ -116,25 +129,65 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                         child_nodes.push((line_id, Arc::new(line_node)));
 
                         // Check if this line contains the cursor or selection
-                        if cursor.line == index {
+                        if cursor.index < current_cursor + line_length
+                            && cursor.index >= current_cursor
+                        {
                             selection_active_line = line_id;
+                            selection_active_cursor = cursor.index - current_cursor;
+                            println!("cursor line: {}", line_text);
                         }
 
-                        if selection.line == index {
+                        if selection.index < current_cursor + line_length
+                            && selection.index >= current_cursor
+                        {
                             selection_anchor_line = line_id;
+                            selection_anchor_cursor = selection.index - current_cursor;
+                        }
+
+                        current_cursor += line_length;
+
+                        println!(
+                            "{} {} {} {}",
+                            cursor.line, cursor.index, selection.line, selection.index
+                        );
+
+                        total_length += line_length;
+                        last_line_length = line_length;
+                    }
+
+                    if !child_nodes.is_empty() {
+                        let cursor = editor.cursor();
+                        println!(
+                            "current_cursor: {}  total_length: {}",
+                            current_cursor, total_length
+                        );
+                        if cursor.index == total_length {
+                            selection_active_line = child_nodes.last().unwrap().0;
+                            selection_active_cursor = last_line_length;
+                        }
+
+                        if selection.index == total_length {
+                            selection_anchor_line = child_nodes.last().unwrap().0;
+                            selection_anchor_cursor = last_line_length;
                         }
                     }
 
-                    let cursor = editor.cursor();
+                    println!(
+                        "{:?} {} {:?} {}",
+                        selection_anchor_line,
+                        selection_anchor_cursor,
+                        selection_active_line,
+                        selection_active_cursor
+                    );
 
                     node.text_selection = Some(TextSelection {
                         anchor: TextPosition {
                             node: selection_anchor_line,
-                            character_index: selection.index,
+                            character_index: selection_anchor_cursor,
                         },
                         focus: TextPosition {
                             node: selection_active_line,
-                            character_index: cursor.index,
+                            character_index: selection_active_cursor,
                         },
                     });
 
