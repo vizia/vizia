@@ -321,6 +321,7 @@ impl Application {
                             // update.nodes.iter().for_each(|(node_id, node)| {
                             //     println!("{:?} {:?}", node_id, node.value)
                             // });
+                            // println!("NODES: {:?}", update.nodes);
                             // println!("");
                             accesskit.update(update.clone());
                         }

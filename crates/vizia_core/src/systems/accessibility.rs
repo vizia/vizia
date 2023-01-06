@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
-use crate::{accessibility::IntoNode, prelude::*, text::Selection};
+use crate::{accessibility::IntoNode, prelude::*};
 use accesskit::{
     kurbo::Rect, Node, NodeId, TextDirection, TextPosition, TextSelection, TreeUpdate,
 };
+use cosmic_text::Edit;
+use unicode_segmentation::UnicodeSegmentation;
 use vizia_storage::LayoutTreeIterator;
 
 // Updates node properties from view properties
@@ -36,166 +38,108 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
         // Here we need to construct the correct text edit nodes for each wrapped line of text
         if let Some(role) = cx.style.roles.get(entity) {
             if *role == Role::TextField {
-                if let Some(text) = cx.style.text_value.get(entity) {
-                    // This is a dirty hack because we need the bounds of the inner inner text content
-                    // which we know is going to be 3 more than the id of the textbox
-                    let text_content_id = Entity::new(entity.index() as u32 + 3, 0);
-                    let bounds = cx.cache.get_bounds(text_content_id);
-                    // TODO
-                    // let selection = cx
-                    //     .style
-                    //     .text_selection
-                    //     .get(text_content_id)
-                    //     .copied()
-                    //     .unwrap_or(Selection::caret(0));
+                // This is a dirty hack because we need the bounds of the inner inner text content
+                // which we know is going to be 3 more than the id of the textbox
+                let text_content_id = Entity::new(entity.index() as u32 + 3, 0);
+                let bounds = cx.cache.get_bounds(text_content_id);
+
+                // We need a child node per line
+                let mut children = Vec::new();
+                cx.text_context.with_editor(text_content_id, |editor| {
+                    let cursor = editor.cursor();
+                    let selection = editor.select_opt().unwrap_or(cursor);
+
                     let mut selection_active_line = node_id;
                     let mut selection_anchor_line = node_id;
-                    let mut selection_active_cursor = 0;
-                    let mut selection_anchor_cursor = 0;
-                    // Compute the rows of text
-                    // let text_paint = text_paint_general(&cx.style, &cx.resource_manager, entity);
-                    // let font_metrics = cx
-                    //     .text_context
-                    //     .measure_font(&text_paint)
-                    //     .expect("Failed to read font metrics");
-                    // if let Ok((text_layout, new_lines)) =
-                    //     text_layout(bounds.width(), &text, &text_paint, &cx.text_context)
-                    // {
-                    //     let text_lines = measure_text_lines(
-                    //         text,
-                    //         &text_paint,
-                    //         text_layout.as_ref(),
-                    //         bounds.x,
-                    //         bounds.y,
-                    //         &cx.text_context,
-                    //     );
 
-                    //     let mut children = Vec::new();
+                    for (index, line) in editor.buffer().layout_runs().enumerate() {
+                        // Concatenate the parent id with the index of the text line to form a unique node id
+                        let mut line_id = (entity.index() as u64 + 1) << 32;
+                        line_id |= index as u64;
+                        let line_id: NodeId = std::num::NonZeroU64::new(line_id).unwrap().into();
 
-                    //     let mut cursor = 0;
+                        children.push(line_id);
 
-                    //     for ((index, line), has_new_line) in
-                    //         text_lines.iter().enumerate().zip(new_lines.iter())
-                    //     {
-                    //         // Concatenate the parent id with the index of the text line to form a unique node id
-                    //         let mut line_id = (entity.index() as u64 + 1) << 32;
-                    //         line_id |= index as u64;
+                        let text = line.text;
 
-                    //         let line_id: NodeId =
-                    //             std::num::NonZeroU64::new(line_id).unwrap().into();
+                        let mut line_node = Node::default();
 
-                    //         children.push(line_id);
+                        line_node.role = Role::InlineTextBox;
+                        let line_height = editor.buffer().metrics().line_height as f64;
+                        line_node.bounds = Some(Rect {
+                            x0: bounds.x as f64,
+                            y0: bounds.y as f64 + line.line_y as f64
+                                - editor.buffer().metrics().font_size as f64,
+                            x1: bounds.x as f64 + line.line_w as f64,
+                            y1: bounds.y as f64 + line.line_y as f64
+                                - editor.buffer().metrics().font_size as f64
+                                + line_height,
+                        });
+                        line_node.text_direction = if line.rtl {
+                            Some(TextDirection::RightToLeft)
+                        } else {
+                            Some(TextDirection::LeftToRight)
+                        };
 
-                    //         let range = &text_layout[index];
+                        let mut character_lengths = Vec::with_capacity(line.glyphs.len());
+                        let mut character_positions = Vec::with_capacity(line.glyphs.len());
+                        let mut character_widths = Vec::with_capacity(line.glyphs.len());
 
-                    //         // println!(
-                    //         //     "line: {} range: {:?} active: {} anchor: {}",
-                    //         //     index, range, selection.active, selection.anchor
-                    //         // );
+                        // Get the actual text in the line
+                        let first_glyph_pos =
+                            line.glyphs.first().map(|glyph| glyph.start).unwrap_or_default();
+                        let last_glyph_pos =
+                            line.glyphs.last().map(|glyph| glyph.end).unwrap_or_default();
 
-                    //         if range.contains(&selection.active) {
-                    //             selection_active_line = line_id;
-                    //             selection_active_cursor = selection.active - cursor;
-                    //         }
+                        let line_text = &text[first_glyph_pos..last_glyph_pos];
 
-                    //         if range.contains(&selection.anchor) {
-                    //             selection_anchor_line = line_id;
-                    //             selection_anchor_cursor = selection.anchor - cursor;
-                    //         }
+                        let word_lengths = line_text
+                            .unicode_words()
+                            .map(|word| word.len() as u8)
+                            .collect::<Vec<_>>();
 
-                    //         let txt = text.as_str();
-                    //         let mut line_str =
-                    //             (&txt[text_layout[index].start..text_layout[index].end]).to_owned();
+                        for glyph in line.glyphs.iter() {
+                            let length = (glyph.end - glyph.start) as u8;
+                            let position = glyph.x;
+                            let width = glyph.w;
 
-                    //         let mut line_node = Node::default();
+                            character_lengths.push(length);
+                            character_positions.push(position);
+                            character_widths.push(width);
+                        }
 
-                    //         // println!("{} {} {}", line.y, line.height(), bounds.y);
+                        line_node.value = Some(line_text.into());
+                        line_node.character_lengths = character_lengths.into();
+                        line_node.character_positions = Some(character_positions.into());
+                        line_node.character_widths = Some(character_widths.into());
+                        line_node.word_lengths = word_lengths.into();
+                        child_nodes.push((line_id, Arc::new(line_node)));
 
-                    //         line_node.role = Role::InlineTextBox;
-                    //         line_node.bounds = Some(Rect {
-                    //             x0: (line.x) as f64,
-                    //             y0: (line.y + line.height()) as f64,
-                    //             x1: (line.x + line.width()) as f64,
-                    //             y1: (line.y + 2.0 * line.height()) as f64,
-                    //         });
-                    //         line_node.text_direction = Some(TextDirection::LeftToRight);
+                        // Check if this line contains the cursor or selection
+                        if cursor.line == index {
+                            selection_active_line = line_id;
+                        }
 
-                    //         let mut word_lengths = Vec::new();
+                        if selection.line == index {
+                            selection_anchor_line = line_id;
+                        }
+                    }
 
-                    //         let mut character_lengths = Vec::with_capacity(line.glyphs.len());
-                    //         let mut character_positions = Vec::with_capacity(line.glyphs.len());
-                    //         let mut character_widths = Vec::with_capacity(line.glyphs.len());
+                    let cursor = editor.cursor();
 
-                    //         let mut was_at_word_end = false;
-                    //         let mut last_word_start = 0usize;
+                    node.text_selection = Some(TextSelection {
+                        anchor: TextPosition {
+                            node: selection_anchor_line,
+                            character_index: selection.index,
+                        },
+                        focus: TextPosition {
+                            node: selection_active_line,
+                            character_index: cursor.index,
+                        },
+                    });
 
-                    //         for glyph in line.glyphs.iter() {
-                    //             let length = glyph.c.len_utf8() as u8;
-                    //             if index != text_lines.len() - 1 {
-                    //                 cursor += length as usize;
-                    //             }
-                    //             let position = glyph.x - bounds.x;
-                    //             let width = glyph.width;
-
-                    //             let is_word_char = glyph.c.is_alphanumeric();
-                    //             if is_word_char && was_at_word_end {
-                    //                 word_lengths
-                    //                     .push((character_lengths.len() - last_word_start) as u8);
-                    //                 last_word_start = character_lengths.len();
-                    //             }
-
-                    //             was_at_word_end = !is_word_char;
-
-                    //             character_lengths.push(length);
-                    //             character_positions.push(position);
-                    //             character_widths.push(width);
-                    //         }
-
-                    //         if *has_new_line {
-                    //             line_str += "\n";
-                    //             character_lengths.push(1);
-                    //             character_positions.push(line.width());
-                    //             character_widths.push(0.0);
-                    //         }
-
-                    //         word_lengths.push((character_lengths.len() - last_word_start) as u8);
-
-                    //         // println!("{:?} {:?}", line_id, character_positions);
-
-                    //         line_node.value = Some(line_str.into());
-                    //         line_node.character_lengths = character_lengths.into();
-                    //         line_node.character_positions = Some(character_positions.into());
-                    //         line_node.character_widths = Some(character_widths.into());
-                    //         line_node.word_lengths = word_lengths.into();
-                    //         child_nodes.push((line_id, Arc::new(line_node)));
-                    //     }
-
-                    //     if selection_active_line == node_id {
-                    //         selection_active_line = child_nodes.last().unwrap().0;
-                    //         selection_active_cursor = selection.active - cursor;
-                    //     }
-
-                    //     if selection_anchor_line == node_id {
-                    //         selection_anchor_line = child_nodes.last().unwrap().0;
-                    //         selection_anchor_cursor = selection.anchor - cursor;
-                    //     }
-
-                    //     node.text_selection = Some(TextSelection {
-                    //         anchor: TextPosition {
-                    //             node: selection_anchor_line,
-                    //             character_index: selection_anchor_cursor,
-                    //         },
-                    //         focus: TextPosition {
-                    //             node: selection_active_line,
-                    //             character_index: selection_active_cursor,
-                    //         },
-                    //     });
-
-                    //     // println!("{:?}", node.text_selection);
-
-                    //     node.children = children;
-                    // }
-                }
+                    node.children = children;
+                });
             }
         }
 

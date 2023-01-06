@@ -800,7 +800,8 @@ where
                 target: _,
                 data: Some(ActionData::SetTextSelection(selection)),
             }) => {
-                todo!()
+                println!("Select some text: {:?}", selection);
+                // todo!()
                 // println!("Received selectio: {:?}", selection);
                 // let text_selection = Selection::new(
                 //     selection.anchor.character_index,
