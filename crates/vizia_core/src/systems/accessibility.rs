@@ -57,6 +57,7 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                     let mut current_cursor = 0;
                     let mut total_length = 0;
                     let mut last_line_length = 0;
+                    let mut prev_line_index = -1;
 
                     for (index, line) in editor.buffer().layout_runs().enumerate() {
                         // Concatenate the parent id with the index of the text line to form a unique node id
@@ -97,7 +98,7 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                         let last_glyph_pos =
                             line.glyphs.last().map(|glyph| glyph.end).unwrap_or_default();
 
-                        let line_text = &text[first_glyph_pos..last_glyph_pos];
+                        let mut line_text = text[first_glyph_pos..last_glyph_pos].to_owned();
 
                         let word_lengths = line_text
                             .unicode_words()
@@ -119,7 +120,21 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                             character_widths.push(width);
                         }
 
-                        println!("{} {}", line_text, current_cursor);
+                        // TODO: Need to figure out if this line occurs due to a soft or hard break
+                        // println!(
+                        //     "LAst glyph pos: {}, line_text: {}, line_length: {}",
+                        //     last_glyph_pos,
+                        //     line.text,
+                        //     line.text.len()
+                        // );
+                        if last_glyph_pos == line.text.len() {
+                            line_text += "\n";
+                            character_lengths.push(1);
+                            character_positions.push(line.line_w);
+                            character_widths.push(0.0);
+                        }
+
+                        // println!("{} {}", line_text, current_cursor);
 
                         line_node.value = Some(line_text.into());
                         line_node.character_lengths = character_lengths.into();
@@ -134,7 +149,6 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                         {
                             selection_active_line = line_id;
                             selection_active_cursor = cursor.index - current_cursor;
-                            println!("cursor line: {}", line_text);
                         }
 
                         if selection.index < current_cursor + line_length
@@ -155,6 +169,8 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                         last_line_length = line_length;
                     }
 
+                    // Check if the cursor/selection is at the end of the text
+                    // in which case use the last line node id and the last line length as the position
                     if !child_nodes.is_empty() {
                         let cursor = editor.cursor();
                         println!(
