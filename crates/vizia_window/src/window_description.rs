@@ -46,6 +46,8 @@ pub struct WindowDescription {
     pub inner_size: WindowSize,
     pub min_inner_size: Option<WindowSize>,
     pub max_inner_size: Option<WindowSize>,
+    /// A scale factor applied on top of any DPI scaling, defaults to 1.0.
+    pub user_scale_factor: f64,
     pub position: Option<Position>,
     pub resizable: bool,
     pub minimized: bool,
@@ -72,6 +74,7 @@ impl Default for WindowDescription {
             inner_size: WindowSize::new(800, 600),
             min_inner_size: Some(WindowSize::new(100, 100)),
             max_inner_size: None,
+            user_scale_factor: 1.0,
             position: None,
             resizable: true,
             minimized: true,
@@ -123,6 +126,14 @@ impl WindowDescription {
 
     pub fn with_max_inner_size(mut self, width: u32, height: u32) -> Self {
         self.max_inner_size = Some(WindowSize::new(width, height));
+
+        self
+    }
+
+    /// Apply a user scale factor to the window. This is separate from any DPI scaling that already
+    /// gets applied to the window.
+    pub fn with_scale_factor(mut self, factor: f64) -> Self {
+        self.user_scale_factor = factor;
 
         self
     }

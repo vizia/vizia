@@ -117,7 +117,7 @@ where
     /// #     One,
     /// # }
     /// #
-    /// # let cx = &Context::new();
+    /// # let cx = &Context::default();
     /// # let keymap = Keymap::<Action>::new();
     /// #
     /// for entry in keymap.pressed_actions(cx, Code::KeyA) {
@@ -223,7 +223,7 @@ where
     /// #     One,
     /// # }
     /// #
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::default();
     /// #
     /// cx.emit(KeymapEvent::InsertAction(
     ///     KeyChord::new(Modifiers::empty(), Code::KeyA),
@@ -243,7 +243,7 @@ where
     /// #     One,
     /// # }
     /// #
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::default();
     /// #
     /// cx.emit(KeymapEvent::RemoveAction(
     ///     KeyChord::new(Modifiers::empty(), Code::KeyA),

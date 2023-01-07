@@ -11,7 +11,7 @@ pub trait StyleModifiers: internal::Modifiable {
     /// # Example
     /// ```
     /// # use vizia_core::prelude::*;
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::default();
     /// Element::new(cx).id("foo");
     /// ```
     /// css

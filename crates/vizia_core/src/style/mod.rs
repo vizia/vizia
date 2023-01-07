@@ -235,6 +235,7 @@ pub struct Style {
     pub needs_relayout: bool,
     pub needs_redraw: bool,
 
+    /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub dpi_factor: f64,
 }
 

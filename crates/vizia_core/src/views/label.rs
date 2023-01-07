@@ -11,7 +11,7 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// Label::new(cx, "Text");
 /// ```
@@ -23,7 +23,7 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// #[derive(Lens)]
 /// struct AppData {
@@ -47,7 +47,7 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # let mut cx = &mut Context::new();
+/// # let mut cx = &mut Context::default();
 /// #
 /// Label::new(
 ///     cx,
@@ -63,7 +63,7 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # let mut cx = &mut Context::new();
+/// # let mut cx = &mut Context::default();
 /// #
 /// Label::new(
 ///     cx,
@@ -79,7 +79,7 @@ use crate::prelude::*;
 ///
 /// ```
 /// # use vizia_core::prelude::*;
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
 /// ```
@@ -95,7 +95,7 @@ impl Label {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::default();
     /// #
     /// Label::new(cx, "Text");
     /// ```
@@ -126,7 +126,7 @@ impl Handle<'_, Label> {
     /// #     ToggleValue,
     /// # }
     /// #
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::default();
     /// #
     /// # AppData { value: false }.build(cx);
     /// #

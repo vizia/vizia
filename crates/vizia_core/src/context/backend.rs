@@ -45,14 +45,31 @@ impl<'a> BackendContext<'a> {
         &mut self.0.modifiers
     }
 
+    /// The window's size in logical pixels, before
+    /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
+    /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will be
+    /// emitted.
+    pub fn window_size(&mut self) -> &mut WindowSize {
+        &mut self.0.window_size
+    }
+
+    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
+    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
+    /// changes during a frame, then the window will be resized at the end of the frame and a
+    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
+    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    pub fn user_scale_factor(&mut self) -> &mut f64 {
+        &mut self.0.user_scale_factor
+    }
+
     pub fn add_main_window(
         &mut self,
         window_description: &WindowDescription,
         mut canvas: Canvas<OpenGl>,
-        scale_factor: f32,
+        dpi_factor: f32,
     ) {
-        let physical_width = window_description.inner_size.width as f32 * scale_factor;
-        let physical_height = window_description.inner_size.height as f32 * scale_factor;
+        let physical_width = window_description.inner_size.width as f32 * dpi_factor;
+        let physical_height = window_description.inner_size.height as f32 * dpi_factor;
 
         // Scale factor is set to 1.0 here because scaling is applied prior to rendering
         canvas.set_size(physical_width as u32, physical_height as u32, 1.0);
@@ -64,7 +81,7 @@ impl<'a> BackendContext<'a> {
             femtovg::Color::rgb(255, 0, 0),
         );
 
-        self.0.style.dpi_factor = scale_factor as f64;
+        self.0.style.dpi_factor = dpi_factor as f64;
 
         self.0.cache.set_width(Entity::root(), physical_width);
         self.0.cache.set_height(Entity::root(), physical_height);
