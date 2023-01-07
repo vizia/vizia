@@ -4,7 +4,7 @@ use crate::prelude::*;
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest};
-use cosmic_text::{Action, Attrs, Edit, LayoutGlyph};
+use cosmic_text::{Action, Attrs, Edit};
 use std::sync::Arc;
 use vizia_id::GenerationalId;
 use vizia_input::Code;
@@ -47,53 +47,29 @@ impl TextboxData {
         let bounds = cx.cache.bounds.get(entity).unwrap().clone();
         let mut parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
 
-        let render_width = match self.kind {
-            TextboxKind::MultiLineWrapped => parent_bounds.w,
-            _ => f32::MAX,
-        };
-
         cx.text_context.sync_styles(entity, &cx.style);
 
-        cx.text_context.with_editor(entity, |buf| {
-            buf.buffer_mut().set_size(render_width as i32, i32::MAX);
-            let layout = buf.buffer().layout_cursor(&buf.cursor());
-            let glyphs: &Vec<LayoutGlyph> = &buf
-                .buffer_mut()
-                .line_layout(layout.line)
-                .unwrap()
-                .get(layout.layout)
-                .unwrap()
-                .glyphs;
-            let xpos = if let Some(glyph) = glyphs.get(layout.glyph) {
-                glyph.x
-            } else if let Some(glyph) = glyphs.last() {
-                glyph.x + glyph.w // TODO rtl?
-            } else {
-                0.0
-            };
+        // do the computation
+        let (mut tx, mut ty) = self.transform;
+        tx *= scale;
+        ty *= scale;
+        (tx, ty) = enforce_text_bounds(&bounds, &parent_bounds, (tx, ty));
 
-            let line = (0..layout.line)
-                .map(|text_line| buf.buffer_mut().line_layout(text_line).unwrap().len())
-                .sum::<usize>() as i32;
+        // TODO justify????
+        if let Some((x, y, w, h)) = cx.text_context.layout_caret(
+            self.content_entity,
+            (bounds.x, bounds.y),
+            (0., 0.),
+            1.0 * scale,
+        ) {
+            let caret_box = BoundingBox { x, y, w, h };
 
-            let line_height = buf.buffer().metrics().line_height;
-            let caret_box = BoundingBox {
-                x: bounds.x + xpos.round(),
-                y: bounds.y + (line * line_height) as f32,
-                w: 1.0,
-                h: line_height as f32,
-            };
-
-            // do the computation
-            let (mut tx, mut ty) = self.transform;
-            tx *= scale;
-            ty *= scale;
-            (tx, ty) = enforce_text_bounds(&bounds, &parent_bounds, (tx, ty));
             parent_bounds.x -= 1.0;
             parent_bounds.w += 2.0;
             (tx, ty) = ensure_visible(&caret_box, &parent_bounds, (tx, ty));
-            self.transform = (tx.round() / scale, ty.round() / scale);
-        });
+        }
+
+        self.transform = (tx.round() / scale, ty.round() / scale);
     }
 
     pub fn insert_text(&mut self, cx: &mut EventContext, text: &str) {
@@ -133,8 +109,12 @@ impl TextboxData {
             buf.action(match movement {
                 Movement::Grapheme(Direction::Upstream) => Action::Previous,
                 Movement::Grapheme(Direction::Downstream) => Action::Next,
+                Movement::Grapheme(Direction::Left) => Action::Left,
+                Movement::Grapheme(Direction::Right) => Action::Right,
                 Movement::Word(Direction::Upstream) => Action::PreviousWord,
                 Movement::Word(Direction::Downstream) => Action::NextWord,
+                Movement::Word(Direction::Left) => Action::LeftWord,
+                Movement::Word(Direction::Right) => Action::RightWord,
                 Movement::Line(Direction::Upstream) => Action::Up,
                 Movement::Line(Direction::Downstream) => Action::Down,
                 Movement::LineStart => Action::Home,
@@ -685,9 +665,9 @@ where
 
                 Code::ArrowLeft => {
                     let movement = if cx.modifiers.contains(Modifiers::CTRL) {
-                        Movement::Word(Direction::Upstream)
+                        Movement::Word(Direction::Left)
                     } else {
-                        Movement::Grapheme(Direction::Upstream)
+                        Movement::Grapheme(Direction::Left)
                     };
 
                     cx.emit(TextEvent::MoveCursor(
@@ -698,9 +678,9 @@ where
 
                 Code::ArrowRight => {
                     let movement = if cx.modifiers.contains(Modifiers::CTRL) {
-                        Movement::Word(Direction::Downstream)
+                        Movement::Word(Direction::Right)
                     } else {
-                        Movement::Grapheme(Direction::Downstream)
+                        Movement::Grapheme(Direction::Right)
                     };
 
                     cx.emit(TextEvent::MoveCursor(
