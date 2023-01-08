@@ -572,65 +572,6 @@ impl Context {
         let labelled_by =
             self.style.labelled_by.get(entity).map(|labelled_by| labelled_by.accesskit_id());
 
-        // let (character_lengths, character_positions, character_widths, word_lengths) =
-        //     if let Some(text) = self.style.text_value.get(entity) {
-        //         let mut word_lengths = Vec::new();
-        //         let text_paint = text_paint_general(&self.style, &self.resource_manager, entity);
-        //         let metrics =
-        //             self.text_context.measure_text(bounds.x, bounds.y, text, &text_paint).unwrap();
-
-        //         let mut character_lengths = Vec::with_capacity(metrics.glyphs.len());
-        //         let mut character_positions = Vec::with_capacity(metrics.glyphs.len());
-        //         let mut character_widths = Vec::with_capacity(metrics.glyphs.len());
-
-        //         let mut was_at_word_end = false;
-        //         let mut last_word_start = 0usize;
-
-        //         for glyph in metrics.glyphs {
-        //             let length = glyph.c.len_utf8() as u8;
-        //             let position = glyph.x - bounds.x;
-        //             let width = glyph.width;
-
-        //             let is_word_char = glyph.c.is_alphanumeric();
-        //             if is_word_char && was_at_word_end {
-        //                 word_lengths.push((character_lengths.len() - last_word_start) as _);
-        //                 last_word_start = character_lengths.len();
-        //             }
-
-        //             was_at_word_end = !is_word_char;
-
-        //             character_lengths.push(length);
-        //             character_positions.push(position);
-        //             character_widths.push(width);
-        //         }
-
-        //         (
-        //             character_lengths.into(),
-        //             Some(character_positions.into()),
-        //             Some(character_widths.into()),
-        //             word_lengths.into(),
-        //         )
-        //     } else {
-        //         (Box::default(), None, None, Box::default())
-        //     };
-
-        // let text_selection = self.tree.get_layout_first_child(entity).and_then(|first_child| {
-        //     self.style.text_selection.get(entity).and_then(|selection| {
-        //         Some(TextSelection {
-        //             anchor: TextPosition {
-        //                 node: first_child.accesskit_id(),
-        //                 character_index: selection.anchor,
-        //             },
-        //             focus: TextPosition {
-        //                 node: first_child.accesskit_id(),
-        //                 character_index: selection.active,
-        //             },
-        //         })
-        //     })
-        // });
-
-        //println!("Text Selection: {} {:?}", entity, text_selection);
-
         Node {
             role: self.style.roles.get(entity).copied().unwrap_or(Role::Unknown),
             transform: None,
@@ -659,8 +600,6 @@ impl Context {
             max_numeric_value: self.style.max_numeric_value.get(entity).copied(),
             numeric_value_step: self.style.numeric_value_step.get(entity).copied(),
             hidden: self.style.hidden.get(entity).copied().unwrap_or_default(),
-            // text_direction: Some(accesskit::TextDirection::LeftToRight),
-            // text_selection,
             ..Default::default()
         }
     }

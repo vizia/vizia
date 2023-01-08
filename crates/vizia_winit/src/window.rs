@@ -256,6 +256,7 @@ fn apply_window_description(
     builder
         .with_resizable(description.resizable)
         .with_maximized(description.maximized)
+        // Accesskit requires that the window start invisible until accesskit is initialized.
         .with_visible(false)
         .with_transparent(description.transparent)
         .with_decorations(description.decorations)

@@ -3,9 +3,7 @@ use crate::{
     window::Window,
 };
 #[cfg(not(target_arch = "wasm32"))]
-use accesskit::Action;
-#[cfg(not(target_arch = "wasm32"))]
-use accesskit::TreeUpdate;
+use accesskit::{Action, TreeUpdate};
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit_winit;
 use std::cell::RefCell;
@@ -241,18 +239,8 @@ impl Application {
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
         #[cfg(not(target_arch = "wasm32"))]
-        let mut cx = BackendContext::new(&mut context);
-        #[cfg(not(target_arch = "wasm32"))]
-        cx.process_tree_updates(|tree_updates| {
+        BackendContext::new(&mut context).process_tree_updates(|tree_updates| {
             for update in tree_updates.iter() {
-                // println!("");
-
-                // update
-                //     .nodes
-                //     .iter()
-                //     .for_each(|(node_id, node)| println!("{:?} {:?}", node_id, node.children));
-
-                // println!("");
                 accesskit.update(update.clone());
             }
         });
@@ -269,20 +257,9 @@ impl Application {
                     #[cfg(not(target_arch = "wasm32"))]
                     UserEvent::AccessKitActionRequest(action_request_event) => {
                         let node_id = action_request_event.request.target;
-                        // println!(
-                        //     "Received action request for node: {:?} {:?}",
-                        //     node_id, action_request_event.request.action
-                        // );
 
                         if action_request_event.request.action != Action::ScrollIntoView {
                             let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
-
-                            // println!(
-                            //     "Received Action: {:?} {:?} {:?}",
-                            //     entity,
-                            //     action_request_event.request.action,
-                            //     action_request_event.request.data,
-                            // );
 
                             // Handle focus action from screen reader
                             match action_request_event.request.action {
@@ -317,12 +294,6 @@ impl Application {
                     #[cfg(not(target_arch = "wasm32"))]
                     cx.process_tree_updates(|tree_updates| {
                         for update in tree_updates.iter() {
-                            // println!("");
-                            // update.nodes.iter().for_each(|(node_id, node)| {
-                            //     println!("{:?} {:?}", node_id, node.value)
-                            // });
-                            // println!("NODES: {:?}", update.nodes);
-                            // println!("");
                             accesskit.update(update.clone());
                         }
                     });
@@ -335,7 +306,7 @@ impl Application {
                         event_loop_proxy
                             .send_event(UserEvent::Event(Event::new(WindowEvent::Redraw)))
                             .unwrap();
-                        //window.handle.window().request_redraw();
+
                         if let Some(window_event_handler) = cx.views().remove(&Entity::root()) {
                             if let Some(window) = window_event_handler.downcast_ref::<Window>() {
                                 window.window().request_redraw();

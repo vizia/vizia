@@ -42,15 +42,6 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self
     }
 
-    // TODO
-    // fn labelled_by(mut self, labelled_by: LabelledBy) -> Self {
-    //     let id = self.entity();
-
-    //     self.context().style.labelled_by.insert(id, labelled_by).unwrap();
-
-    //     self
-    // }
-
     fn numeric_value<U: Into<f64>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, id, val| {

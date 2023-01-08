@@ -20,7 +20,6 @@ vizia_id = { path = "../vizia_id" }
 vizia_input = { path = "../vizia_input" }
 vizia_window = { path = "../vizia_window" }
 accesskit = "0.8.1"
-# accesskit = {git = "https://github.com/AccessKit/accesskit", rev = "28e46b2c29833aee77175c7b978154ba96244c36" }
 femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "e1f3f05cc050c0ed69ca702b368bb5d4eb2cabff", default-features = false, features = ["image-loading"] }
 #femtovg = { path = "../../../femtovg", default-features = false, features = ["image-loading"] }
 image = { version = "0.24.0", default-features = false, features = ["png"] } # inherited from femtovg

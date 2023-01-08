@@ -502,10 +502,6 @@ where
                 })
                 .hidden(true)
                 .navigable(false)
-                // Added the InlineTextBox role to the container because it's using the first child of the textbox
-                // as the node id of the text selection for accesskit.
-                // .role(Role::InlineTextBox)
-                // .text_value(TextboxData::text)
                 .hoverable(false)
                 .class("textbox_container");
         });
@@ -517,7 +513,6 @@ where
                 TextboxKind::MultiLineWrapped => "multi_line_wrapped",
             })
             .role(Role::TextField)
-            //.text_selection(TextboxData::selection)
             .text_value(text_lens)
             .cursor(CursorIcon::Text)
             .default_action_verb(DefaultActionVerb::Focus)
