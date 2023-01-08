@@ -19,8 +19,8 @@ vizia_core = { path = "../vizia_core" }
 vizia_id = { path = "../vizia_id" }
 vizia_window = { path = "../vizia_window" }
 
-# accesskit = "0.8.1"
-accesskit = {git = "https://github.com/AccessKit/accesskit", rev = "28e46b2c29833aee77175c7b978154ba96244c36" }
+accesskit = "0.8.1"
+# accesskit = {git = "https://github.com/AccessKit/accesskit", rev = "28e46b2c29833aee77175c7b978154ba96244c36" }
 winit = { version = "0.27.2", default-features = false }
 femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "e1f3f05cc050c0ed69ca702b368bb5d4eb2cabff", default-features = false }
 #femtovg = { path = "../../../femtovg", default-features = false }
@@ -29,8 +29,8 @@ copypasta = {version = "0.8.1", optional = true, default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 glutin = { version = "0.29.1", default-features = false }
-# accesskit_winit = "0.8.0"
-accesskit_winit = {git = "https://github.com/AccessKit/accesskit", rev = "28e46b2c29833aee77175c7b978154ba96244c36" }
+accesskit_winit = "0.8.1"
+# accesskit_winit = {git = "https://github.com/AccessKit/accesskit", rev = "28e46b2c29833aee77175c7b978154ba96244c36" }
 
 femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "e1f3f05cc050c0ed69ca702b368bb5d4eb2cabff", features = ["glutin"] }
 #femtovg = { path = "../../../femtovg", default-features = false, features = ["glutin"] }

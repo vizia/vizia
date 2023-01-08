@@ -778,16 +778,14 @@ where
             WindowEvent::ActionRequest(ActionRequest {
                 action: accesskit::Action::SetTextSelection,
                 target: _,
-                data: Some(ActionData::SetTextSelection(selection)),
+                data: Some(ActionData::SetTextSelection(_selection)),
             }) => {
-                println!("Select some text: {:?}", selection);
-                // todo!()
-                // println!("Received selectio: {:?}", selection);
-                // let text_selection = Selection::new(
-                //     selection.anchor.character_index,
-                //     selection.focus.character_index,
-                // );
-                // cx.emit(TextEvent::SetSelection(text_selection));
+                // println!("Select some text: {:?}", selection);
+                // TODO: Handle selection action request
+                // Requires converting the selection line and position to something
+                // which cosmic can understand.
+
+                // println!("Received selection: {:?}", selection);
             }
 
             _ => {}
