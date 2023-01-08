@@ -238,6 +238,52 @@ impl<'a> DrawContext<'a> {
     pub fn opacity(&self) -> f32 {
         self.cache.get_opacity(self.current)
     }
+
+    pub fn draw_text(&mut self, canvas: &mut Canvas, origin: (f32, f32), justify: (f32, f32)) {
+        if let Ok(draw_commands) =
+            self.text_context.fill_to_cmds(canvas, self.current, origin, justify)
+        {
+            for (color, cmds) in draw_commands.into_iter() {
+                let temp_paint =
+                    Paint::color(femtovg::Color::rgba(color.r(), color.g(), color.b(), color.a()));
+                canvas.draw_glyph_cmds(cmds, &temp_paint);
+            }
+        }
+    }
+
+    pub fn draw_highlights(
+        &mut self,
+        canvas: &mut Canvas,
+        origin: (f32, f32),
+        justify: (f32, f32),
+    ) {
+        let selection_color = self.selection_color();
+        let mut path = Path::new();
+        for (x, y, w, h) in self.text_context.layout_selection(self.current, origin, justify) {
+            path.rect(x, y, w, h);
+        }
+        canvas.fill_path(&mut path, &Paint::color(selection_color.into()));
+    }
+
+    pub fn draw_caret(
+        &mut self,
+        canvas: &mut Canvas,
+        origin: (f32, f32),
+        justify: (f32, f32),
+        width: f32,
+    ) {
+        let caret_color = self.caret_color();
+        if let Some((x, y, w, h)) = self.text_context.layout_caret(
+            self.current,
+            origin,
+            justify,
+            self.logical_to_physical(width),
+        ) {
+            let mut path = Path::new();
+            path.rect(x, y, w, h);
+            canvas.fill_path(&mut path, &Paint::color(caret_color.into()));
+        }
+    }
 }
 
 impl<'a> DataContext for DrawContext<'a> {

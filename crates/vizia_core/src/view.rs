@@ -442,6 +442,80 @@ pub trait View: 'static + Sized {
         canvas.stroke_path(&mut outline_path, &outline_paint);
 
         // Draw text and image
+        if cx.text_context.has_buffer(cx.current) || cx.image().is_some() {
+            let mut box_x = bounds.x + border_width;
+            let mut box_y = bounds.y + border_width;
+            let mut box_w = bounds.w - border_width * 2.0;
+            let mut box_h = bounds.h - border_width * 2.0;
+
+            let child_left = cx.child_left();
+            let child_right = cx.child_right();
+            let child_top = cx.child_top();
+            let child_bottom = cx.child_bottom();
+
+            // shrink the bounding box based on pixel values
+            if let Pixels(val) = child_left {
+                box_x += val;
+                box_w -= val;
+            }
+            if let Pixels(val) = child_right {
+                box_w -= val;
+            }
+            if let Pixels(val) = child_top {
+                box_y += val;
+                box_h -= val;
+            }
+            if let Pixels(val) = child_bottom {
+                box_h -= val;
+            }
+
+            // Draw image
+            if let Some(image_name) = cx.image() {
+                if let Some(img) = cx.resource_manager.images.get(image_name) {
+                    if let ImageOrId::Id(id, _) = img.image {
+                        let paint = Paint::image(id, box_x, box_y, box_w, box_h, 0.0, 1.0);
+                        canvas.fill_path(&mut path, &paint);
+                    }
+                }
+            }
+
+            // Draw text
+            if cx.text_context.has_buffer(cx.current) {
+                let justify_x = match (child_left, child_right) {
+                    (Stretch(left), Stretch(right)) => {
+                        if left + right == 0.0 {
+                            0.5
+                        } else {
+                            left / (left + right)
+                        }
+                    }
+                    (Stretch(_), _) => 1.0,
+                    _ => 0.0,
+                };
+                let justify_y = match (child_top, child_bottom) {
+                    (Stretch(top), Stretch(bottom)) => {
+                        if top + bottom == 0.0 {
+                            0.5
+                        } else {
+                            top / (top + bottom)
+                        }
+                    }
+                    (Stretch(_), _) => 1.0,
+                    _ => 0.0,
+                };
+
+                let origin_x = box_x + box_w * justify_x;
+                let origin_y = box_y + (box_h * justify_y).round();
+
+                cx.text_context.sync_styles(cx.current, &cx.style);
+
+                cx.draw_highlights(canvas, (origin_x, origin_y), (justify_x, justify_y));
+                cx.draw_caret(canvas, (origin_x, origin_y), (justify_x, justify_y), 1.0);
+                cx.draw_text(canvas, (origin_x, origin_y), (justify_x, justify_y));
+            }
+        }
+
+        // Draw text and image
         /*
         if cx.text().is_some() || cx.image().is_some() {
             let mut x = bounds.x + border_width;
