@@ -223,6 +223,7 @@ mod test {
                     crate::PseudoClass::Lang(_) => todo!(),
                     crate::PseudoClass::Dir(_) => todo!(),
                     crate::PseudoClass::Custom(_) => todo!(),
+                    _ => todo!(),
                 }
             } else {
                 false
