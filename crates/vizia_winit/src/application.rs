@@ -2,6 +2,7 @@ use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
     window::Window,
 };
+#[cfg(not(target_arch = "wasm32"))]
 use accesskit::Action;
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit::TreeUpdate;
@@ -239,6 +240,7 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
+        #[cfg(not(target_arch = "wasm32"))]
         let mut cx = BackendContext::new(&mut context);
         #[cfg(not(target_arch = "wasm32"))]
         cx.process_tree_updates(|tree_updates| {
