@@ -11,8 +11,8 @@ const STYLE: &str = r#"
         border-width: 1px;
         border-color: red;
     }
-    */ 
-    
+    */
+
 
     textbox.invalid {
         background-color: #AA0000;
@@ -78,8 +78,8 @@ impl AppData {
         Self {
             options: vec!["one-way flight", "return flight"],
             choice: "one-way flight".to_string(),
-            start_date: SimpleDate(NaiveDate::from_ymd(2022, 02, 12)),
-            end_date: SimpleDate(NaiveDate::from_ymd(2022, 02, 26)),
+            start_date: SimpleDate(NaiveDate::from_ymd_opt(2022, 02, 12).unwrap()),
+            end_date: SimpleDate(NaiveDate::from_ymd_opt(2022, 02, 26).unwrap()),
         }
     }
 }
@@ -97,7 +97,7 @@ fn main() {
                     Label::new(cx, AppData::choice)
                         .width(Stretch(1.0))
                         .text_wrap(false);
-                    Label::new(cx, DOWN).font("icons").left(Pixels(5.0)).right(Pixels(5.0));
+                    Label::new(cx, DOWN).class("icon").left(Pixels(5.0)).right(Pixels(5.0));
                 }).width(Stretch(1.0)),
                 // List of options
                 move |cx| {

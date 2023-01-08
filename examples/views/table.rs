@@ -31,7 +31,7 @@ fn main() {
                                 .child_left(Pixels(5.0))
                                 .width(Stretch(1.0))
                                 .height(Stretch(1.0))
-                                .font("roboto-bold");
+                                .font_weight(Weight::BOLD);
                             Binding::new(cx, TableData::first_name_sorted, |cx, sorted| {
                                 let visible = match sorted.get(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,
@@ -43,7 +43,7 @@ fn main() {
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
                                     .text(icon)
-                                    .font("icons")
+                                    .class("icon")
                                     .visibility(visible);
                             });
 
@@ -89,7 +89,7 @@ fn main() {
                                 .child_left(Pixels(5.0))
                                 .width(Stretch(1.0))
                                 .height(Stretch(1.0))
-                                .font("roboto-bold");
+                                .font_weight(Weight::BOLD);
                             Binding::new(cx, TableData::last_name_sorted, |cx, sorted| {
                                 let visible = match sorted.get(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,
@@ -101,7 +101,7 @@ fn main() {
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
                                     .text(icon)
-                                    .font("icons")
+                                    .class("icon")
                                     .visibility(visible);
                             });
                             Element::new(cx)
@@ -144,7 +144,7 @@ fn main() {
                                 .child_left(Pixels(5.0))
                                 .width(Stretch(1.0))
                                 .height(Stretch(1.0))
-                                .font("roboto-bold");
+                                .font_weight(Weight::BOLD);
 
                             Binding::new(cx, TableData::age_sorted, |cx, sorted| {
                                 let visible = match sorted.get(cx) {
@@ -157,7 +157,7 @@ fn main() {
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
                                     .text(icon)
-                                    .font("icons")
+                                    .class("icon")
                                     .visibility(visible);
                             });
                         })

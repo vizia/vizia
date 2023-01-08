@@ -3,6 +3,10 @@
     border-color: red;
 } */
 
+* {
+    font-family: Roboto, sans-serif;
+}
+
 button {
     background-color: white;
     width: auto;

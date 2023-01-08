@@ -1,7 +1,8 @@
+use cosmic_text::{FamilyOwned, Weight};
 use std::any::{Any, TypeId};
 use std::ops::Range;
 
-use femtovg::{ImageId, TextContext};
+use femtovg::{ImageId, Paint, Path};
 use fnv::FnvHashMap;
 use morphorm::Units;
 
@@ -11,7 +12,7 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
 use crate::style::{LinearGradient, Style};
-use crate::text::Selection;
+use crate::text::TextContext;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 use vizia_style::{Length, LengthOrPercentage, LengthValue};
@@ -46,7 +47,7 @@ pub struct DrawContext<'a> {
     pub(crate) data: &'a SparseSet<ModelDataStore>,
     pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub resource_manager: &'a ResourceManager,
-    pub text_context: &'a TextContext,
+    pub text_context: &'a mut TextContext,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState<Entity>,
 }
@@ -115,7 +116,7 @@ impl<'a> DrawContext<'a> {
             data: &cx.data,
             views: &cx.views,
             resource_manager: &cx.resource_manager,
-            text_context: &cx.text_context,
+            text_context: &mut cx.text_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
         }
@@ -129,8 +130,8 @@ impl<'a> DrawContext<'a> {
         self.cache.get_clip_region(self.current)
     }
 
-    /// Returns the name of the default font.
-    pub fn default_font(&self) -> &str {
+    /// Returns the lookup pattern to pick the default font.
+    pub fn default_font(&self) -> &[FamilyOwned] {
         &self.style.default_font
     }
 
@@ -237,6 +238,54 @@ impl<'a> DrawContext<'a> {
 
     pub fn opacity(&self) -> f32 {
         self.cache.get_opacity(self.current)
+    }
+
+    pub fn draw_text(&mut self, canvas: &mut Canvas, origin: (f32, f32), justify: (f32, f32)) {
+        if let Ok(draw_commands) =
+            self.text_context.fill_to_cmds(canvas, self.current, origin, justify)
+        {
+            for (color, cmds) in draw_commands.into_iter() {
+                let temp_paint =
+                    Paint::color(femtovg::Color::rgba(color.r(), color.g(), color.b(), color.a()));
+                canvas.draw_glyph_cmds(cmds, &temp_paint);
+            }
+        }
+    }
+
+    pub fn draw_highlights(
+        &mut self,
+        canvas: &mut Canvas,
+        origin: (f32, f32),
+        justify: (f32, f32),
+    ) {
+        if let Some(color) = self.selection_color().copied() {
+            let mut path = Path::new();
+            for (x, y, w, h) in self.text_context.layout_selection(self.current, origin, justify) {
+                path.rect(x, y, w, h);
+            }
+            canvas.fill_path(&mut path, &Paint::color(color.into()));
+        }
+    }
+
+    pub fn draw_caret(
+        &mut self,
+        canvas: &mut Canvas,
+        origin: (f32, f32),
+        justify: (f32, f32),
+        width: f32,
+    ) {
+        if let Some(color) = self.caret_color().copied() {
+            if let Some((x, y, w, h)) = self.text_context.layout_caret(
+                self.current,
+                origin,
+                justify,
+                self.logical_to_physical(width),
+            ) {
+                let mut path = Path::new();
+                path.rect(x, y, w, h);
+                canvas.fill_path(&mut path, &Paint::color(color.into()));
+            }
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::fonts::unicode_names::CHECK;
+use crate::fonts::icons_names::CHECK;
 use crate::prelude::*;
 
 /// A checkbox used to display and toggle boolean state.
@@ -21,7 +21,7 @@ use crate::prelude::*;
 /// #
 /// # impl Model for AppData {}
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// # AppData { value: false }.build(cx);
 /// #
@@ -47,7 +47,7 @@ use crate::prelude::*;
 /// #     ToggleValue,
 /// # }
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// # AppData { value: false }.build(cx);
 /// #
@@ -71,7 +71,7 @@ use crate::prelude::*;
 /// #
 /// # impl Model for AppData {}
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// # AppData { value: false }.build(cx);
 /// #
@@ -99,10 +99,10 @@ use crate::prelude::*;
 /// #     ToggleValue,
 /// # }
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// # AppData { value: false }.build(cx);
-/// # use vizia_core::fonts::unicode_names::CANCEL;
+/// # use vizia_core::fonts::icons_names::CANCEL;
 ///
 /// Checkbox::new(cx, AppData::value)
 ///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue))
@@ -127,7 +127,7 @@ impl Checkbox {
     /// #
     /// # impl Model for AppData {}
     /// #
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::default();
     /// #
     /// # AppData { value: false }.build(cx);
     /// #
@@ -166,7 +166,7 @@ impl Handle<'_, Checkbox> {
     /// #     ToggleValue,
     /// # }
     /// #
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::default();
     /// #
     /// # AppData { value: false }.build(cx);
     /// #

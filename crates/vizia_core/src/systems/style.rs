@@ -219,7 +219,9 @@ pub fn inline_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
 
             cx.style.font_color.inherit_inline(entity, parent);
             cx.style.font_size.inherit_inline(entity, parent);
-            cx.style.font.inherit_inline(entity, parent);
+            cx.style.font_family.inherit_inline(entity, parent);
+            cx.style.font_weight.inherit_inline(entity, parent);
+            cx.style.font_style.inherit_inline(entity, parent);
             cx.style.caret_color.inherit_inline(entity, parent);
             cx.style.selection_color.inherit_inline(entity, parent);
         }
@@ -231,7 +233,9 @@ pub fn shared_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
         if let Some(parent) = tree.get_layout_parent(entity) {
             cx.style.font_color.inherit_shared(entity, parent);
             cx.style.font_size.inherit_shared(entity, parent);
-            cx.style.font.inherit_shared(entity, parent);
+            cx.style.font_family.inherit_shared(entity, parent);
+            cx.style.font_weight.inherit_shared(entity, parent);
+            cx.style.font_style.inherit_shared(entity, parent);
             cx.style.caret_color.inherit_shared(entity, parent);
             cx.style.selection_color.inherit_shared(entity, parent);
         }
@@ -428,8 +432,20 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
         should_relayout = true;
     }
 
-    if cx.style.font.link(entity, &matched_rules) {
+    if cx.style.font_family.link(entity, &matched_rules) {
+        //println!("44");
         should_redraw = true;
+        should_relayout = true;
+    }
+
+    if cx.style.font_weight.link(entity, &matched_rules) {
+        should_redraw = true;
+        should_relayout = true;
+    }
+
+    if cx.style.font_style.link(entity, &matched_rules) {
+        should_redraw = true;
+        should_relayout = true;
     }
 
     if cx.style.text_wrap.link(entity, &matched_rules) {

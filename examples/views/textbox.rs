@@ -1,4 +1,5 @@
 use vizia::prelude::*;
+use vizia_core::state::StaticLens;
 
 #[derive(Lens, Setter, Model)]
 pub struct AppData {
@@ -15,6 +16,16 @@ fn main() {
             .on_build(|cx| {
                 cx.emit(TextEvent::StartEdit);
             });
+
+        Textbox::new_multiline(
+            cx,
+            StaticLens::new(
+                &"This text is editable, but will reset on blur. Good luck editing it, haha!",
+            ),
+            true,
+        )
+        .width(Pixels(200.0))
+        .height(Pixels(100.0));
     })
     .title("Textbox")
     .run();

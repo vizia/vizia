@@ -50,6 +50,8 @@ impl_res_simple!(f64);
 impl_res_simple!(CursorIcon);
 impl_res_simple!(Overflow);
 impl_res_simple!(LengthValue);
+impl_res_simple!(Weight);
+impl_res_simple!(FontStyle);
 
 impl<T, L> Res<T> for L
 where
@@ -242,6 +244,32 @@ impl Res<RGBA> for RGBA {
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
         F: 'static + Clone + Fn(&mut Context, Entity, Self),
+    {
+        (closure)(cx, entity, self.clone())
+    }
+}
+
+impl<T: Clone + Res<T>> Res<Vec<T>> for Vec<T> {
+    fn get_val(&self, _: &Context) -> Vec<T> {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, Vec<T>),
+    {
+        (closure)(cx, entity, self.clone())
+    }
+}
+
+impl Res<FamilyOwned> for FamilyOwned {
+    fn get_val(&self, _: &Context) -> FamilyOwned {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, FamilyOwned),
     {
         (closure)(cx, entity, self.clone())
     }

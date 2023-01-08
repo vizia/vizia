@@ -59,6 +59,8 @@ A simple counter application. Run with `cargo run --example counter`.
 <div align="center"><img src="./assets/images/counter.png" width="400px" height="130px"/></div>
 
 ```rust
+use vizia::prelude::*;
+
 // Define some model data
 #[derive(Lens)]
 pub struct AppData {
@@ -72,7 +74,7 @@ pub enum AppEvent {
 
 // Describe how the data can be mutated
 impl Model for AppData {
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::Increment => {
                 self.count += 1;
@@ -80,28 +82,25 @@ impl Model for AppData {
         });
     }
 }
+fn main() {
+    Application::new(|cx| {
+        // Build the model data into the tree
+        AppData { count: 0 }.build(cx);
 
-Application::new(|cx| {
-    // Build the model data into the tree
-    AppData { count: 0 }.build(cx);
+        HStack::new(cx, |cx| {
+            // Declare a button which emits an event
+            Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx| Label::new(cx, "Increment"));
 
-    HStack::new(cx, |cx| {
-        // Declare a button which emits an event
-        Button::new(cx, 
-          |cx| cx.emit(AppEvent::Increment), 
-          |cx| Label::new(cx, "Increment")
-        );
-        
-        // Declare a label which is bound to part of the model, updating if it changes
-        Label::new(cx, AppData::count)
-            .width(Pixels(50.0));
+            // Declare a label which is bound to part of the model, updating if it changes
+            Label::new(cx, AppData::count).width(Pixels(50.0));
+        })
+        .child_space(Stretch(1.0))
+        .col_between(Pixels(50.0));
     })
-    .child_space(Stretch(1.0))
-    .col_between(Pixels(50.0));
-})
-.title("Counter")
-.inner_size((400, 100))
-.run();
+    .title("Counter")
+    .inner_size((400, 100))
+    .run();
+}
 ```
 
 <br/>

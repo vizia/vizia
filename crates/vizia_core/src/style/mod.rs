@@ -55,8 +55,8 @@ pub use gradient::*;
 use crate::animation::{AnimationState, Interpolator};
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
-use crate::text::Selection;
 use bitflags::bitflags;
+use cosmic_text::{FamilyOwned, Weight};
 use vizia_id::IdManager;
 use vizia_storage::SparseSet;
 
@@ -93,7 +93,7 @@ pub struct Style {
     pub selectors: HashMap<Rule, (u32, SelectorList<Selectors>)>,
     pub transitions: HashMap<Rule, Animation>,
 
-    pub default_font: String,
+    pub default_font: Vec<FamilyOwned>,
 
     pub elements: SparseSet<String>,
     pub ids: SparseSet<String>,
@@ -168,12 +168,12 @@ pub struct Style {
     pub inner_shadow_color: AnimatableSet<Color>,
 
     // Text & Font
-    pub text: StyleSet<String>,
     pub text_wrap: StyleSet<bool>,
-    pub font: StyleSet<String>,
+    pub font_family: StyleSet<Vec<FamilyOwned>>,
     pub font_color: AnimatableSet<Color>,
     pub font_size: AnimatableSet<f32>,
-    pub text_selection: StyleSet<Selection>,
+    pub font_weight: StyleSet<Weight>,
+    pub font_style: StyleSet<FontStyle>,
     pub caret_color: AnimatableSet<Color>,
     pub selection_color: AnimatableSet<Color>,
 
@@ -243,6 +243,7 @@ pub struct Style {
     pub needs_relayout: bool,
     pub needs_redraw: bool,
 
+    /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub dpi_factor: f64,
 }
 
@@ -783,8 +784,16 @@ impl Style {
                         self.font_color.insert_rule(rule_id, value);
                     }
 
-                    Property::Font(value) => {
-                        self.font.insert_rule(rule_id, value);
+                    Property::FontFamily(value) => {
+                        self.font_family.insert_rule(rule_id, value);
+                    }
+
+                    Property::FontWeight(value) => {
+                        self.font_weight.insert_rule(rule_id, value);
+                    }
+
+                    Property::FontStyle(value) => {
+                        self.font_style.insert_rule(rule_id, value);
                     }
 
                     Property::TextWrap(value) => {
@@ -1356,12 +1365,12 @@ impl Style {
         self.row_span.remove(entity);
 
         // Text and Font
-        self.text.remove(entity);
         self.text_wrap.remove(entity);
-        self.font.remove(entity);
+        self.font_family.remove(entity);
+        self.font_weight.remove(entity);
+        self.font_style.remove(entity);
         self.font_color.remove(entity);
         self.font_size.remove(entity);
-        self.text_selection.remove(entity);
         self.selection_color.remove(entity);
         self.caret_color.remove(entity);
 
@@ -1475,12 +1484,12 @@ impl Style {
         self.row_span.clear_rules();
 
         // Text and Font
-        self.text.clear_rules();
         self.text_wrap.clear_rules();
-        self.font.clear_rules();
+        self.font_family.clear_rules();
+        self.font_weight.clear_rules();
+        self.font_style.clear_rules();
         self.font_color.clear_rules();
         self.font_size.clear_rules();
-        self.text_selection.clear_rules();
         self.selection_color.clear_rules();
         self.caret_color.clear_rules();
 

@@ -74,7 +74,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         }
 
         impl #impl_generics Setter for #ray_name #ty_generics #where_clause {
-            type Source = #enum_type;
+            type Source = #enum_type #ty_generics;
 
             fn swap(&mut self, source: &mut Self::Source) {
                 match self {

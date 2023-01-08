@@ -1,5 +1,9 @@
 label.icon {
-    font: "icons";
+    font-family: "Entypo", sans-serif;
+}
+
+label.material-icon {
+    font-family: "Material Icons", sans-serif;
 }
 
 textbox {
@@ -11,12 +15,13 @@ textbox .textbox_content {
     layout-type: row;
     width: auto;
     height: auto;
-    min-width: 0px;
+    min-width: 100%;
     overflow: visible;
+    text-wrap: false;
     /*
     border-width: 1px;
     border-color: green;
-     */
+    */
 }
 
 textbox .textbox_container {
@@ -50,6 +55,7 @@ textbox.align_center .textbox_content {
 
 textbox.multi_line_wrapped .textbox_content {
     max-width: 100%;
+    text-wrap: true;
 }
 
 textbox.single_line .textbox_container {
@@ -76,6 +82,10 @@ label {
     layout-type: row;
     child-space: auto;
     child-left: 0px;
+}
+
+checkbox {
+    font-family: Entypo, sans-serif;
 }
 
 image {
@@ -198,7 +208,7 @@ menustack.horizontal > menu > menustack {
 
 menustack.vertical > menu > hstack > .menu_arrow {
     display: flex;
-    font: "material";
+    font-family: "Material Icons";
     left: 1s;
     top: 1s;
     bottom: 1s;

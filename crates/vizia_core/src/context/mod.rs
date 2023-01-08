@@ -7,6 +7,7 @@ use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::iter::once;
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -14,8 +15,9 @@ use std::sync::Mutex;
 use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
-use femtovg::TextContext;
+use cosmic_text::{fontdb::Database, Attrs, AttrsList, BufferLine, FamilyOwned};
 use fnv::FnvHashMap;
+use replace_with::replace_with_or_abort;
 use unic_langid::LanguageIdentifier;
 
 pub use draw::*;
@@ -25,10 +27,12 @@ pub use proxy::*;
 use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
+use crate::fonts;
 use crate::prelude::*;
-use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
+use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
+use crate::text::TextContext;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -75,6 +79,17 @@ pub struct Context {
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
+    /// The window's size in logical pixels, before `user_scale_factor` gets applied to it. If this
+    /// value changed during a frame then the window will be resized and a
+    /// [`WindowEvent::GeometryChanged`] will be emitted.
+    pub(crate) window_size: WindowSize,
+    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
+    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
+    /// changes during a frame, then the window will be resized at the end of the frame and a
+    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
+    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    pub(crate) user_scale_factor: f64,
+
     #[cfg(feature = "clipboard")]
     pub(crate) clipboard: Box<dyn ClipboardProvider>,
 
@@ -85,10 +100,27 @@ pub struct Context {
     pub ignore_default_theme: bool,
 }
 
+impl Default for Context {
+    fn default() -> Self {
+        Context::new(WindowSize::new(800, 600), 1.0)
+    }
+}
+
 impl Context {
-    pub fn new() -> Self {
+    pub fn new(window_size: WindowSize, user_scale_factor: f64) -> Self {
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
+
+        // Add default fonts
+        let mut db = Database::new();
+        db.load_system_fonts();
+        db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
+        db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
+        db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
+        db.load_font_data(Vec::from(fonts::ENTYPO));
+        db.load_font_data(Vec::from(fonts::OPEN_SANS_EMOJI));
+        db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));
+        db.load_font_data(Vec::from(fonts::MATERIAL_ICONS_REGULAR));
 
         let mut result = Self {
             entity_manager: IdManager::new(),
@@ -115,9 +147,15 @@ impl Context {
             focus_stack: Vec::new(),
             cursor_icon_locked: false,
             resource_manager: ResourceManager::new(),
-            text_context: TextContext::default(),
+            text_context: TextContext::new_from_locale_and_db(
+                sys_locale::get_locale().unwrap_or_else(|| "en-US".to_owned()),
+                db,
+            ),
 
             event_proxy: None,
+
+            window_size,
+            user_scale_factor,
 
             #[cfg(feature = "clipboard")]
             clipboard: {
@@ -140,6 +178,7 @@ impl Context {
         Environment::new().build(&mut result);
 
         result.entity_manager.create();
+        result.set_default_font(&["Roboto"]);
 
         result
     }
@@ -167,6 +206,23 @@ impl Context {
 
     pub fn environment(&self) -> &Environment {
         self.data::<Environment>().unwrap()
+    }
+
+    /// The window's size in logical pixels, before
+    /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
+    /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will be
+    /// emitted.
+    pub fn window_size(&self) -> WindowSize {
+        self.window_size
+    }
+
+    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
+    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
+    /// changes during a frame, then the window will be resized at the end of the frame and a
+    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
+    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    pub fn user_scale_factor(&self) -> f64 {
+        self.user_scale_factor
     }
 
     /// Mark the application as needing to rerun the draw method
@@ -310,33 +366,12 @@ impl Context {
             self.data.remove(*entity);
             self.views.remove(entity);
             self.entity_manager.destroy(*entity);
+            self.text_context.clear_buffer(*entity);
 
             if self.captured == *entity {
                 self.captured = Entity::null();
             }
         }
-    }
-
-    /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Any + Send>(&mut self, message: M) {
-        self.event_queue.push_back(
-            Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up),
-        );
-    }
-
-    /// Send an event containing a message directly to a specified entity.
-    pub fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
-        self.event_queue.push_back(
-            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
-        );
-    }
-
-    /// Send an event with custom origin and propagation information.
-    pub fn emit_custom(&mut self, event: Event) {
-        self.event_queue.push_back(event);
     }
 
     /// Check whether there are any events in the queue waiting for the next event dispatch cycle.
@@ -377,25 +412,40 @@ impl Context {
     }
 
     /// Add a font from memory to the application.
-    pub fn add_font_mem(&mut self, name: &str, data: &[u8]) {
-        // TODO - return error
-        if self.resource_manager.fonts.contains_key(name) {
-            println!("Font already exists");
-            return;
-        }
-
-        self.resource_manager.fonts.insert(name.to_owned(), FontOrId::Font(data.to_vec()));
+    pub fn add_fonts_mem(&mut self, data: &[&[u8]]) {
+        self.text_context.take_buffers();
+        replace_with_or_abort(&mut self.text_context, |mut ccx| {
+            let buffers = ccx.take_buffers();
+            let (locale, mut db) = ccx.into_font_system().into_locale_and_db();
+            for font_data in data {
+                db.load_font_data(Vec::from(*font_data));
+            }
+            let mut new_ccx = TextContext::new_from_locale_and_db(locale, db);
+            for (entity, lines) in buffers {
+                new_ccx.with_buffer(entity, move |buf| {
+                    buf.lines = lines
+                        .into_iter()
+                        .map(|line| BufferLine::new(line, AttrsList::new(Attrs::new())))
+                        .collect();
+                });
+            }
+            new_ccx
+        });
     }
 
     /// Sets the global default font for the application.
-    pub fn set_default_font(&mut self, name: &str) {
-        self.style.default_font = name.to_string();
+    pub fn set_default_font(&mut self, names: &[&str]) {
+        self.style.default_font = names
+            .iter()
+            .map(|x| FamilyOwned::Name(x.to_string()))
+            .chain(once(FamilyOwned::SansSerif))
+            .collect();
     }
 
     pub fn add_theme(&mut self, theme: &str) {
         self.resource_manager.themes.push(theme.to_owned());
 
-        self.reload_styles().expect("Failed to reload styles");
+        EventContext::new(self).reload_styles().expect("Failed to reload styles");
     }
 
     pub fn remove_user_themes(&mut self) {
@@ -538,6 +588,12 @@ pub trait DataContext {
     fn data<T: 'static>(&self) -> Option<&T>;
 }
 
+pub trait EmitContext {
+    fn emit<M: Any + Send>(&mut self, message: M);
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
+    fn emit_custom(&mut self, event: Event);
+}
+
 impl DataContext for Context {
     fn data<T: 'static>(&self) -> Option<&T> {
         // return data for the static model
@@ -560,5 +616,29 @@ impl DataContext for Context {
         }
 
         None
+    }
+}
+
+impl EmitContext for Context {
+    /// Send an event containing a message up the tree from the current entity.
+    fn emit<M: Any + Send>(&mut self, message: M) {
+        self.event_queue.push_back(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+        );
+    }
+
+    /// Send an event containing a message directly to a specified entity.
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
+        self.event_queue.push_back(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+        );
+    }
+
+    /// Send an event with custom origin and propagation information.
+    fn emit_custom(&mut self, event: Event) {
+        self.event_queue.push_back(event);
     }
 }

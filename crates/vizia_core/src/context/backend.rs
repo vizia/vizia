@@ -1,7 +1,7 @@
 use std::any::Any;
 use std::collections::HashSet;
 
-use femtovg::{renderer::OpenGl, Canvas, TextContext};
+use femtovg::{renderer::OpenGl, Canvas};
 use fnv::FnvHashMap;
 
 use super::EventProxy;
@@ -9,10 +9,8 @@ use crate::{
     cache::{BoundingBox, CachedData},
     environment::Environment,
     events::ViewHandler,
-    fonts,
     layout::geometry_changed,
     prelude::*,
-    resource::FontOrId,
     state::ModelOrView,
     style::Style,
     systems::*,
@@ -47,31 +45,31 @@ impl<'a> BackendContext<'a> {
         &mut self.0.modifiers
     }
 
+    /// The window's size in logical pixels, before
+    /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
+    /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will be
+    /// emitted.
+    pub fn window_size(&mut self) -> &mut WindowSize {
+        &mut self.0.window_size
+    }
+
+    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
+    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
+    /// changes during a frame, then the window will be resized at the end of the frame and a
+    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
+    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    pub fn user_scale_factor(&mut self) -> &mut f64 {
+        &mut self.0.user_scale_factor
+    }
+
     pub fn add_main_window(
         &mut self,
         window_description: &WindowDescription,
         mut canvas: Canvas<OpenGl>,
-        scale_factor: f32,
+        dpi_factor: f32,
     ) {
-        // Add default fonts
-        let regular_font = fonts::ROBOTO_REGULAR;
-        let bold_font = fonts::ROBOTO_BOLD;
-        let icon_font = fonts::ENTYPO;
-        let emoji_font = fonts::OPEN_SANS_EMOJI;
-        let arabic_font = fonts::AMIRI_REGULAR;
-        let material_font = fonts::MATERIAL_ICONS_REGULAR;
-
-        self.0.add_font_mem("roboto", regular_font);
-        self.0.add_font_mem("roboto-bold", bold_font);
-        self.0.add_font_mem("icons", icon_font);
-        self.0.add_font_mem("emoji", emoji_font);
-        self.0.add_font_mem("arabic", arabic_font);
-        self.0.add_font_mem("material", material_font);
-
-        self.0.style.default_font = String::from("roboto");
-
-        let physical_width = window_description.inner_size.width as f32 * scale_factor;
-        let physical_height = window_description.inner_size.height as f32 * scale_factor;
+        let physical_width = window_description.inner_size.width as f32 * dpi_factor;
+        let physical_height = window_description.inner_size.height as f32 * dpi_factor;
 
         // Scale factor is set to 1.0 here because scaling is applied prior to rendering
         canvas.set_size(physical_width as u32, physical_height as u32, 1.0);
@@ -83,7 +81,7 @@ impl<'a> BackendContext<'a> {
             femtovg::Color::rgb(255, 0, 0),
         );
 
-        self.0.style.dpi_factor = scale_factor as f64;
+        self.0.style.dpi_factor = dpi_factor as f64;
 
         self.0.cache.set_width(Entity::root(), physical_width);
         self.0.cache.set_height(Entity::root(), physical_height);
@@ -168,34 +166,6 @@ impl<'a> BackendContext<'a> {
     /// Check whether there are any events in the queue waiting for the next event dispatch cycle.
     pub fn has_queued_events(&self) -> bool {
         !self.0.event_queue.is_empty()
-    }
-
-    /// Ensure all FontOrId entires are loaded into the contexts and become Ids.
-    pub fn synchronize_fonts(&mut self) {
-        if let Some(canvas) = self.0.canvases.get_mut(&Entity::root()) {
-            for (name, font) in self.0.resource_manager.fonts.iter_mut() {
-                match font {
-                    FontOrId::Font(data) => {
-                        let id1 = canvas
-                            .add_font_mem(&data.clone())
-                            .expect(&format!("Failed to load font file for: {}", name));
-                        let id2 = self.0.text_context.add_font_mem(&data.clone()).expect("failed");
-                        if id1 != id2 {
-                            panic!(
-                                "Fonts in canvas must have the same id as fonts in the text context"
-                            );
-                        }
-                        *font = FontOrId::Id(id1);
-                    }
-
-                    _ => {}
-                }
-            }
-        }
-    }
-
-    pub fn text_context(&mut self) -> &mut TextContext {
-        &mut self.0.text_context
     }
 
     /// For each binding or data observer, check if its data has changed, and if so, rerun its

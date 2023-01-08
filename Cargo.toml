@@ -189,6 +189,10 @@ name = "window_modifiers"
 path = "examples/window_modifiers.rs"
 
 [[example]]
+name = "user_scale"
+path = "examples/user_scale.rs"
+
+[[example]]
 name = "long_list"
 path = "examples/lists/long_list.rs"
 
@@ -203,6 +207,10 @@ path = "examples/ignore_default_theme.rs"
 [[example]]
 name = "outline"
 path = "examples/style/outline.rs"
+
+[[example]]
+name = "save_dialog"
+path = "examples/save_dialog.rs"
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]

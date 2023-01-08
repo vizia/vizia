@@ -3,7 +3,6 @@ use std::collections::{HashMap, HashSet, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
 
-use femtovg::TextContext;
 use fnv::FnvHashMap;
 
 use crate::cache::CachedData;
@@ -16,6 +15,8 @@ use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 
+use crate::context::EmitContext;
+use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
@@ -36,11 +37,13 @@ pub struct EventContext<'a> {
     listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub resource_manager: &'a ResourceManager,
-    pub text_context: &'a TextContext,
+    pub text_context: &'a mut TextContext,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
     cursor_icon_locked: &'a mut bool,
+    window_size: &'a mut WindowSize,
+    user_scale_factor: &'a mut f64,
     #[cfg(feature = "clipboard")]
     clipboard: &'a mut Box<dyn ClipboardProvider>,
     event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
@@ -62,11 +65,13 @@ impl<'a> EventContext<'a> {
             views: &mut cx.views,
             listeners: &mut cx.listeners,
             resource_manager: &cx.resource_manager,
-            text_context: &cx.text_context,
+            text_context: &mut cx.text_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
+            window_size: &mut cx.window_size,
+            user_scale_factor: &mut cx.user_scale_factor,
             #[cfg(feature = "clipboard")]
             clipboard: &mut cx.clipboard,
             event_proxy: &mut cx.event_proxy,
@@ -80,28 +85,6 @@ impl<'a> EventContext<'a> {
 
     pub fn current(&self) -> Entity {
         self.current
-    }
-
-    /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Any + Send>(&mut self, message: M) {
-        self.event_queue.push_back(
-            Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up),
-        );
-    }
-
-    /// Send an event containing a message directly to a specified entity.
-    pub fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
-        self.event_queue.push_back(
-            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
-        );
-    }
-
-    /// Send an event with custom origin and propagation information.
-    pub fn emit_custom(&mut self, event: Event) {
-        self.event_queue.push_back(event);
     }
 
     /// Add a listener to an entity.
@@ -335,6 +318,44 @@ impl<'a> EventContext<'a> {
         self.style.needs_redraw = true;
     }
 
+    pub fn needs_relayout(&mut self) {
+        self.style.needs_relayout = true;
+        self.style.needs_redraw = true;
+    }
+
+    pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
+        if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
+            return Ok(());
+        }
+
+        self.style.remove_rules();
+
+        self.style.rules.clear();
+
+        self.style.clear_style_rules();
+
+        let mut overall_theme = String::new();
+
+        // Reload the stored themes
+        for theme in self.resource_manager.themes.iter() {
+            overall_theme += theme;
+        }
+
+        // Reload the stored stylesheets
+        for stylesheet in self.resource_manager.stylesheets.iter() {
+            let theme = std::fs::read_to_string(stylesheet)?;
+            overall_theme += &theme;
+        }
+
+        self.style.parse_theme(&overall_theme);
+
+        self.style.needs_restyle = true;
+        self.style.needs_relayout = true;
+        self.style.needs_redraw = true;
+
+        Ok(())
+    }
+
     pub fn spawn<F>(&self, target: F)
     where
         F: 'static + Send + FnOnce(&mut ContextProxy),
@@ -347,8 +368,38 @@ impl<'a> EventContext<'a> {
         std::thread::spawn(move || target(&mut cxp));
     }
 
-    pub fn scale_factor(&self) -> f32 {
+    /// The window's DPI factor. This includes both HiDPI scaling and the user scale factor.
+    pub fn dpi_factor(&self) -> f32 {
         self.style.dpi_factor as f32
+    }
+
+    /// The window's size in logical pixels, before
+    /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
+    /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will
+    /// be emitted.
+    pub fn window_size(&self) -> WindowSize {
+        *self.window_size
+    }
+
+    /// Change the window size. A [`WindowEvent::GeometryChanged`] will be emitted when the window
+    /// has actually changed in size.
+    pub fn set_window_size(&mut self, new_size: WindowSize) {
+        *self.window_size = new_size;
+    }
+
+    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
+    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
+    /// changes during a frame, then the window will be resized at the end of the frame and a
+    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
+    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    pub fn user_scale_factor(&self) -> f64 {
+        *self.user_scale_factor
+    }
+
+    /// Change the user scale factor size. A [`WindowEvent::GeometryChanged`] will be emitted when the
+    /// window has actually changed in size.
+    pub fn set_user_scale_factor(&mut self, new_factor: f64) {
+        *self.user_scale_factor = new_factor;
     }
 }
 
@@ -374,5 +425,26 @@ impl<'a> DataContext for EventContext<'a> {
         }
 
         None
+    }
+}
+
+impl<'a> EmitContext for EventContext<'a> {
+    fn emit<M: Any + Send>(&mut self, message: M) {
+        self.event_queue.push_back(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+        );
+    }
+
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
+        self.event_queue.push_back(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+        );
+    }
+
+    fn emit_custom(&mut self, event: Event) {
+        self.event_queue.push_back(event);
     }
 }

@@ -4,7 +4,7 @@ use crate::prelude::*;
 use crate::state::RatioLens;
 use crate::views::Orientation;
 
-const SCROLL_SENSITIVITY: f32 = 35.0;
+pub(crate) const SCROLL_SENSITIVITY: f32 = 35.0;
 
 #[derive(Lens, Data, Clone, Debug)]
 pub struct ScrollData {
