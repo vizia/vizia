@@ -230,31 +230,39 @@ impl<'w> Node<'w> for Entity {
     }
 
     fn border_left(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
-            t => t,
-        })
+        // store.border_width.get(*self).cloned().map(|v| match v {
+        //     Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+        //     t => t,
+        // })
+        // TODO
+        None
     }
 
     fn border_right(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
-            t => t,
-        })
+        // store.border_width.get(*self).cloned().map(|v| match v {
+        //     Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+        //     t => t,
+        // })
+        // TODO
+        None
     }
 
     fn border_top(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
-            t => t,
-        })
+        // store.border_width.get(*self).cloned().map(|v| match v {
+        //     Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+        //     t => t,
+        // })
+        // TODO
+        None
     }
 
     fn border_bottom(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.border_width.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
-            t => t,
-        })
+        // store.border_width.get(*self).cloned().map(|v| match v {
+        //     Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+        //     t => t,
+        // })
+        // TODO
+        None
     }
 
     fn row_index(&self, store: &Self::Data) -> Option<usize> {

@@ -481,8 +481,6 @@ where
                         .build(cx, |_| {})
                         .hoverable(false)
                         .class("textbox_content")
-                        .text(TextboxData::text)
-                        .text_selection(TextboxData::selection)
                         // .translate(TextboxData::transform)
                         .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
                         .entity;

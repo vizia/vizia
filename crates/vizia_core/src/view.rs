@@ -442,6 +442,7 @@ pub trait View: 'static + Sized {
         canvas.stroke_path(&mut outline_path, &outline_paint);
 
         // Draw text and image
+        /*
         if cx.text().is_some() || cx.image().is_some() {
             let mut x = bounds.x + border_width;
             let mut y = bounds.y + border_width;
@@ -615,6 +616,7 @@ pub trait View: 'static + Sized {
                 }
             }
         }
+        */
     }
 }
 
@@ -643,6 +645,7 @@ where
     }
 }
 
+/*
 fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     let bounds = cx.bounds();
 
@@ -1145,3 +1148,4 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
         }
     }
 }
+*/

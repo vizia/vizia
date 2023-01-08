@@ -504,9 +504,10 @@ impl Style {
             }
 
             // Font
-            Property::Font(font) => {
-                self.font.insert_rule(rule_id, font);
-            }
+            // TODO
+            // Property::FontFamily(font_family) => {
+            //     self.font_family.insert_rule(rule_id, font);
+            // }
 
             // Font Color
             Property::FontColor(font_color) => {
