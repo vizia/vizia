@@ -55,9 +55,7 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                     let mut selection_anchor_cursor = 0;
 
                     let mut current_cursor = 0;
-                    let mut total_length = 0;
-                    let mut last_line_length = 0;
-                    let mut prev_line_index = -1;
+                    let mut prev_line_index = std::usize::MAX;
 
                     for (index, line) in editor.buffer().layout_runs().enumerate() {
                         // Concatenate the parent id with the index of the text line to form a unique node id
@@ -120,13 +118,8 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                             character_widths.push(width);
                         }
 
-                        // TODO: Need to figure out if this line occurs due to a soft or hard break
-                        // println!(
-                        //     "LAst glyph pos: {}, line_text: {}, line_length: {}",
-                        //     last_glyph_pos,
-                        //     line.text,
-                        //     line.text.len()
-                        // );
+                        // Cosmic strips the newlines but accesskit needs them so we append them back in if line ended originally ended with a newline
+                        // If the last glyph position is equal to the end of the buffer line then this layout run is the last one and ends in a newline.
                         if last_glyph_pos == line.text.len() {
                             line_text += "\n";
                             character_lengths.push(1);
@@ -134,7 +127,15 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                             character_widths.push(0.0);
                         }
 
-                        // println!("{} {}", line_text, current_cursor);
+                        // FIXME: The screen reader gets out of sync with the cursor due to affinity
+
+                        // TODO: Might need to append any spaces that were stripped during layout. This can be done by
+                        // figuring out if the start of the next line is greater than the end of the current line as long
+                        // as the lines have the same `line_i`. This will require a peekable iterator loop.
+
+                        if prev_line_index == line.line_i {
+                            println!("{} {} {}", line_text, first_glyph_pos, current_cursor);
+                        }
 
                         line_node.value = Some(line_text.into());
                         line_node.character_lengths = character_lengths.into();
@@ -143,58 +144,53 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                         line_node.word_lengths = word_lengths.into();
                         child_nodes.push((line_id, Arc::new(line_node)));
 
-                        // Check if this line contains the cursor or selection
-                        if cursor.index < current_cursor + line_length
-                            && cursor.index >= current_cursor
-                        {
-                            selection_active_line = line_id;
-                            selection_active_cursor = cursor.index - current_cursor;
+                        if line.line_i != prev_line_index {
+                            current_cursor = 0;
                         }
 
-                        if selection.index < current_cursor + line_length
-                            && selection.index >= current_cursor
-                        {
-                            selection_anchor_line = line_id;
-                            selection_anchor_cursor = selection.index - current_cursor;
+                        if line.line_i == cursor.line {
+                            if prev_line_index != line.line_i {
+                                if cursor.index <= line_length {
+                                    selection_active_line = line_id;
+                                    selection_active_cursor = cursor.index;
+                                }
+                            } else {
+                                if cursor.index > current_cursor {
+                                    selection_active_line = line_id;
+                                    selection_active_cursor = cursor.index - current_cursor;
+                                }
+                            }
+                        }
+
+                        // Check if the current line contains the cursor or selection
+                        // This is a mess because a line happens due to soft and hard breaks but
+                        // the cursor and selected indices are relative to the lines caused by hard breaks only.
+                        if line.line_i == selection.line {
+                            // A previous line index different to the current means that the current line follows a hard break
+                            if prev_line_index != line.line_i {
+                                if selection.index <= line_length {
+                                    selection_anchor_line = line_id;
+                                    selection_anchor_cursor = selection.index;
+                                }
+                            } else {
+                                if selection.index > current_cursor {
+                                    selection_anchor_line = line_id;
+                                    selection_anchor_cursor = selection.index - current_cursor;
+                                }
+                            }
                         }
 
                         current_cursor += line_length;
-
-                        println!(
-                            "{} {} {} {}",
-                            cursor.line, cursor.index, selection.line, selection.index
-                        );
-
-                        total_length += line_length;
-                        last_line_length = line_length;
+                        prev_line_index = line.line_i;
                     }
 
-                    // Check if the cursor/selection is at the end of the text
-                    // in which case use the last line node id and the last line length as the position
-                    if !child_nodes.is_empty() {
-                        let cursor = editor.cursor();
-                        println!(
-                            "current_cursor: {}  total_length: {}",
-                            current_cursor, total_length
-                        );
-                        if cursor.index == total_length {
-                            selection_active_line = child_nodes.last().unwrap().0;
-                            selection_active_cursor = last_line_length;
-                        }
-
-                        if selection.index == total_length {
-                            selection_anchor_line = child_nodes.last().unwrap().0;
-                            selection_anchor_cursor = last_line_length;
-                        }
-                    }
-
-                    println!(
-                        "{:?} {} {:?} {}",
-                        selection_anchor_line,
-                        selection_anchor_cursor,
-                        selection_active_line,
-                        selection_active_cursor
-                    );
+                    // println!(
+                    //     "{:?} {} {:?} {}",
+                    //     selection_anchor_line,
+                    //     selection_anchor_cursor,
+                    //     selection_active_line,
+                    //     selection_active_cursor
+                    // );
 
                     node.text_selection = Some(TextSelection {
                         anchor: TextPosition {

@@ -8,11 +8,15 @@ pub struct AppData {
 
 fn main() {
     Application::new(|cx| {
-        AppData { text: "This is some text\nthat spans two lines".to_string() }.build(cx);
+        AppData {
+            text: "This is some text that spans two lines\nthen a third line or maybe a fourth"
+                .to_string(),
+        }
+        .build(cx);
 
-        Textbox::new_multiline(cx, AppData::text, false)
+        Textbox::new_multiline(cx, AppData::text, true)
             .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
-            .width(Pixels(150.0))
+            .width(Pixels(160.0))
             .height(Pixels(100.0))
             .on_build(|cx| {
                 cx.emit(TextEvent::StartEdit);
