@@ -1,30 +1,27 @@
-use crate::{macros::impl_parse, CustomParseError, Parse};
+use crate::{CustomParseError, Parse};
 
 use cssparser::*;
 
 /// A simple ident.
 #[derive(Debug, Clone, PartialEq)]
-pub struct Ident(pub String);
+pub struct Ident<'i>(pub CowRcStr<'i>);
 
-impl_parse! {
-    Ident,
-
-    tokens {
-        custom {
-            cssparser::Token::Ident(ident) => ident.as_ref().to_owned().into(),
-        }
+impl<'i> Parse<'i> for Ident<'i> {
+    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+        let ident = input.expect_ident()?;
+        Ok(Ident(ident.clone()))
     }
 }
 
-impl From<String> for Ident {
+impl<'i> From<String> for Ident<'i> {
     fn from(string: String) -> Self {
-        Ident(string)
+        Ident(string.into())
     }
 }
 
-impl From<Ident> for String {
-    fn from(ident: Ident) -> Self {
-        ident.0
+impl<'i> From<Ident<'i>> for String {
+    fn from(ident: Ident<'i>) -> Self {
+        ident.0.to_string()
     }
 }
 
@@ -58,11 +55,11 @@ mod tests {
 
         custom {
             success {
-                "ident" => Ident(String::from("ident")),
-                "border" => Ident(String::from("border")),
-                "color" => Ident(String::from("color")),
-                "yes" => Ident(String::from("yes")),
-                "no" => Ident(String::from("no")),
+                "ident" => Ident(String::from("ident").into()),
+                "border" => Ident(String::from("border").into()),
+                "color" => Ident(String::from("color").into()),
+                "yes" => Ident(String::from("yes").into()),
+                "no" => Ident(String::from("no").into()),
             }
 
             failure {

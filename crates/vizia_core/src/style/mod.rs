@@ -1,7 +1,9 @@
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
-use vizia_style::{border, overflow, CssRule, Transform, Transition};
+use vizia_style::{
+    border, overflow, CssRule, FontFamily, GenericFontFamily, Transform, Transition,
+};
 
 use cssparser::{Parser, ParserInput};
 
@@ -503,11 +505,25 @@ impl Style {
                 todo!()
             }
 
-            // Font
-            // TODO
-            // Property::FontFamily(font_family) => {
-            //     self.font_family.insert_rule(rule_id, font);
-            // }
+            // Font Family
+            Property::FontFamily(font_family) => {
+                self.font_family.insert_rule(
+                    rule_id,
+                    font_family
+                        .iter()
+                        .map(|family| match family {
+                            FontFamily::Named(name) => FamilyOwned::Name(name.to_string()),
+                            FontFamily::Generic(generic) => match generic {
+                                GenericFontFamily::Serif => FamilyOwned::Serif,
+                                GenericFontFamily::SansSerif => FamilyOwned::SansSerif,
+                                GenericFontFamily::Cursive => FamilyOwned::Cursive,
+                                GenericFontFamily::Fantasy => FamilyOwned::Fantasy,
+                                GenericFontFamily::Monospace => FamilyOwned::Monospace,
+                            },
+                        })
+                        .collect::<Vec<_>>(),
+                );
+            }
 
             // Font Color
             Property::FontColor(font_color) => {

@@ -1,8 +1,8 @@
 use crate::{
     define_property, Angle, BorderColor, BorderCornerShape, BorderRadius, BorderWidth,
     BorderWidthValue, BoxShadow, Color, CursorIcon, CustomParseError, CustomProperty, Display,
-    FontSize, InsetKeyword, LayoutType, Length, LengthOrPercentage, Opacity, Overflow, Parse,
-    PositionType, Rect, Scale, Transform, Transition, Translate, Units, UnparsedProperty,
+    FontFamily, FontSize, InsetKeyword, LayoutType, Length, LengthOrPercentage, Opacity, Overflow,
+    Parse, PositionType, Rect, Scale, Transform, Transition, Translate, Units, UnparsedProperty,
     Visibility,
 };
 use cssparser::Parser;
@@ -137,7 +137,7 @@ define_property! {
         // Font
         "font-size": FontSize(FontSize),
         "color": FontColor(Color),
-        "font": Font(String),
+        "font-family": FontFamily(Vec<FontFamily<'i>>),
         "selection-color": SelectionColor(Color), // TODO: Remove this once we have the pseudoselector version.
         "caret-color": CaretColor(Color),
         "text-wrap": TextWrap(bool),
