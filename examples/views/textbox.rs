@@ -9,7 +9,7 @@ pub struct AppData {
 fn main() {
     Application::new(|cx| {
         AppData {
-            text: "This is some text that spans two lines\nthen a third line or maybe a fourth"
+            text: "This is some text that spans four lines\nthanks to a newline and wrapping."
                 .to_string(),
         }
         .build(cx);
@@ -22,14 +22,15 @@ fn main() {
                 cx.emit(TextEvent::StartEdit);
             });
 
-        // Textbox::new_multiline(
-        //     cx,
-        //     StaticLens::new(
-        //         &"This text is editable, but will reset on blur. Good luck editing it, haha!",
-        //     ),
-        //     true,
-        // )
-        // .width(Pixels(200.0));
+        Textbox::new_multiline(
+            cx,
+            StaticLens::new(
+                &"This text is editable, but will reset on blur. Good luck editing it, haha!",
+            ),
+            true,
+        )
+        .width(Pixels(200.0))
+        .height(Pixels(200.0));
     })
     .title("Textbox")
     .run();

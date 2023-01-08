@@ -41,6 +41,7 @@ struct TextContextInternal<'a> {
 }
 
 impl TextContext {
+    #[cfg(debug_assertions)]
     pub(crate) fn font_system(&self) -> &FontSystem {
         self.borrow_font_system()
     }

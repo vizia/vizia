@@ -133,9 +133,9 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                         // figuring out if the start of the next line is greater than the end of the current line as long
                         // as the lines have the same `line_i`. This will require a peekable iterator loop.
 
-                        if prev_line_index == line.line_i {
-                            println!("{} {} {}", line_text, first_glyph_pos, current_cursor);
-                        }
+                        // if prev_line_index == line.line_i {
+                        //     println!("{} {} {}", line_text, first_glyph_pos, current_cursor);
+                        // }
 
                         line_node.value = Some(line_text.into());
                         line_node.character_lengths = character_lengths.into();
