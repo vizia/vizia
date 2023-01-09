@@ -100,7 +100,7 @@ impl TextContext {
                 .style(font_style)
                 .monospaced(monospace)
                 .color(FontColor::rgba(color.r(), color.g(), color.b(), color.a()));
-            let wrap = if style.text_wrap.get(entity).copied().unwrap_or_default() {
+            let wrap = if style.text_wrap.get(entity).copied().unwrap_or(true) {
                 Wrap::Word
             } else {
                 Wrap::None
