@@ -260,10 +260,17 @@ impl TextContext {
                 }
             }
 
-            Ok(alpha_cmd_map.into_iter().map(|(color, map)| (color, GlyphDrawCommands {
-                alpha_glyphs: map.into_iter().map(|(_, cmd)| cmd).collect(),
-                color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
-            })).collect())
+            if !alpha_cmd_map.is_empty() {
+                Ok(alpha_cmd_map.into_iter().map(|(color, map)| (color, GlyphDrawCommands {
+                    alpha_glyphs: map.into_iter().map(|(_, cmd)| cmd).collect(),
+                    color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
+                })).collect())
+            } else {
+                Ok(vec![(FontColor(0), GlyphDrawCommands {
+                    alpha_glyphs: vec![],
+                    color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
+                })])
+            }
         })
     }
 
