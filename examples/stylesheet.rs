@@ -3,9 +3,10 @@ use vizia::prelude::*;
 
 const STYLE: &str = r#"
     element {
-        width: 100px;
+        width: 300px;
         height: 100px;
         background-color: green;
+        background-image: linear-gradient(to right, blue, green 20%, red 30%);
     }
 "#;
 
@@ -42,5 +43,6 @@ fn main() {
         .class("bar");
     })
     .title("Stylesheet")
+    .inner_size((400, 200))
     .run();
 }

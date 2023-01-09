@@ -2,7 +2,7 @@ use crate::error::CustomParseError;
 use crate::horizontal_position_keyword::HorizontalPositionKeyword;
 use crate::traits::Parse;
 use crate::vertical_position_keyword::VerticalPositionKeyword;
-use crate::{LengthPercentage, Percentage};
+use crate::{LengthOrPercentage, Percentage};
 use cssparser::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -13,10 +13,7 @@ pub struct Position {
 
 impl Position {
     pub fn center() -> Position {
-        Position {
-            x: HorizontalPosition::Center,
-            y: VerticalPosition::Center,
-        }
+        Position { x: HorizontalPosition::Center, y: VerticalPosition::Center }
     }
 
     pub fn is_center(&self) -> bool {
@@ -31,8 +28,8 @@ impl Position {
 impl Default for Position {
     fn default() -> Position {
         Position {
-            x: HorizontalPosition::Length(LengthPercentage::Percentage(Percentage(0.0))),
-            y: VerticalPosition::Length(LengthPercentage::Percentage(Percentage(0.0))),
+            x: HorizontalPosition::Length(LengthOrPercentage::Percentage(Percentage(0.0))),
+            y: VerticalPosition::Length(LengthOrPercentage::Percentage(Percentage(0.0))),
         }
     }
 }
@@ -43,10 +40,7 @@ impl<'i> Parse<'i> for Position {
             Ok(HorizontalPosition::Center) => {
                 // Try parsing a vertical position next.
                 if let Ok(y) = input.try_parse(VerticalPosition::parse) {
-                    return Ok(Position {
-                        x: HorizontalPosition::Center,
-                        y,
-                    });
+                    return Ok(Position { x: HorizontalPosition::Center, y });
                 }
 
                 // If it didn't work, assume the first actually represents a y position,
@@ -64,7 +58,7 @@ impl<'i> Parse<'i> for Position {
                     let y = VerticalPosition::Side(y_keyword, None);
                     return Ok(Position { x, y });
                 }
-                if let Ok(y_lp) = input.try_parse(LengthPercentage::parse) {
+                if let Ok(y_lp) = input.try_parse(LengthOrPercentage::parse) {
                     let y = VerticalPosition::Length(y_lp);
                     return Ok(Position { x, y });
                 }
@@ -75,10 +69,7 @@ impl<'i> Parse<'i> for Position {
             Ok(HorizontalPosition::Side(x_keyword, lp)) => {
                 // If we got a horizontal side keyword (and optional offset), expect another for the vertical side.
                 // e.g. `left center` or `left 20px center`
-                if input
-                    .try_parse(|i| i.expect_ident_matching("center"))
-                    .is_ok()
-                {
+                if input.try_parse(|i| i.expect_ident_matching("center")).is_ok() {
                     let x = HorizontalPosition::Side(x_keyword, lp);
                     let y = VerticalPosition::Center;
                     return Ok(Position { x, y });
@@ -86,7 +77,7 @@ impl<'i> Parse<'i> for Position {
 
                 // e.g. `left top`, `left top 20px`, `left 20px top`, or `left 20px top 20px`
                 if let Ok(y_keyword) = input.try_parse(VerticalPositionKeyword::parse) {
-                    let y_lp = input.try_parse(LengthPercentage::parse).ok();
+                    let y_lp = input.try_parse(LengthOrPercentage::parse).ok();
                     let x = HorizontalPosition::Side(x_keyword, lp);
                     let y = VerticalPosition::Side(y_keyword, y_lp);
                     return Ok(Position { x, y });
@@ -151,10 +142,7 @@ impl<S> PositionComponent<S> {
 
 impl<'i, S: Parse<'i>> Parse<'i> for PositionComponent<S> {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        if input
-            .try_parse(|i| i.expect_ident_matching("center"))
-            .is_ok()
-        {
+        if input.try_parse(|i| i.expect_ident_matching("center")).is_ok() {
             return Ok(PositionComponent::Center);
         }
 

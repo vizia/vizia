@@ -1,9 +1,9 @@
 use crate::{
     define_property, Angle, BorderColor, BorderCornerShape, BorderRadius, BorderWidth,
     BorderWidthValue, BoxShadow, Color, CursorIcon, CustomParseError, CustomProperty, Display,
-    FontFamily, FontSize, InsetKeyword, LayoutType, Length, LengthOrPercentage, Opacity, Overflow,
-    Parse, PositionType, Rect, Scale, Transform, Transition, Translate, Units, UnparsedProperty,
-    Visibility,
+    FontFamily, FontSize, Image, InsetKeyword, LayoutType, Length, LengthOrPercentage, Opacity,
+    Overflow, Parse, PositionType, Rect, Scale, Transform, Transition, Translate, Units,
+    UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -130,7 +130,7 @@ define_property! {
 
         // Background
         "background-color": BackgroundColor(Color),
-        "background-image": BackgroundImage(String),
+        "background-image": BackgroundImage(Image<'i>),
         // // TODO
         // //BackgroundGradient(LinearGradient),
 

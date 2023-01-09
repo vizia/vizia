@@ -1,6 +1,6 @@
-use crate::{define_enum_value, Parse};
+use crate::{define_enum, Parse};
 
-define_enum_value! {
+define_enum! {
     /// A horizontal position keyword.
     pub enum HorizontalPositionKeyword {
         /// The 'left' horizontal position keyword.

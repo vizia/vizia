@@ -422,6 +422,10 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
         should_redraw = true;
     }
 
+    if cx.style.background_gradient.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
     // Font
     if cx.style.font_color.link(entity, &matched_rules) {
         should_redraw = true;
@@ -589,7 +593,7 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
             matched_rules.sort_by_cached_key(|(_, s)| *s);
             matched_rules.reverse();
 
-            println!("Matched rules: {:?}", matched_rules);
+            // println!("Matched rules: {:?}", matched_rules);
             //compute_matched_rules(cx, tree, entity, &mut matched_rules);
             //matched_rule_ids.extend(matched_rules.into_iter());
             link_style_data(

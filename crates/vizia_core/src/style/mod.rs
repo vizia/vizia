@@ -2,7 +2,7 @@ use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
 use vizia_style::{
-    border, overflow, CssRule, FontFamily, GenericFontFamily, Transform, Transition,
+    border, overflow, CssRule, FontFamily, GenericFontFamily, Gradient, Transform, Transition,
 };
 
 use cssparser::{Parser, ParserInput};
@@ -44,9 +44,6 @@ pub use selector::*;
 
 // mod property;
 // pub use property::*;
-
-mod gradient;
-pub use gradient::*;
 
 // mod shadow;
 // use shadow::*;
@@ -155,7 +152,7 @@ pub struct Style {
     // Background
     pub background_color: AnimatableSet<Color>,
     pub background_image: StyleSet<String>,
-    pub background_gradient: StyleSet<LinearGradient>,
+    pub background_gradient: StyleSet<Gradient>,
 
     // Outer Shadow
     pub outer_shadow_h_offset: AnimatableSet<LengthOrPercentage>,
@@ -585,7 +582,15 @@ impl Style {
                 self.outline_offset.insert_rule(rule_id, outline_offset);
             }
 
-            Property::BackgroundImage(_) => todo!(),
+            Property::BackgroundImage(image) => {
+                println!("Background Image: {:?}", image);
+                match image {
+                    vizia_style::Image::Name(_) => {}
+                    vizia_style::Image::Gradient(gradient) => {
+                        self.background_gradient.insert_rule(rule_id, *gradient);
+                    }
+                }
+            }
             // Property::TextWrap(_) => todo!(),
             Property::BoxShadow(_) => todo!(),
             Property::BoxShadowXOffset(_) => todo!(),

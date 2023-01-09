@@ -1,7 +1,7 @@
 use crate::{impl_parse, Calc, Parse, TryAdd};
 
 /// A value representing an angle expressed in degrees, gradians, radians, or turns.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Angle {
     /// An angle expressed in degrees.
     Deg(f32),

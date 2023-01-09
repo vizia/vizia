@@ -62,9 +62,8 @@ pub mod prelude {
     pub use vizia_window::{WindowDescription, WindowEvent, WindowSize};
 
     pub use super::style::{
-        Abilities, BorderCornerShape, Color, CursorIcon, Display, GradientDirection, GradientStop,
-        Length, LengthOrPercentage, LengthValue, LinearGradient, Opacity, Overflow,
-        PseudoClassFlags, Visibility, RGBA,
+        Abilities, BorderCornerShape, Color, CursorIcon, Display, Length, LengthOrPercentage,
+        LengthValue, Opacity, Overflow, PseudoClassFlags, Visibility, RGBA,
     };
 
     pub use cosmic_text::{FamilyOwned, Style as FontStyle, Weight};

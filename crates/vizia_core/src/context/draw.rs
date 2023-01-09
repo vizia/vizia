@@ -11,11 +11,14 @@ use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
-use crate::style::{LinearGradient, Style};
+use crate::style::Style;
 use crate::text::TextContext;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
-use vizia_style::{Length, LengthOrPercentage, LengthValue};
+use vizia_style::{
+    Gradient, HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue, LineDirection,
+    VerticalPositionKeyword,
+};
 
 /// Cached data used for drawing.
 pub struct DrawCache {
@@ -237,6 +240,90 @@ impl<'a> DrawContext<'a> {
 
     pub fn opacity(&self) -> f32 {
         self.cache.get_opacity(self.current)
+    }
+
+    pub fn draw_gradient(&mut self, canvas: &mut Canvas, paint: &mut Paint) {
+        let bounds = self.bounds();
+
+        let parent = self
+            .tree
+            .get_layout_parent(self.current)
+            .expect(&format!("Failed to find parent somehow: {}", self.current));
+
+        let parent_width = self.cache.get_width(parent);
+        let parent_height = self.cache.get_height(parent);
+
+        if let Some(gradient) = self.style.background_gradient.get(self.current) {
+            println!("Gradient: {:?}", gradient);
+
+            match gradient {
+                Gradient::Linear(linear_gradient) => {
+                    let (_, _, end_x, end_y, parent_length) = match linear_gradient.direction {
+                        LineDirection::Horizontal(horizontal_keyword) => match horizontal_keyword {
+                            HorizontalPositionKeyword::Left => {
+                                (0.0, 0.0, bounds.w, 0.0, parent_width)
+                            }
+
+                            HorizontalPositionKeyword::Right => {
+                                (0.0, 0.0, bounds.w, 0.0, parent_width)
+                            }
+                        },
+
+                        LineDirection::Vertical(vertical_keyword) => match vertical_keyword {
+                            VerticalPositionKeyword::Bottom => {
+                                (0.0, 0.0, 0.0, bounds.h, parent_height)
+                            }
+
+                            VerticalPositionKeyword::Top => {
+                                (0.0, 0.0, 0.0, bounds.h, parent_height)
+                            }
+                        },
+
+                        LineDirection::Corner { horizontal, vertical } => {
+                            match (horizontal, vertical) {
+                                (
+                                    HorizontalPositionKeyword::Right,
+                                    VerticalPositionKeyword::Bottom,
+                                ) => (0.0, 0.0, bounds.w, bounds.h, parent_width),
+
+                                _ => (0.0, 0.0, 0.0, 0.0, 0.0),
+                            }
+                        }
+
+                        _ => (0.0, 0.0, 0.0, 0.0, 0.0),
+                    };
+
+                    let num_stops = linear_gradient.stops.len();
+
+                    let stops = linear_gradient
+                        .stops
+                        .iter()
+                        .enumerate()
+                        .map(|(index, stop)| {
+                            let pos = if let Some(pos) = &stop.position {
+                                pos.to_pixels(parent_length) / parent_length
+                            } else {
+                                index as f32 / (num_stops - 1) as f32
+                            };
+                            let col: femtovg::Color = stop.color.into();
+                            (pos, col)
+                        })
+                        .collect::<Vec<_>>();
+
+                    println!("STOPS: {:?}", stops);
+
+                    *paint = Paint::linear_gradient_stops(
+                        bounds.x,
+                        bounds.y,
+                        end_x,
+                        end_y,
+                        stops.as_slice(),
+                    )
+                }
+
+                _ => {}
+            }
+        }
     }
 
     pub fn draw_text(&mut self, canvas: &mut Canvas, origin: (f32, f32), justify: (f32, f32)) {
