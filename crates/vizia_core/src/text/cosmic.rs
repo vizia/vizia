@@ -6,7 +6,7 @@ use cosmic_text::{
     Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor, Family, FontSystem,
     Metrics, SubpixelBin, Wrap,
 };
-use femtovg::imgref::ImgRef;
+use femtovg::imgref::{Img, ImgRef, ImgExt};
 use femtovg::rgb::RGBA8;
 use femtovg::{
     Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource,
@@ -187,7 +187,7 @@ impl TextContext {
                                 // if no atlas could fit the texture, make a new atlas tyvm
                                 // TODO error handling
                                 let mut atlas = Atlas::new(TEXTURE_SIZE, TEXTURE_SIZE);
-                                let image_id = canvas.create_image_empty(TEXTURE_SIZE, TEXTURE_SIZE, PixelFormat::Rgba8, ImageFlags::empty()).unwrap();
+                                let image_id = canvas.create_image(Img::new(vec![RGBA8::new(0,0,0,0); TEXTURE_SIZE * TEXTURE_SIZE], TEXTURE_SIZE, TEXTURE_SIZE).as_ref(), ImageFlags::empty()).unwrap();
                                 let texture_index = int.glyph_textures.len();
                                 let (x, y) = atlas.add_rect(alloc_w as usize, alloc_h as usize).unwrap();
                                 int.glyph_textures.push(FontTexture {
