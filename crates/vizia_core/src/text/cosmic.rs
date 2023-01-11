@@ -6,11 +6,11 @@ use cosmic_text::{
     Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor, Family, FontSystem,
     Metrics, SubpixelBin, Wrap,
 };
-use femtovg::imgref::{Img, ImgRef, ImgExt};
+use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
     Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource,
-    PixelFormat, Quad, Renderer,
+    Quad, Renderer,
 };
 use fnv::FnvHashMap;
 use ouroboros::self_referencing;
