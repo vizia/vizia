@@ -9,8 +9,8 @@ use cosmic_text::{
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
-    Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource,
-    Quad, Renderer,
+    Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource, Quad,
+    Renderer,
 };
 use fnv::FnvHashMap;
 use ouroboros::self_referencing;
