@@ -212,6 +212,10 @@ path = "examples/style/outline.rs"
 name = "save_dialog"
 path = "examples/save_dialog.rs"
 
+[[example]]
+name = "transform"
+path = "examples/style/transform.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard", "vizia_winit/clipboard"]
