@@ -117,6 +117,7 @@ impl Interpolator for Transform {
     }
 }
 
+// TODO: Split this into interpolated matrices for translation, rotation, scale, and skew
 impl Interpolator for Transform2D {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         let mut transform = *start;

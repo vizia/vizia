@@ -67,6 +67,11 @@ const STYLE: &str = r#"
         transform: translate(40px, 20px) rotate(40deg) scale(2, 0.5) skew(30deg, 20deg);
         transition: transform 500ms;
     }
+
+    .matrix:hover {
+        transform: matrix(1, 2, 3, 4, 5, 6);
+        transition: transform 500ms;
+    }
 "#;
 
 fn main() {
@@ -102,6 +107,7 @@ fn main() {
             .size(Auto)
             .col_between(Pixels(10.0));
             Element::new(cx).class("multi").text("multi");
+            Element::new(cx).class("matrix").text("matrix");
         })
         .child_space(Stretch(1.0))
         .row_between(Pixels(10.0));
