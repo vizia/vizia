@@ -82,8 +82,8 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
                 });
 
                 // Add an extra pixel to account for AA
-                let text_width = text_width.round() + 1.0 + child_space_x;
-                let text_height = text_height.round() + 1.0 + child_space_y;
+                let text_width = text_width.ceil() + 1.0 + child_space_x;
+                let text_height = text_height.ceil() + 1.0 + child_space_y;
 
                 if content_width < text_width {
                     content_width = text_width;
