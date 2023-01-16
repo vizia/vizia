@@ -6,8 +6,21 @@ use cssparser::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Gradient {
+    None,
     Linear(LinearGradient),
     // Radial(RadialGradient),
+}
+
+impl Default for Gradient {
+    fn default() -> Self {
+        Gradient::None
+    }
+}
+
+impl From<LinearGradient> for Gradient {
+    fn from(linear_gradient: LinearGradient) -> Self {
+        Gradient::Linear(linear_gradient)
+    }
 }
 
 impl<'i> Parse<'i> for Gradient {
@@ -21,6 +34,14 @@ impl<'i> Parse<'i> for Gradient {
               _ => Err(location.new_unexpected_token_error(cssparser::Token::Ident(func.clone())))
             }
         })
+    }
+}
+
+impl From<&str> for Gradient {
+    fn from(s: &str) -> Self {
+        let mut input = ParserInput::new(&s);
+        let mut parser = Parser::new(&mut input);
+        Gradient::parse(&mut parser).unwrap_or_default()
     }
 }
 

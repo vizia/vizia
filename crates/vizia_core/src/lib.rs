@@ -38,7 +38,7 @@ pub mod image {
 
 /// Members which we recommend you wildcard-import.
 pub mod prelude {
-    pub use super::animation::{Animation, AnimationBuilder};
+    pub use super::animation::{Animation, AnimationBuilder, Interpolator};
     pub use super::context::{
         Context, ContextProxy, DataContext, DrawContext, EmitContext, EventContext, ProxyEmitError,
     };
@@ -62,8 +62,9 @@ pub mod prelude {
     pub use vizia_window::{WindowDescription, WindowEvent, WindowSize};
 
     pub use super::style::{
-        Abilities, BorderCornerShape, Color, CursorIcon, Display, Length, LengthOrPercentage,
-        LengthValue, Opacity, Overflow, PseudoClassFlags, Visibility, RGBA,
+        Abilities, BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, Length,
+        LengthOrPercentage, LengthValue, LineDirection, LinearGradient, Opacity, Overflow,
+        PseudoClassFlags, Visibility, RGBA,
     };
 
     pub use cosmic_text::{FamilyOwned, Style as FontStyle, Weight};

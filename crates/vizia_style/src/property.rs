@@ -1,7 +1,7 @@
 use crate::{
-    define_property, Angle, BorderColor, BorderCornerShape, BorderRadius, BorderWidth,
-    BorderWidthValue, BoxShadow, Color, CursorIcon, CustomParseError, CustomProperty, Display,
-    FontFamily, FontSize, Image, InsetKeyword, LayoutType, Length, LengthOrPercentage, Opacity,
+    define_property, Angle, BackgroundImage, BorderColor, BorderCornerShape, BorderRadius,
+    BorderWidth, BorderWidthValue, BoxShadow, Color, CursorIcon, CustomParseError, CustomProperty,
+    Display, FontFamily, FontSize, InsetKeyword, LayoutType, Length, LengthOrPercentage, Opacity,
     Overflow, Parse, PositionType, Rect, Scale, Transform, Transition, Translate, Units,
     UnparsedProperty, Visibility,
 };
@@ -130,7 +130,7 @@ define_property! {
 
         // Background
         "background-color": BackgroundColor(Color),
-        "background-image": BackgroundImage(Image<'i>),
+        "background-image": BackgroundImage(BackgroundImage<'i>),
         // // TODO
         // //BackgroundGradient(LinearGradient),
 

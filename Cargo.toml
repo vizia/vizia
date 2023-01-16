@@ -216,6 +216,10 @@ path = "examples/save_dialog.rs"
 name = "transform"
 path = "examples/style/transform.rs"
 
+[[example]]
+name = "gradient"
+path = "examples/style/gradient.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard", "vizia_winit/clipboard"]

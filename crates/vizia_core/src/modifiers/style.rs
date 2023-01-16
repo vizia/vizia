@@ -1,5 +1,5 @@
 use super::internal;
-use crate::prelude::*;
+use crate::{entity, prelude::*};
 
 /// Modifiers for changing the style properties of a view.
 pub trait StyleModifiers: internal::Modifiable {
@@ -136,13 +136,23 @@ pub trait StyleModifiers: internal::Modifiable {
         background_color,
         Color
     );
-    modifier!(
-        /// Sets the background image of the view.
-        ///
-        /// Background image will override any background gradient or color.
-        background_image,
-        String
-    );
+
+    fn background_image<'i, U: Into<BackgroundImage<'i>>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, val| {
+            let image: BackgroundImage = val.into();
+            match image {
+                BackgroundImage::Gradient(gradient) => {
+                    cx.style.background_gradient.insert(entity, *gradient);
+                    cx.need_redraw();
+                }
+
+                _ => {}
+            }
+        });
+
+        self
+    }
 
     // TODO: Docs for this.
     fn image<U: ToString>(mut self, value: impl Res<U>) -> Self {

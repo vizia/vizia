@@ -337,6 +337,12 @@ impl From<Color> for femtovg::Color {
     }
 }
 
+impl From<RGBA> for femtovg::Color {
+    fn from(src: RGBA) -> femtovg::Color {
+        femtovg::Color::rgba(src.r(), src.g(), src.b(), src.a())
+    }
+}
+
 impl From<&str> for Color {
     fn from(s: &str) -> Self {
         let mut input = ParserInput::new(&s);

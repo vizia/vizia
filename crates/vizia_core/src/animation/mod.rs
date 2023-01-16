@@ -49,7 +49,7 @@ mod animation_state;
 pub(crate) use animation_state::AnimationState;
 
 mod interpolator;
-pub(crate) use interpolator::Interpolator;
+pub use interpolator::Interpolator;
 
 // mod transition;
 // pub(crate) use transition::Transition;

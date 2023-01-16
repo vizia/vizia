@@ -10,9 +10,9 @@ use cssparser::{Parser, ParserInput};
 use crate::prelude::*;
 
 pub use vizia_style::{
-    BorderCornerShape, Color, CursorIcon, Display, Length, LengthOrPercentage, LengthValue,
-    Opacity, Overflow, ParserOptions, Property, SelectorList, Selectors, StyleSheet, Visibility,
-    RGBA,
+    BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, Length, LengthOrPercentage,
+    LengthValue, LineDirection, LinearGradient, Opacity, Overflow, ParserOptions, Property,
+    SelectorList, Selectors, StyleSheet, Visibility, RGBA,
 };
 
 // mod color;
@@ -582,15 +582,12 @@ impl Style {
                 self.outline_offset.insert_rule(rule_id, outline_offset);
             }
 
-            Property::BackgroundImage(image) => {
-                println!("Background Image: {:?}", image);
-                match image {
-                    vizia_style::Image::Name(_) => {}
-                    vizia_style::Image::Gradient(gradient) => {
-                        self.background_gradient.insert_rule(rule_id, *gradient);
-                    }
+            Property::BackgroundImage(image) => match image {
+                BackgroundImage::Name(_) => {}
+                BackgroundImage::Gradient(gradient) => {
+                    self.background_gradient.insert_rule(rule_id, *gradient);
                 }
-            }
+            },
             // Property::TextWrap(_) => todo!(),
             Property::BoxShadow(_) => todo!(),
             Property::BoxShadowXOffset(_) => todo!(),

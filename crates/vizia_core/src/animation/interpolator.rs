@@ -1,5 +1,5 @@
 use morphorm::Units;
-use vizia_style::{Color, Length, LengthOrPercentage, LengthValue, Opacity, Transform};
+use vizia_style::{Color, Length, LengthOrPercentage, LengthValue, Opacity, Transform, RGBA};
 
 use crate::style::Transform2D;
 
@@ -59,6 +59,16 @@ impl Interpolator for Color {
         let b = (end.b() as f64 - start.b() as f64).mul_add(t as f64, start.b() as f64) as u8;
         let a = (end.a() as f64 - start.a() as f64).mul_add(t as f64, start.a() as f64) as u8;
         Color::rgba(r, g, b, a)
+    }
+}
+
+impl Interpolator for RGBA {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        let r = (end.r() as f64 - start.r() as f64).mul_add(t as f64, start.r() as f64) as u8;
+        let g = (end.g() as f64 - start.g() as f64).mul_add(t as f64, start.g() as f64) as u8;
+        let b = (end.b() as f64 - start.b() as f64).mul_add(t as f64, start.b() as f64) as u8;
+        let a = (end.a() as f64 - start.a() as f64).mul_add(t as f64, start.a() as f64) as u8;
+        RGBA::rgba(r, g, b, a)
     }
 }
 

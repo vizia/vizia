@@ -422,9 +422,9 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
         should_redraw = true;
     }
 
-    if cx.style.background_gradient.link(entity, &matched_rules) {
-        should_redraw = true;
-    }
+    // if cx.style.background_gradient.link(entity, &matched_rules) {
+    //     should_redraw = true;
+    // }
 
     // Font
     if cx.style.font_color.link(entity, &matched_rules) {
