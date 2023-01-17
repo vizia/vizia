@@ -1,5 +1,8 @@
 use morphorm::Units;
-use vizia_style::{Color, Length, LengthOrPercentage, LengthValue, Opacity, Transform, RGBA};
+use vizia_style::{
+    Color, ColorStop, Gradient, Length, LengthOrPercentage, LengthValue, LinearGradient, Opacity,
+    Transform, RGBA,
+};
 
 use crate::style::Transform2D;
 
@@ -148,5 +151,50 @@ impl<T: Interpolator> Interpolator for Vec<T> {
             .zip(end.iter())
             .map(|(start, end)| T::interpolate(start, end, t))
             .collect::<Vec<T>>()
+    }
+}
+
+impl Interpolator for Gradient {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (Gradient::Linear(start_gradient), Gradient::Linear(end_gradient)) => {
+                Gradient::Linear(LinearGradient::interpolate(start_gradient, end_gradient, t))
+            }
+
+            _ => end.clone(),
+        }
+    }
+}
+
+impl Interpolator for LinearGradient {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        if start.direction == end.direction && start.stops.len() == end.stops.len() {
+            LinearGradient {
+                direction: start.direction,
+                stops: start
+                    .stops
+                    .iter()
+                    .zip(end.stops.iter())
+                    .enumerate()
+                    .map(|(index, (start_stop, end_stop))| {
+                        let num_stops = start.stops.len();
+                        let start_pos = start_stop.position.clone().unwrap_or(
+                            LengthOrPercentage::Percentage(index as f32 / (num_stops - 1) as f32),
+                        );
+                        let end_pos = end_stop.position.clone().unwrap_or(
+                            LengthOrPercentage::Percentage(index as f32 / (num_stops - 1) as f32),
+                        );
+                        ColorStop {
+                            color: Color::interpolate(&start_stop.color, &end_stop.color, t),
+                            position: Some(LengthOrPercentage::interpolate(
+                                &start_pos, &end_pos, t,
+                            )),
+                        }
+                    })
+                    .collect::<Vec<_>>(),
+            }
+        } else {
+            end.clone()
+        }
     }
 }

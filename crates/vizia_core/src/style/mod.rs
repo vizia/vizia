@@ -152,7 +152,7 @@ pub struct Style {
     // Background
     pub background_color: AnimatableSet<Color>,
     pub background_image: StyleSet<String>,
-    pub background_gradient: StyleSet<Gradient>,
+    pub background_gradient: AnimatableSet<Gradient>,
 
     // Outer Shadow
     pub outer_shadow_h_offset: AnimatableSet<LengthOrPercentage>,
@@ -366,6 +366,36 @@ impl Style {
             "transform" => {
                 self.transform.insert_animation(animation, self.add_transition(transition));
                 self.transform.insert_transition(rule_id, animation);
+                self.transitions.insert(rule_id, animation);
+            }
+
+            "background-image" => {
+                println!("Transition: {:?}", transition);
+                self.background_gradient
+                    .insert_animation(animation, self.add_transition(transition));
+                self.background_gradient.insert_transition(rule_id, animation);
+                self.transitions.insert(rule_id, animation);
+            }
+
+            "border-radius" => {
+                self.border_bottom_left_radius
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_bottom_left_radius.insert_transition(rule_id, animation);
+                self.border_bottom_right_radius
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_bottom_right_radius.insert_transition(rule_id, animation);
+                self.border_top_left_radius
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_top_left_radius.insert_transition(rule_id, animation);
+                self.border_top_right_radius
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_top_right_radius.insert_transition(rule_id, animation);
+                self.transitions.insert(rule_id, animation);
+            }
+
+            "width" => {
+                self.width.insert_animation(animation, self.add_transition(transition));
+                self.width.insert_transition(rule_id, animation);
                 self.transitions.insert(rule_id, animation);
             }
 

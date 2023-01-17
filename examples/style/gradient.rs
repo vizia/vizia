@@ -6,12 +6,22 @@ use vizia::vg;
 const STYLE: &str = r#"
 
     element {
-        width: 100px;
-        height: 100px;
+        width: 400px;
+        height: 200px;
+        space: 1s;
+        background-color: blue;
+        border-radius: 0%;
     }
 
     .linear-gradient {
+        background-image: linear-gradient(red, red);
+    }
+
+    .linear-gradient:hover {
+        width: 200px;
         background-image: linear-gradient(red, yellow);
+        border-radius: 50%;
+        transition: background-image 0.5s 0.5s, width 0.5s, border-radius 0.5s 1.0s;
     }
 
     .linear-gradient-direction {
@@ -313,7 +323,7 @@ fn main() {
         .build(cx);
 
         VStack::new(cx, |cx| {
-            // Element::new(cx).class("linear-gradient");
+            Element::new(cx).class("linear-gradient");
             // Element::new(cx).class("linear-gradient-direction");
             // Element::new(cx)
             //     // .class("linear-gradient-corner")
@@ -321,12 +331,12 @@ fn main() {
             //     .width(Pixels(600.0))
             //     .background_image("linear-gradient(red, green)");
 
-            GradientCanvas::new(cx, AppData::gradient).size(Pixels(300.0)).space(Stretch(1.0));
+            // GradientCanvas::new(cx, AppData::gradient).size(Pixels(300.0)).space(Stretch(1.0));
 
-            GradientControl::new(cx, AppData::gradient)
-                .position_type(PositionType::SelfDirected)
-                .size(Stretch(1.0))
-                .background_color(RGBA::GREY);
+            // GradientControl::new(cx, AppData::gradient)
+            //     .position_type(PositionType::SelfDirected)
+            //     .size(Stretch(1.0))
+            //     .background_color(RGBA::GREY);
         })
         .row_between(Pixels(10.0));
     })

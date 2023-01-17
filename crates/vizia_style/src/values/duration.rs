@@ -8,7 +8,7 @@ impl_parse! {
         custom {
             cssparser::Token::Dimension {
                 value, ref unit, ..
-            } if unit.as_ref().eq_ignore_ascii_case("s") => Duration::from_secs(*value as u64),
+            } if unit.as_ref().eq_ignore_ascii_case("s") => Duration::from_millis((*value * 1000.0) as u64),
             cssparser::Token::Dimension {
                 value, ref unit, ..
             } if unit.as_ref().eq_ignore_ascii_case("ms") => Duration::from_millis(*value as u64),

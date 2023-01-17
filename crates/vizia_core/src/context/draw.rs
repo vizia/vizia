@@ -254,8 +254,6 @@ impl<'a> DrawContext<'a> {
         let parent_height = self.cache.get_height(parent);
 
         if let Some(gradient) = self.style.background_gradient.get(self.current) {
-            println!("Gradient: {:?}", gradient);
-
             match gradient {
                 Gradient::Linear(linear_gradient) => {
                     let (_, _, end_x, end_y, parent_length) = match linear_gradient.direction {
@@ -310,13 +308,11 @@ impl<'a> DrawContext<'a> {
                         })
                         .collect::<Vec<_>>();
 
-                    println!("STOPS: {:?}", stops);
-
                     *paint = Paint::linear_gradient_stops(
                         bounds.x,
                         bounds.y,
-                        end_x,
-                        end_y,
+                        bounds.x + end_x,
+                        bounds.y + end_y,
                         stops.as_slice(),
                     )
                 }
