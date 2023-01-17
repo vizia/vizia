@@ -1,3 +1,7 @@
+.icon {
+    font-family: "ViziaIcons", sans-serif;
+}
+
 /* Button */
 
 button {
@@ -304,7 +308,7 @@ menustack.horizontal > menu > menustack {
 
 menustack.vertical > menu > hstack > .menu_arrow {
     display: flex;
-    font: "material";
+    font-family: "material";
     left: 1s;
     top: 1s;
     bottom: 1s;

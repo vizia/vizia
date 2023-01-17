@@ -50,4 +50,6 @@ pub mod vizia_icons {
     pub const MINUS: &str = "O";
     pub const PLUS: &str = "P";
     pub const USER: &str = "Q";
+    pub const SUN: &str = "R";
+    pub const MOON: &str = "S";
 }

@@ -6,10 +6,6 @@
     border-width: 1px; */
 }
 
-.icon {
-    font-family: "Entypo", sans-serif;
-}
-
 root {
     background-color: #1d1d1d;
 }
@@ -148,7 +144,7 @@ checkbox {
     background-color: transparent;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
-    font: "icons";
+    font-family: "ViziaIcons";
 }
 
 checkbox:hover {
@@ -283,7 +279,7 @@ datetimepicker {
 }
 
 datetimepicker tabheader label {
-    font: "icons";
+    font-family: "ViziaIcons";
 }
 
 datetimepicker tabheader:checked label {
@@ -732,11 +728,11 @@ table {
 }
 
 .table-column-title {
-    font: "roboto-bold";
+    font-family: "roboto-bold";
 }
 
 .table-column-icon {
-    font: "icons";
+    font-family: "ViziaIcons";
 }
 
 .table-row-divisor {

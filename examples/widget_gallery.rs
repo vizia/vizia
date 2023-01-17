@@ -1,63 +1,164 @@
-use vizia::prelude::*;
-
-const ICON_PLUS: &str = "\u{2b}";
-const ICON_STAR: &str = "\u{2605}";
+use vizia::{
+    fonts::vizia_icons::{CHECK, MOON, PLUS, SUN},
+    prelude::*,
+};
 
 const STYLE: &str = r#"
 
     .title {
-        font-size: 30.0;
-        font: "roboto-bold";
-        top: 10px;
-        bottom: 10px;
         space: 0px;
-        child-space: 40px;
-        child-top: 20px;
+        child-space: 16px;
         background-color: red;
-        height: 100px;
+        height: 48px;
+        child-top: 1s;
+        child-bottom: 1s;
+    }
+    
+    .title > label {
         width: 1s;
+        font-size: 30px;
+        font-weight: 600;
     }
 
     .heading {
         font-size: 20.0;
-        font: "roboto-bold";
         top: 10px;
         bottom: 6px;
     }
 
     .tabview-tabheader-wrapper {
         width: 200px;
+        child-top: 4px;
+        child-bottom: 4px;
     }
 
     tabheader {
         width: 1s;
+        height: 24px;
+        child-top: 1s;
+        child-bottom: 1s;
     }
 
     tabheader label {
         width: 1s;
+        color: #ffffff88;
+    }
+    
+    tabheader:checked {
+        background-color: #51afef22;
     }
 
+    tabheader:hover {
+        background-color: #51afef22;
+    }
+
+    .indicator {
+        width: 2px;
+        top: 0px;
+        bottom: 0px;
+        border-top-left-radius: 2px;
+        border-bottom-left-radius: 2px;
+    }
+
+    .row-wrapper {
+        width: auto;
+    }
+
+    .wrapper {
+        width: auto;
+        height: auto;
+        background-color: #282828;
+        border-radius: 4px;
+        child-space: 8px;
+        row-between: 8px;
+    }
+
+    .wrapper > hstack {
+        col-between: 8px;
+    }
+
+    .bg-darker {
+        child-space: 16px;
+        row-between: 8px;
+    }
 "#;
 
 #[derive(Lens)]
 pub struct AppData {
     items: Vec<&'static str>,
+    disabled: bool,
+    theme: ThemeMode,
 }
 
-impl Model for AppData {}
+pub enum AppEvent {
+    ToggleDisabled,
+    ToggleTheme,
+}
+
+impl Model for AppData {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|e, _| match e {
+            AppEvent::ToggleDisabled => {
+                self.disabled = !self.disabled;
+            }
+
+            AppEvent::ToggleTheme => {
+                self.theme = match self.theme {
+                    ThemeMode::DarkMode => ThemeMode::LightMode,
+                    ThemeMode::LightMode => ThemeMode::DarkMode,
+                };
+
+                cx.emit(EnvironmentEvent::SetThemeMode(self.theme));
+            }
+        })
+    }
+}
+
+fn title(cx: &mut Context, title: &str) {
+    HStack::new(cx, |cx| {
+        Label::new(cx, title);
+        HStack::new(cx, |cx| {
+            Switch::new(cx, AppData::disabled).on_toggle(|cx| cx.emit(AppEvent::ToggleDisabled));
+            Label::new(cx, "Disabled");
+        })
+        .size(Auto)
+        .col_between(Pixels(5.0))
+        .child_top(Stretch(1.0))
+        .child_bottom(Stretch(1.0));
+        Button::new(
+            cx,
+            |cx| cx.emit(AppEvent::ToggleTheme),
+            |cx| {
+                Label::new(
+                    cx,
+                    match AppData::theme.get(cx) {
+                        ThemeMode::DarkMode => SUN,
+                        _ => MOON,
+                    },
+                )
+                .class("icon")
+            },
+        );
+    })
+    .class("title");
+}
 
 fn tab<T: ToString + Data>(cx: &mut Context, item: impl Lens<Target = T>) {
-    Element::new(cx).class("indicator").width(Pixels(5.0));
-    Label::new(cx, item);
+    Label::new(cx, item).hoverable(false);
+    Element::new(cx).class("indicator").hoverable(false);
 }
 
 fn main() {
     Application::new(|cx| {
         cx.add_theme(STYLE);
+        cx.emit(EnvironmentEvent::SetThemeMode(ThemeMode::DarkMode));
+
         AppData {
             items: vec![
                 "Label", "Button", "Checkbox", "Slider", "Switch", "Spinbox", "Tabs", "Textbox",
             ],
+            disabled: false,
+            theme: ThemeMode::DarkMode,
         }
         .build(cx);
         //cx.add_stylesheet("examples/test_style.css").unwrap();
@@ -128,7 +229,7 @@ fn main() {
 
 pub fn button(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Button").class("title");
+        title(cx, "Button");
 
         // Basic Buttons
         VStack::new(cx, |cx| {
@@ -138,33 +239,23 @@ pub fn button(cx: &mut Context) {
                 Button::new(cx, |_| {}, |cx| Label::new(cx, "Accent Button")).class("accent");
                 Button::new(cx, |_| {}, |cx| Label::new(cx, "Outline Button")).class("outline");
                 Button::new(cx, |_| {}, |cx| Label::new(cx, "Ghost Button")).class("ghost");
-            })
-            .col_between(Pixels(20.0));
+            });
         })
-        .height(Auto)
-        .child_space(Pixels(20.0))
-        .background_color(Color::rgb(40, 40, 40));
+        .disabled(AppData::disabled)
+        .class("wrapper");
 
         // Icon Buttons
         VStack::new(cx, |cx| {
             Label::new(cx, "Icon Buttons").class("heading");
             HStack::new(cx, |cx| {
-                Button::new(cx, |_| {}, |cx| Label::new(cx, ICON_PLUS)).class("icon");
-                Button::new(cx, |_| {}, |cx| Label::new(cx, ICON_PLUS))
-                    .class("icon")
-                    .class("accent");
-                Button::new(cx, |_| {}, |cx| Label::new(cx, ICON_PLUS))
-                    .class("icon")
-                    .class("outline");
-                Button::new(cx, |_| {}, |cx| Label::new(cx, ICON_PLUS))
-                    .class("icon")
-                    .class("ghost");
-            })
-            .col_between(Pixels(20.0));
+                Button::new(cx, |_| {}, |cx| Label::new(cx, PLUS)).class("icon");
+                Button::new(cx, |_| {}, |cx| Label::new(cx, PLUS)).class("icon").class("accent");
+                Button::new(cx, |_| {}, |cx| Label::new(cx, PLUS)).class("icon").class("outline");
+                Button::new(cx, |_| {}, |cx| Label::new(cx, PLUS)).class("icon").class("ghost");
+            });
         })
-        .height(Auto)
-        .child_space(Pixels(20.0))
-        .background_color(Color::rgb(40, 40, 40));
+        .disabled(AppData::disabled)
+        .class("wrapper");
 
         // Icon & Label Buttons
         VStack::new(cx, |cx| {
@@ -175,7 +266,7 @@ pub fn button(cx: &mut Context) {
                     |_| {},
                     |cx| {
                         HStack::new(cx, |cx| {
-                            Label::new(cx, ICON_STAR).class("icon");
+                            Label::new(cx, CHECK).class("icon");
                             Label::new(cx, "Icon before");
                         })
                         .size(Auto)
@@ -189,7 +280,7 @@ pub fn button(cx: &mut Context) {
                     |_| {},
                     |cx| {
                         HStack::new(cx, |cx| {
-                            Label::new(cx, ICON_STAR).class("icon");
+                            Label::new(cx, CHECK).class("icon");
                             Label::new(cx, "Icon before");
                         })
                         .size(Auto)
@@ -204,7 +295,7 @@ pub fn button(cx: &mut Context) {
                     |_| {},
                     |cx| {
                         HStack::new(cx, |cx| {
-                            Label::new(cx, ICON_STAR).class("icon");
+                            Label::new(cx, CHECK).class("icon");
                             Label::new(cx, "Icon before");
                         })
                         .size(Auto)
@@ -219,7 +310,7 @@ pub fn button(cx: &mut Context) {
                     |_| {},
                     |cx| {
                         HStack::new(cx, |cx| {
-                            Label::new(cx, ICON_STAR).class("icon");
+                            Label::new(cx, CHECK).class("icon");
                             Label::new(cx, "Icon before");
                         })
                         .size(Auto)
@@ -228,12 +319,10 @@ pub fn button(cx: &mut Context) {
                     },
                 )
                 .class("ghost");
-            })
-            .col_between(Pixels(20.0));
+            });
         })
-        .height(Auto)
-        .child_space(Pixels(20.0))
-        .background_color(Color::rgb(40, 40, 40));
+        .disabled(AppData::disabled)
+        .class("wrapper");
 
         VStack::new(cx, |cx| {
             Label::new(cx, "Label & Icon Buttons").class("heading");
@@ -244,7 +333,7 @@ pub fn button(cx: &mut Context) {
                     |cx| {
                         HStack::new(cx, |cx| {
                             Label::new(cx, "Icon after");
-                            Label::new(cx, ICON_STAR).class("icon");
+                            Label::new(cx, CHECK).class("icon");
                         })
                         .size(Auto)
                         .child_space(Stretch(1.0))
@@ -258,7 +347,7 @@ pub fn button(cx: &mut Context) {
                     |cx| {
                         HStack::new(cx, |cx| {
                             Label::new(cx, "Icon after");
-                            Label::new(cx, ICON_STAR).class("icon");
+                            Label::new(cx, CHECK).class("icon");
                         })
                         .size(Auto)
                         .child_space(Stretch(1.0))
@@ -273,7 +362,7 @@ pub fn button(cx: &mut Context) {
                     |cx| {
                         HStack::new(cx, |cx| {
                             Label::new(cx, "Icon after");
-                            Label::new(cx, ICON_STAR).class("icon");
+                            Label::new(cx, CHECK).class("icon");
                         })
                         .size(Auto)
                         .child_space(Stretch(1.0))
@@ -288,7 +377,7 @@ pub fn button(cx: &mut Context) {
                     |cx| {
                         HStack::new(cx, |cx| {
                             Label::new(cx, "Icon after");
-                            Label::new(cx, ICON_STAR).class("icon");
+                            Label::new(cx, CHECK).class("icon");
                         })
                         .size(Auto)
                         .child_space(Stretch(1.0))
@@ -296,15 +385,11 @@ pub fn button(cx: &mut Context) {
                     },
                 )
                 .class("ghost");
-            })
-            .col_between(Pixels(20.0));
+            });
         })
-        .height(Auto)
-        .child_space(Pixels(20.0))
-        .background_color(Color::rgb(40, 40, 40));
+        .disabled(AppData::disabled)
+        .class("wrapper");
     })
-    .child_space(Pixels(20.0))
-    .row_between(Pixels(20.0))
     .class("bg-darker");
 }
 
@@ -415,9 +500,9 @@ pub fn checkbox(cx: &mut Context) {
 }
 
 pub fn label(cx: &mut Context) {
-    VStack::new(cx, |cx| {
-        Label::new(cx, "Label").class("title");
+    title(cx, "Label");
 
+    VStack::new(cx, |cx| {
         Label::new(cx, "A simple label").class("heading");
 
         Label::new(cx, "This is some simple text");

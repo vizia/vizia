@@ -106,6 +106,7 @@ impl Context {
         db.load_font_data(Vec::from(fonts::OPEN_SANS_EMOJI));
         db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));
         db.load_font_data(Vec::from(fonts::MATERIAL_ICONS_REGULAR));
+        db.load_font_data(Vec::from(fonts::VIZIA_ICONS));
 
         let mut result = Self {
             entity_manager: IdManager::new(),
