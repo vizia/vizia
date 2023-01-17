@@ -1,5 +1,6 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
+use chrono::{NaiveDate, NaiveTime};
 use unic_langid::LanguageIdentifier;
 
 use crate::prelude::*;
@@ -61,10 +62,9 @@ impl_data_simple!(std::net::SocketAddr);
 impl_data_simple!(std::ops::RangeFull);
 impl_data_simple!(std::path::PathBuf);
 impl_data_simple!(LanguageIdentifier);
-impl_data_simple!(chrono::Date<chrono::Utc>);
-impl_data_simple!(chrono::DateTime<chrono::Utc>);
-impl_data_simple!(chrono::NaiveDate);
-impl_data_simple!(chrono::NaiveTime);
+impl_data_simple!(NaiveDate);
+impl_data_simple!(NaiveTime);
+
 impl_data_simple!(String);
 
 impl Data for &'static str {
@@ -272,7 +272,17 @@ impl<T: std::hash::Hash + Eq + Data> Data for std::collections::HashSet<T> {
             return false;
         }
 
-        *self == *other
+        self.iter().zip(other.iter()).all(|(a, b)| a.same(b))
+    }
+}
+
+impl<T: std::hash::Hash + Eq + Data, V: Data> Data for std::collections::HashMap<T, V> {
+    fn same(&self, other: &Self) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+
+        self.iter().zip(other.iter()).all(|(a, b)| a.0.same(&b.0) && a.1.same(&b.1))
     }
 }
 

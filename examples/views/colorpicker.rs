@@ -1,4 +1,3 @@
-use chrono::{NaiveDate, Utc};
 use vizia::prelude::*;
 
 #[derive(Clone, Lens)]
@@ -36,9 +35,8 @@ fn main() {
 
         ColorPicker::new(cx, AppState::color)
             .on_change(|cx, color| cx.emit(AppEvent::SetColor(color)));
-        //.on_select(|cx, date| cx.emit(AppEvent::SetDate(date)));
     })
     .ignore_default_theme()
-    .title("Datepicker")
+    .title("Colorpicker")
     .run();
 }

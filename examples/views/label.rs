@@ -1,3 +1,5 @@
+mod helpers;
+use helpers::*;
 use vizia::prelude::*;
 
 #[derive(Lens)]
@@ -22,17 +24,8 @@ impl Model for AppData {
     }
 }
 
-const CENTER_LAYOUT: &str = "crates/vizia_core/resources/themes/center_layout.css";
-#[allow(dead_code)]
-const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
-#[allow(dead_code)]
-const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
-
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
-        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
-
         AppData {
             text: String::from("As well as model data which implements ToString:"),
             value: 3.141592,
@@ -40,8 +33,10 @@ fn main() {
         }
         .build(cx);
 
+        theme_selector(cx);
+
         VStack::new(cx, |cx| {
-            Label::new(cx, "A label can display a static string of text.");
+            Label::new(cx, "A label can display a static string of unicode 😂");
 
             Label::new(cx, AppData::text);
 
@@ -52,7 +47,8 @@ fn main() {
 
             Label::new(cx, "Unless text wrapping is disabled.")
                 .width(Pixels(200.0))
-                .text_wrap(false);
+                .text_wrap(false)
+                .font_style(FontStyle::Italic);
 
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, AppData::checked)
@@ -64,11 +60,10 @@ fn main() {
                 Label::new(cx, "A label that is describing a form element also acts as a trigger")
                     .describing("checkbox_1");
             })
-            .col_between(Units::Pixels(4.0));
+            .col_between(Units::Pixels(8.0));
         })
         .class("container");
     })
-    .ignore_default_theme()
     .title("Label")
     .run();
 }

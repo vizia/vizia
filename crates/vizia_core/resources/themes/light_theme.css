@@ -1,5 +1,11 @@
+/* General */
+
+.icon {
+    font: "icons";
+}
+
 root {
-    background-color: #e4e4e4;
+    background-color: #fafafa;
 }
 
 .container {
@@ -9,75 +15,137 @@ root {
     col-between: 8px;
 }
 
+/* Label */
+
+/* label {
+    color: #181818;
+} */
+
+label:disabled {
+    color: #a0a0a0;
+}
+
+label.describing {
+    cursor: hand;
+}
+
 /* Button  */
 
 button {
-    width: auto;
-    height: 28px;
     border-radius: 4px;
-    child-space: 1s;
-    child-left: 10px;
-    child-right: 10px;
     border-width: 1px;
-    border-color: #d9d9d9;
-    background-color: #ececec;
-    overflow: visible;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
     transition: background-color 0.1 0;
-}
-
-button label {
     color: #181818;
-    child-space: 1s;
 }
 
 button:over {
-    background-color: #fff;
+    background-color: #f9f9f9;
     transition: background-color 0.1 0;
 }
 
 button:active {
-    background-color: #d9d9d9;
+    background-color: #fafafa;
+    border-color: #ebebeb;
+    color: #626262;
+}
+
+button:disabled {
+    border-color: #ebebeb;
+    color: #626262;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
+}
+
+button:focus-visible {
+    outline-width: 2px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
 }
 
 button.accent {
     border-width: 0px;
     background-color: #51afef;
-}
-
-button.accent label {
+    transition: background-color 0.1 0;
     color: #181818;
 }
 
 button.accent:over {
-    background-color: #80caff;
+    background-color: #73bff2;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 button.accent:active {
-    background-color: #3995d6;
+    background-color: #59a4d9;
+    color: #363636;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
-button:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
+button.accent:disabled {
+    background-color: #c4c4c4;
+    color: white;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
-button:disabled {
+button.outline {
     background-color: transparent;
-    border-color: #404040;
+    border-width: 1px;
+    border-color: #51afef;
+    color: #51afef;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
-button:disabled label {
-    color: #888;
+button.outline:over {
+    background-color: #80caff10;
+    transition: background-color 0.1 0;
 }
+
+button.outline:active {
+    background-color: #3995d610;
+}
+
+button.outline:disabled {
+    border-color: #ebebeb;
+    color: #626262;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
+}
+
+button.ghost {
+    border-width: 0px;
+    background-color: transparent;
+    transition: background-color 0.1 0;
+    color: #51afef;
+}
+
+button.ghost:over {
+    background-color: #80caff10;
+    transition: background-color 0.1 0;
+}
+
+button.ghost:active {
+    background-color: #3995d610;
+    transition: background-color 0.1 0;
+}
+
+button.ghost:disabled {
+    color: #626262;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
+}
+
+/* Checkbox */
 
 checkbox {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    border-width: 2px;
-    border-color: #888;
-    background-color: transparent;
+    border-radius: 2px;
+    border-width: 1px;
+    border-color: #626262;
+    background-color: #f4f4f4;
     child-space: 1s;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
@@ -85,8 +153,22 @@ checkbox {
 }
 
 checkbox:hover {
-    border-color: #51afef;
-    background-color: transparent;
+    border-color: #626262;
+    background-color: #ebebeb;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
+}
+
+checkbox:active {
+    border-color: #c4c4c4;
+    background-color: #e2e2e2;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
+}
+
+checkbox:disabled {
+    border-color: #c4c4c4;
+    background-color: #f4f4f400;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
 }
@@ -105,32 +187,185 @@ checkbox:checked {
     transition: border-color 0.1 0;
 }
 
-checkbox:disabled {
-    border-color: #b6b6b6;
+checkbox:checked:hover {
+    background-color: #73bff2;
+    border-color: #73bff2;
+    transition: background-color 0.1 0;
     transition: border-color 0.1 0;
 }
 
-checkbox:hover:disabled {
-    background-color: transparent;
-    transition: background-color 0.1 0;
-}
-
-checkbox:checked:hover {
-    background-color: #80caff;
-    border-color: #80caff;
-    color: #fff;
+checkbox:checked:active {
+    background-color: #59a4d9;
+    border-color: #59a4d9;
+    color: #e0e0e0;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
 }
 
 checkbox:checked:disabled {
-    background-color: #b6b6b6;
-    border-color: #b6b6b6;
-    color: #fff;
+    background-color: #c4c4c4;
+    border-color: #c4c4c4;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
 }
 
+/* Chip */
+
+chip {
+    border-radius: 16px;
+}
+
+/* Datepicker */
+
+datepicker {
+    background-color: #343434;
+    border-radius: 4px;
+    child-space: 8px;
+    row-between: 8px;
+}
+
+.datepicker-divisor {
+    background-color: #2f2f2f;
+}
+
+.datepicker-calendar {
+    width: auto;
+    height: auto;
+    left: 1s;
+    right: 1s;
+}
+
+.datepicker-calendar-day {
+    color: #888;
+    cursor: hand;
+}
+
+.datepicker-calendar-day:checked {
+    color: #181818;
+    background-color: #51afef;
+    border-radius: 4px;
+}
+
+.datepicker-calendar-day-disabled {
+    color: #585858;
+    cursor: arrow;
+}
+
+.datepicker-selected-date {
+    color: #b0b0b0;
+}
+
+.datepicker-cancel {
+    border-width: 2px;
+    border-color: #ef5151;
+    border-radius: 4px;
+}
+
+.datepicker-cancel label {
+    color: #ef5151;
+}
+
+.datepicker-apply {
+    border-radius: 4px;
+    border-width: 2px;
+    border-color: #51afef;
+    background-color: #51afef;
+}
+
+.datepicker-apply label {
+    color: #181818;
+}
+
+/* Date Time Picker */
+
+datetimepicker {
+    border-radius: 4px;
+    background-color: #343434;
+}
+
+datetimepicker tabheader label {
+    font: "icons";
+}
+
+datetimepicker tabheader:checked label {
+    color: #51afef;
+}
+
+datetimepicker tabheader .indicator {
+    background-color: #2f2f2f;
+}
+
+datetimepicker tabheader:checked .indicator {
+    background-color: #51afef;
+}
+
+/* Dropdown */
+
+dropdown {
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
+}
+
+dropdown:over {
+    background-color: #f9f9f9;
+}
+
+dropdown:active {
+    border-color: #ebebeb;
+    background-color: #fafafa;
+}
+
+dropdown:active .title {
+    color: #626262;
+}
+
+dropdown .title:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+dropdown popup {
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: #fafafa;
+}
+
+dropdown list label {
+    cursor: hand;
+}
+
+dropdown list label:hover {
+    background-color: #51afef11;
+}
+
+dropdown list label:checked {
+    background-color: #5dc4ec;
+}
+
+dropdown list label:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+/* Popup */
+
+popup {
+    outer-shadow: 0 0 8 #00000026;
+    opacity: 0%;
+    transition: opacity 0.1 0;
+}
+
+popup:checked {
+    opacity: 100%;
+    transition: opacity 0.1 0;
+}
+
+/*
 dropdown .title {
     width: auto;
     height: 30px;
@@ -180,7 +415,7 @@ dropdown list label:focus-visible {
 
 dropdown vstack {
     child-space: auto;
-}
+} */
 
 knob {
     width: 48px;
@@ -290,6 +525,8 @@ scrollbar .thumb:focus {
     background-color: #888;
 }
 
+/* slider */
+
 slider * {
     background-color: #51afef20;
     border-radius: 2px;
@@ -315,172 +552,105 @@ slider .thumb {
     child-space: 1s;
 }
 
+/* Spinbox */
+
 spinbox {
     background-color: #fff;
     border-radius: 4px;
     border-width: 1px;
     border-color: #e4e4e4;
-    child-space: 1s;
-}
-
-spinbox.horizontal {
-    layout-type: row;
-    height: 32px;
-}
-
-spinbox.vertical {
-    layout-type: column;
-    width: 32px;
-}
-
-spinbox .container {
-    width: auto;
 }
 
 spinbox .spinbox-button {
-    height: 24px;
-    child-space: 1s;
-    color: #888888;
-}
-
-spinbox.horizontal .spinbox-button {
-    width: 24px;
-}
-
-spinbox.vertical .spinbox-button {
-    width: 1s;
+    color: #505050;
+    cursor: hand;
 }
 
 spinbox .spinbox-button:hover {
     color: #000;
 }
 
-spinbox label.spinbox-value {
-    space: 1s;
-    width: auto;
-    height: 24px;
-    child-space: 1s;
+spinbox .spinbox-value {
+    color: #000;
 }
 
 spinbox textbox.spinbox-value {
-    width: auto;
-    min-width: 24px;
-    height: 24px;
-    child-space: 1s;
-    left: 4px;
-    right: 4px;
     border-width: 0px;
     border-radius: 0px;
 }
 
-spinbox textbox.spinbox-value textboxcontainer {
-    child-space: 1s;
-    width: auto;
-}
-
-spinbox textbox.spinbox-value textboxlabel {
-    width: auto;
-}
-
 spinbox dropdown.spinbox-value {
-    width: 100px;
-}
-
-spinbox dropdown.spinbox-value .title {
     background-color: transparent;
     border-width: 0px;
 }
 
-spinbox dropdown.spinbox-value popup {
-    width: auto;
-}
-
-spinbox dropdown.spinbox-value popup * {
-    width: auto;
-}
-
-switch {
-    width: 24px;
-    height: 16px;
-    border-radius: 8px;
-    border-width: 2px;
-    border-color: #888888;
+spinbox picklist.spinbox-value .title {
     background-color: transparent;
-    child-space: 1s;
-    transition: border-color 0.1 0;
+    border-width: 0px;
+    col-between: 4px;
 }
 
-.switch-handle-container {
-    left: 2px;
-    top: 2px;
-    width: 16px;
-    height: 8px;
-    border-radius: 4px;
-    background-color: transparent;
+/* Switch */
+
+switch .switch-handle-bg {
+    border-radius: 6px;
+    background-color: #888;
     transition: background-color 0.1 0;
 }
 
-.switch-handle {
-    width: 8px;
-    height: 8px;
-    background-color: #888888;
-    border-radius: 4px;
+switch .switch-handle {
+    border-width: 1px;
+    border-color: #d9d9d9;
+    background-color: #ececec;
+    border-radius: 50%;
     transition: background-color 0.1 0;
+    transition: left 0.1 0;
 }
 
-switch:hover .switch-handle-container .switch-handle {
-    background-color: #51afef;
+switch:hover .switch-handle {
+    background-color: #f0f0f0;
+    transition: background-color 0.1 0;
 }
 
 switch:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef;
+    outline-color: #51afef80;
+    outline-offset: 3px;
 }
 
-switch:active {
-    border-color: #b6b6b6;
-    background-color: #dcdcdc;
-}
-
-switch:checked {
-    border-color: #51afef;
-}
-
-switch:checked .switch-handle-container {
+switch:checked .switch-handle-bg {
     background-color: #51afef40;
+    transition: background-color 0.1 0;
 }
 
-switch:checked .switch-handle-container .switch-handle {
+switch:checked .switch-handle {
     background-color: #51afef;
-    left: 8px;
+    transition: background-color 0.1 0;
 }
 
-switch:checked:hover .switch-handle-container .switch-handle {
+switch:checked:hover .switch-handle {
     background-color: #80caff;
+    transition: background-color 0.1 0;
 }
 
-switch:disabled {
-    border-color: #b6b6b6;
+switch:disabled * {
+    background-color: #cccccc;
+    transition: background-color 0.1 0;
 }
 
-switch:disabled .switch-handle-container .switch-handle {
-    background-color: #b6b6b6;
+switch:hover:disabled * {
+    background-color: #cccccc;
+    transition: background-color 0.1 0;
 }
 
-switch:hover:disabled {
-    background-color: transparent;
+switch:checked:disabled * {
+    background-color: #cccccc;
+    transition: background-color 0.1 0;
 }
 
-switch:hover:disabled .switch-handle-container .switch-handle {
-    background-color: #b6b6b6;
-}
-
-switch:checked:disabled .switch-handle-container {
-    background-color: #b6b6b640;
-}
-
-switch:checked:disabled .switch-handle-container .switch-handle {
-    background-color: #b6b6b6;
+switch:checked:hover:disabled * {
+    background-color: #cccccc;
+    transition: background-color 0.1 0;
 }
 
 table {

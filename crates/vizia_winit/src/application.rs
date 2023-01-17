@@ -184,9 +184,6 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
-        let mut cx = BackendContext::new(&mut context);
-        cx.synchronize_fonts();
-
         event_loop.run(move |event, _, control_flow| {
             let mut cx = BackendContext::new(&mut context);
 
@@ -198,14 +195,6 @@ impl Application {
                 winit::event::Event::MainEventsCleared => {
                     *stored_control_flow.borrow_mut() =
                         if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
-
-                    //if let Some(mut window_view) = context.views.remove(&Entity::root()) {
-                    //    if let Some(_) = window_view.downcast_mut::<Window>() {
-                    cx.synchronize_fonts();
-                    //    }
-
-                    //    context.views.insert(Entity::root(), window_view);
-                    //}
 
                     // Events
                     while event_manager.flush_events(cx.0) {}
@@ -249,6 +238,16 @@ impl Application {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
                         event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
                     }
+
+                    if let Some(window_event_handler) = cx.views().remove(&Entity::root()) {
+                        if let Some(window) = window_event_handler.downcast_ref::<Window>() {
+                            if window.should_close {
+                                *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                            }
+                        }
+
+                        cx.views().insert(Entity::root(), window_event_handler);
+                    }
                 }
 
                 winit::event::Event::RedrawRequested(_) => {
@@ -259,7 +258,7 @@ impl Application {
                 winit::event::Event::WindowEvent { window_id: _, event } => {
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
-                            *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                            cx.0.emit(WindowEvent::WindowClose);
                         }
 
                         winit::event::WindowEvent::ScaleFactorChanged {
@@ -417,18 +416,6 @@ impl Application {
 
             *control_flow = *stored_control_flow.borrow();
         });
-    }
-
-    /// Resize the cache used for rendering text lines
-    pub fn text_shaping_run_cache(mut self, size: usize) -> Self {
-        BackendContext::new(&mut self.context).text_context().resize_shaping_run_cache(size);
-        self
-    }
-
-    /// Resize the cache used for rendering words
-    pub fn text_shaped_words_cache(mut self, size: usize) -> Self {
-        BackendContext::new(&mut self.context).text_context().resize_shaped_words_cache(size);
-        self
     }
 }
 

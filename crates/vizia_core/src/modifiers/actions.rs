@@ -1,23 +1,117 @@
-use crate::prelude::*;
-use std::any::TypeId;
+use crate::context::EmitContext;
+use crate::{cache::CachedData, prelude::*};
+use std::{
+    any::{Any, TypeId},
+    marker::PhantomData,
+};
 
-pub(crate) struct ActionsModel {
-    pub(crate) on_press: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_press_down: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_hover: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_hover_out: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_over: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_over_out: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_mouse_move: Option<Box<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
-    pub(crate) on_mouse_down: Option<Box<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>>,
-    pub(crate) on_mouse_up: Option<Box<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>>,
-    pub(crate) on_focus_in: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_focus_out: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_geo_changed:
-        Option<Box<dyn Fn(&mut EventContext, GeometryChanged) + Send + Sync>>,
+pub struct EventHandle<'a, 'b, V> {
+    cx: &'a mut EventContext<'b>,
+    entity: Entity,
+    p: PhantomData<V>,
 }
 
-impl ActionsModel {
+impl<'a, 'b, V> EventHandle<'a, 'b, V> {
+    pub fn new(cx: &'a mut EventContext<'b>) -> Self {
+        let entity = cx.current();
+        Self { cx, entity, p: PhantomData::default() }
+    }
+
+    pub fn current(&self) -> Entity {
+        self.entity
+    }
+
+    pub fn cache(&self) -> &CachedData {
+        &self.cx.cache
+    }
+
+    /// Sets application focus to the current entity using the previous focus visibility.
+    pub fn focus(&mut self) {
+        self.cx.focus()
+    }
+
+    pub fn play_animation(&mut self, animation: Animation) {
+        self.cx.play_animation(animation);
+    }
+
+    pub fn modify<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut V),
+        V: 'static,
+    {
+        if let Some(view) = self
+            .cx
+            .views
+            .get_mut(&self.entity)
+            .and_then(|view_handler| view_handler.downcast_mut::<V>())
+        {
+            (f)(view);
+        }
+    }
+}
+
+impl<'a, 'b, V> AsMut<EventContext<'b>> for EventHandle<'a, 'b, V> {
+    fn as_mut(&mut self) -> &mut EventContext<'b> {
+        self.cx
+    }
+}
+
+impl<'a, 'b, V> DataContext for EventHandle<'a, 'b, V> {
+    fn data<T: 'static>(&self) -> Option<&T> {
+        // Return data for the static model.
+        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
+            return Some(t);
+        }
+
+        for entity in self.entity.parent_iter(&self.cx.tree) {
+            if let Some(model_data_store) = self.cx.data.get(entity) {
+                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+                    return model.downcast_ref::<T>();
+                }
+            }
+
+            if let Some(view_handler) = self.cx.views.get(&entity) {
+                if let Some(data) = view_handler.downcast_ref::<T>() {
+                    return Some(data);
+                }
+            }
+        }
+
+        None
+    }
+}
+
+impl<'a, 'b, V> EmitContext for EventHandle<'a, 'b, V> {
+    fn emit<M: Any + Send>(&mut self, message: M) {
+        self.cx.emit(message);
+    }
+
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
+        self.cx.emit_to(target, message);
+    }
+
+    fn emit_custom(&mut self, event: Event) {
+        self.cx.emit_custom(event);
+    }
+}
+
+pub(crate) struct ActionsModel<V> {
+    pub(crate) on_press: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
+    pub(crate) on_press_down: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
+    pub(crate) on_hover: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
+    pub(crate) on_hover_out: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
+    pub(crate) on_over: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
+    pub(crate) on_over_out: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
+    pub(crate) on_mouse_move: Option<Box<dyn Fn(&mut EventHandle<V>, f32, f32) + Send + Sync>>,
+    pub(crate) on_mouse_down: Option<Box<dyn Fn(&mut EventHandle<V>, MouseButton) + Send + Sync>>,
+    pub(crate) on_mouse_up: Option<Box<dyn Fn(&mut EventHandle<V>, MouseButton) + Send + Sync>>,
+    pub(crate) on_focus_in: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
+    pub(crate) on_focus_out: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
+    pub(crate) on_geo_changed:
+        Option<Box<dyn Fn(&mut EventHandle<V>, GeometryChanged) + Send + Sync>>,
+}
+
+impl<V> ActionsModel<V> {
     pub(crate) fn new() -> Self {
         Self {
             on_press: None,
@@ -36,7 +130,7 @@ impl ActionsModel {
     }
 }
 
-impl Model for ActionsModel {
+impl<V: 'static> Model for ActionsModel<V> {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.take().map(|actions_event| match actions_event {
             ActionsEvent::OnPress(on_press) => {
@@ -94,8 +188,9 @@ impl Model for ActionsModel {
                 if cx.current() != over && !over.is_descendant_of(cx.tree, cx.current()) {
                     return;
                 }
+
                 if let Some(action) = &self.on_press {
-                    (action)(cx);
+                    (action)(&mut EventHandle::<V>::new(cx));
                 }
             }
 
@@ -105,14 +200,14 @@ impl Model for ActionsModel {
                     return;
                 }
                 if let Some(action) = &self.on_press_down {
-                    (action)(cx);
+                    (action)(&mut EventHandle::<V>::new(cx));
                 }
             }
 
             WindowEvent::MouseEnter => {
                 if meta.target == cx.current() {
                     if let Some(action) = &self.on_hover {
-                        (action)(cx);
+                        (action)(&mut EventHandle::<V>::new(cx));
                     }
                 }
             }
@@ -120,59 +215,59 @@ impl Model for ActionsModel {
             WindowEvent::MouseLeave => {
                 if meta.target == cx.current() {
                     if let Some(action) = &self.on_hover_out {
-                        (action)(cx);
+                        (action)(&mut EventHandle::<V>::new(cx));
                     }
                 }
             }
 
             WindowEvent::MouseOver => {
                 if let Some(action) = &self.on_over {
-                    (action)(cx);
+                    (action)(&mut EventHandle::<V>::new(cx));
                 }
             }
 
             WindowEvent::MouseOut => {
                 if meta.target == cx.current() {
                     if let Some(action) = &self.on_over_out {
-                        (action)(cx);
+                        (action)(&mut EventHandle::<V>::new(cx));
                     }
                 }
             }
 
             WindowEvent::MouseMove(x, y) => {
                 if let Some(action) = &self.on_mouse_move {
-                    (action)(cx, *x, *y);
+                    (action)(&mut EventHandle::<V>::new(cx), *x, *y);
                 }
             }
 
             WindowEvent::MouseDown(mouse_button) => {
                 if let Some(action) = &self.on_mouse_down {
-                    (action)(cx, *mouse_button);
+                    (action)(&mut EventHandle::<V>::new(cx), *mouse_button);
                 }
             }
 
             WindowEvent::MouseUp(mouse_button) => {
                 if let Some(action) = &self.on_mouse_up {
-                    (action)(cx, *mouse_button);
+                    (action)(&mut EventHandle::<V>::new(cx), *mouse_button);
                 }
             }
 
             WindowEvent::FocusIn => {
                 if let Some(action) = &self.on_focus_in {
-                    (action)(cx);
+                    (action)(&mut EventHandle::<V>::new(cx));
                 }
             }
 
             WindowEvent::FocusOut => {
                 if let Some(action) = &self.on_focus_out {
-                    (action)(cx);
+                    (action)(&mut EventHandle::<V>::new(cx));
                 }
             }
 
             WindowEvent::GeometryChanged(geo) => {
                 if meta.target == cx.current() {
                     if let Some(action) = &self.on_geo_changed {
-                        (action)(cx, *geo);
+                        (action)(&mut EventHandle::<V>::new(cx), *geo);
                     }
                 }
             }
@@ -182,23 +277,23 @@ impl Model for ActionsModel {
     }
 }
 
-pub(crate) enum ActionsEvent {
-    OnPress(Box<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnPressDown(Box<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnHover(Box<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnHoverOut(Box<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnOver(Box<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnOverOut(Box<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnMouseMove(Box<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>),
-    OnMouseDown(Box<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>),
-    OnMouseUp(Box<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>),
-    OnFocusIn(Box<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnFocusOut(Box<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnGeoChanged(Box<dyn Fn(&mut EventContext, GeometryChanged) + Send + Sync>),
+pub(crate) enum ActionsEvent<V> {
+    OnPress(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
+    OnPressDown(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
+    OnHover(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
+    OnHoverOut(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
+    OnOver(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
+    OnOverOut(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
+    OnMouseMove(Box<dyn Fn(&mut EventHandle<V>, f32, f32) + Send + Sync>),
+    OnMouseDown(Box<dyn Fn(&mut EventHandle<V>, MouseButton) + Send + Sync>),
+    OnMouseUp(Box<dyn Fn(&mut EventHandle<V>, MouseButton) + Send + Sync>),
+    OnFocusIn(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
+    OnFocusOut(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
+    OnGeoChanged(Box<dyn Fn(&mut EventHandle<V>, GeometryChanged) + Send + Sync>),
 }
 
 /// Modifiers which add an action callback to a view.
-pub trait ActionModifiers {
+pub trait ActionModifiers<V> {
     /// Adds a callback which is performed when the the view receives the [`Press`](crate::prelude::WindowEvent::Press) event.
     /// By default a view receives the [`Press`](crate::prelude::WindowEvent::Press) event when the left mouse button is pressed and then released on the view,
     /// or when the space or enter keys are pressed and then released while the view is focused.
@@ -211,7 +306,7 @@ pub trait ActionModifiers {
     /// ```
     fn on_press<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync;
 
     /// Adds a callback which is performed when the the view receives the [`PressDown`](crate::prelude::WindowEvent::PressDown) event.
     // By default a view receives the [`PressDown`](crate::prelude::WindowEvent::PressDown) event when the left mouse button is pressed on the view,
@@ -225,7 +320,7 @@ pub trait ActionModifiers {
     /// ```
     fn on_press_down<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync;
 
     /// Adds a callback which is performed when the mouse pointer moves over a view.
     /// This callback is not triggered when the mouse pointer moves over an overlapping child of the view.
@@ -238,7 +333,7 @@ pub trait ActionModifiers {
     /// ```
     fn on_hover<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync;
 
     /// Adds a callback which is performed when the mouse pointer moves away from a view.
     /// This callback is not triggered when the mouse pointer moves away from an overlapping child of the view.
@@ -251,7 +346,7 @@ pub trait ActionModifiers {
     /// ```
     fn on_hover_out<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync;
 
     /// Adds a callback which is performed when the mouse pointer moves over the bounds of a view,
     /// including any overlapping children.
@@ -264,7 +359,7 @@ pub trait ActionModifiers {
     /// ```
     fn on_over<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync;
 
     /// Adds a callback which is performed when the mouse pointer moves away from the bounds of a view,
     /// including any overlapping children.
@@ -277,7 +372,7 @@ pub trait ActionModifiers {
     /// ```
     fn on_over_out<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync;
 
     /// Adds a callback which is performed when the mouse pointer moves within the bounds of a view.
     ///
@@ -289,7 +384,7 @@ pub trait ActionModifiers {
     /// ```
     fn on_mouse_move<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, f32, f32) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>, f32, f32) + Send + Sync;
 
     /// Adds a callback which is performed when a mouse button is pressed on the view.
     /// Unlike the `on_press` callback, this callback is triggered for all mouse buttons and not for any keyboard keys.
@@ -302,7 +397,7 @@ pub trait ActionModifiers {
     /// ```
     fn on_mouse_down<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, MouseButton) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>, MouseButton) + Send + Sync;
 
     /// Adds a callback which is performed when a mouse button is released on the view.
     /// Unlike the `on_release` callback, this callback is triggered for all mouse buttons and not for any keyboard keys.
@@ -315,7 +410,7 @@ pub trait ActionModifiers {
     /// ```
     fn on_mouse_up<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, MouseButton) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>, MouseButton) + Send + Sync;
 
     /// Adds a callback which is performed when the view gains keyboard focus.
     ///
@@ -327,7 +422,7 @@ pub trait ActionModifiers {
     /// ```
     fn on_focus_in<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync;
 
     /// Adds a callback which is performed when the view loses keyboard focus.
     ///
@@ -339,7 +434,7 @@ pub trait ActionModifiers {
     /// ```
     fn on_focus_out<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync;
 
     /// Adds a callback which is performed when the the view changes size or position after layout.
     ///
@@ -351,29 +446,29 @@ pub trait ActionModifiers {
     /// ```
     fn on_geo_changed<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, GeometryChanged) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>, GeometryChanged) + Send + Sync;
 }
 
 // If the entity doesn't have an `ActionsModel` then add one to the entity
-fn build_action_model(cx: &mut Context, entity: Entity) {
+fn build_action_model<V: 'static>(cx: &mut Context, entity: Entity) {
     if cx
         .data
         .get(entity)
-        .and_then(|model_data_store| model_data_store.models.get(&TypeId::of::<ActionsModel>()))
+        .and_then(|model_data_store| model_data_store.models.get(&TypeId::of::<ActionsModel<V>>()))
         .is_none()
     {
         cx.with_current(entity, |cx| {
-            ActionsModel::new().build(cx);
+            ActionsModel::<V>::new().build(cx);
         });
     }
 }
 
-impl<'a, V: View> ActionModifiers for Handle<'a, V> {
+impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     fn on_press<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync,
     {
-        build_action_model(self.cx, self.entity);
+        build_action_model::<V>(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnPress(Box::new(action)))
@@ -386,9 +481,9 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
     fn on_press_down<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync,
     {
-        build_action_model(self.cx, self.entity);
+        build_action_model::<V>(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnPressDown(Box::new(action)))
@@ -401,9 +496,9 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
     fn on_hover<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync,
     {
-        build_action_model(self.cx, self.entity);
+        build_action_model::<V>(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnHover(Box::new(action)))
@@ -416,9 +511,9 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
     fn on_hover_out<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync,
     {
-        build_action_model(self.cx, self.entity);
+        build_action_model::<V>(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnHoverOut(Box::new(action)))
@@ -431,9 +526,9 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
     fn on_over<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync,
     {
-        build_action_model(self.cx, self.entity);
+        build_action_model::<V>(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnOver(Box::new(action)))
@@ -446,9 +541,9 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
     fn on_over_out<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync,
     {
-        build_action_model(self.cx, self.entity);
+        build_action_model::<V>(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnOverOut(Box::new(action)))
@@ -461,9 +556,9 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
     fn on_mouse_move<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, f32, f32) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>, f32, f32) + Send + Sync,
     {
-        build_action_model(self.cx, self.entity);
+        build_action_model::<V>(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnMouseMove(Box::new(action)))
@@ -476,9 +571,9 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
     fn on_mouse_down<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, MouseButton) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>, MouseButton) + Send + Sync,
     {
-        build_action_model(self.cx, self.entity);
+        build_action_model::<V>(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnMouseDown(Box::new(action)))
@@ -491,9 +586,9 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
     fn on_mouse_up<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, MouseButton) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>, MouseButton) + Send + Sync,
     {
-        build_action_model(self.cx, self.entity);
+        build_action_model::<V>(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnMouseUp(Box::new(action)))
@@ -506,9 +601,9 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
     fn on_focus_in<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync,
     {
-        build_action_model(self.cx, self.entity);
+        build_action_model::<V>(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnFocusIn(Box::new(action)))
@@ -521,9 +616,9 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
     fn on_focus_out<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>) + Send + Sync,
     {
-        build_action_model(self.cx, self.entity);
+        build_action_model::<V>(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnFocusOut(Box::new(action)))
@@ -536,9 +631,9 @@ impl<'a, V: View> ActionModifiers for Handle<'a, V> {
 
     fn on_geo_changed<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, GeometryChanged) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>, GeometryChanged) + Send + Sync,
     {
-        build_action_model(self.cx, self.entity);
+        build_action_model::<V>(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnGeoChanged(Box::new(action)))

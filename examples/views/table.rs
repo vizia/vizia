@@ -24,7 +24,7 @@ where
                 let icon = if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
                 Element::new(cx)
                     .class("table-column-icon")
-                    .font("icons")
+                    .class("icon")
                     .text(icon)
                     .visibility(visible);
             });

@@ -1,5 +1,6 @@
 use super::internal;
-use crate::{prelude::*, text::Selection};
+use crate::prelude::*;
+use cosmic_text::{FamilyOwned, Weight};
 
 /// Modifiers for changing the text properties of a view.
 pub trait TextModifiers: internal::Modifiable {
@@ -7,19 +8,11 @@ pub trait TextModifiers: internal::Modifiable {
     fn text<U: ToString>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, val| {
-            if let Some(prev_data) = cx.style.text.get(entity) {
-                if prev_data != &val.to_string() {
-                    cx.style.text.insert(entity, val.to_string());
+            let text_data = val.to_string();
+            cx.text_context.set_text(entity, &text_data);
 
-                    cx.need_relayout();
-                    cx.need_redraw();
-                }
-            } else {
-                cx.style.text.insert(entity, val.to_string());
-
-                cx.need_relayout();
-                cx.need_redraw();
-            }
+            cx.need_relayout();
+            cx.need_redraw();
         });
 
         self
@@ -29,8 +22,20 @@ pub trait TextModifiers: internal::Modifiable {
         /// Sets the font that should be used by the view.
         ///
         /// The font name refers to the name assigned when the font is added to context.
-        font,
-        String
+        font_family,
+        Vec<FamilyOwned>
+    );
+
+    modifier!(
+        /// Sets the font weight that should be used by the view.
+        font_weight,
+        Weight
+    );
+
+    modifier!(
+        /// Sets the font style that should be used by the view.
+        font_style,
+        FontStyle
     );
 
     /// Sets the text color of the view.
@@ -50,12 +55,6 @@ pub trait TextModifiers: internal::Modifiable {
         });
         self
     }
-
-    modifier!(
-        /// Sets the text selection of the view.
-        text_selection,
-        Selection
-    );
 
     modifier!(
         /// Sets the ext caret color of the view.

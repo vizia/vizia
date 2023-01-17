@@ -1,15 +1,14 @@
-use crate::prelude::*;
+use crate::{
+    fonts::vizia_icons::{CHEVRON_DOWN, CHEVRON_RIGHT, CROSS},
+    prelude::*,
+};
 
-const ICON_CHEVRON_DOWN: &str = "\u{1F783}";
-const ICON_CHEVRON_RIGHT: &str = "\u{1F782}";
-const ICON_CLOSE: &str = "\u{1F7AA}";
-
-#[derive(Clone, Debug, PartialEq, Data, Lens)]
+#[derive(Clone, Debug, PartialEq, Lens)]
 pub struct Notification {
     container_open: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Data)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum NotificationEvent {
     ToggleContainer,
 }
@@ -25,26 +24,28 @@ impl Notification {
                         Label::new(cx, &header);
                         HStack::new(cx, |cx| {
                             if some_text {
-                                HStack::new(cx, |cx| {
-                                    Label::new(cx, "v").bind(
-                                        Notification::container_open,
-                                        |h, open| {
-                                            if open.get(h.cx) {
-                                                h.text(ICON_CHEVRON_DOWN);
-                                            } else {
-                                                h.text(ICON_CHEVRON_RIGHT);
-                                            }
-                                        },
-                                    );
-                                })
-                                .on_press_down(|ex| ex.emit(NotificationEvent::ToggleContainer))
+                                Button::new(
+                                    cx,
+                                    |ex| ex.emit(NotificationEvent::ToggleContainer),
+                                    |cx| {
+                                        Label::new(
+                                            cx,
+                                            Notification::container_open.map(|open| {
+                                                if *open {
+                                                    CHEVRON_DOWN
+                                                } else {
+                                                    CHEVRON_RIGHT
+                                                }
+                                            }),
+                                        )
+                                        .class("icon")
+                                    },
+                                )
                                 .class("icon")
                                 .checked(Notification::container_open);
                             }
-                            HStack::new(cx, |cx| {
-                                Label::new(cx, ICON_CLOSE);
-                            })
-                            .class("icon");
+                            Button::new(cx, |_| (), |cx| Label::new(cx, CROSS).class("icon"))
+                                .class("icon");
                         })
                         .class("icon-container");
                     })

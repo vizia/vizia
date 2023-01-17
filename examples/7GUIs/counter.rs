@@ -1,5 +1,10 @@
 use vizia::prelude::*;
 
+#[allow(dead_code)]
+const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
+#[allow(dead_code)]
+const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
+
 #[derive(Lens)]
 pub struct AppData {
     count: i32,
@@ -21,6 +26,8 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
+        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
+
         AppData { count: 0 }.build(cx);
 
         HStack::new(cx, |cx| {
@@ -33,5 +40,6 @@ fn main() {
     })
     .title("Counter")
     .inner_size((400, 100))
+    .ignore_default_theme()
     .run();
 }

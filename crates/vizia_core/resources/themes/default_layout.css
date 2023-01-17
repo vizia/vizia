@@ -3,15 +3,20 @@
 button {
     width: auto;
     height: 32px;
-    child-left: 12px;
-    child-right: 12px;
+    child-left: 8px;
+    child-right: 8px;
     child-top: 4px;
     child-bottom: 4px;
     overflow: visible;
-    child-space: 1s;
 }
 
 button label {
+    child-space: 1s;
+}
+
+button.icon {
+    width: 32px;
+    height: 32px;
     child-space: 1s;
 }
 
@@ -150,34 +155,36 @@ datetimepicker tabheader .indicator {
 /* Dropdown */
 
 dropdown {
-    height: auto;
+    height: 32px;
 }
 
 dropdown .title {
     width: 1s;
-    height: 28px;
+    height: 1s;
+    child-left: 8px;
+    child-right: 4px;
     child-top: 1s;
     child-bottom: 1s;
-    child-right: 5px;
-    child-left: 5px;
 }
 
 dropdown popup {
-    width: 1s;
+    width: 100%;
     height: auto;
 }
 
 dropdown popup list {
-    width: 1s;
+    width: 100%;
     height: auto;
     child-top: 4px;
     child-bottom: 4px;
 }
 
 dropdown list label {
-    width: 1s;
-    height: 30px;
+    width: 100%;
+    height: 32px;
     child-left: 6px;
+    child-top: 1s;
+    child-bottom: 1s;
 }
 
 dropdown vstack {
@@ -260,7 +267,11 @@ label {
 }
 
 label.icon {
-    font: "icons";
+    font-family: "Entypo", sans-serif;
+}
+
+label.material-icon {
+    font-family: "Material Icons", sans-serif;
 }
 
 /* List */
@@ -451,18 +462,17 @@ scrollview > scrollbar.horizontal {
     width: 1s;
     height: 8px;
     left: 0px;
-    right: 14px;
+    right: 0px;
     top: 1s;
     bottom: 0px;
 }
 
 scrollview > scrollbar.vertical {
-    top: 0px;
-    height: 1s;
-    bottom: 0px;
-
-    left: 1s;
     width: 8px;
+    height: 1s;
+    left: 1s;
+    top: 0px;
+    bottom: 0px;
     right: 0px;
 }
 
@@ -482,17 +492,17 @@ scrollbar .thumb {
 }
 
 scrollbar.horizontal .thumb {
-    height: 8px;
+    height: 1s;
 }
 
 scrollbar.vertical .thumb {
-    width: 8px;
+    width: 1s;
 }
 
 /* Slider */
 
 slider {
-    height: 4px;
+    height: 8px;
     width: 1s;
     border-radius: 2px;
 }
@@ -501,15 +511,45 @@ slider.vertical {
     top: auto;
     bottom: auto;
     height: 1s;
-    width: 4px;
+    width: 8px;
 }
 
 slider .thumb {
-    width: 12px;
-    height: 12px;
+    width: 16px;
+    height: 16px;
     top: 1s;
     bottom: 1s;
     child-space: 1s;
+}
+
+/* Named Slider */
+
+namedslider {
+    height: 28px;
+    child-top: 1s;
+    child-bottom: 1s;
+    child-space: 2px;
+    child-left: 2px;
+    child-right: 0px;
+    col-between: 4px;
+}
+
+namedslider > textbox {
+    min-width: 55px;
+}
+
+namedslider slider {
+    width: 1s;
+    height: 1s;
+    top: 0px;
+    bottom: 0px;
+}
+
+namedslider slider label {
+    left: 4px;
+    top: 1s;
+    bottom: 1s;
+    right: 4px;
 }
 
 /* Spinbox */
@@ -528,6 +568,11 @@ spinbox.horizontal {
 spinbox.vertical {
     layout-type: column;
     width: 32px;
+}
+
+spinbox.vertical {
+    child-top: 4px;
+    child-bottom: 4px;
 }
 
 spinbox .container {
@@ -549,12 +594,14 @@ spinbox.vertical .spinbox-button {
 
 spinbox .spinbox-value {
     width: 1s;
-    height: 24px;
+    height: 1s;
     child-space: 1s;
 }
 
 spinbox label.spinbox-value {
     width: auto;
+    left: 1s;
+    right: 1s;
 }
 
 spinbox textbox.spinbox-value {
@@ -604,26 +651,28 @@ zstack > * {
 /* Switch */
 
 switch {
-    width: 24px;
-    height: 16px;
-    child-space: 1s;
+    width: 30px;
+    height: 18px;
 }
 
-.switch-handle-container {
-    left: 2px;
-    top: 2px;
-    width: 16px;
-    height: 8px;
-}
-
-.switch-handle {
+switch .switch-handle {
     left: 0px;
-    width: 8px;
-    height: 8px;
+    width: 18px;
+    height: 18px;
+    transition: left 0.1 0;
 }
 
-switch:checked .switch-handle-container .switch-handle {
-    left: 8px;
+switch .switch-handle-bg {
+    width: 30px;
+    height: 12px;
+    top: 1s;
+    bottom: 1s;
+    transition: background-color 0.1 0;
+}
+
+switch:checked .switch-handle {
+    left: 12px;
+    transition: left 0.1 0;
 }
 
 /* Tab */
@@ -633,6 +682,22 @@ tabview {
     height: 1s;
 }
 
+tabview.vertical {
+    layout-type: row;
+}
+
+tabview.vertical tabheader {
+    layout-type: row;
+}
+
+tabview .tabview-tabheader-wrapper {
+    layout-type: row;
+}
+
+tabview.vertical .tabview-tabheader-wrapper {
+    layout-type: column;
+}
+
 .tabview-tabheader-wrapper {
     height: auto;
     col-between: 1px;
@@ -640,7 +705,19 @@ tabview {
 
 tabheader {
     width: auto;
-    height: auto;
+    height: 32px;
+}
+
+tabheader label {
+    height: 1s;
+    child-left: 4px;
+    child-right: 4px;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+tabheader .indicator {
+    height: 2px;
 }
 
 /* tabheader label {
@@ -716,7 +793,6 @@ textbox {
     child-top: 2px;
     child-bottom: 2px;
     min-width: 0px;
-    overflow: hidden;
 }
 
 textbox .textbox_content {
@@ -778,45 +854,224 @@ textbox.multi_line_unwrapped {
 
 /* Time Picker */
 
-timepicker {
-    child-space: 8px;
+timepicker digitaltimepicker {
+    width: 1s;
 }
 
-timepicker .timepicker-wrapper {
+checkbox {
+    font-family: Entypo, sans-serif;
+}
+
+image {
+    width: auto;
+    height: auto;
+}
+
+zstack > * {
+    position-type: self-directed;
+}
+
+slider {
+    height: 5px;
+    width: 1s;
+}
+
+timepicker digitaltimepicker .digitaltimepicker-button-wrapper {
+    left: 1s;
+}
+
+/* Digital Time Picker */
+
+digitaltimepicker {
+    height: auto;
+    width: auto;
+    child-space: 8px;
     col-between: 8px;
 }
 
-timepicker .timepicker-button-wrapper {
-    row-between: 1s;
+digitaltimepicker > spinbox {
+    width: 120px;
 }
 
-timepicker .timepicker-dots-wrapper {
+digitaltimepicker .digitaltimepicker-button-wrapper {
+    child-top: 1s;
+    child-bottom: 1s;
+    height: 1s;
+}
+
+digitaltimepicker .digitaltimepicker-dots-wrapper {
     width: auto;
     height: 1s;
     child-space: 1s;
     row-between: 8px;
 }
 
-timepicker .timepicker-dot {
+digitaltimepicker .digitaltimepicker-dot {
     width: 6px;
     height: 6px;
 }
 
 /* Radial Time Picker */
 
-radial_timepicker {
-    child-space: 1s;
+analogtimepicker {
+    child-space: 8px;
     border-radius: 4px;
 }
 
-radial_timepicker .clock-face {
-    width: 230px;
-    height: 230px;
+analogtimepicker .clock-face {
+    child-space: 1s;
 }
 
-radial_timepicker .switch-page-button {
-    cursor: hand;
-    transition: background-color 0.1 0;
+analogtimepicker .clock-hand {
+    width: 1px;
+    height: 80px;
+}
+
+analogtimepicker .center-dot {
+    width: 4px;
+    height: 4px;
+}
+
+analogtimepicker .marker {
+    width: 32px;
+    height: 32px;
+    child-space: 1s;
+}
+
+analogtimepicker .controls-wrapper {
+    top: 1s;
+    bottom: 1s;
+    right: 1s;
+    left: 1s;
+    width: auto;
+    height: 80px;
+    row-between: 1s;
+    child-left: 1s;
+    child-right: 1s;
+}
+
+analogtimepicker .time-selector-wrapper {
+    height: auto;
+    overflow: hidden;
+}
+
+analogtimepicker .time-selector-wrapper button {
+    width: 30px;
+    child-left: 0px;
+    child-right: 0px;
+    child-top: 0px;
+    child-bottom: 0px;
+}
+
+analogtimepicker .time-selector-wrapper button label {
+    left: 4px;
+    right: 4px;
+    top: 1s;
+    bottom: 1s;
+    width: 1s;
+    height: 1s;
+    child-space: 1s;
+}
+
+scrollview > .scroll_content {
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    position-type: self-directed;
+}
+
+scrollview > scrollbar.horizontal {
+    left: 0px;
+    width: 1s;
+    right: 14px;
+
+    top: 1s;
+    height: 14px;
+    bottom: 0px;
+}
+
+scrollview > scrollbar.vertical {
+    top: 0px;
+    height: 1s;
+    bottom: 0px;
+
+    left: 1s;
+    width: 14px;
+    right: 0px;
+}
+
+popup {
+    display: none;
+    opacity: 0;
+}
+
+popup:checked {
+    display: flex;
+    opacity: 1;
+}
+
+menucontroller {
+    width: 0px;
+    height: 0px;
+    overflow: visible;
+}
+
+menustack {
+    width: auto;
+    height: auto;
+    overflow: visible;
+}
+
+menu {
+    overflow: visible;
+}
+
+menustack.vertical {
+    layout-type: column;
+}
+
+menustack.horizontal {
+    layout-type: row;
+}
+
+menu > menustack {
+    position-type: self-directed;
+    z-index: 1000;
+    display: none;
+}
+
+menu:selected > menustack {
+    display: flex;
+}
+
+menustack.vertical > menu > menustack {
+    left: 100%;
+}
+
+menustack.horizontal > menu > menustack {
+    top: 100%;
+}
+
+.menu_arrow {
+    display: none;
+}
+
+menustack.vertical > menu > hstack > .menu_arrow {
+    display: flex;
+    font-family: "Material Icons";
+    left: 1s;
+    top: 1s;
+    bottom: 1s;
+    width: 1s;
+    height: 1s;
+    child-space: 1s;
+}
+
+analogtimepicker .time-selector-wrapper button .indicator {
+    top: 1s;
+    width: 100%;
+    height: 2px;
 }
 
 /* Tooltip */

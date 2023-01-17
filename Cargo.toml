@@ -27,6 +27,10 @@ name = "colorpicker"
 path = "examples/views/colorpicker.rs"
 
 [[example]]
+name = "xypad"
+path = "examples/views/xypad.rs"
+
+[[example]]
 name = "picklist"
 path = "examples/views/picklist.rs"
 
@@ -94,9 +98,9 @@ path = "examples/views/checkbox.rs"
 name = "dropdown"
 path = "examples/views/dropdown.rs"
 
-# [[example]]
-# name = "image"
-# path = "examples/views/image.rs"
+[[example]]
+name = "image"
+path = "examples/views/image.rs"
 
 [[example]]
 name = "knob"
@@ -245,6 +249,10 @@ path = "examples/style/outline.rs"
 [[example]]
 name = "gradient"
 path = "examples/style/gradient.rs"
+
+[[example]]
+name = "save_dialog"
+path = "examples/save_dialog.rs"
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]

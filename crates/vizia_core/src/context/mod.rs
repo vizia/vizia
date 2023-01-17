@@ -7,6 +7,7 @@ use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::iter::once;
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -14,8 +15,9 @@ use std::sync::Mutex;
 use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
-use femtovg::TextContext;
+use cosmic_text::{fontdb::Database, Attrs, AttrsList, BufferLine, FamilyOwned};
 use fnv::FnvHashMap;
+use replace_with::replace_with_or_abort;
 use unic_langid::LanguageIdentifier;
 
 pub use draw::*;
@@ -23,18 +25,19 @@ pub use event::*;
 pub use proxy::*;
 
 use crate::cache::CachedData;
-use crate::environment::Environment;
+use crate::environment::{Environment, ThemeMode};
 use crate::events::ViewHandler;
+use crate::fonts;
 use crate::prelude::*;
-use crate::resource::{FontOrId, ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
+use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
+use crate::text::TextContext;
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 use vizia_storage::TreeExt;
 
-static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 
 pub static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
@@ -93,6 +96,17 @@ impl Context {
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
 
+        // Add default fonts
+        let mut db = Database::new();
+        db.load_system_fonts();
+        db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
+        db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
+        db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
+        db.load_font_data(Vec::from(fonts::ENTYPO));
+        db.load_font_data(Vec::from(fonts::OPEN_SANS_EMOJI));
+        db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));
+        db.load_font_data(Vec::from(fonts::MATERIAL_ICONS_REGULAR));
+
         let mut result = Self {
             entity_manager: IdManager::new(),
             entity_identifiers: HashMap::new(),
@@ -118,7 +132,10 @@ impl Context {
             focus_stack: Vec::new(),
             cursor_icon_locked: false,
             resource_manager: ResourceManager::new(),
-            text_context: TextContext::default(),
+            text_context: TextContext::new_from_locale_and_db(
+                sys_locale::get_locale().unwrap_or_else(|| "en-US".to_owned()),
+                db,
+            ),
 
             event_proxy: None,
 
@@ -143,6 +160,7 @@ impl Context {
         Environment::new().build(&mut result);
 
         result.entity_manager.create();
+        result.set_default_font(&["Roboto"]);
 
         result
     }
@@ -313,33 +331,12 @@ impl Context {
             self.data.remove(*entity);
             self.views.remove(entity);
             self.entity_manager.destroy(*entity);
+            self.text_context.clear_buffer(*entity);
 
             if self.captured == *entity {
                 self.captured = Entity::null();
             }
         }
-    }
-
-    /// Send an event containing a message up the tree from the current entity.
-    pub fn emit<M: Any + Send>(&mut self, message: M) {
-        self.event_queue.push_back(
-            Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up),
-        );
-    }
-
-    /// Send an event containing a message directly to a specified entity.
-    pub fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
-        self.event_queue.push_back(
-            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
-        );
-    }
-
-    /// Send an event with custom origin and propagation information.
-    pub fn emit_custom(&mut self, event: Event) {
-        self.event_queue.push_back(event);
     }
 
     /// Check whether there are any events in the queue waiting for the next event dispatch cycle.
@@ -380,25 +377,40 @@ impl Context {
     }
 
     /// Add a font from memory to the application.
-    pub fn add_font_mem(&mut self, name: &str, data: &[u8]) {
-        // TODO - return error
-        if self.resource_manager.fonts.contains_key(name) {
-            println!("Font already exists");
-            return;
-        }
-
-        self.resource_manager.fonts.insert(name.to_owned(), FontOrId::Font(data.to_vec()));
+    pub fn add_fonts_mem(&mut self, data: &[&[u8]]) {
+        self.text_context.take_buffers();
+        replace_with_or_abort(&mut self.text_context, |mut ccx| {
+            let buffers = ccx.take_buffers();
+            let (locale, mut db) = ccx.into_font_system().into_locale_and_db();
+            for font_data in data {
+                db.load_font_data(Vec::from(*font_data));
+            }
+            let mut new_ccx = TextContext::new_from_locale_and_db(locale, db);
+            for (entity, lines) in buffers {
+                new_ccx.with_buffer(entity, move |buf| {
+                    buf.lines = lines
+                        .into_iter()
+                        .map(|line| BufferLine::new(line, AttrsList::new(Attrs::new())))
+                        .collect();
+                });
+            }
+            new_ccx
+        });
     }
 
     /// Sets the global default font for the application.
-    pub fn set_default_font(&mut self, name: &str) {
-        self.style.default_font = name.to_string();
+    pub fn set_default_font(&mut self, names: &[&str]) {
+        self.style.default_font = names
+            .iter()
+            .map(|x| FamilyOwned::Name(x.to_string()))
+            .chain(once(FamilyOwned::SansSerif))
+            .collect();
     }
 
     pub fn add_theme(&mut self, theme: &str) {
         self.resource_manager.themes.push(theme.to_owned());
 
-        self.reload_styles().expect("Failed to reload styles");
+        EventContext::new(self).reload_styles().expect("Failed to reload styles");
     }
 
     pub fn remove_user_themes(&mut self) {
@@ -406,15 +418,17 @@ impl Context {
 
         self.add_theme(DEFAULT_LAYOUT);
         if !self.ignore_default_theme {
-            self.add_theme(DEFAULT_THEME);
+            let environment = self.data::<Environment>().expect("Failed to get environment");
+            match environment.theme_mode {
+                ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
+                ThemeMode::DarkMode => self.add_theme(DARK_THEME),
+            }
         }
     }
 
     pub fn add_stylesheet(&mut self, path: impl AsRef<Path>) -> Result<(), std::io::Error> {
-        let style_string = std::fs::read_to_string(path.as_ref())?;
         self.resource_manager.stylesheets.push(path.as_ref().to_owned());
-        self.style.parse_theme(&style_string);
-
+        EventContext::new(self).reload_styles().expect("Failed to reload styles");
         Ok(())
     }
 
@@ -432,39 +446,6 @@ impl Context {
     pub fn add_animation(&mut self, duration: std::time::Duration) -> AnimationBuilder {
         let id = self.style.animation_manager.create();
         AnimationBuilder::new(id, self, duration)
-    }
-
-    pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
-        if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
-            return Ok(());
-        }
-
-        self.style.remove_rules();
-
-        self.style.rules.clear();
-
-        self.style.clear_style_rules();
-
-        let mut overall_theme = String::new();
-
-        // Reload the stored themes
-        for theme in self.resource_manager.themes.iter() {
-            overall_theme += theme;
-        }
-
-        // Reload the stored stylesheets
-        for stylesheet in self.resource_manager.stylesheets.iter() {
-            let theme = std::fs::read_to_string(stylesheet)?;
-            overall_theme += &theme;
-        }
-
-        self.style.parse_theme(&overall_theme);
-
-        self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
-
-        Ok(())
     }
 
     pub fn set_image_loader<F: 'static + Fn(&mut Context, &str)>(&mut self, loader: F) {
@@ -529,6 +510,12 @@ pub trait DataContext {
     fn data<T: 'static>(&self) -> Option<&T>;
 }
 
+pub trait EmitContext {
+    fn emit<M: Any + Send>(&mut self, message: M);
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
+    fn emit_custom(&mut self, event: Event);
+}
+
 impl DataContext for Context {
     fn data<T: 'static>(&self) -> Option<&T> {
         // return data for the static model
@@ -551,5 +538,29 @@ impl DataContext for Context {
         }
 
         None
+    }
+}
+
+impl EmitContext for Context {
+    /// Send an event containing a message up the tree from the current entity.
+    fn emit<M: Any + Send>(&mut self, message: M) {
+        self.event_queue.push_back(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+        );
+    }
+
+    /// Send an event containing a message directly to a specified entity.
+    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
+        self.event_queue.push_back(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+        );
+    }
+
+    /// Send an event with custom origin and propagation information.
+    fn emit_custom(&mut self, event: Event) {
+        self.event_queue.push_back(event);
     }
 }

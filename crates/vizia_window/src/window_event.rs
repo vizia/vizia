@@ -8,7 +8,7 @@ use vizia_input::{Code, Key, MouseButton};
 /// This type is part of the prelude.
 #[derive(Debug, Clone)]
 pub enum WindowEvent {
-    /// Emitted when a window is closed.
+    /// Emitted when a window is closed. Can also be emitted by a view or model to close the window.
     WindowClose,
     /// Emitted when a window changes size.
     WindowResize(f32, f32),
@@ -93,4 +93,6 @@ pub enum WindowEvent {
     Relayout,
     /// Prints the debug message to the console.
     Debug(String),
+    /// Reloads all application stylesheets.
+    ReloadStyles,
 }

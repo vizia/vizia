@@ -4,7 +4,7 @@ use crate::prelude::*;
 use crate::state::RatioLens;
 use crate::views::Orientation;
 
-const SCROLL_SENSITIVITY: f32 = 35.0;
+pub(crate) const SCROLL_SENSITIVITY: f32 = 35.0;
 
 #[derive(Lens, Data, Clone, Debug)]
 pub struct ScrollData {
@@ -136,8 +136,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                     || geo.contains(GeometryChanged::WIDTH_CHANGED)
                 {
                     let current = cx.current();
-                    let width = cx.cache.get_width(current);
-                    let height = cx.cache.get_height(current);
+                    let width = cx.cache().get_width(current);
+                    let height = cx.cache().get_height(current);
                     cx.emit(ScrollEvent::ChildGeo(width, height));
                 }
             });

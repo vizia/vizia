@@ -44,9 +44,6 @@ impl ViziaWindow {
             (builder)(&mut cx);
         }
 
-        let mut backend_cx = BackendContext::new(&mut cx);
-        backend_cx.synchronize_fonts();
-
         let application = ApplicationRunner::new(cx, scale_policy);
         unsafe { context.make_not_current() };
 
@@ -160,8 +157,6 @@ impl ViziaWindow {
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
         ignore_default_theme: bool,
-        text_shaping_run_cache_size: Option<usize>,
-        text_shaped_words_cache_size: Option<usize>,
     ) where
         F: Fn(&mut Context),
         F: 'static + Send,
@@ -180,14 +175,6 @@ impl ViziaWindow {
             window_settings,
             move |window: &mut baseview::Window<'_>| -> ViziaWindow {
                 let mut context = Context::new();
-                if let Some(size) = text_shaped_words_cache_size {
-                    BackendContext::new(&mut context)
-                        .text_context()
-                        .resize_shaped_words_cache(size);
-                }
-                if let Some(size) = text_shaping_run_cache_size {
-                    BackendContext::new(&mut context).text_context().resize_shaping_run_cache(size);
-                }
 
                 context.ignore_default_theme = ignore_default_theme;
                 context.remove_user_themes();
@@ -225,8 +212,6 @@ impl WindowHandler for ViziaWindow {
     fn on_event(&mut self, _window: &mut Window<'_>, event: Event) -> EventStatus {
         let mut should_quit = false;
         self.application.handle_event(event, &mut should_quit);
-
-        //self.application.update_data();
 
         self.application.handle_idle(&self.on_idle);
 

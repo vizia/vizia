@@ -107,11 +107,14 @@ impl Switch {
     pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
         Self { on_toggle: None }
             .build(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    Element::new(cx).class("switch-handle").hoverable(false);
-                })
-                .class("switch-handle-container")
-                .hoverable(false);
+                Element::new(cx)
+                    .class("switch-handle-bg")
+                    .hoverable(false)
+                    .position_type(PositionType::SelfDirected);
+                Element::new(cx)
+                    .class("switch-handle")
+                    .hoverable(false)
+                    .position_type(PositionType::SelfDirected);
             })
             .checked(checked)
             .cursor(CursorIcon::Hand)

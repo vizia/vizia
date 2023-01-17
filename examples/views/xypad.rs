@@ -1,23 +1,23 @@
 mod helpers;
-use chrono::{NaiveDate, Utc};
-use helpers::*;
+pub use helpers::*;
 use vizia::prelude::*;
 
 #[derive(Clone, Lens)]
 struct AppState {
-    date: NaiveDate,
+    x: f32,
+    y: f32,
 }
 
 pub enum AppEvent {
-    SetDate(NaiveDate),
+    SetValue(f32, f32),
 }
 
 impl Model for AppState {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetDate(date) => {
-                println!("Date changed to: {}", date);
-                self.date = *date;
+            AppEvent::SetValue(x, y) => {
+                self.x = *x;
+                self.y = *y;
             }
         });
     }
@@ -25,17 +25,17 @@ impl Model for AppState {
 
 fn main() {
     Application::new(|cx| {
-        AppState { date: Utc::now().date_naive() }.build(cx);
+        AppState { x: 0.2, y: 0.5 }.build(cx);
 
         view_controls(cx);
 
         VStack::new(cx, |cx| {
-            Datepicker::new(cx, AppState::date)
-                .on_select(|cx, date| cx.emit(AppEvent::SetDate(date)));
+            XYPad::new(cx, AppState::root.map(|app_state| (app_state.x, app_state.y)))
+                .on_change(|cx, x, y| cx.emit(AppEvent::SetValue(x, y)));
         })
         .disabled(ControlsData::disabled)
         .class("container");
     })
-    .title("Datepicker")
+    .title("XYPad")
     .run();
 }

@@ -1,8 +1,10 @@
+mod helpers;
+use helpers::*;
 use std::fmt::Display;
 
 use vizia::prelude::*;
 
-#[derive(Clone, Data, Lens)]
+#[derive(Clone, Lens)]
 struct AppState {
     spinbox_value_1: i64,
     spinbox_value_2: usize,
@@ -10,7 +12,7 @@ struct AppState {
     spinbox_value_3: Spinbox3Values,
 }
 
-#[derive(Clone, PartialEq, Data, Copy)]
+#[derive(Clone, PartialEq, Copy, Eq, Data)]
 enum Spinbox3Values {
     One,
     Two,
@@ -31,12 +33,6 @@ enum AppEvent {
     Set3(Spinbox3Values),
 }
 
-const CENTER_LAYOUT: &str = "crates/vizia_core/resources/themes/center_layout.css";
-#[allow(dead_code)]
-const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
-#[allow(dead_code)]
-const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
-
 fn main() {
     Application::new(|cx| {
         AppState {
@@ -47,13 +43,17 @@ fn main() {
         }
         .build(cx);
 
-        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
-        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
+        view_controls(cx);
 
         HStack::new(cx, |cx| {
-            Spinbox::new(cx, AppState::spinbox_value_1, SpinboxKind::Horizontal)
-                .on_increment(|ex| ex.emit(AppEvent::Increment1))
-                .on_decrement(|ex| ex.emit(AppEvent::Decrement1));
+            Spinbox::new(
+                cx,
+                AppState::spinbox_value_1,
+                SpinboxKind::Horizontal,
+                SpinboxIcons::Math,
+            )
+            .on_increment(|ex| ex.emit(AppEvent::Increment1))
+            .on_decrement(|ex| ex.emit(AppEvent::Decrement1));
 
             Spinbox::custom(
                 cx,
@@ -62,6 +62,7 @@ fn main() {
                         .on_edit(|ex, v| ex.emit(AppEvent::Set2(v)))
                 },
                 SpinboxKind::Vertical,
+                SpinboxIcons::Math,
             )
             .on_increment(|ex| ex.emit(AppEvent::Increment2))
             .on_decrement(|ex| ex.emit(AppEvent::Decrement2));
@@ -94,13 +95,13 @@ fn main() {
                     .width(Pixels(50.0))
                 },
                 SpinboxKind::Horizontal,
+                SpinboxIcons::Chevrons,
             )
             .on_increment(|ex| ex.emit(AppEvent::Increment3))
             .on_decrement(|ex| ex.emit(AppEvent::Decrement3));
         })
         .class("container");
     })
-    .ignore_default_theme()
     .title("Spinbox")
     .run();
 }

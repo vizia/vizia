@@ -1,17 +1,18 @@
+use cosmic_text::{FamilyOwned, Weight};
 use std::any::{Any, TypeId};
 use std::ops::Range;
 
-use femtovg::{ImageId, TextContext};
+use femtovg::{ImageId, Paint};
 use fnv::FnvHashMap;
 use morphorm::Units;
 
 use crate::cache::{BoundingBox, CachedData};
 use crate::events::ViewHandler;
 use crate::prelude::*;
-use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager};
+use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
 use crate::style::{LinearGradient, Style};
-use crate::text::Selection;
+use crate::text::TextContext;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 
@@ -45,7 +46,7 @@ pub struct DrawContext<'a> {
     pub(crate) data: &'a SparseSet<ModelDataStore>,
     pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub resource_manager: &'a ResourceManager,
-    pub text_context: &'a TextContext,
+    pub text_context: &'a mut TextContext,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState<Entity>,
 }
@@ -86,7 +87,7 @@ impl<'a> DrawContext<'a> {
             data: &cx.data,
             views: &cx.views,
             resource_manager: &cx.resource_manager,
-            text_context: &cx.text_context,
+            text_context: &mut cx.text_context,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
         }
@@ -100,8 +101,8 @@ impl<'a> DrawContext<'a> {
         self.cache.get_clip_region(self.current)
     }
 
-    /// Returns the name of the default font.
-    pub fn default_font(&self) -> &str {
+    /// Returns the lookup pattern to pick the default font.
+    pub fn default_font(&self) -> &[FamilyOwned] {
         &self.style.default_font
     }
 
@@ -151,41 +152,27 @@ impl<'a> DrawContext<'a> {
     style_getter_untranslated!(BorderCornerShape, border_shape_bottom_right);
     style_getter_untranslated!(BorderCornerShape, border_shape_bottom_left);
     style_getter_untranslated!(String, background_image);
-    style_getter_untranslated!(String, text);
     style_getter_untranslated!(String, image);
-    style_getter_untranslated!(String, font);
+    style_getter_untranslated!(Vec<FamilyOwned>, font_family);
+    style_getter_untranslated!(Weight, font_weight);
+    style_getter_untranslated!(FontStyle, font_style);
     style_getter_untranslated!(bool, text_wrap);
-    style_getter_untranslated!(Selection, text_selection);
 
     pub fn opacity(&self) -> f32 {
         self.cache.get_opacity(self.current)
     }
 
-    // pub fn load_image(
-    //     &mut self,
-    //     name: impl AsRef<str>,
-    //     image: ImageOrId,
-    //     policy: ImageRetentionPolicy,
-    // ) {
-    //     match self.resource_manager.images.entry(name) {
-    //         Entry::Occupied(mut occ) => {
-    //             occ.get_mut().image = image;
-    //             occ.get_mut().dirty = true;
-    //             occ.get_mut().retention_policy = policy;
-    //         }
-    //         Entry::Vacant(vac) => {
-    //             vac.insert(StoredImage {
-    //                 image,
-    //                 retention_policy: policy,
-    //                 used: true,
-    //                 dirty: false,
-    //                 observers: HashSet::new(),
-    //             });
-    //         }
-    //     }
-    //     self.style.needs_redraw = true;
-    //     self.style.needs_relayout = true;
-    // }
+    pub fn draw_text(&mut self, canvas: &mut Canvas, origin: (f32, f32), justify: (f32, f32)) {
+        if let Ok(draw_commands) =
+            self.text_context.fill_to_cmds(canvas, self.current, origin, justify)
+        {
+            for (color, cmds) in draw_commands.into_iter() {
+                let temp_paint =
+                    Paint::color(femtovg::Color::rgba(color.r(), color.g(), color.b(), color.a()));
+                canvas.draw_glyph_cmds(cmds, &temp_paint);
+            }
+        }
+    }
 }
 
 impl<'a> DataContext for DrawContext<'a> {

@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{fonts::vizia_icons::*, prelude::*};
 
 pub enum SpinboxEvent {
     Increment,
@@ -13,21 +13,37 @@ pub struct Spinbox {
     on_increment: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
 }
 
-#[derive(Clone, Copy, Debug, Data, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Data)]
 pub enum SpinboxKind {
     Horizontal,
     Vertical,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum SpinboxIcons {
+    Math, //Don't know how to call this tbh
+    Chevrons,
+}
+
 impl Spinbox {
-    pub fn new<L: Lens>(cx: &mut Context, lens: L, kind: SpinboxKind) -> Handle<Spinbox>
+    pub fn new<L: Lens>(
+        cx: &mut Context,
+        lens: L,
+        kind: SpinboxKind,
+        icons: SpinboxIcons,
+    ) -> Handle<Spinbox>
     where
         <L as Lens>::Target: Data + ToString,
     {
-        Self::custom(cx, move |cx| Label::new(cx, lens.clone()), kind)
+        Self::custom(cx, move |cx| Label::new(cx, lens.clone()), kind, icons)
     }
 
-    pub fn custom<F, V>(cx: &mut Context, content: F, kind: SpinboxKind) -> Handle<Spinbox>
+    pub fn custom<F, V>(
+        cx: &mut Context,
+        content: F,
+        kind: SpinboxKind,
+        icons: SpinboxIcons,
+    ) -> Handle<Spinbox>
     where
         F: Fn(&mut Context) -> Handle<V>,
         V: 'static + View,
@@ -35,33 +51,55 @@ impl Spinbox {
         Self { kind, on_decrement: None, on_increment: None }
             .build(cx, move |cx| {
                 Label::new(cx, "")
-                    .font("icons")
+                    .class("icon")
                     .bind(Spinbox::kind, move |handle, spinbox_kind| {
                         match spinbox_kind.get(handle.cx) {
                             SpinboxKind::Horizontal => {
-                                handle.text("-").on_press(|ex| ex.emit(SpinboxEvent::Decrement));
+                                handle
+                                    .text(match icons {
+                                        SpinboxIcons::Math => MINUS,
+                                        SpinboxIcons::Chevrons => CHEVRON_LEFT,
+                                    })
+                                    .on_press(|ex| ex.emit(SpinboxEvent::Decrement));
                             }
 
                             SpinboxKind::Vertical => {
-                                handle.text("+").on_press(|ex| ex.emit(SpinboxEvent::Increment));
+                                handle
+                                    .text(match icons {
+                                        SpinboxIcons::Math => PLUS,
+                                        SpinboxIcons::Chevrons => CHEVRON_UP,
+                                    })
+                                    .on_press(|ex| ex.emit(SpinboxEvent::Increment));
                             }
                         }
                     })
+                    .class("icon")
                     .class("spinbox-button");
                 (content)(cx).class("spinbox-value");
                 Label::new(cx, "")
-                    .font("icons")
+                    .class("icon")
                     .bind(Spinbox::kind, move |handle, spinbox_kind| {
                         match spinbox_kind.get(handle.cx) {
                             SpinboxKind::Horizontal => {
-                                handle.text("+").on_press(|ex| ex.emit(SpinboxEvent::Increment));
+                                handle
+                                    .text(match icons {
+                                        SpinboxIcons::Math => PLUS,
+                                        SpinboxIcons::Chevrons => CHEVRON_RIGHT,
+                                    })
+                                    .on_press(|ex| ex.emit(SpinboxEvent::Increment));
                             }
 
                             SpinboxKind::Vertical => {
-                                handle.text("-").on_press(|ex| ex.emit(SpinboxEvent::Decrement));
+                                handle
+                                    .text(match icons {
+                                        SpinboxIcons::Math => MINUS,
+                                        SpinboxIcons::Chevrons => CHEVRON_DOWN,
+                                    })
+                                    .on_press(|ex| ex.emit(SpinboxEvent::Decrement));
                             }
                         }
                     })
+                    .class("icon")
                     .class("spinbox-button");
             })
             .toggle_class("horizontal", Spinbox::kind.map(|kind| kind == &SpinboxKind::Horizontal))
