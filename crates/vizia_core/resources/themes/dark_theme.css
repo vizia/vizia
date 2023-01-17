@@ -347,12 +347,12 @@ dropdown list label:hover {
 /* Knob */
 
 knob {
-    background-color: #1d1d1d;
-    border-radius: 100px;
+    border-radius: 500px;
 }
 
 knob .knob-track {
-    background-color: #51afef;
+    background-color: #343434;
+    border-color: #3995d6;
 }
 
 knob:focus-visible {
@@ -363,15 +363,20 @@ knob:focus-visible {
 
 .knob-head {
     background-color: #343434;
+    border-radius: 500px;
     border-width: 2px;
     border-color: #1d1d1d;
-    border-radius: 100px;
-    /* outer-shadow: 0 4 4 #00000088; BUGGY */
 }
 
-.knob-tick {
-    background-color: #fff;
+.knob-head-tick {
+    background-color: white;
     border-radius: 1px;
+}
+
+ticks {
+    border-width: 2px;
+    background-color: #888;
+    border-color: #3995d6;
 }
 
 /* Label */

@@ -213,30 +213,45 @@ knob.small {
 }
 
 .knob-track {
-    width: 1s;
-    height: 1s;
+    width: 100%;
+    height: 100%;
 }
 
-.knob-head {
-    width: 1s;
-    height: 1s;
-    top: 2px;
-    left: 2px;
-    right: 2px;
-    bottom: 2px;
-}
-
-.knob-tick {
+.knob-head-tick {
     width: 2px;
     height: 8px;
     left: 1s;
     right: 1s;
     top: 2px;
+}
+
+.knob-head {
+    width: 28px;
+    height: 28px;
+    left: 1s;
+    top: 1s;
+    right: 1s;
     bottom: 1s;
 }
 
-knob.small .knob-tick {
+knob.small .knob-head {
+    width: 20px;
+    height: 20px;
+}
+
+knob.small .knob-head-tick {
+    width: 2px;
     height: 4px;
+}
+
+.knob-head.knob-discrete {
+    width: 24px;
+    height: 24px;
+}
+
+knob.small .knob-head.knob-discrete {
+    width: 18px;
+    height: 18px;
 }
 
 /* Label */
