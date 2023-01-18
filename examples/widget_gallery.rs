@@ -4,115 +4,11 @@ const THEME: &str = "\u{25d1}";
 const PLUS: &str = "+";
 const CHECK: &str = "\u{2713}";
 
-const STYLE: &str = r#"
-
-    .title {
-        space: 0px;
-        child-space: 16px;
-        background-color: red;
-        height: 48px;
-        child-top: 1s;
-        child-bottom: 1s;
-    }
-    
-    .title > label {
-        width: 1s;
-        font-size: 30px;
-        font-weight: 600;
-    }
-
-    .heading {
-        font-size: 20.0;
-        top: 10px;
-        bottom: 6px;
-    }
-
-    .tabview-tabheader-wrapper {
-        width: 200px;
-        child-top: 4px;
-        child-bottom: 4px;
-    }
-
-    tabheader {
-        width: 1s;
-        height: 24px;
-        child-top: 1s;
-        child-bottom: 1s;
-    }
-
-    tabheader label {
-        width: 1s;
-        color: #ffffff88;
-    }
-    
-    tabheader:checked {
-        background-color: #51afef22;
-    }
-
-    tabheader:hover {
-        background-color: #51afef22;
-    }
-
-    .indicator {
-        width: 2px;
-        top: 0px;
-        bottom: 0px;
-        border-top-left-radius: 2px;
-        border-bottom-left-radius: 2px;
-    }
-
-    .row-wrapper {
-        width: auto;
-    }
-
-    .wrapper {
-        width: auto;
-        height: auto;
-        background-color: #282828;
-        border-radius: 4px;
-        child-space: 8px;
-        row-between: 8px;
-    }
-
-    .wrapper > hstack {
-        col-between: 8px;
-    }
-
-    .bg-darker {
-        child-space: 16px;
-        row-between: 8px;
-    }
-"#;
-
 #[derive(Lens)]
 pub struct AppData {
     items: Vec<&'static str>,
     disabled: bool,
     theme: ThemeMode,
-}
-
-pub enum AppEvent {
-    ToggleDisabled,
-    ToggleTheme,
-}
-
-impl Model for AppData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|e, _| match e {
-            AppEvent::ToggleDisabled => {
-                self.disabled = !self.disabled;
-            }
-
-            AppEvent::ToggleTheme => {
-                self.theme = match self.theme {
-                    ThemeMode::DarkMode => ThemeMode::LightMode,
-                    ThemeMode::LightMode => ThemeMode::DarkMode,
-                };
-
-                cx.emit(EnvironmentEvent::SetThemeMode(self.theme));
-            }
-        })
-    }
 }
 
 fn title(cx: &mut Context, title: &str) {
@@ -121,26 +17,27 @@ fn title(cx: &mut Context, title: &str) {
         HStack::new(cx, |cx| {
             Switch::new(cx, AppData::disabled).on_toggle(|cx| cx.emit(AppEvent::ToggleDisabled));
             Label::new(cx, "Disabled");
-        })
-        .size(Auto)
-        .col_between(Pixels(5.0))
-        .child_top(Stretch(1.0))
-        .child_bottom(Stretch(1.0));
+        });
         Button::new(cx, |cx| cx.emit(AppEvent::ToggleTheme), |cx| Label::new(cx, THEME))
             .class("icon");
     })
-    .class("title");
+    .class("title")
+    .class("bg-darkest");
+}
+
+fn wrapper_heading(cx: &mut Context, title: &str) {
+    Label::new(cx, &title.to_uppercase()).class("heading").class("text-disabled");
 }
 
 fn tab<T: ToString + Data>(cx: &mut Context, item: impl Lens<Target = T>) {
-    Label::new(cx, item).hoverable(false);
+    Label::new(cx, item).hoverable(false).class("text-disabled");
     Element::new(cx).class("indicator").hoverable(false);
 }
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
         cx.emit(EnvironmentEvent::SetThemeMode(ThemeMode::DarkMode));
+        cx.add_stylesheet("examples/widget_gallery.css").unwrap();
 
         AppData {
             items: vec![
@@ -216,13 +113,49 @@ fn main() {
     .run();
 }
 
-pub fn button(cx: &mut Context) {
-    VStack::new(cx, |cx| {
-        title(cx, "Button");
+pub fn label(cx: &mut Context) {
+    title(cx, "Label");
 
+    VStack::new(cx, |cx| {
+        HStack::new(cx, |cx| {
+            VStack::new(cx, |cx| {
+                wrapper_heading(cx, "A simple label");
+                Label::new(cx, "This is some simple text");
+            })
+            .disabled(AppData::disabled)
+            .class("wrapper")
+            .class("bg-darker");
+
+            VStack::new(cx, |cx| {
+                wrapper_heading(cx, "A styled label");
+                Label::new(cx, "This is some styled text").color(Color::red());
+            })
+            .disabled(AppData::disabled)
+            .class("wrapper")
+            .class("bg-darker");
+        })
+        .class("row-wrapper");
+
+        VStack::new(cx, |cx| {
+            wrapper_heading(cx, "A multiline label");
+            Label::new(cx, "This is some text which is wrapped")
+                .width(Pixels(100.0))
+                .bottom(Pixels(10.0));
+        })
+        .disabled(AppData::disabled)
+        .class("wrapper")
+        .class("bg-darker");
+    })
+    .class("bg-darkest");
+}
+
+pub fn button(cx: &mut Context) {
+    title(cx, "Button");
+
+    VStack::new(cx, |cx| {
         // Basic Buttons
         VStack::new(cx, |cx| {
-            Label::new(cx, "Basic Buttons").class("heading");
+            wrapper_heading(cx, "Basic Buttons");
             HStack::new(cx, |cx| {
                 Button::new(cx, |_| {}, |cx| Label::new(cx, "Simple Button"));
                 Button::new(cx, |_| {}, |cx| Label::new(cx, "Accent Button")).class("accent");
@@ -231,11 +164,12 @@ pub fn button(cx: &mut Context) {
             });
         })
         .disabled(AppData::disabled)
-        .class("wrapper");
+        .class("wrapper")
+        .class("bg-darker");
 
         // Icon Buttons
         VStack::new(cx, |cx| {
-            Label::new(cx, "Icon Buttons").class("heading");
+            wrapper_heading(cx, "Icon Buttons");
             HStack::new(cx, |cx| {
                 Button::new(cx, |_| {}, |cx| Label::new(cx, PLUS)).class("icon");
                 Button::new(cx, |_| {}, |cx| Label::new(cx, PLUS)).class("icon").class("accent");
@@ -244,11 +178,12 @@ pub fn button(cx: &mut Context) {
             });
         })
         .disabled(AppData::disabled)
-        .class("wrapper");
+        .class("wrapper")
+        .class("bg-darker");
 
         // Icon & Label Buttons
         VStack::new(cx, |cx| {
-            Label::new(cx, "Icon & Label Buttons").class("heading");
+            wrapper_heading(cx, "Icon & Label Buttons");
             HStack::new(cx, |cx| {
                 Button::new(
                     cx,
@@ -311,10 +246,11 @@ pub fn button(cx: &mut Context) {
             });
         })
         .disabled(AppData::disabled)
-        .class("wrapper");
+        .class("wrapper")
+        .class("bg-darker");
 
         VStack::new(cx, |cx| {
-            Label::new(cx, "Label & Icon Buttons").class("heading");
+            wrapper_heading(cx, "Label & Icon Buttons");
             HStack::new(cx, |cx| {
                 Button::new(
                     cx,
@@ -377,9 +313,10 @@ pub fn button(cx: &mut Context) {
             });
         })
         .disabled(AppData::disabled)
-        .class("wrapper");
+        .class("wrapper")
+        .class("bg-darker");
     })
-    .class("bg-darker");
+    .class("bg-darkest");
 }
 
 #[derive(Lens)]
@@ -387,6 +324,217 @@ pub struct CheckboxData {
     check: bool,
 
     items: Vec<bool>,
+}
+
+pub fn checkbox(cx: &mut Context) {
+    CheckboxData { check: false, items: vec![false, false, false] }.build(cx);
+
+    title(cx, "Checkbox");
+
+    VStack::new(cx, |cx| {
+        HStack::new(cx, |cx| {
+            VStack::new(cx, |cx| {
+                wrapper_heading(cx, "Simple Checkbox");
+                Checkbox::new(cx, CheckboxData::check)
+                    .on_toggle(|cx| cx.emit(CheckboxEvent::Toggle));
+            })
+            .class("wrapper")
+            .class("bg-darker");
+            VStack::new(cx, |cx| {
+                wrapper_heading(cx, "Checkbox and Label");
+                HStack::new(cx, |cx| {
+                    Checkbox::new(cx, CheckboxData::check);
+                    Label::new(cx, "Two-state checkbox");
+                })
+                .size(Auto)
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .col_between(Pixels(5.0))
+                .on_press(|cx| cx.emit(CheckboxEvent::Toggle));
+            })
+            .class("wrapper")
+            .class("bg-darker");
+        })
+        .class("row-wrapper");
+
+        VStack::new(cx, |cx| {
+            wrapper_heading(cx, "Intermediate Checkbox");
+            HStack::new(cx, |cx| {
+                Checkbox::intermediate(
+                    cx,
+                    CheckboxData::items.map(|items| items.iter().all(|b| *b)),
+                    CheckboxData::items.map(|items| items.iter().any(|b| *b)),
+                );
+                Label::new(cx, "All items");
+            })
+            .size(Auto)
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0))
+            .col_between(Pixels(5.0))
+            .on_press(|cx| cx.emit(CheckboxEvent::ToggleAll));
+            List::new(cx, CheckboxData::items, |cx, index, item| {
+                HStack::new(cx, |cx| {
+                    Checkbox::new(cx, item);
+                    Label::new(cx, "Item 1");
+                })
+                .size(Auto)
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .col_between(Pixels(5.0))
+                .on_press(move |cx| cx.emit(CheckboxEvent::ToggleItem(index)));
+            })
+            .child_left(Pixels(25.0))
+            .row_between(Pixels(5.0));
+        })
+        .class("wrapper")
+        .class("bg-darker");
+    })
+    .class("bg-darkest");
+}
+
+#[derive(Lens)]
+pub struct SliderData {
+    val: f32,
+}
+
+pub fn slider(cx: &mut Context) {
+    SliderData { val: 0.5 }.build(cx);
+
+    title(cx, "Slider");
+
+    VStack::new(cx, |cx| {
+        HStack::new(cx, |cx| {
+            VStack::new(cx, |cx| {
+                wrapper_heading(cx, "A simple slider");
+                HStack::new(cx, |cx| {
+                    Slider::new(cx, SliderData::val)
+                        .on_changing(|cx, val| cx.emit(SliderEvent::SetValue(val)));
+                })
+                .height(Pixels(32.0))
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .col_between(Pixels(10.0));
+            })
+            .class("wrapper")
+            .class("bg-darker");
+
+            VStack::new(cx, |cx| {
+                wrapper_heading(cx, "A slider and label");
+                HStack::new(cx, |cx| {
+                    Slider::new(cx, SliderData::val)
+                        .on_changing(|cx, val| cx.emit(SliderEvent::SetValue(val)));
+                    Label::new(cx, SliderData::val.map(|val| format!("{:.2}", val)))
+                        .width(Pixels(50.0));
+                })
+                .height(Pixels(32.0))
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .col_between(Pixels(10.0));
+            })
+            .class("wrapper")
+            .class("bg-darker");
+        })
+        .class("row-wrapper");
+    })
+    .class("bg-darkest");
+}
+
+#[derive(Lens)]
+pub struct SwitchData {
+    flag: bool,
+}
+
+pub fn switch(cx: &mut Context) {
+    SwitchData { flag: false }.build(cx);
+
+    title(cx, "Switch");
+
+    VStack::new(cx, |cx| {
+        VStack::new(cx, |cx| {
+            wrapper_heading(cx, "A simple switch");
+            Switch::new(cx, SwitchData::flag).on_toggle(|cx| cx.emit(SwitchEvent::Toggle));
+        })
+        .class("wrapper")
+        .class("bg-darker");
+
+        // Slider::new(cx, SliderData::val).on_changing(|cx, val| cx.emit(SliderEvent::SetValue(val)));
+
+        // Label::new(cx, "A slider and label").class("heading");
+
+        // HStack::new(cx, |cx| {
+        //     Slider::new(cx, SliderData::val)
+        //         .on_changing(|cx, val| cx.emit(SliderEvent::SetValue(val)));
+        //     Label::new(cx, SliderData::val.map(|val| format!("{:.2}", val))).width(Pixels(50.0));
+        // })
+        // .height(Auto)
+        // .child_top(Stretch(1.0))
+        // .child_bottom(Stretch(1.0))
+        // .col_between(Pixels(10.0));
+    })
+    .child_space(Pixels(10.0))
+    .class("bg-darkest");
+}
+
+#[derive(Lens)]
+pub struct TextboxData {
+    text: String,
+    multiline_text: String,
+}
+
+pub fn textbox(cx: &mut Context) {
+    TextboxData {
+        text: String::from("Some text..."),
+        multiline_text: String::from("This text spans \n multiple lines."),
+    }
+    .build(cx);
+
+    VStack::new(cx, |cx| {
+        title(cx, "Textbox");
+
+        VStack::new(cx, |cx| {
+            wrapper_heading(cx, "Single Line Textbox");
+            Textbox::new(cx, TextboxData::text)
+                .width(Stretch(1.0))
+                .on_submit(|cx, text, _| cx.emit(TextboxEvent::SetText(text)));
+        })
+        .class("wrapper")
+        .class("bg-darker");
+
+        VStack::new(cx, |cx| {
+            wrapper_heading(cx, "Multi Line Textbox");
+            Textbox::new_multiline(cx, TextboxData::multiline_text, false)
+                .width(Stretch(1.0))
+                .height(Pixels(100.0))
+                .on_submit(|cx, text, _| cx.emit(TextboxEvent::SetMultiline(text)));
+        })
+        .class("wrapper")
+        .class("bg-darker");
+    })
+    .class("bg-darkest");
+}
+
+pub enum AppEvent {
+    ToggleDisabled,
+    ToggleTheme,
+}
+
+impl Model for AppData {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|e, _| match e {
+            AppEvent::ToggleDisabled => {
+                self.disabled = !self.disabled;
+            }
+
+            AppEvent::ToggleTheme => {
+                self.theme = match self.theme {
+                    ThemeMode::DarkMode => ThemeMode::LightMode,
+                    ThemeMode::LightMode => ThemeMode::DarkMode,
+                };
+
+                cx.emit(EnvironmentEvent::SetThemeMode(self.theme));
+            }
+        })
+    }
 }
 
 pub enum CheckboxEvent {
@@ -418,103 +566,6 @@ impl Model for CheckboxData {
     }
 }
 
-// Checkbox
-pub fn checkbox(cx: &mut Context) {
-    CheckboxData { check: false, items: vec![false, false, false] }.build(cx);
-
-    VStack::new(cx, |cx| {
-        Label::new(cx, "Checkbox").class("title");
-
-        VStack::new(cx, |cx| {
-            Label::new(cx, "Simple Checkbox").class("heading");
-            Checkbox::new(cx, CheckboxData::check).on_toggle(|cx| cx.emit(CheckboxEvent::Toggle));
-        })
-        .height(Auto)
-        .child_space(Pixels(20.0))
-        .background_color(Color::rgb(40, 40, 40));
-
-        VStack::new(cx, |cx| {
-            Label::new(cx, "Checkbox and Label").class("heading");
-            HStack::new(cx, |cx| {
-                Checkbox::new(cx, CheckboxData::check);
-                Label::new(cx, "Two-state checkbox");
-            })
-            .size(Auto)
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
-            .col_between(Pixels(5.0))
-            .on_press(|cx| cx.emit(CheckboxEvent::Toggle));
-        })
-        .height(Auto)
-        .child_space(Pixels(20.0))
-        .background_color(Color::rgb(40, 40, 40));
-
-        VStack::new(cx, |cx| {
-            Label::new(cx, "Intermediate Checkbox").class("heading");
-            HStack::new(cx, |cx| {
-                Checkbox::intermediate(
-                    cx,
-                    CheckboxData::items.map(|items| items.iter().all(|b| *b)),
-                    CheckboxData::items.map(|items| items.iter().any(|b| *b)),
-                );
-                Label::new(cx, "All items");
-            })
-            .size(Auto)
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
-            .col_between(Pixels(5.0))
-            .on_press(|cx| cx.emit(CheckboxEvent::ToggleAll));
-            List::new(cx, CheckboxData::items, |cx, index, item| {
-                HStack::new(cx, |cx| {
-                    Checkbox::new(cx, item);
-                    Label::new(cx, "Item 1");
-                })
-                .size(Auto)
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .col_between(Pixels(5.0))
-                .on_press(move |cx| cx.emit(CheckboxEvent::ToggleItem(index)));
-            })
-            .child_left(Pixels(25.0))
-            .row_between(Pixels(5.0));
-        })
-        .height(Auto)
-        .child_space(Pixels(20.0))
-        .row_between(Pixels(5.0))
-        .background_color(Color::rgb(40, 40, 40));
-    })
-    .child_space(Pixels(20.0))
-    .row_between(Pixels(20.0))
-    .class("bg-darker");
-}
-
-pub fn label(cx: &mut Context) {
-    title(cx, "Label");
-
-    VStack::new(cx, |cx| {
-        Label::new(cx, "A simple label").class("heading");
-
-        Label::new(cx, "This is some simple text");
-
-        Label::new(cx, "A styled label").class("heading");
-
-        Label::new(cx, "This is some styled text").color(Color::red());
-
-        Label::new(cx, "A multiline label").class("heading");
-
-        Label::new(cx, "This is some text which is wrapped")
-            .width(Pixels(100.0))
-            .bottom(Pixels(10.0));
-    })
-    .child_space(Pixels(10.0))
-    .class("bg-darker");
-}
-
-#[derive(Lens)]
-pub struct SliderData {
-    val: f32,
-}
-
 pub enum SliderEvent {
     SetValue(f32),
 }
@@ -529,37 +580,6 @@ impl Model for SliderData {
     }
 }
 
-pub fn slider(cx: &mut Context) {
-    SliderData { val: 0.5 }.build(cx);
-
-    VStack::new(cx, |cx| {
-        Label::new(cx, "Label").class("title");
-
-        Label::new(cx, "A simple slider").class("heading");
-
-        Slider::new(cx, SliderData::val).on_changing(|cx, val| cx.emit(SliderEvent::SetValue(val)));
-
-        Label::new(cx, "A slider and label").class("heading");
-
-        HStack::new(cx, |cx| {
-            Slider::new(cx, SliderData::val)
-                .on_changing(|cx, val| cx.emit(SliderEvent::SetValue(val)));
-            Label::new(cx, SliderData::val.map(|val| format!("{:.2}", val))).width(Pixels(50.0));
-        })
-        .height(Auto)
-        .child_top(Stretch(1.0))
-        .child_bottom(Stretch(1.0))
-        .col_between(Pixels(10.0));
-    })
-    .child_space(Pixels(10.0))
-    .class("bg-darker");
-}
-
-#[derive(Lens)]
-pub struct SwitchData {
-    flag: bool,
-}
-
 pub enum SwitchEvent {
     Toggle,
 }
@@ -572,39 +592,6 @@ impl Model for SwitchData {
             }
         });
     }
-}
-
-pub fn switch(cx: &mut Context) {
-    SwitchData { flag: false }.build(cx);
-
-    VStack::new(cx, |cx| {
-        Label::new(cx, "Switch").class("title");
-
-        Label::new(cx, "A simple switch").class("heading");
-
-        Switch::new(cx, SwitchData::flag).on_toggle(|cx| cx.emit(SwitchEvent::Toggle));
-        // Slider::new(cx, SliderData::val).on_changing(|cx, val| cx.emit(SliderEvent::SetValue(val)));
-
-        // Label::new(cx, "A slider and label").class("heading");
-
-        // HStack::new(cx, |cx| {
-        //     Slider::new(cx, SliderData::val)
-        //         .on_changing(|cx, val| cx.emit(SliderEvent::SetValue(val)));
-        //     Label::new(cx, SliderData::val.map(|val| format!("{:.2}", val))).width(Pixels(50.0));
-        // })
-        // .height(Auto)
-        // .child_top(Stretch(1.0))
-        // .child_bottom(Stretch(1.0))
-        // .col_between(Pixels(10.0));
-    })
-    .child_space(Pixels(10.0))
-    .class("bg-darker");
-}
-
-#[derive(Lens)]
-pub struct TextboxData {
-    text: String,
-    multiline_text: String,
 }
 
 pub enum TextboxEvent {
@@ -624,39 +611,4 @@ impl Model for TextboxData {
             }
         });
     }
-}
-
-pub fn textbox(cx: &mut Context) {
-    TextboxData {
-        text: String::from("Some text..."),
-        multiline_text: String::from("This text spans \n multiple lines."),
-    }
-    .build(cx);
-
-    VStack::new(cx, |cx| {
-        Label::new(cx, "Switch").class("title");
-        VStack::new(cx, |cx| {
-            Label::new(cx, "Single Line Textbox").class("heading");
-            Textbox::new(cx, TextboxData::text)
-                .width(Stretch(1.0))
-                .on_submit(|cx, text, _| cx.emit(TextboxEvent::SetText(text)));
-        })
-        .height(Auto)
-        .child_space(Pixels(20.0))
-        .background_color(Color::rgb(36, 36, 36));
-
-        VStack::new(cx, |cx| {
-            Label::new(cx, "Single Line Textbox").class("heading");
-            Textbox::new_multiline(cx, TextboxData::multiline_text, false)
-                .width(Stretch(1.0))
-                .height(Pixels(100.0))
-                .on_submit(|cx, text, _| cx.emit(TextboxEvent::SetMultiline(text)));
-        })
-        .height(Auto)
-        .child_space(Pixels(20.0))
-        .background_color(Color::rgb(36, 36, 36));
-    })
-    .child_space(Pixels(20.0))
-    .row_between(Pixels(20.0))
-    .class("bg-darker");
 }

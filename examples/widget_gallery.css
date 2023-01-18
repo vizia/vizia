@@ -1,0 +1,92 @@
+.title {
+    space: 0px;
+    child-space: 16px;
+    height: 64px;
+    col-between: 32px;
+}
+
+.title * {
+    top: 1s;
+    bottom: 1s;
+}
+
+.title > hstack {
+    width: auto;
+    height: auto;
+    col-between: 4px;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+.title > label {
+    width: 1s;
+    font-size: 30px;
+    font-weight: 600;
+}
+
+.heading {
+    font-size: 14;
+    font-weight: 600;
+    top: 10px;
+    bottom: 6px;
+}
+
+.tabview-tabheader-wrapper {
+    width: 200px;
+    child-top: 4px;
+    child-bottom: 4px;
+}
+
+tabheader {
+    width: 1s;
+    height: 24px;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+tabheader label {
+    width: 1s;
+}
+
+tabheader:checked {
+    background-color: #51afef22;
+}
+
+tabheader:hover {
+    background-color: #51afef22;
+}
+
+.indicator {
+    width: 2px;
+    top: 0px;
+    bottom: 0px;
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
+}
+
+.row-wrapper {
+    width: 1s;
+    height: auto;
+    col-between: 8px;
+}
+
+.row-wrapper > .wrapper {
+    height: 1s;
+}
+
+.wrapper {
+    width: 1s;
+    height: auto;
+    border-radius: 4px;
+    child-space: 8px;
+    row-between: 4px;
+}
+
+.wrapper > hstack {
+    col-between: 8px;
+}
+
+.bg-darkest {
+    child-space: 16px;
+    row-between: 8px;
+}
