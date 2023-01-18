@@ -144,7 +144,7 @@ checkbox {
     background-color: transparent;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
-    font-family: "ViziaIcons";
+    font-family: "Entypo";
 }
 
 checkbox:hover {
@@ -279,7 +279,7 @@ datetimepicker {
 }
 
 datetimepicker tabheader label {
-    font-family: "ViziaIcons";
+    font-family: "Entypo";
 }
 
 datetimepicker tabheader:checked label {
@@ -732,7 +732,7 @@ table {
 }
 
 .table-column-icon {
-    font-family: "ViziaIcons";
+    font-family: "Entypo";
 }
 
 .table-row-divisor {

@@ -1,7 +1,7 @@
 /* General */
 
 .icon {
-    font-family: "ViziaIcons";
+    font-family: "Entypo";
 }
 
 root {
@@ -149,7 +149,7 @@ checkbox {
     child-space: 1s;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
-    font-family: "ViziaIcons";
+    font-family: "Entypo";
 }
 
 checkbox:hover {
@@ -284,7 +284,7 @@ datetimepicker {
 }
 
 datetimepicker tabheader label {
-    font-family: "ViziaIcons";
+    font-family: "Entypo";
 }
 
 datetimepicker tabheader:checked label {
@@ -676,7 +676,7 @@ tablecolumn {
 .table-column-icon {
     width: 30px;
     child-space: 1s;
-    font-family: "ViziaIcons";
+    font-family: "Entypo";
 }
 
 .table-row-divisor {

@@ -1,5 +1,6 @@
-use crate::fonts::vizia_icons::CHEVRON_DOWN;
 use crate::prelude::*;
+
+const CHEVRON_DOWN: &str = "\u{123}";
 
 pub struct PickList {
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,

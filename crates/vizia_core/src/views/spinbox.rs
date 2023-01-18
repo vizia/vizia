@@ -1,4 +1,11 @@
-use crate::{fonts::vizia_icons::*, prelude::*};
+use crate::prelude::*;
+
+const CHEVRON_DOWN: &str = "\u{123}";
+const CHEVRON_LEFT: &str = "\u{124}";
+const CHEVRON_RIGHT: &str = "\u{125}";
+const CHEVRON_UP: &str = "\u{126}";
+const MINUS: &str = "-";
+const PLUS: &str = "+";
 
 pub enum SpinboxEvent {
     Increment,

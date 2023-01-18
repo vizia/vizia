@@ -88,6 +88,7 @@ impl TextContext {
                 stretch: Default::default(),
                 style: style.font_style.get(entity).copied().unwrap_or_default(),
             };
+            println!("{:?}", &query);
             let id = int.font_system.db().query(&query).unwrap(); // TODO worst-case default handling
             let font = int.font_system.get_font(id).unwrap();
             (font.info.family.clone(), font.info.weight, font.info.style, font.info.monospaced)

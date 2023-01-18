@@ -1,7 +1,8 @@
-use vizia::{
-    fonts::vizia_icons::{CHECK, MOON, PLUS, SUN},
-    prelude::*,
-};
+use vizia::prelude::*;
+
+const THEME: &str = "\u{25d1}";
+const PLUS: &str = "+";
+const CHECK: &str = "\u{2713}";
 
 const STYLE: &str = r#"
 
@@ -125,20 +126,8 @@ fn title(cx: &mut Context, title: &str) {
         .col_between(Pixels(5.0))
         .child_top(Stretch(1.0))
         .child_bottom(Stretch(1.0));
-        Button::new(
-            cx,
-            |cx| cx.emit(AppEvent::ToggleTheme),
-            |cx| {
-                Label::new(
-                    cx,
-                    match AppData::theme.get(cx) {
-                        ThemeMode::DarkMode => SUN,
-                        _ => MOON,
-                    },
-                )
-                .class("icon")
-            },
-        );
+        Button::new(cx, |cx| cx.emit(AppEvent::ToggleTheme), |cx| Label::new(cx, THEME))
+            .class("icon");
     })
     .class("title");
 }

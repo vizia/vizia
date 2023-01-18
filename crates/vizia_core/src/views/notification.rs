@@ -1,7 +1,8 @@
-use crate::{
-    fonts::vizia_icons::{CHEVRON_DOWN, CHEVRON_RIGHT, CROSS},
-    prelude::*,
-};
+use crate::prelude::*;
+
+const CHEVRON_DOWN: &str = "\u{123}";
+const CHEVRON_RIGHT: &str = "\u{125}";
+const CROSS: &str = "\u{53}";
 
 #[derive(Clone, Debug, PartialEq, Lens)]
 pub struct Notification {
