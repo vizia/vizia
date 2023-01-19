@@ -1,9 +1,9 @@
 use crate::prelude::*;
 
-const CHEVRON_DOWN: &str = "\u{123}";
-const CHEVRON_LEFT: &str = "\u{124}";
-const CHEVRON_RIGHT: &str = "\u{125}";
-const CHEVRON_UP: &str = "\u{126}";
+const CHEVRON_DOWN: &str = "\u{e75c}";
+const CHEVRON_LEFT: &str = "\u{e75d}";
+const CHEVRON_RIGHT: &str = "\u{e75e}";
+const CHEVRON_UP: &str = "\u{e75f}";
 const MINUS: &str = "-";
 const PLUS: &str = "+";
 
@@ -80,7 +80,6 @@ impl Spinbox {
                             }
                         }
                     })
-                    .class("icon")
                     .class("spinbox-button");
                 (content)(cx).class("spinbox-value");
                 Label::new(cx, "")
@@ -106,7 +105,6 @@ impl Spinbox {
                             }
                         }
                     })
-                    .class("icon")
                     .class("spinbox-button");
             })
             .toggle_class("horizontal", Spinbox::kind.map(|kind| kind == &SpinboxKind::Horizontal))

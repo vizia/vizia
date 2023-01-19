@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
-const CHEVRON_DOWN: &str = "\u{123}";
-const CHEVRON_RIGHT: &str = "\u{125}";
+const CHEVRON_DOWN: &str = "\u{e75c}";
+const CHEVRON_RIGHT: &str = "\u{e75e}";
 const CROSS: &str = "\u{53}";
 
 #[derive(Clone, Debug, PartialEq, Lens)]

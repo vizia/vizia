@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-const CHEVRON_DOWN: &str = "\u{123}";
+const CHEVRON_DOWN: &str = "\u{e75c}";
 
 pub struct PickList {
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
