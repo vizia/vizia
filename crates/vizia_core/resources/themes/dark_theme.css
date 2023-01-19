@@ -667,7 +667,7 @@ switch:checked:hover:disabled .switch-handle {
 /* Tab */
 
 tabview {
-    background-color: #343434;
+    background-color: #282828;
     layout-type: column;
 }
 
