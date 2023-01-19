@@ -2,7 +2,8 @@ use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
 use vizia_style::{
-    border, overflow, CssRule, FontFamily, GenericFontFamily, Gradient, Transform, Transition,
+    border, overflow, BoxShadow, CssRule, FontFamily, GenericFontFamily, Gradient, Transform,
+    Transition,
 };
 
 use cssparser::{Parser, ParserInput};
@@ -154,17 +155,7 @@ pub struct Style {
     pub background_image: StyleSet<String>,
     pub background_gradient: AnimatableSet<Gradient>,
 
-    // Outer Shadow
-    pub outer_shadow_h_offset: AnimatableSet<LengthOrPercentage>,
-    pub outer_shadow_v_offset: AnimatableSet<LengthOrPercentage>,
-    pub outer_shadow_blur: AnimatableSet<LengthOrPercentage>,
-    pub outer_shadow_color: AnimatableSet<Color>,
-
-    // Inner Shadow (TODO)
-    pub inner_shadow_h_offset: AnimatableSet<LengthOrPercentage>,
-    pub inner_shadow_v_offset: AnimatableSet<LengthOrPercentage>,
-    pub inner_shadow_blur: AnimatableSet<LengthOrPercentage>,
-    pub inner_shadow_color: AnimatableSet<Color>,
+    pub box_shadow: AnimatableSet<Vec<BoxShadow>>,
 
     // Text & Font
     pub text_wrap: StyleSet<bool>,
@@ -399,6 +390,12 @@ impl Style {
                 self.transitions.insert(rule_id, animation);
             }
 
+            "box-shadow" => {
+                self.box_shadow.insert_animation(animation, self.add_transition(transition));
+                self.box_shadow.insert_transition(rule_id, animation);
+                self.transitions.insert(rule_id, animation);
+            }
+
             _ => {}
         }
     }
@@ -619,7 +616,9 @@ impl Style {
                 }
             },
             // Property::TextWrap(_) => todo!(),
-            Property::BoxShadow(_) => todo!(),
+            Property::BoxShadow(box_shadows) => {
+                self.box_shadow.insert_rule(rule_id, box_shadows);
+            }
             Property::BoxShadowXOffset(_) => todo!(),
             Property::BoxShadowYOffset(_) => todo!(),
             Property::BoxShadowBlurRadius(_) => todo!(),
@@ -1356,15 +1355,7 @@ impl Style {
         self.background_image.remove(entity);
         self.background_gradient.remove(entity);
 
-        self.outer_shadow_h_offset.remove(entity);
-        self.outer_shadow_v_offset.remove(entity);
-        self.outer_shadow_blur.remove(entity);
-        self.outer_shadow_color.remove(entity);
-
-        self.inner_shadow_h_offset.remove(entity);
-        self.inner_shadow_v_offset.remove(entity);
-        self.inner_shadow_blur.remove(entity);
-        self.inner_shadow_color.remove(entity);
+        self.box_shadow.remove(entity);
 
         self.layout_type.remove(entity);
         self.position_type.remove(entity);
@@ -1475,15 +1466,7 @@ impl Style {
         self.background_image.clear_rules();
         self.background_gradient.clear_rules();
 
-        self.outer_shadow_h_offset.clear_rules();
-        self.outer_shadow_v_offset.clear_rules();
-        self.outer_shadow_blur.clear_rules();
-        self.outer_shadow_color.clear_rules();
-
-        self.inner_shadow_h_offset.clear_rules();
-        self.inner_shadow_v_offset.clear_rules();
-        self.inner_shadow_blur.clear_rules();
-        self.inner_shadow_color.clear_rules();
+        self.box_shadow.clear_rules();
 
         self.layout_type.clear_rules();
         self.position_type.clear_rules();

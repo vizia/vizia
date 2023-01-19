@@ -1,7 +1,7 @@
 use morphorm::Units;
 use vizia_style::{
-    Color, ColorStop, Gradient, Length, LengthOrPercentage, LengthValue, LinearGradient, Opacity,
-    Transform, RGBA,
+    BoxShadow, Color, ColorStop, Gradient, Length, LengthOrPercentage, LengthValue, LinearGradient,
+    Opacity, Transform, RGBA,
 };
 
 use crate::style::Transform2D;
@@ -93,7 +93,7 @@ impl Interpolator for Length {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (end, start) {
             (Length::Value(end_val), Length::Value(start_val)) => {
-                return Length::Value(LengthValue::interpolate(end_val, start_val, t));
+                return Length::Value(LengthValue::interpolate(start_val, end_val, t));
             }
 
             _ => {}
@@ -195,6 +195,30 @@ impl Interpolator for LinearGradient {
             }
         } else {
             end.clone()
+        }
+    }
+}
+
+impl Interpolator for BoxShadow {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        BoxShadow {
+            x_offset: Length::interpolate(&start.x_offset, &end.x_offset, t),
+            y_offset: Length::interpolate(&start.y_offset, &end.y_offset, t),
+            blur_radius: Option::interpolate(&start.blur_radius, &end.blur_radius, t),
+            spread_radius: Option::interpolate(&start.spread_radius, &end.spread_radius, t),
+            color: Option::interpolate(&start.color, &end.color, t),
+            inset: end.inset,
+        }
+    }
+}
+
+impl<T: Interpolator + Clone + Default> Interpolator for Option<T> {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (Some(s), Some(e)) => Some(T::interpolate(s, e, t)),
+            (None, Some(e)) => Some(T::interpolate(&T::default(), e, t)),
+            (Some(s), None) => Some(T::interpolate(s, &T::default(), t)),
+            _ => end.clone(),
         }
     }
 }

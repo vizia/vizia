@@ -631,6 +631,7 @@ where
                         transition_state.from_rule =
                             self.inline_data.sparse[entity_index].data_index.index();
                         transition_state.to_rule = shared_data_index.index();
+
                         if transition_state.from_rule != transition_state.to_rule {
                             self.play_animation(entity, rule_animation);
                         }

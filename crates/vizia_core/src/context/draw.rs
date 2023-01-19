@@ -16,8 +16,8 @@ use crate::text::TextContext;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 use vizia_style::{
-    Gradient, HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue, LineDirection,
-    VerticalPositionKeyword,
+    BoxShadow, Gradient, HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue,
+    LineDirection, VerticalPositionKeyword,
 };
 
 /// Cached data used for drawing.
@@ -234,6 +234,10 @@ impl<'a> DrawContext<'a> {
         self.style.image.get(self.current)
     }
 
+    pub fn box_shadows(&self) -> Option<&Vec<BoxShadow>> {
+        self.style.box_shadow.get(self.current)
+    }
+
     // pub fn text(&self) -> Option<&String> {
     //     self.style.text.get(self.current)
     // }
@@ -242,7 +246,124 @@ impl<'a> DrawContext<'a> {
         self.cache.get_opacity(self.current)
     }
 
-    pub fn draw_gradient(&mut self, canvas: &mut Canvas, paint: &mut Paint) {
+    pub fn scale_factor(&self) -> f32 {
+        self.style.dpi_factor as f32
+    }
+
+    pub fn draw_shadows(&mut self, canvas: &mut Canvas, path: &mut Path) {
+        if let Some(box_shadows) = self.box_shadows() {
+            for box_shadow in box_shadows.iter().rev() {
+                // Create a shadow image
+                // Draw the path to the shadow image
+                // Blur the shadow image
+                // Draw the shadow image onto the canvas
+                let color = box_shadow.color.unwrap_or_default();
+                let x_offset = box_shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
+                let y_offset = box_shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();
+                // canvas.save();
+                // canvas.translate(x_offset, y_offset);
+                // canvas.fill_path(path, &femtovg::Paint::color(color.into()));
+                // canvas.restore();
+
+                let blur_radius =
+                    box_shadow.blur_radius.as_ref().and_then(|br| br.to_px()).unwrap_or(0.0);
+                let sigma = blur_radius / 2.0;
+                let d = (sigma * 5.0).ceil();
+
+                let bounds = self.bounds();
+                // println!("bounds: {}", bounds);
+
+                let (source, target) = {
+                    (
+                        canvas
+                            .create_image_empty(
+                                (bounds.w + d) as usize,
+                                (bounds.h + d) as usize,
+                                femtovg::PixelFormat::Rgba8,
+                                femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
+                            )
+                            .unwrap(),
+                        canvas
+                            .create_image_empty(
+                                (bounds.w + d) as usize,
+                                (bounds.h + d) as usize,
+                                femtovg::PixelFormat::Rgba8,
+                                femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
+                            )
+                            .unwrap(),
+                    )
+                };
+
+                canvas.save();
+                canvas.set_render_target(femtovg::RenderTarget::Image(source));
+                canvas.reset_scissor();
+                canvas.reset_transform();
+                canvas.clear_rect(
+                    0,
+                    0,
+                    (bounds.w + d) as u32,
+                    (bounds.h + d) as u32,
+                    femtovg::Color::rgba(0, 0, 0, 0),
+                );
+                canvas.translate(-bounds.x + d / 2.0, -bounds.y + d / 2.0);
+                let paint = Paint::color(color.into());
+                canvas.fill_path(&mut path.clone(), &paint);
+                canvas.restore();
+
+                let target_image = if blur_radius > 0.0 {
+                    canvas.filter_image(
+                        target,
+                        femtovg::ImageFilter::GaussianBlur { sigma },
+                        source,
+                    );
+                    target
+                } else {
+                    source
+                };
+
+                canvas.set_render_target(femtovg::RenderTarget::Screen);
+                canvas.save();
+                canvas.translate(x_offset, y_offset);
+                let mut shadow_path = Path::new();
+                shadow_path.rect(
+                    bounds.x - d / 2.0,
+                    bounds.y - d / 2.0,
+                    bounds.w + d,
+                    bounds.h + d,
+                );
+
+                // shadow_path.rect(0.0, 0.0, bounds.w + d, bounds.h + d);
+
+                canvas.fill_path(
+                    &mut shadow_path,
+                    &Paint::image(
+                        target_image,
+                        bounds.x - d / 2.0,
+                        bounds.y - d / 2.0,
+                        bounds.w + d,
+                        bounds.h + d,
+                        0f32,
+                        1f32,
+                    ),
+                );
+
+                // canvas.fill_path(
+                //     &mut shadow_path,
+                //     &Paint::image(source, 0.0, 0.0, bounds.w + d, bounds.h + d, 0f32, 1f32),
+                // );
+                // canvas.fill_path(
+                //     &mut shadow_path,
+                //     &femtovg::Paint::color(femtovg::Color::rgb(0, 0, 0)),
+                // );
+                canvas.restore();
+
+                // canvas.delete_image(source);
+                // canvas.delete_image(target);
+            }
+        }
+    }
+
+    pub fn draw_gradient(&self, canvas: &mut Canvas, paint: &mut Paint) {
         let bounds = self.bounds();
 
         let parent = self

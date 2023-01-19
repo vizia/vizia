@@ -220,6 +220,10 @@ path = "examples/style/transform.rs"
 name = "gradient"
 path = "examples/style/gradient.rs"
 
+[[example]]
+name = "box_shadow"
+path = "examples/style/box_shadow.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard", "vizia_winit/clipboard"]

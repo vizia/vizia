@@ -90,14 +90,14 @@ pub fn draw_system(cx: &mut Context) {
         // Apply transform
         // let transform = cx.cache.get_transform(entity);
         canvas.save();
-        canvas.set_transform(
-            transform[0],
-            transform[1],
-            transform[2],
-            transform[3],
-            transform[4],
-            transform[5],
-        );
+        // canvas.set_transform(
+        //     transform[0],
+        //     transform[1],
+        //     transform[2],
+        //     transform[3],
+        //     transform[4],
+        //     transform[5],
+        // );
 
         if let Some(view) = cx.views.remove(&entity) {
             cx.current = entity;

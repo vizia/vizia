@@ -466,36 +466,7 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
     }
 
     // Outer Shadow
-    if cx.style.outer_shadow_h_offset.link(entity, &matched_rules) {
-        should_redraw = true;
-    }
-
-    if cx.style.outer_shadow_v_offset.link(entity, &matched_rules) {
-        should_redraw = true;
-    }
-
-    if cx.style.outer_shadow_blur.link(entity, &matched_rules) {
-        should_redraw = true;
-    }
-
-    if cx.style.outer_shadow_color.link(entity, &matched_rules) {
-        should_redraw = true;
-    }
-
-    // Inner Shadow
-    if cx.style.inner_shadow_h_offset.link(entity, &matched_rules) {
-        should_redraw = true;
-    }
-
-    if cx.style.inner_shadow_v_offset.link(entity, &matched_rules) {
-        should_redraw = true;
-    }
-
-    if cx.style.inner_shadow_blur.link(entity, &matched_rules) {
-        should_redraw = true;
-    }
-
-    if cx.style.inner_shadow_color.link(entity, &matched_rules) {
+    if cx.style.box_shadow.link(entity, &matched_rules) {
         should_redraw = true;
     }
 

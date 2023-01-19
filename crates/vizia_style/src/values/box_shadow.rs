@@ -2,7 +2,7 @@ use crate::{Color, CustomParseError, InsetKeyword, Length, Parse};
 use cssparser::{ParseError, Parser};
 
 /// A box shadow adding a shadow effect around an element's frame.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct BoxShadow {
     /// The horizontal offset of the box shadow.
     pub x_offset: Length,
@@ -28,14 +28,7 @@ impl BoxShadow {
         color: Option<Color>,
         inset: bool,
     ) -> Self {
-        Self {
-            x_offset,
-            y_offset,
-            blur_radius,
-            spread_radius,
-            color,
-            inset,
-        }
+        Self { x_offset, y_offset, blur_radius, spread_radius, color, inset }
     }
 }
 
@@ -46,19 +39,9 @@ impl<'i> Parse<'i> for BoxShadow {
         let blur_radius = input.try_parse(Length::parse).ok();
         let spread_radius = input.try_parse(Length::parse).ok();
         let color = input.try_parse(Color::parse).ok();
-        let inset = input
-            .try_parse(InsetKeyword::parse)
-            .map(|_| true)
-            .unwrap_or(false);
+        let inset = input.try_parse(InsetKeyword::parse).map(|_| true).unwrap_or(false);
 
-        Ok(BoxShadow::new(
-            x_offset,
-            y_offset,
-            blur_radius,
-            spread_radius,
-            color,
-            inset,
-        ))
+        Ok(BoxShadow::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
     }
 }
 

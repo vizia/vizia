@@ -19,10 +19,7 @@ pub fn has_animations(cx: &Context) -> bool {
         | cx.style.border_bottom_right_radius.has_animations()
         | cx.style.background_color.has_animations()
         | cx.style.background_gradient.has_animations()
-        | cx.style.outer_shadow_h_offset.has_animations()
-        | cx.style.outer_shadow_v_offset.has_animations()
-        | cx.style.outer_shadow_blur.has_animations()
-        | cx.style.outer_shadow_color.has_animations()
+        | cx.style.box_shadow.has_animations()
     //     | cx.style.font_color.has_animations()
     //     | cx.style.font_size.has_animations()
         | cx.style.left.has_animations()
@@ -72,10 +69,7 @@ pub fn animation_system(cx: &mut Context) {
     cx.style.border_bottom_right_radius.tick(time);
     cx.style.background_color.tick(time);
     cx.style.background_gradient.tick(time);
-    cx.style.outer_shadow_h_offset.tick(time);
-    cx.style.outer_shadow_v_offset.tick(time);
-    cx.style.outer_shadow_blur.tick(time);
-    cx.style.outer_shadow_color.tick(time);
+    cx.style.box_shadow.tick(time);
     // cx.style.font_color.tick(time);
     // cx.style.font_size.tick(time);
     cx.style.left.tick(time);

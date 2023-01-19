@@ -262,8 +262,9 @@ pub trait View: 'static + Sized {
 
         //path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
 
-        // // Draw outer shadow
+        cx.draw_shadows(canvas, &mut path);
 
+        // // Draw outer shadow
         // if cx.outer_shadow_color().is_some() {
         //     let sigma = outer_shadow_blur / 2.0;
         //     let d = (sigma * 5.0).ceil();
@@ -365,7 +366,7 @@ pub trait View: 'static + Sized {
         // Fill with background color
         let mut paint = Paint::color(background_color.into());
 
-        cx.draw_gradient(canvas, &mut paint);
+        // cx.draw_gradient(canvas, &mut paint);
         // // Gradient overrides background color
         // if let Some(background_gradient) = cx.background_gradient() {
         //     let (_, _, end_x, end_y, parent_length) = match background_gradient.direction {
