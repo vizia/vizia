@@ -2,12 +2,6 @@
 
 * {
     color: #ffffff;
-    /* border-color: blue;
-    border-width: 1px; */
-}
-
-.icon {
-    font-family: "Entypo", sans-serif;
 }
 
 root {
@@ -24,15 +18,19 @@ root {
 /* Backgrounds */
 
 .bg-default {
-    background-color: #343434;
+    background-color: #323232;
 }
 
-.bg-lighter {
-    background-color: #404040;
+.bg-side-pannel {
+    background-color: #383838;
 }
 
-.bg-darker {
-    background-color: #1d1d1d;
+.bg-secondary {
+    background-color: #202020;
+}
+
+.bg-main {
+    background-color: #1b1b1b;
 }
 
 /* Button  */
@@ -54,7 +52,7 @@ button:over {
 }
 
 button:active {
-    background-color: #323232;
+    background-color: #48484888;
 }
 
 button.accent {
@@ -121,8 +119,8 @@ button:focus-visible {
 
 button:disabled {
     border-width: 0px;
-    background-color: #404040;
-    border-color: #404040;
+    background-color: #ffffff44;
+    border-color: #ffffff44;
 }
 
 button.outline:disabled {
@@ -136,7 +134,7 @@ button.ghost:disabled {
 }
 
 button:disabled label {
-    color: #888;
+    color: #ffffff88;
 }
 
 /* Checkbox */
@@ -144,11 +142,11 @@ button:disabled label {
 checkbox {
     border-radius: 4px;
     border-width: 2px;
-    border-color: #888;
+    border-color: #ffffff88;
     background-color: transparent;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
-    font: "icons";
+    font-family: "Entypo";
 }
 
 checkbox:hover {
@@ -173,7 +171,7 @@ checkbox:checked {
 }
 
 checkbox:disabled {
-    border-color: #404040;
+    border-color: #ffffff44;
     transition: border-color 0.1 0;
 }
 
@@ -191,8 +189,8 @@ checkbox:checked:hover {
 }
 
 checkbox:checked:disabled {
-    background-color: #404040;
-    border-color: #404040;
+    background-color: #ffffff44;
+    border-color: #ffffff44;
     color: #181818;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
@@ -219,23 +217,10 @@ chip {
 datepicker {
     background-color: #343434;
     border-radius: 4px;
-    child-space: 8px;
-    row-between: 8px;
-}
-
-.datepicker-divisor {
-    background-color: #2f2f2f;
-}
-
-.datepicker-calendar {
-    width: auto;
-    height: auto;
-    left: 1s;
-    right: 1s;
 }
 
 .datepicker-calendar-day {
-    color: #888;
+    color: #ffffff88;
     cursor: hand;
 }
 
@@ -245,34 +230,13 @@ datepicker {
     border-radius: 4px;
 }
 
+.datepicker-calendar-day:checked:disabled {
+    background-color: #ffffff88;
+}
+
 .datepicker-calendar-day-disabled {
     color: #585858;
     cursor: arrow;
-}
-
-.datepicker-selected-date {
-    color: #b0b0b0;
-}
-
-.datepicker-cancel {
-    border-width: 2px;
-    border-color: #ef5151;
-    border-radius: 4px;
-}
-
-.datepicker-cancel label {
-    color: #ef5151;
-}
-
-.datepicker-apply {
-    border-radius: 4px;
-    border-width: 2px;
-    border-color: #51afef;
-    background-color: #51afef;
-}
-
-.datepicker-apply label {
-    color: #181818;
 }
 
 /* Date Time Picker */
@@ -282,8 +246,8 @@ datetimepicker {
     background-color: #343434;
 }
 
-datetimepicker tabheader label {
-    font: "icons";
+datetimepicker tabview {
+    border-radius: 4px;
 }
 
 datetimepicker tabheader:checked label {
@@ -301,6 +265,8 @@ datetimepicker tabheader:checked .indicator {
 /* Dropdown */
 
 dropdown {
+    border-width: 1px;
+    border-color: #484848;
     background-color: #282828;
     border-radius: 4px;
 }
@@ -311,10 +277,9 @@ dropdown:focus-visible {
     outline-offset: 3px;
 }
 
-/* dropdown label {
-    child-space: 1s;
-    background-color: red;
-} */
+dropdown:disabled .title {
+    color: #ffffff88;
+}
 
 dropdown popup {
     background-color: #282828;
@@ -322,7 +287,7 @@ dropdown popup {
 }
 
 dropdown list label {
-    color: #888;
+    color: #ffffff88;
     cursor: hand;
 }
 
@@ -375,6 +340,10 @@ knob:focus-visible {
 }
 
 /* Label */
+
+label.text-disabled {
+    color: #ffffff88;
+}
 
 /* List */
 
@@ -451,7 +420,7 @@ popup:checked {
 radiobutton {
     border-width: 2px;
     border-radius: 50%;
-    border-color: #888;
+    border-color: #ffffff88;
     background-color: transparent;
     transition: background-color 0.1 0;
     transition: border-color 0.1 0;
@@ -479,13 +448,13 @@ radiobutton:checked:hover {
 }
 
 radiobutton:disabled {
-    border-color: #404040;
+    border-color: #ffffff44;
     transition: border-color 0.1 0;
 }
 
 radiobutton .inner {
     border-radius: 50%;
-    background-color: #888;
+    background-color: #ffffff00;
     transition: width 0.15 0;
     transition: height 0.15 0;
     transition: background-color 0.1 0;
@@ -504,9 +473,12 @@ radiobutton:hover .inner {
 }
 
 radiobutton:disabled .inner {
-    background-color: #404040;
-    transition: width 0.15 0;
-    transition: height 0.15 0;
+    background-color: #ffffff00;
+    transition: background-color 0.1 0;
+}
+
+radiobutton:checked:disabled .inner {
+    background-color: #ffffff44;
     transition: background-color 0.1 0;
 }
 
@@ -521,15 +493,15 @@ scrollbar {
 }
 
 scrollbar .thumb {
-    background-color: #404040;
+    background-color: #ffffff44;
 }
 
 scrollbar .thumb:hover {
-    background-color: #888;
+    background-color: #ffffff88;
 }
 
 scrollbar .thumb:focus {
-    background-color: #888;
+    background-color: #ffffff88;
 }
 
 /* Slider */
@@ -561,15 +533,15 @@ slider .thumb:hover {
 }
 
 slider:disabled {
-    background-color: #404040;
+    background-color: #ffffff44;
 }
 
 slider:disabled .active {
-    background-color: #404040;
+    background-color: #ffffff44;
 }
 
 slider:disabled .thumb {
-    background-color: #404040;
+    background-color: #ffffff44;
 }
 
 /* Named Slider */
@@ -580,7 +552,7 @@ namedslider {
 }
 
 namedslider > textbox {
-    color: #888;
+    color: #ffffff88;
 }
 
 namedslider slider label {
@@ -590,12 +562,14 @@ namedslider slider label {
 /* Spinbox */
 
 spinbox {
+    border-width: 1px;
+    border-color: #484848;
     background-color: #282828;
     border-radius: 4px;
 }
 
 spinbox .spinbox-button {
-    color: #888888;
+    color: #ffffff88;
     cursor: hand;
 }
 
@@ -613,13 +587,13 @@ spinbox textbox.spinbox-value {
 }
 
 spinbox dropdown.spinbox-value {
-    background-color: red;
     border-width: 0px;
 }
 
-spinbox picklist.spinbox-value {
+spinbox picklist.spinbox-value dropdown {
     background-color: transparent;
     border-width: 0px;
+    border-radius: 0px;
     col-between: 4px;
 }
 
@@ -627,17 +601,17 @@ spinbox picklist.spinbox-value {
 
 /* Switch */
 
+switch .switch-handle {
+    border-radius: 50%;
+    background-color: #ffffff88;
+    transition: background-color 0.1 0;
+    transition: left 0.1 0;
+}
+
 switch .switch-handle-bg {
     border-radius: 6px;
     background-color: #343434;
     transition: background-color 0.1 0;
-}
-
-switch .switch-handle {
-    background-color: #888888;
-    border-radius: 50%;
-    transition: background-color 0.1 0;
-    transition: left 0.1 0;
 }
 
 switch:hover .switch-handle {
@@ -652,7 +626,7 @@ switch:focus-visible {
 }
 
 switch:checked .switch-handle-bg {
-    background-color: #51afef40;
+    background-color: #2c4454;
     transition: background-color 0.1 0;
 }
 
@@ -666,34 +640,39 @@ switch:checked:hover .switch-handle {
     transition: background-color 0.1 0;
 }
 
-switch:disabled * {
-    background-color: #404040;
+switch:disabled .switch-handle {
+    background-color: #888;
     transition: background-color 0.1 0;
 }
 
-switch:hover:disabled * {
-    background-color: #404040;
+switch:hover:disabled .switch-handle {
+    background-color: #888;
     transition: background-color 0.1 0;
 }
 
-switch:checked:disabled * {
-    background-color: #404040;
+switch:checked:disabled .switch-handle {
+    background-color: #888;
     transition: background-color 0.1 0;
 }
 
-switch:checked:hover:disabled * {
-    background-color: #404040;
+switch:checked:disabled .switch-handle-bg {
+    background-color: #323232;
+    transition: background-color 0.1 0;
+}
+
+switch:checked:hover:disabled .switch-handle {
+    background-color: #888;
     transition: background-color 0.1 0;
 }
 /* Tab */
 
 tabview {
-    background-color: #343434;
+    background-color: #282828;
     layout-type: column;
 }
 
 tabview tabheader label {
-    color: #888;
+    color: #ffffff88;
 }
 
 tabview tabheader:checked label {
@@ -701,7 +680,7 @@ tabview tabheader:checked label {
 }
 
 tabview.vertical tabheader label {
-    color: #888;
+    color: #ffffff88;
 }
 
 tabview.vertical tabheader:checked label {
@@ -732,15 +711,15 @@ table {
 }
 
 .table-column-title {
-    font: "roboto-bold";
+    font-family: "roboto-bold";
 }
 
 .table-column-icon {
-    font: "icons";
+    font-family: "Entypo";
 }
 
 .table-row-divisor {
-    background-color: #404040;
+    background-color: #ffffff44;
 }
 
 .table-element {
@@ -758,7 +737,7 @@ table {
 textbox {
     border-width: 1px;
     border-radius: 4px;
-    border-color: #282828;
+    border-color: #484848;
     background-color: #282828;
     transition: border-color 0.1 0;
     transition: background-color 0.1 0;
@@ -784,8 +763,13 @@ textbox:checked .textbox_content {
     selection-color: #51afef40;
 }
 
+textbox:disabled {
+    border-color: #323232;
+    transition: border-color 0.1 0;
+}
+
 textbox:disabled textboxlabel {
-    color: #888;
+    color: #ffffff88;
     transition: color 0.1 0;
 }
 
@@ -799,6 +783,10 @@ textbox.error {
     border-width: 1px;
     transition: border-color 0.1 0;
     background-color: #3c2c2c;
+}
+
+textbox.error:checked {
+    background-color: #3d2525;
 }
 
 /* Time Picker */
@@ -829,15 +817,11 @@ digitaltimepicker textbox {
 analogtimepicker {
     background-color: #343434;
     border-radius: 4px;
-    width: 160px;
-    height: 160px;
 }
 
 analogtimepicker .clock-face {
     border-radius: 50%;
     background-color: #484848;
-    width: 180px;
-    height: 180px;
 }
 
 analogtimepicker .clock-hand {
@@ -872,11 +856,11 @@ analogtimepicker .time-selector-wrapper button {
 }
 
 analogtimepicker .time-selector-wrapper button label {
-    color: #888;
+    color: #ffffff88;
 }
 
 analogtimepicker .time-selector-wrapper button label {
-    color: #888;
+    color: #ffffff88;
 }
 
 analogtimepicker .time-selector-wrapper button:hover label {
@@ -904,6 +888,7 @@ tooltip .tooltip-wrapper {
 }
 
 tooltip .title {
+    font-weight: 600;
     font-size: 18px;
 }
 
@@ -945,7 +930,7 @@ tooltip button {
 }
 
 .modal label {
-    color: #888;
+    color: #ffffff88;
 }
 
 .modal .title {

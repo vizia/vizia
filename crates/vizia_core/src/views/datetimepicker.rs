@@ -30,7 +30,7 @@ where
                         let lens1 = lens.clone();
                         TabPair::new(
                             move |cx| {
-                                Label::new(cx, ICON_CALENDAR).hoverable(false);
+                                Label::new(cx, ICON_CALENDAR).hoverable(false).class("icon");
                                 Element::new(cx).class("indicator");
                             },
                             move |cx| {
@@ -46,7 +46,7 @@ where
                         let lens1 = lens.clone();
                         TabPair::new(
                             move |cx| {
-                                Label::new(cx, ICON_CLOCK).class("icon").hoverable(false);
+                                Label::new(cx, ICON_CLOCK).hoverable(false).class("icon");
                                 Element::new(cx).class("indicator");
                             },
                             move |cx| {

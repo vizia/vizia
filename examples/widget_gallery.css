@@ -1,0 +1,108 @@
+.section-title {
+    space: 0px;
+    child-space: 16px;
+    height: 64px;
+    col-between: 32px;
+}
+
+.section-title * {
+    top: 1s;
+    bottom: 1s;
+}
+
+.section-title > hstack {
+    width: auto;
+    height: auto;
+    col-between: 4px;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+.section-title > label {
+    width: 1s;
+    font-size: 30px;
+    font-weight: 600;
+}
+
+.heading {
+    font-size: 14;
+    font-weight: 600;
+    top: 10px;
+    bottom: 6px;
+}
+
+tabview.tabview-main {
+    layout-type: row;
+}
+
+tabview.tabview-main > .tabview-tabheader-wrapper > tabheader {
+    width: 1s;
+    height: 24px;
+    child-top: 1s;
+    child-bottom: 1s;
+    layout-type: row;
+}
+
+tabview.tabview-main > .tabview-tabheader-wrapper {
+    layout-type: column;
+    width: 200px;
+    child-top: 4px;
+    child-bottom: 4px;
+}
+
+.tabview-main > .tabview-tabheader-wrapper > tabheader > label {
+    width: 1s;
+}
+
+.tabview-main > .tabview-tabheader-wrapper > tabheader:checked {
+    background-color: #51afef22;
+}
+
+.tabview-main > .tabview-tabheader-wrapper > tabheader:hover {
+    background-color: #51afef22;
+}
+
+.tabview-main > .tabview-tabheader-wrapper > tabheader > .indicator {
+    width: 2px;
+    top: 0px;
+    bottom: 0px;
+    height: 1s;
+}
+
+.row-wrapper {
+    width: 1s;
+    height: auto;
+    col-between: 8px;
+}
+
+.row-wrapper > .wrapper {
+    height: 1s;
+}
+
+.wrapper {
+    width: 1s;
+    height: auto;
+    border-radius: 4px;
+    child-space: 8px;
+    row-between: 4px;
+}
+
+.wrapper > hstack {
+    col-between: 8px;
+}
+
+.bg-main {
+    child-space: 16px;
+    row-between: 8px;
+}
+
+knob .track {
+    background-color: #ffb74d;
+}
+.label_knob {
+    border-width: 2px;
+    border-color: #28282b;
+    background-color: #000000;
+    col-between: 10px;
+    child-space: 1s;
+}

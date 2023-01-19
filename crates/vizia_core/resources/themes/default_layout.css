@@ -1,3 +1,7 @@
+.icon {
+    font-family: "Entypo", sans-serif;
+}
+
 /* Button */
 
 button {
@@ -50,8 +54,8 @@ chip label {
 
 datepicker {
     width: 252px;
-    height: 289px;
-    child-space: 8px;
+    height: 288px;
+    child-space: 7px;
     row-between: 8px;
 }
 
@@ -99,36 +103,6 @@ datepicker {
 .datepicker-selected-date {
     left: 1s;
     right: 1s;
-}
-
-.datepicker-actions-container {
-    left: 1s;
-    right: 1s;
-    col-between: 4px;
-}
-
-.datepicker-cancel {
-    width: auto;
-    height: auto;
-}
-
-.datepicker-cancel label {
-    top: 2px;
-    bottom: 2px;
-    right: 8px;
-    left: 8px;
-}
-
-.datepicker-apply {
-    width: auto;
-    height: auto;
-}
-
-.datepicker-apply label {
-    top: 2px;
-    bottom: 2px;
-    right: 8px;
-    left: 8px;
 }
 
 /* Date Time Picker */
@@ -304,7 +278,7 @@ menustack.horizontal > menu > menustack {
 
 menustack.vertical > menu > hstack > .menu_arrow {
     display: flex;
-    font: "material";
+    font-family: "material";
     left: 1s;
     top: 1s;
     bottom: 1s;
@@ -899,12 +873,14 @@ digitaltimepicker .digitaltimepicker-dot {
 /* Radial Time Picker */
 
 analogtimepicker {
-    child-space: 8px;
+    child-space: 1s;
     border-radius: 4px;
 }
 
 analogtimepicker .clock-face {
     child-space: 1s;
+    width: 180px;
+    height: 180px;
 }
 
 analogtimepicker .clock-hand {

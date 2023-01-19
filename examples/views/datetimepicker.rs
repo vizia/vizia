@@ -70,6 +70,7 @@ fn main() {
             .on_blur(|cx| cx.emit(PopupEvent::Close))
             .top(Pixels(36.0));
         })
+        .disabled(ControlsData::disabled)
         .row_between(Pixels(8.0));
     })
     .title("Datepicker")
