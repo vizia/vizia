@@ -21,16 +21,16 @@ root {
     background-color: #323232;
 }
 
-.bg-lighter {
+.bg-side-pannel {
     background-color: #383838;
 }
 
-.bg-darker {
+.bg-secondary {
     background-color: #202020;
 }
 
-.bg-darkest {
-    background-color: #1d1d1d;
+.bg-main {
+    background-color: #1b1b1b;
 }
 
 /* Button  */
@@ -217,15 +217,6 @@ chip {
 datepicker {
     background-color: #343434;
     border-radius: 4px;
-    child-space: 8px;
-    row-between: 8px;
-}
-
-.datepicker-calendar {
-    width: auto;
-    height: auto;
-    left: 1s;
-    right: 1s;
 }
 
 .datepicker-calendar-day {
@@ -255,8 +246,8 @@ datetimepicker {
     background-color: #343434;
 }
 
-datetimepicker tabheader label {
-    font-family: "Entypo";
+datetimepicker tabview {
+    border-radius: 4px;
 }
 
 datetimepicker tabheader:checked label {
@@ -274,6 +265,8 @@ datetimepicker tabheader:checked .indicator {
 /* Dropdown */
 
 dropdown {
+    border-width: 1px;
+    border-color: #484848;
     background-color: #282828;
     border-radius: 4px;
 }
@@ -282,6 +275,10 @@ dropdown:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
     outline-offset: 3px;
+}
+
+dropdown:disabled .title {
+    color: #ffffff88;
 }
 
 dropdown popup {
@@ -565,6 +562,8 @@ namedslider slider label {
 /* Spinbox */
 
 spinbox {
+    border-width: 1px;
+    border-color: #484848;
     background-color: #282828;
     border-radius: 4px;
 }
@@ -591,9 +590,10 @@ spinbox dropdown.spinbox-value {
     border-width: 0px;
 }
 
-spinbox picklist.spinbox-value {
+spinbox picklist.spinbox-value dropdown {
     background-color: transparent;
     border-width: 0px;
+    border-radius: 0px;
     col-between: 4px;
 }
 
@@ -601,17 +601,17 @@ spinbox picklist.spinbox-value {
 
 /* Switch */
 
+switch .switch-handle {
+    border-radius: 50%;
+    background-color: #ffffff88;
+    transition: background-color 0.1 0;
+    transition: left 0.1 0;
+}
+
 switch .switch-handle-bg {
     border-radius: 6px;
     background-color: #343434;
     transition: background-color 0.1 0;
-}
-
-switch .switch-handle {
-    background-color: #ffffff88;
-    border-radius: 50%;
-    transition: background-color 0.1 0;
-    transition: left 0.1 0;
 }
 
 switch:hover .switch-handle {
@@ -626,7 +626,7 @@ switch:focus-visible {
 }
 
 switch:checked .switch-handle-bg {
-    background-color: #51afef40;
+    background-color: #2c4454;
     transition: background-color 0.1 0;
 }
 
@@ -640,23 +640,28 @@ switch:checked:hover .switch-handle {
     transition: background-color 0.1 0;
 }
 
-switch:disabled * {
-    background-color: #ffffff44;
+switch:disabled .switch-handle {
+    background-color: #888;
     transition: background-color 0.1 0;
 }
 
-switch:hover:disabled * {
-    background-color: #ffffff44;
+switch:hover:disabled .switch-handle {
+    background-color: #888;
     transition: background-color 0.1 0;
 }
 
-switch:checked:disabled * {
-    background-color: #ffffff44;
+switch:checked:disabled .switch-handle {
+    background-color: #888;
     transition: background-color 0.1 0;
 }
 
-switch:checked:hover:disabled * {
-    background-color: #ffffff44;
+switch:checked:disabled .switch-handle-bg {
+    background-color: #323232;
+    transition: background-color 0.1 0;
+}
+
+switch:checked:hover:disabled .switch-handle {
+    background-color: #888;
     transition: background-color 0.1 0;
 }
 /* Tab */
@@ -732,7 +737,7 @@ table {
 textbox {
     border-width: 1px;
     border-radius: 4px;
-    border-color: #282828;
+    border-color: #484848;
     background-color: #282828;
     transition: border-color 0.1 0;
     transition: background-color 0.1 0;
@@ -758,6 +763,11 @@ textbox:checked .textbox_content {
     selection-color: #51afef40;
 }
 
+textbox:disabled {
+    border-color: #323232;
+    transition: border-color 0.1 0;
+}
+
 textbox:disabled textboxlabel {
     color: #ffffff88;
     transition: color 0.1 0;
@@ -773,6 +783,10 @@ textbox.error {
     border-width: 1px;
     transition: border-color 0.1 0;
     background-color: #3c2c2c;
+}
+
+textbox.error:checked {
+    background-color: #3d2525;
 }
 
 /* Time Picker */
@@ -803,15 +817,11 @@ digitaltimepicker textbox {
 analogtimepicker {
     background-color: #343434;
     border-radius: 4px;
-    width: 160px;
-    height: 160px;
 }
 
 analogtimepicker .clock-face {
     border-radius: 50%;
     background-color: #484848;
-    width: 180px;
-    height: 180px;
 }
 
 analogtimepicker .clock-hand {

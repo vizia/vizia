@@ -21,16 +21,16 @@ root {
     background-color: #eeeeee;
 }
 
-.bg-lighter {
-    background-color: #fff;
-}
-
-.bg-darker {
-    background-color: #dddddd;
-}
-
-.bg-darkest {
+.bg-side-pannel {
     background-color: #eee;
+}
+
+.bg-secondary {
+    background-color: #ddd;
+}
+
+.bg-main {
+    background-color: #fff;
 }
 
 /* Button  */
@@ -210,15 +210,6 @@ chip {
 datepicker {
     background-color: #ffffff;
     border-radius: 4px;
-    child-space: 8px;
-    row-between: 8px;
-}
-
-.datepicker-calendar {
-    width: auto;
-    height: auto;
-    left: 1s;
-    right: 1s;
 }
 
 .datepicker-calendar-day {
@@ -245,11 +236,11 @@ datepicker {
 
 datetimepicker {
     border-radius: 4px;
-    background-color: #ffffff;
+    background-color: #fff;
 }
 
-datetimepicker tabheader label {
-    font-family: "Entypo";
+datetimepicker tabview {
+    border-radius: 4px;
 }
 
 datetimepicker tabheader:checked label {
@@ -267,6 +258,8 @@ datetimepicker tabheader:checked .indicator {
 /* Dropdown */
 
 dropdown {
+    border-width: 1px;
+    border-color: #c4c4c4;
     background-color: #eee;
     border-radius: 4px;
 }
@@ -275,6 +268,10 @@ dropdown:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
     outline-offset: 3px;
+}
+
+dropdown:disabled .title {
+    color: #48484888;
 }
 
 dropdown popup {
@@ -558,6 +555,8 @@ namedslider slider label {
 /* Spinbox */
 
 spinbox {
+    border-width: 1px;
+    border-color: #c4c4c4;
     background-color: #eee;
     border-radius: 4px;
 }
@@ -584,9 +583,10 @@ spinbox dropdown.spinbox-value {
     border-width: 0px;
 }
 
-spinbox picklist.spinbox-value {
+spinbox picklist.spinbox-value dropdown {
     background-color: transparent;
     border-width: 0px;
+    border-radius: 0px;
     col-between: 4px;
 }
 
@@ -594,21 +594,21 @@ spinbox picklist.spinbox-value {
 
 /* Switch */
 
-switch .switch-handle-bg {
-    border-radius: 6px;
-    background-color: #ffffff;
-    transition: background-color 0.1 0;
-}
-
 switch .switch-handle {
-    background-color: #888888;
     border-radius: 50%;
+    background-color: #eee;
     transition: background-color 0.1 0;
     transition: left 0.1 0;
 }
 
-switch:hover .switch-handle {
+switch .switch-handle-bg {
+    border-radius: 6px;
     background-color: #c4c4c4;
+    transition: background-color 0.1 0;
+}
+
+switch:hover .switch-handle {
+    background-color: #fff;
     transition: background-color 0.1 0;
 }
 
@@ -619,7 +619,7 @@ switch:focus-visible {
 }
 
 switch:checked .switch-handle-bg {
-    background-color: #51afef88;
+    background-color: #a7bfcf;
     transition: background-color 0.1 0;
 }
 
@@ -629,33 +629,38 @@ switch:checked .switch-handle {
 }
 
 switch:checked:hover .switch-handle {
-    background-color: #80caff;
+    background-color: #90d0fc;
     transition: background-color 0.1 0;
 }
 
-switch:disabled * {
-    background-color: #48484844;
+switch:disabled .switch-handle {
+    background-color: #aaaaaa;
     transition: background-color 0.1 0;
 }
 
-switch:hover:disabled * {
-    background-color: #48484844;
+switch:hover:disabled .switch-handle {
+    background-color: #aaaaaa;
     transition: background-color 0.1 0;
 }
 
-switch:checked:disabled * {
-    background-color: #48484844;
+switch:checked:disabled .switch-handle {
+    background-color: #aaaaaa;
     transition: background-color 0.1 0;
 }
 
-switch:checked:hover:disabled * {
-    background-color: #48484844;
+switch:checked:disabled .switch-handle-bg {
+    background-color: #c4c4c4;
+    transition: background-color 0.1 0;
+}
+
+switch:checked:hover:disabled .switch-handle {
+    background-color: #aaaaaa;
     transition: background-color 0.1 0;
 }
 /* Tab */
 
 tabview {
-    background-color: #ffffff;
+    background-color: #eee;
     layout-type: column;
 }
 
@@ -765,7 +770,11 @@ textbox.error {
     border-color: #ef5151;
     border-width: 1px;
     transition: border-color 0.1 0;
-    background-color: #ef515122;
+    background-color: #efd7d7;
+}
+
+textbox.error:checked {
+    background-color: #fdeaea;
 }
 
 /* Time Picker */
@@ -796,15 +805,11 @@ digitaltimepicker textbox {
 analogtimepicker {
     background-color: #ffffff;
     border-radius: 4px;
-    width: 160px;
-    height: 160px;
 }
 
 analogtimepicker .clock-face {
     border-radius: 50%;
     background-color: #eee;
-    width: 180px;
-    height: 180px;
 }
 
 analogtimepicker .clock-hand {
