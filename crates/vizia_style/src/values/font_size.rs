@@ -1,7 +1,9 @@
+use cssparser::*;
+
 use crate::{macros::impl_parse, FontSizeKeyword, Parse};
 
 /// A font size value.
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub struct FontSize(pub f32);
 
 impl_parse! {
@@ -30,6 +32,20 @@ impl From<FontSizeKeyword> for FontSize {
 impl From<f32> for FontSize {
     fn from(number: f32) -> Self {
         FontSize(number)
+    }
+}
+
+impl From<f64> for FontSize {
+    fn from(number: f64) -> Self {
+        FontSize(number as f32)
+    }
+}
+
+impl From<&str> for FontSize {
+    fn from(s: &str) -> Self {
+        let mut input = ParserInput::new(&s);
+        let mut parser = Parser::new(&mut input);
+        FontSize::parse(&mut parser).unwrap_or_default()
     }
 }
 

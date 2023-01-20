@@ -1,7 +1,7 @@
 use morphorm::Units;
 use vizia_style::{
-    BoxShadow, Color, ColorStop, Gradient, Length, LengthOrPercentage, LengthValue, LinearGradient,
-    Opacity, Transform, RGBA,
+    BoxShadow, Color, ColorStop, FontSize, Gradient, Length, LengthOrPercentage, LengthValue,
+    LinearGradient, Opacity, Transform, RGBA,
 };
 
 use crate::style::Transform2D;
@@ -220,5 +220,11 @@ impl<T: Interpolator + Clone + Default> Interpolator for Option<T> {
             (Some(s), None) => Some(T::interpolate(s, &T::default(), t)),
             _ => end.clone(),
         }
+    }
+}
+
+impl Interpolator for FontSize {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        FontSize(f32::interpolate(&start.0, &end.0, t))
     }
 }

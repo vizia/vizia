@@ -228,6 +228,10 @@ path = "examples/style/box_shadow.rs"
 name = "border"
 path = "examples/style/border.rs"
 
+[[example]]
+name = "text"
+path = "examples/style/text.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland"]
 clipboard = ["vizia_core/clipboard", "vizia_winit/clipboard"]

@@ -2,7 +2,7 @@ use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
 use vizia_style::{
-    BoxShadow, CssRule, FontFamily, GenericFontFamily, Gradient, Transform, Transition,
+    BoxShadow, CssRule, FontFamily, FontSize, GenericFontFamily, Gradient, Transform, Transition,
 };
 
 use crate::prelude::*;
@@ -143,7 +143,7 @@ pub struct Style {
     pub text_wrap: StyleSet<bool>,
     pub font_family: StyleSet<Vec<FamilyOwned>>,
     pub font_color: AnimatableSet<Color>,
-    pub font_size: AnimatableSet<f32>,
+    pub font_size: AnimatableSet<FontSize>,
     pub font_weight: StyleSet<Weight>,
     pub font_style: StyleSet<FontStyle>,
     pub caret_color: AnimatableSet<Color>,
@@ -620,7 +620,7 @@ impl Style {
 
             // Font Size
             Property::FontSize(font_size) => {
-                self.font_size.insert_rule(rule_id, font_size.0);
+                self.font_size.insert_rule(rule_id, font_size);
             }
 
             // Caret Color

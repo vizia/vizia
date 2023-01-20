@@ -140,7 +140,9 @@ impl<'a> DrawContext<'a> {
 
     /// Returns the font-size of the current entity in physical coordinates.
     pub fn font_size(&self, entity: Entity) -> f32 {
-        self.logical_to_physical(self.style.font_size.get(entity).copied().unwrap_or(16.0))
+        self.logical_to_physical(
+            self.style.font_size.get(entity).copied().map(|f| f.0).unwrap_or(16.0),
+        )
     }
 
     /// Function to convert logical points to physical pixels.

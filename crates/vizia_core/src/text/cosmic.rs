@@ -110,8 +110,8 @@ impl TextContext {
                 // TODO spans
                 line.set_attrs_list(AttrsList::new(attrs));
             }
-            let font_size =
-                style.font_size.get(entity).copied().unwrap_or(16.0) * style.dpi_factor as f32;
+            let font_size = style.font_size.get(entity).copied().map(|f| f.0).unwrap_or(16.0)
+                * style.dpi_factor as f32;
             // TODO configurable line spacing
             buf.set_metrics(Metrics::new(font_size as i32, (font_size * 1.25) as i32));
             buf.shape_until_scroll();

@@ -1,6 +1,7 @@
 use super::internal;
 use crate::prelude::*;
 use cosmic_text::{FamilyOwned, Weight};
+use vizia_style::FontSize;
 
 /// Modifiers for changing the text properties of a view.
 pub trait TextModifiers: internal::Modifiable {
@@ -48,7 +49,7 @@ pub trait TextModifiers: internal::Modifiable {
     }
 
     /// Sets the font size of the view.
-    fn font_size(mut self, value: impl Res<f32>) -> Self {
+    fn font_size<U: Into<FontSize>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             cx.style.font_size.insert(entity, v.into());
