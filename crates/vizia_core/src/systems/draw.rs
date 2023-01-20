@@ -1,5 +1,4 @@
 use crate::animation::Interpolator;
-use crate::cache::BoundingBox;
 use crate::context::Context;
 use crate::prelude::*;
 use crate::style::Transform2D;
@@ -125,14 +124,6 @@ pub fn draw_system(cx: &mut Context) {
         }
 
         canvas.restore();
-
-        // Uncomment this for debug outlines
-        // TODO - Hook this up to a key in debug mode
-        // let mut path = Path::new();
-        // path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-        // let mut paint = Paint::color(femtovg::Color::rgb(255, 0, 0));
-        // paint.set_line_width(1.0);
-        // canvas.stroke_path(&mut path, paint);
     }
 
     canvas.flush();

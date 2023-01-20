@@ -125,7 +125,7 @@ impl Interpolator for LengthOrPercentage {
 }
 
 impl Interpolator for Transform {
-    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+    fn interpolate(_start: &Self, end: &Self, _t: f32) -> Self {
         end.clone()
     }
 }

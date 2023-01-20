@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 
 use vizia_style::Transform;
 
-use crate::{cache::BoundingBox, systems::transform};
+use crate::cache::BoundingBox;
 
 /// A 2D transform matrix.
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
@@ -79,7 +79,6 @@ impl Transform2D {
                 Transform::Matrix(matrix) => {
                     Transform2D::new(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f)
                 }
-                _ => Transform2D::identity(),
             };
 
             result.premultiply(&t);
