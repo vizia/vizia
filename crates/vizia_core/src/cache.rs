@@ -340,6 +340,7 @@ impl CachedData {
 
     pub fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
+        self.display.remove(entity);
         self.visibility.remove(entity);
         self.child_sum.remove(entity);
         self.child_max.remove(entity);

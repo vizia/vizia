@@ -1,8 +1,8 @@
 use crate::{
-    define_property, Angle, BackgroundImage, BorderColor, BorderCornerShape, BorderRadius,
+    define_property, Angle, BackgroundImage, Border, BorderColor, BorderCornerShape, BorderRadius,
     BorderWidth, BorderWidthValue, BoxShadow, Color, CursorIcon, CustomParseError, CustomProperty,
     Display, FontFamily, FontSize, InsetKeyword, LayoutType, Length, LengthOrPercentage, Opacity,
-    Overflow, Parse, PositionType, Rect, Scale, Transform, Transition, Translate, Units,
+    Outline, Overflow, Parse, PositionType, Rect, Scale, Transform, Transition, Translate, Units,
     UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
@@ -56,8 +56,7 @@ define_property! {
         // ----- Border -----
 
         // Border Shorthand
-        // TODO: Support coloring and styling individual borders and enable this.
-        // "border": Border(Border),
+        "border": Border(Border),
 
         // Border Color
         "border-color": BorderColor(Color),
@@ -100,8 +99,7 @@ define_property! {
         // ----- Outline -----
 
         // Outline Shorthand
-        // TODO: Support coloring and styling individual outlines.
-        // "outline": Outline(Outline),
+        "outline": Outline(Outline),
 
         // Outline Color
         "outline-color": OutlineColor(Color),

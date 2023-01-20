@@ -1,3 +1,5 @@
+use vizia_style::{BorderRadius, Rect};
+
 use super::internal;
 use crate::{entity, prelude::*};
 
@@ -210,14 +212,14 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets the border radius for all four corners of the view.
-    fn border_radius<U: Into<LengthOrPercentage>>(mut self, value: impl Res<U>) -> Self {
+    fn border_radius<U: Into<BorderRadius>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.into();
-            cx.style.border_top_left_radius.insert(entity, value.clone());
-            cx.style.border_top_right_radius.insert(entity, value.clone());
-            cx.style.border_bottom_left_radius.insert(entity, value.clone());
-            cx.style.border_bottom_right_radius.insert(entity, value.clone());
+            cx.style.border_top_left_radius.insert(entity, value.top_left);
+            cx.style.border_top_right_radius.insert(entity, value.top_right);
+            cx.style.border_bottom_left_radius.insert(entity, value.bottom_left);
+            cx.style.border_bottom_right_radius.insert(entity, value.bottom_right);
 
             cx.need_redraw();
         });
@@ -247,14 +249,14 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets the border corner shape for all four corners of the view.
-    fn border_corner_shape<U: Into<BorderCornerShape>>(mut self, value: impl Res<U>) -> Self {
+    fn border_corner_shape<U: Into<Rect<BorderCornerShape>>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.into();
-            cx.style.border_top_left_shape.insert(entity, value);
-            cx.style.border_top_right_shape.insert(entity, value);
-            cx.style.border_bottom_left_shape.insert(entity, value);
-            cx.style.border_bottom_right_shape.insert(entity, value);
+            cx.style.border_top_left_shape.insert(entity, value.0);
+            cx.style.border_top_right_shape.insert(entity, value.1);
+            cx.style.border_bottom_right_shape.insert(entity, value.2);
+            cx.style.border_bottom_left_shape.insert(entity, value.3);
 
             cx.need_redraw();
         });

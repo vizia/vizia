@@ -14,7 +14,7 @@ pub fn hover_system(cx: &mut Context) {
 
     for entity in draw_tree.into_iter() {
         // Skip invisible widgets
-        if cx.cache.get_visibility(entity) == Visibility::Invisible {
+        if cx.cache.get_visibility(entity) == Visibility::Hidden {
             continue;
         }
 

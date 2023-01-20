@@ -338,34 +338,64 @@ impl Style {
     fn insert_transition(&mut self, rule_id: Rule, transition: &Transition) {
         let animation = self.animation_manager.create();
         match transition.property.as_ref() {
+            "opacity" => {
+                self.opacity.insert_animation(animation, self.add_transition(transition));
+                self.opacity.insert_transition(rule_id, animation);
+            }
+
             "background-color" => {
                 self.background_color.insert_animation(animation, self.add_transition(transition));
                 self.background_color.insert_transition(rule_id, animation);
-                self.transitions.insert(rule_id, animation);
             }
+
+            "border" => {
+                self.border_width.insert_animation(animation, self.add_transition(transition));
+                self.border_width.insert_transition(rule_id, animation);
+                self.border_color.insert_animation(animation, self.add_transition(transition));
+                self.border_color.insert_transition(rule_id, animation);
+            }
+
+            "border-width" => {
+                self.border_width.insert_animation(animation, self.add_transition(transition));
+                self.border_width.insert_transition(rule_id, animation);
+            }
+
             "border-color" => {
                 self.border_color.insert_animation(animation, self.add_transition(transition));
                 self.border_color.insert_transition(rule_id, animation);
-                self.transitions.insert(rule_id, animation);
             }
+
+            "outline" => {
+                self.outline_width.insert_animation(animation, self.add_transition(transition));
+                self.outline_width.insert_transition(rule_id, animation);
+                self.outline_color.insert_animation(animation, self.add_transition(transition));
+                self.outline_color.insert_transition(rule_id, animation);
+            }
+
+            "outline-width" => {
+                self.outline_width.insert_animation(animation, self.add_transition(transition));
+                self.outline_width.insert_transition(rule_id, animation);
+            }
+
             "outline-color" => {
                 self.outline_color.insert_animation(animation, self.add_transition(transition));
                 self.outline_color.insert_transition(rule_id, animation);
-                self.transitions.insert(rule_id, animation);
+            }
+
+            "outline-offset" => {
+                self.outline_offset.insert_animation(animation, self.add_transition(transition));
+                self.outline_offset.insert_transition(rule_id, animation);
             }
 
             "transform" => {
                 self.transform.insert_animation(animation, self.add_transition(transition));
                 self.transform.insert_transition(rule_id, animation);
-                self.transitions.insert(rule_id, animation);
             }
 
             "background-image" => {
-                println!("Transition: {:?}", transition);
                 self.background_gradient
                     .insert_animation(animation, self.add_transition(transition));
                 self.background_gradient.insert_transition(rule_id, animation);
-                self.transitions.insert(rule_id, animation);
             }
 
             "border-radius" => {
@@ -381,23 +411,46 @@ impl Style {
                 self.border_top_right_radius
                     .insert_animation(animation, self.add_transition(transition));
                 self.border_top_right_radius.insert_transition(rule_id, animation);
-                self.transitions.insert(rule_id, animation);
+            }
+
+            "border-bottom-left-radius" => {
+                self.border_bottom_left_radius
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_bottom_left_radius.insert_transition(rule_id, animation);
+            }
+
+            "border-bottom-right-radius" => {
+                self.border_bottom_right_radius
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_bottom_right_radius.insert_transition(rule_id, animation);
+            }
+
+            "border-top-left-radius" => {
+                self.border_top_left_radius
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_top_left_radius.insert_transition(rule_id, animation);
+            }
+
+            "border-top-right-radius" => {
+                self.border_top_right_radius
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_top_right_radius.insert_transition(rule_id, animation);
             }
 
             "width" => {
                 self.width.insert_animation(animation, self.add_transition(transition));
                 self.width.insert_transition(rule_id, animation);
-                self.transitions.insert(rule_id, animation);
             }
 
             "box-shadow" => {
                 self.box_shadow.insert_animation(animation, self.add_transition(transition));
                 self.box_shadow.insert_transition(rule_id, animation);
-                self.transitions.insert(rule_id, animation);
             }
 
-            _ => {}
+            _ => return,
         }
+
+        self.transitions.insert(rule_id, animation);
     }
 
     fn insert_property(&mut self, rule_id: Rule, property: Property) {
@@ -493,6 +546,16 @@ impl Style {
             }
 
             // Border
+            Property::Border(border) => {
+                if let Some(border_color) = border.color {
+                    self.border_color.insert_rule(rule_id, border_color);
+                }
+
+                if let Some(border_width) = border.width {
+                    self.border_width.insert_rule(rule_id, border_width.into());
+                }
+            }
+
             Property::BorderWidth(border_width) => {
                 self.border_width.insert_rule(rule_id, border_width.top.0);
             }
@@ -526,7 +589,26 @@ impl Style {
 
             // Border Corner Shape
             Property::BorderCornerShape(border_corner_shape) => {
-                todo!()
+                self.border_top_left_shape.insert_rule(rule_id, border_corner_shape.0);
+                self.border_top_right_shape.insert_rule(rule_id, border_corner_shape.1);
+                self.border_bottom_right_shape.insert_rule(rule_id, border_corner_shape.2);
+                self.border_bottom_left_shape.insert_rule(rule_id, border_corner_shape.3);
+            }
+
+            Property::BorderTopLeftShape(border_corner_shape) => {
+                self.border_top_left_shape.insert_rule(rule_id, border_corner_shape);
+            }
+
+            Property::BorderTopRightShape(border_corner_shape) => {
+                self.border_top_right_shape.insert_rule(rule_id, border_corner_shape);
+            }
+
+            Property::BorderBottomLeftShape(border_corner_shape) => {
+                self.border_bottom_left_shape.insert_rule(rule_id, border_corner_shape);
+            }
+
+            Property::BorderBottomRightShape(border_corner_shape) => {
+                self.border_bottom_right_shape.insert_rule(rule_id, border_corner_shape);
             }
 
             // Font Family
@@ -595,6 +677,16 @@ impl Style {
 
             Property::ColBetween(col_between) => {
                 self.col_between.insert_rule(rule_id, col_between);
+            }
+
+            Property::Outline(outline) => {
+                if let Some(outline_color) = outline.color {
+                    self.outline_color.insert_rule(rule_id, outline_color);
+                }
+
+                if let Some(outline_width) = outline.width {
+                    self.outline_width.insert_rule(rule_id, outline_width.into());
+                }
             }
 
             Property::OutlineColor(outline_color) => {
@@ -1295,8 +1387,6 @@ impl Style {
             .expect("Failed to add pseudoclasses");
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
-        self.visibility.insert(entity, Default::default());
-        //self.focus_order.insert(entity, Default::default()).unwrap();
         self.needs_restyle = true;
         self.needs_relayout = true;
         self.needs_redraw = true;

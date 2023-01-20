@@ -9,7 +9,7 @@ define_enum! {
         /// The entity will be rendered.
         "visible": Visible,
         /// The entity will not rendered, but will still be acted upon by the layout system.
-        "invisible": Invisible,
+        "hidden": Hidden,
     }
 }
 
@@ -18,7 +18,7 @@ impl From<bool> for Visibility {
         if boolean {
             Visibility::Visible
         } else {
-            Visibility::Invisible
+            Visibility::Hidden
         }
     }
 }

@@ -12,7 +12,7 @@ impl Cache for CachedData {
 
     fn set_visible(&mut self, node: Self::Item, value: bool) {
         if let Some(visibility) = self.visibility.get_mut(node) {
-            *visibility = if value { Visibility::Visible } else { Visibility::Invisible }
+            *visibility = if value { Visibility::Visible } else { Visibility::Hidden }
         }
     }
 

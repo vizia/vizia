@@ -1,7 +1,7 @@
 use crate::{macros::impl_parse, Length, LengthOrPercentage, Parse, Rect};
-
+use cssparser::*;
 /// Defines the border radius of every corner of a rectangle.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct BorderRadius {
     /// The border radius of the top-left corner.
     pub top_left: LengthOrPercentage,
@@ -20,12 +20,7 @@ impl BorderRadius {
         bottom_right: LengthOrPercentage,
         bottom_left: LengthOrPercentage,
     ) -> Self {
-        Self {
-            top_left,
-            top_right,
-            bottom_right,
-            bottom_left,
-        }
+        Self { top_left, top_right, bottom_right, bottom_left }
     }
 }
 
@@ -40,6 +35,14 @@ impl_parse! {
 impl From<Rect<LengthOrPercentage>> for BorderRadius {
     fn from(rect: Rect<LengthOrPercentage>) -> Self {
         BorderRadius::new(rect.0, rect.1, rect.2, rect.3)
+    }
+}
+
+impl From<&str> for BorderRadius {
+    fn from(s: &str) -> Self {
+        let mut input = ParserInput::new(&s);
+        let mut parser = Parser::new(&mut input);
+        BorderRadius::parse(&mut parser).unwrap_or_default()
     }
 }
 

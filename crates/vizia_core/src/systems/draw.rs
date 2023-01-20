@@ -22,7 +22,7 @@ pub fn draw_system(cx: &mut Context) {
     let mut draw_tree: Vec<Entity> = tree_iter
         .filter(|&entity| {
             entity != Entity::root()
-                && cx.cache.get_visibility(entity) != Visibility::Invisible
+                && cx.cache.get_visibility(entity) != Visibility::Hidden
                 && cx.cache.get_display(entity) != Display::None
                 && !cx.tree.is_ignored(entity)
                 && cx.cache.get_opacity(entity) > 0.0
@@ -90,14 +90,14 @@ pub fn draw_system(cx: &mut Context) {
         // Apply transform
         // let transform = cx.cache.get_transform(entity);
         canvas.save();
-        // canvas.set_transform(
-        //     transform[0],
-        //     transform[1],
-        //     transform[2],
-        //     transform[3],
-        //     transform[4],
-        //     transform[5],
-        // );
+        canvas.set_transform(
+            transform[0],
+            transform[1],
+            transform[2],
+            transform[3],
+            transform[4],
+            transform[5],
+        );
 
         if let Some(view) = cx.views.remove(&entity) {
             cx.current = entity;

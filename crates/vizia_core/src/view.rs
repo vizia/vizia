@@ -366,7 +366,7 @@ pub trait View: 'static + Sized {
         // Fill with background color
         let mut paint = Paint::color(background_color.into());
 
-        // cx.draw_gradient(canvas, &mut paint);
+        cx.draw_gradient(canvas, &mut paint);
         // // Gradient overrides background color
         // if let Some(background_gradient) = cx.background_gradient() {
         //     let (_, _, end_x, end_y, parent_length) = match background_gradient.direction {

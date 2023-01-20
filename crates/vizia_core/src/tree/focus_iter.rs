@@ -7,7 +7,7 @@ use vizia_storage::{DoubleEndedTreeTour, TourDirection, TreeExt, TreeIterator, T
 /// Should the user be able to navigate to the entity with tab?
 pub fn is_navigatable(cx: &Context, node: Entity, lock_focus_to: Entity) -> bool {
     // Skip invisible widgets
-    if cx.cache.get_visibility(node) == Visibility::Invisible {
+    if cx.cache.get_visibility(node) == Visibility::Hidden {
         return false;
     }
 

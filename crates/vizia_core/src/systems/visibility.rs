@@ -16,8 +16,8 @@ pub fn visibility_system(cx: &mut Context, tree: &Tree<Entity>) {
 
         let parent = tree.get_layout_parent(entity).unwrap();
 
-        if cx.cache.get_visibility(parent) == Visibility::Invisible {
-            cx.cache.set_visibility(entity, Visibility::Invisible);
+        if cx.cache.get_visibility(parent) == Visibility::Hidden {
+            cx.cache.set_visibility(entity, Visibility::Hidden);
         } else {
             if let Some(visibility) = cx.style.visibility.get(entity).copied() {
                 cx.cache.set_visibility(entity, visibility);

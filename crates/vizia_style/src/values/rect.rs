@@ -1,5 +1,5 @@
 use crate::{CustomParseError, Parse};
-use cssparser::{ParseError, Parser};
+use cssparser::*;
 
 /// Describes four sides of a rectangle.
 ///
@@ -50,6 +50,23 @@ where
                 location,
             })
         }
+    }
+}
+
+impl<T: Default> Default for Rect<T> {
+    fn default() -> Self {
+        Self(T::default(), T::default(), T::default(), T::default())
+    }
+}
+
+impl<T: Clone + Default> From<&str> for Rect<T>
+where
+    for<'i> T: Parse<'i>,
+{
+    fn from(s: &str) -> Self {
+        let mut input = ParserInput::new(&s);
+        let mut parser = Parser::new(&mut input);
+        Rect::parse(&mut parser).unwrap_or_default()
     }
 }
 

@@ -564,7 +564,7 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
             matched_rules.sort_by_cached_key(|(_, s)| *s);
             matched_rules.reverse();
 
-            // println!("Matched rules: {:?}", matched_rules);
+            // println!("Matched rules: {} {:?}", entity, matched_rules);
             //compute_matched_rules(cx, tree, entity, &mut matched_rules);
             //matched_rule_ids.extend(matched_rules.into_iter());
             link_style_data(

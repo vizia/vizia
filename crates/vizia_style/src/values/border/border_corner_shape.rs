@@ -1,4 +1,4 @@
-use crate::{macros::define_enum, Parse};
+use crate::{macros::define_enum, Parse, Rect};
 use cssparser::*;
 
 define_enum! {
