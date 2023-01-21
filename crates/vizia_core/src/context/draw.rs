@@ -262,6 +262,9 @@ impl<'a> DrawContext<'a> {
                 let color = box_shadow.color.unwrap_or_default();
                 let x_offset = box_shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
                 let y_offset = box_shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();
+                let spread_radius =
+                    box_shadow.spread_radius.as_ref().and_then(|l| l.to_px()).unwrap_or(0.0)
+                        * self.scale_factor();
                 // canvas.save();
                 // canvas.translate(x_offset, y_offset);
                 // canvas.fill_path(path, &femtovg::Paint::color(color.into()));
@@ -270,7 +273,7 @@ impl<'a> DrawContext<'a> {
                 let blur_radius =
                     box_shadow.blur_radius.as_ref().and_then(|br| br.to_px()).unwrap_or(0.0);
                 let sigma = blur_radius / 2.0;
-                let d = (sigma * 5.0).ceil();
+                let d = (sigma * 5.0).ceil() + 2.0 * spread_radius;
 
                 let bounds = self.bounds();
                 // println!("bounds: {}", bounds);
@@ -307,7 +310,18 @@ impl<'a> DrawContext<'a> {
                     (bounds.h + d) as u32,
                     femtovg::Color::rgba(0, 0, 0, 0),
                 );
-                canvas.translate(-bounds.x + d / 2.0, -bounds.y + d / 2.0);
+
+                let scalex = 1.0 + (2.0 * spread_radius / bounds.w);
+                let scaley = 1.0 + (2.0 * spread_radius / bounds.h);
+                canvas.translate(
+                    (-bounds.x - bounds.w / 2.0) * scalex,
+                    (-bounds.y - bounds.h / 2.0) * scaley,
+                );
+                canvas.scale(scalex, scaley);
+                canvas.translate(
+                    (bounds.w / 2.0 + d / 2.0) / scalex,
+                    (bounds.h / 2.0 + d / 2.0) / scaley,
+                );
                 let paint = Paint::color(color.into());
                 canvas.fill_path(&mut path.clone(), &paint);
                 canvas.restore();
@@ -334,8 +348,6 @@ impl<'a> DrawContext<'a> {
                     bounds.h + d,
                 );
 
-                // shadow_path.rect(0.0, 0.0, bounds.w + d, bounds.h + d);
-
                 canvas.fill_path(
                     &mut shadow_path,
                     &Paint::image(
@@ -349,14 +361,6 @@ impl<'a> DrawContext<'a> {
                     ),
                 );
 
-                // canvas.fill_path(
-                //     &mut shadow_path,
-                //     &Paint::image(source, 0.0, 0.0, bounds.w + d, bounds.h + d, 0f32, 1f32),
-                // );
-                // canvas.fill_path(
-                //     &mut shadow_path,
-                //     &femtovg::Paint::color(femtovg::Color::rgb(0, 0, 0)),
-                // );
                 canvas.restore();
 
                 // canvas.delete_image(source);

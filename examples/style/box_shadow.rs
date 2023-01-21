@@ -16,7 +16,7 @@ const STYLE: &str = r#"
     }
 
     .shadow:hover {
-        box-shadow: 10px 10px 16px blue, 20px 20px 16px red, 30px 30px 16px green;
+        box-shadow: 10px 10px 16px 8px blue, 20px 20px 16px 8px red, 30px 30px 16px 8px green;
         transition: box-shadow 0.5s;
     }
 "#;
