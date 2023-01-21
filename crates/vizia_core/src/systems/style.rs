@@ -6,7 +6,7 @@ use crate::{
 use fnv::FnvHashMap;
 // use crate::style::{Rule, Selector, SelectorRelation, StyleRule};
 use vizia_id::GenerationalId;
-use vizia_storage::{LayoutTreeIterator, TreeExt};
+use vizia_storage::LayoutTreeIterator;
 use vizia_style::{
     matches_selector_list,
     selectors::{
@@ -97,17 +97,17 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
         false
     }
 
-    fn has_namespace(&self, ns: &<Self::Impl as SelectorImpl>::BorrowedNamespaceUrl) -> bool {
+    fn has_namespace(&self, _ns: &<Self::Impl as SelectorImpl>::BorrowedNamespaceUrl) -> bool {
         false
     }
 
-    fn is_part(&self, name: &<Self::Impl as SelectorImpl>::Identifier) -> bool {
+    fn is_part(&self, _name: &<Self::Impl as SelectorImpl>::Identifier) -> bool {
         false
     }
 
     fn imported_part(
         &self,
-        name: &<Self::Impl as SelectorImpl>::Identifier,
+        _name: &<Self::Impl as SelectorImpl>::Identifier,
     ) -> Option<<Self::Impl as SelectorImpl>::Identifier> {
         None
     }
@@ -124,10 +124,11 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
         false
     }
 
+    // TODO
     fn has_id(
         &self,
-        id: &<Self::Impl as SelectorImpl>::Identifier,
-        case_sensitivity: CaseSensitivity,
+        _id: &<Self::Impl as SelectorImpl>::Identifier,
+        _case_sensitivity: CaseSensitivity,
     ) -> bool {
         false
     }
@@ -135,7 +136,7 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     fn has_class(
         &self,
         name: &<Self::Impl as SelectorImpl>::Identifier,
-        case_sensitivity: CaseSensitivity,
+        _case_sensitivity: CaseSensitivity,
     ) -> bool {
         if let Some(classes) = self.store.classes.get(self.entity) {
             return classes.contains(&name.0);
@@ -146,17 +147,17 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
 
     fn attr_matches(
         &self,
-        ns: &NamespaceConstraint<&<Self::Impl as SelectorImpl>::NamespaceUrl>,
-        local_name: &<Self::Impl as SelectorImpl>::LocalName,
-        operation: &AttrSelectorOperation<&<Self::Impl as SelectorImpl>::AttrValue>,
+        _ns: &NamespaceConstraint<&<Self::Impl as SelectorImpl>::NamespaceUrl>,
+        _local_name: &<Self::Impl as SelectorImpl>::LocalName,
+        _operation: &AttrSelectorOperation<&<Self::Impl as SelectorImpl>::AttrValue>,
     ) -> bool {
         false
     }
 
     fn match_pseudo_element(
         &self,
-        pe: &<Self::Impl as SelectorImpl>::PseudoElement,
-        context: &mut MatchingContext<'_, Self::Impl>,
+        _pe: &<Self::Impl as SelectorImpl>::PseudoElement,
+        _context: &mut MatchingContext<'_, Self::Impl>,
     ) -> bool {
         false
     }
@@ -164,8 +165,8 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     fn match_non_ts_pseudo_class<F>(
         &self,
         pc: &<Self::Impl as SelectorImpl>::NonTSPseudoClass,
-        context: &mut MatchingContext<'_, Self::Impl>,
-        flags_setter: &mut F,
+        _context: &mut MatchingContext<'_, Self::Impl>,
+        _flags_setter: &mut F,
     ) -> bool
     where
         F: FnMut(&Self, ElementSelectorFlags),
@@ -530,23 +531,7 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
         let iterator = LayoutTreeIterator::full(tree);
 
         // Loop through all entities
-        'ent: for entity in iterator {
-            let element_name = cx.views.get(&entity).and_then(|view| view.element());
-            // If the entity and the previous entity have the same parent and selectors then they share the same rules
-            // if let Some(prev) = prev_entity {
-            //     if let Some(parent) = tree.get_layout_parent(entity) {
-            //         if let Some(prev_parent) = tree.get_layout_parent(prev) {
-            //             if parent == prev_parent {
-            //                 if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
-            //                     prev_entity = Some(entity);
-            //                     link_style_data(cx, entity, &prev_matched_rule_ids);
-            //                     continue 'ent;
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
-
+        for entity in iterator {
             let mut matched_rules = Vec::with_capacity(100);
             for (rule, (specificity, selector_list)) in cx.style.selectors.iter() {
                 // println!("selector_list: {:?} {}", selector_list, entity);
@@ -565,17 +550,11 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
             matched_rules.reverse();
 
             // println!("Matched rules: {} {:?}", entity, matched_rules);
-            //compute_matched_rules(cx, tree, entity, &mut matched_rules);
-            //matched_rule_ids.extend(matched_rules.into_iter());
             link_style_data(
                 cx,
                 entity,
                 &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
             );
-
-            // prev_entity = Some(entity);
-            // prev_matched_rule_ids.clear();
-            // prev_matched_rule_ids.append(&mut matched_rule_ids);
         }
 
         cx.style.needs_restyle = false;

@@ -1,8 +1,6 @@
-use cosmic_text::{FamilyOwned, Weight};
+use cosmic_text::FamilyOwned;
 use std::any::{Any, TypeId};
-use std::ops::Range;
 
-use femtovg::{ImageId, Paint, Path};
 use fnv::FnvHashMap;
 use morphorm::Units;
 
@@ -13,27 +11,25 @@ use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
 use crate::style::Style;
 use crate::text::TextContext;
+use crate::vg::{ImageId, Paint, Path};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 use vizia_style::{
-    BoxShadow, Gradient, HorizontalPositionKeyword, Length, LengthOrPercentage, LengthValue,
-    LineDirection, VerticalPositionKeyword,
+    BoxShadow, Gradient, HorizontalPositionKeyword, LineDirection, VerticalPositionKeyword,
 };
 
 /// Cached data used for drawing.
 pub struct DrawCache {
-    pub shadow_image: SparseSet<(ImageId, ImageId)>,
-    pub text_lines: SparseSet<Vec<(Range<usize>, femtovg::TextMetrics)>>,
+    pub shadow_image: SparseSet<Vec<(ImageId, ImageId)>>,
 }
 
 impl DrawCache {
     pub fn new() -> Self {
-        Self { shadow_image: SparseSet::new(), text_lines: SparseSet::new() }
+        Self { shadow_image: SparseSet::new() }
     }
 
     pub fn remove(&mut self, entity: Entity) {
         self.shadow_image.remove(entity);
-        self.text_lines.remove(entity);
     }
 }
 
@@ -68,13 +64,13 @@ macro_rules! style_getter_units {
     };
 }
 
-macro_rules! get_property {
-    ($ty:ty, $name:ident) => {
-        pub fn $name(&self) -> $ty {
-            self.style.$name.get(self.current).copied().unwrap_or_default()
-        }
-    };
-}
+// macro_rules! get_property {
+//     ($ty:ty, $name:ident) => {
+//         pub fn $name(&self) -> $ty {
+//             self.style.$name.get(self.current).copied().unwrap_or_default()
+//         }
+//     };
+// }
 
 macro_rules! get_color_property {
     ($ty:ty, $name:ident) => {
@@ -179,19 +175,6 @@ impl<'a> DrawContext<'a> {
         self.style.border_bottom_right_shape.get(self.current).copied().unwrap_or_default()
     }
 
-    // style_getter_untranslated!(LengthOrPercentage, border_width);
-    // style_getter_untranslated!(LengthOrPercentage, border_top_right_radius);
-    // style_getter_untranslated!(LengthOrPercentage, border_top_left_radius);
-    // style_getter_untranslated!(LengthOrPercentage, border_bottom_right_radius);
-    // style_getter_untranslated!(LengthOrPercentage, border_bottom_left_radius);
-    // style_getter_untranslated!(LengthOrPercentage, outline_width);
-    // style_getter_untranslated!(LengthOrPercentage, outline_offset);
-    // style_getter_untranslated!(LengthOrPercentage, outer_shadow_h_offset);
-    // style_getter_untranslated!(LengthOrPercentage, outer_shadow_v_offset);
-    // style_getter_untranslated!(LengthOrPercentage, outer_shadow_blur);
-    // style_getter_untranslated!(LengthOrPercentage, inner_shadow_h_offset);
-    // style_getter_untranslated!(LengthOrPercentage, inner_shadow_v_offset);
-    // style_getter_untranslated!(LengthOrPercentage, inner_shadow_blur);
     style_getter_units!(child_left);
     style_getter_units!(child_right);
     style_getter_units!(child_top);
@@ -200,20 +183,8 @@ impl<'a> DrawContext<'a> {
     // get_color_property!(Color, font_color);
     get_color_property!(Color, border_color);
     get_color_property!(Color, outline_color);
-    // style_getter_untranslated!(Color, outer_shadow_color);
-    // style_getter_untranslated!(Color, inner_shadow_color);
     get_color_property!(Color, selection_color);
     get_color_property!(Color, caret_color);
-    // style_getter_untranslated!(LinearGradient, background_gradient);
-    // style_getter_untranslated!(BorderCornerShape, border_top_right_shape);
-    // style_getter_untranslated!(BorderCornerShape, border_top_left_shape);
-    // style_getter_untranslated!(BorderCornerShape, border_bottom_right_shape);
-    // style_getter_untranslated!(BorderCornerShape, border_bottom_left_shape);
-    // style_getter_untranslated!(String, background_image);
-    // style_getter_untranslated!(String, text);
-    // get_property!(String, image);
-    // style_getter_untranslated!(String, font);
-    // get_property!(bool, text_wrap);
 
     pub fn font_color(&self) -> Color {
         let opacity = self.cache.get_opacity(self.current);
@@ -252,23 +223,252 @@ impl<'a> DrawContext<'a> {
         self.style.dpi_factor as f32
     }
 
+    pub fn build_path(&mut self) -> Path {
+        // Length proportional to radius of a cubic bezier handle for 90deg arcs.
+        const KAPPA90: f32 = 0.5522847493;
+
+        let bounds = self.bounds();
+
+        let border_width = self.border_width();
+
+        let border_top_left_radius = self.border_top_left_radius();
+        let border_top_right_radius = self.border_top_left_radius();
+        let border_bottom_right_radius = self.border_top_left_radius();
+        let border_bottom_left_radius = self.border_top_left_radius();
+
+        let border_top_left_shape = self.border_top_left_shape();
+        let border_top_right_shape = self.border_top_left_shape();
+        let border_bottom_right_shape = self.border_top_left_shape();
+        let border_bottom_left_shape = self.border_top_left_shape();
+
+        //TODO: Cache the path a regenerate if the bounds change
+        let mut path = Path::new();
+
+        if bounds.w == bounds.h
+            && border_bottom_left_radius == (bounds.w - 2.0 * border_width) / 2.0
+            && border_bottom_right_radius == (bounds.w - 2.0 * border_width) / 2.0
+            && border_top_left_radius == (bounds.w - 2.0 * border_width) / 2.0
+            && border_top_right_radius == (bounds.w - 2.0 * border_width) / 2.0
+        {
+            path.circle(
+                bounds.x + (border_width / 2.0) + (bounds.w - border_width) / 2.0,
+                bounds.y + (border_width / 2.0) + (bounds.h - border_width) / 2.0,
+                bounds.w / 2.0,
+            );
+        } else {
+            let x = bounds.x + border_width / 2.0;
+            let y = bounds.y + border_width / 2.0;
+            let w = bounds.w - border_width;
+            let h = bounds.h - border_width;
+            let halfw = w.abs() * 0.5;
+            let halfh = h.abs() * 0.5;
+
+            let rx_bl = border_bottom_left_radius.min(halfw) * w.signum();
+            let ry_bl = border_bottom_left_radius.min(halfh) * h.signum();
+
+            let rx_br = border_bottom_right_radius.min(halfw) * w.signum();
+            let ry_br = border_bottom_right_radius.min(halfh) * h.signum();
+
+            let rx_tr = border_top_right_radius.min(halfw) * w.signum();
+            let ry_tr = border_top_right_radius.min(halfh) * h.signum();
+
+            let rx_tl = border_top_left_radius.min(halfw) * w.signum();
+            let ry_tl = border_top_left_radius.min(halfh) * h.signum();
+
+            path.move_to(x, y + ry_tl);
+            path.line_to(x, y + h - ry_bl);
+            if border_bottom_left_radius != 0.0 {
+                if border_bottom_left_shape == BorderCornerShape::Round {
+                    path.bezier_to(
+                        x,
+                        y + h - ry_bl * (1.0 - KAPPA90),
+                        x + rx_bl * (1.0 - KAPPA90),
+                        y + h,
+                        x + rx_bl,
+                        y + h,
+                    );
+                } else {
+                    path.line_to(x + rx_bl, y + h);
+                }
+            }
+
+            path.line_to(x + w - rx_br, y + h);
+
+            if border_bottom_right_radius != 0.0 {
+                if border_bottom_right_shape == BorderCornerShape::Round {
+                    path.bezier_to(
+                        x + w - rx_br * (1.0 - KAPPA90),
+                        y + h,
+                        x + w,
+                        y + h - ry_br * (1.0 - KAPPA90),
+                        x + w,
+                        y + h - ry_br,
+                    );
+                } else {
+                    path.line_to(x + w, y + h - ry_br);
+                }
+            }
+
+            path.line_to(x + w, y + ry_tr);
+
+            if border_top_right_radius != 0.0 {
+                if border_top_right_shape == BorderCornerShape::Round {
+                    path.bezier_to(
+                        x + w,
+                        y + ry_tr * (1.0 - KAPPA90),
+                        x + w - rx_tr * (1.0 - KAPPA90),
+                        y,
+                        x + w - rx_tr,
+                        y,
+                    );
+                } else {
+                    path.line_to(x + w - rx_tr, y);
+                }
+            }
+
+            path.line_to(x + rx_tl, y);
+
+            if border_top_left_radius != 0.0 {
+                if border_top_left_shape == BorderCornerShape::Round {
+                    path.bezier_to(
+                        x + rx_tl * (1.0 - KAPPA90),
+                        y,
+                        x,
+                        y + ry_tl * (1.0 - KAPPA90),
+                        x,
+                        y + ry_tl,
+                    );
+                } else {
+                    path.line_to(x, y + ry_tl);
+                }
+            }
+
+            path.close();
+        }
+
+        path
+    }
+
+    pub fn draw_background(&mut self, canvas: &mut Canvas, path: &mut Path) {
+        let background_color = self.background_color();
+        let paint = Paint::color(background_color.into());
+        canvas.fill_path(path, &paint);
+    }
+
+    pub fn draw_text_and_selection(&mut self, canvas: &mut Canvas) {
+        if self.text_context.has_buffer(self.current) {
+            let bounds = self.bounds();
+            let border_width = self.border_width();
+
+            let mut box_x = bounds.x + border_width;
+            let mut box_y = bounds.y + border_width;
+            let mut box_w = bounds.w - border_width * 2.0;
+            let mut box_h = bounds.h - border_width * 2.0;
+
+            let child_left = self.child_left();
+            let child_right = self.child_right();
+            let child_top = self.child_top();
+            let child_bottom = self.child_bottom();
+
+            // shrink the bounding box based on pixel values
+            if let Pixels(val) = child_left {
+                box_x += val;
+                box_w -= val;
+            }
+            if let Pixels(val) = child_right {
+                box_w -= val;
+            }
+            if let Pixels(val) = child_top {
+                box_y += val;
+                box_h -= val;
+            }
+            if let Pixels(val) = child_bottom {
+                box_h -= val;
+            }
+
+            // Draw text
+
+            let justify_x = match (child_left, child_right) {
+                (Stretch(left), Stretch(right)) => {
+                    if left + right == 0.0 {
+                        0.5
+                    } else {
+                        left / (left + right)
+                    }
+                }
+                (Stretch(_), _) => 1.0,
+                _ => 0.0,
+            };
+            let justify_y = match (child_top, child_bottom) {
+                (Stretch(top), Stretch(bottom)) => {
+                    if top + bottom == 0.0 {
+                        0.5
+                    } else {
+                        top / (top + bottom)
+                    }
+                }
+                (Stretch(_), _) => 1.0,
+                _ => 0.0,
+            };
+
+            let origin_x = box_x + box_w * justify_x;
+            let origin_y = box_y + (box_h * justify_y).round();
+
+            self.text_context.sync_styles(self.current, &self.style);
+
+            self.draw_highlights(canvas, (origin_x, origin_y), (justify_x, justify_y));
+            self.draw_caret(canvas, (origin_x, origin_y), (justify_x, justify_y), 1.0);
+            self.draw_text(canvas, (origin_x, origin_y), (justify_x, justify_y));
+        }
+    }
+
+    pub fn draw_border(&mut self, canvas: &mut Canvas, path: &mut Path) {
+        let border_color = self.border_color();
+        let border_width = self.border_width();
+
+        let mut paint = Paint::color(border_color.into());
+        paint.set_line_width(border_width);
+        canvas.stroke_path(path, &paint);
+    }
+
+    pub fn draw_outline(&mut self, canvas: &mut Canvas) {
+        let bounds = self.bounds();
+
+        let border_top_left_radius = self.border_top_left_radius();
+        let border_top_right_radius = self.border_top_left_radius();
+        let border_bottom_right_radius = self.border_top_left_radius();
+        let border_bottom_left_radius = self.border_top_left_radius();
+
+        let outline_width = self.outline_width();
+        let outline_offset = self.outline_offset();
+        let outline_color = self.outline_color();
+
+        let mut outline_path = Path::new();
+        let half_outline_width = outline_width / 2.0;
+        outline_path.rounded_rect_varying(
+            bounds.x - half_outline_width - outline_offset,
+            bounds.y - half_outline_width - outline_offset,
+            bounds.w + outline_width + 2.0 * outline_offset,
+            bounds.h + outline_width + 2.0 * outline_offset,
+            border_top_left_radius * 1.5,
+            border_top_right_radius * 1.5,
+            border_bottom_right_radius * 1.5,
+            border_bottom_left_radius * 1.5,
+        );
+        let mut outline_paint = Paint::color(outline_color.into());
+        outline_paint.set_line_width(outline_width);
+        canvas.stroke_path(&mut outline_path, &outline_paint);
+    }
+
     pub fn draw_shadows(&mut self, canvas: &mut Canvas, path: &mut Path) {
         if let Some(box_shadows) = self.box_shadows() {
             for box_shadow in box_shadows.iter().rev() {
-                // Create a shadow image
-                // Draw the path to the shadow image
-                // Blur the shadow image
-                // Draw the shadow image onto the canvas
                 let color = box_shadow.color.unwrap_or_default();
                 let x_offset = box_shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
                 let y_offset = box_shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();
                 let spread_radius =
                     box_shadow.spread_radius.as_ref().and_then(|l| l.to_px()).unwrap_or(0.0)
                         * self.scale_factor();
-                // canvas.save();
-                // canvas.translate(x_offset, y_offset);
-                // canvas.fill_path(path, &femtovg::Paint::color(color.into()));
-                // canvas.restore();
 
                 let blur_radius =
                     box_shadow.blur_radius.as_ref().and_then(|br| br.to_px()).unwrap_or(0.0);
@@ -276,8 +476,8 @@ impl<'a> DrawContext<'a> {
                 let d = (sigma * 5.0).ceil() + 2.0 * spread_radius;
 
                 let bounds = self.bounds();
-                // println!("bounds: {}", bounds);
 
+                // TODO: Cache shadow images
                 let (source, target) = {
                     (
                         canvas

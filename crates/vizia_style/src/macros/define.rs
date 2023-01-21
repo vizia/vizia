@@ -67,8 +67,6 @@ macro_rules! define_property {
             pub fn parse_value<'t>(name: cssparser::CowRcStr<'i>, input: &mut Parser<'i, 't>) -> Result<Self, cssparser::ParseError<'i, CustomParseError<'i>>> {
 
                 let state = input.state();
-
-                let location = input.current_source_location();
                 let name_ref = name.as_ref();
                 match name_ref {
                     $(

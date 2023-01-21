@@ -230,39 +230,39 @@ impl<'w> Node<'w> for Entity {
     }
 
     fn border_left(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        // store.border_width.get(*self).cloned().map(|v| match v {
-        //     Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
-        //     t => t,
-        // })
-        // TODO
-        None
+        store.border_width.get(*self).map(|border_width| match border_width {
+            LengthOrPercentage::Length(val) => {
+                Units::Pixels(val.to_px().unwrap_or_default() * store.dpi_factor as f32)
+            }
+            LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
+        })
     }
 
     fn border_right(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        // store.border_width.get(*self).cloned().map(|v| match v {
-        //     Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
-        //     t => t,
-        // })
-        // TODO
-        None
+        store.border_width.get(*self).map(|border_width| match border_width {
+            LengthOrPercentage::Length(val) => {
+                Units::Pixels(val.to_px().unwrap_or_default() * store.dpi_factor as f32)
+            }
+            LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
+        })
     }
 
     fn border_top(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        // store.border_width.get(*self).cloned().map(|v| match v {
-        //     Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
-        //     t => t,
-        // })
-        // TODO
-        None
+        store.border_width.get(*self).map(|border_width| match border_width {
+            LengthOrPercentage::Length(val) => {
+                Units::Pixels(val.to_px().unwrap_or_default() * store.dpi_factor as f32)
+            }
+            LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
+        })
     }
 
     fn border_bottom(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        // store.border_width.get(*self).cloned().map(|v| match v {
-        //     Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
-        //     t => t,
-        // })
-        // TODO
-        None
+        store.border_width.get(*self).map(|border_width| match border_width {
+            LengthOrPercentage::Length(val) => {
+                Units::Pixels(val.to_px().unwrap_or_default() * store.dpi_factor as f32)
+            }
+            LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
+        })
     }
 
     fn row_index(&self, store: &Self::Data) -> Option<usize> {

@@ -1,7 +1,7 @@
 use vizia_style::{BorderRadius, Rect};
 
 use super::internal;
-use crate::{entity, prelude::*};
+use crate::prelude::*;
 
 /// Modifiers for changing the style properties of a view.
 pub trait StyleModifiers: internal::Modifiable {
@@ -74,9 +74,9 @@ pub trait StyleModifiers: internal::Modifiable {
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClassFlags::CHECKED, val.into());
             } else {
-                let mut PseudoClassFlags = PseudoClassFlags::empty();
-                PseudoClassFlags.set(PseudoClassFlags::CHECKED, val.into());
-                cx.style.pseudo_classes.insert(entity, PseudoClassFlags).unwrap();
+                let mut pseudo_class_flags = PseudoClassFlags::empty();
+                pseudo_class_flags.set(PseudoClassFlags::CHECKED, val.into());
+                cx.style.pseudo_classes.insert(entity, pseudo_class_flags).unwrap();
             }
 
             cx.need_restyle();
