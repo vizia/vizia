@@ -135,7 +135,7 @@ pub struct Style {
     // Background
     pub background_color: AnimatableSet<Color>,
     pub background_image: StyleSet<String>,
-    pub background_gradient: AnimatableSet<Gradient>,
+    pub background_gradient: AnimatableSet<Vec<Gradient>>,
 
     pub box_shadow: AnimatableSet<Vec<BoxShadow>>,
 
@@ -683,12 +683,20 @@ impl Style {
                 self.outline_offset.insert_rule(rule_id, outline_offset);
             }
 
-            Property::BackgroundImage(image) => match image {
-                BackgroundImage::Name(_) => {}
-                BackgroundImage::Gradient(gradient) => {
-                    self.background_gradient.insert_rule(rule_id, *gradient);
-                }
-            },
+            Property::BackgroundImage(images) => {
+                let gradients = images
+                    .into_iter()
+                    .filter_map(|img| match img {
+                        BackgroundImage::Gradient(gradient) => Some(*gradient),
+                        _ => None,
+                    })
+                    .collect::<Vec<_>>();
+                self.background_gradient.insert_rule(rule_id, gradients);
+                // BackgroundImage::Name(_) => {}
+                // BackgroundImage::Gradient(gradient) => {
+                //     self.background_gradient.insert_rule(rule_id, *gradient);
+                // }
+            }
             // Property::TextWrap(_) => todo!(),
             Property::BoxShadow(box_shadows) => {
                 self.box_shadow.insert_rule(rule_id, box_shadows);

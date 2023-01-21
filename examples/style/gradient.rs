@@ -12,11 +12,11 @@ const STYLE: &str = r#"
     }
 
     .linear-gradient {
-        background-image: linear-gradient(rgb(200, 200, 200), rgb(100, 100, 100));
+        background-image: linear-gradient(rgb(200, 200, 200), rgb(100, 100, 100)), linear-gradient(to right, transparent, transparent);
     }
 
     .linear-gradient:hover {
-        background-image: linear-gradient(red, yellow);
+        background-image: linear-gradient(red, yellow), linear-gradient(to right, #0000FF80, #00FF0080);
         transition: background-image 0.5s;
     }
 "#;

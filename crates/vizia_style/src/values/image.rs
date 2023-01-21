@@ -1,11 +1,20 @@
 use cssparser::*;
 
-use crate::{Gradient, Parse};
+use crate::{CustomParseError, Gradient, Parse};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BackgroundImage<'i> {
     Name(CowRcStr<'i>),
     Gradient(Box<Gradient>),
+}
+
+impl<'i> BackgroundImage<'i> {
+    pub fn is_gradient(&self) -> bool {
+        match self {
+            BackgroundImage::Gradient(_) => true,
+            _ => false,
+        }
+    }
 }
 
 impl<'i> Parse<'i> for BackgroundImage<'i> {
@@ -31,5 +40,11 @@ impl<'i> From<&'i str> for BackgroundImage<'i> {
         let mut input = ParserInput::new(&s);
         let mut parser = Parser::new(&mut input);
         BackgroundImage::parse(&mut parser).expect("Failed to parse background-image")
+    }
+}
+
+impl<'i> Parse<'i> for Vec<BackgroundImage<'i>> {
+    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+        input.parse_comma_separated(BackgroundImage::parse)
     }
 }

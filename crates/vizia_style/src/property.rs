@@ -128,7 +128,7 @@ define_property! {
 
         // Background
         "background-color": BackgroundColor(Color),
-        "background-image": BackgroundImage(BackgroundImage<'i>),
+        "background-image": BackgroundImage(Vec<BackgroundImage<'i>>),
         // // TODO
         // //BackgroundGradient(LinearGradient),
 

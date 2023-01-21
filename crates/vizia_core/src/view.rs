@@ -416,10 +416,11 @@ pub trait View: 'static + Sized {
 
         // //canvas.global_composite_blend_func(BlendFactor::DstColor, BlendFactor::OneMinusSrcAlpha);
 
-        // Fill the path
+        // Draw path
         canvas.fill_path(&mut path, &paint);
 
-        // //println!("{:.2?} seconds for whatever you did.", start.elapsed());
+        // Draw gradients
+        cx.draw_gradients(canvas, &mut path);
 
         // Draw border
         let mut paint = Paint::color(border_color.into());

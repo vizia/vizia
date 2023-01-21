@@ -139,18 +139,22 @@ pub trait StyleModifiers: internal::Modifiable {
         Color
     );
 
-    fn background_image<'i, U: Into<BackgroundImage<'i>>>(mut self, value: impl Res<U>) -> Self {
+    fn background_image<'i, U: Into<Vec<BackgroundImage<'i>>>>(
+        mut self,
+        value: impl Res<U>,
+    ) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, val| {
-            let image: BackgroundImage = val.into();
-            match image {
-                BackgroundImage::Gradient(gradient) => {
-                    cx.style.background_gradient.insert(entity, *gradient);
-                    cx.need_redraw();
-                }
-
-                _ => {}
-            }
+            let images = val.into();
+            let gradients = images
+                .into_iter()
+                .filter_map(|img| match img {
+                    BackgroundImage::Gradient(gradient) => Some(*gradient),
+                    _ => None,
+                })
+                .collect::<Vec<_>>();
+            cx.style.background_gradient.insert(entity, gradients);
+            cx.need_redraw();
         });
 
         self
