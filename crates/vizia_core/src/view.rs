@@ -13,7 +13,8 @@
 //! ```
 
 mod handle;
-use crate::{prelude::*, systems::draw_view};
+use crate::prelude::*;
+use crate::systems::draw_view;
 pub use handle::Handle;
 use std::{any::Any, collections::HashMap};
 

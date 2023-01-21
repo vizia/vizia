@@ -2,7 +2,7 @@ use cosmic_text::{FamilyOwned, Weight};
 use std::any::{Any, TypeId};
 use std::ops::Range;
 
-use femtovg::{ImageId, Paint};
+use femtovg::{ImageId, Paint, Path};
 use fnv::FnvHashMap;
 use morphorm::Units;
 
@@ -287,6 +287,42 @@ impl<'a> DrawContext<'a> {
                 let temp_paint =
                     Paint::color(femtovg::Color::rgba(color.r(), color.g(), color.b(), color.a()));
                 canvas.draw_glyph_cmds(cmds, &temp_paint);
+            }
+        }
+    }
+
+    pub fn draw_highlights(
+        &mut self,
+        canvas: &mut Canvas,
+        origin: (f32, f32),
+        justify: (f32, f32),
+    ) {
+        if let Some(color) = self.selection_color().copied() {
+            let mut path = Path::new();
+            for (x, y, w, h) in self.text_context.layout_selection(self.current, origin, justify) {
+                path.rect(x, y, w, h);
+            }
+            canvas.fill_path(&mut path, &Paint::color(color.into()));
+        }
+    }
+
+    pub fn draw_caret(
+        &mut self,
+        canvas: &mut Canvas,
+        origin: (f32, f32),
+        justify: (f32, f32),
+        width: f32,
+    ) {
+        if let Some(color) = self.caret_color().copied() {
+            if let Some((x, y, w, h)) = self.text_context.layout_caret(
+                self.current,
+                origin,
+                justify,
+                self.logical_to_physical(width),
+            ) {
+                let mut path = Path::new();
+                path.rect(x, y, w, h);
+                canvas.fill_path(&mut path, &Paint::color(color.into()));
             }
         }
     }

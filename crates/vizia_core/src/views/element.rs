@@ -15,7 +15,7 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// Element::new(cx)
 ///     .width(Pixels(100.0))
@@ -29,7 +29,7 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// Element::new(cx)
 ///     .width(Pixels(100.0))
@@ -44,7 +44,7 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// Element::new(cx)
 ///      .width(Pixels(100.0))
@@ -61,7 +61,7 @@ use crate::prelude::*;
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// Element::new(cx)
 ///     .width(Pixels(100.0))
@@ -86,7 +86,7 @@ use crate::prelude::*;
 /// #
 /// # impl Model for AppData {}
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// # AppData { picture: String::from("test.png") }.build(cx);
 /// #
@@ -105,7 +105,7 @@ impl Element {
     /// ```
     /// # use vizia_core::prelude::*;
     /// #
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::default();
     /// #
     /// Element::new(cx);
     /// ```

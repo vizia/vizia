@@ -17,7 +17,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// # Example
         /// ```
         /// # use vizia_core::prelude::*;
-        /// # let cx = &mut Context::new();
+        /// # let cx = &mut Context::default();
         /// #[derive(Lens, Model, Setter)]
         /// pub struct AppData {
         ///     layout_type: LayoutType,
@@ -47,7 +47,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// # Example
         /// ```
         /// # use vizia_core::prelude::*;
-        /// # let cx = &mut Context::new();
+        /// # let cx = &mut Context::default();
         /// Element::new(cx).position_type(PositionType::SelfDirected);
         /// ```
         position_type,
@@ -94,7 +94,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// # Example
         /// ```
         /// # use vizia_core::prelude::*;
-        /// # let cx = &mut Context::new();
+        /// # let cx = &mut Context::default();
         /// Element::new(cx).left(Units::Pixels(100.0));
         /// ```
         left,
@@ -114,7 +114,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// # Example
         /// ```
         /// # use vizia_core::prelude::*;
-        /// # let cx = &mut Context::new();
+        /// # let cx = &mut Context::default();
         /// Element::new(cx).right(Units::Pixels(100.0));
         /// ```
         right,
@@ -134,7 +134,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// # Example
         /// ```
         /// # use vizia_core::prelude::*;
-        /// # let cx = &mut Context::new();
+        /// # let cx = &mut Context::default();
         /// Element::new(cx).top(Units::Pixels(100.0));
         /// ```
         top,
@@ -154,7 +154,7 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// # Example
         /// ```
         /// # use vizia_core::prelude::*;
-        /// # let cx = &mut Context::new();
+        /// # let cx = &mut Context::default();
         /// Element::new(cx).bottom(Units::Pixels(100.0));
         /// ```
         bottom,

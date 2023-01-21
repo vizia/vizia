@@ -6,11 +6,11 @@ use cosmic_text::{
     Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor, Family, FontSystem,
     Metrics, SubpixelBin, Wrap,
 };
-use femtovg::imgref::ImgRef;
+use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
-    Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource,
-    PixelFormat, Quad, Renderer,
+    Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource, Quad,
+    Renderer,
 };
 use fnv::FnvHashMap;
 use ouroboros::self_referencing;
@@ -100,19 +100,16 @@ impl TextContext {
                 .style(font_style)
                 .monospaced(monospace)
                 .color(FontColor::rgba(color.r(), color.g(), color.b(), color.a()));
-            let wrap = if style.text_wrap.get(entity).copied().unwrap_or_default() {
+            let wrap = if style.text_wrap.get(entity).copied().unwrap_or(true) {
                 Wrap::Word
             } else {
                 Wrap::None
             };
+            buf.set_wrap(wrap);
             for line in buf.lines.iter_mut() {
                 // TODO spans
                 line.set_attrs_list(AttrsList::new(attrs));
-                line.set_wrap(wrap);
             }
-            //if let Some(size) = cache.size.get(entity) {
-            //    buf.set_size(size.width as i32, size.height as i32);
-            //}
             let font_size =
                 style.font_size.get(entity).copied().unwrap_or(16.0) * style.dpi_factor as f32;
             // TODO configurable line spacing
@@ -190,7 +187,7 @@ impl TextContext {
                                 // if no atlas could fit the texture, make a new atlas tyvm
                                 // TODO error handling
                                 let mut atlas = Atlas::new(TEXTURE_SIZE, TEXTURE_SIZE);
-                                let image_id = canvas.create_image_empty(TEXTURE_SIZE, TEXTURE_SIZE, PixelFormat::Rgba8, ImageFlags::empty()).unwrap();
+                                let image_id = canvas.create_image(Img::new(vec![RGBA8::new(0,0,0,0); TEXTURE_SIZE * TEXTURE_SIZE], TEXTURE_SIZE, TEXTURE_SIZE).as_ref(), ImageFlags::empty()).unwrap();
                                 let texture_index = int.glyph_textures.len();
                                 let (x, y) = atlas.add_rect(alloc_w as usize, alloc_h as usize).unwrap();
                                 int.glyph_textures.push(FontTexture {
@@ -263,10 +260,69 @@ impl TextContext {
                 }
             }
 
-            Ok(alpha_cmd_map.into_iter().map(|(color, map)| (color, GlyphDrawCommands {
-                alpha_glyphs: map.into_iter().map(|(_, cmd)| cmd).collect(),
-                color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
-            })).collect())
+            if !alpha_cmd_map.is_empty() {
+                Ok(alpha_cmd_map.into_iter().map(|(color, map)| (color, GlyphDrawCommands {
+                    alpha_glyphs: map.into_iter().map(|(_, cmd)| cmd).collect(),
+                    color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
+                })).collect())
+            } else {
+                Ok(vec![(FontColor(0), GlyphDrawCommands {
+                    alpha_glyphs: vec![],
+                    color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
+                })])
+            }
+        })
+    }
+
+    pub(crate) fn layout_selection(
+        &mut self,
+        entity: Entity,
+        position: (f32, f32),
+        justify: (f32, f32),
+    ) -> Vec<(f32, f32, f32, f32)> {
+        self.with_editor(entity, |buf| {
+            let mut result = vec![];
+            if let Some(cursor_end) = buf.select_opt() {
+                let (cursor_start, cursor_end) = if buf.cursor() < cursor_end {
+                    (buf.cursor(), cursor_end)
+                } else {
+                    (cursor_end, buf.cursor())
+                };
+                let buffer = buf.buffer();
+                let total_height = buffer.layout_runs().len() as i32 * buffer.metrics().line_height;
+                for run in buffer.layout_runs() {
+                    if let Some((x, w)) = run.highlight(cursor_start, cursor_end) {
+                        let y = run.line_y as f32 - buffer.metrics().font_size as f32;
+                        let x = x + position.0 - run.line_w * justify.0;
+                        let y = y + position.1 - total_height as f32 * justify.1;
+                        result.push((x, y, w, buffer.metrics().line_height as f32));
+                    }
+                }
+            }
+            result
+        })
+    }
+
+    pub(crate) fn layout_caret(
+        &mut self,
+        entity: Entity,
+        position: (f32, f32),
+        justify: (f32, f32),
+        width: f32,
+    ) -> Option<(f32, f32, f32, f32)> {
+        self.with_editor(entity, |buf| {
+            let (cursor_start, cursor_end) = (buf.cursor(), buf.cursor());
+            let buffer = buf.buffer();
+            let total_height = buffer.layout_runs().len() as i32 * buffer.metrics().line_height;
+            for run in buffer.layout_runs() {
+                if let Some((x, _)) = run.highlight(cursor_start, cursor_end) {
+                    let y = run.line_y as f32 - buffer.metrics().font_size as f32;
+                    let x = x + position.0 - run.line_w * justify.0;
+                    let y = y + position.1 - total_height as f32 * justify.1;
+                    return Some((x - width / 2.0, y, width, buffer.metrics().line_height as f32));
+                }
+            }
+            None
         })
     }
 

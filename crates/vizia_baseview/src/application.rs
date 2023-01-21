@@ -1,5 +1,5 @@
 use crate::window::ViziaWindow;
-use baseview::{WindowHandle, WindowScalePolicy};
+use baseview::{Window, WindowHandle, WindowScalePolicy};
 use raw_window_handle::HasRawWindowHandle;
 
 use crate::proxy::queue_get;
@@ -28,7 +28,7 @@ where
 {
     app: F,
     window_description: WindowDescription,
-    scale_policy: WindowScalePolicy,
+    window_scale_policy: WindowScalePolicy,
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ignore_default_theme: bool,
 }
@@ -42,7 +42,7 @@ where
         Self {
             app,
             window_description: WindowDescription::new(),
-            scale_policy: WindowScalePolicy::SystemScaleFactor,
+            window_scale_policy: WindowScalePolicy::SystemScaleFactor,
             on_idle: None,
             ignore_default_theme: false,
         }
@@ -55,9 +55,10 @@ where
     }
 
     /// Change the window's scale policy. Not part of [`new()`][Self::new] to keep the same
-    /// signature as the winit backend.
+    /// signature as the winit backend. This should only be used for HiDPI scaling, use
+    /// [`WindowDescription::scale_factor`] to set a separate arbitrary scale factor.
     pub fn with_scale_policy(mut self, scale_policy: WindowScalePolicy) -> Self {
-        self.scale_policy = scale_policy;
+        self.window_scale_policy = scale_policy;
         self
     }
 
@@ -73,6 +74,13 @@ where
         self
     }
 
+    /// A scale factor applied on top of any DPI scaling, defaults to 1.0.
+    pub fn user_scale_factor(mut self, factor: f64) -> Self {
+        self.window_description.user_scale_factor = factor;
+
+        self
+    }
+
     /// Open a new window that blocks the current thread until the window is destroyed.
     ///
     /// Do **not** use this in the context of audio plugins, unless it is compiled as a
@@ -82,7 +90,7 @@ where
     pub fn run(self) {
         ViziaWindow::open_blocking(
             self.window_description,
-            self.scale_policy,
+            self.window_scale_policy,
             self.app,
             self.on_idle,
             self.ignore_default_theme,
@@ -100,7 +108,7 @@ where
         ViziaWindow::open_parented(
             parent,
             self.window_description,
-            self.scale_policy,
+            self.window_scale_policy,
             self.app,
             self.on_idle,
             self.ignore_default_theme,
@@ -116,7 +124,7 @@ where
     pub fn open_as_if_parented(self) -> WindowHandle {
         ViziaWindow::open_as_if_parented(
             self.window_description,
-            self.scale_policy,
+            self.window_scale_policy,
             self.app,
             self.on_idle,
             self.ignore_default_theme,
@@ -152,30 +160,48 @@ pub(crate) struct ApplicationRunner {
     context: Context,
     event_manager: EventManager,
     should_redraw: bool,
-    scale_policy: WindowScalePolicy,
-    scale_factor: f64,
+
+    /// If this is set to `true`, then `window_scale_factor` will be updated during
+    /// [`baseview::WindowEvent::Resized`] events in accordance to the system's reported DPI. This
+    /// can change at runtime when the window is dragged between displays. Otherwise
+    /// `window_scale_factor` will not change.
+    use_system_scaling: bool,
+    /// The scale factor for the window itself. This is either determined by either the operating
+    /// system or explicitly overridden by the creator of the window. In some cases window resize
+    /// events may change this scaling policy. This value is only used when translating logical
+    /// mouse coordinates to physical window coordinates. For any other use within VIZIA itself this
+    /// always needs to be multplied by `user_scale_factor`.
+    window_scale_factor: f64,
+    /// The scale factor applied on top of the `window_scale` to convert the window's logical size
+    /// to a physical size. If this is different from `*cx.user_scale_factor` after handling the
+    /// events then the window will be resized.
+    current_user_scale_factor: f64,
+    /// The window's current logical size, before `user_scale_factor` has been applied. Needed to
+    /// resize the window when changing the scale factor.
+    current_window_size: WindowSize,
 }
 
 impl ApplicationRunner {
-    pub fn new(context: Context, scale_policy: WindowScalePolicy) -> Self {
+    pub fn new(mut context: Context, use_system_scaling: bool, window_scale_factor: f64) -> Self {
+        let mut cx = BackendContext::new(&mut context);
         let event_manager = EventManager::new();
-
-        // Assume scale for now until there is an event with a new one.
-        let scale_factor = match scale_policy {
-            WindowScalePolicy::ScaleFactor(scale) => scale,
-            WindowScalePolicy::SystemScaleFactor => 1.0,
-        };
 
         ApplicationRunner {
             event_manager,
-            context,
             should_redraw: true,
-            scale_policy,
-            scale_factor,
+
+            use_system_scaling,
+            window_scale_factor,
+            current_user_scale_factor: *cx.user_scale_factor(),
+            current_window_size: *cx.window_size(),
+
+            context,
         }
     }
 
-    pub fn on_frame_update(&mut self) {
+    /// Handle all reactivity within a frame. The window instance is used to resize the window when
+    /// needed.
+    pub fn on_frame_update(&mut self, window: &mut Window) {
         let mut cx = BackendContext::new(&mut self.context);
 
         while let Some(event) = queue_get() {
@@ -184,6 +210,53 @@ impl ApplicationRunner {
 
         // Events
         while self.event_manager.flush_events(&mut cx.context()) {}
+
+        if *cx.window_size() != self.current_window_size
+            || *cx.user_scale_factor() != self.current_user_scale_factor
+        {
+            self.current_window_size = *cx.window_size();
+            self.current_user_scale_factor = *cx.user_scale_factor();
+
+            // The user scale factor is not part of the HiDPI scaling, so baseview should treat it
+            // as part of our logical size
+            window.resize(baseview::Size {
+                width: self.current_window_size.width as f64 * self.current_user_scale_factor,
+                height: self.current_window_size.height as f64 * self.current_user_scale_factor,
+            });
+
+            // TODO: These calculations are now repeated in three places, should probably be moved
+            //       to a function
+            cx.style().dpi_factor = self.window_scale_factor * self.current_user_scale_factor;
+            cx.style()
+                .width
+                .insert(Entity::root(), Units::Pixels(self.current_window_size.width as f32));
+            cx.style()
+                .height
+                .insert(Entity::root(), Units::Pixels(self.current_window_size.height as f32));
+
+            let new_physical_width =
+                self.current_window_size.width as f32 * cx.style().dpi_factor as f32;
+            let new_physical_height =
+                self.current_window_size.height as f32 * cx.style().dpi_factor as f32;
+            cx.cache().set_width(Entity::root(), new_physical_width);
+            cx.cache().set_height(Entity::root(), new_physical_height);
+
+            cx.cache().set_clip_region(
+                Entity::root(),
+                BoundingBox {
+                    w: new_physical_width,
+                    h: new_physical_height,
+                    ..BoundingBox::default()
+                },
+            );
+
+            cx.0.need_restyle();
+            // This will trigger a `WindowEvent::GeometryChanged`
+            cx.0.need_relayout();
+            cx.0.need_redraw();
+
+            self.event_manager.flush_events(cx.context());
+        }
 
         cx.load_images();
 
@@ -231,8 +304,14 @@ impl ApplicationRunner {
                 baseview::MouseEvent::CursorMoved { position, modifiers } => {
                     update_modifiers(modifiers);
 
-                    let physical_posx = position.x * cx.style().dpi_factor;
-                    let physical_posy = position.y * cx.style().dpi_factor;
+                    // NOTE: We multiply by `self.window_scale_factor` and not by
+                    //       `self.context.style.dpi_factor`. Since the additional scaling by
+                    //       internally do additional scaling by `self.context.user_scale_factor` is
+                    //       done internally to be able to separate actual HiDPI scaling from
+                    //       arbitrary uniform scaling baseview only knows about its own scale
+                    //       factor.
+                    let physical_posx = position.x * self.window_scale_factor;
+                    let physical_posy = position.y * self.window_scale_factor;
                     let cursorx = (physical_posx) as f32;
                     let cursory = (physical_posy) as f32;
                     cx.emit_origin(WindowEvent::MouseMove(cursorx, cursory));
@@ -319,16 +398,29 @@ impl ApplicationRunner {
                     cx.0.need_redraw();
                 }
                 baseview::WindowEvent::Resized(window_info) => {
-                    self.scale_factor = match self.scale_policy {
-                        WindowScalePolicy::ScaleFactor(scale) => scale,
-                        WindowScalePolicy::SystemScaleFactor => window_info.scale(),
-                    };
+                    // We keep track of the current size before applying the user scale factor while
+                    // baseview's logical size includes that factor so we need to compensate for it
+                    self.current_window_size = *cx.window_size();
+                    self.current_window_size.width =
+                        (window_info.logical_size().width / *cx.user_scale_factor()).round() as u32;
+                    self.current_window_size.height = (window_info.logical_size().height
+                        / *cx.user_scale_factor())
+                    .round() as u32;
+                    *cx.window_size() = self.current_window_size;
 
-                    cx.style().dpi_factor = self.scale_factor;
+                    // Only use new DPI settings when `WindowScalePolicy::SystemScaleFactor` was
+                    // used
+                    if self.use_system_scaling {
+                        self.window_scale_factor = window_info.scale();
+                    }
 
+                    cx.style().dpi_factor = self.window_scale_factor * *cx.user_scale_factor();
+
+                    // Since we apply a user scale factor, our logical size may not match baseview's
+                    // logical size
                     let logical_size = (
-                        (window_info.physical_size().width as f64 / self.scale_factor),
-                        (window_info.physical_size().height as f64 / self.scale_factor),
+                        (window_info.physical_size().width as f64 / cx.style().dpi_factor),
+                        (window_info.physical_size().height as f64 / cx.style().dpi_factor),
                     );
 
                     let physical_size =

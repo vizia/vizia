@@ -78,6 +78,17 @@ pub struct Context {
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
+    /// The window's size in logical pixels, before `user_scale_factor` gets applied to it. If this
+    /// value changed during a frame then the window will be resized and a
+    /// [`WindowEvent::GeometryChanged`] will be emitted.
+    pub(crate) window_size: WindowSize,
+    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
+    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
+    /// changes during a frame, then the window will be resized at the end of the frame and a
+    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
+    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    pub(crate) user_scale_factor: f64,
+
     #[cfg(feature = "clipboard")]
     pub(crate) clipboard: Box<dyn ClipboardProvider>,
 
@@ -88,8 +99,14 @@ pub struct Context {
     pub ignore_default_theme: bool,
 }
 
+impl Default for Context {
+    fn default() -> Self {
+        Context::new(WindowSize::new(800, 600), 1.0)
+    }
+}
+
 impl Context {
-    pub fn new() -> Self {
+    pub fn new(window_size: WindowSize, user_scale_factor: f64) -> Self {
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
 
@@ -135,6 +152,9 @@ impl Context {
             ),
 
             event_proxy: None,
+
+            window_size,
+            user_scale_factor,
 
             #[cfg(feature = "clipboard")]
             clipboard: {
@@ -185,6 +205,23 @@ impl Context {
 
     pub fn environment(&self) -> &Environment {
         self.data::<Environment>().unwrap()
+    }
+
+    /// The window's size in logical pixels, before
+    /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
+    /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will be
+    /// emitted.
+    pub fn window_size(&self) -> WindowSize {
+        self.window_size
+    }
+
+    /// A scale factor used for uniformly scaling the window independently of any HiDPI scaling.
+    /// `window_size` gets multplied with this factor to get the actual logical window size. If this
+    /// changes during a frame, then the window will be resized at the end of the frame and a
+    /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
+    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    pub fn user_scale_factor(&self) -> f64 {
+        self.user_scale_factor
     }
 
     /// Mark the application as needing to rerun the draw method

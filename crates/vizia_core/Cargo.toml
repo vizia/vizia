@@ -21,7 +21,7 @@ vizia_id = { path = "../vizia_id" }
 vizia_input = { path = "../vizia_input" }
 vizia_window = { path = "../vizia_window" }
 
-femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "e1f3f05cc050c0ed69ca702b368bb5d4eb2cabff", default-features = false, features = ["image-loading"] }
+femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "09f4837fff4d2cd58ddc4674d0d7e1296a4123aa", default-features = false, features = ["image-loading"] }
 #femtovg = { path = "../../../femtovg", default-features = false, features = ["image-loading"] }
 image = { version = "0.24.0", default-features = false, features = ["png"] } # inherited from femtovg
 morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "3d74358fe976249738f58724854270aa2f0fdb4a" }
@@ -41,8 +41,8 @@ instant = "0.1.12"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 ouroboros = "^0.15"
 #cosmic-text = "^0.6"
-#cosmic-text = { git = "https://github.com/pop-os/cosmic-text", rev = "b9fef72f76e702bf1190292c60d567bd7f147361" }
-cosmic-text = { git = "https://github.com/rhelmot/cosmic-text", rev = "3e355f0cfc9cebcf958c88c48cbe12a3ac672ac7" }
+cosmic-text = { git = "https://github.com/pop-os/cosmic-text", rev = "e00109d77f06d5a2e3057865eda3f530bc40a046" }
+# cosmic-text = { git = "https://github.com/rhelmot/cosmic-text", rev = "45fbf25958437706e4f5c07b5169eee8079d774d" }
 #cosmic-text = { path = "../../../cosmic-text" }
 swash = "^0.1"
 replace_with = "0.1.7"
