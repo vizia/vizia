@@ -10,7 +10,7 @@ rust-version = "1.60"
 
 [features]
 clipboard = ["copypasta"]
-localization = ["dep:fluent-bundle", "dep:fluent-langneg", "dep:fluent-syntax", "dep:unic-langid", "dep:sys-locale"]
+localization = ["dep:fluent-bundle", "dep:fluent-langneg", "dep:fluent-syntax", "dep:unic-langid"]
 x11 = ["copypasta?/x11"]
 wayland = ["copypasta?/wayland"]
 
@@ -32,7 +32,7 @@ fluent-bundle = {version = "0.15.2", optional = true}
 fluent-langneg = {version = "0.13", optional = true}
 fluent-syntax = {version = "0.11.0", optional = true}
 unic-langid = {version = "0.9", optional = true, features = ["macros"]}
-sys-locale = {version = "0.2.0", optional = true}
+sys-locale = {version = "0.2.0"}
 cssparser = "0.27.2"
 unicode-segmentation = "1.8.0"
 unicode-bidi = "0.3.7"
