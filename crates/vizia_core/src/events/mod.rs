@@ -15,7 +15,7 @@
 //! ```no_run
 //! # use vizia_core::prelude::*;
 //! # use vizia_winit::application::Application;
-//! # let cx = &mut Context::new();
+//! # let cx = &mut Context::default();
 //! pub struct AppData {
 //!     count: i32,
 //! }
@@ -42,7 +42,7 @@
 //! The event message must then be downcast to the right type using the [`map`](Event::map) or [`take`](Event::take) methods on the event:
 //! ```no_run
 //! # use vizia_core::prelude::*;
-//! # let cx = &mut Context::new();
+//! # let cx = &mut Context::default();
 //! # use vizia_winit::application::Application;
 //!
 //! pub struct AppData {

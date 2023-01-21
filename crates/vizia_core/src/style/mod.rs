@@ -9,7 +9,7 @@
 //! Inline styling refers to setting the style and layout properties of a view using view [modifiers](crate::modifiers).
 //! ```
 //! # use vizia_core::prelude::*;
-//! # let cx = &mut Context::new();
+//! # let cx = &mut Context::default();
 //! Element::new(cx).background_color(Color::red());
 //! ```
 //! Properties set inline affect only the modified view and override any shared styling for the same property.
@@ -18,7 +18,7 @@
 //! Shared styling refers to setting the style and layout properties using css rules.
 //! ```
 //! # use vizia_core::prelude::*;
-//! # let cx = &mut Context::new();
+//! # let cx = &mut Context::default();
 //! Element::new(cx).class("foo");
 //! ```
 //! ```css
@@ -35,7 +35,7 @@
 //!
 //! ```
 //! # use vizia_core::prelude::*;
-//! # let cx = &mut Context::new();
+//! # let cx = &mut Context::default();
 //!
 //! const STYLE: &str = r#"
 //!     .foo {
@@ -53,7 +53,7 @@
 //!
 //! ```
 //! # use vizia_core::prelude::*;
-//! # let cx = &mut Context::new();
+//! # let cx = &mut Context::default();
 //!
 //! cx.add_stylesheet("path/to/stylesheet.css");
 //!

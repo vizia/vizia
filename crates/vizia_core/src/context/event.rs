@@ -31,7 +31,7 @@ use super::DrawCache;
 /// ```no_run
 /// # use vizia_core::prelude::*;
 /// # use vizia_core::vg;
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 ///
 /// pub struct CustomView {}
 ///

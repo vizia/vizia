@@ -76,7 +76,7 @@ impl Event {
     /// # Example
     /// ```no_run
     /// # use vizia_core::prelude::*;
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::default();
     /// # use vizia_winit::application::Application;
     /// # pub struct AppData {
     /// #     count: i32,
@@ -117,7 +117,7 @@ impl Event {
     /// # Example
     /// ```no_run
     /// # use vizia_core::prelude::*;
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::default();
     /// # use vizia_winit::application::Application;
     /// # pub struct AppData {
     /// #     count: i32,

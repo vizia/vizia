@@ -11,7 +11,7 @@
 //! Before text can be translated, one or more fluent files must be added to an application with the corresponding locale:
 //! ```ignore
 //! # use vizia_core::prelude::*;
-//! # let mut cx = &mut Context::new();
+//! # let mut cx = &mut Context::default();
 //! // Adds a fluent file to the application resource manager.
 //! // This file is then used for translations to the corresponding locale.
 //! cx.add_translation(
@@ -26,7 +26,7 @@
 //! If no fluent file can be found for the specified locale, then a fallback fluent file is used from the list of available files.
 //! ```ignore
 //! # use vizia_core::prelude::*;
-//! # let mut cx = &mut Context::new();
+//! # let mut cx = &mut Context::default();
 //! // Sets the current locale to en-US, regardless of the system locale
 //! cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap()));
 //! ```
@@ -35,7 +35,7 @@
 //! Use the [`Localized`] type to specify a translation key to be used with fluent files. The key is then used to look up the corresponding translation.
 //! ```ignore
 //! # use vizia_core::prelude::*;
-//! # let mut cx = &mut Context::new();
+//! # let mut cx = &mut Context::default();
 //! Label::new(cx, Localized::new("hello-world"));
 //! ```
 //! The markup in the loaded fluent (.ftl) files defines the translations for a particular key. The translation used depends on the application locale, which can be queried from [`Environment`].
@@ -57,13 +57,13 @@
 //! The [`Localized`] type provides two methods for referencing a variable. The `arg_const(...)` method allows a keyed value to be inserted into the translation.
 //! ```ignore
 //! # use vizia_core::prelude::*;
-//! # let mut cx = &mut Context::new();
+//! # let mut cx = &mut Context::default();
 //! Label::new(cx, Localized::new("welcome").arg_const("user", "Jane"));
 //! ```
 //! While the `arg(...)` method allows a keyed lens to be used, binding the fluent variable to a piece of application data, and updating when that data changes.
 //! ```ignore
 //! # use vizia_core::prelude::*;
-//! # let mut cx = &mut Context::new();
+//! # let mut cx = &mut Context::default();
 //! # #[derive(Lens)]
 //! # pub struct AppData {
 //! #   user: String,

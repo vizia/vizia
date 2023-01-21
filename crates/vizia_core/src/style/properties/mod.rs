@@ -53,7 +53,7 @@
 //!
 //! ```no_run
 //! # use vizia_core::prelude::*;
-//! # let cx = &mut Context::new();
+//! # let cx = &mut Context::default();
 //! # use vizia_winit::application::Application;
 //! # Application::new(|cx|{
 //! // Sets the width of the label to be 100 pixels.
@@ -81,7 +81,7 @@
 //! ### Inline
 //! ```no_run
 //! # use vizia_core::prelude::*;
-//! # let cx = &mut Context::new();
+//! # let cx = &mut Context::default();
 //! # use vizia_winit::application::Application;
 //! # Application::new(|cx|{
 //! // Sets the width of the label to be 100 pixels.

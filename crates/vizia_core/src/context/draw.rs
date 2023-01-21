@@ -42,7 +42,7 @@ impl DrawCache {
 /// ```
 /// # use vizia_core::prelude::*;
 /// # use vizia_core::vg;
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 ///
 /// pub struct CustomView {}
 ///
