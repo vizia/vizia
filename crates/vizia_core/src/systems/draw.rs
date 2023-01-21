@@ -1,6 +1,5 @@
 use crate::prelude::*;
 use crate::{context::Context, resource::ImageOrId};
-use cosmic_text::Edit;
 use femtovg::{ImageFlags, Paint, Path, PixelFormat, RenderTarget};
 use vizia_id::GenerationalId;
 
@@ -168,6 +167,47 @@ pub(crate) fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     let mut outer_shadow_color: femtovg::Color = outer_shadow_color.into();
     outer_shadow_color.set_alphaf(outer_shadow_color.a * opacity);
 
+    // // Draw outer shadow
+    // let mut path = Path::new();
+    // path.rounded_rect_varying(
+    //     bounds.x - outer_shadow_blur + outer_shadow_h_offset,
+    //     bounds.y - outer_shadow_blur + outer_shadow_v_offset,
+    //     bounds.w + 2.0 * outer_shadow_blur,
+    //     bounds.h + 2.0 * outer_shadow_blur,
+    //     border_radius_top_left,
+    //     border_radius_top_right,
+    //     border_radius_bottom_right,
+    //     border_radius_bottom_left,
+    // );
+    // path.rounded_rect_varying(
+    //     bounds.x,
+    //     bounds.y,
+    //     bounds.w,
+    //     bounds.h,
+    //     border_radius_top_left,
+    //     border_radius_top_right,
+    //     border_radius_bottom_right,
+    //     border_radius_bottom_left,
+    // );
+    // path.solidity(Solidity::Hole);
+
+    // let mut paint = Paint::box_gradient(
+    //     bounds.x + outer_shadow_h_offset,
+    //     bounds.y + outer_shadow_v_offset,
+    //     bounds.w,
+    //     bounds.h,
+    //     border_radius_top_left
+    //         .max(border_radius_top_right)
+    //         .max(border_radius_bottom_left)
+    //         .max(border_radius_bottom_right),
+    //     outer_shadow_blur,
+    //     outer_shadow_color,
+    //     femtovg::Color::rgba(0, 0, 0, 0),
+    // );
+
+    // canvas.fill_path(&mut path, paint);
+
+    //let start = instant::Instant::now();
     let mut path = Path::new();
 
     if bounds.w == bounds.h
@@ -273,6 +313,7 @@ pub(crate) fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     }
 
     // Draw outer shadow
+
     if cx.outer_shadow_color().is_some() {
         let sigma = outer_shadow_blur / 2.0;
         let d = (sigma * 5.0).ceil();
@@ -443,6 +484,34 @@ pub(crate) fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     outline_paint.set_line_width(outline_width);
     canvas.stroke_path(&mut outline_path, &outline_paint);
 
+    // // Draw inner shadow
+    // let mut path = Path::new();
+    // path.rounded_rect_varying(
+    //     0.0 + border_width,
+    //     0.0 + border_width,
+    //     bounds.w - border_width * 2.0,
+    //     bounds.h - border_width * 2.0,
+    //     border_radius_top_left,
+    //     border_radius_top_right,
+    //     border_radius_bottom_right,
+    //     border_radius_bottom_left,
+    // );
+
+    // let mut paint = Paint::box_gradient(
+    //     0.0 + inner_shadow_h_offset + border_width,
+    //     0.0 + inner_shadow_v_offset + border_width,
+    //     bounds.w - border_width * 2.0,
+    //     bounds.h - border_width * 2.0,
+    //     border_radius_top_left
+    //         .max(border_radius_top_right)
+    //         .max(border_radius_bottom_left)
+    //         .max(border_radius_bottom_right),
+    //     inner_shadow_blur,
+    //     femtovg::Color::rgba(0, 0, 0, 0),
+    //     inner_shadow_color,
+    // );
+    // canvas.fill_path(&mut path, paint);
+
     // Draw text and image
     if cx.text_context.has_buffer(cx.current) || cx.image().is_some() {
         let mut box_x = bounds.x + border_width;
@@ -507,57 +576,12 @@ pub(crate) fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
             };
 
             let origin_x = box_x + box_w * justify_x;
-            let origin_y = box_y + (box_h * justify_y).round();
+            let origin_y = box_y + (box_h * justify_y).ceil();
 
             cx.text_context.sync_styles(cx.current, &cx.style);
 
-            let selection_color =
-                cx.style.selection_color.get(cx.current).copied().unwrap_or_default();
-            let caret_color = cx.style.caret_color.get(cx.current).copied().unwrap_or_default();
-            if selection_color.a() != 0 || caret_color.a() != 0 {
-                let cursor_width = cx.logical_to_physical(1.0) as u32;
-                let select_offset = cx.logical_to_physical(0.5) as u32;
-                cx.text_context.with_editor(cx.current, |buf| {
-                    if selection_color.a() != 0 {
-                        if let Some(cursor_end) = buf.select_opt() {
-                            let mut path = Path::new();
-                            let (cursor_start, cursor_end) = if buf.cursor() < cursor_end {
-                                (buf.cursor(), cursor_end)
-                            } else {
-                                (cursor_end, buf.cursor())
-                            };
-                            for (sel_x, sel_y, sel_w, sel_h) in
-                                buf.buffer().highlight_blocks(cursor_start, cursor_end)
-                            {
-                                let sel_w = if sel_w == 0 { cursor_width } else { sel_w };
-                                path.rect(
-                                    sel_x as f32 + box_x - select_offset as f32,
-                                    sel_y as f32 + box_y,
-                                    sel_w as f32,
-                                    sel_h as f32,
-                                );
-                            }
-                            canvas.fill_path(&mut path, &Paint::color(selection_color.into()));
-                        }
-                    }
-                    if caret_color.a() != 0 {
-                        let mut path = Path::new();
-                        for (sel_x, sel_y, sel_w, sel_h) in
-                            buf.buffer().highlight_blocks(buf.cursor(), buf.cursor())
-                        {
-                            let sel_w = if sel_w == 0 { cursor_width } else { sel_w };
-                            path.rect(
-                                sel_x as f32 + box_x - select_offset as f32,
-                                sel_y as f32 + box_y,
-                                sel_w as f32,
-                                sel_h as f32,
-                            );
-                        }
-                        canvas.fill_path(&mut path, &Paint::color(caret_color.into()));
-                    }
-                });
-            }
-
+            cx.draw_highlights(canvas, (origin_x, origin_y), (justify_x, justify_y));
+            cx.draw_caret(canvas, (origin_x, origin_y), (justify_x, justify_y), 1.0);
             cx.draw_text(canvas, (origin_x, origin_y), (justify_x, justify_y));
         }
     }
