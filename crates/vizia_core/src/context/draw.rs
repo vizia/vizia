@@ -93,11 +93,6 @@ impl<'a> DrawContext<'a> {
         }
     }
 
-    /// Get the entity ID of the view currently being drawn.
-    pub fn current(&self) -> Entity {
-        self.current
-    }
-
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
     }

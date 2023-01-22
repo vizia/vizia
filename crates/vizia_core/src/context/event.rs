@@ -83,7 +83,6 @@ impl<'a> EventContext<'a> {
         self.entity_identifiers.get(identity).cloned()
     }
 
-    /// Get the entity ID of the view currently handling events.
     pub fn current(&self) -> Entity {
         self.current
     }
