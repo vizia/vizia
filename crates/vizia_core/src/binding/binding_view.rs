@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 use crate::binding::{BasicStore, LensCache, ModelOrView, Store, StoreId};
 use crate::prelude::*;
 
-/// A binding view which rebuilds its contents when its observed data changes.
+/// A view with a binding which rebuilds its contents when the observed data changes.
 pub struct Binding<L>
 where
     L: Lens,

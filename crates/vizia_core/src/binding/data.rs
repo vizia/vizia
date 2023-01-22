@@ -5,8 +5,8 @@ use unic_langid::LanguageIdentifier;
 
 use crate::prelude::*;
 
-/// A trait for any type which can be bound to, i.e. can be cached and compared against previous
-/// versions.
+/// A trait for fast comparisons of data. Implemented by any type which can be bound to,
+/// i.e. can be cached and compared against previous versions.
 pub trait Data: 'static + Clone {
     fn same(&self, other: &Self) -> bool;
 }

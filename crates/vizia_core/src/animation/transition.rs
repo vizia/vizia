@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, PartialEq)]
-pub struct Transition {
+pub(crate) struct Transition {
     // List of properties affected by transition
     pub property: String,
     // Duration of the transition
