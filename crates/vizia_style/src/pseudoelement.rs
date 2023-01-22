@@ -11,7 +11,7 @@ pub enum PseudoElement {
 }
 
 impl ToCss for PseudoElement {
-    fn to_css<W>(&self, dest: &mut W) -> std::fmt::Result
+    fn to_css<W>(&self, _dest: &mut W) -> std::fmt::Result
     where
         W: std::fmt::Write,
     {

@@ -139,19 +139,19 @@ test {
 }
 "#;
 
-    const EXAMPLE: &str = r#"
-    :root {
-        --main-bg-color: brown;
-    }
+    //     const EXAMPLE: &str = r#"
+    //     :root {
+    //         --main-bg-color: brown;
+    //     }
 
-    button {
-        background-color: var(--main-bg-color);
-    }
-"#;
+    //     button {
+    //         background-color: var(--main-bg-color);
+    //     }
+    // "#;
 
     #[test]
     fn parse_stylsheet() {
-        let style_sheet = StyleSheet::parse("test.css", EXAMPLE, ParserOptions::default());
+        let style_sheet = StyleSheet::parse("test.css", CSS_EXAMPLE, ParserOptions::default());
         println!("{:#?}", style_sheet);
     }
 }

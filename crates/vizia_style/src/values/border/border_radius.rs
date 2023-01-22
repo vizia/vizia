@@ -1,4 +1,4 @@
-use crate::{macros::impl_parse, Length, LengthOrPercentage, Parse, Rect};
+use crate::{macros::impl_parse, LengthOrPercentage, Parse, Rect};
 use cssparser::*;
 /// Defines the border radius of every corner of a rectangle.
 #[derive(Default, Debug, Clone, PartialEq)]
@@ -50,6 +50,7 @@ impl From<&str> for BorderRadius {
 mod tests {
     use super::*;
     use crate::tests::assert_parse;
+    use crate::Length;
 
     assert_parse! {
         BorderRadius, assert_border_radius,

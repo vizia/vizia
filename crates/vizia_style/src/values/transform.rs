@@ -142,7 +142,6 @@ mod tests {
     use super::*;
     use crate::tests::assert_parse;
     use crate::Length;
-    use crate::LengthValue;
 
     assert_parse! {
         Transform, assert_transform,

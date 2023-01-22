@@ -90,7 +90,6 @@ impl<'a, 'i> selectors::parser::Parser<'i> for SelectorParser<'a, 'i> {
             "over" => Over,
             "focus" => Focus,
             "focus-visible" => FocusVisible,
-            "over" => Over,
             "enabled" => Enabled,
             "disabled" => Disabled,
             "read-only" => ReadOnly,
@@ -143,7 +142,7 @@ impl<'a, 'i> selectors::parser::Parser<'i> for SelectorParser<'a, 'i> {
 
     fn parse_pseudo_element(
         &self,
-        location: SourceLocation,
+        _location: SourceLocation,
         name: CowRcStr<'i>,
     ) -> Result<<Self::Impl as SelectorImpl>::PseudoElement, ParseError<'i, Self::Error>> {
         use PseudoElement::*;

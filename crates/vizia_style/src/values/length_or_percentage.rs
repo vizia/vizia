@@ -21,18 +21,16 @@ impl LengthOrPercentage {
         match self {
             LengthOrPercentage::Length(length) => {
                 match length {
-                    Length::Value(val) => {
-                        match val {
-                            LengthValue::Px(pixels) => {
-                                return *pixels;
-                            }
-
-                            _=> {}
+                    Length::Value(val) => match val {
+                        LengthValue::Px(pixels) => {
+                            return *pixels;
                         }
-                    }
+
+                        _ => {}
+                    },
 
                     // TODO
-                    Length::Calc(l) => {
+                    Length::Calc(_l) => {
                         todo!();
                     }
                 }

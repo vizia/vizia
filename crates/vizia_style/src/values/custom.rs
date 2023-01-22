@@ -1,6 +1,6 @@
 use cssparser::*;
 
-use crate::{CustomParseError, DashedIdent, Parse, ParserOptions};
+use crate::{CustomParseError, DashedIdent, Parse};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CustomProperty<'i> {
@@ -241,7 +241,7 @@ impl<'i> Variable<'i> {
 mod tests {
     use cssparser::CowRcStr;
 
-    use crate::{CustomProperty, Parse};
+    use crate::CustomProperty;
 
     #[test]
     fn parse_custom_ident() {

@@ -1,9 +1,6 @@
 use cssparser::{ParseError, Parser};
 
-use crate::{
-    BorderColor, BorderStyle, BorderWidth, BorderWidthKeyword, BorderWidthValue, Color,
-    CustomParseError, LengthOrPercentage, Parse,
-};
+use crate::{BorderStyle, BorderWidthValue, Color, CustomParseError, Parse};
 
 /// The border shorthand containing a border width, style and color.
 #[derive(Debug, Clone, PartialEq)]
@@ -83,7 +80,7 @@ impl<'i> Parse<'i> for Border {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{tests::assert_parse, BorderStyleKeyword, Color, Length};
+    use crate::{tests::assert_parse, BorderStyleKeyword, BorderWidthKeyword, Color};
 
     assert_parse! {
         Border, assert_border,

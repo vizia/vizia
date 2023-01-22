@@ -1,12 +1,9 @@
-use std::marker::PhantomData;
-
 use crate::{
-    parse_declaration, parser::declaration::DeclarationParser, CssRule, CssRuleList,
-    CustomParseError, DashedIdent, DeclarationBlock, DeclarationList, Location, Parse,
-    ParserOptions, Property, PropertyRule, SelectorParser, Selectors, StyleRule,
+    parse_declaration, CssRule, CssRuleList, CustomParseError, DashedIdent, DeclarationBlock,
+    DeclarationList, Location, ParserOptions, SelectorParser, Selectors, StyleRule,
 };
 use cssparser::*;
-use selectors::{parser::Selector, SelectorList};
+use selectors::SelectorList;
 
 #[derive(PartialEq, PartialOrd)]
 enum State {

@@ -43,7 +43,7 @@ impl ToCss for PseudoClass {
             PseudoClass::Hover => dest.write_str(":hover"),
             PseudoClass::Active => dest.write_str(":active"),
             PseudoClass::Over => todo!(),
-            PseudoClass::Lang(ref lang) => todo!(),
+            PseudoClass::Lang(ref _lang) => todo!(),
             PseudoClass::Focus => todo!(),
             PseudoClass::FocusVisible => todo!(),
             PseudoClass::FocusWithin => todo!(),

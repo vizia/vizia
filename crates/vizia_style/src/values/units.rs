@@ -1,5 +1,4 @@
 use crate::{macros::impl_parse, AutoKeyword, LengthPixels, Parse, Percentage, Stretch};
-use cssparser::*;
 pub use morphorm::Units;
 
 impl_parse! {
@@ -65,11 +64,3 @@ mod tests {
         }
     }
 }
-
-// impl From<&str> for Units {
-//     fn from(s: &str) -> Self {
-//         let mut input = ParserInput::new(&s);
-//         let mut parser = Parser::new(&mut input);
-//         Units::parse(&mut parser).unwrap_or_default()
-//     }
-// }

@@ -11,7 +11,7 @@ mod property;
 pub use property::*;
 
 mod macros;
-pub use macros::*;
+use macros::*;
 
 mod matching;
 pub use matching::*;

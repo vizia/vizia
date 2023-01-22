@@ -63,7 +63,7 @@ pub(crate) fn parse_declaration<'i, 't>(
     input: &mut cssparser::Parser<'i, 't>,
     declarations: &mut DeclarationList<'i>,
     important_declarations: &mut DeclarationList<'i>,
-    options: &ParserOptions,
+    _options: &ParserOptions,
 ) -> Result<(), ParseError<'i, CustomParseError<'i>>> {
     let property =
         input.parse_until_before(Delimiter::Bang, |input| Property::parse_value(name, input))?;
