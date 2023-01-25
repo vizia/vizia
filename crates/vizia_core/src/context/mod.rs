@@ -175,6 +175,10 @@ impl Context {
             ignore_default_theme: false,
         };
 
+        result.style.needs_restyle = true;
+        result.style.needs_relayout = true;
+        result.style.needs_redraw = true;
+
         Environment::new().build(&mut result);
 
         result.entity_manager.create();
@@ -290,9 +294,9 @@ impl Context {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
-        self.style.needs_restyle = true;
+        // self.style.needs_relayout = true;
+        // self.style.needs_redraw = true;
+        // self.style.needs_restyle = true;
     }
 
     /// Sets application focus to the current entity using the previous focus visibility

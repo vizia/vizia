@@ -204,7 +204,7 @@ impl Application {
                     cx.process_data_updates();
                     cx.process_style_updates();
 
-                    if has_animations(&cx.0) {
+                    if cx.process_animations() {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
 
                         event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();
