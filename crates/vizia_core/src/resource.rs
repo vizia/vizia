@@ -3,7 +3,8 @@
 use crate::context::Context;
 use crate::entity::Entity;
 use crate::view::Canvas;
-use fluent_bundle::{FluentBundle, FluentResource};
+use fluent_bundle::resolver::Scope;
+use fluent_bundle::{FluentBundle, FluentResource, FluentValue};
 use image::GenericImageView;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
@@ -113,6 +114,79 @@ impl ResourceManager {
             .expect("Failed to parse translation as FTL");
         let bundle =
             self.translations.entry(lang.clone()).or_insert_with(|| FluentBundle::new(vec![lang]));
+        bundle
+            .add_function("CLASS", |args, _| {
+                FluentValue::String(
+                    format!(
+                        "\0.{}\0",
+                        args[0].as_string(&Scope::<FluentResource, _>::new(
+                            &FluentBundle::new(vec![]),
+                            None,
+                            None
+                        ))
+                    )
+                    .into(),
+                )
+            })
+            .expect("Failed to add function to bundle");
+        bundle
+            .add_function("ID", |args, _| {
+                FluentValue::String(
+                    format!(
+                        "\0#{}\0",
+                        args[0].as_string(&Scope::<FluentResource, _>::new(
+                            &FluentBundle::new(vec![]),
+                            None,
+                            None
+                        ))
+                    )
+                    .into(),
+                )
+            })
+            .expect("Failed to add function to bundle");
+        bundle
+            .add_function("END", |_, _| FluentValue::String(format!("\0-\0").into()))
+            .expect("Failed to add function to bundle");
+        bundle
+            .add_function("WITH_CLASS", |args, _| {
+                FluentValue::String(
+                    format!(
+                        "\0.{}\0{}\0-\0",
+                        args[1].as_string(&Scope::<FluentResource, _>::new(
+                            &FluentBundle::new(vec![]),
+                            None,
+                            None
+                        )),
+                        args[0].as_string(&Scope::<FluentResource, _>::new(
+                            &FluentBundle::new(vec![]),
+                            None,
+                            None
+                        ))
+                    )
+                    .into(),
+                )
+            })
+            .expect("Failed to add function to bundle");
+        bundle
+            .add_function("WITH_ID", |args, _| {
+                FluentValue::String(
+                    format!(
+                        "\0#{}\0{}\0-\0",
+                        args[1].as_string(&Scope::<FluentResource, _>::new(
+                            &FluentBundle::new(vec![]),
+                            None,
+                            None
+                        )),
+                        args[0].as_string(&Scope::<FluentResource, _>::new(
+                            &FluentBundle::new(vec![]),
+                            None,
+                            None
+                        ))
+                    )
+                    .into(),
+                )
+            })
+            .expect("Failed to add function to bundle");
         bundle.add_resource(res).expect("Failed to add resource to bundle");
         self.renegotiate_language();
     }

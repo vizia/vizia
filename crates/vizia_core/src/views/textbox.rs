@@ -45,7 +45,7 @@ impl TextboxData {
         let bounds = cx.cache.bounds.get(entity).unwrap().clone();
         let mut parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
 
-        cx.text_context.sync_styles(entity, &cx.style);
+        cx.text_context.sync_styles(entity, &cx.style, &cx.tree, &cx.views);
 
         // do the computation
         let (mut tx, mut ty) = self.transform;

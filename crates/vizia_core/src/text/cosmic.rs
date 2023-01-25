@@ -1,6 +1,8 @@
 use crate::entity::Entity;
+use crate::events::ViewHandler;
 use crate::prelude::Color;
 use crate::style::Style;
+use crate::text::TextSpan;
 use cosmic_text::{
     fontdb::{Database, Query},
     Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor, Family, FontSystem,
@@ -18,6 +20,7 @@ use std::collections::HashMap;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
+use vizia_storage::{Tree, TreeExt, TreeIterator};
 
 const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
@@ -73,42 +76,73 @@ impl TextContext {
         self.with_editor(entity, |ed| f(ed.buffer_mut()))
     }
 
-    pub fn sync_styles(&mut self, entity: Entity, style: &Style) {
-        let (family, weight, font_style, monospace) = self.with_int(|int: &TextContextInternal| {
-            let families = style
-                .font_family
-                .get(entity)
-                .unwrap_or(&style.default_font)
-                .iter()
-                .map(|x| x.as_family())
-                .collect::<Vec<_>>();
-            let query = Query {
-                families: families.as_slice(),
-                weight: style.font_weight.get(entity).copied().unwrap_or_default(),
-                stretch: Default::default(),
-                style: style.font_style.get(entity).copied().unwrap_or_default(),
-            };
-            let id = int.font_system.db().query(&query).unwrap(); // TODO worst-case default handling
-            let font = int.font_system.get_font(id).unwrap();
-            (font.info.family.clone(), font.info.weight, font.info.style, font.info.monospaced)
-        });
+    fn extract_attrs<'a>(
+        font_system: &'a FontSystem,
+        entity: Entity,
+        style: &'a Style,
+    ) -> Attrs<'a> {
+        let families = style
+            .font_family
+            .get(entity)
+            .unwrap_or(&style.default_font)
+            .iter()
+            .map(|x| x.as_family())
+            .collect::<Vec<_>>();
+        let query = Query {
+            families: families.as_slice(),
+            weight: style.font_weight.get(entity).copied().unwrap_or_default(),
+            stretch: Default::default(),
+            style: style.font_style.get(entity).copied().unwrap_or_default(),
+        };
+        let id = font_system.db().query(&query).unwrap(); // TODO worst-case default handling
+        let font = font_system.get_font(id).unwrap();
         let color = style.font_color.get(entity).copied().unwrap_or(Color::rgb(0, 0, 0));
+        Attrs::new()
+            .family(Family::Name(&font.info.family))
+            .weight(font.info.weight)
+            .style(font.info.style)
+            .monospaced(font.info.monospaced)
+            .color(FontColor::rgba(color.r(), color.g(), color.b(), color.a()))
+    }
+
+    pub fn sync_styles(
+        &mut self,
+        entity: Entity,
+        style: &Style,
+        tree: &Tree<Entity>,
+        views: &FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    ) {
         self.with_buffer(entity, |buf| {
-            let attrs = Attrs::new()
-                .family(Family::Name(&family))
-                .weight(weight)
-                .style(font_style)
-                .monospaced(monospace)
-                .color(FontColor::rgba(color.r(), color.g(), color.b(), color.a()));
+            let base_attrs = Self::extract_attrs(buf.font_system(), entity, style);
+            let child_attrs = TreeIterator::subtree(tree, entity)
+                .filter_map(|child_entity| {
+                    views.get(&child_entity).and_then(|view| view.downcast_ref::<TextSpan>()).map(
+                        |view| (*view, Self::extract_attrs(buf.font_system(), child_entity, style)),
+                    )
+                })
+                .collect::<Vec<_>>();
             let wrap = if style.text_wrap.get(entity).copied().unwrap_or(true) {
                 Wrap::Word
             } else {
                 Wrap::None
             };
             buf.set_wrap(wrap);
-            for line in buf.lines.iter_mut() {
+            for (i, line) in buf.lines.iter_mut().enumerate() {
                 // TODO spans
-                line.set_attrs_list(AttrsList::new(attrs));
+                let mut attrs_list = AttrsList::new(base_attrs);
+                for (view, attrs) in child_attrs.iter() {
+                    if view.cursor_start.line <= i && i <= view.cursor_end.line {
+                        let start =
+                            if view.cursor_start.line == i { view.cursor_start.index } else { 0 };
+                        let end = if view.cursor_end.line == i {
+                            view.cursor_end.index
+                        } else {
+                            line.text().len()
+                        };
+                        attrs_list.add_span(start..end, *attrs);
+                    }
+                }
+                line.set_attrs_list(attrs_list);
             }
             let font_size =
                 style.font_size.get(entity).copied().unwrap_or(16.0) * style.dpi_factor as f32;
