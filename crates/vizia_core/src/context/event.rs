@@ -175,9 +175,9 @@ impl<'a> EventContext<'a> {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
-        self.style.needs_restyle = true;
+        // self.style.needs_relayout = true;
+        // self.style.needs_redraw = true;
+        // self.style.needs_restyle = true;
     }
 
     /// Sets application focus to the current entity using the previous focus visibility.

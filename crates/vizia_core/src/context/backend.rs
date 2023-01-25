@@ -17,8 +17,6 @@ use crate::{
 };
 use vizia_id::GenerationalId;
 
-pub use crate::systems::animation::has_animations;
-
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
@@ -241,13 +239,15 @@ impl<'a> BackendContext<'a> {
         image_system(self.0);
     }
 
+    // Returns true if animations are playing
+    pub fn process_animations(&mut self) -> bool {
+        animation_system(self.0)
+    }
+
     /// Massages the style system until everything is coherent
     pub fn process_visual_updates(&mut self) {
         // Not ideal
         let tree = self.0.tree.clone();
-
-        // Compute any animations for this frame.
-        animation_system(self.0);
 
         // Apply z-order inheritance.
         z_ordering_system(self.0, &tree);
