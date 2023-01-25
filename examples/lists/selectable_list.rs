@@ -44,22 +44,22 @@ fn main() {
                 let item_text = item.get(cx).to_string();
                 //let item_index = item.idx();
                 VStack::new(cx, move |cx| {
-                    Binding::new(cx, AppData::selected, move |cx, selected| {
-                        let selected = selected.get(cx);
-                        Label::new(cx, &item_text)
-                            // Set the checked state based on whether this item is selected
-                            .checked(if selected == index { true } else { false })
-                            // Set the selected item to this one if pressed
-                            .on_press(move |cx| cx.emit(AppEvent::Select(index)));
-                    });
+                    Label::new(cx, &item_text)
+                        // Set the checked state based on whether this item is selected
+                        .checked(AppData::selected.map(move |selected| *selected == index))
+                        // Set the selected item to this one if pressed
+                        .on_press(move |cx| cx.emit(AppEvent::Select(index)));
                 });
             })
             .on_increment(move |cx| cx.emit(AppEvent::IncrementSelection))
             .on_decrement(move |cx| cx.emit(AppEvent::DecrementSelection));
 
-            Binding::new(cx, AppData::selected, move |cx, selected_item| {
-                Label::new(cx, &format!("You have selected: {}", selected_item.get(cx),));
-            });
+            Label::new(
+                cx,
+                AppData::selected.map(|selected| format!("You have selected: {}", selected)),
+            )
+            .height(Pixels(30.0))
+            .width(Pixels(200.0));
         })
         .class("container");
     })

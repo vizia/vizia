@@ -117,10 +117,16 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
                 }
             }
 
-            cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
-            cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
+            let bounds = cx.cache.get_bounds(entity);
 
-            cx.style.needs_relayout = true;
+            if (desired_width == Auto && content_width != bounds.w)
+                || (desired_height == Auto && content_height != bounds.h)
+            {
+                cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
+                cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
+
+                cx.style.needs_relayout = true;
+            }
         }
     }
 }
