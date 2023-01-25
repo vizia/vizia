@@ -20,7 +20,7 @@ use std::collections::HashMap;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
-use vizia_storage::{Tree, TreeExt, TreeIterator};
+use vizia_storage::{Tree, TreeIterator};
 
 const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
