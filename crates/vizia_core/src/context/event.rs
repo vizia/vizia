@@ -114,8 +114,6 @@ impl<'a> EventContext<'a> {
         }
 
         self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
     }
 
     /// Capture mouse input for the current entity.
@@ -175,9 +173,7 @@ impl<'a> EventContext<'a> {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        // self.style.needs_relayout = true;
-        // self.style.needs_redraw = true;
-        // self.style.needs_restyle = true;
+        self.style.needs_restyle = true;
     }
 
     /// Sets application focus to the current entity using the previous focus visibility.
@@ -242,8 +238,6 @@ impl<'a> EventContext<'a> {
         }
 
         self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
     }
 
     /// Sets the checked flag of the current entity.
@@ -254,8 +248,6 @@ impl<'a> EventContext<'a> {
         }
 
         self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
     }
 
     /// Sets the checked flag of the current entity.
@@ -266,8 +258,6 @@ impl<'a> EventContext<'a> {
         }
 
         self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
     }
 
     /// Get the contents of the system clipboard. This may fail for a variety of backend-specific
@@ -302,8 +292,6 @@ impl<'a> EventContext<'a> {
         }
 
         self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
     }
 
     pub fn play_animation(&mut self, animation: Animation) {

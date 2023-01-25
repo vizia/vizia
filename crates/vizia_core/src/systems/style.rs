@@ -222,19 +222,19 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
 
     // Display
     if cx.style.display.link(entity, &matched_rules) {
-        //println!("1");
+        println!("1");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.visibility.link(entity, &matched_rules) {
-        //println!("2");
+        println!("2");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.z_order.link(entity, &matched_rules) {
-        //println!("3");
+        println!("3");
         should_redraw = true;
     }
 
@@ -244,81 +244,81 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
 
     // Opacity
     if cx.style.opacity.link(entity, &matched_rules) {
-        //println!("4");
+        println!("4");
         should_redraw = true;
     }
 
     if cx.style.left.link(entity, &matched_rules) {
-        //println!("6");
+        println!("5");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.right.link(entity, &matched_rules) {
-        //println!("7");
+        println!("6");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.top.link(entity, &matched_rules) {
-        //println!("8");
+        println!("7");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.bottom.link(entity, &matched_rules) {
-        //println!("9");
+        println!("8");
         should_relayout = true;
         should_redraw = true;
     }
 
     // Size
     if cx.style.width.link(entity, &matched_rules) {
-        //println!("10");
+        println!("9");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.height.link(entity, &matched_rules) {
-        //println!("11");
+        println!("10");
         should_relayout = true;
         should_redraw = true;
     }
 
     // Size Constraints
     if cx.style.max_width.link(entity, &matched_rules) {
-        //println!("12");
+        println!("11");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.min_width.link(entity, &matched_rules) {
-        //println!("13");
+        println!("13");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.max_height.link(entity, &matched_rules) {
-        //println!("14");
+        println!("14");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.min_height.link(entity, &matched_rules) {
-        //println!("15");
+        println!("15");
         should_relayout = true;
         should_redraw = true;
     }
 
     // Border
     if cx.style.border_width.link(entity, &matched_rules) {
-        //println!("24");
+        println!("24");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.border_color.link(entity, &matched_rules) {
-        //println!("25");
+        println!("25");
         should_redraw = true;
     }
 
@@ -339,22 +339,22 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
     }
 
     if cx.style.border_radius_top_left.link(entity, &matched_rules) {
-        //println!("26");
+        println!("26");
         should_redraw = true;
     }
 
     if cx.style.border_radius_top_right.link(entity, &matched_rules) {
-        //println!("27");
+        println!("27");
         should_redraw = true;
     }
 
     if cx.style.border_radius_bottom_left.link(entity, &matched_rules) {
-        //println!("28");
+        println!("28");
         should_redraw = true;
     }
 
     if cx.style.border_radius_bottom_right.link(entity, &matched_rules) {
-        //println!("29");
+        println!("29");
         should_redraw = true;
     }
 
@@ -371,42 +371,42 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
     }
 
     if cx.style.layout_type.link(entity, &matched_rules) {
-        //println!("30");
+        println!("30");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.position_type.link(entity, &matched_rules) {
-        //println!("30");
+        println!("30");
         should_relayout = true;
         should_redraw = true;
     }
 
     // Background
     if cx.style.background_color.link(entity, &matched_rules) {
-        //println!("41");
+        println!("41");
         should_redraw = true;
     }
 
     if cx.style.background_image.link(entity, &matched_rules) {
-        //println!("42");
+        println!("42");
         should_redraw = true;
     }
 
     // Font
     if cx.style.font_color.link(entity, &matched_rules) {
-        //println!("43");
+        println!("43");
         should_redraw = true;
     }
 
     if cx.style.font_size.link(entity, &matched_rules) {
-        //println!("44");
+        println!("44");
         should_redraw = true;
         should_relayout = true;
     }
 
     if cx.style.font_family.link(entity, &matched_rules) {
-        //println!("44");
+        println!("44");
         should_redraw = true;
         should_relayout = true;
     }
@@ -436,43 +436,43 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
 
     // Outer Shadow
     if cx.style.outer_shadow_h_offset.link(entity, &matched_rules) {
-        //println!("45");
+        println!("45");
         should_redraw = true;
     }
 
     if cx.style.outer_shadow_v_offset.link(entity, &matched_rules) {
-        //println!("46");
+        println!("46");
         should_redraw = true;
     }
 
     if cx.style.outer_shadow_blur.link(entity, &matched_rules) {
-        //println!("47");
+        println!("47");
         should_redraw = true;
     }
 
     if cx.style.outer_shadow_color.link(entity, &matched_rules) {
-        //println!("48");
+        println!("48");
         should_redraw = true;
     }
 
     // Inner Shadow
     if cx.style.inner_shadow_h_offset.link(entity, &matched_rules) {
-        //println!("45");
+        println!("45");
         should_redraw = true;
     }
 
     if cx.style.inner_shadow_v_offset.link(entity, &matched_rules) {
-        //println!("46");
+        println!("46");
         should_redraw = true;
     }
 
     if cx.style.inner_shadow_blur.link(entity, &matched_rules) {
-        //println!("47");
+        println!("47");
         should_redraw = true;
     }
 
     if cx.style.inner_shadow_color.link(entity, &matched_rules) {
-        //println!("48");
+        println!("48");
         should_redraw = true;
     }
 
@@ -511,6 +511,7 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
     }
 
     if should_relayout {
+        println!("should relayout");
         cx.style.needs_relayout = true;
     }
 
