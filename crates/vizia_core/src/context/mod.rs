@@ -513,8 +513,8 @@ impl Context {
                 });
             }
         }
+        self.need_relayout();
         self.style.needs_redraw = true;
-        self.style.needs_relayout = true;
     }
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
