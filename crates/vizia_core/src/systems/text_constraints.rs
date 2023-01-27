@@ -3,8 +3,8 @@ use vizia_id::GenerationalId;
 
 // Apply this before layout
 // THE GOAL OF THIS FUNCTION: set content-width and content-height
-pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
-    let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
+pub fn text_constraints_system(cx: &mut Context) {
+    let mut draw_tree: Vec<Entity> = cx.tree.into_iter().collect();
     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 
     for entity in draw_tree.into_iter() {
@@ -21,7 +21,7 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
             continue;
         }
 
-        if tree.is_ignored(entity) {
+        if cx.tree.is_ignored(entity) {
             continue;
         }
 

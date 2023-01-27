@@ -41,6 +41,9 @@ use vizia_storage::TreeExt;
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 
+pub(crate) type DataStore = SparseSet<ModelDataStore>;
+pub(crate) type Views = FnvHashMap<Entity, Box<dyn BindingHandler>>;
+
 /// The main storage and control object for a Vizia application.
 ///
 /// This type is part of the prelude.
@@ -51,8 +54,8 @@ pub struct Context {
     pub(crate) current: Entity,
     /// TODO make this private when there's no longer a need to mutate views after building
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
-    pub(crate) data: SparseSet<ModelDataStore>,
-    pub(crate) bindings: FnvHashMap<Entity, Box<dyn BindingHandler>>,
+    pub(crate) data: DataStore,
+    pub(crate) bindings: Views,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,

@@ -9,8 +9,8 @@ use crate::prelude::*;
 pub use morphorm::GeometryChanged;
 use morphorm::{Cache, Hierarchy};
 
-pub(crate) fn geometry_changed(cx: &mut Context, tree: &Tree<Entity>) {
-    for node in tree.down_iter() {
+pub(crate) fn geometry_changed(cx: &mut Context) {
+    for node in cx.tree.down_iter() {
         let geometry_changed = cx.cache.geometry_changed(node);
         if !geometry_changed.is_empty() {
             cx.event_queue.push_back(
