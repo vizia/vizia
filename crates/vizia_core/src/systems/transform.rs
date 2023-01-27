@@ -1,13 +1,13 @@
 use crate::{prelude::*, style::Transform2D};
 use vizia_id::GenerationalId;
 
-pub fn transform_system(cx: &mut Context, tree: &Tree<Entity>) {
-    for entity in tree.into_iter() {
+pub fn transform_system(cx: &mut Context) {
+    for entity in cx.tree.into_iter() {
         if entity == Entity::root() {
             continue;
         }
 
-        let parent = tree.get_parent(entity).unwrap();
+        let parent = cx.tree.get_parent(entity).unwrap();
         //let parent_origin = state.data.get_origin(parent);
         let parent_transform = cx.cache.get_transform(parent);
 

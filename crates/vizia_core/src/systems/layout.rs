@@ -4,8 +4,8 @@ use crate::prelude::*;
 
 use super::text_constraints_system;
 
-pub(crate) fn layout_system(cx: &mut Context, tree: &Tree<Entity>) {
-    text_constraints_system(cx, tree);
+pub(crate) fn layout_system(cx: &mut Context) {
+    text_constraints_system(cx);
 
     if cx.style.needs_relayout {
         layout(&mut cx.cache, &cx.tree, &cx.style, &mut cx.text_context);

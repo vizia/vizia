@@ -1,8 +1,8 @@
 use crate::prelude::*;
 use vizia_id::GenerationalId;
 
-pub fn visibility_system(cx: &mut Context, tree: &Tree<Entity>) {
-    let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
+pub fn visibility_system(cx: &mut Context) {
+    let mut draw_tree: Vec<Entity> = cx.tree.into_iter().collect();
     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 
     for entity in draw_tree.into_iter() {
@@ -10,11 +10,11 @@ pub fn visibility_system(cx: &mut Context, tree: &Tree<Entity>) {
             continue;
         }
 
-        if tree.is_ignored(entity) {
+        if cx.tree.is_ignored(entity) {
             continue;
         }
 
-        let parent = tree.get_layout_parent(entity).unwrap();
+        let parent = cx.tree.get_layout_parent(entity).unwrap();
 
         if cx.cache.get_visibility(parent) == Visibility::Invisible {
             cx.cache.set_visibility(entity, Visibility::Invisible);
