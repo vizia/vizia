@@ -171,7 +171,7 @@ impl<'a> DrawContext<'a> {
             for (color, cmds) in draw_commands.into_iter() {
                 let temp_paint =
                     Paint::color(femtovg::Color::rgba(color.r(), color.g(), color.b(), color.a()));
-                canvas.draw_glyph_cmds(cmds, &temp_paint);
+                canvas.draw_glyph_cmds(cmds, &temp_paint, 1.0);
             }
         }
     }
