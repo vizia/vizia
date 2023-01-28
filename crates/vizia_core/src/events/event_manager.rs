@@ -511,10 +511,6 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                         context.triggered = Entity::null();
                     }
                 }
-
-                // context.style.needs_relayout = true;
-                // context.style.needs_redraw = true;
-                // context.style.needs_restyle = true;
             }
 
             if matches!(*code, Code::Enter | Code::NumpadEnter | Code::Space) {
