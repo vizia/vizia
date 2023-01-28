@@ -236,10 +236,7 @@ impl ApplicationRunner {
                 },
             );
 
-            cx.0.needs_restyle();
-            // This will trigger a `WindowEvent::GeometryChanged`
-            cx.0.needs_relayout();
-            cx.0.needs_redraw();
+            cx.needs_refresh();
 
             self.event_manager.flush_events(cx.context());
         }
@@ -378,11 +375,7 @@ impl ApplicationRunner {
                 }
             }
             baseview::Event::Window(event) => match event {
-                baseview::WindowEvent::Focused => {
-                    cx.0.needs_restyle();
-                    cx.0.needs_relayout();
-                    cx.0.needs_redraw();
-                }
+                baseview::WindowEvent::Focused => cx.needs_refresh(),
                 baseview::WindowEvent::Resized(window_info) => {
                     // We keep track of the current size before applying the user scale factor while
                     // baseview's logical size includes that factor so we need to compensate for it
@@ -424,9 +417,7 @@ impl ApplicationRunner {
 
                     cx.cache().set_clip_region(Entity::root(), bounding_box);
 
-                    cx.0.needs_restyle();
-                    cx.0.needs_relayout();
-                    cx.0.needs_redraw();
+                    cx.needs_refresh();
                 }
                 baseview::WindowEvent::WillClose => {
                     cx.send_event(Event::new(WindowEvent::WindowClose));

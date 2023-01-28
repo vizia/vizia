@@ -5,6 +5,7 @@ use femtovg::{renderer::OpenGl, Canvas};
 use fnv::FnvHashMap;
 
 use super::EventProxy;
+use crate::style::SystemFlags;
 use crate::{
     cache::{BoundingBox, CachedData},
     environment::Environment,
@@ -272,5 +273,9 @@ impl<'a> BackendContext<'a> {
                 .origin(Entity::root())
                 .propagate(Propagation::Up),
         );
+    }
+
+    pub fn needs_refresh(&mut self) {
+        self.0.style.system_flags = SystemFlags::all();
     }
 }

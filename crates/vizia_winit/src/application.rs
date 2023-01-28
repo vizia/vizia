@@ -288,6 +288,7 @@ impl Application {
                             cx.style()
                                 .height
                                 .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
+                            cx.needs_refresh();
                         }
 
                         #[allow(deprecated)]
@@ -405,9 +406,7 @@ impl Application {
 
                             cx.cache().set_clip_region(Entity::root(), bounding_box);
 
-                            cx.0.needs_restyle();
-                            cx.0.needs_relayout();
-                            cx.0.needs_redraw();
+                            cx.needs_refresh();
                         }
 
                         winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {
