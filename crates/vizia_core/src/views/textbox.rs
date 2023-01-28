@@ -211,6 +211,7 @@ impl TextboxData {
         self.transform = (tx / scale, ty / scale);
     }
 
+    #[allow(dead_code)]
     pub fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
         cx.text_context.with_editor(self.content_entity, |buf| buf.copy_selection())
     }

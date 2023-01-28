@@ -12,7 +12,7 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
 use crate::style::{LinearGradient, Style};
-use crate::text::TextContext;
+use crate::text::{TextConfig, TextContext};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 
@@ -47,6 +47,7 @@ pub struct DrawContext<'a> {
     pub views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub resource_manager: &'a ResourceManager,
     pub text_context: &'a mut TextContext,
+    pub text_config: &'a TextConfig,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState<Entity>,
 }
@@ -88,6 +89,7 @@ impl<'a> DrawContext<'a> {
             views: &cx.views,
             resource_manager: &cx.resource_manager,
             text_context: &mut cx.text_context,
+            text_config: &cx.text_config,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
         }
@@ -164,7 +166,7 @@ impl<'a> DrawContext<'a> {
 
     pub fn draw_text(&mut self, canvas: &mut Canvas, origin: (f32, f32), justify: (f32, f32)) {
         if let Ok(draw_commands) =
-            self.text_context.fill_to_cmds(canvas, self.current, origin, justify)
+            self.text_context.fill_to_cmds(canvas, self.current, origin, justify, *self.text_config)
         {
             for (color, cmds) in draw_commands.into_iter() {
                 let temp_paint =

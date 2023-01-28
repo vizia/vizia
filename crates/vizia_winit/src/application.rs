@@ -92,6 +92,11 @@ impl Application {
         self
     }
 
+    pub fn set_text_config(mut self, text_config: TextConfig) -> Self {
+        BackendContext::new(&mut self.context).set_text_config(text_config);
+        self
+    }
+
     pub fn should_poll(mut self) -> Self {
         self.should_poll = true;
 
