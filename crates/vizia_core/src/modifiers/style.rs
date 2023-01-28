@@ -99,7 +99,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// A display value of `Display::None` causes the view to be ignored by both layout and rendering.
         display,
         Display,
-        SystemFlags::RELAYOUT
+        SystemFlags::REHIDE | SystemFlags::RELAYOUT | SystemFlags::REDRAW
     );
 
     modifier!(
@@ -108,7 +108,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// The layout system will still compute the size and position of an invisible view.
         visibility,
         Visibility,
-        SystemFlags::REDRAW
+        SystemFlags::REHIDE | SystemFlags::REDRAW
     );
 
     /// Sets the z-order index of the view.
