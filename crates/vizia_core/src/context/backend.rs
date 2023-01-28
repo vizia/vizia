@@ -261,6 +261,7 @@ impl<'a> BackendContext<'a> {
         // Apply transform inheritance.
         transform_system(self.0);
 
+        // Layout may have changed what entity is being hovered, so deal with that here.
         // Determine hovered entity.
         hover_system(self.0);
 

@@ -186,9 +186,9 @@ impl Context {
             ignore_default_theme: false,
         };
 
-        result.style.needs_restyle = true;
-        result.style.needs_relayout = true;
-        result.style.needs_redraw = true;
+        result.style.needs_restyle();
+        result.style.needs_relayout();
+        result.style.needs_redraw();
 
         Environment::new().build(&mut result);
 
@@ -241,18 +241,18 @@ impl Context {
     }
 
     /// Mark the application as needing to rerun the draw method
-    pub fn need_redraw(&mut self) {
-        self.style.needs_redraw = true;
+    pub fn needs_redraw(&mut self) {
+        self.style.needs_redraw();
     }
 
     /// Mark the application as needing to recompute view styles
-    pub fn need_restyle(&mut self) {
-        self.style.needs_restyle = true;
+    pub fn needs_restyle(&mut self) {
+        self.style.needs_restyle();
     }
 
     /// Mark the application as needing to rerun layout computations
-    pub fn need_relayout(&mut self) {
-        self.style.needs_relayout = true;
+    pub fn needs_relayout(&mut self) {
+        self.style.needs_relayout();
     }
 
     /// Enables or disables pseudoclasses for the focus of an entity
@@ -305,7 +305,7 @@ impl Context {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        self.style.needs_restyle = true;
+        self.style.needs_restyle();
     }
 
     /// Sets application focus to the current entity using the previous focus visibility
@@ -327,7 +327,7 @@ impl Context {
             pseudo_classes.set(PseudoClass::SELECTED, flag);
         }
 
-        self.style.needs_restyle = true;
+        self.style.needs_restyle();
     }
 
     pub(crate) fn remove_children(&mut self, entity: Entity) {
@@ -341,9 +341,9 @@ impl Context {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         if !delete_list.is_empty() {
-            self.style.needs_restyle = true;
-            self.style.needs_relayout = true;
-            self.style.needs_redraw = true;
+            self.style.needs_restyle();
+            self.style.needs_relayout();
+            self.style.needs_redraw();
         }
 
         for entity in delete_list.iter().rev() {
@@ -524,8 +524,7 @@ impl Context {
                 });
             }
         }
-        self.need_relayout();
-        self.style.needs_redraw = true;
+        self.needs_relayout();
     }
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {

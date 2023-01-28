@@ -1,5 +1,6 @@
 use super::internal;
 use crate::prelude::*;
+use crate::style::SystemFlags;
 
 /// Modifiers for changing the layout properties of a view.
 pub trait LayoutModifiers: internal::Modifiable {
@@ -31,7 +32,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Element::new(cx).layout_type(AppData::layout_type); // Lens to target of type `LayoutType`.
         /// ```
         layout_type,
-        LayoutType
+        LayoutType,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
@@ -51,7 +53,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Element::new(cx).position_type(PositionType::SelfDirected);
         /// ```
         position_type,
-        PositionType
+        PositionType,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
@@ -71,7 +74,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Element::new(cx).left(Units::Pixels(100.0));
         /// ```
         left,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
@@ -91,7 +95,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Element::new(cx).right(Units::Pixels(100.0));
         /// ```
         right,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
@@ -111,7 +116,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Element::new(cx).top(Units::Pixels(100.0));
         /// ```
         top,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
@@ -131,7 +137,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         /// Element::new(cx).bottom(Units::Pixels(100.0));
         /// ```
         bottom,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     /// Sets the space for all sides of the view.
@@ -144,8 +151,7 @@ pub trait LayoutModifiers: internal::Modifiable {
             cx.style.top.insert(entity, value);
             cx.style.bottom.insert(entity, value);
 
-            cx.need_relayout();
-            cx.need_redraw();
+            cx.style.needs_relayout();
         });
 
         self
@@ -154,13 +160,15 @@ pub trait LayoutModifiers: internal::Modifiable {
     modifier!(
         /// Sets the width of the view.
         width,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
         /// Sets the height of the view.
         height,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     /// Sets the width and height of the view.
@@ -171,8 +179,7 @@ pub trait LayoutModifiers: internal::Modifiable {
             cx.style.width.insert(entity, value);
             cx.style.height.insert(entity, value);
 
-            cx.need_relayout();
-            cx.need_redraw();
+            cx.style.needs_relayout();
         });
 
         self
@@ -183,7 +190,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         ///
         /// Applies only to child views which have a `left` property set to `Auto`.
         child_left,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
@@ -191,7 +199,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         ///
         /// Applies only to child views which have a `right` property set to `Auto`.
         child_right,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
@@ -199,7 +208,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         ///
         /// Applies only to child views which have a `top` property set to `Auto`.
         child_top,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
@@ -207,7 +217,8 @@ pub trait LayoutModifiers: internal::Modifiable {
         ///
         /// Applies only to child views which have a `bottom` property set to `Auto`.
         child_bottom,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     /// Sets the space between the vew and its children.
@@ -222,8 +233,7 @@ pub trait LayoutModifiers: internal::Modifiable {
             cx.style.child_top.insert(entity, value);
             cx.style.child_bottom.insert(entity, value);
 
-            cx.need_relayout();
-            cx.need_redraw();
+            cx.style.needs_relayout();
         });
 
         self
@@ -232,25 +242,29 @@ pub trait LayoutModifiers: internal::Modifiable {
     modifier!(
         /// Sets the space between the views children in a vertical stack.
         row_between,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
         /// Sets the space between the views children in a horizontal stack.
         col_between,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
         /// Sets the minimum width of the view.
         min_width,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
         /// Sets the minimum height of the view.
         min_height,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     /// Sets the minimum width and minimum height of the view.
@@ -261,8 +275,7 @@ pub trait LayoutModifiers: internal::Modifiable {
             cx.style.min_width.insert(entity, value);
             cx.style.min_height.insert(entity, value);
 
-            cx.need_relayout();
-            cx.need_redraw();
+            cx.needs_relayout();
         });
 
         self
@@ -271,13 +284,15 @@ pub trait LayoutModifiers: internal::Modifiable {
     modifier!(
         /// Sets the maximum width of the view.
         max_width,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
         /// Sets the maximum height of the view.
         max_height,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     /// Sets the maximum width and maximum height of the view.
@@ -288,8 +303,7 @@ pub trait LayoutModifiers: internal::Modifiable {
             cx.style.max_width.insert(entity, value);
             cx.style.max_height.insert(entity, value);
 
-            cx.need_relayout();
-            cx.need_redraw();
+            cx.needs_relayout();
         });
 
         self
@@ -298,25 +312,29 @@ pub trait LayoutModifiers: internal::Modifiable {
     modifier!(
         /// Sets the minimum left space of the view.
         min_left,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
         /// Sets the minimum right space of the view.
         min_right,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
         /// Sets the minimum top space of the view.
         min_top,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
         /// Sets the minimum bottom space of the view.
         min_bottom,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     /// Sets the minimum space for all sides of the view.
@@ -329,8 +347,7 @@ pub trait LayoutModifiers: internal::Modifiable {
             cx.style.min_top.insert(entity, value);
             cx.style.min_bottom.insert(entity, value);
 
-            cx.need_relayout();
-            cx.need_redraw();
+            cx.style.needs_relayout();
         });
 
         self
@@ -339,25 +356,29 @@ pub trait LayoutModifiers: internal::Modifiable {
     modifier!(
         /// Sets the maximum left space of the view.
         max_left,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
         /// Sets the maximum right space of the view.
         max_right,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
         /// Sets the maximum top space of the view.
         max_top,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     modifier!(
         /// Sets the maximum bottom space of the view.
         max_bottom,
-        Units
+        Units,
+        SystemFlags::RELAYOUT
     );
 
     /// Sets the maximum space for all sides of the view.
@@ -370,8 +391,7 @@ pub trait LayoutModifiers: internal::Modifiable {
             cx.style.max_top.insert(entity, value);
             cx.style.max_bottom.insert(entity, value);
 
-            cx.need_relayout();
-            cx.need_redraw();
+            cx.style.needs_relayout();
         });
 
         self
@@ -381,7 +401,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     fn grid_rows(mut self, rows: Vec<Units>) -> Self {
         let entity = self.entity();
         self.context().style.grid_rows.insert(entity, rows);
-        self.context().need_relayout();
+        self.context().needs_relayout();
         self
     }
 
@@ -389,7 +409,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     fn grid_cols(mut self, cols: Vec<Units>) -> Self {
         let entity = self.entity();
         self.context().style.grid_cols.insert(entity, cols);
-        self.context().need_relayout();
+        self.context().needs_relayout();
         self
     }
 
@@ -398,28 +418,32 @@ pub trait LayoutModifiers: internal::Modifiable {
         ///
         /// This index relates to the grid rows of the parent view when the parent layout type is set to `Grid`.
         row_index,
-        usize
+        usize,
+        SystemFlags::RELAYOUT
     );
     modifier!(
         /// Sets the grid row span of the view.
         ///
         /// This relates to the range of occupied grid rows of the parent view when the parent layout type is set to `Grid`.
         row_span,
-        usize
+        usize,
+        SystemFlags::RELAYOUT
     );
     modifier!(
         /// Sets the grid column index of the view.
         ///
         /// This index relates to the grid columns of the parent view when the parent layout type is set to `Grid`.
         col_index,
-        usize
+        usize,
+        SystemFlags::RELAYOUT
     );
     modifier!(
         /// Sets the grid column span of the view.
         ///
         /// This relates to the range of occupied grid columns of the parent view when the parent layout type is set to `Grid`.
         col_span,
-        usize
+        usize,
+        SystemFlags::RELAYOUT
     );
 }
 

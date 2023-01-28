@@ -235,10 +235,9 @@ impl Application {
 
                     if let Some(window_view) = cx.views().remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_ref::<Window>() {
-                            if cx.style().needs_redraw {
+                            cx.style().should_redraw(|| {
                                 window.window().request_redraw();
-                                cx.style().needs_redraw = false;
-                            }
+                            });
                         }
 
                         cx.views().insert(Entity::root(), window_view);
@@ -411,9 +410,9 @@ impl Application {
 
                             cx.cache().set_clip_region(Entity::root(), bounding_box);
 
-                            cx.0.need_restyle();
-                            cx.0.need_relayout();
-                            cx.0.need_redraw();
+                            cx.0.needs_restyle();
+                            cx.0.needs_relayout();
+                            cx.0.needs_redraw();
                         }
 
                         winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {

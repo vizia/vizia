@@ -4,7 +4,7 @@
 macro_rules! modifier {
     (
         $(#[$meta:meta])*
-        $name:ident, $t:ty
+        $name:ident, $t:ty, $flags:expr
     ) => {
         $(#[$meta])*
         #[allow(unused_variables)]
@@ -13,8 +13,7 @@ macro_rules! modifier {
             value.set_or_bind(self.context(), entity, |cx, entity, v| {
                 cx.style.$name.insert(entity, v.into());
 
-                cx.need_relayout();
-                cx.need_redraw();
+                cx.style.system_flags |= $flags;
             });
 
             self

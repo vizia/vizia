@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::style::SystemFlags;
 use vizia_id::GenerationalId;
 
 // Apply this before layout
@@ -125,7 +126,7 @@ pub fn text_constraints_system(cx: &mut Context) {
                 cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
                 cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
 
-                cx.style.needs_relayout = true;
+                cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
             }
         }
     }

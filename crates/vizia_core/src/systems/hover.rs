@@ -139,6 +139,6 @@ pub fn hover_system(cx: &mut Context) {
 
         cx.hovered = hovered_widget;
 
-        cx.style.needs_restyle = true;
+        cx.style.needs_restyle();
     }
 }
