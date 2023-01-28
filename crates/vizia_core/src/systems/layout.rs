@@ -1,17 +1,18 @@
 use morphorm::layout;
 
 use crate::prelude::*;
+use crate::style::SystemFlags;
 
 use super::text_constraints_system;
 
 pub(crate) fn layout_system(cx: &mut Context) {
     text_constraints_system(cx);
 
-    if cx.style.needs_relayout {
+    if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {
         layout(&mut cx.cache, &cx.tree, &cx.style, &mut cx.text_context);
 
-        cx.style.needs_relayout = false;
-        cx.style.needs_redraw = true;
+        // If layout has changed then redraw
+        cx.style.system_flags.set(SystemFlags::REDRAW, true);
 
         for entity in cx.tree.into_iter() {
             if cx.text_context.has_buffer(entity) {
@@ -21,5 +22,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
                 });
             }
         }
+        // Defer this to the geometry changed system for now
+        // cx.style.system_flags.set(SystemFlags::RELAYOUT, false);
     }
 }

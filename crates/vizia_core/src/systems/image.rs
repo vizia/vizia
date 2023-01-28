@@ -55,8 +55,8 @@ fn try_load_image(cx: &mut Context, entity: Entity, image_name: &str) -> bool {
                     // This loads the image and sets the image id
                     image_store.image.id(canvas);
                     image_store.used = true;
-                    cx.need_relayout();
-                    cx.need_redraw();
+                    cx.needs_relayout();
+                    cx.needs_redraw();
                 }
             }
         }

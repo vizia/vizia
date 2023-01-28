@@ -45,7 +45,7 @@ impl EventManager {
         'events: for event in self.event_queue.iter_mut() {
             // handle internal events
             event.map(|internal_event, _| match internal_event {
-                InternalEvent::Redraw => context.need_redraw(),
+                InternalEvent::Redraw => context.needs_redraw(),
                 InternalEvent::LoadImage { path, image, policy } => {
                     if let Some(image) = image.lock().unwrap().take() {
                         context.load_image(path.clone(), image, *policy);
@@ -309,7 +309,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 {
                     pseudo_classes.set(PseudoClass::ACTIVE, false);
                 }
-                context.need_restyle();
+                context.needs_restyle();
 
                 context.triggered = Entity::null();
             }
@@ -475,7 +475,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                         {
                             pseudo_classes.set(PseudoClass::ACTIVE, false);
                         }
-                        context.need_restyle();
+                        context.needs_restyle();
                         context.triggered = Entity::null();
                     }
                 } else {
@@ -507,7 +507,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                         {
                             pseudo_classes.set(PseudoClass::ACTIVE, false);
                         }
-                        context.need_restyle();
+                        context.needs_restyle();
                         context.triggered = Entity::null();
                     }
                 }
@@ -542,7 +542,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 {
                     pseudo_classes.set(PseudoClass::ACTIVE, false);
                 }
-                context.need_restyle();
+                context.needs_restyle();
                 context.triggered = Entity::null();
             }
         }

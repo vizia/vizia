@@ -236,10 +236,10 @@ impl ApplicationRunner {
                 },
             );
 
-            cx.0.need_restyle();
+            cx.0.needs_restyle();
             // This will trigger a `WindowEvent::GeometryChanged`
-            cx.0.need_relayout();
-            cx.0.need_redraw();
+            cx.0.needs_relayout();
+            cx.0.needs_redraw();
 
             self.event_manager.flush_events(cx.context());
         }
@@ -247,7 +247,7 @@ impl ApplicationRunner {
         cx.load_images();
 
         // Force restyle on every frame for baseview backend to avoid style inheritance issues
-        cx.style().needs_restyle = true;
+        cx.style().needs_restyle();
         cx.process_data_updates();
         cx.process_style_updates();
 
@@ -255,11 +255,9 @@ impl ApplicationRunner {
 
         cx.process_visual_updates();
 
-        if cx.style().needs_redraw {
-            // TODO - Move this to EventManager
+        cx.style().should_redraw(|| {
             self.should_redraw = true;
-            cx.style().needs_redraw = false;
-        }
+        });
     }
 
     pub fn render(&mut self) {
@@ -381,9 +379,9 @@ impl ApplicationRunner {
             }
             baseview::Event::Window(event) => match event {
                 baseview::WindowEvent::Focused => {
-                    cx.0.need_restyle();
-                    cx.0.need_relayout();
-                    cx.0.need_redraw();
+                    cx.0.needs_restyle();
+                    cx.0.needs_relayout();
+                    cx.0.needs_redraw();
                 }
                 baseview::WindowEvent::Resized(window_info) => {
                     // We keep track of the current size before applying the user scale factor while
@@ -426,9 +424,9 @@ impl ApplicationRunner {
 
                     cx.cache().set_clip_region(Entity::root(), bounding_box);
 
-                    cx.0.need_restyle();
-                    cx.0.need_relayout();
-                    cx.0.need_redraw();
+                    cx.0.needs_restyle();
+                    cx.0.needs_relayout();
+                    cx.0.needs_redraw();
                 }
                 baseview::WindowEvent::WillClose => {
                     cx.send_event(Event::new(WindowEvent::WindowClose));

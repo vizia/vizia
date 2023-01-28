@@ -12,7 +12,7 @@ pub trait AbilityModifiers: internal::Modifiable {
         state.set_or_bind(self.context(), entity, |cx, entity, v| {
             if let Some(abilities) = cx.style.abilities.get_mut(entity) {
                 abilities.set(Abilities::HOVERABLE, v.into());
-                cx.need_restyle();
+                cx.needs_restyle();
             }
         });
 
@@ -32,7 +32,7 @@ pub trait AbilityModifiers: internal::Modifiable {
                     abilities.set(Abilities::NAVIGABLE, false);
                 }
 
-                cx.need_restyle();
+                cx.needs_restyle();
             }
         });
 
@@ -47,7 +47,7 @@ pub trait AbilityModifiers: internal::Modifiable {
         state.set_or_bind(self.context(), entity, |cx, entity, v| {
             if let Some(abilities) = cx.style.abilities.get_mut(entity) {
                 abilities.set(Abilities::NAVIGABLE, v.into());
-                cx.need_restyle();
+                cx.needs_restyle();
             }
         });
 
