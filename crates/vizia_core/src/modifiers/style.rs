@@ -111,15 +111,20 @@ pub trait StyleModifiers: internal::Modifiable {
         SystemFlags::REDRAW
     );
 
-    modifier!(
-        /// Sets the z-order index of the view.
-        ///
-        /// Views with a higher z-order will be rendered on top of those with a lower z-order.
-        /// Views with the same z-order are rendered in tree order.
-        z_order,
-        i32,
-        SystemFlags::REORDER | SystemFlags::REDRAW
-    );
+    /// Sets the z-order index of the view.
+    ///
+    /// Views with a higher z-order will be rendered on top of those with a lower z-order.
+    /// Views with the same z-order are rendered in tree order.
+    fn z_order<U: Into<i32>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.tree.set_z_order(entity, value);
+            cx.needs_redraw();
+        });
+
+        self
+    }
 
     modifier!(
         /// Sets the overflow behavior of the view.

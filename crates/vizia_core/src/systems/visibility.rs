@@ -1,18 +1,14 @@
 use crate::prelude::*;
 use crate::style::SystemFlags;
 use vizia_id::GenerationalId;
+use vizia_storage::DrawIterator;
 
 pub fn visibility_system(cx: &mut Context) {
     if cx.style.system_flags.contains(SystemFlags::REHIDE) {
-        let mut draw_tree: Vec<Entity> = cx.tree.into_iter().collect();
-        draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
+        let draw_tree = DrawIterator::full(&cx.tree);
 
-        for entity in draw_tree.into_iter() {
+        for entity in draw_tree {
             if entity == Entity::root() {
-                continue;
-            }
-
-            if cx.tree.is_ignored(entity) {
                 continue;
             }
 

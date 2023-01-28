@@ -243,9 +243,6 @@ impl<'a> BackendContext<'a> {
 
     /// Massages the style system until everything is coherent
     pub fn process_visual_updates(&mut self) {
-        // Apply z-order inheritance.
-        z_ordering_system(self.0);
-
         // Apply visibility inheritance.
         visibility_system(self.0);
 
