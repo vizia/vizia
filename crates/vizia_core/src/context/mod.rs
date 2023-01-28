@@ -27,12 +27,13 @@ pub use proxy::*;
 use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
+#[cfg(feature = "embedded_fonts")]
 use crate::fonts;
 use crate::prelude::*;
 use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
-use crate::text::TextContext;
+use crate::text::{TextConfig, TextContext};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -76,6 +77,7 @@ pub struct Context {
     pub(crate) resource_manager: ResourceManager,
 
     pub(crate) text_context: TextContext,
+    pub(crate) text_config: TextConfig,
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
@@ -114,13 +116,17 @@ impl Context {
         // Add default fonts
         let mut db = Database::new();
         db.load_system_fonts();
-        db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
-        db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
-        db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
-        db.load_font_data(Vec::from(fonts::ENTYPO));
-        db.load_font_data(Vec::from(fonts::OPEN_SANS_EMOJI));
-        db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));
-        db.load_font_data(Vec::from(fonts::MATERIAL_ICONS_REGULAR));
+
+        #[cfg(feature = "embedded_fonts")]
+        {
+            db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
+            db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
+            db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
+            db.load_font_data(Vec::from(fonts::ENTYPO));
+            db.load_font_data(Vec::from(fonts::OPEN_SANS_EMOJI));
+            db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));
+            db.load_font_data(Vec::from(fonts::MATERIAL_ICONS_REGULAR));
+        }
 
         let mut result = Self {
             entity_manager: IdManager::new(),
@@ -151,6 +157,8 @@ impl Context {
                 sys_locale::get_locale().unwrap_or_else(|| "en-US".to_owned()),
                 db,
             ),
+
+            text_config: TextConfig::default(),
 
             event_proxy: None,
 
