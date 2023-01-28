@@ -223,12 +223,11 @@ impl TextContext {
                                         src_buf.push(RGBA8::new(chunk[0], 0, 0, 0));
                                     }
                                 }
-                                Content::Color => {
+                                Content::Color | Content::SubpixelMask => {
                                     for chunk in rendered.data.chunks_exact(4) {
                                         src_buf.push(RGBA8::new(chunk[0], chunk[1], chunk[2], chunk[3]));
                                     }
                                 }
-                                Content::SubpixelMask => unreachable!(),
                             }
                             canvas.update_image::<ImageSource>(int.glyph_textures[texture_index].image_id, ImgRef::new(&src_buf, content_w, content_h).into(), atlas_content_x as usize, atlas_content_y as usize).unwrap();
 

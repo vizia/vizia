@@ -116,7 +116,10 @@ impl Window {
         };
 
         // Build the femtovg renderer
-        let renderer = OpenGl::new_from_glutin_context(&handle).expect("Cannot create renderer");
+        let renderer = unsafe {
+            OpenGl::new_from_function(|s| handle.get_proc_address(s) as *const _)
+                .expect("Cannot create renderer")
+        };
 
         let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
 
