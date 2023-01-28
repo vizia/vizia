@@ -1,28 +1,27 @@
 use crate::prelude::*;
 use crate::style::SystemFlags;
 use vizia_id::GenerationalId;
+use vizia_storage::DrawIterator;
 
 // Apply this before layout
 // THE GOAL OF THIS FUNCTION: set content-width and content-height
 pub fn text_constraints_system(cx: &mut Context) {
-    let mut draw_tree: Vec<Entity> = cx.tree.into_iter().collect();
-    draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
+    let draw_tree = DrawIterator::full(&cx.tree);
 
-    for entity in draw_tree.into_iter() {
+    for entity in draw_tree {
         // Skip if the entity isn't marked as having its text modified
         if !cx.style.needs_text_layout.get(entity).copied().unwrap_or_default() {
             continue;
         }
 
-        if entity == Entity::root() {
-            continue;
-        }
-
-        if cx.cache.display.get(entity) == Some(&Display::None) {
-            continue;
-        }
-
-        if cx.tree.is_ignored(entity) {
+        // Skip if the entity is invisible or out of bounds
+        // Unfortunately we can't skip the subtree because even if a parent is invisible
+        // a child might be explicitly set to be visible.
+        if entity == Entity::root()
+            || cx.cache.get_visibility(entity) == Visibility::Invisible
+            || cx.cache.get_display(entity) == Display::None
+            || cx.cache.get_opacity(entity) == 0.0
+        {
             continue;
         }
 

@@ -2,7 +2,7 @@ use crate::prelude::*;
 use crate::style::SystemFlags;
 use crate::style::{Rule, Selector, SelectorRelation, Style, StyleRule};
 use vizia_id::GenerationalId;
-use vizia_storage::{LayoutTreeIterator, TreeExt};
+use vizia_storage::{DrawIterator, LayoutTreeIterator, TreeExt};
 
 pub fn inline_inheritance_system(cx: &mut Context) {
     for entity in cx.tree.into_iter() {
@@ -35,15 +35,10 @@ pub fn shared_inheritance_system(cx: &mut Context) {
 }
 
 pub fn hoverability_system(cx: &mut Context) {
-    let mut draw_tree: Vec<Entity> = cx.tree.into_iter().collect();
-    draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
+    let draw_tree = DrawIterator::full(&cx.tree);
 
-    for entity in draw_tree.into_iter() {
+    for entity in draw_tree {
         if entity == Entity::root() {
-            continue;
-        }
-
-        if cx.tree.is_ignored(entity) {
             continue;
         }
 
