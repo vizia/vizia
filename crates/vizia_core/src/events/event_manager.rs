@@ -1,4 +1,4 @@
-use crate::context::InternalEvent;
+use crate::context::{InternalEvent, ResourceContext};
 use crate::events::EventMeta;
 use crate::prelude::*;
 #[cfg(debug_assertions)]
@@ -48,7 +48,7 @@ impl EventManager {
                 InternalEvent::Redraw => context.needs_redraw(),
                 InternalEvent::LoadImage { path, image, policy } => {
                     if let Some(image) = image.lock().unwrap().take() {
-                        context.load_image(path.clone(), image, *policy);
+                        ResourceContext::new(context).load_image(path.clone(), image, *policy);
                     }
                 }
             });

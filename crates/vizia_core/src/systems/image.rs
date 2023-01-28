@@ -1,4 +1,4 @@
-use crate::context::Context;
+use crate::context::{Context, ResourceContext};
 use crate::resource::{ImageRetentionPolicy, StoredImage};
 use crate::{prelude::*, resource::ImageOrId};
 use std::collections::HashSet;
@@ -6,10 +6,12 @@ use vizia_id::GenerationalId;
 
 // Iterate he tree and load any images used by entities which aren't already loaded. Remove any images no longer being used.
 pub fn image_system(cx: &mut Context) {
+    let cx = &mut ResourceContext::new(cx);
+
     cx.resource_manager.mark_images_unused();
 
     // Iterate the tree and load any defined images that aren't already loaded
-    for entity in cx.tree.clone().into_iter() {
+    for entity in cx.tree.into_iter() {
         // Load a background-image if the entity has one
         if let Some(background_image) = cx.style.background_image.get(entity).cloned() {
             load_image(cx, entity, &background_image);
@@ -24,7 +26,7 @@ pub fn image_system(cx: &mut Context) {
     cx.resource_manager.evict_unused_images();
 }
 
-fn load_image(cx: &mut Context, entity: Entity, image_name: &String) {
+fn load_image(cx: &mut ResourceContext, entity: Entity, image_name: &String) {
     if !try_load_image(cx, entity, image_name) {
         // Image doesn't exists yet so call the image loader
         if let Some(callback) = cx.resource_manager.image_loader.take() {
@@ -38,7 +40,7 @@ fn load_image(cx: &mut Context, entity: Entity, image_name: &String) {
     }
 }
 
-fn try_load_image(cx: &mut Context, entity: Entity, image_name: &str) -> bool {
+fn try_load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) -> bool {
     // Check if the image is already loaded
     if let Some(image_store) = cx.resource_manager.images.get_mut(image_name) {
         match &image_store.image {
@@ -55,8 +57,8 @@ fn try_load_image(cx: &mut Context, entity: Entity, image_name: &str) -> bool {
                     // This loads the image and sets the image id
                     image_store.image.id(canvas);
                     image_store.used = true;
-                    cx.needs_relayout();
-                    cx.needs_redraw();
+                    cx.style.needs_relayout();
+                    cx.style.needs_redraw();
                 }
             }
         }
