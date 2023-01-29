@@ -2,15 +2,16 @@ use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
 use vizia_style::{
-    BoxShadow, CssRule, FontFamily, FontSize, GenericFontFamily, Gradient, Transform, Transition,
+    BoxShadow, CssRule, FontFamily, FontSize, FontWeight, GenericFontFamily, Gradient, Transform,
+    Transition,
 };
 
 use crate::prelude::*;
 
 pub use vizia_style::{
-    BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, Length, LengthOrPercentage,
-    LengthValue, LineDirection, LinearGradient, Opacity, Overflow, ParserOptions, Property,
-    SelectorList, Selectors, StyleSheet, Visibility, RGBA,
+    BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, FontStyle, Length,
+    LengthOrPercentage, LengthValue, LineDirection, LinearGradient, Opacity, Overflow,
+    ParserOptions, Property, SelectorList, Selectors, StyleSheet, Visibility, RGBA,
 };
 
 mod rule;
@@ -38,7 +39,7 @@ use crate::animation::{AnimationState, Interpolator};
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
 use bitflags::bitflags;
-use cosmic_text::{FamilyOwned, Weight};
+use cosmic_text::FamilyOwned;
 use vizia_id::IdManager;
 use vizia_storage::SparseSet;
 
@@ -144,7 +145,7 @@ pub struct Style {
     pub font_family: StyleSet<Vec<FamilyOwned>>,
     pub font_color: AnimatableSet<Color>,
     pub font_size: AnimatableSet<FontSize>,
-    pub font_weight: StyleSet<Weight>,
+    pub font_weight: StyleSet<FontWeight>,
     pub font_style: StyleSet<FontStyle>,
     pub caret_color: AnimatableSet<Color>,
     pub selection_color: AnimatableSet<Color>,
@@ -624,6 +625,14 @@ impl Style {
             // Font Size
             Property::FontSize(font_size) => {
                 self.font_size.insert_rule(rule_id, font_size);
+            }
+
+            Property::FontWeight(font_weight) => {
+                self.font_weight.insert_rule(rule_id, font_weight);
+            }
+
+            Property::FontStyle(font_style) => {
+                self.font_style.insert_rule(rule_id, font_style);
             }
 
             // Caret Color

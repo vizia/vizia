@@ -4,7 +4,7 @@ use crate::style::Style;
 use cosmic_text::{
     fontdb::{Database, Query},
     Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor, Family, FontSystem,
-    Metrics, SubpixelBin, Wrap,
+    Metrics, SubpixelBin, Weight, Wrap,
 };
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
@@ -18,6 +18,7 @@ use std::collections::HashMap;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
+use vizia_style::FontStyle;
 
 const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
@@ -97,9 +98,17 @@ impl TextContext {
                 .collect::<Vec<_>>();
             let query = Query {
                 families: families.as_slice(),
-                weight: style.font_weight.get(entity).copied().unwrap_or_default(),
+                weight: Weight(style.font_weight.get(entity).copied().unwrap_or_default().into()),
                 stretch: Default::default(),
-                style: style.font_style.get(entity).copied().unwrap_or_default(),
+                style: style
+                    .font_style
+                    .get(entity)
+                    .map(|style| match style {
+                        FontStyle::Italic => cosmic_text::Style::Italic,
+                        FontStyle::Normal => cosmic_text::Style::Normal,
+                        FontStyle::Oblique => cosmic_text::Style::Oblique,
+                    })
+                    .unwrap_or_default(),
             };
             let id = int.font_system.db().query(&query).unwrap(); // TODO worst-case default handling
             let font = int.font_system.get_font(id).unwrap();

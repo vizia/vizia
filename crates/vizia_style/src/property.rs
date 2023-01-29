@@ -1,9 +1,9 @@
 use crate::{
     define_property, Angle, BackgroundImage, Border, BorderCornerShape, BorderRadius, BorderWidth,
     BorderWidthValue, BoxShadow, Color, CursorIcon, CustomParseError, CustomProperty, Display,
-    FontFamily, FontSize, InsetKeyword, LayoutType, Length, LengthOrPercentage, Opacity, Outline,
-    Overflow, Parse, PositionType, Rect, Scale, Transform, Transition, Translate, Units,
-    UnparsedProperty, Visibility,
+    FontFamily, FontSize, FontStyle, FontWeight, InsetKeyword, LayoutType, Length,
+    LengthOrPercentage, Opacity, Outline, Overflow, Parse, PositionType, Rect, Scale, Transform,
+    Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -125,17 +125,16 @@ define_property! {
         // "outline-left-width": OutlineLeftWidth(BorderWidthValue),
         "outline-offset": OutlineOffset(LengthOrPercentage),
 
-
         // Background
         "background-color": BackgroundColor(Color),
         "background-image": BackgroundImage(Vec<BackgroundImage<'i>>),
-        // // TODO
-        // //BackgroundGradient(LinearGradient),
 
         // Font
         "font-size": FontSize(FontSize),
         "color": FontColor(Color),
         "font-family": FontFamily(Vec<FontFamily<'i>>),
+        "font-weight": FontWeight(FontWeight),
+        "font-style": FontStyle(FontStyle),
         "selection-color": SelectionColor(Color), // TODO: Remove this once we have the pseudoselector version.
         "caret-color": CaretColor(Color),
         "text-wrap": TextWrap(bool),
