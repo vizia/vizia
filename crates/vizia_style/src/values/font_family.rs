@@ -1,4 +1,4 @@
-use crate::{macros::impl_parse, Ident, Parse};
+use crate::{macros::impl_parse, CustomParseError, Parse};
 use cssparser::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -34,10 +34,16 @@ impl<'i> Parse<'i> for FontFamily<'i> {
     fn parse<'t>(
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i, crate::CustomParseError<'i>>> {
-        if let Ok(generic) = GenericFontFamily::parse(input) {
-            return Ok(FontFamily::Generic(generic));
+        let location = input.current_source_location();
+        if let Ok(generic) = input.try_parse(GenericFontFamily::parse) {
+            Ok(FontFamily::Generic(generic))
         } else {
-            return Ident::parse(input).map(|ident| FontFamily::Named(ident.0));
+            Ok(FontFamily::Named(input.expect_ident_or_string().cloned().map_err(|_err| {
+                cssparser::ParseError {
+                    kind: cssparser::ParseErrorKind::Custom(CustomParseError::InvalidValue),
+                    location,
+                }
+            })?))
         }
     }
 }

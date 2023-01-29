@@ -148,12 +148,6 @@ define_property! {
 
         // Box Shadow
         "box-shadow": BoxShadow(Vec<BoxShadow>),
-        "box-shadow-x-offset": BoxShadowXOffset(Length),
-        "box-shadow-y-offset": BoxShadowYOffset(Length),
-        "box-shadow-blur-radius": BoxShadowBlurRadius(Length),
-        "box-shadow-spread-radius": BoxShadowSpreadRadius(Length),
-        "box-shadow-color": BoxShadowColor(Color),
-        "box-shadow-inset": BoxShadowInset(InsetKeyword),
 
         // Animations
         "transition": Transition(Vec<Transition>),

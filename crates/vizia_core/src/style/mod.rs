@@ -790,16 +790,11 @@ impl Style {
             Property::BoxShadow(box_shadows) => {
                 self.box_shadow.insert_rule(rule_id, box_shadows);
             }
-            Property::BoxShadowXOffset(_) => todo!(),
-            Property::BoxShadowYOffset(_) => todo!(),
-            Property::BoxShadowBlurRadius(_) => todo!(),
-            Property::BoxShadowSpreadRadius(_) => todo!(),
-            Property::BoxShadowColor(_) => todo!(),
-            Property::BoxShadowInset(_) => todo!(),
-            Property::Transition(_) => todo!(),
+
             Property::Translate(_) => todo!(),
             Property::Rotate(_) => todo!(),
             Property::Scale(_) => todo!(),
+
             Property::Cursor(cursor) => {
                 self.cursor.insert_rule(rule_id, cursor);
             }
