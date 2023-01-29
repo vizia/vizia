@@ -13,7 +13,7 @@ button {
     child-right: 10px;
     border-width: 1px;
     border-color: #e5e5e5;
-    outer-shadow: 0 1 1 #00000055;
+    box-shadow: 0px 1px 1px #00000055;
     overflow: visible;
 }
 
@@ -29,7 +29,7 @@ button:over {
 }
 
 button:active {
-    outer-shadow: 0 1 1 transparent;
+    box-shadow: 0px 1px 1px transparent;
 }
 
 button:active label {
@@ -40,7 +40,7 @@ button.accent {
     background-color: #005a9e;
     border-width: 0px;
     border-color: #3076ae;
-    outer-shadow: 0 1 0 #00365f;
+    box-shadow: 0px 1px 0px #00365f;
 }
 
 button.accent label {
@@ -256,7 +256,7 @@ dropdown .title {
     child-left: 5px;
     border-width: 1px;
     border-color: #e5e5e5;
-    outer-shadow: 0 1 1 #00000055;
+    box-shadow: 0px 1px 1px #00000055;
     overflow: visible;
 }
 
@@ -266,7 +266,7 @@ dropdown > .title:focus-visible {
 }
 
 dropdown > popup {
-    outer-shadow: 0 3 5 #00000055;
+    box-shadow: 0px 3px 5px #00000055;
 }
 
 dropdown > popup > list {

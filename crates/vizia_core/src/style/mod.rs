@@ -527,6 +527,14 @@ impl Style {
                 self.child_bottom.insert_rule(rule_id, child_bottom);
             }
 
+            Property::RowBetween(row_between) => {
+                self.row_between.insert_rule(rule_id, row_between);
+            }
+
+            Property::ColBetween(col_between) => {
+                self.col_between.insert_rule(rule_id, col_between);
+            }
+
             Property::MinSpace(min_space) => {
                 self.min_left.insert_rule(rule_id, min_space);
                 self.min_right.insert_rule(rule_id, min_space);
@@ -729,26 +737,6 @@ impl Style {
 
             Property::Overflow(overflow) => self.overflow.insert_rule(rule_id, overflow),
             Property::ZIndex(z_index) => self.z_index.insert_rule(rule_id, z_index),
-
-            // Property::MinLeft(min_left) => self.min_left.insert_rule(rule_id, min_left),
-            // Property::MaxLeft(max_left) => self.max_left.insert_rule(rule_id, max_left),
-            // Property::MinWidth(min_width) => self.min_width.insert_rule(rule_id, min_width),
-            // Property::MaxWidth(max_width) => self.max_width.insert_rule(rule_id, max_width),
-            // Property::MinRight(min_right) => self.min_right.insert_rule(rule_id, min_right),
-            // Property::MaxRight(max_right) => self.max_right.insert_rule(rule_id, max_right),
-            // Property::MinTop(min_top) => self.min_top.insert_rule(rule_id, min_top),
-            // Property::MaxTop(max_top) => self.max_top.insert_rule(rule_id, max_top),
-            // Property::MinHeight(min_height) => self.min_height.insert_rule(rule_id, min_height),
-            // Property::MaxHeight(max_height) => self.max_height.insert_rule(rule_id, max_height),
-            // Property::MinBottom(min_bottom) => self.min_bottom.insert_rule(rule_id, min_bottom),
-            // Property::MaxBottom(max_bottom) => self.max_bottom.insert_rule(rule_id, max_bottom),
-            Property::RowBetween(row_between) => {
-                self.row_between.insert_rule(rule_id, row_between);
-            }
-
-            Property::ColBetween(col_between) => {
-                self.col_between.insert_rule(rule_id, col_between);
-            }
 
             Property::Outline(outline) => {
                 if let Some(outline_color) = outline.color {
