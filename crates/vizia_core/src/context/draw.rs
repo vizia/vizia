@@ -234,14 +234,14 @@ impl<'a> DrawContext<'a> {
         let border_width = self.border_width();
 
         let border_top_left_radius = self.border_top_left_radius();
-        let border_top_right_radius = self.border_top_left_radius();
-        let border_bottom_right_radius = self.border_top_left_radius();
-        let border_bottom_left_radius = self.border_top_left_radius();
+        let border_top_right_radius = self.border_top_right_radius();
+        let border_bottom_right_radius = self.border_bottom_right_radius();
+        let border_bottom_left_radius = self.border_bottom_left_radius();
 
         let border_top_left_shape = self.border_top_left_shape();
-        let border_top_right_shape = self.border_top_left_shape();
-        let border_bottom_right_shape = self.border_top_left_shape();
-        let border_bottom_left_shape = self.border_top_left_shape();
+        let border_top_right_shape = self.border_top_right_shape();
+        let border_bottom_right_shape = self.border_bottom_right_shape();
+        let border_bottom_left_shape = self.border_bottom_left_shape();
 
         //TODO: Cache the path a regenerate if the bounds change
         let mut path = Path::new();
