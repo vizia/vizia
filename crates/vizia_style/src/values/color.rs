@@ -81,6 +81,456 @@ impl Default for Color {
     }
 }
 
+impl Color {
+    pub const fn black() -> Self {
+        Self::RGBA(RGBA::BLACK)
+    }
+    pub const fn silver() -> Self {
+        Self::RGBA(RGBA::SILVER)
+    }
+    pub const fn gray() -> Self {
+        Self::RGBA(RGBA::GRAY)
+    }
+    pub const fn white() -> Self {
+        Self::RGBA(RGBA::WHITE)
+    }
+    pub const fn maroon() -> Self {
+        Self::RGBA(RGBA::MAROON)
+    }
+    pub const fn red() -> Self {
+        Self::RGBA(RGBA::RED)
+    }
+    pub const fn purple() -> Self {
+        Self::RGBA(RGBA::PURPLE)
+    }
+    pub const fn fuchsia() -> Self {
+        Self::RGBA(RGBA::FUCHSIA)
+    }
+    pub const fn green() -> Self {
+        Self::RGBA(RGBA::GREEN)
+    }
+    pub const fn lime() -> Self {
+        Self::RGBA(RGBA::LIME)
+    }
+    pub const fn olive() -> Self {
+        Self::RGBA(RGBA::OLIVE)
+    }
+    pub const fn yellow() -> Self {
+        Self::RGBA(RGBA::YELLOW)
+    }
+    pub const fn navy() -> Self {
+        Self::RGBA(RGBA::NAVY)
+    }
+    pub const fn blue() -> Self {
+        Self::RGBA(RGBA::BLUE)
+    }
+    pub const fn teal() -> Self {
+        Self::RGBA(RGBA::TEAL)
+    }
+    pub const fn aqua() -> Self {
+        Self::RGBA(RGBA::AQUA)
+    }
+    pub const fn aliceblue() -> Self {
+        Self::RGBA(RGBA::ALICEBLUE)
+    }
+    pub const fn antiquewhite() -> Self {
+        Self::RGBA(RGBA::ANTIQUEWHITE)
+    }
+    pub const fn aquamarine() -> Self {
+        Self::RGBA(RGBA::AQUAMARINE)
+    }
+    pub const fn azure() -> Self {
+        Self::RGBA(RGBA::AZURE)
+    }
+    pub const fn beige() -> Self {
+        Self::RGBA(RGBA::BEIGE)
+    }
+    pub const fn bisque() -> Self {
+        Self::RGBA(RGBA::BISQUE)
+    }
+    pub const fn blanchedalmond() -> Self {
+        Self::RGBA(RGBA::BLANCHEDALMOND)
+    }
+    pub const fn blueviolet() -> Self {
+        Self::RGBA(RGBA::BLUEVIOLET)
+    }
+    pub const fn brown() -> Self {
+        Self::RGBA(RGBA::BROWN)
+    }
+    pub const fn burlywood() -> Self {
+        Self::RGBA(RGBA::BURLYWOOD)
+    }
+    pub const fn cadetblue() -> Self {
+        Self::RGBA(RGBA::CADETBLUE)
+    }
+    pub const fn chartreuse() -> Self {
+        Self::RGBA(RGBA::CHARTREUSE)
+    }
+    pub const fn chocolate() -> Self {
+        Self::RGBA(RGBA::CHOCOLATE)
+    }
+    pub const fn coral() -> Self {
+        Self::RGBA(RGBA::CORAL)
+    }
+    pub const fn cornflowerblue() -> Self {
+        Self::RGBA(RGBA::CORNFLOWERBLUE)
+    }
+    pub const fn cornsilk() -> Self {
+        Self::RGBA(RGBA::CORNSILK)
+    }
+    pub const fn crimson() -> Self {
+        Self::RGBA(RGBA::CRIMSON)
+    }
+    pub const fn cyan() -> Self {
+        Self::RGBA(RGBA::CYAN)
+    }
+    pub const fn darkblue() -> Self {
+        Self::RGBA(RGBA::DARKBLUE)
+    }
+    pub const fn darkcyan() -> Self {
+        Self::RGBA(RGBA::DARKCYAN)
+    }
+    pub const fn darkgoldenrod() -> Self {
+        Self::RGBA(RGBA::DARKGOLDENROD)
+    }
+    pub const fn darkgray() -> Self {
+        Self::RGBA(RGBA::DARKGRAY)
+    }
+    pub const fn darkgreen() -> Self {
+        Self::RGBA(RGBA::DARKGREEN)
+    }
+    pub const fn darkgrey() -> Self {
+        Self::RGBA(RGBA::DARKGREY)
+    }
+    pub const fn darkkhaki() -> Self {
+        Self::RGBA(RGBA::DARKKHAKI)
+    }
+    pub const fn darkmagenta() -> Self {
+        Self::RGBA(RGBA::DARKMAGENTA)
+    }
+    pub const fn darkolivegreen() -> Self {
+        Self::RGBA(RGBA::DARKOLIVEGREEN)
+    }
+    pub const fn darkorange() -> Self {
+        Self::RGBA(RGBA::DARKORANGE)
+    }
+    pub const fn darkorchid() -> Self {
+        Self::RGBA(RGBA::DARKORCHID)
+    }
+    pub const fn darkred() -> Self {
+        Self::RGBA(RGBA::DARKRED)
+    }
+    pub const fn darksalmon() -> Self {
+        Self::RGBA(RGBA::DARKSALMON)
+    }
+    pub const fn darkseagreen() -> Self {
+        Self::RGBA(RGBA::DARKSEAGREEN)
+    }
+    pub const fn darkslateblue() -> Self {
+        Self::RGBA(RGBA::DARKSLATEBLUE)
+    }
+    pub const fn darkslategray() -> Self {
+        Self::RGBA(RGBA::DARKSLATEGRAY)
+    }
+    pub const fn darkslategrey() -> Self {
+        Self::RGBA(RGBA::DARKSLATEGREY)
+    }
+    pub const fn darkturquoise() -> Self {
+        Self::RGBA(RGBA::DARKTURQUOISE)
+    }
+    pub const fn darkviolet() -> Self {
+        Self::RGBA(RGBA::DARKVIOLET)
+    }
+    pub const fn deeppink() -> Self {
+        Self::RGBA(RGBA::DEEPPINK)
+    }
+    pub const fn deepskyblue() -> Self {
+        Self::RGBA(RGBA::DEEPSKYBLUE)
+    }
+    pub const fn dimgray() -> Self {
+        Self::RGBA(RGBA::DIMGRAY)
+    }
+    pub const fn dimgrey() -> Self {
+        Self::RGBA(RGBA::DIMGREY)
+    }
+    pub const fn dodgerblue() -> Self {
+        Self::RGBA(RGBA::DODGERBLUE)
+    }
+    pub const fn firebrick() -> Self {
+        Self::RGBA(RGBA::FIREBRICK)
+    }
+    pub const fn floralwhite() -> Self {
+        Self::RGBA(RGBA::FLORALWHITE)
+    }
+    pub const fn forestgreen() -> Self {
+        Self::RGBA(RGBA::FORESTGREEN)
+    }
+    pub const fn gainsboro() -> Self {
+        Self::RGBA(RGBA::GAINSBORO)
+    }
+    pub const fn ghostwhite() -> Self {
+        Self::RGBA(RGBA::GHOSTWHITE)
+    }
+    pub const fn gold() -> Self {
+        Self::RGBA(RGBA::GOLD)
+    }
+    pub const fn goldenrod() -> Self {
+        Self::RGBA(RGBA::GOLDENROD)
+    }
+    pub const fn greenyellow() -> Self {
+        Self::RGBA(RGBA::GREENYELLOW)
+    }
+    pub const fn grey() -> Self {
+        Self::RGBA(RGBA::GREY)
+    }
+    pub const fn honeydew() -> Self {
+        Self::RGBA(RGBA::HONEYDEW)
+    }
+    pub const fn hotpink() -> Self {
+        Self::RGBA(RGBA::HOTPINK)
+    }
+    pub const fn indianred() -> Self {
+        Self::RGBA(RGBA::INDIANRED)
+    }
+    pub const fn indigo() -> Self {
+        Self::RGBA(RGBA::INDIGO)
+    }
+    pub const fn ivory() -> Self {
+        Self::RGBA(RGBA::IVORY)
+    }
+    pub const fn khaki() -> Self {
+        Self::RGBA(RGBA::KHAKI)
+    }
+    pub const fn lavender() -> Self {
+        Self::RGBA(RGBA::LAVENDER)
+    }
+    pub const fn lavenderblush() -> Self {
+        Self::RGBA(RGBA::LAVENDERBLUSH)
+    }
+    pub const fn lawngreen() -> Self {
+        Self::RGBA(RGBA::LAWNGREEN)
+    }
+    pub const fn lemonchiffon() -> Self {
+        Self::RGBA(RGBA::LEMONCHIFFON)
+    }
+    pub const fn lightblue() -> Self {
+        Self::RGBA(RGBA::LIGHTBLUE)
+    }
+    pub const fn lightcoral() -> Self {
+        Self::RGBA(RGBA::LIGHTCORAL)
+    }
+    pub const fn lightcyan() -> Self {
+        Self::RGBA(RGBA::LIGHTCYAN)
+    }
+    pub const fn lightgoldenrodyellow() -> Self {
+        Self::RGBA(RGBA::LIGHTGOLDENRODYELLOW)
+    }
+    pub const fn lightgray() -> Self {
+        Self::RGBA(RGBA::LIGHTGRAY)
+    }
+    pub const fn lightgreen() -> Self {
+        Self::RGBA(RGBA::LIGHTGREEN)
+    }
+    pub const fn lightgrey() -> Self {
+        Self::RGBA(RGBA::LIGHTGREY)
+    }
+    pub const fn lightpink() -> Self {
+        Self::RGBA(RGBA::LIGHTPINK)
+    }
+    pub const fn lightsalmon() -> Self {
+        Self::RGBA(RGBA::LIGHTSALMON)
+    }
+    pub const fn lightseagreen() -> Self {
+        Self::RGBA(RGBA::LIGHTSEAGREEN)
+    }
+    pub const fn lightskyblue() -> Self {
+        Self::RGBA(RGBA::LIGHTSKYBLUE)
+    }
+    pub const fn lightslategray() -> Self {
+        Self::RGBA(RGBA::LIGHTSLATEGRAY)
+    }
+    pub const fn lightslategrey() -> Self {
+        Self::RGBA(RGBA::LIGHTSLATEGREY)
+    }
+    pub const fn lightsteelblue() -> Self {
+        Self::RGBA(RGBA::LIGHTSTEELBLUE)
+    }
+    pub const fn lightyellow() -> Self {
+        Self::RGBA(RGBA::LIGHTYELLOW)
+    }
+    pub const fn limegreen() -> Self {
+        Self::RGBA(RGBA::LIMEGREEN)
+    }
+    pub const fn linen() -> Self {
+        Self::RGBA(RGBA::LINEN)
+    }
+    pub const fn magenta() -> Self {
+        Self::RGBA(RGBA::MAGENTA)
+    }
+    pub const fn mediumaquamarine() -> Self {
+        Self::RGBA(RGBA::MEDIUMAQUAMARINE)
+    }
+    pub const fn mediumblue() -> Self {
+        Self::RGBA(RGBA::MEDIUMBLUE)
+    }
+    pub const fn mediumorchid() -> Self {
+        Self::RGBA(RGBA::MEDIUMORCHID)
+    }
+    pub const fn mediumpurple() -> Self {
+        Self::RGBA(RGBA::MEDIUMPURPLE)
+    }
+    pub const fn mediumseagreen() -> Self {
+        Self::RGBA(RGBA::MEDIUMSEAGREEN)
+    }
+    pub const fn mediumslateblue() -> Self {
+        Self::RGBA(RGBA::MEDIUMSLATEBLUE)
+    }
+    pub const fn mediumspringgreen() -> Self {
+        Self::RGBA(RGBA::MEDIUMSPRINGGREEN)
+    }
+    pub const fn mediumturquoise() -> Self {
+        Self::RGBA(RGBA::MEDIUMTURQUOISE)
+    }
+    pub const fn mediumvioletred() -> Self {
+        Self::RGBA(RGBA::MEDIUMVIOLETRED)
+    }
+    pub const fn midnightblue() -> Self {
+        Self::RGBA(RGBA::MIDNIGHTBLUE)
+    }
+    pub const fn mintcream() -> Self {
+        Self::RGBA(RGBA::MINTCREAM)
+    }
+    pub const fn mistyrose() -> Self {
+        Self::RGBA(RGBA::MISTYROSE)
+    }
+    pub const fn moccasin() -> Self {
+        Self::RGBA(RGBA::MOCCASIN)
+    }
+    pub const fn navajowhite() -> Self {
+        Self::RGBA(RGBA::NAVAJOWHITE)
+    }
+    pub const fn oldlace() -> Self {
+        Self::RGBA(RGBA::OLDLACE)
+    }
+    pub const fn olivedrab() -> Self {
+        Self::RGBA(RGBA::OLIVEDRAB)
+    }
+    pub const fn orange() -> Self {
+        Self::RGBA(RGBA::ORANGE)
+    }
+    pub const fn orangered() -> Self {
+        Self::RGBA(RGBA::ORANGERED)
+    }
+    pub const fn orchid() -> Self {
+        Self::RGBA(RGBA::ORCHID)
+    }
+    pub const fn palegoldenrod() -> Self {
+        Self::RGBA(RGBA::PALEGOLDENROD)
+    }
+    pub const fn palegreen() -> Self {
+        Self::RGBA(RGBA::PALEGREEN)
+    }
+    pub const fn paleturquoise() -> Self {
+        Self::RGBA(RGBA::PALETURQUOISE)
+    }
+    pub const fn palevioletred() -> Self {
+        Self::RGBA(RGBA::PALEVIOLETRED)
+    }
+    pub const fn papayawhip() -> Self {
+        Self::RGBA(RGBA::PAPAYAWHIP)
+    }
+    pub const fn peachpuff() -> Self {
+        Self::RGBA(RGBA::PEACHPUFF)
+    }
+    pub const fn peru() -> Self {
+        Self::RGBA(RGBA::PERU)
+    }
+    pub const fn pink() -> Self {
+        Self::RGBA(RGBA::PINK)
+    }
+    pub const fn plum() -> Self {
+        Self::RGBA(RGBA::PLUM)
+    }
+    pub const fn powderblue() -> Self {
+        Self::RGBA(RGBA::POWDERBLUE)
+    }
+    pub const fn rebeccapurple() -> Self {
+        Self::RGBA(RGBA::REBECCAPURPLE)
+    }
+    pub const fn rosybrown() -> Self {
+        Self::RGBA(RGBA::ROSYBROWN)
+    }
+    pub const fn royalblue() -> Self {
+        Self::RGBA(RGBA::ROYALBLUE)
+    }
+    pub const fn saddlebrown() -> Self {
+        Self::RGBA(RGBA::SADDLEBROWN)
+    }
+    pub const fn salmon() -> Self {
+        Self::RGBA(RGBA::SALMON)
+    }
+    pub const fn sandybrown() -> Self {
+        Self::RGBA(RGBA::SANDYBROWN)
+    }
+    pub const fn seagreen() -> Self {
+        Self::RGBA(RGBA::SEAGREEN)
+    }
+    pub const fn seashell() -> Self {
+        Self::RGBA(RGBA::SEASHELL)
+    }
+    pub const fn sienna() -> Self {
+        Self::RGBA(RGBA::SIENNA)
+    }
+    pub const fn skyblue() -> Self {
+        Self::RGBA(RGBA::SKYBLUE)
+    }
+    pub const fn slateblue() -> Self {
+        Self::RGBA(RGBA::SLATEBLUE)
+    }
+    pub const fn slategray() -> Self {
+        Self::RGBA(RGBA::SLATEGRAY)
+    }
+    pub const fn slategrey() -> Self {
+        Self::RGBA(RGBA::SLATEGREY)
+    }
+    pub const fn snow() -> Self {
+        Self::RGBA(RGBA::SNOW)
+    }
+    pub const fn springgreen() -> Self {
+        Self::RGBA(RGBA::SPRINGGREEN)
+    }
+    pub const fn steelblue() -> Self {
+        Self::RGBA(RGBA::STEELBLUE)
+    }
+    pub const fn tan() -> Self {
+        Self::RGBA(RGBA::TAN)
+    }
+    pub const fn thistle() -> Self {
+        Self::RGBA(RGBA::THISTLE)
+    }
+    pub const fn tomato() -> Self {
+        Self::RGBA(RGBA::TOMATO)
+    }
+    pub const fn turquoise() -> Self {
+        Self::RGBA(RGBA::TURQUOISE)
+    }
+    pub const fn violet() -> Self {
+        Self::RGBA(RGBA::VIOLET)
+    }
+    pub const fn wheat() -> Self {
+        Self::RGBA(RGBA::WHEAT)
+    }
+    pub const fn whitesmoke() -> Self {
+        Self::RGBA(RGBA::WHITESMOKE)
+    }
+    pub const fn yellowgreen() -> Self {
+        Self::RGBA(RGBA::YELLOWGREEN)
+    }
+    pub const fn transparent() -> Self {
+        Self::RGBA(RGBA::TRANSPARENT)
+    }
+}
+
 /// A color with red, green, blue, and alpha components, in a byte each.
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)]
