@@ -77,8 +77,6 @@ textbox.multi_line_unwrapped {
 label {
     width: auto;
     height: auto;
-    max-width: 100%;
-    min-width: 0px;
     layout-type: row;
     child-space: auto;
     child-left: 0px;
