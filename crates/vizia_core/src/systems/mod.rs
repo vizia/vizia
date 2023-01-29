@@ -11,7 +11,6 @@ pub(crate) mod visibility;
 pub(crate) mod z_order;
 
 pub(crate) use self::image::*;
-pub use animation::has_animations;
 pub(crate) use animation::*;
 pub(crate) use clipping::*;
 pub(crate) use draw::*;

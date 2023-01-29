@@ -12,6 +12,7 @@ rust-version = "1.60"
 clipboard = ["copypasta"]
 x11 = ["copypasta?/x11"]
 wayland = ["copypasta?/wayland"]
+embedded_fonts = []
 
 [dependencies]
 vizia_derive = { path = "../vizia_derive" }
@@ -22,7 +23,7 @@ vizia_window = { path = "../vizia_window" }
 vizia_style = { path = "../vizia_style"}
 
 femtovg = "0.4.0"
-# femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "e1f3f05cc050c0ed69ca702b368bb5d4eb2cabff", default-features = false, features = ["image-loading"] }
+# femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "09f4837fff4d2cd58ddc4674d0d7e1296a4123aa", default-features = false, features = ["image-loading"] }
 #femtovg = { path = "../../../femtovg", default-features = false, features = ["image-loading"] }
 image = { version = "0.24.0", default-features = false, features = ["png"] } # inherited from femtovg
 morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "3d74358fe976249738f58724854270aa2f0fdb4a" }

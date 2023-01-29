@@ -38,7 +38,7 @@ fn main() {
                         cx,
                         AppData::option.map(move |option| *option == current_option),
                     )
-                    .disabled(if i == 2 { true } else { false })
+                    .disabled(i == 2)
                     .on_select(move |cx| cx.emit(AppDataSetter::Option(current_option)));
                 }
             })
@@ -57,7 +57,7 @@ fn main() {
                     .id(format!("button_{i}"));
                     Label::new(cx, &current_option.to_string()).describing(format!("button_{i}"));
                 })
-                .disabled(if i == 2 { true } else { false })
+                .disabled(i == 2)
                 .size(Auto)
                 .child_top(Stretch(1.0))
                 .child_bottom(Stretch(1.0))

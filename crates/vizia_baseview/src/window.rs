@@ -68,6 +68,7 @@ impl ViziaWindow {
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
         ignore_default_theme: bool,
+        text_config: TextConfig,
     ) -> WindowHandle
     where
         P: HasRawWindowHandle,
@@ -96,6 +97,7 @@ impl ViziaWindow {
                 context.remove_user_themes();
 
                 let mut cx = BackendContext::new(&mut context);
+                cx.set_text_config(text_config);
 
                 cx.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
@@ -119,6 +121,7 @@ impl ViziaWindow {
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
         ignore_default_theme: bool,
+        text_config: TextConfig,
     ) -> WindowHandle
     where
         F: Fn(&mut Context),
@@ -143,6 +146,7 @@ impl ViziaWindow {
                 context.remove_user_themes();
 
                 let mut cx = BackendContext::new(&mut context);
+                cx.set_text_config(text_config);
 
                 cx.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(
@@ -166,6 +170,7 @@ impl ViziaWindow {
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
         ignore_default_theme: bool,
+        text_config: TextConfig,
     ) where
         F: Fn(&mut Context),
         F: 'static + Send,
@@ -189,6 +194,7 @@ impl ViziaWindow {
                 context.remove_user_themes();
 
                 let mut cx = BackendContext::new(&mut context);
+                cx.set_text_config(text_config);
 
                 cx.set_event_proxy(Box::new(BaseviewProxy()));
                 ViziaWindow::new(

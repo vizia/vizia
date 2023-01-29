@@ -117,7 +117,7 @@ impl Window {
 
         // Build the femtovg renderer
         let renderer = unsafe {
-            OpenGl::new_from_function(|s| handle.get_proc_address(s))
+            OpenGl::new_from_function(|s| handle.get_proc_address(s) as *const _)
                 .expect("Cannot create renderer")
         };
 

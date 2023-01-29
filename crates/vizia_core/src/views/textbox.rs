@@ -74,7 +74,7 @@ impl TextboxData {
         cx.text_context.with_editor(self.content_entity, |buf| {
             buf.insert_string(text, None);
         });
-        cx.needs_relayout();
+        cx.style.needs_text_layout.insert(self.content_entity, true).unwrap();
     }
 
     pub fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
@@ -84,14 +84,14 @@ impl TextboxData {
                 buf.delete_selection();
             });
         }
-        cx.needs_relayout();
+        cx.style.needs_text_layout.insert(self.content_entity, true).unwrap();
     }
 
     pub fn reset_text(&mut self, cx: &mut EventContext, text: &str) {
         cx.text_context.with_buffer(self.content_entity, |buf| {
             buf.set_text(text, Attrs::new());
         });
-        cx.needs_relayout();
+        cx.style.needs_text_layout.insert(self.content_entity, true).unwrap();
     }
 
     pub fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
@@ -211,6 +211,7 @@ impl TextboxData {
         self.transform = (tx / scale, ty / scale);
     }
 
+    #[allow(dead_code)]
     pub fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
         cx.text_context.with_editor(self.content_entity, |buf| buf.copy_selection())
     }

@@ -233,13 +233,14 @@ name = "text"
 path = "examples/style/text.rs"
 
 [features]
-default = ["winit", "clipboard", "x11", "wayland"]
+default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
 clipboard = ["vizia_core/clipboard", "vizia_winit/clipboard"]
 serde = ["vizia_core/serde"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]
 x11 = ["vizia_winit?/x11", "vizia_core/x11"]
 wayland = ["vizia_winit?/wayland", "vizia_core/wayland"]
+embedded_fonts = ["vizia_core/embedded_fonts"]
 
 [dependencies]
 vizia_core = { version = "0.1.0", path = "crates/vizia_core"}

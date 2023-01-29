@@ -1,101 +1,51 @@
 use crate::prelude::*;
 
-pub fn has_animations(cx: &Context) -> bool {
-    // cx.style.display.has_animations()
-    //     | cx.style.visibility.has_animations()
-    cx.style.opacity.has_animations()
-        | cx.style.transform.has_animations()
-    //     | cx.style.rotate.has_animations()
-    //     | cx.style.translate.has_animations()
-    //     | cx.style.scale.has_animations()
-        | cx.style.border_width.has_animations()
-        | cx.style.border_color.has_animations()
-        | cx.style.outline_width.has_animations()
-        | cx.style.outline_offset.has_animations()
-        | cx.style.outline_color.has_animations()
-        | cx.style.border_top_left_radius.has_animations()
-        | cx.style.border_top_right_radius.has_animations()
-        | cx.style.border_bottom_left_radius.has_animations()
-        | cx.style.border_bottom_right_radius.has_animations()
-        | cx.style.background_color.has_animations()
-        | cx.style.background_gradient.has_animations()
-        | cx.style.box_shadow.has_animations()
-    //     | cx.style.font_color.has_animations()
-    //     | cx.style.font_size.has_animations()
-        | cx.style.left.has_animations()
-        | cx.style.right.has_animations()
-        | cx.style.top.has_animations()
-        | cx.style.bottom.has_animations()
-        | cx.style.width.has_animations()
-        | cx.style.height.has_animations()
-        | cx.style.max_width.has_animations()
-        | cx.style.max_height.has_animations()
-        | cx.style.min_width.has_animations()
-        | cx.style.min_height.has_animations()
-        | cx.style.min_left.has_animations()
-        | cx.style.max_left.has_animations()
-        | cx.style.min_right.has_animations()
-        | cx.style.max_right.has_animations()
-        | cx.style.min_top.has_animations()
-        | cx.style.max_top.has_animations()
-        | cx.style.min_bottom.has_animations()
-        | cx.style.max_bottom.has_animations()
-        | cx.style.row_between.has_animations()
-        | cx.style.col_between.has_animations()
-        | cx.style.child_left.has_animations()
-        | cx.style.child_right.has_animations()
-        | cx.style.child_top.has_animations()
-        | cx.style.child_bottom.has_animations()
-}
-
-pub fn animation_system(cx: &mut Context) {
+pub fn animation_system(cx: &mut Context) -> bool {
     let time = instant::Instant::now();
 
-    // cx.style.display.tick(time);
-    // cx.style.visibility.tick(time);
-    cx.style.opacity.tick(time);
-    cx.style.transform.tick(time);
-    // cx.style.rotate.tick(time);
-    // cx.style.translate.tick(time);
-    // cx.style.scale.tick(time);
-    cx.style.border_width.tick(time);
-    cx.style.border_color.tick(time);
-    cx.style.outline_width.tick(time);
-    cx.style.outline_offset.tick(time);
-    cx.style.outline_color.tick(time);
-    cx.style.border_top_left_radius.tick(time);
-    cx.style.border_top_right_radius.tick(time);
-    cx.style.border_bottom_left_radius.tick(time);
-    cx.style.border_bottom_right_radius.tick(time);
-    cx.style.background_color.tick(time);
-    cx.style.background_gradient.tick(time);
-    cx.style.box_shadow.tick(time);
-    // cx.style.font_color.tick(time);
-    // cx.style.font_size.tick(time);
-    cx.style.left.tick(time);
-    cx.style.right.tick(time);
-    cx.style.top.tick(time);
-    cx.style.bottom.tick(time);
-    cx.style.width.tick(time);
-    cx.style.height.tick(time);
-    cx.style.max_width.tick(time);
-    cx.style.max_height.tick(time);
-    cx.style.min_width.tick(time);
-    cx.style.min_height.tick(time);
-    cx.style.min_left.tick(time);
-    cx.style.max_left.tick(time);
-    cx.style.min_right.tick(time);
-    cx.style.max_right.tick(time);
-    cx.style.min_top.tick(time);
-    cx.style.max_top.tick(time);
-    cx.style.min_bottom.tick(time);
-    cx.style.max_bottom.tick(time);
-    cx.style.row_between.tick(time);
-    cx.style.col_between.tick(time);
-    cx.style.child_left.tick(time);
-    cx.style.child_right.tick(time);
-    cx.style.child_top.tick(time);
-    cx.style.child_bottom.tick(time);
+    // Properties which affect rendering
+    let needs_redraw = cx.style.opacity.tick(time)
+        | cx.style.border_color.tick(time)
+        | cx.style.border_top_left_radius.tick(time)
+        | cx.style.border_top_right_radius.tick(time)
+        | cx.style.border_bottom_left_radius.tick(time)
+        | cx.style.border_bottom_right_radius.tick(time)
+        | cx.style.background_color.tick(time)
+        | cx.style.background_gradient.tick(time)
+        | cx.style.box_shadow.tick(time)
+        | cx.style.font_color.tick(time)
+        | cx.style.transform.tick(time);
 
-    cx.style.needs_relayout = true;
+    // Properties which affect layout
+    let needs_relayout = cx.style.border_width.tick(time)
+        | cx.style.font_size.tick(time)
+        | cx.style.left.tick(time)
+        | cx.style.right.tick(time)
+        | cx.style.top.tick(time)
+        | cx.style.bottom.tick(time)
+        | cx.style.width.tick(time)
+        | cx.style.height.tick(time)
+        | cx.style.max_width.tick(time)
+        | cx.style.max_height.tick(time)
+        | cx.style.min_width.tick(time)
+        | cx.style.min_height.tick(time)
+        | cx.style.min_left.tick(time)
+        | cx.style.max_left.tick(time)
+        | cx.style.min_right.tick(time)
+        | cx.style.max_right.tick(time)
+        | cx.style.min_top.tick(time)
+        | cx.style.max_top.tick(time)
+        | cx.style.min_bottom.tick(time)
+        | cx.style.max_bottom.tick(time)
+        | cx.style.row_between.tick(time)
+        | cx.style.col_between.tick(time)
+        | cx.style.child_left.tick(time)
+        | cx.style.child_right.tick(time)
+        | cx.style.child_top.tick(time)
+        | cx.style.child_bottom.tick(time);
+
+    cx.style.needs_redraw |= needs_redraw | needs_relayout;
+    cx.style.needs_relayout |= needs_relayout;
+
+    return needs_redraw | needs_relayout;
 }

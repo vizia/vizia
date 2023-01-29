@@ -82,19 +82,15 @@ fn main() {
             );
 
             List::new(cx, AppData::list, move |cx, index, item| {
-                Binding::new(cx, AppData::selected, move |cx, selected| {
-                    let selected = selected.get(cx);
-
-                    Label::new(cx, item)
-                        .width(Pixels(100.0))
-                        .height(Pixels(30.0))
-                        .border_color(Color::black())
-                        .border_width(Pixels(1.0))
-                        // Set the checked state based on whether this item is selected
-                        .checked(if selected == index { true } else { false })
-                        // Set the selected item to this one if pressed
-                        .on_press(move |cx| cx.emit(AppEvent::Select(index)));
-                });
+                Label::new(cx, item)
+                    .width(Pixels(100.0))
+                    .height(Pixels(30.0))
+                    .border_color(Color::black())
+                    .border_width(Pixels(1.0))
+                    // Set the checked state based on whether this item is selected
+                    .checked(AppData::selected.map(move |selected| *selected == index))
+                    // Set the selected item to this one if pressed
+                    .on_press(move |cx| cx.emit(AppEvent::Select(index)));
             })
             .row_between(Pixels(5.0))
             .on_increment(move |cx| cx.emit(AppEvent::IncrementSelection))

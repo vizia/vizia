@@ -27,12 +27,13 @@ pub use proxy::*;
 use crate::cache::CachedData;
 use crate::environment::Environment;
 use crate::events::ViewHandler;
+#[cfg(feature = "embedded_fonts")]
 use crate::fonts;
 use crate::prelude::*;
 use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
-use crate::text::TextContext;
+use crate::text::{TextConfig, TextContext};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -76,6 +77,7 @@ pub struct Context {
     pub(crate) resource_manager: ResourceManager,
 
     pub(crate) text_context: TextContext,
+    pub(crate) text_config: TextConfig,
 
     pub(crate) event_proxy: Option<Box<dyn EventProxy>>,
 
@@ -114,13 +116,17 @@ impl Context {
         // Add default fonts
         let mut db = Database::new();
         db.load_system_fonts();
-        db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
-        db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
-        db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
-        db.load_font_data(Vec::from(fonts::ENTYPO));
-        db.load_font_data(Vec::from(fonts::OPEN_SANS_EMOJI));
-        db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));
-        db.load_font_data(Vec::from(fonts::MATERIAL_ICONS_REGULAR));
+
+        #[cfg(feature = "embedded_fonts")]
+        {
+            db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
+            db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
+            db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
+            db.load_font_data(Vec::from(fonts::ENTYPO));
+            db.load_font_data(Vec::from(fonts::OPEN_SANS_EMOJI));
+            db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));
+            db.load_font_data(Vec::from(fonts::MATERIAL_ICONS_REGULAR));
+        }
 
         let mut result = Self {
             entity_manager: IdManager::new(),
@@ -152,6 +158,8 @@ impl Context {
                 db,
             ),
 
+            text_config: TextConfig::default(),
+
             event_proxy: None,
 
             window_size,
@@ -174,6 +182,10 @@ impl Context {
 
             ignore_default_theme: false,
         };
+
+        result.style.needs_restyle = true;
+        result.style.needs_relayout = true;
+        result.style.needs_redraw = true;
 
         Environment::new().build(&mut result);
 
@@ -290,8 +302,6 @@ impl Context {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
         self.style.needs_restyle = true;
     }
 
@@ -315,8 +325,6 @@ impl Context {
         }
 
         self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
     }
 
     pub(crate) fn remove_children(&mut self, entity: Entity) {
@@ -547,8 +555,8 @@ impl Context {
                 });
             }
         }
+        self.need_relayout();
         self.style.needs_redraw = true;
-        self.style.needs_relayout = true;
     }
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {

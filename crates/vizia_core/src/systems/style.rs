@@ -299,38 +299,45 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
     }
 
     if cx.style.left.link(entity, &matched_rules) {
+        //println!("5");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.right.link(entity, &matched_rules) {
+        //println!("6");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.top.link(entity, &matched_rules) {
+        //println!("7");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.bottom.link(entity, &matched_rules) {
+        //println!("8");
         should_relayout = true;
         should_redraw = true;
     }
 
     // Size
     if cx.style.width.link(entity, &matched_rules) {
+        //println!("9");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.height.link(entity, &matched_rules) {
+        //println!("10");
         should_relayout = true;
         should_redraw = true;
     }
 
     // Size Constraints
     if cx.style.max_width.link(entity, &matched_rules) {
+        //println!("11");
         should_relayout = true;
         should_redraw = true;
     }
@@ -510,6 +517,7 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
     }
 
     if should_relayout {
+        //println!("should relayout");
         cx.style.needs_relayout = true;
     }
 
