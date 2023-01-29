@@ -2,8 +2,8 @@ use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
 use vizia_style::{
-    BoxShadow, CssRule, FontFamily, FontSize, FontWeight, GenericFontFamily, Gradient, Transform,
-    Transition,
+    BoxShadow, CssRule, FontFamily, FontSize, FontStretch, FontWeight, GenericFontFamily, Gradient,
+    Transform, Transition,
 };
 
 use crate::prelude::*;
@@ -147,6 +147,7 @@ pub struct Style {
     pub font_size: AnimatableSet<FontSize>,
     pub font_weight: StyleSet<FontWeight>,
     pub font_style: StyleSet<FontStyle>,
+    pub font_stretch: StyleSet<FontStretch>,
     pub caret_color: AnimatableSet<Color>,
     pub selection_color: AnimatableSet<Color>,
 
@@ -526,6 +527,78 @@ impl Style {
                 self.child_bottom.insert_rule(rule_id, child_bottom);
             }
 
+            Property::MinSpace(min_space) => {
+                self.min_left.insert_rule(rule_id, min_space);
+                self.min_right.insert_rule(rule_id, min_space);
+                self.min_top.insert_rule(rule_id, min_space);
+                self.min_bottom.insert_rule(rule_id, min_space);
+            }
+
+            Property::MinLeft(min_left) => {
+                self.min_left.insert_rule(rule_id, min_left);
+            }
+
+            Property::MinRight(min_right) => {
+                self.min_right.insert_rule(rule_id, min_right);
+            }
+
+            Property::MinTop(min_top) => {
+                self.min_top.insert_rule(rule_id, min_top);
+            }
+
+            Property::MinBottom(min_bottom) => {
+                self.min_bottom.insert_rule(rule_id, min_bottom);
+            }
+
+            Property::MaxSpace(max_space) => {
+                self.max_left.insert_rule(rule_id, max_space);
+                self.max_right.insert_rule(rule_id, max_space);
+                self.max_top.insert_rule(rule_id, max_space);
+                self.max_bottom.insert_rule(rule_id, max_space);
+            }
+
+            Property::MaxLeft(max_left) => {
+                self.max_left.insert_rule(rule_id, max_left);
+            }
+
+            Property::MaxRight(max_right) => {
+                self.max_right.insert_rule(rule_id, max_right);
+            }
+
+            Property::MaxTop(max_top) => {
+                self.max_top.insert_rule(rule_id, max_top);
+            }
+
+            Property::MaxBottom(max_bottom) => {
+                self.max_bottom.insert_rule(rule_id, max_bottom);
+            }
+
+            Property::MinSize(min_size) => {
+                self.min_width.insert_rule(rule_id, min_size);
+                self.min_height.insert_rule(rule_id, min_size);
+            }
+
+            Property::MinWidth(min_width) => {
+                self.min_width.insert_rule(rule_id, min_width);
+            }
+
+            Property::MinHeight(min_height) => {
+                self.min_height.insert_rule(rule_id, min_height);
+            }
+
+            Property::MaxSize(max_size) => {
+                self.max_width.insert_rule(rule_id, max_size);
+                self.max_height.insert_rule(rule_id, max_size);
+            }
+
+            Property::MaxWidth(max_width) => {
+                self.max_width.insert_rule(rule_id, max_width);
+            }
+
+            Property::MaxHeight(max_height) => {
+                self.max_height.insert_rule(rule_id, max_height);
+            }
+
             // Background
             Property::BackgroundColor(color) => {
                 self.background_color.insert_rule(rule_id, color);
@@ -633,6 +706,10 @@ impl Style {
 
             Property::FontStyle(font_style) => {
                 self.font_style.insert_rule(rule_id, font_style);
+            }
+
+            Property::FontStretch(font_stretch) => {
+                self.font_stretch.insert_rule(rule_id, font_stretch);
             }
 
             // Caret Color

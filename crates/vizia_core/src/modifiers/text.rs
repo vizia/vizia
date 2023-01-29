@@ -1,7 +1,7 @@
 use super::internal;
 use crate::prelude::*;
 use cosmic_text::FamilyOwned;
-use vizia_style::{FontSize, FontStyle, FontWeight};
+use vizia_style::{FontSize, FontStretch, FontStyle, FontWeight};
 
 /// Modifiers for changing the text properties of a view.
 pub trait TextModifiers: internal::Modifiable {
@@ -37,6 +37,12 @@ pub trait TextModifiers: internal::Modifiable {
         /// Sets the font style that should be used by the view.
         font_style,
         FontStyle
+    );
+
+    modifier!(
+        /// Sets the font stretch that should be used by the view if the font supports it.
+        font_stretch,
+        FontStretch
     );
 
     /// Sets the text color of the view.

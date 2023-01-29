@@ -1,7 +1,7 @@
 use crate::{
     define_property, Angle, BackgroundImage, Border, BorderCornerShape, BorderRadius, BorderWidth,
     BorderWidthValue, BoxShadow, Color, CursorIcon, CustomParseError, CustomProperty, Display,
-    FontFamily, FontSize, FontStyle, FontWeight, InsetKeyword, LayoutType, Length,
+    FontFamily, FontSize, FontStretch, FontStyle, FontWeight, InsetKeyword, LayoutType, Length,
     LengthOrPercentage, Opacity, Outline, Overflow, Parse, PositionType, Rect, Scale, Transform,
     Transition, Translate, Units, UnparsedProperty, Visibility,
 };
@@ -31,19 +31,25 @@ define_property! {
         "bottom": Bottom(Units),
 
         // Constraints
+        "min-space": MinSpace(Units),
         "min-left": MinLeft(Units),
-        "max-left": MaxLeft(Units),
-        "min-width": MinWidth(Units),
-        "max-width": MaxWidth(Units),
         "min-right": MinRight(Units),
-        "max-right": MaxRight(Units),
-
         "min-top": MinTop(Units),
-        "max-top": MaxTop(Units),
-        "min-height": MinHeight(Units),
-        "max-height": MaxHeight(Units),
         "min-bottom": MinBottom(Units),
+
+        "max-space": MaxSpace(Units),
+        "max-left": MaxLeft(Units),
+        "max-right": MaxRight(Units),
+        "max-top": MaxTop(Units),
         "max-bottom": MaxBottom(Units),
+
+        "min-size": MinSize(Units),
+        "min-width": MinWidth(Units),
+        "min-height": MinHeight(Units),
+
+        "max-size": MaxSize(Units),
+        "max-width": MaxWidth(Units),
+        "max-height": MaxHeight(Units),
 
         // Child Spacing
         "child-space": ChildSpace(Units),
@@ -135,6 +141,7 @@ define_property! {
         "font-family": FontFamily(Vec<FontFamily<'i>>),
         "font-weight": FontWeight(FontWeight),
         "font-style": FontStyle(FontStyle),
+        "font-stretch": FontStretch(FontStretch),
         "selection-color": SelectionColor(Color), // TODO: Remove this once we have the pseudoselector version.
         "caret-color": CaretColor(Color),
         "text-wrap": TextWrap(bool),

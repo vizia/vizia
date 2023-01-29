@@ -299,25 +299,61 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
     }
 
     if cx.style.left.link(entity, &matched_rules) {
-        //println!("5");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.right.link(entity, &matched_rules) {
-        //println!("6");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.top.link(entity, &matched_rules) {
-        //println!("7");
         should_relayout = true;
         should_redraw = true;
     }
 
     if cx.style.bottom.link(entity, &matched_rules) {
-        //println!("8");
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if cx.style.min_left.link(entity, &matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if cx.style.min_right.link(entity, &matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if cx.style.min_top.link(entity, &matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if cx.style.min_bottom.link(entity, &matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if cx.style.max_left.link(entity, &matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if cx.style.max_right.link(entity, &matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if cx.style.max_top.link(entity, &matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if cx.style.max_bottom.link(entity, &matched_rules) {
         should_relayout = true;
         should_redraw = true;
     }
@@ -456,6 +492,11 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
     }
 
     if cx.style.font_style.link(entity, &matched_rules) {
+        should_redraw = true;
+        should_relayout = true;
+    }
+
+    if cx.style.font_stretch.link(entity, &matched_rules) {
         should_redraw = true;
         should_relayout = true;
     }

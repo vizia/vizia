@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
-use vizia_style::FontStyle;
+use vizia_style::{FontStretch, FontStyle};
 
 const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
@@ -99,7 +99,21 @@ impl TextContext {
             let query = Query {
                 families: families.as_slice(),
                 weight: Weight(style.font_weight.get(entity).copied().unwrap_or_default().into()),
-                stretch: Default::default(),
+                stretch: style
+                    .font_stretch
+                    .get(entity)
+                    .map(|stretch| match stretch {
+                        FontStretch::UltraCondensed => cosmic_text::Stretch::UltraCondensed,
+                        FontStretch::ExtraCondensed => cosmic_text::Stretch::ExtraCondensed,
+                        FontStretch::Condensed => cosmic_text::Stretch::Condensed,
+                        FontStretch::SemiCondensed => cosmic_text::Stretch::SemiCondensed,
+                        FontStretch::Normal => cosmic_text::Stretch::Normal,
+                        FontStretch::SemiExpanded => cosmic_text::Stretch::SemiExpanded,
+                        FontStretch::Expanded => cosmic_text::Stretch::Expanded,
+                        FontStretch::ExtraExpanded => cosmic_text::Stretch::ExtraExpanded,
+                        FontStretch::UltraExpanded => cosmic_text::Stretch::UltraExpanded,
+                    })
+                    .unwrap_or_default(),
                 style: style
                     .font_style
                     .get(entity)
