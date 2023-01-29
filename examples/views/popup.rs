@@ -10,7 +10,7 @@ fn main() {
             .on_blur(|cx| cx.emit(PopupEvent::Close))
             .space(Pixels(100.0))
             .size(Pixels(200.0))
-            .background_color(RGBA::RED);
+            .background_color(Color::red());
     })
     .title("Popup")
     .run();

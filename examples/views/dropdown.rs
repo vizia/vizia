@@ -38,7 +38,7 @@ fn main() {
                                 if item.get(handle.cx) == selected.get(handle.cx) {
                                     handle.background_color(Color::from("#f8ac14"));
                                 } else {
-                                    handle.background_color(RGBA::WHITE);
+                                    handle.background_color(Color::white());
                                 }
                             })
                             .on_press(move |cx| {

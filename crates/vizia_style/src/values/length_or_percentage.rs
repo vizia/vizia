@@ -1,5 +1,6 @@
 use crate::{macros::impl_parse, Length, LengthValue, Parse, Percentage};
 use cssparser::*;
+use morphorm::Units;
 
 /// A length or a percentage value.
 #[derive(Debug, Clone, PartialEq)]
@@ -77,6 +78,16 @@ impl From<&str> for LengthOrPercentage {
         let mut input = ParserInput::new(&s);
         let mut parser = Parser::new(&mut input);
         LengthOrPercentage::parse(&mut parser).unwrap_or_default()
+    }
+}
+
+impl From<Units> for LengthOrPercentage {
+    fn from(units: Units) -> Self {
+        match units {
+            Units::Pixels(val) => Length::Value(LengthValue::Px(val)).into(),
+            Units::Percentage(val) => LengthOrPercentage::Percentage(val),
+            _ => LengthOrPercentage::default(),
+        }
     }
 }
 

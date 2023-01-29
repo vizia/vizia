@@ -3,7 +3,6 @@ use vizia::prelude::*;
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet("crates/vizia_core/resources/themes/default_theme.css").expect("Failed");
         HStack::new(cx, |cx| {
             // Basic Button
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));

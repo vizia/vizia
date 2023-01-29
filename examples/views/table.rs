@@ -67,12 +67,12 @@ fn main() {
                         .child_left(Pixels(5.0))
                         .width(Stretch(1.0))
                         .height(Pixels(30.0))
-                        .border_top_left_radius("3px")
-                        .border_bottom_left_radius("3px")
+                        .border_top_left_radius(Pixels(3.0))
+                        .border_bottom_left_radius(Pixels(3.0))
                         .background_color(if index % 2 != 0 {
-                            RGBA::rgb(230, 230, 230)
+                            Color::rgb(230, 230, 230)
                         } else {
-                            RGBA::WHITE
+                            Color::white()
                         });
                 },
             )
@@ -125,9 +125,9 @@ fn main() {
                         .width(Stretch(1.0))
                         .height(Pixels(30.0))
                         .background_color(if index % 2 != 0 {
-                            RGBA::rgb(230, 230, 230)
+                            Color::rgb(230, 230, 230)
                         } else {
-                            RGBA::WHITE
+                            Color::white()
                         });
                 },
             )
@@ -174,12 +174,12 @@ fn main() {
                         .child_left(Pixels(5.0))
                         .width(Stretch(1.0))
                         .height(Pixels(30.0))
-                        .border_top_right_radius("3px")
-                        .border_bottom_right_radius("3px")
+                        .border_top_right_radius(Pixels(3.0))
+                        .border_bottom_right_radius(Pixels(3.0))
                         .background_color(if index % 2 != 0 {
-                            RGBA::rgb(230, 230, 230)
+                            Color::rgb(230, 230, 230)
                         } else {
-                            RGBA::WHITE
+                            Color::white()
                         });
                 },
             )

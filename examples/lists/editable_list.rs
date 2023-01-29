@@ -88,8 +88,8 @@ fn main() {
                     Label::new(cx, item)
                         .width(Pixels(100.0))
                         .height(Pixels(30.0))
-                        .border_color(RGBA::BLACK)
-                        .border_width("1px")
+                        .border_color(Color::black())
+                        .border_width(Pixels(1.0))
                         // Set the checked state based on whether this item is selected
                         .checked(if selected == index { true } else { false })
                         // Set the selected item to this one if pressed
