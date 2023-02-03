@@ -5,12 +5,13 @@ use crate::prelude::*;
 use super::text_constraints_system;
 
 pub(crate) fn layout_system(cx: &mut Context, tree: &Tree<Entity>) {
-    if cx.style.needs_relayout {
-        text_constraints_system(cx, tree);
+    text_constraints_system(cx, tree);
 
+    if cx.style.needs_relayout {
         layout(&mut cx.cache, &cx.tree, &cx.style, &mut cx.text_context);
 
         cx.style.needs_relayout = false;
+        cx.style.needs_redraw = true;
 
         for entity in cx.tree.into_iter() {
             if cx.text_context.has_buffer(entity) {

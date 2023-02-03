@@ -366,49 +366,55 @@ where
         }
     }
 
-    pub fn tick(&mut self, time: instant::Instant) {
-        for state in self.active_animations.iter_mut() {
-            // If the animation is already finished then return false
-            if state.t0 == 1.0 {
-                continue;
-            }
-
-            let start = state.keyframes.first().unwrap();
-            let end = state.keyframes.last().unwrap();
-
-            if start.1 == end.1 {
-                state.t0 = 1.0;
-                state.output = Some(end.1.clone());
-                continue;
-            }
-
-            let elapsed_time = time.duration_since(state.start_time);
-
-            // Store previous time state
-            state.t0 = state.t;
-
-            // Update time state
-            state.t = (elapsed_time.as_secs_f32() / state.duration.as_secs_f32()) - state.delay;
-
-            if state.t >= 1.0 {
-                //Animation is finished
-                state.output = Some(T::interpolate(&start.1, &end.1, 1.0));
-
-                if !state.persistent {
-                    //state.output = Some(T::interpolate(&start.1, &end.1, 0.0));
-                    state.t = 1.0;
-                    state.active = false;
-                } else {
-                    state.t = 1.0;
+    pub fn tick(&mut self, time: instant::Instant) -> bool {
+        if self.has_animations() {
+            for state in self.active_animations.iter_mut() {
+                // If the animation is already finished then return false
+                if state.t0 == 1.0 {
+                    continue;
                 }
-            } else if state.t <= 0.0 {
-                state.output = Some(start.1.clone());
-            } else {
-                state.output = Some(T::interpolate(&start.1, &end.1, state.t));
+
+                let start = state.keyframes.first().unwrap();
+                let end = state.keyframes.last().unwrap();
+
+                if start.1 == end.1 {
+                    state.t0 = 1.0;
+                    state.output = Some(end.1.clone());
+                    continue;
+                }
+
+                let elapsed_time = time.duration_since(state.start_time);
+
+                // Store previous time state
+                state.t0 = state.t;
+
+                // Update time state
+                state.t = (elapsed_time.as_secs_f32() / state.duration.as_secs_f32()) - state.delay;
+
+                if state.t >= 1.0 {
+                    //Animation is finished
+                    state.output = Some(T::interpolate(&start.1, &end.1, 1.0));
+
+                    if !state.persistent {
+                        //state.output = Some(T::interpolate(&start.1, &end.1, 0.0));
+                        state.t = 1.0;
+                        state.active = false;
+                    } else {
+                        state.t = 1.0;
+                    }
+                } else if state.t <= 0.0 {
+                    state.output = Some(start.1.clone());
+                } else {
+                    state.output = Some(T::interpolate(&start.1, &end.1, state.t));
+                }
             }
+
+            self.remove_innactive_animations();
+
+            return true;
         }
 
-        self.remove_innactive_animations();
+        false
     }
 
     pub fn is_animating(&mut self, entity: Entity, animation: Animation) -> bool {

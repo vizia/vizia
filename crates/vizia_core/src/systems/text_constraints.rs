@@ -8,6 +8,11 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 
     for entity in draw_tree.into_iter() {
+        // Skip if the entity isn't marked as having its text modified
+        if !cx.style.needs_text_layout.get(entity).copied().unwrap_or_default() {
+            continue;
+        }
+
         if entity == Entity::root() {
             continue;
         }
@@ -91,6 +96,10 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
                 if content_height < text_height {
                     content_height = text_height;
                 }
+
+                if let Some(needs_text_layout) = cx.style.needs_text_layout.get_mut(entity) {
+                    *needs_text_layout = false;
+                }
             }
 
             if let Some(image_name) = cx.style.image.get(entity) {
@@ -108,8 +117,16 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
                 }
             }
 
-            cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
-            cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
+            let bounds = cx.cache.get_bounds(entity);
+
+            if (desired_width == Auto && content_width != bounds.w)
+                || (desired_height == Auto && content_height != bounds.h)
+            {
+                cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
+                cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
+
+                cx.style.needs_relayout = true;
+            }
         }
     }
 }

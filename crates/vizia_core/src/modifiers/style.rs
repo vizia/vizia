@@ -146,12 +146,12 @@ pub trait StyleModifiers: internal::Modifiable {
             if let Some(prev_data) = cx.style.image.get(entity) {
                 if prev_data != &val {
                     cx.style.image.insert(entity, val);
-
+                    cx.style.needs_text_layout.insert(entity, true).unwrap();
                     cx.need_redraw();
                 }
             } else {
                 cx.style.image.insert(entity, val);
-
+                cx.style.needs_text_layout.insert(entity, true).unwrap();
                 cx.need_redraw();
             }
         });

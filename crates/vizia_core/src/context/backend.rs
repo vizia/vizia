@@ -15,7 +15,7 @@ use crate::{
 };
 use vizia_id::GenerationalId;
 
-pub use crate::systems::animation::has_animations;
+pub use crate::text::cosmic::TextConfig;
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
@@ -145,6 +145,11 @@ impl<'a> BackendContext<'a> {
         self.0.current = e;
     }
 
+    /// Sets the default text configuration to use for text rendering.
+    pub fn set_text_config(&mut self, text_config: TextConfig) {
+        self.0.text_config = text_config;
+    }
+
     /// Temporarily sets the current entity, calls the provided closure, and then resets the current entity back to previous.
     pub fn with_current(&mut self, e: Entity, f: impl FnOnce(&mut Context)) {
         let prev = self.0.current;
@@ -253,13 +258,15 @@ impl<'a> BackendContext<'a> {
         image_system(self.0);
     }
 
+    // Returns true if animations are playing
+    pub fn process_animations(&mut self) -> bool {
+        animation_system(self.0)
+    }
+
     /// Massages the style system until everything is coherent
     pub fn process_visual_updates(&mut self) {
         // Not ideal
         let tree = self.0.tree.clone();
-
-        // Compute any animations for this frame.
-        animation_system(self.0);
 
         // Apply z-order inheritance.
         z_ordering_system(self.0, &tree);

@@ -11,7 +11,7 @@ pub trait TextModifiers: internal::Modifiable {
             let text_data = val.to_string();
             cx.text_context.set_text(entity, &text_data);
 
-            cx.need_relayout();
+            cx.style.needs_text_layout.insert(entity, true).unwrap();
             cx.need_redraw();
         });
 

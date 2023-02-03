@@ -296,6 +296,9 @@ pub struct Style {
     pub needs_restyle: bool,
     pub needs_relayout: bool,
     pub needs_redraw: bool,
+    // TODO: When we can do incremental updates on a per entity basis, change this to a bitflag
+    // for layout, text layout, rendering, etc. to replace the above `needs_` members.
+    pub needs_text_layout: SparseSet<bool>,
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub dpi_factor: f64,
@@ -1145,6 +1148,8 @@ impl Style {
         self.name.remove(entity);
 
         self.image.remove(entity);
+
+        self.needs_text_layout.remove(entity);
     }
 
     pub fn clear_style_rules(&mut self) {

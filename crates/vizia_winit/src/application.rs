@@ -104,6 +104,11 @@ impl Application {
         self
     }
 
+    pub fn set_text_config(mut self, text_config: TextConfig) -> Self {
+        BackendContext::new(&mut self.context).set_text_config(text_config);
+        self
+    }
+
     pub fn should_poll(mut self) -> Self {
         self.should_poll = true;
 
@@ -216,7 +221,7 @@ impl Application {
                     cx.process_data_updates();
                     cx.process_style_updates();
 
-                    if has_animations(&cx.0) {
+                    if cx.process_animations() {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
 
                         event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();

@@ -116,7 +116,6 @@ impl<'a> EventContext<'a> {
         self.entity_identifiers.get(identity).cloned()
     }
 
-    /// Get the entity ID of the view currently handling events.
     pub fn current(&self) -> Entity {
         self.current
     }
@@ -148,8 +147,6 @@ impl<'a> EventContext<'a> {
         }
 
         self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
     }
 
     /// Capture mouse input for the current entity.
@@ -193,8 +190,6 @@ impl<'a> EventContext<'a> {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
         self.style.needs_restyle = true;
     }
 
@@ -260,8 +255,6 @@ impl<'a> EventContext<'a> {
         }
 
         self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
     }
 
     /// Sets the checked flag of the current entity.
@@ -272,8 +265,6 @@ impl<'a> EventContext<'a> {
         }
 
         self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
     }
 
     /// Sets the checked flag of the current entity.
@@ -284,8 +275,6 @@ impl<'a> EventContext<'a> {
         }
 
         self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
     }
 
     /// Get the contents of the system clipboard.
@@ -322,8 +311,6 @@ impl<'a> EventContext<'a> {
         }
 
         self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
     }
 
     pub fn play_animation(&mut self, animation: Animation) {

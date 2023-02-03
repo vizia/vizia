@@ -23,6 +23,18 @@ const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
 const TEXTURE_SIZE: usize = 512;
 
+#[derive(Debug, Clone, Copy)]
+pub struct TextConfig {
+    pub hint: bool,
+    pub subpixel: bool,
+}
+
+impl Default for TextConfig {
+    fn default() -> Self {
+        Self { hint: true, subpixel: false }
+    }
+}
+
 #[self_referencing]
 pub struct TextContext {
     font_system: FontSystem,
@@ -41,6 +53,7 @@ struct TextContextInternal<'a> {
 }
 
 impl TextContext {
+    #[allow(dead_code)]
     pub(crate) fn font_system(&self) -> &FontSystem {
         self.borrow_font_system()
     }
@@ -124,6 +137,7 @@ impl TextContext {
         entity: Entity,
         position: (f32, f32),
         justify: (f32, f32),
+        config: TextConfig,
     ) -> Result<Vec<(FontColor, GlyphDrawCommands)>, ErrorKind> {
         if !self.has_buffer(entity) {
             return Ok(vec![]);
@@ -163,7 +177,7 @@ impl TextContext {
                             Source::ColorBitmap(StrikeWith::BestFit),
                             Source::Outline,
                         ])
-                            .format(Format::Alpha)
+                            .format(if config.subpixel {Format::Subpixel} else {Format::Alpha})
                             .offset(offset)
                             .render(&mut scaler, cache_key.glyph_id);
 
@@ -209,12 +223,11 @@ impl TextContext {
                                         src_buf.push(RGBA8::new(chunk[0], 0, 0, 0));
                                     }
                                 }
-                                Content::Color => {
+                                Content::Color | Content::SubpixelMask => {
                                     for chunk in rendered.data.chunks_exact(4) {
                                         src_buf.push(RGBA8::new(chunk[0], chunk[1], chunk[2], chunk[3]));
                                     }
                                 }
-                                Content::SubpixelMask => unreachable!(),
                             }
                             canvas.update_image::<ImageSource>(int.glyph_textures[texture_index].image_id, ImgRef::new(&src_buf, content_w, content_h).into(), atlas_content_x as usize, atlas_content_y as usize).unwrap();
 
