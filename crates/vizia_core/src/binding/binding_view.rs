@@ -5,6 +5,10 @@ use crate::binding::{BasicStore, LensCache, ModelOrView, Store, StoreId};
 use crate::prelude::*;
 
 /// A view with a binding which rebuilds its contents when the observed data changes.
+///
+/// This view is typically used to switch between two or more views when the bound data changes. The binding view will destroy and then recreate its
+/// contents whenever the bound data changes, so it is usually preferable to bind a view directly to the data (if supported) or to bind to a view modifier,
+/// which will update the properties of a view without rebuilding it.
 pub struct Binding<L>
 where
     L: Lens,

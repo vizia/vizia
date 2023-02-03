@@ -17,7 +17,7 @@ pub enum Propagation {
     Direct,
 }
 
-/// A wrapper around a message, providing metadata on how the event travels through the tree.
+/// A wrapper around a message, providing metadata on how the event travels through the view [tree](crate::tree::Tree).
 pub struct Event {
     /// The meta data of the event
     pub(crate) meta: EventMeta,

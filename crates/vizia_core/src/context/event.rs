@@ -24,7 +24,7 @@ use super::DrawCache;
 
 /// A context used when handling events.
 ///
-/// The `EventContext` is provided by the [`event`](crate::prelude::View::event) method in [`View`] and [`Model`] and can be used to mutably access the
+/// The [`EventContext`] is provided by the [`event`](crate::prelude::View::event) method in [`View`], or the [`event`](crate::model::Model::event) method in [`Model`], and can be used to mutably access the
 /// desired style and layout properties of the current view.
 ///
 /// # Example

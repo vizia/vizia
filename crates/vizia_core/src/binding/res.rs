@@ -17,8 +17,11 @@ macro_rules! impl_res_simple {
     };
 }
 
-/// A trait for types that can automatically resolve into other types, with or without consulting
-/// the Context.
+/// A trait which allows passing a value or a lens to a view or view modifier.
+///
+/// For example, the `Label` view constructor takes a type which implements `Res<T>` where
+/// `T` implements `ToString`. This allows the user to pass a type which implements `ToString`,
+/// such as `String` or `&str`, or a lens to a type which implements `ToString`.
 pub trait Res<T> {
     fn get_val(&self, cx: &Context) -> T;
     fn get_val_fallible(&self, cx: &Context) -> Option<T> {

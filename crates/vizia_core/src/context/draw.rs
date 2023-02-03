@@ -35,7 +35,7 @@ impl DrawCache {
 
 /// A context used when drawing.
 ///
-/// The `DrawContext` is provided by the `draw` method in `View` and can be used to immutably access the
+/// The `DrawContext` is provided by the [`draw`](crate::view::View::draw) method in [`View`] and can be used to immutably access the
 /// computed style and layout properties of the current view.
 ///
 /// # Example

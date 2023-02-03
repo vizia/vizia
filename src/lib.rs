@@ -1,4 +1,4 @@
-#![doc = include_str!("../README.md")]
+//! # Vizia
 
 #[cfg(all(not(feature = "baseview"), feature = "winit"))]
 pub use vizia_winit::application::Application;

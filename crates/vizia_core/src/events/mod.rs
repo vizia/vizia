@@ -92,3 +92,5 @@ pub use event::{Event, EventMeta, Propagation};
 
 mod event_handler;
 pub(crate) use event_handler::ViewHandler;
+
+pub use vizia_window::WindowEvent;

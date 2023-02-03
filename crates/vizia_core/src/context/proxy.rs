@@ -10,7 +10,7 @@ use crate::resource::ImageRetentionPolicy;
 /// A bundle of data representing a snapshot of the context when a thread was spawned.
 ///
 /// It supports a small subset of context operations. You will get one of these passed to you when
-/// you create a new thread with `cx.spawn()`.
+/// you create a new thread with the [`spawn`](crate::context::Context::spawn) method on [`Context`].
 pub struct ContextProxy {
     pub current: Entity,
     pub event_proxy: Option<Box<dyn EventProxy>>,
