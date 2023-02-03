@@ -24,7 +24,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
                 });
             }
         }
-        // Defer this to the geometry changed system for now
-        // cx.style.system_flags.set(SystemFlags::RELAYOUT, false);
+
+        // Defer resetting the layout system flag to the geometry changed system
     }
 }
