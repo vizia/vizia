@@ -2,6 +2,7 @@ use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
     window::Window,
 };
+use accesskit::NodeBuilder;
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit::{Action, TreeUpdate};
 #[cfg(not(target_arch = "wasm32"))]
@@ -183,11 +184,10 @@ impl Application {
                 use std::sync::Arc;
 
                 let root_id = Entity::root().accesskit_id();
+                let root_node =
+                    NodeBuilder::new(Role::Window).build(&mut context.style.accesskit_node_classes);
                 TreeUpdate {
-                    nodes: vec![(
-                        root_id,
-                        Arc::new(Node { role: Role::Window, ..Default::default() }),
-                    )],
+                    nodes: vec![(root_id, root_node)],
                     tree: Some(Tree::new(root_id)),
                     focus: Some(Entity::root().accesskit_id()),
                 }

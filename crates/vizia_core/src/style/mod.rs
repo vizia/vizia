@@ -108,6 +108,7 @@ pub struct Style {
     pub min_numeric_value: SparseSet<f64>,
     pub max_numeric_value: SparseSet<f64>,
     pub numeric_value_step: SparseSet<f64>,
+    pub accesskit_node_classes: accesskit::NodeClassSet,
 
     // Display
     pub display: AnimatableSet<Display>,

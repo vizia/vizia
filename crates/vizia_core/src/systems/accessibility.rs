@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{accessibility::IntoNode, prelude::*};
 use accesskit::{
-    kurbo::Rect, Node, NodeId, TextDirection, TextPosition, TextSelection, TreeUpdate,
+    NodeBuilder, NodeId, Rect, TextDirection, TextPosition, TextSelection, TreeUpdate,
 };
 use cosmic_text::Edit;
 use unicode_segmentation::UnicodeSegmentation;
@@ -17,7 +17,7 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
 
     for entity in iterator {
         let node_id = entity.accesskit_id();
-        let mut node = cx.get_node(entity);
+        let mut node = cx.get_node_builder(entity);
 
         let navigable = cx
             .style
@@ -67,11 +67,10 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
 
                         let text = line.text;
 
-                        let mut line_node = Node::default();
+                        let mut line_node = NodeBuilder::new(Role::InlineTextBox);
 
-                        line_node.role = Role::InlineTextBox;
                         let line_height = editor.buffer().metrics().line_height as f64;
-                        line_node.bounds = Some(Rect {
+                        line_node.set_bounds(Rect {
                             x0: bounds.x as f64,
                             y0: bounds.y as f64 + line.line_y as f64
                                 - editor.buffer().metrics().font_size as f64,
@@ -80,11 +79,11 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                                 - editor.buffer().metrics().font_size as f64
                                 + line_height,
                         });
-                        line_node.text_direction = if line.rtl {
-                            Some(TextDirection::RightToLeft)
+                        line_node.set_text_direction(if line.rtl {
+                            TextDirection::RightToLeft
                         } else {
-                            Some(TextDirection::LeftToRight)
-                        };
+                            TextDirection::LeftToRight
+                        });
 
                         let mut character_lengths = Vec::with_capacity(line.glyphs.len());
                         let mut character_positions = Vec::with_capacity(line.glyphs.len());
@@ -137,12 +136,13 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                         //     println!("{} {} {}", line_text, first_glyph_pos, current_cursor);
                         // }
 
-                        line_node.value = Some(line_text.into());
-                        line_node.character_lengths = character_lengths.into();
-                        line_node.character_positions = Some(character_positions.into());
-                        line_node.character_widths = Some(character_widths.into());
-                        line_node.word_lengths = word_lengths.into();
-                        child_nodes.push((line_id, Arc::new(line_node)));
+                        line_node.set_value(line_text.into_boxed_str());
+                        line_node.set_character_lengths(character_lengths.into_boxed_slice());
+                        line_node.set_character_positions(character_positions.into_boxed_slice());
+                        line_node.set_character_widths(character_widths.into_boxed_slice());
+                        line_node.set_word_lengths(word_lengths.into_boxed_slice());
+                        child_nodes
+                            .push((line_id, line_node.build(&mut cx.style.accesskit_node_classes)));
 
                         if line.line_i != prev_line_index {
                             current_cursor = 0;
@@ -192,7 +192,7 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                     //     selection_active_cursor
                     // );
 
-                    node.text_selection = Some(TextSelection {
+                    node.set_text_selection(TextSelection {
                         anchor: TextPosition {
                             node: selection_anchor_line,
                             character_index: selection_anchor_cursor,
@@ -203,12 +203,12 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                         },
                     });
 
-                    node.children = children;
+                    node.set_children(children);
                 });
             }
         }
 
-        let mut nodes = vec![(node_id, Arc::new(node))];
+        let mut nodes = vec![(node_id, node.build(&mut cx.style.accesskit_node_classes))];
 
         // If child nodes were generated then append them to the nodes list
         if !child_nodes.is_empty() {

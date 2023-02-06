@@ -3,8 +3,7 @@ mod draw;
 mod event;
 mod proxy;
 
-use accesskit::kurbo::Rect;
-use accesskit::{CheckedState, Node};
+use accesskit::{CheckedState, Node, NodeBuilder, Rect};
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
@@ -547,7 +546,7 @@ impl Context {
     }
 
     /// Generates an accesskit node for the given entity using properties stored in context
-    pub(crate) fn get_node(&self, entity: Entity) -> Node {
+    pub(crate) fn get_node_builder(&self, entity: Entity) -> NodeBuilder {
         let bounds = self.cache.get_bounds(entity);
 
         // The CheckedState of the entity
@@ -572,36 +571,84 @@ impl Context {
         let labelled_by =
             self.style.labelled_by.get(entity).map(|labelled_by| labelled_by.accesskit_id());
 
-        Node {
-            role: self.style.roles.get(entity).copied().unwrap_or(Role::Unknown),
-            transform: None,
-            bounds: Some(Rect {
-                x0: bounds.x as f64,
-                y0: bounds.y as f64,
-                x1: (bounds.x + bounds.w) as f64,
-                y1: (bounds.y + bounds.h) as f64,
-            }),
-            children: entity.child_iter(&self.tree).map(|e| e.accesskit_id()).collect(),
-            name: self.style.name.get(entity).map(|name| name.clone().into_boxed_str()),
-            checked_state,
-            disabled: self.style.disabled.get(entity).copied().unwrap_or_default(),
-            default_action_verb: self.style.default_action_verb.get(entity).copied(),
-            focusable: self
-                .style
-                .abilities
-                .get(entity)
-                .map(|flags| flags.contains(Abilities::NAVIGABLE))
-                .unwrap_or(false),
-            live: self.style.live.get(entity).copied(),
-            labelled_by: labelled_by.and_then(|l| Some(vec![l])).unwrap_or(vec![]),
-            numeric_value: self.style.numeric_value.get(entity).copied(),
-            value: self.style.text_value.get(entity).map(|s| s.clone().into_boxed_str()),
-            min_numeric_value: self.style.min_numeric_value.get(entity).copied(),
-            max_numeric_value: self.style.max_numeric_value.get(entity).copied(),
-            numeric_value_step: self.style.numeric_value_step.get(entity).copied(),
-            hidden: self.style.hidden.get(entity).copied().unwrap_or_default(),
-            ..Default::default()
+        let role = self.style.roles.get(entity).copied().unwrap_or(Role::Unknown);
+
+        let mut builder = NodeBuilder::new(role);
+
+        builder.set_bounds(Rect {
+            x0: bounds.x as f64,
+            y0: bounds.y as f64,
+            x1: (bounds.x + bounds.w) as f64,
+            y1: (bounds.y + bounds.h) as f64,
+        });
+
+        builder.set_children(
+            entity.child_iter(&self.tree).map(|e| e.accesskit_id()).collect::<Vec<_>>(),
+        );
+
+        if let Some(name) = self.style.name.get(entity) {
+            builder.set_name(name.clone().into_boxed_str());
         }
+
+        if let Some(checked) = checked_state {
+            builder.set_checked_state(checked);
+        }
+
+        if let Some(disabled) = self.style.disabled.get(entity).copied() {
+            if disabled {
+                builder.set_disabled();
+            }
+        }
+
+        if let Some(default_action_verb) = self.style.default_action_verb.get(entity).copied() {
+            builder.set_default_action_verb(default_action_verb);
+        }
+
+        let focusable = self
+            .style
+            .abilities
+            .get(entity)
+            .map(|flags| flags.contains(Abilities::NAVIGABLE))
+            .unwrap_or(false);
+
+        if focusable {
+            builder.set_selected_from_focus();
+        }
+
+        if let Some(live) = self.style.live.get(entity).copied() {
+            builder.set_live(live);
+        }
+
+        let labelled_by = labelled_by.and_then(|l| Some(vec![l])).unwrap_or(vec![]);
+        builder.set_labelled_by(labelled_by);
+
+        if let Some(numeric_value) = self.style.numeric_value.get(entity).copied() {
+            builder.set_numeric_value(numeric_value);
+        }
+
+        if let Some(value) = self.style.text_value.get(entity).map(|s| s.clone().into_boxed_str()) {
+            builder.set_value(value);
+        }
+
+        if let Some(min_numeric_value) = self.style.min_numeric_value.get(entity).copied() {
+            builder.set_min_numeric_value(min_numeric_value);
+        }
+
+        if let Some(max_numeric_value) = self.style.max_numeric_value.get(entity).copied() {
+            builder.set_max_numeric_value(max_numeric_value);
+        }
+
+        if let Some(numeric_value_step) = self.style.numeric_value_step.get(entity).copied() {
+            builder.set_numeric_value_step(numeric_value_step);
+        }
+
+        let hidden = self.style.hidden.get(entity).copied().unwrap_or_default();
+
+        if hidden {
+            builder.set_hidden();
+        }
+
+        builder
     }
 }
 

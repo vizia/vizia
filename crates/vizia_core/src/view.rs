@@ -7,7 +7,7 @@ use crate::events::ViewHandler;
 use crate::resource::ImageOrId;
 use crate::state::ModelDataStore;
 
-use accesskit::{Node, Role, TreeUpdate};
+use accesskit::{Node, NodeBuilder, Role, TreeUpdate};
 use femtovg::{renderer::OpenGl, ImageFlags, Paint, Path, PixelFormat, RenderTarget};
 
 /// The canvas we will be drawing to.
@@ -34,19 +34,30 @@ pub trait View: 'static + Sized {
         cx.views.insert(id, Box::new(self));
         let parent_id = cx.tree.get_layout_parent(id).unwrap();
         let parent_node_id = parent_id.accesskit_id();
-        let parent_node = cx.get_node(parent_id);
+        let mut parent_node_builder = cx.get_node_builder(parent_id);
         let node_id = id.accesskit_id();
         let children =
             parent_id.child_iter(&cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
 
+        parent_node_builder.set_children(children);
+
+        let parent_node = parent_node_builder.build(&mut cx.style.accesskit_node_classes);
+
+        let node = NodeBuilder::default().build(&mut cx.style.accesskit_node_classes);
         cx.tree_updates.push(TreeUpdate {
-            nodes: vec![
-                (parent_node_id, Arc::new(Node { role: Role::Window, children, ..parent_node })),
-                (node_id, Arc::new(Node { ..Default::default() })),
-            ],
+            nodes: vec![(parent_node_id, parent_node), (node_id, node)],
             tree: None,
             focus: None,
         });
+
+        // cx.tree_updates.push(TreeUpdate {
+        //     nodes: vec![
+        //         (parent_node_id, Arc::new(Node { role: Role::Window, children, ..parent_node })),
+        //         (node_id, Arc::new(Node { ..Default::default() })),
+        //     ],
+        //     tree: None,
+        //     focus: None,
+        // });
 
         cx.data
             .insert(id, ModelDataStore { models: HashMap::default(), stores: HashMap::default() })
