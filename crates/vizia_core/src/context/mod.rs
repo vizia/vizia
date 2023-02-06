@@ -237,6 +237,10 @@ impl Context {
         self.user_scale_factor
     }
 
+    pub fn scale_factor(&self) -> f32 {
+        self.style.dpi_factor as f32
+    }
+
     /// Mark the application as needing to rerun the draw method
     pub fn need_redraw(&mut self) {
         self.style.needs_redraw = true;

@@ -34,8 +34,10 @@ pub fn transform_system(cx: &mut Context, tree: &Tree<Entity>) {
             if let Some(animation_state) = cx.style.transform.get_active_animation(entity) {
                 if let Some(start) = animation_state.keyframes.first() {
                     if let Some(end) = animation_state.keyframes.last() {
-                        let start_transform = Transform2D::from_style_transforms(&start.1, bounds);
-                        let end_transform = Transform2D::from_style_transforms(&end.1, bounds);
+                        let start_transform =
+                            Transform2D::from_style_transforms(&start.1, bounds, cx.scale_factor());
+                        let end_transform =
+                            Transform2D::from_style_transforms(&end.1, bounds, cx.scale_factor());
                         let t = animation_state.t;
                         let animated_transform =
                             Transform2D::interpolate(&start_transform, &end_transform, t);
@@ -43,7 +45,11 @@ pub fn transform_system(cx: &mut Context, tree: &Tree<Entity>) {
                     }
                 }
             } else {
-                transform.premultiply(&Transform2D::from_style_transforms(transforms, bounds));
+                transform.premultiply(&Transform2D::from_style_transforms(
+                    transforms,
+                    bounds,
+                    cx.scale_factor(),
+                ));
             }
         }
 

@@ -13,25 +13,29 @@ impl Transform2D {
         Self([a, b, c, d, e, f])
     }
 
-    pub fn from_style_transforms(transforms: &Vec<Transform>, parent_bounds: BoundingBox) -> Self {
+    pub fn from_style_transforms(
+        transforms: &Vec<Transform>,
+        parent_bounds: BoundingBox,
+        scale_factor: f32,
+    ) -> Self {
         let mut result = Transform2D::identity();
         for transform in transforms.iter() {
             let t = match transform {
                 Transform::Translate(translate) => {
-                    let tx = translate.x.to_pixels(parent_bounds.w);
-                    let ty = translate.y.to_pixels(parent_bounds.h);
+                    let tx = translate.x.to_pixels(parent_bounds.w) * scale_factor;
+                    let ty = translate.y.to_pixels(parent_bounds.h) * scale_factor;
 
                     Transform2D::with_translate(tx, ty)
                 }
 
                 Transform::TranslateX(x) => {
-                    let tx = x.to_pixels(parent_bounds.h);
+                    let tx = x.to_pixels(parent_bounds.h) * scale_factor;
 
                     Transform2D::with_translate(tx, 0.0)
                 }
 
                 Transform::TranslateY(y) => {
-                    let ty = y.to_pixels(parent_bounds.h);
+                    let ty = y.to_pixels(parent_bounds.h) * scale_factor;
 
                     Transform2D::with_translate(0.0, ty)
                 }

@@ -10,7 +10,7 @@ const STYLE: &str = r#"
     .two {
         size: 50px;
         background-color: red;
-        transform: translateX(150px);
+        transform: translateX(75px);
         overflow: hidden;
     }
 
