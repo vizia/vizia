@@ -14,7 +14,7 @@ pub fn text_constraints_system(cx: &mut Context) {
             continue;
         }
 
-        // Skip if the entity is invisible or out of bounds
+        // Skip if the entity is invisible
         // Unfortunately we can't skip the subtree because even if a parent is invisible
         // a child might be explicitly set to be visible.
         if entity == Entity::root()

@@ -27,8 +27,6 @@ pub(crate) fn geometry_changed(cx: &mut Context) {
             cx.cache.set_geo_changed(node, morphorm::GeometryChanged::WIDTH_CHANGED, false);
             cx.cache.set_geo_changed(node, morphorm::GeometryChanged::HEIGHT_CHANGED, false);
         }
-
-        cx.style.system_flags.set(SystemFlags::RELAYOUT, false);
     }
 
     if cx.style.system_flags.contains(SystemFlags::RELAYOUT)
@@ -46,5 +44,10 @@ pub(crate) fn geometry_changed(cx: &mut Context) {
 
             proxy.send(event).expect("Failed to send event");
         }
+
+        cx.style.system_flags.set(SystemFlags::RELAYOUT, false);
+        cx.style.system_flags.set(SystemFlags::RETRANSFORM, false);
+        cx.style.system_flags.set(SystemFlags::RECLIP, false);
+        cx.style.system_flags.set(SystemFlags::REORDER, false);
     }
 }
