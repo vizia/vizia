@@ -1,7 +1,11 @@
 use crate::entity::Entity;
 use crate::prelude::Color;
 use crate::style::Style;
-use cosmic_text::{fontdb::{Database, Query}, Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor, Family, FontSystem, Metrics, SubpixelBin, Wrap, Color as CosmicColor};
+use cosmic_text::{
+    fontdb::{Database, Query},
+    Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Color as CosmicColor, Edit, Editor,
+    Family, FontSystem, Metrics, SubpixelBin, Wrap,
+};
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
