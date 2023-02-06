@@ -19,8 +19,6 @@ pub fn transform_system(cx: &mut Context) {
 
             let bounds = cx.cache.get_bounds(entity);
 
-            //state.data.set_origin(entity, parent_origin);
-
             if let Some((tx, ty)) = cx.style.translate.get(entity).copied() {
                 let scale = cx.style.dpi_factor as f32;
                 cx.cache.set_translate(entity, (tx * scale, ty * scale));
@@ -33,7 +31,6 @@ pub fn transform_system(cx: &mut Context) {
                 cx.cache.set_rotate(entity, (rotate).to_radians());
                 cx.cache.set_translate(entity, (-x, -y));
             }
-            //println!("End");
 
             if let Some((scalex, scaley)) = cx.style.scale.get(entity).copied() {
                 let x = bounds.x + (bounds.w / 2.0);
@@ -43,7 +40,5 @@ pub fn transform_system(cx: &mut Context) {
                 cx.cache.set_translate(entity, (-x, -y));
             }
         }
-
-        cx.style.system_flags.set(SystemFlags::RETRANSFORM, false);
     }
 }

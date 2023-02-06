@@ -62,7 +62,5 @@ pub fn clipping_system(cx: &mut Context) {
 
         // If clipping has changed then redraw
         cx.style.system_flags.set(SystemFlags::REDRAW, true);
-
-        cx.style.system_flags.set(SystemFlags::RECLIP, false);
     }
 }
