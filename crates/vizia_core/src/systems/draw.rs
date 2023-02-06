@@ -38,6 +38,8 @@ pub fn draw_system(cx: &mut Context) {
     // Sort the tree by z order
     draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
 
+    canvas.scissor(0.0, 0.0, 1600.0, 1200.0);
+
     for entity in draw_tree.into_iter() {
         let parent = cx.tree.get_layout_parent(entity).unwrap();
         let parent_bounds = cx.cache.get_bounds(parent);
@@ -53,42 +55,46 @@ pub fn draw_system(cx: &mut Context) {
 
         let bounds = cx.cache.get_bounds(entity);
 
-        let x = bounds.x + (bounds.w / 2.0);
-        let y = bounds.y + (bounds.h / 2.0);
-        let mut translate = Transform2D::with_translate(x, y);
+        // let x = bounds.x + (bounds.w / 2.0);
+        // let y = bounds.y + (bounds.h / 2.0);
+        // let mut translate = Transform2D::with_translate(x, y);
 
-        let mut transform = Transform2D::identity();
-        transform.premultiply(&translate);
+        // let mut transform = Transform2D::identity();
+        // transform.premultiply(&translate);
 
-        translate.inverse();
+        // translate.inverse();
 
-        // canvas.scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
-        if let Some(transforms) = cx.style.transform.get(entity) {
-            // Check if the transform is currently animating
-            // Get the animation state
-            // Manually interpolate the value to get the overall transform for the current frame
+        // if let Some(transforms) = cx.style.transform.get(entity) {
+        //     // Check if the transform is currently animating
+        //     // Get the animation state
+        //     // Manually interpolate the value to get the overall transform for the current frame
 
-            if let Some(animation_state) = cx.style.transform.get_active_animation(entity) {
-                if let Some(start) = animation_state.keyframes.first() {
-                    if let Some(end) = animation_state.keyframes.last() {
-                        let start_transform = Transform2D::from_style_transforms(&start.1, bounds);
-                        let end_transform = Transform2D::from_style_transforms(&end.1, bounds);
-                        let t = animation_state.t;
-                        let animated_transform =
-                            Transform2D::interpolate(&start_transform, &end_transform, t);
-                        transform.premultiply(&animated_transform);
-                    }
-                }
-            } else {
-                transform.premultiply(&Transform2D::from_style_transforms(transforms, bounds));
-            }
-        }
+        //     if let Some(animation_state) = cx.style.transform.get_active_animation(entity) {
+        //         if let Some(start) = animation_state.keyframes.first() {
+        //             if let Some(end) = animation_state.keyframes.last() {
+        //                 let start_transform = Transform2D::from_style_transforms(&start.1, bounds);
+        //                 let end_transform = Transform2D::from_style_transforms(&end.1, bounds);
+        //                 let t = animation_state.t;
+        //                 let animated_transform =
+        //                     Transform2D::interpolate(&start_transform, &end_transform, t);
+        //                 transform.premultiply(&animated_transform);
+        //             }
+        //         }
+        //     } else {
+        //         transform.premultiply(&Transform2D::from_style_transforms(transforms, bounds));
+        //     }
+        // }
 
-        transform.premultiply(&translate);
+        // transform.premultiply(&translate);
+
+        let transform = cx.cache.get_transform(entity);
+        // let (clipx, clipy) = transform.transform_point(clip_region.x, clip_region.y);
+        // let (clipw, cliph) = transform.transform_point(clip_region.w, clip_region.h);
 
         // Apply transform
-        // let transform = cx.cache.get_transform(entity);
         canvas.save();
+        // canvas.set_transform(1.0, 0.0, 0.0, 1.0, bounds.center().0, bounds.center().1);
+        // canvas.reset_transform();
         canvas.set_transform(
             transform[0],
             transform[1],
@@ -97,6 +103,24 @@ pub fn draw_system(cx: &mut Context) {
             transform[4],
             transform[5],
         );
+        // canvas.reset_transform();
+        // canvas.set_transform(1.0, 0.0, 0.5, 1.0, -50.0, 0.0);
+
+        // canvas.set_transform(1.0, 0.0, 0.0, 1.0, -bounds.center().0, -bounds.center().1);
+
+        // let overlfow = cx.style.overflowx.get(entity).copied().unwrap_or_default();
+        // if overlfow == Overflow::Hidden {
+        //     println!("Set clip for {} {:?} {:?}", entity, bounds, transform);
+        //     canvas.intersect_scissor(bounds.x, bounds.y, bounds.w, bounds.h);
+        // }
+
+        canvas.scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
+        // canvas.intersect_scissor(
+        //     parent_bounds.x,
+        //     parent_bounds.y,
+        //     parent_bounds.w,
+        //     parent_bounds.h,
+        // );
 
         if let Some(view) = cx.views.remove(&entity) {
             cx.current = entity;

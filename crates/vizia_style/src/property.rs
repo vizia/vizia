@@ -1,9 +1,9 @@
 use crate::{
     define_property, Angle, BackgroundImage, Border, BorderCornerShape, BorderRadius, BorderWidth,
-    BorderWidthValue, BoxShadow, Color, CursorIcon, CustomParseError, CustomProperty, Display,
-    FontFamily, FontSize, FontStretch, FontStyle, FontWeight, InsetKeyword, LayoutType, Length,
-    LengthOrPercentage, Opacity, Outline, Overflow, Parse, PositionType, Rect, Scale, Transform,
-    Transition, Translate, Units, UnparsedProperty, Visibility,
+    BorderWidthValue, BoxShadow, Clip, Color, CursorIcon, CustomParseError, CustomProperty,
+    Display, FontFamily, FontSize, FontStretch, FontStyle, FontWeight, InsetKeyword, LayoutType,
+    Length, LengthOrPercentage, Opacity, Outline, Overflow, Parse, PositionType, Rect, Scale,
+    Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -13,6 +13,9 @@ define_property! {
         "display": Display(Display),
         "visibility": Visibility(Visibility),
         "overflow": Overflow(Overflow),
+        "overflow-x": OverflowX(Overflow),
+        "overflow-y": OverflowY(Overflow),
+        "clip": Clip(Clip),
         "opacity": Opacity(Opacity),
         "z-index": ZIndex(i32),
 

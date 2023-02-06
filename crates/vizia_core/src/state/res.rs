@@ -1,3 +1,5 @@
+use vizia_style::{FontStyle, FontWeight};
+
 use crate::prelude::*;
 
 macro_rules! impl_res_simple {
@@ -50,7 +52,7 @@ impl_res_simple!(f64);
 impl_res_simple!(CursorIcon);
 impl_res_simple!(Overflow);
 impl_res_simple!(LengthValue);
-impl_res_simple!(Weight);
+impl_res_simple!(FontWeight);
 impl_res_simple!(FontStyle);
 
 impl<T, L> Res<T> for L
@@ -103,6 +105,19 @@ impl<'s> Res<&'s String> for &'s String {
         F: 'static + Fn(&mut Context, Entity, Self),
     {
         (closure)(cx, entity, self);
+    }
+}
+
+impl<'s> Res<Transform> for Transform {
+    fn get_val(&self, _: &Context) -> Transform {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Fn(&mut Context, Entity, Self),
+    {
+        (closure)(cx, entity, self.clone());
     }
 }
 

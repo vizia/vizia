@@ -289,7 +289,15 @@ fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) 
         should_redraw = true;
     }
 
-    if cx.style.overflow.link(entity, &matched_rules) {
+    if cx.style.overflowx.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
+    if cx.style.overflowy.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
+    if cx.style.clip.link(entity, &matched_rules) {
         should_redraw = true;
     }
 

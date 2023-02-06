@@ -194,6 +194,15 @@ impl BoundingBox {
         )
     }
 
+    pub fn shrink_sides(&self, left: f32, top: f32, right: f32, bottom: f32) -> BoundingBox {
+        BoundingBox::from_min_max(
+            self.left() + left,
+            self.top() + top,
+            self.right() - right,
+            self.bottom() - bottom,
+        )
+    }
+
     /// Expands by some `amount` in both directions and returns a new
     /// [`BoundingBox`].
     #[inline(always)]
@@ -229,6 +238,14 @@ impl BoundingBox {
             self.right(),
             self.bottom() + amount,
         )
+    }
+
+    pub fn intersection(&self, other: &Self) -> Self {
+        let left = self.left().max(other.left());
+        let right = self.right().min(other.right());
+        let top = self.top().max(other.top());
+        let bottom = self.bottom().min(other.bottom());
+        BoundingBox::from_min_max(left, top, right, bottom)
     }
 
     pub fn intersects(&self, other: &Self) -> bool {

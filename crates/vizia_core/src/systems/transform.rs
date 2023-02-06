@@ -14,76 +14,43 @@ pub fn transform_system(cx: &mut Context, tree: &Tree<Entity>) {
         //let parent_origin = state.data.get_origin(parent);
         let parent_transform = cx.cache.get_transform(parent);
 
-        cx.cache.set_transform(entity, Transform2D::identity());
-
-        cx.cache.set_transform(entity, parent_transform);
-
         let bounds = cx.cache.get_bounds(entity);
 
         let x = bounds.x + (bounds.w / 2.0);
         let y = bounds.y + (bounds.h / 2.0);
         let mut translate = Transform2D::with_translate(x, y);
 
-        let mut current_transform = parent_transform;
-
-        current_transform.premultiply(&translate);
+        let mut transform = parent_transform;
+        // let mut transform = Transform2D::default();
+        transform.premultiply(&translate);
 
         translate.inverse();
 
         if let Some(transforms) = cx.style.transform.get(entity) {
-            for transform in transforms.iter() {
-                match transform {
-                    Transform::Translate(translate) => {
-                        let tx = translate.x.to_pixels(bounds.w);
-                        let ty = translate.y.to_pixels(bounds.h);
+            // Check if the transform is currently animating
+            // Get the animation state
+            // Manually interpolate the value to get the overall transform for the current frame
 
-                        let t = Transform2D::with_translate(tx, ty);
-                        current_transform.premultiply(&t);
+            if let Some(animation_state) = cx.style.transform.get_active_animation(entity) {
+                if let Some(start) = animation_state.keyframes.first() {
+                    if let Some(end) = animation_state.keyframes.last() {
+                        let start_transform = Transform2D::from_style_transforms(&start.1, bounds);
+                        let end_transform = Transform2D::from_style_transforms(&end.1, bounds);
+                        let t = animation_state.t;
+                        let animated_transform =
+                            Transform2D::interpolate(&start_transform, &end_transform, t);
+                        transform.premultiply(&animated_transform);
                     }
-
-                    Transform::TranslateX(value) => {
-                        let tx = value.to_pixels(bounds.w);
-
-                        let t = Transform2D::with_translate(tx, 0.0);
-                        current_transform.premultiply(&t);
-                    }
-
-                    Transform::Rotate(angle) => {
-                        let t = Transform2D::with_rotate(angle.to_radians());
-                        current_transform.premultiply(&t);
-                    }
-
-                    _ => {}
                 }
+            } else {
+                transform.premultiply(&Transform2D::from_style_transforms(transforms, bounds));
             }
         }
 
-        current_transform.premultiply(&translate);
+        transform.premultiply(&translate);
 
-        cx.cache.set_transform(entity, current_transform);
+        // println!("Set transform: {} {:?}", entity, transform);
 
-        //state.data.set_origin(entity, parent_origin);
-
-        // if let Some((tx, ty)) = cx.style.translate.get(entity).copied() {
-        //     let scale = cx.style.dpi_factor as f32;
-        //     cx.cache.set_translate(entity, (tx * scale, ty * scale));
-        // }
-
-        // if let Some(rotate) = cx.style.rotate.get(entity).copied() {
-        //     let x = bounds.x + (bounds.w / 2.0);
-        //     let y = bounds.y + (bounds.h / 2.0);
-        //     cx.cache.set_translate(entity, (x, y));
-        //     cx.cache.set_rotate(entity, (rotate).to_radians());
-        //     cx.cache.set_translate(entity, (-x, -y));
-        // }
-        //println!("End");
-
-        // if let Some((scalex, scaley)) = cx.style.scale.get(entity).copied() {
-        //     let x = bounds.x + (bounds.w / 2.0);
-        //     let y = bounds.y + (bounds.h / 2.0);
-        //     cx.cache.set_translate(entity, (x, y));
-        //     cx.cache.set_scale(entity, (scalex, scaley));
-        //     cx.cache.set_translate(entity, (-x, -y));
-        // }
+        cx.cache.set_transform(entity, transform);
     }
 }

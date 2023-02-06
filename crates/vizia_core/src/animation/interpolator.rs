@@ -1,7 +1,7 @@
 use morphorm::Units;
 use vizia_style::{
-    BoxShadow, Color, ColorStop, FontSize, Gradient, Length, LengthOrPercentage, LengthValue,
-    LinearGradient, Opacity, Transform, RGBA,
+    BoxShadow, Clip, Color, ColorStop, FontSize, Gradient, Length, LengthOrPercentage, LengthValue,
+    LinearGradient, Opacity, Rect, Transform, RGBA,
 };
 
 use crate::style::Transform2D;
@@ -226,5 +226,25 @@ impl<T: Interpolator + Clone + Default> Interpolator for Option<T> {
 impl Interpolator for FontSize {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         FontSize(f32::interpolate(&start.0, &end.0, t))
+    }
+}
+
+impl<T: Interpolator> Interpolator for Rect<T> {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        Rect(
+            T::interpolate(&start.0, &end.0, t),
+            T::interpolate(&start.1, &end.1, t),
+            T::interpolate(&start.2, &end.2, t),
+            T::interpolate(&start.3, &end.3, t),
+        )
+    }
+}
+
+impl Interpolator for Clip {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (Clip::Shape(s), Clip::Shape(e)) => Clip::Shape(Rect::interpolate(s, e, t)),
+            _ => end.clone(),
+        }
     }
 }

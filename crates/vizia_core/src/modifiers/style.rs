@@ -1,4 +1,4 @@
-use vizia_style::{BorderRadius, Rect};
+use vizia_style::{BorderRadius, Rect, Transform};
 
 use super::internal;
 use crate::prelude::*;
@@ -124,11 +124,32 @@ pub trait StyleModifiers: internal::Modifiable {
         i32
     );
 
+    fn overflow<U: Into<Overflow>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.overflowx.insert(entity, value);
+            cx.style.overflowy.insert(entity, value);
+
+            cx.need_redraw();
+        });
+
+        self
+    }
+
     modifier!(
-        /// Sets the overflow behavior of the view.
+        /// Sets the overflow behavior of the view in the horizontal direction.
         ///
         /// The overflow behavior determines whether child views can render outside the bounds of their parent.
-        overflow,
+        overflowx,
+        Overflow
+    );
+
+    modifier!(
+        /// Sets the overflow behavior of the view in the vertical direction.
+        ///
+        /// The overflow behavior determines whether child views can render outside the bounds of their parent.
+        overflowy,
         Overflow
     );
 
@@ -291,6 +312,17 @@ pub trait StyleModifiers: internal::Modifiable {
         cursor,
         CursorIcon
     );
+
+    fn transform<U: Into<Vec<Transform>>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.transform.insert(entity, value);
+            cx.need_redraw();
+        });
+
+        self
+    }
 
     // // Transform Properties
     // modifier!(

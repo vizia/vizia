@@ -2,16 +2,16 @@ use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
 use vizia_style::{
-    BoxShadow, CssRule, FontFamily, FontSize, FontStretch, FontWeight, GenericFontFamily, Gradient,
-    Transform, Transition,
+    BoxShadow, Clip, CssRule, FontFamily, FontSize, GenericFontFamily, Gradient, Transition,
 };
 
 use crate::prelude::*;
 
 pub use vizia_style::{
-    BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, FontStyle, Length,
-    LengthOrPercentage, LengthValue, LineDirection, LinearGradient, Opacity, Overflow,
-    ParserOptions, Property, SelectorList, Selectors, StyleSheet, Visibility, RGBA,
+    Angle, BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, FontStretch, FontStyle,
+    FontWeight, FontWeightKeyword, Length, LengthOrPercentage, LengthValue, LineDirection,
+    LinearGradient, Opacity, Overflow, ParserOptions, Property, SelectorList, Selectors,
+    StyleSheet, Transform, Visibility, RGBA,
 };
 
 mod rule;
@@ -98,16 +98,17 @@ pub struct Style {
     pub z_index: StyleSet<i32>,
 
     // Clipping
-    pub clip_widget: SparseSet<Entity>,
+    pub clip: AnimatableSet<Clip>,
 
     // Transform
     pub transform: AnimatableSet<Vec<Transform>>,
-    // pub computed_transform: AnimatableSet<Transform2D>,
     // pub rotate: AnimatableSet<f32>,
     // pub translate: AnimatableSet<(f32, f32)>,
     // pub scale: AnimatableSet<(f32, f32)>,
-    pub overflow: StyleSet<Overflow>, // TODO
-    //pub scroll: DenseStorage<Scroll>,     // TODO
+
+    // Overflow
+    pub overflowx: StyleSet<Overflow>,
+    pub overflowy: StyleSet<Overflow>,
 
     // Border
     pub border_width: AnimatableSet<LengthOrPercentage>,
@@ -455,6 +456,10 @@ impl Style {
                 self.opacity.insert_rule(rule_id, opacity);
             }
 
+            Property::Clip(clip) => {
+                self.clip.insert_rule(rule_id, clip);
+            }
+
             // Layout Type
             Property::LayoutType(layout_type) => {
                 self.layout_type.insert_rule(rule_id, layout_type);
@@ -735,7 +740,19 @@ impl Style {
                 self.transform.insert_rule(rule_id, transforms);
             }
 
-            Property::Overflow(overflow) => self.overflow.insert_rule(rule_id, overflow),
+            Property::Overflow(overflow) => {
+                self.overflowx.insert_rule(rule_id, overflow);
+                self.overflowy.insert_rule(rule_id, overflow);
+            }
+
+            Property::OverflowX(overflow) => {
+                self.overflowx.insert_rule(rule_id, overflow);
+            }
+
+            Property::OverflowY(overflow) => {
+                self.overflowy.insert_rule(rule_id, overflow);
+            }
+
             Property::ZIndex(z_index) => self.z_index.insert_rule(rule_id, z_index),
 
             Property::Outline(outline) => {
@@ -836,7 +853,7 @@ impl Style {
         // Z Order
         self.z_index.remove(entity);
         // Clipping
-        self.clip_widget.remove(entity);
+        self.clip.remove(entity);
 
         // Transform
         self.transform.remove(entity);
@@ -844,7 +861,8 @@ impl Style {
         // self.rotate.remove(entity);
         // self.scale.remove(entity);
 
-        self.overflow.remove(entity);
+        self.overflowx.remove(entity);
+        self.overflowy.remove(entity);
 
         // Border
         self.border_width.remove(entity);
@@ -952,13 +970,16 @@ impl Style {
         // Z Order
         self.z_index.clear_rules();
 
+        self.clip.clear_rules();
+
         // Transform
         self.transform.clear_rules();
         // self.translate.clear_rules();
         // self.rotate.clear_rules();
         // self.scale.clear_rules();
 
-        self.overflow.clear_rules();
+        self.overflowx.clear_rules();
+        self.overflowy.clear_rules();
 
         // Border
         self.border_width.clear_rules();

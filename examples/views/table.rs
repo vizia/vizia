@@ -144,7 +144,7 @@ fn main() {
                                 .child_left(Pixels(5.0))
                                 .width(Stretch(1.0))
                                 .height(Stretch(1.0))
-                                .font_weight(Weight::BOLD);
+                                .font_weight(FontWeightKeyword::Bold);
 
                             Binding::new(cx, TableData::age_sorted, |cx, sorted| {
                                 let visible = match sorted.get(cx) {

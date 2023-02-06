@@ -62,12 +62,12 @@ pub mod prelude {
     pub use vizia_window::{WindowDescription, WindowEvent, WindowSize};
 
     pub use super::style::{
-        Abilities, BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, Length,
-        LengthOrPercentage, LengthValue, LineDirection, LinearGradient, Opacity, Overflow,
-        PseudoClassFlags, Visibility, RGBA,
+        Abilities, Angle, BackgroundImage, BorderCornerShape, Color, CursorIcon, Display,
+        FontStyle, FontWeight, Length, LengthOrPercentage, LengthValue, LineDirection,
+        LinearGradient, Opacity, Overflow, PseudoClassFlags, Transform, Visibility, RGBA,
     };
 
-    pub use cosmic_text::{FamilyOwned, Style as FontStyle, Weight};
+    pub use cosmic_text::FamilyOwned;
     pub use morphorm::Units::*;
     pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
     pub use unic_langid::LanguageIdentifier;
