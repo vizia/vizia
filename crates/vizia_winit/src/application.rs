@@ -23,7 +23,7 @@ use winit::event_loop::EventLoopBuilder;
         target_os = "openbsd"
     )
 ))]
-use winit::platform::unix::WindowExtUnix;
+use winit::platform::wayland::WindowExtWayland;
 use winit::{
     dpi::LogicalSize,
     event::VirtualKeyCode,
