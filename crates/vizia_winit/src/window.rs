@@ -1,3 +1,4 @@
+#[cfg(not(target_arch = "wasm32"))]
 use std::num::NonZeroU32;
 
 use crate::convert::cursor_icon_to_cursor_icon;
@@ -38,9 +39,6 @@ impl Window {
         events_loop: &EventLoop<Event>,
         window_description: &WindowDescription,
     ) -> (Self, Canvas<OpenGl>) {
-        use wasm_bindgen::JsCast;
-        use winit::platform::web::WindowBuilderExtWebSys;
-
         let window_builder = WindowBuilder::new();
 
         let canvas_element = {
