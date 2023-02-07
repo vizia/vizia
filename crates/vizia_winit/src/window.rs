@@ -38,14 +38,14 @@ impl Window {
         events_loop: &EventLoop<Event>,
         window_description: &WindowDescription,
     ) -> (Self, Canvas<OpenGl>) {
+        use wasm_bindgen::JsCast;
+        use winit::platform::web::WindowBuilderExtWebSys;
+
         let window_builder = WindowBuilder::new();
 
-        // For wasm, create or look up the canvas element we're drawing on
         let canvas_element = {
             use wasm_bindgen::JsCast;
-
             let document = web_sys::window().unwrap().document().unwrap();
-
             if let Some(canvas_id) = &window_description.target_canvas {
                 document.get_element_by_id(canvas_id).unwrap()
             } else {
@@ -57,8 +57,10 @@ impl Window {
             .unwrap()
         };
 
-        // Build the femtovg renderer
-        let renderer = OpenGl::new_from_html_canvas(&canvas_element).unwrap();
+        let renderer =
+            OpenGl::new_from_html_canvas(&canvas_element).expect("Cannot create renderer");
+
+        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
 
         // tell winit about the above canvas
         let window_builder = {
@@ -73,14 +75,7 @@ impl Window {
         let handle = window_builder.build(&events_loop).unwrap();
 
         // Build our window
-        let window = Window {
-            id: handle.id(),
-            handle,
-            should_close: false,
-            //canvas: Canvas::new(renderer).expect("Cannot create canvas"),
-        };
-
-        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
+        let window = Window { id: handle.id(), window: handle, should_close: false };
 
         let size = window.window().inner_size();
         canvas.set_size(size.width as u32, size.height as u32, 1.0);
@@ -90,7 +85,7 @@ impl Window {
     }
 
     pub fn window(&self) -> &winit::window::Window {
-        &self.handle
+        &self.window
     }
 
     pub fn resize(&self, _size: PhysicalSize<u32>) {
