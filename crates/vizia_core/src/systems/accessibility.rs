@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{accessibility::IntoNode, prelude::*};
 use accesskit::{
     NodeBuilder, NodeId, Rect, TextDirection, TextPosition, TextSelection, TreeUpdate,

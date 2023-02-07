@@ -4,7 +4,7 @@ mod event;
 mod proxy;
 mod resource;
 
-use accesskit::{CheckedState, Node, NodeBuilder, Rect};
+use accesskit::{CheckedState, NodeBuilder, Rect};
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::{HashMap, VecDeque};
@@ -65,7 +65,7 @@ pub struct Context {
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,
-    pub style: Style,
+    pub(crate) style: Style,
     pub(crate) cache: CachedData,
     pub(crate) draw_cache: DrawCache,
 

@@ -1,13 +1,12 @@
 use crate::accessibility::IntoNode;
 use crate::prelude::*;
-use std::sync::Arc;
 use std::{any::Any, collections::HashMap};
 
 use crate::events::ViewHandler;
 use crate::resource::ImageOrId;
 use crate::state::ModelDataStore;
 
-use accesskit::{Node, NodeBuilder, Role, TreeUpdate};
+use accesskit::{NodeBuilder, TreeUpdate};
 use femtovg::{renderer::OpenGl, ImageFlags, Paint, Path, PixelFormat, RenderTarget};
 
 /// The canvas we will be drawing to.
