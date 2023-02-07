@@ -12,7 +12,6 @@ pub(crate) mod visibility;
 
 pub(crate) use self::image::*;
 pub(crate) use accessibility::*;
-pub use animation::has_animations;
 pub(crate) use animation::*;
 pub(crate) use clipping::*;
 pub(crate) use draw::*;

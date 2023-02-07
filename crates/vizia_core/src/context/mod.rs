@@ -65,7 +65,7 @@ pub struct Context {
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,
-    pub(crate) style: Style,
+    pub style: Style,
     pub(crate) cache: CachedData,
     pub(crate) draw_cache: DrawCache,
 

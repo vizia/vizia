@@ -180,6 +180,10 @@ impl<'a> BackendContext<'a> {
         !self.0.event_queue.is_empty()
     }
 
+    pub fn accesskit_node_classes(&mut self) -> &mut accesskit::NodeClassSet {
+        &mut self.style().accesskit_node_classes
+    }
+
     /// For each binding or data observer, check if its data has changed, and if so, rerun its
     /// builder/body.
     pub fn process_data_updates(&mut self) {

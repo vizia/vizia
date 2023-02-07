@@ -47,7 +47,7 @@ pub trait AbilityModifiers: internal::Modifiable {
                 let state = v.into();
                 abilities.set(Abilities::CHECKABLE, state);
 
-                cx.need_restyle();
+                cx.needs_restyle();
             }
         });
 

@@ -181,16 +181,18 @@ impl Application {
         let event_loop_proxy = event_loop.create_proxy();
 
         #[cfg(not(target_arch = "wasm32"))]
+        let mut cx = BackendContext::new(&mut context);
+
+        #[cfg(not(target_arch = "wasm32"))]
+        let root_node = NodeBuilder::new(Role::Window).build(cx.accesskit_node_classes());
         let accesskit = accesskit_winit::Adapter::new(
             window.window(),
             move || {
                 // TODO: set a flag to signify that a screen reader has been attached
-                use accesskit::{Node, Tree};
-                use std::sync::Arc;
+                use accesskit::Tree;
 
                 let root_id = Entity::root().accesskit_id();
-                let root_node =
-                    NodeBuilder::new(Role::Window).build(&mut context.style.accesskit_node_classes);
+
                 TreeUpdate {
                     nodes: vec![(root_id, root_node)],
                     tree: Some(Tree::new(root_id)),
