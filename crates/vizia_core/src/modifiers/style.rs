@@ -1,5 +1,6 @@
 use super::internal;
 use crate::prelude::*;
+use crate::style::SystemFlags;
 
 /// Modifiers for changing the style properties of a view.
 pub trait StyleModifiers: internal::Modifiable {
@@ -24,7 +25,7 @@ pub trait StyleModifiers: internal::Modifiable {
         let id = id.into();
         let entity = self.entity();
         self.context().style.ids.insert(entity, id.clone()).expect("Could not insert id");
-        self.context().need_restyle();
+        self.context().needs_restyle();
 
         self.context().entity_identifiers.insert(id, entity);
 
@@ -38,7 +39,7 @@ pub trait StyleModifiers: internal::Modifiable {
             class_list.insert(name.to_string());
         }
 
-        self.context().need_restyle();
+        self.context().needs_restyle();
 
         self
     }
@@ -56,7 +57,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 }
             }
 
-            cx.need_restyle();
+            cx.needs_restyle();
         });
 
         self
@@ -89,7 +90,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 }
             }
 
-            cx.need_restyle();
+            cx.needs_restyle();
         });
 
         self
@@ -100,7 +101,8 @@ pub trait StyleModifiers: internal::Modifiable {
         ///
         /// This property is inherited by the descendants of the view.
         disabled,
-        bool
+        bool,
+        SystemFlags::RESTYLE
     );
 
     modifier!(
@@ -108,7 +110,8 @@ pub trait StyleModifiers: internal::Modifiable {
         ///
         /// A display value of `Display::None` causes the view to be ignored by both layout and rendering.
         display,
-        Display
+        Display,
+        SystemFlags::REHIDE | SystemFlags::RELAYOUT | SystemFlags::REDRAW
     );
 
     modifier!(
@@ -116,38 +119,48 @@ pub trait StyleModifiers: internal::Modifiable {
         ///
         /// The layout system will still compute the size and position of an invisible view.
         visibility,
-        Visibility
+        Visibility,
+        SystemFlags::REHIDE | SystemFlags::REDRAW
     );
 
-    modifier!(
-        /// Sets the z-order index of the view.
-        ///
-        /// Views with a higher z-order will be rendered on top of those with a lower z-order.
-        /// Views with the same z-order are rendered in tree order.
-        z_order,
-        i32
-    );
+    /// Sets the z-order index of the view.
+    ///
+    /// Views with a higher z-order will be rendered on top of those with a lower z-order.
+    /// Views with the same z-order are rendered in tree order.
+    fn z_order<U: Into<i32>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.tree.set_z_order(entity, value);
+            cx.needs_redraw();
+        });
+
+        self
+    }
 
     modifier!(
         /// Sets the overflow behavior of the view.
         ///
         /// The overflow behavior determines whether child views can render outside the bounds of their parent.
         overflow,
-        Overflow
+        Overflow,
+        SystemFlags::RECLIP | SystemFlags::REDRAW
     );
 
     // Background Properties
     modifier!(
         /// Sets the background color of the view.
         background_color,
-        Color
+        Color,
+        SystemFlags::REDRAW
     );
     modifier!(
         /// Sets the background image of the view.
         ///
         /// Background image will override any background gradient or color.
         background_image,
-        String
+        String,
+        SystemFlags::REDRAW
     );
 
     // TODO: Docs for this.
@@ -158,13 +171,13 @@ pub trait StyleModifiers: internal::Modifiable {
             if let Some(prev_data) = cx.style.image.get(entity) {
                 if prev_data != &val {
                     cx.style.image.insert(entity, val);
-
-                    cx.need_redraw();
+                    cx.style.needs_text_layout.insert(entity, true).unwrap();
+                    cx.needs_redraw();
                 }
             } else {
                 cx.style.image.insert(entity, val);
-
-                cx.need_redraw();
+                cx.style.needs_text_layout.insert(entity, true).unwrap();
+                cx.needs_redraw();
             }
         });
 
@@ -175,34 +188,40 @@ pub trait StyleModifiers: internal::Modifiable {
     modifier!(
         /// Sets the border width of the view.
         border_width,
-        Units
+        Units,
+        SystemFlags::RELAYOUT | SystemFlags::REDRAW
     );
 
     modifier!(
         /// Sets the border color of the view.
         border_color,
-        Color
+        Color,
+        SystemFlags::REDRAW
     );
 
     modifier!(
         /// Sets the border radius for the top-left corner of the view.
         border_radius_top_left,
-        Units
+        Units,
+        SystemFlags::REDRAW
     );
     modifier!(
         /// Sets the border radius for the top-right corner of the view.
         border_radius_top_right,
-        Units
+        Units,
+        SystemFlags::REDRAW
     );
     modifier!(
         /// Sets the border radius for the bottom-left corner of the view.
         border_radius_bottom_left,
-        Units
+        Units,
+        SystemFlags::REDRAW
     );
     modifier!(
         /// Sets the border radius for the bottom-right corner of the view.
         border_radius_bottom_right,
-        Units
+        Units,
+        SystemFlags::REDRAW
     );
 
     /// Sets the border radius for all four corners of the view.
@@ -215,7 +234,7 @@ pub trait StyleModifiers: internal::Modifiable {
             cx.style.border_radius_bottom_left.insert(entity, value);
             cx.style.border_radius_bottom_right.insert(entity, value);
 
-            cx.need_redraw();
+            cx.needs_redraw();
         });
 
         self
@@ -224,22 +243,26 @@ pub trait StyleModifiers: internal::Modifiable {
     modifier!(
         /// Sets the border corner shape for the top-left corner of the view.
         border_shape_top_left,
-        BorderCornerShape
+        BorderCornerShape,
+        SystemFlags::REDRAW
     );
     modifier!(
         /// Sets the border corner shape for the top-right corner of the view.
         border_shape_top_right,
-        BorderCornerShape
+        BorderCornerShape,
+        SystemFlags::REDRAW
     );
     modifier!(
         /// Sets the border corner shape for the bottom-left corner of the view.
         border_shape_bottom_left,
-        BorderCornerShape
+        BorderCornerShape,
+        SystemFlags::REDRAW
     );
     modifier!(
         /// Sets the border corner shape for the bottom-right corner of the view.
         border_shape_bottom_right,
-        BorderCornerShape
+        BorderCornerShape,
+        SystemFlags::REDRAW
     );
 
     /// Sets the border corner shape for all four corners of the view.
@@ -252,7 +275,7 @@ pub trait StyleModifiers: internal::Modifiable {
             cx.style.border_shape_bottom_left.insert(entity, value);
             cx.style.border_shape_bottom_right.insert(entity, value);
 
-            cx.need_redraw();
+            cx.needs_redraw();
         });
 
         self
@@ -262,24 +285,28 @@ pub trait StyleModifiers: internal::Modifiable {
     modifier!(
         /// Sets the outline width of the view.
         outline_width,
-        Units
+        Units,
+        SystemFlags::REDRAW
     );
 
     modifier!(
         /// Sets the outline color of the view.
         outline_color,
-        Color
+        Color,
+        SystemFlags::REDRAW
     );
     modifier!(
         /// Sets the outline offset of the view.
         outline_offset,
-        Units
+        Units,
+        SystemFlags::REDRAW
     );
 
     modifier!(
         /// Sets the mouse cursor used when the view is hovered.
         cursor,
-        CursorIcon
+        CursorIcon,
+        SystemFlags::empty()
     );
 
     // Transform Properties
@@ -288,21 +315,24 @@ pub trait StyleModifiers: internal::Modifiable {
         ///
         /// Rotation applies to the rendered view and does not affect layout.
         rotate,
-        f32
+        f32,
+        SystemFlags::RETRANSFORM | SystemFlags::REDRAW
     );
     modifier!(
         /// Sets the translation offset of the view.
         ///
         /// Translation applies to the rendered view and does not affect layout.
         translate,
-        (f32, f32)
+        (f32, f32),
+        SystemFlags::RETRANSFORM | SystemFlags::REDRAW
     );
     modifier!(
         /// Sets the scale of the view.
         ///
         /// Scale applies to the rendered view and does not affect layout.
         scale,
-        (f32, f32)
+        (f32, f32),
+        SystemFlags::RETRANSFORM | SystemFlags::REDRAW
     );
 }
 

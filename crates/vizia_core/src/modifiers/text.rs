@@ -1,5 +1,5 @@
 use super::internal;
-use crate::prelude::*;
+use crate::{prelude::*, style::SystemFlags};
 use cosmic_text::{FamilyOwned, Weight};
 
 /// Modifiers for changing the text properties of a view.
@@ -11,8 +11,8 @@ pub trait TextModifiers: internal::Modifiable {
             let text_data = val.to_string();
             cx.text_context.set_text(entity, &text_data);
 
-            cx.need_relayout();
-            cx.need_redraw();
+            cx.style.needs_text_layout.insert(entity, true).unwrap();
+            cx.style.system_flags |= SystemFlags::REFLOW;
         });
 
         self
@@ -23,19 +23,22 @@ pub trait TextModifiers: internal::Modifiable {
         ///
         /// The font name refers to the name assigned when the font is added to context.
         font_family,
-        Vec<FamilyOwned>
+        Vec<FamilyOwned>,
+        SystemFlags::REFLOW
     );
 
     modifier!(
         /// Sets the font weight that should be used by the view.
         font_weight,
-        Weight
+        Weight,
+        SystemFlags::REDRAW
     );
 
     modifier!(
         /// Sets the font style that should be used by the view.
         font_style,
-        FontStyle
+        FontStyle,
+        SystemFlags::REDRAW
     );
 
     /// Sets the text color of the view.
@@ -43,6 +46,7 @@ pub trait TextModifiers: internal::Modifiable {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             cx.style.font_color.insert(entity, v.into());
+            cx.style.needs_redraw();
         });
         self
     }
@@ -52,6 +56,7 @@ pub trait TextModifiers: internal::Modifiable {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             cx.style.font_size.insert(entity, v.into());
+            cx.style.system_flags |= SystemFlags::REFLOW;
         });
         self
     }
@@ -59,19 +64,22 @@ pub trait TextModifiers: internal::Modifiable {
     modifier!(
         /// Sets the ext caret color of the view.
         caret_color,
-        Color
+        Color,
+        SystemFlags::REDRAW
     );
 
     modifier!(
         /// Sets the color used to highlight selected text within the view.
         selection_color,
-        Color
+        Color,
+        SystemFlags::REDRAW
     );
 
     modifier!(
         /// Sets whether the text of the view should be allowed to wrap.
         text_wrap,
-        bool
+        bool,
+        SystemFlags::REFLOW
     );
 }
 

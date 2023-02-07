@@ -1,4 +1,4 @@
-use crate::context::InternalEvent;
+use crate::context::{InternalEvent, ResourceContext};
 use crate::events::EventMeta;
 use crate::prelude::*;
 #[cfg(debug_assertions)]
@@ -21,14 +21,11 @@ const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 pub struct EventManager {
     // Queue of events to be processed
     event_queue: Vec<Event>,
-
-    // A copy of the tree for iteration
-    tree: Tree<Entity>,
 }
 
 impl EventManager {
     pub fn new() -> Self {
-        EventManager { event_queue: Vec::new(), tree: Tree::new() }
+        EventManager { event_queue: Vec::new() }
     }
 
     /// Flush the event queue, dispatching events to their targets.
@@ -40,18 +37,14 @@ impl EventManager {
         // Move events from state to event manager
         self.event_queue.extend(context.event_queue.drain(0..));
 
-        if context.tree.changed {
-            self.tree = context.tree.clone();
-        }
-
         // Loop over the events in the event queue
         'events: for event in self.event_queue.iter_mut() {
             // handle internal events
             event.map(|internal_event, _| match internal_event {
-                InternalEvent::Redraw => context.need_redraw(),
+                InternalEvent::Redraw => context.needs_redraw(),
                 InternalEvent::LoadImage { path, image, policy } => {
                     if let Some(image) = image.lock().unwrap().take() {
-                        context.load_image(path.clone(), image, *policy);
+                        ResourceContext::new(context).load_image(path.clone(), image, *policy);
                     }
                 }
             });
@@ -101,6 +94,8 @@ impl EventManager {
                 }
             }
 
+            let context = &mut EventContext::new(context);
+
             // Define the target to prevent multiple mutable borrows error
             let target = event.meta.target;
 
@@ -114,7 +109,7 @@ impl EventManager {
             // Propagate up from target to root (not including target)
             if event.meta.propagation == Propagation::Up {
                 // Walk up the tree from parent to parent
-                for entity in target.parent_iter(&self.tree) {
+                for entity in target.parent_iter(&context.tree) {
                     // Skip the target entity
                     if entity == event.meta.target {
                         continue;
@@ -131,7 +126,7 @@ impl EventManager {
             }
 
             if event.meta.propagation == Propagation::Subtree {
-                for entity in target.branch_iter(&self.tree) {
+                for entity in target.branch_iter(&context.tree) {
                     // Skip the target entity
                     if entity == event.meta.target {
                         continue;
@@ -152,7 +147,7 @@ impl EventManager {
     }
 }
 
-fn visit_entity(cx: &mut Context, entity: Entity, event: &mut Event) {
+fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
     // Send event to models attached to the entity
     if let Some(ids) = cx.data.get(entity).and_then(|model_data_store| {
         Some(model_data_store.models.keys().cloned().collect::<Vec<_>>())
@@ -163,10 +158,9 @@ fn visit_entity(cx: &mut Context, entity: Entity, event: &mut Event) {
                 .get_mut(entity)
                 .and_then(|model_data_store| model_data_store.models.remove(&id))
             {
-                let mut context = EventContext::new(cx);
-                context.current = entity;
+                cx.current = entity;
 
-                model.event(&mut context, event);
+                model.event(cx, event);
 
                 cx.data
                     .get_mut(entity)
@@ -182,9 +176,10 @@ fn visit_entity(cx: &mut Context, entity: Entity, event: &mut Event) {
 
     // Send event to the view attached to the entity
     if let Some(mut view) = cx.views.remove(&entity) {
-        cx.with_current(entity, |cx| {
-            view.event(&mut EventContext::new(cx), event);
-        });
+        // cx.with_current(entity, |cx| {
+        cx.current = entity;
+        view.event(cx, event);
+        // });
 
         cx.views.insert(entity, view);
     }
@@ -310,7 +305,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 {
                     pseudo_classes.set(PseudoClass::ACTIVE, false);
                 }
-                context.need_restyle();
+                context.needs_restyle();
 
                 context.triggered = Entity::null();
             }
@@ -476,7 +471,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                         {
                             pseudo_classes.set(PseudoClass::ACTIVE, false);
                         }
-                        context.need_restyle();
+                        context.needs_restyle();
                         context.triggered = Entity::null();
                     }
                 } else {
@@ -508,14 +503,10 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                         {
                             pseudo_classes.set(PseudoClass::ACTIVE, false);
                         }
-                        context.need_restyle();
+                        context.needs_restyle();
                         context.triggered = Entity::null();
                     }
                 }
-
-                context.style.needs_relayout = true;
-                context.style.needs_redraw = true;
-                context.style.needs_restyle = true;
             }
 
             if matches!(*code, Code::Enter | Code::NumpadEnter | Code::Space) {
@@ -543,7 +534,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 {
                     pseudo_classes.set(PseudoClass::ACTIVE, false);
                 }
-                context.need_restyle();
+                context.needs_restyle();
                 context.triggered = Entity::null();
             }
         }

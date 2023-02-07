@@ -30,7 +30,7 @@ use winit::event_loop::EventLoopBuilder;
         target_os = "openbsd"
     )
 ))]
-use winit::platform::unix::WindowExtUnix;
+use winit::platform::wayland::WindowExtWayland;
 use winit::{
     dpi::LogicalSize,
     event::VirtualKeyCode,
@@ -116,6 +116,11 @@ impl Application {
 
     pub fn ignore_default_theme(mut self) -> Self {
         self.context.ignore_default_theme = true;
+        self
+    }
+
+    pub fn set_text_config(mut self, text_config: TextConfig) -> Self {
+        BackendContext::new(&mut self.context).set_text_config(text_config);
         self
     }
 
@@ -245,6 +250,9 @@ impl Application {
             }
         });
 
+        let mut cursor_moved = false;
+        let mut cursor = (0.0f32, 0.0f32);
+
         event_loop.run(move |event, _, control_flow| {
             let mut cx = BackendContext::new(&mut context);
 
@@ -286,6 +294,11 @@ impl Application {
                     *stored_control_flow.borrow_mut() =
                         if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
 
+                    if cursor_moved {
+                        cx.emit_origin(WindowEvent::MouseMove(cursor.0 as f32, cursor.1 as f32));
+                        cursor_moved = false;
+                    }
+
                     // Events
                     while event_manager.flush_events(cx.0) {}
 
@@ -300,7 +313,7 @@ impl Application {
 
                     cx.process_style_updates();
 
-                    if has_animations(&cx.0) {
+                    if cx.process_animations() {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
 
                         event_loop_proxy
@@ -320,10 +333,9 @@ impl Application {
 
                     if let Some(window_view) = cx.views().remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_ref::<Window>() {
-                            if cx.style().needs_redraw {
+                            cx.style().should_redraw(|| {
                                 window.window().request_redraw();
-                                cx.style().needs_redraw = false;
-                            }
+                            });
                         }
 
                         cx.views().insert(Entity::root(), window_view);
@@ -391,6 +403,7 @@ impl Application {
                             cx.style()
                                 .height
                                 .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
+                            cx.needs_refresh();
                         }
 
                         #[allow(deprecated)]
@@ -399,10 +412,11 @@ impl Application {
                             position,
                             modifiers: _,
                         } => {
-                            cx.emit_origin(WindowEvent::MouseMove(
-                                position.x as f32,
-                                position.y as f32,
-                            ));
+                            if !cursor_moved {
+                                cursor_moved = true;
+                                cursor.0 = position.x as f32;
+                                cursor.1 = position.y as f32;
+                            }
                         }
 
                         #[allow(deprecated)]
@@ -507,9 +521,7 @@ impl Application {
 
                             cx.cache().set_clip_region(Entity::root(), bounding_box);
 
-                            cx.0.need_restyle();
-                            cx.0.need_relayout();
-                            cx.0.need_redraw();
+                            cx.needs_refresh();
                         }
 
                         winit::event::WindowEvent::ModifiersChanged(modifiers_state) => {

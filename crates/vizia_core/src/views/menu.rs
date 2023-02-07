@@ -185,10 +185,12 @@ impl MenuStack {
         if cx.data::<MenuControllerData>().is_none() {
             panic!("MenuStacks must be built inside a MenuController");
         }
-        Self {}.build(cx, move |cx| {
-            MenuData::default().build(cx);
-            builder(cx);
-        })
+        Self {}
+            .build(cx, move |cx| {
+                MenuData::default().build(cx);
+                builder(cx);
+            })
+            .z_order(100)
     }
 
     pub fn new_vertical<F: FnOnce(&mut Context)>(cx: &mut Context, builder: F) -> Handle<'_, Self> {

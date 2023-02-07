@@ -3,14 +3,14 @@ use crate::prelude::Color;
 use crate::style::Style;
 use cosmic_text::{
     fontdb::{Database, Query},
-    Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor, Family, FontSystem,
-    Metrics, SubpixelBin, Wrap,
+    Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Color as CosmicColor, Edit, Editor,
+    Family, FontSystem, Metrics, SubpixelBin, Wrap,
 };
-use femtovg::imgref::ImgRef;
+use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
-    Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource,
-    PixelFormat, Quad, Renderer,
+    Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource, Quad,
+    Renderer,
 };
 use fnv::FnvHashMap;
 use ouroboros::self_referencing;
@@ -22,6 +22,18 @@ use swash::zeno::{Format, Vector};
 const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
 const TEXTURE_SIZE: usize = 512;
+
+#[derive(Debug, Clone, Copy)]
+pub struct TextConfig {
+    pub hint: bool,
+    pub subpixel: bool,
+}
+
+impl Default for TextConfig {
+    fn default() -> Self {
+        Self { hint: true, subpixel: false }
+    }
+}
 
 #[self_referencing]
 pub struct TextContext {
@@ -101,7 +113,7 @@ impl TextContext {
                 .style(font_style)
                 .monospaced(monospace)
                 .color(FontColor::rgba(color.r(), color.g(), color.b(), color.a()));
-            let wrap = if style.text_wrap.get(entity).copied().unwrap_or_default() {
+            let wrap = if style.text_wrap.get(entity).copied().unwrap_or(true) {
                 Wrap::Word
             } else {
                 Wrap::None
@@ -125,6 +137,7 @@ impl TextContext {
         entity: Entity,
         position: (f32, f32),
         justify: (f32, f32),
+        config: TextConfig,
     ) -> Result<Vec<(FontColor, GlyphDrawCommands)>, ErrorKind> {
         if !self.has_buffer(entity) {
             return Ok(vec![]);
@@ -164,7 +177,7 @@ impl TextContext {
                             Source::ColorBitmap(StrikeWith::BestFit),
                             Source::Outline,
                         ])
-                            .format(Format::Alpha)
+                            .format(if config.subpixel {Format::Subpixel} else {Format::Alpha})
                             .offset(offset)
                             .render(&mut scaler, cache_key.glyph_id);
 
@@ -188,7 +201,7 @@ impl TextContext {
                                 // if no atlas could fit the texture, make a new atlas tyvm
                                 // TODO error handling
                                 let mut atlas = Atlas::new(TEXTURE_SIZE, TEXTURE_SIZE);
-                                let image_id = canvas.create_image_empty(TEXTURE_SIZE, TEXTURE_SIZE, PixelFormat::Rgba8, ImageFlags::empty()).unwrap();
+                                let image_id = canvas.create_image(Img::new(vec![RGBA8::new(0,0,0,0); TEXTURE_SIZE * TEXTURE_SIZE], TEXTURE_SIZE, TEXTURE_SIZE).as_ref(), ImageFlags::empty()).unwrap();
                                 let texture_index = int.glyph_textures.len();
                                 let (x, y) = atlas.add_rect(alloc_w as usize, alloc_h as usize).unwrap();
                                 int.glyph_textures.push(FontTexture {
@@ -210,12 +223,11 @@ impl TextContext {
                                         src_buf.push(RGBA8::new(chunk[0], 0, 0, 0));
                                     }
                                 }
-                                Content::Color => {
+                                Content::Color | Content::SubpixelMask => {
                                     for chunk in rendered.data.chunks_exact(4) {
                                         src_buf.push(RGBA8::new(chunk[0], chunk[1], chunk[2], chunk[3]));
                                     }
                                 }
-                                Content::SubpixelMask => unreachable!(),
                             }
                             canvas.update_image::<ImageSource>(int.glyph_textures[texture_index].image_id, ImgRef::new(&src_buf, content_w, content_h).into(), atlas_content_x as usize, atlas_content_y as usize).unwrap();
 
@@ -236,7 +248,7 @@ impl TextContext {
                     let cmd_map = if rendered.color_glyph {
                         &mut color_cmd_map
                     } else {
-                        alpha_cmd_map.entry(glyph.color_opt.unwrap()).or_insert_with(FnvHashMap::default)
+                        alpha_cmd_map.entry(glyph.color_opt.unwrap_or(CosmicColor::rgb(0, 0, 0))).or_insert_with(FnvHashMap::default)
                     };
 
                     let cmd = cmd_map.entry(rendered.texture_index).or_insert_with(|| DrawCmd {
@@ -261,10 +273,17 @@ impl TextContext {
                 }
             }
 
-            Ok(alpha_cmd_map.into_iter().map(|(color, map)| (color, GlyphDrawCommands {
-                alpha_glyphs: map.into_iter().map(|(_, cmd)| cmd).collect(),
-                color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
-            })).collect())
+            if !alpha_cmd_map.is_empty() {
+                Ok(alpha_cmd_map.into_iter().map(|(color, map)| (color, GlyphDrawCommands {
+                    alpha_glyphs: map.into_iter().map(|(_, cmd)| cmd).collect(),
+                    color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
+                })).collect())
+            } else {
+                Ok(vec![(FontColor(0), GlyphDrawCommands {
+                    alpha_glyphs: vec![],
+                    color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
+                })])
+            }
         })
     }
 

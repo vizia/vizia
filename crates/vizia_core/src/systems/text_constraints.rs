@@ -1,22 +1,27 @@
 use crate::prelude::*;
+use crate::style::SystemFlags;
 use vizia_id::GenerationalId;
+use vizia_storage::DrawIterator;
 
 // Apply this before layout
 // THE GOAL OF THIS FUNCTION: set content-width and content-height
-pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
-    let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
-    draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
+pub fn text_constraints_system(cx: &mut Context) {
+    let draw_tree = DrawIterator::full(&cx.tree);
 
-    for entity in draw_tree.into_iter() {
-        if entity == Entity::root() {
+    for entity in draw_tree {
+        // Skip if the entity isn't marked as having its text modified
+        if !cx.style.needs_text_layout.get(entity).copied().unwrap_or_default() {
             continue;
         }
 
-        if cx.cache.display.get(entity) == Some(&Display::None) {
-            continue;
-        }
-
-        if tree.is_ignored(entity) {
+        // Skip if the entity is invisible
+        // Unfortunately we can't skip the subtree because even if a parent is invisible
+        // a child might be explicitly set to be visible.
+        if entity == Entity::root()
+            || cx.cache.get_visibility(entity) == Visibility::Invisible
+            || cx.cache.get_display(entity) == Display::None
+            || cx.cache.get_opacity(entity) == 0.0
+        {
             continue;
         }
 
@@ -82,14 +87,18 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
                 });
 
                 // Add an extra pixel to account for AA
-                let text_width = text_width.round() + 1.0 + child_space_x;
-                let text_height = text_height.round() + 1.0 + child_space_y;
+                let text_width = text_width.ceil() + 1.0 + child_space_x;
+                let text_height = text_height.ceil() + 1.0 + child_space_y;
 
                 if content_width < text_width {
                     content_width = text_width;
                 }
                 if content_height < text_height {
                     content_height = text_height;
+                }
+
+                if let Some(needs_text_layout) = cx.style.needs_text_layout.get_mut(entity) {
+                    *needs_text_layout = false;
                 }
             }
 
@@ -108,8 +117,16 @@ pub fn text_constraints_system(cx: &mut Context, tree: &Tree<Entity>) {
                 }
             }
 
-            cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
-            cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
+            let bounds = cx.cache.get_bounds(entity);
+
+            if (desired_width == Auto && content_width != bounds.w)
+                || (desired_height == Auto && content_height != bounds.h)
+            {
+                cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
+                cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
+
+                cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
+            }
         }
     }
 }

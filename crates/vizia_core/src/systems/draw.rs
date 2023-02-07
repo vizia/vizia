@@ -1,6 +1,7 @@
 use crate::context::Context;
 use crate::prelude::*;
 use vizia_id::GenerationalId;
+use vizia_storage::DrawIterator;
 
 pub fn draw_system(cx: &mut Context) {
     let canvas = cx.canvases.get_mut(&Entity::root()).unwrap();
@@ -14,29 +15,23 @@ pub fn draw_system(cx: &mut Context) {
         cx.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
     canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
 
-    // filter for widgets that should be drawn
-    let tree_iter = cx.tree.into_iter();
-    let mut draw_tree: Vec<Entity> = tree_iter
-        .filter(|&entity| {
-            entity != Entity::root()
-                && cx.cache.get_visibility(entity) != Visibility::Invisible
-                && cx.cache.get_display(entity) != Display::None
-                && !cx.tree.is_ignored(entity)
-                && cx.cache.get_opacity(entity) > 0.0
-                && {
-                    let bounds = cx.cache.get_bounds(entity);
-                    !(bounds.x > window_width
-                        || bounds.y > window_height
-                        || bounds.x + bounds.w <= 0.0
-                        || bounds.y + bounds.h <= 0.0)
-                }
-        })
-        .collect();
+    let mut draw_tree = DrawIterator::full(&cx.tree);
 
-    // Sort the tree by z order
-    draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
+    while let Some(entity) = draw_tree.next() {
+        let window_bounds = cx.cache.get_bounds(Entity::root());
 
-    for entity in draw_tree.into_iter() {
+        // Skip if the entity is invisible or out of bounds
+        // Unfortunately we can't skip the subtree because even if a parent is invisible
+        // a child might be explicitly set to be visible.
+        if entity == Entity::root()
+            || cx.cache.get_visibility(entity) == Visibility::Invisible
+            || cx.cache.get_display(entity) == Display::None
+            || cx.cache.get_opacity(entity) == 0.0
+            || !window_bounds.contains(&cx.cache.get_bounds(entity))
+        {
+            continue;
+        }
+
         // Apply clipping
         let clip_region = cx.cache.get_clip_region(entity);
 
@@ -76,6 +71,7 @@ pub fn draw_system(cx: &mut Context) {
                     views: &cx.views,
                     resource_manager: &cx.resource_manager,
                     text_context: &mut cx.text_context,
+                    text_config: &cx.text_config,
                     modifiers: &cx.modifiers,
                     mouse: &cx.mouse,
                 },

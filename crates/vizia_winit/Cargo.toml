@@ -10,7 +10,7 @@ rust-version = "1.60"
 
 [features]
 x11 = ["winit/x11", "glutin?/x11"]
-wayland = ["winit/wayland", "winit/wayland-dlopen", "winit/wayland-csd-adwaita", "glutin?/wayland", "glutin?/wayland-dlopen", "copypasta?/wayland"]
+wayland = ["winit/wayland", "winit/wayland-dlopen", "winit/wayland-csd-adwaita", "copypasta?/wayland"]
 clipboard = ["copypasta"]
 
 [dependencies]
@@ -21,17 +21,21 @@ vizia_window = { path = "../vizia_window" }
 
 accesskit = "0.9.0"
 winit = { version = "0.28.1", default-features = false }
-femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "e1f3f05cc050c0ed69ca702b368bb5d4eb2cabff", default-features = false }
+femtovg = "0.4.0"
+# femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "09f4837fff4d2cd58ddc4674d0d7e1296a4123aa", default-features = false }
 #femtovg = { path = "../../../femtovg", default-features = false }
-glutin = { version = "0.29.1", default-features = false, optional = true }
+glutin = { version = "0.30.3", default-features = false, optional = true }
 copypasta = {version = "0.8.1", optional = true, default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-glutin = { version = "0.29.1", default-features = false }
 accesskit_winit = "0.10.0"
-
-femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "e1f3f05cc050c0ed69ca702b368bb5d4eb2cabff", features = ["glutin"] }
+glutin = { version = "0.30.3", default-features = false }
+femtovg = "0.4.0"
+# femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "09f4837fff4d2cd58ddc4674d0d7e1296a4123aa", features = ["glutin"] }
 #femtovg = { path = "../../../femtovg", default-features = false, features = ["glutin"] }
+glutin-winit = "0.3.0"
+raw-window-handle = "0.5.0"
+
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2" }

@@ -5,6 +5,7 @@ use femtovg::{renderer::OpenGl, Canvas};
 use fnv::FnvHashMap;
 
 use super::EventProxy;
+use crate::style::SystemFlags;
 use crate::{
     cache::{BoundingBox, CachedData},
     environment::Environment,
@@ -17,7 +18,7 @@ use crate::{
 };
 use vizia_id::GenerationalId;
 
-pub use crate::systems::animation::has_animations;
+pub use crate::text::cosmic::TextConfig;
 
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
@@ -139,6 +140,11 @@ impl<'a> BackendContext<'a> {
         self.0.current = e;
     }
 
+    /// Sets the default text configuration to use for text rendering.
+    pub fn set_text_config(&mut self, text_config: TextConfig) {
+        self.0.text_config = text_config;
+    }
+
     /// Temporarily sets the current entity, calls the provided closure, and then resets the current entity back to previous.
     pub fn with_current(&mut self, e: Entity, f: impl FnOnce(&mut Context)) {
         let prev = self.0.current;
@@ -241,49 +247,38 @@ impl<'a> BackendContext<'a> {
     }
 
     pub fn process_style_updates(&mut self) {
-        // Not ideal
-        let tree = self.0.tree.clone();
-
         // Apply any inline style inheritance.
-        inline_inheritance_system(self.0, &tree);
+        inline_inheritance_system(self.0);
 
-        //
-        style_system(self.0, &tree);
+        style_system(self.0);
 
-        shared_inheritance_system(self.0, &tree);
+        shared_inheritance_system(self.0);
 
         // Load any unloaded images and remove unused images.
         image_system(self.0);
     }
 
+    // Returns true if animations are playing
+    pub fn process_animations(&mut self) -> bool {
+        animation_system(self.0)
+    }
+
     /// Massages the style system until everything is coherent
     pub fn process_visual_updates(&mut self) {
-        // Not ideal
-        let tree = self.0.tree.clone();
-
-        // Compute any animations for this frame.
-        animation_system(self.0);
-
-        // Apply z-order inheritance.
-        z_ordering_system(self.0, &tree);
-
         // Apply visibility inheritance.
-        visibility_system(self.0, &tree);
+        visibility_system(self.0);
 
         // Perform layout.
-        layout_system(self.0, &tree);
+        layout_system(self.0);
 
         // Apply transform inheritance.
-        transform_system(self.0, &tree);
-
-        // Determine hovered entity.
-        hover_system(self.0);
+        transform_system(self.0);
 
         // Apply clipping inheritance.
-        clipping_system(self.0, &tree);
+        clipping_system(self.0);
 
         // Emit any geometry changed events.
-        geometry_changed(self.0, &tree);
+        geometry_changed(self.0);
     }
 
     pub fn emit_origin<M: Send + Any>(&mut self, message: M) {
@@ -293,5 +288,9 @@ impl<'a> BackendContext<'a> {
                 .origin(Entity::root())
                 .propagate(Propagation::Up),
         );
+    }
+
+    pub fn needs_refresh(&mut self) {
+        self.0.style.system_flags = SystemFlags::all();
     }
 }

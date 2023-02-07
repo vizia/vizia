@@ -136,21 +136,14 @@ fn main() {
                     });
 
                     List::new(cx, AppData::list, |cx, index, item| {
-                        Binding::new(cx, AppData::selected, move |cx, selected| {
-                            let is_selected = if let Some(selected) = selected.get(cx) {
-                                selected == index
-                            } else {
-                                false
-                            };
-                            Binding::new(cx, item, move |cx, item| {
-                                let (name, surname) = item.get(cx).clone();
-                                Label::new(cx, &format!("{}, {}", surname, name))
-                                    .on_press(move |cx| {
-                                        cx.emit(AppEvent::SetSelected(index));
-                                    })
-                                    .checked(is_selected);
-                            });
-                        });
+                        Label::new(
+                            cx,
+                            item.map(|(name, surname)| format!("{}, {}", surname, name)),
+                        )
+                        .on_press(move |cx| {
+                            cx.emit(AppEvent::SetSelected(index));
+                        })
+                        .checked(AppData::selected.map(move |selected| *selected == Some(index)));
                     });
                 });
 
