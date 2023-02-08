@@ -1,15 +1,18 @@
 use accesskit::{NodeBuilder, NodeId, Rect, TextDirection, TextSelection};
 
-use crate::{cache::CachedData, prelude::*, text::TextContext};
+use crate::{cache::CachedData, prelude::*, style::Style, text::TextContext};
 
 // A context used for configuring the accessibility features of a view.
 pub struct AccessContext<'a> {
     pub(crate) current: Entity,
+    pub(crate) tree: &'a Tree<Entity>,
+    pub(crate) style: &'a Style,
     pub(crate) cache: &'a CachedData,
     pub(crate) text_context: &'a mut TextContext,
 }
 
 /// Wrapper around an accesskit node builder, a node id, and a list of children to be added to the node
+#[derive(Debug)]
 pub struct AccessNode {
     pub(crate) node_id: NodeId,
     pub(crate) node_builder: NodeBuilder,
@@ -69,5 +72,25 @@ impl AccessNode {
 
     pub fn set_word_lengths(&mut self, word_lengths: impl Into<Box<[u8]>>) {
         self.node_builder.set_word_lengths(word_lengths);
+    }
+
+    pub fn set_numeric_value_step(&mut self, value: f64) {
+        self.node_builder.set_numeric_value_step(value);
+    }
+
+    pub fn set_numeric_value(&mut self, value: f64) {
+        self.node_builder.set_numeric_value(value);
+    }
+
+    pub fn set_numeric_value_jump(&mut self, value: f64) {
+        self.node_builder.set_numeric_value_jump(value);
+    }
+
+    pub fn set_min_numeric_value(&mut self, value: f64) {
+        self.node_builder.set_min_numeric_value(value);
+    }
+
+    pub fn set_max_numeric_value(&mut self, value: f64) {
+        self.node_builder.set_max_numeric_value(value);
     }
 }

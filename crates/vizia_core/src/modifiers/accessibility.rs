@@ -5,9 +5,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     fn role(mut self, role: Role) -> Self {
         let id = self.entity();
 
-        if let Some(node_builder) = self.context().style.accesskit_node_builders.get_mut(id) {
-            node_builder.set_role(role);
-        }
+        self.context().style.roles.insert(id, role).unwrap();
 
         self
     }
@@ -15,10 +13,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     fn name<U: ToString>(mut self, name: impl Res<U>) -> Self {
         let entity = self.entity();
         name.set_or_bind(self.context(), entity, |cx, id, name| {
-            // println!("set name for: {} {}", id, name.to_string());
-            if let Some(node_builder) = cx.style.accesskit_node_builders.get_mut(id) {
-                node_builder.set_name(name.to_string().into_boxed_str());
-            }
+            cx.style.name.insert(id, name.to_string());
         });
 
         self
@@ -26,9 +21,8 @@ pub trait AccessibilityModifiers: internal::Modifiable {
 
     fn default_action_verb(mut self, action_verb: DefaultActionVerb) -> Self {
         let id = self.entity();
-        if let Some(node_builder) = self.context().style.accesskit_node_builders.get_mut(id) {
-            node_builder.set_default_action_verb(action_verb);
-        }
+
+        self.context().style.default_action_verb.insert(id, action_verb).unwrap();
 
         self
     }
@@ -36,22 +30,15 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     fn live(mut self, live: Live) -> Self {
         let id = self.entity();
 
-        if let Some(node_builder) = self.context().style.accesskit_node_builders.get_mut(id) {
-            node_builder.set_live(live);
-        }
+        self.context().style.live.insert(id, live).unwrap();
+
         self
     }
 
     fn hidden<U: Into<bool>>(mut self, hidden: impl Res<U>) -> Self {
         let entity = self.entity();
         hidden.set_or_bind(self.context(), entity, |cx, id, hidden| {
-            if let Some(node_builder) = cx.style.accesskit_node_builders.get_mut(id) {
-                if hidden.into() {
-                    node_builder.set_hidden();
-                } else {
-                    node_builder.clear_hidden();
-                }
-            }
+            cx.style.hidden.insert(id, hidden.into()).unwrap();
         });
 
         self
@@ -61,9 +48,8 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, id, val| {
             let v = val.into();
-            if let Some(node_builder) = cx.style.accesskit_node_builders.get_mut(id) {
-                node_builder.set_numeric_value(v);
-            }
+
+            cx.style.numeric_value.insert(id, v).unwrap();
         });
 
         self
@@ -72,9 +58,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     fn text_value<U: ToString>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, id, val| {
-            if let Some(node_builder) = cx.style.accesskit_node_builders.get_mut(id) {
-                node_builder.set_value(val.to_string().into_boxed_str());
-            }
+            cx.style.text_value.insert(id, val.to_string()).unwrap();
         });
 
         self

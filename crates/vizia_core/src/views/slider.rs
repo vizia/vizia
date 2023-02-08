@@ -197,6 +197,12 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
         Some("slider")
     }
 
+    fn accessibility(&self, _cx: &mut AccessContext, node: &mut AccessNode) {
+        node.set_numeric_value_step(self.internal.step as f64);
+        node.set_min_numeric_value(self.internal.range.start as f64);
+        node.set_max_numeric_value(self.internal.range.end as f64);
+    }
+
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|slider_event_internal, _| match slider_event_internal {
             SliderEventInternal::SetThumbSize(width, height) => match self.internal.orientation {
@@ -211,10 +217,10 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
 
             SliderEventInternal::SetRange(range) => {
                 self.internal.range = range.clone();
-                if let Some(node_builder) = cx.style.accesskit_node_builders.get_mut(cx.current) {
-                    node_builder.set_min_numeric_value(range.start as f64);
-                    node_builder.set_max_numeric_value(range.end as f64);
-                }
+                // if let Some(node_builder) = cx.style.accesskit_node_builders.get_mut(cx.current) {
+                //     node_builder.set_min_numeric_value(range.start as f64);
+                //     node_builder.set_max_numeric_value(range.end as f64);
+                // }
             }
 
             SliderEventInternal::SetKeyboardFraction(keyboard_fraction) => {
@@ -447,9 +453,9 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     }
 
     pub fn step(self, step: f32) -> Self {
-        if let Some(node_builder) = self.cx.style.accesskit_node_builders.get_mut(self.entity) {
-            node_builder.set_numeric_value_step(step as f64);
-        }
+        // if let Some(node_builder) = self.cx.style.accesskit_node_builders.get_mut(self.entity) {
+        //     node_builder.set_numeric_value_step(step as f64);
+        // }
         self.modify(|slider: &mut Slider<L>| slider.internal.step = step)
     }
 

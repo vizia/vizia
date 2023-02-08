@@ -5,7 +5,6 @@ mod event;
 mod proxy;
 mod resource;
 
-use accesskit::NodeBuilder;
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::{HashMap, VecDeque};
@@ -203,11 +202,7 @@ impl Context {
         result.entity_manager.create();
         result.set_default_font(&["Roboto"]);
 
-        result
-            .style
-            .accesskit_node_builders
-            .insert(Entity::root(), NodeBuilder::new(Role::Window))
-            .unwrap();
+        result.style.roles.insert(Entity::root(), Role::Window).unwrap();
 
         result
     }

@@ -1,4 +1,3 @@
-use accesskit::NodeBuilder;
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
@@ -125,7 +124,17 @@ pub struct Style {
 
     pub accesskit_node_classes: accesskit::NodeClassSet,
 
-    pub accesskit_node_builders: SparseSet<NodeBuilder>,
+    pub roles: SparseSet<Role>,
+    pub default_action_verb: SparseSet<DefaultActionVerb>,
+    pub live: SparseSet<Live>,
+    pub labelled_by: SparseSet<Entity>,
+    pub hidden: SparseSet<bool>,
+    // TODO: Should we store these or somehow derive them from app state?
+    pub text_value: SparseSet<String>,
+    pub numeric_value: SparseSet<f64>,
+
+    // pub accesskit_node_builders: SparseSet<NodeBuilder>,
+
     // Display
     pub display: AnimatableSet<Display>,
 
@@ -997,7 +1006,15 @@ impl Style {
         self.pseudo_classes.remove(entity);
         self.disabled.remove(entity);
         self.abilities.remove(entity);
-        self.accesskit_node_builders.remove(entity);
+
+        self.roles.remove(entity);
+        self.default_action_verb.remove(entity);
+        self.live.remove(entity);
+        self.labelled_by.remove(entity);
+        self.hidden.remove(entity);
+        self.text_value.remove(entity);
+        self.numeric_value.remove(entity);
+
         // Display
         self.display.remove(entity);
         // Visibility

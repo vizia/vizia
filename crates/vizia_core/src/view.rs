@@ -1,5 +1,6 @@
 use crate::context::AccessNode;
 use crate::prelude::*;
+use crate::systems::get_access_node;
 use crate::{accessibility::IntoNode, context::AccessContext};
 use std::{any::Any, collections::HashMap};
 
@@ -32,34 +33,33 @@ pub trait View: 'static + Sized {
         cx.cache.add(id).expect("Failed to add to cache");
         cx.style.add(id);
         cx.views.insert(id, Box::new(self));
-        cx.style
-            .accesskit_node_builders
-            .insert(id, NodeBuilder::default())
-            .expect("Failed to add node builder");
         let parent_id = cx.tree.get_layout_parent(id).unwrap();
         let parent_node_id = parent_id.accesskit_id();
-        let parent_node_builder = cx.style.accesskit_node_builders.get_mut(parent_id).unwrap();
+        // let parent_node_builder = cx.style.accesskit_node_builders.get_mut(parent_id).unwrap();
         let node_id = id.accesskit_id();
         let children =
             parent_id.child_iter(&cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
 
-        parent_node_builder.set_children(children);
-        let parent_node = parent_node_builder.clone().build(&mut cx.style.accesskit_node_classes);
-        let node = NodeBuilder::default().build(&mut cx.style.accesskit_node_classes);
-        cx.tree_updates.push(TreeUpdate {
-            nodes: vec![(parent_node_id, parent_node), (node_id, node)],
-            tree: None,
-            focus: None,
-        });
+        let mut access_context = AccessContext {
+            current: id,
+            tree: &cx.tree,
+            cache: &cx.cache,
+            style: &cx.style,
+            text_context: &mut cx.text_context,
+        };
 
-        // cx.tree_updates.push(TreeUpdate {
-        //     nodes: vec![
-        //         (parent_node_id, Arc::new(Node { role: Role::Window, children, ..parent_node })),
-        //         (node_id, Arc::new(Node { ..Default::default() })),
-        //     ],
-        //     tree: None,
-        //     focus: None,
-        // });
+        if let Some(mut parent_node) =
+            get_access_node(&mut access_context, &mut cx.views, parent_id)
+        {
+            parent_node.node_builder.set_children(children);
+            let parent_node = parent_node.node_builder.build(&mut cx.style.accesskit_node_classes);
+            let node = NodeBuilder::default().build(&mut cx.style.accesskit_node_classes);
+            cx.tree_updates.push(TreeUpdate {
+                nodes: vec![(parent_node_id, parent_node), (node_id, node)],
+                tree: None,
+                focus: None,
+            });
+        }
 
         cx.data
             .insert(id, ModelDataStore { models: HashMap::default(), stores: HashMap::default() })
