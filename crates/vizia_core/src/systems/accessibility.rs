@@ -3,11 +3,7 @@ use crate::{
     context::{AccessContext, AccessNode},
     prelude::*,
 };
-use accesskit::{
-    NodeBuilder, NodeId, Rect, TextDirection, TextPosition, TextSelection, TreeUpdate,
-};
-use cosmic_text::Edit;
-use unicode_segmentation::UnicodeSegmentation;
+use accesskit::{Rect, TreeUpdate};
 use vizia_storage::LayoutTreeIterator;
 
 // Updates node properties from view properties
@@ -65,7 +61,6 @@ pub fn accessibility_system(cx: &mut Context) {
         if let Some(view) = cx.views.remove(&entity) {
             let mut access_context = AccessContext {
                 current: entity,
-                style: &mut cx.style,
                 cache: &cx.cache,
                 text_context: &mut cx.text_context,
             };
@@ -82,7 +77,7 @@ pub fn accessibility_system(cx: &mut Context) {
             }
 
             let mut nodes = vec![(
-                access_context.node_id(),
+                node.node_id(),
                 node.node_builder.build(&mut cx.style.accesskit_node_classes),
             )];
 

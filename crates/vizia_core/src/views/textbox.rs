@@ -4,10 +4,7 @@ use crate::prelude::*;
 
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
-use accesskit::{
-    ActionData, ActionRequest, NodeBuilder, NodeId, Rect, TextDirection, TextPosition,
-    TextSelection,
-};
+use accesskit::{ActionData, ActionRequest, Rect, TextDirection, TextPosition, TextSelection};
 use cosmic_text::{Action, Attrs, Edit};
 use std::sync::Arc;
 use unicode_segmentation::UnicodeSegmentation;
@@ -560,7 +557,7 @@ where
 
         // We need a child node per line
         // let mut children: Vec<(NodeId, NodeBuilder)> = Vec::new();
-        let node_id = cx.node_id();
+        let node_id = node.node_id();
         cx.text_context.with_editor(text_content_id, |editor| {
             let cursor = editor.cursor();
             let selection = editor.select_opt().unwrap_or(cursor);
@@ -574,16 +571,7 @@ where
             let mut prev_line_index = std::usize::MAX;
 
             for (index, line) in editor.buffer().layout_runs().enumerate() {
-                // Concatenate the parent id with the index of the text line to form a unique node id
-                // let mut line_id = (cx.current.index() as u64 + 1) << 32;
-                // line_id |= index as u64;
-                // let line_id: NodeId = std::num::NonZeroU64::new(line_id).unwrap().into();
-
-                // child_ids.push(line_id);
-
                 let text = line.text;
-
-                // let mut line_node = NodeBuilder::new(Role::InlineTextBox);
 
                 let mut line_node = AccessNode::new_from_parent(node_id, index);
                 line_node.set_role(Role::InlineTextBox);
@@ -633,7 +621,7 @@ where
                     character_widths.push(width);
                 }
 
-                // Cosmic strips the newlines but accesskit needs them so we append them back in if line ended originally ended with a newline
+                // Cosmic strips the newlines but accesskit needs them so we append them back in if line originally ended with a newline
                 // If the last glyph position is equal to the end of the buffer line then this layout run is the last one and ends in a newline.
                 if last_glyph_pos == line.text.len() {
                     line_text += "\n";
@@ -648,16 +636,11 @@ where
                 // figuring out if the start of the next line is greater than the end of the current line as long
                 // as the lines have the same `line_i`. This will require a peekable iterator loop.
 
-                // if prev_line_index == line.line_i {
-                //     println!("{} {} {}", line_text, first_glyph_pos, current_cursor);
-                // }
-
                 line_node.set_value(line_text.into_boxed_str());
                 line_node.set_character_lengths(character_lengths.into_boxed_slice());
                 line_node.set_character_positions(character_positions.into_boxed_slice());
                 line_node.set_character_widths(character_widths.into_boxed_slice());
                 line_node.set_word_lengths(word_lengths.into_boxed_slice());
-                // cx.add_child(line_id, line_node);
 
                 if line.line_i != prev_line_index {
                     current_cursor = 0;
@@ -701,14 +684,6 @@ where
                 prev_line_index = line.line_i;
             }
 
-            // println!(
-            //     "{:?} {} {:?} {}",
-            //     selection_anchor_line,
-            //     selection_anchor_cursor,
-            //     selection_active_line,
-            //     selection_active_cursor
-            // );
-
             node.set_text_selection(TextSelection {
                 anchor: TextPosition {
                     node: selection_anchor_line,
@@ -719,10 +694,6 @@ where
                     character_index: selection_active_cursor,
                 },
             });
-
-            // println!("children: {} {:?}", entity, children);
-
-            // node_builder.set_children(child_ids);
         });
     }
 

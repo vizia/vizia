@@ -7,7 +7,7 @@ use crate::events::ViewHandler;
 use crate::resource::ImageOrId;
 use crate::state::ModelDataStore;
 
-use accesskit::{NodeBuilder, NodeId, TreeUpdate};
+use accesskit::{NodeBuilder, TreeUpdate};
 use femtovg::{renderer::OpenGl, ImageFlags, Paint, Path, PixelFormat, RenderTarget};
 
 /// The canvas we will be drawing to.
