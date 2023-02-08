@@ -1,3 +1,4 @@
+use crate::context::AccessNode;
 use crate::prelude::*;
 use crate::{accessibility::IntoNode, context::AccessContext};
 use std::{any::Any, collections::HashMap};
@@ -85,13 +86,7 @@ pub trait View: 'static + Sized {
     }
 
     #[allow(unused_variables)]
-    fn accessibility(
-        &self,
-        cx: &mut AccessContext,
-        node_builder: &mut NodeBuilder,
-        children: &mut Vec<(NodeId, NodeBuilder)>,
-    ) {
-    }
+    fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode) {}
 }
 
 impl<T: View> ViewHandler for T
@@ -110,13 +105,8 @@ where
         <T as View>::draw(self, cx, canvas);
     }
 
-    fn accessibility(
-        &self,
-        cx: &mut AccessContext,
-        node_builder: &mut NodeBuilder,
-        children: &mut Vec<(NodeId, NodeBuilder)>,
-    ) {
-        <T as View>::accessibility(self, cx, node_builder, children);
+    fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode) {
+        <T as View>::accessibility(self, cx, node);
     }
 
     fn as_any_ref(&self) -> &dyn Any {

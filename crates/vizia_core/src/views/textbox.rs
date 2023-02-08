@@ -1,4 +1,5 @@
 use crate::cache::BoundingBox;
+use crate::context::AccessNode;
 use crate::prelude::*;
 
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
@@ -553,12 +554,7 @@ where
         Some("textbox")
     }
 
-    fn accessibility(
-        &self,
-        cx: &mut AccessContext,
-        node_builder: &mut NodeBuilder,
-        children: &mut Vec<(NodeId, NodeBuilder)>,
-    ) {
+    fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode) {
         let text_content_id = Entity::new(cx.current.index() as u32 + 3, 0);
         let bounds = cx.cache.get_bounds(text_content_id);
 
@@ -579,15 +575,18 @@ where
 
             for (index, line) in editor.buffer().layout_runs().enumerate() {
                 // Concatenate the parent id with the index of the text line to form a unique node id
-                let mut line_id = (cx.current.index() as u64 + 1) << 32;
-                line_id |= index as u64;
-                let line_id: NodeId = std::num::NonZeroU64::new(line_id).unwrap().into();
+                // let mut line_id = (cx.current.index() as u64 + 1) << 32;
+                // line_id |= index as u64;
+                // let line_id: NodeId = std::num::NonZeroU64::new(line_id).unwrap().into();
 
                 // child_ids.push(line_id);
 
                 let text = line.text;
 
-                let mut line_node = NodeBuilder::new(Role::InlineTextBox);
+                // let mut line_node = NodeBuilder::new(Role::InlineTextBox);
+
+                let mut line_node = AccessNode::new_from_parent(node_id, index);
+                line_node.set_role(Role::InlineTextBox);
 
                 let line_height = editor.buffer().metrics().line_height as f64;
                 line_node.set_bounds(Rect {
@@ -659,7 +658,6 @@ where
                 line_node.set_character_widths(character_widths.into_boxed_slice());
                 line_node.set_word_lengths(word_lengths.into_boxed_slice());
                 // cx.add_child(line_id, line_node);
-                children.push((line_id, line_node));
 
                 if line.line_i != prev_line_index {
                     current_cursor = 0;
@@ -668,12 +666,12 @@ where
                 if line.line_i == cursor.line {
                     if prev_line_index != line.line_i {
                         if cursor.index <= line_length {
-                            selection_active_line = line_id;
+                            selection_active_line = line_node.node_id();
                             selection_active_cursor = cursor.index;
                         }
                     } else {
                         if cursor.index > current_cursor {
-                            selection_active_line = line_id;
+                            selection_active_line = line_node.node_id();
                             selection_active_cursor = cursor.index - current_cursor;
                         }
                     }
@@ -686,16 +684,18 @@ where
                     // A previous line index different to the current means that the current line follows a hard break
                     if prev_line_index != line.line_i {
                         if selection.index <= line_length {
-                            selection_anchor_line = line_id;
+                            selection_anchor_line = line_node.node_id();
                             selection_anchor_cursor = selection.index;
                         }
                     } else {
                         if selection.index > current_cursor {
-                            selection_anchor_line = line_id;
+                            selection_anchor_line = line_node.node_id();
                             selection_anchor_cursor = selection.index - current_cursor;
                         }
                     }
                 }
+
+                node.add_child(line_node);
 
                 current_cursor += line_length;
                 prev_line_index = line.line_i;
@@ -709,7 +709,7 @@ where
             //     selection_active_cursor
             // );
 
-            node_builder.set_text_selection(TextSelection {
+            node.set_text_selection(TextSelection {
                 anchor: TextPosition {
                     node: selection_anchor_line,
                     character_index: selection_anchor_cursor,

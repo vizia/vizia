@@ -1,6 +1,9 @@
 use accesskit::{NodeBuilder, NodeId};
 
-use crate::{context::AccessContext, prelude::*};
+use crate::{
+    context::{AccessContext, AccessNode},
+    prelude::*,
+};
 
 use std::any::Any;
 
@@ -13,12 +16,7 @@ pub trait ViewHandler: Any {
 
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas);
 
-    fn accessibility(
-        &self,
-        cx: &mut AccessContext,
-        node_builder: &mut NodeBuilder,
-        children: &mut Vec<(NodeId, NodeBuilder)>,
-    );
+    fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode);
 
     fn as_any_ref(&self) -> &dyn Any;
 

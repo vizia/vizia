@@ -1,4 +1,8 @@
-use crate::{accessibility::IntoNode, context::AccessContext, prelude::*};
+use crate::{
+    accessibility::IntoNode,
+    context::{AccessContext, AccessNode},
+    prelude::*,
+};
 use accesskit::{
     NodeBuilder, NodeId, Rect, TextDirection, TextPosition, TextSelection, TreeUpdate,
 };
@@ -66,24 +70,29 @@ pub fn accessibility_system(cx: &mut Context) {
                 text_context: &mut cx.text_context,
             };
 
-            let mut children = Vec::new();
+            let mut node =
+                AccessNode { node_id: entity.accesskit_id(), node_builder, children: Vec::new() };
 
-            view.accessibility(&mut access_context, &mut node_builder, &mut children);
+            view.accessibility(&mut access_context, &mut node);
 
-            let child_ids = children.iter().map(|(id, _)| *id).collect::<Vec<_>>();
+            let child_ids =
+                node.children.iter().map(|child_node| child_node.node_id()).collect::<Vec<_>>();
             if !child_ids.is_empty() {
-                node_builder.set_children(child_ids);
+                node.node_builder.set_children(child_ids);
             }
 
             let mut nodes = vec![(
                 access_context.node_id(),
-                node_builder.build(&mut cx.style.accesskit_node_classes),
+                node.node_builder.build(&mut cx.style.accesskit_node_classes),
             )];
 
             // If child nodes were generated then append them to the nodes list
-            if !children.is_empty() {
-                nodes.extend(children.into_iter().map(|(id, builder)| {
-                    (id, builder.build(&mut cx.style.accesskit_node_classes))
+            if !node.children.is_empty() {
+                nodes.extend(node.children.into_iter().map(|child_node| {
+                    (
+                        child_node.node_id(),
+                        child_node.node_builder.build(&mut cx.style.accesskit_node_classes),
+                    )
                 }));
             }
 
