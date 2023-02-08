@@ -240,8 +240,7 @@ impl<'a> BackendContext<'a> {
     }
 
     pub fn process_tree_updates(&mut self, process: impl Fn(&Vec<accesskit::TreeUpdate>)) {
-        let tree = self.0.tree.clone();
-        accessibility_system(self.0, &tree);
+        accessibility_system(self.0);
 
         (process)(&self.0.tree_updates);
 

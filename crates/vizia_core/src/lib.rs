@@ -41,7 +41,8 @@ pub mod image {
 pub mod prelude {
     pub use super::animation::{AnimExt, Animation, AnimationBuilder};
     pub use super::context::{
-        Context, ContextProxy, DataContext, DrawContext, EmitContext, EventContext, ProxyEmitError,
+        AccessContext, Context, ContextProxy, DataContext, DrawContext, EmitContext, EventContext,
+        ProxyEmitError,
     };
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent};

@@ -1,3 +1,4 @@
+mod access;
 pub mod backend;
 mod draw;
 mod event;
@@ -21,6 +22,7 @@ use fnv::FnvHashMap;
 use replace_with::replace_with_or_abort;
 use unic_langid::LanguageIdentifier;
 
+pub use access::*;
 pub use draw::*;
 pub use event::*;
 pub use proxy::*;

@@ -1,12 +1,12 @@
-use crate::accessibility::IntoNode;
 use crate::prelude::*;
+use crate::{accessibility::IntoNode, context::AccessContext};
 use std::{any::Any, collections::HashMap};
 
 use crate::events::ViewHandler;
 use crate::resource::ImageOrId;
 use crate::state::ModelDataStore;
 
-use accesskit::{NodeBuilder, TreeUpdate};
+use accesskit::{NodeBuilder, NodeId, TreeUpdate};
 use femtovg::{renderer::OpenGl, ImageFlags, Paint, Path, PixelFormat, RenderTarget};
 
 /// The canvas we will be drawing to.
@@ -83,6 +83,15 @@ pub trait View: 'static + Sized {
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         draw_view(cx, canvas);
     }
+
+    #[allow(unused_variables)]
+    fn accessibility(
+        &self,
+        cx: &mut AccessContext,
+        node_builder: &mut NodeBuilder,
+        children: &mut Vec<(NodeId, NodeBuilder)>,
+    ) {
+    }
 }
 
 impl<T: View> ViewHandler for T
@@ -99,6 +108,15 @@ where
 
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         <T as View>::draw(self, cx, canvas);
+    }
+
+    fn accessibility(
+        &self,
+        cx: &mut AccessContext,
+        node_builder: &mut NodeBuilder,
+        children: &mut Vec<(NodeId, NodeBuilder)>,
+    ) {
+        <T as View>::accessibility(self, cx, node_builder, children);
     }
 
     fn as_any_ref(&self) -> &dyn Any {
