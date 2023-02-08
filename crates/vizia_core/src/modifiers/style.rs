@@ -79,6 +79,14 @@ pub trait StyleModifiers: internal::Modifiable {
                 cx.style.pseudo_classes.insert(entity, pseudoclass).unwrap();
             }
 
+            if let Some(node_builder) = cx.style.accesskit_node_builders.get_mut(entity) {
+                if val {
+                    node_builder.set_checked_state(accesskit::CheckedState::True);
+                } else {
+                    node_builder.set_checked_state(accesskit::CheckedState::False);
+                }
+            }
+
             if val {
                 // Setting a checked state should make it checkable... probably
                 if let Some(abilities) = cx.style.abilities.get_mut(entity) {

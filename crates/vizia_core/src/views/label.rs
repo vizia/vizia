@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{accessibility::IntoNode, prelude::*};
 
 /// A label used to display text to the screen.
 ///
@@ -140,7 +140,10 @@ impl Handle<'_, Label> {
     pub fn describing(self, entity_identifier: impl Into<String>) -> Self {
         let identifier = entity_identifier.into();
         if let Some(id) = self.cx.resolve_entity_identifier(&identifier) {
-            self.cx.style.labelled_by.insert(id, self.entity).unwrap();
+            // self.cx.style.labelled_by.insert(id, self.entity).unwrap();
+            if let Some(node_builder) = self.cx.style.accesskit_node_builders.get_mut(id) {
+                node_builder.set_labelled_by(vec![self.entity.accesskit_id()]);
+            }
         }
         self.modify(|label| label.describing = Some(identifier)).class("describing")
     }

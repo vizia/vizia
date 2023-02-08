@@ -15,27 +15,55 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
 
     for entity in iterator {
         let node_id = entity.accesskit_id();
-        let mut node = cx.get_node_builder(entity);
+        if let Some(node_builder) = cx.style.accesskit_node_builders.get_mut(entity) {
+            let navigable = cx
+                .style
+                .abilities
+                .get(entity)
+                .copied()
+                .unwrap_or_default()
+                .contains(Abilities::NAVIGABLE);
 
-        let navigable = cx
-            .style
-            .abilities
-            .get(entity)
-            .copied()
-            .unwrap_or_default()
-            .contains(Abilities::NAVIGABLE);
+            if node_builder.role() == Role::Unknown && !navigable {
+                continue;
+            }
 
-        if cx.style.roles.get(entity).is_none() && !navigable {
-            continue;
-        }
+            let bounds = cx.cache.get_bounds(entity);
 
-        // println!("ENTITY: {} NODE: {:?} \n", entity, node);
+            node_builder.set_bounds(Rect {
+                x0: bounds.x as f64,
+                y0: bounds.y as f64,
+                x1: (bounds.x + bounds.w) as f64,
+                y1: (bounds.y + bounds.h) as f64,
+            });
 
-        let mut child_nodes = Vec::new();
+            if let Some(disabled) = cx.style.disabled.get(entity).copied() {
+                if disabled {
+                    node_builder.set_disabled();
+                } else {
+                    node_builder.clear_disabled();
+                }
+            }
 
-        // Here we need to construct the correct text edit nodes for each wrapped line of text
-        if let Some(role) = cx.style.roles.get(entity) {
-            if *role == Role::TextField {
+            let focusable = cx
+                .style
+                .abilities
+                .get(entity)
+                .map(|flags| flags.contains(Abilities::NAVIGABLE))
+                .unwrap_or(false);
+
+            if focusable {
+                node_builder.set_selected_from_focus();
+            } else {
+                node_builder.clear_selected_from_focus();
+            }
+
+            let mut child_nodes = Vec::new();
+            // Here we need to construct the correct text edit nodes for each wrapped line of text
+            let role = node_builder.role();
+            // println!("{} {:?}", entity, role);
+
+            if role == Role::TextField {
                 // This is a dirty hack because we need the bounds of the inner inner text content
                 // which we know is going to be 3 more than the id of the textbox
                 let text_content_id = Entity::new(entity.index() as u32 + 3, 0);
@@ -190,7 +218,7 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                     //     selection_active_cursor
                     // );
 
-                    node.set_text_selection(TextSelection {
+                    node_builder.set_text_selection(TextSelection {
                         anchor: TextPosition {
                             node: selection_anchor_line,
                             character_index: selection_anchor_cursor,
@@ -201,22 +229,28 @@ pub fn accessibility_system(cx: &mut Context, tree: &Tree<Entity>) {
                         },
                     });
 
-                    node.set_children(children);
+                    // println!("children: {} {:?}", entity, children);
+
+                    node_builder.set_children(children);
                 });
             }
+
+            // println!("{:?} {:?}", node_id, node_builder.labelled_by());
+
+            let mut nodes =
+                vec![(node_id, node_builder.clone().build(&mut cx.style.accesskit_node_classes))];
+
+            // println!("{} {:?}", entity, child_nodes);
+            // If child nodes were generated then append them to the nodes list
+            if !child_nodes.is_empty() {
+                nodes.extend(child_nodes.into_iter());
+            }
+
+            cx.tree_updates.push(TreeUpdate {
+                nodes,
+                tree: None,
+                focus: cx.window_has_focus.then_some(cx.focused.accesskit_id()),
+            });
         }
-
-        let mut nodes = vec![(node_id, node.build(&mut cx.style.accesskit_node_classes))];
-
-        // If child nodes were generated then append them to the nodes list
-        if !child_nodes.is_empty() {
-            nodes.extend(child_nodes.into_iter());
-        }
-
-        cx.tree_updates.push(TreeUpdate {
-            nodes,
-            tree: None,
-            focus: cx.window_has_focus.then_some(cx.focused.accesskit_id()),
-        });
     }
 }

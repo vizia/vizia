@@ -306,13 +306,6 @@ impl Application {
 
                     cx.process_data_updates();
 
-                    #[cfg(not(target_arch = "wasm32"))]
-                    cx.process_tree_updates(|tree_updates| {
-                        for update in tree_updates.iter() {
-                            accesskit.update(update.clone());
-                        }
-                    });
-
                     cx.process_style_updates();
 
                     if cx.process_animations() {
@@ -332,6 +325,13 @@ impl Application {
                     }
 
                     cx.process_visual_updates();
+
+                    #[cfg(not(target_arch = "wasm32"))]
+                    cx.process_tree_updates(|tree_updates| {
+                        for update in tree_updates.iter() {
+                            accesskit.update(update.clone());
+                        }
+                    });
 
                     if let Some(window_view) = cx.views().remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_ref::<Window>() {
