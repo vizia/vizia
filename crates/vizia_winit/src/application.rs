@@ -2,9 +2,8 @@ use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
     window::Window,
 };
-use accesskit::NodeBuilder;
 #[cfg(not(target_arch = "wasm32"))]
-use accesskit::{Action, TreeUpdate};
+use accesskit::{Action, NodeBuilder, TreeUpdate};
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit_winit;
 use std::cell::RefCell;
@@ -185,6 +184,7 @@ impl Application {
 
         #[cfg(not(target_arch = "wasm32"))]
         let root_node = NodeBuilder::new(Role::Window).build(cx.accesskit_node_classes());
+        #[cfg(not(target_arch = "wasm32"))]
         let accesskit = accesskit_winit::Adapter::new(
             window.window(),
             move || {
