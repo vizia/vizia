@@ -27,7 +27,6 @@ impl<'a, V> Handle<'a, V> {
     pub fn lock_focus_to_within(self) -> Self {
         self.cx.tree.set_lock_focus_within(self.entity, true);
         self.cx.focus_stack.push(self.cx.focused);
-        // self.cx.with_current(self.entity, |cx| cx.focus());
         if !self.cx.focused.is_descendant_of(&self.cx.tree, self.entity) {
             let new_focus = vizia_storage::TreeIterator::subtree(&self.cx.tree, self.entity)
                 .filter(|node| crate::tree::is_navigatable(self.cx, *node, Entity::root()))

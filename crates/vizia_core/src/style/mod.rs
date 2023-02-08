@@ -133,8 +133,6 @@ pub struct Style {
     pub text_value: SparseSet<String>,
     pub numeric_value: SparseSet<f64>,
 
-    // pub accesskit_node_builders: SparseSet<NodeBuilder>,
-
     // Display
     pub display: AnimatableSet<Display>,
 

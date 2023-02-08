@@ -35,7 +35,6 @@ pub trait View: 'static + Sized {
         cx.views.insert(id, Box::new(self));
         let parent_id = cx.tree.get_layout_parent(id).unwrap();
         let parent_node_id = parent_id.accesskit_id();
-        // let parent_node_builder = cx.style.accesskit_node_builders.get_mut(parent_id).unwrap();
         let node_id = id.accesskit_id();
         let children =
             parent_id.child_iter(&cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
