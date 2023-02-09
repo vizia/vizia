@@ -192,11 +192,13 @@ impl Window {
     }
 
     pub fn resize(&self, size: PhysicalSize<u32>) {
-        self.surface.resize(
-            &self.context,
-            size.width.try_into().unwrap(),
-            size.height.try_into().unwrap(),
-        );
+        if size.width != 0 && size.height != 0 {
+            self.surface.resize(
+                &self.context,
+                size.width.try_into().unwrap(),
+                size.height.try_into().unwrap(),
+            );
+        }
     }
 
     pub fn swap_buffers(&self) {
