@@ -599,7 +599,9 @@ where
             }
 
             WindowEvent::MouseMove(_, _) => {
-                if cx.mouse.left.state == MouseButtonState::Pressed {
+                if cx.mouse.left.state == MouseButtonState::Pressed
+                    && cx.mouse.left.pressed == cx.current
+                {
                     cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
                 }
             }
