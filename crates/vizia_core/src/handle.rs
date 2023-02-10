@@ -31,7 +31,7 @@ impl<'a, V> Handle<'a, V> {
             let new_focus = vizia_storage::TreeIterator::subtree(&self.cx.tree, self.entity)
                 .filter(|node| crate::tree::is_focusable(self.cx, *node))
                 .next()
-                .unwrap_or(Entity::root());
+                .unwrap_or(self.cx.focus_stack.pop().unwrap());
             self.cx.with_current(new_focus, |cx| cx.focus());
         }
         self
