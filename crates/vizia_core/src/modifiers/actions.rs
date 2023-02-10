@@ -34,6 +34,10 @@ impl<'a, 'b, V> EventHandle<'a, 'b, V> {
         self.cx.play_animation(animation);
     }
 
+    pub fn modifiers(&self) -> &Modifiers {
+        self.cx.modifiers
+    }
+
     pub fn modify<F>(&mut self, f: F)
     where
         F: FnOnce(&mut V),
@@ -98,6 +102,7 @@ impl<'a, 'b, V> EmitContext for EventHandle<'a, 'b, V> {
 pub(crate) struct ActionsModel<V> {
     pub(crate) on_press: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
     pub(crate) on_press_down: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
+    pub(crate) on_double_click: Option<Box<dyn Fn(&mut EventHandle<V>, MouseButton) + Send + Sync>>,
     pub(crate) on_hover: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
     pub(crate) on_hover_out: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
     pub(crate) on_over: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
@@ -116,6 +121,7 @@ impl<V> ActionsModel<V> {
         Self {
             on_press: None,
             on_press_down: None,
+            on_double_click: None,
             on_hover: None,
             on_hover_out: None,
             on_over: None,
@@ -139,6 +145,10 @@ impl<V: 'static> Model for ActionsModel<V> {
 
             ActionsEvent::OnPressDown(on_press_down) => {
                 self.on_press_down = Some(on_press_down);
+            }
+
+            ActionsEvent::OnDoubleClick(on_double_click) => {
+                self.on_double_click = Some(on_double_click);
             }
 
             ActionsEvent::OnHover(on_hover) => {
@@ -201,6 +211,14 @@ impl<V: 'static> Model for ActionsModel<V> {
                 }
                 if let Some(action) = &self.on_press_down {
                     (action)(&mut EventHandle::<V>::new(cx));
+                }
+            }
+
+            WindowEvent::MouseDoubleClick(button) => {
+                if meta.target == cx.current {
+                    if let Some(action) = &self.on_double_click {
+                        (action)(&mut EventHandle::<V>::new(cx), *button);
+                    }
                 }
             }
 
@@ -280,6 +298,7 @@ impl<V: 'static> Model for ActionsModel<V> {
 pub(crate) enum ActionsEvent<V> {
     OnPress(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
     OnPressDown(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
+    OnDoubleClick(Box<dyn Fn(&mut EventHandle<V>, MouseButton) + Send + Sync>),
     OnHover(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
     OnHoverOut(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
     OnOver(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
@@ -321,6 +340,18 @@ pub trait ActionModifiers<V> {
     fn on_press_down<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventHandle<V>) + Send + Sync;
+
+    /// Adds a callback which is performed when the the view receives the [`MouseDoubleClick`](crate::prelude::WindowEvent::MouseDoubleClick) event.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # let mut cx = &mut Context::default();
+    /// Element::new(cx).on_double_click(|_, _button| println!("View was double clicked on!"));
+    /// ```
+    fn on_double_click<F>(self, action: F) -> Self
+    where
+        F: 'static + Fn(&mut EventHandle<V>, MouseButton) + Send + Sync;
 
     /// Adds a callback which is performed when the mouse pointer moves over a view.
     /// This callback is not triggered when the mouse pointer moves over an overlapping child of the view.
@@ -487,6 +518,21 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnPressDown(Box::new(action)))
+                .target(self.entity)
+                .origin(self.entity),
+        );
+
+        self
+    }
+
+    fn on_double_click<F>(self, action: F) -> Self
+    where
+        F: 'static + Fn(&mut EventHandle<V>, MouseButton) + Send + Sync,
+    {
+        build_action_model::<V>(self.cx, self.entity);
+
+        self.cx.emit_custom(
+            Event::new(ActionsEvent::OnDoubleClick(Box::new(action)))
                 .target(self.entity)
                 .origin(self.entity),
         );
