@@ -27,7 +27,7 @@ pub fn draw_system(cx: &mut Context) {
             || cx.cache.get_visibility(entity) == Visibility::Invisible
             || cx.cache.get_display(entity) == Display::None
             || cx.cache.get_opacity(entity) == 0.0
-            || !window_bounds.contains(&cx.cache.get_bounds(entity))
+            || !window_bounds.intersects(&cx.cache.get_bounds(entity))
         {
             continue;
         }
