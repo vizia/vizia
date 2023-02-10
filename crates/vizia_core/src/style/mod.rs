@@ -646,6 +646,16 @@ impl Style {
                                     self.transitions.insert(rule_id, animation);
                                 }
 
+                                "border-color" => {
+                                    let animation = self.animation_manager.create();
+                                    self.border_color.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
+                                    self.border_color.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
+                                }
+
                                 "color" => {
                                     let animation = self.animation_manager.create();
                                     self.font_color.insert_animation(
