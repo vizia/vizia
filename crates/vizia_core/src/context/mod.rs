@@ -363,12 +363,20 @@ impl Context {
                 self.entity_identifiers.remove(identifier);
             }
 
+            if let Some(index) = self.focus_stack.iter().position(|r| r == entity) {
+                self.focus_stack.remove(index);
+            }
+
             if self.focused == *entity
                 && delete_list.contains(&self.tree.lock_focus_within(*entity))
             {
                 if let Some(new_focus) = self.focus_stack.pop() {
                     self.with_current(new_focus, |cx| cx.focus());
                 }
+            }
+
+            if self.captured == *entity {
+                self.captured = Entity::null();
             }
 
             self.tree.remove(*entity).expect("");
@@ -379,10 +387,6 @@ impl Context {
             self.views.remove(entity);
             self.entity_manager.destroy(*entity);
             self.text_context.clear_buffer(*entity);
-
-            if self.captured == *entity {
-                self.captured = Entity::null();
-            }
         }
     }
 
