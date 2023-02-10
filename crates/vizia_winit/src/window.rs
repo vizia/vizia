@@ -4,6 +4,7 @@ use std::num::NonZeroU32;
 use crate::convert::cursor_icon_to_cursor_icon;
 use femtovg::{renderer::OpenGl, Canvas, Color};
 
+use glutin::surface::SwapInterval;
 #[cfg(not(target_arch = "wasm32"))]
 use glutin_winit::DisplayBuilder;
 #[cfg(not(target_arch = "wasm32"))]
@@ -171,6 +172,12 @@ impl Window {
             OpenGl::new_from_function_cstr(|s| gl_display.get_proc_address(s) as *const _)
         }
         .expect("Cannot create renderer");
+
+        if window_description.vsync {
+            surface
+                .set_swap_interval(&gl_context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
+                .expect("Failed to set vsync");
+        }
 
         let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
 
