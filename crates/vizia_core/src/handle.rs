@@ -1,8 +1,5 @@
-use std::marker::PhantomData;
-
-use vizia_id::GenerationalId;
-
 use crate::prelude::*;
+use std::marker::PhantomData;
 
 /// A handle to a view which has been already built into the tree.
 ///
