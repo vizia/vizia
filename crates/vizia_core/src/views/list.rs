@@ -16,9 +16,9 @@ where
 
 impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
     /// Creates a new List view with a binding to the given lens and a template for constructing the list items
-    pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
+    pub fn new<'a, F>(cx: &'a mut Context, lens: &L, item: F) -> Handle<'a, Self>
     where
-        F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, T>>),
+        F: 'static + Fn(&mut Context, usize, &Then<L, Index<Vec<T>, T>>),
         <L as Lens>::Source: Model,
     {
         //let item_template = Rc::new(item);
@@ -29,16 +29,16 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
             clear_callback: None,
         }
         .build(cx, move |cx| {
-            //let list_lens = lens.clone();
+            let list_lens = lens.clone();
             // Bind to the list data
-            Binding::new(cx, lens.clone().map(|lst| lst.len()), move |cx, list_len| {
+            Binding::new(cx, &lens.map(|lst| lst.len()), move |cx, list_len| {
                 // If the number of list items is different to the number of children of the ListView
                 // then remove and rebuild all the children
                 let list_len = list_len.get_fallible(cx).map_or(0, |d| d);
 
                 for index in 0..list_len {
-                    let ptr = lens.clone().index(index);
-                    (item)(cx, index, ptr);
+                    let ptr = list_lens.index(index);
+                    (item)(cx, index, &ptr);
                 }
             });
         })

@@ -97,7 +97,7 @@ where
     ///         println!("Slider on_changing: {}", value);
     ///     });
     /// ```
-    pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
+    pub fn new<'a>(cx: &'a mut Context, lens: &'static L) -> Handle<'a, Self> {
         Self {
             lens: lens.clone(),
             is_dragging: false,
@@ -112,9 +112,8 @@ where
 
             on_changing: None,
         }
-        .build(cx, move |cx| {
-            Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
-                let lens = lens.clone();
+        .build(cx, |cx| {
+            Binding::new(cx, &Slider::<L>::internal, move |cx, slider_data| {
                 ZStack::new(cx, move |cx| {
                     let slider_data = slider_data.get(cx);
                     let thumb_size = slider_data.thumb_size;
@@ -123,7 +122,7 @@ where
                     let range = slider_data.range;
 
                     // Active track
-                    Element::new(cx).class("active").bind(lens.clone(), move |handle, value| {
+                    Element::new(cx).class("active").bind(&lens.clone(), move |handle, value| {
                         let val = value.get(handle.cx);
                         let normal_val = (val - range.start) / (range.end - range.start);
                         let min = thumb_size / size;
@@ -156,7 +155,7 @@ where
                                 cx.emit(SliderEventInternal::SetThumbSize(width, height));
                             }
                         })
-                        .bind(lens.clone(), move |handle, value| {
+                        .bind(&lens.clone(), move |handle, value| {
                             let val = value.get(handle.cx);
                             let normal_val = (val - range.start) / (range.end - range.start);
                             let px = normal_val * (1.0 - (thumb_size / size));

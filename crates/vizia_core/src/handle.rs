@@ -66,11 +66,11 @@ impl<'a, V> Handle<'a, V> {
         self
     }
 
-    pub fn bind<L, F>(self, lens: L, closure: F) -> Self
+    pub fn bind<L, F>(self, lens: &L, closure: F) -> Self
     where
         L: Lens,
         <L as Lens>::Target: Data,
-        F: 'static + Fn(Handle<'_, V>, L),
+        F: 'static + Fn(Handle<'_, V>, &L),
     {
         let entity = self.entity();
         Binding::new(self.cx, lens, move |cx, data| {

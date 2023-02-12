@@ -38,7 +38,7 @@ where
         Box::new(self.clone())
     }
     fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>) {
-        Binding::new(cx, self.lens.clone(), move |cx, _| closure(cx));
+        Binding::new(cx, &self.lens, move |cx, _| closure(cx));
     }
 }
 
@@ -143,7 +143,7 @@ impl Res<String> for Localized {
     {
         let self2 = self.clone();
         cx.with_current(entity, move |cx| {
-            Binding::new(cx, Environment::locale, move |cx, _| {
+            Binding::new(cx, &Environment::locale, move |cx, _| {
                 let lenses = self2.args.values().map(|x| x.make_clone()).collect();
                 let self3 = self2.clone();
                 let closure = closure.clone();

@@ -53,13 +53,13 @@ where
     R: Lens<Target = Vec<T>>,
     L: Lens<Source = T, Target = U>,
 {
-    pub fn new<F, Label>(
-        cx: &mut Context,
-        list: R,
-        item: L,
+    pub fn new<'a, F, Label>(
+        cx: &'a mut Context,
+        list: &'static R,
+        item: &'static L,
         label: Label,
         content: F,
-    ) -> Handle<Self>
+    ) -> Handle<'a, Self>
     where
         F: 'static + Fn(&mut Context, usize, Then<Then<R, Index<<R as Lens>::Target, T>>, L>),
         Label: 'static + Fn(&mut Context),
@@ -75,10 +75,9 @@ where
             //let item = item.clone();
             List::new(cx, list, move |cx, index, it| {
                 let content = content.clone();
-                let item = item.clone();
                 VStack::new(cx, move |cx| {
                     //let item = item.clone();
-                    Binding::new(cx, it.then(item), move |cx, l| {
+                    Binding::new(cx, &it.then(item), move |cx, l| {
                         (content)(cx, index, l.clone());
                     });
                 });

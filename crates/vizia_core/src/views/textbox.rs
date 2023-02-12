@@ -427,11 +427,11 @@ impl<L: Lens> Textbox<L>
 where
     <L as Lens>::Target: Data + Clone + ToString,
 {
-    pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
+    pub fn new<'a>(cx: &'a mut Context, lens: &L) -> Handle<'a, Self> {
         Self::new_core(cx, lens, TextboxKind::SingleLine)
     }
 
-    pub fn new_multiline(cx: &mut Context, lens: L, wrap: bool) -> Handle<Self> {
+    pub fn new_multiline<'a>(cx: &'a mut Context, lens: &L, wrap: bool) -> Handle<'a, Self> {
         Self::new_core(
             cx,
             lens,
@@ -439,10 +439,10 @@ where
         )
     }
 
-    fn new_core(cx: &mut Context, lens: L, kind: TextboxKind) -> Handle<Self> {
+    fn new_core<'a>(cx: &'a mut Context, lens: &L, kind: TextboxKind) -> Handle<'a, Self> {
         // TODO can this be simplified now that text doesn't live in TextboxData?
         let result = Self { lens: lens.clone(), kind }.build(cx, move |cx| {
-            Binding::new(cx, lens.clone(), |cx, text| {
+            Binding::new(cx, lens, |cx, text| {
                 let text_str = text.view(cx.data().unwrap(), |text| {
                     text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned())
                 });
@@ -483,7 +483,7 @@ where
                         .hoverable(false)
                         .class("textbox_content")
                         .text(&text)
-                        .translate(TextboxData::transform)
+                        .translate(&TextboxData::transform)
                         .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
                         .entity;
 

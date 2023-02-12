@@ -79,40 +79,40 @@ pub trait LensExt: Lens {
     ///
     /// });
     /// ```
-    fn then<Other>(self, other: Other) -> Then<Self, Other>
+    fn then<Other>(&self, other: &Other) -> Then<Self, Other>
     where
         Other: Lens<Source = Self::Target>,
     {
-        Then::new(self, other)
+        Then::new(self.clone(), other.clone())
     }
 
-    fn index<T>(self, index: usize) -> Then<Self, Index<Self::Target, T>>
+    fn index<T>(&self, index: usize) -> Then<Self, Index<Self::Target, T>>
     where
         T: 'static,
         Self::Target: Deref<Target = [T]>,
     {
-        self.then(Index::new(index))
+        self.then(&Index::new(index))
     }
 
-    fn map<G: Clone, B: 'static + Clone>(self, get: G) -> Then<Self, Map<G, Self::Target, B>>
+    fn map<G: Clone, B: 'static + Clone>(&self, get: G) -> Then<Self, Map<G, Self::Target, B>>
     where
         G: 'static + Fn(&Self::Target) -> B,
     {
-        self.then(Map::new(get))
+        self.then(&Map::new(get))
     }
 
     fn unwrap<T: 'static>(self) -> Then<Self, UnwrapLens<T>>
     where
         Self: Lens<Target = Option<T>>,
     {
-        self.then(UnwrapLens::new())
+        self.then(&UnwrapLens::new())
     }
 
     fn into_lens<T: 'static>(self) -> Then<Self, IntoLens<Self::Target, T>>
     where
         Self::Target: Clone + Into<T>,
     {
-        self.then(IntoLens::new())
+        self.then(&IntoLens::new())
     }
 }
 

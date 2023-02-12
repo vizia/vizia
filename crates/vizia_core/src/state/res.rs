@@ -52,7 +52,7 @@ impl_res_simple!(Overflow);
 impl_res_simple!(Weight);
 impl_res_simple!(FontStyle);
 
-impl<T, L> Res<T> for L
+impl<T, L> Res<T> for &L
 where
     L: Lens<Target = T> + LensExt,
     T: Clone + Data,

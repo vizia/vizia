@@ -13,7 +13,7 @@ where
 {
     entity: Entity,
     lens: L,
-    content: Option<Box<dyn Fn(&mut Context, L)>>,
+    content: Option<Box<dyn Fn(&mut Context, &L)>>,
 }
 
 impl<L> Binding<L>
@@ -34,9 +34,9 @@ where
     ///     let value = *lens.get(cx);
     ///     Label::new(cx, value.to_string());
     /// });
-    pub fn new<F>(cx: &mut Context, lens: L, builder: F)
+    pub fn new<F>(cx: &mut Context, lens: &L, builder: F)
     where
-        F: 'static + Fn(&mut Context, L),
+        F: 'static + Fn(&mut Context, &L),
     {
         let id = cx.entity_manager.create();
         let current = cx.current();
@@ -90,7 +90,7 @@ where
                         &ancestors,
                         &mut model_data_store.stores,
                         ModelOrView::Model(model_data.as_ref()),
-                        lens,
+                        lens.clone(),
                         id,
                     );
 
@@ -104,7 +104,7 @@ where
                             &ancestors,
                             &mut model_data_store.stores,
                             ModelOrView::View(view_handler.as_ref()),
-                            lens,
+                            lens.clone(),
                             id,
                         );
 
@@ -138,7 +138,7 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
     fn update<'a>(&mut self, cx: &'a mut Context) {
         cx.remove_children(cx.current());
         if let Some(builder) = &self.content {
-            (builder)(cx, self.lens.clone());
+            (builder)(cx, &self.lens);
         }
     }
 

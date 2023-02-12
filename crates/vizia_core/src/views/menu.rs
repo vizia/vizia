@@ -24,7 +24,7 @@ where
         *data.counter.borrow_mut() += 1;
         handle
             .navigable(true)
-            .bind(MenuData::selected, move |handle, selected| {
+            .bind(&MenuData::selected, move |handle, selected| {
                 let selected = selected.get(handle.cx) == Some(i);
                 handle.cx.set_selected(selected);
                 if selected {
@@ -292,7 +292,12 @@ impl MenuButton {
         )
     }
 
-    pub fn new_check<F, A, L>(cx: &mut Context, builder: F, action: A, lens: L) -> Handle<'_, Self>
+    pub fn new_check<'a, F, A, L>(
+        cx: &'a mut Context,
+        builder: F,
+        action: A,
+        lens: &'static L,
+    ) -> Handle<'a, Self>
     where
         F: 'static + FnOnce(&mut Context),
         A: 'static + Fn(&mut EventContext),
@@ -303,8 +308,8 @@ impl MenuButton {
             move |cx| {
                 HStack::new(cx, move |cx| {
                     builder(cx);
-                    Label::new(cx, "").left(Units::Stretch(1.0)).bind(lens, move |handle, lens| {
-                        let val = lens.get_fallible(handle.cx);
+                    Label::new(cx, "").left(Units::Stretch(1.0)).bind(lens, move |handle, l| {
+                        let val = l.get_fallible(handle.cx);
                         handle.text(if val == Some(true) { CHECK } else { "" });
                     });
                 });
@@ -313,12 +318,12 @@ impl MenuButton {
         )
     }
 
-    pub fn new_check_simple<U: ToString, A, L>(
-        cx: &mut Context,
+    pub fn new_check_simple<'a, U: ToString, A, L>(
+        cx: &'a mut Context,
         text: impl 'static + Res<U>,
         action: A,
-        lens: L,
-    ) -> Handle<'_, Self>
+        lens: &'static L,
+    ) -> Handle<'a, Self>
     where
         A: 'static + Fn(&mut EventContext),
         L: 'static + Lens<Target = bool>,

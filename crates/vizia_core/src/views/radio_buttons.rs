@@ -84,7 +84,7 @@ pub struct RadioButton {
 }
 
 impl RadioButton {
-    pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
+    pub fn new<'a>(cx: &'a mut Context, checked: &impl Lens<Target = bool>) -> Handle<'a, Self> {
         Self { on_select: None }
             .build(cx, |cx| {
                 Element::new(cx)

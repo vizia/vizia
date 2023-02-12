@@ -27,12 +27,12 @@ pub struct Knob<L> {
 }
 
 impl<L: Lens<Target = f32>> Knob<L> {
-    pub fn new(
-        cx: &mut Context,
+    pub fn new<'a>(
+        cx: &'a mut Context,
         normalized_default: impl Res<f32>,
-        lens: L,
+        lens: &L,
         centered: bool,
-    ) -> Handle<Self> {
+    ) -> Handle<'a, Self> {
         Self {
             lens: lens.clone(),
             default_normal: normalized_default.get_val(cx),
@@ -438,7 +438,7 @@ impl View for TickKnob {
     }
 }
 impl Handle<'_, TickKnob> {
-    pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
+    pub fn value<L: Lens<Target = f32>>(self, lens: &L) -> Self {
         let entity = self.entity;
         Binding::new(self.cx, lens, move |cx, value| {
             let value = value.get(cx);
@@ -571,7 +571,7 @@ impl View for ArcTrack {
 }
 
 impl Handle<'_, ArcTrack> {
-    pub fn value<L: Lens<Target = f32>>(self, lens: L) -> Self {
+    pub fn value<L: Lens<Target = f32>>(self, lens: &L) -> Self {
         let entity = self.entity;
         Binding::new(self.cx, lens, move |cx, value| {
             let value = value.get(cx);

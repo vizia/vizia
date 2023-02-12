@@ -11,13 +11,13 @@ pub struct Scrollbar<L1> {
 }
 
 impl<L1: Lens<Target = f32>> Scrollbar<L1> {
-    pub fn new<F, L2: Lens<Target = f32>>(
-        cx: &mut Context,
-        value: L1,
-        ratio: L2,
+    pub fn new<'a, F, L2: Lens<Target = f32>>(
+        cx: &'a mut Context,
+        value: &L1,
+        ratio: &L2,
         orientation: Orientation,
         callback: F,
-    ) -> Handle<Self>
+    ) -> Handle<'a, Self>
     where
         F: 'static + Fn(&mut EventContext, f32),
     {

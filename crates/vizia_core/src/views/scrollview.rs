@@ -78,7 +78,7 @@ impl ScrollView<scroll_data_derived_lenses::root> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        Self { data: ScrollData::root }.build(cx, move |cx| {
+        Self { data: ScrollData::root.clone() }.build(cx, move |cx| {
             ScrollData {
                 scroll_x: initial_x,
                 scroll_y: initial_y,
@@ -89,19 +89,19 @@ impl ScrollView<scroll_data_derived_lenses::root> {
             }
             .build(cx);
 
-            Self::common_builder(cx, ScrollData::root, content, scroll_x, scroll_y);
+            Self::common_builder(cx, &ScrollData::root, content, scroll_x, scroll_y);
         })
     }
 }
 
 impl<L: Lens<Target = ScrollData>> ScrollView<L> {
-    pub fn custom<F>(
-        cx: &mut Context,
+    pub fn custom<'a, F>(
+        cx: &'a mut Context,
         scroll_x: bool,
         scroll_y: bool,
-        data: L,
+        data: &L,
         content: F,
-    ) -> Handle<Self>
+    ) -> Handle<'a, Self>
     where
         F: 'static + FnOnce(&mut Context),
     {
@@ -114,13 +114,13 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         })
     }
 
-    fn common_builder<F>(cx: &mut Context, data: L, content: F, scroll_x: bool, scroll_y: bool)
+    fn common_builder<F>(cx: &mut Context, data: &L, content: F, scroll_x: bool, scroll_y: bool)
     where
         F: 'static + FnOnce(&mut Context),
     {
         VStack::new(cx, content)
             .class("scroll_content")
-            .bind(data.clone(), |handle, data| {
+            .bind(data, |handle, data| {
                 let dpi_factor = handle.cx.style.dpi_factor;
                 if dpi_factor > 0.0 {
                     let data = data.get(handle.cx);
@@ -144,8 +144,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         if scroll_y {
             Scrollbar::new(
                 cx,
-                data.clone().then(ScrollData::scroll_y),
-                data.clone().then(RatioLens::new(ScrollData::parent_y, ScrollData::child_y)),
+                &data.then(&ScrollData::scroll_y),
+                &data.then(&RatioLens::new(ScrollData::parent_y, ScrollData::child_y)),
                 Orientation::Vertical,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetY(value));
@@ -156,8 +156,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         if scroll_x {
             Scrollbar::new(
                 cx,
-                data.clone().then(ScrollData::scroll_x),
-                data.clone().then(RatioLens::new(ScrollData::parent_x, ScrollData::child_x)),
+                &data.then(&ScrollData::scroll_x),
+                &data.then(&RatioLens::new(ScrollData::parent_x, ScrollData::child_x)),
                 Orientation::Horizontal,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetX(value));
