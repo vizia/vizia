@@ -4,6 +4,7 @@ use std::num::NonZeroU32;
 use crate::convert::cursor_icon_to_cursor_icon;
 use femtovg::{renderer::OpenGl, Canvas, Color};
 
+#[cfg(not(target_arch = "wasm32"))]
 use glutin::surface::SwapInterval;
 #[cfg(not(target_arch = "wasm32"))]
 use glutin_winit::DisplayBuilder;
