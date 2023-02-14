@@ -78,7 +78,7 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     }
 
     fn is_empty(&self) -> bool {
-        true
+        !self.tree.has_children(self.entity)
     }
 
     fn is_root(&self) -> bool {
