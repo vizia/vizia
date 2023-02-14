@@ -66,7 +66,7 @@ pub struct ScrollView<L> {
     data: L,
 }
 
-impl ScrollView<scroll_data_derived_lenses::root> {
+impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
     pub fn new<F>(
         cx: &mut Context,
         initial_x: f32,
