@@ -411,7 +411,12 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "caret-color" => Property::CaretColor(parse_color(input)?),
 
             // Border
+            // TODO - Support array for specifying each side
             "border-width" => Property::BorderWidth(parse_units(input)?),
+            "border-left-width" => Property::BorderLeftWidth(parse_units(input)?),
+            "border-right-width" => Property::BorderRightWidth(parse_units(input)?),
+            "border-top-width" => Property::BorderTopWidth(parse_units(input)?),
+            "border-bottom-width" => Property::BorderBottomWidth(parse_units(input)?),
             "border-color" => Property::BorderColor(parse_color(input)?),
             // TODO - Support array for specifying each corner
             "border-radius" => Property::BorderRadius(parse_units(input)?),

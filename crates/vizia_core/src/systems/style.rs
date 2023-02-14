@@ -284,7 +284,19 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
     }
 
     // Border
-    if style.border_width.link(entity, &matched_rules) {
+    if style.border_width_left.link(entity, &matched_rules) {
+        should_relayout = true;
+    }
+
+    if style.border_width_right.link(entity, &matched_rules) {
+        should_relayout = true;
+    }
+
+    if style.border_width_top.link(entity, &matched_rules) {
+        should_relayout = true;
+    }
+
+    if style.border_width_bottom.link(entity, &matched_rules) {
         should_relayout = true;
     }
 

@@ -59,7 +59,10 @@ pub trait AnimExt: Copy + Sized {
 
         // Border
         cx.style.border_color.play_animation(self.entity(), animation);
-        cx.style.border_width.play_animation(self.entity(), animation);
+        cx.style.border_width_left.play_animation(self.entity(), animation);
+        cx.style.border_width_right.play_animation(self.entity(), animation);
+        cx.style.border_width_top.play_animation(self.entity(), animation);
+        cx.style.border_width_bottom.play_animation(self.entity(), animation);
         cx.style.border_radius_bottom_left.play_animation(self.entity(), animation);
         cx.style.border_radius_top_left.play_animation(self.entity(), animation);
         cx.style.border_radius_bottom_right.play_animation(self.entity(), animation);

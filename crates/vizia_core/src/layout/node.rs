@@ -230,28 +230,28 @@ impl<'w> Node<'w> for Entity {
     }
 
     fn border_left(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.border_width.get(*self).cloned().map(|v| match v {
+        store.border_width_left.get(*self).cloned().map(|v| match v {
             Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
             t => t,
         })
     }
 
     fn border_right(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.border_width.get(*self).cloned().map(|v| match v {
+        store.border_width_right.get(*self).cloned().map(|v| match v {
             Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
             t => t,
         })
     }
 
     fn border_top(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.border_width.get(*self).cloned().map(|v| match v {
+        store.border_width_top.get(*self).cloned().map(|v| match v {
             Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
             t => t,
         })
     }
 
     fn border_bottom(&self, store: &Self::Data) -> Option<morphorm::Units> {
-        store.border_width.get(*self).cloned().map(|v| match v {
+        store.border_width_bottom.get(*self).cloned().map(|v| match v {
             Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
             t => t,
         })
