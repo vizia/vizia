@@ -177,7 +177,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
         quote! {
             /// Lens for the corresponding field.
-            #field_vis const #lens_field_name: #twizzled_name::#field_name#lens_ty_generics = #twizzled_name::#field_name::new();
+            #field_vis const #lens_field_name: Wrapper<#twizzled_name::#field_name#lens_ty_generics> = Wrapper(#twizzled_name::#field_name::new());
         }
     });
 
@@ -212,7 +212,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         impl #impl_generics #struct_type #ty_generics #where_clause {
             #(#associated_items)*
 
-            pub const root: #twizzled_name::root#lens_ty_generics = #twizzled_name::root::new();
+            pub const root: Wrapper<#twizzled_name::root#lens_ty_generics> = Wrapper(#twizzled_name::root::new());
         }
     };
 
