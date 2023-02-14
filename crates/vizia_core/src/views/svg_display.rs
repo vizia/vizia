@@ -18,14 +18,15 @@ use crate::prelude::*;
 /// #
 /// SvgDisplay::new(cx, SvgTree::from_str(include_str!("path/to/my/graphic.svg"), &SvgOptions::default()));
 /// ```
-pub struct SvgDisplay<L: Lens> {
-    tree: L,
+pub struct SvgDisplay {
+    tree: SvgTree,
 }
 
-impl<L> SvgDisplay<L>
-where
-    L: Lens<Target = SvgTree>,
-{
+enum SvgEvent {
+    TreeChanged(SvgTree),
+}
+
+impl SvgDisplay {
     /// Creates a new svg display.
     ///
     /// # Examples
@@ -37,35 +38,44 @@ where
     /// #
     /// SvgDisplay::new(cx, SvgTree::from_str(include_str!("path/to/my/graphic.svg"), &SvgOptions::default()));
     /// ```
-    pub fn new<'a>(cx: &'a mut Context, svg_tree: L) -> Handle<'a, Self> {
-        Self { tree: svg_tree }.build(cx, |_| {})
+    pub fn new<'a>(cx: &'a mut Context, svg_tree: impl Res<SvgTree>) -> Handle<'a, Self> {
+        Self { tree: SvgTree::default() }.build(cx, |cx| {
+            svg_tree.set_or_bind(cx, cx.current(), |cx, _entity, val| {
+                cx.emit(SvgEvent::TreeChanged(val));
+            });
+        })
     }
 }
 
-impl<L> View for SvgDisplay<L>
-where
-    L: Lens<Target = SvgTree>,
-{
+impl View for SvgDisplay {
     fn element(&self) -> Option<&'static str> {
         Some("svg_display")
     }
 
-    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        for (path, fill, stroke) in &mut self.tree.get(cx).result {
-            if let Some(fill) = fill {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        if let Some(event) = event.take::<SvgEvent>() {
+            match event {
+                SvgEvent::TreeChanged(new_tree) => self.tree = new_tree,
+            }
+        }
+    }
+
+    fn draw(&self, _cx: &mut DrawContext, canvas: &mut Canvas) {
+        for (mut path, fill, stroke) in self.tree.result.clone() {
+            if let Some(mut fill) = fill {
                 fill.set_anti_alias(true);
-                canvas.fill_path(path, fill);
+                canvas.fill_path(&mut path, &fill);
             }
 
-            if let Some(stroke) = stroke {
+            if let Some(mut stroke) = stroke {
                 stroke.set_anti_alias(true);
-                canvas.stroke_path(path, stroke);
+                canvas.stroke_path(&mut path, &stroke);
             }
         }
     }
 }
 
-#[derive(Clone)]
+#[derive(Lens, Clone, Default)]
 pub struct SvgTree {
     result: Vec<(Path, Option<Paint>, Option<Paint>)>,
 }
