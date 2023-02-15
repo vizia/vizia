@@ -34,6 +34,11 @@ impl Color {
         Color { data: ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8) | (a as u32) }
     }
 
+    // Create a new color from raw RGBA data represented by `u32`
+    pub const fn from_raw(data: u32) -> Self {
+        Color { data }
+    }
+
     /// Returns color value specified by hue, saturation and lightness.
     /// HSL values are all in range [0..1], alpha will be set to 1.0.
     pub fn hsl(h: f32, s: f32, l: f32) -> Self {
@@ -150,10 +155,7 @@ impl From<Color> for femtovg::Color {
 
 impl PartialEq for Color {
     fn eq(&self, other: &Color) -> bool {
-        self.r() == other.r()
-            && self.g() == other.g()
-            && self.b() == other.b()
-            && self.a() == other.a()
+        self.data == other.data
     }
 }
 
