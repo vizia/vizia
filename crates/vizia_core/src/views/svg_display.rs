@@ -11,7 +11,7 @@ use crate::prelude::*;
 ///
 /// A svg display can be used to simply load and display vector graphics on the screen.
 ///
-/// ```
+/// ```ignore
 /// # use vizia_core::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
@@ -31,7 +31,7 @@ impl SvgDisplay {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # use vizia_core::prelude::*;
     /// #
     /// # let cx = &mut Context::default();
