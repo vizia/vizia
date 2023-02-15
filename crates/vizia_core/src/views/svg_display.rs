@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use femtovg::{Paint, Path};
 use usvg::{LineCap, LineJoin, NodeKind, PathSegment};
 
@@ -31,7 +33,7 @@ use crate::{prelude::*, vg};
 /// SvgDisplay::new(cx, SvgTree::from_str(include_str!("path/to/my/graphic.svg"), &SvgOptions::default(), Some(Color::red())));
 /// ```
 pub struct SvgDisplay {
-    tree: SvgTree,
+    tree: RefCell<SvgTree>,
 }
 
 enum SvgEvent {
@@ -51,7 +53,7 @@ impl SvgDisplay {
     /// SvgDisplay::new(cx, SvgTree::from_str(include_str!("path/to/my/graphic.svg"), &SvgOptions::default(), None));
     /// ```
     pub fn new<'a>(cx: &'a mut Context, svg_tree: impl Res<SvgTree>) -> Handle<'a, Self> {
-        Self { tree: SvgTree::default() }.build(cx, |cx| {
+        Self { tree: RefCell::new(SvgTree::default()) }.build(cx, |cx| {
             svg_tree.set_or_bind(cx, cx.current(), |cx, _entity, val| {
                 cx.emit(SvgEvent::TreeChanged(val));
             });
@@ -67,7 +69,9 @@ impl View for SvgDisplay {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         if let Some(event) = event.take::<SvgEvent>() {
             match event {
-                SvgEvent::TreeChanged(new_tree) => self.tree = new_tree,
+                SvgEvent::TreeChanged(new_tree) => {
+                    self.tree.replace(new_tree);
+                }
             }
         }
     }
@@ -77,18 +81,20 @@ impl View for SvgDisplay {
 
         let b = cx.bounds();
 
-        canvas.translate(b.x, b.y);
-        canvas.scale(b.w / self.tree.size.0, b.h / self.tree.size.1);
+        let mut tree = self.tree.borrow_mut();
 
-        for (mut path, fill, stroke) in self.tree.result.clone() {
-            if let Some(mut fill) = fill {
+        canvas.translate(b.x, b.y);
+        canvas.scale(b.w / tree.size.0, b.h / tree.size.1);
+
+        for (path, fill, stroke) in &mut tree.result {
+            if let Some(fill) = fill {
                 fill.set_anti_alias(true);
-                canvas.fill_path(&mut path, &fill);
+                canvas.fill_path(path, fill);
             }
 
-            if let Some(mut stroke) = stroke {
+            if let Some(stroke) = stroke {
                 stroke.set_anti_alias(true);
-                canvas.stroke_path(&mut path, &stroke);
+                canvas.stroke_path(path, stroke);
             }
         }
 
