@@ -143,6 +143,7 @@ pub trait LensExt: Lens {
     fn then<Other>(self, other: Other) -> Then<Self, Other>
     where
         Other: Lens<Source = Self::Target>,
+        Other::Target: Clone,
     {
         Then::new(self, other)
     }
