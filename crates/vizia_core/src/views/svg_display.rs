@@ -60,7 +60,13 @@ impl View for SvgDisplay {
         }
     }
 
-    fn draw(&self, _cx: &mut DrawContext, canvas: &mut Canvas) {
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+        canvas.save();
+
+        let b = cx.bounds();
+
+        canvas.translate(b.x, b.y);
+
         for (mut path, fill, stroke) in self.tree.result.clone() {
             if let Some(mut fill) = fill {
                 fill.set_anti_alias(true);
@@ -72,6 +78,8 @@ impl View for SvgDisplay {
                 canvas.stroke_path(&mut path, &stroke);
             }
         }
+
+        canvas.restore();
     }
 }
 
