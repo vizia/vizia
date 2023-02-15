@@ -443,9 +443,9 @@ where
         // TODO can this be simplified now that text doesn't live in TextboxData?
         let result = Self { lens: lens.clone(), kind }.build(cx, move |cx| {
             Binding::new(cx, lens.clone(), |cx, text| {
-                let text_str = text.view(cx.data().unwrap(), |text| {
-                    text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned())
-                });
+                let text_str =
+                    text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
+
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
                         let td = TextboxData {
@@ -473,9 +473,8 @@ where
                     cx.emit_to(cx.current(), ());
                 }
             });
-            let text = lens.view(cx.data().unwrap(), |text| {
-                text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned())
-            });
+            let text =
+                lens.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
             TextboxContainer {}
                 .build(cx, move |cx| {
                     let lbl = TextboxLabel {}
@@ -547,17 +546,13 @@ where
                     cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
                 } else {
                     cx.emit(TextEvent::Submit(false));
-                    if let Some(source) = cx.data::<L::Source>() {
-                        let text = self.lens.view(source, |t| {
-                            if let Some(t) = t {
-                                t.to_string()
-                            } else {
-                                "".to_owned()
-                            }
-                        });
+                    let text = self
+                        .lens
+                        .get_fallible(cx)
+                        .map(|x| x.to_string())
+                        .unwrap_or_else(|| "".to_owned());
 
-                        cx.emit(TextEvent::ResetText(text));
-                    };
+                    cx.emit(TextEvent::ResetText(text));
                     cx.release();
                     cx.set_checked(false);
 
@@ -625,18 +620,14 @@ where
                     // Finish editing
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
-                        if let Some(source) = cx.data::<L::Source>() {
-                            let text = self.lens.view(source, |t| {
-                                if let Some(t) = t {
-                                    t.to_string()
-                                } else {
-                                    "".to_owned()
-                                }
-                            });
+                        let text = self
+                            .lens
+                            .get_fallible(cx)
+                            .map(|x| x.to_string())
+                            .unwrap_or_else(|| "".to_owned());
 
-                            cx.emit(TextEvent::SelectAll);
-                            cx.emit(TextEvent::InsertText(text));
-                        };
+                        cx.emit(TextEvent::SelectAll);
+                        cx.emit(TextEvent::InsertText(text));
 
                         cx.set_checked(false);
                         cx.release();

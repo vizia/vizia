@@ -3,6 +3,10 @@ use crate::prelude::*;
 macro_rules! impl_res_simple {
     ($t:ty) => {
         impl Res<$t> for $t {
+            fn get_ref<'a>(&self, _: &'a impl DataContext) -> Option<LensValue<'a, $t>> {
+                Some(LensValue::Owned(*self))
+            }
+
             fn get_val(&self, _: &Context) -> $t {
                 *self
             }
@@ -22,6 +26,10 @@ macro_rules! impl_res_simple {
 ///
 /// This trait is part of the prelude.
 pub trait Res<T> {
+    #[allow(unused_variables)]
+    fn get_ref<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, T>> {
+        None
+    }
     fn get_val(&self, cx: &Context) -> T;
     fn get_val_fallible(&self, cx: &Context) -> Option<T> {
         Some(self.get_val(cx))
@@ -57,6 +65,10 @@ where
     L: Lens<Target = T> + LensExt,
     T: Clone + Data,
 {
+    fn get_ref<'a>(&self, cx: &'a impl DataContext) -> Option<LensValue<'a, T>> {
+        self.view(cx.data().unwrap())
+    }
+
     fn get_val(&self, cx: &Context) -> T {
         self.get(cx)
     }
@@ -80,6 +92,10 @@ where
 }
 
 impl<'s> Res<&'s str> for &'s str {
+    // fn get_ref(&self, cx: &Context) -> Option<&Self> {
+    //     Some(self)
+    // }
+
     fn get_val(&self, _: &Context) -> &'s str {
         self
     }
@@ -93,6 +109,10 @@ impl<'s> Res<&'s str> for &'s str {
 }
 
 impl<'s> Res<&'s String> for &'s String {
+    // fn get_ref(&self, cx: &Context) -> Option<&Self> {
+    //     Some(self)
+    // }
+
     fn get_val(&self, _: &Context) -> &'s String {
         self
     }
@@ -106,6 +126,10 @@ impl<'s> Res<&'s String> for &'s String {
 }
 
 impl Res<Color> for Color {
+    // fn get_ref(&self, cx: &Context) -> Option<&Self> {
+    //     Some(self)
+    // }
+
     fn get_val(&self, _: &Context) -> Color {
         *self
     }
@@ -119,6 +143,10 @@ impl Res<Color> for Color {
 }
 
 impl Res<Units> for Units {
+    // fn get_ref(&self, cx: &Context) -> Option<&Self> {
+    //     Some(self)
+    // }
+
     fn get_val(&self, _: &Context) -> Units {
         *self
     }
@@ -132,6 +160,10 @@ impl Res<Units> for Units {
 }
 
 impl Res<Visibility> for Visibility {
+    // fn get_ref(&self, cx: &Context) -> Option<&Self> {
+    //     Some(self)
+    // }
+
     fn get_val(&self, _: &Context) -> Visibility {
         *self
     }
@@ -145,6 +177,10 @@ impl Res<Visibility> for Visibility {
 }
 
 impl Res<Display> for Display {
+    // fn get_ref(&self, cx: &Context) -> Option<&Self> {
+    //     Some(self)
+    // }
+
     fn get_val(&self, _: &Context) -> Display {
         *self
     }
@@ -158,6 +194,10 @@ impl Res<Display> for Display {
 }
 
 impl Res<LayoutType> for LayoutType {
+    // fn get_ref(&self, cx: &Context) -> Option<&Self> {
+    //     Some(self)
+    // }
+
     fn get_val(&self, _: &Context) -> LayoutType {
         *self
     }
@@ -171,6 +211,10 @@ impl Res<LayoutType> for LayoutType {
 }
 
 impl Res<PositionType> for PositionType {
+    // fn get_ref(&self, cx: &Context) -> Option<&Self> {
+    //     Some(self)
+    // }
+
     fn get_val(&self, _: &Context) -> PositionType {
         *self
     }
@@ -184,6 +228,10 @@ impl Res<PositionType> for PositionType {
 }
 
 impl Res<(u32, u32)> for (u32, u32) {
+    // fn get_ref(&self, cx: &Context) -> Option<&Self> {
+    //     Some(self)
+    // }
+
     fn get_val(&self, _: &Context) -> (u32, u32) {
         *self
     }
@@ -197,6 +245,10 @@ impl Res<(u32, u32)> for (u32, u32) {
 }
 
 impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
+    // fn get_ref(&self, cx: &Context) -> Option<&Self> {
+    //     Some(self)
+    // }
+
     fn get_val(&self, _: &Context) -> Option<T> {
         self.clone()
     }
@@ -210,6 +262,10 @@ impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
 }
 
 impl<T: Clone + Res<T>> Res<Vec<T>> for Vec<T> {
+    // fn get_ref(&self, cx: &Context) -> Option<&Self> {
+    //     Some(self)
+    // }
+
     fn get_val(&self, _: &Context) -> Vec<T> {
         self.clone()
     }
@@ -223,6 +279,10 @@ impl<T: Clone + Res<T>> Res<Vec<T>> for Vec<T> {
 }
 
 impl Res<FamilyOwned> for FamilyOwned {
+    // fn get_ref(&self, cx: &Context) -> Option<&Self> {
+    //     Some(self)
+    // }
+
     fn get_val(&self, _: &Context) -> FamilyOwned {
         self.clone()
     }
