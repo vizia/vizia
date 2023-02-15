@@ -25,13 +25,17 @@ where
     <L as Lens>::Target: Into<FluentValue<'static>> + Data,
 {
     fn get_val(&self, cx: &Context) -> FluentValue<'static> {
-        self.lens.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |data| match data {
-                Some(x) => x.clone().into(),
-                None => "".into(),
-            },
-        )
+        match self
+            .lens
+            .view(
+                cx.data()
+                    .expect("Failed to get data from context. Has it been built into the tree?"),
+            )
+            .map(|t| t.into_owned())
+        {
+            Some(x) => x.into(),
+            None => "".into(),
+        }
     }
 
     fn make_clone(&self) -> Box<dyn FluentStore> {

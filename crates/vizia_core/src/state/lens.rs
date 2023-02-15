@@ -1,4 +1,5 @@
 use std::any::TypeId;
+use std::borrow::Borrow;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::{BitAnd, BitOr, Deref};
@@ -18,10 +19,63 @@ pub trait Lens: 'static + Clone {
     type Source;
     type Target;
 
-    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O;
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>>;
 
     fn name(&self) -> Option<&'static str> {
         None
+    }
+}
+
+/// A type returned by `Lens::view()` which contains either a reference to model data or an owned value.
+pub enum LensValue<'a, T> {
+    Borrowed(&'a T),
+    Owned(T),
+}
+
+impl<T: Clone> Clone for LensValue<'_, T> {
+    fn clone(&self) -> Self {
+        match self {
+            LensValue::Borrowed(v) => LensValue::Owned((*v).clone()),
+            LensValue::Owned(v) => LensValue::Owned(v.clone()),
+        }
+    }
+}
+
+impl<T: Copy> Copy for LensValue<'_, T> {}
+
+impl<'a, T: Clone> LensValue<'a, T> {
+    pub fn into_owned(self) -> T {
+        match self {
+            LensValue::Borrowed(t) => t.clone(),
+            LensValue::Owned(t) => t,
+        }
+    }
+
+    pub fn get_ref(&self) -> &T {
+        match self {
+            LensValue::Borrowed(t) => *t,
+            LensValue::Owned(t) => t,
+        }
+    }
+}
+
+impl<T: Clone> AsRef<T> for LensValue<'_, T> {
+    fn as_ref(&self) -> &T {
+        self
+    }
+}
+
+impl<B> Deref for LensValue<'_, B>
+where
+    B: Borrow<B>,
+{
+    type Target = B;
+
+    fn deref(&self) -> &B {
+        match *self {
+            LensValue::Borrowed(borrowed) => borrowed,
+            LensValue::Owned(ref owned) => owned.borrow(),
+        }
     }
 }
 
@@ -51,23 +105,14 @@ pub trait LensExt: Lens {
     where
         Self::Target: Clone,
     {
-        self.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| {
-                t.expect("Lens failed to resolve. Do you want to use LensExt::get_fallible?")
-                    .clone()
-            },
-        )
+        self.view(cx.data().expect("Failed to get data")).expect("Failed").into_owned()
     }
 
     fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Target>
     where
         Self::Target: Clone,
     {
-        self.view(
-            cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| t.cloned(),
-        )
+        self.view(cx.data().unwrap()).map(|t| t.into_owned())
     }
 
     fn or<Other>(self, other: Other) -> OrLens<Self, Other>
@@ -161,13 +206,8 @@ impl<G: 'static + Clone + Fn(&I) -> O, I: 'static, O: 'static> Lens for Map<G, I
     type Source = I;
     type Target = O;
 
-    fn view<VO, F: FnOnce(Option<&Self::Target>) -> VO>(
-        &self,
-        source: &Self::Source,
-        map: F,
-    ) -> VO {
-        let data = (self.get)(source);
-        map(Some(&data))
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        Some(LensValue::Owned((self.get)(source)))
     }
 }
 
@@ -195,8 +235,15 @@ where
     type Source = A::Source;
     type Target = B::Target;
 
-    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        self.a.view(source, |t| if let Some(t) = t { self.b.view(t, map) } else { map(None) })
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        match self.a.view(source) {
+            Some(LensValue::Borrowed(val)) => self.b.view(val),
+            // TODO: Not sure if this is possible tbh.
+            // Some(LensValue::Owned(val)) => {
+            //     self.b.view(&val).map(|t| LensValue::Owned(t.into_owned()))
+            // }
+            _ => None,
+        }
     }
 
     fn name(&self) -> Option<&'static str> {
@@ -236,12 +283,6 @@ impl<A, T> Clone for Index<A, T> {
 
 impl<A, T> Copy for Index<A, T> {}
 
-// impl<A,I> Debug for Index<A,I> {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-//         f.debug_struct("Index").field("index", &self.index).finish()
-//     }
-// }
-
 impl<A, T: 'static> Lens for Index<A, T>
 where
     A: 'static + std::ops::Deref<Target = [T]>,
@@ -249,9 +290,8 @@ where
     type Source = A;
     type Target = T;
 
-    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        let data = source.get(self.index);
-        map(data)
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        source.get(self.index.clone()).map(|t| LensValue::Borrowed(t))
     }
 }
 
@@ -279,8 +319,8 @@ impl<T> Lens for StaticLens<T> {
     type Source = ();
     type Target = T;
 
-    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, _: &Self::Source, map: F) -> O {
-        map(Some(self.data))
+    fn view<'a>(&self, _: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        Some(LensValue::Borrowed(self.data))
     }
 }
 
@@ -312,8 +352,8 @@ impl<T: 'static> Lens for UnwrapLens<T> {
     type Source = Option<T>;
     type Target = T;
 
-    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        map(source.as_ref())
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        source.as_ref().map(|t| LensValue::Borrowed(t))
     }
 }
 
@@ -341,9 +381,8 @@ impl<T: 'static + Clone + TryInto<U>, U: 'static> Lens for IntoLens<T, U> {
     type Source = T;
     type Target = U;
 
-    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        let converted = source.clone().try_into().ok();
-        map(converted.as_ref())
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        source.clone().try_into().ok().map(|t| LensValue::Owned(t))
     }
 }
 
@@ -367,17 +406,17 @@ where
     type Source = L1::Source;
     type Target = f32;
 
-    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        let num = self.numerator.view(source, |num| num.copied());
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, f32>> {
+        let num = self.numerator.view(source).map(|t| t.into_owned());
         if let Some(num) = num {
-            let den = self.denominator.view(source, |den| den.copied());
+            let den = self.denominator.view(source).map(|t| t.into_owned());
             if let Some(den) = den {
-                map(Some(&(num / den)))
+                Some(LensValue::Owned(num / den))
             } else {
-                map(None)
+                None
             }
         } else {
-            map(None)
+            None
         }
     }
 }
@@ -405,20 +444,15 @@ where
     type Source = L1::Source;
     type Target = bool;
 
-    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        self.lens1.view(source, |t1| {
-            if let Some(l1) = t1 {
-                self.lens2.view(source, |t2| {
-                    if let Some(l2) = t2 {
-                        map(Some(&(*l1 | *l2)))
-                    } else {
-                        map(None)
-                    }
-                })
-            } else {
-                map(None)
-            }
-        })
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        match (
+            self.lens1.view(source).map(|t| t.into_owned()),
+            self.lens2.view(source).map(|t| t.into_owned()),
+        ) {
+            (Some(v1), Some(v2)) => Some(LensValue::Owned(v1 | v2)),
+
+            _ => None,
+        }
     }
 
     fn name(&self) -> Option<&'static str> {
@@ -440,8 +474,9 @@ impl<L: Copy> Copy for Wrapper<L> {}
 impl<L: Lens> Lens for Wrapper<L> {
     type Source = L::Source;
     type Target = L::Target;
-    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        self.0.view(source, map)
+
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        self.0.view(source)
     }
 
     fn name(&self) -> Option<&'static str> {
@@ -515,20 +550,15 @@ where
     type Source = L1::Source;
     type Target = bool;
 
-    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        self.lens1.view(source, |t1| {
-            if let Some(l1) = t1 {
-                self.lens2.view(source, |t2| {
-                    if let Some(l2) = t2 {
-                        map(Some(&(*l1 & *l2)))
-                    } else {
-                        map(None)
-                    }
-                })
-            } else {
-                map(None)
-            }
-        })
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        match (
+            self.lens1.view(source).map(|t| t.into_owned()),
+            self.lens2.view(source).map(|t| t.into_owned()),
+        ) {
+            (Some(v1), Some(v2)) => Some(LensValue::Owned(v1 | v2)),
+
+            _ => None,
+        }
     }
 
     fn name(&self) -> Option<&'static str> {
@@ -595,20 +625,15 @@ where
     type Source = L1::Source;
     type Target = (L1::Target, L2::Target);
 
-    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        self.0.view(source, |t1| {
-            if let Some(l1) = t1 {
-                self.1.view(source, |t2| {
-                    if let Some(l2) = t2 {
-                        map(Some(&(l1.clone(), l2.clone())))
-                    } else {
-                        map(None)
-                    }
-                })
-            } else {
-                map(None)
-            }
-        })
+    fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+        match (
+            self.0.view(source).map(|t| t.into_owned()),
+            self.1.view(source).map(|t| t.into_owned()),
+        ) {
+            (Some(v1), Some(v2)) => Some(LensValue::Owned((v1, v2))),
+
+            _ => None,
+        }
     }
 
     fn name(&self) -> Option<&'static str> {

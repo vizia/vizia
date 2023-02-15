@@ -1,4 +1,4 @@
-use crate::prelude::Wrapper;
+use crate::prelude::{LensValue, Wrapper};
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
 

@@ -1,4 +1,4 @@
-use std::{any::TypeId, collections::HashSet};
+use std::{any::TypeId, collections::HashSet, ops::Deref};
 
 use crate::prelude::*;
 
@@ -46,13 +46,14 @@ where
 
     fn update(&mut self, model: ModelOrView) -> bool {
         if let Some(data) = model.downcast_ref::<L::Source>() {
-            let result = self.lens.view(data, |t| match (&self.old, t) {
-                (Some(a), Some(b)) if a.same(b) => None,
-                (None, None) => None,
-                _ => Some(t.cloned()),
-            });
+            let result = match (&self.old, self.lens.view(data).as_ref()) {
+                (Some(old), Some(new)) if old.same(new) => None,
+                (_, Some(new)) => Some(new.deref().clone()),
+                _ => None,
+            };
+
             if let Some(new_data) = result {
-                self.old = new_data;
+                self.old = Some(new_data);
                 return true;
             }
         }
