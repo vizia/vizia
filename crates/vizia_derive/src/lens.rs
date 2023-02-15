@@ -188,6 +188,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         #module_vis mod #twizzled_name {
             #(#defs)*
             #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+            #[allow(non_camel_case_types)]
             #struct_vis struct root#lens_ty_generics(#(#phantom_decls),*);
 
             impl #lens_ty_generics root#lens_ty_generics{
