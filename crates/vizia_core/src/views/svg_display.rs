@@ -1,7 +1,7 @@
 use femtovg::{Paint, Path};
-use usvg::{NodeKind, PathSegment};
+use usvg::{LineCap, LineJoin, NodeKind, PathSegment};
 
-use crate::prelude::*;
+use crate::{prelude::*, vg};
 
 /// A svg display used to display vector graphics to the screen.
 ///
@@ -144,6 +144,23 @@ impl SvgTree {
                     to_femto_color(&stroke.paint).map(|paint| {
                         let mut stroke_paint = Paint::color(paint);
                         stroke_paint.set_line_width(stroke.width.get() as f32);
+
+                        let line_cap: vg::LineCap = match stroke.linecap {
+                            LineCap::Butt => vg::LineCap::Butt,
+                            LineCap::Square => vg::LineCap::Square,
+                            LineCap::Round => vg::LineCap::Round,
+                        };
+
+                        let line_join: vg::LineJoin = match stroke.linejoin {
+                            LineJoin::Bevel => vg::LineJoin::Bevel,
+                            LineJoin::Miter => vg::LineJoin::Miter,
+                            LineJoin::Round => vg::LineJoin::Round,
+                        };
+
+                        stroke_paint.set_line_cap(line_cap);
+                        stroke_paint.set_line_join(line_join);
+
+                        stroke_paint.set_miter_limit(stroke.miterlimit.get() as f32);
                         stroke_paint
                     })
                 });
