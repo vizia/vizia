@@ -4,8 +4,8 @@ use vizia_core::state::RatioLens;
 fn main() {
     Application::new(|cx| {
         ScrollView::new(cx, 0.0, 0.0, true, true, |cx| {
-            Label::new(cx, "Label 1").width(Units::Pixels(1000.0)).background_color(Color::green());
-            Label::new(cx, "Label 2").height(Units::Pixels(1000.0)).background_color(Color::blue());
+            Label::new(cx, "Label 1").width(Units::Pixels(1000.0)).background_color(Color::GREEN);
+            Label::new(cx, "Label 2").height(Units::Pixels(1000.0)).background_color(Color::BLUE);
         })
         .size(Units::Pixels(300.0));
         ScrollData {
@@ -21,13 +21,13 @@ fn main() {
             ScrollView::custom(cx, false, false, ScrollData::root, |cx| {
                 Label::new(cx, "Label 1")
                     .width(Units::Pixels(1000.0))
-                    .background_color(Color::green());
+                    .background_color(Color::GREEN);
             })
             .size(Units::Pixels(300.0));
             ScrollView::custom(cx, false, false, ScrollData::root, |cx| {
                 Label::new(cx, "Label 2")
                     .width(Units::Pixels(1000.0))
-                    .background_color(Color::blue());
+                    .background_color(Color::BLUE);
             })
             .size(Units::Pixels(300.0));
         });

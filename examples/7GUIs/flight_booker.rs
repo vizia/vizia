@@ -111,7 +111,7 @@ fn main() {
                                 handle.background_color(if selected {
                                     Color::from("#f8ac14")
                                 } else {
-                                    Color::white()
+                                    Color::WHITE
                                 });
                             })
                             .on_press(move |cx| {

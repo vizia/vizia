@@ -34,12 +34,12 @@ fn main() {
         Element::new(cx)
             .size(Pixels(100.0))
             .space(Pixels(20.0))
-            .background_color(Color::blue())
+            .background_color(Color::BLUE)
             .border_width(Pixels(2.0))
-            .border_color(Color::green())
+            .border_color(Color::GREEN)
             .border_radius(Pixels(5.0))
             .outline_width(Pixels(2.0))
-            .outline_color(Color::red())
+            .outline_color(Color::RED)
             .outline_offset(Pixels(2.0));
     })
     .run();

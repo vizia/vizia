@@ -23,25 +23,25 @@ fn main() {
         // Animation
         let animation = cx
             .add_animation(std::time::Duration::from_secs(1))
-            .add_keyframe(0.0, |keyframe| keyframe.set_background_color(Color::red()))
-            .add_keyframe(1.0, |keyframe| keyframe.set_background_color(Color::blue()))
+            .add_keyframe(0.0, |keyframe| keyframe.set_background_color(Color::RED))
+            .add_keyframe(1.0, |keyframe| keyframe.set_background_color(Color::BLUE))
             .build();
 
         let animation_persistent = cx
             .add_animation(std::time::Duration::from_secs(1))
             .persistent()
-            .add_keyframe(0.0, |keyframe| keyframe.set_background_color(Color::red()))
-            .add_keyframe(1.0, |keyframe| keyframe.set_background_color(Color::blue()))
+            .add_keyframe(0.0, |keyframe| keyframe.set_background_color(Color::RED))
+            .add_keyframe(1.0, |keyframe| keyframe.set_background_color(Color::BLUE))
             .build();
 
         Element::new(cx)
             .size(Pixels(200.0))
-            .background_color(Color::red())
+            .background_color(Color::RED)
             .on_press(move |cx| cx.play_animation(animation));
 
         Element::new(cx)
             .size(Pixels(200.0))
-            .background_color(Color::red())
+            .background_color(Color::RED)
             .on_press(move |cx| cx.play_animation(animation_persistent));
     })
     .title("Animation")

@@ -44,7 +44,7 @@ fn main() {
                 Label::new(cx, item)
                     .width(Pixels(100.0))
                     .height(Pixels(30.0))
-                    .border_color(Color::black())
+                    .border_color(Color::BLACK)
                     .border_width(Pixels(1.0));
             })
             .row_between(Pixels(5.0));

@@ -36,7 +36,7 @@ fn main() {
 
                 Knob::new(cx, 0.5, KnobData::knobs.map(|knobs| knobs[0]), false)
                     .on_changing(move |cx, val| cx.emit(KnobChangeEvent::SetKnob(0, val)))
-                    .color(Color::red());
+                    .color(Color::RED);
 
                 Label::new(cx, KnobData::knobs.map(|knobs| format!("{:.3}", knobs[0])));
             })

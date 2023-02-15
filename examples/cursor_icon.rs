@@ -6,7 +6,7 @@ macro_rules! cursor_label {
             .width(Pixels(110.0))
             .height(Pixels(30.0))
             .border_width(Pixels(1.0))
-            .border_color(Color::black())
+            .border_color(Color::BLACK)
             .child_top(Stretch(1.0))
             .child_bottom(Stretch(1.0))
             .child_left(Pixels(5.0))

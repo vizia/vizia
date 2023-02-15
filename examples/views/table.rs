@@ -72,7 +72,7 @@ fn main() {
                         .background_color(if index % 2 != 0 {
                             Color::rgb(230, 230, 230)
                         } else {
-                            Color::white()
+                            Color::WHITE
                         });
                 },
             )
@@ -127,7 +127,7 @@ fn main() {
                         .background_color(if index % 2 != 0 {
                             Color::rgb(230, 230, 230)
                         } else {
-                            Color::white()
+                            Color::WHITE
                         });
                 },
             )
@@ -179,7 +179,7 @@ fn main() {
                         .background_color(if index % 2 != 0 {
                             Color::rgb(230, 230, 230)
                         } else {
-                            Color::white()
+                            Color::WHITE
                         });
                 },
             )

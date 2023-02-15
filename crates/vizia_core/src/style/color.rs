@@ -216,54 +216,15 @@ macro_rules! implement_color {
 }
 
 impl Color {
-    #[deprecated]
-    pub const fn transparent() -> Self {
-        Self { data: 0x00000000 }
-    }
-
-    #[deprecated]
-    pub const fn black() -> Self {
-        Self { data: 0x000000FF }
-    }
-
-    #[deprecated]
-    pub const fn white() -> Self {
-        Self { data: 0xFFFFFFFF }
-    }
-
-    #[deprecated]
-    pub const fn red() -> Self {
-        Self { data: 0xFF0000FF }
-    }
-
-    #[deprecated]
-    pub const fn green() -> Self {
-        Self { data: 0x008000FF }
-    }
-
-    #[deprecated]
-    pub const fn blue() -> Self {
-        Self { data: 0x0000FFFF }
-    }
-
-    #[deprecated]
-    pub const fn yellow() -> Self {
-        Self { data: 0xFFFF00FF }
-    }
-
-    #[deprecated]
-    pub const fn cyan() -> Self {
-        Self { data: 0x00FFFFFF }
-    }
-
-    #[deprecated]
-    pub const fn magenta() -> Self {
-        Self { data: 0xFF00FFFF }
-    }
-
     pub const TRANSPARENT: Color = Color::from_raw(0x00000000);
     pub const WHITE: Color = Color::from_raw(0xFFFFFFFF);
     pub const BLACK: Color = Color::from_raw(0x000000FF);
+    pub const RED: Color = Color::from_raw(0xFF0000FF);
+    pub const GREEN: Color = Color::from_raw(0x008000FF);
+    pub const BLUE: Color = Color::from_raw(0x0000FFFF);
+    pub const YELLOW: Color = Color::from_raw(0xFFFF00FF);
+    pub const CYAN: Color = Color::from_raw(0x00FFFFFF);
+    pub const MAGENTA: Color = Color::from_raw(0xFF00FFFF);
     implement_color!(
         RED, 0xFFEBEE, 0xFFCDD2, 0xEF9A9A, 0xE57373, 0xEF5350, 0xF44336, 0xE53935, 0xD32F2F,
         0xC62828, 0xB71C1C

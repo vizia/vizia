@@ -1,6 +1,6 @@
 use vizia::prelude::*;
 
-const COLORS: [Color; 3] = [Color::red(), Color::green(), Color::blue()];
+const COLORS: [Color; 3] = [Color::RED, Color::GREEN, Color::BLUE];
 
 fn main() {
     Application::new(|cx| {
