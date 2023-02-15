@@ -196,8 +196,8 @@ impl Res<SvgTree> for SvgTree {
     }
 }
 
-impl<T: Copy> Res<(T, T)> for (T, T) {
-    fn get_val(&self, _: &Context) -> (T, T) {
+impl Res<(u32, u32)> for (u32, u32) {
+    fn get_val(&self, _: &Context) -> (u32, u32) {
         *self
     }
 
