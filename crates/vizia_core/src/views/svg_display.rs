@@ -66,6 +66,7 @@ impl View for SvgDisplay {
         let b = cx.bounds();
 
         canvas.translate(b.x, b.y);
+        canvas.scale(b.w / self.tree.size.0, b.h / self.tree.size.1);
 
         for (mut path, fill, stroke) in self.tree.result.clone() {
             if let Some(mut fill) = fill {
@@ -86,6 +87,7 @@ impl View for SvgDisplay {
 #[derive(Lens, Clone, Default)]
 pub struct SvgTree {
     result: Vec<(Path, Option<Paint>, Option<Paint>)>,
+    size: (f32, f32),
 }
 
 pub type SvgOptions = usvg::Options;
@@ -138,6 +140,6 @@ impl SvgTree {
             }
         }
 
-        Self { result: paths }
+        Self { result: paths, size: (tree.size.width() as f32, tree.size.height() as f32) }
     }
 }
