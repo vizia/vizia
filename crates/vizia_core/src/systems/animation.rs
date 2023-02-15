@@ -24,7 +24,10 @@ pub fn animation_system(cx: &mut Context) -> bool {
         | cx.style.font_color.tick(time);
 
     // Properties which affect layout
-    let needs_relayout = cx.style.border_width.tick(time)
+    let needs_relayout = cx.style.border_width_left.tick(time)
+        | cx.style.border_width_right.tick(time)
+        | cx.style.border_width_top.tick(time)
+        | cx.style.border_width_bottom.tick(time)
         | cx.style.font_size.tick(time)
         | cx.style.left.tick(time)
         | cx.style.right.tick(time)

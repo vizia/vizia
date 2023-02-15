@@ -127,7 +127,14 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     let mut border_color: femtovg::Color = border_color.into();
     border_color.set_alphaf(border_color.a * opacity);
 
-    let border_width = cx.border_width().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
+    let border_width_left =
+        cx.border_width_left().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
+    let border_width_right =
+        cx.border_width_right().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
+    let border_width_top =
+        cx.border_width_top().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
+    let border_width_bottom =
+        cx.border_width_bottom().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
 
     let outline_width =
         cx.outline_width().unwrap_or_default().value_or(bounds.w.min(bounds.h), 0.0);
@@ -206,21 +213,21 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     let mut path = Path::new();
 
     if bounds.w == bounds.h
-        && border_radius_bottom_left == (bounds.w - 2.0 * border_width) / 2.0
-        && border_radius_bottom_right == (bounds.w - 2.0 * border_width) / 2.0
-        && border_radius_top_left == (bounds.w - 2.0 * border_width) / 2.0
-        && border_radius_top_right == (bounds.w - 2.0 * border_width) / 2.0
+        && border_radius_bottom_left == (bounds.w - (border_width_left + border_width_right)) / 2.0 // TODO: should this also need `border_width_(top/bottom)` anywhere?
+        && border_radius_bottom_right == (bounds.w - (border_width_left + border_width_right)) / 2.0
+        && border_radius_top_left == (bounds.w - (border_width_left + border_width_right)) / 2.0
+        && border_radius_top_right == (bounds.w - (border_width_left + border_width_right)) / 2.0
     {
         path.circle(
-            bounds.x + (border_width / 2.0) + (bounds.w - border_width) / 2.0,
-            bounds.y + (border_width / 2.0) + (bounds.h - border_width) / 2.0,
+            bounds.x + (border_width_left / 2.0) + (bounds.w - border_width_right) / 2.0,
+            bounds.y + (border_width_top / 2.0) + (bounds.h - border_width_bottom) / 2.0, // TODO: need to swap `top` and `bottom`?
             bounds.w / 2.0,
         );
     } else {
-        let x = bounds.x + border_width / 2.0;
-        let y = bounds.y + border_width / 2.0;
-        let w = bounds.w - border_width;
-        let h = bounds.h - border_width;
+        let x = bounds.x + border_width_left / 2.0;
+        let y = bounds.y + border_width_top / 2.0;
+        let w = bounds.w - border_width_right;
+        let h = bounds.h - border_width_bottom;
         let halfw = w.abs() * 0.5;
         let halfh = h.abs() * 0.5;
 
@@ -459,7 +466,7 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
 
     // Draw border
     let mut paint = Paint::color(border_color);
-    paint.set_line_width(border_width);
+    paint.set_line_width(border_width_left); // TODO: make this use different widths for different sides
     canvas.stroke_path(&mut path, &paint);
 
     // Draw outline
@@ -509,10 +516,10 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
 
     // Draw text and image
     if cx.text_context.has_buffer(cx.current) || cx.image().is_some() {
-        let mut box_x = bounds.x + border_width;
-        let mut box_y = bounds.y + border_width;
-        let mut box_w = bounds.w - border_width * 2.0;
-        let mut box_h = bounds.h - border_width * 2.0;
+        let mut box_x = bounds.x + border_width_left;
+        let mut box_y = bounds.y + border_width_top;
+        let mut box_w = bounds.w - border_width_right;
+        let mut box_h = bounds.h - border_width_bottom;
 
         let child_left = cx.child_left().unwrap_or_default();
         let child_right = cx.child_right().unwrap_or_default();

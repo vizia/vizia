@@ -67,6 +67,10 @@ pub(crate) enum Property {
 
     // Border Width
     BorderWidth(Units),
+    BorderLeftWidth(Units),
+    BorderRightWidth(Units),
+    BorderTopWidth(Units),
+    BorderBottomWidth(Units),
 
     // Border Color
     BorderColor(Color),
@@ -224,6 +228,18 @@ impl std::fmt::Display for Property {
                 write!(f, "border-bottom-right-radius: {};", fmt_units(val))
             }
             Property::BorderWidth(val) => write!(f, "border-width: {};", fmt_units(val)),
+            Property::BorderLeftWidth(val) => {
+                write!(f, "border-left-width: {};", fmt_units(val))
+            }
+            Property::BorderRightWidth(val) => {
+                write!(f, "border-right-width: {};", fmt_units(val))
+            }
+            Property::BorderTopWidth(val) => {
+                write!(f, "border-top-width: {};", fmt_units(val))
+            }
+            Property::BorderBottomWidth(val) => {
+                write!(f, "border-bottom-width: {};", fmt_units(val))
+            }
             Property::BorderColor(val) => write!(f, "border-color: {};", val),
             Property::BorderCornerShape(val) => write!(f, "border-corner-shape: {};", val),
             Property::BorderTopLeftShape(val) => write!(f, "border-top-left-shape: {};", val),

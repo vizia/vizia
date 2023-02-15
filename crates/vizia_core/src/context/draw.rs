@@ -123,7 +123,10 @@ impl<'a> DrawContext<'a> {
         physical * self.style.dpi_factor as f32
     }
 
-    style_getter_units!(border_width);
+    style_getter_units!(border_width_left);
+    style_getter_units!(border_width_right);
+    style_getter_units!(border_width_top);
+    style_getter_units!(border_width_bottom);
     style_getter_units!(border_radius_top_right);
     style_getter_units!(border_radius_top_left);
     style_getter_units!(border_radius_bottom_right);

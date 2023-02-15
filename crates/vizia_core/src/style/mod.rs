@@ -146,7 +146,10 @@ pub struct Style {
     //pub scroll: DenseStorage<Scroll>,     // TODO
 
     // Border
-    pub border_width: AnimatableSet<Units>,
+    pub border_width_left: AnimatableSet<Units>,
+    pub border_width_right: AnimatableSet<Units>,
+    pub border_width_top: AnimatableSet<Units>,
+    pub border_width_bottom: AnimatableSet<Units>,
     pub border_color: AnimatableSet<Color>,
 
     // Border Shape
@@ -444,7 +447,26 @@ impl Style {
 
                     // Border
                     Property::BorderWidth(value) => {
-                        self.border_width.insert_rule(rule_id, value);
+                        self.border_width_left.insert_rule(rule_id, value);
+                        self.border_width_right.insert_rule(rule_id, value);
+                        self.border_width_top.insert_rule(rule_id, value);
+                        self.border_width_bottom.insert_rule(rule_id, value);
+                    }
+
+                    Property::BorderLeftWidth(value) => {
+                        self.border_width_left.insert_rule(rule_id, value);
+                    }
+
+                    Property::BorderRightWidth(value) => {
+                        self.border_width_right.insert_rule(rule_id, value);
+                    }
+
+                    Property::BorderTopWidth(value) => {
+                        self.border_width_top.insert_rule(rule_id, value);
+                    }
+
+                    Property::BorderBottomWidth(value) => {
+                        self.border_width_bottom.insert_rule(rule_id, value);
                     }
 
                     Property::BorderColor(value) => {
@@ -1012,8 +1034,13 @@ impl Style {
         self.overflow.remove(entity);
 
         // Border
-        self.border_width.remove(entity);
         self.border_color.remove(entity);
+
+        // Border Width
+        self.border_width_top.remove(entity);
+        self.border_width_bottom.remove(entity);
+        self.border_width_left.remove(entity);
+        self.border_width_right.remove(entity);
 
         // Border Shape
         self.border_shape_bottom_left.remove(entity);
@@ -1152,8 +1179,13 @@ impl Style {
         self.overflow.clear_rules();
 
         // Border
-        self.border_width.clear_rules();
         self.border_color.clear_rules();
+
+        // Border Width
+        self.border_width_top.clear_rules();
+        self.border_width_bottom.clear_rules();
+        self.border_width_left.clear_rules();
+        self.border_width_right.clear_rules();
 
         // Border Shape
         self.border_shape_bottom_left.clear_rules();
