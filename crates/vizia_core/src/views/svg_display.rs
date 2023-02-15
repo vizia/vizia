@@ -16,7 +16,19 @@ use crate::prelude::*;
 /// #
 /// # let cx = &mut Context::default();
 /// #
-/// SvgDisplay::new(cx, SvgTree::from_str(include_str!("path/to/my/graphic.svg"), &SvgOptions::default()));
+/// SvgDisplay::new(cx, SvgTree::from_str(include_str!("path/to/my/graphic.svg"), &SvgOptions::default(), None));
+/// ```
+///
+/// ## Svg Display with overriden color
+///
+/// Displaying a Svg where the color is other than from the given svg.
+///
+/// ```ignore
+/// # use vizia_core::prelude::*;
+/// #
+/// # let cx = &mut Context::default();
+/// #
+/// SvgDisplay::new(cx, SvgTree::from_str(include_str!("path/to/my/graphic.svg"), &SvgOptions::default(), Some(Color::red())));
 /// ```
 pub struct SvgDisplay {
     tree: SvgTree,
@@ -36,7 +48,7 @@ impl SvgDisplay {
     /// #
     /// # let cx = &mut Context::default();
     /// #
-    /// SvgDisplay::new(cx, SvgTree::from_str(include_str!("path/to/my/graphic.svg"), &SvgOptions::default()));
+    /// SvgDisplay::new(cx, SvgTree::from_str(include_str!("path/to/my/graphic.svg"), &SvgOptions::default(), None));
     /// ```
     pub fn new<'a>(cx: &'a mut Context, svg_tree: impl Res<SvgTree>) -> Handle<'a, Self> {
         Self { tree: SvgTree::default() }.build(cx, |cx| {
@@ -93,7 +105,7 @@ pub struct SvgTree {
 pub type SvgOptions = usvg::Options;
 
 impl SvgTree {
-    pub fn from_str(text: &str, options: &SvgOptions) -> SvgTree {
+    pub fn from_str(text: &str, options: &SvgOptions, override_color: Option<Color>) -> SvgTree {
         let tree = usvg::Tree::from_str(text, options).unwrap();
         let mut paths = vec![];
 
@@ -122,19 +134,28 @@ impl SvgTree {
                     }
                 }
 
-                let fill = svg_path
+                let mut fill = svg_path
                     .fill
                     .as_ref()
                     .and_then(|fill| to_femto_color(&fill.paint))
                     .map(Paint::color);
 
-                let stroke = svg_path.stroke.as_ref().and_then(|stroke| {
+                let mut stroke = svg_path.stroke.as_ref().and_then(|stroke| {
                     to_femto_color(&stroke.paint).map(|paint| {
                         let mut stroke_paint = Paint::color(paint);
                         stroke_paint.set_line_width(stroke.width.get() as f32);
                         stroke_paint
                     })
                 });
+
+                if let Some(override_color) = override_color {
+                    if let Some(paint) = &mut fill {
+                        paint.set_color(override_color.into());
+                    }
+                    if let Some(paint) = &mut stroke {
+                        paint.set_color(override_color.into());
+                    }
+                }
 
                 paths.push((path, fill, stroke));
             }

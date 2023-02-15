@@ -7,6 +7,7 @@ fn main() {
             SvgTree::from_str(
                 include_str!("../resources/heroicons_cake.svg"),
                 &SvgOptions::default(),
+                None,
             ),
         )
         .size(Pixels(200.));
@@ -16,6 +17,7 @@ fn main() {
             SvgTree::from_str(
                 include_str!("../resources/heroicons_cake.svg"),
                 &SvgOptions::default(),
+                Some(Color::green()),
             ),
         )
         .size(Pixels(200.));
