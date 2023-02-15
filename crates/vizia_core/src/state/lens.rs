@@ -231,6 +231,7 @@ impl<A, B> Lens for Then<A, B>
 where
     A: Lens,
     B: Lens<Source = A::Target>,
+    B::Target: Clone,
 {
     type Source = A::Source;
     type Target = B::Target;
@@ -238,10 +239,9 @@ where
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
         match self.a.view(source) {
             Some(LensValue::Borrowed(val)) => self.b.view(val),
-            // TODO: Not sure if this is possible tbh.
-            // Some(LensValue::Owned(val)) => {
-            //     self.b.view(&val).map(|t| LensValue::Owned(t.into_owned()))
-            // }
+            Some(LensValue::Owned(val)) => {
+                self.b.view(&val).map(|t| LensValue::Owned(t.into_owned()))
+            }
             _ => None,
         }
     }
