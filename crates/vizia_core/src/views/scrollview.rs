@@ -123,7 +123,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             .bind(data.clone(), |handle, data| {
                 let dpi_factor = handle.cx.style.dpi_factor;
                 if dpi_factor > 0.0 {
-                    let data = data.get(handle.cx);
+                    let data = data.get_val(handle.cx);
                     let left = ((data.child_x - data.parent_x) * data.scroll_x).round()
                         / handle.cx.style.dpi_factor as f32;
                     let top = ((data.child_y - data.parent_y) * data.scroll_y).round()
@@ -191,7 +191,7 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
                     if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, -*x) } else { (-*x, -*y) };
 
                 // what percentage of the negative space does this cross?
-                let data = self.data.get(cx);
+                let data = self.data.get_val(cx);
                 if x != 0.0 {
                     let negative_space = data.child_x - data.parent_x;
                     let logical_delta = x * SCROLL_SENSITIVITY / negative_space;

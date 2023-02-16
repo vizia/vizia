@@ -35,14 +35,14 @@ fn main() {
                             .child_top(Stretch(1.0))
                             .child_bottom(Stretch(1.0))
                             .bind(AppData::choice, move |handle, selected| {
-                                if item.get(handle.cx) == selected.get(handle.cx) {
+                                if item.get_val(handle.cx) == selected.get_val(handle.cx) {
                                     handle.background_color(Color::from("#f8ac14"));
                                 } else {
                                     handle.background_color(Color::white());
                                 }
                             })
                             .on_press(move |cx| {
-                                cx.emit(AppDataSetter::Choice(item.get(cx)));
+                                cx.emit(AppDataSetter::Choice(item.get_val(cx)));
                                 cx.emit(PopupEvent::Close);
                             });
                     });

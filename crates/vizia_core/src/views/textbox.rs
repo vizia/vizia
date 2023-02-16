@@ -441,8 +441,7 @@ where
         // TODO can this be simplified now that text doesn't live in TextboxData?
         let result = Self { lens: lens.clone(), kind }.build(cx, move |cx| {
             Binding::new(cx, lens.clone(), |cx, text| {
-                let text_str =
-                    text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
+                let text_str = text.get(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
 
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
@@ -471,8 +470,7 @@ where
                     cx.emit_to(cx.current(), ());
                 }
             });
-            let text =
-                lens.get_fallible(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
+            let text = lens.get(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
             TextboxContainer {}
                 .build(cx, move |cx| {
                     let lbl = TextboxLabel {}
@@ -544,11 +542,8 @@ where
                     cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
                 } else {
                     cx.emit(TextEvent::Submit(false));
-                    let text = self
-                        .lens
-                        .get_fallible(cx)
-                        .map(|x| x.to_string())
-                        .unwrap_or_else(|| "".to_owned());
+                    let text =
+                        self.lens.get(cx).map(|x| x.to_string()).unwrap_or_else(|| "".to_owned());
 
                     cx.emit(TextEvent::ResetText(text));
                     cx.release();
@@ -622,7 +617,7 @@ where
                         cx.emit(TextEvent::Submit(true));
                         let text = self
                             .lens
-                            .get_fallible(cx)
+                            .get(cx)
                             .map(|x| x.to_string())
                             .unwrap_or_else(|| "".to_owned());
 

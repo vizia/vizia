@@ -25,7 +25,7 @@ where
         handle
             .navigable(true)
             .bind(MenuData::selected, move |handle, selected| {
-                let selected = selected.get(handle.cx) == Some(i);
+                let selected = selected.get_val(handle.cx) == Some(i);
                 handle.cx.set_selected(selected);
                 if selected {
                     on_select(handle.cx);
@@ -302,7 +302,7 @@ impl MenuButton {
                 HStack::new(cx, move |cx| {
                     builder(cx);
                     Label::new(cx, "").left(Units::Stretch(1.0)).bind(lens, move |handle, lens| {
-                        let val = lens.get_fallible(handle.cx);
+                        let val = lens.get(handle.cx);
                         handle.text(if val == Some(true) { CHECK } else { "" });
                     });
                 });

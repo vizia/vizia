@@ -107,7 +107,7 @@ fn main() {
                             .child_top(Stretch(1.0))
                             .child_bottom(Stretch(1.0))
                             .bind(AppData::choice, move |handle, choice| {
-                                let selected = item.get(handle.cx) == choice.get(handle.cx);
+                                let selected = item.get_val(handle.cx) == choice.get_val(handle.cx);
                                 handle.background_color(if selected {
                                     Color::from("#f8ac14")
                                 } else {
@@ -115,7 +115,9 @@ fn main() {
                                 });
                             })
                             .on_press(move |cx| {
-                                cx.emit(AppEvent::SetChoice(item.get(cx).to_string()));
+                                cx.emit(AppEvent::SetChoice(
+                                    item.get_val(cx).to_string().to_owned(),
+                                ));
                                 cx.emit(PopupEvent::Close);
                             });
                     });

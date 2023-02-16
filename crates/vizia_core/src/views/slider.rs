@@ -116,7 +116,7 @@ where
             Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
                 let lens = lens.clone();
                 ZStack::new(cx, move |cx| {
-                    let slider_data = slider_data.get(cx);
+                    let slider_data = slider_data.get_val(cx);
                     let thumb_size = slider_data.thumb_size;
                     let orientation = slider_data.orientation;
                     let size = slider_data.size;
@@ -124,7 +124,7 @@ where
 
                     // Active track
                     Element::new(cx).class("active").bind(lens.clone(), move |handle, value| {
-                        let val = value.get(handle.cx);
+                        let val = value.get_val(handle.cx);
                         let normal_val = (val - range.start) / (range.end - range.start);
                         let min = thumb_size / size;
                         let max = 1.0;
@@ -156,8 +156,8 @@ where
                                 cx.emit(SliderEventInternal::SetThumbSize(width, height));
                             }
                         })
-                        .bind(lens, move |handle, value| {
-                            let val = value.get(handle.cx);
+                        .bind(lens.clone(), move |handle, value| {
+                            let val = value.get_val(handle.cx);
                             let normal_val = (val - range.start) / (range.end - range.start);
                             let px = normal_val * (1.0 - (thumb_size / size));
                             if orientation == Orientation::Horizontal {
@@ -300,7 +300,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
-                let val = (self.lens.get(cx) + 0.1 * (max - min)).clamp(min, max);
+                let val = (self.lens.get_val(cx) + 0.1 * (max - min)).clamp(min, max);
                 if let Some(callback) = &self.on_changing {
                     (callback)(cx, val);
                 }
@@ -309,7 +309,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
-                let val = (self.lens.get(cx) - 0.1 * (max - min)).clamp(min, max);
+                let val = (self.lens.get_val(cx) - 0.1 * (max - min)).clamp(min, max);
                 if let Some(callback) = &self.on_changing {
                     (callback)(cx, val);
                 }

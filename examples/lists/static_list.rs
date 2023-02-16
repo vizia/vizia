@@ -59,7 +59,7 @@ fn main() {
             .on_decrement(move |cx| cx.emit(AppEvent::DecrementSelection));
 
             Binding::new(cx, AppData::selected, move |cx, selected_item| {
-                Label::new(cx, &format!("You have selected: {}", selected_item.get(cx),));
+                Label::new(cx, &format!("You have selected: {}", selected_item.get_val(cx),));
             });
         })
         .class("container");

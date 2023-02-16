@@ -50,7 +50,7 @@ where
         Self { lens: lens.clone() }
             .build(cx, |cx| {
                 Binding::new(cx, lens.clone(), move |cx, lens| {
-                    if lens.get(cx) {
+                    if lens.get_val(cx) {
                         if capture_focus {
                             VStack::new(cx, &content).lock_focus_to_within();
                         } else {
@@ -68,7 +68,7 @@ where
 impl<'a, L> Handle<'a, Popup<L>>
 where
     L: Lens,
-    L::Target: Clone + Into<bool>,
+    L::Target: Clone + Data + Into<bool>,
 {
     /// Registers a callback for when the user clicks off of the popup, usually with the intent of
     /// closing it.
@@ -79,7 +79,7 @@ where
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
             cx.add_listener(move |popup: &mut Popup<L>, cx, event| {
-                let flag: bool = popup.lens.get(cx).into();
+                let flag: bool = popup.lens.get_val(cx).clone().into();
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag && meta.origin != cx.current() && !cx.is_over() {

@@ -4,7 +4,7 @@ use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::{BitAnd, BitOr, Deref};
 
-use crate::prelude::*;
+use crate::context::DataContext;
 
 use super::{next_uuid, StoreId};
 
@@ -95,24 +95,11 @@ impl<T: Lens> LensCache for T {}
 ///
 /// This trait is part of the prelude.
 pub trait LensExt: Lens {
-    /// Retrieve a copy of the lensed data from context.
-    ///
-    /// Example
-    /// ```ignore
-    /// let value = lens.get(cx);
-    /// ```
-    fn get<C: DataContext>(&self, cx: &C) -> Self::Target
+    fn get(&self, cx: &impl DataContext) -> Option<Self::Target>
     where
         Self::Target: Clone,
     {
-        self.view(cx.data().expect("Failed to get data")).expect("Failed").into_owned()
-    }
-
-    fn get_fallible<C: DataContext>(&self, cx: &C) -> Option<Self::Target>
-    where
-        Self::Target: Clone,
-    {
-        self.view(cx.data().unwrap()).map(|t| t.into_owned())
+        self.view(cx.data()?).map(|t| t.into_owned())
     }
 
     fn or<Other>(self, other: Other) -> OrLens<Self, Other>

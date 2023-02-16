@@ -33,12 +33,12 @@ fn main() {
                                 .height(Stretch(1.0))
                                 .font_weight(Weight::BOLD);
                             Binding::new(cx, TableData::first_name_sorted, |cx, sorted| {
-                                let visible = match sorted.get(cx) {
+                                let visible = match sorted.get_val(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
                                 let icon =
-                                    if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
+                                    if sorted.get_val(cx) == Sorted::Forward { DOWN } else { UP };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
@@ -91,12 +91,12 @@ fn main() {
                                 .height(Stretch(1.0))
                                 .font_weight(Weight::BOLD);
                             Binding::new(cx, TableData::last_name_sorted, |cx, sorted| {
-                                let visible = match sorted.get(cx) {
+                                let visible = match sorted.get_val(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
                                 let icon =
-                                    if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
+                                    if sorted.get_val(cx) == Sorted::Forward { DOWN } else { UP };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
@@ -147,12 +147,12 @@ fn main() {
                                 .font_weight(Weight::BOLD);
 
                             Binding::new(cx, TableData::age_sorted, |cx, sorted| {
-                                let visible = match sorted.get(cx) {
+                                let visible = match sorted.get_val(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
                                 let icon =
-                                    if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
+                                    if sorted.get_val(cx) == Sorted::Forward { DOWN } else { UP };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))

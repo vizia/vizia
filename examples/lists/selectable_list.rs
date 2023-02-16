@@ -41,7 +41,7 @@ fn main() {
 
         VStack::new(cx, move |cx| {
             List::new(cx, AppData::list, move |cx, index, item| {
-                let item_text = item.get(cx).to_string();
+                let item_text = item.get_val(cx).to_string();
                 //let item_index = item.idx();
                 VStack::new(cx, move |cx| {
                     Label::new(cx, &item_text)
