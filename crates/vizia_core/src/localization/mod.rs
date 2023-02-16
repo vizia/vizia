@@ -87,7 +87,7 @@ impl Clone for Localized {
 }
 
 impl Localized {
-    fn _get_args(&self, cx: &Context) -> FluentArgs {
+    fn get_args(&self, cx: &Context) -> FluentArgs {
         let mut res = FluentArgs::new();
         for (name, arg) in &self.args {
             res.set(name.to_owned(), arg.get_val(cx));
@@ -115,31 +115,31 @@ impl Localized {
 }
 
 impl Res<String> for Localized {
-    fn get_val(&self, _cx: &impl DataContext) -> String {
-        todo!();
-        // let locale = &cx.environment().locale;
-        // let bundle = cx.resource_manager.current_translation(locale);
-        // let message = if let Some(msg) = bundle.get_message(&self.key) {
-        //     msg
-        // } else {
-        //     return format!("{{MISSING: {}}}", self.key);
-        // };
+    fn get_val(&self, cx: &impl DataContext) -> String {
+        let cx = cx.as_context().expect("Failed to get context");
+        let locale = &cx.environment().locale;
+        let bundle = cx.resource_manager.current_translation(locale);
+        let message = if let Some(msg) = bundle.get_message(&self.key) {
+            msg
+        } else {
+            return format!("{{MISSING: {}}}", self.key);
+        };
 
-        // let value = if let Some(value) = message.value() {
-        //     value
-        // } else {
-        //     return format!("{{MISSING: {}}}", self.key);
-        // };
+        let value = if let Some(value) = message.value() {
+            value
+        } else {
+            return format!("{{MISSING: {}}}", self.key);
+        };
 
-        // let mut err = vec![];
-        // let args = self.get_args(cx);
-        // let res = bundle.format_pattern(value, Some(&args), &mut err);
+        let mut err = vec![];
+        let args = self.get_args(cx);
+        let res = bundle.format_pattern(value, Some(&args), &mut err);
 
-        // if err.is_empty() {
-        //     res.to_string()
-        // } else {
-        //     format!("{} {{ERROR: {:?}}}", res, err)
-        // }
+        if err.is_empty() {
+            res.to_string()
+        } else {
+            format!("{} {{ERROR: {:?}}}", res, err)
+        }
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)

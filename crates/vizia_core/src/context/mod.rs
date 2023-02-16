@@ -536,6 +536,10 @@ pub(crate) enum InternalEvent {
 pub trait DataContext {
     /// Get stored data from the context.
     fn data<T: 'static>(&self) -> Option<&T>;
+
+    fn as_context(&self) -> Option<&Context> {
+        None
+    }
 }
 
 pub trait EmitContext {
@@ -566,6 +570,10 @@ impl DataContext for Context {
         }
 
         None
+    }
+
+    fn as_context(&self) -> Option<&Context> {
+        Some(self)
     }
 }
 

@@ -83,7 +83,7 @@
 //!         }.build(cx);
 //!
 //!         Binding::new(cx, AppData::count, |cx, count|{
-//!             Label::new(cx, &count.get(cx).to_string());
+//!             Label::new(cx, &count.get_val(cx).to_string());
 //!         });
 //!     }).run();
 //! }
@@ -113,7 +113,7 @@
 //!         }.build(cx);
 //!
 //!         Binding::new(cx, AppData::count, |cx, count|{
-//!             Label::new(cx, &count.get(cx).to_string());
+//!             Label::new(cx, &count.get_val(cx).to_string());
 //!         });
 //!
 //!         Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx|{

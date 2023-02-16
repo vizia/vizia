@@ -109,7 +109,7 @@ use crate::views::popup::PopupData;
 ///     .height(Pixels(30.0))
 /// }, |cx| {
 ///     Binding::new(cx, AppData::root, |cx, lens| {
-///         let current = lens.get(cx);
+///         let current = lens.get_val(cx);
 ///         for i in 0..6 {
 ///             if LABELS[i].to_lowercase().contains(&current.filter.to_lowercase()) {
 ///                 HStack::new(cx, move |cx| {
