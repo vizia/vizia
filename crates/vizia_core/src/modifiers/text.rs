@@ -7,8 +7,8 @@ pub trait TextModifiers: internal::Modifiable {
     /// Sets the text content of the view.
     fn text<U: ToString>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, val| {
-            let text_data = val.to_string();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let text_data = v.get_val(cx).to_string();
             cx.text_context.set_text(entity, &text_data);
 
             cx.style.needs_text_layout.insert(entity, true).unwrap();
@@ -42,10 +42,10 @@ pub trait TextModifiers: internal::Modifiable {
     );
 
     /// Sets the text color of the view.
-    fn color<U: Into<Color>>(mut self, value: impl Res<U>) -> Self {
+    fn color<U: Clone + Into<Color>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            cx.style.font_color.insert(entity, v.into());
+            cx.style.font_color.insert(entity, v.get_val(cx).into());
             cx.style.needs_redraw();
         });
         self
@@ -55,7 +55,7 @@ pub trait TextModifiers: internal::Modifiable {
     fn font_size(mut self, value: impl Res<f32>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            cx.style.font_size.insert(entity, v);
+            cx.style.font_size.insert(entity, v.get_val(cx).into());
             cx.style.system_flags |= SystemFlags::REFLOW;
         });
         self

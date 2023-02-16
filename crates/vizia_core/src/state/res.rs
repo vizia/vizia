@@ -15,9 +15,9 @@ macro_rules! impl_res_simple {
 
             fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
             where
-                F: 'static + Fn(&mut Context, Entity, Self),
+                F: 'static + Fn(&mut Context, Entity, &Self),
             {
-                (closure)(cx, entity, *self);
+                (closure)(cx, entity, self);
             }
         }
     };
@@ -37,7 +37,7 @@ pub trait Res<T> {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, T);
+        F: 'static + Clone + Fn(&mut Context, Entity, &Self);
 }
 
 pub enum ResValue<'a, 'b, T> {
@@ -114,13 +114,13 @@ where
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, T),
+        F: 'static + Fn(&mut Context, Entity, &Self),
     {
         cx.with_current(entity, |cx| {
             Binding::new(cx, self.clone(), move |cx, val| {
-                if let Some(v) = val.get(cx) {
-                    (closure)(cx, entity, v);
-                }
+                // if let Some(v) = val.get_ref(cx) {
+                (closure)(cx, entity, &val);
+                // }
             });
         });
     }
@@ -137,7 +137,7 @@ impl<'s> Res<&'s str> for &'s str {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, Self),
+        F: 'static + Fn(&mut Context, Entity, &Self),
     {
         (closure)(cx, entity, self);
     }
@@ -154,7 +154,7 @@ impl<'s> Res<&'s String> for &'s String {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, Self),
+        F: 'static + Fn(&mut Context, Entity, &Self),
     {
         (closure)(cx, entity, self);
     }
@@ -171,9 +171,9 @@ impl<'s> Res<String> for String {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, Self),
+        F: 'static + Fn(&mut Context, Entity, &Self),
     {
-        (closure)(cx, entity, self.clone());
+        (closure)(cx, entity, self);
     }
 }
 
@@ -188,9 +188,9 @@ impl Res<Color> for Color {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, Self),
+        F: 'static + Fn(&mut Context, Entity, &Self),
     {
-        (closure)(cx, entity, *self);
+        (closure)(cx, entity, self);
     }
 }
 
@@ -205,9 +205,9 @@ impl Res<Units> for Units {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, Self),
+        F: 'static + Fn(&mut Context, Entity, &Self),
     {
-        (closure)(cx, entity, *self);
+        (closure)(cx, entity, self);
     }
 }
 
@@ -222,9 +222,9 @@ impl Res<Visibility> for Visibility {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, Self),
+        F: 'static + Fn(&mut Context, Entity, &Self),
     {
-        (closure)(cx, entity, *self);
+        (closure)(cx, entity, self);
     }
 }
 
@@ -239,9 +239,9 @@ impl Res<Display> for Display {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, Self),
+        F: 'static + Fn(&mut Context, Entity, &Self),
     {
-        (closure)(cx, entity, *self);
+        (closure)(cx, entity, self);
     }
 }
 
@@ -256,9 +256,9 @@ impl Res<LayoutType> for LayoutType {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, Self),
+        F: 'static + Fn(&mut Context, Entity, &Self),
     {
-        (closure)(cx, entity, *self);
+        (closure)(cx, entity, self);
     }
 }
 
@@ -273,9 +273,9 @@ impl Res<PositionType> for PositionType {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, Self),
+        F: 'static + Fn(&mut Context, Entity, &Self),
     {
-        (closure)(cx, entity, *self);
+        (closure)(cx, entity, self);
     }
 }
 
@@ -290,9 +290,9 @@ impl Res<(u32, u32)> for (u32, u32) {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, Self),
+        F: 'static + Fn(&mut Context, Entity, &Self),
     {
-        (closure)(cx, entity, *self);
+        (closure)(cx, entity, self);
     }
 }
 
@@ -307,9 +307,9 @@ impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, Option<T>),
+        F: 'static + Clone + Fn(&mut Context, Entity, &Option<T>),
     {
-        (closure)(cx, entity, self.clone())
+        (closure)(cx, entity, self)
     }
 }
 
@@ -324,9 +324,9 @@ impl<T: Clone + Res<T>> Res<Vec<T>> for Vec<T> {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, Vec<T>),
+        F: 'static + Clone + Fn(&mut Context, Entity, &Vec<T>),
     {
-        (closure)(cx, entity, self.clone())
+        (closure)(cx, entity, self)
     }
 }
 
@@ -341,8 +341,8 @@ impl Res<FamilyOwned> for FamilyOwned {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, FamilyOwned),
+        F: 'static + Clone + Fn(&mut Context, Entity, &FamilyOwned),
     {
-        (closure)(cx, entity, self.clone())
+        (closure)(cx, entity, self)
     }
 }

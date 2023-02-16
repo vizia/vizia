@@ -49,6 +49,7 @@ pub trait StyleModifiers: internal::Modifiable {
         let name = name.to_owned();
         let entity = self.entity();
         applied.set_or_bind(self.context(), entity, move |cx, entity, applied| {
+            let applied = applied.get_val(cx);
             if let Some(class_list) = cx.style.classes.get_mut(entity) {
                 if applied {
                     class_list.insert(name.clone());
@@ -67,14 +68,15 @@ pub trait StyleModifiers: internal::Modifiable {
     // TODO: Should these have their own modifiers trait?
 
     /// Sets the state of the view to checked.
-    fn checked<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
+    fn checked<U: Clone + Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
-        state.set_or_bind(self.context(), entity, |cx, entity, val| {
+        state.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let val = v.get_val(cx).into();
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
-                pseudo_classes.set(PseudoClass::CHECKED, val.into());
+                pseudo_classes.set(PseudoClass::CHECKED, val);
             } else {
                 let mut pseudoclass = PseudoClass::empty();
-                pseudoclass.set(PseudoClass::CHECKED, val.into());
+                pseudoclass.set(PseudoClass::CHECKED, val);
                 cx.style.pseudo_classes.insert(entity, pseudoclass).unwrap();
             }
 
@@ -115,10 +117,10 @@ pub trait StyleModifiers: internal::Modifiable {
     ///
     /// Views with a higher z-order will be rendered on top of those with a lower z-order.
     /// Views with the same z-order are rendered in tree order.
-    fn z_order<U: Into<i32>>(mut self, value: impl Res<U>) -> Self {
+    fn z_order<U: Clone + Into<i32>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            let value = v.into();
+            let value = v.get_val(cx).into();
             cx.tree.set_z_order(entity, value);
             cx.needs_redraw();
         });
@@ -154,8 +156,8 @@ pub trait StyleModifiers: internal::Modifiable {
     // TODO: Docs for this.
     fn image<U: ToString>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, val| {
-            let val = val.to_string();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let val = v.get_val(cx).to_string();
             if let Some(prev_data) = cx.style.image.get(entity) {
                 if prev_data != &val {
                     cx.style.image.insert(entity, val);
@@ -213,10 +215,10 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets the border radius for all four corners of the view.
-    fn border_radius<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn border_radius<U: Clone + Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            let value = v.into();
+            let value = v.get_val(cx).into();
             cx.style.border_radius_top_left.insert(entity, value);
             cx.style.border_radius_top_right.insert(entity, value);
             cx.style.border_radius_bottom_left.insert(entity, value);
@@ -254,10 +256,13 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets the border corner shape for all four corners of the view.
-    fn border_corner_shape<U: Into<BorderCornerShape>>(mut self, value: impl Res<U>) -> Self {
+    fn border_corner_shape<U: Clone + Into<BorderCornerShape>>(
+        mut self,
+        value: impl Res<U>,
+    ) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            let value = v.into();
+            let value = v.get_val(cx).into();
             cx.style.border_shape_top_left.insert(entity, value);
             cx.style.border_shape_top_right.insert(entity, value);
             cx.style.border_shape_bottom_left.insert(entity, value);

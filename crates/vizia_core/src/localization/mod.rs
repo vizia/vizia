@@ -87,7 +87,7 @@ impl Clone for Localized {
 }
 
 impl Localized {
-    fn get_args(&self, cx: &Context) -> FluentArgs {
+    fn _get_args(&self, cx: &Context) -> FluentArgs {
         let mut res = FluentArgs::new();
         for (name, arg) in &self.args {
             res.set(name.to_owned(), arg.get_val(cx));
@@ -115,7 +115,7 @@ impl Localized {
 }
 
 impl Res<String> for Localized {
-    fn get_val(&self, cx: &impl DataContext) -> String {
+    fn get_val(&self, _cx: &impl DataContext) -> String {
         todo!();
         // let locale = &cx.environment().locale;
         // let bundle = cx.resource_manager.current_translation(locale);
@@ -144,7 +144,7 @@ impl Res<String> for Localized {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, String),
+        F: 'static + Clone + Fn(&mut Context, Entity, &Localized),
     {
         let self2 = self.clone();
         cx.with_current(entity, move |cx| {
@@ -153,7 +153,7 @@ impl Res<String> for Localized {
                 let self3 = self2.clone();
                 let closure = closure.clone();
                 bind_recursive(cx, &lenses, move |cx| {
-                    closure(cx, entity, self3.get_val(cx));
+                    closure(cx, entity, &self3);
                 });
             });
         });

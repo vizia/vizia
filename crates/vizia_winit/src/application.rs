@@ -437,7 +437,7 @@ impl WindowModifiers for Application {
     fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
         self.window_description.title = title.get_val(&mut self.context).to_string();
         title.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetTitle(val.to_string()));
+            cx.emit(WindowEvent::SetTitle(val.get_val(cx).to_string()));
         });
 
         self
@@ -447,7 +447,7 @@ impl WindowModifiers for Application {
         self.window_description.inner_size = size.get_val(&mut self.context).into();
         *BackendContext::new(&mut self.context).window_size() = self.window_description.inner_size;
         size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetSize(val.into()));
+            cx.emit(WindowEvent::SetSize(val.get_val(cx).into()));
         });
 
         self
@@ -457,7 +457,7 @@ impl WindowModifiers for Application {
         self.window_description.min_inner_size =
             size.get_val(&mut self.context).map(|size| size.into());
         size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMinSize(val.map(|size| size.into())));
+            cx.emit(WindowEvent::SetMinSize(val.get_val(cx).map(|size| size.into())));
         });
 
         self
@@ -467,7 +467,7 @@ impl WindowModifiers for Application {
         self.window_description.max_inner_size =
             size.get_val(&mut self.context).map(|size| size.into());
         size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMaxSize(val.map(|size| size.into())));
+            cx.emit(WindowEvent::SetMaxSize(val.get_val(cx).map(|size| size.into())));
         });
 
         self
@@ -476,7 +476,7 @@ impl WindowModifiers for Application {
     fn position<P: Into<Position>>(mut self, position: impl Res<P>) -> Self {
         self.window_description.position = Some(position.get_val(&mut self.context).into());
         position.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetPosition(val.into()));
+            cx.emit(WindowEvent::SetPosition(val.get_val(cx).into()));
         });
 
         self
@@ -485,7 +485,7 @@ impl WindowModifiers for Application {
     fn resizable(mut self, flag: impl Res<bool>) -> Self {
         self.window_description.resizable = flag.get_val(&mut self.context);
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetResizable(val));
+            cx.emit(WindowEvent::SetResizable(val.get_val(cx)));
         });
 
         self
@@ -494,7 +494,7 @@ impl WindowModifiers for Application {
     fn minimized(mut self, flag: impl Res<bool>) -> Self {
         self.window_description.minimized = flag.get_val(&mut self.context);
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMinimized(val));
+            cx.emit(WindowEvent::SetMinimized(val.get_val(cx)));
         });
 
         self
@@ -503,7 +503,7 @@ impl WindowModifiers for Application {
     fn maximized(mut self, flag: impl Res<bool>) -> Self {
         self.window_description.maximized = flag.get_val(&mut self.context);
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMaximized(val));
+            cx.emit(WindowEvent::SetMaximized(val.get_val(cx)));
         });
 
         self
@@ -512,7 +512,7 @@ impl WindowModifiers for Application {
     fn visible(mut self, flag: impl Res<bool>) -> Self {
         self.window_description.visible = flag.get_val(&mut self.context);
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetVisible(val));
+            cx.emit(WindowEvent::SetVisible(val.get_val(cx)));
         });
 
         self
@@ -527,7 +527,7 @@ impl WindowModifiers for Application {
     fn decorations(mut self, flag: impl Res<bool>) -> Self {
         self.window_description.decorations = flag.get_val(&mut self.context);
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetDecorations(val));
+            cx.emit(WindowEvent::SetDecorations(val.get_val(cx)));
         });
 
         self
@@ -536,7 +536,7 @@ impl WindowModifiers for Application {
     fn always_on_top(mut self, flag: impl Res<bool>) -> Self {
         self.window_description.always_on_top = flag.get_val(&mut self.context);
         flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetAlwaysOnTop(val));
+            cx.emit(WindowEvent::SetAlwaysOnTop(val.get_val(cx)));
         });
 
         self
