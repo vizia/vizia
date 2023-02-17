@@ -55,7 +55,7 @@ impl_res_simple!(FontStyle);
 impl<T, L> Res<T> for L
 where
     L: Lens<Target = T> + LensExt,
-    T: Clone + Data,
+    T: Data,
 {
     fn get_val(&self, cx: &Context) -> T {
         self.get(cx)
