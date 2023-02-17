@@ -220,6 +220,10 @@ path = "examples/localization/fluent_variables.rs"
 name = "save_dialog"
 path = "examples/save_dialog.rs"
 
+[[example]]
+name = "boolean"
+path = "examples/binding/boolean.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "localization", "embedded_fonts"]
 localization = ["vizia_core/localization"]

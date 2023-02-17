@@ -1,5 +1,5 @@
 //! A model for system specific state which can be accessed by any model or view.
-
+use crate::prelude::Wrapper;
 use vizia_derive::Lens;
 
 #[cfg(feature = "localization")]

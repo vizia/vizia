@@ -1,11 +1,13 @@
 use crate::prelude::*;
+
+use crate::style::SystemFlags;
 use crate::style::{Abilities, PseudoClass, Rule, Selector, SelectorRelation, StyleRule};
 use vizia_id::GenerationalId;
-use vizia_storage::{LayoutTreeIterator, TreeExt};
+use vizia_storage::{DrawIterator, LayoutTreeIterator, TreeExt};
 
-pub fn inline_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
-    for entity in tree.into_iter() {
-        if let Some(parent) = tree.get_layout_parent(entity) {
+pub fn inline_inheritance_system(cx: &mut Context) {
+    for entity in cx.tree.into_iter() {
+        if let Some(parent) = cx.tree.get_layout_parent(entity) {
             cx.style.disabled.inherit_inline(entity, parent);
 
             cx.style.font_color.inherit_inline(entity, parent);
@@ -19,9 +21,9 @@ pub fn inline_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
     }
 }
 
-pub fn shared_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
-    for entity in tree.into_iter() {
-        if let Some(parent) = tree.get_layout_parent(entity) {
+pub fn shared_inheritance_system(cx: &mut Context) {
+    for entity in cx.tree.into_iter() {
+        if let Some(parent) = cx.tree.get_layout_parent(entity) {
             cx.style.font_color.inherit_shared(entity, parent);
             cx.style.font_size.inherit_shared(entity, parent);
             cx.style.font_family.inherit_shared(entity, parent);
@@ -33,20 +35,15 @@ pub fn shared_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
     }
 }
 
-pub fn hoverability_system(cx: &mut Context, tree: &Tree<Entity>) {
-    let mut draw_tree: Vec<Entity> = tree.into_iter().collect();
-    draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
+pub fn hoverability_system(cx: &mut Context) {
+    let draw_tree = DrawIterator::full(&cx.tree);
 
-    for entity in draw_tree.into_iter() {
+    for entity in draw_tree {
         if entity == Entity::root() {
             continue;
         }
 
-        if tree.is_ignored(entity) {
-            continue;
-        }
-
-        let parent = tree.get_layout_parent(entity).unwrap();
+        let parent = cx.tree.get_layout_parent(entity).unwrap();
 
         if !cx.cache.get_hoverability(parent) {
             cx.cache.set_hoverability(entity, false);
@@ -216,319 +213,273 @@ pub(crate) fn compute_matched_rules<'a>(
     }
 }
 
-fn link_style_data(cx: &mut Context, entity: Entity, matched_rules: &Vec<Rule>) {
+fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>) {
     let mut should_relayout = false;
     let mut should_redraw = false;
+    let mut should_reorder = false;
+    let mut should_reclip = false;
+    let mut should_rehide = false;
 
     // Display
-    if cx.style.display.link(entity, &matched_rules) {
-        //println!("1");
-        should_relayout = true;
-        should_redraw = true;
+    if style.display.link(entity, &matched_rules) {
+        should_rehide = true;
     }
 
-    if cx.style.visibility.link(entity, &matched_rules) {
-        //println!("2");
-        should_relayout = true;
-        should_redraw = true;
+    if style.visibility.link(entity, &matched_rules) {
+        should_rehide = true;
     }
 
-    if cx.style.z_order.link(entity, &matched_rules) {
-        //println!("3");
-        should_redraw = true;
+    if style.z_order.link(entity, &matched_rules) {
+        should_reorder = true;
     }
 
-    if cx.style.overflow.link(entity, &matched_rules) {
-        should_redraw = true;
+    if style.overflow.link(entity, &matched_rules) {
+        should_reclip = true;
     }
 
     // Opacity
-    if cx.style.opacity.link(entity, &matched_rules) {
-        //println!("4");
+    if style.opacity.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.left.link(entity, &matched_rules) {
-        //println!("5");
+    if style.left.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.right.link(entity, &matched_rules) {
-        //println!("6");
+    if style.right.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.top.link(entity, &matched_rules) {
-        //println!("7");
+    if style.top.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.bottom.link(entity, &matched_rules) {
-        //println!("8");
+    if style.bottom.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
     // Size
-    if cx.style.width.link(entity, &matched_rules) {
-        //println!("9");
+    if style.width.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.height.link(entity, &matched_rules) {
-        //println!("10");
+    if style.height.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
     // Size Constraints
-    if cx.style.max_width.link(entity, &matched_rules) {
-        //println!("11");
+    if style.max_width.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.min_width.link(entity, &matched_rules) {
-        //println!("13");
+    if style.min_width.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.max_height.link(entity, &matched_rules) {
-        //println!("14");
+    if style.max_height.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.min_height.link(entity, &matched_rules) {
-        //println!("15");
+    if style.min_height.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
     // Border
-    if cx.style.border_width.link(entity, &matched_rules) {
-        //println!("24");
+    if style.border_width.link(entity, &matched_rules) {
         should_relayout = true;
+    }
+
+    if style.border_color.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.border_color.link(entity, &matched_rules) {
-        //println!("25");
+    if style.border_shape_top_left.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.border_shape_top_left.link(entity, &matched_rules) {
+    if style.border_shape_top_right.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.border_shape_top_right.link(entity, &matched_rules) {
+    if style.border_shape_bottom_left.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.border_shape_bottom_left.link(entity, &matched_rules) {
+    if style.border_shape_bottom_right.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.border_shape_bottom_right.link(entity, &matched_rules) {
+    if style.border_radius_top_left.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.border_radius_top_left.link(entity, &matched_rules) {
-        //println!("26");
+    if style.border_radius_top_right.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.border_radius_top_right.link(entity, &matched_rules) {
-        //println!("27");
+    if style.border_radius_bottom_left.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.border_radius_bottom_left.link(entity, &matched_rules) {
-        //println!("28");
+    if style.border_radius_bottom_right.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.border_radius_bottom_right.link(entity, &matched_rules) {
-        //println!("29");
+    if style.outline_width.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.outline_width.link(entity, &matched_rules) {
+    if style.outline_color.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.outline_color.link(entity, &matched_rules) {
+    if style.outline_offset.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.outline_offset.link(entity, &matched_rules) {
-        should_redraw = true;
-    }
-
-    if cx.style.layout_type.link(entity, &matched_rules) {
-        //println!("30");
+    if style.layout_type.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.position_type.link(entity, &matched_rules) {
-        //println!("30");
+    if style.position_type.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
     // Background
-    if cx.style.background_color.link(entity, &matched_rules) {
-        //println!("41");
+    if style.background_color.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.background_image.link(entity, &matched_rules) {
-        //println!("42");
+    if style.background_image.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
     // Font
-    if cx.style.font_color.link(entity, &matched_rules) {
-        //println!("43");
+    if style.font_color.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.font_size.link(entity, &matched_rules) {
-        //println!("44");
-        should_redraw = true;
+    if style.font_size.link(entity, &matched_rules) {
         should_relayout = true;
     }
 
-    if cx.style.font_family.link(entity, &matched_rules) {
-        //println!("44");
-        should_redraw = true;
+    if style.font_family.link(entity, &matched_rules) {
         should_relayout = true;
     }
 
-    if cx.style.font_weight.link(entity, &matched_rules) {
+    if style.font_weight.link(entity, &matched_rules) {
         should_redraw = true;
+    }
+
+    if style.font_style.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.text_wrap.link(entity, &matched_rules) {
         should_relayout = true;
     }
 
-    if cx.style.font_style.link(entity, &matched_rules) {
-        should_redraw = true;
-        should_relayout = true;
-    }
-
-    if cx.style.text_wrap.link(entity, &matched_rules) {
-        should_redraw = true;
-        should_relayout = true;
-    }
-
-    if cx.style.selection_color.link(entity, &matched_rules) {
+    if style.selection_color.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.caret_color.link(entity, &matched_rules) {
+    if style.caret_color.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
     // Outer Shadow
-    if cx.style.outer_shadow_h_offset.link(entity, &matched_rules) {
-        //println!("45");
+    if style.outer_shadow_h_offset.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.outer_shadow_v_offset.link(entity, &matched_rules) {
-        //println!("46");
+    if style.outer_shadow_v_offset.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.outer_shadow_blur.link(entity, &matched_rules) {
-        //println!("47");
+    if style.outer_shadow_blur.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.outer_shadow_color.link(entity, &matched_rules) {
-        //println!("48");
+    if style.outer_shadow_color.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
     // Inner Shadow
-    if cx.style.inner_shadow_h_offset.link(entity, &matched_rules) {
-        //println!("45");
+    if style.inner_shadow_h_offset.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.inner_shadow_v_offset.link(entity, &matched_rules) {
-        //println!("46");
+    if style.inner_shadow_v_offset.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.inner_shadow_blur.link(entity, &matched_rules) {
-        //println!("47");
+    if style.inner_shadow_blur.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.inner_shadow_color.link(entity, &matched_rules) {
-        //println!("48");
+    if style.inner_shadow_color.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
-    if cx.style.child_left.link(entity, &matched_rules) {
+    if style.child_left.link(entity, &matched_rules) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if cx.style.child_right.link(entity, &matched_rules) {
+    if style.child_right.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.child_top.link(entity, &matched_rules) {
+    if style.child_top.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.child_bottom.link(entity, &matched_rules) {
+    if style.child_bottom.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.row_between.link(entity, &matched_rules) {
+    if style.row_between.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.col_between.link(entity, &matched_rules) {
+    if style.col_between.link(entity, &matched_rules) {
         should_relayout = true;
-        should_redraw = true;
     }
 
-    if cx.style.cursor.link(entity, &matched_rules) {
+    if style.cursor.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
     if should_relayout {
-        //println!("should relayout");
-        cx.style.needs_relayout = true;
+        style.system_flags.set(SystemFlags::RELAYOUT, true);
     }
 
     if should_redraw {
-        cx.style.needs_redraw = true;
+        style.system_flags.set(SystemFlags::REDRAW, true);
+    }
+
+    if should_reorder {
+        style.system_flags.set(SystemFlags::REORDER, true);
+    }
+
+    if should_reclip {
+        style.system_flags.set(SystemFlags::RECLIP, true);
+    }
+
+    if should_rehide {
+        style.system_flags.set(SystemFlags::REHIDE, true);
     }
 }
 
 // Iterate tree and determine the matched style rules for each entity. Link the entity to the style data.
-pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
-    if cx.style.needs_restyle {
-        hoverability_system(cx, tree);
+pub fn style_system(cx: &mut Context) {
+    if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
+        hoverability_system(cx);
 
         let mut matched_rule_ids = Vec::with_capacity(100);
         let mut prev_matched_rule_ids = Vec::with_capacity(100);
 
-        let iterator = LayoutTreeIterator::full(tree);
+        let iterator = LayoutTreeIterator::full(&cx.tree);
 
         // Loop through all entities
         for entity in iterator {
@@ -548,14 +499,14 @@ pub fn style_system(cx: &mut Context, tree: &Tree<Entity>) {
             //}
 
             let mut matched_rules = Vec::with_capacity(100);
-            compute_matched_rules(cx, tree, entity, &mut matched_rules);
+            compute_matched_rules(cx, &cx.tree, entity, &mut matched_rules);
             matched_rule_ids.extend(matched_rules.into_iter().map(|r| r.id));
-            link_style_data(cx, entity, &matched_rule_ids);
+            link_style_data(&mut cx.style, entity, &matched_rule_ids);
 
             prev_matched_rule_ids.clear();
             prev_matched_rule_ids.append(&mut matched_rule_ids);
         }
 
-        cx.style.needs_restyle = false;
+        cx.style.system_flags.set(SystemFlags::RESTYLE, false);
     }
 }

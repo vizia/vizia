@@ -3,8 +3,8 @@ use crate::prelude::Color;
 use crate::style::Style;
 use cosmic_text::{
     fontdb::{Database, Query},
-    Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor, Family, FontSystem,
-    Metrics, SubpixelBin, Wrap,
+    Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Color as CosmicColor, Edit, Editor,
+    Family, FontSystem, Metrics, SubpixelBin, Wrap,
 };
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
@@ -248,7 +248,7 @@ impl TextContext {
                     let cmd_map = if rendered.color_glyph {
                         &mut color_cmd_map
                     } else {
-                        alpha_cmd_map.entry(glyph.color_opt.unwrap()).or_insert_with(FnvHashMap::default)
+                        alpha_cmd_map.entry(glyph.color_opt.unwrap_or(CosmicColor::rgb(0, 0, 0))).or_insert_with(FnvHashMap::default)
                     };
 
                     let cmd = cmd_map.entry(rendered.texture_index).or_insert_with(|| DrawCmd {

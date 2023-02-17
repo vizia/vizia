@@ -44,7 +44,7 @@ pub mod image {
 pub mod prelude {
     pub use super::animation::{AnimExt, Animation, AnimationBuilder};
     pub use super::binding::{
-        Binding, Data, Index, Lens, LensExt, Model, Res, Setter, StaticLens, Then,
+        Binding, Data, Index, Lens, LensExt, Model, Res, Setter, StaticLens, Then, Wrapper,
     };
     pub use super::context::{
         Context, ContextProxy, DataContext, DrawContext, EmitContext, EventContext, ProxyEmitError,
@@ -59,8 +59,7 @@ pub mod prelude {
         AbilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers, TextModifiers,
     };
     pub use super::resource::fonts;
-    pub use super::view::Handle;
-    pub use super::view::{Canvas, View};
+    pub use super::view::{Canvas, Handle, View};
     pub use super::views::*;
     pub use super::window::WindowModifiers;
     pub use vizia_derive::{Data, Lens, Model, Setter};

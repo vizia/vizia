@@ -1,13 +1,14 @@
-use crate::prelude::*;
+use crate::{prelude::*, style::SystemFlags};
 
 pub fn animation_system(cx: &mut Context) -> bool {
     let time = instant::Instant::now();
 
+    // Properties which affect visibility
+    let needs_rehide =
+        cx.style.display.tick(time) | cx.style.visibility.tick(time) | cx.style.opacity.tick(time);
+
     // Properties which affect rendering
-    let needs_redraw = cx.style.display.tick(time)
-        | cx.style.visibility.tick(time)
-        | cx.style.opacity.tick(time)
-        | cx.style.rotate.tick(time)
+    let needs_redraw = cx.style.rotate.tick(time)
         | cx.style.translate.tick(time)
         | cx.style.scale.tick(time)
         | cx.style.border_color.tick(time)
@@ -50,8 +51,17 @@ pub fn animation_system(cx: &mut Context) -> bool {
         | cx.style.child_top.tick(time)
         | cx.style.child_bottom.tick(time);
 
-    cx.style.needs_redraw |= needs_redraw | needs_relayout;
-    cx.style.needs_relayout |= needs_relayout;
+    if needs_relayout {
+        cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
+    }
+
+    if needs_rehide {
+        cx.style.system_flags.set(SystemFlags::REHIDE, true);
+    }
+
+    if needs_redraw {
+        cx.style.system_flags.set(SystemFlags::REDRAW, true);
+    }
 
     return needs_redraw | needs_relayout;
 }

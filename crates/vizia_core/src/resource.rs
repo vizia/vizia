@@ -3,7 +3,7 @@
 #![allow(dead_code)]
 pub mod fonts;
 
-use crate::context::Context;
+use crate::context::ResourceContext;
 use crate::entity::Entity;
 use crate::view::Canvas;
 #[cfg(feature = "localization")]
@@ -71,7 +71,7 @@ pub struct ResourceManager {
     #[cfg(feature = "localization")]
     pub language: LanguageIdentifier,
 
-    pub image_loader: Option<Box<dyn Fn(&mut Context, &str)>>,
+    pub image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>>,
 
     count: u32,
 }

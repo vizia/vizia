@@ -1,33 +1,28 @@
 use crate::{prelude::*, style::PseudoClass};
 use vizia_id::GenerationalId;
+use vizia_storage::DrawIterator;
 
 // Determines the hovered entity based on the mouse cursor position.
 pub fn hover_system(cx: &mut Context) {
-    // TODO - Cache this
-    let mut draw_tree: Vec<Entity> = cx.tree.into_iter().collect();
-    draw_tree.sort_by_cached_key(|entity| cx.cache.get_z_index(*entity));
+    let draw_tree = DrawIterator::full(&cx.tree);
 
     let cursorx = cx.mouse.cursorx;
     let cursory = cx.mouse.cursory;
 
     let mut hovered_widget = Entity::root();
 
-    for entity in draw_tree.into_iter() {
-        // Skip invisible widgets
-        if cx.cache.get_visibility(entity) == Visibility::Invisible {
-            continue;
-        }
+    for entity in draw_tree {
+        let window_bounds = cx.cache.get_bounds(Entity::root());
 
-        // This shouldn't be here but there's a bug if it isn't
-        if cx.cache.get_opacity(entity) == 0.0 {
-            continue;
-        }
-
-        // Skip non-displayed widgets
-        if cx.cache.get_display(entity) == Display::None {
-            continue;
-        }
-        if cx.tree.is_ignored(entity) {
+        // Skip if the entity is invisible or out of bounds
+        // Unfortunately we can't skip the subtree because even if a parent is invisible
+        // a child might be explicitly set to be visible.
+        if entity == Entity::root()
+            || cx.cache.get_visibility(entity) == Visibility::Invisible
+            || cx.cache.get_display(entity) == Display::None
+            || cx.cache.get_opacity(entity) == 0.0
+            || !window_bounds.contains(&cx.cache.get_bounds(entity))
+        {
             continue;
         }
 
@@ -139,6 +134,6 @@ pub fn hover_system(cx: &mut Context) {
 
         cx.hovered = hovered_widget;
 
-        cx.style.needs_restyle = true;
+        cx.style.needs_restyle();
     }
 }
