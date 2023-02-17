@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
-use crate::style::SystemFlags;
 use crate::style::{Abilities, PseudoClass, Rule, Selector, SelectorRelation, StyleRule};
+use crate::style::{Style, SystemFlags};
 use vizia_id::GenerationalId;
 use vizia_storage::{DrawIterator, LayoutTreeIterator, TreeExt};
 

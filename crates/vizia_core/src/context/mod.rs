@@ -36,7 +36,7 @@ use crate::events::ViewHandler;
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
 use crate::prelude::*;
-use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
+use crate::resource::{ImageRetentionPolicy, ResourceManager};
 use crate::style::{PseudoClass, Style};
 use crate::text::{TextConfig, TextContext};
 use vizia_id::{GenerationalId, IdManager};
