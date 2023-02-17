@@ -142,7 +142,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the space for all sides of the view.
-    fn space<U: Clone + Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.get_val(cx).into();
@@ -172,7 +172,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the width and height of the view.
-    fn size<U: Clone + Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.get_val(cx).into();
@@ -224,7 +224,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     /// Sets the space between the vew and its children.
     ///
     /// The child_space works by overriding the `Auto` space properties of its children.
-    fn child_space<U: Clone + Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn child_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.get_val(cx).into();
@@ -268,7 +268,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the minimum width and minimum height of the view.
-    fn min_size<U: Clone + Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn min_size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.get_val(cx).into();
@@ -296,7 +296,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the maximum width and maximum height of the view.
-    fn max_size<U: Clone + Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn max_size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.get_val(cx).into();
@@ -338,7 +338,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the minimum space for all sides of the view.
-    fn min_space<U: Clone + Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn min_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.get_val(cx).into();
@@ -382,7 +382,7 @@ pub trait LayoutModifiers: internal::Modifiable {
     );
 
     /// Sets the maximum space for all sides of the view.
-    fn max_space<U: Clone + Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn max_space<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.get_val(cx).into();

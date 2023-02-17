@@ -8,7 +8,7 @@ macro_rules! modifier {
     ) => {
         $(#[$meta])*
         #[allow(unused_variables)]
-        fn $name<U: Clone + Into<$t>>(mut self, value: impl Res<U>) -> Self {
+        fn $name<U: Into<$t>>(mut self, value: impl Res<U>) -> Self {
             let entity = self.entity();
             value.set_or_bind(self.context(), entity, |cx, entity, v| {
                 cx.style.$name.insert(entity, v.get_val(cx).into());

@@ -68,7 +68,7 @@ pub trait StyleModifiers: internal::Modifiable {
     // TODO: Should these have their own modifiers trait?
 
     /// Sets the state of the view to checked.
-    fn checked<U: Clone + Into<bool>>(mut self, state: impl Res<U>) -> Self {
+    fn checked<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, entity, v| {
             let val = v.get_val(cx).into();
@@ -117,7 +117,7 @@ pub trait StyleModifiers: internal::Modifiable {
     ///
     /// Views with a higher z-order will be rendered on top of those with a lower z-order.
     /// Views with the same z-order are rendered in tree order.
-    fn z_order<U: Clone + Into<i32>>(mut self, value: impl Res<U>) -> Self {
+    fn z_order<U: Into<i32>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.get_val(cx).into();
@@ -215,7 +215,7 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets the border radius for all four corners of the view.
-    fn border_radius<U: Clone + Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn border_radius<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.get_val(cx).into();
@@ -256,10 +256,7 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets the border corner shape for all four corners of the view.
-    fn border_corner_shape<U: Clone + Into<BorderCornerShape>>(
-        mut self,
-        value: impl Res<U>,
-    ) -> Self {
+    fn border_corner_shape<U: Into<BorderCornerShape>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.get_val(cx).into();

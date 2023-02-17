@@ -7,7 +7,7 @@ pub trait AbilityModifiers: internal::Modifiable {
     ///
     /// Views which cannot be hovered will not receive mouse input events unless
     /// the view has captured the mouse input, see [`cx.capture()`](crate::prelude::EventContext::capture).
-    fn hoverable<U: Clone + Into<bool>>(mut self, state: impl Res<U>) -> Self {
+    fn hoverable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, entity, v| {
             let val = v.get_val(cx).into();
@@ -21,7 +21,7 @@ pub trait AbilityModifiers: internal::Modifiable {
     }
 
     /// Sets whether the view can be focused to receive keyboard input events.
-    fn focusable<U: Clone + Into<bool>>(mut self, state: impl Res<U>) -> Self {
+    fn focusable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, entity, v| {
             let state = v.get_val(cx).into();
@@ -43,7 +43,7 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// Sets whether the view can be navigated to, i.e. focused, by the keyboard.
     ///
     /// Navigating to a view with the keyboard gives the view keyboard focus and is typically done with `tab` and `shift + tab` key combinations.
-    fn navigable<U: Clone + Into<bool>>(mut self, state: impl Res<U>) -> Self {
+    fn navigable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, entity, v| {
             let val = v.get_val(cx).into();
