@@ -164,6 +164,10 @@ impl<'a> DrawContext<'a> {
         self.cache.get_opacity(self.current)
     }
 
+    pub fn sync_text_styles(&mut self) {
+        self.text_context.sync_styles(self.current, &self.style);
+    }
+
     pub fn draw_text(&mut self, canvas: &mut Canvas, origin: (f32, f32), justify: (f32, f32)) {
         if let Ok(draw_commands) =
             self.text_context.fill_to_cmds(canvas, self.current, origin, justify, *self.text_config)
