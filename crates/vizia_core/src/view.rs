@@ -573,7 +573,7 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
             let origin_x = box_x + box_w * justify_x;
             let origin_y = box_y + (box_h * justify_y).ceil();
 
-            cx.text_context.sync_styles(cx.current, &cx.style);
+            cx.text_context.sync_styles(cx.current, &cx.style, &cx.tree, &cx.views);
 
             cx.draw_highlights(canvas, (origin_x, origin_y), (justify_x, justify_y));
             cx.draw_caret(canvas, (origin_x, origin_y), (justify_x, justify_y), 1.0);

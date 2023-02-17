@@ -30,6 +30,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
+        cx.add_theme(".bold { font-style: italic; }");
         cx.add_translation(
             "en-US".parse().unwrap(),
             include_str!("../resources/en-US/hello.ftl").to_owned(),
@@ -64,7 +65,10 @@ fn main() {
             .height(Auto)
             .col_between(Pixels(5.0));
             Label::new(cx, Localized::new("intro").arg("name", AppData::name));
-            Label::new(cx, Localized::new("emails").arg("unread_emails", AppData::emails));
+            Label::new_rich_formatted(
+                cx,
+                Localized::new("emails").arg("unread_emails", AppData::emails),
+            );
             Button::new(
                 cx,
                 |cx| cx.emit(AppEvent::ReceiveEmail),

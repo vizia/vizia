@@ -74,7 +74,7 @@ pub fn text_constraints_system(cx: &mut Context) {
             let mut content_height = 0.0;
 
             if cx.text_context.has_buffer(entity) {
-                cx.text_context.sync_styles(entity, &cx.style);
+                cx.text_context.sync_styles(entity, &cx.style, &cx.tree, &cx.views);
                 let (text_width, text_height) = cx.text_context.with_buffer(entity, |buf| {
                     buf.set_size(999999, i32::MAX);
                     let w = buf
