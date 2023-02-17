@@ -159,7 +159,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                 type Source = #struct_type#ty_generics;
                 type Target = #field_ty;
 
-                fn view<'a>(&self, source: &'a #struct_type#ty_generics) -> Option<LensValue<'a, Self::Target>> {
+                fn view<'a>(&self, source: &'a #struct_type#ty_generics) -> Option<LensValue<'_,'a, Self::Target>> {
                     Some(LensValue::Borrowed(&source.#field_name))
                 }
 
@@ -204,7 +204,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             type Source = #struct_type#ty_generics;
             type Target = #struct_type#ty_generics;
 
-            fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
+            fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'_,'a, Self::Target>> {
                 Some(LensValue::Borrowed(source))
             }
         }
