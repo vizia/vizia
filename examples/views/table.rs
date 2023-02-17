@@ -216,7 +216,7 @@ pub enum AppEvent {
     ToggleSortAge,
 }
 
-#[derive(Debug, Clone, PartialEq, Data)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Sorted {
     Forward,
     Reverse,
