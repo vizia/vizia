@@ -150,7 +150,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     let impls = fields.iter().filter(|f| !f.attrs.ignore).map(|f| {
         let field_name = &f.ident.unwrap_named();
         let field_ty = &f.ty;
-        let name = format!("{}:{}", struct_type.to_string(), field_name.to_string());
+        let name = format!("{}:{}", struct_type, field_name);
 
         quote! {
 
@@ -297,7 +297,7 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
             _ => None,
         })
         .collect::<Vec<_>>();
-    if usable_variants.len() == 0 {
+    if usable_variants.is_empty() {
         panic!("This enum has no variants which can have Lenses built. A valid variant has exactly one unnamed field. If you think this is unreasonable, please work on https://github.com/rust-lang/rfcs/pull/2593")
     }
 
@@ -311,7 +311,7 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
         ));
     };
 
-    if input.generics.params.len() != 0 {
+    if !input.generics.params.is_empty() {
         panic!("Lens implementations can only be derived from non-generic enums (for now)");
     }
 
@@ -336,7 +336,7 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
     });
 
     let impls = usable_variants.iter().map(|(variant_name, variant_type)| {
-        let name = format!("{}:{}", enum_type.to_string(), variant_name.to_string());
+        let name = format!("{}:{}", enum_type, variant_name);
         quote! {
             impl Lens for #twizzled_name::#variant_name {
                 type Source = #enum_type;

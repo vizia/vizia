@@ -76,9 +76,10 @@ impl TextContext {
 
     pub fn with_editor<O>(&mut self, entity: Entity, f: impl FnOnce(&mut Editor) -> O) -> O {
         self.with_int_mut(move |int: &mut TextContextInternal| {
-            f(int.buffers.entry(entity).or_insert_with(|| {
-                Editor::new(Buffer::new(&int.font_system, Metrics::new(18, 20)))
-            }))
+            f(int
+                .buffers
+                .entry(entity)
+                .or_insert_with(|| Editor::new(Buffer::new(int.font_system, Metrics::new(18, 20)))))
         })
     }
 
@@ -238,8 +239,8 @@ impl TextContext {
                                 height: used_h,
                                 offset_x: rendered.placement.left,
                                 offset_y: rendered.placement.top,
-                                atlas_x: atlas_used_x as u32,
-                                atlas_y: atlas_used_y as u32,
+                                atlas_x: atlas_used_x,
+                                atlas_y: atlas_used_y,
                                 color_glyph: matches!(rendered.content, Content::Color),
                             }
                         })
@@ -275,7 +276,7 @@ impl TextContext {
 
             if !alpha_cmd_map.is_empty() {
                 Ok(alpha_cmd_map.into_iter().map(|(color, map)| (color, GlyphDrawCommands {
-                    alpha_glyphs: map.into_iter().map(|(_, cmd)| cmd).collect(),
+                    alpha_glyphs: map.into_values().collect(),
                     color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
                 })).collect())
             } else {

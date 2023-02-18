@@ -22,7 +22,7 @@ impl<'a, 'b, V> EventHandle<'a, 'b, V> {
     }
 
     pub fn cache(&self) -> &CachedData {
-        &self.cx.cache
+        self.cx.cache
     }
 
     /// Sets application focus to the current entity using the previous focus visibility.
@@ -67,7 +67,7 @@ impl<'a, 'b, V> DataContext for EventHandle<'a, 'b, V> {
             return Some(t);
         }
 
-        for entity in self.entity.parent_iter(&self.cx.tree) {
+        for entity in self.entity.parent_iter(self.cx.tree) {
             if let Some(model_data_store) = self.cx.data.get(entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();

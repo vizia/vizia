@@ -15,9 +15,9 @@ pub fn draw_system(cx: &mut Context) {
         cx.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
     canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
 
-    let mut draw_tree = DrawIterator::full(&cx.tree);
+    let draw_tree = DrawIterator::full(&cx.tree);
 
-    while let Some(entity) = draw_tree.next() {
+    for entity in draw_tree {
         let window_bounds = cx.cache.get_bounds(Entity::root());
 
         // Skip if the entity is invisible or out of bounds

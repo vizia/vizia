@@ -66,7 +66,7 @@ pub trait LensExt: Lens {
     {
         self.view(
             cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| t.cloned().map(|v| v),
+            |t| t.cloned(),
         )
     }
 
@@ -224,13 +224,13 @@ impl<A, T> Index<A, T> {
     }
 
     pub fn idx(&self) -> usize {
-        self.index.clone()
+        self.index
     }
 }
 
 impl<A, T> Clone for Index<A, T> {
     fn clone(&self) -> Self {
-        Self { index: self.index.clone(), pa: PhantomData::default(), pt: PhantomData::default() }
+        Self { index: self.index, pa: PhantomData::default(), pt: PhantomData::default() }
     }
 }
 
@@ -250,7 +250,7 @@ where
     type Target = T;
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        let data = source.get(self.index.clone());
+        let data = source.get(self.index);
         map(data)
     }
 }
@@ -410,7 +410,7 @@ where
             if let Some(l1) = t1 {
                 self.lens2.view(source, |t2| {
                     if let Some(l2) = t2 {
-                        return map(Some(&(*l1 | *l2)));
+                        map(Some(&(*l1 | *l2)))
                     } else {
                         map(None)
                     }
@@ -520,7 +520,7 @@ where
             if let Some(l1) = t1 {
                 self.lens2.view(source, |t2| {
                     if let Some(l2) = t2 {
-                        return map(Some(&(*l1 & *l2)));
+                        map(Some(&(*l1 & *l2)))
                     } else {
                         map(None)
                     }
@@ -600,7 +600,7 @@ where
             if let Some(l1) = t1 {
                 self.1.view(source, |t2| {
                     if let Some(l2) = t2 {
-                        return map(Some(&(l1.clone(), l2.clone())));
+                        map(Some(&(l1.clone(), l2.clone())))
                     } else {
                         map(None)
                     }

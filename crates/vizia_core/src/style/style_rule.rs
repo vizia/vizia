@@ -15,13 +15,13 @@ impl std::fmt::Display for StyleRule {
             write!(f, "{}", selector)?;
         }
 
-        write!(f, " {{\n")?;
+        writeln!(f, " {{")?;
 
         for property in self.properties.iter() {
-            write!(f, "    {}\n", property)?;
+            writeln!(f, "    {}", property)?;
         }
 
-        write!(f, "}}\n")?;
+        writeln!(f, "}}")?;
 
         Ok(())
     }
@@ -34,7 +34,7 @@ impl StyleRule {
             specificity += selector.specificity();
         }
 
-        return specificity;
+        specificity
     }
 }
 

@@ -37,7 +37,7 @@ impl std::fmt::Display for SimpleDate {
 impl FromStr for SimpleDate {
     type Err = ParseError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        NaiveDate::parse_from_str(s, "%Y:%m:%d").map(|date| SimpleDate(date))
+        NaiveDate::parse_from_str(s, "%Y:%m:%d").map(SimpleDate)
     }
 }
 
@@ -115,7 +115,7 @@ fn main() {
                                 });
                             })
                             .on_press(move |cx| {
-                                cx.emit(AppEvent::SetChoice(item.get(cx).to_string().to_owned()));
+                                cx.emit(AppEvent::SetChoice(item.get(cx).to_string()));
                                 cx.emit(PopupEvent::Close);
                             });
                     });

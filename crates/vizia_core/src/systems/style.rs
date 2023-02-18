@@ -46,12 +46,10 @@ pub fn hoverability_system(cx: &mut Context) {
 
         if !cx.cache.get_hoverability(parent) {
             cx.cache.set_hoverability(entity, false);
+        } else if let Some(abilities) = cx.style.abilities.get(entity) {
+            cx.cache.set_hoverability(entity, abilities.contains(Abilities::HOVERABLE));
         } else {
-            if let Some(abilities) = cx.style.abilities.get(entity) {
-                cx.cache.set_hoverability(entity, abilities.contains(Abilities::HOVERABLE));
-            } else {
-                cx.cache.set_hoverability(entity, false);
-            }
+            cx.cache.set_hoverability(entity, false);
         }
     }
 }
@@ -90,11 +88,8 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
                 pseudo_classes.set(PseudoClass::DISABLED, *disabled);
             }
             let selector_pseudo_classes = selector.pseudo_classes;
-            if !pseudo_classes.is_empty() && !pseudo_classes.contains(selector_pseudo_classes) {
-                return false;
-            } else {
-                return true;
-            }
+            return !(!pseudo_classes.is_empty()
+                && !pseudo_classes.contains(selector_pseudo_classes));
         } else {
             return true;
         }
@@ -144,7 +139,7 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
         }
     }
 
-    return true;
+    true
 }
 
 pub(crate) fn compute_matched_rules<'a>(
@@ -220,232 +215,232 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
     let mut should_rehide = false;
 
     // Display
-    if style.display.link(entity, &matched_rules) {
+    if style.display.link(entity, matched_rules) {
         should_rehide = true;
     }
 
-    if style.visibility.link(entity, &matched_rules) {
+    if style.visibility.link(entity, matched_rules) {
         should_rehide = true;
     }
 
-    if style.z_order.link(entity, &matched_rules) {
+    if style.z_order.link(entity, matched_rules) {
         should_reorder = true;
     }
 
-    if style.overflow.link(entity, &matched_rules) {
+    if style.overflow.link(entity, matched_rules) {
         should_reclip = true;
     }
 
     // Opacity
-    if style.opacity.link(entity, &matched_rules) {
+    if style.opacity.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.left.link(entity, &matched_rules) {
+    if style.left.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.right.link(entity, &matched_rules) {
+    if style.right.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.top.link(entity, &matched_rules) {
+    if style.top.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.bottom.link(entity, &matched_rules) {
+    if style.bottom.link(entity, matched_rules) {
         should_relayout = true;
     }
 
     // Size
-    if style.width.link(entity, &matched_rules) {
+    if style.width.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.height.link(entity, &matched_rules) {
+    if style.height.link(entity, matched_rules) {
         should_relayout = true;
     }
 
     // Size Constraints
-    if style.max_width.link(entity, &matched_rules) {
+    if style.max_width.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.min_width.link(entity, &matched_rules) {
+    if style.min_width.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.max_height.link(entity, &matched_rules) {
+    if style.max_height.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.min_height.link(entity, &matched_rules) {
+    if style.min_height.link(entity, matched_rules) {
         should_relayout = true;
     }
 
     // Border
-    if style.border_width.link(entity, &matched_rules) {
+    if style.border_width.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.border_color.link(entity, &matched_rules) {
+    if style.border_color.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_shape_top_left.link(entity, &matched_rules) {
+    if style.border_shape_top_left.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_shape_top_right.link(entity, &matched_rules) {
+    if style.border_shape_top_right.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_shape_bottom_left.link(entity, &matched_rules) {
+    if style.border_shape_bottom_left.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_shape_bottom_right.link(entity, &matched_rules) {
+    if style.border_shape_bottom_right.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_radius_top_left.link(entity, &matched_rules) {
+    if style.border_radius_top_left.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_radius_top_right.link(entity, &matched_rules) {
+    if style.border_radius_top_right.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_radius_bottom_left.link(entity, &matched_rules) {
+    if style.border_radius_bottom_left.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_radius_bottom_right.link(entity, &matched_rules) {
+    if style.border_radius_bottom_right.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.outline_width.link(entity, &matched_rules) {
+    if style.outline_width.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.outline_color.link(entity, &matched_rules) {
+    if style.outline_color.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.outline_offset.link(entity, &matched_rules) {
+    if style.outline_offset.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.layout_type.link(entity, &matched_rules) {
+    if style.layout_type.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.position_type.link(entity, &matched_rules) {
+    if style.position_type.link(entity, matched_rules) {
         should_relayout = true;
     }
 
     // Background
-    if style.background_color.link(entity, &matched_rules) {
+    if style.background_color.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.background_image.link(entity, &matched_rules) {
+    if style.background_image.link(entity, matched_rules) {
         should_redraw = true;
     }
 
     // Font
-    if style.font_color.link(entity, &matched_rules) {
+    if style.font_color.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.font_size.link(entity, &matched_rules) {
+    if style.font_size.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.font_family.link(entity, &matched_rules) {
+    if style.font_family.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.font_weight.link(entity, &matched_rules) {
+    if style.font_weight.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.font_style.link(entity, &matched_rules) {
+    if style.font_style.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.text_wrap.link(entity, &matched_rules) {
+    if style.text_wrap.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.selection_color.link(entity, &matched_rules) {
+    if style.selection_color.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.caret_color.link(entity, &matched_rules) {
+    if style.caret_color.link(entity, matched_rules) {
         should_redraw = true;
     }
 
     // Outer Shadow
-    if style.outer_shadow_h_offset.link(entity, &matched_rules) {
+    if style.outer_shadow_h_offset.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.outer_shadow_v_offset.link(entity, &matched_rules) {
+    if style.outer_shadow_v_offset.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.outer_shadow_blur.link(entity, &matched_rules) {
+    if style.outer_shadow_blur.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.outer_shadow_color.link(entity, &matched_rules) {
+    if style.outer_shadow_color.link(entity, matched_rules) {
         should_redraw = true;
     }
 
     // Inner Shadow
-    if style.inner_shadow_h_offset.link(entity, &matched_rules) {
+    if style.inner_shadow_h_offset.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.inner_shadow_v_offset.link(entity, &matched_rules) {
+    if style.inner_shadow_v_offset.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.inner_shadow_blur.link(entity, &matched_rules) {
+    if style.inner_shadow_blur.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.inner_shadow_color.link(entity, &matched_rules) {
+    if style.inner_shadow_color.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.child_left.link(entity, &matched_rules) {
+    if style.child_left.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
     }
 
-    if style.child_right.link(entity, &matched_rules) {
+    if style.child_right.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.child_top.link(entity, &matched_rules) {
+    if style.child_top.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.child_bottom.link(entity, &matched_rules) {
+    if style.child_bottom.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.row_between.link(entity, &matched_rules) {
+    if style.row_between.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.col_between.link(entity, &matched_rules) {
+    if style.col_between.link(entity, matched_rules) {
         should_relayout = true;
     }
 
-    if style.cursor.link(entity, &matched_rules) {
+    if style.cursor.link(entity, matched_rules) {
         should_redraw = true;
     }
 

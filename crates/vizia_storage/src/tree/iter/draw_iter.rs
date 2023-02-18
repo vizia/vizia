@@ -78,7 +78,7 @@ where
             return self.next();
         }
 
-        return result;
+        result
     }
 }
 
