@@ -159,7 +159,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                 type Source = #struct_type#ty_generics;
                 type Target = #field_ty;
 
-                fn view<'a>(&self, source: &'a #struct_type#ty_generics) -> Option<LensValue<'_,'a, Self::Target>> {
+                fn view<'a>(&self, source: &'a #struct_type#ty_generics) -> Option<LensValue<'_, 'a, Self::Target>> {
                     Some(LensValue::Borrowed(&source.#field_name))
                 }
 
@@ -204,7 +204,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             type Source = #struct_type#ty_generics;
             type Target = #struct_type#ty_generics;
 
-            fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'_,'a, Self::Target>> {
+            fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'_, 'a, Self::Target>> {
                 Some(LensValue::Borrowed(source))
             }
         }
@@ -342,7 +342,7 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
                 type Source = #enum_type;
                 type Target = #variant_type;
 
-                fn view<'a>(&self, source: &'a #enum_type) -> Option<LensValue<<'a, Self::Target>> {
+                fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'_, 'a, Self::Target>> {
                     if let #enum_type::#variant_name(inner_value) = source {
                         Some(LensValue::Borrowed(inner_value))
                     } else {

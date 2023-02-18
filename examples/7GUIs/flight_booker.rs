@@ -115,9 +115,7 @@ fn main() {
                                 });
                             })
                             .on_press(move |cx| {
-                                cx.emit(AppEvent::SetChoice(
-                                    item.get_val(cx).to_string().to_owned(),
-                                ));
+                                cx.emit(AppEvent::SetChoice(item.get_val(cx).to_string()));
                                 cx.emit(PopupEvent::Close);
                             });
                     });

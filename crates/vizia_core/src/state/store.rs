@@ -45,20 +45,18 @@ where
     }
 
     fn update(&mut self, model: ModelOrView) -> bool {
-        if let Some(data) = model.downcast_ref::<L::Source>() {
-            let result = match (&self.old, self.lens.view(data).as_ref()) {
-                (Some(old), Some(new)) if old.same(new) => None,
-                (_, Some(new)) => Some(new.deref().clone()),
-                _ => None,
-            };
+        let Some(data) = model.downcast_ref::<L::Source>() else {
+            return false
+        };
+        let Some(new_data) = self.lens.view(data) else { return false };
 
-            if let Some(new_data) = result {
-                self.old = Some(new_data);
-                return true;
-            }
+        if matches!(&self.old, Some(old) if old.same(&new_data)) {
+            return false;
         }
 
-        false
+        self.old = Some(new_data.deref().clone());
+
+        true
     }
 
     fn observers(&self) -> &HashSet<Entity> {

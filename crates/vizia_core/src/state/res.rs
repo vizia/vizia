@@ -69,7 +69,7 @@ where
     }
 
     fn get_val(&self, cx: &impl DataContext) -> T {
-        self.get_ref(cx).map(|t| t.into_owned()).unwrap()
+        self.get_ref(cx).unwrap().into_owned()
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
