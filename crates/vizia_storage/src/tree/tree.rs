@@ -448,21 +448,21 @@ where
     }
 
     pub fn set_ignored(&mut self, entity: I, flag: bool) {
-        self.ignored.get_mut(entity.index()).map(|ignored| {
+        if let Some(ignored) = self.ignored.get_mut(entity.index()) {
             *ignored = flag;
-        });
+        }
     }
 
     pub fn set_z_order(&mut self, entity: I, index: i32) {
-        self.z_order.get_mut(entity.index()).map(|z_order| {
+        if let Some(z_order) = self.z_order.get_mut(entity.index()) {
             *z_order = index;
-        });
+        }
     }
 
     pub fn set_lock_focus_within(&mut self, entity: I, flag: bool) {
-        self.lock_focus_within.get_mut(entity.index()).map(|result| {
+        if let Some(result) = self.lock_focus_within.get_mut(entity.index()) {
             *result = flag;
-        });
+        }
     }
 
     /// Adds an entity to the tree with the specified parent.
