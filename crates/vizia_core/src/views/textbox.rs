@@ -614,11 +614,7 @@ where
                     // Finish editing
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
-                        let text = self
-                            .lens
-                            .get(cx)
-                            .map(|x| x.to_string())
-                            .unwrap_or_default();
+                        let text = self.lens.get(cx).map(|x| x.to_string()).unwrap_or_default();
 
                         cx.emit(TextEvent::SelectAll);
                         cx.emit(TextEvent::InsertText(text));
