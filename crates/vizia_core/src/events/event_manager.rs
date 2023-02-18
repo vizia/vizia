@@ -52,7 +52,7 @@ impl EventManager {
             // handle state updates for window events
             event.map(|window_event, meta| {
                 if meta.origin == Entity::root() {
-                    internal_state_updates(context, &window_event, meta);
+                    internal_state_updates(context, window_event, meta);
                 }
             });
 
@@ -70,8 +70,7 @@ impl EventManager {
             std::mem::swap(&mut context.global_listeners, &mut global_listeners);
 
             // Send events to any local listeners
-            let listeners =
-                context.listeners.iter().map(|(entity, _)| *entity).collect::<Vec<Entity>>();
+            let listeners = context.listeners.keys().copied().collect::<Vec<Entity>>();
             for entity in listeners {
                 if let Some(listener) = context.listeners.remove(&entity) {
                     if let Some(mut event_handler) = context.views.remove(&entity) {
@@ -109,7 +108,7 @@ impl EventManager {
             // Propagate up from target to root (not including target)
             if event.meta.propagation == Propagation::Up {
                 // Walk up the tree from parent to parent
-                for entity in target.parent_iter(&context.tree) {
+                for entity in target.parent_iter(context.tree) {
                     // Skip the target entity
                     if entity == event.meta.target {
                         continue;
@@ -126,7 +125,7 @@ impl EventManager {
             }
 
             if event.meta.propagation == Propagation::Subtree {
-                for entity in target.branch_iter(&context.tree) {
+                for entity in target.branch_iter(context.tree) {
                     // Skip the target entity
                     if entity == event.meta.target {
                         continue;
@@ -149,9 +148,11 @@ impl EventManager {
 
 fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
     // Send event to models attached to the entity
-    if let Some(ids) = cx.data.get(entity).and_then(|model_data_store| {
-        Some(model_data_store.models.keys().cloned().collect::<Vec<_>>())
-    }) {
+    if let Some(ids) = cx
+        .data
+        .get(entity)
+        .map(|model_data_store| model_data_store.models.keys().cloned().collect::<Vec<_>>())
+    {
         for id in ids {
             if let Some(mut model) = cx
                 .data
@@ -444,12 +445,12 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 let lock_focus_to = context.tree.lock_focus_within(context.focused);
                 if context.modifiers.contains(Modifiers::SHIFT) {
                     let prev_focused = if let Some(prev_focused) =
-                        focus_backward(&context, context.focused, lock_focus_to)
+                        focus_backward(context, context.focused, lock_focus_to)
                     {
                         prev_focused
                     } else {
                         TreeIterator::full(&context.tree)
-                            .filter(|node| is_navigatable(&context, *node, lock_focus_to))
+                            .filter(|node| is_navigatable(context, *node, lock_focus_to))
                             .next_back()
                             .unwrap_or(Entity::root())
                     };
@@ -476,13 +477,12 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     }
                 } else {
                     let next_focused = if let Some(next_focused) =
-                        focus_forward(&context, context.focused, lock_focus_to)
+                        focus_forward(context, context.focused, lock_focus_to)
                     {
                         next_focused
                     } else {
                         TreeIterator::full(&context.tree)
-                            .filter(|node| is_navigatable(&context, *node, lock_focus_to))
-                            .next()
+                            .find(|node| is_navigatable(context, *node, lock_focus_to))
                             .unwrap_or(Entity::root())
                     };
 

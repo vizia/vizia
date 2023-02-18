@@ -63,5 +63,5 @@ pub fn animation_system(cx: &mut Context) -> bool {
         cx.style.system_flags.set(SystemFlags::REDRAW, true);
     }
 
-    return needs_redraw | needs_relayout;
+    needs_redraw | needs_relayout
 }

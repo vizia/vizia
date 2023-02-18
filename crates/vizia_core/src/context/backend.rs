@@ -213,7 +213,7 @@ impl<'a> BackendContext<'a> {
         }
 
         let ordered_observers =
-            self.0.tree.into_iter().filter(|ent| observers.contains(&ent)).collect::<Vec<_>>();
+            self.0.tree.into_iter().filter(|ent| observers.contains(ent)).collect::<Vec<_>>();
 
         // Update observers in tree order
         for observer in ordered_observers.into_iter() {

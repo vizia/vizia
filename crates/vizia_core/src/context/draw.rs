@@ -165,7 +165,7 @@ impl<'a> DrawContext<'a> {
     }
 
     pub fn sync_text_styles(&mut self) {
-        self.text_context.sync_styles(self.current, &self.style);
+        self.text_context.sync_styles(self.current, self.style);
     }
 
     pub fn draw_text(&mut self, canvas: &mut Canvas, origin: (f32, f32), justify: (f32, f32)) {
@@ -224,7 +224,7 @@ impl<'a> DataContext for DrawContext<'a> {
             return Some(t);
         }
 
-        for entity in self.current.parent_iter(&self.tree) {
+        for entity in self.current.parent_iter(self.tree) {
             if let Some(model_data_store) = self.data.get(entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();

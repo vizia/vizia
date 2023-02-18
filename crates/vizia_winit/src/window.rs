@@ -113,13 +113,13 @@ impl Window {
         };
 
         // Apply generic WindowBuilder properties
-        let window_builder = apply_window_description(window_builder, &window_description);
+        let window_builder = apply_window_description(window_builder, window_description);
 
         let template = ConfigTemplateBuilder::new().with_alpha_size(8);
         let display_builder = DisplayBuilder::new().with_window_builder(Some(window_builder));
 
         let (window, gl_config) = display_builder
-            .build(&events_loop, template, |configs| {
+            .build(events_loop, template, |configs| {
                 // Find the config with the maximum number of samples, so our triangle will
                 // be smooth.
                 configs
@@ -183,8 +183,8 @@ impl Window {
         let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
 
         let size = window.inner_size();
-        canvas.set_size(size.width as u32, size.height as u32, 1.0);
-        canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
+        canvas.set_size(size.width, size.height, 1.0);
+        canvas.clear_rect(0, 0, size.width, size.height, Color::rgb(255, 80, 80));
 
         //cx.canvases.insert(Entity::root(), canvas);
 
@@ -323,16 +323,12 @@ fn apply_window_description(
         .with_visible(description.visible)
         .with_transparent(description.transparent)
         .with_decorations(description.decorations)
-        .with_window_icon(if let Some(icon) = &description.icon {
-            Some(
-                winit::window::Icon::from_rgba(
-                    icon.clone(),
-                    description.icon_width,
-                    description.icon_height,
-                )
-                .unwrap(),
+        .with_window_icon(description.icon.as_ref().map(|icon| {
+            winit::window::Icon::from_rgba(
+                icon.clone(),
+                description.icon_width,
+                description.icon_height,
             )
-        } else {
-            None
-        })
+            .unwrap()
+        }))
 }

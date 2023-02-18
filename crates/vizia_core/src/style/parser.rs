@@ -192,9 +192,9 @@ fn parse_selectors<'i, 't>(
                     selector.relation = SelectorRelation::Ancestor;
                     selectors.push(selector);
                     selector = Selector::default();
-                    selector.set_element(&element_name.to_string());
+                    selector.set_element(element_name);
                 } else {
-                    selector.set_element(&element_name.to_string());
+                    selector.set_element(element_name);
                 }
 
                 whitespace = false;
@@ -216,7 +216,7 @@ fn parse_selectors<'i, 't>(
 
             // Id
             Token::IDHash(ref id_name) => {
-                selector.set_id(&id_name.to_string());
+                selector.set_id(id_name);
                 whitespace = false;
             }
 
@@ -459,9 +459,7 @@ impl<'i> cssparser::DeclarationParser<'i> for DeclarationParser {
             "inner-shadow-blur" => Property::InnerShadowBlur(parse_units(input)?),
             "inner-shadow-color" => Property::InnerShadowColor(parse_color(input)?),
 
-            "transition" => Property::Transition(
-                input.parse_comma_separated(|parser| parse_transition2(parser))?,
-            ),
+            "transition" => Property::Transition(input.parse_comma_separated(parse_transition2)?),
 
             "z-index" => Property::ZIndex(parse_z_index(input)?),
 
@@ -518,22 +516,22 @@ fn parse_unknown<'i, 't>(
     input: &mut Parser<'i, 't>,
 ) -> Result<PropType, ParseError<'i, CustomParseError>> {
     Ok(match input.next()? {
-        Token::QuotedString(s) => match css_string(&s) {
+        Token::QuotedString(s) => match css_string(s) {
             Some(string) => PropType::String(string),
             None => {
                 return Err(CustomParseError::InvalidStringName(s.to_owned().to_string()).into())
             }
         },
 
-        Token::Number { value: x, .. } => PropType::Units(Units::Pixels(*x as f32)),
-        Token::Percentage { unit_value: x, .. } => PropType::Units(Units::Percentage(*x as f32)),
+        Token::Number { value: x, .. } => PropType::Units(Units::Pixels(*x)),
+        Token::Percentage { unit_value: x, .. } => PropType::Units(Units::Percentage(*x)),
 
         Token::Dimension { has_sign: _, value: v, int_value: _, unit: u } if u == &"px" => {
-            PropType::Units(Units::Pixels(*v as f32))
+            PropType::Units(Units::Pixels(*v))
         }
 
         Token::Dimension { has_sign: _, value: v, int_value: _, unit: u } if u == &"s" => {
-            PropType::Units(Units::Stretch(*v as f32))
+            PropType::Units(Units::Stretch(*v))
         }
 
         Token::Ident(name) if name == &"auto" => PropType::Units(Units::Auto),
@@ -553,7 +551,7 @@ fn parse_string<'i, 't>(
     input: &mut Parser<'i, 't>,
 ) -> Result<String, ParseError<'i, CustomParseError>> {
     Ok(match input.next()? {
-        Token::QuotedString(s) => match css_string(&s) {
+        Token::QuotedString(s) => match css_string(s) {
             Some(string) => string,
             None => {
                 return Err(CustomParseError::InvalidStringName(s.to_owned().to_string()).into())
@@ -601,10 +599,10 @@ fn parse_length_or_percentage<'i, 't>(
     input: &mut Parser<'i, 't>,
 ) -> Result<f32, ParseError<'i, CustomParseError>> {
     Ok(match input.next()? {
-        Token::Number { value: x, .. } => *x as f32,
-        Token::Percentage { unit_value: x, .. } => *x as f32,
+        Token::Number { value: x, .. } => *x,
+        Token::Percentage { unit_value: x, .. } => *x,
 
-        Token::Dimension { value: x, .. } => *x as f32,
+        Token::Dimension { value: x, .. } => *x,
         t => {
             let basic_error = BasicParseError {
                 kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
@@ -743,16 +741,16 @@ fn parse_box_shadow<'i, 't>(
 
 fn parse_length2<'i>(token: &Token<'i>) -> Result<Units, ParseError<'i, CustomParseError>> {
     match token {
-        Token::Number { value: x, .. } => Ok(Units::Pixels(*x as f32)),
-        Token::Percentage { unit_value: x, .. } => Ok(Units::Percentage(*x as f32)),
+        Token::Number { value: x, .. } => Ok(Units::Pixels(*x)),
+        Token::Percentage { unit_value: x, .. } => Ok(Units::Percentage(*x)),
 
-        Token::Dimension { value: x, .. } => Ok(Units::Pixels(*x as f32)),
+        Token::Dimension { value: x, .. } => Ok(Units::Pixels(*x)),
         t => {
             let basic_error = BasicParseError {
                 kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
                 location: SourceLocation { line: 0, column: 0 },
             };
-            return Err(basic_error.into());
+            Err(basic_error.into())
         }
     }
 }
@@ -811,15 +809,15 @@ fn parse_units<'i, 't>(
     input: &mut Parser<'i, 't>,
 ) -> Result<Units, ParseError<'i, CustomParseError>> {
     Ok(match input.next()? {
-        Token::Number { value: x, .. } => Units::Pixels(*x as f32),
-        Token::Percentage { unit_value: x, .. } => Units::Percentage((*x as f32) * 100.0),
+        Token::Number { value: x, .. } => Units::Pixels(*x),
+        Token::Percentage { unit_value: x, .. } => Units::Percentage(*x * 100.0),
 
         Token::Dimension { has_sign: _, value: v, int_value: _, unit: u } if u == &"px" => {
-            Units::Pixels(*v as f32)
+            Units::Pixels(*v)
         }
 
         Token::Dimension { has_sign: _, value: v, int_value: _, unit: u } if u == &"s" => {
-            Units::Stretch(*v as f32)
+            Units::Stretch(*v)
         }
 
         Token::Ident(name) if name == &"auto" => Units::Auto,
@@ -1087,7 +1085,7 @@ fn parse_color<'i, 't>(
             //     }
             // }
 
-            match css_color(&name) {
+            match css_color(name) {
                 Some(color) => color,
                 None => {
                     return Err(CustomParseError::UnrecognisedColorName(
@@ -1119,13 +1117,10 @@ fn parse_color2<'i>(token: &Token<'i>) -> Result<Color, ParseError<'i, CustomPar
             //     }
             // }
 
-            match css_color(&name) {
+            match css_color(name) {
                 Some(color) => Ok(color),
                 None => {
-                    return Err(CustomParseError::UnrecognisedColorName(
-                        name.to_owned().to_string(),
-                    )
-                    .into());
+                    Err(CustomParseError::UnrecognisedColorName(name.to_owned().to_string()).into())
                 }
             }
         }
@@ -1137,7 +1132,7 @@ fn parse_color2<'i>(token: &Token<'i>) -> Result<Color, ParseError<'i, CustomPar
                 kind: BasicParseErrorKind::UnexpectedToken(t.to_owned()),
                 location: SourceLocation { line: 0, column: 0 },
             };
-            return Err(basic_error.into());
+            Err(basic_error.into())
         }
     }
 }
