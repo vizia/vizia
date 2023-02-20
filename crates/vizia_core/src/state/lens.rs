@@ -39,7 +39,7 @@ pub enum LensValue<'a, 'b, T> {
 impl<T: Clone> Clone for LensValue<'_, '_, T> {
     fn clone(&self) -> Self {
         match self {
-            LensValue::Borrowed(v) => LensValue::Owned((*v).clone()),
+            LensValue::Borrowed(v) => LensValue::Borrowed(*v),
             LensValue::Owned(v) => LensValue::Owned(v.clone()),
             LensValue::Local(v) => LensValue::Local(v.clone()),
         }
