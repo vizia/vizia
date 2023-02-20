@@ -19,18 +19,6 @@ pub trait Lens: 'static + Clone {
     type Target;
 
     fn view<'a>(&'a self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>>;
-    fn view_value<'a>(
-        &'a self,
-        source: LensValue<'a, Self::Source>,
-    ) -> Option<LensValue<'a, Self::Target>> {
-        match source {
-            LensValue::Borrowed(source) => self.view(source),
-            LensValue::Owned(source) => match self.view(&source)? {
-                LensValue::Owned(target) => Some(target.into()),
-                LensValue::Borrowed(_) => None,
-            },
-        }
-    }
 
     fn name(&self) -> Option<&'static str> {
         None
