@@ -2,7 +2,12 @@ use crate::prelude::{LensValue, Wrapper};
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
 
-use crate::{context::EventContext, events::Event, state::Lens, state::Model};
+use crate::{
+    context::EventContext,
+    events::Event,
+    state::Model,
+    state::{Lens, StatelessLens},
+};
 
 #[derive(Lens)]
 pub struct Environment {

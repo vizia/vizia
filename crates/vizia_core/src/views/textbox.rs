@@ -441,7 +441,7 @@ where
         // TODO can this be simplified now that text doesn't live in TextboxData?
         let result = Self { lens: lens.clone(), kind }.build(cx, move |cx| {
             Binding::new(cx, lens.clone(), |cx, text| {
-                let text_str = text.get(cx).map(|x| x.to_string()).unwrap_or_default();
+                let text_str = text.get_fallible(cx).map(|x| x.to_string()).unwrap_or_default();
 
                 if let Some(text_data) = cx.data::<TextboxData>() {
                     if !text_data.edit {
@@ -470,7 +470,7 @@ where
                     cx.emit_to(cx.current(), ());
                 }
             });
-            let text = lens.get(cx).map(|x| x.to_string()).unwrap_or_default();
+            let text = lens.get_fallible(cx).map(|x| x.to_string()).unwrap_or_default();
             TextboxContainer {}
                 .build(cx, move |cx| {
                     let lbl = TextboxLabel {}
@@ -542,7 +542,7 @@ where
                     cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
                 } else {
                     cx.emit(TextEvent::Submit(false));
-                    let text = self.lens.get(cx).map(|x| x.to_string()).unwrap_or_default();
+                    let text = self.lens.get_fallible(cx).map(|x| x.to_string()).unwrap_or_default();
 
                     cx.emit(TextEvent::ResetText(text));
                     cx.release();
@@ -614,7 +614,7 @@ where
                     // Finish editing
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
-                        let text = self.lens.get(cx).map(|x| x.to_string()).unwrap_or_default();
+                        let text = self.lens.get_fallible(cx).map(|x| x.to_string()).unwrap_or_default();
 
                         cx.emit(TextEvent::SelectAll);
                         cx.emit(TextEvent::InsertText(text));

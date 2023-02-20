@@ -3,8 +3,8 @@ use crate::prelude::*;
 macro_rules! impl_res_simple {
     ($t:ty) => {
         impl Res<$t> for $t {
-            fn get_ref<'a, 'b>(&'a self, _: &'b impl DataContext) -> Option<LensValue<'a, 'b, $t>> {
-                Some(LensValue::Local(self))
+            fn get_ref(&self, _: &impl DataContext) -> Option<LensValue<'_, $t>> {
+                Some(LensValue::Borrowed(self))
             }
 
             fn get_val(&self, _: &impl DataContext) -> $t {
@@ -27,7 +27,7 @@ macro_rules! impl_res_simple {
 /// This trait is part of the prelude.
 pub trait Res<T> {
     #[allow(unused_variables)]
-    fn get_ref<'a, 'b>(&'a self, cx: &'b impl DataContext) -> Option<LensValue<'a, 'b, T>> {
+    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, T>> {
         None
     }
 
@@ -64,7 +64,7 @@ where
     L: Lens<Target = T>,
     T: Clone + Data,
 {
-    fn get_ref<'a, 'b>(&'a self, cx: &'b impl DataContext) -> Option<LensValue<'a, 'b, T>> {
+    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, T>> {
         self.view(cx.data()?)
     }
 

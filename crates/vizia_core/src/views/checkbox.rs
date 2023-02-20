@@ -138,7 +138,7 @@ impl Checkbox {
         Self { on_toggle: None }
             .build(cx, |_| {})
             .bind(checked, |handle, checked| {
-                if let Some(flag) = checked.get(handle.cx) {
+                if let Some(flag) = checked.get_fallible(handle.cx) {
                     handle.text(if flag { CHECK } else { "" }).checked(flag);
                 }
             })

@@ -302,7 +302,7 @@ impl MenuButton {
                 HStack::new(cx, move |cx| {
                     builder(cx);
                     Label::new(cx, "").left(Units::Stretch(1.0)).bind(lens, move |handle, lens| {
-                        let val = lens.get(handle.cx);
+                        let val = lens.get_fallible(handle.cx);
                         handle.text(if val == Some(true) { CHECK } else { "" });
                     });
                 });
