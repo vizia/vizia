@@ -183,6 +183,19 @@ impl Res<PositionType> for PositionType {
     }
 }
 
+impl Res<SvgTree> for SvgTree {
+    fn get_val(&self, _: &Context) -> SvgTree {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, SvgTree),
+    {
+        (closure)(cx, entity, self.clone());
+    }
+}
+
 impl Res<(u32, u32)> for (u32, u32) {
     fn get_val(&self, _: &Context) -> (u32, u32) {
         *self

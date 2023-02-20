@@ -18,6 +18,7 @@ mod scrollbar;
 mod scrollview;
 mod slider;
 mod stack;
+mod svg_display;
 mod table;
 mod textbox;
 
@@ -36,6 +37,7 @@ pub use scrollbar::Scrollbar;
 pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
 pub use slider::Slider;
 pub use stack::{HStack, VStack, ZStack};
+pub use svg_display::{SvgDisplay, SvgOptions, SvgTree};
 pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};
 

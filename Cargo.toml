@@ -86,6 +86,10 @@ path = "examples/views/label.rs"
 name = "slider"
 path = "examples/views/slider.rs"
 
+[[example]]
+name = "svg_display"
+path = "examples/views/svg_display.rs"
+
 
 [[example]]
 name = "radiobutton"
