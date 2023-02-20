@@ -221,8 +221,15 @@ where
     type Target = B::Target;
 
     fn view<'a>(&self, source: &'a Self::Source) -> Option<LensValue<'_, 'a, Self::Target>> {
-        match self.a.view(source)? {
-            LensValue::Borrowed(val) => self.b.view(val),
+        let val = self.a.view(source)?;
+        let val = match val {
+            LensValue::Borrowed(val) => return self.b.view(val),
+            LensValue::Local(val) => val,
+            LensValue::Owned(ref val) => &val,
+        };
+        match self.b.view(&val)? {
+            LensValue::Local(val) => Some(LensValue::Local(val)),
+            LensValue::Owned(val) => Some(LensValue::Owned(val)),
             _ => None,
         }
     }
