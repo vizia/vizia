@@ -170,7 +170,7 @@ impl TextContext {
                         let font = int.font_system.get_font(cache_key.font_id).expect("Somehow shaped a font that doesn't exist");
                         let mut scaler = int.scale_context.builder(font.as_swash())
                             .size(cache_key.font_size as f32)
-                            .hint(true)
+                            .hint(config.hint)
                             .build();
                         let offset = Vector::new(cache_key.x_bin.as_float(), cache_key.y_bin.as_float());
                         let rendered = Render::new(&[

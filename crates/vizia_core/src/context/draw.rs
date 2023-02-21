@@ -115,12 +115,12 @@ impl<'a> DrawContext<'a> {
 
     /// Function to convert logical points to physical pixels.
     pub fn logical_to_physical(&self, logical: f32) -> f32 {
-        logical * self.style.dpi_factor as f32
+        self.style.logical_to_physical(logical)
     }
 
     /// Function to convert physical pixels to logical points.
     pub fn physical_to_logical(&self, physical: f32) -> f32 {
-        physical * self.style.dpi_factor as f32
+        self.style.physical_to_logical(physical)
     }
 
     style_getter_units!(border_width);
