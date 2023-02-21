@@ -3,7 +3,6 @@ use std::collections::HashSet;
 
 use femtovg::{renderer::OpenGl, Canvas};
 use fnv::FnvHashMap;
-use vizia_input::MouseState;
 
 use super::EventProxy;
 use crate::style::SystemFlags;
@@ -45,10 +44,6 @@ impl<'a> BackendContext<'a> {
 
     pub fn modifiers(&mut self) -> &mut Modifiers {
         &mut self.0.modifiers
-    }
-
-    pub fn mouse(&mut self) -> &mut MouseState<Entity> {
-        &mut self.0.mouse
     }
 
     /// The window's size in logical pixels, before
