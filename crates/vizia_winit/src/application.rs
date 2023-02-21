@@ -306,6 +306,8 @@ impl Application {
                                 cursor_moved = true;
                                 cursor.0 = position.x as f32;
                                 cursor.1 = position.y as f32;
+                                cx.mouse().cursorx = cursor.0;
+                                cx.mouse().cursory = cursor.1;
                             }
                         }
 

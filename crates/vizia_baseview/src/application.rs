@@ -308,6 +308,8 @@ impl ApplicationRunner {
                     let physical_posy = position.y * self.window_scale_factor;
                     let cursorx = (physical_posx) as f32;
                     let cursory = (physical_posy) as f32;
+                    cx.mouse().cursorx = cursorx;
+                    cx.mouse().cursory = cursory;
                     cx.emit_origin(WindowEvent::MouseMove(cursorx, cursory));
                 }
                 baseview::MouseEvent::ButtonPressed { button, modifiers } => {
