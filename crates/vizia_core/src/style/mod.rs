@@ -281,7 +281,7 @@ impl Style {
 
     /// Function to convert logical points to physical pixels.
     pub fn logical_to_physical(&self, logical: f32) -> f32 {
-        (logical * self.dpi_factor as f32).ceil()
+        (logical * self.dpi_factor as f32).round()
     }
 
     /// Function to convert physical pixels to logical points.

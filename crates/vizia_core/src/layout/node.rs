@@ -122,11 +122,11 @@ impl<'w> Node<'w> for Entity {
     }
 
     fn content_width(&self, store: &Self::Data) -> Option<f32> {
-        store.content_width.get(*self).cloned().map(|x| store.logical_to_physical(x))
+        store.content_width.get(*self).cloned().map(|x| (x * store.dpi_factor as f32).ceil())
     }
 
     fn content_height(&self, store: &Self::Data) -> Option<f32> {
-        store.content_height.get(*self).cloned().map(|x| store.logical_to_physical(x))
+        store.content_height.get(*self).cloned().map(|x| (x * store.dpi_factor as f32).ceil())
     }
 
     fn content_width_secondary(
@@ -135,7 +135,7 @@ impl<'w> Node<'w> for Entity {
         _sublayout: &'_ mut Self::Sublayout,
         _height: f32,
     ) -> Option<f32> {
-        store.content_width.get(*self).cloned().map(|x| store.logical_to_physical(x))
+        store.content_width.get(*self).cloned().map(|x| (x * store.dpi_factor as f32).ceil())
     }
 
     fn content_height_secondary(
@@ -144,6 +144,7 @@ impl<'w> Node<'w> for Entity {
         sublayout: &'_ mut Self::Sublayout,
         width: f32,
     ) -> Option<f32> {
+        let width = width.ceil();
         if !store.text_wrap.get(*self).copied().unwrap_or(true) {
             return None;
         }
