@@ -159,7 +159,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                 type Source = #struct_type#ty_generics;
                 type Target = #field_ty;
 
-                fn view<'a>(&'a self, source: &'a #struct_type#ty_generics) -> Option<LensValue<'a, Self::Target>> {
+                fn view<'a>(&'a self, source: impl Into<LensValue<'a, Self::Source>>) -> Option<LensValue<'a, Self::Target>> {
                     self.view_stateless(source)
                 }
 
@@ -168,8 +168,11 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
                 }
             }
             impl #impl_generics StatelessLens for #twizzled_name::#field_name#lens_ty_generics #where_clause {
-                fn view_stateless<'a>(&self, source: &'a #struct_type#ty_generics) -> Option<LensValue<'a, Self::Target>> {
-                    Some(LensValue::Borrowed(&source.#field_name))
+                fn view_stateless<'a>(&self, source: impl Into<LensValue<'a, Self::Source>>) -> Option<LensValue<'a, Self::Target>> {
+                    Some(match source.into() {
+                        LensValue::Borrowed(source) => LensValue::Borrowed(&source.#field_name),
+                        LensValue::Owned(source) => LensValue::Owned(source.#field_name)
+                    })
                 }
             }
         }
@@ -207,10 +210,17 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
 
         impl #impl_generics Lens for #twizzled_name::root#lens_ty_generics {
             type Source = #struct_type#ty_generics;
+            type SourceOwned = #struct_type#ty_generics;
             type Target = #struct_type#ty_generics;
+            type TargetOwned = #struct_type#ty_generics;
 
-            fn view<'a>(&'a self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
-                Some(LensValue::Borrowed(source))
+            fn view<'a>(&'a self, source: impl Into<LensValue<'a, Self::Source>>) -> Option<LensValue<'a, Self::Target>> {
+                self.view_stateless(source)
+            }
+        }
+        impl #impl_generics StatelessLens for #twizzled_name::root#lens_ty_generics {
+            fn view_stateless<'a>(&self, source: impl Into<LensValue<'a, Self::Source>>) -> Option<LensValue<'a, Self::Target>> {
+                Some(source.into())
             }
         }
 

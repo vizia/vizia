@@ -392,7 +392,7 @@ impl<'a> EventContext<'a> {
 }
 
 impl<'a> DataContext for EventContext<'a> {
-    fn data<T: 'static>(&self) -> Option<&T> {
+    fn data<T: 'static + ?Sized>(&self) -> Option<&T> {
         // Return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);

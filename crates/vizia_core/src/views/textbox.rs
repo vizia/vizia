@@ -423,7 +423,8 @@ pub enum TextboxKind {
 
 impl<L: Lens> Textbox<L>
 where
-    <L as Lens>::Target: Data + Clone + ToString,
+    <L as Lens>::TargetOwned: Data + Clone + ToString,
+    L::Target: ToOwned<Owned = L::TargetOwned>,
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
         Self::new_core(cx, lens, TextboxKind::SingleLine)
@@ -524,7 +525,8 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
 
 impl<L: Lens> View for Textbox<L>
 where
-    <L as Lens>::Target: Data + ToString,
+    <L as Lens>::TargetOwned: Data + ToString,
+    L::Target: ToOwned<Owned = L::TargetOwned>,
 {
     fn element(&self) -> Option<&'static str> {
         Some("textbox")
@@ -542,7 +544,8 @@ where
                     cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
                 } else {
                     cx.emit(TextEvent::Submit(false));
-                    let text = self.lens.get_fallible(cx).map(|x| x.to_string()).unwrap_or_default();
+                    let text =
+                        self.lens.get_fallible(cx).map(|x| x.to_string()).unwrap_or_default();
 
                     cx.emit(TextEvent::ResetText(text));
                     cx.release();
@@ -614,7 +617,8 @@ where
                     // Finish editing
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
-                        let text = self.lens.get_fallible(cx).map(|x| x.to_string()).unwrap_or_default();
+                        let text =
+                            self.lens.get_fallible(cx).map(|x| x.to_string()).unwrap_or_default();
 
                         cx.emit(TextEvent::SelectAll);
                         cx.emit(TextEvent::InsertText(text));

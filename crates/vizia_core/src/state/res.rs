@@ -61,11 +61,11 @@ impl_res_simple!(FontStyle);
 
 impl<T, L> Res<T> for L
 where
-    L: Lens<Target = T>,
+    L: Lens<Target = T, TargetOwned = T>,
     T: Clone + Data,
 {
     fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, T>> {
-        self.view(cx.data()?)
+        self.view(LensValue::Borrowed(cx.data()?))
     }
 
     fn get_val(&self, cx: &impl DataContext) -> T {

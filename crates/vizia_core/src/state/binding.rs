@@ -21,7 +21,7 @@ impl<L> Binding<L>
 where
     L: 'static + Lens,
     <L as Lens>::Source: 'static,
-    <L as Lens>::Target: Data,
+    <L as Lens>::TargetOwned: Data,
 {
     /// Creates a new binding view.
     ///
@@ -59,6 +59,8 @@ where
             id: Entity,
         ) where
             L::Target: Data,
+            L::Source: Sized,
+            L::Target: ToOwned<Owned = L::TargetOwned>,
         {
             let key = lens.cache_key();
 
@@ -74,7 +76,7 @@ where
 
                 let model = model_data.downcast_ref::<L::Source>().unwrap();
 
-                let old = lens.view(model).map(|t| t.into_owned());
+                let old = lens.view(LensValue::Borrowed(model)).map(|t| t.into_owned());
 
                 let store = Box::new(BasicStore { entity: id, lens, old, observers });
 

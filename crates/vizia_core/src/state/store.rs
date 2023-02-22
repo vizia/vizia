@@ -1,4 +1,4 @@
-use std::{any::TypeId, collections::HashSet, ops::Deref};
+use std::{any::TypeId, collections::HashSet};
 
 use crate::prelude::*;
 

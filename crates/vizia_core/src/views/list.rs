@@ -18,7 +18,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
     /// Creates a new List view with a binding to the given lens and a template for constructing the list items
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, T>>),
+        F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, Vec<T>, T>>),
         <L as Lens>::Source: Model,
     {
         //let item_template = Rc::new(item);
