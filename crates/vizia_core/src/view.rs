@@ -423,15 +423,10 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
             bounds.y,
             bounds.x + end_x,
             bounds.y + end_y,
-            background_gradient
-                .get_stops(parent_length)
-                .iter()
-                .map(|stop| {
-                    let col: femtovg::Color = stop.1.into();
-                    (stop.0, col)
-                })
-                .collect::<Vec<_>>()
-                .as_slice(),
+            background_gradient.get_stops(parent_length).iter().map(|stop| {
+                let col: femtovg::Color = stop.1.into();
+                (stop.0, col)
+            }),
         );
     }
 

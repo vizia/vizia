@@ -18,8 +18,7 @@ pub use rule::Rule;
 mod display;
 pub use display::*;
 
-mod transform;
-pub use transform::*;
+pub use femtovg::Transform2D;
 
 mod parser;
 pub use parser::*;
