@@ -9,8 +9,8 @@ use cosmic_text::{
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
-    Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource, Quad,
-    Renderer,
+    Atlas, Canvas, DrawCommand, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource,
+    Quad, Renderer,
 };
 use fnv::FnvHashMap;
 use ouroboros::self_referencing;
@@ -252,7 +252,7 @@ impl TextContext {
                         alpha_cmd_map.entry(glyph.color_opt.unwrap_or(CosmicColor::rgb(0, 0, 0))).or_insert_with(FnvHashMap::default)
                     };
 
-                    let cmd = cmd_map.entry(rendered.texture_index).or_insert_with(|| DrawCmd {
+                    let cmd = cmd_map.entry(rendered.texture_index).or_insert_with(|| DrawCommand {
                         image_id: int.glyph_textures[rendered.texture_index].image_id,
                         quads: Vec::new(),
                     });
