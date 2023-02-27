@@ -22,6 +22,11 @@ use copypasta::ClipboardProvider;
 
 use super::DrawCache;
 
+pub enum RelativeResult {
+    Inside((f32, f32)),
+    Outside((f32, f32)),
+}
+
 pub struct EventContext<'a> {
     pub(crate) current: Entity,
     pub(crate) captured: &'a mut Entity,
@@ -91,16 +96,17 @@ impl<'a> EventContext<'a> {
         self.cache.get_bounds(self.current)
     }
 
-    /// Returns `Some` containing a tuple of the passed `x` and `y` values relative to the current bounding box.
-    /// Returns `None`, when the coordinate is not inside the bounds.
-    pub fn bounds_relative_position(&self, x: f32, y: f32) -> Option<(f32, f32)> {
+    /// Returns [`RelativeResult::Inside`] containing a tuple of the passed `x` and `y` values relative to the current bounding box,
+    /// or [`RelativeResult::Outside`] with the `x` and `y` coordinates, also relative but they may be negative,
+    /// when the coordinate is not inside the bounds.
+    pub fn relative_position(&self, x: f32, y: f32) -> RelativeResult {
         let bounds = self.bounds();
         let rel_x = x - bounds.x;
         let rel_y = y - bounds.y;
         if rel_x >= 0. && rel_y >= 0. && rel_x < bounds.w && rel_y < bounds.h {
-            Some((rel_x, rel_y))
+            RelativeResult::Inside((rel_x, rel_y))
         } else {
-            None
+            RelativeResult::Outside((rel_x, rel_y))
         }
     }
 
