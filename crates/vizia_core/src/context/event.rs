@@ -5,7 +5,7 @@ use std::error::Error;
 
 use fnv::FnvHashMap;
 
-use crate::cache::CachedData;
+use crate::cache::{BoundingBox, CachedData};
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
@@ -85,6 +85,23 @@ impl<'a> EventContext<'a> {
 
     pub fn current(&self) -> Entity {
         self.current
+    }
+
+    pub fn bounds(&self) -> BoundingBox {
+        self.cache.get_bounds(self.current)
+    }
+
+    /// Returns `Some` containing a tuple of the passed `x` and `y` values relative to the current bounding box.
+    /// Returns `None`, when the coordinate is not inside the bounds.
+    pub fn bounds_relative_position(&self, x: f32, y: f32) -> Option<(f32, f32)> {
+        let bounds = self.bounds();
+        let rel_x = x - bounds.x;
+        let rel_y = y - bounds.y;
+        if rel_x >= 0. && rel_y >= 0. && rel_x < bounds.w && rel_y < bounds.h {
+            Some((rel_x, rel_y))
+        } else {
+            None
+        }
     }
 
     /// Add a listener to an entity.
