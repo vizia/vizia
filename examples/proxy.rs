@@ -1,10 +1,23 @@
-use vizia::*;
+#[allow(unused)]
+use vizia::prelude::*;
 
+#[cfg(target_arch = "wasm32")]
 fn main() {
-    let app =
-        Application::new(WindowDescription::new().with_title("Proxy"), |_| {}).on_idle(|_| {
-            println!("On Idle: {:?}", std::time::Instant::now());
-        });
+    panic!("This example is not supported on wasm - threads are experimental");
+}
+
+#[cfg(feature = "baseview")]
+fn main() {
+    panic!("This example is not supported on baseview - proxies are winit only");
+}
+
+#[cfg(all(not(target_arch = "wasm32"), not(feature = "baseview")))]
+fn main() {
+    let app = Application::new(|_| {})
+        .on_idle(|_| {
+            println!("On Idle: {:?}", instant::Instant::now());
+        })
+        .title("Proxy");
 
     let proxy = app.get_proxy();
 

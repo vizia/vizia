@@ -1,21 +1,28 @@
-use vizia::*;
+use vizia::prelude::*;
 
 const STYLE: &str = r#"
 
-    zstack {
+    .modal {
         space: 1s;
-        background-color: #CCCCCC;
+        background-color: white;
         border-radius: 3px;
+        border-width: 1px;
+        border-color: #999999;
+        outer-shadow: 0 3 10 #00000055;
+        overflow: visible;
+        child-space: 10px;
     }
 
-    label {
+    modal>popup>label {
         width: auto;
-        height: 1s;
+        height: auto;
+        space: 5px;
         child-space: 1s;
     }
 
     button {
         border-radius: 3px;
+        child-space: 1s;
     }
 
     hstack {
@@ -25,37 +32,33 @@ const STYLE: &str = r#"
 "#;
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("Modal"), |cx| {
+    Application::new(|cx| {
         cx.add_theme(STYLE);
 
         AppData { show_modal: false }.build(cx);
 
         Button::new(cx, |cx| cx.emit(AppEvent::ShowModal), |cx| Label::new(cx, "Show Modal"))
+            .width(Pixels(150.0))
             .space(Pixels(50.0));
 
-        Binding::new(cx, AppData::show_modal, |cx, show| {
-            ZStack::new(cx, |cx| {
-                VStack::new(cx, |cx| {
-                    Label::new(cx, "This is a message").width(Stretch(1.0));
-                    HStack::new(cx, |cx| {
-                        Button::new(
-                            cx,
-                            |cx| cx.emit(AppEvent::HideModal),
-                            |cx| Label::new(cx, "Cancel"),
-                        );
-                        Button::new(
-                            cx,
-                            |cx| cx.emit(AppEvent::HideModal),
-                            |cx| Label::new(cx, "Ok"),
-                        );
-                    });
-                });
-            })
-            .width(Pixels(300.0))
-            .height(Pixels(100.0))
-            .visibility(show);
-        });
+        Popup::new(cx, AppData::show_modal, true, |cx| {
+            Label::new(cx, "This is a message").width(Stretch(1.0));
+            HStack::new(cx, |cx| {
+                Button::new(cx, |cx| cx.emit(AppEvent::HideModal), |cx| Label::new(cx, "Ok"))
+                    .width(Pixels(100.0))
+                    .class("accent");
+
+                Button::new(cx, |cx| cx.emit(AppEvent::HideModal), |cx| Label::new(cx, "Cancel"))
+                    .width(Pixels(100.0));
+            });
+        })
+        .on_blur(|cx| cx.emit(AppEvent::HideModal))
+        .width(Pixels(300.0))
+        .height(Auto)
+        .row_between(Pixels(10.0))
+        .class("modal");
     })
+    .title("Modal")
     .run();
 }
 
@@ -71,17 +74,14 @@ pub struct AppData {
 }
 
 impl Model for AppData {
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(app_event) = event.message.downcast() {
-            match app_event {
-                AppEvent::ShowModal => {
-                    self.show_modal = true;
-                }
-
-                AppEvent::HideModal => {
-                    self.show_modal = false;
-                }
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::ShowModal => {
+                self.show_modal = true;
             }
-        }
+            AppEvent::HideModal => {
+                self.show_modal = false;
+            }
+        });
     }
 }

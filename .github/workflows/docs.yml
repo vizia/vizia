@@ -1,0 +1,73 @@
+name: Docs
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      # Run when pushing version tags, since otherwise it's impossible to
+      # restart a successful build after pushing a tag
+      - '*.*.*'
+
+defaults:
+  run:
+    # This otherwise gets run under dash which does not support brace expansion
+    shell: bash
+
+jobs:
+  docs:
+    name: Build and test all components
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      # Needed for git-describe to do anything useful
+      - name: Fetch all git history
+        run: git fetch --force --prune --tags --unshallow
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl-dev libxcb1-dev libxcb-icccm4-dev libxcursor-dev libxkbcommon-dev libxcb-shape0-dev libxcb-xfixes0-dev
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Set up Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          default: true
+      - name: Build all targets
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: >-
+            --no-deps
+            -p vizia
+            -p vizia_core
+            -p vizia_winit
+            -p vizia_baseview
+            -p vizia_derive
+      - name: Add a redirect index page
+        run: |
+          cat > target/doc/index.html <<EOF
+          <meta charset="utf-8">
+          <meta http-equiv="refresh" content="0; url=vizia">
+          EOF
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4.3.0
+        with:
+          branch: gh-pages
+          folder: target/doc
+
+          # Having the gh-pages branch on this repository adds a whole bunch of
+          # noise to the GitHub feed if you follow this repo
+          repository-name: vizia/vizia-docs
+          ssh-key: ${{ secrets.DOCS_DEPLOY_KEY }}

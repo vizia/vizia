@@ -1,0 +1,14 @@
+[package]
+name = "vizia_window"
+version = "0.1.0"
+authors = ["George Atkinson"]
+license = "MIT"
+repository = "https://github.com/vizia/vizia"
+edition = "2021"
+description = "The window components of vizia"
+rust-version = "1.60"
+
+[dependencies]
+vizia_input = { path = "../vizia_input" }
+morphorm = { git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "3d74358fe976249738f58724854270aa2f0fdb4a" }
+#morphorm = { path = "../../../morphorm", features = ["rounding"] }

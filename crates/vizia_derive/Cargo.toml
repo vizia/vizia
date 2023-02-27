@@ -1,0 +1,16 @@
+[package]
+name = "vizia_derive"
+version = "0.1.0"
+authors = ["George Atkinson"]
+license = "MIT"
+repository = "https://github.com/vizia/vizia"
+edition = "2018"
+description = "Derive macros for vizia"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "1.0.84"
+quote = "1.0.13"
+proc-macro2 = "1.0.36"

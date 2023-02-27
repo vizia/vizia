@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use vizia::*;
+use vizia::prelude::*;
 
 #[derive(Lens)]
 pub struct AppData {
@@ -15,48 +15,41 @@ pub enum AppEvent {
 }
 
 impl Model for AppData {
-    fn event(&mut self, _: &mut Context, event: &mut Event) {
-        if let Some(list_event) = event.message.downcast() {
-            match list_event {
-                AppEvent::Select(index) => {
-                    if !self.selected.insert(*index) {
-                        self.selected.remove(index);
-                    }
-                }
-
-                AppEvent::ClearSelection => {
-                    self.selected.clear();
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::Select(index) => {
+                if !self.selected.insert(*index) {
+                    self.selected.remove(index);
                 }
             }
-        }
+
+            AppEvent::ClearSelection => {
+                self.selected.clear();
+            }
+        });
     }
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("List"), |cx| {
-        cx.add_stylesheet("examples/lists/list_style.css").unwrap();
+    Application::new(|cx| {
+        cx.add_theme(include_str!("../resources/list_style.css"));
 
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list, selected: HashSet::new() }.build(cx);
 
-        List::new(cx, AppData::list, |cx, item| {
-            let item_text = item.get(cx).to_string();
-            let item_index = item.index();
+        List::new(cx, AppData::list, |cx, index, item| {
             // This vstack shouldn't be necessary but because of how bindings work it's required
             VStack::new(cx, move |cx| {
-                Binding::new(cx, AppData::selected, move |cx, selected| {
-                    let selected = selected.get(cx).clone();
-
-                    Label::new(cx, &item_text)
-                        // Set the checked state based on whether this item is selected
-                        .checked(selected.contains(&item_index))
-                        // Set the selected item to this one if pressed
-                        .on_press(move |cx| cx.emit(AppEvent::Select(item_index)));
-                });
+                Label::new(cx, item)
+                    // Set the checked state based on whether this item is selected
+                    .checked(AppData::selected.map(move |selected| selected.contains(&index)))
+                    // Set the selected item to this one if pressed
+                    .on_press(move |cx| cx.emit(AppEvent::Select(index)));
             });
         })
         .space(Stretch(1.0))
         .on_clear(|cx| cx.emit(AppEvent::ClearSelection));
     })
+    .title("Multiselectable List")
     .run();
 }

@@ -1,4 +1,4 @@
-use vizia::*;
+use vizia::prelude::*;
 
 #[derive(Lens)]
 pub struct AppData {
@@ -15,55 +15,54 @@ pub enum AppEvent {
 
 impl Model for AppData {
     // Intercept list events from the list view to modify the selected index in the model
-    fn event(&mut self, cx: &mut Context, event: &mut Event) {
-        if let Some(list_event) = event.message.downcast() {
-            match list_event {
-                AppEvent::Select(index) => {
-                    self.selected = *index;
-                }
-
-                AppEvent::IncrementSelection => {
-                    cx.emit(AppEvent::Select((self.selected + 1).min(self.list.len() - 1)));
-                }
-
-                AppEvent::DecrementSelection => {
-                    cx.emit(AppEvent::Select(self.selected.saturating_sub(1)));
-                }
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::Select(index) => {
+                self.selected = *index;
             }
-        }
+
+            AppEvent::IncrementSelection => {
+                cx.emit(AppEvent::Select((self.selected + 1).min(self.list.len() - 1)));
+            }
+
+            AppEvent::DecrementSelection => {
+                cx.emit(AppEvent::Select(self.selected.saturating_sub(1)));
+            }
+        });
     }
 }
 
 fn main() {
-    Application::new(WindowDescription::new().with_title("List"), |cx| {
-        cx.add_stylesheet("examples/lists/list_style.css").unwrap();
+    Application::new(|cx| {
+        cx.add_theme(include_str!("../resources/list_style.css"));
 
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list, selected: 0 }.build(cx);
 
         VStack::new(cx, move |cx| {
-            List::new(cx, AppData::list, move |cx, item| {
+            List::new(cx, AppData::list, move |cx, index, item| {
                 let item_text = item.get(cx).to_string();
-                let item_index = item.index();
+                //let item_index = item.idx();
                 VStack::new(cx, move |cx| {
-                    Binding::new(cx, AppData::selected, move |cx, selected| {
-                        let selected = *selected.get(cx);
-                        Label::new(cx, &item_text)
-                            // Set the checked state based on whether this item is selected
-                            .checked(if selected == item_index { true } else { false })
-                            // Set the selected item to this one if pressed
-                            .on_press(move |cx| cx.emit(AppEvent::Select(item_index)));
-                    });
+                    Label::new(cx, &item_text)
+                        // Set the checked state based on whether this item is selected
+                        .checked(AppData::selected.map(move |selected| *selected == index))
+                        // Set the selected item to this one if pressed
+                        .on_press(move |cx| cx.emit(AppEvent::Select(index)));
                 });
             })
             .on_increment(move |cx| cx.emit(AppEvent::IncrementSelection))
             .on_decrement(move |cx| cx.emit(AppEvent::DecrementSelection));
 
-            Binding::new(cx, AppData::selected, move |cx, selected_item| {
-                Label::new(cx, &format!("You have selected: {}", selected_item.get(cx),));
-            });
+            Label::new(
+                cx,
+                AppData::selected.map(|selected| format!("You have selected: {}", selected)),
+            )
+            .height(Pixels(30.0))
+            .width(Pixels(200.0));
         })
         .class("container");
     })
+    .title("Selectable List")
     .run();
 }

@@ -4,55 +4,126 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 description = "A Rust GUI Framework"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+autoexamples = false
+rust-version = "1.60"
 
 [workspace]
+members = [ "crates/*", "run-wasm" ]
+
+[[example]]
+name = "action_modifier"
+path = "examples/action_modifier.rs"
+
+[[example]]
+name = "animation"
+path = "examples/animation.rs"
+
+[[example]]
+name = "cursor_icon"
+path = "examples/cursor_icon.rs"
+
+[[example]]
+name = "l10n"
+path = "examples/localization/l10n.rs"
+
+[[example]]
+name = "modal"
+path = "examples/modal.rs"
+
+[[example]]
+name = "more_knobs"
+path = "examples/more_knobs.rs"
+
+[[example]]
+name = "proxy"
+path = "examples/proxy.rs"
+
+[[example]]
+name = "key_input_propagation"
+path = "examples/key_input_propagation.rs"
+
+[[example]]
+name = "scrollview"
+path = "examples/views/scrollview.rs"
+
+[[example]]
+name = "stylesheet"
+path = "examples/stylesheet.rs"
+
+[[example]]
+name = "table"
+path = "examples/views/table.rs"
+
+[[example]]
+name = "textbox_list"
+path = "examples/textbox_list.rs"
 
 [[example]]
 name = "button"
-path = "examples/controls/button.rs"
-
-
-[[example]]
-name = "slider"
-path = "examples/controls/slider.rs"
-
-[[example]]
-name = "knob"
-path = "examples/controls/knob.rs"
+path = "examples/views/button.rs"
 
 [[example]]
 name = "checkbox"
-path = "examples/controls/checkbox.rs"
-
-[[example]]
-name = "radiobutton"
-path = "examples/controls/radiobutton.rs"
-
-[[example]]
-name = "zstack"
-path = "examples/controls/zstack.rs"
-
-[[example]]
-name = "picker"
-path = "examples/controls/picker.rs"
-
-[[example]]
-name = "popup"
-path = "examples/controls/popup.rs"
+path = "examples/views/checkbox.rs"
 
 [[example]]
 name = "dropdown"
-path = "examples/controls/dropdown.rs"
+path = "examples/views/dropdown.rs"
+
+[[example]]
+name = "image"
+path = "examples/views/image.rs"
+
+[[example]]
+name = "knob"
+path = "examples/views/knob.rs"
+
+[[example]]
+name = "label"
+path = "examples/views/label.rs"
+
+[[example]]
+name = "slider"
+path = "examples/views/slider.rs"
+
+
+[[example]]
+name = "radiobutton"
+path = "examples/views/radiobutton.rs"
+
+[[example]]
+name = "zstack"
+path = "examples/views/zstack.rs"
+
+[[example]]
+name = "hstack"
+path = "examples/views/hstack.rs"
+
+[[example]]
+name = "vstack"
+path = "examples/views/vstack.rs"
+
+[[example]]
+name = "popup"
+path = "examples/views/popup.rs"
+
+
 
 [[example]]
 name = "textbox"
-path = "examples/controls/textbox.rs"
+path = "examples/views/textbox.rs"
+
+[[example]]
+name = "number_input"
+path = "examples/number_input.rs"
+
+[[example]]
+name = "widget_gallery"
+path = "examples/widget_gallery.rs"
 
 [[example]]
 name = "list"
-path = "examples/lists/list.rs"
+path = "examples/views/list.rs"
 
 [[example]]
 name = "selectable_list"
@@ -67,23 +138,103 @@ name = "multiselectable_list"
 path = "examples/lists/multiselectable_list.rs"
 
 [[example]]
+name = "sortable_list"
+path = "examples/lists/sortable_list.rs"
+
+[[example]]
 name = "static_list"
 path = "examples/lists/static_list.rs"
 
 
-[features]
-default = ["glutin", "clipboard"]
-clipboard = ["vizia_core/clipboard"]
-glutin = ["vizia_glutin"]
-baseview = ["vizia_baseview"]
-meadowlark = ["glutin", "vizia_core/meadowlark"]
 
+[[example]]
+name = "menu"
+path = "examples/views/menu.rs"
+
+
+[[example]]
+name = "counter"
+path = "examples/7GUIs/counter.rs"
+
+[[example]]
+name = "temperature_converter"
+path = "examples/7GUIs/temperature_converter.rs"
+
+[[example]]
+name = "flight_booker"
+path = "examples/7GUIs/flight_booker.rs"
+
+[[example]]
+name = "crud"
+path = "examples/7GUIs/crud.rs"
+
+[[example]]
+name = "focus_order"
+path = "examples/accessibility/focus_order.rs"
+
+[[example]]
+name = "keymap_basic"
+path = "examples/keymap_basic.rs"
+
+[[example]]
+name = "keymap_change_entries"
+path = "examples/keymap_change_entries.rs"
+
+[[example]]
+name = "mouse_delta"
+path = "examples/mouse_delta.rs"
+
+[[example]]
+name = "window_modifiers"
+path = "examples/window_modifiers.rs"
+
+[[example]]
+name = "user_scale"
+path = "examples/user_scale.rs"
+
+[[example]]
+name = "long_list"
+path = "examples/lists/long_list.rs"
+
+[[example]]
+name = "locale_binding"
+path = "examples/localization/locale_binding.rs"
+
+[[example]]
+name = "ignore_default_theme"
+path = "examples/ignore_default_theme.rs"
+
+[[example]]
+name = "outline"
+path = "examples/style/outline.rs"
+
+[[example]]
+name = "save_dialog"
+path = "examples/save_dialog.rs"
+
+[[example]]
+name = "boolean"
+path = "examples/binding/boolean.rs"
+
+[features]
+default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
+clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
+serde = ["vizia_core/serde"]
+winit = ["vizia_winit"]
+baseview = ["vizia_baseview"]
+x11 = ["vizia_winit?/x11", "vizia_core/x11"]
+wayland = ["vizia_winit?/wayland", "vizia_core/wayland"]
+embedded_fonts = ["vizia_core/embedded_fonts"]
 
 [dependencies]
-vizia_core = { version = "0.1.0", path = "core"}
-vizia_glutin = { version = "0.1.0", path = "glutin", optional = true }
-vizia_baseview = { version = "0.1.0", path = "baseview", optional = true }
+vizia_core = { version = "0.1.0", path = "crates/vizia_core"}
+vizia_winit = { version = "0.1.0", path = "crates/vizia_winit", optional = true }
+vizia_baseview = { version = "0.1.0", path = "crates/vizia_baseview", optional = true }
 
 [dev-dependencies]
 english-numbers = "0.3.3"
 lazy_static = "1.4.0"
+chrono = "0.4.19"
+image = { version = "0.24.0", default-features = false, features = ["png"] }
+reqwest = { version = "0.11.9", features = ["blocking"] }
+instant = "0.1.12"
