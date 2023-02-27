@@ -278,6 +278,16 @@ impl Style {
     //     self.set_style_properties();
     // }
 
+    /// Function to convert logical points to physical pixels.
+    pub fn logical_to_physical(&self, logical: f32) -> f32 {
+        (logical * self.dpi_factor as f32).round()
+    }
+
+    /// Function to convert physical pixels to logical points.
+    pub fn physical_to_logical(&self, physical: f32) -> f32 {
+        physical / self.dpi_factor as f32
+    }
+
     pub fn remove_rules(&mut self) {
         for rule in self.rules.iter() {
             self.rule_manager.destroy(rule.id);

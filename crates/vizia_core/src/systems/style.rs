@@ -501,6 +501,20 @@ pub fn style_system(cx: &mut Context) {
             prev_matched_rule_ids.append(&mut matched_rule_ids);
         }
 
+        // Z-Order system
+        let iterator = LayoutTreeIterator::full(&cx.tree);
+        if cx.style.system_flags.contains(SystemFlags::REORDER) {
+            let mut entities = Vec::new();
+            for entity in iterator {
+                if let Some(z_order) = cx.style.z_order.get(entity) {
+                    entities.push((entity, *z_order));
+                }
+            }
+            for (entity, z_order) in entities {
+                cx.tree.set_z_order(entity, z_order);
+            }
+        }
+
         cx.style.system_flags.set(SystemFlags::RESTYLE, false);
     }
 }

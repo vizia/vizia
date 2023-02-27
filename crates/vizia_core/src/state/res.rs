@@ -51,6 +51,8 @@ impl_res_simple!(CursorIcon);
 impl_res_simple!(Overflow);
 impl_res_simple!(Weight);
 impl_res_simple!(FontStyle);
+impl_res_simple!((u32, u32));
+impl_res_simple!((f32, f32));
 
 impl<T, L> Res<T> for L
 where
@@ -183,31 +185,6 @@ impl Res<PositionType> for PositionType {
     }
 }
 
-impl Res<(u32, u32)> for (u32, u32) {
-    fn get_val(&self, _: &Context) -> (u32, u32) {
-        *self
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, Self),
-    {
-        (closure)(cx, entity, *self);
-    }
-}
-
-impl Res<(f32, f32)> for (f32, f32) {
-    fn get_val(&self, _: &Context) -> (f32, f32) {
-        *self
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, Self),
-    {
-        (closure)(cx, entity, *self);
-    }
-}
 impl<T: Clone + Res<T>> Res<Option<T>> for Option<T> {
     fn get_val(&self, _: &Context) -> Option<T> {
         self.clone()

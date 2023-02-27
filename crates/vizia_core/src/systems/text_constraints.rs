@@ -10,7 +10,9 @@ pub fn text_constraints_system(cx: &mut Context) {
 
     for entity in draw_tree {
         // Skip if the entity isn't marked as having its text modified
-        if !cx.style.needs_text_layout.get(entity).copied().unwrap_or_default() {
+        if !cx.style.needs_text_layout.get(entity).copied().unwrap_or_default()
+            && !cx.style.system_flags.contains(SystemFlags::REFLOW)
+        {
             continue;
         }
 
@@ -86,9 +88,8 @@ pub fn text_constraints_system(cx: &mut Context) {
                     (w, h)
                 });
 
-                // Add an extra pixel to account for AA
-                let text_width = text_width.ceil() + 1.0 + child_space_x;
-                let text_height = text_height.ceil() + 1.0 + child_space_y;
+                let text_width = text_width + child_space_x;
+                let text_height = text_height + child_space_y;
 
                 if content_width < text_width {
                     content_width = text_width;
@@ -122,11 +123,15 @@ pub fn text_constraints_system(cx: &mut Context) {
             if (desired_width == Auto && content_width != bounds.w)
                 || (desired_height == Auto && content_height != bounds.h)
             {
-                cx.style.content_width.insert(entity, content_width / cx.style.dpi_factor as f32);
-                cx.style.content_height.insert(entity, content_height / cx.style.dpi_factor as f32);
+                cx.style.content_width.insert(entity, cx.style.physical_to_logical(content_width));
+                cx.style
+                    .content_height
+                    .insert(entity, cx.style.physical_to_logical(content_height));
 
                 cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
             }
         }
     }
+
+    cx.style.system_flags.set(SystemFlags::REFLOW, false);
 }

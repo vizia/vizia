@@ -10,7 +10,7 @@ use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
-use crate::style::Style;
+use crate::style::{Style, SystemFlags};
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -388,6 +388,8 @@ impl<'a> EventContext<'a> {
     /// window has actually changed in size.
     pub fn set_user_scale_factor(&mut self, new_factor: f64) {
         *self.user_scale_factor = new_factor;
+        self.style.system_flags.set(SystemFlags::RELAYOUT, true);
+        self.style.system_flags.set(SystemFlags::REFLOW, true);
     }
 }
 
