@@ -27,6 +27,17 @@ pub enum RelativeResult {
     Outside((f32, f32)),
 }
 
+impl RelativeResult {
+    /// Returns the `x` and `y` coordinates. May be negative when unwrapping [`RelativeResult::Outside`]
+    #[inline]
+    pub fn unwrap(self) -> (f32, f32) {
+        match self {
+            Self::Inside((x, y)) => (x, y),
+            Self::Outside((x, y)) => (x, y),
+        }
+    }
+}
+
 pub struct EventContext<'a> {
     pub(crate) current: Entity,
     pub(crate) captured: &'a mut Entity,
