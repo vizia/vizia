@@ -1,6 +1,8 @@
+use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::style::SystemFlags;
 use crate::style::{Rule, Selector, SelectorRelation, Style, StyleRule};
+use fnv::FnvHashMap;
 use vizia_id::GenerationalId;
 use vizia_storage::{DrawIterator, LayoutTreeIterator, TreeExt};
 
@@ -80,11 +82,16 @@ fn entity_selector(cx: &Context, entity: Entity) -> Selector {
 }
 
 // Returns true if the widget matches the selector
-fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
+fn check_match(
+    style: &Style,
+    views: &FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    entity: Entity,
+    selector: &Selector,
+) -> bool {
     // Universal selector always matches
     if selector.asterisk {
-        if let Some(mut pseudo_classes) = cx.style.pseudo_classes.get(entity).cloned() {
-            if let Some(disabled) = cx.style.disabled.get(entity) {
+        if let Some(mut pseudo_classes) = style.pseudo_classes.get(entity).cloned() {
+            if let Some(disabled) = style.disabled.get(entity) {
                 pseudo_classes.set(PseudoClass::DISABLED, *disabled);
             }
             let selector_pseudo_classes = selector.pseudo_classes;
@@ -97,14 +104,14 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
 
     // If there's an id in the selector, it must match the entity's id
     if let Some(id) = &selector.id {
-        if Some(id) != cx.style.ids.get(entity) {
+        if Some(id) != style.ids.get(entity) {
             return false;
         }
     }
 
     // Check for element name match
     if let Some(selector_element) = &selector.element {
-        if let Some(element) = cx.views.get(&entity).and_then(|view| view.element()) {
+        if let Some(element) = views.get(&entity).and_then(|view| view.element()) {
             if selector_element != &element {
                 return false;
             }
@@ -118,7 +125,7 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     }
 
     // Check for classes match
-    if let Some(classes) = cx.style.classes.get(entity) {
+    if let Some(classes) = style.classes.get(entity) {
         if !selector.classes.is_subset(classes) {
             return false;
         }
@@ -127,8 +134,8 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
     }
 
     // Check for pseudo-class match
-    if let Some(mut pseudo_classes) = cx.style.pseudo_classes.get(entity).cloned() {
-        if let Some(disabled) = cx.style.disabled.get(entity) {
+    if let Some(mut pseudo_classes) = style.pseudo_classes.get(entity).cloned() {
+        if let Some(disabled) = style.disabled.get(entity) {
             pseudo_classes.set(PseudoClass::DISABLED, *disabled);
         }
         let selector_pseudo_classes = selector.pseudo_classes;
@@ -143,13 +150,14 @@ fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
 }
 
 pub(crate) fn compute_matched_rules<'a>(
-    cx: &'a Context,
+    style: &'a Style,
+    views: &'a FnvHashMap<Entity, Box<dyn ViewHandler>>,
     tree: &Tree<Entity>,
     entity: Entity,
     matched_rules: &mut Vec<&'a StyleRule>,
 ) {
     // Loop through all of the style rules
-    'rule_loop: for rule in cx.style.rules.iter() {
+    'rule_loop: for rule in style.rules.iter() {
         let mut relation_entity = entity;
         // Loop through selectors (Should be from right to left)
         // All the selectors need to match for the rule to apply
@@ -157,7 +165,7 @@ pub(crate) fn compute_matched_rules<'a>(
             // Get the relation of the selector
             match rule_selector.relation {
                 SelectorRelation::None => {
-                    if !check_match(cx, entity, rule_selector) {
+                    if !check_match(style, views, entity, rule_selector) {
                         continue 'rule_loop;
                     }
                 }
@@ -167,7 +175,7 @@ pub(crate) fn compute_matched_rules<'a>(
                     // Contrust the selector for the parent
                     // Check if the parent selector matches the rule_seletor
                     if let Some(parent) = tree.get_layout_parent(relation_entity) {
-                        if !check_match(cx, parent, rule_selector) {
+                        if !check_match(style, views, parent, rule_selector) {
                             continue 'rule_loop;
                         }
 
@@ -190,7 +198,7 @@ pub(crate) fn compute_matched_rules<'a>(
                             continue;
                         }
 
-                        if check_match(cx, ancestor, rule_selector) {
+                        if check_match(style, views, ancestor, rule_selector) {
                             relation_entity = ancestor;
 
                             continue 'selector_loop;
@@ -493,7 +501,7 @@ pub fn style_system(cx: &mut Context) {
             //}
 
             let mut matched_rules = Vec::with_capacity(100);
-            compute_matched_rules(cx, &cx.tree, entity, &mut matched_rules);
+            compute_matched_rules(&cx.style, &cx.views, &cx.tree, entity, &mut matched_rules);
             matched_rule_ids.extend(matched_rules.into_iter().map(|r| r.id));
             link_style_data(&mut cx.style, entity, &matched_rule_ids);
 

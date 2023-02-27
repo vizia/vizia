@@ -216,6 +216,10 @@ path = "examples/save_dialog.rs"
 name = "boolean"
 path = "examples/binding/boolean.rs"
 
+[[example]]
+name = "inspector"
+path = "examples/inspector.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]

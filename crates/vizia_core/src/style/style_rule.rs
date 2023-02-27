@@ -2,7 +2,7 @@ use super::Property;
 
 use super::*;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub(crate) struct StyleRule {
     pub(crate) id: Rule,
     pub(crate) selectors: Vec<Selector>,

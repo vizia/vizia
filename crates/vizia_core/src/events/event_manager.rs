@@ -399,7 +399,13 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 && context.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
                 let mut result = vec![];
-                compute_matched_rules(context, &context.tree, context.hovered, &mut result);
+                compute_matched_rules(
+                    &context.style,
+                    &context.views,
+                    &context.tree,
+                    context.hovered,
+                    &mut result,
+                );
 
                 let entity = context.hovered;
                 println!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",

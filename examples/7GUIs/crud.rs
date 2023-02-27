@@ -2,30 +2,30 @@ use vizia::prelude::*;
 
 const STYLE: &str = r#"
 
-    textbox {
+    .crud textbox {
         width: 1s;
         height: 30px;
         child-top: 1s;
         child-bottom: 1s;
     }
 
-    hstack {
+    .crud hstack {
         height: auto;
         col-between: 10px;
         child-top: 1s;
         child-bottom: 1s;
     }
 
-    vstack {
+    .crud vstack {
         height: 1s;
         row-between: 10px;
     }
 
-    button {
+    .crud button {
         width: 100px;
     }
 
-    label {
+    .crud label {
         width: 1s;
         height: 30px;
         child-left: 5px;
@@ -33,12 +33,12 @@ const STYLE: &str = r#"
         child-bottom: 1s;
     }
 
-    label:checked {
+    .crud label:checked {
         background-color: blue;
         color: white;
     }
 
-    list {
+    .crud list {
         border-color: black;
         border-width: 1px;
         width: 1s;
@@ -116,73 +116,82 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
+        Inspector::new(cx, |cx| {
+            cx.add_theme(STYLE);
 
-        AppData {
-            filter_prefix: "".to_string(),
-            list: vec![("John".to_string(), "Smith".to_string())],
-            selected: None,
-            name: "".to_string(),
-            surname: "".to_string(),
-        }
-        .build(cx);
+            AppData {
+                filter_prefix: "".to_string(),
+                list: vec![("John".to_string(), "Smith".to_string())],
+                selected: None,
+                name: "".to_string(),
+                surname: "".to_string(),
+            }
+            .build(cx);
 
-        VStack::new(cx, |cx| {
-            HStack::new(cx, |cx| {
-                VStack::new(cx, |cx| {
-                    HStack::new(cx, |cx| {
-                        Label::new(cx, "Filter prefix:");
-                        Textbox::new(cx, AppData::filter_prefix).width(Pixels(80.0));
-                    });
+            VStack::new(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    VStack::new(cx, |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, "Filter prefix:");
+                            Textbox::new(cx, AppData::filter_prefix).width(Pixels(80.0));
+                        });
 
-                    List::new(cx, AppData::list, |cx, index, item| {
-                        Label::new(
-                            cx,
-                            item.map(|(name, surname)| format!("{}, {}", surname, name)),
-                        )
-                        .on_press(move |cx| {
-                            cx.emit(AppEvent::SetSelected(index));
-                        })
-                        .checked(AppData::selected.map(move |selected| *selected == Some(index)));
-                    });
-                });
-
-                VStack::new(cx, |cx| {
-                    HStack::new(cx, |cx| {
-                        Label::new(cx, "Name:");
-
-                        Textbox::new(cx, AppData::name)
-                            .on_edit(move |cx, text| {
-                                cx.emit(AppEvent::SetName(text));
+                        List::new(cx, AppData::list, |cx, index, item| {
+                            Label::new(
+                                cx,
+                                item.map(|(name, surname)| format!("{}, {}", surname, name)),
+                            )
+                            .on_press(move |cx| {
+                                cx.emit(AppEvent::SetSelected(index));
                             })
-                            .width(Pixels(120.0));
+                            .checked(
+                                AppData::selected.map(move |selected| *selected == Some(index)),
+                            );
+                        });
                     });
 
-                    HStack::new(cx, |cx| {
-                        Label::new(cx, "Surname:");
+                    VStack::new(cx, |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, "Name:");
 
-                        Textbox::new(cx, AppData::surname)
-                            .on_edit(move |cx, text| {
-                                cx.emit(AppEvent::SetSurname(text));
-                            })
-                            .width(Pixels(120.0));
+                            Textbox::new(cx, AppData::name)
+                                .on_edit(move |cx, text| {
+                                    cx.emit(AppEvent::SetName(text));
+                                })
+                                .width(Pixels(120.0));
+                        });
+
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, "Surname:");
+
+                            Textbox::new(cx, AppData::surname)
+                                .on_edit(move |cx, text| {
+                                    cx.emit(AppEvent::SetSurname(text));
+                                })
+                                .width(Pixels(120.0));
+                        });
                     });
-                });
-            })
-            .height(Stretch(1.0))
-            .child_top(Pixels(0.0))
-            .child_bottom(Pixels(0.0));
+                })
+                .height(Stretch(1.0))
+                .child_top(Pixels(0.0))
+                .child_bottom(Pixels(0.0));
 
-            HStack::new(cx, |cx| {
-                Button::new(cx, |cx| cx.emit(AppEvent::Create), |cx| Label::new(cx, "Create"));
-                Button::new(cx, |cx| cx.emit(AppEvent::Update), |cx| Label::new(cx, "Update"));
-                Button::new(cx, |cx| cx.emit(AppEvent::Delete), |cx| Label::new(cx, "Delete"));
+                HStack::new(cx, |cx| {
+                    Button::new(cx, |cx| cx.emit(AppEvent::Create), |cx| Label::new(cx, "Create"));
+                    Button::new(cx, |cx| cx.emit(AppEvent::Update), |cx| Label::new(cx, "Update"));
+                    Button::new(cx, |cx| cx.emit(AppEvent::Delete), |cx| Label::new(cx, "Delete"));
+                })
+                .col_between(Pixels(10.0));
             })
-            .col_between(Pixels(10.0));
-        })
-        .child_space(Pixels(10.0));
+            .child_space(Pixels(10.0))
+            .width(Pixels(450.0))
+            .height(Pixels(250.0))
+            .background_color(Color::white())
+            .class("crud");
+        });
     })
+    .background_color(Color::rgb(200, 200, 200))
     .title("CRUD")
-    .inner_size((450, 200))
+    .inner_size((1400, 800))
     .run();
 }
