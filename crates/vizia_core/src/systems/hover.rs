@@ -18,7 +18,7 @@ pub fn hover_system(cx: &mut Context) {
         // Unfortunately we can't skip the subtree because even if a parent is invisible
         // a child might be explicitly set to be visible.
         if entity == Entity::root()
-            || cx.cache.get_visibility(entity) == Visibility::Invisible
+            || cx.cache.get_visibility(entity) == Visibility::Hidden
             || cx.cache.get_display(entity) == Display::None
             || cx.cache.get_opacity(entity) == 0.0
             || !window_bounds.contains(&cx.cache.get_bounds(entity))

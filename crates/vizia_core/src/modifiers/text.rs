@@ -1,5 +1,5 @@
 use super::internal;
-use crate::prelude::*;
+use crate::{prelude::*, style::SystemFlags};
 use cosmic_text::FamilyOwned;
 use vizia_style::{FontSize, FontStretch, FontStyle, FontWeight};
 
@@ -28,15 +28,11 @@ pub trait TextModifiers: internal::Modifiable {
     );
 
     modifier!(
-            /// Sets the font weight that should be used by the view.
-            font_weight,
-    <<<<<<< HEAD
-            FontWeight
-    =======
-            Weight,
-            SystemFlags::REDRAW
-    >>>>>>> main
-        );
+        /// Sets the font weight that should be used by the view.
+        font_weight,
+        FontWeight,
+        SystemFlags::REDRAW
+    );
 
     modifier!(
         /// Sets the font style that should be used by the view.
@@ -48,7 +44,8 @@ pub trait TextModifiers: internal::Modifiable {
     modifier!(
         /// Sets the font stretch that should be used by the view if the font supports it.
         font_stretch,
-        FontStretch
+        FontStretch,
+        SystemFlags::REDRAW
     );
 
     /// Sets the text color of the view.
@@ -65,7 +62,7 @@ pub trait TextModifiers: internal::Modifiable {
     fn font_size<U: Into<FontSize>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            cx.style.font_size.insert(entity, v);
+            cx.style.font_size.insert(entity, v.into());
             cx.style.needs_text_layout.insert(entity, true).unwrap();
         });
         self

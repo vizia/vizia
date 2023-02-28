@@ -61,7 +61,7 @@ where
             })
             .checked(lens.clone())
             .position_type(PositionType::SelfDirected)
-            .z_index(100)
+            .z_order(100)
     }
 }
 

@@ -4,8 +4,7 @@ pub fn animation_system(cx: &mut Context) -> bool {
     let time = instant::Instant::now();
 
     // Properties which affect visibility
-    let needs_rehide =
-        cx.style.display.tick(time) | cx.style.visibility.tick(time) | cx.style.opacity.tick(time);
+    let needs_rehide = cx.style.opacity.tick(time);
 
     // Properties which affect rendering
     let needs_redraw = cx.style.opacity.tick(time)

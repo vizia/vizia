@@ -142,7 +142,7 @@ pub trait StyleModifiers: internal::Modifiable {
             cx.style.overflowx.insert(entity, value);
             cx.style.overflowy.insert(entity, value);
 
-            cx.need_redraw();
+            cx.needs_redraw();
         });
 
         self
@@ -189,7 +189,7 @@ pub trait StyleModifiers: internal::Modifiable {
                 })
                 .collect::<Vec<_>>();
             cx.style.background_gradient.insert(entity, gradients);
-            cx.need_redraw();
+            cx.needs_redraw();
         });
 
         self
@@ -220,7 +220,7 @@ pub trait StyleModifiers: internal::Modifiable {
     modifier!(
         /// Sets the border width of the view.
         border_width,
-        LengthOrPercentage
+        LengthOrPercentage,
         SystemFlags::RELAYOUT | SystemFlags::REDRAW
     );
 
@@ -323,7 +323,7 @@ pub trait StyleModifiers: internal::Modifiable {
     modifier!(
         /// Sets the outline width of the view.
         outline_width,
-        LengthOrPercentage
+        LengthOrPercentage,
         SystemFlags::REDRAW
     );
 
@@ -336,7 +336,7 @@ pub trait StyleModifiers: internal::Modifiable {
     modifier!(
         /// Sets the outline offset of the view.
         outline_offset,
-        LengthOrPercentage
+        LengthOrPercentage,
         SystemFlags::REDRAW
     );
 

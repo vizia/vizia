@@ -869,7 +869,7 @@ impl Style {
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
         self.visibility.insert(entity, Default::default());
-        self.focus_order.insert(entity, Default::default()).unwrap();
+        // self.focus_order.insert(entity, Default::default()).unwrap();
         self.system_flags = SystemFlags::all();
     }
 

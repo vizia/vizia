@@ -272,7 +272,7 @@ impl TextContext {
                     let cmd_map = if rendered.color_glyph {
                         &mut color_cmd_map
                     } else {
-                        alpha_cmd_map.entry(glyph.color_opt.unwrap_or(CosmicColor::rgb(0, 0, 0))).or_insert_with(FnvHashMap::default)
+                        alpha_cmd_map.entry(glyph.color_opt.unwrap_or(FontColor::rgb(0, 0, 0))).or_insert_with(FnvHashMap::default)
                     };
 
                     let cmd = cmd_map.entry(rendered.texture_index).or_insert_with(|| DrawCommand {

@@ -33,7 +33,7 @@ use crate::fonts;
 use crate::prelude::*;
 use crate::resource::{ImageRetentionPolicy, ResourceManager};
 use crate::state::{BindingHandler, ModelDataStore};
-use crate::style::Style;
+use crate::style::{Style, SystemFlags};
 use crate::text::{TextConfig, TextContext};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
@@ -528,9 +528,9 @@ impl Context {
 
         self.style.parse_theme(&overall_theme);
 
-        self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
+        self.style.needs_restyle();
+        self.style.needs_relayout();
+        self.style.needs_redraw();
 
         Ok(())
     }

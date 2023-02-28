@@ -645,7 +645,7 @@ impl<'a> DrawContext<'a> {
                             bounds.y,
                             bounds.x + end_x,
                             bounds.y + end_y,
-                            stops.as_slice(),
+                            stops.into_iter(),
                         );
 
                         canvas.fill_path(path, &paint);

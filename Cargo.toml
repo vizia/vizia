@@ -235,6 +235,8 @@ path = "examples/style/text.rs"
 [[example]]
 name = "clipping"
 path = "examples/style/clipping.rs"
+
+[[example]]
 name = "boolean"
 path = "examples/binding/boolean.rs"
 

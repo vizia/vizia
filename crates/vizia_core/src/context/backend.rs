@@ -233,11 +233,11 @@ impl<'a> BackendContext<'a> {
 
     pub fn process_style_updates(&mut self) {
         // Apply any inline style inheritance.
-        inline_inheritance_system(self.0);
+        // inline_inheritance_system(self.0);
 
         style_system(self.0);
 
-        shared_inheritance_system(self.0);
+        // shared_inheritance_system(self.0);
 
         // Load any unloaded images and remove unused images.
         image_system(self.0);

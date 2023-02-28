@@ -10,7 +10,7 @@ rust-version = "1.60"
 
 [dependencies]
 cssparser = "0.29.6"
-femtovg = "0.4.0"
+femtovg = "0.6.0"
 # femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "e1f3f05cc050c0ed69ca702b368bb5d4eb2cabff", default-features = false, features = ["image-loading"] }
 selectors = { version = "0.23.0", path = "./selectors" }
 morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "3d74358fe976249738f58724854270aa2f0fdb4a" }

@@ -5,6 +5,8 @@ use crate::style::Transform2D;
 use vizia_id::GenerationalId;
 use vizia_storage::DrawIterator;
 
+use super::transform;
+
 pub fn draw_system(cx: &mut Context) {
     let canvas = cx.canvases.get_mut(&Entity::root()).unwrap();
     cx.resource_manager.mark_images_unused();
@@ -26,7 +28,7 @@ pub fn draw_system(cx: &mut Context) {
         // Unfortunately we can't skip the subtree because even if a parent is invisible
         // a child might be explicitly set to be visible.
         if entity == Entity::root()
-            || cx.cache.get_visibility(entity) == Visibility::Invisible
+            || cx.cache.get_visibility(entity) == Visibility::Hidden
             || cx.cache.get_display(entity) == Display::None
             || cx.cache.get_opacity(entity) == 0.0
             || !window_bounds.intersects(&cx.cache.get_bounds(entity))
@@ -85,14 +87,16 @@ pub fn draw_system(cx: &mut Context) {
         canvas.save();
         // canvas.set_transform(1.0, 0.0, 0.0, 1.0, bounds.center().0, bounds.center().1);
         // canvas.reset_transform();
-        canvas.set_transform(
+        let trans = femtovg::Transform2D::identity();
+        let mut trans = femtovg::Transform2D::identity();
+        canvas.set_transform(&trans.new(
             transform[0],
             transform[1],
             transform[2],
             transform[3],
             transform[4],
             transform[5],
-        );
+        ));
         // canvas.reset_transform();
         // canvas.set_transform(1.0, 0.0, 0.5, 1.0, -50.0, 0.0);
 

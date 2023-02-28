@@ -3,17 +3,17 @@ use vizia_id::GenerationalId;
 use vizia_style::{clip, Clip};
 
 // Iterate tree and apply clip region to nodes based on specified clip widget and parent clip region.
-pub fn clipping_system(cx: &mut Context, tree: &Tree<Entity>) {
-    for entity in tree.into_iter() {
+pub fn clipping_system(cx: &mut Context) {
+    for entity in cx.tree.into_iter() {
         if entity == Entity::root() {
             continue;
         }
 
-        if tree.is_ignored(entity) {
+        if cx.tree.is_ignored(entity) {
             continue;
         }
 
-        let parent = tree.get_layout_parent(entity).unwrap();
+        let parent = cx.tree.get_layout_parent(entity).unwrap();
 
         let parent_clip_region = cx.cache.get_clip_region(parent);
         let mut parent_transform = cx.cache.get_transform(parent);
