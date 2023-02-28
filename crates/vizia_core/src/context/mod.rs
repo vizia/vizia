@@ -33,7 +33,7 @@ use crate::fonts;
 use crate::prelude::*;
 use crate::resource::{ImageRetentionPolicy, ResourceManager};
 use crate::state::{BindingHandler, ModelDataStore};
-use crate::style::{Style, SystemFlags};
+use crate::style::Style;
 use crate::text::{TextConfig, TextContext};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};

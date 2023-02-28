@@ -280,32 +280,39 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
     if style.display.link(entity, &matched_rules) {
         should_relayout = true;
         should_redraw = true;
+        should_rehide = true;
     }
 
     if style.visibility.link(entity, &matched_rules) {
         should_relayout = true;
         should_redraw = true;
+        should_rehide = true;
     }
 
     if style.z_index.link(entity, &matched_rules) {
         should_redraw = true;
+        should_reorder = true;
     }
 
     if style.overflowx.link(entity, &matched_rules) {
         should_redraw = true;
+        should_reclip = true;
     }
 
     if style.overflowy.link(entity, &matched_rules) {
         should_redraw = true;
+        should_reclip = true;
     }
 
     if style.clip.link(entity, &matched_rules) {
         should_redraw = true;
+        should_reclip = true;
     }
 
     // Opacity
     if style.opacity.link(entity, &matched_rules) {
         should_redraw = true;
+        should_rehide = true;
     }
 
     if style.left.link(entity, &matched_rules) {
