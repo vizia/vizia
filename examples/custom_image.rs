@@ -20,12 +20,13 @@ impl CustomImageView {
 impl View for CustomImageView {
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let bounds = cx.bounds();
-        let noise: RgbaImage = ImageBuffer::from_fn(256, 256, |_, _| {
-            let pixel_value: u8 = rand::thread_rng().gen::<u8>();
-            Rgba([pixel_value, pixel_value, pixel_value, 255])
-        });
 
         let image_id = if self.image.borrow().is_none() {
+            let noise: RgbaImage = ImageBuffer::from_fn(256, 256, |_, _| {
+                let pixel_value: u8 = rand::thread_rng().gen::<u8>();
+                Rgba([pixel_value, pixel_value, pixel_value, 255])
+            });
+
             let img_src = Img::new(noise.as_rgba(), 256, 256);
 
             let image_id = canvas.create_image(img_src, vg::ImageFlags::empty()).unwrap();
