@@ -213,9 +213,9 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     }
 }
 
-pub fn inline_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
-    for entity in tree.into_iter() {
-        if let Some(parent) = tree.get_layout_parent(entity) {
+pub fn inline_inheritance_system(cx: &mut Context) {
+    for entity in cx.tree.into_iter() {
+        if let Some(parent) = cx.tree.get_layout_parent(entity) {
             cx.style.disabled.inherit_inline(entity, parent);
 
             cx.style.font_color.inherit_inline(entity, parent);
@@ -229,9 +229,9 @@ pub fn inline_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
     }
 }
 
-pub fn shared_inheritance_system(cx: &mut Context, tree: &Tree<Entity>) {
-    for entity in tree.into_iter() {
-        if let Some(parent) = tree.get_layout_parent(entity) {
+pub fn shared_inheritance_system(cx: &mut Context) {
+    for entity in cx.tree.into_iter() {
+        if let Some(parent) = cx.tree.get_layout_parent(entity) {
             cx.style.font_color.inherit_shared(entity, parent);
             cx.style.font_size.inherit_shared(entity, parent);
             cx.style.font_family.inherit_shared(entity, parent);
@@ -272,47 +272,37 @@ pub fn hoverability_system(cx: &mut Context) {
 fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>) {
     let mut should_relayout = false;
     let mut should_redraw = false;
-    let mut should_reorder = false;
-    let mut should_reclip = false;
-    let mut should_rehide = false;
 
     // Display
     if style.display.link(entity, &matched_rules) {
         should_relayout = true;
         should_redraw = true;
-        should_rehide = true;
     }
 
     if style.visibility.link(entity, &matched_rules) {
         should_relayout = true;
         should_redraw = true;
-        should_rehide = true;
     }
 
     if style.z_index.link(entity, &matched_rules) {
         should_redraw = true;
-        should_reorder = true;
     }
 
     if style.overflowx.link(entity, &matched_rules) {
         should_redraw = true;
-        should_reclip = true;
     }
 
     if style.overflowy.link(entity, &matched_rules) {
         should_redraw = true;
-        should_reclip = true;
     }
 
     if style.clip.link(entity, &matched_rules) {
         should_redraw = true;
-        should_reclip = true;
     }
 
     // Opacity
     if style.opacity.link(entity, &matched_rules) {
         should_redraw = true;
-        should_rehide = true;
     }
 
     if style.left.link(entity, &matched_rules) {
@@ -581,18 +571,6 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
     if should_redraw {
         style.system_flags.set(SystemFlags::REDRAW, true);
     }
-
-    if should_reorder {
-        style.system_flags.set(SystemFlags::REORDER, true);
-    }
-
-    if should_reclip {
-        style.system_flags.set(SystemFlags::RECLIP, true);
-    }
-
-    if should_rehide {
-        style.system_flags.set(SystemFlags::REHIDE, true);
-    }
 }
 
 // Iterate tree and determine the matched style rules for each entity. Link the entity to the style data.
@@ -633,20 +611,6 @@ pub fn style_system(cx: &mut Context) {
                 &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
             );
         }
-
-        // Z-Order system (TODO)
-        // let iterator = LayoutTreeIterator::full(&cx.tree);
-        // if cx.style.system_flags.contains(SystemFlags::REORDER) {
-        //     let mut entities = Vec::new();
-        //     for entity in iterator {
-        //         if let Some(z_order) = cx.style.z_order.get(entity) {
-        //             entities.push((entity, *z_order));
-        //         }
-        //     }
-        //     for (entity, z_order) in entities {
-        //         cx.tree.set_z_order(entity, z_order);
-        //     }
-        // }
 
         cx.style.system_flags.set(SystemFlags::RESTYLE, false);
     }

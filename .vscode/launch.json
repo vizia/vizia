@@ -1654,6 +1654,24 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug example 'clipping'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=clipping",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "clipping",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in example 'transform'",
             "cargo": {
                 "args": [

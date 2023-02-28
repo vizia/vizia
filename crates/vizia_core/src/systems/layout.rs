@@ -11,9 +11,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
     if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {
         layout(&mut cx.cache, &cx.tree, &cx.style, &mut cx.text_context);
 
-        // If layout has changed then reclip, retransform, and redraw
-        cx.style.system_flags.set(SystemFlags::RETRANSFORM, true);
-        cx.style.system_flags.set(SystemFlags::RECLIP, true);
+        // If layout has changed then redraw
         cx.style.system_flags.set(SystemFlags::REDRAW, true);
 
         for entity in cx.tree.into_iter() {

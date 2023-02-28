@@ -237,6 +237,10 @@ name = "clipping"
 path = "examples/style/clipping.rs"
 
 [[example]]
+name = "zorder"
+path = "examples/style/zorder.rs"
+
+[[example]]
 name = "boolean"
 path = "examples/binding/boolean.rs"
 

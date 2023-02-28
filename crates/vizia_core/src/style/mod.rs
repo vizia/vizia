@@ -66,16 +66,8 @@ bitflags! {
         const RELAYOUT = 1 << 1;
         /// Draw system flag.
         const REDRAW = 1 << 2;
-        /// Z_order system flag.
-        const REORDER = 1 << 3;
-        /// Transform system flag.
-        const RETRANSFORM = 1 << 4;
         /// Text constraints system flag.
         const REFLOW = 1 << 5;
-        /// Clipping system flag.
-        const RECLIP = 1 << 6;
-        /// Visibility system flag.
-        const REHIDE = 1 << 7;
     }
 }
 

@@ -3,9 +3,6 @@ use crate::{prelude::*, style::SystemFlags};
 pub fn animation_system(cx: &mut Context) -> bool {
     let time = instant::Instant::now();
 
-    // Properties which affect visibility
-    let needs_rehide = cx.style.opacity.tick(time);
-
     // Properties which affect rendering
     let needs_redraw = cx.style.opacity.tick(time)
         | cx.style.border_color.tick(time)
@@ -49,10 +46,6 @@ pub fn animation_system(cx: &mut Context) -> bool {
 
     if needs_relayout {
         cx.style.system_flags.set(SystemFlags::RELAYOUT, true);
-    }
-
-    if needs_rehide {
-        cx.style.system_flags.set(SystemFlags::REHIDE, true);
     }
 
     if needs_redraw {

@@ -4,14 +4,16 @@ const STYLE: &str = r#"
     .one {
         size: 100px;
         background-color: green;
-        overflow: hidden;
+        overflow-x: visible;
+        overflow-y: hidden;
     }
     
     .two {
         size: 50px;
         background-color: red;
+        top: 75px;
         transform: translateX(75px);
-        overflow: hidden;
+        overflow: visible;
     }
 
     .three {

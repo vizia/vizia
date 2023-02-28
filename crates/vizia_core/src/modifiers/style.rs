@@ -101,7 +101,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// A display value of `Display::None` causes the view to be ignored by both layout and rendering.
         display,
         Display,
-        SystemFlags::REHIDE | SystemFlags::RELAYOUT | SystemFlags::REDRAW
+        SystemFlags::RELAYOUT | SystemFlags::REDRAW
     );
 
     modifier!(
@@ -110,7 +110,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// The layout system will still compute the size and position of an invisible view.
         visibility,
         Visibility,
-        SystemFlags::REHIDE | SystemFlags::REDRAW
+        SystemFlags::REDRAW
     );
 
     modifier!(
@@ -154,7 +154,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// The overflow behavior determines whether child views can render outside the bounds of their parent.
         overflowx,
         Overflow,
-        SystemFlags::RECLIP | SystemFlags::REDRAW
+        SystemFlags::REDRAW
     );
 
     modifier!(
@@ -163,7 +163,7 @@ pub trait StyleModifiers: internal::Modifiable {
         /// The overflow behavior determines whether child views can render outside the bounds of their parent.
         overflowy,
         Overflow,
-        SystemFlags::RECLIP | SystemFlags::REDRAW
+        SystemFlags::REDRAW
     );
 
     // Background Properties

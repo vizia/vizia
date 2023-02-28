@@ -29,11 +29,7 @@ pub(crate) fn geometry_changed(cx: &mut Context) {
         }
     }
 
-    if cx.style.system_flags.contains(SystemFlags::RELAYOUT)
-        || cx.style.system_flags.contains(SystemFlags::RETRANSFORM)
-        || cx.style.system_flags.contains(SystemFlags::RECLIP)
-        || cx.style.system_flags.contains(SystemFlags::REORDER)
-    {
+    if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {
         // A relayout, retransform, or reclip, can cause the element under the cursor to change. So we push a mouse move event here to force
         // a new event cycle and the hover system to trigger.
         #[cfg(feature = "winit")]
@@ -47,8 +43,5 @@ pub(crate) fn geometry_changed(cx: &mut Context) {
         }
 
         cx.style.system_flags.set(SystemFlags::RELAYOUT, false);
-        cx.style.system_flags.set(SystemFlags::RETRANSFORM, false);
-        cx.style.system_flags.set(SystemFlags::RECLIP, false);
-        cx.style.system_flags.set(SystemFlags::REORDER, false);
     }
 }

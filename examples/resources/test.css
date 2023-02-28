@@ -1,5 +1,5 @@
 :root {
-    background-color: gray;
+    background-color: white;
 }
 
 .bar {
@@ -10,6 +10,7 @@
 
 .foo {
     background-color: red;
+    space: 100px;
     size: 200px;
     transform: skew(-15deg, 0deg);
 }
