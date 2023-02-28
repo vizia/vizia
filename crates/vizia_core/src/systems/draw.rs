@@ -149,3 +149,8 @@ pub fn draw_system(cx: &mut Context) {
 
     //cx.resource_manager.evict_unused_images();
 }
+
+fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
+    let current = cx.current;
+    for child in current.child_iter(&cx.tree) {}
+}
