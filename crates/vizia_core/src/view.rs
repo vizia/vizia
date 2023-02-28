@@ -72,7 +72,7 @@ where
     T: std::marker::Sized + View + 'static,
 {
     fn element(&self) -> Option<&'static str> {
-        <T as View>::element(&self)
+        <T as View>::element(self)
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {

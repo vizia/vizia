@@ -10,7 +10,7 @@ use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
-use crate::style::Style;
+use crate::style::{Style, SystemFlags};
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -32,7 +32,7 @@ pub struct EventContext<'a> {
     pub cache: &'a CachedData,
     pub draw_cache: &'a DrawCache,
     pub tree: &'a Tree<Entity>,
-    pub(crate) data: &'a SparseSet<ModelDataStore>,
+    pub(crate) data: &'a mut SparseSet<ModelDataStore>,
     pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
     listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
@@ -61,7 +61,7 @@ impl<'a> EventContext<'a> {
             cache: &cx.cache,
             draw_cache: &cx.draw_cache,
             tree: &cx.tree,
-            data: &cx.data,
+            data: &mut cx.data,
             views: &mut cx.views,
             listeners: &mut cx.listeners,
             resource_manager: &cx.resource_manager,
@@ -113,7 +113,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::ACTIVE, active);
         }
 
-        self.style.needs_restyle = true;
+        self.style.needs_restyle();
     }
 
     /// Capture mouse input for the current entity.
@@ -153,7 +153,7 @@ impl<'a> EventContext<'a> {
             }
         }
 
-        for ancestor in focused.parent_iter(&self.tree) {
+        for ancestor in focused.parent_iter(self.tree) {
             let entity = ancestor;
             if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClassFlags::FOCUS_WITHIN, enabled);
@@ -173,7 +173,7 @@ impl<'a> EventContext<'a> {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        self.style.needs_restyle = true;
+        self.style.needs_restyle();
     }
 
     /// Sets application focus to the current entity using the previous focus visibility.
@@ -237,7 +237,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::HOVER, flag);
         }
 
-        self.style.needs_restyle = true;
+        self.style.needs_restyle();
     }
 
     /// Sets the checked flag of the current entity.
@@ -247,7 +247,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::CHECKED, flag);
         }
 
-        self.style.needs_restyle = true;
+        self.style.needs_restyle();
     }
 
     /// Sets the checked flag of the current entity.
@@ -257,7 +257,7 @@ impl<'a> EventContext<'a> {
             pseudo_classes.set(PseudoClassFlags::SELECTED, flag);
         }
 
-        self.style.needs_restyle = true;
+        self.style.needs_restyle();
     }
 
     /// Get the contents of the system clipboard. This may fail for a variety of backend-specific
@@ -291,7 +291,7 @@ impl<'a> EventContext<'a> {
             self.style.classes.insert(current, class_list).expect("Failed to insert class name");
         }
 
-        self.style.needs_restyle = true;
+        self.style.needs_restyle();
     }
 
     // pub fn play_animation(&mut self, animation: Animation) {
@@ -303,12 +303,12 @@ impl<'a> EventContext<'a> {
     }
 
     pub fn needs_redraw(&mut self) {
-        self.style.needs_redraw = true;
+        self.style.needs_redraw();
     }
 
     pub fn needs_relayout(&mut self) {
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
+        self.style.needs_relayout();
+        self.style.needs_redraw();
     }
 
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
@@ -337,9 +337,9 @@ impl<'a> EventContext<'a> {
 
         self.style.parse_theme(&overall_theme);
 
-        self.style.needs_restyle = true;
-        self.style.needs_relayout = true;
-        self.style.needs_redraw = true;
+        self.style.needs_restyle();
+        self.style.needs_relayout();
+        self.style.needs_redraw();
 
         Ok(())
     }
@@ -388,6 +388,8 @@ impl<'a> EventContext<'a> {
     /// window has actually changed in size.
     pub fn set_user_scale_factor(&mut self, new_factor: f64) {
         *self.user_scale_factor = new_factor;
+        self.style.system_flags.set(SystemFlags::RELAYOUT, true);
+        self.style.system_flags.set(SystemFlags::REFLOW, true);
     }
 }
 
@@ -398,7 +400,7 @@ impl<'a> DataContext for EventContext<'a> {
             return Some(t);
         }
 
-        for entity in self.current.parent_iter(&self.tree) {
+        for entity in self.current.parent_iter(self.tree) {
             if let Some(model_data_store) = self.data.get(entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();

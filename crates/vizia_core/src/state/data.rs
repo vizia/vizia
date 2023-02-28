@@ -196,7 +196,7 @@ impl<T: 'static> Data for std::mem::Discriminant<T> {
 
 impl<T: 'static + ?Sized + Data> Data for std::mem::ManuallyDrop<T> {
     fn same(&self, other: &Self) -> bool {
-        (&**self).same(&**other)
+        (**self).same(&**other)
     }
 }
 
@@ -280,7 +280,7 @@ impl<T: std::hash::Hash + Eq + Data, V: Data> Data for std::collections::HashMap
             return false;
         }
 
-        self.iter().zip(other.iter()).all(|(a, b)| a.0.same(&b.0) && a.1.same(&b.1))
+        self.iter().zip(other.iter()).all(|(a, b)| a.0.same(b.0) && a.1.same(b.1))
     }
 }
 

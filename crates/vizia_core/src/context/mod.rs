@@ -2,11 +2,11 @@ pub mod backend;
 mod draw;
 mod event;
 mod proxy;
+mod resource;
 
 use instant::Instant;
 use std::any::{Any, TypeId};
-use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::iter::once;
 use std::path::Path;
 use std::sync::Mutex;
@@ -23,6 +23,7 @@ use unic_langid::LanguageIdentifier;
 pub use draw::*;
 pub use event::*;
 pub use proxy::*;
+pub use resource::*;
 
 use crate::cache::CachedData;
 use crate::environment::Environment;
@@ -30,7 +31,7 @@ use crate::events::ViewHandler;
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
 use crate::prelude::*;
-use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
+use crate::resource::{ImageRetentionPolicy, ResourceManager};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
 use crate::text::{TextConfig, TextContext};
@@ -42,6 +43,9 @@ use vizia_storage::TreeExt;
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 
+pub(crate) type DataStore = SparseSet<ModelDataStore>;
+pub(crate) type Views = FnvHashMap<Entity, Box<dyn BindingHandler>>;
+
 /// The main storage and control object for a Vizia application.
 ///
 /// This type is part of the prelude.
@@ -52,8 +56,8 @@ pub struct Context {
     pub(crate) current: Entity,
     /// TODO make this private when there's no longer a need to mutate views after building
     pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
-    pub(crate) data: SparseSet<ModelDataStore>,
-    pub(crate) bindings: FnvHashMap<Entity, Box<dyn BindingHandler>>,
+    pub(crate) data: DataStore,
+    pub(crate) bindings: Views,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
@@ -183,9 +187,9 @@ impl Context {
             ignore_default_theme: false,
         };
 
-        result.style.needs_restyle = true;
-        result.style.needs_relayout = true;
-        result.style.needs_redraw = true;
+        result.style.needs_restyle();
+        result.style.needs_relayout();
+        result.style.needs_redraw();
 
         Environment::new().build(&mut result);
 
@@ -242,18 +246,18 @@ impl Context {
     }
 
     /// Mark the application as needing to rerun the draw method
-    pub fn need_redraw(&mut self) {
-        self.style.needs_redraw = true;
+    pub fn needs_redraw(&mut self) {
+        self.style.needs_redraw();
     }
 
     /// Mark the application as needing to recompute view styles
-    pub fn need_restyle(&mut self) {
-        self.style.needs_restyle = true;
+    pub fn needs_restyle(&mut self) {
+        self.style.needs_restyle();
     }
 
     /// Mark the application as needing to rerun layout computations
-    pub fn need_relayout(&mut self) {
-        self.style.needs_relayout = true;
+    pub fn needs_relayout(&mut self) {
+        self.style.needs_relayout();
     }
 
     /// Enables or disables PseudoClasses for the focus of an entity
@@ -306,7 +310,7 @@ impl Context {
         }
         self.set_focus_pseudo_classes(new_focus, true, focus_visible);
 
-        self.style.needs_restyle = true;
+        self.style.needs_restyle();
     }
 
     /// Sets application focus to the current entity using the previous focus visibility
@@ -328,7 +332,7 @@ impl Context {
             pseudo_classes.set(PseudoClassFlags::SELECTED, flag);
         }
 
-        self.style.needs_restyle = true;
+        self.style.needs_restyle();
     }
 
     pub(crate) fn remove_children(&mut self, entity: Entity) {
@@ -342,9 +346,9 @@ impl Context {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         if !delete_list.is_empty() {
-            self.style.needs_restyle = true;
-            self.style.needs_relayout = true;
-            self.style.needs_redraw = true;
+            self.style.needs_restyle();
+            self.style.needs_relayout();
+            self.style.needs_redraw();
         }
 
         for entity in delete_list.iter().rev() {
@@ -363,12 +367,20 @@ impl Context {
                 self.entity_identifiers.remove(identifier);
             }
 
+            if let Some(index) = self.focus_stack.iter().position(|r| r == entity) {
+                self.focus_stack.remove(index);
+            }
+
             if self.focused == *entity
                 && delete_list.contains(&self.tree.lock_focus_within(*entity))
             {
                 if let Some(new_focus) = self.focus_stack.pop() {
                     self.with_current(new_focus, |cx| cx.focus());
                 }
+            }
+
+            if self.captured == *entity {
+                self.captured = Entity::null();
             }
 
             self.tree.remove(*entity).expect("");
@@ -379,10 +391,6 @@ impl Context {
             self.views.remove(entity);
             self.entity_manager.destroy(*entity);
             self.text_context.clear_buffer(*entity);
-
-            if self.captured == *entity {
-                self.captured = Entity::null();
-            }
         }
     }
 
@@ -527,40 +535,8 @@ impl Context {
         Ok(())
     }
 
-    pub fn set_image_loader<F: 'static + Fn(&mut Context, &str)>(&mut self, loader: F) {
+    pub fn set_image_loader<F: 'static + Fn(&mut ResourceContext, &str)>(&mut self, loader: F) {
         self.resource_manager.image_loader = Some(Box::new(loader));
-    }
-
-    pub fn load_image(
-        &mut self,
-        path: String,
-        image: image::DynamicImage,
-        policy: ImageRetentionPolicy,
-    ) {
-        match self.resource_manager.images.entry(path) {
-            Entry::Occupied(mut occ) => {
-                occ.get_mut().image = ImageOrId::Image(
-                    image,
-                    femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
-                );
-                occ.get_mut().dirty = true;
-                occ.get_mut().retention_policy = policy;
-            }
-            Entry::Vacant(vac) => {
-                vac.insert(StoredImage {
-                    image: ImageOrId::Image(
-                        image,
-                        femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
-                    ),
-                    retention_policy: policy,
-                    used: true,
-                    dirty: false,
-                    observers: HashSet::new(),
-                });
-            }
-        }
-        self.need_relayout();
-        self.style.needs_redraw = true;
     }
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {

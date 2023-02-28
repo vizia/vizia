@@ -54,6 +54,8 @@ impl_res_simple!(Overflow);
 impl_res_simple!(LengthValue);
 impl_res_simple!(FontWeight);
 impl_res_simple!(FontStyle);
+impl_res_simple!((u32, u32));
+impl_res_simple!((f32, f32));
 
 impl<T, L> Res<T> for L
 where
@@ -65,7 +67,7 @@ where
     }
 
     fn get_val_fallible(&self, cx: &Context) -> Option<T> {
-        self.get_fallible(cx).map(|x| x)
+        self.get_fallible(cx)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
@@ -188,19 +190,6 @@ impl Res<LayoutType> for LayoutType {
 
 impl Res<PositionType> for PositionType {
     fn get_val(&self, _: &Context) -> PositionType {
-        *self
-    }
-
-    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
-    where
-        F: 'static + Fn(&mut Context, Entity, Self),
-    {
-        (closure)(cx, entity, *self);
-    }
-}
-
-impl<T: Copy> Res<(T, T)> for (T, T) {
-    fn get_val(&self, _: &Context) -> (T, T) {
         *self
     }
 

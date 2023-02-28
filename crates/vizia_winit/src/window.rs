@@ -1,7 +1,25 @@
+#[cfg(not(target_arch = "wasm32"))]
+use std::num::NonZeroU32;
+
 use crate::convert::cursor_icon_to_cursor_icon;
 use femtovg::{renderer::OpenGl, Canvas, Color};
+
 #[cfg(not(target_arch = "wasm32"))]
-use glutin::ContextBuilder;
+use glutin::surface::SwapInterval;
+#[cfg(not(target_arch = "wasm32"))]
+use glutin_winit::DisplayBuilder;
+#[cfg(not(target_arch = "wasm32"))]
+use raw_window_handle::HasRawWindowHandle;
+
+#[cfg(not(target_arch = "wasm32"))]
+use glutin::{
+    config::ConfigTemplateBuilder,
+    context::{ContextApi, ContextAttributesBuilder},
+    display::GetGlDisplay,
+    prelude::*,
+    surface::{SurfaceAttributesBuilder, WindowSurface},
+};
+
 use vizia_core::prelude::*;
 use winit::event_loop::EventLoop;
 use winit::window::{CursorGrabMode, WindowBuilder};
@@ -10,9 +28,10 @@ use winit::{dpi::*, window::WindowId};
 pub struct Window {
     pub id: WindowId,
     #[cfg(not(target_arch = "wasm32"))]
-    handle: glutin::WindowedContext<glutin::PossiblyCurrent>,
-    #[cfg(target_arch = "wasm32")]
-    handle: winit::window::Window,
+    context: glutin::context::PossiblyCurrentContext,
+    #[cfg(not(target_arch = "wasm32"))]
+    surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
+    window: winit::window::Window,
     pub should_close: bool,
 }
 
@@ -24,12 +43,9 @@ impl Window {
     ) -> (Self, Canvas<OpenGl>) {
         let window_builder = WindowBuilder::new();
 
-        // For wasm, create or look up the canvas element we're drawing on
         let canvas_element = {
             use wasm_bindgen::JsCast;
-
             let document = web_sys::window().unwrap().document().unwrap();
-
             if let Some(canvas_id) = &window_description.target_canvas {
                 document.get_element_by_id(canvas_id).unwrap()
             } else {
@@ -41,8 +57,10 @@ impl Window {
             .unwrap()
         };
 
-        // Build the femtovg renderer
-        let renderer = OpenGl::new_from_html_canvas(&canvas_element).unwrap();
+        let renderer =
+            OpenGl::new_from_html_canvas(&canvas_element).expect("Cannot create renderer");
+
+        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
 
         // tell winit about the above canvas
         let window_builder = {
@@ -57,14 +75,7 @@ impl Window {
         let handle = window_builder.build(&events_loop).unwrap();
 
         // Build our window
-        let window = Window {
-            id: handle.id(),
-            handle,
-            should_close: false,
-            //canvas: Canvas::new(renderer).expect("Cannot create canvas"),
-        };
-
-        let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
+        let window = Window { id: handle.id(), window: handle, should_close: false };
 
         let size = window.window().inner_size();
         canvas.set_size(size.width as u32, size.height as u32, 1.0);
@@ -74,7 +85,7 @@ impl Window {
     }
 
     pub fn window(&self) -> &winit::window::Window {
-        &self.handle
+        &self.window
     }
 
     pub fn resize(&self, _size: PhysicalSize<u32>) {
@@ -102,49 +113,104 @@ impl Window {
         };
 
         // Apply generic WindowBuilder properties
-        let window_builder = apply_window_description(window_builder, &window_description);
+        let window_builder = apply_window_description(window_builder, window_description);
 
-        // Get the window handle. this is a ContextWrapper
-        let handle = {
-            let handle = ContextBuilder::new()
-                .with_vsync(window_description.vsync)
-                // .with_srgb(true)
-                .build_windowed(window_builder, &events_loop)
-                .expect("Window context creation failed!");
+        let template = ConfigTemplateBuilder::new().with_alpha_size(8);
+        let display_builder = DisplayBuilder::new().with_window_builder(Some(window_builder));
 
-            unsafe { handle.make_current().unwrap() }
-        };
+        let (window, gl_config) = display_builder
+            .build(events_loop, template, |configs| {
+                // Find the config with the maximum number of samples, so our triangle will
+                // be smooth.
+                configs
+                    .reduce(|accum, config| {
+                        let transparency_check = config.supports_transparency().unwrap_or(false)
+                            & !accum.supports_transparency().unwrap_or(false);
+
+                        if transparency_check || config.num_samples() < accum.num_samples() {
+                            config
+                        } else {
+                            accum
+                        }
+                    })
+                    .unwrap()
+            })
+            .unwrap();
+
+        let window = window.unwrap();
+
+        let raw_window_handle = Some(window.raw_window_handle());
+
+        let gl_display = gl_config.display();
+
+        let context_attributes = ContextAttributesBuilder::new().build(raw_window_handle);
+        let fallback_context_attributes = ContextAttributesBuilder::new()
+            .with_context_api(ContextApi::Gles(None))
+            .build(raw_window_handle);
+        let mut not_current_gl_context = Some(unsafe {
+            gl_display.create_context(&gl_config, &context_attributes).unwrap_or_else(|_| {
+                gl_display
+                    .create_context(&gl_config, &fallback_context_attributes)
+                    .expect("failed to create context")
+            })
+        });
+
+        let (width, height): (u32, u32) = window.inner_size().into();
+        let raw_window_handle = window.raw_window_handle();
+        let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().build(
+            raw_window_handle,
+            NonZeroU32::new(width).unwrap(),
+            NonZeroU32::new(height).unwrap(),
+        );
+
+        let surface =
+            unsafe { gl_config.display().create_window_surface(&gl_config, &attrs).unwrap() };
+
+        let gl_context = not_current_gl_context.take().unwrap().make_current(&surface).unwrap();
 
         // Build the femtovg renderer
         let renderer = unsafe {
-            OpenGl::new_from_function(|s| handle.get_proc_address(s) as *const _)
-                .expect("Cannot create renderer")
-        };
+            OpenGl::new_from_function_cstr(|s| gl_display.get_proc_address(s) as *const _)
+        }
+        .expect("Cannot create renderer");
+
+        if window_description.vsync {
+            surface
+                .set_swap_interval(&gl_context, SwapInterval::Wait(NonZeroU32::new(1).unwrap()))
+                .expect("Failed to set vsync");
+        }
 
         let mut canvas = Canvas::new(renderer).expect("Failed to create canvas");
 
-        let size = handle.window().inner_size();
-        canvas.set_size(size.width as u32, size.height as u32, 1.0);
-        canvas.clear_rect(0, 0, size.width as u32, size.height as u32, Color::rgb(255, 80, 80));
+        let size = window.inner_size();
+        canvas.set_size(size.width, size.height, 1.0);
+        canvas.clear_rect(0, 0, size.width, size.height, Color::rgb(255, 80, 80));
 
         //cx.canvases.insert(Entity::root(), canvas);
 
         // Build our window
-        let window = Window { id: handle.window().id(), handle, should_close: false };
+        let win =
+            Window { id: window.id(), context: gl_context, surface, window, should_close: false };
 
-        (window, canvas)
+        (win, canvas)
     }
 
     pub fn window(&self) -> &winit::window::Window {
-        self.handle.window()
+        &self.window
     }
 
     pub fn resize(&self, size: PhysicalSize<u32>) {
-        self.handle.resize(size);
+        if size.width != 0 && size.height != 0 {
+            self.surface.resize(
+                &self.context,
+                size.width.try_into().unwrap(),
+                size.height.try_into().unwrap(),
+            );
+        }
     }
 
     pub fn swap_buffers(&self) {
-        self.handle.swap_buffers().expect("Failed to swap buffers");
+        self.surface.swap_buffers(&self.context).expect("Failed to swap buffers");
     }
 }
 
@@ -215,10 +281,6 @@ impl View for Window {
                 self.window().set_decorations(*flag);
             }
 
-            WindowEvent::SetAlwaysOnTop(flag) => {
-                self.window().set_always_on_top(*flag);
-            }
-
             WindowEvent::ReloadStyles => {
                 cx.reload_styles().unwrap();
             }
@@ -261,17 +323,12 @@ fn apply_window_description(
         .with_visible(description.visible)
         .with_transparent(description.transparent)
         .with_decorations(description.decorations)
-        .with_always_on_top(description.always_on_top)
-        .with_window_icon(if let Some(icon) = &description.icon {
-            Some(
-                winit::window::Icon::from_rgba(
-                    icon.clone(),
-                    description.icon_width,
-                    description.icon_height,
-                )
-                .unwrap(),
+        .with_window_icon(description.icon.as_ref().map(|icon| {
+            winit::window::Icon::from_rgba(
+                icon.clone(),
+                description.icon_width,
+                description.icon_height,
             )
-        } else {
-            None
-        })
+            .unwrap()
+        }))
 }

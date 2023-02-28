@@ -1,8 +1,5 @@
-use std::marker::PhantomData;
-
-use vizia_id::GenerationalId;
-
 use crate::prelude::*;
+use std::marker::PhantomData;
 
 /// A handle to a view which has been already built into the tree.
 ///
@@ -29,9 +26,8 @@ impl<'a, V> Handle<'a, V> {
         self.cx.focus_stack.push(self.cx.focused);
         if !self.cx.focused.is_descendant_of(&self.cx.tree, self.entity) {
             let new_focus = vizia_storage::TreeIterator::subtree(&self.cx.tree, self.entity)
-                .filter(|node| crate::tree::is_focusable(self.cx, *node))
-                .next()
-                .unwrap_or(Entity::root());
+                .find(|node| crate::tree::is_focusable(self.cx, *node))
+                .unwrap_or(self.cx.focus_stack.pop().unwrap());
             self.cx.with_current(new_focus, |cx| cx.focus());
         }
         self

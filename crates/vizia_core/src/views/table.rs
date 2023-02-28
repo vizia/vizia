@@ -79,7 +79,7 @@ where
                 VStack::new(cx, move |cx| {
                     //let item = item.clone();
                     Binding::new(cx, it.then(item), move |cx, l| {
-                        (content)(cx, index, l.clone());
+                        (content)(cx, index, l);
                     });
                 });
             })

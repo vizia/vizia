@@ -16,6 +16,7 @@ where
     pub ignored: Vec<bool>,
     pub lock_focus_within: Vec<bool>,
     pub changed: bool,
+    pub z_order: Vec<i32>,
 }
 
 impl<I> Tree<I>
@@ -32,6 +33,7 @@ where
             ignored: vec![false],
             lock_focus_within: vec![true],
             changed: true,
+            z_order: vec![0],
         }
     }
 
@@ -54,12 +56,12 @@ where
         if index < self.first_child.len() {
             let mut f = self.first_child[index];
             let mut r = None;
-            while f != None {
+            while f.is_some() {
                 r = f;
                 f = self.next_sibling[f.unwrap().index()];
             }
 
-            return r;
+            r
         } else {
             None
         }
@@ -73,7 +75,7 @@ where
         let index = entity.index();
         let mut f = self.first_child[index];
         let mut i = 0;
-        while f != None {
+        while f.is_some() {
             if i == n {
                 break;
             }
@@ -81,7 +83,7 @@ where
             i += 1;
         }
 
-        return f;
+        f
     }
 
     /// Returns the number of children of an entity.
@@ -92,7 +94,7 @@ where
         };
         let mut f = self.first_child[index];
         let mut r = 0;
-        while f != None {
+        while f.is_some() {
             r += 1;
             f = self.next_sibling[f.unwrap().index()];
         }
@@ -105,10 +107,14 @@ where
         self.ignored.get(entity.index()).map_or_else(|| false, |ignored| *ignored)
     }
 
+    pub fn z_order(&self, entity: I) -> i32 {
+        self.z_order.get(entity.index()).copied().unwrap_or_default()
+    }
+
     /// Returns the first ancestor to have the lock_focus_within flag set
     pub fn lock_focus_within(&self, entity: I) -> I {
         entity
-            .parent_iter(&self)
+            .parent_iter(self)
             .find(|&entity| self.lock_focus_within.get(entity.index()).cloned().unwrap_or_default())
             .unwrap_or(I::root())
     }
@@ -128,33 +134,29 @@ where
 
     /// Returns the parent of an entity.
     pub fn get_parent(&self, entity: I) -> Option<I> {
-        self.parent.get(entity.index()).map_or(None, |&parent| parent)
+        self.parent.get(entity.index()).and_then(|&parent| parent)
     }
 
     /// Returns the first child of an entity or `None` if there isn't one.
     pub fn get_first_child(&self, entity: I) -> Option<I> {
-        self.first_child.get(entity.index()).map_or(None, |&first_child| first_child)
+        self.first_child.get(entity.index()).and_then(|&first_child| first_child)
     }
 
     /// Returns the next sibling of an entity or `None` if t here isn't one.
     pub fn get_next_sibling(&self, entity: I) -> Option<I> {
-        self.next_sibling.get(entity.index()).map_or(None, |&next_sibling| next_sibling)
+        self.next_sibling.get(entity.index()).and_then(|&next_sibling| next_sibling)
     }
 
     /// Returns the previous sibling of an entity or `None` if there isn't one.
     pub fn get_prev_sibling(&self, entity: I) -> Option<I> {
-        self.prev_sibling.get(entity.index()).map_or(None, |&prev_sibling| prev_sibling)
+        self.prev_sibling.get(entity.index()).and_then(|&prev_sibling| prev_sibling)
     }
 
     /// Returns true if the entity is the first child of its parent.
     pub fn is_first_child(&self, entity: I) -> bool {
         if let Some(parent) = self.get_parent(entity) {
             if let Some(first_child) = self.get_first_child(parent) {
-                if first_child == entity {
-                    return true;
-                } else {
-                    return false;
-                }
+                return first_child == entity;
             }
         }
 
@@ -423,13 +425,13 @@ where
             self.prev_sibling[next_sibling.index()] = self.get_prev_sibling(entity);
         }
 
-        if self.first_child[parent.index()] == None {
+        if self.first_child[parent.index()].is_none() {
             self.first_child[parent.index()] = Some(entity);
         } else {
             let mut temp = self.first_child[parent.index()];
 
             loop {
-                if self.next_sibling[temp.unwrap().index()] == None {
+                if self.next_sibling[temp.unwrap().index()].is_none() {
                     break;
                 }
 
@@ -446,11 +448,21 @@ where
     }
 
     pub fn set_ignored(&mut self, entity: I, flag: bool) {
-        self.ignored.get_mut(entity.index()).and_then(|ignored| Some(*ignored = flag));
+        if let Some(ignored) = self.ignored.get_mut(entity.index()) {
+            *ignored = flag;
+        }
+    }
+
+    pub fn set_z_order(&mut self, entity: I, index: i32) {
+        if let Some(z_order) = self.z_order.get_mut(entity.index()) {
+            *z_order = index;
+        }
     }
 
     pub fn set_lock_focus_within(&mut self, entity: I, flag: bool) {
-        self.lock_focus_within.get_mut(entity.index()).and_then(|result| Some(*result = flag));
+        if let Some(result) = self.lock_focus_within.get_mut(entity.index()) {
+            *result = flag;
+        }
     }
 
     /// Adds an entity to the tree with the specified parent.
@@ -474,6 +486,7 @@ where
             self.prev_sibling.resize(entity_index + 1, None);
             self.ignored.resize(entity_index + 1, false);
             self.lock_focus_within.resize(entity_index + 1, false);
+            self.z_order.resize(entity_index + 1, 0);
         }
 
         self.parent[entity_index] = Some(parent);
@@ -482,15 +495,16 @@ where
         self.prev_sibling[entity_index] = None;
         self.ignored[entity_index] = false;
         self.lock_focus_within[entity_index] = false;
+        self.z_order[entity_index] = 0;
 
         // If the parent has no first child then this entity is the first child
-        if self.first_child[parent_index] == None {
+        if self.first_child[parent_index].is_none() {
             self.first_child[parent_index] = Some(entity);
         } else {
             let mut temp = self.first_child[parent_index];
 
             loop {
-                if self.next_sibling[temp.unwrap().index()] == None {
+                if self.next_sibling[temp.unwrap().index()].is_none() {
                     break;
                 }
 

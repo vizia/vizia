@@ -22,7 +22,7 @@ vizia_input = { path = "../vizia_input" }
 vizia_window = { path = "../vizia_window" }
 vizia_style = { path = "../vizia_style"}
 
-femtovg = "0.4.0"
+femtovg = "0.6.0"
 # femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "09f4837fff4d2cd58ddc4674d0d7e1296a4123aa", default-features = false, features = ["image-loading"] }
 #femtovg = { path = "../../../femtovg", default-features = false, features = ["image-loading"] }
 image = { version = "0.24.0", default-features = false, features = ["png"] } # inherited from femtovg

@@ -9,8 +9,8 @@ use cosmic_text::{
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
-    Atlas, Canvas, DrawCmd, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource, Quad,
-    Renderer,
+    Atlas, Canvas, DrawCommand, ErrorKind, GlyphDrawCommands, ImageFlags, ImageId, ImageSource,
+    Quad, Renderer,
 };
 use fnv::FnvHashMap;
 use ouroboros::self_referencing;
@@ -77,9 +77,10 @@ impl TextContext {
 
     pub fn with_editor<O>(&mut self, entity: Entity, f: impl FnOnce(&mut Editor) -> O) -> O {
         self.with_int_mut(move |int: &mut TextContextInternal| {
-            f(int.buffers.entry(entity).or_insert_with(|| {
-                Editor::new(Buffer::new(&int.font_system, Metrics::new(18, 20)))
-            }))
+            f(int
+                .buffers
+                .entry(entity)
+                .or_insert_with(|| Editor::new(Buffer::new(int.font_system, Metrics::new(18, 20)))))
         })
     }
 
@@ -192,7 +193,7 @@ impl TextContext {
                         let font = int.font_system.get_font(cache_key.font_id).expect("Somehow shaped a font that doesn't exist");
                         let mut scaler = int.scale_context.builder(font.as_swash())
                             .size(cache_key.font_size as f32)
-                            .hint(true)
+                            .hint(config.hint)
                             .build();
                         let offset = Vector::new(cache_key.x_bin.as_float(), cache_key.y_bin.as_float());
                         let rendered = Render::new(&[
@@ -261,8 +262,8 @@ impl TextContext {
                                 height: used_h,
                                 offset_x: rendered.placement.left,
                                 offset_y: rendered.placement.top,
-                                atlas_x: atlas_used_x as u32,
-                                atlas_y: atlas_used_y as u32,
+                                atlas_x: atlas_used_x,
+                                atlas_y: atlas_used_y,
                                 color_glyph: matches!(rendered.content, Content::Color),
                             }
                         })
@@ -271,10 +272,10 @@ impl TextContext {
                     let cmd_map = if rendered.color_glyph {
                         &mut color_cmd_map
                     } else {
-                        alpha_cmd_map.entry(glyph.color_opt.unwrap()).or_insert_with(FnvHashMap::default)
+                        alpha_cmd_map.entry(glyph.color_opt.unwrap_or(CosmicColor::rgb(0, 0, 0))).or_insert_with(FnvHashMap::default)
                     };
 
-                    let cmd = cmd_map.entry(rendered.texture_index).or_insert_with(|| DrawCmd {
+                    let cmd = cmd_map.entry(rendered.texture_index).or_insert_with(|| DrawCommand {
                         image_id: int.glyph_textures[rendered.texture_index].image_id,
                         quads: Vec::new(),
                     });
@@ -298,7 +299,7 @@ impl TextContext {
 
             if !alpha_cmd_map.is_empty() {
                 Ok(alpha_cmd_map.into_iter().map(|(color, map)| (color, GlyphDrawCommands {
-                    alpha_glyphs: map.into_iter().map(|(_, cmd)| cmd).collect(),
+                    alpha_glyphs: map.into_values().collect(),
                     color_glyphs: color_cmd_map.drain().map(|(_, cmd)| cmd).collect(),
                 })).collect())
             } else {

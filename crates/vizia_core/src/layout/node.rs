@@ -18,115 +18,115 @@ impl<'w> Node<'w> for Entity {
 
     fn left(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.left.get(*self).cloned().map(|l| match l {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_left(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.min_left.get(*self).cloned().map(|l| match l {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_left(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.max_left.get(*self).cloned().map(|l| match l {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn right(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.right.get(*self).cloned().map(|r| match r {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_right(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.min_right.get(*self).cloned().map(|r| match r {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_right(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.max_right.get(*self).cloned().map(|r| match r {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn top(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.top.get(*self).cloned().map(|t| match t {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_top(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.min_top.get(*self).cloned().map(|t| match t {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_top(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.max_top.get(*self).cloned().map(|t| match t {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn bottom(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.bottom.get(*self).cloned().map(|b| match b {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_bottom(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.min_bottom.get(*self).cloned().map(|b| match b {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_bottom(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.max_bottom.get(*self).cloned().map(|b| match b {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn width(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.width.get(*self).cloned().map(|w| match w {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_width(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.min_width.get(*self).cloned().map(|w| match w {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_width(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.max_width.get(*self).cloned().map(|w| match w {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn content_width(&self, store: &Self::Data) -> Option<f32> {
-        store.content_width.get(*self).cloned().map(|x| x * store.dpi_factor as f32)
+        store.content_width.get(*self).cloned().map(|x| (x * store.dpi_factor as f32).ceil())
     }
 
     fn content_height(&self, store: &Self::Data) -> Option<f32> {
-        store.content_height.get(*self).cloned().map(|x| x * store.dpi_factor as f32)
+        store.content_height.get(*self).cloned().map(|x| (x * store.dpi_factor as f32).ceil())
     }
 
     fn content_width_secondary(
@@ -135,7 +135,7 @@ impl<'w> Node<'w> for Entity {
         _sublayout: &'_ mut Self::Sublayout,
         _height: f32,
     ) -> Option<f32> {
-        store.content_width.get(*self).cloned().map(|x| x * store.dpi_factor as f32)
+        store.content_width.get(*self).cloned().map(|x| (x * store.dpi_factor as f32).ceil())
     }
 
     fn content_height_secondary(
@@ -144,6 +144,7 @@ impl<'w> Node<'w> for Entity {
         sublayout: &'_ mut Self::Sublayout,
         width: f32,
     ) -> Option<f32> {
+        let width = width.ceil();
         if !store.text_wrap.get(*self).copied().unwrap_or(true) {
             return None;
         }
@@ -160,49 +161,49 @@ impl<'w> Node<'w> for Entity {
 
     fn height(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.height.get(*self).cloned().map(|h| match h {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn min_height(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.min_height.get(*self).cloned().map(|h| match h {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn max_height(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.max_height.get(*self).cloned().map(|h| match h {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn child_left(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.child_left.get(*self).cloned().map(|l| match l {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn child_right(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.child_right.get(*self).cloned().map(|r| match r {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn child_top(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.child_top.get(*self).cloned().map(|t| match t {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn child_bottom(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.child_bottom.get(*self).cloned().map(|b| match b {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
@@ -217,14 +218,14 @@ impl<'w> Node<'w> for Entity {
 
     fn row_between(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.row_between.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
 
     fn col_between(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.col_between.get(*self).cloned().map(|v| match v {
-            Units::Pixels(val) => Units::Pixels(val * store.dpi_factor as f32),
+            Units::Pixels(val) => Units::Pixels(store.logical_to_physical(val)),
             t => t,
         })
     }
@@ -232,7 +233,7 @@ impl<'w> Node<'w> for Entity {
     fn border_left(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.border_width.get(*self).map(|border_width| match border_width {
             LengthOrPercentage::Length(val) => {
-                Units::Pixels(val.to_px().unwrap_or_default() * store.dpi_factor as f32)
+                Units::Pixels(store.logical_to_physical(val.to_px().unwrap_or_default()))
             }
             LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
         })
@@ -241,7 +242,7 @@ impl<'w> Node<'w> for Entity {
     fn border_right(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.border_width.get(*self).map(|border_width| match border_width {
             LengthOrPercentage::Length(val) => {
-                Units::Pixels(val.to_px().unwrap_or_default() * store.dpi_factor as f32)
+                Units::Pixels(store.logical_to_physical(val.to_px().unwrap_or_default()))
             }
             LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
         })
@@ -250,7 +251,7 @@ impl<'w> Node<'w> for Entity {
     fn border_top(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.border_width.get(*self).map(|border_width| match border_width {
             LengthOrPercentage::Length(val) => {
-                Units::Pixels(val.to_px().unwrap_or_default() * store.dpi_factor as f32)
+                Units::Pixels(store.logical_to_physical(val.to_px().unwrap_or_default()))
             }
             LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
         })
@@ -259,7 +260,7 @@ impl<'w> Node<'w> for Entity {
     fn border_bottom(&self, store: &Self::Data) -> Option<morphorm::Units> {
         store.border_width.get(*self).map(|border_width| match border_width {
             LengthOrPercentage::Length(val) => {
-                Units::Pixels(val.to_px().unwrap_or_default() * store.dpi_factor as f32)
+                Units::Pixels(store.logical_to_physical(val.to_px().unwrap_or_default()))
             }
             LengthOrPercentage::Percentage(val) => Units::Percentage(*val),
         })

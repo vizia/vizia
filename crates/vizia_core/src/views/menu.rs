@@ -158,19 +158,17 @@ impl View for MenuController {
                         );
                     }
                 }
-            } else {
-                if let WindowEvent::PressDown { .. } = window_event {
-                    // capture focus on click
-                    cx.capture();
-                    cx.emit(MenuEvent::Activate);
-                    // send an over event to highlight whatever we're hovered on
-                    cx.event_queue.push_back(
-                        Event::new(WindowEvent::MouseOver)
-                            .propagate(Propagation::Up)
-                            .target(cx.hovered())
-                            .origin(cx.current()),
-                    );
-                }
+            } else if let WindowEvent::PressDown { .. } = window_event {
+                // capture focus on click
+                cx.capture();
+                cx.emit(MenuEvent::Activate);
+                // send an over event to highlight whatever we're hovered on
+                cx.event_queue.push_back(
+                    Event::new(WindowEvent::MouseOver)
+                        .propagate(Propagation::Up)
+                        .target(cx.hovered())
+                        .origin(cx.current()),
+                );
             }
         });
     }
@@ -185,10 +183,12 @@ impl MenuStack {
         if cx.data::<MenuControllerData>().is_none() {
             panic!("MenuStacks must be built inside a MenuController");
         }
-        Self {}.build(cx, move |cx| {
-            MenuData::default().build(cx);
-            builder(cx);
-        })
+        Self {}
+            .build(cx, move |cx| {
+                MenuData::default().build(cx);
+                builder(cx);
+            })
+            .z_order(100)
     }
 
     pub fn new_vertical<F: FnOnce(&mut Context)>(cx: &mut Context, builder: F) -> Handle<'_, Self> {

@@ -235,10 +235,12 @@ path = "examples/style/text.rs"
 [[example]]
 name = "clipping"
 path = "examples/style/clipping.rs"
+name = "boolean"
+path = "examples/binding/boolean.rs"
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
-clipboard = ["vizia_core/clipboard", "vizia_winit/clipboard"]
+clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
 serde = ["vizia_core/serde"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]

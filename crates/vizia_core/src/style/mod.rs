@@ -58,6 +58,33 @@ bitflags! {
     }
 }
 
+bitflags! {
+    pub struct SystemFlags: u8 {
+        /// Style system flag.
+        const RESTYLE = 1;
+        /// Layout system flag.
+        const RELAYOUT = 1 << 1;
+        /// Draw system flag.
+        const REDRAW = 1 << 2;
+        /// Z_order system flag.
+        const REORDER = 1 << 3;
+        /// Transform system flag.
+        const RETRANSFORM = 1 << 4;
+        /// Text constraints system flag.
+        const REFLOW = 1 << 5;
+        /// Clipping system flag.
+        const RECLIP = 1 << 6;
+        /// Visibility system flag.
+        const REHIDE = 1 << 7;
+    }
+}
+
+impl Default for SystemFlags {
+    fn default() -> Self {
+        SystemFlags::all()
+    }
+}
+
 impl Default for Abilities {
     fn default() -> Abilities {
         Abilities::HOVERABLE
@@ -214,9 +241,8 @@ pub struct Style {
 
     pub cursor: StyleSet<CursorIcon>,
 
-    pub needs_restyle: bool,
-    pub needs_relayout: bool,
-    pub needs_redraw: bool,
+    pub system_flags: SystemFlags,
+
     // TODO: When we can do incremental updates on a per entity basis, change this to a bitflag
     // for layout, text layout, rendering, etc. to replace the above `needs_` members.
     pub needs_text_layout: SparseSet<bool>,
@@ -235,6 +261,16 @@ impl Style {
 
     //     self.set_style_properties();
     // }
+
+    /// Function to convert logical points to physical pixels.
+    pub fn logical_to_physical(&self, logical: f32) -> f32 {
+        (logical * self.dpi_factor as f32).round()
+    }
+
+    /// Function to convert physical pixels to logical points.
+    pub fn physical_to_logical(&self, physical: f32) -> f32 {
+        physical / self.dpi_factor as f32
+    }
 
     pub fn remove_rules(&mut self) {
         // for rule in self.rules.iter() {
@@ -832,9 +868,9 @@ impl Style {
             .expect("Failed to add pseudoclasses");
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
-        self.needs_restyle = true;
-        self.needs_relayout = true;
-        self.needs_redraw = true;
+        self.visibility.insert(entity, Default::default());
+        self.focus_order.insert(entity, Default::default()).unwrap();
+        self.system_flags = SystemFlags::all();
     }
 
     pub fn remove(&mut self, entity: Entity) {
@@ -957,6 +993,25 @@ impl Style {
         self.image.remove(entity);
 
         self.needs_text_layout.remove(entity);
+    }
+
+    pub fn needs_restyle(&mut self) {
+        self.system_flags.set(SystemFlags::RESTYLE, true);
+    }
+
+    pub fn needs_relayout(&mut self) {
+        self.system_flags.set(SystemFlags::RELAYOUT, true);
+    }
+
+    pub fn needs_redraw(&mut self) {
+        self.system_flags.set(SystemFlags::REDRAW, true);
+    }
+
+    pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {
+        if self.system_flags.contains(SystemFlags::REDRAW) {
+            f();
+            self.system_flags.set(SystemFlags::REDRAW, false);
+        }
     }
 
     pub fn clear_style_rules(&mut self) {

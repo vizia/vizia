@@ -206,7 +206,7 @@ impl ApplicationRunner {
         }
 
         // Events
-        while self.event_manager.flush_events(&mut cx.context()) {}
+        while self.event_manager.flush_events(cx.context()) {}
 
         if *cx.window_size() != self.current_window_size
             || *cx.user_scale_factor() != self.current_user_scale_factor
@@ -247,10 +247,7 @@ impl ApplicationRunner {
                 },
             );
 
-            cx.0.need_restyle();
-            // This will trigger a `WindowEvent::GeometryChanged`
-            cx.0.need_relayout();
-            cx.0.need_redraw();
+            cx.needs_refresh();
 
             self.event_manager.flush_events(cx.context());
         }
@@ -258,7 +255,7 @@ impl ApplicationRunner {
         cx.load_images();
 
         // Force restyle on every frame for baseview backend to avoid style inheritance issues
-        cx.style().needs_restyle = true;
+        cx.style().needs_restyle();
         cx.process_data_updates();
         cx.process_style_updates();
 
@@ -266,11 +263,9 @@ impl ApplicationRunner {
 
         cx.process_visual_updates();
 
-        if cx.style().needs_redraw {
-            // TODO - Move this to EventManager
+        cx.style().should_redraw(|| {
             self.should_redraw = true;
-            cx.style().needs_redraw = false;
-        }
+        });
     }
 
     pub fn render(&mut self) {
@@ -386,16 +381,12 @@ impl ApplicationRunner {
                     }
 
                     MouseButtonState::Released => {
-                        cx.emit_origin(WindowEvent::KeyUp(event.code, Some(event.key.clone())));
+                        cx.emit_origin(WindowEvent::KeyUp(event.code, Some(event.key)));
                     }
                 }
             }
             baseview::Event::Window(event) => match event {
-                baseview::WindowEvent::Focused => {
-                    cx.0.need_restyle();
-                    cx.0.need_relayout();
-                    cx.0.need_redraw();
-                }
+                baseview::WindowEvent::Focused => cx.needs_refresh(),
                 baseview::WindowEvent::Resized(window_info) => {
                     // We keep track of the current size before applying the user scale factor while
                     // baseview's logical size includes that factor so we need to compensate for it
@@ -437,9 +428,7 @@ impl ApplicationRunner {
 
                     cx.cache().set_clip_region(Entity::root(), bounding_box);
 
-                    cx.0.need_restyle();
-                    cx.0.need_relayout();
-                    cx.0.need_redraw();
+                    cx.needs_refresh();
                 }
                 baseview::WindowEvent::WillClose => {
                     cx.send_event(Event::new(WindowEvent::WindowClose));

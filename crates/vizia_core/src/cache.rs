@@ -282,8 +282,6 @@ pub struct CachedData {
 
     pub(crate) abilities: SparseSet<Abilities>,
 
-    pub(crate) z_index: SparseSet<i32>,
-
     pub(crate) child_sum: SparseSet<(f32, f32)>, // Sum of child (widths, heights)
     pub(crate) child_max: SparseSet<(f32, f32)>, // Max child (widths, heights)
 
@@ -331,8 +329,6 @@ impl CachedData {
         self.transform.insert(entity, Transform2D::identity())?;
         self.origin.insert(entity, (0.0, 0.0))?;
 
-        self.z_index.insert(entity, 0)?;
-
         self.clip_region.insert(entity, Default::default())?;
         self.space.insert(entity, Default::default())?;
         self.size.insert(entity, Default::default())?;
@@ -368,8 +364,6 @@ impl CachedData {
         self.scale.remove(entity);
         self.transform.remove(entity);
         self.origin.remove(entity);
-
-        self.z_index.remove(entity);
 
         self.clip_region.remove(entity);
         self.space.remove(entity);
@@ -501,14 +495,6 @@ impl CachedData {
     /// This is the bounding box for which rendering of the widget will be clipped/cropped when outside of the bounds.
     pub fn get_clip_region(&self, entity: Entity) -> BoundingBox {
         self.clip_region.get(entity).cloned().unwrap()
-    }
-
-    /// Returns the Z index of the entity.
-    ///
-    /// Entities can specify a z-index with `entity.set_z_index(cx, value)`.
-    /// The z_order_system then determines the z-index of child entities based on their parent and any specified z-index.
-    pub fn get_z_index(&self, entity: Entity) -> i32 {
-        self.z_index.get(entity).cloned().unwrap()
     }
 
     pub fn get_child_width_sum(&self, entity: Entity) -> f32 {
@@ -690,12 +676,6 @@ impl CachedData {
     pub fn set_clip_region(&mut self, entity: Entity, val: BoundingBox) {
         if let Some(clip_region) = self.clip_region.get_mut(entity) {
             *clip_region = val;
-        }
-    }
-
-    pub fn set_z_index(&mut self, entity: Entity, val: i32) {
-        if let Some(z_index) = self.z_index.get_mut(entity) {
-            *z_index = val;
         }
     }
 

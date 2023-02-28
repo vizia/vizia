@@ -18,7 +18,7 @@ impl Model for AppData {
             AppEvent::SetName(s) => self.name = s.clone(),
             AppEvent::ReceiveEmail => self.emails += 1,
             AppEvent::ToggleLanguage => {
-                if cx.environment().locale.to_string() == "en-US" {
+                if cx.environment().locale == "en-US" {
                     cx.emit(EnvironmentEvent::SetLocale("fr".parse().unwrap()));
                 } else {
                     cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap()));
@@ -43,7 +43,7 @@ fn main() {
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                Checkbox::new(cx, Environment::locale.map(|locale| locale.to_string() == "en-US"))
+                Checkbox::new(cx, Environment::locale.map(|locale| *locale == "en-US"))
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleLanguage));
                 Label::new(cx, "Toggle Language");
             })
