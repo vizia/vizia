@@ -4,7 +4,7 @@ use vizia_style::{
     LinearGradient, Opacity, Rect, Transform, RGBA,
 };
 
-use crate::style::Transform2D;
+use femtovg::Transform2D;
 
 /// A trait which describes a property which can be interpolated for animations.
 pub trait Interpolator {

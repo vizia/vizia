@@ -1,11 +1,8 @@
-use crate::cache::BoundingBox;
 use crate::context::Context;
 use crate::prelude::*;
-use crate::style::Transform2D;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use vizia_id::GenerationalId;
-use vizia_style::Clip;
 
 pub fn draw_system(cx: &mut Context) {
     let canvas = cx.canvases.get_mut(&Entity::root()).unwrap();
@@ -61,8 +58,6 @@ fn draw_entity(
         return;
     }
 
-    let bounds = cx.cache.get_bounds(current);
-
     let z_order = cx.tree.z_order(current);
     if z_order > current_z {
         queue.push(ZEntity(z_order, current));
@@ -71,93 +66,15 @@ fn draw_entity(
 
     canvas.save();
 
-    if let Some(transforms) = cx.style.transform.get(current) {
-        let mut translate = Transform2D::with_translate(bounds.center().0, bounds.center().1);
-
-        let mut transform = Transform2D::identity();
-        transform.premultiply(&translate);
-
-        translate.inverse();
-
-        // Check if the transform is currently animating
-        // Get the animation state
-        // Manually interpolate the value to get the overall transform for the current frame
-        if let Some(animation_state) = cx.style.transform.get_active_animation(current) {
-            if let Some(start) = animation_state.keyframes.first() {
-                if let Some(end) = animation_state.keyframes.last() {
-                    let start_transform =
-                        Transform2D::from_style_transforms(&start.1, bounds, cx.scale_factor());
-                    let end_transform =
-                        Transform2D::from_style_transforms(&end.1, bounds, cx.scale_factor());
-                    let t = animation_state.t;
-                    let animated_transform =
-                        Transform2D::interpolate(&start_transform, &end_transform, t);
-                    transform.premultiply(&animated_transform);
-                }
-            }
-        } else {
-            transform.premultiply(&Transform2D::from_style_transforms(
-                transforms,
-                bounds,
-                cx.scale_factor(),
-            ));
-        }
-
-        transform.premultiply(&translate);
-
-        let mut trans = femtovg::Transform2D::identity();
-        canvas.set_transform(&trans.new(
-            transform[0],
-            transform[1],
-            transform[2],
-            transform[3],
-            transform[4],
-            transform[5],
-        ));
+    if let Some(transform) = cx.transform() {
+        canvas.set_transform(&transform);
     }
 
-    let overflowx = cx.style.overflowx.get(current).copied().unwrap_or_default();
-    let overflowy = cx.style.overflowy.get(current).copied().unwrap_or_default();
+    let clip_region = cx.clip_region();
 
-    let root_bounds = cx.cache.get_bounds(Entity::root());
+    canvas.intersect_scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
 
-    let clip_bounds = cx
-        .style
-        .clip
-        .get(current)
-        .map(|clip| match clip {
-            Clip::Auto => bounds,
-            Clip::Shape(rect) => bounds.shrink_sides(
-                rect.3.to_px().unwrap() * cx.style.dpi_factor as f32,
-                rect.0.to_px().unwrap() * cx.style.dpi_factor as f32,
-                rect.1.to_px().unwrap() * cx.style.dpi_factor as f32,
-                rect.2.to_px().unwrap() * cx.style.dpi_factor as f32,
-            ),
-        })
-        .unwrap_or(bounds);
-
-    let clipping = match (overflowx, overflowy) {
-        (Overflow::Visible, Overflow::Visible) => root_bounds,
-        (Overflow::Hidden, Overflow::Visible) => {
-            let left = clip_bounds.left();
-            let right = clip_bounds.right();
-            let top = root_bounds.top();
-            let bottom = root_bounds.bottom();
-            BoundingBox::from_min_max(left, top, right, bottom)
-        }
-        (Overflow::Visible, Overflow::Hidden) => {
-            let left = root_bounds.left();
-            let right = root_bounds.right();
-            let top = clip_bounds.top();
-            let bottom = clip_bounds.bottom();
-            BoundingBox::from_min_max(left, top, right, bottom)
-        }
-        (Overflow::Hidden, Overflow::Hidden) => clip_bounds,
-    };
-
-    canvas.intersect_scissor(clipping.x, clipping.y, clipping.w, clipping.h);
-
-    let is_visible = match (visible, cx.style.visibility.get(current).copied()) {
+    let is_visible = match (visible, cx.visibility()) {
         (v, None) => v,
         (_, Some(Visibility::Hidden)) => false,
         (_, Some(Visibility::Visible)) => true,

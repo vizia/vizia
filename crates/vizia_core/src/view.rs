@@ -61,6 +61,8 @@ pub trait View: 'static + Sized {
 
         cx.draw_border(canvas, &mut path);
 
+        cx.draw_inset_box_shadows(canvas, &mut path);
+
         cx.draw_outline(canvas);
 
         cx.draw_text_and_selection(canvas);

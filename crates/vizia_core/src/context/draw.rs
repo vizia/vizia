@@ -1,4 +1,5 @@
 use cosmic_text::FamilyOwned;
+use femtovg::Transform2D;
 use std::any::{Any, TypeId};
 
 use fnv::FnvHashMap;
@@ -9,13 +10,13 @@ use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
-use crate::style::Style;
+use crate::style::{IntoTransform, Style};
 use crate::text::{TextConfig, TextContext};
 use crate::vg::{ImageId, Paint, Path};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 use vizia_style::{
-    BoxShadow, Gradient, HorizontalPositionKeyword, LineDirection, VerticalPositionKeyword,
+    BoxShadow, Clip, Gradient, HorizontalPositionKeyword, LineDirection, VerticalPositionKeyword,
 };
 
 /// Cached data used for drawing.
@@ -128,7 +129,86 @@ impl<'a> DrawContext<'a> {
     }
 
     pub fn clip_region(&self) -> BoundingBox {
-        self.cache.get_clip_region(self.current)
+        let bounds = self.bounds();
+        let overflowx = self.style.overflowx.get(self.current).copied().unwrap_or_default();
+        let overflowy = self.style.overflowy.get(self.current).copied().unwrap_or_default();
+
+        let root_bounds = self.cache.get_bounds(Entity::root());
+
+        let clip_bounds = self
+            .style
+            .clip
+            .get(self.current)
+            .map(|clip| match clip {
+                Clip::Auto => bounds,
+                Clip::Shape(rect) => bounds.shrink_sides(
+                    self.logical_to_physical(rect.3.to_px().unwrap()),
+                    self.logical_to_physical(rect.0.to_px().unwrap()),
+                    self.logical_to_physical(rect.1.to_px().unwrap()),
+                    self.logical_to_physical(rect.2.to_px().unwrap()),
+                ),
+            })
+            .unwrap_or(bounds);
+
+        match (overflowx, overflowy) {
+            (Overflow::Visible, Overflow::Visible) => root_bounds,
+            (Overflow::Hidden, Overflow::Visible) => {
+                let left = clip_bounds.left();
+                let right = clip_bounds.right();
+                let top = root_bounds.top();
+                let bottom = root_bounds.bottom();
+                BoundingBox::from_min_max(left, top, right, bottom)
+            }
+            (Overflow::Visible, Overflow::Hidden) => {
+                let left = root_bounds.left();
+                let right = root_bounds.right();
+                let top = clip_bounds.top();
+                let bottom = clip_bounds.bottom();
+                BoundingBox::from_min_max(left, top, right, bottom)
+            }
+            (Overflow::Hidden, Overflow::Hidden) => clip_bounds,
+        }
+    }
+
+    pub fn transform(&self) -> Option<Transform2D> {
+        if let Some(transforms) = self.style.transform.get(self.current) {
+            let bounds = self.bounds();
+            let scale_factor = self.scale_factor();
+            let mut translate = Transform2D::new_translation(bounds.center().0, bounds.center().1);
+
+            let mut transform = Transform2D::identity();
+            transform.premultiply(&translate);
+
+            translate.inverse();
+
+            // Check if the transform is currently animating
+            // Get the animation state
+            // Manually interpolate the value to get the overall transform for the current frame
+            if let Some(animation_state) = self.style.transform.get_active_animation(self.current) {
+                if let Some(start) = animation_state.keyframes.first() {
+                    if let Some(end) = animation_state.keyframes.last() {
+                        let start_transform = start.1.into_transform(bounds, scale_factor);
+                        let end_transform = end.1.into_transform(bounds, scale_factor);
+                        let t = animation_state.t;
+                        let animated_transform =
+                            Transform2D::interpolate(&start_transform, &end_transform, t);
+                        transform.premultiply(&animated_transform);
+                    }
+                }
+            } else {
+                transform.premultiply(&transforms.into_transform(bounds, scale_factor));
+            }
+
+            transform.premultiply(&translate);
+
+            return Some(transform);
+        }
+
+        None
+    }
+
+    pub fn visibility(&self) -> Option<Visibility> {
+        self.style.visibility.get(self.current).copied()
     }
 
     /// Returns the lookup pattern to pick the default font.
@@ -462,9 +542,125 @@ impl<'a> DrawContext<'a> {
         canvas.stroke_path(&mut outline_path, &outline_paint);
     }
 
+    pub fn draw_inset_box_shadows(&self, canvas: &mut Canvas, path: &mut Path) {
+        if let Some(box_shadows) = self.box_shadows() {
+            for box_shadow in box_shadows.iter().rev().filter(|shadow| shadow.inset) {
+                let color = box_shadow.color.unwrap_or_default();
+                let x_offset = box_shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
+                let y_offset = box_shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();
+                let spread_radius =
+                    box_shadow.spread_radius.as_ref().and_then(|l| l.to_px()).unwrap_or(0.0)
+                        * self.scale_factor();
+
+                let blur_radius =
+                    box_shadow.blur_radius.as_ref().and_then(|br| br.to_px()).unwrap_or(0.0);
+                let sigma = blur_radius / 2.0;
+                let d = (sigma * 5.0).ceil() + 2.0 * spread_radius + 20.0;
+
+                let bounds = self.bounds();
+
+                // TODO: Cache shadow images
+                let (source, target) = {
+                    (
+                        canvas
+                            .create_image_empty(
+                                (bounds.w + d) as usize,
+                                (bounds.h + d) as usize,
+                                femtovg::PixelFormat::Rgba8,
+                                femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
+                            )
+                            .unwrap(),
+                        canvas
+                            .create_image_empty(
+                                (bounds.w + d) as usize,
+                                (bounds.h + d) as usize,
+                                femtovg::PixelFormat::Rgba8,
+                                femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
+                            )
+                            .unwrap(),
+                    )
+                };
+
+                canvas.save();
+                canvas.set_render_target(femtovg::RenderTarget::Image(source));
+                canvas.reset_scissor();
+                canvas.reset_transform();
+                canvas.clear_rect(
+                    0,
+                    0,
+                    (bounds.w + d) as u32,
+                    (bounds.h + d) as u32,
+                    femtovg::Color::rgba(0, 0, 0, 0),
+                );
+
+                let scalex = 1.0 - (2.0 * spread_radius / bounds.w);
+                let scaley = 1.0 - (2.0 * spread_radius / bounds.h);
+                canvas.translate(
+                    (-bounds.x - bounds.w / 2.0) * scalex,
+                    (-bounds.y - bounds.h / 2.0) * scaley,
+                );
+                canvas.scale(scalex, scaley);
+                canvas.translate(
+                    (bounds.w / 2.0 + d / 2.0) / scalex,
+                    (bounds.h / 2.0 + d / 2.0) / scaley,
+                );
+                let paint = Paint::color(color.into());
+                let mut shadow_path = path.clone();
+                shadow_path.rect(
+                    bounds.x - d / 2.0,
+                    bounds.y - d / 2.0,
+                    bounds.w + d,
+                    bounds.h + d,
+                );
+
+                shadow_path.solidity(femtovg::Solidity::Hole);
+                canvas.fill_path(&mut shadow_path, &paint);
+                canvas.restore();
+
+                let target_image = if blur_radius > 0.0 {
+                    canvas.filter_image(
+                        target,
+                        femtovg::ImageFilter::GaussianBlur { sigma },
+                        source,
+                    );
+                    target
+                } else {
+                    source
+                };
+
+                canvas.set_render_target(femtovg::RenderTarget::Screen);
+                canvas.save();
+                let mut shadow_path = Path::new();
+                shadow_path.rect(
+                    bounds.x - d / 2.0,
+                    bounds.y - d / 2.0,
+                    bounds.w + d,
+                    bounds.h + d,
+                );
+
+                let paint = Paint::image(
+                    target_image,
+                    bounds.x - d / 2.0 + x_offset - 1.5,
+                    bounds.y - d / 2.0 + y_offset - 1.5,
+                    bounds.w + d + 3.0,
+                    bounds.h + d + 3.0,
+                    0f32,
+                    1f32,
+                );
+
+                canvas.fill_path(path, &paint);
+
+                canvas.restore();
+
+                // canvas.delete_image(source);
+                // canvas.delete_image(target);
+            }
+        }
+    }
+
     pub fn draw_shadows(&mut self, canvas: &mut Canvas, path: &mut Path) {
         if let Some(box_shadows) = self.box_shadows() {
-            for box_shadow in box_shadows.iter().rev() {
+            for box_shadow in box_shadows.iter().rev().filter(|shadow| !shadow.inset) {
                 let color = box_shadow.color.unwrap_or_default();
                 let x_offset = box_shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
                 let y_offset = box_shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();

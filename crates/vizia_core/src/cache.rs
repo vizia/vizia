@@ -1,11 +1,11 @@
 //! The cache is a store for intermediate data produced while computing state, notably layout
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
+use femtovg::Transform2D;
 use morphorm::GeometryChanged;
 use std::fmt::Debug;
 
 use crate::prelude::*;
-use crate::style::Transform2D;
 use vizia_storage::SparseSet;
 use vizia_storage::SparseSetError;
 
