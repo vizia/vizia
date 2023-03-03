@@ -317,7 +317,6 @@ pub struct CachedData {
 impl CachedData {
     pub fn add(&mut self, entity: Entity) -> Result<(), SparseSetError> {
         self.bounds.insert(entity, Default::default())?;
-        self.visibility.insert(entity, Default::default())?;
         self.display.insert(entity, Default::default())?;
         self.child_sum.insert(entity, (0.0, 0.0))?;
         self.child_max.insert(entity, (0.0, 0.0))?;
@@ -354,7 +353,6 @@ impl CachedData {
     pub fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
         self.display.remove(entity);
-        self.visibility.remove(entity);
         self.child_sum.remove(entity);
         self.child_max.remove(entity);
 
@@ -727,28 +725,12 @@ impl CachedData {
         }
     }
 
-    // pub(crate) fn set_prev_width(&mut self, entity: Entity, val: f32) {
-    //     if let Some(size) = self.prev_size.get_mut(entity.index_unchecked()) {
-    //         size.x = val;
-    //     }
-    // }
-
-    // pub(crate) fn set_prev_height(&mut self, entity: Entity, val: f32) {
-    //     if let Some(size) = self.prev_size.get_mut(entity.index_unchecked()) {
-    //         size.y = val;
-    //     }
-    // }
-
     pub fn get_hoverability(&self, entity: Entity) -> bool {
         if let Some(abilities) = self.abilities.get(entity) {
             abilities.contains(Abilities::HOVERABLE)
         } else {
             false
         }
-    }
-
-    pub fn get_visibility(&self, entity: Entity) -> Visibility {
-        self.visibility.get(entity).cloned().unwrap()
     }
 
     pub fn get_display(&self, entity: Entity) -> Display {
@@ -761,81 +743,9 @@ impl CachedData {
         }
     }
 
-    pub(crate) fn set_visibility(&mut self, entity: Entity, val: Visibility) {
-        if let Some(visibility) = self.visibility.get_mut(entity) {
-            *visibility = val;
-        }
-    }
-
-    pub(crate) fn set_display(&mut self, entity: Entity, val: Display) {
-        if let Some(display) = self.display.get_mut(entity) {
-            *display = val;
-        }
-    }
-
-    // pub(crate) fn set_hoverable(&mut self, entity: Entity, val: bool) {
-    //     if let Some(abilities) = self.abilities.get_mut(entity) {
-    //         abilities.set(Abilities::HOVERABLE, val);
-    //     }
-    // }
-
-    // pub(crate) fn set_focusable(&mut self, entity: Entity, val: bool) {
-    //     if let Some(abilities) = self.abilities.get_mut(entity) {
-    //         abilities.set(Abilities::FOCUSABLE, val);
-    //     }
-    // }
-
-    // pub(crate) fn set_checkable(&mut self, entity: Entity, val: bool) {
-    //     if let Some(abilities) = self.abilities.get_mut(entity) {
-    //         abilities.set(Abilities::CHECKABLE, val);
-    //     }
-    // }
-
-    // pub(crate) fn set_selectable(&mut self, entity: Entity, val: bool) {
-    //     if let Some(abilities) = self.abilities.get_mut(entity) {
-    //         abilities.set(Abilities::SELECTABLE, val);
-    //     }
-    // }
-
     pub fn set_opacity(&mut self, entity: Entity, val: f32) {
         if let Some(opacity) = self.opacity.get_mut(entity) {
             *opacity = val;
-        }
-    }
-
-    pub(crate) fn set_rotate(&mut self, entity: Entity, val: f32) {
-        if let Some(transform) = self.transform.get_mut(entity) {
-            let mut t = Transform2D::identity();
-            t.rotate(val);
-            transform.premultiply(&t);
-        }
-    }
-
-    pub(crate) fn set_translate(&mut self, entity: Entity, val: (f32, f32)) {
-        if let Some(transform) = self.transform.get_mut(entity) {
-            let mut t = Transform2D::identity();
-            t.translate(val.0, val.1);
-            transform.premultiply(&t);
-        }
-    }
-
-    pub(crate) fn set_scale(&mut self, entity: Entity, val: (f32, f32)) {
-        if let Some(transform) = self.transform.get_mut(entity) {
-            let mut t = Transform2D::identity();
-            t.scale(val.0, val.1);
-            transform.premultiply(&t);
-        }
-    }
-
-    // pub(crate) fn set_origin(&mut self, entity: Entity, val: (f32, f32)) {
-    //     if let Some(origin) = self.origin.get_mut(entity) {
-    //         *origin = val;
-    //     }
-    // }
-
-    pub(crate) fn set_transform(&mut self, entity: Entity, val: Transform2D) {
-        if let Some(transform) = self.transform.get_mut(entity) {
-            *transform = val;
         }
     }
 }

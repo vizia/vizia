@@ -1,15 +1,15 @@
 use crate::context::Context;
 use crate::entity::Entity;
-use crate::style::{Abilities, Display, Visibility};
+use crate::style::{Abilities, Display};
 use vizia_id::GenerationalId;
 use vizia_storage::{DoubleEndedTreeTour, TourDirection, TreeExt, TreeIterator, TreeTour};
 
 /// Should the user be able to navigate to the entity with tab?
 pub fn is_navigatable(cx: &Context, node: Entity, lock_focus_to: Entity) -> bool {
     // Skip invisible widgets
-    if cx.cache.get_visibility(node) == Visibility::Hidden {
-        return false;
-    }
+    // if cx.cache.get_visibility(node) == Visibility::Hidden {
+    //     return false;
+    // }
 
     // Skip disabled widgets
     if cx.style.disabled.get(node).cloned().unwrap_or_default() {

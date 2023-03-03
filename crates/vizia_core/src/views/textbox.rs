@@ -533,8 +533,12 @@ where
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
+        event.map(|window_event, meta| match window_event {
             WindowEvent::MouseDown(MouseButton::Left) => {
+                if meta.origin == cx.current {
+                    return;
+                }
+
                 if cx.is_over() {
                     cx.focus_with_visibility(false);
                     cx.capture();

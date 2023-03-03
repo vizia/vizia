@@ -18,7 +18,6 @@ pub fn hover_system(cx: &mut Context) {
         // Unfortunately we can't skip the subtree because even if a parent is invisible
         // a child might be explicitly set to be visible.
         if entity == Entity::root()
-            || cx.cache.get_visibility(entity) == Visibility::Hidden
             || cx.cache.get_display(entity) == Display::None
             || cx.cache.get_opacity(entity) == 0.0
             || !window_bounds.contains(&cx.cache.get_bounds(entity))
@@ -53,6 +52,7 @@ pub fn hover_system(cx: &mut Context) {
             && ty < (clip_region.y + clip_region.h)
         {
             hovered_widget = entity;
+
             if !cx
                 .style
                 .pseudo_classes
@@ -60,7 +60,6 @@ pub fn hover_system(cx: &mut Context) {
                 .cloned()
                 .unwrap_or_default()
                 .contains(PseudoClassFlags::OVER)
-                == false
             {
                 cx.event_queue.push_back(
                     Event::new(WindowEvent::MouseOver)
@@ -80,7 +79,6 @@ pub fn hover_system(cx: &mut Context) {
                 .cloned()
                 .unwrap_or_default()
                 .contains(PseudoClassFlags::OVER)
-                == true
             {
                 cx.event_queue.push_back(
                     Event::new(WindowEvent::MouseOut).target(entity).propagate(Propagation::Direct),

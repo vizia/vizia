@@ -1,3 +1,4 @@
+use femtovg::Transform2D;
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
@@ -5,6 +6,7 @@ use vizia_style::{
     BoxShadow, Clip, CssRule, FontFamily, FontSize, GenericFontFamily, Gradient, Transition,
 };
 
+use crate::cache::BoundingBox;
 use crate::prelude::*;
 
 pub use vizia_style::{
@@ -17,23 +19,8 @@ pub use vizia_style::{
 mod rule;
 pub use rule::Rule;
 
-mod transform;
-pub use transform::*;
-
 mod selector;
 pub use selector::*;
-
-// mod specificity;
-// use specificity::*;
-
-// mod property;
-// pub use property::*;
-
-// mod shadow;
-// use shadow::*;
-
-// mod prop;
-// pub use prop::*;
 
 use crate::animation::{AnimationState, Interpolator};
 use crate::storage::animatable_set::AnimatableSet;
@@ -244,10 +231,6 @@ pub struct Style {
 }
 
 impl Style {
-    // pub(crate) fn add_rule(&mut self, style_rule: StyleRule) {
-    //     if !self.rules.contains(&style_rule) {
-    //         self.rules.push(style_rule);
-    //         self.rules.sort_by_key(|rule| rule.specificity());
     //         self.rules.reverse();
     //     }
 
@@ -309,46 +292,6 @@ impl Style {
                 }
             }
         }
-
-        // let mut input = ParserInput::new(stylesheet);
-        // let mut parser = Parser::new(&mut input);
-        // let rule_parser = parser::RuleParser::new();
-
-        // let rules = {
-        //     let rule_list_parser =
-        //         cssparser::RuleListParser::new_for_stylesheet(&mut parser, rule_parser);
-        //     rule_list_parser.collect::<Vec<_>>()
-        // };
-
-        // let mut rule_list: Vec<StyleRule> = rules
-        //     .into_iter()
-        //     .filter_map(|rule| {
-        //         match rule {
-        //             Ok(mut style_rule) => {
-        //                 style_rule.id = self.rule_manager.create();
-        //                 Some(style_rule)
-        //             }
-        //             Err(parse_error) => {
-        //                 let style_parse_error = StyleParseError(parse_error.0);
-        //                 println!("{}", style_parse_error);
-        //                 None
-        //             }
-        //         }
-        //         //rule.ok()
-        //     })
-        //     .collect();
-
-        // self.rules.append(&mut rule_list);
-
-        // self.rules.sort_by_key(|rule| rule.specificity());
-        // self.rules.reverse();
-
-        // // for rule in self.rules.iter() {
-        // //     print!("{}", rule);
-        // // }
-
-        // self.clear_style_rules();
-        // self.set_style_properties();
     }
 
     fn insert_transition(&mut self, rule_id: Rule, transition: &Transition) {
@@ -813,7 +756,9 @@ impl Style {
                         _ => None,
                     })
                     .collect::<Vec<_>>();
-                self.background_gradient.insert_rule(rule_id, gradients);
+                if !gradients.is_empty() {
+                    self.background_gradient.insert_rule(rule_id, gradients);
+                }
                 // BackgroundImage::Name(_) => {}
                 // BackgroundImage::Gradient(gradient) => {
                 //     self.background_gradient.insert_rule(rule_id, *gradient);
@@ -860,7 +805,7 @@ impl Style {
             .expect("Failed to add pseudoclasses");
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
-        self.visibility.insert(entity, Default::default());
+        // self.visibility.insert(entity, Default::default());
         // self.focus_order.insert(entity, Default::default()).unwrap();
         self.system_flags = SystemFlags::all();
     }
@@ -908,20 +853,23 @@ impl Style {
         self.border_top_left_radius.remove(entity);
         self.border_top_right_radius.remove(entity);
 
+        // Outline
         self.outline_width.remove(entity);
         self.outline_color.remove(entity);
         self.outline_offset.remove(entity);
-
-        //self.focus_order.remove(entity);
 
         // Background
         self.background_color.remove(entity);
         self.background_image.remove(entity);
         self.background_gradient.remove(entity);
 
+        // Box Shadow
         self.box_shadow.remove(entity);
 
+        // Layout Type
         self.layout_type.remove(entity);
+
+        // Position Type
         self.position_type.remove(entity);
 
         // Space
@@ -978,6 +926,7 @@ impl Style {
         self.selection_color.remove(entity);
         self.caret_color.remove(entity);
 
+        // Cursor
         self.cursor.remove(entity);
 
         self.name.remove(entity);
@@ -1118,5 +1067,86 @@ impl Style {
         self.name.clear_rules();
 
         self.image.clear_rules();
+    }
+}
+
+pub(crate) trait IntoTransform {
+    fn into_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D;
+}
+
+impl IntoTransform for Vec<Transform> {
+    fn into_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
+        let mut result = Transform2D::identity();
+        for transform in self.iter() {
+            let mut t = Transform2D::identity();
+            match transform {
+                Transform::Translate(translate) => {
+                    let tx = translate.x.to_pixels(parent_bounds.w) * scale_factor;
+                    let ty = translate.y.to_pixels(parent_bounds.h) * scale_factor;
+
+                    t.translate(tx, ty);
+                }
+
+                Transform::TranslateX(x) => {
+                    let tx = x.to_pixels(parent_bounds.h) * scale_factor;
+
+                    t.translate(tx, 0.0)
+                }
+
+                Transform::TranslateY(y) => {
+                    let ty = y.to_pixels(parent_bounds.h) * scale_factor;
+
+                    t.translate(0.0, ty)
+                }
+
+                Transform::Scale(scale) => {
+                    let sx = scale.x.to_factor();
+                    let sy = scale.y.to_factor();
+
+                    t.scale(sx, sy)
+                }
+
+                Transform::ScaleX(x) => {
+                    let sx = x.to_factor();
+
+                    t.scale(sx, 1.0)
+                }
+
+                Transform::ScaleY(y) => {
+                    let sy = y.to_factor();
+
+                    t.scale(1.0, sy)
+                }
+
+                Transform::Rotate(angle) => t.rotate(angle.to_radians()),
+
+                Transform::Skew(x, y) => {
+                    let cx = x.to_radians().tan();
+                    let cy = y.to_radians().tan();
+
+                    t = t.new(1.0, cx, cy, 1.0, 0.0, 0.0);
+                }
+
+                Transform::SkewX(angle) => {
+                    let cx = angle.to_radians().tan();
+
+                    t.skew_x(cx)
+                }
+
+                Transform::SkewY(angle) => {
+                    let cy = angle.to_radians().tan();
+
+                    t.skew_y(cy)
+                }
+
+                Transform::Matrix(matrix) => {
+                    t = t.new(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
+                }
+            };
+
+            result.premultiply(&t);
+        }
+
+        result
     }
 }
