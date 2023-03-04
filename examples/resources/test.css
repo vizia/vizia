@@ -12,13 +12,14 @@
     background-color: red;
     space: 100px;
     size: 200px;
-    transform: skew(-15deg, 0deg);
+    transform: skew(-15deg, 0deg) translate(50%, 0px) rotate(30deg)
+        translateX(200px);
 }
 
-.bar:hover .foo {
+.bar .foo:hover {
     background-color: blue;
-    transform: translate(50%, 0px) rotate(30deg) translateX(200px);
+    /* transform: translate(50%, 0px) rotate(30deg) translateX(200px); */
     /* transform: translate(50%, 0px); */
-    transition: transform 1s;
-    transition: background-color 1s;
+    /* transition: transform 1s; */
+    /* transition: background-color 1s; */
 }

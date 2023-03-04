@@ -261,6 +261,12 @@ impl BoundingBox {
         let y_hit = other.y >= self.y && other.y < self.y + self.h;
         x_hit && y_hit
     }
+
+    pub fn transform(&self, transform: &Transform2D) -> Self {
+        let (tl, tt) = transform.transform_point(self.x, self.y);
+        let (tr, tb) = transform.transform_point(self.right(), self.bottom());
+        BoundingBox::from_min_max(tl, tt, tr, tb)
+    }
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]

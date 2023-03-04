@@ -1,9 +1,12 @@
-use crate::prelude::*;
+use std::{cmp::Ordering, collections::BinaryHeap};
+
+use crate::{cache::BoundingBox, prelude::*};
+use femtovg::Transform2D;
 use vizia_id::GenerationalId;
 use vizia_storage::DrawIterator;
 
 // Determines the hovered entity based on the mouse cursor position.
-pub fn hover_system(cx: &mut Context) {
+pub fn hover_system2(cx: &mut Context) {
     let draw_tree = DrawIterator::full(&cx.tree);
 
     let cursorx = cx.mouse.cursorx;
@@ -133,5 +136,135 @@ pub fn hover_system(cx: &mut Context) {
         cx.hovered = hovered_widget;
 
         cx.style.needs_restyle();
+    }
+}
+
+pub fn hover_system(cx: &mut Context) {
+    println!("{} {}", cx.mouse.cursorx, cx.mouse.cursory);
+    let mut queue = BinaryHeap::new();
+    queue.push(ZEntity(0, Entity::root()));
+    let mut hovered = Entity::root();
+    let mut transform = Transform2D::identity();
+    let mut clip_bounds = cx.cache.get_bounds(Entity::root());
+    while !queue.is_empty() {
+        let ZEntity(current_z, current) = queue.pop().unwrap();
+        cx.with_current(current, |cx| {
+            hover_entity(
+                &mut DrawContext {
+                    current,
+                    captured: &cx.captured,
+                    focused: &cx.focused,
+                    hovered: &cx.hovered,
+                    style: &cx.style,
+                    cache: &mut cx.cache,
+                    draw_cache: &mut cx.draw_cache,
+                    tree: &cx.tree,
+                    data: &cx.data,
+                    views: &mut cx.views,
+                    resource_manager: &cx.resource_manager,
+                    text_context: &mut cx.text_context,
+                    text_config: &cx.text_config,
+                    modifiers: &cx.modifiers,
+                    mouse: &cx.mouse,
+                },
+                current_z,
+                &mut queue,
+                &mut hovered,
+                &mut transform,
+                &clip_bounds,
+            );
+        });
+    }
+
+    if hovered != cx.hovered {
+        // Useful for debugging
+
+        #[cfg(debug_assertions)]
+        println!(
+            "Hover changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
+            hovered,
+            cx.tree.get_parent(hovered),
+            cx.views.get(&hovered).map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
+            cx.cache.get_posx(hovered),
+            cx.cache.get_posy(hovered),
+            cx.cache.get_width(hovered),
+            cx.cache.get_height(hovered),
+        );
+
+        let cursor = cx.style.cursor.get(hovered).cloned().unwrap_or_default();
+        // TODO: Decide if not changing the cursor when the view is disabled is the correct thing to do
+        if !cx.cursor_icon_locked && !cx.style.disabled.get(hovered).cloned().unwrap_or_default() {
+            cx.emit(WindowEvent::SetCursor(cursor));
+        }
+
+        // Set current hovered pseudoclass to true
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(hovered) {
+            pseudo_classes.set(PseudoClassFlags::HOVER, true);
+        }
+
+        // Set previous hovered pseudoclass to false
+        let h = cx.hovered;
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(h) {
+            pseudo_classes.set(PseudoClassFlags::HOVER, false);
+        }
+
+        cx.event_queue.push_back(Event::new(WindowEvent::MouseEnter).target(h));
+        cx.event_queue.push_back(Event::new(WindowEvent::MouseLeave).target(cx.hovered));
+
+        cx.hovered = hovered;
+
+        cx.style.needs_restyle();
+    }
+}
+
+fn hover_entity(
+    cx: &mut DrawContext,
+    current_z: i32,
+    queue: &mut BinaryHeap<ZEntity>,
+    hovered: &mut Entity,
+    transform: &mut Transform2D,
+    clip_bounds: &BoundingBox,
+) {
+    let bounds = cx.cache.get_bounds(cx.current);
+    let cursorx = cx.mouse.cursorx;
+    let cursory = cx.mouse.cursory;
+
+    if let Some(t) = cx.transform() {
+        transform.premultiply(&t);
+    }
+
+    let mut t = *transform;
+    t.inverse();
+    let (tx, ty) = t.transform_point(cursorx, cursory);
+
+    let mut clipping = clip_bounds.intersection(&cx.clip_region());
+
+    let b = bounds.intersection(&clipping);
+
+    if tx >= b.left() && tx <= b.right() && ty >= b.top() && ty <= b.bottom() {
+        *hovered = cx.current;
+    }
+
+    for child in cx.current.child_iter(&cx.tree) {
+        cx.current = child;
+        hover_entity(cx, current_z, queue, hovered, transform, &clipping);
+    }
+}
+
+#[derive(Eq)]
+pub struct ZEntity(i32, Entity);
+impl Ord for ZEntity {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.0.cmp(&self.0)
+    }
+}
+impl PartialOrd for ZEntity {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl PartialEq for ZEntity {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
     }
 }

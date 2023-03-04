@@ -7,6 +7,10 @@ const STYLE: &str = r#"
         overflow-x: visible;
         overflow-y: hidden;
     }
+
+    .one:hover {
+        background-color: red;
+    }
     
     .two {
         size: 50px;
@@ -16,9 +20,17 @@ const STYLE: &str = r#"
         overflow: visible;
     }
 
+    .two:hover {
+        background-color: blue;
+    }
+
     .three {
         size: 75px;
         background-color: yellow;
+    }
+
+    .three:hover {
+        background-color: maroon;
     }
 "#;
 
@@ -61,9 +73,7 @@ fn main() {
             .min_size(Pixels(0.0))
             .class("two");
         })
-        // .transform(AppData::skew.map(|skew| vec![Transform::SkewX(Angle::Deg(*skew))]))
         .transform(vec![Transform::SkewX(Angle::Deg(26.5650512))])
-        // .transform(AppData::skew.map(|skew| vec![Transform::SkewX(Angle::Deg(*skew))]))
         .class("one")
         .min_size(Pixels(0.0));
 
