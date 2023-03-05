@@ -628,8 +628,6 @@ where
                     character_widths.push(0.0);
                 }
 
-                // FIXME: The screen reader gets out of sync with the cursor due to affinity
-
                 // TODO: Might need to append any spaces that were stripped during layout. This can be done by
                 // figuring out if the start of the next line is greater than the end of the current line as long
                 // as the lines have the same `line_i`. This will require a peekable iterator loop.
@@ -692,6 +690,18 @@ where
                     character_index: selection_active_cursor,
                 },
             });
+
+            match self.kind {
+                TextboxKind::MultiLineUnwrapped | TextboxKind::MultiLineWrapped => {
+                    node.node_builder.set_multiline();
+                }
+
+                _ => {
+                    node.node_builder.clear_multiline();
+                }
+            }
+
+            node.node_builder.set_default_action_verb(DefaultActionVerb::Focus);
         });
     }
 
