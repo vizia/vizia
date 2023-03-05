@@ -13,7 +13,7 @@ fn main() {
 
             Checkbox::new(cx, Environment::locale.map(|locale| *locale == "fr"))
                 .id("french")
-                .role(Role::RadioButton)main
+                .role(Role::RadioButton)
                 .on_toggle(|cx| cx.emit(EnvironmentEvent::SetLocale("fr".parse().unwrap())))
                 .left(Pixels(10.0));
             Label::new(cx, "French").describing("french").hidden(true);
