@@ -1,3 +1,4 @@
+use crate::accessibility::IntoNode;
 use crate::cache::BoundingBox;
 use crate::context::AccessNode;
 use crate::prelude::*;
@@ -5,7 +6,7 @@ use crate::prelude::*;
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest, Rect, TextDirection, TextPosition, TextSelection};
-use cosmic_text::{Action, Attrs, Edit};
+use cosmic_text::{Action, Attrs, Cursor, Edit};
 use std::sync::Arc;
 use unicode_segmentation::UnicodeSegmentation;
 use vizia_id::GenerationalId;
@@ -932,14 +933,58 @@ where
             WindowEvent::ActionRequest(ActionRequest {
                 action: accesskit::Action::SetTextSelection,
                 target: _,
-                data: Some(ActionData::SetTextSelection(_selection)),
+                data: Some(ActionData::SetTextSelection(selection)),
             }) => {
-                // println!("Select some text: {:?}", selection);
-                // TODO: Handle selection action request
-                // Requires converting the selection line and position to something
-                // which cosmic can understand.
+                // TODO: This needs testing once I figure out how to trigger it with a screen reader.
+                let text_content_id = Entity::new(cx.current.index() as u32 + 3, 0);
+                let node_id = cx.current.accesskit_id();
+                cx.text_context.with_editor(text_content_id, |editor| {
+                    // let cursor_node = selection.focus.node;
+                    let selection_node = selection.anchor.node;
 
-                // println!("Received selection: {:?}", selection);
+                    // let mut cursor_line_index = 0;
+                    // let mut cursor_index = 0;
+                    let mut selection_line_index = 0;
+                    let mut selection_index = 0;
+
+                    let mut current_cursor = 0;
+                    let mut prev_line_index = std::usize::MAX;
+
+                    for (index, line) in editor.buffer().layout_runs().enumerate() {
+                        let line_node = AccessNode::new_from_parent(node_id, index);
+                        // if line_node.node_id() == cursor_node {
+                        //     cursor_line_index = line.line_i;
+                        //     cursor_index = selection.focus.character_index + current_cursor;
+                        // }
+
+                        if line_node.node_id() == selection_node {
+                            selection_line_index = line.line_i;
+                            selection_index = selection.anchor.character_index + current_cursor;
+                        }
+
+                        if line.line_i != prev_line_index {
+                            current_cursor = 0;
+                        }
+
+                        let first_glyph_pos =
+                            line.glyphs.first().map(|glyph| glyph.start).unwrap_or_default();
+                        let last_glyph_pos =
+                            line.glyphs.last().map(|glyph| glyph.end).unwrap_or_default();
+
+                        let line_length = last_glyph_pos - first_glyph_pos;
+
+                        current_cursor += line_length;
+                        prev_line_index = line.line_i;
+                    }
+
+                    let selection_cursor = Cursor::new(selection_line_index, selection_index);
+                    editor.set_select_opt(Some(selection_cursor));
+
+                    // TODO: Either add a method to set the cursor by index to cosmic,
+                    // or loop over an `Action` to move the cursor to the correct place.
+                });
+
+                // println!("Select some text: {:?}", selection);
             }
 
             _ => {}

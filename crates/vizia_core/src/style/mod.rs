@@ -274,6 +274,8 @@ pub struct Style {
     // for layout, text layout, rendering, etc. to replace the above `needs_` members.
     pub needs_text_layout: SparseSet<bool>,
 
+    pub needs_access_update: SparseSet<bool>,
+
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub dpi_factor: f64,
 }
@@ -1151,6 +1153,7 @@ impl Style {
         self.image.remove(entity);
 
         self.needs_text_layout.remove(entity);
+        self.needs_access_update.remove(entity);
     }
 
     pub fn needs_restyle(&mut self) {
@@ -1163,6 +1166,10 @@ impl Style {
 
     pub fn needs_redraw(&mut self) {
         self.system_flags.set(SystemFlags::REDRAW, true);
+    }
+
+    pub fn needs_access_update(&mut self, entity: Entity) {
+        self.needs_access_update.insert(entity, true).unwrap();
     }
 
     pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {

@@ -8,6 +8,8 @@ pub trait AccessibilityModifiers: internal::Modifiable {
 
         self.context().style.roles.insert(id, role).unwrap();
 
+        self.context().style.needs_access_update(id);
+
         self
     }
 
@@ -16,6 +18,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let entity = self.entity();
         name.set_or_bind(self.context(), entity, |cx, id, name| {
             cx.style.name.insert(id, name.to_string());
+            cx.style.needs_access_update(id);
         });
 
         self
@@ -26,6 +29,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let id = self.entity();
 
         self.context().style.default_action_verb.insert(id, action_verb).unwrap();
+        self.context().style.needs_access_update(id);
 
         self
     }
@@ -35,6 +39,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let id = self.entity();
 
         self.context().style.live.insert(id, live).unwrap();
+        self.context().style.needs_access_update(id);
 
         self
     }
@@ -44,6 +49,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let entity = self.entity();
         hidden.set_or_bind(self.context(), entity, |cx, id, hidden| {
             cx.style.hidden.insert(id, hidden.into()).unwrap();
+            cx.style.needs_access_update(id);
         });
 
         self
@@ -56,6 +62,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
             let v = val.into();
 
             cx.style.numeric_value.insert(id, v).unwrap();
+            cx.style.needs_access_update(id);
         });
 
         self
@@ -66,6 +73,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, id, val| {
             cx.style.text_value.insert(id, val.to_string()).unwrap();
+            cx.style.needs_access_update(id);
         });
 
         self
