@@ -1,7 +1,7 @@
 use std::any::TypeId;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
-use std::ops::Deref;
+use std::ops::{BitAnd, BitOr, Deref};
 
 use crate::prelude::*;
 
@@ -66,8 +66,24 @@ pub trait LensExt: Lens {
     {
         self.view(
             cx.data().expect("Failed to get data from context. Has it been built into the tree?"),
-            |t| t.cloned().map(|v| v),
+            |t| t.cloned(),
         )
+    }
+
+    fn or<Other>(self, other: Other) -> OrLens<Self, Other>
+    where
+        Other: Lens<Target = bool>,
+        Self: Lens<Target = bool>,
+    {
+        OrLens::new(self, other)
+    }
+
+    fn and<Other>(self, other: Other) -> AndLens<Self, Other>
+    where
+        Other: Lens<Target = bool>,
+        Self: Lens<Target = bool>,
+    {
+        AndLens::new(self, other)
     }
 
     /// Used to construct a lens to some data contained within some other lensed data.
@@ -208,13 +224,13 @@ impl<A, T> Index<A, T> {
     }
 
     pub fn idx(&self) -> usize {
-        self.index.clone()
+        self.index
     }
 }
 
 impl<A, T> Clone for Index<A, T> {
     fn clone(&self) -> Self {
-        Self { index: self.index.clone(), pa: PhantomData::default(), pt: PhantomData::default() }
+        Self { index: self.index, pa: PhantomData::default(), pt: PhantomData::default() }
     }
 }
 
@@ -234,7 +250,7 @@ where
     type Target = T;
 
     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-        let data = source.get(self.index.clone());
+        let data = source.get(self.index);
         map(data)
     }
 }
@@ -363,5 +379,239 @@ where
         } else {
             map(None)
         }
+    }
+}
+
+pub struct OrLens<L1, L2> {
+    lens1: L1,
+    lens2: L2,
+}
+
+impl<L1, L2> OrLens<L1, L2> {
+    pub fn new(lens1: L1, lens2: L2) -> Self
+    where
+        L1: Lens<Target = bool>,
+        L2: Lens<Target = bool>,
+    {
+        Self { lens1, lens2 }
+    }
+}
+
+impl<L1, L2> Lens for OrLens<L1, L2>
+where
+    L1: Lens<Source = L2::Source, Target = bool>,
+    L2: Lens<Target = bool>,
+{
+    type Source = L1::Source;
+    type Target = bool;
+
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
+        self.lens1.view(source, |t1| {
+            if let Some(l1) = t1 {
+                self.lens2.view(source, |t2| {
+                    if let Some(l2) = t2 {
+                        map(Some(&(*l1 | *l2)))
+                    } else {
+                        map(None)
+                    }
+                })
+            } else {
+                map(None)
+            }
+        })
+    }
+
+    fn name(&self) -> Option<&'static str> {
+        self.lens1.name()
+    }
+}
+
+impl<L1: Clone, L2: Clone> Clone for OrLens<L1, L2> {
+    fn clone(&self) -> Self {
+        Self { lens1: self.lens1.clone(), lens2: self.lens2.clone() }
+    }
+}
+
+#[derive(Clone)]
+pub struct Wrapper<L>(pub L);
+
+impl<L: Copy> Copy for Wrapper<L> {}
+
+impl<L: Lens> Lens for Wrapper<L> {
+    type Source = L::Source;
+    type Target = L::Target;
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
+        self.0.view(source, map)
+    }
+
+    fn name(&self) -> Option<&'static str> {
+        self.0.name()
+    }
+}
+
+impl<L1: Lens<Target = bool>, L2: Lens<Target = bool>> BitOr<L2> for Wrapper<L1>
+where
+    L1: Lens<Source = L2::Source>,
+{
+    type Output = OrLens<Self, L2>;
+    fn bitor(self, rhs: L2) -> Self::Output {
+        OrLens::new(self, rhs)
+    }
+}
+
+impl<L1, L2, L3: Lens<Target = bool>> BitOr<L3> for OrLens<L1, L2>
+where
+    Self: Lens<Target = bool>,
+    Self: Lens<Source = L3::Source>,
+{
+    type Output = OrLens<Self, L3>;
+    fn bitor(self, rhs: L3) -> Self::Output {
+        OrLens::new(self, rhs)
+    }
+}
+
+impl<A: Lens, L1: Lens<Target = bool>, L2: Lens<Target = bool>> BitOr<L2> for Then<A, L1>
+where
+    A: Lens<Source = L2::Source>,
+    L1: Lens<Source = A::Target>,
+{
+    type Output = OrLens<Self, L2>;
+    fn bitor(self, rhs: L2) -> Self::Output {
+        OrLens::new(self, rhs)
+    }
+}
+
+impl<G: 'static + Clone + Fn(&I) -> bool, I: 'static, L2: Lens<Target = bool>> BitOr<L2>
+    for Map<G, I, bool>
+where
+    I: Lens<Source = L2::Source>,
+{
+    type Output = OrLens<Self, L2>;
+    fn bitor(self, rhs: L2) -> Self::Output {
+        OrLens::new(self, rhs)
+    }
+}
+
+pub struct AndLens<L1, L2> {
+    lens1: L1,
+    lens2: L2,
+}
+
+impl<L1, L2> AndLens<L1, L2> {
+    pub fn new(lens1: L1, lens2: L2) -> Self
+    where
+        L1: Lens<Target = bool>,
+        L2: Lens<Target = bool>,
+    {
+        Self { lens1, lens2 }
+    }
+}
+
+impl<L1, L2> Lens for AndLens<L1, L2>
+where
+    L1: Lens<Source = L2::Source, Target = bool>,
+    L2: Lens<Target = bool>,
+{
+    type Source = L1::Source;
+    type Target = bool;
+
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
+        self.lens1.view(source, |t1| {
+            if let Some(l1) = t1 {
+                self.lens2.view(source, |t2| {
+                    if let Some(l2) = t2 {
+                        map(Some(&(*l1 & *l2)))
+                    } else {
+                        map(None)
+                    }
+                })
+            } else {
+                map(None)
+            }
+        })
+    }
+
+    fn name(&self) -> Option<&'static str> {
+        self.lens1.name()
+    }
+}
+
+impl<L1: Clone, L2: Clone> Clone for AndLens<L1, L2> {
+    fn clone(&self) -> Self {
+        Self { lens1: self.lens1.clone(), lens2: self.lens2.clone() }
+    }
+}
+
+impl<L1: Lens<Target = bool>, L2: Lens<Target = bool>> BitAnd<L2> for Wrapper<L1>
+where
+    L1: Lens<Source = L2::Source>,
+{
+    type Output = AndLens<Self, L2>;
+    fn bitand(self, rhs: L2) -> Self::Output {
+        AndLens::new(self, rhs)
+    }
+}
+
+impl<L1, L2, L3: Lens<Target = bool>> BitAnd<L3> for AndLens<L1, L2>
+where
+    Self: Lens<Target = bool>,
+    Self: Lens<Source = L3::Source>,
+{
+    type Output = AndLens<Self, L3>;
+    fn bitand(self, rhs: L3) -> Self::Output {
+        AndLens::new(self, rhs)
+    }
+}
+
+impl<A: Lens, L1: Lens<Target = bool>, L2: Lens<Target = bool>> BitAnd<L2> for Then<A, L1>
+where
+    A: Lens<Source = L2::Source>,
+    L1: Lens<Source = A::Target>,
+{
+    type Output = AndLens<Self, L2>;
+    fn bitand(self, rhs: L2) -> Self::Output {
+        AndLens::new(self, rhs)
+    }
+}
+
+impl<G: 'static + Clone + Fn(&I) -> bool, I: 'static, L2: Lens<Target = bool>> BitAnd<L2>
+    for Map<G, I, bool>
+where
+    I: Lens<Source = L2::Source>,
+{
+    type Output = AndLens<Self, L2>;
+    fn bitand(self, rhs: L2) -> Self::Output {
+        AndLens::new(self, rhs)
+    }
+}
+
+impl<L1, L2> Lens for (L1, L2)
+where
+    L1: Lens<Source = L2::Source>,
+    L2: Lens,
+    L1::Target: Clone,
+    L2::Target: Clone,
+{
+    type Source = L1::Source;
+    type Target = (L1::Target, L2::Target);
+
+    fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
+        self.0.view(source, |t1| {
+            if let Some(l1) = t1 {
+                self.1.view(source, |t2| {
+                    if let Some(l2) = t2 {
+                        map(Some(&(l1.clone(), l2.clone())))
+                    } else {
+                        map(None)
+                    }
+                })
+            } else {
+                map(None)
+            }
+        })
+    }
+
+    fn name(&self) -> Option<&'static str> {
+        self.0.name()
     }
 }

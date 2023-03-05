@@ -10,7 +10,7 @@ use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
-use crate::style::Style;
+use crate::style::{Style, SystemFlags};
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -153,7 +153,7 @@ impl<'a> EventContext<'a> {
             }
         }
 
-        for ancestor in focused.parent_iter(&self.tree) {
+        for ancestor in focused.parent_iter(self.tree) {
             let entity = ancestor;
             if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClass::FOCUS_WITHIN, enabled);
@@ -388,6 +388,8 @@ impl<'a> EventContext<'a> {
     /// window has actually changed in size.
     pub fn set_user_scale_factor(&mut self, new_factor: f64) {
         *self.user_scale_factor = new_factor;
+        self.style.system_flags.set(SystemFlags::RELAYOUT, true);
+        self.style.system_flags.set(SystemFlags::REFLOW, true);
     }
 }
 
@@ -398,7 +400,7 @@ impl<'a> DataContext for EventContext<'a> {
             return Some(t);
         }
 
-        for entity in self.current.parent_iter(&self.tree) {
+        for entity in self.current.parent_iter(self.tree) {
             if let Some(model_data_store) = self.data.get(entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();

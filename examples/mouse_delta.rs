@@ -41,6 +41,6 @@ impl View for MouseDeltaView {
             println!("Pressed middle delta | {:>12.4} | {:>12.4}", delta.0, delta.1);
         }
 
-        println!("");
+        println!();
     }
 }

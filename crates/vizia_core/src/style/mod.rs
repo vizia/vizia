@@ -18,8 +18,7 @@ pub use rule::Rule;
 mod display;
 pub use display::*;
 
-mod transform;
-pub use transform::*;
+pub use femtovg::Transform2D;
 
 mod parser;
 pub use parser::*;
@@ -289,6 +288,16 @@ impl Style {
 
     //     self.set_style_properties();
     // }
+
+    /// Function to convert logical points to physical pixels.
+    pub fn logical_to_physical(&self, logical: f32) -> f32 {
+        (logical * self.dpi_factor as f32).round()
+    }
+
+    /// Function to convert physical pixels to logical points.
+    pub fn physical_to_logical(&self, physical: f32) -> f32 {
+        physical / self.dpi_factor as f32
+    }
 
     pub fn remove_rules(&mut self) {
         for rule in self.rules.iter() {
@@ -654,6 +663,16 @@ impl Style {
                                         self.add_transition(transition),
                                     );
                                     self.background_color.insert_transition(rule_id, animation);
+                                    self.transitions.insert(rule_id, animation);
+                                }
+
+                                "border-color" => {
+                                    let animation = self.animation_manager.create();
+                                    self.border_color.insert_animation(
+                                        animation,
+                                        self.add_transition(transition),
+                                    );
+                                    self.border_color.insert_transition(rule_id, animation);
                                     self.transitions.insert(rule_id, animation);
                                 }
 

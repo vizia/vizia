@@ -48,11 +48,7 @@ where
         } else {
             let idx = (self.generation.len()) as u32;
             self.generation.push(0);
-            assert!(
-                (idx as u32) < IDX_MAX,
-                "ID index exceeds maximum allowed value of {}",
-                IDX_MAX
-            );
+            assert!(idx < IDX_MAX, "ID index exceeds maximum allowed value of {}", IDX_MAX);
             idx
         };
 
@@ -67,7 +63,7 @@ where
             let index = id.index();
             assert!(index < self.generation.len(), "ID is invalid");
             assert!(self.generation[index] != u8::MAX, "ID generation is at maximum");
-            self.generation[index as usize] += 1;
+            self.generation[index] += 1;
             self.free_list.push_back(index as u32);
             true
         } else {

@@ -66,7 +66,7 @@ pub struct ScrollView<L> {
     data: L,
 }
 
-impl ScrollView<scroll_data_derived_lenses::root> {
+impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
     pub fn new<F>(
         cx: &mut Context,
         initial_x: f32,
@@ -157,7 +157,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             Scrollbar::new(
                 cx,
                 data.clone().then(ScrollData::scroll_x),
-                data.clone().then(RatioLens::new(ScrollData::parent_x, ScrollData::child_x)),
+                data.then(RatioLens::new(ScrollData::parent_x, ScrollData::child_x)),
                 Orientation::Horizontal,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetX(value));

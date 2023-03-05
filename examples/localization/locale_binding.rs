@@ -5,15 +5,15 @@ fn main() {
         cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap()));
 
         HStack::new(cx, |cx| {
-            Checkbox::new(cx, Environment::locale.map(|locale| locale.to_string() == "en-US"))
+            Checkbox::new(cx, Environment::locale.map(|locale| *locale == "en-US"))
                 .id("english")
                 .role(Role::RadioButton)
                 .on_toggle(|cx| cx.emit(EnvironmentEvent::SetLocale("en-US".parse().unwrap())));
             Label::new(cx, "English").describing("english").hidden(true);
 
-            Checkbox::new(cx, Environment::locale.map(|locale| locale.to_string() == "fr"))
+            Checkbox::new(cx, Environment::locale.map(|locale| *locale == "fr"))
                 .id("french")
-                .role(Role::RadioButton)
+                .role(Role::RadioButton)main
                 .on_toggle(|cx| cx.emit(EnvironmentEvent::SetLocale("fr".parse().unwrap())))
                 .left(Pixels(10.0));
             Label::new(cx, "French").describing("french").hidden(true);

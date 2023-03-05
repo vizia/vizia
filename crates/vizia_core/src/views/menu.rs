@@ -158,19 +158,17 @@ impl View for MenuController {
                         );
                     }
                 }
-            } else {
-                if let WindowEvent::PressDown { .. } = window_event {
-                    // capture focus on click
-                    cx.capture();
-                    cx.emit(MenuEvent::Activate);
-                    // send an over event to highlight whatever we're hovered on
-                    cx.event_queue.push_back(
-                        Event::new(WindowEvent::MouseOver)
-                            .propagate(Propagation::Up)
-                            .target(cx.hovered())
-                            .origin(cx.current()),
-                    );
-                }
+            } else if let WindowEvent::PressDown { .. } = window_event {
+                // capture focus on click
+                cx.capture();
+                cx.emit(MenuEvent::Activate);
+                // send an over event to highlight whatever we're hovered on
+                cx.event_queue.push_back(
+                    Event::new(WindowEvent::MouseOver)
+                        .propagate(Propagation::Up)
+                        .target(cx.hovered())
+                        .origin(cx.current()),
+                );
             }
         });
     }

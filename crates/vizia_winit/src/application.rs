@@ -297,7 +297,7 @@ impl Application {
                         if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
 
                     if cursor_moved {
-                        cx.emit_origin(WindowEvent::MouseMove(cursor.0 as f32, cursor.1 as f32));
+                        cx.emit_origin(WindowEvent::MouseMove(cursor.0, cursor.1));
                         cursor_moved = false;
                     }
 
@@ -400,11 +400,11 @@ impl Application {
 
                             cx.style()
                                 .width
-                                .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
+                                .insert(Entity::root(), Units::Pixels(logical_size.width));
 
                             cx.style()
                                 .height
-                                .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
+                                .insert(Entity::root(), Units::Pixels(logical_size.height));
                             cx.needs_refresh();
                         }
 
@@ -508,11 +508,11 @@ impl Application {
 
                             cx.style()
                                 .width
-                                .insert(Entity::root(), Units::Pixels(logical_size.width as f32));
+                                .insert(Entity::root(), Units::Pixels(logical_size.width));
 
                             cx.style()
                                 .height
-                                .insert(Entity::root(), Units::Pixels(logical_size.height as f32));
+                                .insert(Entity::root(), Units::Pixels(logical_size.height));
 
                             cx.cache().set_width(Entity::root(), physical_size.width as f32);
                             cx.cache().set_height(Entity::root(), physical_size.height as f32);

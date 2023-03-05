@@ -12,7 +12,6 @@ pub trait TextModifiers: internal::Modifiable {
             cx.text_context.set_text(entity, &text_data);
 
             cx.style.needs_text_layout.insert(entity, true).unwrap();
-            cx.style.system_flags |= SystemFlags::REFLOW;
         });
 
         self
@@ -55,8 +54,8 @@ pub trait TextModifiers: internal::Modifiable {
     fn font_size(mut self, value: impl Res<f32>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            cx.style.font_size.insert(entity, v.into());
-            cx.style.system_flags |= SystemFlags::REFLOW;
+            cx.style.font_size.insert(entity, v);
+            cx.style.needs_text_layout.insert(entity, true).unwrap();
         });
         self
     }

@@ -13,6 +13,7 @@ where
 {
     entity: Entity,
     lens: L,
+    #[allow(clippy::type_complexity)]
     content: Option<Box<dyn Fn(&mut Context, L)>>,
 }
 
@@ -34,6 +35,7 @@ where
     ///     let value = *lens.get(cx);
     ///     Label::new(cx, value.to_string());
     /// });
+    #[allow(clippy::new_ret_no_self)]
     pub fn new<F>(cx: &mut Context, lens: L, builder: F)
     where
         F: 'static + Fn(&mut Context, L),
@@ -130,13 +132,13 @@ where
 }
 
 pub trait BindingHandler {
-    fn update<'a>(&mut self, cx: &'a mut Context);
+    fn update(&mut self, cx: &mut Context);
     fn remove(&self, cx: &mut Context);
     fn name(&self) -> Option<&'static str>;
 }
 
 impl<L: 'static + Lens> BindingHandler for Binding<L> {
-    fn update<'a>(&mut self, cx: &'a mut Context) {
+    fn update(&mut self, cx: &mut Context) {
         cx.remove_children(cx.current());
         if let Some(builder) = &self.content {
             (builder)(cx, self.lens.clone());
@@ -153,7 +155,9 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
                     if let Some(store) = model_data_store.stores.get_mut(&key) {
                         store.remove_observer(&self.entity);
 
-                        model_data_store.stores.retain(|_, store| store.num_observers() != 0);
+                        if store.num_observers() == 0 {
+                            model_data_store.stores.remove(&key);
+                        }
                     }
 
                     break;
@@ -167,7 +171,9 @@ impl<L: 'static + Lens> BindingHandler for Binding<L> {
                         if let Some(store) = model_data_store.stores.get_mut(&key) {
                             store.remove_observer(&self.entity);
 
-                            model_data_store.stores.retain(|_, store| store.num_observers() != 0);
+                            if store.num_observers() == 0 {
+                                model_data_store.stores.remove(&key);
+                            }
                         }
 
                         break;

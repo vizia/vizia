@@ -103,27 +103,22 @@ impl From<&str> for Color {
         match clean_hex.len() {
             3 | 4 => {
                 let hex = clean_hex.as_bytes();
-                let r = (hex[0] as char).to_digit(16).unwrap() as u8 * 17;
-                let g = (hex[1] as char).to_digit(16).unwrap() as u8 * 17;
-                let b = (hex[2] as char).to_digit(16).unwrap() as u8 * 17;
-
-                let mut data = ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8);
-
-                if clean_hex.len() == 3 {
-                    data |= 0x00_000_0FF;
-                } else {
-                    let a = (hex[0] as char).to_digit(16).unwrap() as u8 * 17;
-                    data |= a as u32;
+                fn digit_to_u8(digit: u8) -> u8 {
+                    (digit as char).to_digit(16).unwrap() as u8 * 0x11
                 }
+                let r = digit_to_u8(hex[0]);
+                let g = digit_to_u8(hex[1]);
+                let b = digit_to_u8(hex[2]);
+
+                let a = hex.get(3).copied().map_or(0xFF, digit_to_u8);
+
+                let data = ((r as u32) << 24) | ((g as u32) << 16) | ((b as u32) << 8) | (a as u32);
 
                 Color { data }
             }
 
             6 | 8 => {
-                let mut x = match u32::from_str_radix(&clean_hex, 16) {
-                    Ok(x) => x,
-                    Err(_) => 0,
-                };
+                let mut x = u32::from_str_radix(clean_hex, 16).unwrap_or(0);
 
                 if clean_hex.len() == 6 {
                     x = (x << 8) | 0x00_000_0FF;
@@ -209,7 +204,7 @@ impl Color {
 
 impl Interpolator for Color {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        Color::interpolate(start.clone(), end.clone(), t as f64)
+        Color::interpolate(*start, *end, t as f64)
     }
 }
 
@@ -252,5 +247,13 @@ mod tests {
         let color = Color::from(hex_color);
 
         assert_eq!(color, Color::rgba(255, 255, 255, 255));
+    }
+
+    #[test]
+    fn test_short_hex_with_alpha() {
+        let hex_color = "#1234";
+        let color = Color::from(hex_color);
+
+        assert_eq!(color, Color::rgba(0x11, 0x22, 0x33, 0x44));
     }
 }

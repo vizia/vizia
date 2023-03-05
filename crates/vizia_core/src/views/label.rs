@@ -158,7 +158,7 @@ impl View for Label {
                     if let Some(describing) = self
                         .describing
                         .as_ref()
-                        .and_then(|identity| cx.resolve_entity_identifier(&identity))
+                        .and_then(|identity| cx.resolve_entity_identifier(identity))
                     {
                         let old = cx.current;
                         cx.current = describing;

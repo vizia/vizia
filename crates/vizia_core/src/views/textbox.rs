@@ -46,10 +46,10 @@ impl TextboxData {
         let scale = cx.style.dpi_factor as f32;
 
         // calculate visible area for content and container
-        let bounds = cx.cache.bounds.get(entity).unwrap().clone();
-        let mut parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
+        let bounds = *cx.cache.bounds.get(entity).unwrap();
+        let mut parent_bounds = *cx.cache.bounds.get(parent).unwrap();
 
-        cx.text_context.sync_styles(entity, &cx.style);
+        cx.text_context.sync_styles(entity, cx.style);
 
         // do the computation
         let (mut tx, mut ty) = self.transform;
@@ -122,8 +122,8 @@ impl TextboxData {
                 Movement::LineStart => Action::Home,
                 Movement::LineEnd => Action::End,
                 Movement::Page(dir) => {
-                    let parent = self.content_entity.parent(&cx.tree).unwrap();
-                    let parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
+                    let parent = self.content_entity.parent(cx.tree).unwrap();
+                    let parent_bounds = *cx.cache.bounds.get(parent).unwrap();
                     let sign = if let Direction::Upstream = dir { -1 } else { 1 };
                     Action::Vertical(sign * parent_bounds.h as i32)
                 }
@@ -173,8 +173,8 @@ impl TextboxData {
     /// The output text coordinates will also be physical, but relative to the top of the text
     /// glyphs, appropriate for passage to cosmic.
     pub fn coordinates_global_to_text(&self, cx: &EventContext, x: f32, y: f32) -> (f32, f32) {
-        let parent = self.content_entity.parent(&cx.tree).unwrap();
-        let parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
+        let parent = self.content_entity.parent(cx.tree).unwrap();
+        let parent_bounds = *cx.cache.bounds.get(parent).unwrap();
 
         let x = x - self.transform.0 * cx.style.dpi_factor as f32 - parent_bounds.x;
         let y = y - self.transform.1 * cx.style.dpi_factor as f32 - parent_bounds.y;
@@ -203,8 +203,8 @@ impl TextboxData {
     pub fn scroll(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         let entity = self.content_entity;
         let parent = cx.tree.get_parent(entity).unwrap();
-        let bounds = cx.cache.bounds.get(entity).unwrap().clone();
-        let parent_bounds = cx.cache.bounds.get(parent).unwrap().clone();
+        let bounds = *cx.cache.bounds.get(entity).unwrap();
+        let parent_bounds = *cx.cache.bounds.get(parent).unwrap();
         let (mut tx, mut ty) = self.transform;
         let scale = cx.style.dpi_factor as f32;
         tx *= scale;
@@ -222,7 +222,7 @@ impl TextboxData {
 
     pub fn clone_text(&self, cx: &mut EventContext) -> String {
         cx.text_context.with_buffer(self.content_entity, |buf| {
-            buf.lines.iter().map(|line| line.text()).collect::<Vec<_>>().join("\n").to_string()
+            buf.lines.iter().map(|line| line.text()).collect::<Vec<_>>().join("\n")
         })
     }
 }
@@ -297,13 +297,11 @@ impl Model for TextboxData {
             }
 
             TextEvent::StartEdit => {
-                if !cx.is_disabled() {
-                    if !self.edit {
-                        self.edit = true;
-                        cx.focus_with_visibility(false);
-                        cx.capture();
-                        cx.set_checked(true);
-                    }
+                if !cx.is_disabled() && !self.edit {
+                    self.edit = true;
+                    cx.focus_with_visibility(false);
+                    cx.capture();
+                    cx.set_checked(true);
                 }
             }
 
@@ -361,7 +359,7 @@ impl Model for TextboxData {
                 #[cfg(feature = "clipboard")]
                 if self.edit {
                     if let Some(selected_text) = self.clone_selected(cx) {
-                        if selected_text.len() > 0 {
+                        if !selected_text.is_empty() {
                             cx.set_clipboard(selected_text)
                                 .expect("Failed to add text to clipboard");
                         }
@@ -384,7 +382,7 @@ impl Model for TextboxData {
                 #[cfg(feature = "clipboard")]
                 if self.edit {
                     if let Some(selected_text) = self.clone_selected(cx) {
-                        if selected_text.len() > 0 {
+                        if !selected_text.is_empty() {
                             cx.set_clipboard(selected_text)
                                 .expect("Failed to add text to clipboard");
                             self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
@@ -761,7 +759,9 @@ where
             }
 
             WindowEvent::MouseMove(_, _) => {
-                if cx.mouse.left.state == MouseButtonState::Pressed {
+                if cx.mouse.left.state == MouseButtonState::Pressed
+                    && cx.mouse.left.pressed == cx.current
+                {
                     cx.emit(TextEvent::Drag(cx.mouse.cursorx, cx.mouse.cursory));
                 }
             }

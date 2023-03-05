@@ -17,7 +17,7 @@ use femtovg::{renderer::OpenGl, ImageFlags, Paint, Path, PixelFormat, RenderTarg
 pub type Canvas = femtovg::Canvas<OpenGl>;
 
 // Length proportional to radius of a cubic bezier handle for 90deg arcs.
-const KAPPA90: f32 = 0.5522847493;
+const KAPPA90: f32 = 0.552_284_8;
 
 /// A view is any object which can be displayed on the screen.
 ///
@@ -93,7 +93,7 @@ where
     T: std::marker::Sized + View + 'static,
 {
     fn element(&self) -> Option<&'static str> {
-        <T as View>::element(&self)
+        <T as View>::element(self)
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -133,7 +133,7 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
     let parent = cx
         .tree
         .get_layout_parent(cx.current)
-        .expect(&format!("Failed to find parent somehow: {}", cx.current));
+        .unwrap_or_else(|| panic!("Failed to find parent somehow: {}", cx.current));
 
     let parent_width = cx.cache.get_width(parent);
     let parent_height = cx.cache.get_height(parent);
@@ -461,15 +461,10 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
             bounds.y,
             bounds.x + end_x,
             bounds.y + end_y,
-            background_gradient
-                .get_stops(parent_length)
-                .iter()
-                .map(|stop| {
-                    let col: femtovg::Color = stop.1.into();
-                    (stop.0, col)
-                })
-                .collect::<Vec<_>>()
-                .as_slice(),
+            background_gradient.get_stops(parent_length).iter().map(|stop| {
+                let col: femtovg::Color = stop.1.into();
+                (stop.0, col)
+            }),
         );
     }
 
@@ -611,8 +606,7 @@ fn draw_view(cx: &mut DrawContext, canvas: &mut Canvas) {
             let origin_x = box_x + box_w * justify_x;
             let origin_y = box_y + (box_h * justify_y).ceil();
 
-            cx.text_context.sync_styles(cx.current, &cx.style);
-
+            cx.sync_text_styles();
             cx.draw_highlights(canvas, (origin_x, origin_y), (justify_x, justify_y));
             cx.draw_caret(canvas, (origin_x, origin_y), (justify_x, justify_y), 1.0);
             cx.draw_text(canvas, (origin_x, origin_y), (justify_x, justify_y));

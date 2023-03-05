@@ -71,7 +71,7 @@ pub struct ResourceManager {
 
 impl ResourceManager {
     pub fn new() -> Self {
-        let locale = sys_locale::get_locale().map(|l| l.parse().ok()).flatten().unwrap_or_default();
+        let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
 
         ResourceManager {
             stylesheets: Vec::new(),
@@ -94,8 +94,7 @@ impl ResourceManager {
             .filter(|&x| x != &LanguageIdentifier::default())
             .collect::<Vec<_>>();
         let locale = sys_locale::get_locale()
-            .map(|l| l.parse().ok())
-            .flatten()
+            .and_then(|l| l.parse().ok())
             .unwrap_or_else(|| available.first().copied().cloned().unwrap_or_default());
         let default = LanguageIdentifier::default();
         let default_ref = &default; // ???

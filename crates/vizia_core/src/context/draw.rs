@@ -115,12 +115,12 @@ impl<'a> DrawContext<'a> {
 
     /// Function to convert logical points to physical pixels.
     pub fn logical_to_physical(&self, logical: f32) -> f32 {
-        logical * self.style.dpi_factor as f32
+        self.style.logical_to_physical(logical)
     }
 
     /// Function to convert physical pixels to logical points.
     pub fn physical_to_logical(&self, physical: f32) -> f32 {
-        physical * self.style.dpi_factor as f32
+        self.style.physical_to_logical(physical)
     }
 
     style_getter_units!(border_width);
@@ -164,6 +164,10 @@ impl<'a> DrawContext<'a> {
         self.cache.get_opacity(self.current)
     }
 
+    pub fn sync_text_styles(&mut self) {
+        self.text_context.sync_styles(self.current, self.style);
+    }
+
     pub fn draw_text(&mut self, canvas: &mut Canvas, origin: (f32, f32), justify: (f32, f32)) {
         if let Ok(draw_commands) =
             self.text_context.fill_to_cmds(canvas, self.current, origin, justify, *self.text_config)
@@ -171,7 +175,7 @@ impl<'a> DrawContext<'a> {
             for (color, cmds) in draw_commands.into_iter() {
                 let temp_paint =
                     Paint::color(femtovg::Color::rgba(color.r(), color.g(), color.b(), color.a()));
-                canvas.draw_glyph_cmds(cmds, &temp_paint, 1.0);
+                canvas.draw_glyph_commands(cmds, &temp_paint, 1.0);
             }
         }
     }
@@ -220,7 +224,7 @@ impl<'a> DataContext for DrawContext<'a> {
             return Some(t);
         }
 
-        for entity in self.current.parent_iter(&self.tree) {
+        for entity in self.current.parent_iter(self.tree) {
             if let Some(model_data_store) = self.data.get(entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();

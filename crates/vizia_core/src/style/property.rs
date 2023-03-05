@@ -128,7 +128,7 @@ pub(crate) fn fmt_units(val: &Units) -> String {
         Pixels(px) => format!("{}px", px),
         Percentage(p) => format!("{}%", p),
         Stretch(s) => format!("{}s", s),
-        Auto => format!("auto"),
+        Auto => "auto".to_string(),
     }
 }
 

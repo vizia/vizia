@@ -15,9 +15,9 @@ pub fn draw_system(cx: &mut Context) {
         cx.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
     canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
 
-    let mut draw_tree = DrawIterator::full(&cx.tree);
+    let draw_tree = DrawIterator::full(&cx.tree);
 
-    while let Some(entity) = draw_tree.next() {
+    for entity in draw_tree {
         let window_bounds = cx.cache.get_bounds(Entity::root());
 
         // Skip if the entity is invisible or out of bounds
@@ -27,7 +27,7 @@ pub fn draw_system(cx: &mut Context) {
             || cx.cache.get_visibility(entity) == Visibility::Invisible
             || cx.cache.get_display(entity) == Display::None
             || cx.cache.get_opacity(entity) == 0.0
-            || !window_bounds.contains(&cx.cache.get_bounds(entity))
+            || !window_bounds.intersects(&cx.cache.get_bounds(entity))
         {
             continue;
         }
@@ -46,14 +46,7 @@ pub fn draw_system(cx: &mut Context) {
         // Apply transform
         let transform = cx.cache.get_transform(entity);
         canvas.save();
-        canvas.set_transform(
-            transform[0],
-            transform[1],
-            transform[2],
-            transform[3],
-            transform[4],
-            transform[5],
-        );
+        canvas.set_transform(&transform);
 
         if let Some(view) = cx.views.remove(&entity) {
             cx.current = entity;

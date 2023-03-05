@@ -206,7 +206,7 @@ impl ApplicationRunner {
         }
 
         // Events
-        while self.event_manager.flush_events(&mut cx.context()) {}
+        while self.event_manager.flush_events(cx.context()) {}
 
         if *cx.window_size() != self.current_window_size
             || *cx.user_scale_factor() != self.current_user_scale_factor
@@ -381,7 +381,7 @@ impl ApplicationRunner {
                     }
 
                     MouseButtonState::Released => {
-                        cx.emit_origin(WindowEvent::KeyUp(event.code, Some(event.key.clone())));
+                        cx.emit_origin(WindowEvent::KeyUp(event.code, Some(event.key)));
                     }
                 }
             }

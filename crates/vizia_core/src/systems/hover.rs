@@ -53,14 +53,13 @@ pub fn hover_system(cx: &mut Context) {
             && ty < (clip_region.y + clip_region.h)
         {
             hovered_widget = entity;
-            if cx
+            if !cx
                 .style
                 .pseudo_classes
                 .get(entity)
                 .cloned()
                 .unwrap_or_default()
                 .contains(PseudoClass::OVER)
-                == false
             {
                 cx.event_queue.push_back(
                     Event::new(WindowEvent::MouseOver)
@@ -72,23 +71,20 @@ pub fn hover_system(cx: &mut Context) {
                     pseudo_class.set(PseudoClass::OVER, true);
                 }
             }
-        } else {
-            if cx
-                .style
-                .pseudo_classes
-                .get(entity)
-                .cloned()
-                .unwrap_or_default()
-                .contains(PseudoClass::OVER)
-                == true
-            {
-                cx.event_queue.push_back(
-                    Event::new(WindowEvent::MouseOut).target(entity).propagate(Propagation::Direct),
-                );
+        } else if cx
+            .style
+            .pseudo_classes
+            .get(entity)
+            .cloned()
+            .unwrap_or_default()
+            .contains(PseudoClass::OVER)
+        {
+            cx.event_queue.push_back(
+                Event::new(WindowEvent::MouseOut).target(entity).propagate(Propagation::Direct),
+            );
 
-                if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(entity) {
-                    pseudo_class.set(PseudoClass::OVER, false);
-                }
+            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(entity) {
+                pseudo_class.set(PseudoClass::OVER, false);
             }
         }
     }
