@@ -1,5 +1,6 @@
 use vizia::fonts::icons_names::{DOWN, UP};
 use vizia::prelude::*;
+use vizia::style::FontWeightKeyword;
 
 fn main() {
     Application::new(|cx| {
@@ -31,7 +32,7 @@ fn main() {
                                 .child_left(Pixels(5.0))
                                 .width(Stretch(1.0))
                                 .height(Stretch(1.0))
-                                .font_weight(Weight::BOLD);
+                                .font_weight(FontWeightKeyword::Bold);
                             Binding::new(cx, TableData::first_name_sorted, |cx, sorted| {
                                 let visible = match sorted.get(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,
@@ -89,7 +90,7 @@ fn main() {
                                 .child_left(Pixels(5.0))
                                 .width(Stretch(1.0))
                                 .height(Stretch(1.0))
-                                .font_weight(Weight::BOLD);
+                                .font_weight(FontWeightKeyword::Bold);
                             Binding::new(cx, TableData::last_name_sorted, |cx, sorted| {
                                 let visible = match sorted.get(cx) {
                                     Sorted::Forward | Sorted::Reverse => true,

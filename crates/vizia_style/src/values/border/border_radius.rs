@@ -1,5 +1,4 @@
 use crate::{macros::impl_parse, LengthOrPercentage, Parse, Rect};
-use cssparser::*;
 /// Defines the border radius of every corner of a rectangle.
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct BorderRadius {
@@ -38,11 +37,88 @@ impl From<Rect<LengthOrPercentage>> for BorderRadius {
     }
 }
 
-impl From<&str> for BorderRadius {
-    fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(&s);
-        let mut parser = Parser::new(&mut input);
-        BorderRadius::parse(&mut parser).unwrap_or_default()
+// impl From<LengthOrPercentage> for BorderRadius {
+//     fn from(length: LengthOrPercentage) -> Self {
+//         BorderRadius::new(length.clone(), length.clone(), length.clone(), length.clone())
+//     }
+// }
+
+// impl From<Length> for BorderRadius {
+//     fn from(length: Length) -> Self {
+//         BorderRadius::new(
+//             length.clone().into(),
+//             length.clone().into(),
+//             length.clone().into(),
+//             length.clone().into(),
+//         )
+//     }
+// }
+
+// impl From<LengthValue> for BorderRadius {
+//     fn from(length: LengthValue) -> Self {
+//         BorderRadius::new(
+//             length.clone().into(),
+//             length.clone().into(),
+//             length.clone().into(),
+//             length.clone().into(),
+//         )
+//     }
+// }
+
+// impl From<Units> for BorderRadius {
+//     fn from(value: Units) -> Self {
+//         let length: LengthOrPercentage = value.into();
+//         BorderRadius::new(length.clone(), length.clone(), length.clone(), length.clone())
+//     }
+// }
+
+// impl From<&str> for BorderRadius {
+//     fn from(s: &str) -> Self {
+//         let mut input = ParserInput::new(&s);
+//         let mut parser = Parser::new(&mut input);
+//         BorderRadius::parse(&mut parser).unwrap_or_default()
+//     }
+// }
+
+impl<T: Into<LengthOrPercentage>> From<T> for BorderRadius {
+    fn from(value: T) -> Self {
+        let length: LengthOrPercentage = value.into();
+        BorderRadius::new(length.clone(), length.clone(), length.clone(), length.clone())
+    }
+}
+
+impl<T1: Into<LengthOrPercentage>, T2: Into<LengthOrPercentage>> From<(T1, T2)> for BorderRadius {
+    fn from(value: (T1, T2)) -> Self {
+        let length1: LengthOrPercentage = value.0.into();
+        let length2: LengthOrPercentage = value.1.into();
+        BorderRadius::new(length1.clone(), length2.clone(), length1.clone(), length2.clone())
+    }
+}
+
+impl<T1: Into<LengthOrPercentage>, T2: Into<LengthOrPercentage>, T3: Into<LengthOrPercentage>>
+    From<(T1, T2, T3)> for BorderRadius
+{
+    fn from(value: (T1, T2, T3)) -> Self {
+        let length1: LengthOrPercentage = value.0.into();
+        let length2: LengthOrPercentage = value.1.into();
+        let length3: LengthOrPercentage = value.2.into();
+        BorderRadius::new(length1.clone(), length2.clone(), length3.clone(), length2.clone())
+    }
+}
+
+impl<
+        T1: Into<LengthOrPercentage>,
+        T2: Into<LengthOrPercentage>,
+        T3: Into<LengthOrPercentage>,
+        T4: Into<LengthOrPercentage>,
+    > From<(T1, T2, T3, T4)> for BorderRadius
+{
+    fn from(value: (T1, T2, T3, T4)) -> Self {
+        let length1: LengthOrPercentage = value.0.into();
+        let length2: LengthOrPercentage = value.1.into();
+        let length3: LengthOrPercentage = value.2.into();
+        let length4: LengthOrPercentage = value.3.into();
+        BorderRadius::new(length1.clone(), length2.clone(), length3.clone(), length4.clone())
     }
 }
 

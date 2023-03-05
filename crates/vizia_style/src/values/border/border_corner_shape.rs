@@ -1,4 +1,4 @@
-use crate::{macros::define_enum, Parse};
+use crate::{macros::define_enum, Parse, Rect};
 use cssparser::*;
 
 define_enum! {
@@ -22,5 +22,11 @@ impl From<&str> for BorderCornerShape {
         let mut input = ParserInput::new(&s);
         let mut parser = Parser::new(&mut input);
         BorderCornerShape::parse(&mut parser).unwrap_or_default()
+    }
+}
+
+impl From<BorderCornerShape> for Rect<BorderCornerShape> {
+    fn from(value: BorderCornerShape) -> Self {
+        Rect(value, value, value, value)
     }
 }

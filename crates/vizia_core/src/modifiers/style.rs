@@ -260,7 +260,10 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets the border radius for all four corners of the view.
-    fn border_radius<U: Into<BorderRadius>>(mut self, value: impl Res<U>) -> Self {
+    fn border_radius<U: std::fmt::Debug + Into<BorderRadius>>(
+        mut self,
+        value: impl Res<U>,
+    ) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.into();
@@ -304,9 +307,13 @@ pub trait StyleModifiers: internal::Modifiable {
     );
 
     /// Sets the border corner shape for all four corners of the view.
-    fn border_corner_shape<U: Into<Rect<BorderCornerShape>>>(mut self, value: impl Res<U>) -> Self {
+    fn border_corner_shape<U: std::fmt::Debug + Into<Rect<BorderCornerShape>>>(
+        mut self,
+        value: impl Res<U>,
+    ) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            println!("{:?}", v);
             let value = v.into();
             cx.style.border_top_left_shape.insert(entity, value.0);
             cx.style.border_top_right_shape.insert(entity, value.1);

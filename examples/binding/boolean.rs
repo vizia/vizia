@@ -46,10 +46,10 @@ fn main() {
         Checkbox::new(cx, ModelOne::flag1.and(ModelOne::flag2));
         Checkbox::new(cx, ModelOne::flag1 & ModelOne::flag2 & ModelOne::flag3);
 
-        Checkbox::new(
-            cx,
-            (ModelOne::flag1, ModelOne::flag2).map(|(f1, f2)| !(*f1 | *f2)) | ModelOne::flag3,
-        );
+        // Checkbox::new(
+        //     cx,
+        //     (ModelOne::flag1, ModelOne::flag2).map(|(f1, f2)| !(*f1 | *f2)) | ModelOne::flag3,
+        // );
     })
     .run();
 }

@@ -3,6 +3,7 @@ use crate::prelude::*;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use vizia_id::GenerationalId;
+use vizia_storage::LayoutChildIterator;
 
 pub fn draw_system(cx: &mut Context) {
     let canvas = cx.canvases.get_mut(&Entity::root()).unwrap();
@@ -54,9 +55,14 @@ fn draw_entity(
     visible: bool,
 ) {
     let current = cx.current;
-    if cx.cache.get_display(current) == Display::None || cx.cache.get_opacity(current) == 0.0 {
-        return;
-    }
+    // println!("{} {:?}", current, cx.style.display.get(current));
+    // if cx.cache.get_display(current) == Display::None || cx.cache.get_opacity(current) == 0.0 {
+    //     return;
+    // }
+
+    // if !cx.style.display.get(cx.current).map(|display| *display == Display::Flex).unwrap_or(true) {
+    //     return;
+    // }
 
     let z_order = cx.tree.z_order(current);
     if z_order > current_z {
@@ -87,8 +93,11 @@ fn draw_entity(
             cx.views.insert(current, view);
         }
     }
+
+    let child_iter = LayoutChildIterator::new(&cx.tree, cx.current);
+
     // Draw its children
-    for child in current.child_iter(&cx.tree) {
+    for child in child_iter {
         cx.current = child;
         draw_entity(cx, canvas, current_z, queue, is_visible);
     }

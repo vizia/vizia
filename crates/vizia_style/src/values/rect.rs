@@ -70,6 +70,24 @@ where
     }
 }
 
+impl<T: Clone> From<(T, T)> for Rect<T> {
+    fn from(value: (T, T)) -> Self {
+        Rect(value.0.clone(), value.1.clone(), value.0.clone(), value.1.clone())
+    }
+}
+
+impl<T: Clone> From<(T, T, T)> for Rect<T> {
+    fn from(value: (T, T, T)) -> Self {
+        Rect(value.0.clone(), value.1.clone(), value.2.clone(), value.1.clone())
+    }
+}
+
+impl<T: Clone> From<(T, T, T, T)> for Rect<T> {
+    fn from(value: (T, T, T, T)) -> Self {
+        Rect(value.0.clone(), value.1.clone(), value.2.clone(), value.3.clone())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

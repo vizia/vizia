@@ -3,7 +3,7 @@ use std::{cmp::Ordering, collections::BinaryHeap};
 use crate::{cache::BoundingBox, prelude::*};
 use femtovg::Transform2D;
 use vizia_id::GenerationalId;
-use vizia_storage::DrawIterator;
+use vizia_storage::{DrawIterator, LayoutChildIterator};
 
 // Determines the hovered entity based on the mouse cursor position.
 pub fn hover_system2(cx: &mut Context) {
@@ -96,7 +96,6 @@ pub fn hover_system2(cx: &mut Context) {
 
     if hovered_widget != cx.hovered {
         // Useful for debugging
-
         #[cfg(debug_assertions)]
         println!(
             "Hover changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
@@ -140,33 +139,16 @@ pub fn hover_system2(cx: &mut Context) {
 }
 
 pub fn hover_system(cx: &mut Context) {
-    println!("{} {}", cx.mouse.cursorx, cx.mouse.cursory);
     let mut queue = BinaryHeap::new();
     queue.push(ZEntity(0, Entity::root()));
     let mut hovered = Entity::root();
     let mut transform = Transform2D::identity();
-    let mut clip_bounds = cx.cache.get_bounds(Entity::root());
+    let clip_bounds = cx.cache.get_bounds(Entity::root());
     while !queue.is_empty() {
         let ZEntity(current_z, current) = queue.pop().unwrap();
         cx.with_current(current, |cx| {
             hover_entity(
-                &mut DrawContext {
-                    current,
-                    captured: &cx.captured,
-                    focused: &cx.focused,
-                    hovered: &cx.hovered,
-                    style: &cx.style,
-                    cache: &mut cx.cache,
-                    draw_cache: &mut cx.draw_cache,
-                    tree: &cx.tree,
-                    data: &cx.data,
-                    views: &mut cx.views,
-                    resource_manager: &cx.resource_manager,
-                    text_context: &mut cx.text_context,
-                    text_config: &cx.text_config,
-                    modifiers: &cx.modifiers,
-                    mouse: &cx.mouse,
-                },
+                &mut EventContext::new(cx),
                 current_z,
                 &mut queue,
                 &mut hovered,
@@ -178,7 +160,6 @@ pub fn hover_system(cx: &mut Context) {
 
     if hovered != cx.hovered {
         // Useful for debugging
-
         #[cfg(debug_assertions)]
         println!(
             "Hover changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
@@ -218,13 +199,25 @@ pub fn hover_system(cx: &mut Context) {
 }
 
 fn hover_entity(
-    cx: &mut DrawContext,
+    cx: &mut EventContext,
     current_z: i32,
     queue: &mut BinaryHeap<ZEntity>,
     hovered: &mut Entity,
     transform: &mut Transform2D,
     clip_bounds: &BoundingBox,
 ) {
+    // Skip non-hoverable
+    let hoverable = cx
+        .style
+        .abilities
+        .get(cx.current)
+        .map(|abilitites| abilitites.contains(Abilities::HOVERABLE))
+        .unwrap_or(true);
+
+    if !hoverable {
+        return;
+    }
+
     let bounds = cx.cache.get_bounds(cx.current);
     let cursorx = cx.mouse.cursorx;
     let cursory = cx.mouse.cursory;
@@ -237,15 +230,53 @@ fn hover_entity(
     t.inverse();
     let (tx, ty) = t.transform_point(cursorx, cursory);
 
-    let mut clipping = clip_bounds.intersection(&cx.clip_region());
+    let clipping = clip_bounds.intersection(&cx.clip_region());
 
     let b = bounds.intersection(&clipping);
 
     if tx >= b.left() && tx <= b.right() && ty >= b.top() && ty <= b.bottom() {
         *hovered = cx.current;
+
+        if !cx
+            .style
+            .pseudo_classes
+            .get(cx.current)
+            .cloned()
+            .unwrap_or_default()
+            .contains(PseudoClassFlags::OVER)
+        {
+            // cx.event_queue.push_back(
+            //     Event::new(WindowEvent::MouseOver)
+            //         .target(cx.current)
+            //         .propagate(Propagation::Direct),
+            // );
+
+            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
+                pseudo_class.set(PseudoClassFlags::OVER, true);
+            }
+        }
+    } else {
+        if cx
+            .style
+            .pseudo_classes
+            .get(cx.current)
+            .cloned()
+            .unwrap_or_default()
+            .contains(PseudoClassFlags::OVER)
+        {
+            // cx.event_queue.push_back(
+            //     Event::new(WindowEvent::MouseOut).target(cx.current).propagate(Propagation::Direct),
+            // );
+
+            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
+                pseudo_class.set(PseudoClassFlags::OVER, false);
+            }
+        }
     }
 
-    for child in cx.current.child_iter(&cx.tree) {
+    let child_iter = LayoutChildIterator::new(&cx.tree, cx.current);
+
+    for child in child_iter {
         cx.current = child;
         hover_entity(cx, current_z, queue, hovered, transform, &clipping);
     }

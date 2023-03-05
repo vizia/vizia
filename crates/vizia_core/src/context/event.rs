@@ -3,14 +3,16 @@ use std::collections::{HashMap, HashSet, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
 
+use femtovg::Transform2D;
 use fnv::FnvHashMap;
+use vizia_style::Clip;
 
-use crate::cache::CachedData;
+use crate::cache::{BoundingBox, CachedData};
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::state::ModelDataStore;
-use crate::style::{Style, SystemFlags};
+use crate::style::{IntoTransform, Style, SystemFlags};
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -85,6 +87,103 @@ impl<'a> EventContext<'a> {
 
     pub fn current(&self) -> Entity {
         self.current
+    }
+
+    pub fn clip_region(&self) -> BoundingBox {
+        let bounds = self.bounds();
+        let overflowx = self.style.overflowx.get(self.current).copied().unwrap_or_default();
+        let overflowy = self.style.overflowy.get(self.current).copied().unwrap_or_default();
+
+        let root_bounds = self.cache.get_bounds(Entity::root());
+
+        let clip_bounds = self
+            .style
+            .clip
+            .get(self.current)
+            .map(|clip| match clip {
+                Clip::Auto => bounds,
+                Clip::Shape(rect) => bounds.shrink_sides(
+                    self.logical_to_physical(rect.3.to_px().unwrap()),
+                    self.logical_to_physical(rect.0.to_px().unwrap()),
+                    self.logical_to_physical(rect.1.to_px().unwrap()),
+                    self.logical_to_physical(rect.2.to_px().unwrap()),
+                ),
+            })
+            .unwrap_or(bounds);
+
+        match (overflowx, overflowy) {
+            (Overflow::Visible, Overflow::Visible) => root_bounds,
+            (Overflow::Hidden, Overflow::Visible) => {
+                let left = clip_bounds.left();
+                let right = clip_bounds.right();
+                let top = root_bounds.top();
+                let bottom = root_bounds.bottom();
+                BoundingBox::from_min_max(left, top, right, bottom)
+            }
+            (Overflow::Visible, Overflow::Hidden) => {
+                let left = root_bounds.left();
+                let right = root_bounds.right();
+                let top = clip_bounds.top();
+                let bottom = clip_bounds.bottom();
+                BoundingBox::from_min_max(left, top, right, bottom)
+            }
+            (Overflow::Hidden, Overflow::Hidden) => clip_bounds,
+        }
+    }
+
+    pub fn bounds(&self) -> BoundingBox {
+        self.cache.get_bounds(self.current)
+    }
+
+    pub fn scale_factor(&self) -> f32 {
+        self.style.dpi_factor as f32
+    }
+
+    /// Function to convert logical points to physical pixels.
+    pub fn logical_to_physical(&self, logical: f32) -> f32 {
+        self.style.logical_to_physical(logical)
+    }
+
+    /// Function to convert physical pixels to logical points.
+    pub fn physical_to_logical(&self, physical: f32) -> f32 {
+        self.style.physical_to_logical(physical)
+    }
+
+    pub fn transform(&self) -> Option<Transform2D> {
+        if let Some(transforms) = self.style.transform.get(self.current) {
+            let bounds = self.bounds();
+            let scale_factor = self.scale_factor();
+            let mut translate = Transform2D::new_translation(bounds.center().0, bounds.center().1);
+
+            let mut transform = Transform2D::identity();
+            transform.premultiply(&translate);
+
+            translate.inverse();
+
+            // Check if the transform is currently animating
+            // Get the animation state
+            // Manually interpolate the value to get the overall transform for the current frame
+            if let Some(animation_state) = self.style.transform.get_active_animation(self.current) {
+                if let Some(start) = animation_state.keyframes.first() {
+                    if let Some(end) = animation_state.keyframes.last() {
+                        let start_transform = start.1.into_transform(bounds, scale_factor);
+                        let end_transform = end.1.into_transform(bounds, scale_factor);
+                        let t = animation_state.t;
+                        let animated_transform =
+                            Transform2D::interpolate(&start_transform, &end_transform, t);
+                        transform.premultiply(&animated_transform);
+                    }
+                }
+            } else {
+                transform.premultiply(&transforms.into_transform(bounds, scale_factor));
+            }
+
+            transform.premultiply(&translate);
+
+            return Some(transform);
+        }
+
+        None
     }
 
     /// Add a listener to an entity.

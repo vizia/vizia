@@ -1,4 +1,4 @@
-use vizia_style::{FontStyle, FontWeight};
+use vizia_style::{FontStyle, FontWeight, FontWeightKeyword};
 
 use crate::prelude::*;
 
@@ -53,9 +53,9 @@ impl_res_simple!(CursorIcon);
 impl_res_simple!(Overflow);
 impl_res_simple!(LengthValue);
 impl_res_simple!(FontWeight);
+impl_res_simple!(FontWeightKeyword);
 impl_res_simple!(FontStyle);
-impl_res_simple!((u32, u32));
-impl_res_simple!((f32, f32));
+impl_res_simple!(BorderCornerShape);
 
 impl<T, L> Res<T> for L
 where
@@ -276,5 +276,44 @@ impl Res<FamilyOwned> for FamilyOwned {
         F: 'static + Clone + Fn(&mut Context, Entity, FamilyOwned),
     {
         (closure)(cx, entity, self.clone())
+    }
+}
+
+impl<T1: Clone, T2: Clone> Res<(T1, T2)> for (T1, T2) {
+    fn get_val(&self, _cx: &Context) -> (T1, T2) {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, (T1, T2)),
+    {
+        (closure)(cx, entity, self.clone());
+    }
+}
+
+impl<T1: Clone, T2: Clone, T3: Clone> Res<(T1, T2, T3)> for (T1, T2, T3) {
+    fn get_val(&self, _cx: &Context) -> (T1, T2, T3) {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, (T1, T2, T3)),
+    {
+        (closure)(cx, entity, self.clone());
+    }
+}
+
+impl<T1: Clone, T2: Clone, T3: Clone, T4: Clone> Res<(T1, T2, T3, T4)> for (T1, T2, T3, T4) {
+    fn get_val(&self, _cx: &Context) -> (T1, T2, T3, T4) {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, (T1, T2, T3, T4)),
+    {
+        (closure)(cx, entity, self.clone());
     }
 }

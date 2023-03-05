@@ -45,7 +45,8 @@ fn main() {
                                 cx.emit(AppDataSetter::Choice(item.get(cx)));
                                 cx.emit(PopupEvent::Close);
                             });
-                    });
+                    })
+                    .width(Stretch(1.0));
                 },
             )
             .width(Pixels(100.0));

@@ -32,6 +32,15 @@ const STYLE: &str = r#"
     .three:hover {
         background-color: maroon;
     }
+
+    .four {
+        space: 200px;
+        background-color: red;
+    }
+
+    .four:hover {
+        background-color: green;
+    }
 "#;
 
 #[derive(Lens)]
@@ -57,7 +66,7 @@ fn main() {
     Application::new(|cx| {
         cx.add_theme(STYLE);
 
-        // AppData { skew: 0.0 }.build(cx);
+        AppData { skew: 0.0 }.build(cx);
         // HStack::new(cx, |cx| {
         //     Element::new(cx)
         //         .size(Pixels(100.0))
@@ -73,9 +82,12 @@ fn main() {
             .min_size(Pixels(0.0))
             .class("two");
         })
+        .hoverable(false)
         .transform(vec![Transform::SkewX(Angle::Deg(26.5650512))])
         .class("one")
         .min_size(Pixels(0.0));
+
+        // Label::new(cx, "Hello World").size(Pixels(200.0)).class("four");
 
         // Slider::new(cx, AppData::skew)
         //     .range(0.0..45.0)
