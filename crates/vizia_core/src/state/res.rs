@@ -266,6 +266,19 @@ impl<T: Clone + Res<T>> Res<Vec<T>> for Vec<T> {
     }
 }
 
+impl<T: Clone + Res<T>, const N: usize> Res<[T; N]> for [T; N] {
+    fn get_val(&self, _: &Context) -> Self {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, Self),
+    {
+        (closure)(cx, entity, self.clone())
+    }
+}
+
 impl Res<FamilyOwned> for FamilyOwned {
     fn get_val(&self, _: &Context) -> FamilyOwned {
         self.clone()

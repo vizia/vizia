@@ -12,7 +12,7 @@ use crate::prelude::*;
 pub use vizia_style::{
     Angle, BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, FontStretch, FontStyle,
     FontWeight, FontWeightKeyword, Length, LengthOrPercentage, LengthValue, LineDirection,
-    LinearGradient, Opacity, Overflow, ParserOptions, Property, SelectorList, Selectors,
+    LinearGradient, Matrix, Opacity, Overflow, ParserOptions, Property, SelectorList, Selectors,
     StyleSheet, Transform, Visibility, RGBA,
 };
 

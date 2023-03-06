@@ -64,7 +64,7 @@ pub mod prelude {
     pub use super::style::{
         Abilities, Angle, BackgroundImage, BorderCornerShape, Color, CursorIcon, Display,
         FontStyle, FontWeight, Length, LengthOrPercentage, LengthValue, LineDirection,
-        LinearGradient, Opacity, Overflow, PseudoClassFlags, Transform, Visibility, RGBA,
+        LinearGradient, Matrix, Opacity, Overflow, PseudoClassFlags, Transform, Visibility, RGBA,
     };
 
     pub use cosmic_text::FamilyOwned;

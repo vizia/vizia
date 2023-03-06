@@ -29,6 +29,12 @@ impl_parse! {
     }
 }
 
+impl<T1: Into<LengthOrPercentage>, T2: Into<LengthOrPercentage>> From<(T1, T2)> for Translate {
+    fn from(value: (T1, T2)) -> Translate {
+        Translate { x: value.0.into(), y: value.1.into() }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

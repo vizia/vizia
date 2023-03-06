@@ -137,6 +137,12 @@ impl<'i> Parse<'i> for Vec<Transform> {
     }
 }
 
+impl From<Transform> for Vec<Transform> {
+    fn from(value: Transform) -> Self {
+        vec![value]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

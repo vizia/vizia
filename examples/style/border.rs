@@ -2,8 +2,7 @@ use vizia::prelude::*;
 
 const STYLE: &str = r#"
 
-    :root {
-        layout-type: row;
+    .row {
         child-space: 1s;
         col-between: 20px;
     }
@@ -35,30 +34,42 @@ const STYLE: &str = r#"
         border-radius: 30px;
         border-corner-shape: round bevel round bevel;
     }
+
+    .border_shape:hover {
+        border-radius: 30px;
+        border-corner-shape: bevel round bevel round;
+    }
 "#;
 
 fn main() {
     Application::new(|cx| {
         cx.add_theme(STYLE);
-        Element::new(cx).class("border");
-        Element::new(cx).class("border_radius");
-        Element::new(cx).class("border_shape");
 
-        Element::new(cx).border_color(Color::black()).border_width(Pixels(10.0));
+        HStack::new(cx, |cx| {
+            Element::new(cx).class("border");
+            Element::new(cx).class("border_radius");
+            Element::new(cx).class("border_shape");
+        })
+        .class("row");
 
-        Element::new(cx).border_radius((
-            Length::Value(LengthValue::Px(10.0)),
-            Pixels(0.0),
-            "50px",
-            LengthValue::Px(20.0),
-        ));
+        HStack::new(cx, |cx| {
+            Element::new(cx).border_color(Color::black()).border_width(Pixels(10.0));
 
-        Element::new(cx).border_radius(Pixels(10.0)).border_corner_shape((
-            BorderCornerShape::Bevel,
-            BorderCornerShape::Round,
-            BorderCornerShape::Bevel,
-            BorderCornerShape::Round,
-        ));
+            Element::new(cx).border_radius((
+                Length::Value(LengthValue::Px(10.0)),
+                Pixels(0.0),
+                "50px",
+                LengthValue::Px(20.0),
+            ));
+
+            Element::new(cx).border_radius(Pixels(10.0)).border_corner_shape((
+                BorderCornerShape::Bevel,
+                BorderCornerShape::Round,
+                BorderCornerShape::Bevel,
+                BorderCornerShape::Round,
+            ));
+        })
+        .class("row");
     })
     .run();
 }

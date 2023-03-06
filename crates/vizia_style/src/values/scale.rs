@@ -29,6 +29,12 @@ impl_parse! {
     }
 }
 
+impl<T1: Into<PercentageOrNumber>, T2: Into<PercentageOrNumber>> From<(T1, T2)> for Scale {
+    fn from(value: (T1, T2)) -> Scale {
+        Scale { x: value.0.into(), y: value.1.into() }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

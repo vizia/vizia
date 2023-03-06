@@ -29,8 +29,9 @@ const STYLE: &str = r#"
 fn main() {
     Application::new(|cx| {
         cx.add_theme(STYLE);
-        // Element::new(cx).class("shadow");
-        Element::new(cx).class("inner-shadow");
+        Element::new(cx).class("shadow");
+        // Element::new(cx).box_shadow(&[])
+        // Element::new(cx).class("inner-shadow");
     })
     .run();
 }
