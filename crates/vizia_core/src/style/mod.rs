@@ -121,6 +121,17 @@ pub struct Style {
     pub disabled: StyleSet<bool>,
     pub abilities: SparseSet<Abilities>,
 
+    pub accesskit_node_classes: accesskit::NodeClassSet,
+
+    pub roles: SparseSet<Role>,
+    pub default_action_verb: SparseSet<DefaultActionVerb>,
+    pub live: SparseSet<Live>,
+    pub labelled_by: SparseSet<Entity>,
+    pub hidden: SparseSet<bool>,
+    // TODO: Should we store these or somehow derive them from app state?
+    pub text_value: SparseSet<String>,
+    pub numeric_value: SparseSet<f64>,
+
     // Display
     pub display: AnimatableSet<Display>,
 
@@ -262,6 +273,8 @@ pub struct Style {
     // TODO: When we can do incremental updates on a per entity basis, change this to a bitflag
     // for layout, text layout, rendering, etc. to replace the above `needs_` members.
     pub needs_text_layout: SparseSet<bool>,
+
+    pub needs_access_update: SparseSet<bool>,
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
     pub dpi_factor: f64,
@@ -1012,6 +1025,15 @@ impl Style {
         self.pseudo_classes.remove(entity);
         self.disabled.remove(entity);
         self.abilities.remove(entity);
+
+        self.roles.remove(entity);
+        self.default_action_verb.remove(entity);
+        self.live.remove(entity);
+        self.labelled_by.remove(entity);
+        self.hidden.remove(entity);
+        self.text_value.remove(entity);
+        self.numeric_value.remove(entity);
+
         // Display
         self.display.remove(entity);
         // Visibility
@@ -1131,6 +1153,7 @@ impl Style {
         self.image.remove(entity);
 
         self.needs_text_layout.remove(entity);
+        self.needs_access_update.remove(entity);
     }
 
     pub fn needs_restyle(&mut self) {
@@ -1143,6 +1166,10 @@ impl Style {
 
     pub fn needs_redraw(&mut self) {
         self.system_flags.set(SystemFlags::REDRAW, true);
+    }
+
+    pub fn needs_access_update(&mut self, entity: Entity) {
+        self.needs_access_update.insert(entity, true).unwrap();
     }
 
     pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {

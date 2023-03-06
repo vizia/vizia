@@ -150,6 +150,7 @@ impl Dropdown {
 
                 (label)(cx)
                     .class("title")
+                    .role(Role::PopupButton)
                     .width(Stretch(1.0))
                     .on_press(|cx| cx.emit(PopupEvent::Switch));
 

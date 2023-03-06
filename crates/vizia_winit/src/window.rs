@@ -1,3 +1,4 @@
+use crate::application::UserEvent;
 #[cfg(not(target_arch = "wasm32"))]
 use std::num::NonZeroU32;
 
@@ -38,7 +39,7 @@ pub struct Window {
 #[cfg(target_arch = "wasm32")]
 impl Window {
     pub fn new(
-        events_loop: &EventLoop<Event>,
+        events_loop: &EventLoop<UserEvent>,
         window_description: &WindowDescription,
     ) -> (Self, Canvas<OpenGl>) {
         let window_builder = WindowBuilder::new();
@@ -100,7 +101,7 @@ impl Window {
 #[cfg(not(target_arch = "wasm32"))]
 impl Window {
     pub fn new(
-        events_loop: &EventLoop<Event>,
+        events_loop: &EventLoop<UserEvent>,
         window_description: &WindowDescription,
     ) -> (Self, Canvas<OpenGl>) {
         let window_builder = WindowBuilder::new();
@@ -320,7 +321,8 @@ fn apply_window_description(
     builder
         .with_resizable(description.resizable)
         .with_maximized(description.maximized)
-        .with_visible(description.visible)
+        // Accesskit requires that the window start invisible until accesskit is initialized.
+        .with_visible(false)
         .with_transparent(description.transparent)
         .with_decorations(description.decorations)
         .with_window_icon(description.icon.as_ref().map(|icon| {

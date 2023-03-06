@@ -11,6 +11,8 @@ pub trait ViewHandler: Any {
 
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas);
 
+    fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode);
+
     fn as_any_ref(&self) -> &dyn Any;
 
     fn as_any_mut(&mut self) -> &mut dyn Any;

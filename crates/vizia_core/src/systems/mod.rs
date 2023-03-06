@@ -1,3 +1,4 @@
+pub(crate) mod accessibility;
 pub(crate) mod animation;
 pub(crate) mod clipping;
 pub(crate) mod draw;
@@ -10,6 +11,7 @@ pub(crate) mod transform;
 pub(crate) mod visibility;
 
 pub(crate) use self::image::*;
+pub(crate) use accessibility::*;
 pub(crate) use animation::*;
 pub(crate) use clipping::*;
 pub(crate) use draw::*;

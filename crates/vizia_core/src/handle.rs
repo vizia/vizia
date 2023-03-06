@@ -26,7 +26,8 @@ impl<'a, V> Handle<'a, V> {
         self.cx.focus_stack.push(self.cx.focused);
         if !self.cx.focused.is_descendant_of(&self.cx.tree, self.entity) {
             let new_focus = vizia_storage::TreeIterator::subtree(&self.cx.tree, self.entity)
-                .find(|node| crate::tree::is_focusable(self.cx, *node))
+                .filter(|node| crate::tree::is_navigatable(self.cx, *node, Entity::root()))
+                .next()
                 .unwrap_or(self.cx.focus_stack.pop().unwrap());
             self.cx.with_current(new_focus, |cx| cx.focus());
         }

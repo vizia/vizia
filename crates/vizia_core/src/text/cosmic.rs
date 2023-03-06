@@ -53,7 +53,7 @@ struct TextContextInternal<'a> {
 }
 
 impl TextContext {
-    #[allow(dead_code)]
+    #[cfg(debug_assertions)]
     pub(crate) fn font_system(&self) -> &FontSystem {
         self.borrow_font_system()
     }

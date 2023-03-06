@@ -42,6 +42,9 @@ mod internal {
     }
 }
 
+mod accessibility;
+pub use accessibility::*;
+
 mod actions;
 pub use actions::*;
 

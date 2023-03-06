@@ -59,6 +59,7 @@ where
                     }
                 });
             })
+            .role(Role::Dialog)
             .checked(lens.clone())
             .position_type(PositionType::SelfDirected)
             .z_order(100)

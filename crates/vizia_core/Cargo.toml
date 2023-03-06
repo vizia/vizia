@@ -20,6 +20,7 @@ vizia_storage = { path = "../vizia_storage" }
 vizia_id = { path = "../vizia_id" }
 vizia_input = { path = "../vizia_input" }
 vizia_window = { path = "../vizia_window" }
+accesskit = "0.9.0"
 
 femtovg = "0.6.0"
 # femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "09f4837fff4d2cd58ddc4674d0d7e1296a4123aa", default-features = false, features = ["image-loading"] }

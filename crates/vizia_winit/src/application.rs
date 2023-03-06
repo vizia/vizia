@@ -2,7 +2,13 @@ use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
     window::Window,
 };
+#[cfg(not(target_arch = "wasm32"))]
+use accesskit::{Action, NodeBuilder, TreeUpdate};
+#[cfg(not(target_arch = "wasm32"))]
+use accesskit_winit;
 use std::cell::RefCell;
+#[cfg(not(target_arch = "wasm32"))]
+use vizia_core::accessibility::IntoNode;
 use vizia_core::cache::BoundingBox;
 use vizia_core::context::backend::*;
 #[cfg(not(target_arch = "wasm32"))]
@@ -30,9 +36,29 @@ use winit::{
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
 
+#[derive(Debug)]
+pub enum UserEvent {
+    Event(Event),
+    #[cfg(not(target_arch = "wasm32"))]
+    AccessKitActionRequest(accesskit_winit::ActionRequestEvent),
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl From<accesskit_winit::ActionRequestEvent> for UserEvent {
+    fn from(action_request_event: accesskit_winit::ActionRequestEvent) -> Self {
+        UserEvent::AccessKitActionRequest(action_request_event)
+    }
+}
+
+impl From<vizia_core::events::Event> for UserEvent {
+    fn from(event: vizia_core::events::Event) -> Self {
+        UserEvent::Event(event)
+    }
+}
+
 pub struct Application {
     context: Context,
-    event_loop: EventLoop<Event>,
+    event_loop: EventLoop<UserEvent>,
     builder: Option<Box<dyn FnOnce(&mut Context)>>,
     on_idle: Option<Box<dyn Fn(&mut Context)>>,
     window_description: WindowDescription,
@@ -41,12 +67,12 @@ pub struct Application {
 
 // TODO uhhhhhhhhhhhhhhhhhhhhhh I think it's a winit bug that EventLoopProxy isn't Send on web
 #[cfg(not(target_arch = "wasm32"))]
-pub struct WinitEventProxy(EventLoopProxy<Event>);
+pub struct WinitEventProxy(EventLoopProxy<UserEvent>);
 
 #[cfg(not(target_arch = "wasm32"))]
 impl EventProxy for WinitEventProxy {
     fn send(&self, event: Event) -> Result<(), ()> {
-        self.0.send_event(event).map_err(|_| ())
+        self.0.send_event(UserEvent::Event(event)).map_err(|_| ())
     }
 
     fn make_clone(&self) -> Box<dyn EventProxy> {
@@ -130,7 +156,7 @@ impl Application {
     }
 
     // TODO - Rename this
-    pub fn get_proxy(&self) -> EventLoopProxy<Event> {
+    pub fn get_proxy(&self) -> EventLoopProxy<UserEvent> {
         self.event_loop.create_proxy()
     }
 
@@ -149,6 +175,34 @@ impl Application {
         let event_loop = self.event_loop;
 
         let (window, canvas) = Window::new(&event_loop, &self.window_description);
+
+        #[cfg(not(target_arch = "wasm32"))]
+        let event_loop_proxy = event_loop.create_proxy();
+
+        #[cfg(not(target_arch = "wasm32"))]
+        let mut cx = BackendContext::new(&mut context);
+
+        #[cfg(not(target_arch = "wasm32"))]
+        let root_node = NodeBuilder::new(Role::Window).build(cx.accesskit_node_classes());
+        #[cfg(not(target_arch = "wasm32"))]
+        let accesskit = accesskit_winit::Adapter::new(
+            window.window(),
+            move || {
+                // TODO: set a flag to signify that a screen reader has been attached
+                use accesskit::Tree;
+
+                let root_id = Entity::root().accesskit_id();
+
+                TreeUpdate {
+                    nodes: vec![(root_id, root_node)],
+                    tree: Some(Tree::new(root_id)),
+                    focus: Some(Entity::root().accesskit_id()),
+                }
+            },
+            event_loop_proxy,
+        );
+
+        window.window().set_visible(true);
 
         #[cfg(all(
             feature = "clipboard",
@@ -191,6 +245,13 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
+        #[cfg(not(target_arch = "wasm32"))]
+        BackendContext::new(&mut context).process_tree_updates(|tree_updates| {
+            for update in tree_updates.iter() {
+                accesskit.update(update.clone());
+            }
+        });
+
         let mut cursor_moved = false;
         let mut cursor = (0.0f32, 0.0f32);
 
@@ -198,9 +259,38 @@ impl Application {
             let mut cx = BackendContext::new(&mut context);
 
             match event {
-                winit::event::Event::UserEvent(event) => {
-                    cx.send_event(event);
-                }
+                winit::event::Event::UserEvent(user_event) => match user_event {
+                    UserEvent::Event(event) => {
+                        cx.send_event(event);
+                    }
+
+                    #[cfg(not(target_arch = "wasm32"))]
+                    UserEvent::AccessKitActionRequest(action_request_event) => {
+                        let node_id = action_request_event.request.target;
+
+                        if action_request_event.request.action != Action::ScrollIntoView {
+                            let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
+
+                            // Handle focus action from screen reader
+                            match action_request_event.request.action {
+                                Action::Focus => {
+                                    cx.0.with_current(entity, |cx| {
+                                        cx.focus();
+                                    });
+                                }
+
+                                _ => {}
+                            }
+
+                            cx.send_event(
+                                Event::new(WindowEvent::ActionRequest(
+                                    action_request_event.request.clone(),
+                                ))
+                                .direct(entity),
+                            );
+                        }
+                    }
+                },
 
                 winit::event::Event::MainEventsCleared => {
                     *stored_control_flow.borrow_mut() =
@@ -215,13 +305,16 @@ impl Application {
                     while event_manager.flush_events(cx.0) {}
 
                     cx.process_data_updates();
+
                     cx.process_style_updates();
 
                     if cx.process_animations() {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
 
-                        event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();
-                        //window.handle.window().request_redraw();
+                        event_loop_proxy
+                            .send_event(UserEvent::Event(Event::new(WindowEvent::Redraw)))
+                            .unwrap();
+
                         if let Some(window_event_handler) = cx.views().remove(&Entity::root()) {
                             if let Some(window) = window_event_handler.downcast_ref::<Window>() {
                                 window.window().request_redraw();
@@ -232,6 +325,13 @@ impl Application {
                     }
 
                     cx.process_visual_updates();
+
+                    #[cfg(not(target_arch = "wasm32"))]
+                    cx.process_tree_updates(|tree_updates| {
+                        for update in tree_updates.iter() {
+                            accesskit.update(update.clone());
+                        }
+                    });
 
                     if let Some(window_view) = cx.views().remove(&Entity::root()) {
                         if let Some(window) = window_view.downcast_ref::<Window>() {
@@ -250,7 +350,9 @@ impl Application {
 
                     if cx.has_queued_events() {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
-                        event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
+                        event_loop_proxy
+                            .send_event(UserEvent::Event(Event::new(())))
+                            .expect("Failed to send event");
                     }
 
                     if let Some(window_event_handler) = cx.views().remove(&Entity::root()) {
@@ -273,6 +375,16 @@ impl Application {
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
                             cx.0.emit(WindowEvent::WindowClose);
+                        }
+
+                        winit::event::WindowEvent::Focused(is_focused) => {
+                            cx.0.window_has_focus = is_focused;
+                            #[cfg(not(target_arch = "wasm32"))]
+                            accesskit.update_if_active(|| TreeUpdate {
+                                nodes: vec![],
+                                tree: None,
+                                focus: is_focused.then_some(cx.focused().accesskit_id()),
+                            });
                         }
 
                         winit::event::WindowEvent::ScaleFactorChanged {
