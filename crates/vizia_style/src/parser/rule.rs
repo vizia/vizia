@@ -8,9 +8,9 @@ use selectors::SelectorList;
 #[derive(PartialEq, PartialOrd)]
 enum State {
     Start = 1,
-    Layers = 2,
-    Imports = 3,
-    Namespaces = 4,
+    // Layers = 2,
+    // Imports = 3,
+    // Namespaces = 4,
     Body = 5,
 }
 
@@ -99,7 +99,7 @@ struct NestedRuleParser<'a, 'o, 'i> {
 }
 
 impl<'a, 'o, 'b, 'i> NestedRuleParser<'a, 'o, 'i> {
-    fn parse_nested_rules<'t>(&mut self, input: &mut Parser<'i, 't>) -> CssRuleList<'i> {
+    fn _parse_nested_rules<'t>(&mut self, input: &mut Parser<'i, 't>) -> CssRuleList<'i> {
         let nested_parser =
             NestedRuleParser { default_namespace: self.default_namespace, options: self.options };
 
@@ -270,8 +270,8 @@ impl<'a, 'o, 'i> AtRuleParser<'i> for StyleRuleParser<'a, 'o, 'i> {
 
     fn parse_block<'t>(
         &mut self,
-        prelude: Self::Prelude,
-        start: &ParserState,
+        _prelude: Self::Prelude,
+        _start: &ParserState,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::AtRule, ParseError<'i, Self::Error>> {
         Err(input.new_error(BasicParseErrorKind::AtRuleBodyInvalid))

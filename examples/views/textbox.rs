@@ -12,20 +12,20 @@ fn main() {
 
         Textbox::new(cx, AppData::text)
             .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
-            .width(Pixels(200.0));
-        // .on_build(|cx| {
-        //     cx.emit(TextEvent::StartEdit);
-        // });
+            .width(Pixels(200.0))
+            .on_build(|cx| {
+                cx.emit(TextEvent::StartEdit);
+            });
 
-        // Textbox::new_multiline(
-        //     cx,
-        //     StaticLens::new(
-        //         &"This text is editable, but will reset on blur. Good luck editing it, haha!",
-        //     ),
-        //     true,
-        // )
-        // .width(Pixels(200.0))
-        // .height(Pixels(100.0));
+        Textbox::new_multiline(
+            cx,
+            StaticLens::new(
+                &"This text is editable, but will reset on blur. Good luck editing it, haha!",
+            ),
+            true,
+        )
+        .width(Pixels(200.0))
+        .height(Pixels(100.0));
     })
     .title("Textbox")
     .run();

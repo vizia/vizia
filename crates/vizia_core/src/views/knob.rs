@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
 use femtovg::{LineCap, Paint, Path, Solidity};
 use morphorm::{Hierarchy, Units};
 

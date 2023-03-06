@@ -6,7 +6,7 @@ use vizia_id::GenerationalId;
 use vizia_storage::{DrawIterator, LayoutChildIterator};
 
 // Determines the hovered entity based on the mouse cursor position.
-pub fn hover_system2(cx: &mut Context) {
+pub fn _hover_system2(cx: &mut Context) {
     let draw_tree = DrawIterator::full(&cx.tree);
 
     let cursorx = cx.mouse.cursorx;

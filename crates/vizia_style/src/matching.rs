@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 pub use selectors::SelectorList;
 
 pub use selectors::{
@@ -16,11 +17,11 @@ mod test {
     use cssparser::*;
     use selectors::{
         context::{MatchingContext, MatchingMode, QuirksMode},
-        matching::{matches_selector, matches_selector_list},
+        matching::matches_selector_list,
         OpaqueElement, SelectorList,
     };
 
-    use crate::{pseudoclass, CustomParseError, SelectorIdent, SelectorParser, Selectors};
+    use crate::{CustomParseError, SelectorIdent, SelectorParser, Selectors};
 
     fn parse<'i>(
         input: &'i str,
