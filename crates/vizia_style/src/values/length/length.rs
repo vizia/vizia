@@ -94,20 +94,14 @@ impl Length {
                 if let Calc::Value(a) = *calc {
                     a.add(b)
                 } else {
-                    Length::Calc(Box::new(Calc::Sum(
-                        Box::new((*calc).into()),
-                        Box::new(b.into()),
-                    )))
+                    Length::Calc(Box::new(Calc::Sum(Box::new((*calc).into()), Box::new(b.into()))))
                 }
             }
             (a, Length::Calc(calc)) => {
                 if let Calc::Value(b) = *calc {
                     a.add(*b)
                 } else {
-                    Length::Calc(Box::new(Calc::Sum(
-                        Box::new(a.into()),
-                        Box::new((*calc).into()),
-                    )))
+                    Length::Calc(Box::new(Calc::Sum(Box::new(a.into()), Box::new((*calc).into()))))
                 }
             }
             (a, b) => Length::Calc(Box::new(Calc::Sum(Box::new(a.into()), Box::new(b.into())))),

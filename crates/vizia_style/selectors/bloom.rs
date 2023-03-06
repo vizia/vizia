@@ -205,17 +205,13 @@ impl BloomStorage for BloomStorageU8 {
 
 impl Default for BloomStorageU8 {
     fn default() -> Self {
-        BloomStorageU8 {
-            counters: [0; ARRAY_SIZE],
-        }
+        BloomStorageU8 { counters: [0; ARRAY_SIZE] }
     }
 }
 
 impl Clone for BloomStorageU8 {
     fn clone(&self) -> Self {
-        BloomStorageU8 {
-            counters: self.counters,
-        }
+        BloomStorageU8 { counters: self.counters }
     }
 }
 
@@ -233,10 +229,7 @@ impl BloomStorage for BloomStorageBool {
         // Since we have only one bit for storage, decrementing it
         // should never do anything.  Assert against an accidental
         // decrementing of a bit that was never set.
-        assert!(
-            increment || (*byte & bit) != 0,
-            "should not decrement if slot is already false"
-        );
+        assert!(increment || (*byte & bit) != 0, "should not decrement if slot is already false");
 
         if increment {
             *byte |= bit;
@@ -257,17 +250,13 @@ impl BloomStorage for BloomStorageBool {
 
 impl Default for BloomStorageBool {
     fn default() -> Self {
-        BloomStorageBool {
-            counters: [0; ARRAY_SIZE / 8],
-        }
+        BloomStorageBool { counters: [0; ARRAY_SIZE / 8] }
     }
 }
 
 impl Clone for BloomStorageBool {
     fn clone(&self) -> Self {
-        BloomStorageBool {
-            counters: self.counters,
-        }
+        BloomStorageBool { counters: self.counters }
     }
 }
 
@@ -311,9 +300,8 @@ fn create_and_insert_some_stuff() {
         assert!(bf.might_contain_hash(hash_as_str(i)));
     }
 
-    let false_positives = (1001_usize..2000)
-        .filter(|i| bf.might_contain_hash(hash_as_str(*i)))
-        .count();
+    let false_positives =
+        (1001_usize..2000).filter(|i| bf.might_contain_hash(hash_as_str(*i))).count();
 
     assert!(false_positives < 190, "{} is not < 190", false_positives); // 19%.
 
@@ -325,9 +313,7 @@ fn create_and_insert_some_stuff() {
         assert!(bf.might_contain_hash(hash_as_str(i)));
     }
 
-    let false_positives = (0_usize..100)
-        .filter(|i| bf.might_contain_hash(hash_as_str(*i)))
-        .count();
+    let false_positives = (0_usize..100).filter(|i| bf.might_contain_hash(hash_as_str(*i))).count();
 
     assert!(false_positives < 20, "{} is not < 20", false_positives); // 20%.
 

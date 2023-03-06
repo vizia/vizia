@@ -15,12 +15,7 @@ pub struct BorderColor {
 
 impl BorderColor {
     pub fn new(top: Color, right: Color, bottom: Color, left: Color) -> Self {
-        Self {
-            top,
-            right,
-            bottom,
-            left,
-        }
+        Self { top, right, bottom, left }
     }
 }
 

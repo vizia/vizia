@@ -18,12 +18,8 @@ fn main() {
     for name in ASCII_CASE_INSENSITIVE_HTML_ATTRIBUTES.split_whitespace() {
         set.entry(name);
     }
-    write!(
-        &mut file,
-        "{{ static SET: ::phf::Set<&'static str> = {}; &SET }}",
-        set.build(),
-    )
-    .unwrap();
+    write!(&mut file, "{{ static SET: ::phf::Set<&'static str> = {}; &SET }}", set.build(),)
+        .unwrap();
 }
 
 /// <https://html.spec.whatwg.org/multipage/#selectors>

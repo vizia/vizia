@@ -21,12 +21,7 @@ impl BorderWidth {
         bottom: BorderWidthValue,
         left: BorderWidthValue,
     ) -> Self {
-        Self {
-            top,
-            right,
-            bottom,
-            left,
-        }
+        Self { top, right, bottom, left }
     }
 }
 

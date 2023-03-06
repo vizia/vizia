@@ -53,8 +53,8 @@ impl VisitedHandlingMode {
     pub fn matches_visited(&self) -> bool {
         matches!(
             *self,
-            VisitedHandlingMode::RelevantLinkVisited |
-                VisitedHandlingMode::AllLinksVisitedAndUnvisited
+            VisitedHandlingMode::RelevantLinkVisited
+                | VisitedHandlingMode::AllLinksVisitedAndUnvisited
         )
     }
 
@@ -62,8 +62,8 @@ impl VisitedHandlingMode {
     pub fn matches_unvisited(&self) -> bool {
         matches!(
             *self,
-            VisitedHandlingMode::AllLinksUnvisited |
-                VisitedHandlingMode::AllLinksVisitedAndUnvisited
+            VisitedHandlingMode::AllLinksUnvisited
+                | VisitedHandlingMode::AllLinksVisitedAndUnvisited
         )
     }
 }

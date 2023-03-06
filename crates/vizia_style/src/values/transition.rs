@@ -15,11 +15,7 @@ pub struct Transition {
 impl Transition {
     /// Creates a new transition.
     pub fn new(property: String, duration: Duration, delay: Option<Duration>) -> Self {
-        Self {
-            property,
-            duration,
-            delay,
-        }
+        Self { property, duration, delay }
     }
 }
 
@@ -32,11 +28,7 @@ impl<'i> Parse<'i> for Transition {
         let delay = input.try_parse(Duration::parse).ok();
 
         if input.is_exhausted() {
-            Ok(Self {
-                property,
-                duration,
-                delay,
-            })
+            Ok(Self { property, duration, delay })
         } else {
             Err(ParseError {
                 kind: ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),

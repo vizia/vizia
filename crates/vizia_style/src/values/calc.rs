@@ -217,10 +217,7 @@ impl<
             }
         }
 
-        if input
-            .try_parse(|input| input.expect_parenthesis_block())
-            .is_ok()
-        {
+        if input.try_parse(|input| input.expect_parenthesis_block()).is_ok() {
             return input.parse_nested_block(Calc::parse_sum);
         }
 

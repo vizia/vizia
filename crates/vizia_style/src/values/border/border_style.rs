@@ -21,12 +21,7 @@ impl BorderStyle {
         bottom: BorderStyleKeyword,
         left: BorderStyleKeyword,
     ) -> Self {
-        Self {
-            top,
-            right,
-            bottom,
-            left,
-        }
+        Self { top, right, bottom, left }
     }
 }
 
