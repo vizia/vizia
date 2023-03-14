@@ -1,4 +1,4 @@
-use std::{any::TypeId, collections::HashSet};
+use std::{any::TypeId, borrow::Borrow, collections::HashSet, ops::Deref};
 
 use crate::prelude::*;
 
@@ -37,8 +37,9 @@ pub(crate) struct BasicStore<L: Lens, T> {
 
 impl<L: Lens, T> Store for BasicStore<L, T>
 where
-    L: Lens<Target = T>,
+    L: Lens<Target = T, TargetOwned = T>,
     <L as Lens>::Target: Data,
+    L::Source: Sized,
 {
     fn entity(&self) -> Entity {
         self.entity
@@ -48,9 +49,9 @@ where
         let Some(data) = model.downcast_ref::<L::Source>() else {
             return false
         };
-        let Some(new_data) = self.lens.view(data) else { return false };
+        let Some(new_data) = self.lens.view(LensValue::Borrowed(data)) else { return false };
 
-        if matches!(&self.old, Some(old) if old.same(&new_data)) {
+        if matches!(&self.old, Some(old) if old.same(new_data.borrow())) {
             return false;
         }
 

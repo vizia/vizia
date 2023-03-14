@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use crate::prelude::*;
 
 macro_rules! impl_res_simple {
@@ -38,6 +40,42 @@ pub trait Res<T> {
         F: 'static + Clone + Fn(&mut Context, Entity, &Self);
 }
 
+pub trait GenericRes<T, B>
+where
+    T: Borrow<B>,
+{
+    #[allow(unused_variables)]
+    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, B, T>> {
+        None
+    }
+
+    fn get_val(&self, _: &impl DataContext) -> T;
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, &Self);
+}
+
+impl<R, T> Res<T> for R
+where
+    R: GenericRes<T, T>,
+{
+    fn get_val(&self, cx: &impl DataContext) -> T {
+        <Self as GenericRes<T, T>>::get_val(&self, cx)
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Clone + Fn(&mut Context, Entity, &Self),
+    {
+        <Self as GenericRes<T, T>>::set_or_bind(&self, cx, entity, closure)
+    }
+
+    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, T, T>> {
+        <Self as GenericRes<T, T>>::get_ref(&self, cx)
+    }
+}
+
 impl_res_simple!(i8);
 impl_res_simple!(i16);
 impl_res_simple!(i32);
@@ -59,12 +97,14 @@ impl_res_simple!(Overflow);
 impl_res_simple!(Weight);
 impl_res_simple!(FontStyle);
 
-impl<T, L> Res<T> for L
+impl<T, L, B> GenericRes<T, B> for L
+// translation lookaside buffer
 where
-    L: Lens<Target = T, TargetOwned = T>,
-    T: Clone + Data,
+    L: Lens<TargetOwned = T, Target = B>,
+    T: Clone + Data + Borrow<B>,
+    B: ToOwned<Owned = T>,
 {
-    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, T>> {
+    fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, B, T>> {
         self.view(LensValue::Borrowed(cx.data()?))
     }
 

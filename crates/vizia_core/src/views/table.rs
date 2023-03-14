@@ -50,10 +50,11 @@ where
 
 impl<R, L> TableColumn<R, L>
 where
-    R: Lens<Target = Vec<L::SourceOwned>>,
+    R: Lens<Target = Vec<L::SourceOwned>, TargetOwned = Vec<L::SourceOwned>>,
     L: Lens,
     L::SourceOwned: Data,
     L::TargetOwned: Data,
+    L::Target: Data,
 {
     pub fn new<F, Label>(
         cx: &mut Context,

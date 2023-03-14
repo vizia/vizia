@@ -65,7 +65,7 @@ impl<'a, V> Handle<'a, V> {
     pub fn bind<L, F>(self, lens: L, closure: F) -> Self
     where
         L: Lens,
-        <L as Lens>::Target: Data,
+        <L as Lens>::TargetOwned: Data,
         F: 'static + Fn(Handle<'_, V>, L),
     {
         let entity = self.entity();

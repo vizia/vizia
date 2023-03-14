@@ -46,7 +46,11 @@ pub enum LensValue<'a, T: ?Sized, U: Borrow<T> = T> {
     Owned(U),
 }
 
-impl<T: Clone> Clone for LensValue<'_, T> {
+impl<T, U> Clone for LensValue<'_, T, U>
+where
+    T: ?Sized,
+    U: Clone + Borrow<T>,
+{
     fn clone(&self) -> Self {
         match self {
             LensValue::Borrowed(v) => LensValue::Borrowed(*v),
@@ -59,7 +63,7 @@ impl<T: Copy> Copy for LensValue<'_, T> {}
 
 impl<T> LensValue<'_, T, T::Owned>
 where
-    T: ToOwned,
+    T: ToOwned + ?Sized,
 {
     pub fn into_owned(self) -> T::Owned {
         match self {
@@ -69,19 +73,27 @@ where
     }
 }
 
-impl<T> AsRef<T> for LensValue<'_, T> {
-    fn as_ref(&self) -> &T {
+impl<B, O> AsRef<B> for LensValue<'_, B, O>
+where
+    O: Borrow<B>,
+    B: ?Sized,
+{
+    fn as_ref(&self) -> &B {
         self
     }
 }
 
-impl<B> Deref for LensValue<'_, B> {
+impl<B, O> Deref for LensValue<'_, B, O>
+where
+    O: Borrow<B>,
+    B: ?Sized,
+{
     type Target = B;
 
     fn deref(&self) -> &B {
         match *self {
             LensValue::Borrowed(borrowed) => borrowed,
-            LensValue::Owned(ref owned) => &owned,
+            LensValue::Owned(ref owned) => owned.borrow(),
         }
     }
 }
@@ -155,16 +167,17 @@ pub trait LensExt: Lens {
     /// ```
     fn then<Other>(self, other: Other) -> Then<Self, Other>
     where
-        Other: Lens<Source = Self::Target, SourceOwned = Self::TargetOwned>,
+        Other: Lens<SourceOwned = Self::TargetOwned>,
+        Self::Target: Borrow<Other::Source>,
     {
         Then::new(self, other)
     }
 
-    fn index<T>(self, index: usize) -> Then<Self, Index<Self::Target, (), T>>
+    fn index<T>(self, index: usize) -> Then<Self, Index<Self::TargetOwned, (), T>>
     where
         T: 'static,
-        // Self::Target: Deref<Target = [T]>,
-        Self::TargetOwned: 'static + Into<Vec<T>> + Borrow<[T]>,
+        Self: Lens<TargetOwned = Vec<T>>,
+        Self::Target: Borrow<[T]>,
     {
         self.then(Index::new(index))
     }
@@ -203,14 +216,14 @@ pub struct Borrowed<B, O> {
     o: PhantomData<O>,
 }
 
-pub struct Map<G, I, IO, O> {
+pub struct Map<G, I: ?Sized, IO, O> {
     get: G,
     i: PhantomData<I>,
     io: PhantomData<IO>,
     o: PhantomData<O>,
 }
 
-impl<G: Clone, I, IO, O> Clone for Map<G, I, IO, O> {
+impl<G: Clone, I: ?Sized, IO, O> Clone for Map<G, I, IO, O> {
     fn clone(&self) -> Self {
         Map {
             get: self.get.clone(),
@@ -221,7 +234,7 @@ impl<G: Clone, I, IO, O> Clone for Map<G, I, IO, O> {
     }
 }
 
-impl<G, I, IO, O> Map<G, I, IO, O> {
+impl<G, I: ?Sized, IO, O> Map<G, I, IO, O> {
     pub fn new(get: G) -> Self
     where
         G: Fn(&I) -> O,
@@ -230,8 +243,12 @@ impl<G, I, IO, O> Map<G, I, IO, O> {
     }
 }
 
-impl<G: 'static + Clone + Fn(&I) -> O, I: 'static, IO: 'static + Borrow<I>, O: 'static> Lens
-    for Map<G, I, IO, O>
+impl<
+        G: 'static + Clone + Fn(&I) -> O,
+        I: 'static + ?Sized,
+        IO: 'static + Borrow<I>,
+        O: 'static,
+    > Lens for Map<G, I, IO, O>
 {
     // TODO can we get rid of these static bounds?
     type Source = I;
@@ -243,7 +260,7 @@ impl<G: 'static + Clone + Fn(&I) -> O, I: 'static, IO: 'static + Borrow<I>, O: '
         &self,
         source: impl Into<LensValue<'a, Self::Source, Self::SourceOwned>>,
     ) -> Option<LensValue<'a, Self::Target>> {
-        Some(LensValue::Owned((self.get)(&*source.into())))
+        Some(LensValue::Owned((self.get)(source.into().deref())))
     }
 }
 
@@ -251,7 +268,9 @@ impl<G: 'static + Clone + Fn(&I) -> O, I: 'static, IO: 'static + Borrow<I>, O: '
 pub struct Then<A, B>
 where
     A: Lens,
-    B: Lens<Source = A::Target, SourceOwned = A::TargetOwned>,
+    B: Lens,
+    A::TargetOwned: Into<B::SourceOwned>,
+    A::Target: Borrow<B::Source>,
 {
     a: A,
     b: B,
@@ -260,7 +279,9 @@ where
 impl<A, B> Then<A, B>
 where
     A: Lens,
-    B: Lens<Source = A::Target, SourceOwned = A::TargetOwned>,
+    B: Lens,
+    A::TargetOwned: Into<B::SourceOwned>,
+    A::Target: Borrow<B::Source>,
 {
     pub fn new(a: A, b: B) -> Self
     where
@@ -274,7 +295,9 @@ where
 impl<A, B> Lens for Then<A, B>
 where
     A: Lens,
-    B: Lens<Source = A::Target, SourceOwned = A::TargetOwned>,
+    B: Lens,
+    A::TargetOwned: Into<B::SourceOwned>,
+    A::Target: Borrow<B::Source>,
 {
     type Source = A::Source;
     type SourceOwned = A::SourceOwned;
@@ -285,7 +308,10 @@ where
         &'a self,
         source: impl Into<LensValue<'a, Self::Source, Self::SourceOwned>>,
     ) -> Option<LensValue<'a, Self::Target, Self::TargetOwned>> {
-        self.b.view(self.a.view(source)?)
+        match self.a.view(source)? {
+            LensValue::Borrowed(b) => self.b.view(LensValue::Borrowed(b.borrow())),
+            LensValue::Owned(o) => self.b.view(LensValue::Owned(o.into())),
+        }
     }
 
     fn name(&self) -> Option<&'static str> {
@@ -296,7 +322,9 @@ where
 impl<T: Clone, U: Clone> Clone for Then<T, U>
 where
     T: Lens,
-    U: Lens<Source = T::Target, SourceOwned = T::TargetOwned>,
+    U: Lens,
+    T::TargetOwned: Into<U::SourceOwned>,
+    T::Target: Borrow<U::Source>,
 {
     fn clone(&self) -> Self {
         Self { a: self.a.clone(), b: self.b.clone() }
@@ -306,7 +334,9 @@ where
 impl<T: Copy, U: Copy> Copy for Then<T, U>
 where
     T: Lens,
-    U: Lens<Source = T::Target, SourceOwned = T::TargetOwned>,
+    U: Lens,
+    T::TargetOwned: Into<U::SourceOwned>,
+    T::Target: Borrow<U::Source>,
 {
 }
 
@@ -475,11 +505,11 @@ where
 
     fn view<'a>(
         &'a self,
-        source: impl Into<LensValue<'a, Self::Source>>,
+        source: impl Into<LensValue<'a, Self::Source, Self::SourceOwned>>,
     ) -> Option<LensValue<'a, Self::Target>> {
         match source.into() {
             LensValue::Owned(o) => o.try_into().ok().map(LensValue::Owned),
-            LensValue::Borrowed(b) => b.clone().try_into().ok().map(LensValue::Owned),
+            LensValue::Borrowed(b) => b.to_owned().try_into().ok().map(LensValue::Owned),
         }
     }
 }
@@ -498,7 +528,7 @@ impl<L1, L2> RatioLens<L1, L2> {
 
 impl<L1, L2> Lens for RatioLens<L1, L2>
 where
-    L1: 'static + Clone + Lens<Target = f32, TargetOwned = f32>,
+    L1: 'static + Clone + Lens<Target = f32>,
     L2: 'static
         + Clone
         + Lens<Target = f32, Source = <L1 as Lens>::Source, SourceOwned = <L1 as Lens>::SourceOwned>,
@@ -512,9 +542,9 @@ where
         &'a self,
         source: impl Into<LensValue<'a, Self::Source, Self::SourceOwned>>,
     ) -> Option<LensValue<'a, Self::Target>> {
-        let source = &*source.into();
-        let num = self.numerator.view(source)?.into_owned();
-        let den = self.denominator.view(source)?.into_owned();
+        let source = source.into();
+        let num = *self.numerator.view(source)?;
+        let den = *self.denominator.view(source)?;
         Some(LensValue::Owned(num / den))
     }
 }
@@ -541,16 +571,16 @@ where
 {
     type Source = L1::Source;
     type Target = bool;
-    type SourceOwned = L1::SourceOwned;
+    type SourceOwned = L2::SourceOwned;
     type TargetOwned = Self::Target;
 
     fn view<'a>(
         &'a self,
         source: impl Into<LensValue<'a, Self::Source, Self::SourceOwned>>,
     ) -> Option<LensValue<'a, Self::Target>> {
-        let source = &*source.into();
-        let v1 = self.lens1.view(source)?.into_owned();
-        let v2 = self.lens2.view(source)?.into_owned();
+        let source = source.into();
+        let v1 = *self.lens1.view(LensValue::Borrowed(source.deref()))?;
+        let v2 = *self.lens2.view(source)?;
 
         Some(LensValue::Owned(v1 | v2))
     }
@@ -663,16 +693,16 @@ where
 {
     type Source = L1::Source;
     type Target = bool;
-    type SourceOwned = L1::SourceOwned;
+    type SourceOwned = L2::SourceOwned;
     type TargetOwned = bool;
 
     fn view<'a>(
         &'a self,
         source: impl Into<LensValue<'a, Self::Source, Self::SourceOwned>>,
     ) -> Option<LensValue<'a, Self::Target>> {
-        let source = source.into().deref();
-        let v1 = self.lens1.view(source)?.into_owned();
-        let v2 = self.lens2.view(source)?.into_owned();
+        let source = source.into();
+        let v1 = *self.lens1.view(LensValue::Borrowed(source.deref()))?;
+        let v2 = *self.lens2.view(source)?;
 
         Some(LensValue::Owned(v1 | v2))
     }
@@ -720,8 +750,8 @@ where
     }
 }
 
-impl<G: 'static + Clone + Fn(&I) -> bool, I: 'static, IO, L2: Lens<Target = bool>> BitAnd<L2>
-    for Map<G, I, IO, bool>
+impl<G: 'static + Clone + Fn(&I) -> bool, I: 'static, IO: Borrow<I>, L2: Lens<Target = bool>>
+    BitAnd<L2> for Map<G, I, IO, bool>
 where
     I: Lens<Source = L2::Source>,
 {
@@ -737,8 +767,8 @@ where
     L2: Lens,
     L1::SourceOwned: Clone,
     L2::SourceOwned: Clone,
-    L1::TargetOwned: Clone,
-    L2::TargetOwned: Clone,
+    L1::Target: ToOwned<Owned = L1::TargetOwned>,
+    L2::Target: ToOwned<Owned = L2::TargetOwned>,
 {
     type Source = L1::Source;
     type SourceOwned = L1::SourceOwned;
@@ -749,8 +779,8 @@ where
         &'a self,
         source: impl Into<LensValue<'a, Self::Source, Self::SourceOwned>>,
     ) -> Option<LensValue<'a, Self::Target, Self::TargetOwned>> {
-        let source = &source.into().clone();
-        let v1 = self.0.view(source)?.into_owned();
+        let source = source.into();
+        let v1 = self.0.view(source.clone())?.into_owned();
         let v2 = self.1.view(source)?.into_owned();
 
         Some(LensValue::Owned((v1, v2)))
