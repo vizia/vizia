@@ -157,7 +157,9 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
             impl #impl_generics Lens for #twizzled_name::#field_name#lens_ty_generics #where_clause {
 
                 type Source = #struct_type#ty_generics;
+                type SourceOwned = #struct_type#ty_generics;
                 type Target = #field_ty;
+                type TargetOwned = #field_ty;
 
                 fn view<'a>(&'a self, source: impl Into<LensValue<'a, Self::Source>>) -> Option<LensValue<'a, Self::Target>> {
                     self.view_stateless(source)
@@ -355,7 +357,9 @@ fn derive_enum(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn
         quote! {
             impl Lens for #twizzled_name::#variant_name {
                 type Source = #enum_type;
+                type SourceOwned = #enum_type;
                 type Target = #variant_type;
+                type TargetOwned = #variant_type;
 
                 fn view<'a>(&'a self, source: &'a Self::Source) -> Option<LensValue<'a, Self::Target>> {
                     if let #enum_type::#variant_name(inner_value) = source {

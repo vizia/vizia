@@ -391,7 +391,7 @@ where
         source: impl Into<LensValue<'a, Self::Source, Self::SourceOwned>>,
     ) -> Option<LensValue<'a, Self::Target, Self::TargetOwned>> {
         Some(match source.into() {
-            LensValue::Borrowed(source) => LensValue::Borrowed(source.get(self.index)?),
+            LensValue::Borrowed(source) => LensValue::Borrowed(<[T]>::get(source, self.index)?),
             LensValue::Owned(source) => LensValue::Owned(source.into().swap_remove(self.index)),
         })
     }

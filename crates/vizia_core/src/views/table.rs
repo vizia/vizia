@@ -68,7 +68,10 @@ where
             + Fn(
                 &mut Context,
                 usize,
-                Then<Then<R, Index<<R as Lens>::Target, (), L::SourceOwned>>, L>,
+                Then<
+                    Then<R, Index<<R as Lens>::TargetOwned, <R as Lens>::Target, L::SourceOwned>>,
+                    L,
+                >,
             ),
         Label: 'static + Fn(&mut Context),
         <R as Lens>::Source: Model,
