@@ -129,6 +129,8 @@ pub trait LensExt: Lens {
     fn get(&self, cx: &impl DataContext) -> Self::TargetOwned
     where
         Self::Target: ToOwned<Owned = Self::TargetOwned>,
+        Self::Source: Sized,
+        Self::SourceOwned: Sized,
     {
         self.get_fallible(cx).unwrap()
     }
@@ -136,6 +138,8 @@ pub trait LensExt: Lens {
     fn get_fallible(&self, cx: &impl DataContext) -> Option<Self::TargetOwned>
     where
         Self::Target: ToOwned<Owned = Self::TargetOwned>,
+        Self::Source: Sized,
+        Self::SourceOwned: Sized,
     {
         self.view(LensValue::Borrowed(cx.data()?)).map(|t| t.into_owned())
     }

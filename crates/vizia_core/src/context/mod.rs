@@ -535,7 +535,7 @@ pub(crate) enum InternalEvent {
 /// This type is part of the prelude.
 pub trait DataContext {
     /// Get stored data from the context.
-    fn data<T: 'static + ?Sized>(&self) -> Option<&T>;
+    fn data<T: 'static>(&self) -> Option<&T>;
 
     fn as_context(&self) -> Option<&Context> {
         None

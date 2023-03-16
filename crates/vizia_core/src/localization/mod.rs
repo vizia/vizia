@@ -22,7 +22,9 @@ pub struct ValState<T> {
 impl<L> FluentStore for LensState<L>
 where
     L: Lens,
-    <L as Lens>::Target: Into<FluentValue<'static>> + Data,
+    <L as Lens>::TargetOwned: Into<FluentValue<'static>> + Data,
+    L::Target: ToOwned<Owned = L::TargetOwned>,
+    L::SourceOwned: Sized,
 {
     fn get_val(&self, cx: &Context) -> FluentValue<'static> {
         self.lens
