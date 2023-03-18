@@ -23,15 +23,15 @@ impl<L> FluentStore for LensState<L>
 where
     L: Lens,
     <L as Lens>::TargetOwned: Into<FluentValue<'static>> + Data,
-    L::Target: ToOwned<Owned = L::TargetOwned>,
-    L::SourceOwned: Sized,
+    L::Target: ToOwned<Owned = L::TargetOwned> + Data,
+    L::Source: Sized,
 {
     fn get_val(&self, cx: &Context) -> FluentValue<'static> {
         self.lens
             .view(
-                cx.data()
+                LensValue::Borrowed(cx.data()
                     .expect("Failed to get data from context. Has it been built into the tree?"),
-            )
+            ))
             .map(|t| t.into_owned().into())
             .unwrap_or_else(|| "".into())
     }
@@ -100,7 +100,9 @@ impl Localized {
     pub fn arg<L>(mut self, key: &str, lens: L) -> Self
     where
         L: Lens,
-        <L as Lens>::Target: Into<FluentValue<'static>> + Data,
+        <L as Lens>::TargetOwned: Into<FluentValue<'static>> + Data,
+        L::Target: ToOwned<Owned = L::TargetOwned> + Data,
+        L::Source: Sized,
     {
         self.args.insert(key.to_owned(), Box::new(LensState { lens }));
         self

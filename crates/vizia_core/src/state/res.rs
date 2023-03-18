@@ -102,7 +102,8 @@ impl<T, L, B> GenericRes<T, B> for L
 where
     L: Lens<TargetOwned = T, Target = B>,
     T: Clone + Data + Borrow<B>,
-    B: ToOwned<Owned = T>,
+    B: Data + ToOwned<Owned = T>,
+    L::Source: Sized,
 {
     fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, B, T>> {
         self.view(LensValue::Borrowed(cx.data()?))

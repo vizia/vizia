@@ -1,4 +1,4 @@
-use std::{any::TypeId, borrow::Borrow, collections::HashSet, ops::Deref};
+use std::{any::TypeId, borrow::Borrow, collections::HashSet};
 
 use crate::prelude::*;
 
@@ -35,27 +35,31 @@ pub(crate) struct BasicStore<L: Lens, T> {
     pub observers: HashSet<Entity>,
 }
 
+// TODO skye: what's the role of owned vs borrowed from the perspective of a store?
+// TODO skye: should the models downcast to Source or SourceOwned?
 impl<L: Lens, T> Store for BasicStore<L, T>
 where
-    L: Lens<Target = T, TargetOwned = T>,
+    L: Lens<TargetOwned = T>,
+    <L as Lens>::TargetOwned: Data,
     <L as Lens>::Target: Data,
-    L::Source: Sized,
+    T: Borrow<L::Target>,
+    L::Target: ToOwned<Owned=L::TargetOwned>,
 {
     fn entity(&self) -> Entity {
         self.entity
     }
 
     fn update(&mut self, model: ModelOrView) -> bool {
-        let Some(data) = model.downcast_ref::<L::Source>() else {
+        let Some(data) = model.downcast_ref::<L::SourceOwned>() else {
             return false
         };
-        let Some(new_data) = self.lens.view(LensValue::Borrowed(data)) else { return false };
+        let Some(new_data) = self.lens.view(LensValue::Borrowed(data.borrow())) else { return false };
 
-        if matches!(&self.old, Some(old) if old.same(new_data.borrow())) {
+        if matches!(&self.old, Some(old) if old.borrow().same(new_data.as_ref().borrow())) {
             return false;
         }
 
-        self.old = Some(new_data.deref().clone());
+        self.old = Some(new_data.into_owned());
 
         true
     }

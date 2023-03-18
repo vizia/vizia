@@ -1,4 +1,5 @@
 use std::any::TypeId;
+use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
@@ -20,8 +21,10 @@ where
 impl<L> Binding<L>
 where
     L: 'static + Lens,
-    <L as Lens>::Source: 'static,
-    <L as Lens>::TargetOwned: Data,
+    L::Source: 'static + Sized,
+    L::TargetOwned: Data,
+    L::Target: Data + ToOwned<Owned = L::TargetOwned>,
+    L::SourceOwned: Borrow<L::Source>, // TODO skye why is this necessary!!!!!!!!
 {
     /// Creates a new binding view.
     ///
@@ -57,10 +60,13 @@ where
             model_data: ModelOrView,
             lens: L,
             id: Entity,
-        ) where
-            L::Target: Data,
-            L::Source: Sized,
-            L::Target: ToOwned<Owned = L::TargetOwned>,
+        )
+        where
+            L: 'static + Lens,
+            L::Source: 'static + Sized,
+            L::TargetOwned: Data,
+            L::Target: Data + ToOwned<Owned = L::TargetOwned>,
+            L::SourceOwned: Borrow<L::Source>, // TODO skye why is this necessary!!!!!!!!
         {
             let key = lens.cache_key();
 
@@ -74,9 +80,9 @@ where
                 let mut observers = HashSet::new();
                 observers.insert(id);
 
-                let model = model_data.downcast_ref::<L::Source>().unwrap();
+                let model = model_data.downcast_ref::<L::SourceOwned>().unwrap().borrow();
 
-                let old = lens.view(LensValue::Borrowed(model)).map(|t| t.into_owned());
+                let old: Option<L::TargetOwned> = lens.view(LensValue::Borrowed(model)).map(|t| t.into_owned());
 
                 let store = Box::new(BasicStore { entity: id, lens, old, observers });
 
@@ -103,7 +109,7 @@ where
 
                 // Check for view store
                 if let Some(view_handler) = cx.views.get(&entity) {
-                    if view_handler.as_any_ref().is::<L::Source>() {
+                    if view_handler.as_any_ref().is::<L::SourceOwned>() {
                         insert_store(
                             &ancestors,
                             &mut model_data_store.stores,
@@ -138,7 +144,10 @@ pub trait BindingHandler {
     fn name(&self) -> Option<&'static str>;
 }
 
-impl<L: 'static + Lens> BindingHandler for Binding<L> {
+impl<L: 'static + Lens> BindingHandler for Binding<L>
+where
+    L::Source: Sized
+{
     fn update(&mut self, cx: &mut Context) {
         cx.remove_children(cx.current());
         if let Some(builder) = &self.content {

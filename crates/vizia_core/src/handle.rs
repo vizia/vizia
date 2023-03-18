@@ -66,6 +66,8 @@ impl<'a, V> Handle<'a, V> {
     where
         L: Lens,
         <L as Lens>::TargetOwned: Data,
+        L::Target: Data + ToOwned<Owned=L::TargetOwned>,
+        L::Source: Sized,
         F: 'static + Fn(Handle<'_, V>, L),
     {
         let entity = self.entity();
