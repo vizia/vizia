@@ -35,15 +35,9 @@ pub(crate) struct BasicStore<L: Lens, T> {
     pub observers: HashSet<Entity>,
 }
 
-// TODO skye: what's the role of owned vs borrowed from the perspective of a store?
-// TODO skye: should the models downcast to Source or SourceOwned?
-impl<L: Lens, T> Store for BasicStore<L, T>
+impl<L: Lens, T: Data> Store for BasicStore<L, T>
 where
-    L: Lens<TargetOwned = T>,
-    <L as Lens>::TargetOwned: Data,
-    <L as Lens>::Target: Data,
-    T: Borrow<L::Target>,
-    L::Target: ToOwned<Owned=L::TargetOwned>,
+    L: Lens<Target = T>,
 {
     fn entity(&self) -> Entity {
         self.entity

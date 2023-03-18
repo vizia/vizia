@@ -21,10 +21,8 @@ where
 impl<L> Binding<L>
 where
     L: 'static + Lens,
-    L::Source: 'static + Sized,
-    L::TargetOwned: Data,
-    L::Target: Data + ToOwned<Owned = L::TargetOwned>,
-    L::SourceOwned: Borrow<L::Source>, // TODO skye why is this necessary!!!!!!!!
+    L::Source: 'static,
+    L::Target: 'static + Data,
 {
     /// Creates a new binding view.
     ///
@@ -64,9 +62,7 @@ where
         where
             L: 'static + Lens,
             L::Source: 'static + Sized,
-            L::TargetOwned: Data,
-            L::Target: Data + ToOwned<Owned = L::TargetOwned>,
-            L::SourceOwned: Borrow<L::Source>, // TODO skye why is this necessary!!!!!!!!
+            L::Target: Data,
         {
             let key = lens.cache_key();
 

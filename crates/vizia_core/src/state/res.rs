@@ -98,11 +98,10 @@ impl_res_simple!(Weight);
 impl_res_simple!(FontStyle);
 
 impl<T, L, B> GenericRes<T, B> for L
-// translation lookaside buffer
 where
-    L: Lens<TargetOwned = T, Target = B>,
+    L: Lens<Target = T>,
     T: Clone + Data + Borrow<B>,
-    B: Data + ToOwned<Owned = T>,
+    B: Data,
     L::Source: Sized,
 {
     fn get_ref<'a>(&'a self, cx: &'a impl DataContext) -> Option<LensValue<'a, B, T>> {

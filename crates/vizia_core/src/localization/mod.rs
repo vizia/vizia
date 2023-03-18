@@ -22,9 +22,7 @@ pub struct ValState<T> {
 impl<L> FluentStore for LensState<L>
 where
     L: Lens,
-    <L as Lens>::TargetOwned: Into<FluentValue<'static>> + Data,
-    L::Target: ToOwned<Owned = L::TargetOwned> + Data,
-    L::Source: Sized,
+    <L as Lens>::Target: Into<FluentValue<'static>> + Data,
 {
     fn get_val(&self, cx: &Context) -> FluentValue<'static> {
         self.lens
@@ -100,9 +98,7 @@ impl Localized {
     pub fn arg<L>(mut self, key: &str, lens: L) -> Self
     where
         L: Lens,
-        <L as Lens>::TargetOwned: Into<FluentValue<'static>> + Data,
-        L::Target: ToOwned<Owned = L::TargetOwned> + Data,
-        L::Source: Sized,
+        <L as Lens>::Target: Into<FluentValue<'static>> + Data,
     {
         self.args.insert(key.to_owned(), Box::new(LensState { lens }));
         self

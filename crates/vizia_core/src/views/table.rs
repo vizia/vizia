@@ -39,10 +39,10 @@ where
 
 pub struct TableColumn<R, L>
 where
-    R: Lens<Target = Vec<L::SourceOwned>>,
+    R: Lens<Target = Vec<L::Source>>,
     L: Lens,
-    L::SourceOwned: Data,
-    L::TargetOwned: Data,
+    L::Source: Data,
+    L::Target: Data,
 {
     p1: PhantomData<R>,
     p2: PhantomData<L>,
@@ -50,10 +50,9 @@ where
 
 impl<R, L> TableColumn<R, L>
 where
-    R: Lens<Target = Vec<L::SourceOwned>, TargetOwned = Vec<L::SourceOwned>>,
+    R: Lens<Target = Vec<L::Source>>,
     L: Lens,
-    L::SourceOwned: Data,
-    L::TargetOwned: Data,
+    L::Source: Data,
     L::Target: Data,
 {
     pub fn new<F, Label>(
@@ -69,7 +68,7 @@ where
                 &mut Context,
                 usize,
                 Then<
-                    Then<R, Index<<R as Lens>::TargetOwned, <R as Lens>::Target, L::SourceOwned>>,
+                    Then<R, Index<<R as Lens>::Target, <R as Lens>::Target, L::Source>>,
                     L,
                 >,
             ),
@@ -101,10 +100,10 @@ where
 
 impl<R, L> View for TableColumn<R, L>
 where
-    R: Lens<Target = Vec<L::SourceOwned>>,
+    R: Lens<Target = Vec<L::Source>>,
     L: Lens,
-    L::SourceOwned: Data,
-    L::TargetOwned: Data,
+    L::Source: Data,
+    L::Target: Data,
 {
     fn element(&self) -> Option<&'static str> {
         Some("tablecolumn")

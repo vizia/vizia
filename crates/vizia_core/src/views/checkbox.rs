@@ -135,7 +135,7 @@ impl Checkbox {
     /// ```
     pub fn new(
         cx: &mut Context,
-        checked: impl Lens<Target = bool, TargetOwned = bool>,
+        checked: impl Lens<Target = bool>,
     ) -> Handle<Self> {
         //let checked = checked.get_val_fallible(cx).unwrap_or(false);
         Self { on_toggle: None }

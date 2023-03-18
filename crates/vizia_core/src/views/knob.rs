@@ -26,7 +26,7 @@ pub struct Knob<L> {
     on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
 }
 
-impl<L: Lens<Target = f32, TargetOwned = f32>> Knob<L> {
+impl<L: Lens<Target = f32>> Knob<L> {
     pub fn new(
         cx: &mut Context,
         normalized_default: impl Res<f32>,
