@@ -1,5 +1,8 @@
+use std::borrow::Borrow;
+
 use super::internal;
 use crate::prelude::*;
+use crate::state::GenericRes;
 use crate::style::SystemFlags;
 
 /// Modifiers for changing the style properties of a view.
@@ -68,7 +71,7 @@ pub trait StyleModifiers: internal::Modifiable {
     // TODO: Should these have their own modifiers trait?
 
     /// Sets the state of the view to checked.
-    fn checked<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
+    fn checked<U: Into<bool> + Borrow<X>, X>(mut self, state: impl GenericRes<U, X>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, entity, v| {
             let val = v.get_val(cx).into();

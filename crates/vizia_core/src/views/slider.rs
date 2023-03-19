@@ -77,7 +77,7 @@ pub struct Slider<L: Lens> {
 
 impl<L> Slider<L>
 where
-    L: Lens<Target = f32>,
+    L: LensSimple<f32>,
 {
     /// Creates a new slider bound to the value targeted by the lens.
     ///
@@ -181,7 +181,7 @@ where
     }
 }
 
-impl<L: Lens<Target = f32>> View for Slider<L> {
+impl<L: LensSimple<f32>> View for Slider<L> {
     fn element(&self) -> Option<&'static str> {
         Some("slider")
     }

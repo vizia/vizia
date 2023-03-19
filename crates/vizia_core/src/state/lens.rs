@@ -31,6 +31,12 @@ pub trait Lens: 'static + Clone {
     }
 }
 
+pub trait LensSimple<T> = Lens<TargetOwned = T>
+where 
+    <Self as Lens>::Source: Sized,
+    <Self as Lens>::Target: super::Data + ToOwned<Owned = T>,
+    <Self as Lens>::TargetOwned: Borrow<<Self as Lens>::Target>;
+
 pub trait StatelessLens: Lens {
     fn view_stateless<'a>(
         &self,

@@ -6,7 +6,7 @@ use vizia_input::Code;
 /// A view for creating a list of items from a binding to a Vec<T>
 pub struct List<L, T: 'static>
 where
-    L: Lens<Target = Vec<T>>,
+    L: Lens<TargetOwned = Vec<T>, Target = [T]>,
 {
     p: PhantomData<L>,
     increment_callback: Option<Box<dyn Fn(&mut EventContext)>>,
@@ -14,11 +14,11 @@ where
     clear_callback: Option<Box<dyn Fn(&mut EventContext)>>,
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
+impl<L: 'static + Lens<TargetOwned = Vec<T>, Target = [T]>, T: Clone> List<L, T> {
     /// Creates a new List view with a binding to the given lens and a template for constructing the list items
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
-        F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, Vec<T>, T>>),
+        F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, (), T>>),
         <L as Lens>::Source: Model,
     {
         //let item_template = Rc::new(item);
@@ -45,7 +45,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
     }
 }
 
-impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
+impl<L: 'static + Lens<TargetOwned = Vec<T>, Target = [T]>, T> View for List<L, T> {
     fn element(&self) -> Option<&'static str> {
         Some("list")
     }
@@ -88,7 +88,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T> View for List<L, T> {
     }
 }
 
-impl<L: Lens<Target = Vec<T>>, T: Data> Handle<'_, List<L, T>> {
+impl<L: Lens<TargetOwned = Vec<T>, Target = [T]>, T: Data> Handle<'_, List<L, T>> {
     pub fn on_increment<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext),

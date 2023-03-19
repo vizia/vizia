@@ -1,3 +1,5 @@
+#![feature(trait_alias)]
+
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;
@@ -52,7 +54,7 @@ pub mod prelude {
         AbilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers, TextModifiers,
     };
     pub use super::state::{
-        Binding, Data, Lens, LensExt, LensValue, Model, Res, Setter, StatelessLens, Wrapper,
+        Binding, Data, Lens, LensSimple, LensExt, LensValue, Model, Res, Setter, StatelessLens, Wrapper,
     };
     pub use super::view::{Canvas, View};
     pub use super::views::*;

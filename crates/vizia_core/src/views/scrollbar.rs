@@ -10,8 +10,8 @@ pub struct Scrollbar<L1> {
     on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
 }
 
-impl<L1: Lens<Target = f32>> Scrollbar<L1> {
-    pub fn new<F, L2: Lens<Target = f32>>(
+impl<L1: LensSimple<f32>> Scrollbar<L1> {
+    pub fn new<F, L2: LensSimple<f32>>(
         cx: &mut Context,
         value: L1,
         ratio: L2,
@@ -31,7 +31,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
             Element::new(cx)
                 .class("thumb")
                 .bind(value, move |handle, value| {
-                    let value = value.get_val(handle.cx);
+                    let value = value.get(handle.cx);
                     match orientation {
                         Orientation::Horizontal => {
                             handle.left(Units::Stretch(value)).right(Units::Stretch(1.0 - value))
@@ -42,7 +42,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
                     };
                 })
                 .bind(ratio, move |handle, ratio| {
-                    let ratio = ratio.get_val(handle.cx);
+                    let ratio = ratio.get(handle.cx);
                     match orientation {
                         Orientation::Horizontal => handle.width(Units::Percentage(ratio * 100.0)),
                         Orientation::Vertical => handle.height(Units::Percentage(ratio * 100.0)),
@@ -96,7 +96,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
     }
 }
 
-impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
+impl<L1: 'static + LensSimple<f32>> View for Scrollbar<L1> {
     fn element(&self) -> Option<&'static str> {
         Some("scrollbar")
     }
@@ -110,7 +110,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
             match window_event {
                 WindowEvent::MouseDown(MouseButton::Left) => {
                     if meta.target != cx.current() {
-                        self.reference_points = Some((pos, self.value.get_val(cx)));
+                        self.reference_points = Some((pos, self.value.get(cx)));
                         cx.capture();
                     } else {
                         let (_, jump) = self.container_and_thumb_size(cx);
@@ -136,7 +136,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                             }
                         };
                         let changed =
-                            self.compute_new_value(cx, physical_delta, self.value.get_val(cx));
+                            self.compute_new_value(cx, physical_delta, self.value.get(cx));
                         self.change(cx, changed);
                     }
                 }

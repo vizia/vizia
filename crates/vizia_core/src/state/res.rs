@@ -4,7 +4,7 @@ use crate::prelude::*;
 
 macro_rules! impl_res_simple {
     ($t:ty) => {
-        impl Res<$t> for $t {
+        impl GenericRes<$t, $t> for $t {
             fn get_ref(&self, _: &impl DataContext) -> Option<LensValue<'_, $t>> {
                 Some(LensValue::Borrowed(self))
             }

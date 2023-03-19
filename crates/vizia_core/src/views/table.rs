@@ -39,7 +39,7 @@ where
 
 pub struct TableColumn<R, L>
 where
-    R: Lens<Target = Vec<L::SourceOwned>>,
+    R: Lens<TargetOwned = Vec<L::SourceOwned>>,
     L: Lens,
     L::SourceOwned: Data,
     L::TargetOwned: Data,
@@ -50,7 +50,7 @@ where
 
 impl<R, L> TableColumn<R, L>
 where
-    R: Lens<Target = Vec<L::SourceOwned>, TargetOwned = Vec<L::SourceOwned>>,
+    R: Lens<TargetOwned = Vec<L::SourceOwned>>,
     L: Lens,
     L::SourceOwned: Data,
     L::TargetOwned: Data,
@@ -101,7 +101,7 @@ where
 
 impl<R, L> View for TableColumn<R, L>
 where
-    R: Lens<Target = Vec<L::SourceOwned>>,
+    R: Lens<TargetOwned = Vec<L::SourceOwned>>,
     L: Lens,
     L::SourceOwned: Data,
     L::TargetOwned: Data,

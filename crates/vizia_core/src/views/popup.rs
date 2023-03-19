@@ -41,7 +41,7 @@ pub struct Popup<L> {
 
 impl<L> Popup<L>
 where
-    L: Lens<Target = bool>,
+    L: LensSimple<bool>,
 {
     pub fn new<F>(cx: &mut Context, lens: L, capture_focus: bool, content: F) -> Handle<Self>
     where
@@ -50,7 +50,7 @@ where
         Self { lens: lens.clone() }
             .build(cx, |cx| {
                 Binding::new(cx, lens.clone(), move |cx, lens| {
-                    if lens.get_val(cx) {
+                    if lens.get(cx) {
                         if capture_focus {
                             VStack::new(cx, &content).lock_focus_to_within();
                         } else {
@@ -67,7 +67,7 @@ where
 
 impl<'a, L> Handle<'a, Popup<L>>
 where
-    L: Lens,
+    L: LensSimple<bool>,
     L::Target: Clone + Data + Into<bool>,
 {
     /// Registers a callback for when the user clicks off of the popup, usually with the intent of
@@ -79,7 +79,7 @@ where
         let focus_event = Box::new(f);
         self.cx.with_current(self.entity, |cx| {
             cx.add_listener(move |popup: &mut Popup<L>, cx, event| {
-                let flag: bool = popup.lens.get_val(cx).clone().into();
+                let flag = popup.lens.get(cx);
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag && meta.origin != cx.current() && !cx.is_over() {
@@ -105,8 +105,7 @@ where
 
 impl<L> View for Popup<L>
 where
-    L: Lens,
-    L::Target: Into<bool>,
+    L: LensSimple<bool>,
 {
     fn element(&self) -> Option<&'static str> {
         Some("popup")

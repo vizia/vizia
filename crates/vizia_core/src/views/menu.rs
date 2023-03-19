@@ -294,7 +294,7 @@ impl MenuButton {
     where
         F: 'static + FnOnce(&mut Context),
         A: 'static + Fn(&mut EventContext),
-        L: Lens<Target = bool>,
+        L: LensSimple<bool>,
     {
         Self::new(
             cx,
@@ -319,7 +319,7 @@ impl MenuButton {
     ) -> Handle<'_, Self>
     where
         A: 'static + Fn(&mut EventContext),
-        L: 'static + Lens<Target = bool>,
+        L: 'static + LensSimple<bool>,
     {
         Self::new_check(
             cx,
