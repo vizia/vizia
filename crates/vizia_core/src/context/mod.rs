@@ -375,11 +375,11 @@ impl Context {
                 self.focus_stack.remove(index);
             }
 
-            if self.focused == *entity
-                && delete_list.contains(&self.tree.lock_focus_within(*entity))
-            {
+            if self.focused == *entity {
                 if let Some(new_focus) = self.focus_stack.pop() {
                     self.with_current(new_focus, |cx| cx.focus());
+                } else {
+                    self.with_current(Entity::root(), |cx| cx.focus());
                 }
             }
 
