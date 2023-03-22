@@ -380,6 +380,8 @@ impl Context {
             {
                 if let Some(new_focus) = self.focus_stack.pop() {
                     self.with_current(new_focus, |cx| cx.focus());
+                } else {
+                    self.with_current(Entity::root(), |cx| cx.focus());
                 }
             }
 
