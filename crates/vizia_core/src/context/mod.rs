@@ -39,8 +39,8 @@ use crate::style::Style;
 use crate::text::{TextConfig, TextContext};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
-use vizia_storage::SparseSet;
 use vizia_storage::TreeExt;
+use vizia_storage::{ChildIterator, SparseSet};
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
@@ -340,7 +340,8 @@ impl Context {
     }
 
     pub(crate) fn remove_children(&mut self, entity: Entity) {
-        let children = entity.child_iter(&self.tree).collect::<Vec<_>>();
+        let child_iter = ChildIterator::new(&self.tree, entity);
+        let children = child_iter.collect::<Vec<_>>();
         for child in children.into_iter() {
             self.remove(child);
         }
