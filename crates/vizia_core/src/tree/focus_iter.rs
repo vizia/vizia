@@ -17,7 +17,7 @@ pub fn is_navigatable(cx: &Context, node: Entity, lock_focus_to: Entity) -> bool
     }
 
     // Skip non-displayed widgets
-    if cx.cache.get_display(node) == Display::None {
+    if cx.style.display.get(node).copied().unwrap_or_default() == Display::None {
         return false;
     }
 

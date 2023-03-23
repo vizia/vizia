@@ -282,25 +282,23 @@ pub(crate) struct Size {
 #[derive(Default)]
 pub struct CachedData {
     pub(crate) bounds: SparseSet<BoundingBox>,
-    pub(crate) visibility: SparseSet<Visibility>,
-    pub(crate) display: SparseSet<Display>,
-    pub(crate) opacity: SparseSet<f32>,
-
+    // pub(crate) visibility: SparseSet<Visibility>,
+    // pub(crate) display: SparseSet<Display>,
+    // pub(crate) opacity: SparseSet<f32>,
     pub(crate) abilities: SparseSet<Abilities>,
 
     pub(crate) child_sum: SparseSet<(f32, f32)>, // Sum of child (widths, heights)
     pub(crate) child_max: SparseSet<(f32, f32)>, // Max child (widths, heights)
 
     //pub(crate) prev_size: SparseSet<Pos>,
-    clip_region: SparseSet<BoundingBox>,
+    // clip_region: SparseSet<BoundingBox>,
 
     // Transform
-    rotate: SparseSet<f32>,
-    scale: SparseSet<(f32, f32)>,
-    transform: SparseSet<Transform2D>,
+    // rotate: SparseSet<f32>,
+    // scale: SparseSet<(f32, f32)>,
+    // transform: SparseSet<Transform2D>,
 
-    origin: SparseSet<(f32, f32)>,
-
+    // origin: SparseSet<(f32, f32)>,
     pub(crate) space: SparseSet<Space>,
     pub(crate) size: SparseSet<Size>,
     cross_stretch_sum: SparseSet<f32>,
@@ -323,18 +321,18 @@ pub struct CachedData {
 impl CachedData {
     pub fn add(&mut self, entity: Entity) -> Result<(), SparseSetError> {
         self.bounds.insert(entity, Default::default())?;
-        self.display.insert(entity, Default::default())?;
+        // self.display.insert(entity, Default::default())?;
         self.child_sum.insert(entity, (0.0, 0.0))?;
         self.child_max.insert(entity, (0.0, 0.0))?;
 
-        self.opacity.insert(entity, 1.0)?;
+        // self.opacity.insert(entity, 1.0)?;
 
-        self.rotate.insert(entity, 0.0)?;
-        self.scale.insert(entity, (1.0, 1.0))?;
-        self.transform.insert(entity, Transform2D::identity())?;
-        self.origin.insert(entity, (0.0, 0.0))?;
+        // self.rotate.insert(entity, 0.0)?;
+        // self.scale.insert(entity, (1.0, 1.0))?;
+        // self.transform.insert(entity, Transform2D::identity())?;
+        // self.origin.insert(entity, (0.0, 0.0))?;
 
-        self.clip_region.insert(entity, Default::default())?;
+        // self.clip_region.insert(entity, Default::default())?;
         self.space.insert(entity, Default::default())?;
         self.size.insert(entity, Default::default())?;
         self.cross_stretch_sum.insert(entity, Default::default())?;
@@ -358,18 +356,18 @@ impl CachedData {
 
     pub fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
-        self.display.remove(entity);
+        // self.display.remove(entity);
         self.child_sum.remove(entity);
         self.child_max.remove(entity);
 
-        self.opacity.remove(entity);
+        // self.opacity.remove(entity);
 
-        self.rotate.remove(entity);
-        self.scale.remove(entity);
-        self.transform.remove(entity);
-        self.origin.remove(entity);
+        // self.rotate.remove(entity);
+        // self.scale.remove(entity);
+        // self.transform.remove(entity);
+        // self.origin.remove(entity);
 
-        self.clip_region.remove(entity);
+        // self.clip_region.remove(entity);
         self.space.remove(entity);
         self.size.remove(entity);
         self.cross_stretch_sum.remove(entity);
@@ -494,12 +492,12 @@ impl CachedData {
     //     self.space.get(entity).cloned().unwrap()
     // }
 
-    /// Returns the clip region of the entity.
-    ///
-    /// This is the bounding box for which rendering of the widget will be clipped/cropped when outside of the bounds.
-    pub fn get_clip_region(&self, entity: Entity) -> BoundingBox {
-        self.clip_region.get(entity).cloned().unwrap()
-    }
+    // /// Returns the clip region of the entity.
+    // ///
+    // /// This is the bounding box for which rendering of the widget will be clipped/cropped when outside of the bounds.
+    // pub fn get_clip_region(&self, entity: Entity) -> BoundingBox {
+    //     self.clip_region.get(entity).cloned().unwrap()
+    // }
 
     pub fn get_child_width_sum(&self, entity: Entity) -> f32 {
         self.child_sum.get(entity).cloned().unwrap().0
@@ -553,10 +551,10 @@ impl CachedData {
     //         .y
     // }
 
-    /// Returns the opacity of the entity.
-    pub fn get_opacity(&self, entity: Entity) -> f32 {
-        self.opacity.get(entity).cloned().unwrap()
-    }
+    // /// Returns the opacity of the entity.
+    // pub fn get_opacity(&self, entity: Entity) -> f32 {
+    //     self.opacity.get(entity).cloned().unwrap()
+    // }
 
     pub fn get_horizontal_free_space(&self, entity: Entity) -> f32 {
         self.horizontal_free_space.get(entity).cloned().unwrap()
@@ -574,34 +572,34 @@ impl CachedData {
         self.vertical_stretch_sum.get(entity).cloned().unwrap()
     }
 
-    pub fn get_rotate(&self, entity: Entity) -> f32 {
-        self.transform.get(entity).cloned().unwrap()[0].acos()
-    }
+    // pub fn get_rotate(&self, entity: Entity) -> f32 {
+    //     self.transform.get(entity).cloned().unwrap()[0].acos()
+    // }
 
-    pub fn get_translate(&self, entity: Entity) -> (f32, f32) {
-        let transform = self.transform.get(entity).cloned().unwrap();
+    // pub fn get_translate(&self, entity: Entity) -> (f32, f32) {
+    //     let transform = self.transform.get(entity).cloned().unwrap();
 
-        (transform[4], transform[5])
-    }
+    //     (transform[4], transform[5])
+    // }
 
-    pub fn get_scale(&self, entity: Entity) -> f32 {
-        let scale = self.scale.get(entity).cloned().unwrap();
+    // pub fn get_scale(&self, entity: Entity) -> f32 {
+    //     let scale = self.scale.get(entity).cloned().unwrap();
 
-        scale.0
-    }
+    //     scale.0
+    // }
 
-    pub fn get_origin(&self, entity: Entity) -> (f32, f32) {
-        self.origin.get(entity).cloned().unwrap()
-    }
+    // pub fn get_origin(&self, entity: Entity) -> (f32, f32) {
+    //     self.origin.get(entity).cloned().unwrap()
+    // }
 
-    /// Returns the transform on the entity.
-    pub fn get_transform(&self, entity: Entity) -> Transform2D {
-        self.transform.get(entity).cloned().unwrap()
-    }
+    // /// Returns the transform on the entity.
+    // pub fn get_transform(&self, entity: Entity) -> Transform2D {
+    //     self.transform.get(entity).cloned().unwrap()
+    // }
 
-    pub fn get_transform_mut(&mut self, entity: Entity) -> &mut Transform2D {
-        self.transform.get_mut(entity).unwrap()
-    }
+    // pub fn get_transform_mut(&mut self, entity: Entity) -> &mut Transform2D {
+    //     self.transform.get_mut(entity).unwrap()
+    // }
 
     // SETTERS
 
@@ -677,11 +675,11 @@ impl CachedData {
     //     }
     // }
 
-    pub fn set_clip_region(&mut self, entity: Entity, val: BoundingBox) {
-        if let Some(clip_region) = self.clip_region.get_mut(entity) {
-            *clip_region = val;
-        }
-    }
+    // pub fn set_clip_region(&mut self, entity: Entity, val: BoundingBox) {
+    //     if let Some(clip_region) = self.clip_region.get_mut(entity) {
+    //         *clip_region = val;
+    //     }
+    // }
 
     pub fn set_child_width_sum(&mut self, entity: Entity, val: f32) {
         if let Some(child_sum) = self.child_sum.get_mut(entity) {
@@ -739,19 +737,9 @@ impl CachedData {
         }
     }
 
-    pub fn get_display(&self, entity: Entity) -> Display {
-        self.display.get(entity).cloned().unwrap()
-    }
-
     pub(crate) fn set_hoverability(&mut self, entity: Entity, val: bool) {
         if let Some(abilities) = self.abilities.get_mut(entity) {
             abilities.set(Abilities::HOVERABLE, val);
-        }
-    }
-
-    pub fn set_opacity(&mut self, entity: Entity, val: f32) {
-        if let Some(opacity) = self.opacity.get_mut(entity) {
-            *opacity = val;
         }
     }
 }

@@ -238,15 +238,6 @@ impl ApplicationRunner {
             cx.cache().set_width(Entity::root(), new_physical_width);
             cx.cache().set_height(Entity::root(), new_physical_height);
 
-            cx.cache().set_clip_region(
-                Entity::root(),
-                BoundingBox {
-                    w: new_physical_width,
-                    h: new_physical_height,
-                    ..BoundingBox::default()
-                },
-            );
-
             cx.needs_refresh();
 
             self.event_manager.flush_events(cx.context());
@@ -425,8 +416,6 @@ impl ApplicationRunner {
                     let mut bounding_box = BoundingBox::default();
                     bounding_box.w = physical_size.0 as f32;
                     bounding_box.h = physical_size.1 as f32;
-
-                    cx.cache().set_clip_region(Entity::root(), bounding_box);
 
                     cx.needs_refresh();
                 }

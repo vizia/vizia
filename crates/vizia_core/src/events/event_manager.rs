@@ -363,9 +363,9 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                             indents(entity),
                             entity,
                             element_name,
-                            cache.get_display(entity),
                             cache.get_bounds(entity),
-                            cache.get_clip_region(entity),
+                            cache.get_bounds(entity),
+                            cache.get_bounds(entity),
                         );
                     } else if let Some(binding_name) =
                         context.bindings.get(&entity).and_then(|binding| binding.name())

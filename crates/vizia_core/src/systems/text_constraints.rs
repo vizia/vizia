@@ -19,12 +19,12 @@ pub fn text_constraints_system(cx: &mut Context) {
         // Skip if the entity is invisible
         // Unfortunately we can't skip the subtree because even if a parent is invisible
         // a child might be explicitly set to be visible.
-        if entity == Entity::root()
-            || cx.cache.get_display(entity) == Display::None
-            || cx.cache.get_opacity(entity) == 0.0
-        {
-            continue;
-        }
+        // if entity == Entity::root()
+        //     || cx.cache.get_display(entity) == Display::None
+        //     || cx.cache.get_opacity(entity) == 0.0
+        // {
+        //     continue;
+        // }
 
         // content-size is only used if any dimension is auto
         if cx.style.min_width.get(entity).copied().unwrap_or_default() != Units::Auto

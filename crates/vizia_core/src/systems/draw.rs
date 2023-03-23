@@ -12,6 +12,7 @@ pub fn draw_system(cx: &mut Context) {
     let window_height = cx.cache.get_height(Entity::root());
     let clear_color =
         cx.style.background_color.get(Entity::root()).cloned().unwrap_or(RGBA::WHITE.into());
+    canvas.set_size(window_width as u32, window_height as u32, 1.0);
     canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
     let mut queue = BinaryHeap::new();
     queue.push(ZEntity(0, Entity::root()));
@@ -55,14 +56,10 @@ fn draw_entity(
     visible: bool,
 ) {
     let current = cx.current;
-    // println!("{} {:?}", current, cx.style.display.get(current));
-    // if cx.cache.get_display(current) == Display::None || cx.cache.get_opacity(current) == 0.0 {
-    //     return;
-    // }
 
-    // if !cx.style.display.get(cx.current).map(|display| *display == Display::Flex).unwrap_or(true) {
-    //     return;
-    // }
+    if cx.display() == Display::None {
+        return;
+    }
 
     let z_order = cx.tree.z_order(current);
     if z_order > current_z {

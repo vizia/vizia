@@ -7,14 +7,8 @@ use fnv::FnvHashMap;
 use super::EventProxy;
 use crate::style::SystemFlags;
 use crate::{
-    cache::{BoundingBox, CachedData},
-    environment::Environment,
-    events::ViewHandler,
-    layout::geometry_changed,
-    prelude::*,
-    state::ModelOrView,
-    style::Style,
-    systems::*,
+    cache::CachedData, environment::Environment, events::ViewHandler, layout::geometry_changed,
+    prelude::*, state::ModelOrView, style::Style, systems::*,
 };
 use vizia_id::GenerationalId;
 
@@ -98,11 +92,6 @@ impl<'a> BackendContext<'a> {
 
         self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::ROOT).unwrap();
         self.0.style.disabled.insert(Entity::root(), false);
-
-        let bounding_box =
-            BoundingBox { w: physical_width, h: physical_height, ..Default::default() };
-
-        self.0.cache.set_clip_region(Entity::root(), bounding_box);
 
         self.0.canvases.insert(Entity::root(), canvas);
     }

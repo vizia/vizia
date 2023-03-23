@@ -77,7 +77,8 @@ macro_rules! style_getter_units {
 macro_rules! get_color_property {
     ($ty:ty, $name:ident) => {
         pub fn $name(&self) -> $ty {
-            let opacity = self.cache.get_opacity(self.current);
+            // let opacity = self.cache.get_opacity(self.current);
+            let opacity = 1.0;
             if let Some(col) = self.style.$name.get(self.current) {
                 Color::rgba(col.r(), col.g(), col.b(), (opacity * col.a() as f32) as u8)
             } else {
@@ -211,6 +212,10 @@ impl<'a> DrawContext<'a> {
         self.style.visibility.get(self.current).copied()
     }
 
+    pub fn display(&self) -> Display {
+        self.style.display.get(self.current).copied().unwrap_or(Display::Flex)
+    }
+
     /// Returns the lookup pattern to pick the default font.
     pub fn default_font(&self) -> &[FamilyOwned] {
         &self.style.default_font
@@ -269,7 +274,8 @@ impl<'a> DrawContext<'a> {
     get_color_property!(Color, caret_color);
 
     pub fn font_color(&self) -> Color {
-        let opacity = self.cache.get_opacity(self.current);
+        // let opacity = self.cache.get_opacity(self.current);
+        let opacity = 1.0;
         if let Some(col) = self.style.font_color.get(self.current) {
             Color::rgba(col.r(), col.g(), col.b(), (opacity * col.a() as f32) as u8)
         } else {
@@ -297,9 +303,9 @@ impl<'a> DrawContext<'a> {
     //     self.style.text.get(self.current)
     // }
 
-    pub fn opacity(&self) -> f32 {
-        self.cache.get_opacity(self.current)
-    }
+    // pub fn opacity(&self) -> f32 {
+    //     self.cache.get_opacity(self.current)
+    // }
 
     pub fn scale_factor(&self) -> f32 {
         self.style.dpi_factor as f32

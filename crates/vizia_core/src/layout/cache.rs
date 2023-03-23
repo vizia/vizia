@@ -7,13 +7,16 @@ impl Cache for CachedData {
     type Item = Entity;
 
     fn visible(&self, node: Self::Item) -> bool {
-        self.display.get(node).cloned().map_or(true, |display| display == Display::Flex)
+        // TODO
+        //self.display.get(node).cloned().map_or(true, |display| display == Display::Flex)
+        true
     }
 
     fn set_visible(&mut self, node: Self::Item, value: bool) {
-        if let Some(visibility) = self.visibility.get_mut(node) {
-            *visibility = if value { Visibility::Visible } else { Visibility::Hidden }
-        }
+        // TODO
+        // if let Some(visibility) = self.visibility.get_mut(node) {
+        //     *visibility = if value { Visibility::Visible } else { Visibility::Hidden }
+        // }
     }
 
     fn geometry_changed(&self, node: Self::Item) -> GeometryChanged {
