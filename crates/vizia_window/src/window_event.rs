@@ -1,5 +1,4 @@
 use crate::{Position, WindowSize};
-use morphorm::GeometryChanged;
 use vizia_input::{Code, Key, MouseButton};
 use vizia_style::CursorIcon;
 
@@ -83,7 +82,7 @@ pub enum WindowEvent {
     MouseCaptureOutEvent,
     // TODO: check if this includes margins + borders.
     /// Emitted when an entity changes position or size.
-    GeometryChanged(GeometryChanged),
+    GeometryChanged(bool),
     /// Requests a redraw of the window contents.
     Redraw,
     /// Request a restyle.

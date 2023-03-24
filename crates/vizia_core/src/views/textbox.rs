@@ -66,7 +66,7 @@ impl TextboxData {
             parent_bounds.w += 2.0;
             (tx, ty) = ensure_visible(&caret_box, &parent_bounds, (tx, ty));
         }
-
+        println!("{} {}", tx, ty);
         self.transform = (tx.round() / scale, ty.round() / scale);
     }
 
@@ -74,7 +74,8 @@ impl TextboxData {
         cx.text_context.with_editor(self.content_entity, |buf| {
             buf.insert_string(text, None);
         });
-        cx.style.needs_text_layout.insert(self.content_entity, true).unwrap();
+        cx.needs_relayout();
+        cx.needs_redraw();
     }
 
     pub fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
@@ -84,14 +85,16 @@ impl TextboxData {
                 buf.delete_selection();
             });
         }
-        cx.style.needs_text_layout.insert(self.content_entity, true).unwrap();
+        cx.needs_relayout();
+        cx.needs_redraw();
     }
 
     pub fn reset_text(&mut self, cx: &mut EventContext, text: &str) {
         cx.text_context.with_buffer(self.content_entity, |buf| {
             buf.set_text(text, Attrs::new());
         });
-        cx.style.needs_text_layout.insert(self.content_entity, true).unwrap();
+        cx.needs_relayout();
+        cx.needs_redraw();
     }
 
     pub fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
@@ -172,8 +175,8 @@ impl TextboxData {
         let parent = self.content_entity.parent(cx.tree).unwrap();
         let parent_bounds = *cx.cache.bounds.get(parent).unwrap();
 
-        let x = x - self.transform.0 * cx.style.dpi_factor as f32 - parent_bounds.x;
-        let y = y - self.transform.1 * cx.style.dpi_factor as f32 - parent_bounds.y;
+        let x = x - self.transform.0 * cx.style.dpi_factor as f32;
+        let y = y - self.transform.1 * cx.style.dpi_factor as f32;
         (x, y)
     }
 
@@ -474,23 +477,33 @@ where
             let text = lens.view(cx.data().unwrap(), |text| {
                 text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned())
             });
-            TextboxContainer {}
-                .build(cx, move |cx| {
-                    let lbl = TextboxLabel {}
-                        .build(cx, |_| {})
-                        .hoverable(false)
-                        .class("textbox_content")
-                        // .translate(TextboxData::transform)
-                        .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
-                        .entity;
+            // TextboxContainer {}
+            // .build(cx, move |cx| {
+            let lbl = TextboxLabel {}
+                .build(cx, |_| {})
+                // .hoverable(false)
+                .class("textbox_content")
+                // .size(Auto)
+                .text_wrap(kind == TextboxKind::MultiLineWrapped)
+                // .translate(TextboxData::transform)
+                // .transform(
+                //     TextboxData::transform
+                //         .map(|(x, y)| Transform::Translate((Pixels(*x), Pixels(*y)).into())),
+                // )
+                .min_width(Stretch(1.0))
+                // .width(Pixels(200.0))
+                .height(Auto)
+                .child_left(Stretch(1.0))
+                // .on_geo_changed(|cx, _| cx.emit(TextEvent::GeometryChanged))
+                .entity;
 
-                    cx.emit(TextEvent::InitContent(lbl, kind));
-                    cx.text_context.with_buffer(lbl, |buf| {
-                        buf.set_text(&text, Attrs::new());
-                    });
-                })
-                .hoverable(false)
-                .class("textbox_container");
+            cx.emit(TextEvent::InitContent(lbl, kind));
+            cx.text_context.with_buffer(lbl, |buf| {
+                buf.set_text(&text, Attrs::new());
+            });
+            // })
+            // .hoverable(false)
+            // .class("textbox_container");
         });
 
         result

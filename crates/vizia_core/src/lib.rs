@@ -69,7 +69,7 @@ pub mod prelude {
 
     pub use cosmic_text::FamilyOwned;
     pub use morphorm::Units::*;
-    pub use morphorm::{GeometryChanged, LayoutType, PositionType, Units};
+    pub use morphorm::{LayoutType, PositionType, Units};
     pub use unic_langid::LanguageIdentifier;
 }
 

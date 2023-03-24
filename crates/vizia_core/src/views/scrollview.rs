@@ -1,4 +1,4 @@
-use morphorm::{GeometryChanged, PositionType};
+use morphorm::PositionType;
 
 use crate::prelude::*;
 use crate::state::RatioLens;
@@ -132,9 +132,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                 }
             })
             .on_geo_changed(|cx, geo| {
-                if geo.contains(GeometryChanged::HEIGHT_CHANGED)
-                    || geo.contains(GeometryChanged::WIDTH_CHANGED)
-                {
+                if geo {
                     let current = cx.current();
                     let width = cx.cache().get_width(current);
                     let height = cx.cache().get_height(current);
@@ -176,9 +174,7 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::GeometryChanged(geo) => {
-                if geo.contains(GeometryChanged::HEIGHT_CHANGED)
-                    || geo.contains(GeometryChanged::WIDTH_CHANGED)
-                {
+                if *geo {
                     let current = cx.current();
                     let width = cx.cache.get_width(current);
                     let height = cx.cache.get_height(current);

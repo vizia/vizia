@@ -5,6 +5,7 @@
     "version": "0.2.0",
     "configurations": [
 
+
         {
             "type": "lldb",
             "request": "launch",
@@ -36,6 +37,24 @@
                 ],
                 "filter": {
                     "name": "button",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'text_layout'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=text_layout",
+                    "--package=vizia"
+                ],
+                "filter": {
+                    "name": "text_layout",
                     "kind": "example"
                 }
             },

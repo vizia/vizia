@@ -7,25 +7,15 @@ pub(crate) mod node;
 
 use crate::prelude::*;
 use crate::style::SystemFlags;
-pub use morphorm::GeometryChanged;
-use morphorm::{Cache, Hierarchy};
 
 pub(crate) fn geometry_changed(cx: &mut Context) {
     if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {
-        for node in cx.tree.down_iter() {
-            let geometry_changed = cx.cache.geometry_changed(node);
-            if !geometry_changed.is_empty() {
-                cx.event_queue.push_back(
-                    Event::new(WindowEvent::GeometryChanged(geometry_changed))
-                        .target(node)
-                        .propagate(Propagation::Up),
-                );
-            }
-
-            cx.cache.set_geo_changed(node, morphorm::GeometryChanged::POSX_CHANGED, false);
-            cx.cache.set_geo_changed(node, morphorm::GeometryChanged::POSY_CHANGED, false);
-            cx.cache.set_geo_changed(node, morphorm::GeometryChanged::WIDTH_CHANGED, false);
-            cx.cache.set_geo_changed(node, morphorm::GeometryChanged::HEIGHT_CHANGED, false);
+        for node in cx.tree.into_iter() {
+            cx.event_queue.push_back(
+                Event::new(WindowEvent::GeometryChanged(true))
+                    .target(node)
+                    .propagate(Propagation::Up),
+            );
         }
     }
 

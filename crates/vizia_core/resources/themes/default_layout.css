@@ -7,71 +7,12 @@ label.material-icon {
 }
 
 textbox {
-    min-width: 0px;
     overflow: hidden;
 }
 
 textbox .textbox_content {
-    layout-type: row;
-    width: auto;
-    height: auto;
-    min-width: 100%;
-    overflow: visible;
-    text-wrap: false;
-    /*
-    border-width: 1px;
-    border-color: green;
-    */
-}
-
-textbox .textbox_container {
-    width: 1s;
-    height: 1s;
-    min-width: 0px;
-    min-height: 0px;
-    child-right: 1s;
-    child-bottom: 1s;
-    overflow: visible;
-}
-
-textbox.align_right .textbox_container {
-    child-right: 0px;
-    child-left: 1s;
-}
-
-textbox.align_right .textbox_content {
-    child-right: 0px;
-    child-left: 1s;
-}
-
-textbox.align_center .textbox_container {
-    child-left: 1s;
-}
-
-textbox.align_center .textbox_content {
-    child-right: 1s;
-    child-left: 1s;
-}
-
-textbox.multi_line_wrapped .textbox_content {
-    max-width: 100%;
-    text-wrap: true;
-}
-
-textbox.single_line .textbox_container {
-    min-height: auto;
-}
-
-textbox.single_line {
-    min-height: auto;
-}
-
-textbox.multi_line_wrapped {
-    min-height: 28px;
-}
-
-textbox.multi_line_unwrapped {
-    min-height: 28px;
+    /* background-color: red; */
+    /* width: 200px; */
 }
 
 label {

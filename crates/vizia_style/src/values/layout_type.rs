@@ -8,7 +8,7 @@ impl_parse! {
         ident {
             "row" => LayoutType::Row,
             "column" => LayoutType::Column,
-            "grid" => LayoutType::Grid,
+            // "grid" => LayoutType::Grid,
         }
     }
 }
@@ -24,7 +24,7 @@ mod tests {
         ident {
             "row" => LayoutType::Row,
             "column" => LayoutType::Column,
-            "grid" => LayoutType::Grid,
+            // "grid" => LayoutType::Grid,
         }
     }
 }

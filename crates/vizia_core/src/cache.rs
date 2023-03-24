@@ -2,7 +2,6 @@
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
 use femtovg::Transform2D;
-use morphorm::GeometryChanged;
 use std::fmt::Debug;
 
 use crate::prelude::*;
@@ -314,8 +313,6 @@ pub struct CachedData {
 
     // is_first_child, is_last_child
     stack_child: SparseSet<(bool, bool)>,
-
-    pub(crate) geometry_changed: SparseSet<GeometryChanged>,
 }
 
 impl CachedData {
@@ -346,8 +343,6 @@ impl CachedData {
 
         self.grid_row_max.insert(entity, 0.0)?;
         self.grid_col_max.insert(entity, 0.0)?;
-
-        self.geometry_changed.insert(entity, Default::default())?;
 
         self.abilities.insert(entity, Default::default())?;
 
@@ -381,8 +376,6 @@ impl CachedData {
 
         self.grid_row_max.remove(entity);
         self.grid_col_max.remove(entity);
-
-        self.geometry_changed.remove(entity);
 
         self.abilities.remove(entity);
     }

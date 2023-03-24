@@ -2,7 +2,7 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 use femtovg::{LineCap, Paint, Path, Solidity};
-use morphorm::{Hierarchy, Units};
+use morphorm::Units;
 
 use crate::prelude::*;
 

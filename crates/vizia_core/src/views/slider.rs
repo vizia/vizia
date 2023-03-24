@@ -149,7 +149,7 @@ where
                     Element::new(cx)
                         .class("thumb")
                         .on_geo_changed(|cx, geo| {
-                            if geo.contains(GeometryChanged::WIDTH_CHANGED) {
+                            if geo {
                                 let current = cx.current();
                                 let width = cx.cache().get_width(current);
                                 let height = cx.cache().get_height(current);

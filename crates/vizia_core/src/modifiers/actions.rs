@@ -112,8 +112,7 @@ pub(crate) struct ActionsModel<V> {
     pub(crate) on_mouse_up: Option<Box<dyn Fn(&mut EventHandle<V>, MouseButton) + Send + Sync>>,
     pub(crate) on_focus_in: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
     pub(crate) on_focus_out: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
-    pub(crate) on_geo_changed:
-        Option<Box<dyn Fn(&mut EventHandle<V>, GeometryChanged) + Send + Sync>>,
+    pub(crate) on_geo_changed: Option<Box<dyn Fn(&mut EventHandle<V>, bool) + Send + Sync>>,
 }
 
 impl<V> ActionsModel<V> {
@@ -308,7 +307,7 @@ pub(crate) enum ActionsEvent<V> {
     OnMouseUp(Box<dyn Fn(&mut EventHandle<V>, MouseButton) + Send + Sync>),
     OnFocusIn(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
     OnFocusOut(Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>),
-    OnGeoChanged(Box<dyn Fn(&mut EventHandle<V>, GeometryChanged) + Send + Sync>),
+    OnGeoChanged(Box<dyn Fn(&mut EventHandle<V>, bool) + Send + Sync>),
 }
 
 /// Modifiers which add an action callback to a view.
@@ -477,7 +476,7 @@ pub trait ActionModifiers<V> {
     /// ```
     fn on_geo_changed<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventHandle<V>, GeometryChanged) + Send + Sync;
+        F: 'static + Fn(&mut EventHandle<V>, bool) + Send + Sync;
 }
 
 // If the entity doesn't have an `ActionsModel` then add one to the entity
@@ -677,7 +676,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
 
     fn on_geo_changed<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventHandle<V>, GeometryChanged) + Send + Sync,
+        F: 'static + Fn(&mut EventHandle<V>, bool) + Send + Sync,
     {
         build_action_model::<V>(self.cx, self.entity);
 
