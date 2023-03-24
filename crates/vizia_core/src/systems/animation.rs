@@ -14,7 +14,10 @@ pub fn animation_system(cx: &mut Context) -> bool {
         | cx.style.background_gradient.tick(time)
         | cx.style.box_shadow.tick(time)
         | cx.style.font_color.tick(time)
-        | cx.style.transform.tick(time);
+        | cx.style.transform.tick(time)
+        | cx.style.outline_color.tick(time)
+        | cx.style.outline_offset.tick(time)
+        | cx.style.outline_width.tick(time);
 
     // Properties which affect layout
     let needs_relayout = cx.style.border_width.tick(time)

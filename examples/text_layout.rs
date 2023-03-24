@@ -32,9 +32,6 @@ fn main() {
             HStack::new(cx, |cx| {
                 HStack::new(cx, |cx| {
                     Label::new(cx, "This is some non-wrapping text")
-                        // .text_wrap(false)
-                        .width(Pixels(200.0))
-                        .height(Pixels(20.0))
                         .child_space(Pixels(10.0))
                         .background_color(Color::rgb(200, 100, 200));
                 })
@@ -45,6 +42,7 @@ fn main() {
                 HStack::new(cx, |cx| {
                     Label::new(cx, "This is some text which should wrap on every word.")
                         .size(Auto)
+                        .text_wrap(true)
                         .child_space(Pixels(10.0))
                         .background_color(Color::rgb(200, 100, 100));
                 })
@@ -57,6 +55,7 @@ fn main() {
                         cx,
                         "This is some text which should wrap because its container is too narrow.",
                     )
+                    .text_wrap(true)
                     .width(Pixels(100.0))
                     .child_space(Pixels(10.0))
                     .background_color(Color::rgb(200, 100, 100));
@@ -81,6 +80,7 @@ fn main() {
                         cx,
                         "This is some text which should\nwrap because of soft and hard breaks.",
                     )
+                    .text_wrap(true)
                     .width(Pixels(100.0))
                     .child_space(Pixels(10.0))
                     .background_color(Color::rgb(200, 100, 100));

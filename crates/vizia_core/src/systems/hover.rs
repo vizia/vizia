@@ -218,6 +218,10 @@ fn hover_entity(
         return;
     }
 
+    if cx.style.display.get(cx.current).copied().unwrap_or_default() == Display::None {
+        return;
+    }
+
     let mut bounds = cx.cache.get_bounds(cx.current);
 
     let cursorx = cx.mouse.cursorx;
