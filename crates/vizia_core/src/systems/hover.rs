@@ -140,12 +140,12 @@ use vizia_storage::LayoutChildIterator;
 
 pub fn hover_system(cx: &mut Context) {
     let mut queue = BinaryHeap::new();
-    queue.push(ZEntity(0, Entity::root(), BoundingBox { x: 0.0, y: 0.0, w: 0.0, h: 0.0 }));
+    queue.push(ZEntity(0, Entity::root()));
     let mut hovered = Entity::root();
     let mut transform = Transform2D::identity();
     let clip_bounds = cx.cache.get_bounds(Entity::root());
     while !queue.is_empty() {
-        let ZEntity(current_z, current, parent_bounds) = queue.pop().unwrap();
+        let ZEntity(current_z, current) = queue.pop().unwrap();
         cx.with_current(current, |cx| {
             hover_entity(
                 &mut EventContext::new(cx),
@@ -154,7 +154,6 @@ pub fn hover_system(cx: &mut Context) {
                 &mut hovered,
                 &mut transform,
                 &clip_bounds,
-                parent_bounds,
             );
         });
     }
@@ -206,7 +205,6 @@ fn hover_entity(
     hovered: &mut Entity,
     transform: &mut Transform2D,
     clip_bounds: &BoundingBox,
-    parent_bounds: BoundingBox,
 ) {
     // Skip non-hoverable
     let hoverable = cx
@@ -221,8 +219,7 @@ fn hover_entity(
     }
 
     let mut bounds = cx.cache.get_bounds(cx.current);
-    bounds.x += parent_bounds.x;
-    bounds.y += parent_bounds.y;
+
     let cursorx = cx.mouse.cursorx;
     let cursory = cx.mouse.cursory;
 
@@ -282,11 +279,12 @@ fn hover_entity(
     // let bounds = cx.bounds();
     for child in child_iter {
         cx.current = child;
-        hover_entity(cx, current_z, queue, hovered, transform, &clipping, bounds);
+        hover_entity(cx, current_z, queue, hovered, transform, &clipping);
     }
 }
 
-pub struct ZEntity(i32, Entity, BoundingBox);
+#[derive(Eq)]
+pub struct ZEntity(i32, Entity);
 impl Ord for ZEntity {
     fn cmp(&self, other: &Self) -> Ordering {
         other.0.cmp(&self.0)
@@ -302,5 +300,3 @@ impl PartialEq for ZEntity {
         self.0 == other.0
     }
 }
-
-impl Eq for ZEntity {}

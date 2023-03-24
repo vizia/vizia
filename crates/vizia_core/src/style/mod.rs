@@ -768,7 +768,9 @@ impl Style {
                 //     self.background_gradient.insert_rule(rule_id, *gradient);
                 // }
             }
-            // Property::TextWrap(_) => todo!(),
+            Property::TextWrap(text_wrap) => {
+                self.text_wrap.insert_rule(rule_id, text_wrap);
+            }
             Property::BoxShadow(box_shadows) => {
                 self.box_shadow.insert_rule(rule_id, box_shadows);
             }

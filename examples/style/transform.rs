@@ -7,12 +7,17 @@ const STYLE: &str = r#"
         transform: translate(0px, 0px);
     }
 
+    element:hover {
+        background-color: red;
+    }
+
     .foo {
         size: 100px;
         background-color: red;
         transform: translate(0px, 0px);
     }
 
+    
     .translate:hover {
         transform: translate(40px, 20px);
         transition: transform 500ms;
@@ -27,6 +32,7 @@ const STYLE: &str = r#"
         transform: translateY(40px);
         transition: transform 500ms;
     }
+    
 
     .rotate:hover {
         transform: rotate(40deg);

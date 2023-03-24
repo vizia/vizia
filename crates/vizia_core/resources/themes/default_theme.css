@@ -137,7 +137,7 @@ textbox:hover {
 textbox:checked {
     border-color: #4c00ff;
 }
-textbox:checked .textbox_content {
+textbox:checked {
     caret-color: #ff0000;
     selection-color: #6464c888;
 }

@@ -182,13 +182,12 @@ impl Node for Entity {
         width: Option<f32>,
         height: Option<f32>,
     ) -> Option<(f32, f32)> {
-        println!("{:?} {:?}", width, height);
         if !text_context.has_buffer(*self) {
             return None;
         }
 
         // If the width is known use that, else use 0 for wrapping text or 999999 for non-wrapping text.
-        let width = if let Some(width) = width {
+        let max_width = if let Some(width) = width {
             width.ceil() as i32
         } else {
             if store.text_wrap.get(*self).copied().unwrap_or(true) {
@@ -225,8 +224,8 @@ impl Node for Entity {
         }
 
         text_context.sync_styles(*self, store);
-        let (mut text_width, mut text_height) = text_context.with_buffer(*self, |buffer| {
-            buffer.set_size(width, i32::MAX);
+        let (mut text_width, mut text_height) = text_context.with_buffer(*self, |fs, buffer| {
+            buffer.set_size(fs, max_width as f32, f32::MAX);
             let w = buffer
                 .layout_runs()
                 .filter_map(|r| (!r.line_w.is_nan()).then_some(r.line_w))
@@ -240,7 +239,9 @@ impl Node for Entity {
         text_height += child_space_y;
 
         let height = if let Some(height) = height { height } else { text_height };
-        Some((text_width.max(width as f32), height))
+        let width = if let Some(width) = width { text_width.max(width) } else { text_width };
+
+        Some((width, height))
     }
 
     fn height(&self, store: &Self::Store) -> Option<morphorm::Units> {

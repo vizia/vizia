@@ -1,4 +1,3 @@
-use crate::cache::BoundingBox;
 use crate::context::Context;
 use crate::prelude::*;
 use std::cmp::Ordering;
@@ -16,9 +15,9 @@ pub fn draw_system(cx: &mut Context) {
     canvas.set_size(window_width as u32, window_height as u32, 1.0);
     canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
     let mut queue = BinaryHeap::new();
-    queue.push(ZEntity(0, Entity::root(), BoundingBox { x: 0.0, y: 0.0, w: 0.0, h: 0.0 }));
+    queue.push(ZEntity(0, Entity::root()));
     while !queue.is_empty() {
-        let ZEntity(current_z, current, parent_bounds) = queue.pop().unwrap();
+        let ZEntity(current_z, current) = queue.pop().unwrap();
         canvas.save();
         draw_entity(
             &mut DrawContext {
@@ -42,7 +41,6 @@ pub fn draw_system(cx: &mut Context) {
             current_z,
             &mut queue,
             true,
-            parent_bounds,
         );
         canvas.restore();
     }
@@ -56,7 +54,6 @@ fn draw_entity(
     current_z: i32,
     queue: &mut BinaryHeap<ZEntity>,
     visible: bool,
-    parent_bounds: BoundingBox,
 ) {
     let current = cx.current;
 
@@ -66,7 +63,7 @@ fn draw_entity(
 
     let z_order = cx.tree.z_order(current);
     if z_order > current_z {
-        queue.push(ZEntity(z_order, current, parent_bounds));
+        queue.push(ZEntity(z_order, current));
         return;
     }
 
@@ -75,8 +72,6 @@ fn draw_entity(
     if let Some(transform) = cx.transform() {
         canvas.set_transform(&transform);
     }
-    // let bounds = cx.bounds();
-    canvas.translate(parent_bounds.x, parent_bounds.y);
 
     let clip_region = cx.clip_region();
 
@@ -98,18 +93,18 @@ fn draw_entity(
 
     let child_iter = LayoutChildIterator::new(&cx.tree, cx.current);
 
-    let bounds = cx.bounds();
     // Draw its children
     for child in child_iter {
         cx.current = child;
-        draw_entity(cx, canvas, current_z, queue, is_visible, bounds);
+        draw_entity(cx, canvas, current_z, queue, is_visible);
     }
 
     canvas.restore();
     cx.current = current;
 }
 
-pub struct ZEntity(i32, Entity, BoundingBox);
+#[derive(Eq)]
+pub struct ZEntity(i32, Entity);
 impl Ord for ZEntity {
     fn cmp(&self, other: &Self) -> Ordering {
         other.0.cmp(&self.0)
@@ -125,5 +120,3 @@ impl PartialEq for ZEntity {
         self.0 == other.0
     }
 }
-
-impl Eq for ZEntity {}

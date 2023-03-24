@@ -8,6 +8,8 @@ label.material-icon {
 
 textbox {
     overflow: hidden;
+    width: auto;
+    height: auto;
 }
 
 textbox .textbox_content {
@@ -18,9 +20,8 @@ textbox .textbox_content {
 label {
     width: auto;
     height: auto;
-    layout-type: row;
-    child-space: auto;
     child-left: 0px;
+    text-wrap: false;
 }
 
 checkbox {

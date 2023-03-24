@@ -421,10 +421,10 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 && context.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
                 println!("Loaded font face info:");
-                for face in context.text_context.font_system().db().faces().iter() {
+                for face in context.text_context.font_system().db().faces() {
                     println!(
                         "family: {:?}\npost_script_name: {:?}\nstyle: {:?}\nweight: {:?}\nstretch: {:?}\nmonospaced: {:?}\n",
-                        face.family,
+                        face.families,
                         face.post_script_name,
                         face.style,
                         face.weight,

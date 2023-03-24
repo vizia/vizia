@@ -40,11 +40,8 @@ fn main() {
         // })
         // .class("bar");
         HStack::new(cx, |cx| {
-            Element::new(cx)
-                .size(Pixels(50.0))
-                .background_color(Color::red())
-                .space(Pixels(40.0))
-                .class("foo");
+            Element::new(cx).size(Pixels(50.0)).background_color(Color::red()).space(Pixels(40.0));
+            // .class("foo");
         })
         .size(Pixels(300.0))
         .space(Pixels(50.0))

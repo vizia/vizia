@@ -29,67 +29,68 @@ fn main() {
         }
         .build(cx);
         VStack::new(cx, |cx| {
-            // HStack::new(cx, |cx| {
-            //     HStack::new(cx, |cx| {
-            //         Label::new(cx, "This is some non-wrapping text")
-            //             .text_wrap(false)
-            //             .size(Auto)
-            //             .child_space(Pixels(10.0))
-            //             .background_color(Color::rgb(200, 100, 100));
-            //     })
-            //     .size(Auto)
-            //     .child_space(Pixels(10.0))
-            //     .background_color(Color::rgb(100, 200, 100));
+            HStack::new(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    Label::new(cx, "This is some non-wrapping text")
+                        // .text_wrap(false)
+                        .width(Pixels(200.0))
+                        .height(Pixels(20.0))
+                        .child_space(Pixels(10.0))
+                        .background_color(Color::rgb(200, 100, 200));
+                })
+                .size(Auto)
+                .child_space(Pixels(10.0))
+                .background_color(Color::rgb(100, 200, 100));
 
-            //     HStack::new(cx, |cx| {
-            //         Label::new(cx, "This is some text which should wrap on every word.")
-            //             .size(Auto)
-            //             .child_space(Pixels(10.0))
-            //             .background_color(Color::rgb(200, 100, 100));
-            //     })
-            //     .size(Auto)
-            //     .child_space(Pixels(10.0))
-            //     .background_color(Color::rgb(100, 200, 100));
+                HStack::new(cx, |cx| {
+                    Label::new(cx, "This is some text which should wrap on every word.")
+                        .size(Auto)
+                        .child_space(Pixels(10.0))
+                        .background_color(Color::rgb(200, 100, 100));
+                })
+                .size(Auto)
+                .child_space(Pixels(10.0))
+                .background_color(Color::rgb(100, 200, 100));
 
-            //     HStack::new(cx, |cx| {
-            //         Label::new(
-            //             cx,
-            //             "This is some text which should wrap because its container is too narrow.",
-            //         )
-            //         .width(Pixels(100.0))
-            //         .child_space(Pixels(10.0))
-            //         .background_color(Color::rgb(200, 100, 100));
-            //     })
-            //     .size(Auto)
-            //     .child_space(Pixels(10.0))
-            //     .background_color(Color::rgb(100, 200, 100));
+                HStack::new(cx, |cx| {
+                    Label::new(
+                        cx,
+                        "This is some text which should wrap because its container is too narrow.",
+                    )
+                    .width(Pixels(100.0))
+                    .child_space(Pixels(10.0))
+                    .background_color(Color::rgb(200, 100, 100));
+                })
+                .size(Auto)
+                .child_space(Pixels(10.0))
+                .background_color(Color::rgb(100, 200, 100));
 
-            //     HStack::new(cx, |cx| {
-            //         Label::new(cx, "This is some text which should\nwrap because of a hard break.")
-            //             .text_wrap(false)
-            //             .width(Auto)
-            //             .child_space(Pixels(10.0))
-            //             .background_color(Color::rgb(200, 100, 100));
-            //     })
-            //     .size(Auto)
-            //     .child_space(Pixels(10.0))
-            //     .background_color(Color::rgb(100, 200, 100));
+                HStack::new(cx, |cx| {
+                    Label::new(cx, "This is some text which should\nwrap because of a hard break.")
+                        .text_wrap(false)
+                        .width(Auto)
+                        .child_space(Pixels(10.0))
+                        .background_color(Color::rgb(200, 100, 100));
+                })
+                .size(Auto)
+                .child_space(Pixels(10.0))
+                .background_color(Color::rgb(100, 200, 100));
 
-            //     HStack::new(cx, |cx| {
-            //         Label::new(
-            //             cx,
-            //             "This is some text which should\nwrap because of soft and hard breaks.",
-            //         )
-            //         .width(Pixels(100.0))
-            //         .child_space(Pixels(10.0))
-            //         .background_color(Color::rgb(200, 100, 100));
-            //     })
-            //     .size(Auto)
-            //     .child_space(Pixels(10.0))
-            //     .background_color(Color::rgb(100, 200, 100));
-            // })
-            // .col_between(Pixels(50.0))
-            // .child_space(Pixels(50.0));
+                HStack::new(cx, |cx| {
+                    Label::new(
+                        cx,
+                        "This is some text which should\nwrap because of soft and hard breaks.",
+                    )
+                    .width(Pixels(100.0))
+                    .child_space(Pixels(10.0))
+                    .background_color(Color::rgb(200, 100, 100));
+                })
+                .size(Auto)
+                .child_space(Pixels(10.0))
+                .background_color(Color::rgb(100, 200, 100));
+            })
+            .col_between(Pixels(50.0))
+            .child_space(Pixels(50.0));
 
             // HStack::new(cx, |cx| {
             //     HStack::new(cx, |cx| {

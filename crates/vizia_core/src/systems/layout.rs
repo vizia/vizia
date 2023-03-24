@@ -3,8 +3,6 @@ use morphorm::Node;
 use crate::prelude::*;
 use crate::style::SystemFlags;
 
-use super::text_constraints_system;
-
 pub(crate) fn layout_system(cx: &mut Context) {
     // text_constraints_system(cx);
 
@@ -22,9 +20,18 @@ pub(crate) fn layout_system(cx: &mut Context) {
                     cx.style.height.get(entity).copied().unwrap_or_default().is_auto();
                 if !auto_width && !auto_height {
                     let width = cx.cache.bounds.get(entity).unwrap().w;
-                    cx.text_context.with_buffer(entity, |buf| {
-                        buf.set_size(width.ceil() as i32, i32::MAX);
+                    cx.text_context.with_buffer(entity, |fs, buf| {
+                        buf.set_size(fs, width.ceil(), f32::MAX);
                     });
+                }
+            }
+
+            if let Some(parent) = cx.tree.get_layout_parent(entity) {
+                let parent_bounds = cx.cache.get_bounds(parent);
+                let b = cx.cache.bounds.get(entity);
+                if let Some(bounds) = cx.cache.bounds.get_mut(entity) {
+                    bounds.x += parent_bounds.x;
+                    bounds.y += parent_bounds.y;
                 }
             }
         }

@@ -14,10 +14,21 @@ where
     I: GenerationalId,
 {
     pub fn new(tree: &'a Tree<I>, node: I) -> Self {
-        Self {
-            tree,
-            current: tree.first_child.get(node.index()).map(|child| child.as_ref()).flatten(),
+        Self { tree, current: Self::get_first_child(tree, node) }
+    }
+
+    fn get_first_child(tree: &'a Tree<I>, node: I) -> Option<&'a I> {
+        if let Some(first_child) =
+            tree.first_child.get(node.index()).map(|child| child.as_ref()).flatten()
+        {
+            if tree.is_ignored(*first_child) {
+                return Self::get_first_child(tree, *first_child);
+            } else {
+                return Some(first_child);
+            }
         }
+
+        None
     }
 }
 
@@ -37,21 +48,14 @@ where
                 .map(|sibling| sibling.as_ref())
                 .flatten()
         }
+
         if let Some(current) = ret {
             if self.tree.is_ignored(*current) {
-                while let Some(firt_child) = self
-                    .tree
-                    .first_child
-                    .get(current.index())
-                    .map(|first_child| first_child.as_ref())
-                    .flatten()
-                {
-                    if !self.tree.is_ignored(*firt_child) {
-                        return Some(firt_child);
-                    }
+                if let Some(first_child) = Self::get_first_child(self.tree, *current) {
+                    return Some(first_child);
+                } else {
+                    return self.next();
                 }
-
-                return self.next();
             }
         }
         ret
