@@ -150,16 +150,16 @@ macro_rules! assert_parse {
 
                 // Percentage values
                 $(
-                    "10%" => $percentage_type(0.1),
-                    "20%" => $percentage_type(0.2),
-                    "30%" => $percentage_type(0.3),
-                    "40%" => $percentage_type(0.4),
-                    "50%" => $percentage_type(0.5),
-                    "60%" => $percentage_type(0.6),
-                    "70%" => $percentage_type(0.7),
-                    "80%" => $percentage_type(0.8),
-                    "90%" => $percentage_type(0.9),
-                    "100%" => $percentage_type(1.0),
+                    "10%" => $percentage_type(10.0),
+                    "20%" => $percentage_type(20.0),
+                    "30%" => $percentage_type(30.0),
+                    "40%" => $percentage_type(40.0),
+                    "50%" => $percentage_type(50.0),
+                    "60%" => $percentage_type(60.0),
+                    "70%" => $percentage_type(70.0),
+                    "80%" => $percentage_type(80.0),
+                    "90%" => $percentage_type(90.0),
+                    "100%" => $percentage_type(100.0),
                     "0.001%" => $percentage_type(0.00001),
                     "99.999%" => $percentage_type(0.99999),
                 )?

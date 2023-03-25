@@ -7,7 +7,6 @@ use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest, Rect, TextDirection, TextPosition, TextSelection};
 use cosmic_text::{Action, Attrs, Cursor, Edit};
-use std::sync::Arc;
 use unicode_segmentation::UnicodeSegmentation;
 use vizia_id::GenerationalId;
 use vizia_input::Code;
@@ -67,6 +66,7 @@ where
     }
 
     fn new_core(cx: &mut Context, lens: L, kind: TextboxKind) -> Handle<Self> {
+        let text_lens = lens.clone();
         Self {
             lens: lens.clone(),
             kind,
@@ -132,7 +132,7 @@ where
     }
 
     pub fn insert_text(&mut self, cx: &mut EventContext, text: &str) {
-        cx.text_context.with_editor(cx.current, |fs, buf| {
+        cx.text_context.with_editor(cx.current, |_, buf| {
             buf.insert_string(text, None);
         });
         cx.needs_relayout();
@@ -140,9 +140,9 @@ where
     }
 
     pub fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
-        if cx.text_context.with_editor(cx.current, |fs, buf| !buf.delete_selection()) {
+        if cx.text_context.with_editor(cx.current, |_, buf| !buf.delete_selection()) {
             self.move_cursor(cx, movement, true);
-            cx.text_context.with_editor(cx.current, |fs, buf| {
+            cx.text_context.with_editor(cx.current, |_, buf| {
                 buf.delete_selection();
             });
         }
@@ -227,7 +227,7 @@ where
     }
 
     pub fn deselect(&mut self, cx: &mut EventContext) {
-        cx.text_context.with_editor(cx.current, |fs, buf| {
+        cx.text_context.with_editor(cx.current, |_, buf| {
             buf.set_select_opt(None);
         });
         cx.needs_redraw();
@@ -240,43 +240,43 @@ where
         let parent = cx.current.parent(cx.tree).unwrap();
         let parent_bounds = *cx.cache.bounds.get(parent).unwrap();
 
-        let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
-        let child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
-        let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
-        let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
+        // let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
+        // let child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
+        // let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
+        // let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
 
-        let justify_x = match (child_left, child_right) {
-            (Stretch(left), Stretch(right)) => {
-                if left + right == 0.0 {
-                    0.5
-                } else {
-                    left / (left + right)
-                }
-            }
-            (Stretch(_), _) => 1.0,
-            _ => 0.0,
-        };
-        let justify_y = match (child_top, child_bottom) {
-            (Stretch(top), Stretch(bottom)) => {
-                if top + bottom == 0.0 {
-                    0.5
-                } else {
-                    top / (top + bottom)
-                }
-            }
-            (Stretch(_), _) => 1.0,
-            _ => 0.0,
-        };
+        // let justify_x = match (child_left, child_right) {
+        //     (Stretch(left), Stretch(right)) => {
+        //         if left + right == 0.0 {
+        //             0.5
+        //         } else {
+        //             left / (left + right)
+        //         }
+        //     }
+        //     (Stretch(_), _) => 1.0,
+        //     _ => 0.0,
+        // };
+        // let justify_y = match (child_top, child_bottom) {
+        //     (Stretch(top), Stretch(bottom)) => {
+        //         if top + bottom == 0.0 {
+        //             0.5
+        //         } else {
+        //             top / (top + bottom)
+        //         }
+        //     }
+        //     (Stretch(_), _) => 1.0,
+        //     _ => 0.0,
+        // };
 
-        let bounds = cx.bounds();
+        // let bounds = cx.bounds();
 
-        let origin_x = bounds.w * justify_x;
-        let origin_y = bounds.h * justify_y;
+        // let origin_x = bounds.w * justify_x;
+        // let origin_y = bounds.h * justify_y;
 
         // println!("{} {}", origin_x, origin_y);
 
-        let x = x - self.transform.0 * cx.style.dpi_factor as f32 + origin_x;
-        let y = y - self.transform.1 * cx.style.dpi_factor as f32 + origin_y;
+        let x = x - self.transform.0 * cx.style.dpi_factor as f32 - parent_bounds.x;
+        let y = y - self.transform.1 * cx.style.dpi_factor as f32 - parent_bounds.y;
         (x, y)
     }
 
@@ -316,11 +316,11 @@ where
 
     #[allow(dead_code)]
     pub fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
-        cx.text_context.with_editor(cx.current, |fs, buf| buf.copy_selection())
+        cx.text_context.with_editor(cx.current, |_, buf| buf.copy_selection())
     }
 
     pub fn clone_text(&self, cx: &mut EventContext) -> String {
-        cx.text_context.with_buffer(cx.current, |fs, buf| {
+        cx.text_context.with_buffer(cx.current, |_, buf| {
             buf.lines.iter().map(|line| line.text()).collect::<Vec<_>>().join("\n")
         })
     }
@@ -357,7 +357,7 @@ where
         // We need a child node per line
         // let mut children: Vec<(NodeId, NodeBuilder)> = Vec::new();
         let node_id = node.node_id();
-        cx.text_context.with_editor(text_content_id, |editor| {
+        cx.text_context.with_editor(text_content_id, |_, editor| {
             let cursor = editor.cursor();
             let selection = editor.select_opt().unwrap_or(cursor);
 
@@ -741,9 +741,8 @@ where
                 data: Some(ActionData::SetTextSelection(selection)),
             }) => {
                 // TODO: This needs testing once I figure out how to trigger it with a screen reader.
-                let text_content_id = Entity::new(cx.current.index() as u32 + 3, 0);
                 let node_id = cx.current.accesskit_id();
-                cx.text_context.with_editor(text_content_id, |editor| {
+                cx.text_context.with_editor(cx.current, |_, editor| {
                     // let cursor_node = selection.focus.node;
                     let selection_node = selection.anchor.node;
 

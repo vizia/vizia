@@ -10,11 +10,8 @@ textbox {
     overflow: hidden;
     width: auto;
     height: auto;
-}
-
-textbox .textbox_content {
-    /* background-color: red; */
-    /* width: 200px; */
+    child-top: 1s;
+    child-bottom: 1s;
 }
 
 label {

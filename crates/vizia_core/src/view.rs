@@ -3,7 +3,6 @@ use crate::prelude::*;
 use crate::systems::get_access_node;
 use crate::{accessibility::IntoNode, context::AccessContext};
 use std::any::Any;
-use std::{any::Any, collections::HashMap};
 
 use crate::events::ViewHandler;
 use crate::state::ModelDataStore;

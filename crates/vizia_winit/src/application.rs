@@ -9,7 +9,6 @@ use accesskit_winit;
 use std::cell::RefCell;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::accessibility::IntoNode;
-use vizia_core::cache::BoundingBox;
 use vizia_core::context::backend::*;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;

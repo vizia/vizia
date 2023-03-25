@@ -1,6 +1,11 @@
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
+
+    :root {
+        layout-type: row;
+    }
+
     element {
         size: 50px;
         background-color: rgb(200, 200, 200);

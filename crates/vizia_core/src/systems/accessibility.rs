@@ -154,7 +154,7 @@ pub(crate) fn get_access_node(
             .style
             .pseudo_classes
             .get(entity)
-            .and_then(|pseudoclass| Some(pseudoclass.contains(PseudoClass::CHECKED)))
+            .and_then(|pseudoclass| Some(pseudoclass.contains(PseudoClassFlags::CHECKED)))
         {
             if checked {
                 node_builder.set_checked_state(CheckedState::True);

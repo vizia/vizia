@@ -82,7 +82,7 @@ fn main() {
             .min_size(Pixels(0.0))
             .class("two");
         })
-        .hoverable(false)
+        // .hoverable(false)
         .transform(vec![Transform::SkewX(Angle::Deg(26.5650512))])
         .class("one")
         .min_size(Pixels(0.0));

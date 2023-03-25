@@ -442,24 +442,24 @@ impl Context {
 
     /// Add a font from memory to the application.
     pub fn add_fonts_mem(&mut self, data: &[&[u8]]) {
-        // self.text_context.take_buffers();
-        // replace_with_or_abort(&mut self.text_context, |mut ccx| {
-        //     let buffers = ccx.take_buffers();
-        //     let (locale, mut db) = ccx.into_font_system().into_locale_and_db();
-        //     for font_data in data {
-        //         db.load_font_data(Vec::from(*font_data));
-        //     }
-        //     let mut new_ccx = TextContext::new_from_locale_and_db(locale, db);
-        //     for (entity, lines) in buffers {
-        //         new_ccx.with_buffer(entity, move |buf| {
-        //             buf.lines = lines
-        //                 .into_iter()
-        //                 .map(|line| BufferLine::new(line, AttrsList::new(Attrs::new())))
-        //                 .collect();
-        //         });
-        //     }
-        //     new_ccx
-        // });
+        self.text_context.take_buffers();
+        replace_with_or_abort(&mut self.text_context, |mut ccx| {
+            let buffers = ccx.take_buffers();
+            let (locale, mut db) = ccx.into_font_system().into_locale_and_db();
+            for font_data in data {
+                db.load_font_data(Vec::from(*font_data));
+            }
+            let mut new_ccx = TextContext::new_from_locale_and_db(locale, db);
+            for (entity, lines) in buffers {
+                new_ccx.with_buffer(entity, move |_, buf| {
+                    buf.lines = lines
+                        .into_iter()
+                        .map(|line| BufferLine::new(line, AttrsList::new(Attrs::new())))
+                        .collect();
+                });
+            }
+            new_ccx
+        });
     }
 
     /// Sets the global default font for the application.

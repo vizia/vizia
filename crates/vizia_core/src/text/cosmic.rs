@@ -53,6 +53,10 @@ impl TextContext {
         &mut self.font_system
     }
 
+    pub(crate) fn into_font_system(self) -> FontSystem {
+        self.font_system
+    }
+
     pub fn clear_buffer(&mut self, entity: Entity) {
         self.buffers.remove(&entity);
     }
