@@ -6,7 +6,6 @@ use vizia_style::{
     BoxShadow, Clip, CssRule, FontFamily, FontSize, GenericFontFamily, Gradient, Transition,
 };
 
-use crate::cache::BoundingBox;
 use crate::prelude::*;
 
 pub use vizia_style::{

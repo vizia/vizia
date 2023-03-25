@@ -11,7 +11,7 @@ pub struct AccessContext<'a> {
     pub(crate) text_context: &'a mut TextContext,
 }
 
-/// Wrapper around an accesskit node builder, a node id, and a list of children to be added to the node
+/// Wrapper around an accesskit node builder, a node id, and a list of children to be added to the node.
 #[derive(Debug)]
 pub struct AccessNode {
     pub(crate) node_id: NodeId,
@@ -21,7 +21,7 @@ pub struct AccessNode {
 
 impl AccessNode {
     pub fn new_from_parent(parent_id: NodeId, index: usize) -> Self {
-        // Concatenate the parent id with the index of the text line to form a unique node id
+        // Concatenate the parent id with the index of the text line to form a unique node id.
         let mut node_id = (parent_id.0.get() as u64) << 32;
         node_id |= index as u64;
         let node_id: NodeId = std::num::NonZeroU64::new(node_id).unwrap().into();

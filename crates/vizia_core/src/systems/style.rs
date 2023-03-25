@@ -4,7 +4,6 @@ use crate::{
     style::{Rule, Style, SystemFlags},
 };
 use fnv::FnvHashMap;
-// use crate::style::{Rule, Selector, SelectorRelation, StyleRule};
 use vizia_id::GenerationalId;
 use vizia_storage::{DrawIterator, LayoutTreeIterator};
 use vizia_style::{

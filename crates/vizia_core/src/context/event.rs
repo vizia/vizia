@@ -7,7 +7,7 @@ use femtovg::Transform2D;
 use fnv::FnvHashMap;
 use vizia_style::Clip;
 
-use crate::cache::{BoundingBox, CachedData};
+use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;

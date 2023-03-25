@@ -5,7 +5,7 @@ use std::any::{Any, TypeId};
 use fnv::FnvHashMap;
 use morphorm::Units;
 
-use crate::cache::{BoundingBox, CachedData};
+use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;

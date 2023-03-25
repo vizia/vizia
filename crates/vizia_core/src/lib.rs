@@ -49,6 +49,7 @@ pub mod prelude {
     pub use super::events::{Event, Propagation};
     pub use super::handle::Handle;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
+    pub use super::layout::BoundingBox;
     pub use super::localization::Localized;
     pub use super::modifiers::{
         AbilityModifiers, AccessibilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers,

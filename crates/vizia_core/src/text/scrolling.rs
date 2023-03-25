@@ -1,4 +1,4 @@
-use crate::cache::BoundingBox;
+use crate::layout::BoundingBox;
 
 pub fn enforce_text_bounds(
     bounds: &BoundingBox,

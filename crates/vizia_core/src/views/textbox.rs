@@ -1,6 +1,6 @@
 use crate::accessibility::IntoNode;
-use crate::cache::BoundingBox;
 use crate::context::AccessNode;
+use crate::layout::BoundingBox;
 use crate::prelude::*;
 
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
@@ -100,12 +100,9 @@ where
     fn set_caret(&mut self, cx: &mut EventContext) {
         let parent = cx.current().parent(cx.tree).unwrap();
 
-        // this is a weird situation - layout and drawing must be done in physical space, but our
-        // output (translate) must be in logical space.
-        let scale = cx.style.dpi_factor as f32;
+        let scale = cx.scale_factor();
 
         // calculate visible area for content and container
-        // let bounds = *cx.cache.bounds.get(cx.current).unwrap();
         let bounds = cx.bounds();
         let mut parent_bounds = *cx.cache.bounds.get(parent).unwrap();
 

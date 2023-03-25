@@ -1,17 +1,16 @@
 use std::{cmp::Ordering, collections::BinaryHeap};
 
-use crate::{cache::BoundingBox, prelude::*};
+use crate::prelude::*;
 use femtovg::Transform2D;
 use vizia_id::GenerationalId;
 use vizia_storage::LayoutChildIterator;
 
 // Determines the hovered entity based on the mouse cursor position.
 pub fn hover_system(cx: &mut Context) {
-    println!("HOVER");
     let mut queue = BinaryHeap::new();
     queue.push(ZEntity(0, Entity::root()));
     let mut hovered = Entity::root();
-    let mut transform = Transform2D::identity();
+    let transform = Transform2D::identity();
     let clip_bounds = cx.cache.get_bounds(Entity::root());
     while !queue.is_empty() {
         let ZEntity(current_z, current) = queue.pop().unwrap();
@@ -75,7 +74,6 @@ fn hover_entity(
     parent_transform: Transform2D,
     clip_bounds: &BoundingBox,
 ) {
-    println!("Check hover: {:?} {}", cx.tree.get_layout_parent(cx.current), cx.current);
     // Skip non-hoverable
     let hoverable = cx
         .style
