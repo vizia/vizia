@@ -3,9 +3,9 @@ use baseview::{Window, WindowHandle, WindowScalePolicy};
 use raw_window_handle::HasRawWindowHandle;
 
 use crate::proxy::queue_get;
-use vizia_core::cache::BoundingBox;
 use vizia_core::context::backend::*;
 use vizia_core::events::EventManager;
+use vizia_core::layout::BoundingBox;
 use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 
