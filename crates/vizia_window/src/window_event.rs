@@ -91,6 +91,7 @@ pub enum WindowEvent {
     Relayout,
     /// Prints the debug message to the console.
     Debug(String),
+    ActionRequest(accesskit::ActionRequest),
     /// Reloads all application stylesheets.
     ReloadStyles,
 }

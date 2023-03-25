@@ -142,6 +142,9 @@ impl Checkbox {
                     handle.text(if flag { CHECK } else { "" }).checked(flag);
                 }
             })
+            .checkable(true)
+            .role(Role::CheckBox)
+            .default_action_verb(DefaultActionVerb::Click)
             .cursor(CursorIcon::Hand)
             .navigable(true)
     }
@@ -195,6 +198,16 @@ impl View for Checkbox {
                     }
                 }
             }
+
+            WindowEvent::ActionRequest(action) => match action.action {
+                Action::Default => {
+                    if let Some(callback) = &self.on_toggle {
+                        (callback)(cx);
+                    }
+                }
+
+                _ => {}
+            },
 
             _ => {}
         });

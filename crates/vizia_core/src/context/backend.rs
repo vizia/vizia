@@ -40,6 +40,10 @@ impl<'a> BackendContext<'a> {
         &mut self.0.modifiers
     }
 
+    pub fn focused(&self) -> Entity {
+        self.0.focused
+    }
+
     /// The window's size in logical pixels, before
     /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
     /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will be
@@ -163,6 +167,10 @@ impl<'a> BackendContext<'a> {
         !self.0.event_queue.is_empty()
     }
 
+    pub fn accesskit_node_classes(&mut self) -> &mut accesskit::NodeClassSet {
+        &mut self.style().accesskit_node_classes
+    }
+
     /// For each binding or data observer, check if its data has changed, and if so, rerun its
     /// builder/body.
     pub fn process_data_updates(&mut self) {
@@ -218,6 +226,14 @@ impl<'a> BackendContext<'a> {
                 self.0.bindings.insert(observer, binding);
             }
         }
+    }
+
+    pub fn process_tree_updates(&mut self, process: impl Fn(&Vec<accesskit::TreeUpdate>)) {
+        accessibility_system(self.0);
+
+        (process)(&self.0.tree_updates);
+
+        self.0.tree_updates.clear();
     }
 
     pub fn process_style_updates(&mut self) {

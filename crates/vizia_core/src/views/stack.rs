@@ -12,9 +12,11 @@ impl VStack {
     where
         F: FnOnce(&mut Context),
     {
-        Self {}.build(cx, |cx| {
-            (content)(cx);
-        })
+        Self {}
+            .build(cx, |cx| {
+                (content)(cx);
+            })
+            .role(Role::GenericContainer)
     }
 }
 
@@ -37,6 +39,7 @@ impl HStack {
                 (content)(cx);
             })
             .layout_type(LayoutType::Row)
+            .role(Role::GenericContainer)
     }
 }
 

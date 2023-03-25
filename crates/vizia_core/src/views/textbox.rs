@@ -1,8 +1,15 @@
+use crate::accessibility::IntoNode;
 use crate::cache::BoundingBox;
+use crate::context::AccessNode;
 use crate::prelude::*;
+
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
-use cosmic_text::{Action, Attrs, Edit};
+use accesskit::{ActionData, ActionRequest, Rect, TextDirection, TextPosition, TextSelection};
+use cosmic_text::{Action, Attrs, Cursor, Edit};
+use std::sync::Arc;
+use unicode_segmentation::UnicodeSegmentation;
+use vizia_id::GenerationalId;
 use vizia_input::Code;
 use vizia_storage::TreeExt;
 
@@ -14,6 +21,7 @@ pub enum TextEvent {
     SelectAll,
     SelectWord,
     SelectParagraph,
+    //SetSelection(Selection),
     StartEdit,
     EndEdit,
     Submit(bool),
@@ -83,6 +91,10 @@ where
         .text_wrap(kind == TextboxKind::MultiLineWrapped)
         .cursor(CursorIcon::Text)
         .navigable(true)
+        .role(Role::TextField)
+        .text_value(text_lens)
+        .cursor(CursorIcon::Text)
+        .default_action_verb(DefaultActionVerb::Focus)
     }
 
     fn set_caret(&mut self, cx: &mut EventContext) {
@@ -338,6 +350,162 @@ where
         Some("textbox")
     }
 
+    fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode) {
+        let text_content_id = Entity::new(cx.current.index() as u32 + 3, 0);
+        let bounds = cx.cache.get_bounds(text_content_id);
+
+        // We need a child node per line
+        // let mut children: Vec<(NodeId, NodeBuilder)> = Vec::new();
+        let node_id = node.node_id();
+        cx.text_context.with_editor(text_content_id, |editor| {
+            let cursor = editor.cursor();
+            let selection = editor.select_opt().unwrap_or(cursor);
+
+            let mut selection_active_line = node_id;
+            let mut selection_anchor_line = node_id;
+            let mut selection_active_cursor = 0;
+            let mut selection_anchor_cursor = 0;
+
+            let mut current_cursor = 0;
+            let mut prev_line_index = std::usize::MAX;
+
+            for (index, line) in editor.buffer().layout_runs().enumerate() {
+                let text = line.text;
+
+                let mut line_node = AccessNode::new_from_parent(node_id, index);
+                line_node.set_role(Role::InlineTextBox);
+
+                let line_height = editor.buffer().metrics().line_height as f64;
+                line_node.set_bounds(Rect {
+                    x0: bounds.x as f64,
+                    y0: bounds.y as f64 + line.line_y as f64
+                        - editor.buffer().metrics().font_size as f64,
+                    x1: bounds.x as f64 + line.line_w as f64,
+                    y1: bounds.y as f64 + line.line_y as f64
+                        - editor.buffer().metrics().font_size as f64
+                        + line_height,
+                });
+                line_node.set_text_direction(if line.rtl {
+                    TextDirection::RightToLeft
+                } else {
+                    TextDirection::LeftToRight
+                });
+
+                let mut character_lengths = Vec::with_capacity(line.glyphs.len());
+                let mut character_positions = Vec::with_capacity(line.glyphs.len());
+                let mut character_widths = Vec::with_capacity(line.glyphs.len());
+
+                // Get the actual text in the line
+                let first_glyph_pos =
+                    line.glyphs.first().map(|glyph| glyph.start).unwrap_or_default();
+                let last_glyph_pos = line.glyphs.last().map(|glyph| glyph.end).unwrap_or_default();
+
+                let mut line_text = text[first_glyph_pos..last_glyph_pos].to_owned();
+
+                let word_lengths =
+                    line_text.unicode_words().map(|word| word.len() as u8).collect::<Vec<_>>();
+
+                let mut line_length = 0;
+
+                for glyph in line.glyphs.iter() {
+                    let length = (glyph.end - glyph.start) as u8;
+
+                    line_length += length as usize;
+
+                    let position = glyph.x;
+                    let width = glyph.w;
+
+                    character_lengths.push(length);
+                    character_positions.push(position);
+                    character_widths.push(width);
+                }
+
+                // Cosmic strips the newlines but accesskit needs them so we append them back in if line originally ended with a newline
+                // If the last glyph position is equal to the end of the buffer line then this layout run is the last one and ends in a newline.
+                if last_glyph_pos == line.text.len() {
+                    line_text += "\n";
+                    character_lengths.push(1);
+                    character_positions.push(line.line_w);
+                    character_widths.push(0.0);
+                }
+
+                // TODO: Might need to append any spaces that were stripped during layout. This can be done by
+                // figuring out if the start of the next line is greater than the end of the current line as long
+                // as the lines have the same `line_i`. This will require a peekable iterator loop.
+
+                line_node.set_value(line_text.into_boxed_str());
+                line_node.set_character_lengths(character_lengths.into_boxed_slice());
+                line_node.set_character_positions(character_positions.into_boxed_slice());
+                line_node.set_character_widths(character_widths.into_boxed_slice());
+                line_node.set_word_lengths(word_lengths.into_boxed_slice());
+
+                if line.line_i != prev_line_index {
+                    current_cursor = 0;
+                }
+
+                if line.line_i == cursor.line {
+                    if prev_line_index != line.line_i {
+                        if cursor.index <= line_length {
+                            selection_active_line = line_node.node_id();
+                            selection_active_cursor = cursor.index;
+                        }
+                    } else {
+                        if cursor.index > current_cursor {
+                            selection_active_line = line_node.node_id();
+                            selection_active_cursor = cursor.index - current_cursor;
+                        }
+                    }
+                }
+
+                // Check if the current line contains the cursor or selection
+                // This is a mess because a line happens due to soft and hard breaks but
+                // the cursor and selected indices are relative to the lines caused by hard breaks only.
+                if line.line_i == selection.line {
+                    // A previous line index different to the current means that the current line follows a hard break
+                    if prev_line_index != line.line_i {
+                        if selection.index <= line_length {
+                            selection_anchor_line = line_node.node_id();
+                            selection_anchor_cursor = selection.index;
+                        }
+                    } else {
+                        if selection.index > current_cursor {
+                            selection_anchor_line = line_node.node_id();
+                            selection_anchor_cursor = selection.index - current_cursor;
+                        }
+                    }
+                }
+
+                node.add_child(line_node);
+
+                current_cursor += line_length;
+                prev_line_index = line.line_i;
+            }
+
+            node.set_text_selection(TextSelection {
+                anchor: TextPosition {
+                    node: selection_anchor_line,
+                    character_index: selection_anchor_cursor,
+                },
+                focus: TextPosition {
+                    node: selection_active_line,
+                    character_index: selection_active_cursor,
+                },
+            });
+
+            match self.kind {
+                TextboxKind::MultiLineUnwrapped | TextboxKind::MultiLineWrapped => {
+                    node.node_builder.set_multiline();
+                }
+
+                _ => {
+                    node.node_builder.clear_multiline();
+                }
+            }
+
+            node.node_builder.set_default_action_verb(DefaultActionVerb::Focus);
+        });
+    }
+
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         // Window Events
         event.map(|window_event, meta| match window_event {
@@ -566,6 +734,63 @@ where
 
                 _ => {}
             },
+
+            WindowEvent::ActionRequest(ActionRequest {
+                action: accesskit::Action::SetTextSelection,
+                target: _,
+                data: Some(ActionData::SetTextSelection(selection)),
+            }) => {
+                // TODO: This needs testing once I figure out how to trigger it with a screen reader.
+                let text_content_id = Entity::new(cx.current.index() as u32 + 3, 0);
+                let node_id = cx.current.accesskit_id();
+                cx.text_context.with_editor(text_content_id, |editor| {
+                    // let cursor_node = selection.focus.node;
+                    let selection_node = selection.anchor.node;
+
+                    // let mut cursor_line_index = 0;
+                    // let mut cursor_index = 0;
+                    let mut selection_line_index = 0;
+                    let mut selection_index = 0;
+
+                    let mut current_cursor = 0;
+                    let mut prev_line_index = std::usize::MAX;
+
+                    for (index, line) in editor.buffer().layout_runs().enumerate() {
+                        let line_node = AccessNode::new_from_parent(node_id, index);
+                        // if line_node.node_id() == cursor_node {
+                        //     cursor_line_index = line.line_i;
+                        //     cursor_index = selection.focus.character_index + current_cursor;
+                        // }
+
+                        if line_node.node_id() == selection_node {
+                            selection_line_index = line.line_i;
+                            selection_index = selection.anchor.character_index + current_cursor;
+                        }
+
+                        if line.line_i != prev_line_index {
+                            current_cursor = 0;
+                        }
+
+                        let first_glyph_pos =
+                            line.glyphs.first().map(|glyph| glyph.start).unwrap_or_default();
+                        let last_glyph_pos =
+                            line.glyphs.last().map(|glyph| glyph.end).unwrap_or_default();
+
+                        let line_length = last_glyph_pos - first_glyph_pos;
+
+                        current_cursor += line_length;
+                        prev_line_index = line.line_i;
+                    }
+
+                    let selection_cursor = Cursor::new(selection_line_index, selection_index);
+                    editor.set_select_opt(Some(selection_cursor));
+
+                    // TODO: Either add a method to set the cursor by index to cosmic,
+                    // or loop over an `Action` to move the cursor to the correct place.
+                });
+
+                // println!("Select some text: {:?}", selection);
+            }
 
             _ => {}
         });

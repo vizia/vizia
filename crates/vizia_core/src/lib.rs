@@ -2,6 +2,7 @@
 #[macro_use]
 extern crate serde;
 
+pub mod accessibility;
 pub mod animation;
 pub mod cache;
 pub mod context;
@@ -40,7 +41,8 @@ pub mod image {
 pub mod prelude {
     pub use super::animation::{Animation, AnimationBuilder, Interpolator};
     pub use super::context::{
-        Context, ContextProxy, DataContext, DrawContext, EmitContext, EventContext, ProxyEmitError,
+        AccessContext, AccessNode, Context, ContextProxy, DataContext, DrawContext, EmitContext,
+        EventContext, ProxyEmitError,
     };
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent};
@@ -49,12 +51,14 @@ pub mod prelude {
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     pub use super::localization::Localized;
     pub use super::modifiers::{
-        AbilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers, TextModifiers,
+        AbilityModifiers, AccessibilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers,
+        TextModifiers,
     };
     pub use super::state::{Binding, Data, Lens, LensExt, Model, OrLens, Res, Setter, Wrapper};
     pub use super::view::{Canvas, View};
     pub use super::views::*;
     pub use super::window::WindowModifiers;
+    pub use accesskit::{Action, DefaultActionVerb, Live, Role};
     pub use vizia_derive::{Data, Lens, Model, Setter};
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};

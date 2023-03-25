@@ -99,11 +99,15 @@ impl Label {
     /// #
     /// Label::new(cx, "Text");
     /// ```
-    pub fn new<'a, T>(cx: &'a mut Context, text: impl Res<T>) -> Handle<'a, Self>
+    pub fn new<'a, T>(cx: &'a mut Context, text: impl Res<T> + Clone) -> Handle<'a, Self>
     where
         T: ToString,
     {
-        Self { describing: None }.build(cx, |_| {}).text(text)
+        Self { describing: None }
+            .build(cx, |_| {})
+            .text(text.clone())
+            .role(Role::StaticText)
+            .name(text.clone())
     }
 }
 
@@ -134,7 +138,11 @@ impl Handle<'_, Label> {
     /// Label::new(cx, "hello").describing("checkbox_identifier");
     /// ```
     pub fn describing(self, entity_identifier: impl Into<String>) -> Self {
-        self.modify(|label| label.describing = Some(entity_identifier.into())).class("describing")
+        let identifier = entity_identifier.into();
+        if let Some(id) = self.cx.resolve_entity_identifier(&identifier) {
+            self.cx.style.labelled_by.insert(id, self.entity).unwrap();
+        }
+        self.modify(|label| label.describing = Some(identifier)).class("describing")
     }
 }
 

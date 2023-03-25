@@ -1,5 +1,7 @@
 use std::ops::Range;
 
+use accesskit::ActionData;
+
 use crate::prelude::*;
 use crate::views::Orientation;
 
@@ -16,6 +18,7 @@ pub struct SliderDataInternal {
     pub size: f32,
     pub thumb_size: f32,
     pub range: Range<f32>,
+    pub step: f32,
     pub keyboard_fraction: f32,
 }
 
@@ -98,6 +101,7 @@ where
     ///     });
     /// ```
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
+        let value_lens = lens.clone();
         Self {
             lens: lens.clone(),
             is_dragging: false,
@@ -107,6 +111,7 @@ where
                 thumb_size: 0.0,
                 size: 0.0,
                 range: 0.0..1.0,
+                step: 0.01,
                 keyboard_fraction: 0.1,
             },
 
@@ -177,6 +182,12 @@ where
                 });
             });
         })
+        .role(Role::Slider)
+        .numeric_value(value_lens.clone().map(|val| (*val as f64 * 100.0).round() / 100.0))
+        .text_value(value_lens.clone().map(|val| {
+            let v = (*val as f64 * 100.0).round() / 100.0;
+            format!("{}", v)
+        }))
         .navigable(true)
     }
 }
@@ -184,6 +195,12 @@ where
 impl<L: Lens<Target = f32>> View for Slider<L> {
     fn element(&self) -> Option<&'static str> {
         Some("slider")
+    }
+
+    fn accessibility(&self, _cx: &mut AccessContext, node: &mut AccessNode) {
+        node.set_numeric_value_step(self.internal.step as f64);
+        node.set_min_numeric_value(self.internal.range.start as f64);
+        node.set_max_numeric_value(self.internal.range.end as f64);
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -230,6 +247,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                 let thumb_size = self.internal.thumb_size;
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
+                let step = self.internal.step;
 
                 let current = cx.current();
                 let width = cx.cache.get_width(current);
@@ -250,7 +268,10 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
 
                 dx = dx.clamp(0.0, 1.0);
 
-                let val = min + dx * (max - min);
+                let mut val = min + dx * (max - min);
+
+                val = step * (val / step).ceil();
+                val = val.clamp(min, max);
 
                 if let Some(callback) = self.on_changing.take() {
                     (callback)(cx, val);
@@ -270,6 +291,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
 
                     let min = self.internal.range.start;
                     let max = self.internal.range.end;
+                    let step = self.internal.step;
 
                     let current = cx.current();
                     let width = cx.cache.get_width(current);
@@ -289,7 +311,10 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
 
                     dx = dx.clamp(0.0, 1.0);
 
-                    let val = min + dx * (max - min);
+                    let mut val = min + dx * (max - min);
+
+                    val = step * (val / step).ceil();
+                    val = val.clamp(min, max);
 
                     if let Some(callback) = &self.on_changing {
                         (callback)(cx, val);
@@ -300,7 +325,10 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
-                let val = (self.lens.get(cx) + 0.1 * (max - min)).clamp(min, max);
+                let step = self.internal.step;
+                let mut val = self.lens.get(cx) + step;
+                val = step * (val / step).ceil();
+                val = val.clamp(min, max);
                 if let Some(callback) = &self.on_changing {
                     (callback)(cx, val);
                 }
@@ -309,11 +337,54 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
-                let val = (self.lens.get(cx) - 0.1 * (max - min)).clamp(min, max);
+                let step = self.internal.step;
+                let mut val = self.lens.get(cx) - step;
+                val = step * (val / step).ceil();
+                val = val.clamp(min, max);
                 if let Some(callback) = &self.on_changing {
                     (callback)(cx, val);
                 }
             }
+
+            WindowEvent::ActionRequest(action) => match action.action {
+                Action::Increment => {
+                    let min = self.internal.range.start;
+                    let max = self.internal.range.end;
+                    let step = self.internal.step;
+                    let mut val = self.lens.get(cx) + step;
+                    val = step * (val / step).ceil();
+                    val = val.clamp(min, max);
+                    if let Some(callback) = &self.on_changing {
+                        (callback)(cx, val);
+                    }
+                }
+
+                Action::Decrement => {
+                    let min = self.internal.range.start;
+                    let max = self.internal.range.end;
+                    let step = self.internal.step;
+                    let mut val = self.lens.get(cx) - step;
+                    val = step * (val / step).ceil();
+                    val = val.clamp(min, max);
+                    if let Some(callback) = &self.on_changing {
+                        (callback)(cx, val);
+                    }
+                }
+
+                Action::SetValue => {
+                    if let Some(ActionData::NumericValue(val)) = action.data {
+                        let min = self.internal.range.start;
+                        let max = self.internal.range.end;
+                        let mut v = val as f32;
+                        v = v.clamp(min, max);
+                        if let Some(callback) = &self.on_changing {
+                            (callback)(cx, v);
+                        }
+                    }
+                }
+
+                _ => {}
+            },
 
             _ => {}
         });
@@ -375,6 +446,10 @@ impl<L: Lens> Handle<'_, Slider<L>> {
         self.cx.emit_to(self.entity, SliderEventInternal::SetRange(range));
 
         self
+    }
+
+    pub fn step(self, step: f32) -> Self {
+        self.modify(|slider: &mut Slider<L>| slider.internal.step = step)
     }
 
     /// Sets the fraction of a slider that a press of an arrow key will change.

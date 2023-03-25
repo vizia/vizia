@@ -1,3 +1,4 @@
+mod access;
 pub mod backend;
 mod draw;
 mod event;
@@ -20,6 +21,7 @@ use fnv::FnvHashMap;
 use replace_with::replace_with_or_abort;
 use unic_langid::LanguageIdentifier;
 
+pub use access::*;
 pub use draw::*;
 pub use event::*;
 pub use proxy::*;
@@ -37,8 +39,8 @@ use crate::style::Style;
 use crate::text::{TextConfig, TextContext};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
-use vizia_storage::SparseSet;
 use vizia_storage::TreeExt;
+use vizia_storage::{ChildIterator, SparseSet};
 
 static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
@@ -59,6 +61,7 @@ pub struct Context {
     pub(crate) data: DataStore,
     pub(crate) bindings: Views,
     pub(crate) event_queue: VecDeque<Event>,
+    pub(crate) tree_updates: Vec<accesskit::TreeUpdate>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,
@@ -104,6 +107,7 @@ pub struct Context {
     pub(crate) click_pos: (f32, f32),
 
     pub ignore_default_theme: bool,
+    pub window_has_focus: bool,
 }
 
 impl Default for Context {
@@ -146,6 +150,7 @@ impl Context {
             canvases: HashMap::new(),
             // environment: Environment::new(),
             event_queue: VecDeque::new(),
+            tree_updates: Vec::new(),
             listeners: HashMap::default(),
             global_listeners: vec![],
             mouse: MouseState::default(),
@@ -185,6 +190,7 @@ impl Context {
             click_pos: (0.0, 0.0),
 
             ignore_default_theme: false,
+            window_has_focus: true,
         };
 
         result.style.needs_restyle();
@@ -195,6 +201,8 @@ impl Context {
 
         result.entity_manager.create();
         result.set_default_font(&["Roboto"]);
+
+        result.style.roles.insert(Entity::root(), Role::Window).unwrap();
 
         result
     }
@@ -213,7 +221,7 @@ impl Context {
     }
 
     /// Makes the above black magic more explicit
-    pub(crate) fn with_current(&mut self, e: Entity, f: impl FnOnce(&mut Context)) {
+    pub fn with_current(&mut self, e: Entity, f: impl FnOnce(&mut Context)) {
         let prev = self.current;
         self.current = e;
         f(self);
@@ -336,7 +344,8 @@ impl Context {
     }
 
     pub(crate) fn remove_children(&mut self, entity: Entity) {
-        let children = entity.child_iter(&self.tree).collect::<Vec<_>>();
+        let child_iter = ChildIterator::new(&self.tree, entity);
+        let children = child_iter.collect::<Vec<_>>();
         for child in children.into_iter() {
             self.remove(child);
         }
@@ -371,11 +380,11 @@ impl Context {
                 self.focus_stack.remove(index);
             }
 
-            if self.focused == *entity
-                && delete_list.contains(&self.tree.lock_focus_within(*entity))
-            {
+            if self.focused == *entity {
                 if let Some(new_focus) = self.focus_stack.pop() {
                     self.with_current(new_focus, |cx| cx.focus());
+                } else {
+                    self.with_current(Entity::root(), |cx| cx.focus());
                 }
             }
 
@@ -554,6 +563,11 @@ impl Context {
         };
 
         std::thread::spawn(move || target(&mut cxp));
+    }
+
+    /// Finds the entity that identifier identifies
+    pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
+        self.entity_identifiers.get(identity).cloned()
     }
 }
 
