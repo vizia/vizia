@@ -3,7 +3,8 @@ use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
 use vizia_style::{
-    BoxShadow, Clip, CssRule, FontFamily, FontSize, GenericFontFamily, Gradient, Transition,
+    BoxShadow, Clip, CssRule, FontFamily, FontSize, GenericFontFamily, Gradient, Scale, Transition,
+    Translate,
 };
 
 use crate::prelude::*;
@@ -118,9 +119,9 @@ pub struct Style {
 
     // Transform
     pub transform: AnimatableSet<Vec<Transform>>,
-    // pub rotate: AnimatableSet<f32>,
-    // pub translate: AnimatableSet<(f32, f32)>,
-    // pub scale: AnimatableSet<(f32, f32)>,
+    pub translate: AnimatableSet<Translate>,
+    pub rotate: AnimatableSet<Angle>,
+    pub scale: AnimatableSet<Scale>,
 
     // Overflow
     pub overflowx: StyleSet<Overflow>,
@@ -365,6 +366,21 @@ impl Style {
             "transform" => {
                 self.transform.insert_animation(animation, self.add_transition(transition));
                 self.transform.insert_transition(rule_id, animation);
+            }
+
+            "translate" => {
+                self.translate.insert_animation(animation, self.add_transition(transition));
+                self.translate.insert_transition(rule_id, animation);
+            }
+
+            "rotate" => {
+                self.rotate.insert_animation(animation, self.add_transition(transition));
+                self.rotate.insert_transition(rule_id, animation);
+            }
+
+            "scale" => {
+                self.scale.insert_animation(animation, self.add_transition(transition));
+                self.scale.insert_transition(rule_id, animation);
             }
 
             "background-image" => {
@@ -727,6 +743,18 @@ impl Style {
                 self.transform.insert_rule(rule_id, transforms);
             }
 
+            Property::Translate(translate) => {
+                self.translate.insert_rule(rule_id, translate);
+            }
+
+            Property::Rotate(rotate) => {
+                self.rotate.insert_rule(rule_id, rotate);
+            }
+
+            Property::Scale(scale) => {
+                self.scale.insert_rule(rule_id, scale);
+            }
+
             Property::Overflow(overflow) => {
                 self.overflowx.insert_rule(rule_id, overflow);
                 self.overflowy.insert_rule(rule_id, overflow);
@@ -786,10 +814,6 @@ impl Style {
             Property::BoxShadow(box_shadows) => {
                 self.box_shadow.insert_rule(rule_id, box_shadows);
             }
-
-            Property::Translate(_) => todo!(),
-            Property::Rotate(_) => todo!(),
-            Property::Scale(_) => todo!(),
 
             Property::Cursor(cursor) => {
                 self.cursor.insert_rule(rule_id, cursor);
@@ -857,9 +881,9 @@ impl Style {
 
         // Transform
         self.transform.remove(entity);
-        // self.translate.remove(entity);
-        // self.rotate.remove(entity);
-        // self.scale.remove(entity);
+        self.translate.remove(entity);
+        self.rotate.remove(entity);
+        self.scale.remove(entity);
 
         self.overflowx.remove(entity);
         self.overflowy.remove(entity);
@@ -1002,9 +1026,9 @@ impl Style {
 
         // Transform
         self.transform.clear_rules();
-        // self.translate.clear_rules();
-        // self.rotate.clear_rules();
-        // self.scale.clear_rules();
+        self.translate.clear_rules();
+        self.rotate.clear_rules();
+        self.scale.clear_rules();
 
         self.overflowx.clear_rules();
         self.overflowy.clear_rules();
@@ -1106,6 +1130,38 @@ pub(crate) trait IntoTransform {
     fn into_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D;
 }
 
+impl IntoTransform for Translate {
+    fn into_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
+        let mut result = Transform2D::identity();
+        let tx = self.x.to_pixels(parent_bounds.w) * scale_factor;
+        let ty = self.y.to_pixels(parent_bounds.h) * scale_factor;
+        result.translate(tx, ty);
+
+        result
+    }
+}
+
+impl IntoTransform for Scale {
+    fn into_transform(&self, parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
+        let mut result = Transform2D::identity();
+        let sx = self.x.to_number(parent_bounds.w);
+        let sy = self.y.to_number(parent_bounds.h);
+        result.scale(sx, sy);
+
+        result
+    }
+}
+
+impl IntoTransform for Angle {
+    fn into_transform(&self, _parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
+        let mut result = Transform2D::identity();
+        let r = self.to_radians();
+        result.rotate(r);
+
+        result
+    }
+}
+
 impl IntoTransform for Vec<Transform> {
     fn into_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
         let mut result = Transform2D::identity();
@@ -1113,8 +1169,8 @@ impl IntoTransform for Vec<Transform> {
             let mut t = Transform2D::identity();
             match transform {
                 Transform::Translate(translate) => {
-                    let tx = translate.x.to_pixels(parent_bounds.w) * scale_factor;
-                    let ty = translate.y.to_pixels(parent_bounds.h) * scale_factor;
+                    let tx = translate.0.to_pixels(parent_bounds.w) * scale_factor;
+                    let ty = translate.1.to_pixels(parent_bounds.h) * scale_factor;
 
                     t.translate(tx, ty);
                 }
@@ -1132,8 +1188,8 @@ impl IntoTransform for Vec<Transform> {
                 }
 
                 Transform::Scale(scale) => {
-                    let sx = scale.x.to_factor();
-                    let sy = scale.y.to_factor();
+                    let sx = scale.0.to_factor();
+                    let sy = scale.1.to_factor();
 
                     t.scale(sx, sy)
                 }

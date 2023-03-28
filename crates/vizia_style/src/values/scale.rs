@@ -1,7 +1,7 @@
 use crate::{impl_parse, traits::Parse, PercentageOrNumber};
 
 /// A scale defining a scale value on the x and the y axis.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Scale {
     /// The scale value on the x axis.
     pub x: PercentageOrNumber,
@@ -16,14 +16,19 @@ impl Scale {
     }
 }
 
+impl Default for Scale {
+    fn default() -> Self {
+        Self { x: PercentageOrNumber::Number(1.0), y: PercentageOrNumber::Number(1.0) }
+    }
+}
+
 impl_parse! {
     Scale,
 
     custom {
         |input| {
             let x = PercentageOrNumber::parse(input)?;
-            input.expect_comma()?;
-            let y = PercentageOrNumber::parse(input)?;
+            let y = input.try_parse(PercentageOrNumber::parse).ok().unwrap_or_default();
             Ok(Scale { x, y })
         }
     }

@@ -83,6 +83,33 @@ const STYLE: &str = r#"
         transform: matrix(1, 2, 3, 4, 5, 6);
         transition: transform 500ms;
     }
+
+    .translate2 {
+        translate: 0px 0px;
+    }
+
+    .translate2:hover {
+        translate: 10px 10px;
+        transition: translate 500ms;
+    }
+    
+    .rotate2 {
+        rotate: 0deg;
+    }
+    
+    .rotate2:hover {
+        rotate: 45deg;
+        transition: rotate 500ms;
+    }
+    
+    .scale2 {
+        scale: 1 1;
+    }
+    
+    .scale2:hover {
+        scale: 2 2;
+        transition: scale 500ms;
+    }
 "#;
 
 fn main() {
@@ -123,7 +150,7 @@ fn main() {
             HStack::new(cx, |cx| {
                 Element::new(cx)
                     .text("translate")
-                    .transform(Transform::Translate((Pixels(10.0), Pixels(10.0)).into()));
+                    .transform(Transform::Translate((Pixels(10.0).into(), Pixels(10.0).into())));
                 Element::new(cx)
                     .text("translateX")
                     .transform(Transform::TranslateX(Pixels(10.0).into()));
@@ -135,7 +162,9 @@ fn main() {
             .col_between(Pixels(10.0));
             Element::new(cx).text("rotate").transform(Transform::Rotate(Angle::Deg(40.0)));
             HStack::new(cx, |cx| {
-                Element::new(cx).text("scale").transform(Transform::Scale((1.5, 0.5).into()));
+                Element::new(cx)
+                    .text("scale")
+                    .transform(Transform::Scale((1.5.into(), 0.5.into())));
                 Element::new(cx).text("scaleX").transform(Transform::ScaleX(1.5.into()));
                 Element::new(cx).text("scaleY").transform(Transform::ScaleY(0.5.into()));
             })
@@ -152,9 +181,9 @@ fn main() {
             .size(Auto)
             .col_between(Pixels(10.0));
             Element::new(cx).text("multi").transform([
-                Transform::Translate((Pixels(10.0), Pixels(10.0)).into()),
+                Transform::Translate((Pixels(10.0).into(), Pixels(10.0).into())),
                 Transform::Rotate(Angle::Deg(40.0)),
-                Transform::Scale((1.5, 0.5).into()),
+                Transform::Scale((1.5.into(), 0.5.into())),
                 Transform::Skew(Angle::Deg(30.0), Angle::Deg(20.0)),
             ]);
             Element::new(cx)
@@ -163,6 +192,10 @@ fn main() {
         })
         .child_space(Stretch(1.0))
         .row_between(Pixels(10.0));
+
+        Element::new(cx).class("translate2");
+        Element::new(cx).class("rotate2");
+        Element::new(cx).class("scale2");
     })
     .run();
 }

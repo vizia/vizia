@@ -16,14 +16,19 @@ impl Translate {
     }
 }
 
+impl Default for Translate {
+    fn default() -> Self {
+        Self { x: LengthOrPercentage::default(), y: LengthOrPercentage::default() }
+    }
+}
+
 impl_parse! {
     Translate,
 
     custom {
         |input| {
             let x = LengthOrPercentage::parse(input)?;
-            input.expect_comma()?;
-            let y = LengthOrPercentage::parse(input)?;
+            let y = input.try_parse(LengthOrPercentage::parse).ok().unwrap_or_default();
             Ok(Translate { x, y })
         }
     }

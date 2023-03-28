@@ -366,20 +366,17 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
 
     // Size
     if style.width.link(entity, &matched_rules) {
-        //println!("9");
         should_relayout = true;
         should_redraw = true;
     }
 
     if style.height.link(entity, &matched_rules) {
-        //println!("10");
         should_relayout = true;
         should_redraw = true;
     }
 
     // Size Constraints
     if style.max_width.link(entity, &matched_rules) {
-        //println!("11");
         should_relayout = true;
         should_redraw = true;
     }
@@ -482,14 +479,13 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
     }
 
     if style.font_size.link(entity, &matched_rules) {
-        should_redraw = true;
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.font_family.link(entity, &matched_rules) {
-        //println!("44");
-        should_redraw = true;
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.font_weight.link(entity, &matched_rules) {
@@ -560,6 +556,18 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
     }
 
     if style.transform.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.translate.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.rotate.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.scale.link(entity, &matched_rules) {
         should_redraw = true;
     }
 

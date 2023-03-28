@@ -13,6 +13,12 @@ pub enum Angle {
     Turn(f32),
 }
 
+impl Default for Angle {
+    fn default() -> Self {
+        Angle::Rad(0.0)
+    }
+}
+
 impl_parse! {
     Angle,
 

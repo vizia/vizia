@@ -153,12 +153,26 @@ impl<'a> EventContext<'a> {
         if let Some(transforms) = self.style.transform.get(self.current) {
             let bounds = self.bounds();
             let scale_factor = self.scale_factor();
-            let mut translate = Transform2D::new_translation(bounds.center().0, bounds.center().1);
+            let mut top_left = Transform2D::new_translation(bounds.center().0, bounds.center().1);
 
             let mut transform = Transform2D::identity();
-            transform.premultiply(&translate);
+            transform.premultiply(&top_left);
 
-            translate.inverse();
+            // Apply transform origin
+
+            top_left.inverse();
+
+            if let Some(translate) = self.style.translate.get(self.current) {
+                transform.premultiply(&translate.into_transform(bounds, scale_factor));
+            }
+
+            if let Some(rotate) = self.style.rotate.get(self.current) {
+                transform.premultiply(&rotate.into_transform(bounds, scale_factor));
+            }
+
+            if let Some(scale) = self.style.scale.get(self.current) {
+                transform.premultiply(&scale.into_transform(bounds, scale_factor));
+            }
 
             // Check if the transform is currently animating
             // Get the animation state
@@ -178,7 +192,7 @@ impl<'a> EventContext<'a> {
                 transform.premultiply(&transforms.into_transform(bounds, scale_factor));
             }
 
-            transform.premultiply(&translate);
+            transform.premultiply(&top_left);
 
             return Some(transform);
         }

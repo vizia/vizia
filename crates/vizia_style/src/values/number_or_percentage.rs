@@ -1,7 +1,7 @@
 use crate::{macros::impl_parse, Parse, Percentage};
 
 /// A number or a percentage value.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PercentageOrNumber {
     /// A percentage value.
     Percentage(f32),
@@ -15,6 +15,20 @@ impl PercentageOrNumber {
             PercentageOrNumber::Percentage(val) => *val,
             PercentageOrNumber::Number(val) => *val,
         }
+    }
+
+    pub fn to_number(&self, min_bounds: f32) -> f32 {
+        match self {
+            PercentageOrNumber::Number(num) => *num,
+
+            PercentageOrNumber::Percentage(val) => val * min_bounds,
+        }
+    }
+}
+
+impl Default for PercentageOrNumber {
+    fn default() -> Self {
+        Self::Number(0.0)
     }
 }
 

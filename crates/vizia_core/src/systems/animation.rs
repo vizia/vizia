@@ -15,6 +15,9 @@ pub fn animation_system(cx: &mut Context) -> bool {
         | cx.style.box_shadow.tick(time)
         | cx.style.font_color.tick(time)
         | cx.style.transform.tick(time)
+        | cx.style.translate.tick(time)
+        | cx.style.rotate.tick(time)
+        | cx.style.scale.tick(time)
         | cx.style.outline_color.tick(time)
         | cx.style.outline_offset.tick(time)
         | cx.style.outline_width.tick(time);

@@ -1,7 +1,8 @@
 use morphorm::Units;
 use vizia_style::{
-    BoxShadow, Clip, Color, ColorStop, FontSize, Gradient, Length, LengthOrPercentage, LengthValue,
-    LinearGradient, Opacity, Rect, Transform, RGBA,
+    Angle, BoxShadow, Clip, Color, ColorStop, FontSize, Gradient, Length, LengthOrPercentage,
+    LengthValue, LinearGradient, Opacity, PercentageOrNumber, Rect, Scale, Transform, Translate,
+    RGBA,
 };
 
 use femtovg::Transform2D;
@@ -82,10 +83,8 @@ impl Interpolator for LengthValue {
                 return LengthValue::Px(f32::interpolate(start_val, end_val, t));
             }
 
-            _ => {}
+            _ => LengthValue::default(),
         }
-
-        LengthValue::default()
     }
 }
 
@@ -96,10 +95,8 @@ impl Interpolator for Length {
                 return Length::Value(LengthValue::interpolate(start_val, end_val, t));
             }
 
-            _ => {}
+            _ => Length::default(),
         }
-
-        Length::default()
     }
 }
 
@@ -117,10 +114,50 @@ impl Interpolator for LengthOrPercentage {
                 return LengthOrPercentage::Percentage(f32::interpolate(start_val, end_val, t));
             }
 
-            _ => {}
+            _ => LengthOrPercentage::default(),
         }
+    }
+}
 
-        LengthOrPercentage::default()
+impl Interpolator for PercentageOrNumber {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (PercentageOrNumber::Number(start_val), PercentageOrNumber::Number(end_val)) => {
+                return PercentageOrNumber::Number(f32::interpolate(start_val, end_val, t));
+            }
+
+            (
+                PercentageOrNumber::Percentage(start_val),
+                PercentageOrNumber::Percentage(end_val),
+            ) => {
+                return PercentageOrNumber::Percentage(f32::interpolate(start_val, end_val, t));
+            }
+
+            _ => PercentageOrNumber::default(),
+        }
+    }
+}
+
+impl Interpolator for Translate {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        let x = LengthOrPercentage::interpolate(&start.x, &end.x, t);
+        let y = LengthOrPercentage::interpolate(&start.y, &end.y, t);
+        Translate { x, y }
+    }
+}
+
+impl Interpolator for Scale {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        let x = PercentageOrNumber::interpolate(&start.x, &end.x, t);
+        let y = PercentageOrNumber::interpolate(&start.y, &end.y, t);
+        Scale { x, y }
+    }
+}
+
+impl Interpolator for Angle {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        let r = start.to_radians() + (end.to_radians() - start.to_radians()) * t;
+        Angle::Rad(r)
     }
 }
 
