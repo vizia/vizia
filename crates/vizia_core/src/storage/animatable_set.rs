@@ -342,10 +342,8 @@ where
                     );
                     anim_state.entities.remove(&entity);
                 }
-                //println!("Already playing: {:?}", anim_state);
-                //anim_state.play(entity);
             }
-            //else {
+
             // Safe to unwrap because already checked that the animation exists
             let mut anim_state = self.animations.get(animation).cloned().unwrap();
             anim_state.output = Some(
@@ -362,7 +360,6 @@ where
             anim_state.play(entity);
             self.inline_data.sparse[entity_index].anim_index = self.active_animations.len() as u32;
             self.active_animations.push(anim_state);
-            //}
         }
     }
 

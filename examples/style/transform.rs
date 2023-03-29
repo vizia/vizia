@@ -24,17 +24,17 @@ const STYLE: &str = r#"
 
     
     .translate:hover {
-        transform: translate(40px, 20px);
+        transform: translate(10px, 10px);
         transition: transform 500ms;
     }
 
     .translateX:hover {
-        transform: translateX(40px);
+        transform: translateX(10px);
         transition: transform 500ms;
     }
 
     .translateY:hover {
-        transform: translateY(40px);
+        transform: translateY(10px);
         transition: transform 500ms;
     }
     

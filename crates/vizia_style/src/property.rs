@@ -2,8 +2,8 @@ use crate::{
     define_property, Angle, BackgroundImage, Border, BorderCornerShape, BorderRadius, BorderWidth,
     BorderWidthValue, BoxShadow, Clip, Color, CursorIcon, CustomParseError, CustomProperty,
     Display, FontFamily, FontSize, FontStretch, FontStyle, FontWeight, LayoutType,
-    LengthOrPercentage, Opacity, Outline, Overflow, Parse, PositionType, Rect, Scale, Transform,
-    Transition, Translate, Units, UnparsedProperty, Visibility,
+    LengthOrPercentage, Opacity, Outline, Overflow, Parse, Position, PositionType, Rect, Scale,
+    Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -157,6 +157,7 @@ define_property! {
 
         // Transform
         "transform": Transform(Vec<Transform>),
+        "transform-origin": TransformOrigin(Position),
         "translate": Translate(Translate),
         "rotate": Rotate(Angle),
         "scale": Scale(Scale),

@@ -555,7 +555,12 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
         should_redraw = true;
     }
 
+    // Transform
     if style.transform.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.transform_origin.link(entity, &matched_rules) {
         should_redraw = true;
     }
 
@@ -571,6 +576,7 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
         should_redraw = true;
     }
 
+    //
     if should_relayout {
         style.system_flags.set(SystemFlags::RELAYOUT, true);
     }

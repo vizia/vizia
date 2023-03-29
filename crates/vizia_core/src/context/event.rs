@@ -153,14 +153,23 @@ impl<'a> EventContext<'a> {
         if let Some(transforms) = self.style.transform.get(self.current) {
             let bounds = self.bounds();
             let scale_factor = self.scale_factor();
-            let mut top_left = Transform2D::new_translation(bounds.center().0, bounds.center().1);
 
             let mut transform = Transform2D::identity();
-            transform.premultiply(&top_left);
 
-            // Apply transform origin
+            let mut origin = self
+                .style
+                .transform_origin
+                .get(self.current)
+                .map(|transform_origin| {
+                    let mut origin = Transform2D::new_translation(bounds.left(), bounds.top());
+                    let offset = transform_origin.into_transform(bounds, scale_factor);
+                    origin.premultiply(&offset);
+                    origin
+                })
+                .unwrap_or(Transform2D::new_translation(bounds.center().0, bounds.center().1));
+            transform.premultiply(&origin);
 
-            top_left.inverse();
+            origin.inverse();
 
             if let Some(translate) = self.style.translate.get(self.current) {
                 transform.premultiply(&translate.into_transform(bounds, scale_factor));
@@ -192,7 +201,7 @@ impl<'a> EventContext<'a> {
                 transform.premultiply(&transforms.into_transform(bounds, scale_factor));
             }
 
-            transform.premultiply(&top_left);
+            transform.premultiply(&origin);
 
             return Some(transform);
         }

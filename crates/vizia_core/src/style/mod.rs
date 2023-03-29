@@ -119,6 +119,7 @@ pub struct Style {
 
     // Transform
     pub transform: AnimatableSet<Vec<Transform>>,
+    pub transform_origin: AnimatableSet<Translate>,
     pub translate: AnimatableSet<Translate>,
     pub rotate: AnimatableSet<Angle>,
     pub scale: AnimatableSet<Scale>,
@@ -366,6 +367,11 @@ impl Style {
             "transform" => {
                 self.transform.insert_animation(animation, self.add_transition(transition));
                 self.transform.insert_transition(rule_id, animation);
+            }
+
+            "transform-origin" => {
+                self.transform_origin.insert_animation(animation, self.add_transition(transition));
+                self.transform_origin.insert_transition(rule_id, animation);
             }
 
             "translate" => {
@@ -741,6 +747,12 @@ impl Style {
             // Transform
             Property::Transform(transforms) => {
                 self.transform.insert_rule(rule_id, transforms);
+            }
+
+            Property::TransformOrigin(transform_origin) => {
+                let x = transform_origin.x.to_length_or_percentage();
+                let y = transform_origin.y.to_length_or_percentage();
+                self.transform_origin.insert_rule(rule_id, Translate { x, y });
             }
 
             Property::Translate(translate) => {

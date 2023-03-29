@@ -100,7 +100,7 @@ fn hover_entity(
     if let Some(t) = cx.transform() {
         transform.premultiply(&t);
     }
-    println!("{} {:?} {:?} {:?}", cx.current, bounds, transform, parent_transform);
+    // println!("{} {:?} {:?} {:?}", cx.current, bounds, transform, parent_transform);
 
     let mut t = transform.clone();
     t.inverse();

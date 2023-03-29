@@ -221,6 +221,10 @@ name = "transform"
 path = "examples/style/transform.rs"
 
 [[example]]
+name = "transform_origin"
+path = "examples/style/transform_origin.rs"
+
+[[example]]
 name = "gradient"
 path = "examples/style/gradient.rs"
 

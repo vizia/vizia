@@ -325,7 +325,6 @@ pub trait StyleModifiers: internal::Modifiable {
     ) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
-            println!("{:?}", v);
             let value = v.into();
             cx.style.border_top_left_shape.insert(entity, value.0);
             cx.style.border_top_right_shape.insert(entity, value.1);
