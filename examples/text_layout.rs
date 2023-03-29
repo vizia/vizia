@@ -226,14 +226,15 @@ fn main() {
             // Textbox::new_multiline(cx, AppData::text.index(2), true)
             //     .on_submit(|ex, txt, _| ex.emit(AppEvent::SetText(2, txt.clone())));
 
-            Textbox::new_multiline(cx, AppData::text.index(3), true)
-                .width(Pixels(200.0))
-                // .child_left(Stretch(1.0))
-                .on_submit(|ex, txt, _| ex.emit(AppEvent::SetText(3, txt.clone())));
+            // Textbox::new_multiline(cx, AppData::text.index(3), true)
+            // .width(Pixels(200.0))
+            // .child_left(Stretch(1.0))
+            // .on_submit(|ex, txt, _| ex.emit(AppEvent::SetText(3, txt.clone())));
         })
         .child_space(Pixels(0.0))
         .row_between(Pixels(20.0));
     })
     .title("Text")
+    .inner_size((1200, 600))
     .run();
 }

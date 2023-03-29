@@ -188,7 +188,13 @@ impl Node for Entity {
 
         // If the width is known use that, else use 0 for wrapping text or 999999 for non-wrapping text.
         let max_width = if let Some(width) = width {
-            width.ceil() as i32
+            let child_left =
+                store.child_left.get(*self).cloned().unwrap_or_default().to_px(width, 0.0)
+                    * store.scale_factor();
+            let child_right =
+                store.child_right.get(*self).cloned().unwrap_or_default().to_px(width, 0.0)
+                    * store.scale_factor();
+            (width.ceil() - child_left - child_right) as i32
         } else {
             if store.text_wrap.get(*self).copied().unwrap_or(true) {
                 0
@@ -239,7 +245,7 @@ impl Node for Entity {
         text_height += child_space_y;
 
         let height = if let Some(height) = height { height } else { text_height };
-        let width = if let Some(width) = width { text_width.max(width) } else { text_width };
+        let width = if let Some(width) = width { width } else { text_width };
 
         Some((width, height))
     }
