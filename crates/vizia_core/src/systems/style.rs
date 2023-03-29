@@ -601,7 +601,7 @@ pub fn style_system(cx: &mut Context) {
         // Loop through all entities
         for entity in iterator {
             let mut matched_rules = Vec::with_capacity(100);
-            for (rule, (specificity, selector_list)) in cx.style.selectors.iter() {
+            for (rule, specificity, selector_list) in cx.style.selectors.iter() {
                 // println!("selector_list: {:?} {}", selector_list, entity);
                 let mut context =
                     MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);

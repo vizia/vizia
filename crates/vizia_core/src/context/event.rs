@@ -440,8 +440,6 @@ impl<'a> EventContext<'a> {
 
         self.style.remove_rules();
 
-        self.style.selectors.clear();
-
         self.style.clear_style_rules();
 
         let mut overall_theme = String::new();

@@ -52,12 +52,11 @@ pub fn hover_system(cx: &mut Context) {
         }
 
         // Set previous hovered pseudoclass to false
-        let h = cx.hovered;
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(h) {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.hovered) {
             pseudo_classes.set(PseudoClassFlags::HOVER, false);
         }
 
-        cx.event_queue.push_back(Event::new(WindowEvent::MouseEnter).target(h));
+        cx.event_queue.push_back(Event::new(WindowEvent::MouseEnter).target(hovered));
         cx.event_queue.push_back(Event::new(WindowEvent::MouseLeave).target(cx.hovered));
 
         cx.hovered = hovered;

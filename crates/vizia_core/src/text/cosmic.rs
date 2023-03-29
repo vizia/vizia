@@ -380,6 +380,7 @@ impl TextContext {
                 };
                 let buffer = buf.buffer();
                 let total_height = buffer.layout_runs().len() as f32 * buffer.metrics().line_height;
+
                 for run in buffer.layout_runs() {
                     if let Some((x, w)) = run.highlight(cursor_start, cursor_end) {
                         let y = run.line_y as f32 - buffer.metrics().font_size as f32;

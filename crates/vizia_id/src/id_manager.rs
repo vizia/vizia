@@ -39,6 +39,11 @@ where
         }
     }
 
+    pub fn reset(&mut self) {
+        self.generation.clear();
+        self.free_list.clear();
+    }
+
     /// Creates a new generational id
     ///
     /// A generational id has an index, used for indexing into arrays, and a generation, used to check the alive status of the id

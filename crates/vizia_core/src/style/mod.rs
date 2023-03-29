@@ -79,7 +79,8 @@ pub struct Style {
     pub(crate) animation_manager: IdManager<Animation>,
 
     // pub(crate) rules: Vec<StyleRule>,
-    pub selectors: HashMap<Rule, (u32, SelectorList<Selectors>)>,
+    // pub selectors: HashMap<Rule, (u32, SelectorList<Selectors>)>,
+    pub selectors: Vec<(Rule, u32, SelectorList<Selectors>)>,
     pub transitions: HashMap<Rule, Animation>,
 
     pub default_font: Vec<FamilyOwned>,
@@ -98,7 +99,6 @@ pub struct Style {
     pub live: SparseSet<Live>,
     pub labelled_by: SparseSet<Entity>,
     pub hidden: SparseSet<bool>,
-    // TODO: Should we store these or somehow derive them from app state?
     pub text_value: SparseSet<String>,
     pub numeric_value: SparseSet<f64>,
 
@@ -266,13 +266,11 @@ impl Style {
     }
 
     pub fn remove_rules(&mut self) {
-        // for rule in self.rules.iter() {
-        //     self.rule_manager.destroy(rule.id);
-        // }
+        self.rule_manager.reset();
+        self.animation_manager.reset();
 
-        // for (_, animation) in self.transitions.iter() {
-        //     self.animation_manager.destroy(*animation);
-        // }
+        self.selectors.clear();
+        self.transitions.clear();
     }
 
     pub fn parse_theme(&mut self, stylesheet: &str) {
@@ -289,7 +287,7 @@ impl Style {
 
                         let specificity = selectors.0.first().unwrap().specificity();
 
-                        self.selectors.insert(rule_id, (specificity, selectors));
+                        self.selectors.push((rule_id, specificity, selectors));
 
                         for property in style_rule.declarations.declarations {
                             match property {
@@ -893,6 +891,7 @@ impl Style {
 
         // Transform
         self.transform.remove(entity);
+        self.transform_origin.remove(entity);
         self.translate.remove(entity);
         self.rotate.remove(entity);
         self.scale.remove(entity);
@@ -1038,6 +1037,7 @@ impl Style {
 
         // Transform
         self.transform.clear_rules();
+        self.transform_origin.clear_rules();
         self.translate.clear_rules();
         self.rotate.clear_rules();
         self.scale.clear_rules();
