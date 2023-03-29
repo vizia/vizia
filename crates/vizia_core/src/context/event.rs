@@ -5,7 +5,7 @@ use std::error::Error;
 
 use fnv::FnvHashMap;
 
-use crate::cache::CachedData;
+use crate::cache::{BoundingBox, CachedData};
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
@@ -21,6 +21,22 @@ use crate::text::TextContext;
 use copypasta::ClipboardProvider;
 
 use super::DrawCache;
+
+pub enum RelativeResult {
+    Inside((f32, f32)),
+    Outside((f32, f32)),
+}
+
+impl RelativeResult {
+    /// Returns the `x` and `y` coordinates. May be negative when unwrapping [`RelativeResult::Outside`]
+    #[inline]
+    pub fn unwrap(self) -> (f32, f32) {
+        match self {
+            Self::Inside((x, y)) => (x, y),
+            Self::Outside((x, y)) => (x, y),
+        }
+    }
+}
 
 pub struct EventContext<'a> {
     pub(crate) current: Entity,
@@ -85,6 +101,24 @@ impl<'a> EventContext<'a> {
 
     pub fn current(&self) -> Entity {
         self.current
+    }
+
+    pub fn bounds(&self) -> BoundingBox {
+        self.cache.get_bounds(self.current)
+    }
+
+    /// Returns [`RelativeResult::Inside`] containing a tuple of the passed `x` and `y` values relative to the current bounding box,
+    /// or [`RelativeResult::Outside`] with the `x` and `y` coordinates, also relative but they may be negative,
+    /// when the coordinate is not inside the bounds.
+    pub fn relative_position(&self, x: f32, y: f32) -> RelativeResult {
+        let bounds = self.bounds();
+        let rel_x = x - bounds.x;
+        let rel_y = y - bounds.y;
+        if rel_x >= 0. && rel_y >= 0. && rel_x < bounds.w && rel_y < bounds.h {
+            RelativeResult::Inside((rel_x, rel_y))
+        } else {
+            RelativeResult::Outside((rel_x, rel_y))
+        }
     }
 
     /// Add a listener to an entity.
