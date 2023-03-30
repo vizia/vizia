@@ -1,5 +1,6 @@
 use morphorm::Node;
 
+use crate::layout::node::SubLayout;
 use crate::prelude::*;
 use crate::style::SystemFlags;
 
@@ -7,7 +8,15 @@ pub(crate) fn layout_system(cx: &mut Context) {
     // text_constraints_system(cx);
 
     if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {
-        Entity::root().layout(&mut cx.cache, &cx.tree, &cx.style, &mut cx.text_context);
+        Entity::root().layout(
+            &mut cx.cache,
+            &cx.tree,
+            &cx.style,
+            &mut SubLayout {
+                text_context: &mut cx.text_context,
+                resource_manager: &cx.resource_manager,
+            },
+        );
 
         // If layout has changed then redraw
         cx.style.system_flags.set(SystemFlags::REDRAW, true);

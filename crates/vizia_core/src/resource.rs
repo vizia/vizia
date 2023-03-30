@@ -73,6 +73,27 @@ impl ResourceManager {
     pub fn new() -> Self {
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
 
+        let default_image_loader = |cx: &mut ResourceContext, path: &str| {
+            if path.starts_with("https://") {
+                let path = path.to_string();
+                cx.spawn(move |cx| {
+                    let data = reqwest::blocking::get(&path).unwrap().bytes().unwrap();
+                    cx.load_image(
+                        path,
+                        image::load_from_memory_with_format(
+                            &data,
+                            image::guess_format(&data).unwrap(),
+                        )
+                        .unwrap(),
+                        ImageRetentionPolicy::DropWhenUnusedForOneFrame,
+                    )
+                    .unwrap();
+                });
+            } else {
+                // TODO: Try to load path from file
+            }
+        };
+
         ResourceManager {
             stylesheets: Vec::new(),
             themes: Vec::new(),
@@ -82,7 +103,7 @@ impl ResourceManager {
                 FluentBundle::new(vec![LanguageIdentifier::default()]),
             )]),
             language: locale,
-            image_loader: None,
+            image_loader: Some(Box::new(default_image_loader)),
             count: 0,
         }
     }

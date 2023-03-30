@@ -7,6 +7,8 @@ use vizia_style::{
 
 use femtovg::Transform2D;
 
+use crate::style::ImageOrGradient;
+
 /// A trait which describes a property which can be interpolated for animations.
 pub trait Interpolator {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self;
@@ -191,6 +193,18 @@ impl<T: Interpolator> Interpolator for Vec<T> {
     }
 }
 
+impl Interpolator for ImageOrGradient {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (
+                ImageOrGradient::Gradient(gradient_start),
+                ImageOrGradient::Gradient(gradient_end),
+            ) => ImageOrGradient::Gradient(Gradient::interpolate(gradient_start, gradient_end, t)),
+            _ => end.clone(),
+        }
+    }
+}
+
 impl Interpolator for Gradient {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
@@ -215,12 +229,14 @@ impl Interpolator for LinearGradient {
                     .enumerate()
                     .map(|(index, (start_stop, end_stop))| {
                         let num_stops = start.stops.len();
-                        let start_pos = start_stop.position.clone().unwrap_or(
-                            LengthOrPercentage::Percentage(index as f32 / (num_stops - 1) as f32),
-                        );
-                        let end_pos = end_stop.position.clone().unwrap_or(
-                            LengthOrPercentage::Percentage(index as f32 / (num_stops - 1) as f32),
-                        );
+                        let start_pos =
+                            start_stop.position.clone().unwrap_or(LengthOrPercentage::Percentage(
+                                index as f32 / (num_stops - 1) as f32 * 100.0,
+                            ));
+                        let end_pos =
+                            end_stop.position.clone().unwrap_or(LengthOrPercentage::Percentage(
+                                index as f32 / (num_stops - 1) as f32 * 100.0,
+                            ));
                         ColorStop {
                             color: Color::interpolate(&start_stop.color, &end_stop.color, t),
                             position: Some(LengthOrPercentage::interpolate(

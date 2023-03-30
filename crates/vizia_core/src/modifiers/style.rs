@@ -2,7 +2,7 @@ use vizia_style::{BorderRadius, Position, Rect, Scale, Transform, Translate};
 
 use super::internal;
 use crate::prelude::*;
-use crate::style::SystemFlags;
+use crate::style::{ImageOrGradient, SystemFlags};
 
 /// Modifiers for changing the style properties of a view.
 pub trait StyleModifiers: internal::Modifiable {
@@ -209,36 +209,18 @@ pub trait StyleModifiers: internal::Modifiable {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, val| {
             let images = val.into();
-            let gradients = images
+            let images = images
                 .into_iter()
                 .filter_map(|img| match img {
-                    BackgroundImage::Gradient(gradient) => Some(*gradient),
+                    BackgroundImage::Gradient(gradient) => {
+                        Some(ImageOrGradient::Gradient(*gradient))
+                    }
+                    BackgroundImage::Url(url) => Some(ImageOrGradient::Image(url.url.to_string())),
                     _ => None,
                 })
                 .collect::<Vec<_>>();
-            cx.style.background_gradient.insert(entity, gradients);
+            cx.style.background_image.insert(entity, images);
             cx.needs_redraw();
-        });
-
-        self
-    }
-
-    // TODO: Docs for this.
-    fn image<U: ToString>(mut self, value: impl Res<U>) -> Self {
-        let entity = self.entity();
-        value.set_or_bind(self.context(), entity, |cx, entity, val| {
-            let val = val.to_string();
-            if let Some(prev_data) = cx.style.image.get(entity) {
-                if prev_data != &val {
-                    cx.style.image.insert(entity, val);
-                    cx.style.needs_text_layout.insert(entity, true).unwrap();
-                    cx.needs_redraw();
-                }
-            } else {
-                cx.style.image.insert(entity, val);
-                cx.style.needs_text_layout.insert(entity, true).unwrap();
-                cx.needs_redraw();
-            }
         });
 
         self

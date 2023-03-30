@@ -1,10 +1,14 @@
+use vizia_style::Url;
+
 use crate::prelude::*;
 
 pub struct Image {}
 
 impl Image {
     pub fn new<T: ToString>(cx: &mut Context, img: impl Res<T>) -> Handle<'_, Self> {
-        Self {}.build(cx, |_| {}).image(img)
+        // TODO: Make this reactive
+        let img = vec![BackgroundImage::Url(Url { url: img.get_val(cx).to_string().into() })];
+        Self {}.build(cx, |_| {}).background_image(img)
     }
 }
 

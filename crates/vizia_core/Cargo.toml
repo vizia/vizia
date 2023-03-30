@@ -49,6 +49,7 @@ cosmic-text = { git = "https://github.com/pop-os/cosmic-text", rev = "e788c175ec
 #cosmic-text = { path = "../../../cosmic-text" }
 swash = "^0.1"
 replace_with = "0.1.7"
+reqwest = { version = "0.11.9", features = ["blocking"] }
 
 # Required so that doc tests will compile
 [dev-dependencies]

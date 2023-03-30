@@ -7,7 +7,8 @@ mod resource;
 
 use instant::Instant;
 use std::any::{Any, TypeId};
-use std::collections::{HashMap, VecDeque};
+use std::collections::hash_map::Entry;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::once;
 use std::path::Path;
 use std::sync::Mutex;
@@ -33,7 +34,7 @@ use crate::events::ViewHandler;
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
 use crate::prelude::*;
-use crate::resource::{ImageRetentionPolicy, ResourceManager};
+use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::state::{BindingHandler, ModelDataStore};
 use crate::style::Style;
 use crate::text::{TextConfig, TextContext};
@@ -551,6 +552,37 @@ impl Context {
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
         self.resource_manager.add_translation(lang, ftl);
         self.emit(EnvironmentEvent::SetLocale(self.resource_manager.language.clone()));
+    }
+
+    pub fn load_image(
+        &mut self,
+        path: &str,
+        image: image::DynamicImage,
+        policy: ImageRetentionPolicy,
+    ) {
+        match self.resource_manager.images.entry(path.to_string()) {
+            Entry::Occupied(mut occ) => {
+                occ.get_mut().image = ImageOrId::Image(
+                    image,
+                    femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
+                );
+                occ.get_mut().dirty = true;
+                occ.get_mut().retention_policy = policy;
+            }
+            Entry::Vacant(vac) => {
+                vac.insert(StoredImage {
+                    image: ImageOrId::Image(
+                        image,
+                        femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
+                    ),
+                    retention_policy: policy,
+                    used: true,
+                    dirty: false,
+                    observers: HashSet::new(),
+                });
+            }
+        }
+        self.style.needs_relayout();
     }
 
     pub fn spawn<F>(&self, target: F)

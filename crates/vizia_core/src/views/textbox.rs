@@ -8,7 +8,6 @@ use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest, Rect, TextDirection, TextPosition, TextSelection};
 use cosmic_text::{Action, Attrs, Cursor, Edit};
 use unicode_segmentation::UnicodeSegmentation;
-use vizia_id::GenerationalId;
 use vizia_input::Code;
 use vizia_storage::TreeExt;
 
@@ -102,8 +101,6 @@ where
     }
 
     fn set_caret(&mut self, cx: &mut EventContext) {
-        let parent = cx.current().parent(cx.tree).unwrap();
-
         let scale = 1.0;
 
         // calculate visible area for content and container
@@ -282,13 +279,9 @@ where
         let logical_parent_width = cx.physical_to_logical(parent_bounds.w);
 
         let child_left = child_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
-        let child_right = child_right.to_px(logical_parent_width, 0.0) * cx.scale_factor();
-
-        // println!("{} {}", origin_x, origin_y);
 
         let x = x - self.transform.0 - parent_bounds.x - child_left;
         let y = y - self.transform.1 - parent_bounds.y;
-        println!("hit: {} {}", x, y);
         (x, y)
     }
 

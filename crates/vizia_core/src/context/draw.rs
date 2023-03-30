@@ -8,9 +8,9 @@ use morphorm::Units;
 use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::prelude::*;
-use crate::resource::ResourceManager;
+use crate::resource::{ImageOrId, ResourceManager};
 use crate::state::ModelDataStore;
-use crate::style::{IntoTransform, Style};
+use crate::style::{ImageOrGradient, IntoTransform, Style};
 use crate::text::{TextConfig, TextContext};
 use crate::vg::{ImageId, Paint, Path};
 use vizia_input::{Modifiers, MouseState};
@@ -466,6 +466,8 @@ impl<'a> DrawContext<'a> {
         let background_color = self.background_color();
         let paint = Paint::color(background_color.into());
         canvas.fill_path(path, &paint);
+
+        self.draw_background_images(canvas, path);
     }
 
     pub fn draw_text_and_selection(&mut self, canvas: &mut Canvas) {
@@ -798,7 +800,7 @@ impl<'a> DrawContext<'a> {
         }
     }
 
-    pub fn draw_gradients(&self, canvas: &mut Canvas, path: &mut Path) {
+    fn draw_background_images(&self, canvas: &mut Canvas, path: &mut Path) {
         let bounds = self.bounds();
 
         let parent = self
@@ -809,76 +811,103 @@ impl<'a> DrawContext<'a> {
         let parent_width = self.cache.get_width(parent);
         let parent_height = self.cache.get_height(parent);
 
-        if let Some(gradients) = self.style.background_gradient.get(self.current) {
-            for gradient in gradients.iter() {
-                match gradient {
-                    Gradient::Linear(linear_gradient) => {
-                        let (_, _, end_x, end_y, parent_length) = match linear_gradient.direction {
-                            LineDirection::Horizontal(horizontal_keyword) => {
-                                match horizontal_keyword {
-                                    HorizontalPositionKeyword::Left => {
-                                        (0.0, 0.0, bounds.w, 0.0, parent_width)
+        if let Some(images) = self.style.background_image.get(self.current) {
+            for image in images.iter() {
+                match image {
+                    ImageOrGradient::Gradient(gradient) => match gradient {
+                        Gradient::Linear(linear_gradient) => {
+                            let (_, _, end_x, end_y, parent_length) = match linear_gradient
+                                .direction
+                            {
+                                LineDirection::Horizontal(horizontal_keyword) => {
+                                    match horizontal_keyword {
+                                        HorizontalPositionKeyword::Left => {
+                                            (0.0, 0.0, bounds.w, 0.0, parent_width)
+                                        }
+
+                                        HorizontalPositionKeyword::Right => {
+                                            (0.0, 0.0, bounds.w, 0.0, parent_width)
+                                        }
+                                    }
+                                }
+
+                                LineDirection::Vertical(vertical_keyword) => match vertical_keyword
+                                {
+                                    VerticalPositionKeyword::Bottom => {
+                                        (0.0, 0.0, 0.0, bounds.h, parent_height)
                                     }
 
-                                    HorizontalPositionKeyword::Right => {
-                                        (0.0, 0.0, bounds.w, 0.0, parent_width)
+                                    VerticalPositionKeyword::Top => {
+                                        (0.0, 0.0, 0.0, bounds.h, parent_height)
+                                    }
+                                },
+
+                                LineDirection::Corner { horizontal, vertical } => {
+                                    match (horizontal, vertical) {
+                                        (
+                                            HorizontalPositionKeyword::Right,
+                                            VerticalPositionKeyword::Bottom,
+                                        ) => (0.0, 0.0, bounds.w, bounds.h, parent_width),
+
+                                        _ => (0.0, 0.0, 0.0, 0.0, 0.0),
                                     }
                                 }
+
+                                _ => (0.0, 0.0, 0.0, 0.0, 0.0),
+                            };
+
+                            let num_stops = linear_gradient.stops.len();
+
+                            let stops = linear_gradient
+                                .stops
+                                .iter()
+                                .enumerate()
+                                .map(|(index, stop)| {
+                                    let pos = if let Some(pos) = &stop.position {
+                                        pos.to_pixels(parent_length) / parent_length
+                                    } else {
+                                        index as f32 / (num_stops - 1) as f32
+                                    };
+                                    let col: femtovg::Color = stop.color.into();
+                                    (pos, col)
+                                })
+                                .collect::<Vec<_>>();
+
+                            let paint = Paint::linear_gradient_stops(
+                                bounds.x,
+                                bounds.y,
+                                bounds.x + end_x,
+                                bounds.y + end_y,
+                                stops.into_iter(),
+                            );
+
+                            canvas.fill_path(path, &paint);
+                        }
+
+                        _ => {}
+                    },
+
+                    ImageOrGradient::Image(image_name) => {
+                        if let Some(image) = self.resource_manager.images.get(image_name) {
+                            match image.image {
+                                ImageOrId::Id(id, dim) => {
+                                    let paint = Paint::image(
+                                        id,
+                                        bounds.x,
+                                        bounds.y,
+                                        dim.0 as f32,
+                                        dim.1 as f32,
+                                        0.0,
+                                        1.0,
+                                    );
+
+                                    canvas.fill_path(path, &paint);
+                                }
+
+                                _ => {}
                             }
-
-                            LineDirection::Vertical(vertical_keyword) => match vertical_keyword {
-                                VerticalPositionKeyword::Bottom => {
-                                    (0.0, 0.0, 0.0, bounds.h, parent_height)
-                                }
-
-                                VerticalPositionKeyword::Top => {
-                                    (0.0, 0.0, 0.0, bounds.h, parent_height)
-                                }
-                            },
-
-                            LineDirection::Corner { horizontal, vertical } => {
-                                match (horizontal, vertical) {
-                                    (
-                                        HorizontalPositionKeyword::Right,
-                                        VerticalPositionKeyword::Bottom,
-                                    ) => (0.0, 0.0, bounds.w, bounds.h, parent_width),
-
-                                    _ => (0.0, 0.0, 0.0, 0.0, 0.0),
-                                }
-                            }
-
-                            _ => (0.0, 0.0, 0.0, 0.0, 0.0),
-                        };
-
-                        let num_stops = linear_gradient.stops.len();
-
-                        let stops = linear_gradient
-                            .stops
-                            .iter()
-                            .enumerate()
-                            .map(|(index, stop)| {
-                                let pos = if let Some(pos) = &stop.position {
-                                    pos.to_pixels(parent_length) / parent_length
-                                } else {
-                                    index as f32 / (num_stops - 1) as f32
-                                };
-                                let col: femtovg::Color = stop.color.into();
-                                (pos, col)
-                            })
-                            .collect::<Vec<_>>();
-
-                        let paint = Paint::linear_gradient_stops(
-                            bounds.x,
-                            bounds.y,
-                            bounds.x + end_x,
-                            bounds.y + end_y,
-                            stops.into_iter(),
-                        );
-
-                        canvas.fill_path(path, &paint);
+                        }
                     }
-
-                    _ => {}
                 }
             }
         }

@@ -469,10 +469,6 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
         should_redraw = true;
     }
 
-    if style.background_gradient.link(entity, &matched_rules) {
-        should_redraw = true;
-    }
-
     // Font
     if style.font_color.link(entity, &matched_rules) {
         should_redraw = true;

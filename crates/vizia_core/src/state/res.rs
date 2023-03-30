@@ -85,6 +85,19 @@ where
     }
 }
 
+impl<'i> Res<BackgroundImage<'i>> for BackgroundImage<'i> {
+    fn get_val(&self, _: &Context) -> Self {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Fn(&mut Context, Entity, Self),
+    {
+        (closure)(cx, entity, self.clone());
+    }
+}
+
 impl<'s> Res<&'s str> for &'s str {
     fn get_val(&self, _: &Context) -> &'s str {
         self

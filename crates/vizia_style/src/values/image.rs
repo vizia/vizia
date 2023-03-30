@@ -1,10 +1,11 @@
 use cssparser::*;
 
-use crate::{CustomParseError, Gradient, Parse};
+use crate::{CustomParseError, Gradient, Parse, Url};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BackgroundImage<'i> {
-    Name(CowRcStr<'i>),
+    None,
+    Url(Url<'i>),
     Gradient(Box<Gradient>),
 }
 
@@ -21,6 +22,14 @@ impl<'i> Parse<'i> for BackgroundImage<'i> {
     fn parse<'t>(
         input: &mut cssparser::Parser<'i, 't>,
     ) -> Result<Self, cssparser::ParseError<'i, crate::CustomParseError<'i>>> {
+        if input.try_parse(|i| i.expect_ident_matching("none")).is_ok() {
+            return Ok(BackgroundImage::None);
+        }
+
+        if let Ok(url) = input.try_parse(Url::parse) {
+            return Ok(BackgroundImage::Url(url));
+        }
+
         if let Ok(gradient) = input.try_parse(Gradient::parse) {
             return Ok(BackgroundImage::Gradient(Box::new(gradient)));
         }

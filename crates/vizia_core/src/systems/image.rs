@@ -1,10 +1,11 @@
 use crate::context::{Context, ResourceContext};
 use crate::resource::{ImageRetentionPolicy, StoredImage};
+use crate::style::ImageOrGradient;
 use crate::{prelude::*, resource::ImageOrId};
 use std::collections::HashSet;
 use vizia_id::GenerationalId;
 
-// Iterate he tree and load any images used by entities which aren't already loaded. Remove any images no longer being used.
+// Iterate the tree and load any images used by entities which aren't already loaded. Remove any images no longer being used.
 pub fn image_system(cx: &mut Context) {
     let cx = &mut ResourceContext::new(cx);
 
@@ -13,14 +14,21 @@ pub fn image_system(cx: &mut Context) {
     // Iterate the tree and load any defined images that aren't already loaded
     for entity in cx.tree.into_iter() {
         // Load a background-image if the entity has one
-        if let Some(background_image) = cx.style.background_image.get(entity).cloned() {
-            load_image(cx, entity, &background_image);
+        if let Some(background_images) = cx.style.background_image.get(entity).cloned() {
+            for image in background_images.iter() {
+                match image {
+                    ImageOrGradient::Image(name) => {
+                        load_image(cx, entity, name);
+                    }
+                    _ => {}
+                }
+            }
         }
 
-        // Load an image if the entity has one
-        if let Some(image_name) = cx.style.image.get(entity).cloned() {
-            load_image(cx, entity, &image_name);
-        }
+        // // Load an image if the entity has one
+        // if let Some(image_name) = cx.style.image.get(entity).cloned() {
+        //     load_image(cx, entity, &image_name);
+        // }
     }
 
     cx.resource_manager.evict_unused_images();

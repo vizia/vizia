@@ -42,6 +42,7 @@ pub mod transform;
 pub mod transition;
 pub mod translate;
 pub mod units;
+pub mod url;
 pub mod vertical_position_keyword;
 pub mod visibility;
 
@@ -89,5 +90,6 @@ pub use transform::*;
 pub use transition::*;
 pub use translate::*;
 pub use units::*;
+pub use url::*;
 pub use vertical_position_keyword::*;
 pub use visibility::*;

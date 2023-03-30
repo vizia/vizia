@@ -4,7 +4,7 @@ pub fn animation_system(cx: &mut Context) -> bool {
     let time = instant::Instant::now();
 
     // Properties which affect rendering
-    let needs_redraw = 
+    let needs_redraw =
         // Opacity
         cx.style.opacity.tick(time)
         // Border Colour
@@ -16,7 +16,7 @@ pub fn animation_system(cx: &mut Context) -> bool {
         | cx.style.border_bottom_right_radius.tick(time)
         // Background
         | cx.style.background_color.tick(time)
-        | cx.style.background_gradient.tick(time)
+        | cx.style.background_image.tick(time)
         // Box Shadow
         | cx.style.box_shadow.tick(time)
         // Font Color
@@ -33,7 +33,7 @@ pub fn animation_system(cx: &mut Context) -> bool {
         | cx.style.outline_width.tick(time);
 
     // Properties which affect layout
-    let needs_relayout = 
+    let needs_relayout =
         // Border Width
         cx.style.border_width.tick(time)
         // Font Size

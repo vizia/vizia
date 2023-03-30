@@ -70,6 +70,12 @@ impl Default for Abilities {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum ImageOrGradient {
+    Image(String),
+    Gradient(Gradient),
+}
+
 /// Stores the style properties of all entities in the application.
 #[derive(Default)]
 pub struct Style {
@@ -154,9 +160,8 @@ pub struct Style {
 
     // Background
     pub background_color: AnimatableSet<Color>,
-    pub background_image: StyleSet<String>,
-    pub background_gradient: AnimatableSet<Vec<Gradient>>,
-
+    pub background_image: AnimatableSet<Vec<ImageOrGradient>>,
+    // pub background_gradient: AnimatableSet<Vec<Gradient>>,
     pub box_shadow: AnimatableSet<Vec<BoxShadow>>,
 
     // Text & Font
@@ -388,9 +393,8 @@ impl Style {
             }
 
             "background-image" => {
-                self.background_gradient
-                    .insert_animation(animation, self.add_transition(transition));
-                self.background_gradient.insert_transition(rule_id, animation);
+                self.background_image.insert_animation(animation, self.add_transition(transition));
+                self.background_image.insert_transition(rule_id, animation);
             }
 
             "border-radius" => {
@@ -803,16 +807,49 @@ impl Style {
             }
 
             Property::BackgroundImage(images) => {
-                let gradients = images
+                // let (gradients, urls): (Vec<_>, Vec<_>) = images
+                //     .into_iter()
+                //     .filter(|img| *img != BackgroundImage::None)
+                //     .partition(|img| match img {
+                //         BackgroundImage::Gradient(_) => true,
+                //         _ => false,
+                //     });
+
+                // let gradients = gradients
+                //     .into_iter()
+                //     .filter_map(|img| match img {
+                //         BackgroundImage::Gradient(gradient) => Some(*gradient),
+                //         _ => None,
+                //     })
+                //     .collect::<Vec<_>>();
+
+                // if !gradients.is_empty() {
+                //     self.background_gradient.insert_rule(rule_id, gradients);
+                // }
+
+                // let urls = urls
+                //     .into_iter()
+                //     .filter_map(|img| match img {
+                //         BackgroundImage::Url(url) => Some(url.url.to_string()),
+                //         _ => None,
+                //     })
+                //     .collect::<Vec<_>>();
+
+                let images = images
                     .into_iter()
                     .filter_map(|img| match img {
-                        BackgroundImage::Gradient(gradient) => Some(*gradient),
-                        _ => None,
+                        BackgroundImage::None => None,
+                        BackgroundImage::Gradient(gradient) => {
+                            Some(ImageOrGradient::Gradient(*gradient))
+                        }
+                        BackgroundImage::Url(url) => {
+                            Some(ImageOrGradient::Image(url.url.to_string()))
+                        }
                     })
                     .collect::<Vec<_>>();
-                if !gradients.is_empty() {
-                    self.background_gradient.insert_rule(rule_id, gradients);
-                }
+
+                self.background_image.insert_rule(rule_id, images);
+
                 // BackgroundImage::Name(_) => {}
                 // BackgroundImage::Gradient(gradient) => {
                 //     self.background_gradient.insert_rule(rule_id, *gradient);
@@ -923,7 +960,6 @@ impl Style {
         // Background
         self.background_color.remove(entity);
         self.background_image.remove(entity);
-        self.background_gradient.remove(entity);
 
         // Box Shadow
         self.box_shadow.remove(entity);
@@ -1069,7 +1105,6 @@ impl Style {
         // Background
         self.background_color.clear_rules();
         self.background_image.clear_rules();
-        self.background_gradient.clear_rules();
 
         self.box_shadow.clear_rules();
 
