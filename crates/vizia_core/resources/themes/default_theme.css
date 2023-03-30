@@ -292,7 +292,7 @@ knob:focus-visible {
     outline-color: blue;
 }
 
-slider > * {
+slider {
     background-color: #868686;
     border-radius: 3px;
 }

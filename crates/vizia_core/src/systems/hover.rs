@@ -96,9 +96,8 @@ fn hover_entity(
 
     let mut transform = parent_transform.clone();
 
-    if let Some(t) = cx.transform() {
-        transform.premultiply(&t);
-    }
+    transform.premultiply(&cx.transform());
+
     // println!("{} {:?} {:?} {:?}", cx.current, bounds, transform, parent_transform);
 
     let mut t = transform.clone();

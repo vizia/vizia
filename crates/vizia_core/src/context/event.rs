@@ -149,40 +149,44 @@ impl<'a> EventContext<'a> {
         self.style.physical_to_logical(physical)
     }
 
-    pub fn transform(&self) -> Option<Transform2D> {
+    pub fn transform(&self) -> Transform2D {
+        let mut transform = Transform2D::identity();
+
+        let bounds = self.bounds();
+        let scale_factor = self.scale_factor();
+
+        // Apply transform origin.
+        let mut origin = self
+            .style
+            .transform_origin
+            .get(self.current)
+            .map(|transform_origin| {
+                let mut origin = Transform2D::new_translation(bounds.left(), bounds.top());
+                let offset = transform_origin.into_transform(bounds, scale_factor);
+                origin.premultiply(&offset);
+                origin
+            })
+            .unwrap_or(Transform2D::new_translation(bounds.center().0, bounds.center().1));
+        transform.premultiply(&origin);
+        origin.inverse();
+
+        // Apply translation.
+        if let Some(translate) = self.style.translate.get(self.current) {
+            transform.premultiply(&translate.into_transform(bounds, scale_factor));
+        }
+
+        // Apply rotation.
+        if let Some(rotate) = self.style.rotate.get(self.current) {
+            transform.premultiply(&rotate.into_transform(bounds, scale_factor));
+        }
+
+        // Apply scaling.
+        if let Some(scale) = self.style.scale.get(self.current) {
+            transform.premultiply(&scale.into_transform(bounds, scale_factor));
+        }
+
+        // Apply transform functions.
         if let Some(transforms) = self.style.transform.get(self.current) {
-            let bounds = self.bounds();
-            let scale_factor = self.scale_factor();
-
-            let mut transform = Transform2D::identity();
-
-            let mut origin = self
-                .style
-                .transform_origin
-                .get(self.current)
-                .map(|transform_origin| {
-                    let mut origin = Transform2D::new_translation(bounds.left(), bounds.top());
-                    let offset = transform_origin.into_transform(bounds, scale_factor);
-                    origin.premultiply(&offset);
-                    origin
-                })
-                .unwrap_or(Transform2D::new_translation(bounds.center().0, bounds.center().1));
-            transform.premultiply(&origin);
-
-            origin.inverse();
-
-            if let Some(translate) = self.style.translate.get(self.current) {
-                transform.premultiply(&translate.into_transform(bounds, scale_factor));
-            }
-
-            if let Some(rotate) = self.style.rotate.get(self.current) {
-                transform.premultiply(&rotate.into_transform(bounds, scale_factor));
-            }
-
-            if let Some(scale) = self.style.scale.get(self.current) {
-                transform.premultiply(&scale.into_transform(bounds, scale_factor));
-            }
-
             // Check if the transform is currently animating
             // Get the animation state
             // Manually interpolate the value to get the overall transform for the current frame
@@ -200,13 +204,11 @@ impl<'a> EventContext<'a> {
             } else {
                 transform.premultiply(&transforms.into_transform(bounds, scale_factor));
             }
-
-            transform.premultiply(&origin);
-
-            return Some(transform);
         }
 
-        None
+        transform.premultiply(&origin);
+
+        transform
     }
 
     /// Add a listener to an entity.

@@ -69,9 +69,7 @@ fn draw_entity(
 
     canvas.save();
 
-    if let Some(transform) = cx.transform() {
-        canvas.set_transform(&transform);
-    }
+    canvas.set_transform(&cx.transform());
 
     let clip_region = cx.clip_region();
 

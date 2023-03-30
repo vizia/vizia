@@ -38,7 +38,7 @@ impl LengthOrPercentage {
             }
 
             LengthOrPercentage::Percentage(val) => {
-                return val * min_bounds;
+                return (val / 100.0) * min_bounds;
             }
         }
 

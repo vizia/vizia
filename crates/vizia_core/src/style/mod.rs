@@ -1145,8 +1145,9 @@ pub(crate) trait IntoTransform {
 impl IntoTransform for Translate {
     fn into_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
         let mut result = Transform2D::identity();
-        let tx = self.x.to_pixels(parent_bounds.w) * scale_factor;
-        let ty = self.y.to_pixels(parent_bounds.h) * scale_factor;
+        let tx = self.x.to_pixels(parent_bounds.w / scale_factor) * scale_factor;
+        let ty = self.y.to_pixels(parent_bounds.h / scale_factor) * scale_factor;
+
         result.translate(tx, ty);
 
         result

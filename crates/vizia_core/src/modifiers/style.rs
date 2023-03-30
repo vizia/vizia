@@ -1,4 +1,4 @@
-use vizia_style::{BorderRadius, Rect, Transform};
+use vizia_style::{BorderRadius, Position, Rect, Scale, Transform, Translate};
 
 use super::internal;
 use crate::prelude::*;
@@ -10,7 +10,8 @@ pub trait StyleModifiers: internal::Modifiable {
 
     /// Sets the ID name of the view.
     ///
-    /// The ID name can be references by a CSS selector.
+    /// A view can have only one ID name and it must be unique.
+    /// The ID name can be referenced by a CSS selector.
     /// # Example
     /// ```
     /// # use vizia_core::prelude::*;
@@ -35,6 +36,21 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Adds a class name to the view.
+    ///
+    /// A view can have multiple classes.
+    /// The class name can be referenced by a CSS selector.
+    /// # Example
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let cx = &mut Context::default();
+    /// Element::new(cx).class("foo");
+    /// ```
+    /// css
+    /// ```css
+    /// .foo {
+    ///     background-color: red;
+    /// }
+    ///```
     fn class(mut self, name: &str) -> Self {
         let entity = self.entity();
         if let Some(class_list) = self.context().style.classes.get_mut(entity) {
@@ -351,6 +367,8 @@ pub trait StyleModifiers: internal::Modifiable {
         Color,
         SystemFlags::REDRAW
     );
+
+    // Outline Offset
     modifier!(
         /// Sets the outline offset of the view.
         outline_offset,
@@ -358,6 +376,7 @@ pub trait StyleModifiers: internal::Modifiable {
         SystemFlags::REDRAW
     );
 
+    // Cursor Icon
     modifier!(
         /// Sets the mouse cursor used when the view is hovered.
         cursor,
@@ -365,6 +384,7 @@ pub trait StyleModifiers: internal::Modifiable {
         SystemFlags::empty()
     );
 
+    /// Sets the transform of the view with a list of transform functions.
     fn transform<U: Into<Vec<Transform>>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
@@ -376,28 +396,49 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
-    // // Transform Properties
-    // modifier!(
-    //     /// Sets the angle of rotation for the view.
-    //     ///
-    //     /// Rotation applies to the rendered view and does not affect layout.
-    //     rotate,
-    //     f32
-    // );
-    // modifier!(
-    //     /// Sets the translation offset of the view.
-    //     ///
-    //     /// Translation applies to the rendered view and does not affect layout.
-    //     translate,
-    //     (f32, f32)
-    // );
-    // modifier!(
-    //     /// Sets the scale of the view.
-    //     ///
-    //     /// Scale applies to the rendered view and does not affect layout.
-    //     scale,
-    //     (f32, f32)
-    // );
+    /// Sets the transform origin of the the view.
+    fn transform_origin<U: Into<Position>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value: Position = v.into();
+            let x = value.x.to_length_or_percentage();
+            let y = value.y.to_length_or_percentage();
+            cx.style.transform_origin.insert(entity, Translate { x, y });
+            cx.needs_redraw();
+        });
+
+        self
+    }
+
+    // Translate
+    modifier!(
+        /// Sets the translation offset of the view.
+        ///
+        /// Translation applies to the rendered view and does not affect layout.
+        translate,
+        Translate,
+        SystemFlags::REDRAW
+    );
+
+    // Rotate
+    modifier!(
+        /// Sets the angle of rotation for the view.
+        ///
+        /// Rotation applies to the rendered view and does not affect layout.
+        rotate,
+        Angle,
+        SystemFlags::REDRAW
+    );
+
+    // Scale
+    modifier!(
+        /// Sets the scale of the view.
+        ///
+        /// Scale applies to the rendered view and does not affect layout.
+        scale,
+        Scale,
+        SystemFlags::REDRAW
+    );
 }
 
 impl<'a, V: View> StyleModifiers for Handle<'a, V> {}
