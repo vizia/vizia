@@ -33,12 +33,16 @@ pub enum TextEvent {
     GeometryChanged,
 }
 
+#[derive(Lens)]
 pub struct Textbox<L: Lens> {
+    #[lens(ignore)]
     lens: L,
     kind: TextboxKind,
     edit: bool,
     transform: (f32, f32),
+    #[lens(ignore)]
     on_edit: Option<Box<dyn Fn(&mut EventContext, String) + Send + Sync>>,
+    #[lens(ignore)]
     on_submit: Option<Box<dyn Fn(&mut EventContext, String, bool) + Send + Sync>>,
 }
 
@@ -100,11 +104,14 @@ where
     fn set_caret(&mut self, cx: &mut EventContext) {
         let parent = cx.current().parent(cx.tree).unwrap();
 
-        let scale = cx.scale_factor();
+        let scale = 1.0;
 
         // calculate visible area for content and container
-        let bounds = cx.bounds();
-        let mut parent_bounds = *cx.cache.bounds.get(parent).unwrap();
+        let bounds = cx.text_context.get_bounds(cx.current).unwrap();
+        let mut parent_bounds = cx.bounds();
+
+        parent_bounds.x += 10.0;
+        parent_bounds.w -= 20.0;
 
         cx.text_context.sync_styles(cx.current, cx.style);
 
@@ -118,10 +125,12 @@ where
         if let Some((x, y, w, h)) =
             cx.text_context.layout_caret(cx.current, (bounds.x, bounds.y), (0., 0.), 1.0 * scale)
         {
-            let caret_box = BoundingBox { x, y, w, h };
+            let mut caret_box = BoundingBox { x, y, w, h };
+            caret_box.x += 10.0;
+            // println!("caretx: {}", caret_box.x);
 
-            parent_bounds.x -= 1.0;
-            parent_bounds.w += 2.0;
+            // parent_bounds.x -= 1.0;
+            // parent_bounds.w += 2.0;
             (tx, ty) = ensure_visible(&caret_box, &parent_bounds, (tx, ty));
         }
 
@@ -235,12 +244,12 @@ where
     /// glyphs, appropriate for passage to cosmic.
     pub fn coordinates_global_to_text(&self, cx: &EventContext, x: f32, y: f32) -> (f32, f32) {
         let parent = cx.current.parent(cx.tree).unwrap();
-        let parent_bounds = *cx.cache.bounds.get(parent).unwrap();
+        let parent_bounds = cx.bounds();
 
-        // let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
-        // let child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
-        // let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
-        // let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
+        let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
+        let child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
+        let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
+        let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
 
         // let justify_x = match (child_left, child_right) {
         //     (Stretch(left), Stretch(right)) => {
@@ -270,10 +279,16 @@ where
         // let origin_x = bounds.w * justify_x;
         // let origin_y = bounds.h * justify_y;
 
+        let logical_parent_width = cx.physical_to_logical(parent_bounds.w);
+
+        let child_left = child_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+        let child_right = child_right.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+
         // println!("{} {}", origin_x, origin_y);
 
-        let x = x - self.transform.0 * cx.style.dpi_factor as f32 - parent_bounds.x;
-        let y = y - self.transform.1 * cx.style.dpi_factor as f32 - parent_bounds.y;
+        let x = x - self.transform.0 - parent_bounds.x - child_left;
+        let y = y - self.transform.1 - parent_bounds.y;
+        println!("hit: {} {}", x, y);
         (x, y)
     }
 
@@ -348,13 +363,12 @@ where
     }
 
     fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode) {
-        let text_content_id = Entity::new(cx.current.index() as u32 + 3, 0);
-        let bounds = cx.cache.get_bounds(text_content_id);
+        let bounds = cx.bounds();
 
         // We need a child node per line
         // let mut children: Vec<(NodeId, NodeBuilder)> = Vec::new();
         let node_id = node.node_id();
-        cx.text_context.with_editor(text_content_id, |_, editor| {
+        cx.text_context.with_editor(cx.current, |_, editor| {
             let cursor = editor.cursor();
             let selection = editor.select_opt().unwrap_or(cursor);
 
@@ -931,5 +945,18 @@ where
                 self.set_caret(cx);
             }
         });
+    }
+
+    fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+        // println!("{}", self.transform.0);
+        let text_bounds = cx.text_context.get_bounds(cx.current);
+        // println!("{:?} {:?}", cx.bounds(), text_bounds);
+        let mut path = cx.build_path();
+        cx.draw_background(canvas, &mut path);
+        cx.draw_border(canvas, &mut path);
+        canvas.save();
+        canvas.translate(self.transform.0, self.transform.1);
+        cx.draw_text_and_selection(canvas);
+        canvas.restore();
     }
 }

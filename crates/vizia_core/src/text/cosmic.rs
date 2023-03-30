@@ -1,4 +1,5 @@
 use crate::entity::Entity;
+use crate::layout::BoundingBox;
 use crate::prelude::Color;
 use crate::style::Style;
 use cosmic_text::{
@@ -16,6 +17,7 @@ use std::collections::HashMap;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
+use vizia_storage::SparseSet;
 use vizia_style::FontStyle;
 
 const GLYPH_PADDING: u32 = 1;
@@ -40,12 +42,8 @@ pub struct TextContext {
     rendered_glyphs: FnvHashMap<CacheKey, Option<RenderedGlyph>>,
     glyph_textures: Vec<FontTexture>,
     buffers: HashMap<Entity, Editor>,
+    bounds: SparseSet<BoundingBox>,
 }
-
-// struct TextContextInternal<'a> {
-//     font_system: &'a FontSystem,
-
-// }
 
 impl TextContext {
     #[allow(dead_code)]
@@ -89,6 +87,14 @@ impl TextContext {
         f: impl FnOnce(&mut FontSystem, &mut Buffer) -> O,
     ) -> O {
         self.with_editor(entity, |fs, ed| f(fs, ed.buffer_mut()))
+    }
+
+    pub fn set_bounds(&mut self, entity: Entity, size: BoundingBox) {
+        self.bounds.insert(entity, size).unwrap();
+    }
+
+    pub fn get_bounds(&self, entity: Entity) -> Option<BoundingBox> {
+        self.bounds.get(entity).copied()
     }
 
     pub fn sync_styles(&mut self, entity: Entity, style: &Style) {
@@ -440,6 +446,7 @@ impl TextContext {
             rendered_glyphs: FnvHashMap::default(),
             glyph_textures: vec![],
             buffers: HashMap::new(),
+            bounds: SparseSet::new(),
         }
     }
 }

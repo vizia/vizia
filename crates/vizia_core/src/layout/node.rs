@@ -247,6 +247,10 @@ impl Node for Entity {
         let height = if let Some(height) = height { height } else { text_height };
         let width = if let Some(width) = width { width } else { text_width };
 
+        // Cache the text_width/ text_height in the text context so we can use it to compute transforms later
+        text_context
+            .set_bounds(*self, BoundingBox { w: text_width, h: text_height, ..Default::default() });
+
         Some((width, height))
     }
 

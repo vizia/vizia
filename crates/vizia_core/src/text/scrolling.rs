@@ -1,12 +1,17 @@
 use crate::layout::BoundingBox;
 
 pub fn enforce_text_bounds(
-    bounds: &BoundingBox,
+    text_bounds: &BoundingBox,
     parent_bounds: &BoundingBox,
     transform: (f32, f32),
 ) -> (f32, f32) {
     let (mut tx, mut ty) = transform;
-    let text_box = BoundingBox { x: bounds.x + tx, y: bounds.y + ty, w: bounds.w, h: bounds.h };
+    let text_box = BoundingBox {
+        x: text_bounds.x + tx,
+        y: text_bounds.y + ty,
+        w: text_bounds.w,
+        h: text_bounds.h,
+    };
     if text_box.x < parent_bounds.x && text_box.x + text_box.w < parent_bounds.x + parent_bounds.w {
         tx += parent_bounds.x - text_box.x;
     }

@@ -37,7 +37,6 @@ fluent-langneg = "0.13"
 fluent-syntax = "0.11.0"
 unic-langid = "0.9"
 sys-locale = "0.2.0"
-cssparser = "0.27.2"
 unicode-segmentation = "1.8.0"
 unicode-bidi = "0.3.7"
 copypasta = {version = "0.8.1", optional = true, default-features = false }

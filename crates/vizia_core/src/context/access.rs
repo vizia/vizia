@@ -11,6 +11,12 @@ pub struct AccessContext<'a> {
     pub(crate) text_context: &'a mut TextContext,
 }
 
+impl<'a> AccessContext<'a> {
+    pub fn bounds(&self) -> BoundingBox {
+        self.cache.get_bounds(self.current)
+    }
+}
+
 /// Wrapper around an accesskit node builder, a node id, and a list of children to be added to the node.
 #[derive(Debug)]
 pub struct AccessNode {
