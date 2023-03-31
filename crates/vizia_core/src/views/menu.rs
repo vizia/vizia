@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use crate::fonts::{icons_names::CHECK, material_names::RIGHT};
+use crate::fonts::icons::{ICON_CHECK, ICON_CHEVRON_RIGHT};
 use crate::prelude::*;
 use vizia_storage::TreeExt;
 
@@ -224,7 +224,7 @@ impl Menu {
         let result = Self {}.build(cx, move |cx| {
             HStack::new(cx, move |cx| {
                 label(cx);
-                Label::new(cx, RIGHT).class("menu_arrow");
+                Label::new(cx, ICON_CHEVRON_RIGHT).class("menu_arrow");
             });
             MenuStack::new_vertical(cx, items);
         });
@@ -303,7 +303,7 @@ impl MenuButton {
                     builder(cx);
                     Label::new(cx, "").left(Units::Stretch(1.0)).bind(lens, move |handle, lens| {
                         let val = lens.get_fallible(handle.cx);
-                        handle.text(if val == Some(true) { CHECK } else { "" });
+                        handle.text(if val == Some(true) { ICON_CHECK } else { "" });
                     });
                 });
             },

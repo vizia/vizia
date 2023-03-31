@@ -143,44 +143,6 @@ impl Node for Entity {
         })
     }
 
-    // fn content_width(&self, store: &Self::Store) -> Option<f32> {
-    //     store.content_width.get(*self).cloned().map(|x| (x * store.dpi_factor as f32).ceil())
-    // }
-
-    // fn content_height(&self, store: &Self::Store) -> Option<f32> {
-    //     store.content_height.get(*self).cloned().map(|x| (x * store.dpi_factor as f32).ceil())
-    // }
-
-    // fn content_width_secondary(
-    //     &self,
-    //     store: &'_ Self::Store,
-    //     _sublayout: &'_ mut Self::Sublayout,
-    //     _height: f32,
-    // ) -> Option<f32> {
-    //     store.content_width.get(*self).cloned().map(|x| (x * store.dpi_factor as f32).ceil())
-    // }
-
-    // fn content_height_secondary(
-    //     &self,
-    //     store: &Self::Store,
-    //     sublayout: &'_ mut Self::Sublayout,
-    //     width: f32,
-    // ) -> Option<f32> {
-    //     let width = width.ceil();
-    //     if !store.text_wrap.get(*self).copied().unwrap_or(true) {
-    //         return None;
-    //     }
-
-    //     if sublayout.has_buffer(*self) {
-    //         Some(sublayout.with_buffer(*self, |buf| {
-    //             buf.set_size(width as i32, i32::MAX);
-    //             buf.layout_runs().count() as f32 * buf.metrics().line_height as f32
-    //         }))
-    //     } else {
-    //         None
-    //     }
-    // }
-
     fn content_size<'a>(
         &self,
         store: &Self::Store,

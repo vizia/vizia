@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use vizia::fonts::icons_names::DOWN;
+use vizia::icons::ICON_CHEVRON_DOWN;
 use vizia::prelude::*;
 
 use chrono::{NaiveDate, ParseError};
@@ -97,7 +97,7 @@ fn main() {
                     Label::new(cx, AppData::choice)
                         .width(Stretch(1.0))
                         .text_wrap(false);
-                    Label::new(cx, DOWN).class("icon").left(Pixels(5.0)).right(Pixels(5.0));
+                    Label::new(cx, ICON_CHEVRON_DOWN).class("icon").left(Pixels(5.0)).right(Pixels(5.0));
                 }).width(Stretch(1.0)),
                 // List of options
                 move |cx| {

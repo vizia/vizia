@@ -1,9 +1,5 @@
 label.icon {
-    font-family: "Entypo", sans-serif;
-}
-
-label.material-icon {
-    font-family: "Material Icons", sans-serif;
+    font-family: "tabler-icons", sans-serif;
 }
 
 textbox {

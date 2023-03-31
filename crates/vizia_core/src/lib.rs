@@ -37,6 +37,10 @@ pub mod image {
     pub use image::*;
 }
 
+pub mod icons {
+    pub use super::fonts::icons::*;
+}
+
 /// Members which we recommend you wildcard-import.
 pub mod prelude {
     pub use super::animation::{Animation, AnimationBuilder, Interpolator};

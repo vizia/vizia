@@ -104,7 +104,7 @@ where
         let scale = 1.0;
 
         // calculate visible area for content and container
-        let bounds = cx.text_context.get_bounds(cx.current).unwrap();
+        let bounds = cx.text_context.get_bounds(cx.current).unwrap_or_default();
         let mut parent_bounds = cx.bounds();
 
         parent_bounds.x += 10.0;
@@ -280,14 +280,17 @@ where
 
         let child_left = child_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
 
-        let x = x - self.transform.0 - parent_bounds.x - child_left;
-        let y = y - self.transform.1 - parent_bounds.y;
+        // let x = x - self.transform.0 - parent_bounds.x - child_left;
+        // let y = y - self.transform.1 - parent_bounds.y;
+        let x = x - parent_bounds.x - child_left;
+        let y = y - parent_bounds.y;
         (x, y)
     }
 
     /// This function takes window-global physical coordinates.
     pub fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         let (x, y) = self.coordinates_global_to_text(cx, x, y);
+        println!("{} {}", x, y);
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::Click { x: x as i32, y: y as i32 })
         });
@@ -948,7 +951,7 @@ where
         cx.draw_background(canvas, &mut path);
         cx.draw_border(canvas, &mut path);
         canvas.save();
-        canvas.translate(self.transform.0, self.transform.1);
+        // canvas.translate(self.transform.0, self.transform.1);
         cx.draw_text_and_selection(canvas);
         canvas.restore();
     }

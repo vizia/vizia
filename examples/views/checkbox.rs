@@ -1,4 +1,4 @@
-use vizia::fonts::icons_names::CANCEL;
+use vizia::icons::ICON_X;
 use vizia::prelude::*;
 
 #[derive(Debug, Lens)]
@@ -80,7 +80,7 @@ fn main() {
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, AppData::option1)
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
-                    .text(AppData::option1.map(|flag| if *flag { CANCEL } else { "" }))
+                    .text(AppData::option1.map(|flag| if *flag { ICON_X } else { "" }))
                     .id("checkbox_3");
                 Label::new(cx, "Custom").describing("checkbox_3");
             })

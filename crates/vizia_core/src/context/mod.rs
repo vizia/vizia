@@ -131,10 +131,7 @@ impl Context {
             db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
             db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
             db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
-            db.load_font_data(Vec::from(fonts::ENTYPO));
-            db.load_font_data(Vec::from(fonts::OPEN_SANS_EMOJI));
-            db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));
-            db.load_font_data(Vec::from(fonts::MATERIAL_ICONS_REGULAR));
+            db.load_font_data(Vec::from(fonts::TABLER_ICONS));
         }
 
         let mut result = Self {
@@ -201,7 +198,7 @@ impl Context {
         Environment::new().build(&mut result);
 
         result.entity_manager.create();
-        result.set_default_font(&["Roboto"]);
+        result.set_default_font(&["Roboto Regular"]);
 
         result.style.roles.insert(Entity::root(), Role::Window).unwrap();
 

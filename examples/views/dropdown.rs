@@ -1,4 +1,4 @@
-use vizia::fonts::icons_names::DOWN;
+use vizia::icons::ICON_CHEVRON_DOWN;
 use vizia::prelude::*;
 
 #[derive(Lens, Model, Setter)]
@@ -23,7 +23,7 @@ fn main() {
                 // A Label and an Icon
                 HStack::new(cx, move |cx|{
                     Label::new(cx, AppData::choice);
-                    Label::new(cx, DOWN).class("icon");
+                    Label::new(cx, ICON_CHEVRON_DOWN).class("icon");
                 })
                 .child_left(Pixels(5.0))
                 .child_right(Pixels(5.0))

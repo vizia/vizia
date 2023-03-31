@@ -1,4 +1,4 @@
-use vizia::fonts::icons_names::CHECK;
+use vizia::icons::ICON_CHECK;
 use vizia::prelude::*;
 
 fn main() {
@@ -14,7 +14,7 @@ fn main() {
                 |_| {},
                 |cx| {
                     HStack::new(cx, |cx| {
-                        Label::new(cx, CHECK).class("icon");
+                        Label::new(cx, "\u{eabd}").class("icon");
                         Label::new(cx, "Button with Icon");
                     })
                     .size(Auto)
@@ -28,7 +28,7 @@ fn main() {
                 |_| {},
                 |cx| {
                     HStack::new(cx, |cx| {
-                        Label::new(cx, CHECK).class("icon");
+                        Label::new(cx, ICON_CHECK).class("icon");
                         // Hidden from layout and display but used for accessibility
                         Label::new(cx, "Icon Button").display(Display::None);
                     })

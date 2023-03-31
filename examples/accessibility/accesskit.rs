@@ -1,4 +1,4 @@
-use vizia::fonts::icons_names::CHECK;
+use vizia::icons::ICON_CHECK;
 use vizia::prelude::*;
 
 static NAMES: [&str; 3] = ["First", "Second", "Third"];
@@ -103,7 +103,7 @@ fn main() {
                     |_| {},
                     |cx| {
                         HStack::new(cx, |cx| {
-                            Label::new(cx, CHECK).class("icon");
+                            Label::new(cx, ICON_CHECK).class("icon");
                             Label::new(cx, "Button with Icon");
                         })
                         .size(Auto)

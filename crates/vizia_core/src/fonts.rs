@@ -1,32 +1,33 @@
 pub const ROBOTO_REGULAR: &[u8] = include_bytes!("../resources/fonts/Roboto-Regular.ttf");
 pub const ROBOTO_BOLD: &[u8] = include_bytes!("../resources/fonts/Roboto-Bold.ttf");
 pub const ROBOTO_ITALIC: &[u8] = include_bytes!("../resources/fonts/Roboto-Italic.ttf");
-pub const ENTYPO: &[u8] = include_bytes!("../resources/fonts/entypo.ttf");
-pub const OPEN_SANS_EMOJI: &[u8] = include_bytes!("../resources/fonts/OpenSansEmoji.ttf");
-pub const AMIRI_REGULAR: &[u8] = include_bytes!("../resources/fonts/amiri-regular.ttf");
-pub const MATERIAL_ICONS_REGULAR: &[u8] =
-    include_bytes!("../resources/fonts/MaterialIcons-Regular.ttf");
+pub const TABLER_ICONS: &[u8] = include_bytes!("../resources/fonts/tabler-icons.ttf");
 
-pub mod icons_names {
-    pub const PLUS: &str = "\u{2b}";
-    pub const MINUS: &str = "\u{2d}";
-    pub const DOWN: &str = "\u{e75c}";
-    pub const LEFT: &str = "\u{e75d}";
-    pub const RIGHT: &str = "\u{e75e}";
-    pub const UP: &str = "\u{e75f}";
-    pub const CHECK: &str = "\u{2713}";
-    pub const CANCEL: &str = "\u{2715}";
-}
+pub mod icons {
+    // Animals
+    pub const ICON_BAT: &str = "\u{f284}";
+    pub const ICON_CAT: &str = "\u{f65b}";
+    pub const ICON_DEER: &str = "\u{f4c5}";
+    pub const ICON_DOG: &str = "\u{f660}";
+    pub const ICON_FISH_BONE: &str = "\u{f287}";
+    pub const ICON_FISH_OFF: &str = "\u{f12b}";
+    pub const ICON_FISH: &str = "\u{ef2b}";
+    pub const ICON_PIG_MONEY: &str = "\u{f38c}";
+    pub const ICON_PIG_OFF: &str = "\u{f177}";
+    pub const ICON_PIG: &str = "\u{ef52}";
+    pub const ICON_SPIDER: &str = "\u{f293}";
+    // Arrows
+    pub const ICON_CHEVRON_DOWN_LEFT: &str = "\u{ed09}";
+    pub const ICON_CHEVRON_DOWN_RIGHT: &str = "\u{ed0a}";
+    pub const ICON_CHEVRON_DOWN: &str = "\u{ea5f}";
+    pub const ICON_CHEVRON_LEFT: &str = "\u{ea60}";
+    pub const ICON_CHEVRON_RIGHT: &str = "\u{ea61}";
+    pub const ICON_CHEVRON_UP_LEFT: &str = "\u{ed0b}";
+    pub const ICON_CHEVRON_UP_RIGHT: &str = "\u{ed0c}";
+    pub const ICON_CHEVRON_UP: &str = "\u{ea62}";
 
-pub mod material_names {
-    pub const DOWN: &str = "\u{e313}";
-    pub const LEFT: &str = "\u{e314}";
-    pub const RIGHT: &str = "\u{E315}";
-    pub const UP: &str = "\u{e316}";
-    pub const PENCIL: &str = "\u{e150}";
-}
-
-pub mod unicode_names {
-    pub const PLUS: &str = "\u{2b}";
-    pub const MINUS: &str = "\u{2d}";
+    pub const ICON_PLUS: &str = "\u{eb0b}";
+    pub const ICON_MINUS: &str = "\u{eaf2}";
+    pub const ICON_CHECK: &str = "\u{ea5e}";
+    pub const ICON_X: &str = "\u{eb55}";
 }

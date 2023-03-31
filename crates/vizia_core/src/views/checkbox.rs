@@ -1,4 +1,4 @@
-use crate::fonts::icons_names::CHECK;
+use crate::fonts::icons::ICON_CHECK;
 use crate::prelude::*;
 
 /// A checkbox used to display and toggle boolean state.
@@ -139,7 +139,7 @@ impl Checkbox {
             .build(cx, |_| {})
             .bind(checked, |handle, checked| {
                 if let Some(flag) = checked.get_val_fallible(handle.cx) {
-                    handle.text(if flag { CHECK } else { "" }).checked(flag);
+                    handle.text(if flag { ICON_CHECK } else { "" }).checked(flag);
                 }
             })
             .checkable(true)

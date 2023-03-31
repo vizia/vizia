@@ -1,4 +1,4 @@
-use vizia::fonts::icons_names::{DOWN, UP};
+use vizia::icons::{ICON_CHEVRON_DOWN, ICON_CHEVRON_UP};
 use vizia::prelude::*;
 use vizia::style::FontWeightKeyword;
 
@@ -38,8 +38,11 @@ fn main() {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
-                                let icon =
-                                    if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
+                                let icon = if sorted.get(cx) == Sorted::Forward {
+                                    ICON_CHEVRON_DOWN
+                                } else {
+                                    ICON_CHEVRON_UP
+                                };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
@@ -96,8 +99,11 @@ fn main() {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
-                                let icon =
-                                    if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
+                                let icon = if sorted.get(cx) == Sorted::Forward {
+                                    ICON_CHEVRON_DOWN
+                                } else {
+                                    ICON_CHEVRON_UP
+                                };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
@@ -152,8 +158,11 @@ fn main() {
                                     Sorted::Forward | Sorted::Reverse => true,
                                     Sorted::None => false,
                                 };
-                                let icon =
-                                    if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
+                                let icon = if sorted.get(cx) == Sorted::Forward {
+                                    ICON_CHEVRON_DOWN
+                                } else {
+                                    ICON_CHEVRON_UP
+                                };
                                 Element::new(cx)
                                     .width(Pixels(30.0))
                                     .child_space(Stretch(1.0))
