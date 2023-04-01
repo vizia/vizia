@@ -118,7 +118,7 @@ fn main() {
                                 cx.emit(AppEvent::SetChoice(item.get(cx).to_string()));
                                 cx.emit(PopupEvent::Close);
                             });
-                    });
+                    }).width(Stretch(1.0)).height(Auto);
                 },
             )
             .width(Pixels(150.0));

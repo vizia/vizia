@@ -22,8 +22,10 @@ fn main() {
     Application::new(|cx| {
         Element::new(cx)
             .size(Pixels(50.0))
+            .position_type(PositionType::SelfDirected)
             .background_color(Color::red())
-            .translate((Pixels(50.0), Pixels(50.0)));
+            .top(Percentage(50.0));
+        // .translate((Pixels(50.0), Pixels(50.0)));
     })
     .title("Stylesheet")
     .run();

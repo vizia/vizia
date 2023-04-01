@@ -61,7 +61,8 @@ button.accent:active label {
 
 button:focus-visible {
     outline-width: 2px;
-    outline-color: blue;
+    outline-color: #3c77d2;
+    outline-offset: 1px;
 }
 
 checkbox {
@@ -81,6 +82,7 @@ checkbox:hover {
 checkbox:focus-visible {
     outline-width: 2px;
     outline-color: #3c77d2;
+    outline-offset: 1px;
 }
 
 checkbox:active {
@@ -188,7 +190,8 @@ radiobutton:hover {
 
 radiobutton:focus-visible {
     outline-width: 2px;
-    outline-color: blue;
+    outline-color: #3c77d2;
+    outline-offset: 1px;
 }
 
 radiobutton:checked {
@@ -212,8 +215,9 @@ radiobutton:checked:hover {
 }
 
 radiobutton .inner {
-    width: 0px;
-    height: 0px;
+    width: 12px;
+    height: 12px;
+    scale: 0 0;
     border-radius: 50%;
     background-color: #666666;
     transition: width 0.2s;
@@ -221,11 +225,9 @@ radiobutton .inner {
 }
 
 radiobutton:checked .inner {
-    width: 12px;
-    height: 12px;
+    scale: 1 1;
     background-color: #3c77d2;
-    transition: width 0.1s;
-    transition: height 0.1s;
+    transition: scale 0.1s;
 }
 
 radiobutton:hover .inner {

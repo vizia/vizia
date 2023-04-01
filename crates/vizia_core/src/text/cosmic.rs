@@ -2,6 +2,7 @@ use crate::entity::Entity;
 use crate::layout::BoundingBox;
 use crate::prelude::Color;
 use crate::style::Style;
+use cosmic_text::Cursor;
 use cosmic_text::{
     fontdb::Database, Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor,
     FontSystem, Metrics, SubpixelBin, Weight, Wrap,
@@ -17,6 +18,7 @@ use std::collections::HashMap;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
+use unicode_segmentation::UnicodeSegmentation;
 use vizia_storage::SparseSet;
 use vizia_style::FontStyle;
 
@@ -411,12 +413,88 @@ impl TextContext {
             let (cursor_start, cursor_end) = (buf.cursor(), buf.cursor());
             let buffer = buf.buffer();
             let total_height = buffer.layout_runs().len() as f32 * buffer.metrics().line_height;
+
+            let position_y = position.1 - total_height as f32 * justify.1;
+
+            let font_size = buffer.metrics().font_size;
+            let line_height = buffer.metrics().line_height;
+
             for run in buffer.layout_runs() {
-                if let Some((x, _)) = run.highlight(cursor_start, cursor_end) {
-                    let y = run.line_y as f32 - buffer.metrics().font_size as f32;
-                    let x = x + position.0 - run.line_w * justify.0;
-                    let y = y + position.1 - total_height as f32 * justify.1;
-                    return Some((x - width / 2.0, y, width, buffer.metrics().line_height as f32));
+                let line_i = run.line_i;
+                let line_y = run.line_y;
+
+                let position_x = position.0 - run.line_w * justify.0;
+
+                let cursor_glyph_opt = |cursor: &Cursor| -> Option<(usize, f32)> {
+                    if cursor.line == line_i {
+                        for (glyph_i, glyph) in run.glyphs.iter().enumerate() {
+                            if cursor.index == glyph.start {
+                                return Some((glyph_i, 0.0));
+                            } else if cursor.index > glyph.start && cursor.index < glyph.end {
+                                // Guess x offset based on characters
+                                let mut before = 0;
+                                let mut total = 0;
+
+                                let cluster = &run.text[glyph.start..glyph.end];
+                                for (i, _) in cluster.grapheme_indices(true) {
+                                    if glyph.start + i < cursor.index {
+                                        before += 1;
+                                    }
+                                    total += 1;
+                                }
+
+                                let offset = glyph.w * (before as f32) / (total as f32);
+                                return Some((glyph_i, offset));
+                            }
+                        }
+                        match run.glyphs.last() {
+                            Some(glyph) => {
+                                if cursor.index == glyph.end {
+                                    return Some((run.glyphs.len(), 0.0));
+                                }
+                            }
+                            None => {
+                                return Some((0, 0.0));
+                            }
+                        }
+                    }
+                    None
+                };
+
+                if let Some((cursor_glyph, cursor_glyph_offset)) = cursor_glyph_opt(&buf.cursor()) {
+                    let x = match run.glyphs.get(cursor_glyph) {
+                        Some(glyph) => {
+                            // Start of detected glyph
+                            if glyph.level.is_rtl() {
+                                (glyph.x + glyph.w - cursor_glyph_offset) as i32
+                            } else {
+                                (glyph.x + cursor_glyph_offset) as i32
+                            }
+                        }
+                        None => match run.glyphs.last() {
+                            Some(glyph) => {
+                                // End of last glyph
+                                if glyph.level.is_rtl() {
+                                    glyph.x as i32
+                                } else {
+                                    (glyph.x + glyph.w) as i32
+                                }
+                            }
+                            None => {
+                                // Start of empty line
+                                0
+                            }
+                        },
+                    };
+
+                    println!("{} {}", position_x, position_y);
+
+                    return Some((
+                        x as f32 + position_x,
+                        (line_y - font_size) + position_y,
+                        1.0f32,
+                        line_height,
+                    ));
                 }
             }
             None

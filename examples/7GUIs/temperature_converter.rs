@@ -3,7 +3,6 @@ use vizia::prelude::*;
 #[derive(Lens)]
 pub struct AppData {
     temperature: f32,
-    text: String,
 }
 
 pub enum AppEvent {
@@ -22,28 +21,28 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        AppData { temperature: 5.0, text: String::from("test") }.build(cx);
+        AppData { temperature: 5.0 }.build(cx);
 
         HStack::new(cx, |cx| {
-            Textbox::new(cx, AppData::text)
-                // .on_edit(|cx, text| {
-                //     // if let Ok(val) = text.parse::<f32>() {
-                //     //     cx.emit(AppEvent::SetTemperature(val));
-                //     // }
-                // })
-                .width(Pixels(100.0))
+            Textbox::new(cx, AppData::temperature)
+                .on_edit(|cx, text| {
+                    if let Ok(val) = text.parse::<f32>() {
+                        cx.emit(AppEvent::SetTemperature(val));
+                    }
+                })
+                .width(Stretch(1.0))
                 .on_build(|cx| {
                     cx.emit(TextEvent::StartEdit);
                 });
-            // Label::new(cx, "Celcius");
-            // Textbox::new(cx, AppData::temperature.map(|temp| temp * (9.0 / 5.0) + 32.0))
-            //     .on_edit(|cx, text| {
-            //         if let Ok(val) = text.parse::<f32>() {
-            //             cx.emit(AppEvent::SetTemperature((val - 32.0) * (5.0 / 9.0)));
-            //         }
-            //     })
-            //     .width(Stretch(1.0));
-            // Label::new(cx, "Fahrenheit");
+            Label::new(cx, "Celcius");
+            Textbox::new(cx, AppData::temperature.map(|temp| temp * (9.0 / 5.0) + 32.0))
+                .on_edit(|cx, text| {
+                    if let Ok(val) = text.parse::<f32>() {
+                        cx.emit(AppEvent::SetTemperature((val - 32.0) * (5.0 / 9.0)));
+                    }
+                })
+                .width(Stretch(1.0));
+            Label::new(cx, "Fahrenheit");
         })
         .child_space(Stretch(1.0))
         .col_between(Pixels(20.0));
