@@ -2,11 +2,12 @@ use crate::entity::Entity;
 use crate::layout::BoundingBox;
 use crate::prelude::Color;
 use crate::style::Style;
-use cosmic_text::Cursor;
+use cosmic_text::fontdb::Query;
 use cosmic_text::{
     fontdb::Database, Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor,
     FontSystem, Metrics, SubpixelBin, Weight, Wrap,
 };
+use cosmic_text::{Cursor, FamilyOwned};
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
@@ -20,7 +21,7 @@ use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
 use unicode_segmentation::UnicodeSegmentation;
 use vizia_storage::SparseSet;
-use vizia_style::FontStyle;
+use vizia_style::{FontStretch, FontStyle};
 
 const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
@@ -100,72 +101,54 @@ impl TextContext {
     }
 
     pub fn sync_styles(&mut self, entity: Entity, style: &Style) {
-        // let (family, weight, font_style, monospace) = {
-        //     let families = style
-        //         .font_family
-        //         .get(entity)
-        //         .unwrap_or(&style.default_font)
-        //         .iter()
-        //         .map(|x| x.as_family())
-        //         .collect::<Vec<_>>();
-        //     let query = Query {
-        //         families: families.as_slice(),
-        //         weight: Weight(style.font_weight.get(entity).copied().unwrap_or_default().into()),
-        //         stretch: style
-        //             .font_stretch
-        //             .get(entity)
-        //             .map(|stretch| match stretch {
-        //                 FontStretch::UltraCondensed => cosmic_text::Stretch::UltraCondensed,
-        //                 FontStretch::ExtraCondensed => cosmic_text::Stretch::ExtraCondensed,
-        //                 FontStretch::Condensed => cosmic_text::Stretch::Condensed,
-        //                 FontStretch::SemiCondensed => cosmic_text::Stretch::SemiCondensed,
-        //                 FontStretch::Normal => cosmic_text::Stretch::Normal,
-        //                 FontStretch::SemiExpanded => cosmic_text::Stretch::SemiExpanded,
-        //                 FontStretch::Expanded => cosmic_text::Stretch::Expanded,
-        //                 FontStretch::ExtraExpanded => cosmic_text::Stretch::ExtraExpanded,
-        //                 FontStretch::UltraExpanded => cosmic_text::Stretch::UltraExpanded,
-        //             })
-        //             .unwrap_or_default(),
-        //         style: style
-        //             .font_style
-        //             .get(entity)
-        //             .map(|style| match style {
-        //                 FontStyle::Italic => cosmic_text::Style::Italic,
-        //                 FontStyle::Normal => cosmic_text::Style::Normal,
-        //                 FontStyle::Oblique => cosmic_text::Style::Oblique,
-        //             })
-        //             .unwrap_or_default(),
-        //     };
-        //     let id = self.font_system.db().query(&query).unwrap(); // TODO worst-case default handling
-        //     let font = self.font_system.get_font(id).unwrap();
-        //     let info = self.font_system.db().face(id).unwrap();
-        //     (info.family.clone(), info.weight, info.style, info.monospaced)
-        // };
-
-        let font_style = style
-            .font_style
-            .get(entity)
-            .map(|style| match style {
-                FontStyle::Italic => cosmic_text::Style::Italic,
-                FontStyle::Normal => cosmic_text::Style::Normal,
-                FontStyle::Oblique => cosmic_text::Style::Oblique,
-            })
-            .unwrap_or_default();
-
-        let font_weight = Weight(style.font_weight.get(entity).copied().unwrap_or_default().into());
+        let (families, font_weight, font_style, monospace) = {
+            let families = style
+                .font_family
+                .get(entity)
+                .unwrap_or(&style.default_font)
+                .iter()
+                .map(|x| x.as_family())
+                .collect::<Vec<_>>();
+            let query = Query {
+                families: families.as_slice(),
+                weight: Weight(style.font_weight.get(entity).copied().unwrap_or_default().into()),
+                stretch: style
+                    .font_stretch
+                    .get(entity)
+                    .map(|stretch| match stretch {
+                        FontStretch::UltraCondensed => cosmic_text::Stretch::UltraCondensed,
+                        FontStretch::ExtraCondensed => cosmic_text::Stretch::ExtraCondensed,
+                        FontStretch::Condensed => cosmic_text::Stretch::Condensed,
+                        FontStretch::SemiCondensed => cosmic_text::Stretch::SemiCondensed,
+                        FontStretch::Normal => cosmic_text::Stretch::Normal,
+                        FontStretch::SemiExpanded => cosmic_text::Stretch::SemiExpanded,
+                        FontStretch::Expanded => cosmic_text::Stretch::Expanded,
+                        FontStretch::ExtraExpanded => cosmic_text::Stretch::ExtraExpanded,
+                        FontStretch::UltraExpanded => cosmic_text::Stretch::UltraExpanded,
+                    })
+                    .unwrap_or_default(),
+                style: style
+                    .font_style
+                    .get(entity)
+                    .map(|style| match style {
+                        FontStyle::Italic => cosmic_text::Style::Italic,
+                        FontStyle::Normal => cosmic_text::Style::Normal,
+                        FontStyle::Oblique => cosmic_text::Style::Oblique,
+                    })
+                    .unwrap_or_default(),
+            };
+            let id = self.font_system.db().query(&query).unwrap(); // TODO worst-case default handling
+            let info = self.font_system.db().face(id).unwrap();
+            (info.families.clone(), info.weight, info.style, info.monospaced)
+        };
 
         let font_color = style.font_color.get(entity).copied().unwrap_or(Color::rgb(0, 0, 0));
 
-        let font_families = style
-            .font_family
-            .get(entity)
-            .unwrap_or(&style.default_font)
-            .iter()
-            .map(|x| x.as_family())
-            .collect::<Vec<_>>();
+        let font_families =
+            families.into_iter().map(|(name, _)| FamilyOwned::Name(name)).collect::<Vec<_>>();
 
         let family = if let Some(font_family) = font_families.first() {
-            font_family.clone()
+            font_family.as_family().clone()
         } else {
             style.default_font.first().unwrap().as_family().clone()
         };
@@ -175,16 +158,13 @@ impl TextContext {
                 .family(family)
                 .weight(font_weight)
                 .style(font_style)
-                // .monospaced(monospace)
+                .monospaced(monospace)
                 .color(FontColor::rgba(
                     font_color.r(),
                     font_color.g(),
                     font_color.b(),
                     font_color.a(),
                 ));
-            // if let Some(family) = font_families.first() {
-            //     attrs = attrs.family(*family);
-            // }
 
             let wrap = if style.text_wrap.get(entity).copied().unwrap_or(true) {
                 Wrap::Word

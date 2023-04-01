@@ -137,11 +137,8 @@ impl Checkbox {
         //let checked = checked.get_val_fallible(cx).unwrap_or(false);
         Self { on_toggle: None }
             .build(cx, |_| {})
-            .bind(checked, |handle, checked| {
-                if let Some(flag) = checked.get_val_fallible(handle.cx) {
-                    handle.text(if flag { ICON_CHECK } else { "" }).checked(flag);
-                }
-            })
+            .text(checked.clone().map(|flag| if *flag { ICON_CHECK } else { "" }))
+            .checked(checked.clone())
             .checkable(true)
             .role(Role::CheckBox)
             .default_action_verb(DefaultActionVerb::Click)
