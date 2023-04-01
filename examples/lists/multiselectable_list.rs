@@ -38,14 +38,11 @@ fn main() {
         AppData { list, selected: HashSet::new() }.build(cx);
 
         List::new(cx, AppData::list, |cx, index, item| {
-            // This vstack shouldn't be necessary but because of how bindings work it's required
-            VStack::new(cx, move |cx| {
-                Label::new(cx, item)
-                    // Set the checked state based on whether this item is selected
-                    .checked(AppData::selected.map(move |selected| selected.contains(&index)))
-                    // Set the selected item to this one if pressed
-                    .on_press(move |cx| cx.emit(AppEvent::Select(index)));
-            });
+            Label::new(cx, item)
+                // Set the checked state based on whether this item is selected
+                .checked(AppData::selected.map(move |selected| selected.contains(&index)))
+                // Set the selected item to this one if pressed
+                .on_press(move |cx| cx.emit(AppEvent::Select(index)));
         })
         .space(Stretch(1.0))
         .on_clear(|cx| cx.emit(AppEvent::ClearSelection));

@@ -73,13 +73,16 @@ fn main() {
                 |cx| cx.emit(AppEvent::Add(20)),
                 |cx| Label::new(cx, "Add").width(Stretch(1.0)),
             )
-            .width(Percentage(100.0));
+            .width(Stretch(1.0))
+            .space(Pixels(0.0));
 
             Button::new(
                 cx,
                 |cx| cx.emit(AppEvent::RemoveSelected),
-                |cx| Label::new(cx, "Remove Selected"),
-            );
+                |cx| Label::new(cx, "Remove").width(Stretch(1.0)),
+            )
+            .width(Stretch(1.0))
+            .space(Pixels(0.0));
 
             List::new(cx, AppData::list, move |cx, index, item| {
                 Label::new(cx, item)

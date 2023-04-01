@@ -10,6 +10,7 @@ list {
 list label {
     width: 100px;
     height: 30px;
+    child-space: 1s;
     border-color: black;
     border-width: 1px;
     background-color: white;
