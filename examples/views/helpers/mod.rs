@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use vizia::{
-    icons::{ICON_MOON, ICON_SUN},
+    icons::{ICON_EYE, ICON_EYE_OFF, ICON_MOON, ICON_SUN},
     prelude::*,
 };
 
@@ -168,7 +168,10 @@ impl ExamplePage {
                         .class("icon")
                     },
                 )
-                .class("icon");
+                .class("icon")
+                .tooltip(|cx| {
+                    Label::new(cx, "Toggle Dark/Light Mode");
+                });
 
                 // HStack::new(cx, |cx| {
                 //     Switch::new(cx, ControlsData::disabled)
@@ -224,6 +227,30 @@ impl ExamplePage {
 
                 Button::new(
                     cx,
+                    |ex| ex.emit(ControlsEvent::ToggleDisabled),
+                    |cx| {
+                        Label::new(
+                            cx,
+                            ControlsData::disabled.map(
+                                |flag| {
+                                    if *flag {
+                                        ICON_EYE
+                                    } else {
+                                        ICON_EYE_OFF
+                                    }
+                                },
+                            ),
+                        )
+                        .class("icon")
+                    },
+                )
+                .class("icon")
+                .tooltip(|cx| {
+                    Label::new(cx, "Toggle disabled");
+                });
+
+                Button::new(
+                    cx,
                     |ex| ex.emit(EnvironmentEvent::ToggleThemeMode),
                     |cx| {
                         Label::new(
@@ -239,7 +266,10 @@ impl ExamplePage {
                         .class("icon")
                     },
                 )
-                .class("icon");
+                .class("icon")
+                .tooltip(|cx| {
+                    Label::new(cx, "Toggle dark/light mode");
+                });
 
                 // HStack::new(cx, |cx| {
                 //     Switch::new(cx, ControlsData::disabled)

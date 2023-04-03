@@ -51,6 +51,7 @@ pub struct DrawContext<'a> {
     pub text_config: &'a TextConfig,
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState<Entity>,
+    pub opacity: f32,
 }
 
 macro_rules! style_getter_units {
@@ -66,19 +67,12 @@ macro_rules! style_getter_units {
     };
 }
 
-// macro_rules! get_property {
-//     ($ty:ty, $name:ident) => {
-//         pub fn $name(&self) -> $ty {
-//             self.style.$name.get(self.current).copied().unwrap_or_default()
-//         }
-//     };
-// }
-
 macro_rules! get_color_property {
     ($ty:ty, $name:ident) => {
         pub fn $name(&self) -> $ty {
-            // let opacity = self.cache.get_opacity(self.current);
-            let opacity = 1.0;
+            // let opacity = self.style.opacity.get(self.current).copied().unwrap_or(Opacity(1.0)).0;
+            let opacity = self.opacity();
+            // let opacity = 1.0;
             if let Some(col) = self.style.$name.get(self.current) {
                 Color::rgba(col.r(), col.g(), col.b(), (opacity * col.a() as f32) as u8)
             } else {
@@ -122,6 +116,7 @@ impl<'a> DrawContext<'a> {
             text_config: &cx.text_config,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
+            opacity: 1.0,
         }
     }
 
@@ -241,6 +236,10 @@ impl<'a> DrawContext<'a> {
         self.style.display.get(self.current).copied().unwrap_or(Display::Flex)
     }
 
+    pub fn opacity(&self) -> f32 {
+        self.opacity
+    }
+
     /// Returns the lookup pattern to pick the default font.
     pub fn default_font(&self) -> &[FamilyOwned] {
         &self.style.default_font
@@ -292,15 +291,13 @@ impl<'a> DrawContext<'a> {
     style_getter_units!(child_top);
     style_getter_units!(child_bottom);
     get_color_property!(Color, background_color);
-    // get_color_property!(Color, font_color);
     get_color_property!(Color, border_color);
     get_color_property!(Color, outline_color);
     get_color_property!(Color, selection_color);
     get_color_property!(Color, caret_color);
 
     pub fn font_color(&self) -> Color {
-        // let opacity = self.cache.get_opacity(self.current);
-        let opacity = 1.0;
+        let opacity = self.opacity();
         if let Some(col) = self.style.font_color.get(self.current) {
             Color::rgba(col.r(), col.g(), col.b(), (opacity * col.a() as f32) as u8)
         } else {
@@ -312,10 +309,6 @@ impl<'a> DrawContext<'a> {
         self.style.text_wrap.get(self.current).copied().unwrap_or(true)
     }
 
-    // pub fn font(&self) -> Option<&String> {
-    //     self.style.font.get(self.current)
-    // }
-
     pub fn image(&self) -> Option<&String> {
         self.style.image.get(self.current)
     }
@@ -323,14 +316,6 @@ impl<'a> DrawContext<'a> {
     pub fn box_shadows(&self) -> Option<&Vec<BoxShadow>> {
         self.style.box_shadow.get(self.current)
     }
-
-    // pub fn text(&self) -> Option<&String> {
-    //     self.style.text.get(self.current)
-    // }
-
-    // pub fn opacity(&self) -> f32 {
-    //     self.cache.get_opacity(self.current)
-    // }
 
     pub fn scale_factor(&self) -> f32 {
         self.style.dpi_factor as f32
@@ -921,9 +906,20 @@ impl<'a> DrawContext<'a> {
         if let Ok(draw_commands) =
             self.text_context.fill_to_cmds(canvas, self.current, origin, justify, *self.text_config)
         {
+            let opacity = self.opacity();
             for (color, cmds) in draw_commands.into_iter() {
-                let temp_paint =
-                    Paint::color(femtovg::Color::rgba(color.r(), color.g(), color.b(), color.a()));
+                let font_color = Color::rgba(
+                    color.r(),
+                    color.g(),
+                    color.b(),
+                    (color.a() as f32 * opacity) as u8,
+                );
+                let temp_paint = Paint::color(femtovg::Color::rgba(
+                    font_color.r(),
+                    font_color.g(),
+                    font_color.b(),
+                    font_color.a(),
+                ));
                 canvas.draw_glyph_commands(cmds, &temp_paint, 1.0);
             }
         }
@@ -966,7 +962,7 @@ impl<'a> DrawContext<'a> {
 
 impl<'a> DataContext for DrawContext<'a> {
     fn data<T: 'static>(&self) -> Option<&T> {
-        // return data for the static model
+        // return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);
         }

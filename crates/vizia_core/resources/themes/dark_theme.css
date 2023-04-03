@@ -8,7 +8,7 @@
     background-color: #1d1d1d;
 }
 
-/* Button  */
+/* BUTTON  */
 
 button {
     border-radius: 4px;
@@ -25,12 +25,6 @@ button:active {
     background-color: #323232;
     scale: 95%;
     transition: scale 100ms;
-}
-
-button:disabled {
-    border-width: 0px;
-    background-color: #404040;
-    border-color: #404040;
 }
 
 button:focus-visible {
@@ -51,6 +45,12 @@ button.accent label {
 button.accent:over {
     background-color: #80caff;
     transition: background-color 100ms;
+}
+
+button.accent:disabled {
+    border-width: 0px;
+    background-color: #404040;
+    border-color: #404040;
 }
 
 button.accent:active {
@@ -111,11 +111,17 @@ button.ghost:disabled {
     background-color: transparent;
 }
 
+button:disabled {
+    border-width: 0px;
+    background-color: #404040;
+    border-color: #404040;
+}
+
 button:disabled label {
     color: #888;
 }
 
-/* Checkbox */
+/* CHECKBOX */
 
 checkbox {
     border-radius: 2px;
@@ -181,6 +187,8 @@ checkbox.intermediate {
     transition: border-color 100ms;
 }
 
+/* LABEL */
+
 label.icon {
     font-family: "tabler-icons", sans-serif;
 }
@@ -188,4 +196,19 @@ label.icon {
 label.h2 {
     font-size: medium;
     font-weight: bold;
+}
+
+/* TOOLTIP */
+tooltip {
+    child-space: 10px;
+    border-color: #070707;
+    background-color: #353535;
+    border-width: 1px;
+    opacity: 0;
+    transition: opacity 100ms 500ms;
+}
+
+tooltip.vis {
+    opacity: 1;
+    transition: opacity 100ms 500ms;
 }

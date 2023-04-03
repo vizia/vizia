@@ -1,4 +1,4 @@
-use crate::prelude::Wrapper;
+use crate::{modifiers::TooltipEvent, prelude::Wrapper};
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
 
@@ -14,6 +14,8 @@ pub enum ThemeMode {
 pub struct Environment {
     pub locale: LanguageIdentifier,
     pub theme_mode: ThemeMode,
+
+    pub tooltips_visible: bool,
 }
 
 impl Default for Environment {
@@ -26,7 +28,7 @@ impl Environment {
     pub fn new() -> Self {
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
 
-        Self { locale, theme_mode: ThemeMode::DarkMode }
+        Self { locale, theme_mode: ThemeMode::DarkMode, tooltips_visible: false }
     }
 }
 
@@ -65,6 +67,14 @@ impl Model for Environment {
                 cx.set_theme_mode(self.theme_mode);
                 cx.reload_styles().unwrap();
             }
+        });
+
+        event.map(|tooltip_event, _| match tooltip_event {
+            TooltipEvent::ShowTooltip => {
+                self.tooltips_visible = true;
+                println!("show tooltip");
+            }
+            TooltipEvent::HideTooltip => self.tooltips_visible = false,
         });
     }
 }

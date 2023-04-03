@@ -99,6 +99,30 @@ impl<'a, 'b, V> EmitContext for EventHandle<'a, 'b, V> {
     }
 }
 
+#[derive(Lens)]
+pub struct TooltipModel {
+    tooltip_visible: bool,
+}
+
+pub enum TooltipEvent {
+    ShowTooltip,
+    HideTooltip,
+}
+
+impl Model for TooltipModel {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|tooltip_event, _| match tooltip_event {
+            TooltipEvent::ShowTooltip => {
+                self.tooltip_visible = true;
+            }
+
+            TooltipEvent::HideTooltip => {
+                self.tooltip_visible = false;
+            }
+        })
+    }
+}
+
 pub(crate) struct ActionsModel<V> {
     pub(crate) on_press: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
     pub(crate) on_press_down: Option<Box<dyn Fn(&mut EventHandle<V>) + Send + Sync>>,
@@ -477,6 +501,8 @@ pub trait ActionModifiers<V> {
     fn on_geo_changed<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventHandle<V>, bool) + Send + Sync;
+
+    fn tooltip<C: FnOnce(&mut Context)>(self, content: C) -> Self;
 }
 
 // If the entity doesn't have an `ActionsModel` then add one to the entity
@@ -493,7 +519,38 @@ fn build_action_model<V: 'static>(cx: &mut Context, entity: Entity) {
     }
 }
 
+fn build_tooltip_model(cx: &mut Context, entity: Entity) {
+    if cx
+        .data
+        .get(entity)
+        .and_then(|model_data_store| model_data_store.models.get(&TypeId::of::<TooltipModel>()))
+        .is_none()
+    {
+        cx.with_current(entity, |cx| {
+            TooltipModel { tooltip_visible: false }.build(cx);
+        });
+    }
+}
+
 impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
+    fn tooltip<C: FnOnce(&mut Context)>(self, content: C) -> Self {
+        let entity = self.entity();
+
+        build_tooltip_model(self.cx, entity);
+
+        let s = self
+            .on_hover(|cx| cx.emit(TooltipEvent::ShowTooltip))
+            .on_hover_out(|cx| cx.emit(TooltipEvent::HideTooltip));
+
+        s.cx.with_current(entity, |cx| {
+            Tooltip::new(cx, content)
+                .toggle_class("vis", TooltipModel::tooltip_visible)
+                .toggle_class("vis2", Environment::tooltips_visible);
+        });
+
+        s
+    }
+
     fn on_press<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventHandle<V>) + Send + Sync,

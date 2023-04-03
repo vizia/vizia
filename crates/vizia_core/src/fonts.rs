@@ -33,4 +33,7 @@ pub mod icons {
 
     pub const ICON_MOON: &str = "\u{eaf8}";
     pub const ICON_SUN: &str = "\u{eb30}";
+
+    pub const ICON_EYE: &str = "\u{ea9a}";
+    pub const ICON_EYE_OFF: &str = "\u{ecf0}";
 }

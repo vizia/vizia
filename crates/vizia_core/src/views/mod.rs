@@ -20,6 +20,7 @@ mod slider;
 mod stack;
 mod table;
 mod textbox;
+mod tooltip;
 
 pub use self::image::Image;
 pub use button::Button;
@@ -38,6 +39,7 @@ pub use slider::Slider;
 pub use stack::{HStack, VStack, ZStack};
 pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};
+pub use tooltip::Tooltip;
 
 use crate::prelude::*;
 

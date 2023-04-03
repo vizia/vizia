@@ -15,13 +15,13 @@ pub fn draw_system(cx: &mut Context) {
     canvas.set_size(window_width as u32, window_height as u32, 1.0);
     canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
     let mut queue = BinaryHeap::new();
-    queue.push(ZEntity(0, Entity::root()));
+    queue.push(ZEntity { index: 0, entity: Entity::root(), opacity: 1.0, visible: true });
     while !queue.is_empty() {
-        let ZEntity(current_z, current) = queue.pop().unwrap();
+        let zentity = queue.pop().unwrap();
         canvas.save();
         draw_entity(
             &mut DrawContext {
-                current,
+                current: zentity.entity,
                 captured: &cx.captured,
                 focused: &cx.focused,
                 hovered: &cx.hovered,
@@ -36,11 +36,12 @@ pub fn draw_system(cx: &mut Context) {
                 text_config: &cx.text_config,
                 modifiers: &cx.modifiers,
                 mouse: &cx.mouse,
+                opacity: zentity.opacity,
             },
             canvas,
-            current_z,
+            zentity.index,
             &mut queue,
-            true,
+            zentity.visible,
         );
         canvas.restore();
     }
@@ -63,7 +64,7 @@ fn draw_entity(
 
     let z_order = cx.tree.z_order(current);
     if z_order > current_z {
-        queue.push(ZEntity(z_order, current));
+        queue.push(ZEntity { index: z_order, entity: current, opacity: cx.opacity, visible });
         return;
     }
 
@@ -91,9 +92,12 @@ fn draw_entity(
 
     let child_iter = LayoutChildIterator::new(&cx.tree, cx.current);
 
+    let parent_opacity = cx.opacity();
     // Draw its children
     for child in child_iter {
         cx.current = child;
+        let opactiy = cx.style.opacity.get(child).copied().unwrap_or(Opacity(1.0)).0;
+        cx.opacity = parent_opacity * opactiy;
         draw_entity(cx, canvas, current_z, queue, is_visible);
     }
 
@@ -101,11 +105,16 @@ fn draw_entity(
     cx.current = current;
 }
 
-#[derive(Eq)]
-pub struct ZEntity(i32, Entity);
+pub struct ZEntity {
+    pub index: i32,
+    pub entity: Entity,
+    pub opacity: f32,
+    pub visible: bool,
+}
+
 impl Ord for ZEntity {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.0.cmp(&self.0)
+        other.index.cmp(&self.index)
     }
 }
 impl PartialOrd for ZEntity {
@@ -115,6 +124,8 @@ impl PartialOrd for ZEntity {
 }
 impl PartialEq for ZEntity {
     fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
+        self.index == other.index
     }
 }
+
+impl Eq for ZEntity {}

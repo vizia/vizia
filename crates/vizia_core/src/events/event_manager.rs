@@ -204,10 +204,16 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     context.mouse.left.pos_down = (context.mouse.cursorx, context.mouse.cursory);
                     context.mouse.left.pressed = context.hovered;
                     context.triggered = context.hovered;
+
+                    let disabled =
+                        context.style.disabled.get(context.hovered).copied().unwrap_or_default();
+
                     if let Some(pseudo_classes) =
                         context.style.pseudo_classes.get_mut(context.triggered)
                     {
-                        pseudo_classes.set(PseudoClassFlags::ACTIVE, true);
+                        if !disabled {
+                            pseudo_classes.set(PseudoClassFlags::ACTIVE, true);
+                        }
                     }
                     let focusable = context
                         .style
