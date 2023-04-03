@@ -97,7 +97,7 @@ impl<'a> BackendContext<'a> {
         self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::ROOT).unwrap();
         self.0.style.disabled.insert(Entity::root(), false);
 
-        self.0.canvases.insert(Entity::root(), canvas);
+        self.0.canvases.insert(Entity::root(), (canvas, None));
     }
 
     pub fn environment(&self) -> &Environment {

@@ -3,7 +3,7 @@ use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
 use vizia_style::{
-    BoxShadow, ClipPath, CssRule, FontFamily, FontSize, GenericFontFamily, Gradient, Scale,
+    BoxShadow, ClipPath, CssRule, Filter, FontFamily, FontSize, GenericFontFamily, Gradient, Scale,
     Transition, Translate,
 };
 
@@ -122,6 +122,8 @@ pub struct Style {
 
     // Clipping
     pub clip_path: AnimatableSet<ClipPath>,
+
+    pub backdrop_filter: StyleSet<Filter>,
 
     // Transform
     pub transform: AnimatableSet<Vec<Transform>>,
@@ -474,6 +476,10 @@ impl Style {
 
             Property::ClipPath(clip) => {
                 self.clip_path.insert_rule(rule_id, clip);
+            }
+
+            Property::BackdropFilter(filter) => {
+                self.backdrop_filter.insert_rule(rule_id, filter);
             }
 
             // Layout Type
@@ -931,6 +937,9 @@ impl Style {
         // Clipping
         self.clip_path.remove(entity);
 
+        // Backdrop Filter
+        self.backdrop_filter.remove(entity);
+
         // Transform
         self.transform.remove(entity);
         self.transform_origin.remove(entity);
@@ -1074,7 +1083,11 @@ impl Style {
         // Z Order
         self.z_index.clear_rules();
 
+        // Clipping
         self.clip_path.clear_rules();
+
+        // Backdrop Filer
+        self.backdrop_filter.clear_rules();
 
         // Transform
         self.transform.clear_rules();

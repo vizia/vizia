@@ -6,7 +6,7 @@ use vizia_id::GenerationalId;
 use vizia_storage::LayoutChildIterator;
 
 pub fn draw_system(cx: &mut Context) {
-    let canvas = cx.canvases.get_mut(&Entity::root()).unwrap();
+    let (canvas, canvas_image) = cx.canvases.get_mut(&Entity::root()).unwrap();
     cx.resource_manager.mark_images_unused();
     let window_width = cx.cache.get_width(Entity::root());
     let window_height = cx.cache.get_height(Entity::root());
@@ -14,6 +14,37 @@ pub fn draw_system(cx: &mut Context) {
         cx.style.background_color.get(Entity::root()).cloned().unwrap_or(RGBA::WHITE.into());
     canvas.set_size(window_width as u32, window_height as u32, 1.0);
     canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
+
+    // Draw elements to an image which is cached somewhere
+    if let Some(image) = canvas_image {
+        let (img_width, img_height) = canvas.image_size(*image).unwrap();
+        if img_width != window_width as usize || img_height != window_height as usize {
+            *image = canvas
+                .create_image_empty(
+                    window_width as usize,
+                    window_height as usize,
+                    femtovg::PixelFormat::Rgba8,
+                    femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
+                )
+                .unwrap();
+        }
+    } else {
+        *canvas_image = Some(
+            canvas
+                .create_image_empty(
+                    window_width as usize,
+                    window_height as usize,
+                    femtovg::PixelFormat::Rgba8,
+                    femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
+                )
+                .unwrap(),
+        );
+    }
+
+    let canvas_image = canvas_image.unwrap();
+
+    // canvas.set_render_target(femtovg::RenderTarget::Image(canvas_image));
+
     let mut queue = BinaryHeap::new();
     queue.push(ZEntity { index: 0, entity: Entity::root(), opacity: 1.0, visible: true });
     while !queue.is_empty() {
@@ -36,6 +67,7 @@ pub fn draw_system(cx: &mut Context) {
                 text_config: &cx.text_config,
                 modifiers: &cx.modifiers,
                 mouse: &cx.mouse,
+                canvas_image,
                 opacity: zentity.opacity,
             },
             canvas,
@@ -45,6 +77,12 @@ pub fn draw_system(cx: &mut Context) {
         );
         canvas.restore();
     }
+
+    // let mut path = Path::new();
+    // path.rect(0.0, 0.0, window_width, window_height);
+    // let paint =
+    //     femtovg::Paint::image(canvas_image, 0.0, 0.0, window_width, window_height, 0.0, 1.0);
+    // canvas.fill_path(&mut path, &paint);
 
     canvas.flush();
 }

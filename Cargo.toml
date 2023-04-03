@@ -241,6 +241,10 @@ name = "text"
 path = "examples/style/text.rs"
 
 [[example]]
+name = "filter"
+path = "examples/style/filter.rs"
+
+[[example]]
 name = "clipping"
 path = "examples/style/clipping.rs"
 

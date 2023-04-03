@@ -1,5 +1,6 @@
 pub mod alpha;
 pub mod angle;
+pub mod backdrop_filter;
 pub mod basic;
 pub mod border;
 pub mod box_shadow;
@@ -48,6 +49,7 @@ pub mod visibility;
 
 pub use alpha::*;
 pub use angle::*;
+pub use backdrop_filter::*;
 pub use basic::*;
 pub use border::*;
 pub use box_shadow::*;

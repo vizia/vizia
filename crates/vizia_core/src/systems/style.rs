@@ -299,6 +299,10 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
         should_redraw = true;
     }
 
+    if style.backdrop_filter.link(entity, &matched_rules) {
+        should_redraw = true;
+    }
+
     // Opacity
     if style.opacity.link(entity, &matched_rules) {
         should_redraw = true;

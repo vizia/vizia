@@ -59,6 +59,7 @@ pub mod prelude {
         AbilityModifiers, AccessibilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers,
         TextModifiers,
     };
+    pub use super::resource::ImageRetentionPolicy;
     pub use super::state::{
         Binding, Data, Lens, LensExt, Model, OrLens, Res, Setter, StaticLens, Wrapper,
     };

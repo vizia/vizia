@@ -1,7 +1,7 @@
 use crate::{
     define_property, Angle, BackgroundImage, Border, BorderCornerShape, BorderRadius, BorderWidth,
     BorderWidthValue, BoxShadow, ClipPath, Color, CursorIcon, CustomParseError, CustomProperty,
-    Display, FontFamily, FontSize, FontStretch, FontStyle, FontWeight, LayoutType,
+    Display, Filter, FontFamily, FontSize, FontStretch, FontStyle, FontWeight, LayoutType,
     LengthOrPercentage, Opacity, Outline, Overflow, Parse, Position, PositionType, Rect, Scale,
     Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
 };
@@ -151,6 +151,9 @@ define_property! {
 
         // Box Shadow
         "box-shadow": BoxShadow(Vec<BoxShadow>),
+
+        // Backdrop Filter
+        "backdrop-filter": BackdropFilter(Filter),
 
         // Animations
         "transition": Transition(Vec<Transition>),
