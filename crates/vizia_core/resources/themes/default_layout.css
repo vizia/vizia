@@ -17,10 +17,21 @@ button.icon {
     child-space: 1s;
 }
 
+checkbox {
+    width: 20px;
+    height: 20px;
+    child-space: 1s;
+    font-family: "tabler-icons", sans-serif;
+}
+
 label {
     width: auto;
     height: auto;
     text-wrap: false;
+}
+
+label.describing {
+    cursor: hand;
 }
 
 /* label.icon {

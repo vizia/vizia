@@ -114,3 +114,78 @@ button.ghost:disabled {
 button:disabled label {
     color: #888;
 }
+
+/* Checkbox */
+
+checkbox {
+    border-radius: 2px;
+    border-width: 2px;
+    border-color: #888;
+    background-color: transparent;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:hover {
+    border-color: #51afef;
+    background-color: transparent;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+checkbox:checked {
+    background-color: #51afef;
+    border-color: #51afef;
+    color: #181818;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:disabled {
+    border-color: #404040;
+    transition: border-color 100ms;
+}
+
+checkbox:hover:disabled {
+    background-color: transparent;
+    transition: border-color 100ms;
+}
+
+checkbox:checked:hover {
+    background-color: #80caff;
+    border-color: #80caff;
+    color: #181818;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:checked:disabled {
+    background-color: #404040;
+    border-color: #404040;
+    color: #181818;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox.intermediate {
+    background-color: #51afef;
+    border-color: #51afef;
+    color: #181818;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+label.icon {
+    font-family: "tabler-icons", sans-serif;
+}
+
+label.h2 {
+    font-size: medium;
+    font-weight: bold;
+}

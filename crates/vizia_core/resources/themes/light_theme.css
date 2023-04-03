@@ -110,3 +110,73 @@ button.ghost:disabled {
     color: #626262;
     transition: background-color 100ms, border-color 100ms;
 }
+
+/* Checkbox */
+
+checkbox {
+    border-radius: 2px;
+    border-width: 1px;
+    border-color: #626262;
+    background-color: #f4f4f4;
+    child-space: 1s;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+    font: "icons";
+}
+
+checkbox:hover {
+    border-color: #626262;
+    background-color: #ebebeb;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:active {
+    border-color: #c4c4c4;
+    background-color: #e2e2e2;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:disabled {
+    border-color: #c4c4c4;
+    background-color: #f4f4f400;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
+    outline-offset: 3px;
+}
+
+checkbox:checked {
+    background-color: #51afef;
+    border-color: #51afef;
+    color: #fff;
+    transition: background-color 0.2 0;
+    transition: border-color 100ms;
+}
+
+checkbox:checked:hover {
+    background-color: #73bff2;
+    border-color: #73bff2;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:checked:active {
+    background-color: #59a4d9;
+    border-color: #59a4d9;
+    color: #e0e0e0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+checkbox:checked:disabled {
+    background-color: #c4c4c4;
+    border-color: #c4c4c4;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
