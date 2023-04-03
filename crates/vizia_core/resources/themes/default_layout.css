@@ -1,4 +1,29 @@
-label.icon {
+button {
+    width: auto;
+    height: 32px;
+    child-left: 8px;
+    child-right: 8px;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+button label {
+    child-space: 1s;
+}
+
+button.icon {
+    width: 32px;
+    height: 32px;
+    child-space: 1s;
+}
+
+label {
+    width: auto;
+    height: auto;
+    text-wrap: false;
+}
+
+/* label.icon {
     font-family: "tabler-icons", sans-serif;
 }
 
@@ -145,4 +170,4 @@ menustack.vertical > menu > hstack > .menu_arrow {
     left: 1s;
     top: 1s;
     bottom: 1s;
-}
+} */

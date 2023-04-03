@@ -49,7 +49,7 @@ pub mod prelude {
         EventContext, ProxyEmitError,
     };
     pub use super::entity::Entity;
-    pub use super::environment::{Environment, EnvironmentEvent};
+    pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};
     pub use super::events::{Event, Propagation};
     pub use super::handle::Handle;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
@@ -59,7 +59,9 @@ pub mod prelude {
         AbilityModifiers, AccessibilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers,
         TextModifiers,
     };
-    pub use super::state::{Binding, Data, Lens, LensExt, Model, OrLens, Res, Setter, Wrapper};
+    pub use super::state::{
+        Binding, Data, Lens, LensExt, Model, OrLens, Res, Setter, StaticLens, Wrapper,
+    };
     pub use super::view::{Canvas, View};
     pub use super::views::*;
     pub use super::window::WindowModifiers;

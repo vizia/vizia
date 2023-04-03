@@ -28,8 +28,11 @@ impl_parse! {
     custom {
         |input| {
             let x = PercentageOrNumber::parse(input)?;
-            let y = input.try_parse(PercentageOrNumber::parse).ok().unwrap_or_default();
-            Ok(Scale { x, y })
+            if let Some(y) = input.try_parse(PercentageOrNumber::parse).ok() {
+                Ok(Scale {x , y})
+            } else {
+                Ok(Scale { x, y: x })
+            }
         }
     }
 }

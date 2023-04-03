@@ -30,4 +30,7 @@ pub mod icons {
     pub const ICON_MINUS: &str = "\u{eaf2}";
     pub const ICON_CHECK: &str = "\u{ea5e}";
     pub const ICON_X: &str = "\u{eb55}";
+
+    pub const ICON_MOON: &str = "\u{eaf8}";
+    pub const ICON_SUN: &str = "\u{eb30}";
 }

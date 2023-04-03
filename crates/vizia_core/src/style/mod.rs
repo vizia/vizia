@@ -1190,10 +1190,10 @@ impl IntoTransform for Translate {
 }
 
 impl IntoTransform for Scale {
-    fn into_transform(&self, parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
+    fn into_transform(&self, _parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
         let mut result = Transform2D::identity();
-        let sx = self.x.to_number(parent_bounds.w);
-        let sy = self.y.to_number(parent_bounds.h);
+        let sx = self.x.to_factor();
+        let sy = self.y.to_factor();
         result.scale(sx, sy);
 
         result

@@ -29,7 +29,7 @@ pub use proxy::*;
 pub use resource::*;
 
 use crate::cache::CachedData;
-use crate::environment::Environment;
+use crate::environment::{Environment, ThemeMode};
 use crate::events::ViewHandler;
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
@@ -43,8 +43,10 @@ use vizia_input::{Modifiers, MouseState};
 use vizia_storage::TreeExt;
 use vizia_storage::{ChildIterator, SparseSet};
 
-static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
+// static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
+pub static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
+pub static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
 
 pub(crate) type DataStore = SparseSet<ModelDataStore>;
 pub(crate) type Views = FnvHashMap<Entity, Box<dyn BindingHandler>>;
@@ -480,7 +482,12 @@ impl Context {
 
         self.add_theme(DEFAULT_LAYOUT);
         if !self.ignore_default_theme {
-            self.add_theme(DEFAULT_THEME);
+            // self.add_theme(DEFAULT_THEME);
+            let environment = self.data::<Environment>().expect("Failed to get environment");
+            match environment.theme_mode {
+                ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
+                ThemeMode::DarkMode => self.add_theme(DARK_THEME),
+            }
         }
     }
 

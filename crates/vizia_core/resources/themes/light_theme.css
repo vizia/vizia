@@ -1,0 +1,112 @@
+* {
+    color: #0c0c0c;
+}
+
+:root {
+    background-color: #fafafa;
+}
+
+/* Button  */
+
+button {
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
+    transition: background-color 100ms;
+    color: #181818;
+}
+
+button:over {
+    background-color: #f9f9f9;
+    transition: background-color 100ms;
+}
+
+button:active {
+    background-color: #fafafa;
+    border-color: #ebebeb;
+    color: #626262;
+    scale: 95%;
+    transition: scale 100ms;
+}
+
+button:disabled {
+    border-color: #ebebeb;
+    color: #626262;
+    transition: background-color 100ms, border-color 100ms;
+}
+
+button:focus-visible {
+    outline-width: 2px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+button.accent {
+    border-width: 0px;
+    background-color: #51afef;
+    transition: background-color 100ms;
+    color: #181818;
+}
+
+button.accent:over {
+    background-color: #73bff2;
+    transition: background-color 100ms, border-color 100ms;
+}
+
+button.accent:active {
+    background-color: #59a4d9;
+    color: #363636;
+    transition: background-color 100ms, border-color 100ms;
+}
+
+button.accent:disabled {
+    background-color: #c4c4c4;
+    color: white;
+    transition: background-color 100ms, border-color 100ms;
+}
+
+button.outline {
+    background-color: transparent;
+    border-width: 1px;
+    border-color: #51afef;
+    color: #51afef;
+    transition: background-color 100ms, border-color 100ms;
+}
+
+button.outline:over {
+    background-color: #80caff10;
+    transition: background-color 100ms;
+}
+
+button.outline:active {
+    background-color: #3995d610;
+}
+
+button.outline:disabled {
+    border-color: #ebebeb;
+    color: #626262;
+    transition: background-color 100ms, border-color 100ms;
+}
+
+button.ghost {
+    border-width: 0px;
+    background-color: transparent;
+    transition: background-color 100ms;
+    color: #51afef;
+}
+
+button.ghost:over {
+    background-color: #80caff10;
+    transition: background-color 100ms;
+}
+
+button.ghost:active {
+    background-color: #3995d610;
+    transition: background-color 100ms;
+}
+
+button.ghost:disabled {
+    color: #626262;
+    transition: background-color 100ms, border-color 100ms;
+}

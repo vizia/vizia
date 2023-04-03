@@ -12,7 +12,7 @@ pub enum PercentageOrNumber {
 impl PercentageOrNumber {
     pub fn to_factor(&self) -> f32 {
         match self {
-            PercentageOrNumber::Percentage(val) => *val,
+            PercentageOrNumber::Percentage(val) => *val / 100.0,
             PercentageOrNumber::Number(val) => *val,
         }
     }
@@ -21,7 +21,7 @@ impl PercentageOrNumber {
         match self {
             PercentageOrNumber::Number(num) => *num,
 
-            PercentageOrNumber::Percentage(val) => val * min_bounds,
+            PercentageOrNumber::Percentage(val) => (val / 100.0) * min_bounds,
         }
     }
 }

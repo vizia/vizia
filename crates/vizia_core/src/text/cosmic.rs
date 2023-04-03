@@ -467,8 +467,6 @@ impl TextContext {
                         },
                     };
 
-                    println!("{} {}", position_x, position_y);
-
                     return Some((
                         x as f32 + position_x,
                         (line_y - font_size) + position_y,

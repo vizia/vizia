@@ -1,0 +1,116 @@
+* {
+    color: #fafafa;
+    /* border-width: 1px;
+    border-color: red; */
+}
+
+:root {
+    background-color: #1d1d1d;
+}
+
+/* Button  */
+
+button {
+    border-radius: 4px;
+    background-color: #484848;
+    transition: background-color 100ms;
+}
+
+button:over {
+    background-color: #666;
+    transition: background-color 100ms;
+}
+
+button:active {
+    background-color: #323232;
+    scale: 95%;
+    transition: scale 100ms;
+}
+
+button:disabled {
+    border-width: 0px;
+    background-color: #404040;
+    border-color: #404040;
+}
+
+button:focus-visible {
+    outline-width: 2px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+button.accent {
+    background-color: #51afef;
+    transition: background-color 100ms;
+}
+
+button.accent label {
+    color: #181818;
+}
+
+button.accent:over {
+    background-color: #80caff;
+    transition: background-color 100ms;
+}
+
+button.accent:active {
+    background-color: #3995d6;
+}
+
+button.outline {
+    background-color: transparent;
+    border-width: 1px;
+    border-color: #51afef;
+    transition: background-color 100ms;
+}
+
+button.outline label {
+    color: #51afef;
+}
+
+button.outline:over {
+    background-color: #80caff10;
+    transition: background-color 100ms;
+}
+
+button.outline:active {
+    background-color: #3995d610;
+}
+
+button.ghost {
+    background-color: transparent;
+    transition: background-color 100ms;
+}
+
+button.ghost label {
+    color: #51afef;
+}
+
+button.ghost:over {
+    background-color: #80caff10;
+    transition: background-color 100ms;
+}
+
+button.ghost:active {
+    background-color: #3995d610;
+}
+
+button:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+button.outline:disabled {
+    background-color: transparent;
+    border-width: 1px;
+    border-color: #606060;
+}
+
+button.ghost:disabled {
+    background-color: transparent;
+}
+
+button:disabled label {
+    color: #888;
+}
