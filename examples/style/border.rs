@@ -56,13 +56,13 @@ fn main() {
             Element::new(cx).border_color(Color::black()).border_width(Pixels(10.0));
 
             Element::new(cx).border_radius((
-                Length::Value(LengthValue::Px(10.0)),
-                Pixels(0.0),
-                "50px",
-                LengthValue::Px(20.0),
+                Length::Value(LengthValue::Px(5.0)),
+                Pixels(20.0),
+                "30px",
+                LengthValue::Px(40.0),
             ));
 
-            Element::new(cx).border_radius(Pixels(10.0)).border_corner_shape((
+            Element::new(cx).border_radius(Pixels(30.0)).border_corner_shape((
                 BorderCornerShape::Bevel,
                 BorderCornerShape::Round,
                 BorderCornerShape::Bevel,

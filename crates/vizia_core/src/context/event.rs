@@ -5,7 +5,7 @@ use std::error::Error;
 
 use femtovg::Transform2D;
 use fnv::FnvHashMap;
-use vizia_style::Clip;
+use vizia_style::ClipPath;
 
 use crate::cache::CachedData;
 use crate::environment::ThemeMode;
@@ -101,15 +101,15 @@ impl<'a> EventContext<'a> {
 
         let clip_bounds = self
             .style
-            .clip
+            .clip_path
             .get(self.current)
             .map(|clip| match clip {
-                Clip::Auto => bounds,
-                Clip::Shape(rect) => bounds.shrink_sides(
-                    self.logical_to_physical(rect.3.to_px().unwrap()),
-                    self.logical_to_physical(rect.0.to_px().unwrap()),
-                    self.logical_to_physical(rect.1.to_px().unwrap()),
-                    self.logical_to_physical(rect.2.to_px().unwrap()),
+                ClipPath::Auto => bounds,
+                ClipPath::Shape(rect) => bounds.shrink_sides(
+                    self.logical_to_physical(rect.3.to_pixels(bounds.w)),
+                    self.logical_to_physical(rect.0.to_pixels(bounds.h)),
+                    self.logical_to_physical(rect.1.to_pixels(bounds.w)),
+                    self.logical_to_physical(rect.2.to_pixels(bounds.h)),
                 ),
             })
             .unwrap_or(bounds);

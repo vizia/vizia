@@ -16,7 +16,8 @@ use crate::vg::{ImageId, Paint, Path};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 use vizia_style::{
-    BoxShadow, Clip, Gradient, HorizontalPositionKeyword, LineDirection, VerticalPositionKeyword,
+    BoxShadow, ClipPath, Gradient, HorizontalPositionKeyword, LineDirection,
+    VerticalPositionKeyword,
 };
 
 /// Cached data used for drawing.
@@ -133,15 +134,15 @@ impl<'a> DrawContext<'a> {
 
         let clip_bounds = self
             .style
-            .clip
+            .clip_path
             .get(self.current)
             .map(|clip| match clip {
-                Clip::Auto => bounds,
-                Clip::Shape(rect) => bounds.shrink_sides(
-                    self.logical_to_physical(rect.3.to_px().unwrap()),
-                    self.logical_to_physical(rect.0.to_px().unwrap()),
-                    self.logical_to_physical(rect.1.to_px().unwrap()),
-                    self.logical_to_physical(rect.2.to_px().unwrap()),
+                ClipPath::Auto => bounds,
+                ClipPath::Shape(rect) => bounds.shrink_sides(
+                    self.logical_to_physical(rect.3.to_pixels(bounds.w)),
+                    self.logical_to_physical(rect.0.to_pixels(bounds.h)),
+                    self.logical_to_physical(rect.1.to_pixels(bounds.w)),
+                    self.logical_to_physical(rect.2.to_pixels(bounds.h)),
                 ),
             })
             .unwrap_or(bounds);

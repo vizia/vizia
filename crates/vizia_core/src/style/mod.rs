@@ -3,8 +3,8 @@ use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
 use vizia_style::{
-    BoxShadow, Clip, CssRule, FontFamily, FontSize, GenericFontFamily, Gradient, Scale, Transition,
-    Translate,
+    BoxShadow, ClipPath, CssRule, FontFamily, FontSize, GenericFontFamily, Gradient, Scale,
+    Transition, Translate,
 };
 
 use crate::prelude::*;
@@ -121,7 +121,7 @@ pub struct Style {
     pub z_index: StyleSet<i32>,
 
     // Clipping
-    pub clip: AnimatableSet<Clip>,
+    pub clip_path: AnimatableSet<ClipPath>,
 
     // Transform
     pub transform: AnimatableSet<Vec<Transform>>,
@@ -446,6 +446,11 @@ impl Style {
                 self.box_shadow.insert_transition(rule_id, animation);
             }
 
+            "clip-path" => {
+                self.clip_path.insert_animation(animation, self.add_transition(transition));
+                self.clip_path.insert_transition(rule_id, animation);
+            }
+
             _ => return,
         }
 
@@ -467,8 +472,8 @@ impl Style {
                 self.opacity.insert_rule(rule_id, opacity);
             }
 
-            Property::Clip(clip) => {
-                self.clip.insert_rule(rule_id, clip);
+            Property::ClipPath(clip) => {
+                self.clip_path.insert_rule(rule_id, clip);
             }
 
             // Layout Type
@@ -924,7 +929,7 @@ impl Style {
         // Z Order
         self.z_index.remove(entity);
         // Clipping
-        self.clip.remove(entity);
+        self.clip_path.remove(entity);
 
         // Transform
         self.transform.remove(entity);
@@ -1069,7 +1074,7 @@ impl Style {
         // Z Order
         self.z_index.clear_rules();
 
-        self.clip.clear_rules();
+        self.clip_path.clear_rules();
 
         // Transform
         self.transform.clear_rules();

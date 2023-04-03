@@ -1,6 +1,6 @@
 use crate::{
     define_property, Angle, BackgroundImage, Border, BorderCornerShape, BorderRadius, BorderWidth,
-    BorderWidthValue, BoxShadow, Clip, Color, CursorIcon, CustomParseError, CustomProperty,
+    BorderWidthValue, BoxShadow, ClipPath, Color, CursorIcon, CustomParseError, CustomProperty,
     Display, FontFamily, FontSize, FontStretch, FontStyle, FontWeight, LayoutType,
     LengthOrPercentage, Opacity, Outline, Overflow, Parse, Position, PositionType, Rect, Scale,
     Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
@@ -15,7 +15,7 @@ define_property! {
         "overflow": Overflow(Overflow),
         "overflow-x": OverflowX(Overflow),
         "overflow-y": OverflowY(Overflow),
-        "clip": Clip(Clip),
+        "clip-path": ClipPath(ClipPath),
         "opacity": Opacity(Opacity),
         "z-index": ZIndex(i32),
 

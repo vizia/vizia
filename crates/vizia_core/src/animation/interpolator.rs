@@ -1,6 +1,6 @@
 use morphorm::Units;
 use vizia_style::{
-    Angle, BoxShadow, Clip, Color, ColorStop, FontSize, Gradient, Length, LengthOrPercentage,
+    Angle, BoxShadow, ClipPath, Color, ColorStop, FontSize, Gradient, Length, LengthOrPercentage,
     LengthValue, LinearGradient, Opacity, PercentageOrNumber, Rect, Scale, Transform, Translate,
     RGBA,
 };
@@ -293,10 +293,10 @@ impl<T: Interpolator> Interpolator for Rect<T> {
     }
 }
 
-impl Interpolator for Clip {
+impl Interpolator for ClipPath {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
-            (Clip::Shape(s), Clip::Shape(e)) => Clip::Shape(Rect::interpolate(s, e, t)),
+            (ClipPath::Shape(s), ClipPath::Shape(e)) => ClipPath::Shape(Rect::interpolate(s, e, t)),
             _ => end.clone(),
         }
     }

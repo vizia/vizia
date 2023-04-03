@@ -295,7 +295,7 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
         should_redraw = true;
     }
 
-    if style.clip.link(entity, &matched_rules) {
+    if style.clip_path.link(entity, &matched_rules) {
         should_redraw = true;
     }
 

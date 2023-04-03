@@ -1,45 +1,57 @@
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
-    .one {
+    .container {
         size: 100px;
-        background-color: green;
-        overflow-x: visible;
-        overflow-y: hidden;
+        background-color: rgb(200, 200, 200);
     }
 
-    .one:hover {
+    .row {
+        child-space: 1s;
+        col-between: 40px;
+    }
+
+    element {
+        size: 75px;
+        left: 50px;
+        top: 50px;
         background-color: red;
     }
     
-    .two {
-        size: 50px;
-        background-color: red;
-        top: 75px;
-        transform: translateX(75px);
+    .overflow {
+        overflow: hidden;
+    }
+
+    .overflow:over {
         overflow: visible;
     }
 
-    .two:hover {
-        background-color: blue;
+    .overflowx {
+        overflow-x: hidden;
     }
 
-    .three {
-        size: 75px;
-        background-color: yellow;
+    .overflowx:over {
+        overflow-x: visible;
     }
 
-    .three:hover {
-        background-color: maroon;
+    .overflowy {
+        overflow-y: hidden;
     }
 
-    .four {
-        space: 200px;
-        background-color: red;
+    .overflowy:over {
+        overflow-y: visible;
+    }
+    
+    .clipping {
+        size: 100%;
+        space: 0px;
+        clip-path: inset(30px);
+        overflow: hidden;
     }
 
-    .four:hover {
-        background-color: green;
+    .container:over .clipping {
+        clip-path: inset(10px);
+        transition: clip-path 100ms;
     }
 "#;
 
@@ -66,51 +78,33 @@ fn main() {
     Application::new(|cx| {
         cx.add_theme(STYLE);
 
-        AppData { skew: 0.0 }.build(cx);
-        // HStack::new(cx, |cx| {
-        //     Element::new(cx)
-        //         .size(Pixels(100.0))
-        //         .space(Pixels(150.0))
-        //         .background_color(Color::magenta());
-        // })
-        // .size(Pixels(200.0))
-        // .class("test");
         HStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
-                HStack::new(cx, |_cx| {}).class("three");
+                Element::new(cx);
             })
-            .min_size(Pixels(0.0))
-            .class("two");
+            .class("container")
+            .class("overflow");
+
+            HStack::new(cx, |cx| {
+                Element::new(cx);
+            })
+            .class("container")
+            .class("overflowx");
+
+            HStack::new(cx, |cx| {
+                Element::new(cx);
+            })
+            .class("container")
+            .class("overflowy");
+
+            HStack::new(cx, |cx| {
+                Element::new(cx).class("clipping");
+            })
+            .class("container");
         })
-        // .hoverable(false)
-        .transform(vec![Transform::SkewX(Angle::Deg(26.5650512))])
-        .class("one")
-        .min_size(Pixels(0.0));
-
-        // Label::new(cx, "Hello World").size(Pixels(200.0)).class("four");
-
-        // Slider::new(cx, AppData::skew)
-        //     .range(0.0..45.0)
-        //     .on_changing(|ex, val| ex.emit(AppEvent::SetSkew(val)));
-
-        // HStack::new(cx, |cx| {
-        //     HStack::new(cx, |cx| {
-        //         HStack::new(cx, |cx| {})
-        //             .space(Pixels(150.0))
-        //             .size(Pixels(100.0))
-        //             .background_color(Color::blue());
-        //     })
-        //     // .left(Pixels(50.0))
-        //     .size(Pixels(200.0))
-        //     .background_color(Color::red())
-        //     .min_size(Pixels(0.0))
-        //     .class("bar");
-        // })
-        // .background_color(Color::green())
-        // .size(Pixels(220.0))
-        // .child_space(Stretch(1.0))
-        // .overflow(Overflow::Hidden)
-        // .min_size(Pixels(0.0));
+        .class("row");
     })
+    .title("Overlflow and Clipping")
+    .inner_size((800, 400))
     .run();
 }

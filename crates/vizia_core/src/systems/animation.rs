@@ -30,7 +30,9 @@ pub fn animation_system(cx: &mut Context) -> bool {
         // Outline
         | cx.style.outline_color.tick(time)
         | cx.style.outline_offset.tick(time)
-        | cx.style.outline_width.tick(time);
+        | cx.style.outline_width.tick(time)
+        // Clip Path
+        | cx.style.clip_path.tick(time);
 
     // Properties which affect layout
     let needs_relayout =
