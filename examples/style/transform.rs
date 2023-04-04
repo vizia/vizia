@@ -116,35 +116,35 @@ fn main() {
     Application::new(|cx| {
         cx.add_theme(STYLE);
 
-        // VStack::new(cx, |cx| {
-        //     HStack::new(cx, |cx| {
-        //         Element::new(cx).class("translate").text("translate");
-        //         Element::new(cx).class("translateX").text("translateX");
-        //         Element::new(cx).class("translateY").text("translateY");
-        //     })
-        //     .size(Auto)
-        //     .col_between(Pixels(10.0));
-        //     Element::new(cx).text("rotate").class("rotate");
-        //     HStack::new(cx, |cx| {
-        //         Element::new(cx).class("scale").text("scale");
-        //         Element::new(cx).class("scaleX").text("scaleX");
-        //         Element::new(cx).class("scaleY").text("scaleY");
-        //     })
-        //     .size(Auto)
-        //     .col_between(Pixels(10.0));
+        VStack::new(cx, |cx| {
+            HStack::new(cx, |cx| {
+                Element::new(cx).class("translate").text("translate");
+                Element::new(cx).class("translateX").text("translateX");
+                Element::new(cx).class("translateY").text("translateY");
+            })
+            .size(Auto)
+            .col_between(Pixels(10.0));
+            Element::new(cx).text("rotate").class("rotate");
+            HStack::new(cx, |cx| {
+                Element::new(cx).class("scale").text("scale");
+                Element::new(cx).class("scaleX").text("scaleX");
+                Element::new(cx).class("scaleY").text("scaleY");
+            })
+            .size(Auto)
+            .col_between(Pixels(10.0));
 
-        //     HStack::new(cx, |cx| {
-        //         Element::new(cx).class("skew").text("skew");
-        //         Element::new(cx).class("skewX").text("skewX");
-        //         Element::new(cx).class("skewY").text("skewY");
-        //     })
-        //     .size(Auto)
-        //     .col_between(Pixels(10.0));
-        //     Element::new(cx).class("multi").text("multi");
-        //     Element::new(cx).class("matrix").text("matrix");
-        // })
-        // .child_space(Stretch(1.0))
-        // .row_between(Pixels(10.0));
+            HStack::new(cx, |cx| {
+                Element::new(cx).class("skew").text("skew");
+                Element::new(cx).class("skewX").text("skewX");
+                Element::new(cx).class("skewY").text("skewY");
+            })
+            .size(Auto)
+            .col_between(Pixels(10.0));
+            Element::new(cx).class("multi").text("multi");
+            Element::new(cx).class("matrix").text("matrix");
+        })
+        .child_space(Stretch(1.0))
+        .row_between(Pixels(10.0));
 
         // VStack::new(cx, |cx| {
         //     HStack::new(cx, |cx| {
@@ -197,9 +197,9 @@ fn main() {
         // Element::new(cx).class("rotate2");
         // Element::new(cx).class("scale2");
 
-        Element::new(cx).translate((Percentage(10.0), Pixels(10.0)));
-        Element::new(cx).rotate(Angle::Deg(40.0));
-        Element::new(cx).scale((0.5, 0.5));
+        // Element::new(cx).translate((Percentage(10.0), Pixels(10.0)));
+        // Element::new(cx).rotate(Angle::Deg(40.0));
+        // Element::new(cx).scale((0.5, 0.5));
     })
     .run();
 }

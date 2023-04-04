@@ -99,28 +99,6 @@ macro_rules! get_length_property {
 }
 
 impl<'a> DrawContext<'a> {
-    /// Creates a new `DrawContext` from the given `Context`.
-    // pub fn new(cx: &'a mut Context) -> Self {
-    //     Self {
-    //         current: cx.current,
-    //         captured: &cx.captured,
-    //         focused: &cx.focused,
-    //         hovered: &cx.hovered,
-    //         style: &cx.style,
-    //         cache: &mut cx.cache,
-    //         draw_cache: &mut cx.draw_cache,
-    //         tree: &cx.tree,
-    //         data: &cx.data,
-    //         views: &mut cx.views,
-    //         resource_manager: &cx.resource_manager,
-    //         text_context: &mut cx.text_context,
-    //         text_config: &cx.text_config,
-    //         modifiers: &cx.modifiers,
-    //         mouse: &cx.mouse,
-    //         opacity: 1.0,
-    //     }
-    // }
-
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
     }
@@ -340,7 +318,7 @@ impl<'a> DrawContext<'a> {
         let border_bottom_right_shape = self.border_bottom_right_shape();
         let border_bottom_left_shape = self.border_bottom_left_shape();
 
-        //TODO: Cache the path a regenerate if the bounds change
+        //TODO: Cache the path and regenerate if the bounds change
         let mut path = Path::new();
 
         if bounds.w == bounds.h
@@ -452,7 +430,6 @@ impl<'a> DrawContext<'a> {
         let window_width = self.cache.get_width(Entity::root());
         let window_height = self.cache.get_height(Entity::root());
         let bounds = self.bounds();
-        // let image = self.canvas_image;
 
         let blur_radius = self
             .style
@@ -487,17 +464,12 @@ impl<'a> DrawContext<'a> {
                 )
             };
 
-            let mut screenshot_image_id = None;
+            // TODO: Cache these
+            let screenshot_image = canvas.screenshot().unwrap();
 
-            if let Some(screenshot_image_id) = screenshot_image_id {
-                canvas.delete_image(screenshot_image_id);
-            }
-
-            if let Ok(image) = canvas.screenshot() {
-                screenshot_image_id = Some(
-                    canvas.create_image(image.as_ref(), femtovg::ImageFlags::empty()).unwrap(),
-                );
-            }
+            let screenshot_image_id = canvas
+                .create_image(screenshot_image.as_ref(), femtovg::ImageFlags::empty())
+                .unwrap();
 
             // Draw canvas to source image
             canvas.save();
@@ -509,24 +481,14 @@ impl<'a> DrawContext<'a> {
                 0,
                 bounds.w as u32,
                 bounds.h as u32,
-                femtovg::Color::rgba(0, 0, 0, 255),
+                femtovg::Color::rgba(0, 0, 0, 0),
             );
-            // let paint = femtovg::Paint::image(
-            //     screenshot_image_id.unwrap(),
-            //     bounds.x,
-            //     bounds.y,
-            //     bounds.w,
-            //     bounds.h,
-            //     0.0,
-            //     1.0,
-            // );
-            // canvas.fill_path(&mut path.clone(), &paint);
             let mut p = femtovg::Path::new();
             p.rect(0.0, 0.0, bounds.w, bounds.h);
             canvas.fill_path(
                 &mut p,
                 &Paint::image(
-                    screenshot_image_id.unwrap(),
+                    screenshot_image_id,
                     -bounds.x,
                     -bounds.y,
                     window_width,
@@ -535,7 +497,6 @@ impl<'a> DrawContext<'a> {
                     1.0,
                 ),
             );
-            // canvas.fill_path(&mut p, &Paint::color(Color::rgb(120, 255, 120).into()));
 
             let blurred_image = if blur_radius > 0.0 {
                 canvas.filter_image(target, femtovg::ImageFilter::GaussianBlur { sigma }, source);
@@ -543,7 +504,6 @@ impl<'a> DrawContext<'a> {
             } else {
                 source
             };
-            // let blurred_image = source;
             canvas.restore();
             canvas.set_render_target(femtovg::RenderTarget::Screen);
 
@@ -551,7 +511,6 @@ impl<'a> DrawContext<'a> {
                 path,
                 &Paint::image(blurred_image, bounds.x, bounds.y, bounds.w, bounds.h, 0.0, 1.0),
             );
-            // canvas.fill_path(path, &Paint::color(Color::rgb(255, 255, 255).into()));
         }
     }
 

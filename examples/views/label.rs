@@ -39,6 +39,7 @@ fn main() {
             Label::new(cx, AppData::value);
 
             Label::new(cx, "Text which is too long for the label will be wrapped.")
+                .text_wrap(true)
                 .width(Pixels(200.0));
 
             Label::new(cx, "Unless text wrapping is disabled.")

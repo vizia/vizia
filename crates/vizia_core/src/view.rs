@@ -83,7 +83,7 @@ pub trait View: 'static + Sized {
 
         let mut path = cx.build_path();
 
-        // cx.draw_shadows(canvas, &mut path);
+        cx.draw_shadows(canvas, &mut path);
 
         cx.draw_backdrop_filter(canvas, &mut path);
 
@@ -91,7 +91,7 @@ pub trait View: 'static + Sized {
 
         cx.draw_border(canvas, &mut path);
 
-        // cx.draw_inset_box_shadows(canvas, &mut path);
+        cx.draw_inset_box_shadows(canvas, &mut path);
 
         cx.draw_outline(canvas);
 
