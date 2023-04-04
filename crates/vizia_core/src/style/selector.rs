@@ -6,18 +6,29 @@ use bitflags::bitflags;
 
 bitflags! {
     /// A bitflag of possible pseudoclasses.
-    pub struct PseudoClassFlags: u16 {
+    pub struct PseudoClassFlags: u32 {
         const HOVER = 1;
-        const OVER = 1 << 1;
-        const ACTIVE = 1 << 2;
+        const ACTIVE = 1 << 1;
+        const OVER = 1 << 2;
         const FOCUS = 1 << 3;
-        const DISABLED = 1 << 4;
-        const CHECKED = 1 << 5;
-        const SELECTED = 1 << 6;
-        const CUSTOM = 1 << 7;
-        const FOCUS_WITHIN = 1<<8;
-        const FOCUS_VISIBLE = 1 << 9;
-        const ROOT = 1 << 10;
+        const FOCUS_VISIBLE = 1 << 4;
+        const FOCUS_WITHIN = 1 << 5;
+        const READ_ONLY = 1 << 6;
+        const READ_WRITE = 1 << 7;
+        const PLACEHOLDER_SHOWN = 1 << 8;
+        const DEFAULT = 1 << 9;
+        const CHECKED = 1 << 10;
+        const INDETERMINATE = 1 << 11;
+        const SELECTED = 1 << 12;
+        const BLANK = 1 << 13;
+        const VALID = 1 << 14;
+        const INVALID = 1 << 15;
+        const IN_RANGE = 1 << 16;
+        const OUT_OF_RANGE = 1 << 17;
+        const REQUIRED = 1 << 18;
+        const OPTIONAL = 1 << 19;
+        const USER_VALID = 1 << 20;
+        const USER_INVALID = 1 << 21;
     }
 }
 
@@ -27,6 +38,7 @@ impl Default for PseudoClassFlags {
     }
 }
 
+// TODO
 impl std::fmt::Display for PseudoClassFlags {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.contains(PseudoClassFlags::HOVER) {
@@ -41,9 +53,6 @@ impl std::fmt::Display for PseudoClassFlags {
         if self.contains(PseudoClassFlags::FOCUS) {
             write!(f, ":focus")?;
         }
-        if self.contains(PseudoClassFlags::DISABLED) {
-            write!(f, ":disabled")?;
-        }
         if self.contains(PseudoClassFlags::CHECKED) {
             write!(f, ":checked")?;
         }
@@ -55,9 +64,6 @@ impl std::fmt::Display for PseudoClassFlags {
         }
         if self.contains(PseudoClassFlags::FOCUS_VISIBLE) {
             write!(f, ":focus-visible")?;
-        }
-        if self.contains(PseudoClassFlags::ROOT) {
-            write!(f, ":root")?;
         }
 
         Ok(())

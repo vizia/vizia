@@ -253,6 +253,18 @@ name = "zorder"
 path = "examples/style/zorder.rs"
 
 [[example]]
+name = "combinators"
+path = "examples/style/combinators.rs"
+
+[[example]]
+name = "selectors"
+path = "examples/style/selectors.rs"
+
+[[example]]
+name = "pseudo_classes"
+path = "examples/style/pseudo_classes.rs"
+
+[[example]]
 name = "boolean"
 path = "examples/binding/boolean.rs"
 

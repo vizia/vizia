@@ -123,13 +123,16 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
         false
     }
 
-    // TODO
     fn has_id(
         &self,
-        _id: &<Self::Impl as SelectorImpl>::Identifier,
+        name: &<Self::Impl as SelectorImpl>::Identifier,
         _case_sensitivity: CaseSensitivity,
     ) -> bool {
-        false
+        if let Some(id) = self.store.ids.get(self.entity) {
+            *id == name.0
+        } else {
+            false
+        }
     }
 
     fn has_class(
@@ -179,26 +182,38 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
                 PseudoClass::FocusVisible => {
                     psudeo_class_flag.contains(PseudoClassFlags::FOCUS_VISIBLE)
                 }
-                PseudoClass::FocusWithin => todo!(),
-                PseudoClass::Enabled => todo!(),
+                PseudoClass::FocusWithin => {
+                    psudeo_class_flag.contains(PseudoClassFlags::FOCUS_WITHIN)
+                }
+                PseudoClass::Enabled => {
+                    self.store.disabled.get(self.entity).map(|disabled| !*disabled).unwrap_or(true)
+                }
                 PseudoClass::Disabled => {
                     self.store.disabled.get(self.entity).copied().unwrap_or_default()
                 }
-                PseudoClass::ReadOnly => todo!(),
-                PseudoClass::ReadWrite => todo!(),
-                PseudoClass::PlaceHolderShown => todo!(),
-                PseudoClass::Default => todo!(),
+                PseudoClass::ReadOnly => psudeo_class_flag.contains(PseudoClassFlags::READ_ONLY),
+                PseudoClass::ReadWrite => psudeo_class_flag.contains(PseudoClassFlags::READ_WRITE),
+                PseudoClass::PlaceHolderShown => {
+                    psudeo_class_flag.contains(PseudoClassFlags::PLACEHOLDER_SHOWN)
+                }
+                PseudoClass::Default => psudeo_class_flag.contains(PseudoClassFlags::DEFAULT),
                 PseudoClass::Checked => psudeo_class_flag.contains(PseudoClassFlags::CHECKED),
-                PseudoClass::Indeterminate => todo!(),
-                PseudoClass::Blank => todo!(),
-                PseudoClass::Valid => todo!(),
-                PseudoClass::Invalid => todo!(),
-                PseudoClass::InRange => todo!(),
-                PseudoClass::OutOfRange => todo!(),
-                PseudoClass::Required => todo!(),
-                PseudoClass::Optional => todo!(),
-                PseudoClass::UserValid => todo!(),
-                PseudoClass::UserInvalid => todo!(),
+                PseudoClass::Indeterminate => {
+                    psudeo_class_flag.contains(PseudoClassFlags::INDETERMINATE)
+                }
+                PseudoClass::Blank => psudeo_class_flag.contains(PseudoClassFlags::BLANK),
+                PseudoClass::Valid => psudeo_class_flag.contains(PseudoClassFlags::VALID),
+                PseudoClass::Invalid => psudeo_class_flag.contains(PseudoClassFlags::INVALID),
+                PseudoClass::InRange => psudeo_class_flag.contains(PseudoClassFlags::IN_RANGE),
+                PseudoClass::OutOfRange => {
+                    psudeo_class_flag.contains(PseudoClassFlags::OUT_OF_RANGE)
+                }
+                PseudoClass::Required => psudeo_class_flag.contains(PseudoClassFlags::REQUIRED),
+                PseudoClass::Optional => psudeo_class_flag.contains(PseudoClassFlags::OPTIONAL),
+                PseudoClass::UserValid => psudeo_class_flag.contains(PseudoClassFlags::USER_VALID),
+                PseudoClass::UserInvalid => {
+                    psudeo_class_flag.contains(PseudoClassFlags::USER_INVALID)
+                }
                 PseudoClass::Lang(_) => todo!(),
                 PseudoClass::Dir(_) => todo!(),
                 PseudoClass::Custom(name) => {

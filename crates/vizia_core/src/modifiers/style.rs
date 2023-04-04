@@ -25,6 +25,7 @@ pub trait StyleModifiers: internal::Modifiable {
     /// }
     ///```
     fn id(mut self, id: impl Into<String>) -> Self {
+        // TODO - What should happen if the id already exists?
         let id = id.into();
         let entity = self.entity();
         self.context().style.ids.insert(entity, id.clone()).expect("Could not insert id");
@@ -91,21 +92,41 @@ pub trait StyleModifiers: internal::Modifiable {
             let val = val.into();
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClassFlags::CHECKED, val.into());
-            } else {
-                let mut pseudo_class_flags = PseudoClassFlags::empty();
-                pseudo_class_flags.set(PseudoClassFlags::CHECKED, val.into());
-                cx.style.pseudo_classes.insert(entity, pseudo_class_flags).unwrap();
             }
 
             if val {
                 // Setting a checked state should make it checkable... probably
                 if let Some(abilities) = cx.style.abilities.get_mut(entity) {
                     abilities.set(Abilities::CHECKABLE, true);
-                } else {
-                    let mut abilities = Abilities::empty();
-                    abilities.set(Abilities::CHECKABLE, true);
-                    cx.style.abilities.insert(entity, abilities).unwrap();
                 }
+            }
+
+            cx.needs_restyle();
+        });
+
+        self
+    }
+
+    fn read_only<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
+        let entity = self.entity();
+        state.set_or_bind(self.context(), entity, |cx, entity, val| {
+            let val = val.into();
+            if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
+                pseudo_classes.set(PseudoClassFlags::READ_ONLY, val.into());
+            }
+
+            cx.needs_restyle();
+        });
+
+        self
+    }
+
+    fn read_write<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
+        let entity = self.entity();
+        state.set_or_bind(self.context(), entity, |cx, entity, val| {
+            let val = val.into();
+            if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
+                pseudo_classes.set(PseudoClassFlags::READ_WRITE, val.into());
             }
 
             cx.needs_restyle();
