@@ -53,7 +53,6 @@ pub struct DrawContext<'a> {
     pub modifiers: &'a Modifiers,
     pub mouse: &'a MouseState<Entity>,
     pub opacity: f32,
-    pub canvas_image: femtovg::ImageId,
 }
 
 macro_rules! style_getter_units {

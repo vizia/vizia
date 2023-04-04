@@ -72,7 +72,7 @@ pub struct Context {
     pub(crate) cache: CachedData,
     pub(crate) draw_cache: DrawCache,
 
-    pub(crate) canvases: HashMap<Entity, (crate::prelude::Canvas, Option<femtovg::ImageId>)>,
+    pub(crate) canvases: HashMap<Entity, crate::prelude::Canvas>,
     //environment: Environment,
     pub(crate) mouse: MouseState<Entity>,
     pub(crate) modifiers: Modifiers,

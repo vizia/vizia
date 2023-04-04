@@ -61,7 +61,7 @@ fn try_load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) ->
 
             // Image exists but isn't loaded yet
             ImageOrId::Image(_, _) => {
-                if let Some((canvas, _)) = cx.canvases.get_mut(&Entity::root()) {
+                if let Some(canvas) = cx.canvases.get_mut(&Entity::root()) {
                     // This loads the image and sets the image id
                     image_store.image.id(canvas);
                     image_store.used = true;

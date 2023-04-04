@@ -15,8 +15,7 @@ pub struct ResourceContext<'a> {
     pub(crate) current: Entity,
     pub(crate) event_proxy: &'a Option<Box<dyn EventProxy>>,
     pub(crate) resource_manager: &'a mut ResourceManager,
-    pub(crate) canvases:
-        &'a mut HashMap<Entity, (crate::prelude::Canvas, Option<femtovg::ImageId>)>,
+    pub(crate) canvases: &'a mut HashMap<Entity, crate::prelude::Canvas>,
     pub(crate) style: &'a mut Style,
     pub(crate) tree: &'a Tree<Entity>,
 }
