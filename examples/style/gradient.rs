@@ -19,12 +19,26 @@ const STYLE: &str = r#"
         background-image: linear-gradient(red, yellow), linear-gradient(to right, #0000FF80, #00FF0080);
         transition: background-image 0.5s;
     }
+
+    .grad {
+        background-image: linear-gradient(0.25turn, #3f87a6, #ebf8e1, #f69d3c);
+    }
+
+    .grad:hover {
+        background-image: linear-gradient(0.5turn, #3f87a6, #ebf8e1, #f69d3c);
+        transition: background-image 500ms;
+    }
+
+    .grad2 {
+        background-image: radial-gradient(cyan 0%, transparent 20%, salmon 40%);
+    }
 "#;
 
 fn main() {
     Application::new(|cx| {
         cx.add_theme(STYLE);
-        Element::new(cx).class("linear-gradient");
+        // Element::new(cx).class("linear-gradient");
+        Element::new(cx).class("grad2").width(Pixels(200.0));
     })
     .run();
 }

@@ -1,5 +1,5 @@
 use crate::{
-    Angle, Color, CustomParseError, HorizontalPositionKeyword, LengthOrPercentage, Parse,
+    Angle, Color, CustomParseError, HorizontalPositionKeyword, LengthOrPercentage, Parse, Position,
     VerticalPositionKeyword,
 };
 use cssparser::*;
@@ -8,7 +8,7 @@ use cssparser::*;
 pub enum Gradient {
     None,
     Linear(LinearGradient),
-    // Radial(RadialGradient),
+    Radial(RadialGradient),
 }
 
 impl Default for Gradient {
@@ -30,7 +30,7 @@ impl<'i> Parse<'i> for Gradient {
         input.parse_nested_block(|input| {
             match_ignore_ascii_case! { &func,
               "linear-gradient" => Ok(Gradient::Linear(LinearGradient::parse(input)?)),
-              //"radial-gradient" => Ok(Gradient::Radial(RadialGradient::parse(input)?)),
+              "radial-gradient" => Ok(Gradient::Radial(RadialGradient::parse(input)?)),
               _ => Err(location.new_unexpected_token_error(cssparser::Token::Ident(func.clone())))
             }
         })
@@ -137,37 +137,36 @@ fn parse_items<'i, 't, D: Parse<'i>>(
     Ok(items)
 }
 
-// pub struct RadialGradient {
-//     pub position: Position,
-//     pub stops: Vec<ColorStop<LengthOrPercentage>>,
-// }
+#[derive(Debug, Clone, PartialEq)]
+pub struct RadialGradient {
+    pub position: Position,
+    pub stops: Vec<ColorStop<LengthOrPercentage>>,
+}
 
-// impl<'i> RadialGradient {
-//     fn parse<'t>(
-//         input: &mut Parser<'i, 't>,
-//         vendor_prefix: VendorPrefix,
-//     ) -> Result<RadialGradient, ParseError<'i, ParserError<'i>>> {
-//         let shape = input.try_parse(EndingShape::parse).ok();
-//         let position = input
-//             .try_parse(|input| {
-//                 input.expect_ident_matching("at")?;
-//                 Position::parse(input)
-//             })
-//             .ok();
+impl<'i> RadialGradient {
+    fn parse<'t>(
+        input: &mut Parser<'i, 't>,
+    ) -> Result<RadialGradient, ParseError<'i, CustomParseError<'i>>> {
+        // let shape = input.try_parse(EndingShape::parse).ok();
+        let position = input
+            .try_parse(|input| {
+                input.expect_ident_matching("at")?;
+                Position::parse(input)
+            })
+            .ok();
 
-//         if shape.is_some() || position.is_some() {
-//             input.expect_comma()?;
-//         }
+        // if shape.is_some() || position.is_some() {
+        //     input.expect_comma()?;
+        // }
 
-//         let items = parse_items(input)?;
-//         Ok(RadialGradient {
-//             shape: shape.unwrap_or_default(),
-//             position: position.unwrap_or(Position::center()),
-//             items,
-//             vendor_prefix,
-//         })
-//     }
-// }
+        let stops = parse_items(input)?;
+        Ok(RadialGradient {
+            // shape: shape.unwrap_or_default(),
+            position: position.unwrap_or(Position::center()),
+            stops,
+        })
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ColorStop<D> {

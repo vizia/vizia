@@ -1,8 +1,8 @@
 use morphorm::Units;
 use vizia_style::{
     Angle, BoxShadow, ClipPath, Color, ColorStop, FontSize, Gradient, Length, LengthOrPercentage,
-    LengthValue, LinearGradient, Opacity, PercentageOrNumber, Rect, Scale, Transform, Translate,
-    RGBA,
+    LengthValue, LineDirection, LinearGradient, Opacity, PercentageOrNumber, Rect, Scale,
+    Transform, Translate, RGBA,
 };
 
 use femtovg::Transform2D;
@@ -217,11 +217,23 @@ impl Interpolator for Gradient {
     }
 }
 
+impl Interpolator for LineDirection {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (LineDirection::Angle(start_angle), LineDirection::Angle(end_angle)) => {
+                LineDirection::Angle(Angle::interpolate(start_angle, end_angle, t))
+            }
+
+            _ => end.clone(),
+        }
+    }
+}
+
 impl Interpolator for LinearGradient {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        if start.direction == end.direction && start.stops.len() == end.stops.len() {
+        if start.stops.len() == end.stops.len() {
             LinearGradient {
-                direction: start.direction,
+                direction: LineDirection::interpolate(&start.direction, &end.direction, t),
                 stops: start
                     .stops
                     .iter()

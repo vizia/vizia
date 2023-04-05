@@ -868,49 +868,61 @@ impl<'a> DrawContext<'a> {
                 match image {
                     ImageOrGradient::Gradient(gradient) => match gradient {
                         Gradient::Linear(linear_gradient) => {
-                            let (_, _, end_x, end_y, parent_length) = match linear_gradient
-                                .direction
-                            {
-                                LineDirection::Horizontal(horizontal_keyword) => {
-                                    match horizontal_keyword {
-                                        HorizontalPositionKeyword::Left => {
-                                            (0.0, 0.0, bounds.w, 0.0, parent_width)
+                            let (start_x, start_y, end_x, end_y, parent_length) =
+                                match linear_gradient.direction {
+                                    LineDirection::Horizontal(horizontal_keyword) => {
+                                        match horizontal_keyword {
+                                            HorizontalPositionKeyword::Left => {
+                                                (bounds.w, 0.0, 0.0, 0.0, parent_width)
+                                            }
+
+                                            HorizontalPositionKeyword::Right => {
+                                                (0.0, 0.0, bounds.w, 0.0, parent_width)
+                                            }
                                         }
+                                    }
 
-                                        HorizontalPositionKeyword::Right => {
-                                            (0.0, 0.0, bounds.w, 0.0, parent_width)
+                                    LineDirection::Vertical(vertical_keyword) => {
+                                        match vertical_keyword {
+                                            VerticalPositionKeyword::Top => {
+                                                (0.0, bounds.h, 0.0, 0.0, parent_height)
+                                            }
+
+                                            VerticalPositionKeyword::Bottom => {
+                                                (0.0, 0.0, 0.0, bounds.h, parent_height)
+                                            }
                                         }
                                     }
-                                }
 
-                                LineDirection::Vertical(vertical_keyword) => match vertical_keyword
-                                {
-                                    VerticalPositionKeyword::Bottom => {
-                                        (0.0, 0.0, 0.0, bounds.h, parent_height)
+                                    LineDirection::Corner { horizontal, vertical } => {
+                                        match (horizontal, vertical) {
+                                            (
+                                                HorizontalPositionKeyword::Right,
+                                                VerticalPositionKeyword::Bottom,
+                                            ) => (0.0, 0.0, bounds.w, bounds.h, parent_width),
+
+                                            _ => (0.0, 0.0, 0.0, 0.0, 0.0),
+                                        }
                                     }
 
-                                    VerticalPositionKeyword::Top => {
-                                        (0.0, 0.0, 0.0, bounds.h, parent_height)
+                                    LineDirection::Angle(angle) => {
+                                        let angle_rad = angle.to_radians();
+                                        let start_x =
+                                            ((angle_rad.sin() * bounds.w) - bounds.w) / -2.0;
+                                        let end_x = ((angle_rad.sin() * bounds.w) + bounds.w) / 2.0;
+                                        let start_y =
+                                            ((angle_rad.cos() * bounds.h) + bounds.h) / 2.0;
+                                        let end_y =
+                                            ((angle_rad.cos() * bounds.h) - bounds.h) / -2.0;
+
+                                        // TODO: Figure out what the parent length should be.
+                                        (start_x, start_y, end_x, end_y, parent_width)
                                     }
-                                },
-
-                                LineDirection::Corner { horizontal, vertical } => {
-                                    match (horizontal, vertical) {
-                                        (
-                                            HorizontalPositionKeyword::Right,
-                                            VerticalPositionKeyword::Bottom,
-                                        ) => (0.0, 0.0, bounds.w, bounds.h, parent_width),
-
-                                        _ => (0.0, 0.0, 0.0, 0.0, 0.0),
-                                    }
-                                }
-
-                                _ => (0.0, 0.0, 0.0, 0.0, 0.0),
-                            };
+                                };
 
                             let num_stops = linear_gradient.stops.len();
 
-                            let stops = linear_gradient
+                            let mut stops = linear_gradient
                                 .stops
                                 .iter()
                                 .enumerate()
@@ -921,15 +933,73 @@ impl<'a> DrawContext<'a> {
                                         index as f32 / (num_stops - 1) as f32
                                     };
                                     let col: femtovg::Color = stop.color.into();
+                                    println!("{} {:?}", pos, col);
                                     (pos, col)
                                 })
                                 .collect::<Vec<_>>();
 
+                            // Insert a stop at the front if the first stop is not at 0.
+                            if let Some(first) = stops.first() {
+                                if first.0 != 0.0 {
+                                    stops.insert(0, (0.0, first.1));
+                                }
+                            }
+
+                            // Insert a stop at the end if the last stop is not at 1.0.
+                            if let Some(last) = stops.last() {
+                                if last.0 != 1.0 {
+                                    stops.push((1.0, last.1));
+                                }
+                            }
+
                             let paint = Paint::linear_gradient_stops(
-                                bounds.x,
-                                bounds.y,
+                                bounds.x + start_x,
+                                bounds.y + start_y,
                                 bounds.x + end_x,
                                 bounds.y + end_y,
+                                stops.into_iter(),
+                            );
+
+                            canvas.fill_path(path, &paint);
+                        }
+
+                        Gradient::Radial(radial_gradient) => {
+                            let num_stops = radial_gradient.stops.len();
+
+                            let mut stops = radial_gradient
+                                .stops
+                                .iter()
+                                .enumerate()
+                                .map(|(index, stop)| {
+                                    let pos = if let Some(pos) = &stop.position {
+                                        pos.to_pixels(parent_width) / parent_width
+                                    } else {
+                                        index as f32 / (num_stops - 1) as f32
+                                    };
+                                    let col: femtovg::Color = stop.color.into();
+                                    println!("{} {:?}", pos, col);
+                                    (pos, col)
+                                })
+                                .collect::<Vec<_>>();
+
+                            // Insert a stop at the front if the first stop is not at 0.
+                            if let Some(first) = stops.first() {
+                                if first.0 != 0.0 {
+                                    stops.insert(0, (0.0, first.1));
+                                }
+                            }
+
+                            // Insert a stop at the end if the last stop is not at 1.0.
+                            if let Some(last) = stops.last() {
+                                if last.0 != 1.0 {
+                                    stops.push((1.0, last.1));
+                                }
+                            }
+                            let paint = Paint::radial_gradient_stops(
+                                bounds.center().0,
+                                bounds.center().1,
+                                0.0,
+                                bounds.w.max(bounds.h),
                                 stops.into_iter(),
                             );
 
