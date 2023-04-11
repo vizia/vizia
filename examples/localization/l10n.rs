@@ -14,7 +14,6 @@ pub enum AppEvent {
 }
 
 impl Model for AppData {
-    #[cfg(feature = "localization")]
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetName(s) => self.name = s.clone(),
@@ -30,12 +29,6 @@ impl Model for AppData {
     }
 }
 
-#[cfg(not(feature = "localization"))]
-fn main() {
-    panic!("This example requires the 'localization' feature!");
-}
-
-#[cfg(feature = "localization")]
 fn main() {
     Application::new(|cx| {
         cx.add_translation(

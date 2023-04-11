@@ -2,12 +2,6 @@
 #[allow(unused_imports)]
 use vizia::prelude::*;
 
-#[cfg(not(feature = "localization"))]
-fn main() {
-    panic!("This example requires the 'localization' feature!");
-}
-
-#[cfg(feature = "localization")]
 fn main() {
     Application::new(|cx| {
         // Add fluent file for the `fr` locale (french).

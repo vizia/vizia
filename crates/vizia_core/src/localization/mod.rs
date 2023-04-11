@@ -1,5 +1,3 @@
-#![cfg(feature = "localization")]
-
 //! Provides types for adapting an application to a particular language or regional peculiarities.
 //!
 //! # Language Translation

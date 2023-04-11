@@ -1,6 +1,5 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
-#[cfg(feature = "localization")]
 use unic_langid::LanguageIdentifier;
 use vizia_style::Translate;
 
@@ -60,7 +59,7 @@ impl_data_simple!(std::net::IpAddr);
 impl_data_simple!(std::net::SocketAddr);
 impl_data_simple!(std::ops::RangeFull);
 impl_data_simple!(std::path::PathBuf);
-#[cfg(feature = "localization")]
+
 impl_data_simple!(LanguageIdentifier);
 impl_data_simple!(Transform);
 impl_data_simple!(Translate);

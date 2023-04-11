@@ -2,11 +2,6 @@
 #[allow(unused_imports)]
 use vizia::prelude::*;
 
-#[cfg(not(feature = "localization"))]
-fn main() {
-    panic!("This example requires the 'localization' feature!");
-}
-
 #[derive(Lens)]
 pub struct AppData {
     user: String,
@@ -14,7 +9,6 @@ pub struct AppData {
 
 impl Model for AppData {}
 
-#[cfg(feature = "localization")]
 fn main() {
     Application::new(|cx| {
         AppData { user: String::from("Jane") }.build(cx);

@@ -3,6 +3,7 @@ use crate::{
     context::{AccessContext, AccessNode},
     events::ViewHandler,
     prelude::*,
+    style::{Abilities, PseudoClassFlags},
 };
 use accesskit::{CheckedState, NodeBuilder, Rect, TreeUpdate};
 use fnv::FnvHashMap;
