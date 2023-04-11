@@ -101,7 +101,7 @@ impl TextContext {
     }
 
     pub fn sync_styles(&mut self, entity: Entity, style: &Style) {
-        let (families, font_weight, font_style, monospace) = {
+        let (families, font_weight, font_style) = {
             let families = style
                 .font_family
                 .get(entity)
@@ -139,7 +139,7 @@ impl TextContext {
             };
             let id = self.font_system.db().query(&query).unwrap(); // TODO worst-case default handling
             let info = self.font_system.db().face(id).unwrap();
-            (info.families.clone(), info.weight, info.style, info.monospaced)
+            (info.families.clone(), info.weight, info.style)
         };
 
         let font_color = style.font_color.get(entity).copied().unwrap_or(Color::rgb(0, 0, 0));
@@ -154,17 +154,9 @@ impl TextContext {
         };
 
         self.with_buffer(entity, |fs, buf| {
-            let attrs = Attrs::new()
-                .family(family)
-                .weight(font_weight)
-                .style(font_style)
-                .monospaced(monospace)
-                .color(FontColor::rgba(
-                    font_color.r(),
-                    font_color.g(),
-                    font_color.b(),
-                    font_color.a(),
-                ));
+            let attrs = Attrs::new().family(family).weight(font_weight).style(font_style).color(
+                FontColor::rgba(font_color.r(), font_color.g(), font_color.b(), font_color.a()),
+            );
 
             let wrap = if style.text_wrap.get(entity).copied().unwrap_or(true) {
                 Wrap::Word

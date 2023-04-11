@@ -118,7 +118,7 @@ fn hover_entity(
             .style
             .pseudo_classes
             .get(cx.current)
-            .cloned()
+            .copied()
             .unwrap_or_default()
             .contains(PseudoClassFlags::OVER)
         {
@@ -137,7 +137,7 @@ fn hover_entity(
             .style
             .pseudo_classes
             .get(cx.current)
-            .cloned()
+            .copied()
             .unwrap_or_default()
             .contains(PseudoClassFlags::OVER)
         {

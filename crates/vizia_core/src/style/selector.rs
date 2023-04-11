@@ -6,6 +6,7 @@ use bitflags::bitflags;
 
 bitflags! {
     /// A bitflag of possible pseudoclasses.
+    #[derive(Debug, Clone, Copy)]
     pub struct PseudoClassFlags: u32 {
         const HOVER = 1;
         const ACTIVE = 1 << 1;
