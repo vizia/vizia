@@ -1,14 +1,13 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
+#[cfg(feature = "localization")]
 use unic_langid::LanguageIdentifier;
 use vizia_style::Translate;
 
 use crate::prelude::*;
 
-/// A trait for any type which can be bound to, i.e. can be cached and compared against previous
-/// versions.
-///
-/// This type is part of the prelude.
+/// A trait for fast comparisons of data. Implemented by any type which can be bound to,
+/// i.e. can be cached and compared against previous versions.
 pub trait Data: 'static + Clone {
     fn same(&self, other: &Self) -> bool;
 }
@@ -61,6 +60,7 @@ impl_data_simple!(std::net::IpAddr);
 impl_data_simple!(std::net::SocketAddr);
 impl_data_simple!(std::ops::RangeFull);
 impl_data_simple!(std::path::PathBuf);
+#[cfg(feature = "localization")]
 impl_data_simple!(LanguageIdentifier);
 impl_data_simple!(Transform);
 impl_data_simple!(Translate);

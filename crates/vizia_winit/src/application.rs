@@ -55,6 +55,18 @@ impl From<vizia_core::events::Event> for UserEvent {
     }
 }
 
+///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
+///
+/// # Example
+/// ```no_run
+/// # use vizia_core::prelude::*;
+/// # use vizia_winit::application::Application;
+/// Application::new(|cx|{
+///    // Content goes here
+/// })
+/// .run();
+///```
+/// Calling `run()` on the `Application` causes the program to enter the event loop and for the main window to display.
 pub struct Application {
     context: Context,
     event_loop: EventLoop<UserEvent>,
@@ -64,7 +76,6 @@ pub struct Application {
     should_poll: bool,
 }
 
-// TODO uhhhhhhhhhhhhhhhhhhhhhh I think it's a winit bug that EventLoopProxy isn't Send on web
 #[cfg(not(target_arch = "wasm32"))]
 pub struct WinitEventProxy(EventLoopProxy<UserEvent>);
 
@@ -112,6 +123,7 @@ impl Application {
         }
     }
 
+    /// Sets the default built-in theming to be ignored.
     pub fn ignore_default_theme(mut self) -> Self {
         self.context.ignore_default_theme = true;
         self
@@ -154,12 +166,12 @@ impl Application {
         self
     }
 
-    // TODO - Rename this
     pub fn get_proxy(&self) -> EventLoopProxy<UserEvent> {
         self.event_loop.create_proxy()
     }
 
     /// Sets the background color of the window.
+    /// TODO: Remove this is favour of root selector.
     pub fn background_color(mut self, color: Color) -> Self {
         let mut cx = BackendContext::new(&mut self.context);
         cx.style().background_color.insert(Entity::root(), color);
@@ -228,7 +240,7 @@ impl Application {
             canvas,
             scale_factor,
         );
-        context.views.insert(Entity::root(), Box::new(window));
+        BackendContext::new(&mut context).add_window(window);
 
         let mut event_manager = EventManager::new();
 
@@ -314,13 +326,9 @@ impl Application {
                             .send_event(UserEvent::Event(Event::new(WindowEvent::Redraw)))
                             .unwrap();
 
-                        if let Some(window_event_handler) = cx.views().remove(&Entity::root()) {
-                            if let Some(window) = window_event_handler.downcast_ref::<Window>() {
-                                window.window().request_redraw();
-                            }
-
-                            cx.views().insert(Entity::root(), window_event_handler);
-                        }
+                        cx.mutate_window(|_, window: &Window| {
+                            window.window().request_redraw();
+                        });
                     }
 
                     cx.process_visual_updates();
@@ -332,15 +340,11 @@ impl Application {
                         }
                     });
 
-                    if let Some(window_view) = cx.views().remove(&Entity::root()) {
-                        if let Some(window) = window_view.downcast_ref::<Window>() {
-                            cx.style().should_redraw(|| {
-                                window.window().request_redraw();
-                            });
-                        }
-
-                        cx.views().insert(Entity::root(), window_view);
-                    }
+                    cx.mutate_window(|cx, window: &Window| {
+                        cx.style().should_redraw(|| {
+                            window.window().request_redraw();
+                        });
+                    });
 
                     if let Some(idle_callback) = &on_idle {
                         cx.set_current(Entity::root());
@@ -354,15 +358,11 @@ impl Application {
                             .expect("Failed to send event");
                     }
 
-                    if let Some(window_event_handler) = cx.views().remove(&Entity::root()) {
-                        if let Some(window) = window_event_handler.downcast_ref::<Window>() {
-                            if window.should_close {
-                                *stored_control_flow.borrow_mut() = ControlFlow::Exit;
-                            }
+                    cx.mutate_window(|_, window: &Window| {
+                        if window.should_close {
+                            *stored_control_flow.borrow_mut() = ControlFlow::Exit;
                         }
-
-                        cx.views().insert(Entity::root(), window_event_handler);
-                    }
+                    });
                 }
 
                 winit::event::Event::RedrawRequested(_) => {
@@ -494,13 +494,9 @@ impl Application {
                         }
 
                         winit::event::WindowEvent::Resized(physical_size) => {
-                            if let Some(mut window_view) = cx.views().remove(&Entity::root()) {
-                                if let Some(window) = window_view.downcast_mut::<Window>() {
-                                    window.resize(physical_size);
-                                }
-
-                                cx.views().insert(Entity::root(), window_view);
-                            }
+                            cx.mutate_window(|_, window: &Window| {
+                                window.resize(physical_size);
+                            });
 
                             let logical_size: LogicalSize<f32> =
                                 physical_size.to_logical(cx.style().dpi_factor);
@@ -669,21 +665,9 @@ impl WindowModifiers for Application {
     }
 }
 
-// fn debug(cx: &mut Context, entity: Entity) -> String {
-//     if let Some(view) = cx.views.get(&entity) {
-//         view.debug(entity)
-//     } else {
-//         "None".to_string()
-//     }
-// }
-
 fn context_draw(cx: &mut BackendContext) {
-    if let Some(mut window_view) = cx.views().remove(&Entity::root()) {
-        if let Some(window) = window_view.downcast_mut::<Window>() {
-            cx.draw();
-            window.swap_buffers();
-        }
-
-        cx.views().insert(Entity::root(), window_view);
-    }
+    cx.mutate_window(|cx, window: &Window| {
+        cx.draw();
+        window.swap_buffers();
+    });
 }

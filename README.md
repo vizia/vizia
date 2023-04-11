@@ -1,4 +1,4 @@
-<div align="center"><img src="./assets/branding/vizia-logo-01.png" width="128px" height="128px"/><h1>Vizia</h1></div>
+<div align="center"><img src="https://raw.githubusercontent.com/vizia/vizia/main/assets/branding/vizia-logo-01.png" width="128px" height="128px"/><h1>Vizia</h1></div>
 
 <div align="center">
   <!-- License -->
@@ -56,9 +56,9 @@
 A simple counter application. Run with `cargo run --example counter`.
 
 <!-- TODO - Replace with GIF? -->
-<div align="center"><img src="./assets/images/counter.png" width="400px" height="130px"/></div>
+<div align="center"><img src="https://raw.githubusercontent.com/vizia/vizia/main/assets/images/counter.png" width="400px" height="130px"/></div>
 
-```rust
+```rust, no_run
 use vizia::prelude::*;
 
 // Define some model data
@@ -72,7 +72,7 @@ pub enum AppEvent {
     Increment,
 }
 
-// Describe how the data can be mutated
+// Describe how the data is mutated in response to events
 impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
@@ -118,7 +118,7 @@ fn main() {
 
 # Running the Examples
 
-A full list of [examples](https://github.com/vizia/vizia/tree/main/examples) is included in the repository.
+A list of [examples](https://github.com/vizia/vizia/tree/main/examples) is included in the repository.
 
 To run an example with the [winit](https://github.com/rust-windowing/winit) (default) windowing backend:
 ```bash
@@ -138,7 +138,7 @@ Then run an example with the following:
 ```bash
 cargo run-wasm --release --example name_of_example
 ```
-> **NOTE** - Some examples are not compatible with the web target.
+> **NOTE** - Some examples are not compatible with the web target and will intentionally panic if run on web.
 
 <!-- ## Example Projects
 

@@ -1,4 +1,7 @@
+//! The `Context` is where the retained data of a vizia application lives.
+
 mod access;
+#[doc(hidden)]
 pub mod backend;
 mod draw;
 mod event;
@@ -20,6 +23,7 @@ use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
 use cosmic_text::{fontdb::Database, Attrs, AttrsList, BufferLine, FamilyOwned};
 use fnv::FnvHashMap;
 use replace_with::replace_with_or_abort;
+
 use unic_langid::LanguageIdentifier;
 
 pub use access::*;
@@ -28,6 +32,7 @@ pub use event::*;
 pub use proxy::*;
 pub use resource::*;
 
+use crate::binding::{BindingHandler, ModelDataStore};
 use crate::cache::CachedData;
 use crate::environment::{Environment, ThemeMode};
 use crate::events::ViewHandler;
@@ -35,8 +40,7 @@ use crate::events::ViewHandler;
 use crate::fonts;
 use crate::prelude::*;
 use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
-use crate::state::{BindingHandler, ModelDataStore};
-use crate::style::Style;
+use crate::style::{PseudoClassFlags, Style};
 use crate::text::{TextConfig, TextContext};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
@@ -48,21 +52,15 @@ static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layou
 pub static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
 pub static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
 
-pub(crate) type DataStore = SparseSet<ModelDataStore>;
-pub(crate) type Views = FnvHashMap<Entity, Box<dyn BindingHandler>>;
-
 /// The main storage and control object for a Vizia application.
-///
-/// This type is part of the prelude.
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
     pub(crate) entity_identifiers: HashMap<String, Entity>,
     pub(crate) tree: Tree<Entity>,
     pub(crate) current: Entity,
-    /// TODO make this private when there's no longer a need to mutate views after building
-    pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
-    pub(crate) data: DataStore,
-    pub(crate) bindings: Views,
+    pub(crate) views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) data: SparseSet<ModelDataStore>,
+    pub(crate) bindings: FnvHashMap<Entity, Box<dyn BindingHandler>>,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) tree_updates: Vec<accesskit::TreeUpdate>,
     pub(crate) listeners:
@@ -73,7 +71,6 @@ pub struct Context {
     pub(crate) draw_cache: DrawCache,
 
     pub(crate) canvases: HashMap<Entity, crate::prelude::Canvas>,
-    //environment: Environment,
     pub(crate) mouse: MouseState<Entity>,
     pub(crate) modifiers: Modifiers,
 
@@ -553,8 +550,8 @@ impl Context {
         self.resource_manager.image_loader = Some(Box::new(loader));
     }
 
-    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
-        self.resource_manager.add_translation(lang, ftl);
+    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: impl ToString) {
+        self.resource_manager.add_translation(lang, ftl.to_string());
         self.emit(EnvironmentEvent::SetLocale(self.resource_manager.language.clone()));
     }
 
@@ -613,8 +610,6 @@ pub(crate) enum InternalEvent {
 /// A trait for any Context-like object that lets you access stored model data.
 ///
 /// This lets e.g Lens::get be generic over any of these types.
-///
-/// This type is part of the prelude.
 pub trait DataContext {
     /// Get stored data from the context.
     fn data<T: 'static>(&self) -> Option<&T>;

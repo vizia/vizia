@@ -2,13 +2,12 @@ use std::any::Any;
 use std::collections::HashSet;
 
 use femtovg::{renderer::OpenGl, Canvas};
-use fnv::FnvHashMap;
 
 use super::EventProxy;
 use crate::style::SystemFlags;
 use crate::{
-    cache::CachedData, environment::Environment, events::ViewHandler, layout::geometry_changed,
-    prelude::*, state::ModelOrView, style::Style, systems::*,
+    binding::ModelOrView, cache::CachedData, environment::Environment, layout::geometry_changed,
+    prelude::*, style::Style, systems::*,
 };
 use vizia_id::GenerationalId;
 
@@ -17,21 +16,35 @@ pub use crate::text::cosmic::TextConfig;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
+/// Context used to integrate vizia with windowing backends such as winit and baseview.
 pub struct BackendContext<'a>(pub &'a mut Context);
 
 impl<'a> BackendContext<'a> {
+    /// Creates a new instance of a backend context.
     pub fn new(cx: &'a mut Context) -> Self {
         Self(cx)
     }
 
-    pub fn views(&mut self) -> &mut FnvHashMap<Entity, Box<dyn ViewHandler>> {
-        &mut self.0.views
+    pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &W)>(&mut self, f: F) {
+        if let Some(window_event_handler) = self.0.views.remove(&Entity::root()) {
+            if let Some(window) = window_event_handler.downcast_ref::<W>() {
+                f(self, window);
+            }
+
+            self.0.views.insert(Entity::root(), window_event_handler);
+        }
     }
 
+    pub fn add_window<W: View>(&mut self, window: W) {
+        self.0.views.insert(Entity::root(), Box::new(window));
+    }
+
+    /// Returns a mutable reference to the style data.
     pub fn style(&mut self) -> &mut Style {
         &mut self.0.style
     }
 
+    /// Returns a mutable reference to the cache of computed properties data.
     pub fn cache(&mut self) -> &mut CachedData {
         &mut self.0.cache
     }

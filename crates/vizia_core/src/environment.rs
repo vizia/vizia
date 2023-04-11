@@ -1,8 +1,7 @@
+//! A model for system specific state which can be accessed by any model or view.
 use crate::{modifiers::TooltipEvent, prelude::Wrapper};
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
-
-use crate::{context::EventContext, events::Event, state::Lens, state::Model};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
@@ -10,6 +9,9 @@ pub enum ThemeMode {
     LightMode,
 }
 
+use crate::{binding::Lens, binding::Model, context::EventContext, events::Event};
+
+/// A model for system specific state which can be accessed by any model or view.
 #[derive(Lens)]
 pub struct Environment {
     pub locale: LanguageIdentifier,
@@ -32,6 +34,7 @@ impl Environment {
     }
 }
 
+/// Events for setting the state in the [Environment].  
 pub enum EnvironmentEvent {
     SetLocale(LanguageIdentifier),
     UseSystemLocale,

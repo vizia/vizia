@@ -1,6 +1,9 @@
 use std::{cmp::Ordering, collections::BinaryHeap};
 
-use crate::prelude::*;
+use crate::{
+    prelude::*,
+    style::{Abilities, PseudoClassFlags},
+};
 use femtovg::Transform2D;
 use vizia_id::GenerationalId;
 use vizia_storage::LayoutChildIterator;

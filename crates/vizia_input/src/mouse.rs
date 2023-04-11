@@ -1,8 +1,6 @@
 use vizia_id::GenerationalId;
 
 /// A mouse button.
-///
-/// This type is part of the prelude.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum MouseButton {
     /// The left mouse button.
@@ -16,8 +14,6 @@ pub enum MouseButton {
 }
 
 /// The state of a mouse button.
-///
-/// This type is part of the prelude.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum MouseButtonState {
     /// Represents a pressed mouse button.

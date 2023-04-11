@@ -2,7 +2,7 @@ use vizia_style::{BorderRadius, Position, Rect, Scale, Transform, Translate};
 
 use super::internal;
 use crate::prelude::*;
-use crate::style::{ImageOrGradient, SystemFlags};
+use crate::style::{Abilities, ImageOrGradient, PseudoClassFlags, SystemFlags};
 
 /// Modifiers for changing the style properties of a view.
 pub trait StyleModifiers: internal::Modifiable {

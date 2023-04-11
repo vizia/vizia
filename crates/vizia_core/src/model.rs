@@ -1,14 +1,16 @@
+//! Models are used to store application data and can be bound to by views to visually display the data.
+
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
 };
 
-use crate::state::Store;
+use crate::binding::Store;
 use crate::{events::ViewHandler, prelude::*};
 
-use super::StoreId;
+use crate::binding::StoreId;
 
-/// A trait implemented by application data in order to mutate in response to events.
+/// A trait implemented by application data in order to respond to events and mutate state.
 ///
 /// # Examples
 ///
@@ -38,8 +40,6 @@ use super::StoreId;
 ///     }
 /// }
 /// ```
-///
-/// This trait is part of the prelude.
 pub trait Model: 'static + Sized {
     /// Build the model data into the application tree.
     ///
@@ -147,6 +147,7 @@ pub(crate) enum ModelOrView<'a> {
     Model(&'a dyn ModelData),
     View(&'a dyn ViewHandler),
 }
+
 impl<'a> ModelOrView<'a> {
     pub fn downcast_ref<T: 'static>(self) -> Option<&'a T> {
         match self {

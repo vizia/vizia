@@ -1,3 +1,65 @@
+//! Styling determines the appearance of a view.
+//!
+//! # Styling Views
+//! Vizia provides two ways to style views:
+//! - Inline
+//! - Shared
+//!
+//! ## Inline Styling
+//! Inline styling refers to setting the style and layout properties of a view using view [modifiers](crate::modifiers).
+//! ```
+//! # use vizia_core::prelude::*;
+//! # let cx = &mut Context::default();
+//! Element::new(cx).background_color(Color::red());
+//! ```
+//! Properties set inline affect only the modified view and override any shared styling for the same property.
+//!
+//! ## Shared Styling
+//! Shared styling refers to setting the style and layout properties using css rules.
+//! ```
+//! # use vizia_core::prelude::*;
+//! # let cx = &mut Context::default();
+//! Element::new(cx).class("foo");
+//! ```
+//! ```css
+//! .foo {
+//!     background-color: red;
+//! }
+//! ```
+//! Rules defined in css can apply to many views but are overridden by inline properties on a view.
+//!
+//! ### Adding Stylesheets
+//! To add a css string to an application, use [`add_theme()`](crate::context::Context::add_theme()) on [`Context`].
+//! This can be used with the `include_str!()` macro to embed an external stylesheet file into the application binary when compiled.
+//! Alternatively a constant string literal can be used to embed the CSS in the application.
+//!
+//! ```
+//! # use vizia_core::prelude::*;
+//! # let cx = &mut Context::default();
+//!
+//! const STYLE: &str = r#"
+//!     .foo {
+//!         background-color: red;
+//!     }
+//! "#;
+//!
+//! cx.add_theme(STYLE);
+//!
+//! Element::new(cx).class("foo");
+//! ```
+//!
+//! To add an external css stylesheet which is read from a file at runtime, use [`add_stylesheet()`](crate::context::Context::add_stylesheet()) on [`Context`].
+//! Stylesheets added this way can be hot-reloaded by pressing the F5 key in the application window.
+//!
+//! ```
+//! # use vizia_core::prelude::*;
+//! # let cx = &mut Context::default();
+//!
+//! cx.add_stylesheet("path/to/stylesheet.css");
+//!
+//! Element::new(cx).class("foo");
+//! ```
+
 use femtovg::Transform2D;
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
@@ -17,10 +79,10 @@ pub use vizia_style::{
 };
 
 mod rule;
-pub use rule::Rule;
+pub(crate) use rule::Rule;
 
 mod selector;
-pub use selector::*;
+pub(crate) use selector::*;
 
 use crate::animation::{AnimationState, Interpolator};
 use crate::storage::animatable_set::AnimatableSet;
@@ -32,9 +94,7 @@ use vizia_storage::SparseSet;
 
 bitflags! {
     /// Describes the capabilities of a view with respect to user interaction.
-    ///
-    /// This type is part of the prelude.
-    pub struct Abilities: u8 {
+    pub(crate) struct Abilities: u8 {
         const HOVERABLE = 1;
         const FOCUSABLE = 1 << 1;
         const CHECKABLE = 1 << 2;
@@ -86,8 +146,8 @@ pub struct Style {
 
     // pub(crate) rules: Vec<StyleRule>,
     // pub selectors: HashMap<Rule, (u32, SelectorList<Selectors>)>,
-    pub selectors: Vec<(Rule, u32, SelectorList<Selectors>)>,
-    pub transitions: HashMap<Rule, Animation>,
+    pub(crate) selectors: Vec<(Rule, u32, SelectorList<Selectors>)>,
+    pub(crate) transitions: HashMap<Rule, Animation>,
 
     pub default_font: Vec<FamilyOwned>,
 
@@ -96,7 +156,7 @@ pub struct Style {
     pub classes: SparseSet<HashSet<String>>,
     pub pseudo_classes: SparseSet<PseudoClassFlags>,
     pub disabled: StyleSet<bool>,
-    pub abilities: SparseSet<Abilities>,
+    pub(crate) abilities: SparseSet<Abilities>,
 
     pub accesskit_node_classes: accesskit::NodeClassSet,
 

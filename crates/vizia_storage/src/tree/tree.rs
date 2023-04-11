@@ -2,8 +2,6 @@ use crate::{TreeError, TreeExt, TreeIterator};
 use vizia_id::GenerationalId;
 
 /// The [Tree] describes the tree of entities.
-///
-/// This type is part of the prelude.
 #[derive(Debug, Clone)]
 pub struct Tree<I>
 where

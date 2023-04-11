@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+//! Resource management for fonts, themes, images, and translations.
 
 use crate::context::ResourceContext;
 use crate::entity::Entity;
@@ -18,7 +18,7 @@ pub(crate) struct StoredImage {
     pub observers: HashSet<Entity>,
 }
 
-pub enum ImageOrId {
+pub(crate) enum ImageOrId {
     Image(image::DynamicImage, femtovg::ImageFlags),
     Id(femtovg::ImageId, (u32, u32)), // need to be able to get dimensions without a canvas
 }
@@ -56,17 +56,17 @@ pub enum ImageRetentionPolicy {
 // #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 // pub struct Resource(u32);
 
+#[doc(hidden)]
 #[derive(Default)]
 pub struct ResourceManager {
     pub stylesheets: Vec<PathBuf>, // Stylesheets refer to a file path
     pub themes: Vec<String>,       // Themes are the string content stylesheets
     pub(crate) images: HashMap<String, StoredImage>,
     pub translations: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
+
     pub language: LanguageIdentifier,
 
     pub image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>>,
-
-    count: u32,
 }
 
 impl ResourceManager {
@@ -98,13 +98,14 @@ impl ResourceManager {
             stylesheets: Vec::new(),
             themes: Vec::new(),
             images: HashMap::new(),
+
             translations: HashMap::from([(
                 LanguageIdentifier::default(),
                 FluentBundle::new(vec![LanguageIdentifier::default()]),
             )]),
+
             language: locale,
             image_loader: Some(Box::new(default_image_loader)),
-            count: 0,
         }
     }
 

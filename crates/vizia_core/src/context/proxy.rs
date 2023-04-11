@@ -10,22 +10,18 @@ use crate::resource::ImageRetentionPolicy;
 /// A bundle of data representing a snapshot of the context when a thread was spawned.
 ///
 /// It supports a small subset of context operations. You will get one of these passed to you when
-/// you create a new thread with `cx.spawn()`.
-///
-/// This type is part of the prelude.
+/// you create a new thread with the [`spawn`](crate::context::Context::spawn) method on [`Context`].
 pub struct ContextProxy {
     pub current: Entity,
     pub event_proxy: Option<Box<dyn EventProxy>>,
 }
 
-/// Errors that might come up when emitting an event via a ContextProxy.
-///
-/// This type is part of the prelude.
+/// Errors that might occur when emitting an event via a ContextProxy.
 #[derive(Debug)]
 pub enum ProxyEmitError {
-    /// The current runtime does not support proxying events
+    /// The current runtime does not support proxying events.
     Unsupported,
-    /// The event loop has been closed; the application is exiting
+    /// The event loop has been closed; the application is exiting.
     EventLoopClosed,
 }
 

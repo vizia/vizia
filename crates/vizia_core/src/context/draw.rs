@@ -5,11 +5,12 @@ use std::any::{Any, TypeId};
 use fnv::FnvHashMap;
 use morphorm::Units;
 
+use crate::animation::Interpolator;
+use crate::binding::ModelDataStore;
 use crate::cache::CachedData;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::{ImageOrId, ResourceManager};
-use crate::state::ModelDataStore;
 use crate::style::{ImageOrGradient, IntoTransform, Style};
 use crate::text::{TextConfig, TextContext};
 use crate::vg::{ImageId, Paint, Path};
@@ -35,18 +36,53 @@ impl DrawCache {
     }
 }
 
-/// A restricted context used when drawing.
+/// A context used when drawing.
+///
+/// The `DrawContext` is provided by the [`draw`](crate::view::View::draw) method in [`View`] and can be used to immutably access the
+/// computed style and layout properties of the current view.
+///
+/// # Example
+/// ```
+/// # use vizia_core::prelude::*;
+/// # use vizia_core::vg;
+/// # let cx = &mut Context::default();
+///
+/// pub struct CustomView {}
+///
+/// impl CustomView {
+///     pub fn new(cx: &mut Context) -> Handle<Self> {
+///         Self{}.build(cx, |_|{})
+///     }
+/// }
+///
+/// impl View for CustomView {
+///     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
+///         // Get the computed bounds after layout of the current view
+///         let bounds = cx.bounds();
+///         // Draw to the canvas using the bounds of the current view
+///         let mut path = vg::Path::new();
+///         path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+///         canvas.fill_path(&mut path, &vg::Paint::color(vg::Color::rgb(200, 100, 100)));
+///     }
+/// }
+/// ```
 pub struct DrawContext<'a> {
+    /// The current view being drawn.
     pub(crate) current: Entity,
+    /// The view which has captured mouse events.
     pub captured: &'a Entity,
+    /// The view which has keyboard focus.
     pub focused: &'a Entity,
+    /// The currently hovered view.
     pub hovered: &'a Entity,
+    /// Mutable reference to the style store.
     pub style: &'a Style,
+    ///
     pub cache: &'a CachedData,
     pub draw_cache: &'a mut DrawCache,
     pub tree: &'a Tree<Entity>,
     pub(crate) data: &'a SparseSet<ModelDataStore>,
-    pub views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
+    pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub resource_manager: &'a ResourceManager,
     pub text_context: &'a mut TextContext,
     pub text_config: &'a TextConfig,
@@ -56,7 +92,11 @@ pub struct DrawContext<'a> {
 }
 
 macro_rules! style_getter_units {
-    ($name:ident) => {
+    (
+        $(#[$meta:meta])*
+        $name:ident
+    ) => {
+        $(#[$meta])*
         pub fn $name(&self) -> Units {
             let result = self.style.$name.get(self.current);
             if let Some(Units::Pixels(p)) = result {
@@ -103,6 +143,7 @@ impl<'a> DrawContext<'a> {
         self.cache.get_bounds(self.current)
     }
 
+    /// Returns the bounding box of the clip region of the current view.
     pub fn clip_region(&self) -> BoundingBox {
         let bounds = self.bounds();
         let overflowx = self.style.overflowx.get(self.current).copied().unwrap_or_default();
@@ -224,7 +265,7 @@ impl<'a> DrawContext<'a> {
         &self.style.default_font
     }
 
-    /// Returns the font-size of the current entity in physical coordinates.
+    /// Returns the font-size of the current view in physical pixels.
     pub fn font_size(&self, entity: Entity) -> f32 {
         self.logical_to_physical(
             self.style.font_size.get(entity).copied().map(|f| f.0).unwrap_or(16.0),
@@ -1105,6 +1146,7 @@ impl<'a> DataContext for DrawContext<'a> {
                 }
             }
 
+            // Get view data.
             if let Some(view_handler) = self.views.get(&entity) {
                 if let Some(data) = view_handler.downcast_ref::<T>() {
                     return Some(data);

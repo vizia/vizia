@@ -2,8 +2,6 @@ use crate::{Code, Modifiers};
 use std::hash::Hash;
 
 /// A key chord used inside of a `Keymap`.
-///
-/// This type is part of the prelude.
 #[derive(Default, Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct KeyChord {
     /// The modifiers that have to be pressed in order to active its associated actions.

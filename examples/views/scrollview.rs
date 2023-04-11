@@ -1,5 +1,5 @@
 use vizia::prelude::*;
-use vizia_core::state::RatioLens;
+use vizia_core::binding::RatioLens;
 
 fn main() {
     Application::new(|cx| {

@@ -1,7 +1,7 @@
 use morphorm::PositionType;
 
+use crate::binding::RatioLens;
 use crate::prelude::*;
-use crate::state::RatioLens;
 use crate::views::Orientation;
 
 pub(crate) const SCROLL_SENSITIVITY: f32 = 35.0;

@@ -7,13 +7,14 @@ use femtovg::Transform2D;
 use fnv::FnvHashMap;
 use vizia_style::ClipPath;
 
+use crate::animation::Interpolator;
+use crate::binding::ModelDataStore;
 use crate::cache::CachedData;
 use crate::environment::ThemeMode;
 use crate::events::ViewHandler;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::state::ModelDataStore;
-use crate::style::{IntoTransform, Style, SystemFlags};
+use crate::style::{IntoTransform, PseudoClassFlags, Style, SystemFlags};
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -25,6 +26,39 @@ use copypasta::ClipboardProvider;
 
 use super::{DrawCache, DARK_THEME, LIGHT_THEME};
 
+/// A context used when handling events.
+///
+/// The [`EventContext`] is provided by the [`event`](crate::prelude::View::event) method in [`View`], or the [`event`](crate::model::Model::event) method in [`Model`], and can be used to mutably access the
+/// desired style and layout properties of the current view.
+///
+/// # Example
+/// ```no_run
+/// # use vizia_core::prelude::*;
+/// # use vizia_core::vg;
+/// # let cx = &mut Context::default();
+///
+/// pub struct CustomView {}
+///
+/// impl CustomView {
+///     pub fn new(cx: &mut Context) -> Handle<Self> {
+///         Self{}.build(cx, |_|{})
+///     }
+/// }
+///
+/// impl View for CustomView {
+///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+///         event.map(|window_event, _| match window_event {
+///             WindowEvent::Press{mouse} => {
+///                 let current = cx.current();
+///                 // Change the view background color to red when pressed.
+///                 cx.style.background_color.insert(current, Color::red());
+///             }
+///
+///             _=> {}
+///         });
+///     }
+/// }
+/// ```
 pub struct EventContext<'a> {
     pub(crate) current: Entity,
     pub(crate) captured: &'a mut Entity,
@@ -83,7 +117,7 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    /// Finds the entity that identifier identifies
+    /// Finds the entity that identifier identifies.
     pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
         self.entity_identifiers.get(identity).cloned()
     }
@@ -257,22 +291,6 @@ impl<'a> EventContext<'a> {
 
     /// Enables or disables PseudoClassFlags for the focus of an entity
     fn set_focus_pseudo_classes(&mut self, focused: Entity, enabled: bool, focus_visible: bool) {
-        #[cfg(debug_assertions)]
-        if enabled {
-            println!(
-                "Focus changed to {:?} parent: {:?}, view: {}, posx: {}, posy: {} width: {} height: {}",
-                focused,
-                self.tree.get_parent(focused),
-                self.views
-                    .get(&focused)
-                    .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
-                self.cache.get_posx(focused),
-                self.cache.get_posy(focused),
-                self.cache.get_width(focused),
-                self.cache.get_height(focused),
-            );
-        }
-
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {
             pseudo_classes.set(PseudoClassFlags::FOCUS, enabled);
             if !enabled || focus_visible {
@@ -288,7 +306,7 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    /// Sets application focus to the current entity with the specified focus visiblity
+    /// Sets application focus to the current entity with the specified focus visibility.
     pub fn focus_with_visibility(&mut self, focus_visible: bool) {
         let old_focus = self.focused();
         let new_focus = self.current();
@@ -387,15 +405,17 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle();
     }
 
-    /// Get the contents of the system clipboard. This may fail for a variety of backend-specific
-    /// reasons.
+    /// Get the contents of the system clipboard.
+    ///
+    /// This may fail for a variety of backend-specific reasons.
     #[cfg(feature = "clipboard")]
     pub fn get_clipboard(&mut self) -> Result<String, Box<dyn Error + Send + Sync + 'static>> {
         self.clipboard.get_contents()
     }
 
-    /// Set the contents of the system clipboard. This may fail for a variety of backend-specific
-    /// reasons.
+    /// Set the contents of the system clipboard.
+    ///
+    /// This may fail for a variety of backend-specific reasons.
     #[cfg(feature = "clipboard")]
     pub fn set_clipboard(
         &mut self,

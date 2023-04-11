@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum PropType {
+pub(crate) enum PropType {
     Units(Units),
     String(String),
 }

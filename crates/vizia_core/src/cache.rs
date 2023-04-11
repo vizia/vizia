@@ -2,6 +2,7 @@
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
 use crate::prelude::*;
+use crate::style::Abilities;
 use vizia_storage::SparseSet;
 use vizia_storage::SparseSetError;
 
@@ -44,26 +45,21 @@ pub struct CachedData {
 }
 
 impl CachedData {
-    pub fn add(&mut self, entity: Entity) -> Result<(), SparseSetError> {
+    pub(crate) fn add(&mut self, entity: Entity) -> Result<(), SparseSetError> {
         self.bounds.insert(entity, Default::default())?;
         self.abilities.insert(entity, Default::default())?;
 
         Ok(())
     }
 
-    pub fn remove(&mut self, entity: Entity) {
+    pub(crate) fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
         self.abilities.remove(entity);
     }
 
     /// Returns the bounding box of the entity, determined by the layout system.
     pub fn get_bounds(&self, entity: Entity) -> BoundingBox {
-        BoundingBox {
-            x: self.get_posx(entity),
-            y: self.get_posy(entity),
-            w: self.get_width(entity),
-            h: self.get_height(entity),
-        }
+        self.bounds.get(entity).cloned().unwrap()
     }
 
     /// Returns the x position of the entity.

@@ -276,20 +276,20 @@ where
         self.animations.remove(animation)
     }
 
-    pub fn insert_rule(&mut self, rule: Rule, value: T) {
+    pub(crate) fn insert_rule(&mut self, rule: Rule, value: T) {
         self.shared_data.insert(rule, value).unwrap();
     }
 
-    pub fn remove_rule(&mut self, rule: Rule) -> Option<T> {
-        self.shared_data.remove(rule)
-    }
+    // pub(crate) fn remove_rule(&mut self, rule: Rule) -> Option<T> {
+    //     self.shared_data.remove(rule)
+    // }
 
     /// Inserts a transition for a given rule
     ///
     /// Transitions are animations which are defined for a particular rule. When an entity is linked to
     /// a rule any transition associated with that rule will play for that entity.
     ///
-    pub fn insert_transition(&mut self, rule: Rule, animation: Animation) {
+    pub(crate) fn insert_transition(&mut self, rule: Rule, animation: Animation) {
         // Check if the rule exists
         if self.shared_data.contains(rule) && self.animations.contains(animation) {
             self.shared_data.sparse[rule.index()].animation = animation;
@@ -494,15 +494,15 @@ where
         None
     }
 
-    /// Returns a reference to any shared data for a given rule if it exists.
-    pub fn get_shared(&self, rule: Rule) -> Option<&T> {
-        self.shared_data.get(rule)
-    }
+    // /// Returns a reference to any shared data for a given rule if it exists.
+    // pub(crate) fn get_shared(&self, rule: Rule) -> Option<&T> {
+    //     self.shared_data.get(rule)
+    // }
 
-    /// Returns a mutable reference to any shared data for a given rule if it exists.
-    pub fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut T> {
-        self.shared_data.get_mut(rule)
-    }
+    // /// Returns a mutable reference to any shared data for a given rule if it exists.
+    // pub(crate) fn get_shared_mut(&mut self, rule: Rule) -> Option<&mut T> {
+    //     self.shared_data.get_mut(rule)
+    // }
 
     /// Returns a reference to the active animation linked to the given entity if it exists,
     /// else returns None.
@@ -553,7 +553,7 @@ where
     }
 
     /// Link an entity to some shared data.
-    pub fn link(&mut self, entity: Entity, rules: &[Rule]) -> bool {
+    pub(crate) fn link(&mut self, entity: Entity, rules: &[Rule]) -> bool {
         let entity_index = entity.index();
 
         // Check if the entity already has some data

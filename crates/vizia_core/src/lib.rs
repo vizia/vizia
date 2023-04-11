@@ -4,22 +4,25 @@ extern crate serde;
 
 pub mod accessibility;
 pub mod animation;
+pub mod binding;
+#[doc(hidden)]
 pub mod cache;
 pub mod context;
+#[doc(hidden)]
 pub mod entity;
 pub mod environment;
 pub mod events;
-pub mod fonts;
-pub mod handle;
+mod fonts;
 pub mod input;
 pub mod layout;
 pub mod localization;
+pub mod model;
 pub mod modifiers;
 pub mod resource;
-pub mod state;
 pub mod style;
-pub mod systems;
-pub mod text;
+mod systems;
+pub(crate) mod text;
+#[doc(hidden)]
 pub mod tree;
 pub mod view;
 pub mod views;
@@ -27,12 +30,12 @@ pub mod window;
 
 mod storage;
 
-/// This is a re-export of [femtovg](https://docs.rs/femtovg/latest/femtovg/).
+/// Contains types and functions used for custom drawing within views. This is a re-export of [femtovg](https://docs.rs/femtovg/latest/femtovg/).
 pub mod vg {
     pub use femtovg::*;
 }
 
-/// This is a re-export of [image](https://docs.rs/image/latest/image/).
+/// Contains types and functions used for loading and manipulating images. This is a re-export of [image](https://docs.rs/image/latest/image/).
 pub mod image {
     pub use image::*;
 }
@@ -42,8 +45,13 @@ pub mod icons {
 }
 
 /// Members which we recommend you wildcard-import.
+#[doc(hidden)]
 pub mod prelude {
-    pub use super::animation::{Animation, AnimationBuilder, Interpolator};
+    pub use super::animation::{Animation, AnimationBuilder};
+    pub use super::binding::{
+        Binding, Data, Index, Lens, LensExt, Model, Res, Setter, StaticLens, Then, Wrapper,
+    };
+
     pub use super::context::{
         AccessContext, AccessNode, Context, ContextProxy, DataContext, DrawContext, EmitContext,
         EventContext, ProxyEmitError,
@@ -51,7 +59,6 @@ pub mod prelude {
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};
     pub use super::events::{Event, Propagation};
-    pub use super::handle::Handle;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     pub use super::layout::BoundingBox;
     pub use super::localization::Localized;
@@ -60,10 +67,7 @@ pub mod prelude {
         TextModifiers,
     };
     pub use super::resource::ImageRetentionPolicy;
-    pub use super::state::{
-        Binding, Data, Lens, LensExt, Model, OrLens, Res, Setter, StaticLens, Wrapper,
-    };
-    pub use super::view::{Canvas, View};
+    pub use super::view::{Canvas, Handle, View};
     pub use super::views::*;
     pub use super::window::WindowModifiers;
     pub use accesskit::{Action, DefaultActionVerb, Live, Role};
@@ -74,9 +78,9 @@ pub mod prelude {
     pub use vizia_window::{WindowDescription, WindowEvent, WindowSize};
 
     pub use super::style::{
-        Abilities, Angle, BackgroundImage, BorderCornerShape, Color, CursorIcon, Display,
-        FontStyle, FontWeight, Length, LengthOrPercentage, LengthValue, LineDirection,
-        LinearGradient, Matrix, Opacity, Overflow, PseudoClassFlags, Transform, Visibility, RGBA,
+        Angle, BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, FontStyle,
+        FontWeight, Length, LengthOrPercentage, LengthValue, LineDirection, LinearGradient, Matrix,
+        Opacity, Overflow, Transform, Visibility, RGBA,
     };
 
     pub use cosmic_text::FamilyOwned;

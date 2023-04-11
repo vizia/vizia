@@ -1,37 +1,86 @@
-//! Events
+//! Events for communicating state change to views and models.
 //!
-//! Views communicate with each other and model data via events. An [Event] contains a message, as well as metadata to describe how events
-//! should propagate through the tree. By default events will propagate up the tree from the target.
+//! Views and Models communicate with each other via events. An [Event] contains a message, as well as metadata to describe how events
+//! should propagate through the tree. By default events will propagate up the tree from the target, visiting each ancestor as well as
+//! any models attached to the ancestors.
 //!
 //! A message can be any static thread-safe type but is usually an enum. For example:
 //! ```
-//! enum MyEvent {
-//!     ReadDocs,
-//!     CloseDocs,    
+//! enum AppEvent {
+//!     Increment,
+//!     Decrement,    
 //! }
 //! ```
-//! Then, to send an event up the tree from the current entity:
-//! ```compile_fail
-//! cx.emit(MyEvent::ReadDocs);
-//! ```
-//! Or, to send an event from the current entity directly to a target:
-//! ```compile_fail
-//! cx.emit_to(target, MyEvent::ReadDocs);
+//! Then, to send an event up the tree from the current entity, we can use `cx.emit(...)`, for example:
+//! ```no_run
+//! # use vizia_core::prelude::*;
+//! # use vizia_winit::application::Application;
+//! # let cx = &mut Context::default();
+//! pub struct AppData {
+//!     count: i32,
+//! }
+//!
+//! impl Model for AppData {}
+//!
+//! pub enum AppEvent {
+//!     Increment,
+//!     Decrement,    
+//! }
+//!
+//! Application::new(|cx|{
+//!     AppData {
+//!         count: 0,
+//!     }.build(cx);
+//!
+//!     Label::new(cx, "Increment")
+//!         .on_press(|cx| cx.emit(AppEvent::Increment));
+//! })
+//! .run();
 //! ```
 //!
 //! Views and Models receive events through the `event()` method of the View or Model traits.
-//! The event message must then be downcast to the right type:
-//! ```compile_fail
-//! fn on_event(&mut self, state: &mut EventContext, event: &mut Event) {
-//!     event.map(|my_event, _| match my_event {
-//!         MyEvent::ReadDocs => {
-//!             // Do something
-//!         }
+//! The event message must then be downcast to the right type using the [`map`](Event::map) or [`take`](Event::take) methods on the event:
+//! ```no_run
+//! # use vizia_core::prelude::*;
+//! # let cx = &mut Context::default();
+//! # use vizia_winit::application::Application;
 //!
-//!         MyEvent::CloseDocs => {
-//!             // Do something else
-//!         }
-//!     });
+//! pub struct AppData {
+//!     count: i32,
+//! }
+//!
+//! pub enum AppEvent {
+//!     Increment,
+//!     Decrement,    
+//! }
+//!
+//! impl Model for AppData {
+//!     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+//!         // `event.map()` will attempt to cast the event message to the desired type and
+//!         // pass a reference to the message type to the closure passed to the `map()` method.
+//!         event.map(|app_event, _| match app_event {
+//!             AppEvent::Increment => {
+//!                 self.count += 1;
+//!             }
+//!
+//!             AppEvent::Decrement => {
+//!                 self.count -= 1;
+//!             }
+//!         });
+//!     
+//!         // Alternatively, `event.take()` will attempt to cast the event message to the
+//!         // desired type and return the value of the message (not a reference),
+//!         // removing it from the event and thus preventing it from propagating further.
+//!         event.take().map(|app_event| match app_event {
+//!             AppEvent::Increment => {
+//!                 self.count += 1;
+//!             }
+//!
+//!             AppEvent::Decrement => {
+//!                 self.count -= 1;
+//!             }
+//!         });
+//!     }
 //! }
 //! ```
 
@@ -42,4 +91,6 @@ mod event;
 pub use event::{Event, EventMeta, Propagation};
 
 mod event_handler;
-pub use event_handler::ViewHandler;
+pub(crate) use event_handler::ViewHandler;
+
+pub use vizia_window::WindowEvent;

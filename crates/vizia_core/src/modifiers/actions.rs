@@ -12,7 +12,7 @@ pub struct EventHandle<'a, 'b, V> {
 }
 
 impl<'a, 'b, V> EventHandle<'a, 'b, V> {
-    pub fn new(cx: &'a mut EventContext<'b>) -> Self {
+    pub(crate) fn new(cx: &'a mut EventContext<'b>) -> Self {
         let entity = cx.current();
         Self { cx, entity, p: PhantomData::default() }
     }
@@ -21,6 +21,7 @@ impl<'a, 'b, V> EventHandle<'a, 'b, V> {
         self.entity
     }
 
+    /// Returns a reference to the computed data cache.
     pub fn cache(&self) -> &CachedData {
         self.cx.cache
     }
