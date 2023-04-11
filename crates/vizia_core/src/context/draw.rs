@@ -1053,7 +1053,7 @@ impl<'a> DrawContext<'a> {
                     ImageOrGradient::Image(image_name) => {
                         if let Some(image) = self.resource_manager.images.get(image_name) {
                             match image.image {
-                                ImageOrId::Id(id, dim) => {
+                                ImageOrId::Id(id, _dim) => {
                                     let paint = Paint::image(
                                         id, bounds.x, bounds.y, bounds.w, bounds.h, 0.0, 1.0,
                                     );

@@ -29,11 +29,6 @@ pub fn is_navigatable(cx: &Context, node: Entity, lock_focus_to: Entity) -> bool
     has_ability(cx, node, Abilities::NAVIGABLE)
 }
 
-/// Is the entity focusable - some focusable entities are not in the tab order.
-pub fn is_focusable(cx: &Context, node: Entity) -> bool {
-    has_ability(cx, node, Abilities::FOCUSABLE)
-}
-
 fn has_ability(cx: &Context, node: Entity, ability: Abilities) -> bool {
     // Skip ignored widgets
     if cx.tree.is_ignored(node) {

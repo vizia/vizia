@@ -37,13 +37,6 @@ impl ImageOrId {
             ImageOrId::Id(i, _) => *i,
         }
     }
-
-    pub fn dimensions(&self) -> (u32, u32) {
-        match self {
-            ImageOrId::Image(image, _) => image.dimensions(),
-            ImageOrId::Id(_, dim) => *dim,
-        }
-    }
 }
 
 #[derive(Copy, Clone, PartialEq)]
@@ -148,15 +141,6 @@ impl ResourceManager {
             self.translations.get(&self.language).unwrap()
         }
     }
-
-    pub(crate) fn add_font(&mut self, _name: &str, _path: &str) {}
-    // pub fn add_stylesheet(&mut self, path: String) -> Result<(), std::io::Error> {
-
-    //     let style_string = std::fs::read_to_string(path.clone())?;
-    //     self.stylesheets.push(path);
-
-    //     Ok(())
-    // }
 
     pub fn mark_images_unused(&mut self) {
         for (_, img) in self.images.iter_mut() {
