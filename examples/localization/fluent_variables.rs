@@ -1,5 +1,4 @@
 // Example which demonstrates a basic text translation using fluent.
-#[allow(unused_imports)]
 use vizia::prelude::*;
 
 #[derive(Lens)]

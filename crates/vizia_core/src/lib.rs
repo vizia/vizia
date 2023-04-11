@@ -86,7 +86,7 @@ pub mod prelude {
     pub use cosmic_text::FamilyOwned;
     pub use morphorm::Units::*;
     pub use morphorm::{LayoutType, PositionType, Units};
-    pub use unic_langid::LanguageIdentifier;
+    pub use unic_langid::{langid, LanguageIdentifier};
 }
 
 /// One very small function for abstracting debugging between web and desktop programming.

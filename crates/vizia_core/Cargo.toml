@@ -35,7 +35,7 @@ fnv = "1.0.7"
 fluent-bundle = "0.15.2"
 fluent-langneg = "0.13"
 fluent-syntax = "0.11.0"
-unic-langid = "0.9"
+unic-langid = {version = "0.9", features = ["macros"]}
 sys-locale = "0.2.0"
 unicode-segmentation = "1.8.0"
 unicode-bidi = "0.3.7"
