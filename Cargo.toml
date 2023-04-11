@@ -273,6 +273,10 @@ name = "pseudo_classes"
 path = "examples/style/pseudo_classes.rs"
 
 [[example]]
+name = "background_size"
+path = "examples/style/background_size.rs"
+
+[[example]]
 name = "boolean"
 path = "examples/binding/boolean.rs"
 

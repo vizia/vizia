@@ -17,6 +17,7 @@ pub fn animation_system(cx: &mut Context) -> bool {
         // Background
         | cx.style.background_color.tick(time)
         | cx.style.background_image.tick(time)
+        | cx.style.background_size.tick(time)
         // Box Shadow
         | cx.style.box_shadow.tick(time)
         // Font Color

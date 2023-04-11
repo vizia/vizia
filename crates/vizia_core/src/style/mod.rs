@@ -65,8 +65,8 @@ use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
 use vizia_style::{
-    BoxShadow, ClipPath, CssRule, Filter, FontFamily, FontSize, GenericFontFamily, Gradient, Scale,
-    Transition, Translate,
+    BackgroundSize, BoxShadow, ClipPath, CssRule, Filter, FontFamily, FontSize, GenericFontFamily,
+    Gradient, Scale, Transition, Translate,
 };
 
 use crate::prelude::*;
@@ -224,7 +224,7 @@ pub struct Style {
     // Background
     pub background_color: AnimatableSet<Color>,
     pub background_image: AnimatableSet<Vec<ImageOrGradient>>,
-    // pub background_gradient: AnimatableSet<Vec<Gradient>>,
+    pub background_size: AnimatableSet<Vec<BackgroundSize>>,
     pub box_shadow: AnimatableSet<Vec<BoxShadow>>,
 
     // Text & Font
@@ -458,6 +458,11 @@ impl Style {
             "background-image" => {
                 self.background_image.insert_animation(animation, self.add_transition(transition));
                 self.background_image.insert_transition(rule_id, animation);
+            }
+
+            "background-size" => {
+                self.background_size.insert_animation(animation, self.add_transition(transition));
+                self.background_size.insert_transition(rule_id, animation);
             }
 
             "border-radius" => {
@@ -879,34 +884,6 @@ impl Style {
             }
 
             Property::BackgroundImage(images) => {
-                // let (gradients, urls): (Vec<_>, Vec<_>) = images
-                //     .into_iter()
-                //     .filter(|img| *img != BackgroundImage::None)
-                //     .partition(|img| match img {
-                //         BackgroundImage::Gradient(_) => true,
-                //         _ => false,
-                //     });
-
-                // let gradients = gradients
-                //     .into_iter()
-                //     .filter_map(|img| match img {
-                //         BackgroundImage::Gradient(gradient) => Some(*gradient),
-                //         _ => None,
-                //     })
-                //     .collect::<Vec<_>>();
-
-                // if !gradients.is_empty() {
-                //     self.background_gradient.insert_rule(rule_id, gradients);
-                // }
-
-                // let urls = urls
-                //     .into_iter()
-                //     .filter_map(|img| match img {
-                //         BackgroundImage::Url(url) => Some(url.url.to_string()),
-                //         _ => None,
-                //     })
-                //     .collect::<Vec<_>>();
-
                 let images = images
                     .into_iter()
                     .filter_map(|img| match img {
@@ -921,12 +898,12 @@ impl Style {
                     .collect::<Vec<_>>();
 
                 self.background_image.insert_rule(rule_id, images);
-
-                // BackgroundImage::Name(_) => {}
-                // BackgroundImage::Gradient(gradient) => {
-                //     self.background_gradient.insert_rule(rule_id, *gradient);
-                // }
             }
+
+            Property::BackgroundSize(sizes) => {
+                self.background_size.insert_rule(rule_id, sizes);
+            }
+
             Property::TextWrap(text_wrap) => {
                 self.text_wrap.insert_rule(rule_id, text_wrap);
             }
@@ -1259,8 +1236,8 @@ pub(crate) trait IntoTransform {
 impl IntoTransform for Translate {
     fn into_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
         let mut result = Transform2D::identity();
-        let tx = self.x.to_pixels(parent_bounds.w / scale_factor) * scale_factor;
-        let ty = self.y.to_pixels(parent_bounds.h / scale_factor) * scale_factor;
+        let tx = self.x.to_pixels(parent_bounds.w, scale_factor);
+        let ty = self.y.to_pixels(parent_bounds.h, scale_factor);
 
         result.translate(tx, ty);
 
@@ -1296,20 +1273,20 @@ impl IntoTransform for Vec<Transform> {
             let mut t = Transform2D::identity();
             match transform {
                 Transform::Translate(translate) => {
-                    let tx = translate.0.to_pixels(parent_bounds.w) * scale_factor;
-                    let ty = translate.1.to_pixels(parent_bounds.h) * scale_factor;
+                    let tx = translate.0.to_pixels(parent_bounds.w, scale_factor);
+                    let ty = translate.1.to_pixels(parent_bounds.h, scale_factor);
 
                     t.translate(tx, ty);
                 }
 
                 Transform::TranslateX(x) => {
-                    let tx = x.to_pixels(parent_bounds.h) * scale_factor;
+                    let tx = x.to_pixels(parent_bounds.h, scale_factor);
 
                     t.translate(tx, 0.0)
                 }
 
                 Transform::TranslateY(y) => {
-                    let ty = y.to_pixels(parent_bounds.h) * scale_factor;
+                    let ty = y.to_pixels(parent_bounds.h, scale_factor);
 
                     t.translate(0.0, ty)
                 }

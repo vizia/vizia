@@ -18,13 +18,13 @@ impl Default for LengthOrPercentage {
 impl LengthOrPercentage {
     // TODO - Function to return the length in pixels given the necessary input parameters
     // > dpi, font_size, size of 0 char, viewport size, min of bounds
-    pub fn to_pixels(&self, min_bounds: f32) -> f32 {
+    pub fn to_pixels(&self, min_bounds: f32, scale: f32) -> f32 {
         match self {
             LengthOrPercentage::Length(length) => {
                 match length {
                     Length::Value(val) => match val {
                         LengthValue::Px(pixels) => {
-                            return *pixels;
+                            return *pixels * scale;
                         }
 
                         _ => {}

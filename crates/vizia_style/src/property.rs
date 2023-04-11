@@ -1,9 +1,10 @@
 use crate::{
-    define_property, Angle, BackgroundImage, Border, BorderCornerShape, BorderRadius, BorderWidth,
-    BorderWidthValue, BoxShadow, ClipPath, Color, CursorIcon, CustomParseError, CustomProperty,
-    Display, Filter, FontFamily, FontSize, FontStretch, FontStyle, FontWeight, LayoutType,
-    LengthOrPercentage, Opacity, Outline, Overflow, Parse, Position, PositionType, Rect, Scale,
-    Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
+    define_property, Angle, BackgroundImage, BackgroundSize, Border, BorderCornerShape,
+    BorderRadius, BorderWidth, BorderWidthValue, BoxShadow, ClipPath, Color, CursorIcon,
+    CustomParseError, CustomProperty, Display, Filter, FontFamily, FontSize, FontStretch,
+    FontStyle, FontWeight, LayoutType, LengthOrPercentage, Opacity, Outline, Overflow, Parse,
+    Position, PositionType, Rect, Scale, Transform, Transition, Translate, Units, UnparsedProperty,
+    Visibility,
 };
 use cssparser::Parser;
 
@@ -137,6 +138,7 @@ define_property! {
         // Background
         "background-color": BackgroundColor(Color),
         "background-image": BackgroundImage(Vec<BackgroundImage<'i>>),
+        "background-size": BackgroundSize(Vec<BackgroundSize>),
 
         // Font
         "font-size": FontSize(FontSize),

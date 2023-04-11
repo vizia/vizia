@@ -133,6 +133,8 @@ impl<'a> EventContext<'a> {
 
         let root_bounds = self.cache.get_bounds(Entity::root());
 
+        let scale = self.scale_factor();
+
         let clip_bounds = self
             .style
             .clip_path
@@ -140,10 +142,10 @@ impl<'a> EventContext<'a> {
             .map(|clip| match clip {
                 ClipPath::Auto => bounds,
                 ClipPath::Shape(rect) => bounds.shrink_sides(
-                    self.logical_to_physical(rect.3.to_pixels(bounds.w)),
-                    self.logical_to_physical(rect.0.to_pixels(bounds.h)),
-                    self.logical_to_physical(rect.1.to_pixels(bounds.w)),
-                    self.logical_to_physical(rect.2.to_pixels(bounds.h)),
+                    self.logical_to_physical(rect.3.to_pixels(bounds.w, scale)),
+                    self.logical_to_physical(rect.0.to_pixels(bounds.h, scale)),
+                    self.logical_to_physical(rect.1.to_pixels(bounds.w, scale)),
+                    self.logical_to_physical(rect.2.to_pixels(bounds.h, scale)),
                 ),
             })
             .unwrap_or(bounds);

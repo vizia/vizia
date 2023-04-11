@@ -84,7 +84,7 @@ fn try_load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) ->
                         image::ImageFormat::Png,
                     )
                     .unwrap(),
-                    femtovg::ImageFlags::NEAREST,
+                    femtovg::ImageFlags::empty(),
                 ),
                 retention_policy: ImageRetentionPolicy::Forever,
                 used: true,

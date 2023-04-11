@@ -1,8 +1,8 @@
 use morphorm::Units;
 use vizia_style::{
-    Angle, BoxShadow, ClipPath, Color, ColorStop, FontSize, Gradient, Length, LengthOrPercentage,
-    LengthValue, LineDirection, LinearGradient, Opacity, PercentageOrNumber, Rect, Scale,
-    Transform, Translate, RGBA,
+    Angle, BackgroundSize, BoxShadow, ClipPath, Color, ColorStop, FontSize, Gradient, Length,
+    LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LinearGradient,
+    Opacity, PercentageOrNumber, Rect, Scale, Transform, Translate, RGBA,
 };
 
 use femtovg::Transform2D;
@@ -121,6 +121,23 @@ impl Interpolator for LengthOrPercentage {
     }
 }
 
+impl Interpolator for LengthPercentageOrAuto {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (
+                LengthPercentageOrAuto::LengthPercentage(start_val),
+                LengthPercentageOrAuto::LengthPercentage(end_val),
+            ) => {
+                return LengthPercentageOrAuto::LengthPercentage(LengthOrPercentage::interpolate(
+                    start_val, end_val, t,
+                ));
+            }
+
+            _ => end.clone(),
+        }
+    }
+}
+
 impl Interpolator for PercentageOrNumber {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
@@ -200,6 +217,23 @@ impl Interpolator for ImageOrGradient {
                 ImageOrGradient::Gradient(gradient_start),
                 ImageOrGradient::Gradient(gradient_end),
             ) => ImageOrGradient::Gradient(Gradient::interpolate(gradient_start, gradient_end, t)),
+            _ => end.clone(),
+        }
+    }
+}
+
+impl Interpolator for BackgroundSize {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (
+                BackgroundSize::Explicit { width: start_width, height: start_height },
+                BackgroundSize::Explicit { width: end_width, height: end_height },
+            ) => {
+                let width = LengthPercentageOrAuto::interpolate(start_width, end_width, t);
+                let height = LengthPercentageOrAuto::interpolate(start_height, end_height, t);
+                BackgroundSize::Explicit { width, height }
+            }
+
             _ => end.clone(),
         }
     }

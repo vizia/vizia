@@ -52,13 +52,19 @@ impl<'a> ResourceContext<'a> {
     ) {
         match self.resource_manager.images.entry(path) {
             Entry::Occupied(mut occ) => {
-                occ.get_mut().image = ImageOrId::Image(image, femtovg::ImageFlags::NEAREST);
+                occ.get_mut().image = ImageOrId::Image(
+                    image,
+                    femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
+                );
                 occ.get_mut().dirty = true;
                 occ.get_mut().retention_policy = policy;
             }
             Entry::Vacant(vac) => {
                 vac.insert(StoredImage {
-                    image: ImageOrId::Image(image, femtovg::ImageFlags::NEAREST),
+                    image: ImageOrId::Image(
+                        image,
+                        femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
+                    ),
                     retention_policy: policy,
                     used: true,
                     dirty: false,

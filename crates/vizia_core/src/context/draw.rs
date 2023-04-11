@@ -17,8 +17,8 @@ use crate::vg::{ImageId, Paint, Path};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 use vizia_style::{
-    BoxShadow, ClipPath, Filter, Gradient, HorizontalPositionKeyword, LineDirection,
-    VerticalPositionKeyword,
+    BackgroundSize, BoxShadow, ClipPath, Filter, Gradient, HorizontalPositionKeyword,
+    LengthPercentageOrAuto, LineDirection, VerticalPositionKeyword,
 };
 
 /// Cached data used for drawing.
@@ -129,7 +129,7 @@ macro_rules! get_length_property {
             if let Some(length) = self.style.$name.get(self.current) {
                 let bounds = self.bounds();
 
-                let px = length.to_pixels(bounds.w.min(bounds.h));
+                let px = length.to_pixels(bounds.w.min(bounds.h), self.scale_factor());
                 return self.logical_to_physical(px).round();
             }
 
@@ -151,6 +151,8 @@ impl<'a> DrawContext<'a> {
 
         let root_bounds = self.cache.get_bounds(Entity::root());
 
+        let scale = self.scale_factor();
+
         let clip_bounds = self
             .style
             .clip_path
@@ -158,10 +160,10 @@ impl<'a> DrawContext<'a> {
             .map(|clip| match clip {
                 ClipPath::Auto => bounds,
                 ClipPath::Shape(rect) => bounds.shrink_sides(
-                    self.logical_to_physical(rect.3.to_pixels(bounds.w)),
-                    self.logical_to_physical(rect.0.to_pixels(bounds.h)),
-                    self.logical_to_physical(rect.1.to_pixels(bounds.w)),
-                    self.logical_to_physical(rect.2.to_pixels(bounds.h)),
+                    self.logical_to_physical(rect.3.to_pixels(bounds.w, scale)),
+                    self.logical_to_physical(rect.0.to_pixels(bounds.h, scale)),
+                    self.logical_to_physical(rect.1.to_pixels(bounds.w, scale)),
+                    self.logical_to_physical(rect.2.to_pixels(bounds.h, scale)),
                 ),
             })
             .unwrap_or(bounds);
@@ -905,7 +907,10 @@ impl<'a> DrawContext<'a> {
         let parent_height = self.cache.get_height(parent);
 
         if let Some(images) = self.style.background_image.get(self.current) {
-            for image in images.iter() {
+            let image_sizes =
+                self.style.background_size.get(self.current).cloned().unwrap_or_default();
+
+            for (index, image) in images.iter().enumerate() {
                 match image {
                     ImageOrGradient::Gradient(gradient) => match gradient {
                         Gradient::Linear(linear_gradient) => {
@@ -969,7 +974,8 @@ impl<'a> DrawContext<'a> {
                                 .enumerate()
                                 .map(|(index, stop)| {
                                     let pos = if let Some(pos) = &stop.position {
-                                        pos.to_pixels(parent_length) / parent_length
+                                        pos.to_pixels(parent_length, self.scale_factor())
+                                            / parent_length
                                     } else {
                                         index as f32 / (num_stops - 1) as f32
                                     };
@@ -1013,7 +1019,8 @@ impl<'a> DrawContext<'a> {
                                 .enumerate()
                                 .map(|(index, stop)| {
                                     let pos = if let Some(pos) = &stop.position {
-                                        pos.to_pixels(parent_width) / parent_width
+                                        pos.to_pixels(parent_width, self.scale_factor())
+                                            / parent_width
                                     } else {
                                         index as f32 / (num_stops - 1) as f32
                                     };
@@ -1053,9 +1060,62 @@ impl<'a> DrawContext<'a> {
                     ImageOrGradient::Image(image_name) => {
                         if let Some(image) = self.resource_manager.images.get(image_name) {
                             match image.image {
-                                ImageOrId::Id(id, _dim) => {
+                                ImageOrId::Id(id, dim) => {
+                                    let (width, height) =
+                                        if let Some(background_size) = image_sizes.get(index) {
+                                            match background_size {
+                                                BackgroundSize::Explicit { width, height } => {
+                                                    let w = match width {
+                                                    LengthPercentageOrAuto::LengthPercentage(
+                                                        length,
+                                                    ) => length
+                                                        .to_pixels(bounds.w, self.scale_factor()),
+                                                    LengthPercentageOrAuto::Auto => dim.0 as f32,
+                                                };
+
+                                                    let h = match height {
+                                                    LengthPercentageOrAuto::LengthPercentage(
+                                                        length,
+                                                    ) => length
+                                                        .to_pixels(bounds.h, self.scale_factor()),
+                                                    LengthPercentageOrAuto::Auto => dim.1 as f32,
+                                                };
+
+                                                    (w, h)
+                                                }
+
+                                                BackgroundSize::Contain => {
+                                                    let image_ratio = dim.0 as f32 / dim.1 as f32;
+                                                    let container_ratio = bounds.w / bounds.h;
+
+                                                    let (w, h) = if image_ratio > container_ratio {
+                                                        (bounds.w, bounds.w / image_ratio)
+                                                    } else {
+                                                        (bounds.h * image_ratio, bounds.h)
+                                                    };
+
+                                                    (w, h)
+                                                }
+
+                                                BackgroundSize::Cover => {
+                                                    let image_ratio = dim.0 as f32 / dim.1 as f32;
+                                                    let container_ratio = bounds.w / bounds.h;
+
+                                                    let (w, h) = if image_ratio < container_ratio {
+                                                        (bounds.w, bounds.w / image_ratio)
+                                                    } else {
+                                                        (bounds.h * image_ratio, bounds.h)
+                                                    };
+
+                                                    (w, h)
+                                                }
+                                            }
+                                        } else {
+                                            (dim.0 as f32, dim.1 as f32)
+                                        };
+
                                     let paint = Paint::image(
-                                        id, bounds.x, bounds.y, bounds.w, bounds.h, 0.0, 1.0,
+                                        id, bounds.x, bounds.y, width, height, 0.0, 1.0,
                                     );
 
                                     canvas.fill_path(path, &paint);
