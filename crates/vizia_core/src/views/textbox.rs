@@ -34,14 +34,14 @@ pub enum TextEvent {
 
 #[derive(Lens)]
 pub struct Textbox<L: Lens> {
-    #[lens(ignore)]
+    // #[lens(ignore)]
     lens: L,
     kind: TextboxKind,
     edit: bool,
     transform: (f32, f32),
-    #[lens(ignore)]
+    // #[lens(ignore)]
     on_edit: Option<Box<dyn Fn(&mut EventContext, String) + Send + Sync>>,
-    #[lens(ignore)]
+    // #[lens(ignore)]
     on_submit: Option<Box<dyn Fn(&mut EventContext, String, bool) + Send + Sync>>,
 }
 
@@ -92,6 +92,7 @@ where
             });
         })
         .text_wrap(kind == TextboxKind::MultiLineWrapped)
+        // .translate(Textbox::<L>::transform.map(|(x, y)| (Pixels(*x), Pixels(*y))))
         .cursor(CursorIcon::Text)
         .navigable(true)
         .role(Role::TextField)
@@ -101,37 +102,53 @@ where
     }
 
     fn set_caret(&mut self, cx: &mut EventContext) {
-        let scale = 1.0;
+        // let scale = cx.scale_factor();
 
         // calculate visible area for content and container
-        let bounds = cx.text_context.get_bounds(cx.current).unwrap_or_default();
-        let mut parent_bounds = cx.bounds();
+        let mut text_bounds = cx.text_context.get_bounds(cx.current).unwrap_or_default();
+        let mut bounds = cx.bounds();
 
-        parent_bounds.x += 10.0;
-        parent_bounds.w -= 20.0;
+        let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
+        let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
+        let child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
+        let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
+
+        let logical_parent_width = cx.physical_to_logical(bounds.w);
+        let logical_parent_height = cx.physical_to_logical(bounds.h);
+
+        let child_left = child_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+        let child_top = child_top.to_px(logical_parent_height, 0.0) * cx.scale_factor();
+        let child_right = child_right.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+        let child_bottom = child_bottom.to_px(logical_parent_height, 0.0) * cx.scale_factor();
+
+        text_bounds.x = bounds.x;
+        text_bounds.y = bounds.y;
+
+        bounds.h -= child_top + child_bottom;
+        bounds.w -= child_left + child_right;
 
         cx.text_context.sync_styles(cx.current, cx.style);
 
         // do the computation
         let (mut tx, mut ty) = self.transform;
-        tx *= scale;
-        ty *= scale;
-        (tx, ty) = enforce_text_bounds(&bounds, &parent_bounds, (tx, ty));
+
+        (tx, ty) = enforce_text_bounds(&text_bounds, &bounds, (tx, ty));
 
         // TODO justify????
-        if let Some((x, y, w, h)) =
-            cx.text_context.layout_caret(cx.current, (bounds.x, bounds.y), (0., 0.), 1.0 * scale)
-        {
-            let mut caret_box = BoundingBox { x, y, w, h };
-            caret_box.x += 10.0;
-            // println!("caretx: {}", caret_box.x);
+        if let Some((x, y, _, h)) = cx.text_context.layout_caret(
+            cx.current,
+            (text_bounds.x + child_left, text_bounds.y + child_top),
+            (0., 0.),
+            1.0 * cx.scale_factor(),
+        ) {
+            let caret_box = BoundingBox { x, y, w: 0.0, h };
+            bounds.x += child_left;
+            bounds.y += child_top;
 
-            // parent_bounds.x -= 1.0;
-            // parent_bounds.w += 2.0;
-            (tx, ty) = ensure_visible(&caret_box, &parent_bounds, (tx, ty));
+            (tx, ty) = ensure_visible(&caret_box, &bounds, (tx, ty));
         }
 
-        self.transform = (tx.round() / scale, ty.round() / scale);
+        self.transform = (tx.round(), ty.round());
     }
 
     pub fn insert_text(&mut self, cx: &mut EventContext, text: &str) {
@@ -240,13 +257,10 @@ where
     /// The output text coordinates will also be physical, but relative to the top of the text
     /// glyphs, appropriate for passage to cosmic.
     pub fn coordinates_global_to_text(&self, cx: &EventContext, x: f32, y: f32) -> (f32, f32) {
-        let parent = cx.current.parent(cx.tree).unwrap();
-        let parent_bounds = cx.bounds();
+        let bounds = cx.bounds();
 
         let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
-        let child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
         let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
-        let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
 
         // let justify_x = match (child_left, child_right) {
         //     (Stretch(left), Stretch(right)) => {
@@ -276,21 +290,21 @@ where
         // let origin_x = bounds.w * justify_x;
         // let origin_y = bounds.h * justify_y;
 
-        let logical_parent_width = cx.physical_to_logical(parent_bounds.w);
+        let logical_parent_width = cx.physical_to_logical(bounds.w);
+        let logical_parent_height = cx.physical_to_logical(bounds.h);
 
         let child_left = child_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+        let child_top = child_top.to_px(logical_parent_height, 0.0) * cx.scale_factor();
 
-        // let x = x - self.transform.0 - parent_bounds.x - child_left;
-        // let y = y - self.transform.1 - parent_bounds.y;
-        let x = x - parent_bounds.x - child_left;
-        let y = y - parent_bounds.y;
+        let x = x - self.transform.0 - bounds.x - child_left;
+        let y = y - self.transform.1 - bounds.y - child_top;
+
         (x, y)
     }
 
     /// This function takes window-global physical coordinates.
     pub fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         let (x, y) = self.coordinates_global_to_text(cx, x, y);
-        println!("{} {}", x, y);
         cx.text_context.with_editor(cx.current, |fs, buf| {
             buf.action(fs, Action::Click { x: x as i32, y: y as i32 })
         });
@@ -309,17 +323,32 @@ where
     /// This function takes window-global physical dimensions.
     pub fn scroll(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         let entity = cx.current;
-        let parent = cx.tree.get_parent(entity).unwrap();
-        let bounds = *cx.cache.bounds.get(entity).unwrap();
-        let parent_bounds = *cx.cache.bounds.get(parent).unwrap();
+        let mut bounds = cx.cache.get_bounds(entity);
+
+        let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
+        let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
+        let child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
+        let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
+
+        let logical_parent_width = cx.physical_to_logical(bounds.w);
+        let logical_parent_height = cx.physical_to_logical(bounds.h);
+
+        let child_left = child_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+        let child_top = child_top.to_px(logical_parent_height, 0.0) * cx.scale_factor();
+        let child_right = child_right.to_px(logical_parent_width, 0.0) * cx.scale_factor();
+        let child_bottom = child_bottom.to_px(logical_parent_height, 0.0) * cx.scale_factor();
+
+        let mut text_bounds = cx.text_context.get_bounds(entity).unwrap();
+        text_bounds.x = bounds.x;
+        text_bounds.y = bounds.y;
+        bounds.h -= child_top + child_bottom;
+        bounds.w -= child_left + child_right;
         let (mut tx, mut ty) = self.transform;
-        let scale = cx.style.dpi_factor as f32;
-        tx *= scale;
-        ty *= scale;
         tx += x * SCROLL_SENSITIVITY;
         ty += y * SCROLL_SENSITIVITY;
-        (tx, ty) = enforce_text_bounds(&bounds, &parent_bounds, (tx, ty));
-        self.transform = (tx / scale, ty / scale);
+        (tx, ty) = enforce_text_bounds(&text_bounds, &bounds, (tx, ty));
+        self.transform = (tx, ty);
+        cx.needs_redraw();
     }
 
     #[allow(dead_code)]
@@ -595,11 +624,11 @@ where
 
             WindowEvent::CharInput(c) => {
                 if *c != '\u{1b}' && // Escape
-                            *c != '\u{8}' && // Backspace
-                            *c != '\u{9}' && // Tab
-                            *c != '\u{7f}' && // Delete
-                            *c != '\u{0d}' && // Carriage return
-                            !cx.modifiers.contains(Modifiers::CTRL)
+                    *c != '\u{8}' && // Backspace
+                    *c != '\u{9}' && // Tab
+                    *c != '\u{7f}' && // Delete
+                    *c != '\u{0d}' && // Carriage return
+                    !cx.modifiers.contains(Modifiers::CTRL)
                 {
                     cx.emit(TextEvent::InsertText(String::from(*c)));
                 }
@@ -944,14 +973,11 @@ where
     }
 
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
-        // println!("{}", self.transform.0);
-        let text_bounds = cx.text_context.get_bounds(cx.current);
-        // println!("{:?} {:?}", cx.bounds(), text_bounds);
         let mut path = cx.build_path();
         cx.draw_background(canvas, &mut path);
         cx.draw_border(canvas, &mut path);
         canvas.save();
-        // canvas.translate(self.transform.0, self.transform.1);
+        canvas.translate(self.transform.0, self.transform.1);
         cx.draw_text_and_selection(canvas);
         canvas.restore();
     }

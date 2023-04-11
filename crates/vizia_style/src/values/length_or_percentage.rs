@@ -44,6 +44,10 @@ impl LengthOrPercentage {
 
         0.0
     }
+
+    pub fn px(val: f32) -> Self {
+        Self::Length(Length::px(val))
+    }
 }
 
 impl_parse! {

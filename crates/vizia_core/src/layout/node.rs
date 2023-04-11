@@ -194,8 +194,9 @@ impl Node for Entity {
                 child_space_y += val;
             }
 
+            // println!("maxx_width: {}", max_width);
             sublayout.text_context.sync_styles(*self, store);
-            let (mut text_width, mut text_height) =
+            let (text_width, text_height) =
                 sublayout.text_context.with_buffer(*self, |fs, buffer| {
                     buffer.set_size(fs, max_width as f32, f32::MAX);
                     let w = buffer
@@ -207,11 +208,9 @@ impl Node for Entity {
                     (w, h)
                 });
 
-            text_width += child_space_x;
-            text_height += child_space_y;
-
-            let height = if let Some(height) = height { height } else { text_height };
-            let width = if let Some(width) = width { width } else { text_width };
+            let height =
+                if let Some(height) = height { height } else { text_height + child_space_y };
+            let width = if let Some(width) = width { width } else { text_width + child_space_x };
 
             // Cache the text_width/ text_height in the text context so we can use it to compute transforms later
             sublayout.text_context.set_bounds(

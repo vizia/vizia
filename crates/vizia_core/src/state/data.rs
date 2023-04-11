@@ -1,6 +1,7 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
 use unic_langid::LanguageIdentifier;
+use vizia_style::Translate;
 
 use crate::prelude::*;
 
@@ -62,6 +63,7 @@ impl_data_simple!(std::ops::RangeFull);
 impl_data_simple!(std::path::PathBuf);
 impl_data_simple!(LanguageIdentifier);
 impl_data_simple!(Transform);
+impl_data_simple!(Translate);
 
 impl_data_simple!(String);
 

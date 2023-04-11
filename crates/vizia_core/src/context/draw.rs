@@ -1085,7 +1085,7 @@ impl<'a> DrawContext<'a> {
             self.logical_to_physical(width),
         ) {
             let mut path = Path::new();
-            path.rect(x, y, w * self.scale_factor(), h * self.scale_factor());
+            path.rect(x, y, w * self.scale_factor(), h);
             canvas.fill_path(&mut path, &Paint::color(caret_color.into()));
         }
     }

@@ -34,6 +34,16 @@ label.describing {
     cursor: hand;
 }
 
+textbox {
+    overflow: hidden;
+    width: auto;
+    height: 32px;
+    child-left: 10px;
+    child-right: 10px;
+    child-top: 10px;
+    child-bottom: 10px;
+}
+
 /* label.icon {
     font-family: "tabler-icons", sans-serif;
 }

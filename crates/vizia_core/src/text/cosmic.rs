@@ -390,7 +390,6 @@ impl TextContext {
         width: f32,
     ) -> Option<(f32, f32, f32, f32)> {
         self.with_editor(entity, |_, buf| {
-            let (cursor_start, cursor_end) = (buf.cursor(), buf.cursor());
             let buffer = buf.buffer();
             let total_height = buffer.layout_runs().len() as f32 * buffer.metrics().line_height;
 
@@ -470,7 +469,7 @@ impl TextContext {
                     return Some((
                         x as f32 + position_x,
                         (line_y - font_size) + position_y,
-                        1.0f32,
+                        width,
                         line_height,
                     ));
                 }

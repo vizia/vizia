@@ -198,6 +198,27 @@ label.h2 {
     font-weight: bold;
 }
 
+/* TEXTBOX */
+textbox {
+    border-width: 1px;
+    border-radius: 4px;
+    border-color: #282828;
+    background-color: #1d1d1d;
+    transition: border-color 100ms;
+    transition: background-color 100ms;
+    /* outer-shadow: 0 0 0 transparent; */
+}
+
+textbox:checked {
+    border-color: #51afef;
+    background-color: #1d1d1d;
+    box-shadow: 0px 4px 4px #00000026;
+    transition: border-color 0.1 0;
+    transition: outer-shadow 0.1 0;
+    caret-color: red;
+    selection-color: #6464c888;
+}
+
 /* TOOLTIP */
 tooltip {
     child-space: 10px;
