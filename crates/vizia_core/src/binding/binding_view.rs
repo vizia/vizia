@@ -1,7 +1,8 @@
 use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
 
-use crate::binding::{BasicStore, LensCache, ModelOrView, Store, StoreId};
+use crate::binding::{BasicStore, LensCache, Store, StoreId};
+use crate::model::ModelOrView;
 use crate::prelude::*;
 
 /// A view with a binding which rebuilds its contents when the observed data changes.
@@ -133,7 +134,7 @@ where
     }
 }
 
-pub trait BindingHandler {
+pub(crate) trait BindingHandler {
     fn update(&mut self, cx: &mut Context);
     fn remove(&self, cx: &mut Context);
     fn name(&self) -> Option<&'static str>;

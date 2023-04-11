@@ -32,12 +32,13 @@ pub use event::*;
 pub use proxy::*;
 pub use resource::*;
 
-use crate::binding::{BindingHandler, ModelDataStore};
+use crate::binding::BindingHandler;
 use crate::cache::CachedData;
 use crate::environment::{Environment, ThemeMode};
 use crate::events::ViewHandler;
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
+use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
 use crate::style::{PseudoClassFlags, Style};

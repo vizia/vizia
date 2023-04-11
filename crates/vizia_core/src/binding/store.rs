@@ -1,8 +1,6 @@
 use std::{any::TypeId, collections::HashSet};
 
-use crate::prelude::*;
-
-use super::ModelOrView;
+use crate::{model::ModelOrView, prelude::*};
 
 use std::sync::atomic::{AtomicU64, Ordering};
 

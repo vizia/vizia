@@ -9,7 +9,7 @@ use vizia_id::GenerationalId;
 use vizia_storage::LayoutChildIterator;
 
 // Determines the hovered entity based on the mouse cursor position.
-pub fn hover_system(cx: &mut Context) {
+pub(crate) fn hover_system(cx: &mut Context) {
     let mut queue = BinaryHeap::new();
     queue.push(ZEntity(0, Entity::root()));
     let mut hovered = Entity::root();

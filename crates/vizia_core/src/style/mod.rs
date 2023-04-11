@@ -64,19 +64,18 @@ use femtovg::Transform2D;
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::{HashMap, HashSet};
 use vizia_id::GenerationalId;
-use vizia_style::{
-    BackgroundSize, BoxShadow, ClipPath, CssRule, Filter, FontFamily, FontSize, GenericFontFamily,
-    Gradient, Scale, Transition, Translate,
-};
 
 use crate::prelude::*;
 
 pub use vizia_style::{
-    Angle, BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, FontStretch, FontStyle,
-    FontWeight, FontWeightKeyword, Length, LengthOrPercentage, LengthValue, LineDirection,
-    LinearGradient, Matrix, Opacity, Overflow, ParserOptions, Property, SelectorList, Selectors,
-    StyleSheet, Transform, Visibility, RGBA,
+    Angle, BackgroundImage, BackgroundSize, BorderCornerShape, BoxShadow, ClipPath, Color, CssRule,
+    CursorIcon, Display, Filter, FontFamily, FontSize, FontStretch, FontStyle, FontWeight,
+    FontWeightKeyword, GenericFontFamily, Gradient, Length, LengthOrPercentage, LengthValue,
+    LineDirection, LinearGradient, Matrix, Opacity, Overflow, Scale, Transform, Transition,
+    Translate, Visibility, RGBA,
 };
+
+use vizia_style::{ParserOptions, Property, SelectorList, Selectors, StyleSheet};
 
 mod rule;
 pub(crate) use rule::Rule;
@@ -1012,6 +1011,7 @@ impl Style {
         // Background
         self.background_color.remove(entity);
         self.background_image.remove(entity);
+        self.background_size.remove(entity);
 
         // Box Shadow
         self.box_shadow.remove(entity);
@@ -1161,6 +1161,7 @@ impl Style {
         // Background
         self.background_color.clear_rules();
         self.background_image.clear_rules();
+        self.background_size.clear_rules();
 
         self.box_shadow.clear_rules();
 

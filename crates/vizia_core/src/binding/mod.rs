@@ -196,8 +196,6 @@
 mod lens;
 pub use lens::*;
 
-pub use crate::model::*;
-
 mod store;
 pub(crate) use store::*;
 

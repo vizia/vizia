@@ -1,6 +1,6 @@
 use crate::{prelude::*, style::SystemFlags};
 
-pub fn animation_system(cx: &mut Context) -> bool {
+pub(crate) fn animation_system(cx: &mut Context) -> bool {
     let time = instant::Instant::now();
 
     // Properties which affect rendering

@@ -17,7 +17,7 @@ use vizia_style::{
 };
 
 #[derive(Clone)]
-pub struct Node<'s, 't, 'v> {
+pub(crate) struct Node<'s, 't, 'v> {
     entity: Entity,
     store: &'s Style,
     tree: &'t Tree<Entity>,
@@ -227,7 +227,7 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     }
 }
 
-pub fn inline_inheritance_system(cx: &mut Context) {
+pub(crate) fn inline_inheritance_system(cx: &mut Context) {
     for entity in cx.tree.into_iter() {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             cx.style.disabled.inherit_inline(entity, parent);
@@ -243,7 +243,7 @@ pub fn inline_inheritance_system(cx: &mut Context) {
     }
 }
 
-pub fn shared_inheritance_system(cx: &mut Context) {
+pub(crate) fn shared_inheritance_system(cx: &mut Context) {
     for entity in cx.tree.into_iter() {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             cx.style.font_color.inherit_shared(entity, parent);
@@ -257,7 +257,7 @@ pub fn shared_inheritance_system(cx: &mut Context) {
     }
 }
 
-pub fn hoverability_system(cx: &mut Context) {
+pub(crate) fn hoverability_system(cx: &mut Context) {
     let draw_tree = DrawIterator::full(&cx.tree);
 
     for entity in draw_tree {
@@ -606,7 +606,7 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
 }
 
 // Iterate tree and determine the matched style rules for each entity. Link the entity to the style data.
-pub fn style_system(cx: &mut Context) {
+pub(crate) fn style_system(cx: &mut Context) {
     if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
         hoverability_system(cx);
 

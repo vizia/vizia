@@ -2,6 +2,7 @@
 #[macro_use]
 extern crate serde;
 
+#[doc(hidden)]
 pub mod accessibility;
 pub mod animation;
 pub mod binding;
@@ -49,8 +50,10 @@ pub mod icons {
 pub mod prelude {
     pub use super::animation::{Animation, AnimationBuilder};
     pub use super::binding::{
-        Binding, Data, Index, Lens, LensExt, Model, Res, Setter, StaticLens, Then, Wrapper,
+        Binding, Data, Index, Lens, LensExt, Res, Setter, StaticLens, Then, Wrapper,
     };
+
+    pub use crate::model::Model;
 
     pub use super::context::{
         AccessContext, AccessNode, Context, ContextProxy, DataContext, DrawContext, EmitContext,

@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use vizia_id::GenerationalId;
 
 // Iterate the tree and load any images used by entities which aren't already loaded. Remove any images no longer being used.
-pub fn image_system(cx: &mut Context) {
+pub(crate) fn image_system(cx: &mut Context) {
     let cx = &mut ResourceContext::new(cx);
 
     cx.resource_manager.mark_images_unused();

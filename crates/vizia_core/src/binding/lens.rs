@@ -580,34 +580,3 @@ where
         AndLens::new(self, rhs)
     }
 }
-
-// impl<L1, L2> Lens for (L1, L2)
-// where
-//     L1: Lens<Source = L2::Source>,
-//     L2: Lens,
-//     L1::Target: Clone,
-//     L2::Target: Clone,
-// {
-//     type Source = L1::Source;
-//     type Target = (L1::Target, L2::Target);
-
-//     fn view<O, F: FnOnce(Option<&Self::Target>) -> O>(&self, source: &Self::Source, map: F) -> O {
-//         self.0.view(source, |t1| {
-//             if let Some(l1) = t1 {
-//                 self.1.view(source, |t2| {
-//                     if let Some(l2) = t2 {
-//                         map(Some(&(l1.clone(), l2.clone())))
-//                     } else {
-//                         map(None)
-//                     }
-//                 })
-//             } else {
-//                 map(None)
-//             }
-//         })
-//     }
-
-//     fn name(&self) -> Option<&'static str> {
-//         self.0.name()
-//     }
-// }

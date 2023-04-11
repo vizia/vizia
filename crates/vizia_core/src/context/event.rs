@@ -8,10 +8,10 @@ use fnv::FnvHashMap;
 use vizia_style::ClipPath;
 
 use crate::animation::Interpolator;
-use crate::binding::ModelDataStore;
 use crate::cache::CachedData;
 use crate::environment::ThemeMode;
 use crate::events::ViewHandler;
+use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::style::{IntoTransform, PseudoClassFlags, Style, SystemFlags};

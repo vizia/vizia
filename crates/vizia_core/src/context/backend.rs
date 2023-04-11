@@ -4,10 +4,11 @@ use std::collections::HashSet;
 use femtovg::{renderer::OpenGl, Canvas};
 
 use super::EventProxy;
+use crate::model::ModelOrView;
 use crate::style::SystemFlags;
 use crate::{
-    binding::ModelOrView, cache::CachedData, environment::Environment, layout::geometry_changed,
-    prelude::*, style::Style, systems::*,
+    cache::CachedData, environment::Environment, layout::geometry_changed, prelude::*,
+    style::Style, systems::*,
 };
 use vizia_id::GenerationalId;
 

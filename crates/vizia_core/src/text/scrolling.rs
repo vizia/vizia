@@ -1,6 +1,6 @@
 use crate::layout::BoundingBox;
 
-pub fn enforce_text_bounds(
+pub(crate) fn enforce_text_bounds(
     text_bounds: &BoundingBox,
     bounds: &BoundingBox,
     transform: (f32, f32),
@@ -34,7 +34,7 @@ pub fn enforce_text_bounds(
     (tx, ty)
 }
 
-pub fn ensure_visible(
+pub(crate) fn ensure_visible(
     text_bounds: &BoundingBox,
     bounds: &BoundingBox,
     transform: (f32, f32),

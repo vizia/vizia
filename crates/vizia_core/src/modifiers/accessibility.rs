@@ -1,6 +1,7 @@
 use super::internal;
 use crate::prelude::*;
 
+/// Modifiers for changing the accessibility properties of a view.
 pub trait AccessibilityModifiers: internal::Modifiable {
     /// Sets the accessibility role of the view.
     fn role(mut self, role: Role) -> Self {

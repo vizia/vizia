@@ -13,6 +13,7 @@
 //! ```
 
 use crate::context::AccessNode;
+use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::systems::get_access_node;
 use crate::{accessibility::IntoNode, context::AccessContext};
@@ -20,7 +21,6 @@ use std::any::Any;
 mod handle;
 pub use handle::Handle;
 
-use crate::binding::ModelDataStore;
 use crate::events::ViewHandler;
 use accesskit::{NodeBuilder, TreeUpdate};
 use femtovg::renderer::OpenGl;

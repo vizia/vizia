@@ -479,10 +479,6 @@ impl TextContext {
             })
             .collect()
     }
-
-    // pub(crate) fn into_font_system(self) -> FontSystem {
-    //     self.font_system
-    // }
 }
 
 impl TextContext {
@@ -498,13 +494,13 @@ impl TextContext {
     }
 }
 
-pub struct FontTexture {
+pub(crate) struct FontTexture {
     atlas: Atlas,
     image_id: ImageId,
 }
 
 #[derive(Copy, Clone, Debug)]
-pub struct RenderedGlyph {
+pub(crate) struct RenderedGlyph {
     texture_index: usize,
     width: u32,
     height: u32,
@@ -514,9 +510,3 @@ pub struct RenderedGlyph {
     atlas_y: u32,
     color_glyph: bool,
 }
-
-//#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
-//enum RenderMode {
-//    Fill,
-//    Stroke(u32),
-//}

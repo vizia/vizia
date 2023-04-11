@@ -4,7 +4,7 @@ use std::collections::BinaryHeap;
 use vizia_id::GenerationalId;
 use vizia_storage::LayoutChildIterator;
 
-pub fn draw_system(cx: &mut Context) {
+pub(crate) fn draw_system(cx: &mut Context) {
     let canvas = cx.canvases.get_mut(&Entity::root()).unwrap();
     cx.resource_manager.mark_images_unused();
     let window_width = cx.cache.get_width(Entity::root());

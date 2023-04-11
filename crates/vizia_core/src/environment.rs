@@ -1,5 +1,5 @@
 //! A model for system specific state which can be accessed by any model or view.
-use crate::{modifiers::TooltipEvent, prelude::Wrapper};
+use crate::{model::Model, modifiers::TooltipEvent, prelude::Wrapper};
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
 
@@ -9,7 +9,7 @@ pub enum ThemeMode {
     LightMode,
 }
 
-use crate::{binding::Lens, binding::Model, context::EventContext, events::Event};
+use crate::{binding::Lens, context::EventContext, events::Event};
 
 /// A model for system specific state which can be accessed by any model or view.
 #[derive(Lens)]

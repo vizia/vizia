@@ -6,9 +6,9 @@ use fnv::FnvHashMap;
 use morphorm::Units;
 
 use crate::animation::Interpolator;
-use crate::binding::ModelDataStore;
 use crate::cache::CachedData;
 use crate::events::ViewHandler;
+use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::{ImageOrId, ResourceManager};
 use crate::style::{ImageOrGradient, IntoTransform, Style};
