@@ -5,13 +5,15 @@ use crate::prelude::*;
 
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
-use accesskit::{ActionData, ActionRequest, Rect, TextDirection, TextPosition, TextSelection};
+use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
 use cosmic_text::{Action, Attrs, Cursor, Edit};
 use unicode_segmentation::UnicodeSegmentation;
 use vizia_input::Code;
 use vizia_storage::TreeExt;
 
+/// Events for modifying a textbox
 pub enum TextEvent {
+    /// Insert a string of text into the buffer.
     InsertText(String),
     ResetText(String),
     DeleteText(Movement),
@@ -19,7 +21,6 @@ pub enum TextEvent {
     SelectAll,
     SelectWord,
     SelectParagraph,
-    //SetSelection(Selection),
     StartEdit,
     EndEdit,
     Submit(bool),
@@ -29,19 +30,14 @@ pub enum TextEvent {
     Copy,
     Paste,
     Cut,
-    GeometryChanged,
 }
 
-#[derive(Lens)]
 pub struct Textbox<L: Lens> {
-    // #[lens(ignore)]
     lens: L,
     kind: TextboxKind,
     edit: bool,
     transform: (f32, f32),
-    // #[lens(ignore)]
     on_edit: Option<Box<dyn Fn(&mut EventContext, String) + Send + Sync>>,
-    // #[lens(ignore)]
     on_submit: Option<Box<dyn Fn(&mut EventContext, String, bool) + Send + Sync>>,
 }
 
@@ -411,15 +407,12 @@ where
                 let mut line_node = AccessNode::new_from_parent(node_id, index);
                 line_node.set_role(Role::InlineTextBox);
 
-                let line_height = editor.buffer().metrics().line_height as f64;
-                line_node.set_bounds(Rect {
-                    x0: bounds.x as f64,
-                    y0: bounds.y as f64 + line.line_y as f64
-                        - editor.buffer().metrics().font_size as f64,
-                    x1: bounds.x as f64 + line.line_w as f64,
-                    y1: bounds.y as f64 + line.line_y as f64
-                        - editor.buffer().metrics().font_size as f64
-                        + line_height,
+                let line_height = editor.buffer().metrics().line_height;
+                line_node.set_bounds(BoundingBox {
+                    x: bounds.x,
+                    y: bounds.y + line.line_y - editor.buffer().metrics().font_size,
+                    w: line.line_w,
+                    h: line_height,
                 });
                 line_node.set_text_direction(if line.rtl {
                     TextDirection::RightToLeft
@@ -964,10 +957,6 @@ where
                         }
                     }
                 }
-            }
-
-            TextEvent::GeometryChanged => {
-                self.set_caret(cx);
             }
         });
     }

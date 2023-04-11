@@ -83,10 +83,10 @@ pub(crate) fn get_access_node(
     let bounds = cx.cache.get_bounds(entity);
 
     node_builder.set_bounds(Rect {
-        x0: bounds.x as f64,
-        y0: bounds.y as f64,
-        x1: (bounds.x + bounds.w) as f64,
-        y1: (bounds.y + bounds.h) as f64,
+        x0: bounds.left() as f64,
+        y0: bounds.top() as f64,
+        x1: bounds.right() as f64,
+        y1: bounds.bottom() as f64,
     });
 
     if let Some(disabled) = cx.style.disabled.get(entity).copied() {

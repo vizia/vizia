@@ -2,7 +2,7 @@ use accesskit::{NodeBuilder, NodeId, Rect, TextDirection, TextSelection};
 
 use crate::{cache::CachedData, prelude::*, style::Style, text::TextContext};
 
-// A context used for configuring the accessibility features of a view.
+/// A context used for configuring the accessibility features of a view.
 pub struct AccessContext<'a> {
     pub(crate) current: Entity,
     pub(crate) tree: &'a Tree<Entity>,
@@ -12,6 +12,7 @@ pub struct AccessContext<'a> {
 }
 
 impl<'a> AccessContext<'a> {
+    /// Returns the bounds of the current view.
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
     }
@@ -35,7 +36,8 @@ impl AccessNode {
         Self { node_id, node_builder: NodeBuilder::default(), children: Vec::new() }
     }
 
-    pub fn node_id(&self) -> NodeId {
+    /// Returns the accesskit id of the access node.
+    pub(crate) fn node_id(&self) -> NodeId {
         self.node_id
     }
 
@@ -56,8 +58,13 @@ impl AccessNode {
     }
 
     // TODO: switch to bounding box
-    pub fn set_bounds(&mut self, bounds: Rect) {
-        self.node_builder.set_bounds(bounds);
+    pub fn set_bounds(&mut self, bounds: BoundingBox) {
+        self.node_builder.set_bounds(Rect {
+            x0: bounds.left() as f64,
+            y0: bounds.top() as f64,
+            x1: bounds.right() as f64,
+            y1: bounds.bottom() as f64,
+        });
     }
 
     pub fn set_value(&mut self, value: impl Into<Box<str>>) {
