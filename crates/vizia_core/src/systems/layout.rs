@@ -62,6 +62,11 @@ pub(crate) fn layout_system(cx: &mut Context) {
                         entity,
                         BoundingBox { w: text_width, h: text_height, ..Default::default() },
                     )
+                } else {
+                    let bounds = cx.cache.get_bounds(entity);
+                    cx.text_context.with_buffer(entity, |fs, buffer| {
+                        buffer.set_size(fs, bounds.w, bounds.h);
+                    })
                 }
             }
 

@@ -112,6 +112,11 @@ name = "popup"
 path = "examples/views/popup.rs"
 
 
+[[example]]
+name = "spinbox"
+path = "examples/views/spinbox.rs"
+
+
 
 [[example]]
 name = "textbox"
@@ -148,7 +153,6 @@ path = "examples/lists/sortable_list.rs"
 [[example]]
 name = "static_list"
 path = "examples/lists/static_list.rs"
-
 
 
 [[example]]
