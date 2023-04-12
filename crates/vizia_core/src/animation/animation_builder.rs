@@ -392,8 +392,8 @@ impl<'a> KeyframeBuilder<'a> {
         //     self.cx.style.rotate.insert_animation(self.id, anim_cx);
         // }
 
-        self
-    }
+    //     self
+    // }
 
     pub fn set_opacity(self, value: f32) -> Self {
         if let Some(anim_cx) = self.cx.style.opacity.get_animation_mut(self.id) {

@@ -60,7 +60,7 @@ where
                 });
             })
             .role(Role::Dialog)
-            .checked(lens.clone())
+            .checked(lens)
             .position_type(PositionType::SelfDirected)
             .z_order(100)
     }
@@ -83,9 +83,14 @@ where
                 let flag: bool = popup.lens.get(cx).into();
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
-                        if flag && meta.origin != cx.current() && !cx.is_over() {
-                            (focus_event)(cx);
-                            meta.consume();
+                        if flag {
+                            if meta.origin != cx.current() {
+                                // Check if the mouse was pressed outside of any descendants
+                                if !cx.hovered.is_descendant_of(&cx.tree, cx.current) {
+                                    (focus_event)(cx);
+                                    meta.consume();
+                                }
+                            }
                         }
                     }
 

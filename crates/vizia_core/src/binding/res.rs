@@ -151,6 +151,19 @@ impl Res<Color> for Color {
     }
 }
 
+impl Res<LinearGradient> for LinearGradient {
+    fn get_val(&self, _: &Context) -> LinearGradient {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Fn(&mut Context, Entity, Self),
+    {
+        (closure)(cx, entity, self.clone());
+    }
+}
+
 impl Res<Units> for Units {
     fn get_val(&self, _: &Context) -> Units {
         *self

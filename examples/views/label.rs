@@ -1,3 +1,5 @@
+mod helpers;
+use helpers::*;
 use vizia::prelude::*;
 
 #[derive(Lens)]
@@ -31,6 +33,8 @@ fn main() {
         }
         .build(cx);
 
+        theme_selector(cx);
+
         VStack::new(cx, |cx| {
             Label::new(cx, "A label can display a static string of unicode 😂");
 
@@ -50,7 +54,9 @@ fn main() {
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, AppData::checked)
                     .on_toggle(|cx| cx.emit(AppEvent::Toggle))
-                    .id("checkbox_1");
+                    .id("checkbox_1")
+                    .top(Units::Pixels(2.0))
+                    .bottom(Units::Pixels(2.0));
 
                 Label::new(cx, "A label that is describing a form element also acts as a trigger")
                     .describing("checkbox_1");

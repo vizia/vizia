@@ -4,6 +4,7 @@ use crate::prelude::*;
 use crate::style::{Abilities, PseudoClassFlags};
 use crate::systems::hover_system;
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
+use femtovg::ImageFlags;
 use instant::{Duration, Instant};
 use std::any::Any;
 use vizia_id::GenerationalId;

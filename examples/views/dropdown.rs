@@ -15,44 +15,40 @@ fn main() {
         }
         .build(cx);
 
-        HStack::new(cx, move |cx| {
+        view_controls(cx);
+
+        VStack::new(cx, |cx| {
             // Dropdown List
             Dropdown::new(
                 cx,
-                move |cx|
-                // A Label and an Icon
-                HStack::new(cx, move |cx|{
-                    Label::new(cx, AppData::choice);
-                    Label::new(cx, ICON_CHEVRON_DOWN).class("icon");
-                })
-                .child_left(Pixels(5.0))
-                .child_right(Pixels(5.0))
-                .col_between(Stretch(1.0)),
+                move |cx| Label::new(cx, AppData::choice),
                 move |cx| {
                     List::new(cx, AppData::list, |cx, _, item| {
                         Label::new(cx, item)
                             .width(Stretch(1.0))
-                            .child_top(Stretch(1.0))
-                            .child_bottom(Stretch(1.0))
+                            //.child_top(Stretch(1.0))
+                            //.child_bottom(Stretch(1.0))
+                            .cursor(CursorIcon::Hand)
                             .bind(AppData::choice, move |handle, selected| {
                                 if item.get(handle.cx) == selected.get(handle.cx) {
-                                    handle.background_color(Color::from("#f8ac14"));
-                                } else {
-                                    handle.background_color(Color::white());
+                                    handle.checked(true);
                                 }
                             })
                             .on_press(move |cx| {
-                                cx.emit(AppDataSetter::Choice(item.get(cx)));
+                                cx.emit(AppDataSetter::Choice(item.get(cx).clone()));
                                 cx.emit(PopupEvent::Close);
                             });
                     })
                     .width(Stretch(1.0));
                 },
             )
+            .top(Pixels(40.0))
             .width(Pixels(100.0));
         })
-        .child_space(Stretch(1.0));
+        .disabled(ControlsData::disabled)
+        .class("container");
     })
     .title("Dropdown")
+    .inner_size((350, 300))
     .run();
 }

@@ -1,5 +1,6 @@
 use std::{ptr, rc::Rc, sync::Arc};
 
+use chrono::{NaiveDate, NaiveTime};
 use unic_langid::LanguageIdentifier;
 use vizia_style::Translate;
 
@@ -59,10 +60,11 @@ impl_data_simple!(std::net::IpAddr);
 impl_data_simple!(std::net::SocketAddr);
 impl_data_simple!(std::ops::RangeFull);
 impl_data_simple!(std::path::PathBuf);
-
 impl_data_simple!(LanguageIdentifier);
 impl_data_simple!(Transform);
 impl_data_simple!(Translate);
+impl_data_simple!(NaiveDate);
+impl_data_simple!(NaiveTime);
 
 impl_data_simple!(String);
 

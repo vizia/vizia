@@ -1,6 +1,11 @@
 #[allow(unused_imports)]
 use vizia::prelude::*;
 
+#[allow(dead_code)]
+const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
+#[allow(dead_code)]
+const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
+
 #[derive(Lens)]
 pub struct AppData {
     name: String,
@@ -40,6 +45,8 @@ fn main() {
             include_str!("../resources/fr/hello.ftl").to_owned(),
         );
 
+        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
+
         AppData { name: "Audrey".to_owned(), emails: 1 }.build(cx);
 
         VStack::new(cx, |cx| {
@@ -77,5 +84,6 @@ fn main() {
         .space(Pixels(10.0));
     })
     .title("Localization")
+    .ignore_default_theme()
     .run()
 }

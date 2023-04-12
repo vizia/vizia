@@ -1,5 +1,10 @@
 use vizia::prelude::*;
 
+#[allow(dead_code)]
+const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
+#[allow(dead_code)]
+const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
+
 #[derive(Lens)]
 pub struct AppData {
     temperature: f32,
@@ -21,6 +26,8 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
+        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
+
         AppData { temperature: 5.0 }.build(cx);
 
         HStack::new(cx, |cx| {
@@ -45,9 +52,10 @@ fn main() {
             Label::new(cx, "Fahrenheit");
         })
         .child_space(Stretch(1.0))
-        .col_between(Pixels(20.0));
+        .col_between(Pixels(10.0));
     })
     .title("Temperature Converter")
     .inner_size((450, 100))
+    .ignore_default_theme()
     .run();
 }

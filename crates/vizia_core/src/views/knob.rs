@@ -62,19 +62,14 @@ impl<L: Lens<Target = f32>> Knob<L> {
                     150.,
                     KnobMode::Continuous,
                 )
-                .value(lens)
-                .width(Stretch(1.0))
-                .height(Stretch(1.0))
-                .class("track");
+                .value(lens.clone())
+                .class("knob-track");
 
-                // TODO
-                // Element::new(cx)
-                //     .width(Pixels(10.0))
-                //     .height(Pixels(10.0))
-                //     .space(Stretch(1.0))
-                //     .background_color(Color::red())
-                //     .translate((30.0,0.0))
-                //     .rotate(30.0);
+                HStack::new(cx, |cx| {
+                    Element::new(cx).class("knob-tick");
+                })
+                .rotate(lens.clone().map(|v| *v * 300.0 - 150.0))
+                .class("knob-head");
             });
         })
         .navigable(true)

@@ -137,6 +137,8 @@ pub struct Map<G, I, O> {
     o: PhantomData<O>,
 }
 
+impl<G: Copy, I: Clone, O: Clone> std::marker::Copy for Map<G, I, O> {}
+
 impl<G: Clone, I, O> Clone for Map<G, I, O> {
     fn clone(&self) -> Self {
         Map { get: self.get.clone(), i: PhantomData::default(), o: PhantomData::default() }

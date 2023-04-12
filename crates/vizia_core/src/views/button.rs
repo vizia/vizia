@@ -86,6 +86,7 @@ impl Button {
             .default_action_verb(DefaultActionVerb::Click)
             .cursor(CursorIcon::Hand)
             .navigable(true)
+            .navigable(true)
     }
 }
 

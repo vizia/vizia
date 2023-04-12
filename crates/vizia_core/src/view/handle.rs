@@ -76,4 +76,8 @@ impl<'a, V> Handle<'a, V> {
         });
         self
     }
+
+    pub fn bounds(&self) -> BoundingBox {
+        self.cx.cache.get_bounds(self.entity)
+    }
 }

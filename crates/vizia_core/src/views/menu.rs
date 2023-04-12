@@ -257,15 +257,16 @@ pub struct MenuButton {
 }
 
 impl MenuButton {
-    pub fn new<F, A>(cx: &mut Context, contents: F, action: A) -> Handle<'_, Self>
+    pub fn new<F, A, V>(cx: &mut Context, contents: F, action: A) -> Handle<'_, Self>
     where
-        F: 'static + FnOnce(&mut Context),
+        F: 'static + FnOnce(&mut Context) -> Handle<V>,
         A: 'static + Fn(&mut EventContext),
+        V: 'static + View,
     {
         setup_menu_entry(
             Self { action: Some(Box::new(action)) }
                 .build(cx, move |cx| {
-                    contents(cx);
+                    contents(cx).hoverable(false);
                 })
                 .navigable(true),
             |_| {},
@@ -281,13 +282,7 @@ impl MenuButton {
     where
         A: 'static + Fn(&mut EventContext),
     {
-        Self::new(
-            cx,
-            move |cx| {
-                Label::new(cx, text);
-            },
-            action,
-        )
+        Self::new(cx, move |cx| Label::new(cx, text), action)
     }
 
     pub fn new_check<F, A, L>(cx: &mut Context, builder: F, action: A, lens: L) -> Handle<'_, Self>
@@ -305,7 +300,7 @@ impl MenuButton {
                         let val = lens.get_fallible(handle.cx);
                         handle.text(if val == Some(true) { ICON_CHECK } else { "" });
                     });
-                });
+                })
             },
             action,
         )

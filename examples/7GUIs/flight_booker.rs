@@ -3,15 +3,22 @@ use std::str::FromStr;
 use vizia::icons::ICON_CHEVRON_DOWN;
 use vizia::prelude::*;
 
+#[allow(dead_code)]
+const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
+#[allow(dead_code)]
+const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
+
 use chrono::{NaiveDate, ParseError};
 
 const STYLE: &str = r#"
+    
     /*
     * {
         border-width: 1px;
         border-color: red;
     }
     */
+    
 
 
     textbox.invalid {
@@ -44,13 +51,13 @@ impl FromStr for SimpleDate {
 #[derive(Lens)]
 pub struct AppData {
     options: Vec<&'static str>,
-    choice: String,
+    selected_option: usize,
     start_date: SimpleDate,
     end_date: SimpleDate,
 }
 
 pub enum AppEvent {
-    SetChoice(String),
+    SetChoice(usize),
     SetStartDate(SimpleDate),
     SetEndDate(SimpleDate),
 }
@@ -59,7 +66,7 @@ impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetChoice(choice) => {
-                self.choice = choice.clone();
+                self.selected_option = *choice;
             }
 
             AppEvent::SetStartDate(date) => {
@@ -77,7 +84,8 @@ impl AppData {
     pub fn new() -> Self {
         Self {
             options: vec!["one-way flight", "return flight"],
-            choice: "one-way flight".to_string(),
+            // choice: "one-way flight".to_string(),
+            selected_option: 0,
             start_date: SimpleDate(NaiveDate::from_ymd_opt(2022, 02, 12).unwrap()),
             end_date: SimpleDate(NaiveDate::from_ymd_opt(2022, 02, 26).unwrap()),
         }
@@ -86,42 +94,14 @@ impl AppData {
 
 fn main() {
     Application::new(|cx| {
+        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
         cx.add_theme(STYLE);
+
         AppData::new().build(cx);
         VStack::new(cx, |cx| {
-            Dropdown::new(
-                cx,
-                move |cx|
-                // A Label and an Icon
-                HStack::new(cx, move |cx|{
-                    Label::new(cx, AppData::choice)
-                        .width(Stretch(1.0))
-                        .text_wrap(false);
-                    Label::new(cx, ICON_CHEVRON_DOWN).class("icon").left(Pixels(5.0)).right(Pixels(5.0));
-                }).width(Stretch(1.0)),
-                // List of options
-                move |cx| {
-                    List::new(cx, AppData::options, |cx, _, item| {
-                        Label::new(cx, item)
-                            .width(Stretch(1.0))
-                            .child_top(Stretch(1.0))
-                            .child_bottom(Stretch(1.0))
-                            .bind(AppData::choice, move |handle, choice| {
-                                let selected = item.get(handle.cx) == choice.get(handle.cx);
-                                handle.background_color(if selected {
-                                    Color::from("#f8ac14")
-                                } else {
-                                    Color::white()
-                                });
-                            })
-                            .on_press(move |cx| {
-                                cx.emit(AppEvent::SetChoice(item.get(cx).to_string()));
-                                cx.emit(PopupEvent::Close);
-                            });
-                    }).width(Stretch(1.0)).height(Auto);
-                },
-            )
-            .width(Pixels(150.0));
+            PickList::new(cx, AppData::options, AppData::selected_option, true)
+                .on_select(|cx, index| cx.emit(AppEvent::SetChoice(index)))
+                .width(Pixels(150.0));
 
             Textbox::new(cx, AppData::start_date)
                 .on_edit(|cx, text| {
@@ -144,7 +124,7 @@ fn main() {
                     }
                 })
                 .width(Pixels(150.0))
-                .disabled(AppData::choice.map(|choice| choice == "one-way flight"));
+                .disabled(AppData::selected_option.map(|choice| *choice == 0));
 
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Book").width(Stretch(1.0)))
                 .width(Pixels(150.0));
@@ -154,5 +134,6 @@ fn main() {
     })
     .title("Flight Booker")
     .inner_size((250, 250))
+    .ignore_default_theme()
     .run();
 }

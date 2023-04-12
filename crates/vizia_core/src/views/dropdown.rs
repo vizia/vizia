@@ -152,6 +152,7 @@ impl Dropdown {
                     .class("title")
                     .role(Role::PopupButton)
                     .width(Stretch(1.0))
+                    .cursor(CursorIcon::Hand)
                     .on_press(|cx| cx.emit(PopupEvent::Switch));
 
                 Popup::new(cx, PopupData::is_open, false, move |cx| {
@@ -159,9 +160,11 @@ impl Dropdown {
                 })
                 .on_blur(|cx| cx.emit(PopupEvent::Close))
                 .top(Percentage(100.0))
+                .translate((0.0, 4.0))
                 .height(Auto);
             })
-            .size(Auto)
+            .cursor(CursorIcon::Hand)
+        //.on_press(|cx| cx.emit(PopupEvent::Switch))
     }
 }
 

@@ -1,41 +1,65 @@
+/* General */
+
 * {
-    color: #fafafa;
-    /* border-width: 1px;
-    border-color: red; */
+    color: #ffffff;
+    /* border-color: blue;
+    border-width: 1px; */
 }
 
-:root {
+.icon {
+    font-family: "Entypo", sans-serif;
+}
+
+root {
     background-color: #1d1d1d;
 }
 
-/* BUTTON  */
+.container {
+    width: auto;
+    height: auto;
+    row-between: 8px;
+    col-between: 8px;
+}
+
+/* Backgrounds */
+
+.bg-default {
+    background-color: #343434;
+}
+
+.bg-lighter {
+    background-color: #404040;
+}
+
+.bg-darker {
+    background-color: #1d1d1d;
+}
+
+/* Button  */
 
 button {
     border-radius: 4px;
     background-color: #484848;
-    transition: background-color 100ms;
+    transition: background-color 0.1 0;
+}
+
+button label {
+    color: #fff;
+    child-space: 1s;
 }
 
 button:over {
     background-color: #666;
-    transition: background-color 100ms;
+    transition: background-color 0.1 0;
 }
 
 button:active {
     background-color: #323232;
-    scale: 95%;
-    transition: scale 100ms;
-}
-
-button:focus-visible {
-    outline-width: 2px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
 }
 
 button.accent {
     background-color: #51afef;
-    transition: background-color 100ms;
+    transition: background-color 0.1 0;
 }
 
 button.accent label {
@@ -44,13 +68,7 @@ button.accent label {
 
 button.accent:over {
     background-color: #80caff;
-    transition: background-color 100ms;
-}
-
-button.accent:disabled {
-    border-width: 0px;
-    background-color: #404040;
-    border-color: #404040;
+    transition: background-color 0.1 0;
 }
 
 button.accent:active {
@@ -61,7 +79,7 @@ button.outline {
     background-color: transparent;
     border-width: 1px;
     border-color: #51afef;
-    transition: background-color 100ms;
+    transition: background-color 0.1 0;
 }
 
 button.outline label {
@@ -70,7 +88,7 @@ button.outline label {
 
 button.outline:over {
     background-color: #80caff10;
-    transition: background-color 100ms;
+    transition: background-color 0.1 0;
 }
 
 button.outline:active {
@@ -79,7 +97,7 @@ button.outline:active {
 
 button.ghost {
     background-color: transparent;
-    transition: background-color 100ms;
+    transition: background-color 0.1 0;
 }
 
 button.ghost label {
@@ -88,7 +106,7 @@ button.ghost label {
 
 button.ghost:over {
     background-color: #80caff10;
-    transition: background-color 100ms;
+    transition: background-color 0.1 0;
 }
 
 button.ghost:active {
@@ -101,6 +119,12 @@ button:focus-visible {
     outline-offset: 3px;
 }
 
+button:disabled {
+    border-width: 0px;
+    background-color: #404040;
+    border-color: #404040;
+}
+
 button.outline:disabled {
     background-color: transparent;
     border-width: 1px;
@@ -111,32 +135,27 @@ button.ghost:disabled {
     background-color: transparent;
 }
 
-button:disabled {
-    border-width: 0px;
-    background-color: #404040;
-    border-color: #404040;
-}
-
 button:disabled label {
     color: #888;
 }
 
-/* CHECKBOX */
+/* Checkbox */
 
 checkbox {
-    border-radius: 2px;
+    border-radius: 4px;
     border-width: 2px;
     border-color: #888;
     background-color: transparent;
-    transition: background-color 100ms;
-    transition: border-color 100ms;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
+    font: "icons";
 }
 
 checkbox:hover {
     border-color: #51afef;
     background-color: transparent;
-    transition: background-color 100ms;
-    transition: border-color 100ms;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 checkbox:focus-visible {
@@ -149,87 +168,787 @@ checkbox:checked {
     background-color: #51afef;
     border-color: #51afef;
     color: #181818;
-    transition: background-color 100ms;
-    transition: border-color 100ms;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 checkbox:disabled {
     border-color: #404040;
-    transition: border-color 100ms;
+    transition: border-color 0.1 0;
 }
 
 checkbox:hover:disabled {
     background-color: transparent;
-    transition: border-color 100ms;
+    transition: border-color 0.1 0;
 }
 
 checkbox:checked:hover {
     background-color: #80caff;
     border-color: #80caff;
     color: #181818;
-    transition: background-color 100ms;
-    transition: border-color 100ms;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 checkbox:checked:disabled {
     background-color: #404040;
     border-color: #404040;
     color: #181818;
-    transition: background-color 100ms;
-    transition: border-color 100ms;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
 checkbox.intermediate {
     background-color: #51afef;
     border-color: #51afef;
     color: #181818;
-    transition: background-color 100ms;
-    transition: border-color 100ms;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
 }
 
-/* LABEL */
+/* Chip */
 
-label.icon {
-    font-family: "tabler-icons", sans-serif;
+chip {
+    border-radius: 16px;
 }
 
-label.h2 {
-    font-size: medium;
-    font-weight: bold;
+/* Color Picker */
+
+/* Datepicker */
+
+datepicker {
+    background-color: #343434;
+    border-radius: 4px;
+    child-space: 8px;
+    row-between: 8px;
 }
 
-/* TEXTBOX */
+.datepicker-divisor {
+    background-color: #2f2f2f;
+}
+
+.datepicker-calendar {
+    width: auto;
+    height: auto;
+    left: 1s;
+    right: 1s;
+}
+
+.datepicker-calendar-day {
+    color: #888;
+    cursor: hand;
+}
+
+.datepicker-calendar-day:checked {
+    color: #181818;
+    background-color: #51afef;
+    border-radius: 4px;
+}
+
+.datepicker-calendar-day-disabled {
+    color: #585858;
+    cursor: arrow;
+}
+
+.datepicker-selected-date {
+    color: #b0b0b0;
+}
+
+.datepicker-cancel {
+    border-width: 2px;
+    border-color: #ef5151;
+    border-radius: 4px;
+}
+
+.datepicker-cancel label {
+    color: #ef5151;
+}
+
+.datepicker-apply {
+    border-radius: 4px;
+    border-width: 2px;
+    border-color: #51afef;
+    background-color: #51afef;
+}
+
+.datepicker-apply label {
+    color: #181818;
+}
+
+/* Date Time Picker */
+
+datetimepicker {
+    border-radius: 4px;
+    background-color: #343434;
+}
+
+datetimepicker tabheader label {
+    font: "icons";
+}
+
+datetimepicker tabheader:checked label {
+    color: #51afef;
+}
+
+datetimepicker tabheader .indicator {
+    background-color: #2f2f2f;
+}
+
+datetimepicker tabheader:checked .indicator {
+    background-color: #51afef;
+}
+
+/* Dropdown */
+
+dropdown {
+    background-color: #282828;
+    border-radius: 4px;
+}
+
+dropdown:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
+    outline-offset: 3px;
+}
+
+/* dropdown label {
+    child-space: 1s;
+    background-color: red;
+} */
+
+dropdown popup {
+    background-color: #282828;
+    border-radius: 4px;
+}
+
+dropdown list label {
+    color: #888;
+    cursor: hand;
+}
+
+dropdown list label:checked {
+    color: #fff;
+}
+
+dropdown list label:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+dropdown list label:hover {
+    background-color: #51afef11;
+}
+
+/* Element */
+
+/* Image */
+
+/* Knob */
+
+knob {
+    background-color: #1d1d1d;
+    border-radius: 100px;
+}
+
+knob .knob-track {
+    background-color: #51afef;
+}
+
+knob:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+.knob-head {
+    background-color: #343434;
+    border-width: 2px;
+    border-color: #1d1d1d;
+    border-radius: 100px;
+    /* outer-shadow: 0 4 4 #00000088; BUGGY */
+}
+
+.knob-tick {
+    background-color: #fff;
+    border-radius: 1px;
+}
+
+/* Label */
+
+/* List */
+
+/* Menu */
+
+menucontroller {
+    background-color: #323232;
+}
+
+menustack {
+    border-radius: 4px;
+    background-color: #323232;
+}
+
+menustack.vertical {
+    border-top-left-radius: 0px;
+    border-width: 1px;
+    border-color: #424242;
+}
+
+menu {
+    border-radius: 4px;
+}
+
+menubutton:hover {
+    background-color: #424242;
+}
+
+/* Notification */
+
+notification {
+    background-color: #242424;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+notification .color-strip {
+    background-color: #51afef;
+}
+
+notification .notification-header {
+    border-top-right-radius: 4px;
+}
+
+notification .icon label {
+    color: #ffffff88;
+}
+
+notification .icon:checked label {
+    color: #fff;
+}
+
+/* Picklist */
+
+/* Popup */
+
+popup {
+    outer-shadow: 0 0 8 #00000026;
+    opacity: 0%;
+    transition: opacity 0.1 0;
+}
+
+popup:checked {
+    opacity: 100%;
+    transition: opacity 0.1 0;
+}
+
+/* Progress Bar */
+
+/* Progress Steps */
+
+/* Radio Button */
+
+radiobutton {
+    border-width: 2px;
+    border-radius: 50%;
+    border-color: #888;
+    background-color: transparent;
+    transition: background-color 0.1 0;
+    transition: border-color 0.1 0;
+}
+
+radiobutton:hover {
+    border-color: #51afef;
+    transition: border-color 0.1 0;
+}
+
+radiobutton:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+radiobutton:checked {
+    border-color: #51afef;
+    transition: border-color 0.1 0;
+}
+
+radiobutton:checked:hover {
+    border-color: #80caff;
+    transition: border-color 0.1 0;
+}
+
+radiobutton:disabled {
+    border-color: #404040;
+    transition: border-color 0.1 0;
+}
+
+radiobutton .inner {
+    border-radius: 50%;
+    background-color: #888;
+    transition: width 0.15 0;
+    transition: height 0.15 0;
+    transition: background-color 0.1 0;
+}
+
+radiobutton:checked .inner {
+    background-color: #51afef;
+    transition: width 0.15 0;
+    transition: height 0.15 0;
+    transition: background-color 0.1 0;
+}
+
+radiobutton:hover .inner {
+    background-color: #80caff;
+    transition: background-color 0.1 0;
+}
+
+radiobutton:disabled .inner {
+    background-color: #404040;
+    transition: width 0.15 0;
+    transition: height 0.15 0;
+    transition: background-color 0.1 0;
+}
+
+/* Searchbox */
+
+/* Scroll View */
+
+/* Scroll Bar */
+
+scrollbar {
+    background-color: #181818;
+}
+
+scrollbar .thumb {
+    background-color: #404040;
+}
+
+scrollbar .thumb:hover {
+    background-color: #888;
+}
+
+scrollbar .thumb:focus {
+    background-color: #888;
+}
+
+/* Slider */
+
+slider {
+    background-color: #51afef20;
+    border-radius: 3px;
+}
+
+slider:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+slider .active {
+    background-color: #51afef80;
+    border-radius: 3px;
+}
+
+slider .thumb {
+    background-color: #51afef;
+    border-radius: 50%;
+}
+
+slider .thumb:hover {
+    background-color: #80caff;
+}
+
+slider:disabled {
+    background-color: #404040;
+}
+
+slider:disabled .active {
+    background-color: #404040;
+}
+
+slider:disabled .thumb {
+    background-color: #404040;
+}
+
+/* Named Slider */
+
+namedslider {
+    background-color: #282828;
+    border-radius: 4px;
+}
+
+namedslider > textbox {
+    color: #888;
+}
+
+namedslider slider label {
+    background-color: transparent;
+}
+
+/* Spinbox */
+
+spinbox {
+    background-color: #282828;
+    border-radius: 4px;
+}
+
+spinbox .spinbox-button {
+    color: #888888;
+    cursor: hand;
+}
+
+spinbox .spinbox-button:hover {
+    color: #ffffff;
+}
+
+spinbox .spinbox-value {
+    color: #ffffff;
+}
+
+spinbox textbox.spinbox-value {
+    border-width: 0px;
+    border-radius: 0px;
+}
+
+spinbox dropdown.spinbox-value {
+    background-color: red;
+    border-width: 0px;
+}
+
+spinbox picklist.spinbox-value {
+    background-color: transparent;
+    border-width: 0px;
+    col-between: 4px;
+}
+
+/* Stack */
+
+/* Switch */
+
+switch .switch-handle-bg {
+    border-radius: 6px;
+    background-color: #343434;
+    transition: background-color 0.1 0;
+}
+
+switch .switch-handle {
+    background-color: #888888;
+    border-radius: 50%;
+    transition: background-color 0.1 0;
+    transition: left 0.1 0;
+}
+
+switch:hover .switch-handle {
+    background-color: #c4c4c4;
+    transition: background-color 0.1 0;
+}
+
+switch:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+switch:checked .switch-handle-bg {
+    background-color: #51afef40;
+    transition: background-color 0.1 0;
+}
+
+switch:checked .switch-handle {
+    background-color: #51afef;
+    transition: background-color 0.1 0;
+}
+
+switch:checked:hover .switch-handle {
+    background-color: #80caff;
+    transition: background-color 0.1 0;
+}
+
+switch:disabled * {
+    background-color: #404040;
+    transition: background-color 0.1 0;
+}
+
+switch:hover:disabled * {
+    background-color: #404040;
+    transition: background-color 0.1 0;
+}
+
+switch:checked:disabled * {
+    background-color: #404040;
+    transition: background-color 0.1 0;
+}
+
+switch:checked:hover:disabled * {
+    background-color: #404040;
+    transition: background-color 0.1 0;
+}
+/* Tab */
+
+tabview {
+    background-color: #343434;
+    layout-type: column;
+}
+
+tabview tabheader label {
+    color: #888;
+}
+
+tabview tabheader:checked label {
+    color: #fff;
+}
+
+tabview.vertical tabheader label {
+    color: #888;
+}
+
+tabview.vertical tabheader:checked label {
+    color: #fff;
+}
+
+tabview tabheader .indicator {
+    background-color: transparent;
+    height: 2px;
+    width: 1s;
+}
+
+tabview.vertical tabheader .indicator {
+    background-color: transparent;
+    height: 1s;
+    width: 2px;
+}
+
+tabview tabheader:checked .indicator {
+    background-color: #51afef;
+}
+
+/* Table */
+
+table {
+    border-radius: 4px;
+    background-color: #343434;
+}
+
+.table-column-title {
+    font: "roboto-bold";
+}
+
+.table-column-icon {
+    font: "icons";
+}
+
+.table-row-divisor {
+    background-color: #404040;
+}
+
+.table-element {
+    background-color: transparent;
+}
+
+.table-element-colored {
+    background-color: #51afef20;
+    border-radius: 4px;
+    color: #51afef;
+}
+
+/* Textbox */
+
 textbox {
     border-width: 1px;
     border-radius: 4px;
     border-color: #282828;
-    background-color: #1d1d1d;
-    transition: border-color 100ms;
-    transition: background-color 100ms;
+    background-color: #282828;
+    transition: border-color 0.1 0;
+    transition: background-color 0.1 0;
     /* outer-shadow: 0 0 0 transparent; */
 }
 
+textbox textboxlabel {
+    color: #fff;
+    transition: color 0.1 0;
+}
+
 textbox:checked {
+    border-width: 1px;
     border-color: #51afef;
     background-color: #1d1d1d;
-    box-shadow: 0px 4px 4px #00000026;
+    outer-shadow: 0 4 4 #00000026;
     transition: border-color 0.1 0;
     transition: outer-shadow 0.1 0;
-    caret-color: red;
-    selection-color: #6464c888;
 }
 
-/* TOOLTIP */
-tooltip {
-    child-space: 10px;
-    border-color: #070707;
-    background-color: #353535;
+textbox:checked .textbox_content {
+    caret-color: #51afef;
+    selection-color: #51afef40;
+}
+
+textbox:disabled textboxlabel {
+    color: #888;
+    transition: color 0.1 0;
+}
+
+textbox:focus-visible {
+    border-color: #51afef80;
+    transition: border-color 0.1 0;
+}
+
+textbox.error {
+    border-color: #ef5151;
     border-width: 1px;
-    opacity: 0;
-    transition: opacity 100ms 500ms;
+    transition: border-color 0.1 0;
+    background-color: #3c2c2c;
 }
 
-tooltip.vis {
-    opacity: 1;
-    transition: opacity 100ms 500ms;
+/* Time Picker */
+
+timepicker {
+    background-color: #343434;
+    border-radius: 4px;
+}
+
+/* Digital Time Picker */
+
+digitaltimepicker {
+    background-color: #343434;
+    border-radius: 4px;
+}
+
+digitaltimepicker .digitaltimepicker-dot {
+    border-radius: 4px;
+    background-color: #282828;
+}
+
+digitaltimepicker textbox {
+    font-size: 24px;
+}
+
+/* Radial Time Picker */
+
+analogtimepicker {
+    background-color: #343434;
+    border-radius: 4px;
+    width: 160px;
+    height: 160px;
+}
+
+analogtimepicker .clock-face {
+    border-radius: 50%;
+    background-color: #484848;
+    width: 180px;
+    height: 180px;
+}
+
+analogtimepicker .clock-hand {
+    background-color: #51afef;
+}
+
+analogtimepicker .center-dot {
+    border-radius: 50%;
+    background-color: #51afef;
+}
+
+analogtimepicker .marker {
+    border-radius: 50%;
+    cursor: hand;
+    background-color: transparent;
+}
+
+analogtimepicker .marker:checked {
+    background-color: #51afef;
+    color: #181818;
+}
+
+analogtimepicker .time-selector-wrapper {
+    background-color: #343434;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+analogtimepicker .time-selector-wrapper button {
+    border-radius: 0px;
+    background-color: transparent;
+}
+
+analogtimepicker .time-selector-wrapper button label {
+    color: #888;
+}
+
+analogtimepicker .time-selector-wrapper button label {
+    color: #888;
+}
+
+analogtimepicker .time-selector-wrapper button:hover label {
+    color: #fff;
+}
+
+analogtimepicker .time-selector-wrapper button:checked label {
+    color: #fff;
+}
+
+analogtimepicker .time-selector-wrapper button .indicator {
+    background-color: transparent;
+    top: 1s;
+}
+
+analogtimepicker .time-selector-wrapper button:checked .indicator {
+    background-color: #51afef;
+}
+
+/* Tooltip */
+
+tooltip .tooltip-wrapper {
+    background-color: #51afef;
+    border-radius: 4px;
+}
+
+tooltip .title {
+    font-size: 18px;
+}
+
+tooltip .subtitle {
+    color: #00000088;
+}
+
+tooltip .tooltip-wrapper > label {
+    color: #181818;
+}
+
+tooltip button {
+    border-color: #181818;
+}
+
+.tooltip-pointer-wrapper {
+    width: 16px;
+    height: 12px;
+    overflow: hidden;
+    left: 4px;
+}
+
+.tooltip-pointer {
+    width: 12px;
+    height: 12px;
+    background-color: #51afef;
+    border-radius: 2px;
+}
+
+/* Tree */
+
+/* Modal */
+
+.modal {
+    background-color: #323232;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #424242;
+}
+
+.modal label {
+    color: #888;
+}
+
+.modal .title {
+    color: #fff;
+    font-size: 18px;
 }

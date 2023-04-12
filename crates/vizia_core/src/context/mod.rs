@@ -48,8 +48,10 @@ use vizia_input::{Modifiers, MouseState};
 use vizia_storage::TreeExt;
 use vizia_storage::{ChildIterator, SparseSet};
 
-// static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
+pub static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
+pub static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
+
 pub static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
 pub static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
 
@@ -480,7 +482,6 @@ impl Context {
 
         self.add_theme(DEFAULT_LAYOUT);
         if !self.ignore_default_theme {
-            // self.add_theme(DEFAULT_THEME);
             let environment = self.data::<Environment>().expect("Failed to get environment");
             match environment.theme_mode {
                 ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
@@ -490,10 +491,8 @@ impl Context {
     }
 
     pub fn add_stylesheet(&mut self, path: impl AsRef<Path>) -> Result<(), std::io::Error> {
-        let style_string = std::fs::read_to_string(path.as_ref())?;
         self.resource_manager.stylesheets.push(path.as_ref().to_owned());
-        self.style.parse_theme(&style_string);
-
+        EventContext::new(self).reload_styles().expect("Failed to reload styles");
         Ok(())
     }
 
@@ -564,19 +563,13 @@ impl Context {
     ) {
         match self.resource_manager.images.entry(path.to_string()) {
             Entry::Occupied(mut occ) => {
-                occ.get_mut().image = ImageOrId::Image(
-                    image,
-                    femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
-                );
+                occ.get_mut().image = image;
                 occ.get_mut().dirty = true;
                 occ.get_mut().retention_policy = policy;
             }
             Entry::Vacant(vac) => {
                 vac.insert(StoredImage {
-                    image: ImageOrId::Image(
-                        image,
-                        femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
-                    ),
+                    image,
                     retention_policy: policy,
                     used: true,
                     dirty: false,

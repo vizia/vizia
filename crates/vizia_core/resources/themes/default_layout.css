@@ -1,10 +1,13 @@
+/* Button */
+
 button {
     width: auto;
     height: 32px;
     child-left: 8px;
     child-right: 8px;
-    child-top: 1s;
-    child-bottom: 1s;
+    child-top: 4px;
+    child-bottom: 4px;
+    overflow: visible;
 }
 
 button label {
@@ -17,54 +20,831 @@ button.icon {
     child-space: 1s;
 }
 
+/* Checkbox */
+
 checkbox {
     width: 20px;
     height: 20px;
     child-space: 1s;
-    font-family: "tabler-icons", sans-serif;
 }
 
-label {
+/* Chip */
+
+chip {
     width: auto;
     height: auto;
-    text-wrap: false;
+    child-left: 8px;
+    child-right: 8px;
+    child-top: 4px;
+    child-bottom: 4px;
 }
 
-label.describing {
-    cursor: hand;
-}
-
-textbox {
-    overflow: hidden;
+chip label {
+    height: auto;
     width: auto;
+}
+
+/* Color picker */
+
+/* Datepicker */
+
+datepicker {
+    width: 252px;
+    height: 289px;
+    child-space: 8px;
+    row-between: 8px;
+}
+
+.datepicker-header {
+    width: 1s;
+    height: auto;
+    col-between: 4px;
+}
+
+.datepicker-header picklist dropdown popup {
+    left: -28px;
+    width: 131px;
+}
+
+.datepicker-divisor {
+    width: 1s;
+    height: 1px;
+}
+
+.datepicker-calendar {
+    width: auto;
+    height: auto;
+    left: 1s;
+    right: 1s;
+}
+
+.datepicker-calendar-header {
+    child-space: 1s;
+    width: 32px;
     height: 32px;
-    child-left: 10px;
-    child-right: 10px;
-    child-top: 10px;
-    child-bottom: 10px;
 }
 
-/* label.icon {
-    font-family: "tabler-icons", sans-serif;
+.datepicker-calendar-day {
+    width: 32px;
+    height: 32px;
+    child-space: 1s;
 }
 
-textbox {
-    overflow: hidden;
+.datepicker-calendar-day-disabled {
+    width: 32px;
+    height: 32px;
+    child-space: 1s;
+}
+
+.datepicker-selected-date {
+    left: 1s;
+    right: 1s;
+}
+
+.datepicker-actions-container {
+    left: 1s;
+    right: 1s;
+    col-between: 4px;
+}
+
+.datepicker-cancel {
     width: auto;
     height: auto;
+}
+
+.datepicker-cancel label {
+    top: 2px;
+    bottom: 2px;
+    right: 8px;
+    left: 8px;
+}
+
+.datepicker-apply {
+    width: auto;
+    height: auto;
+}
+
+.datepicker-apply label {
+    top: 2px;
+    bottom: 2px;
+    right: 8px;
+    left: 8px;
+}
+
+/* Date Time Picker */
+
+datetimepicker {
+    height: 322px;
+    width: 252px;
+}
+
+datetimepicker tabheader {
+    width: 1s;
+}
+
+datetimepicker tabheader label {
+    width: 1s;
+    height: 32px;
+    child-space: 1s;
+}
+
+datetimepicker tabheader .indicator {
+    height: 1px;
+}
+
+/* Dropdown */
+
+dropdown {
+    height: 32px;
+}
+
+dropdown .title {
+    width: 1s;
+    height: 1s;
+    child-left: 8px;
+    child-right: 4px;
     child-top: 1s;
     child-bottom: 1s;
 }
 
+dropdown popup {
+    width: 100%;
+    height: auto;
+}
+
+dropdown popup list {
+    width: 100%;
+    height: auto;
+    child-top: 4px;
+    child-bottom: 4px;
+}
+
+dropdown list label {
+    width: 100%;
+    height: 32px;
+    child-left: 6px;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+dropdown vstack {
+    child-space: auto;
+}
+
+/* Element */
+
+/* Image */
+
+image {
+    width: auto;
+    height: auto;
+}
+
+/* Knob */
+
+knob {
+    width: 32px;
+    height: 32px;
+}
+
+knob.small {
+    width: 24px;
+    height: 24px;
+}
+
+.knob-track {
+    width: 1s;
+    height: 1s;
+}
+
+.knob-head {
+    width: 1s;
+    height: 1s;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+}
+
+.knob-tick {
+    width: 2px;
+    height: 8px;
+    left: 1s;
+    right: 1s;
+    top: 2px;
+    bottom: 1s;
+}
+
+knob.small .knob-tick {
+    height: 4px;
+}
+
+/* Label */
+
 label {
     width: auto;
     height: auto;
+    max-width: 100%;
+    min-width: 0px;
+    layout-type: row;
+    child-space: auto;
     child-left: 0px;
-    text-wrap: false;
+}
+
+label.icon {
+    font-family: "Entypo", sans-serif;
+}
+
+label.material-icon {
+    font-family: "Material Icons", sans-serif;
+}
+
+/* List */
+
+/* Menu */
+
+menu {
+    overflow: visible;
+}
+
+menu > menustack {
+    position-type: self-directed;
+    z-index: 1000;
+    display: none;
+}
+
+menu:selected > menustack {
+    display: flex;
+}
+
+menustack {
+    width: auto;
+    height: auto;
+    overflow: visible;
+    col-between: 4px;
+}
+
+menustack.vertical {
+    layout-type: column;
+    child-top: 4px;
+    child-bottom: 4px;
+}
+
+menustack.horizontal {
+    layout-type: row;
+}
+
+menustack.vertical > menu > menustack {
+    left: 100%;
+}
+
+menustack.horizontal > menu > menustack {
+    top: 100%;
+}
+
+menustack.vertical > menu > hstack > .menu_arrow {
+    display: flex;
+    font: "material";
+    left: 1s;
+    top: 1s;
+    bottom: 1s;
+}
+
+menucontroller {
+    width: 0px;
+    height: 0px;
+    overflow: visible;
+}
+
+menucontroller label {
+    left: 8px;
+    right: 8px;
+}
+
+.menu_arrow {
+    display: none;
+}
+
+/* Notification */
+
+notification {
+    width: 420px;
+    height: auto;
+}
+
+notification .color-strip {
+    width: 2px;
+    height: 1s;
+}
+
+notification .notification-header {
+    width: 1s;
+    height: auto;
+    child-left: 12px;
+    child-right: 4px;
+    child-top: 4px;
+    child-bottom: 4px;
+    col-between: 12px;
+}
+
+notification .notification-header label {
+    width: 1s;
+}
+
+notification .notification-container {
+    width: 1s;
+    height: auto;
+    child-left: 16px;
+    child-right: 16px;
+    child-top: 8px;
+    child-bottom: 8px;
+    overflow: visible;
+}
+
+notification .notification-container label {
+    width: 1s;
+    height: auto;
+    overflow: visible;
+}
+
+notification .icon-container {
+    width: auto;
+    height: auto;
+    col-between: 0px;
+}
+
+notification .icon {
+    width: 24px;
+    height: 24px;
+    child-space: 1s;
+}
+
+notification .icon label {
+    width: auto;
+    height: auto;
+}
+
+/* Picklist */
+
+/* Popup */
+
+popup {
+    width: auto;
+    height: auto;
+    display: none;
+    opacity: 0;
+}
+
+popup:checked {
+    display: flex;
+    opacity: 1;
+}
+
+/* Progress Bar */
+
+/* Progress Steps */
+
+/* Radiobutton */
+
+radiobutton {
+    width: 16px;
+    height: 16px;
+    child-space: 1s;
+}
+
+radiobutton .inner {
+    width: 0px;
+    height: 0px;
+}
+
+radiobutton:checked .inner {
+    width: 8px;
+    height: 8px;
+}
+
+radiobutton:disabled .inner {
+    width: 8px;
+    height: 8px;
+}
+
+/* Searchbox */
+
+/* Scroll View */
+
+scrollview {
+    overflow: hidden;
+}
+
+scrollview > .scroll_content {
+    width: auto;
+    height: auto;
+    min-width: 100%;
+    min-height: 100%;
+    position-type: self-directed;
+}
+
+scrollview > scrollbar.horizontal {
+    width: 1s;
+    height: 8px;
+    left: 0px;
+    right: 0px;
+    top: 1s;
+    bottom: 0px;
+}
+
+scrollview > scrollbar.vertical {
+    width: 8px;
+    height: 1s;
+    left: 1s;
+    top: 0px;
+    bottom: 0px;
+    right: 0px;
+}
+
+/* Scroll Bar */
+
+scrollbar.horizontal {
+    height: 8px;
+}
+
+scrollbar.vertical {
+    width: 8px;
+}
+
+scrollbar .thumb {
+    min-width: 4px;
+    min-height: 4px;
+}
+
+scrollbar.horizontal .thumb {
+    height: 1s;
+}
+
+scrollbar.vertical .thumb {
+    width: 1s;
+}
+
+/* Slider */
+
+slider {
+    height: 8px;
+    width: 1s;
+    border-radius: 2px;
+}
+
+slider.vertical {
+    top: auto;
+    bottom: auto;
+    height: 1s;
+    width: 8px;
+}
+
+slider .thumb {
+    width: 16px;
+    height: 16px;
+    top: 1s;
+    bottom: 1s;
+    child-space: 1s;
+}
+
+/* Named Slider */
+
+namedslider {
+    height: 28px;
+    child-top: 1s;
+    child-bottom: 1s;
+    child-space: 2px;
+    child-left: 2px;
+    child-right: 0px;
+    col-between: 4px;
+}
+
+namedslider > textbox {
+    min-width: 55px;
+}
+
+namedslider slider {
+    width: 1s;
+    height: 1s;
+    top: 0px;
+    bottom: 0px;
+}
+
+namedslider slider label {
+    left: 4px;
+    top: 1s;
+    bottom: 1s;
+    right: 4px;
+}
+
+/* Spinbox */
+
+spinbox {
+    child-space: 1s;
+    child-left: 4px;
+    child-right: 4px;
+}
+
+spinbox.horizontal {
+    layout-type: row;
+    height: 32px;
+}
+
+spinbox.vertical {
+    layout-type: column;
+    width: 32px;
+}
+
+spinbox.vertical {
+    child-top: 4px;
+    child-bottom: 4px;
+}
+
+spinbox .container {
+    width: auto;
+}
+
+spinbox .spinbox-button {
+    height: 24px;
+    child-space: 1s;
+}
+
+spinbox.horizontal .spinbox-button {
+    width: 24px;
+}
+
+spinbox.vertical .spinbox-button {
+    width: 1s;
+}
+
+spinbox .spinbox-value {
+    width: 1s;
+    height: 1s;
+    child-space: 1s;
+}
+
+spinbox label.spinbox-value {
+    width: auto;
+    left: 1s;
+    right: 1s;
+}
+
+spinbox textbox.spinbox-value {
+    width: auto;
+    min-width: 24px;
+    height: 24px;
+    child-space: 1s;
+    left: 4px;
+    right: 4px;
+}
+
+spinbox textbox.spinbox-value textboxcontainer {
+    min-width: 32px;
+    child-space: 1s;
+    width: auto;
+}
+
+spinbox textbox.spinbox-value textboxlabel {
+    width: auto;
+}
+
+spinbox picklist.spinbox-value {
+    width: 1s;
+    child-space: 1s;
+}
+
+spinbox picklist.spinbox-value dropdown {
+    width: 100%;
+}
+
+spinbox picklist.spinbox-value .title {
+    width: 1s;
+    col-between: 4px;
+}
+
+spinbox picklist.spinbox-value .title label {
+    left: 1s;
+    right: 1s;
+}
+
+/* Stack */
+
+zstack > * {
+    position-type: self-directed;
+}
+
+/* Switch */
+
+switch {
+    width: 30px;
+    height: 18px;
+}
+
+switch .switch-handle {
+    left: 0px;
+    width: 18px;
+    height: 18px;
+    transition: left 0.1 0;
+}
+
+switch .switch-handle-bg {
+    width: 30px;
+    height: 12px;
+    top: 1s;
+    bottom: 1s;
+    transition: background-color 0.1 0;
+}
+
+switch:checked .switch-handle {
+    left: 12px;
+    transition: left 0.1 0;
+}
+
+/* Tab */
+
+tabview {
+    width: 1s;
+    height: 1s;
+}
+
+tabview.vertical {
+    layout-type: row;
+}
+
+tabview.vertical tabheader {
+    layout-type: row;
+}
+
+tabview .tabview-tabheader-wrapper {
+    layout-type: row;
+}
+
+tabview.vertical .tabview-tabheader-wrapper {
+    layout-type: column;
+}
+
+.tabview-tabheader-wrapper {
+    height: auto;
+    col-between: 1px;
+}
+
+tabheader {
+    width: auto;
+    height: 32px;
+}
+
+tabheader label {
+    height: 1s;
+    child-left: 4px;
+    child-right: 4px;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+tabheader .indicator {
+    height: 2px;
+}
+
+/* tabheader label {
+    top: 4px;
+    bottom: 4px;
+    left: 8px;
+    right: 8px;
+} 
+
+.tabview-content-wrapper {
+    width: 1s;
+    height: 1s;
+} */
+
+/* Table */
+
+table {
+    child-left: 4px;
+    child-top: 4px;
+    child-right: 4px;
+    child-bottom: 4px;
+}
+
+tablecolumn * {
+    row-between: 4px;
+}
+
+.table-column-header {
+    height: 30px;
+    bottom: 8px;
+}
+
+.table-column-title {
+    child-left: 5px;
+    width: 1s;
+    height: 1s;
+}
+
+.table-column-icon {
+    width: 30px;
+    child-space: 1s;
+}
+
+.table-row-divisor {
+    height: 1px;
+}
+
+.table-element {
+    width: 1s;
+    height: 32px;
+    child-space: 1s;
+    child-left: 4px;
+}
+
+.table-element-colored {
+    left: 4px;
+    top: 1s;
+    bottom: 1s;
+    child-space: 1s;
+    child-left: 8px;
+    child-right: 8px;
+    child-top: 2px;
+    child-bottom: 2px;
+}
+
+/* Textbox */
+
+textbox {
+    width: auto;
+    height: auto;
+    child-left: 5px;
+    child-right: 5px;
+    child-top: 2px;
+    child-bottom: 2px;
+    min-width: 0px;
+}
+
+textbox .textbox_content {
+    layout-type: row;
+    width: auto;
+    height: auto;
+    min-width: 0px;
+    overflow: visible;
+}
+
+textbox .textbox_container {
+    width: 1s;
+    height: 1s;
+    min-width: 0px;
+    min-height: 0px;
+    child-right: 1s;
+    child-bottom: 1s;
+    overflow: visible;
+}
+
+textbox.align_right .textbox_container {
+    child-right: 0px;
+    child-left: 1s;
+}
+
+textbox.align_right .textbox_content {
+    child-right: 0px;
+    child-left: 1s;
+}
+
+textbox.align_center .textbox_container {
+    child-left: 1s;
+}
+
+textbox.align_center .textbox_content {
+    child-right: 1s;
+    child-left: 1s;
+}
+
+textbox.multi_line_wrapped .textbox_content {
+    max-width: 100%;
+}
+
+textbox.single_line .textbox_container {
+    min-height: auto;
+}
+
+textbox.single_line {
+    min-height: auto;
+}
+
+textbox.multi_line_wrapped {
+    min-height: 28px;
+}
+
+textbox.multi_line_unwrapped {
+    min-height: 28px;
+}
+
+/* Time Picker */
+
+timepicker digitaltimepicker {
+    width: 1s;
 }
 
 checkbox {
-    font-family: "Entypo", sans-serif;
+    font-family: Entypo, sans-serif;
 }
 
 image {
@@ -81,24 +861,101 @@ slider {
     width: 1s;
 }
 
-slider.vertical {
-    top: auto;
-    bottom: auto;
-    height: 1s;
-    width: 5px;
+timepicker digitaltimepicker .digitaltimepicker-button-wrapper {
+    left: 1s;
 }
 
-slider .thumb {
+/* Digital Time Picker */
+
+digitaltimepicker {
+    height: auto;
+    width: auto;
+    child-space: 8px;
+    col-between: 8px;
+}
+
+digitaltimepicker > spinbox {
+    width: 120px;
+}
+
+digitaltimepicker .digitaltimepicker-button-wrapper {
+    child-top: 1s;
+    child-bottom: 1s;
+    height: 1s;
+}
+
+digitaltimepicker .digitaltimepicker-dots-wrapper {
+    width: auto;
+    height: 1s;
+    child-space: 1s;
+    row-between: 8px;
+}
+
+digitaltimepicker .digitaltimepicker-dot {
+    width: 6px;
+    height: 6px;
+}
+
+/* Radial Time Picker */
+
+analogtimepicker {
+    child-space: 8px;
+    border-radius: 4px;
+}
+
+analogtimepicker .clock-face {
+    child-space: 1s;
+}
+
+analogtimepicker .clock-hand {
+    width: 1px;
+    height: 80px;
+}
+
+analogtimepicker .center-dot {
+    width: 4px;
+    height: 4px;
+}
+
+analogtimepicker .marker {
+    width: 32px;
+    height: 32px;
+    child-space: 1s;
+}
+
+analogtimepicker .controls-wrapper {
     top: 1s;
     bottom: 1s;
+    right: 1s;
+    left: 1s;
+    width: auto;
+    height: 80px;
+    row-between: 1s;
+    child-left: 1s;
+    child-right: 1s;
 }
 
-scrollview {
+analogtimepicker .time-selector-wrapper {
+    height: auto;
     overflow: hidden;
 }
 
-scrollbar > .thumb {
-    background-color: #5d5d5d;
+analogtimepicker .time-selector-wrapper button {
+    width: 30px;
+    child-left: 0px;
+    child-right: 0px;
+    child-top: 0px;
+    child-bottom: 0px;
+}
+
+analogtimepicker .time-selector-wrapper button label {
+    left: 4px;
+    right: 4px;
+    top: 1s;
+    bottom: 1s;
+    width: 1s;
+    height: 1s;
+    child-space: 1s;
 }
 
 scrollview > .scroll_content {
@@ -191,4 +1048,74 @@ menustack.vertical > menu > hstack > .menu_arrow {
     left: 1s;
     top: 1s;
     bottom: 1s;
-} */
+    width: 1s;
+    height: 1s;
+    child-space: 1s;
+}
+
+analogtimepicker .time-selector-wrapper button .indicator {
+    top: 1s;
+    width: 100%;
+    height: 2px;
+}
+
+/* Tooltip */
+
+tooltip {
+    height: auto;
+}
+
+tooltip .tooltip-wrapper {
+    child-space: 8px;
+}
+
+tooltip .tooltip-button-wrapper {
+    top: 8px;
+    left: 1s;
+    width: auto;
+    height: auto;
+    col-between: 8px;
+}
+
+.tooltip-pointer-wrapper {
+    width: 16px;
+    height: 12px;
+    overflow: hidden;
+    left: 4px;
+}
+
+.tooltip-pointer {
+    width: 12px;
+    height: 12px;
+    background-color: #51afef;
+    border-radius: 2px;
+}
+
+/* Tree */
+
+/* Modal */
+
+.modal {
+    width: 200px;
+    space: 1s;
+    overflow: visible;
+    child-space: 8px;
+    row-between: 16px;
+}
+
+.modal label {
+    width: auto;
+    height: auto;
+}
+
+.modal button {
+    top: 8px;
+}
+
+.modal .title {
+    bottom: 4px;
+}
+
+.modal .accent {
+    left: 1s;
+}

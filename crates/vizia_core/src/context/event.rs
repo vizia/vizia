@@ -469,6 +469,20 @@ impl<'a> EventContext<'a> {
         self.style.needs_redraw();
     }
 
+    pub fn set_theme_mode(&mut self, theme_mode: ThemeMode) {
+        if !self.ignore_default_theme {
+            match theme_mode {
+                ThemeMode::LightMode => {
+                    self.resource_manager.themes[1] = String::from(LIGHT_THEME);
+                }
+
+                ThemeMode::DarkMode => {
+                    self.resource_manager.themes[1] = String::from(DARK_THEME);
+                }
+            }
+        }
+    }
+
     pub fn needs_relayout(&mut self) {
         self.style.needs_relayout();
         self.style.needs_redraw();

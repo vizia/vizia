@@ -1,63 +1,31 @@
 use vizia::prelude::*;
 
-const STYLE: &str = r#"
-
-    .modal {
-        space: 1s;
-        background-color: white;
-        border-radius: 3px;
-        border-width: 1px;
-        border-color: #999999;
-        outer-shadow: 0 3 10 #00000055;
-        overflow: visible;
-        child-space: 10px;
-    }
-
-    modal>popup>label {
-        width: auto;
-        height: auto;
-        space: 5px;
-        child-space: 1s;
-    }
-
-    button {
-        border-radius: 3px;
-        child-space: 1s;
-    }
-
-    hstack {
-        child-space: 1s;
-        col-between: 20px;
-    }
-"#;
+#[allow(dead_code)]
+const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
+#[allow(dead_code)]
+const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
+        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
 
         AppData { show_modal: false }.build(cx);
 
-        Button::new(cx, |cx| cx.emit(AppEvent::ShowModal), |cx| Label::new(cx, "Show Modal"))
-            .width(Pixels(150.0))
-            .space(Pixels(50.0));
+        VStack::new(cx, |cx| {
+            Button::new(cx, |cx| cx.emit(AppEvent::ShowModal), |cx| Label::new(cx, "Show Modal"));
 
-        Popup::new(cx, AppData::show_modal, true, |cx| {
-            Label::new(cx, "This is a message").width(Stretch(1.0));
-            HStack::new(cx, |cx| {
+            Popup::new(cx, AppData::show_modal, true, |cx| {
+                Label::new(cx, "Modal Title").class("title");
+                Label::new(cx, "This is a message");
                 Button::new(cx, |cx| cx.emit(AppEvent::HideModal), |cx| Label::new(cx, "Ok"))
-                    .width(Pixels(100.0))
                     .class("accent");
-
-                Button::new(cx, |cx| cx.emit(AppEvent::HideModal), |cx| Label::new(cx, "Cancel"))
-                    .width(Pixels(100.0));
-            });
+            })
+            .on_blur(|cx| cx.emit(AppEvent::HideModal))
+            .class("modal");
         })
-        .on_blur(|cx| cx.emit(AppEvent::HideModal))
-        .width(Pixels(300.0))
-        .height(Auto)
-        .row_between(Pixels(10.0))
-        .class("modal");
+        .class("container");
     })
+    .ignore_default_theme()
     .title("Modal")
     .run();
 }

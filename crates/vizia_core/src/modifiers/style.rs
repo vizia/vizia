@@ -442,6 +442,8 @@ pub trait StyleModifiers: internal::Modifiable {
         Scale,
         SystemFlags::REDRAW
     );
+
+    // modifier!(transform, Transform2D);
 }
 
 impl<'a, V: View> StyleModifiers for Handle<'a, V> {}
