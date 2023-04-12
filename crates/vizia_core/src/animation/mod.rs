@@ -49,6 +49,9 @@ pub(crate) use animation_state::AnimationState;
 mod interpolator;
 pub use interpolator::Interpolator;
 
+mod cubic_curve;
+pub use cubic_curve::CubicCurve;
+
 // mod transition;
 // pub(crate) use transition::Transition;
 
