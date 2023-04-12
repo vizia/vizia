@@ -1,7 +1,4 @@
-use crate::{
-    prelude::*,
-    state::{Index, Then},
-};
+use crate::prelude::*;
 
 pub enum TabEvent {
     SetSelected(usize),

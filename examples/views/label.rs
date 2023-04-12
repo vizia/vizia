@@ -33,8 +33,6 @@ fn main() {
         }
         .build(cx);
 
-        theme_selector(cx);
-
         VStack::new(cx, |cx| {
             Label::new(cx, "A label can display a static string of unicode 😂");
 

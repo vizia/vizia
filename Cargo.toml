@@ -155,13 +155,6 @@ path = "examples/views/vstack.rs"
 name = "popup"
 path = "examples/views/popup.rs"
 
-
-[[example]]
-name = "spinbox"
-path = "examples/views/spinbox.rs"
-
-
-
 [[example]]
 name = "textbox"
 path = "examples/views/textbox.rs"

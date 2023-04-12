@@ -1,13 +1,11 @@
 mod helpers;
 use helpers::*;
-use vizia::icons::ICON_CHECK;
 
+use vizia::icons::ICON_CHECK;
 use vizia::prelude::*;
 
 fn main() {
     Application::new(|cx| {
-        // view_controls(cx);
-
         ExamplePage::new(cx, |cx| {
             // Basic Button
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
@@ -32,11 +30,6 @@ fn main() {
                 },
             );
         });
-
-        // HStack::new(cx, |cx| {
-        // })
-        // .disabled(ControlsData::disabled)
-        // .class("container");
     })
     .title("Button")
     .inner_size((700, 200))

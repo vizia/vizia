@@ -1,24 +1,17 @@
 /* General */
 
 * {
-    color: #ffffff;
+    color: #fafafa;
     /* border-color: blue;
     border-width: 1px; */
 }
 
-.icon {
-    font-family: "Entypo", sans-serif;
+label.icon {
+    font-family: "tabler-icons", sans-serif;
 }
 
-root {
+:root {
     background-color: #1d1d1d;
-}
-
-.container {
-    width: auto;
-    height: auto;
-    row-between: 8px;
-    col-between: 8px;
 }
 
 /* Backgrounds */
@@ -35,31 +28,34 @@ root {
     background-color: #1d1d1d;
 }
 
-/* Button  */
+/* BUTTON  */
 
 button {
     border-radius: 4px;
     background-color: #484848;
-    transition: background-color 0.1 0;
-}
-
-button label {
-    color: #fff;
-    child-space: 1s;
+    transition: background-color 100ms;
 }
 
 button:over {
     background-color: #666;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 button:active {
     background-color: #323232;
+    scale: 95%;
+    transition: scale 100ms;
+}
+
+button:focus-visible {
+    outline-width: 2px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
 }
 
 button.accent {
     background-color: #51afef;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 button.accent label {
@@ -68,7 +64,13 @@ button.accent label {
 
 button.accent:over {
     background-color: #80caff;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
+}
+
+button.accent:disabled {
+    border-width: 0px;
+    background-color: #404040;
+    border-color: #404040;
 }
 
 button.accent:active {
@@ -79,7 +81,7 @@ button.outline {
     background-color: transparent;
     border-width: 1px;
     border-color: #51afef;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 button.outline label {
@@ -88,7 +90,7 @@ button.outline label {
 
 button.outline:over {
     background-color: #80caff10;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 button.outline:active {
@@ -97,7 +99,7 @@ button.outline:active {
 
 button.ghost {
     background-color: transparent;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 button.ghost label {
@@ -106,7 +108,7 @@ button.ghost label {
 
 button.ghost:over {
     background-color: #80caff10;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 button.ghost:active {
@@ -119,12 +121,6 @@ button:focus-visible {
     outline-offset: 3px;
 }
 
-button:disabled {
-    border-width: 0px;
-    background-color: #404040;
-    border-color: #404040;
-}
-
 button.outline:disabled {
     background-color: transparent;
     border-width: 1px;
@@ -135,27 +131,32 @@ button.ghost:disabled {
     background-color: transparent;
 }
 
+button:disabled {
+    border-width: 0px;
+    background-color: #404040;
+    border-color: #404040;
+}
+
 button:disabled label {
     color: #888;
 }
 
-/* Checkbox */
+/* CHECKBOX */
 
 checkbox {
-    border-radius: 4px;
+    border-radius: 2px;
     border-width: 2px;
     border-color: #888;
     background-color: transparent;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
-    font: "icons";
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 checkbox:hover {
     border-color: #51afef;
     background-color: transparent;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 checkbox:focus-visible {
@@ -168,48 +169,95 @@ checkbox:checked {
     background-color: #51afef;
     border-color: #51afef;
     color: #181818;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 checkbox:disabled {
     border-color: #404040;
-    transition: border-color 0.1 0;
+    transition: border-color 100ms;
 }
 
 checkbox:hover:disabled {
     background-color: transparent;
-    transition: border-color 0.1 0;
+    transition: border-color 100ms;
 }
 
 checkbox:checked:hover {
     background-color: #80caff;
     border-color: #80caff;
     color: #181818;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 checkbox:checked:disabled {
     background-color: #404040;
     border-color: #404040;
     color: #181818;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 checkbox.intermediate {
     background-color: #51afef;
     border-color: #51afef;
     color: #181818;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+/* LABEL */
+
+label.icon {
+    font-family: "tabler-icons", sans-serif;
+}
+
+label.h2 {
+    font-size: medium;
+    font-weight: bold;
+}
+
+/* TEXTBOX */
+textbox {
+    border-width: 1px;
+    border-radius: 4px;
+    border-color: #282828;
+    background-color: #1d1d1d;
+    transition: border-color 100ms;
+    transition: background-color 100ms;
+    /* outer-shadow: 0 0 0 transparent; */
+}
+
+textbox:checked {
+    border-color: #51afef;
+    background-color: #1d1d1d;
+    box-shadow: 0px 4px 4px #00000026;
     transition: border-color 0.1 0;
+    transition: outer-shadow 0.1 0;
+    caret-color: red;
+    selection-color: #6464c888;
+}
+
+/* TOOLTIP */
+tooltip {
+    child-space: 10px;
+    border-color: #070707;
+    background-color: #353535;
+    border-width: 1px;
+    opacity: 0;
+    transition: opacity 100ms 500ms;
+}
+
+tooltip.vis {
+    opacity: 1;
+    transition: opacity 100ms 500ms;
 }
 
 /* Chip */
 
 chip {
-    border-radius: 16px;
+    border-radius: 4px;
 }
 
 /* Color Picker */

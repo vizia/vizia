@@ -5,9 +5,8 @@ button {
     height: 32px;
     child-left: 8px;
     child-right: 8px;
-    child-top: 4px;
-    child-bottom: 4px;
-    overflow: visible;
+    child-top: 1s;
+    child-bottom: 1s;
 }
 
 button label {
@@ -26,17 +25,19 @@ checkbox {
     width: 20px;
     height: 20px;
     child-space: 1s;
+    font-family: "tabler-icons", sans-serif;
 }
 
 /* Chip */
 
 chip {
     width: auto;
-    height: auto;
+    height: 20px;
     child-left: 8px;
     child-right: 8px;
-    child-top: 4px;
-    child-bottom: 4px;
+    child-top: 1s;
+    child-bottom: 1s;
+    font-size: small;
 }
 
 chip label {
@@ -244,19 +245,11 @@ knob.small .knob-tick {
 label {
     width: auto;
     height: auto;
-    max-width: 100%;
-    min-width: 0px;
-    layout-type: row;
-    child-space: auto;
-    child-left: 0px;
+    text-wrap: false;
 }
 
-label.icon {
-    font-family: "Entypo", sans-serif;
-}
-
-label.material-icon {
-    font-family: "Material Icons", sans-serif;
+label.describing {
+    cursor: hand;
 }
 
 /* List */
@@ -771,80 +764,19 @@ tablecolumn * {
 /* Textbox */
 
 textbox {
+    overflow: hidden;
     width: auto;
-    height: auto;
-    child-left: 5px;
-    child-right: 5px;
-    child-top: 2px;
-    child-bottom: 2px;
-    min-width: 0px;
-}
-
-textbox .textbox_content {
-    layout-type: row;
-    width: auto;
-    height: auto;
-    min-width: 0px;
-    overflow: visible;
-}
-
-textbox .textbox_container {
-    width: 1s;
-    height: 1s;
-    min-width: 0px;
-    min-height: 0px;
-    child-right: 1s;
-    child-bottom: 1s;
-    overflow: visible;
-}
-
-textbox.align_right .textbox_container {
-    child-right: 0px;
-    child-left: 1s;
-}
-
-textbox.align_right .textbox_content {
-    child-right: 0px;
-    child-left: 1s;
-}
-
-textbox.align_center .textbox_container {
-    child-left: 1s;
-}
-
-textbox.align_center .textbox_content {
-    child-right: 1s;
-    child-left: 1s;
-}
-
-textbox.multi_line_wrapped .textbox_content {
-    max-width: 100%;
-}
-
-textbox.single_line .textbox_container {
-    min-height: auto;
-}
-
-textbox.single_line {
-    min-height: auto;
-}
-
-textbox.multi_line_wrapped {
-    min-height: 28px;
-}
-
-textbox.multi_line_unwrapped {
-    min-height: 28px;
+    height: 32px;
+    child-left: 10px;
+    child-right: 10px;
+    child-top: 10px;
+    child-bottom: 10px;
 }
 
 /* Time Picker */
 
 timepicker digitaltimepicker {
     width: 1s;
-}
-
-checkbox {
-    font-family: Entypo, sans-serif;
 }
 
 image {

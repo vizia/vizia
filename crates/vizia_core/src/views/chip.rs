@@ -3,7 +3,7 @@ use crate::prelude::*;
 pub struct Chip;
 
 impl Chip {
-    pub fn new<'a, T>(cx: &'a mut Context, text: impl Res<T>) -> Handle<'a, Self>
+    pub fn new<'a, T>(cx: &'a mut Context, text: impl Res<T> + Clone) -> Handle<'a, Self>
     where
         T: ToString,
     {

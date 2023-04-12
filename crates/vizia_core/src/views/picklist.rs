@@ -1,4 +1,4 @@
-use crate::fonts::vizia_icons::CHEVRON_DOWN;
+use crate::icons::ICON_CHEVRON_DOWN;
 use crate::prelude::*;
 
 pub struct PickList {
@@ -42,7 +42,7 @@ impl PickList {
                             })
                             .hoverable(false);
                         if show_handle {
-                            Label::new(cx, CHEVRON_DOWN).class("icon").hoverable(false);
+                            Label::new(cx, ICON_CHEVRON_DOWN).class("icon").hoverable(false);
                         }
                     })
                     .col_between(Stretch(1.0))

@@ -34,6 +34,13 @@ impl_parse! {
     }
 }
 
+impl<T: Into<LengthOrPercentage>> From<T> for Translate {
+    fn from(value: T) -> Translate {
+        let l = value.into();
+        Translate { x: l.clone(), y: l }
+    }
+}
+
 impl<T1: Into<LengthOrPercentage>, T2: Into<LengthOrPercentage>> From<(T1, T2)> for Translate {
     fn from(value: (T1, T2)) -> Translate {
         Translate { x: value.0.into(), y: value.1.into() }

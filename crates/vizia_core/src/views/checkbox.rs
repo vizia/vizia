@@ -157,7 +157,7 @@ impl Checkbox {
                 let intermediate = intermediate.clone();
                 handle.bind(intermediate, move |handle, i| {
                     if c.get(handle.cx) {
-                        handle.text(CHECK).toggle_class("intermediate", false);
+                        handle.text(ICON_CHECK).toggle_class("intermediate", false);
                     } else if i.get(handle.cx) {
                         handle.text("-").toggle_class("intermediate", true);
                     } else {

@@ -205,6 +205,7 @@ where
                 thumb_size: 0.0,
                 size: 0.0,
                 range: 0.0..1.0,
+                step: 0.01,
                 keyboard_fraction: 0.1,
             },
 

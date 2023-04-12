@@ -1,5 +1,5 @@
 use crate::{
-    fonts::vizia_icons::{CHEVRON_DOWN, CHEVRON_RIGHT, CROSS},
+    icons::{ICON_CHEVRON_DOWN, ICON_CHEVRON_RIGHT, ICON_X},
     prelude::*,
 };
 
@@ -32,9 +32,9 @@ impl Notification {
                                             cx,
                                             Notification::container_open.map(|open| {
                                                 if *open {
-                                                    CHEVRON_DOWN
+                                                    ICON_CHEVRON_DOWN
                                                 } else {
-                                                    CHEVRON_RIGHT
+                                                    ICON_CHEVRON_RIGHT
                                                 }
                                             }),
                                         )
@@ -44,27 +44,27 @@ impl Notification {
                                 .class("icon")
                                 .checked(Notification::container_open);
                             }
-                            Button::new(cx, |_| (), |cx| Label::new(cx, CROSS).class("icon"))
+                            Button::new(cx, |_| (), |cx| Label::new(cx, ICON_X).class("icon"))
                                 .class("icon");
                         })
                         .class("icon-container");
                     })
-                    .class("notification-header")
-                    .bind(Notification::container_open, |h, open| {
-                        if open.get(h.cx) {
-                            h.background_gradient(
-                                LinearGradient::new(GradientDirection::LeftToRight)
-                                    .add_stop(Percentage(0.0), Color::from("#51afef22"))
-                                    .add_stop(Percentage(100.0), Color::from("#51afef22")),
-                            );
-                        } else {
-                            h.background_gradient(
-                                LinearGradient::new(GradientDirection::LeftToRight)
-                                    .add_stop(Percentage(0.0), Color::from("#51afef22"))
-                                    .add_stop(Percentage(25.0), Color::transparent()),
-                            );
-                        }
-                    });
+                    .class("notification-header");
+                    // .bind(Notification::container_open, |h, open| {
+                    //     if open.get(h.cx) {
+                    //         h.background_gradient(
+                    //             LinearGradient::new(GradientDirection::LeftToRight)
+                    //                 .add_stop(Percentage(0.0), Color::from("#51afef22"))
+                    //                 .add_stop(Percentage(100.0), Color::from("#51afef22")),
+                    //         );
+                    //     } else {
+                    //         h.background_gradient(
+                    //             LinearGradient::new(GradientDirection::LeftToRight)
+                    //                 .add_stop(Percentage(0.0), Color::from("#51afef22"))
+                    //                 .add_stop(Percentage(25.0), Color::transparent()),
+                    //         );
+                    //     }
+                    // });
 
                     Binding::new(cx, Notification::container_open, move |cx, open| {
                         if open.get(cx) {

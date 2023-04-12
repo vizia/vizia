@@ -212,7 +212,7 @@ checkbox:checked:disabled {
 /* Chip */
 
 chip {
-    border-radius: 16px;
+    border-radius: 4px;
 }
 
 /* Datepicker */
@@ -990,13 +990,4 @@ tabheader:disabled label {
     width: 1s;
     height: 1s;
     background-color: #fff;
-}
-
-chip {
-    border-radius: 15px;
-    child-left: 8px;
-    child-right: 8px;
-    child-top: 4px;
-    child-bottom: 4px;
-    width: auto;
 }

@@ -160,7 +160,7 @@ impl Dropdown {
                 })
                 .on_blur(|cx| cx.emit(PopupEvent::Close))
                 .top(Percentage(100.0))
-                .translate((0.0, 4.0))
+                .translate((Pixels(0.0), Pixels(4.0)))
                 .height(Auto);
             })
             .cursor(CursorIcon::Hand)

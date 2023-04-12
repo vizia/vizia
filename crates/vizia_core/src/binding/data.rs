@@ -65,6 +65,7 @@ impl_data_simple!(Transform);
 impl_data_simple!(Translate);
 impl_data_simple!(NaiveDate);
 impl_data_simple!(NaiveTime);
+impl_data_simple!(Angle);
 
 impl_data_simple!(String);
 

@@ -52,9 +52,6 @@ static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layou
 pub static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
 pub static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
 
-pub static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
-pub static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
-
 /// The main storage and control object for a Vizia application.
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
@@ -491,8 +488,9 @@ impl Context {
     }
 
     pub fn add_stylesheet(&mut self, path: impl AsRef<Path>) -> Result<(), std::io::Error> {
+        let style_string = std::fs::read_to_string(path.as_ref())?;
         self.resource_manager.stylesheets.push(path.as_ref().to_owned());
-        EventContext::new(self).reload_styles().expect("Failed to reload styles");
+        self.style.parse_theme(&style_string);
         Ok(())
     }
 
@@ -563,13 +561,19 @@ impl Context {
     ) {
         match self.resource_manager.images.entry(path.to_string()) {
             Entry::Occupied(mut occ) => {
-                occ.get_mut().image = image;
+                occ.get_mut().image = ImageOrId::Image(
+                    image,
+                    femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
+                );
                 occ.get_mut().dirty = true;
                 occ.get_mut().retention_policy = policy;
             }
             Entry::Vacant(vac) => {
                 vac.insert(StoredImage {
-                    image,
+                    image: ImageOrId::Image(
+                        image,
+                        femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
+                    ),
                     retention_policy: policy,
                     used: true,
                     dirty: false,

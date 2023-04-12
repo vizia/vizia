@@ -142,10 +142,10 @@ impl<'a> EventContext<'a> {
             .map(|clip| match clip {
                 ClipPath::Auto => bounds,
                 ClipPath::Shape(rect) => bounds.shrink_sides(
-                    self.logical_to_physical(rect.3.to_pixels(bounds.w, scale)),
-                    self.logical_to_physical(rect.0.to_pixels(bounds.h, scale)),
-                    self.logical_to_physical(rect.1.to_pixels(bounds.w, scale)),
-                    self.logical_to_physical(rect.2.to_pixels(bounds.h, scale)),
+                    rect.3.to_pixels(bounds.w, scale),
+                    rect.0.to_pixels(bounds.h, scale),
+                    rect.1.to_pixels(bounds.w, scale),
+                    rect.2.to_pixels(bounds.h, scale),
                 ),
             })
             .unwrap_or(bounds);
@@ -467,20 +467,6 @@ impl<'a> EventContext<'a> {
 
     pub fn needs_redraw(&mut self) {
         self.style.needs_redraw();
-    }
-
-    pub fn set_theme_mode(&mut self, theme_mode: ThemeMode) {
-        if !self.ignore_default_theme {
-            match theme_mode {
-                ThemeMode::LightMode => {
-                    self.resource_manager.themes[1] = String::from(LIGHT_THEME);
-                }
-
-                ThemeMode::DarkMode => {
-                    self.resource_manager.themes[1] = String::from(DARK_THEME);
-                }
-            }
-        }
     }
 
     pub fn needs_relayout(&mut self) {

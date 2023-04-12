@@ -4,8 +4,8 @@ mod button;
 mod checkbox;
 mod chip;
 mod colorpicker;
-mod datepicker;
-mod datetimepicker;
+// mod datepicker;
+// mod datetimepicker;
 mod dropdown;
 mod element;
 mod image;
@@ -27,8 +27,7 @@ mod switch;
 mod tab;
 mod table;
 mod textbox;
-mod timepicker;
-mod tooltip;
+// mod timepicker;
 mod tooltip;
 mod xypad;
 
@@ -37,8 +36,8 @@ pub use button::Button;
 pub use checkbox::Checkbox;
 pub use chip::Chip;
 pub use colorpicker::ColorPicker;
-pub use datepicker::Datepicker;
-pub use datetimepicker::DatetimePicker;
+// pub use datepicker::Datepicker;
+// pub use datetimepicker::DatetimePicker;
 pub use dropdown::Dropdown;
 pub use element::Element;
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
@@ -51,21 +50,18 @@ pub use popup::{Popup, PopupData, PopupEvent};
 pub use radio_buttons::RadioButton;
 pub use scrollbar::Scrollbar;
 pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
-pub use slider::Slider;
 pub use slider::{NamedSlider, Slider};
 pub use spinbox::{Spinbox, SpinboxEvent, SpinboxIcons, SpinboxKind};
-pub use spinbox::{Spinbox, SpinboxIcons, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
 pub use switch::Switch;
 pub use tab::{TabPair, TabView};
 pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};
-pub use timepicker::{
-    AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,
-    DigitalTimepicker, DigitalTimepickerEvent, Timepicker,
-};
+// pub use timepicker::{
+//     AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,
+//     DigitalTimepicker, DigitalTimepickerEvent, Timepicker,
+// };
 pub use tooltip::Tooltip;
-pub use tooltip::{Tooltip, TooltipEvent, TooltipSeq};
 pub use xypad::XYPad;
 
 use crate::prelude::*;

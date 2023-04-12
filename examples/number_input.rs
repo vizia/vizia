@@ -43,8 +43,6 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
-
         cx.add_theme(STYLE);
         AppData { number: 5, invalid: false }.build(cx);
 

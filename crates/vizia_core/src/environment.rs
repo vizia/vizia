@@ -39,7 +39,6 @@ pub enum EnvironmentEvent {
     SetLocale(LanguageIdentifier),
     SetThemeMode(ThemeMode),
     UseSystemLocale,
-    SetThemeMode(ThemeMode),
     ToggleThemeMode,
 }
 
@@ -59,12 +58,6 @@ impl Model for Environment {
             EnvironmentEvent::UseSystemLocale => {
                 self.locale =
                     sys_locale::get_locale().map(|l| l.parse().unwrap()).unwrap_or_default();
-            }
-
-            EnvironmentEvent::SetThemeMode(theme_mode) => {
-                self.theme_mode = *theme_mode;
-                cx.set_theme_mode(self.theme_mode);
-                cx.reload_styles().unwrap();
             }
 
             EnvironmentEvent::ToggleThemeMode => {

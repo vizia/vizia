@@ -130,7 +130,7 @@ macro_rules! get_length_property {
                 let bounds = self.bounds();
 
                 let px = length.to_pixels(bounds.w.min(bounds.h), self.scale_factor());
-                return self.logical_to_physical(px).round();
+                return px.round();
             }
 
             0.0
@@ -160,10 +160,10 @@ impl<'a> DrawContext<'a> {
             .map(|clip| match clip {
                 ClipPath::Auto => bounds,
                 ClipPath::Shape(rect) => bounds.shrink_sides(
-                    self.logical_to_physical(rect.3.to_pixels(bounds.w, scale)),
-                    self.logical_to_physical(rect.0.to_pixels(bounds.h, scale)),
-                    self.logical_to_physical(rect.1.to_pixels(bounds.w, scale)),
-                    self.logical_to_physical(rect.2.to_pixels(bounds.h, scale)),
+                    rect.3.to_pixels(bounds.w, scale),
+                    rect.0.to_pixels(bounds.h, scale),
+                    rect.1.to_pixels(bounds.w, scale),
+                    rect.2.to_pixels(bounds.h, scale),
                 ),
             })
             .unwrap_or(bounds);

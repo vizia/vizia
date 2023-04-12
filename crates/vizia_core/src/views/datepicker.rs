@@ -142,7 +142,7 @@ impl Datepicker {
                             .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
                     },
                     SpinboxKind::Horizontal,
-                    SpinboxIcons::Math,
+                    SpinboxIcons::PlusMinus,
                 )
                 .width(Stretch(1.0))
                 .on_increment(|ex| ex.emit(DatepickerEvent::IncrementYear))

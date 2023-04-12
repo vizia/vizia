@@ -22,7 +22,11 @@ where
                     Sorted::Forward | Sorted::Reverse => true,
                     Sorted::None => false,
                 };
-                let icon = if sorted.get(cx) == Sorted::Forward { DOWN } else { UP };
+                let icon = if sorted.get(cx) == Sorted::Forward {
+                    ICON_CHEVRON_DOWN
+                } else {
+                    ICON_CHEVRON_UP
+                };
                 Element::new(cx)
                     .class("table-column-icon")
                     .class("icon")
@@ -39,7 +43,7 @@ where
     .class("table-column-header");
 }
 
-fn table_element<'a, T>(cx: &mut Context, lens: impl Res<T>, checked: bool)
+fn table_element<'a, T>(cx: &mut Context, lens: impl Res<T> + Clone, checked: bool)
 where
     T: ToString,
 {

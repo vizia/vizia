@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::{prelude::*, style::Transform2D};
+use crate::prelude::*;
 use chrono::{NaiveTime, Timelike};
 
 use super::spinbox::SpinboxIcons;
@@ -123,7 +123,7 @@ where
                         .overflow(Overflow::Hidden)
                     },
                     SpinboxKind::Vertical,
-                    SpinboxIcons::Math,
+                    SpinboxIcons::PlusMinus,
                 )
                 .on_increment(|ex| ex.emit(DigitalTimepickerEvent::IncrementHour))
                 .on_decrement(|ex| ex.emit(DigitalTimepickerEvent::DecrementHour))
@@ -150,7 +150,7 @@ where
                             .overflow(Overflow::Hidden)
                     },
                     SpinboxKind::Vertical,
-                    SpinboxIcons::Math,
+                    SpinboxIcons::PlusMinus,
                 )
                 .on_increment(|ex| ex.emit(DigitalTimepickerEvent::IncrementMinutes))
                 .on_decrement(|ex| ex.emit(DigitalTimepickerEvent::DecrementMinutes))

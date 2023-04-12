@@ -150,7 +150,7 @@ where
                 .position_type(PositionType::SelfDirected)
                 .left(Self::saturation.map(|s| Percentage(*s * 100.0)))
                 .top(Self::value.map(|v| Percentage((1.0 - v) * 100.0)))
-                .translate((-5.0, -5.0))
+                .translate((Pixels(-5.0), Pixels(-5.0)))
                 .checked(Self::thumb_checked)
                 .size(Pixels(10.0))
                 .border_radius(Percentage(50.0))
