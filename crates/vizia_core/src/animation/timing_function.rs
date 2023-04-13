@@ -1,9 +1,13 @@
+use std::f32::EPSILON;
+
 #[derive(Debug, Clone, Copy)]
 pub struct TimingFunction {
-    x1: f32,
-    x2: f32,
-    y1: f32,
-    y2: f32,
+    ax: f32,
+    ay: f32,
+    bx: f32,
+    by: f32,
+    cx: f32,
+    cy: f32,
 }
 
 impl Default for TimingFunction {
@@ -32,51 +36,60 @@ impl TimingFunction {
 
 impl TimingFunction {
     pub fn new(x1: f32, y1: f32, x2: f32, y2: f32) -> Self {
-        Self { x1, y1, x2, y2 }
+        let cx = 3.0 * x1;
+        let bx = 3.0 * (x2 - x1) - cx;
+        let ax = 1.0 - cx - bx;
+
+        let cy = 3.0 * y1;
+        let by = 3.0 * (y2 - y1) - cy;
+        let ay = 1.0 - cy - by;
+
+        Self { ax, ay, bx, by, cx, cy }
     }
 
     pub fn value(&self, x: f32) -> f32 {
-        // Linear
-        if self.x1 == self.y1 && self.x2 == self.y2 {
-            return x;
-        }
-
-        Self::calc_bezier(self.find_t_for_x(x), self.y1, self.y2)
-    }
-
-    fn calc_bezier(t: f32, a1: f32, a2: f32) -> f32 {
-        let a = |a1: f32, a2: f32| 1.0 - 3.0 * a2 + 3.0 * a1;
-        let b = |a1: f32, a2: f32| 3.0 * a2 - 6.0 * a1;
-        let c = |a1: f32| 3.0 * a1;
-
-        ((a(a1, a2) * t + b(a1, a2)) * t + c(a1)) * t
-    }
-
-    fn calc_bezier_slope(t: f32, a1: f32, a2: f32) -> f32 {
-        let a = |a1: f32, a2: f32| 1.0 - 3.0 * a2 + 3.0 * a1;
-        let b = |a1: f32, a2: f32| 3.0 * a2 - 6.0 * a1;
-        let c = |a1: f32| 3.0 * a1;
-
-        3.0 * a(a1, a2) * t * t + 2.0 * b(a1, a2) * t + c(a1)
-    }
-
-    fn find_t_for_x(&self, x: f32) -> f32 {
+        // Newton Raphson
         let mut guess = x;
-        let mut error = f32::MAX;
+        let mut error = x - self.calc_bezier_x(guess);
         for _ in 0..8 {
-            let pos = Self::calc_bezier(guess, self.x1, self.x2);
-            error = pos - x;
-            if error.abs() <= 0.0000001 {
-                return guess;
+            if error.abs() <= EPSILON {
+                return self.calc_bezier_y(guess);
             }
-            let slope = Self::calc_bezier_slope(guess, self.x1, self.x2);
-            guess -= error / slope;
+
+            let pos = self.calc_bezier_x(guess);
+            error = pos - x;
+
+            let derivative = self.calc_derivative(guess);
+            guess -= error / derivative;
         }
-        if error.abs() <= 0.0000001 {
-            guess
-        } else {
-            x
+
+        // Bisect
+        let mut t0 = 0.;
+        let mut t1 = 1.;
+
+        while error.abs() > EPSILON {
+            guess = (t0 + t1) / 2.0;
+            error = x - self.calc_bezier_x(guess);
+            if error > 0.0 {
+                t0 = guess;
+            } else {
+                t1 = guess;
+            }
         }
+
+        self.calc_bezier_y(guess)
+    }
+
+    fn calc_bezier_x(&self, t: f32) -> f32 {
+        ((self.ax * t + self.bx) * t + self.cx) * t
+    }
+
+    fn calc_bezier_y(&self, t: f32) -> f32 {
+        ((self.ay * t + self.by) * t + self.cy) * t
+    }
+
+    fn calc_derivative(&self, t: f32) -> f32 {
+        (3. * self.ax * t + 2. * self.bx) * t + self.cx
     }
 }
 
@@ -93,6 +106,6 @@ mod tests {
     #[test]
     fn ease() {
         let timing_func = TimingFunction::ease();
-        assert_eq!(timing_func.value(0.25), 0.4085106);
+        assert_eq!(timing_func.value(0.25), 0.40851063);
     }
 }
