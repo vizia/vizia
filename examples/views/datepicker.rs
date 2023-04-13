@@ -27,12 +27,10 @@ fn main() {
     Application::new(|cx| {
         AppState { date: Utc::now().date_naive() }.build(cx);
 
-        VStack::new(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             Datepicker::new(cx, AppState::date)
                 .on_select(|cx, date| cx.emit(AppEvent::SetDate(date)));
-        })
-        .disabled(ControlsData::disabled)
-        .class("container");
+        });
     })
     .title("Datepicker")
     .run();

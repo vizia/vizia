@@ -1,10 +1,5 @@
 use vizia::prelude::*;
 
-#[allow(dead_code)]
-const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
-#[allow(dead_code)]
-const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
-
 const STYLE: &str = r#"
 
     /*
@@ -128,7 +123,6 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
         cx.add_theme(STYLE);
 
         AppData {
@@ -193,6 +187,5 @@ fn main() {
     })
     .title("CRUD")
     .inner_size((450, 200))
-    .ignore_default_theme()
     .run();
 }

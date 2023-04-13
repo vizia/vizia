@@ -162,58 +162,58 @@ impl Datepicker {
                 .class("datepicker-calendar-headers");
 
                 // Numbered days in a grid
-                HStack::new(cx, move |cx| {
+                VStack::new(cx, move |cx| {
                     for y in 0..6 {
-                        for x in 0..7 {
-                            let l = lens.clone();
-                            Label::new(cx, "")
-                                .bind(Datepicker::view_date, move |handle, view_date| {
-                                    let view_date = view_date.get(handle.cx);
+                        HStack::new(cx, |cx| {
+                            for x in 0..7 {
+                                let l = lens.clone();
+                                Label::new(cx, "").bind(
+                                    Datepicker::view_date,
+                                    move |handle, view_date| {
+                                        let view_date = view_date.get(handle.cx);
 
-                                    let (day_number, disabled) =
-                                        Self::get_day_number(y, x, &view_date);
+                                        let (day_number, disabled) =
+                                            Self::get_day_number(y, x, &view_date);
 
-                                    handle.bind(l.clone(), move |handle, selected_date| {
-                                        let selected_date = selected_date.get(handle.cx);
+                                        handle.bind(l.clone(), move |handle, selected_date| {
+                                            let selected_date = selected_date.get(handle.cx);
 
-                                        handle
-                                            .text(&day_number.to_string())
-                                            .class("datepicker-calendar-day")
-                                            .toggle_class(
-                                                "datepicker-calendar-day-disabled",
-                                                disabled,
-                                            )
-                                            .on_press(move |ex| {
-                                                if !disabled {
-                                                    ex.emit(DatepickerEvent::SelectDate(
-                                                        NaiveDate::from_ymd_opt(
-                                                            view_date.year(),
-                                                            view_date.month(),
-                                                            day_number,
-                                                        )
-                                                        .unwrap(),
-                                                    ))
-                                                }
-                                            })
-                                            .checked(
-                                                !disabled
-                                                    && selected_date.day() == day_number
-                                                    && selected_date.month() == view_date.month()
-                                                    && selected_date.year() == view_date.year(),
-                                            );
-                                    });
-                                })
-                                .row_index(y as usize)
-                                .col_index(x as usize);
-                        }
+                                            handle
+                                                .text(&day_number.to_string())
+                                                .class("datepicker-calendar-day")
+                                                .toggle_class(
+                                                    "datepicker-calendar-day-disabled",
+                                                    disabled,
+                                                )
+                                                .on_press(move |ex| {
+                                                    if !disabled {
+                                                        ex.emit(DatepickerEvent::SelectDate(
+                                                            NaiveDate::from_ymd_opt(
+                                                                view_date.year(),
+                                                                view_date.month(),
+                                                                day_number,
+                                                            )
+                                                            .unwrap(),
+                                                        ))
+                                                    }
+                                                })
+                                                .checked(
+                                                    !disabled
+                                                        && selected_date.day() == day_number
+                                                        && selected_date.month()
+                                                            == view_date.month()
+                                                        && selected_date.year() == view_date.year(),
+                                                );
+                                        });
+                                    },
+                                );
+                            }
+                        });
                     }
                 })
                 // This shouldn't be needed but apparently grid size isn't propagated up the tree during layout
                 .width(Pixels(32.0 * 7.0))
-                .height(Pixels(32.0 * 6.0))
-                .layout_type(LayoutType::Grid)
-                .grid_rows(vec![Pixels(32.0); 6])
-                .grid_cols(vec![Pixels(32.0); 7]);
+                .height(Pixels(32.0 * 6.0));
             })
             .class("datepicker-calendar");
         })

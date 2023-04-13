@@ -11,16 +11,16 @@ use vizia_storage::LayoutChildIterator;
 // Determines the hovered entity based on the mouse cursor position.
 pub(crate) fn hover_system(cx: &mut Context) {
     let mut queue = BinaryHeap::new();
-    queue.push(ZEntity(0, Entity::root()));
+    queue.push(ZEntity { index: 0, entity: Entity::root() });
     let mut hovered = Entity::root();
     let transform = Transform2D::identity();
     let clip_bounds = cx.cache.get_bounds(Entity::root());
     while !queue.is_empty() {
-        let ZEntity(current_z, current) = queue.pop().unwrap();
-        cx.with_current(current, |cx| {
+        let zentity = queue.pop().unwrap();
+        cx.with_current(zentity.entity, |cx| {
             hover_entity(
                 &mut EventContext::new(cx),
-                current_z,
+                zentity.index,
                 &mut queue,
                 &mut hovered,
                 transform,
@@ -92,6 +92,12 @@ fn hover_entity(
         return;
     }
 
+    let z_order = cx.tree.z_order(cx.current);
+    if z_order > current_z {
+        queue.push(ZEntity { index: z_order, entity: cx.current });
+        return;
+    }
+
     let bounds = cx.bounds();
 
     let cursorx = cx.mouse.cursorx;
@@ -152,18 +158,20 @@ fn hover_entity(
     }
 
     let child_iter = LayoutChildIterator::new(&cx.tree, cx.current);
-    // let bounds = cx.bounds();
     for child in child_iter {
         cx.current = child;
         hover_entity(cx, current_z, queue, hovered, transform, &clipping);
     }
 }
 
-#[derive(Eq)]
-pub struct ZEntity(i32, Entity);
+pub struct ZEntity {
+    pub index: i32,
+    pub entity: Entity,
+}
+
 impl Ord for ZEntity {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.0.cmp(&self.0)
+        other.index.cmp(&self.index)
     }
 }
 impl PartialOrd for ZEntity {
@@ -173,6 +181,8 @@ impl PartialOrd for ZEntity {
 }
 impl PartialEq for ZEntity {
     fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
+        self.index == other.index
     }
 }
+
+impl Eq for ZEntity {}

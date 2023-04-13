@@ -1,12 +1,5 @@
 use std::str::FromStr;
-
-use vizia::icons::ICON_CHEVRON_DOWN;
 use vizia::prelude::*;
-
-#[allow(dead_code)]
-const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
-#[allow(dead_code)]
-const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
 
 use chrono::{NaiveDate, ParseError};
 
@@ -94,7 +87,6 @@ impl AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
         cx.add_theme(STYLE);
 
         AppData::new().build(cx);
@@ -134,6 +126,5 @@ fn main() {
     })
     .title("Flight Booker")
     .inner_size((250, 250))
-    .ignore_default_theme()
     .run();
 }

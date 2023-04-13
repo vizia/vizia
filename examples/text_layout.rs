@@ -40,8 +40,7 @@ fn main() {
                 .background_color(Color::rgb(100, 200, 100));
 
                 HStack::new(cx, |cx| {
-                    Label::new(cx, "This is some text which should wrap on every word.")
-                        .size(Auto)
+                    Label::new(cx, "This is some text which should wrap on the longest word.")
                         .text_wrap(true)
                         .child_space(Pixels(10.0))
                         .background_color(Color::rgb(200, 100, 100));

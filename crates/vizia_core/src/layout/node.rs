@@ -196,7 +196,7 @@ impl Node for Entity {
 
             // println!("maxx_width: {}", max_width);
             sublayout.text_context.sync_styles(*self, store);
-            let (text_width, text_height) =
+            let (text_width, mut text_height) =
                 sublayout.text_context.with_buffer(*self, |fs, buffer| {
                     buffer.set_size(fs, max_width as f32, f32::MAX);
                     let w = buffer
@@ -204,9 +204,18 @@ impl Node for Entity {
                         .filter_map(|r| (!r.line_w.is_nan()).then_some(r.line_w))
                         .max_by(|f1, f2| f1.partial_cmp(f2).unwrap())
                         .unwrap_or_default();
-                    let h = buffer.layout_runs().len() as f32 * buffer.metrics().line_height as f32;
+                    let lines = buffer.layout_runs().filter(|run| run.line_w != 0.0).count();
+                    let h = lines as f32 * buffer.metrics().line_height as f32;
                     (w, h)
                 });
+
+            if height.is_none() {
+                text_height = sublayout.text_context.with_buffer(*self, |fs, buffer| {
+                    buffer.set_size(fs, text_width, f32::MAX);
+                    let h = buffer.layout_runs().len() as f32 * buffer.metrics().line_height as f32;
+                    h
+                });
+            }
 
             let height =
                 if let Some(height) = height { height } else { text_height + child_space_y };

@@ -63,9 +63,26 @@ pub(crate) fn layout_system(cx: &mut Context) {
                         BoundingBox { w: text_width, h: text_height, ..Default::default() },
                     )
                 } else {
-                    let bounds = cx.cache.get_bounds(entity);
+                    let width = cx.cache.bounds.get(entity).unwrap().w;
+                    let child_left = cx
+                        .style
+                        .child_left
+                        .get(entity)
+                        .cloned()
+                        .unwrap_or_default()
+                        .to_px(width, 0.0)
+                        * cx.scale_factor();
+                    let child_right = cx
+                        .style
+                        .child_right
+                        .get(entity)
+                        .cloned()
+                        .unwrap_or_default()
+                        .to_px(width, 0.0)
+                        * cx.scale_factor();
+                    let width = width.ceil() - child_left - child_right;
                     cx.text_context.with_buffer(entity, |fs, buffer| {
-                        buffer.set_size(fs, bounds.w, bounds.h);
+                        buffer.set_size(fs, width, f32::MAX);
                     })
                 }
             }

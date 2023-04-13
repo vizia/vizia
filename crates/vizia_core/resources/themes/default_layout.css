@@ -79,6 +79,12 @@ datepicker {
     right: 1s;
 }
 
+.datepicker-calendar-headers {
+    child-left: 1s;
+    child-right: 1s;
+    height: auto;
+}
+
 .datepicker-calendar-header {
     child-space: 1s;
     width: 32px;

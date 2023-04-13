@@ -1,8 +1,5 @@
-use std::sync::Arc;
-
-use swash::Stretch;
-
 use crate::{icons::ICON_X, prelude::*};
+use std::sync::Arc;
 
 #[derive(Lens)]
 pub struct Chip {
