@@ -253,7 +253,7 @@ mod test {
             let mut context =
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
 
             println!("Result: {}", result);
         }
@@ -281,12 +281,12 @@ mod test {
             let mut context =
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
 
             println!("Result: {}", result);
             assert_eq!(result, true);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context);
+            let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
 
             println!("Result: {}", result);
             assert_eq!(result, false);
@@ -325,10 +325,10 @@ mod test {
             let mut context =
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
             assert_eq!(result, true);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context);
+            let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
             assert_eq!(result, false);
         }
 
@@ -336,10 +336,10 @@ mod test {
             let mut context =
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
             assert_eq!(result, true);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context);
+            let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
             assert_eq!(result, true);
         }
 
@@ -347,10 +347,10 @@ mod test {
             let mut context =
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
             assert_eq!(result, true);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context);
+            let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
             assert_eq!(result, false);
         }
 
@@ -358,10 +358,10 @@ mod test {
             let mut context =
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
             assert_eq!(result, true);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context);
+            let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
             assert_eq!(result, true);
         }
     }
@@ -394,10 +394,10 @@ mod test {
             let mut context =
                 MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, &root_node, &mut context).0;
             assert_eq!(result, true);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context);
+            let result = matches_selector_list(&selector_list, &child_node, &mut context).0;
             assert_eq!(result, false);
         }
     }

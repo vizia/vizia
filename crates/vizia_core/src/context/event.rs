@@ -122,10 +122,12 @@ impl<'a> EventContext<'a> {
         self.entity_identifiers.get(identity).cloned()
     }
 
+    /// Returns the entity id of the current view.
     pub fn current(&self) -> Entity {
         self.current
     }
 
+    /// Returns the clip bounds of the current view.
     pub fn clip_region(&self) -> BoundingBox {
         let bounds = self.bounds();
         let overflowx = self.style.overflowx.get(self.current).copied().unwrap_or_default();
@@ -170,24 +172,27 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    /// Returns the bounds of the current view.
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
     }
 
+    /// Returns the scale factor.
     pub fn scale_factor(&self) -> f32 {
         self.style.dpi_factor as f32
     }
 
-    /// Function to convert logical points to physical pixels.
+    /// Converts logical points to physical pixels.
     pub fn logical_to_physical(&self, logical: f32) -> f32 {
         self.style.logical_to_physical(logical)
     }
 
-    /// Function to convert physical pixels to logical points.
+    /// Convert physical pixels to logical points.
     pub fn physical_to_logical(&self, physical: f32) -> f32 {
         self.style.physical_to_logical(physical)
     }
 
+    /// Returns the transform of the current view.
     pub fn transform(&self) -> Transform2D {
         let mut transform = Transform2D::identity();
 
@@ -270,7 +275,7 @@ impl<'a> EventContext<'a> {
         );
     }
 
-    /// Set the active state for the current entity.
+    /// Set the active state for the current view.
     pub fn set_active(&mut self, active: bool) {
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(self.current) {
             pseudo_classes.set(PseudoClassFlags::ACTIVE, active);
@@ -279,12 +284,12 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle();
     }
 
-    /// Capture mouse input for the current entity.
+    /// Capture mouse input for the current view.
     pub fn capture(&mut self) {
         *self.captured = self.current;
     }
 
-    /// Release mouse input capture for current entity.
+    /// Release mouse input capture for the current view.
     pub fn release(&mut self) {
         if self.current == *self.captured {
             *self.captured = Entity::null();
@@ -308,7 +313,7 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    /// Sets application focus to the current entity with the specified focus visibility.
+    /// Sets application focus to the current view with the specified focus visibility.
     pub fn focus_with_visibility(&mut self, focus_visible: bool) {
         let old_focus = self.focused();
         let new_focus = self.current();
@@ -323,7 +328,7 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle();
     }
 
-    /// Sets application focus to the current entity using the previous focus visibility.
+    /// Sets application focus to the current view using the previous focus visibility.
     pub fn focus(&mut self) {
         let focused = self.focused();
         let old_focus_visible = self
@@ -335,25 +340,34 @@ impl<'a> EventContext<'a> {
         self.focus_with_visibility(old_focus_visible)
     }
 
-    /// Return the currently hovered entity.
+    /// Returns the currently hovered view.
     pub fn hovered(&self) -> Entity {
         *self.hovered
     }
 
-    /// Return the currently focused entity.
+    /// Returns the currently focused view.
     pub fn focused(&self) -> Entity {
         *self.focused
     }
 
-    /// Returns true if the current entity is disabled.
+    /// Returns true if the current view is disabled.
     pub fn is_disabled(&self) -> bool {
         self.style.disabled.get(self.current()).cloned().unwrap_or_default()
     }
 
-    /// Returns true if the mouse cursor is over the current entity.
+    /// Returns true if the mouse cursor is over the current view.
     pub fn is_over(&self) -> bool {
         if let Some(pseudo_classes) = self.style.pseudo_classes.get(self.current) {
             pseudo_classes.contains(PseudoClassFlags::OVER)
+        } else {
+            false
+        }
+    }
+
+    /// Returns true if the view is in a read-only state.
+    pub fn is_read_only(&self) -> bool {
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get(self.current) {
+            pseudo_classes.contains(PseudoClassFlags::READ_ONLY)
         } else {
             false
         }
@@ -377,7 +391,7 @@ impl<'a> EventContext<'a> {
         *self.cursor_icon_locked
     }
 
-    /// Sets the hover flag of the current entity.
+    /// Sets the hover state of the current view.
     pub fn set_hover(&mut self, flag: bool) {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
@@ -387,7 +401,7 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle();
     }
 
-    /// Sets the checked flag of the current entity.
+    /// Sets the checked state of the current view.
     pub fn set_checked(&mut self, flag: bool) {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
@@ -416,6 +430,7 @@ impl<'a> EventContext<'a> {
         self.clipboard.set_contents(text)
     }
 
+    /// Toggles the addition/removal of a class name for the current view.
     pub fn toggle_class(&mut self, class_name: &str, applied: bool) {
         let current = self.current();
         if let Some(class_list) = self.style.classes.get_mut(current) {
@@ -433,14 +448,12 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle();
     }
 
-    // pub fn play_animation(&mut self, animation: Animation) {
-    //     self.current.play_animation(self, animation);
-    // }
-
+    /// Returns a reference to the environment model.
     pub fn environment(&self) -> &Environment {
         self.data::<Environment>().unwrap()
     }
 
+    /// Sets the current theme mode.
     pub fn set_theme_mode(&mut self, theme_mode: ThemeMode) {
         if !self.ignore_default_theme {
             match theme_mode {
@@ -455,15 +468,18 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    /// Marks the current view as needing to be redrawn.
     pub fn needs_redraw(&mut self) {
         self.style.needs_redraw();
     }
 
+    /// Marks the current view as needing a layout computation.
     pub fn needs_relayout(&mut self) {
         self.style.needs_relayout();
         self.style.needs_redraw();
     }
 
+    /// Reloads the stylesheets linked to the application.
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
         if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
             return Ok(());
@@ -505,11 +521,6 @@ impl<'a> EventContext<'a> {
         };
 
         std::thread::spawn(move || target(&mut cxp));
-    }
-
-    /// The window's DPI factor. This includes both HiDPI scaling and the user scale factor.
-    pub fn dpi_factor(&self) -> f32 {
-        self.style.dpi_factor as f32
     }
 
     /// The window's size in logical pixels, before

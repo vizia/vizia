@@ -32,7 +32,7 @@ fn main() {
     Application::new(|cx| {
         AppData { option1: true, option2: false }.build(cx);
 
-        VStack::new(cx, |cx| {
+        ExamplePage::vertical(cx, |cx| {
             Label::new(cx, "Basic Switches");
 
             HStack::new(cx, |cx| {
@@ -56,9 +56,7 @@ fn main() {
             .col_between(Pixels(5.0))
             .child_top(Stretch(1.0))
             .child_bottom(Stretch(1.0));
-        })
-        .disabled(ControlsData::disabled)
-        .class("container");
+        });
     })
     .title("Switch")
     .run();

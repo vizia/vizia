@@ -5,7 +5,7 @@ use vizia_core::binding::RatioLens;
 
 fn main() {
     Application::new(|cx| {
-        VStack::new(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 // TODO: Link scrollviews to the same scroll data
                 // ScrollData {
@@ -76,9 +76,7 @@ fn main() {
             .space(Pixels(0.0))
             .child_space(Stretch(1.0))
             .col_between(Pixels(50.0));
-        })
-        .disabled(ControlsData::disabled)
-        .class("container");
+        });
     })
     .title("Scrollview")
     .inner_size((1100, 400))

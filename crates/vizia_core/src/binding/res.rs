@@ -13,7 +13,9 @@ macro_rules! impl_res_simple {
             where
                 F: 'static + Fn(&mut Context, Entity, Self),
             {
-                (closure)(cx, entity, *self);
+                cx.with_current(entity, |cx| {
+                    (closure)(cx, entity, *self);
+                });
             }
         }
     };

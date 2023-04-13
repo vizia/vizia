@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use vizia::{
-    icons::{ICON_EYE, ICON_EYE_OFF, ICON_MOON, ICON_SUN},
+    icons::{ICON_MOON, ICON_SUN},
     prelude::*,
 };
 
@@ -31,38 +31,6 @@ impl Model for ControlsData {
     }
 }
 
-// pub fn theme_selector(cx: &mut Context) {
-//     cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
-
-//     ControlsData { disabled: false }.build(cx);
-
-//     HStack::new(cx, |cx| {
-//         PickList::new(
-//             cx,
-//             StaticLens::new(THEME_MODES.as_ref()),
-//             Environment::theme_mode.map(|mode| if *mode == ThemeMode::LightMode { 0 } else { 1 }),
-//             true,
-//         )
-//         .on_select(|cx, idx| {
-//             if idx == 0 {
-//                 cx.emit(EnvironmentEvent::SetThemeMode(ThemeMode::LightMode));
-//             } else {
-//                 cx.emit(EnvironmentEvent::SetThemeMode(ThemeMode::DarkMode));
-//             }
-//         })
-//         .width(Pixels(100.0));
-//     })
-//     .height(Auto)
-//     .child_top(Pixels(10.0))
-//     .child_bottom(Pixels(10.0))
-//     .child_left(Stretch(1.0))
-//     .child_right(Pixels(20.0))
-//     .top(Pixels(0.0))
-//     .left(Pixels(0.0))
-//     .right(Pixels(0.0))
-//     .col_between(Pixels(20.0));
-// }
-
 pub struct ExamplePage {}
 
 impl ExamplePage {
@@ -73,20 +41,17 @@ impl ExamplePage {
             ControlsData { disabled: false }.build(cx);
 
             HStack::new(cx, |cx| {
-                // PickList::new(
-                //     cx,
-                //     StaticLens::new(THEME_MODES.as_ref()),
-                //     Environment::theme_mode.map(|mode| if *mode == ThemeMode::LightMode { 0 } else { 1 }),
-                //     true,
-                // )
-                // .on_select(|cx, idx| {
-                //     if idx == 0 {
-                //         cx.emit(EnvironmentEvent::SetThemeMode(ThemeMode::LightMode));
-                //     } else {
-                //         cx.emit(EnvironmentEvent::SetThemeMode(ThemeMode::DarkMode));
-                //     }
-                // })
-                // .width(Pixels(100.0));
+                HStack::new(cx, |cx| {
+                    Switch::new(cx, ControlsData::disabled)
+                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
+                    Label::new(cx, "Toggle Disabled");
+                })
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .col_between(Pixels(5.0))
+                .top(Stretch(1.0))
+                .bottom(Stretch(1.0))
+                .size(Auto);
 
                 Button::new(
                     cx,
@@ -109,18 +74,6 @@ impl ExamplePage {
                 .tooltip(|cx| {
                     Label::new(cx, "Toggle Dark/Light Mode");
                 });
-
-                // HStack::new(cx, |cx| {
-                //     Switch::new(cx, ControlsData::disabled)
-                //         .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
-                //     Label::new(cx, "Toggle Disabled");
-                // })
-                // .child_top(Stretch(1.0))
-                // .child_bottom(Stretch(1.0))
-                // .col_between(Pixels(5.0))
-                // .top(Stretch(1.0))
-                // .bottom(Stretch(1.0))
-                // .size(Auto);
             })
             .height(Auto)
             .width(Stretch(1.0))
@@ -147,44 +100,17 @@ impl ExamplePage {
             ControlsData { disabled: false }.build(cx);
 
             HStack::new(cx, |cx| {
-                // PickList::new(
-                //     cx,
-                //     StaticLens::new(THEME_MODES.as_ref()),
-                //     Environment::theme_mode.map(|mode| if *mode == ThemeMode::LightMode { 0 } else { 1 }),
-                //     true,
-                // )
-                // .on_select(|cx, idx| {
-                //     if idx == 0 {
-                //         cx.emit(EnvironmentEvent::SetThemeMode(ThemeMode::LightMode));
-                //     } else {
-                //         cx.emit(EnvironmentEvent::SetThemeMode(ThemeMode::DarkMode));
-                //     }
-                // })
-                // .width(Pixels(100.0));
-
-                Button::new(
-                    cx,
-                    |ex| ex.emit(ControlsEvent::ToggleDisabled),
-                    |cx| {
-                        Label::new(
-                            cx,
-                            ControlsData::disabled.map(
-                                |flag| {
-                                    if *flag {
-                                        ICON_EYE
-                                    } else {
-                                        ICON_EYE_OFF
-                                    }
-                                },
-                            ),
-                        )
-                        .class("icon")
-                    },
-                )
-                .class("icon")
-                .tooltip(|cx| {
-                    Label::new(cx, "Toggle disabled");
-                });
+                HStack::new(cx, |cx| {
+                    Switch::new(cx, ControlsData::disabled)
+                        .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
+                    Label::new(cx, "Toggle Disabled");
+                })
+                .child_top(Stretch(1.0))
+                .child_bottom(Stretch(1.0))
+                .col_between(Pixels(5.0))
+                .top(Stretch(1.0))
+                .bottom(Stretch(1.0))
+                .size(Auto);
 
                 Button::new(
                     cx,
@@ -207,18 +133,6 @@ impl ExamplePage {
                 .tooltip(|cx| {
                     Label::new(cx, "Toggle dark/light mode");
                 });
-
-                // HStack::new(cx, |cx| {
-                //     Switch::new(cx, ControlsData::disabled)
-                //         .on_toggle(|cx| cx.emit(ControlsEvent::ToggleDisabled));
-                //     Label::new(cx, "Toggle Disabled");
-                // })
-                // .child_top(Stretch(1.0))
-                // .child_bottom(Stretch(1.0))
-                // .col_between(Pixels(5.0))
-                // .top(Stretch(1.0))
-                // .bottom(Stretch(1.0))
-                // .size(Auto);
             })
             .height(Auto)
             .width(Stretch(1.0))

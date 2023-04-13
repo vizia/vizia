@@ -6,7 +6,7 @@ use std::{
 };
 
 pub struct EventHandle<'a, 'b, V> {
-    cx: &'a mut EventContext<'b>,
+    pub cx: &'a mut EventContext<'b>,
     entity: Entity,
     p: PhantomData<V>,
 }

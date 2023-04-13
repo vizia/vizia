@@ -73,10 +73,7 @@ impl Model for Environment {
         });
 
         event.map(|tooltip_event, _| match tooltip_event {
-            TooltipEvent::ShowTooltip => {
-                self.tooltips_visible = true;
-                println!("show tooltip");
-            }
+            TooltipEvent::ShowTooltip => self.tooltips_visible = true,
             TooltipEvent::HideTooltip => self.tooltips_visible = false,
         });
     }

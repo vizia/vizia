@@ -69,7 +69,7 @@ pub fn matches_selector_list<E>(
     selector_list: &SelectorList<E::Impl>,
     element: &E,
     context: &mut MatchingContext<E::Impl>,
-) -> bool
+) -> (bool, u32)
 where
     E: Element,
 {
@@ -79,11 +79,11 @@ where
         let matches = matches_selector(selector, 0, None, element, context, &mut |_, _| {});
 
         if matches {
-            return true;
+            return (true, selector.specificity());
         }
     }
 
-    false
+    (false, 0)
 }
 
 #[inline(always)]

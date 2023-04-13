@@ -1,4 +1,4 @@
-use crate::animation::{Animation, AnimationState, Interpolator, Keyframe, TimingFunction};
+use crate::animation::{Animation, AnimationState, Interpolator};
 use crate::prelude::*;
 use crate::style::Rule;
 use vizia_id::GenerationalId;
@@ -272,10 +272,6 @@ where
         self.animations.insert(animation, animation_description).unwrap();
     }
 
-    pub(crate) fn remove_animation(&mut self, animation: Animation) -> Option<AnimationState<T>> {
-        self.animations.remove(animation)
-    }
-
     pub(crate) fn insert_rule(&mut self, rule: Rule, value: T) {
         self.shared_data.insert(rule, value).unwrap();
     }
@@ -428,11 +424,6 @@ where
         false
     }
 
-    /// Returns true if there is an animation with the given id
-    pub(crate) fn has_animation(&mut self, animation: Animation) -> bool {
-        self.animations.contains(animation)
-    }
-
     pub fn remove_innactive_animations(&mut self) {
         // Create a list of finished animations
         let inactive: Vec<AnimationState<T>> = self
@@ -517,17 +508,6 @@ where
         }
 
         None
-    }
-
-    pub(crate) fn get_animation(&self, animation: Animation) -> Option<&AnimationState<T>> {
-        self.animations.get(animation)
-    }
-
-    pub(crate) fn get_animation_mut(
-        &mut self,
-        animation: Animation,
-    ) -> Option<&mut AnimationState<T>> {
-        self.animations.get_mut(animation)
     }
 
     /// Get the animated, inline, or shared data value from the storage.

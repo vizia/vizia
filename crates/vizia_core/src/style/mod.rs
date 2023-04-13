@@ -62,7 +62,7 @@
 
 use femtovg::Transform2D;
 use morphorm::{LayoutType, PositionType, Units};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use vizia_id::GenerationalId;
 
 use crate::prelude::*;
@@ -144,10 +144,7 @@ pub struct Style {
     /// Creates and destroys animation ids
     pub(crate) animation_manager: IdManager<Animation>,
 
-    // pub(crate) rules: Vec<StyleRule>,
-    // pub selectors: HashMap<Rule, (u32, SelectorList<Selectors>)>,
-    pub(crate) selectors: Vec<(Rule, u32, SelectorList<Selectors>)>,
-    pub(crate) transitions: HashMap<Rule, Animation>,
+    pub(crate) selectors: Vec<(Rule, SelectorList<Selectors>)>,
 
     pub default_font: Vec<FamilyOwned>,
 
@@ -337,7 +334,6 @@ impl Style {
         self.animation_manager.reset();
 
         self.selectors.clear();
-        self.transitions.clear();
     }
 
     pub fn parse_theme(&mut self, stylesheet: &str) {
@@ -349,12 +345,9 @@ impl Style {
                     CssRule::Style(style_rule) => {
                         let rule_id = self.rule_manager.create();
 
-                        //TODO: Store map of selectors
                         let selectors = style_rule.selectors;
 
-                        let specificity = selectors.0.first().unwrap().specificity();
-
-                        self.selectors.push((rule_id, specificity, selectors));
+                        self.selectors.push((rule_id, selectors));
 
                         for property in style_rule.declarations.declarations {
                             match property {
@@ -545,8 +538,6 @@ impl Style {
 
             _ => return,
         }
-
-        self.transitions.insert(rule_id, animation);
     }
 
     fn insert_property(&mut self, rule_id: Rule, property: Property) {

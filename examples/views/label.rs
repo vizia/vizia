@@ -33,7 +33,7 @@ fn main() {
         }
         .build(cx);
 
-        VStack::new(cx, |cx| {
+        ExamplePage::vertical(cx, |cx| {
             Label::new(cx, "A label can display a static string of unicode 😂");
 
             Label::new(cx, AppData::text);
@@ -60,13 +60,11 @@ fn main() {
                     .describing("checkbox_1");
             })
             .width(Auto)
-            .col_between(Pixels(5.0));
-        })
-        .size(Pixels(600.0))
-        .width(Stretch(1.0))
-        .height(Stretch(1.0))
-        .child_space(Stretch(1.0))
-        .row_between(Pixels(20.0));
+            .height(Auto)
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0))
+            .col_between(Pixels(8.0));
+        });
     })
     .title("Label")
     .run();

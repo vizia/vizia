@@ -31,7 +31,7 @@ fn main() {
 
         // Exclusive checkboxes (radio buttons) with labels
         // Only one checkbox can be checked at a time and cannot be unchecked
-        VStack::new(cx, |cx| {
+        ExamplePage::vertical(cx, |cx| {
             Label::new(cx, "Basic Radiobuttons");
             HStack::new(cx, |cx| {
                 for i in 0..3 {
@@ -69,9 +69,7 @@ fn main() {
             })
             .row_between(Pixels(10.0))
             .size(Auto);
-        })
-        .disabled(ControlsData::disabled)
-        .class("container");
+        });
     })
     .title("Radiobutton")
     .run();

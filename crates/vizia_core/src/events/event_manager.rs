@@ -2,7 +2,7 @@ use crate::context::{InternalEvent, ResourceContext};
 use crate::events::EventMeta;
 use crate::prelude::*;
 use crate::style::{Abilities, PseudoClassFlags};
-use crate::systems::hover_system;
+use crate::systems::{compute_matched_rules, hover_system};
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use instant::{Duration, Instant};
 use std::any::Any;
@@ -398,30 +398,34 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 }
             }
 
-            // #[cfg(debug_assertions)]
-            // if *code == Code::KeyS
-            //     && context.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
-            // {
-            //     let mut result = vec![];
-            //     compute_matched_rules(context, &context.tree, context.hovered, &mut result);
+            #[cfg(debug_assertions)]
+            if *code == Code::KeyS
+                && context.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
+            {
+                let mut result = vec![];
+                compute_matched_rules(context, context.hovered, &mut result);
 
-            //     let entity = context.hovered;
-            //     println!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
-            //         entity,
-            //         entity.parent(&context.tree),
-            //         context
-            //             .views
-            //             .get(&entity)
-            //             .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
-            //         context.cache.get_posx(entity),
-            //         context.cache.get_posy(entity),
-            //         context.cache.get_width(entity),
-            //         context.cache.get_height(entity)
-            //     );
-            //     for rule in result.into_iter() {
-            //         println!("{}", rule);
-            //     }
-            // }
+                let entity = context.hovered;
+                println!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
+                    entity,
+                    entity.parent(&context.tree),
+                    context
+                        .views
+                        .get(&entity)
+                        .map_or("<None>", |view| view.element().unwrap_or("<Unnamed>")),
+                    context.cache.get_posx(entity),
+                    context.cache.get_posy(entity),
+                    context.cache.get_width(entity),
+                    context.cache.get_height(entity)
+                );
+                for rule in result.into_iter() {
+                    for selectors in context.style.selectors.iter() {
+                        if selectors.0 == rule.0 {
+                            println!("{:?}", selectors.1);
+                        }
+                    }
+                }
+            }
 
             #[cfg(debug_assertions)]
             if *code == Code::KeyT

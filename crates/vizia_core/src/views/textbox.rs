@@ -90,11 +90,11 @@ where
             });
         })
         .text_wrap(kind == TextboxKind::MultiLineWrapped)
-        .cursor(CursorIcon::Text)
+        // .cursor(CursorIcon::Text)
         .navigable(true)
         .role(Role::TextField)
         .text_value(text_lens)
-        .cursor(CursorIcon::Text)
+        // .cursor(CursorIcon::Text)
         .default_action_verb(DefaultActionVerb::Focus)
     }
 
@@ -543,12 +543,14 @@ where
                 }
 
                 if cx.is_over() {
-                    cx.focus_with_visibility(false);
-                    cx.capture();
-                    cx.set_checked(true);
-                    cx.lock_cursor_icon();
+                    if !cx.is_disabled() {
+                        cx.focus_with_visibility(false);
+                        cx.capture();
+                        cx.set_checked(true);
+                        cx.lock_cursor_icon();
 
-                    cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
+                        cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
+                    }
                 } else {
                     cx.emit(TextEvent::Submit(false));
                     if let Some(source) = cx.data::<L::Source>() {
@@ -861,7 +863,7 @@ where
             }
 
             TextEvent::StartEdit => {
-                if !cx.is_disabled() && !self.edit {
+                if !cx.is_disabled() && !self.edit && !cx.is_read_only() {
                     self.edit = true;
                     cx.focus_with_visibility(false);
                     cx.capture();

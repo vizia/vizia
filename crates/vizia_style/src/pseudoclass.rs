@@ -52,7 +52,7 @@ impl ToCss for PseudoClass {
             PseudoClass::ReadWrite => todo!(),
             PseudoClass::PlaceHolderShown => todo!(),
             PseudoClass::Default => todo!(),
-            PseudoClass::Checked => todo!(),
+            PseudoClass::Checked => dest.write_str(":checked"),
             PseudoClass::Indeterminate => todo!(),
             PseudoClass::Blank => todo!(),
             PseudoClass::Valid => todo!(),

@@ -27,12 +27,10 @@ fn main() {
     Application::new(|cx| {
         AppState { x: 0.2, y: 0.5 }.build(cx);
 
-        VStack::new(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             XYPad::new(cx, AppState::root.map(|app_state| (app_state.x, app_state.y)))
                 .on_change(|cx, x, y| cx.emit(AppEvent::SetValue(x, y)));
-        })
-        .disabled(ControlsData::disabled)
-        .class("container");
+        });
     })
     .title("XYPad")
     .run();

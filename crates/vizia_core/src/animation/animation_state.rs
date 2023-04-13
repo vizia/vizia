@@ -18,8 +18,6 @@ pub(crate) struct Keyframe<T: Interpolator> {
 pub(crate) struct AnimationState<T: Interpolator> {
     /// ID of the animation description.
     pub id: Animation,
-    /// List of property indices that this animation applies to.
-    pub indices: Vec<usize>,
     /// The start time of the animation.
     pub start_time: Instant,
     /// The duration of the animation.
@@ -44,9 +42,6 @@ pub(crate) struct AnimationState<T: Interpolator> {
     /// For tansitions. The ending rule for this transition.
     pub to_rule: usize,
 
-    /// The number of entities linked to this animation when playing
-    pub count: usize,
-
     /// List of entities connected to this animation (used when animation is removed from active list)
     pub entities: HashSet<Entity>,
 }
@@ -58,7 +53,6 @@ where
     pub(crate) fn new(id: Animation) -> Self {
         AnimationState {
             id,
-            indices: Vec::new(),
             start_time: Instant::now(),
             duration: Duration::new(0, 0),
             delay: 0.0,
@@ -71,7 +65,6 @@ where
             entities: HashSet::new(),
             from_rule: usize::MAX,
             to_rule: usize::MAX,
-            count: 0,
         }
     }
 
@@ -89,39 +82,8 @@ where
         self
     }
 
-    pub(crate) fn set_delay(&mut self, delay: Duration) -> &mut Self {
-        self.delay = delay.as_secs_f32() / self.duration.as_secs_f32();
-
-        self
-    }
-
     pub(crate) fn with_keyframe(mut self, key: Keyframe<T>) -> Self {
         self.keyframes.push(key);
-
-        self
-    }
-
-    pub(crate) fn interpolate(&mut self, current_time: Instant) -> bool {
-        if current_time > self.start_time + self.duration {
-            return false;
-        }
-        // println!("Animating");
-
-        //let point = self.start_time.elapsed().as_secs_f32() / self.duration.as_secs_f32();
-
-        //let value = Prop::interpolate((0.0,1.0), (&self.keyframes[0].1, &self.keyframes[1].1), point);
-        // use the keyframes to interpolate the value and store the result in output.
-        //let mut pos = Positioning::default();
-
-        //let i = Prop::interpolate(0.0, Prop::default(), 1.0, Prop::default())
-
-        //let i = pos.interpolate();
-
-        true
-    }
-
-    pub(crate) fn set_persistent(mut self, flag: bool) -> Self {
-        self.persistent = flag;
 
         self
     }
@@ -146,7 +108,6 @@ where
     fn default() -> Self {
         AnimationState {
             id: Animation::null(),
-            indices: Vec::new(),
             start_time: Instant::now(),
             duration: Duration::new(0, 0),
             delay: 0.0,
@@ -159,7 +120,6 @@ where
             entities: HashSet::new(),
             from_rule: std::usize::MAX,
             to_rule: std::usize::MAX,
-            count: 0,
         }
     }
 }

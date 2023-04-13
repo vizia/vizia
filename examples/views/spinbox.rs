@@ -43,7 +43,7 @@ fn main() {
         }
         .build(cx);
 
-        HStack::new(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             Spinbox::new(
                 cx,
                 AppState::spinbox_value_1,
@@ -97,8 +97,7 @@ fn main() {
             )
             .on_increment(|ex| ex.emit(AppEvent::Increment3))
             .on_decrement(|ex| ex.emit(AppEvent::Decrement3));
-        })
-        .class("container");
+        });
     })
     .title("Spinbox")
     .run();

@@ -13,7 +13,7 @@ fn main() {
     Application::new(|cx| {
         AppData { list: vec!["Tab1", "Tab2"] }.build(cx);
 
-        VStack::new(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             TabView::new(cx, AppData::list, |cx, item| match item.get(cx) {
                 "Tab1" => TabPair::new(
                     move |cx| {
@@ -35,12 +35,10 @@ fn main() {
                     },
                 ),
 
-                _ => TabPair::new(|_| {}, |_| {}),
+                _ => unreachable!(),
             })
             .size(Auto);
-        })
-        .disabled(ControlsData::disabled)
-        .class("container");
+        });
     })
     .title("Tabs")
     .run();

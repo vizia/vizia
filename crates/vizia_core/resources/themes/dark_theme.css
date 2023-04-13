@@ -218,27 +218,6 @@ label.h2 {
     font-weight: bold;
 }
 
-/* TEXTBOX */
-textbox {
-    border-width: 1px;
-    border-radius: 4px;
-    border-color: #282828;
-    background-color: #1d1d1d;
-    transition: border-color 100ms;
-    transition: background-color 100ms;
-    /* box-shadow: 0 0 0 transparent; */
-}
-
-textbox:checked {
-    border-color: #51afef;
-    background-color: #1d1d1d;
-    box-shadow: 0px 4px 4px #00000026;
-    transition: border-color 100ms;
-    transition: box-shadow 100ms;
-    caret-color: red;
-    selection-color: #6464c888;
-}
-
 /* TOOLTIP */
 tooltip {
     child-space: 10px;
@@ -455,24 +434,10 @@ menubutton:hover {
 
 notification {
     background-color: #242424;
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
 }
 
-notification .color-strip {
-    background-color: #51afef;
-}
-
-notification .notification-header {
-    border-top-right-radius: 4px;
-}
-
-notification .icon label {
-    color: #ffffff88;
-}
-
-notification .icon:checked label {
-    color: #fff;
+notification .notification-header button {
+    background-color: transparent;
 }
 
 /* Picklist */
@@ -526,6 +491,7 @@ radiobutton:checked:hover {
     transition: border-color 100ms;
 }
 
+radiobutton:checked:disabled,
 radiobutton:disabled {
     border-color: #404040;
     transition: border-color 100ms;
@@ -534,15 +500,15 @@ radiobutton:disabled {
 radiobutton .inner {
     border-radius: 50%;
     background-color: #888;
-    transition: width 150ms;
-    transition: height 150ms;
+    scale: 0;
+    transition: scale 100ms;
     transition: background-color 100ms;
 }
 
 radiobutton:checked .inner {
     background-color: #51afef;
-    transition: width 150ms;
-    transition: height 150ms;
+    scale: 1;
+    transition: scale 100ms;
     transition: background-color 100ms;
 }
 
@@ -553,9 +519,9 @@ radiobutton:hover .inner {
 
 radiobutton:disabled .inner {
     background-color: #404040;
-    transition: width 150ms;
-    transition: height 150ms;
     transition: background-color 100ms;
+    scale: 1;
+    transition: scale 100ms;
 }
 
 /* Searchbox */
@@ -806,33 +772,29 @@ table {
 textbox {
     border-width: 1px;
     border-radius: 4px;
-    border-color: #282828;
-    background-color: #282828;
+    border-color: #323232;
+    background-color: #323232;
     transition: border-color 100ms;
     transition: background-color 100ms;
     /* box-shadow: 0 0 0 transparent; */
 }
 
-textbox textboxlabel {
-    color: #fff;
-    transition: color 100ms;
-}
-
 textbox:checked {
-    border-width: 1px;
     border-color: #51afef;
-    background-color: #1d1d1d;
-    box-shadow: 0px 4px 4px #00000026;
+    background-color: #323232;
     transition: border-color 100ms;
-    transition: box-shadow 100ms;
+    caret-color: red;
+    selection-color: #6464c888;
 }
 
-textbox:checked .textbox_content {
-    caret-color: #51afef;
-    selection-color: #51afef40;
+textbox:read-only {
+    background-color: transparent;
+    border-width: 0px;
+    caret-color: transparent;
+    selection-color: #6464c888;
 }
 
-textbox:disabled textboxlabel {
+textbox:disabled {
     color: #888;
     transition: color 100ms;
 }

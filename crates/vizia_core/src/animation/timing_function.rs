@@ -8,7 +8,7 @@ pub struct TimingFunction {
 
 impl Default for TimingFunction {
     fn default() -> Self {
-        Self::linear()
+        Self::ease()
     }
 }
 

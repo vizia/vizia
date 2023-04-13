@@ -605,38 +605,42 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
     }
 }
 
+pub(crate) fn compute_matched_rules(
+    cx: &Context,
+    entity: Entity,
+    matched_rules: &mut Vec<(Rule, u32)>,
+) {
+    for (rule, selector_list) in cx.style.selectors.iter() {
+        let mut context =
+            MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
+
+        let (matches, specificity) = matches_selector_list(
+            selector_list,
+            &Node { entity, store: &cx.style, tree: &cx.tree, views: &cx.views },
+            &mut context,
+        );
+
+        if matches {
+            matched_rules.push((*rule, specificity));
+        }
+    }
+
+    matched_rules.sort_by_cached_key(|(_, s)| *s);
+    matched_rules.reverse();
+}
+
 // Iterate tree and determine the matched style rules for each entity. Link the entity to the style data.
 pub(crate) fn style_system(cx: &mut Context) {
     if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
         hoverability_system(cx);
 
-        // let mut prev_entity = None;
-
-        // let mut matched_rule_ids = Vec::with_capacity(100);
-        // let mut prev_matched_rule_ids = Vec::with_capacity(100);
-
         let iterator = LayoutTreeIterator::full(&cx.tree);
 
         // Loop through all entities
         for entity in iterator {
-            let mut matched_rules = Vec::with_capacity(100);
-            for (rule, specificity, selector_list) in cx.style.selectors.iter() {
-                // println!("selector_list: {:?} {}", selector_list, entity);
-                let mut context =
-                    MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
-                if matches_selector_list(
-                    selector_list,
-                    &Node { entity, store: &cx.style, tree: &cx.tree, views: &cx.views },
-                    &mut context,
-                ) {
-                    matched_rules.push((*rule, *specificity));
-                }
-            }
+            let mut matched_rules = Vec::with_capacity(5);
+            compute_matched_rules(cx, entity, &mut matched_rules);
 
-            matched_rules.sort_by_cached_key(|(_, s)| *s);
-            matched_rules.reverse();
-
-            // println!("Matched rules: {} {:?}", entity, matched_rules);
             link_style_data(
                 &mut cx.style,
                 entity,

@@ -26,7 +26,7 @@ fn main() {
     Application::new(|cx| {
         AppData { value: 0.2 }.build(cx);
 
-        HStack::new(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             Knob::new(cx, 0.5, AppData::value, false).on_changing(|cx, val| {
                 cx.emit(AppEvent::SetValue(val));
             });
@@ -38,8 +38,7 @@ fn main() {
                     cx.emit(AppEvent::SetValue(val));
                 })
                 .class("small");
-        })
-        .class("container");
+        });
     })
     .title("Knob")
     .run();

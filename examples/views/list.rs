@@ -16,13 +16,11 @@ fn main() {
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list }.build(cx);
 
-        VStack::new(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             List::new(cx, AppData::list, |cx, _, item| {
                 Label::new(cx, item);
             });
-        })
-        .disabled(ControlsData::disabled)
-        .class("container");
+        });
     })
     .title("List")
     .run();

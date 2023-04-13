@@ -164,7 +164,6 @@ impl Dropdown {
                 .height(Auto);
             })
             .cursor(CursorIcon::Hand)
-        //.on_press(|cx| cx.emit(PopupEvent::Switch))
     }
 }
 
