@@ -392,12 +392,12 @@ where
                     //Animation is finished
                     state.output = Some(T::interpolate(&start.value, &end.value, 1.0));
 
-                    if !state.persistent {
+                    if state.persistent {
+                        state.t = 1.0;
+                    } else {
                         //state.output = Some(T::interpolate(&start.1, &end.1, 0.0));
                         state.t = 1.0;
                         state.active = false;
-                    } else {
-                        state.t = 1.0;
                     }
                 } else if state.t <= 0.0 {
                     state.output = Some(start.value.clone());
