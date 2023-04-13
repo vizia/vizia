@@ -956,12 +956,14 @@ impl Style {
         let timing_function = transition
             .timing_function
             .map(|easing| match easing {
-                EasingFunction::Linear => TimingFunction::linear(),
+                EasingFunction::Linear => TimingFunction::Linear,
                 EasingFunction::Ease => TimingFunction::ease(),
                 EasingFunction::EaseIn => TimingFunction::ease_in(),
                 EasingFunction::EaseOut => TimingFunction::ease_out(),
                 EasingFunction::EaseInOut => TimingFunction::ease_in_out(),
-                EasingFunction::CubicBezier(x1, y1, x2, y2) => TimingFunction::new(x1, y1, x2, y2),
+                EasingFunction::CubicBezier(x1, y1, x2, y2) => {
+                    TimingFunction::new_cubic(x1, y1, x2, y2)
+                }
             })
             .unwrap_or_default();
 

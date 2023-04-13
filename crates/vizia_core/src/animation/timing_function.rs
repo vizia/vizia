@@ -1,41 +1,34 @@
 use std::f32::EPSILON;
 
 #[derive(Debug, Clone, Copy)]
-pub struct TimingFunction {
-    ax: f32,
-    ay: f32,
-    bx: f32,
-    by: f32,
-    cx: f32,
-    cy: f32,
+pub enum TimingFunction {
+    Linear,
+    CubicBezier { ax: f32, ay: f32, bx: f32, by: f32, cx: f32, cy: f32 },
 }
 
 impl Default for TimingFunction {
     fn default() -> Self {
-        Self::linear()
+        Self::Linear
     }
 }
 
 impl TimingFunction {
-    pub fn linear() -> Self {
-        Self::new(0., 0., 1., 1.)
-    }
     pub fn ease() -> Self {
-        Self::new(0.25, 0.1, 0.25, 1.)
+        Self::new_cubic(0.25, 0.1, 0.25, 1.)
     }
     pub fn ease_in() -> Self {
-        Self::new(0.42, 0., 1., 1.)
+        Self::new_cubic(0.42, 0., 1., 1.)
     }
     pub fn ease_out() -> Self {
-        Self::new(0., 0., 0.58, 1.)
+        Self::new_cubic(0., 0., 0.58, 1.)
     }
     pub fn ease_in_out() -> Self {
-        Self::new(0.42, 0., 0.58, 1.)
+        Self::new_cubic(0.42, 0., 0.58, 1.)
     }
 }
 
 impl TimingFunction {
-    pub fn new(x1: f32, y1: f32, x2: f32, y2: f32) -> Self {
+    pub fn new_cubic(x1: f32, y1: f32, x2: f32, y2: f32) -> Self {
         let cx = 3.0 * x1;
         let bx = 3.0 * (x2 - x1) - cx;
         let ax = 1.0 - cx - bx;
@@ -44,53 +37,54 @@ impl TimingFunction {
         let by = 3.0 * (y2 - y1) - cy;
         let ay = 1.0 - cy - by;
 
-        Self { ax, ay, bx, by, cx, cy }
+        Self::CubicBezier { ax, ay, bx, by, cx, cy }
     }
 
     pub fn value(&self, x: f32) -> f32 {
-        // Newton Raphson
-        let mut guess = x;
-        let mut error = x - self.calc_bezier_x(guess);
-        for _ in 0..8 {
-            if error.abs() <= EPSILON {
-                return self.calc_bezier_y(guess);
+        match *self {
+            Self::Linear => x,
+            Self::CubicBezier { ax, ay, bx, by, cx, cy } => {
+                // Newton Raphson
+                let mut guess = x;
+                let mut error = x - calc_bezier(guess, ax, bx, cx);
+                for _ in 0..8 {
+                    if error.abs() <= EPSILON {
+                        return calc_bezier(guess, ay, by, cy);
+                    }
+
+                    let pos = calc_bezier(guess, ax, bx, cx);
+                    error = pos - x;
+
+                    let derivative = calc_derivative(guess, ax, bx, cx);
+                    guess -= error / derivative;
+                }
+
+                // Bisect
+                let mut t0 = 0.;
+                let mut t1 = 1.;
+
+                while error.abs() > EPSILON {
+                    guess = (t0 + t1) / 2.0;
+                    error = x - calc_bezier(guess, ax, bx, cx);
+                    if error > 0.0 {
+                        t0 = guess;
+                    } else {
+                        t1 = guess;
+                    }
+                }
+
+                calc_bezier(guess, ay, by, cy)
             }
-
-            let pos = self.calc_bezier_x(guess);
-            error = pos - x;
-
-            let derivative = self.calc_derivative(guess);
-            guess -= error / derivative;
         }
-
-        // Bisect
-        let mut t0 = 0.;
-        let mut t1 = 1.;
-
-        while error.abs() > EPSILON {
-            guess = (t0 + t1) / 2.0;
-            error = x - self.calc_bezier_x(guess);
-            if error > 0.0 {
-                t0 = guess;
-            } else {
-                t1 = guess;
-            }
-        }
-
-        self.calc_bezier_y(guess)
     }
+}
 
-    fn calc_bezier_x(&self, t: f32) -> f32 {
-        ((self.ax * t + self.bx) * t + self.cx) * t
-    }
+fn calc_bezier(t: f32, a: f32, b: f32, c: f32) -> f32 {
+    ((a * t + b) * t + c) * t
+}
 
-    fn calc_bezier_y(&self, t: f32) -> f32 {
-        ((self.ay * t + self.by) * t + self.cy) * t
-    }
-
-    fn calc_derivative(&self, t: f32) -> f32 {
-        (3. * self.ax * t + 2. * self.bx) * t + self.cx
-    }
+fn calc_derivative(t: f32, a: f32, b: f32, c: f32) -> f32 {
+    (3. * a * t + 2. * b) * t + c
 }
 
 #[cfg(test)]
@@ -99,8 +93,8 @@ mod tests {
 
     #[test]
     fn linear() {
-        let timing_func = TimingFunction::linear();
-        assert_eq!(timing_func.value(0.5), 0.5);
+        let timing_func = TimingFunction::Linear;
+        assert_eq!(timing_func.value(0.43), 0.43);
     }
 
     #[test]
