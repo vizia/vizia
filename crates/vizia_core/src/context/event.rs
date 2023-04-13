@@ -232,8 +232,8 @@ impl<'a> EventContext<'a> {
             if let Some(animation_state) = self.style.transform.get_active_animation(self.current) {
                 if let Some(start) = animation_state.keyframes.first() {
                     if let Some(end) = animation_state.keyframes.last() {
-                        let start_transform = start.1.into_transform(bounds, scale_factor);
-                        let end_transform = end.1.into_transform(bounds, scale_factor);
+                        let start_transform = start.value.into_transform(bounds, scale_factor);
+                        let end_transform = end.value.into_transform(bounds, scale_factor);
                         let t = animation_state.t;
                         let animated_transform =
                             Transform2D::interpolate(&start_transform, &end_transform, t);
@@ -392,16 +392,6 @@ impl<'a> EventContext<'a> {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
             pseudo_classes.set(PseudoClassFlags::CHECKED, flag);
-        }
-
-        self.style.needs_restyle();
-    }
-
-    /// Sets the checked flag of the current entity.
-    pub fn set_selected(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClassFlags::SELECTED, flag);
         }
 
         self.style.needs_restyle();

@@ -4,8 +4,6 @@ use vizia::prelude::*;
 
 fn main() {
     Application::new(|cx| {
-        view_controls(cx);
-
         VStack::new(cx, |cx| {
             Notification::new(
                 cx,
@@ -16,6 +14,6 @@ fn main() {
         .disabled(ControlsData::disabled)
         .class("container");
     })
-    .title("Popup")
+    .title("Notification")
     .run();
 }

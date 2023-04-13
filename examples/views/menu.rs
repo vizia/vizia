@@ -1,5 +1,3 @@
-mod helpers;
-use helpers::*;
 use vizia::prelude::*;
 
 #[derive(Lens)]
@@ -13,8 +11,6 @@ impl Model for AppData {}
 fn main() {
     Application::new(|cx| {
         AppData { check1: false, check2: true }.build(cx);
-
-        theme_selector(cx);
 
         MenuController::new(cx, false, |cx| {
             MenuStack::new_horizontal(cx, |cx| {

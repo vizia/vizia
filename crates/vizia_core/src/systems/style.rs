@@ -217,7 +217,7 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
                 PseudoClass::Lang(_) => todo!(),
                 PseudoClass::Dir(_) => todo!(),
                 PseudoClass::Custom(name) => {
-                    println!("{}", name);
+                    println!("custom: {}", name);
                     todo!()
                 }
             }

@@ -29,7 +29,6 @@ fn main() {
     Application::new(|cx| {
         AppData { option: Options::First }.build(cx);
 
-        view_controls(cx);
         // Exclusive checkboxes (radio buttons) with labels
         // Only one checkbox can be checked at a time and cannot be unchecked
         VStack::new(cx, |cx| {

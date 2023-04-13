@@ -20,16 +20,15 @@ bitflags! {
         const DEFAULT = 1 << 9;
         const CHECKED = 1 << 10;
         const INDETERMINATE = 1 << 11;
-        const SELECTED = 1 << 12;
-        const BLANK = 1 << 13;
-        const VALID = 1 << 14;
-        const INVALID = 1 << 15;
-        const IN_RANGE = 1 << 16;
-        const OUT_OF_RANGE = 1 << 17;
-        const REQUIRED = 1 << 18;
-        const OPTIONAL = 1 << 19;
-        const USER_VALID = 1 << 20;
-        const USER_INVALID = 1 << 21;
+        const BLANK = 1 << 12;
+        const VALID = 1 << 13;
+        const INVALID = 1 << 14;
+        const IN_RANGE = 1 << 15;
+        const OUT_OF_RANGE = 1 << 16;
+        const REQUIRED = 1 << 17;
+        const OPTIONAL = 1 << 18;
+        const USER_VALID = 1 << 19;
+        const USER_INVALID = 1 << 20;
     }
 }
 
@@ -56,9 +55,6 @@ impl std::fmt::Display for PseudoClassFlags {
         }
         if self.contains(PseudoClassFlags::CHECKED) {
             write!(f, ":checked")?;
-        }
-        if self.contains(PseudoClassFlags::SELECTED) {
-            write!(f, ":selected")?;
         }
         if self.contains(PseudoClassFlags::FOCUS_WITHIN) {
             write!(f, ":focus-within")?;

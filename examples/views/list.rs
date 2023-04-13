@@ -11,8 +11,6 @@ impl Model for AppData {}
 
 fn main() {
     Application::new(|cx| {
-        view_controls(cx);
-
         cx.add_theme(include_str!("../resources/list_style.css"));
 
         let list: Vec<u32> = (10..14u32).collect();

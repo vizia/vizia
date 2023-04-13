@@ -226,15 +226,15 @@ textbox {
     background-color: #1d1d1d;
     transition: border-color 100ms;
     transition: background-color 100ms;
-    /* outer-shadow: 0 0 0 transparent; */
+    /* box-shadow: 0 0 0 transparent; */
 }
 
 textbox:checked {
     border-color: #51afef;
     background-color: #1d1d1d;
     box-shadow: 0px 4px 4px #00000026;
-    transition: border-color 0.1 0;
-    transition: outer-shadow 0.1 0;
+    transition: border-color 100ms;
+    transition: box-shadow 100ms;
     caret-color: red;
     selection-color: #6464c888;
 }
@@ -331,7 +331,7 @@ datetimepicker {
 }
 
 datetimepicker tabheader label {
-    font: "icons";
+    font-family: "tabler-icons", sans-serif;
 }
 
 datetimepicker tabheader:checked label {
@@ -414,7 +414,7 @@ knob:focus-visible {
     border-width: 2px;
     border-color: #1d1d1d;
     border-radius: 100px;
-    /* outer-shadow: 0 4 4 #00000088; BUGGY */
+    /* box-shadow: 0 4 4 #00000088; BUGGY */
 }
 
 .knob-tick {
@@ -480,14 +480,14 @@ notification .icon:checked label {
 /* Popup */
 
 popup {
-    outer-shadow: 0 0 8 #00000026;
+    box-shadow: 0px 0px 8px #00000026;
     opacity: 0%;
-    transition: opacity 0.1 0;
+    transition: opacity 100ms;
 }
 
 popup:checked {
     opacity: 100%;
-    transition: opacity 0.1 0;
+    transition: opacity 100ms;
 }
 
 /* Progress Bar */
@@ -501,13 +501,13 @@ radiobutton {
     border-radius: 50%;
     border-color: #888;
     background-color: transparent;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 radiobutton:hover {
     border-color: #51afef;
-    transition: border-color 0.1 0;
+    transition: border-color 100ms;
 }
 
 radiobutton:focus-visible {
@@ -518,44 +518,44 @@ radiobutton:focus-visible {
 
 radiobutton:checked {
     border-color: #51afef;
-    transition: border-color 0.1 0;
+    transition: border-color 100ms;
 }
 
 radiobutton:checked:hover {
     border-color: #80caff;
-    transition: border-color 0.1 0;
+    transition: border-color 100ms;
 }
 
 radiobutton:disabled {
     border-color: #404040;
-    transition: border-color 0.1 0;
+    transition: border-color 100ms;
 }
 
 radiobutton .inner {
     border-radius: 50%;
     background-color: #888;
-    transition: width 0.15 0;
-    transition: height 0.15 0;
-    transition: background-color 0.1 0;
+    transition: width 150ms;
+    transition: height 150ms;
+    transition: background-color 100ms;
 }
 
 radiobutton:checked .inner {
     background-color: #51afef;
-    transition: width 0.15 0;
-    transition: height 0.15 0;
-    transition: background-color 0.1 0;
+    transition: width 150ms;
+    transition: height 150ms;
+    transition: background-color 100ms;
 }
 
 radiobutton:hover .inner {
     background-color: #80caff;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 radiobutton:disabled .inner {
     background-color: #404040;
-    transition: width 0.15 0;
-    transition: height 0.15 0;
-    transition: background-color 0.1 0;
+    transition: width 150ms;
+    transition: height 150ms;
+    transition: background-color 100ms;
 }
 
 /* Searchbox */
@@ -678,19 +678,19 @@ spinbox picklist.spinbox-value {
 switch .switch-handle-bg {
     border-radius: 6px;
     background-color: #343434;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch .switch-handle {
     background-color: #888888;
     border-radius: 50%;
-    transition: background-color 0.1 0;
-    transition: left 0.1 0;
+    transition: background-color 100ms;
+    transition: left 100ms;
 }
 
 switch:hover .switch-handle {
     background-color: #c4c4c4;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:focus-visible {
@@ -701,37 +701,37 @@ switch:focus-visible {
 
 switch:checked .switch-handle-bg {
     background-color: #51afef40;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:checked .switch-handle {
     background-color: #51afef;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:checked:hover .switch-handle {
     background-color: #80caff;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:disabled * {
     background-color: #404040;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:hover:disabled * {
     background-color: #404040;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:checked:disabled * {
     background-color: #404040;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:checked:hover:disabled * {
     background-color: #404040;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 /* Tab */
 
@@ -780,11 +780,11 @@ table {
 }
 
 .table-column-title {
-    font: "roboto-bold";
+    font-family: "roboto-bold";
 }
 
 .table-column-icon {
-    font: "icons";
+    font-family: "tabler-icons", sans-serif;
 }
 
 .table-row-divisor {
@@ -808,23 +808,23 @@ textbox {
     border-radius: 4px;
     border-color: #282828;
     background-color: #282828;
-    transition: border-color 0.1 0;
-    transition: background-color 0.1 0;
-    /* outer-shadow: 0 0 0 transparent; */
+    transition: border-color 100ms;
+    transition: background-color 100ms;
+    /* box-shadow: 0 0 0 transparent; */
 }
 
 textbox textboxlabel {
     color: #fff;
-    transition: color 0.1 0;
+    transition: color 100ms;
 }
 
 textbox:checked {
     border-width: 1px;
     border-color: #51afef;
     background-color: #1d1d1d;
-    outer-shadow: 0 4 4 #00000026;
-    transition: border-color 0.1 0;
-    transition: outer-shadow 0.1 0;
+    box-shadow: 0px 4px 4px #00000026;
+    transition: border-color 100ms;
+    transition: box-shadow 100ms;
 }
 
 textbox:checked .textbox_content {
@@ -834,18 +834,18 @@ textbox:checked .textbox_content {
 
 textbox:disabled textboxlabel {
     color: #888;
-    transition: color 0.1 0;
+    transition: color 100ms;
 }
 
 textbox:focus-visible {
     border-color: #51afef80;
-    transition: border-color 0.1 0;
+    transition: border-color 100ms;
 }
 
 textbox.error {
     border-color: #ef5151;
     border-width: 1px;
-    transition: border-color 0.1 0;
+    transition: border-color 100ms;
     background-color: #3c2c2c;
 }
 
@@ -869,7 +869,7 @@ digitaltimepicker .digitaltimepicker-dot {
 }
 
 digitaltimepicker textbox {
-    font-size: 24px;
+    font-size: 24;
 }
 
 /* Radial Time Picker */
@@ -952,7 +952,7 @@ tooltip .tooltip-wrapper {
 }
 
 tooltip .title {
-    font-size: 18px;
+    font-size: 18;
 }
 
 tooltip .subtitle {
@@ -998,5 +998,5 @@ tooltip button {
 
 .modal .title {
     color: #fff;
-    font-size: 18px;
+    font-size: 18;
 }

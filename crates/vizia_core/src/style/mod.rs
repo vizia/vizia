@@ -75,7 +75,7 @@ pub use vizia_style::{
     Translate, Visibility, RGBA,
 };
 
-use vizia_style::{ParserOptions, Property, SelectorList, Selectors, StyleSheet};
+use vizia_style::{EasingFunction, ParserOptions, Property, SelectorList, Selectors, StyleSheet};
 
 mod rule;
 pub(crate) use rule::Rule;
@@ -83,7 +83,7 @@ pub(crate) use rule::Rule;
 mod selector;
 pub(crate) use selector::*;
 
-use crate::animation::{AnimationState, Interpolator};
+use crate::animation::{Animation, AnimationState, Interpolator, Keyframe, TimingFunction};
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
 use bitflags::bitflags;
@@ -508,6 +508,31 @@ impl Style {
                 self.width.insert_transition(rule_id, animation);
             }
 
+            "height" => {
+                self.height.insert_animation(animation, self.add_transition(transition));
+                self.height.insert_transition(rule_id, animation);
+            }
+
+            "left" => {
+                self.left.insert_animation(animation, self.add_transition(transition));
+                self.left.insert_transition(rule_id, animation);
+            }
+
+            "right" => {
+                self.right.insert_animation(animation, self.add_transition(transition));
+                self.right.insert_transition(rule_id, animation);
+            }
+
+            "top" => {
+                self.top.insert_animation(animation, self.add_transition(transition));
+                self.top.insert_transition(rule_id, animation);
+            }
+
+            "bottom" => {
+                self.bottom.insert_animation(animation, self.add_transition(transition));
+                self.bottom.insert_transition(rule_id, animation);
+            }
+
             "box-shadow" => {
                 self.box_shadow.insert_animation(animation, self.add_transition(transition));
                 self.box_shadow.insert_transition(rule_id, animation);
@@ -928,11 +953,23 @@ impl Style {
         &self,
         transition: &Transition,
     ) -> AnimationState<T> {
+        let timing_function = transition
+            .timing_function
+            .map(|easing| match easing {
+                EasingFunction::Linear => TimingFunction::linear(),
+                EasingFunction::Ease => TimingFunction::ease(),
+                EasingFunction::EaseIn => TimingFunction::ease_in(),
+                EasingFunction::EaseOut => TimingFunction::ease_out(),
+                EasingFunction::EaseInOut => TimingFunction::ease_in_out(),
+                EasingFunction::CubicBezier(x1, y1, x2, y2) => TimingFunction::new(x1, y1, x2, y2),
+            })
+            .unwrap_or_default();
+
         AnimationState::new(Animation::null())
             .with_duration(transition.duration)
             .with_delay(transition.delay)
-            .with_keyframe((0.0, Default::default()))
-            .with_keyframe((1.0, Default::default()))
+            .with_keyframe(Keyframe { time: 0.0, value: Default::default(), timing_function })
+            .with_keyframe(Keyframe { time: 1.0, value: Default::default(), timing_function })
     }
 
     // Add style data to an entity

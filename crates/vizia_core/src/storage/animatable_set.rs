@@ -1,4 +1,4 @@
-use crate::animation::{AnimationState, Interpolator};
+use crate::animation::{Animation, AnimationState, Interpolator, Keyframe, TimingFunction};
 use crate::prelude::*;
 use crate::style::Rule;
 use vizia_id::GenerationalId;
@@ -264,7 +264,7 @@ where
     /// Animations exist separately to inline (entity) data and shared (rule) data.
     /// Playing an aimation for a particular entity will clone the animation state to the
     /// active animations and then link the entity to it.  
-    pub fn insert_animation(
+    pub(crate) fn insert_animation(
         &mut self,
         animation: Animation,
         animation_description: AnimationState<T>,
@@ -272,7 +272,7 @@ where
         self.animations.insert(animation, animation_description).unwrap();
     }
 
-    pub fn remove_animation(&mut self, animation: Animation) -> Option<AnimationState<T>> {
+    pub(crate) fn remove_animation(&mut self, animation: Animation) -> Option<AnimationState<T>> {
         self.animations.remove(animation)
     }
 
@@ -296,7 +296,7 @@ where
         }
     }
 
-    pub fn play_animation(&mut self, entity: Entity, animation: Animation) {
+    pub(crate) fn play_animation(&mut self, entity: Entity, animation: Animation) {
         let entity_index = entity.index();
 
         if !self.animations.contains(animation) {
@@ -325,7 +325,7 @@ where
                             .keyframes
                             .first()
                             .unwrap()
-                            .1
+                            .value
                             .clone(),
                     );
                 } else {
@@ -337,7 +337,7 @@ where
                             .keyframes
                             .first()
                             .unwrap()
-                            .1
+                            .value
                             .clone(),
                     );
                     anim_state.entities.remove(&entity);
@@ -354,7 +354,7 @@ where
                     .keyframes
                     .first()
                     .unwrap()
-                    .1
+                    .value
                     .clone(),
             );
             anim_state.play(entity);
@@ -374,9 +374,9 @@ where
                 let start = state.keyframes.first().unwrap();
                 let end = state.keyframes.last().unwrap();
 
-                if start.1 == end.1 {
+                if start.value == end.value {
                     state.t0 = 1.0;
-                    state.output = Some(end.1.clone());
+                    state.output = Some(end.value.clone());
                     continue;
                 }
 
@@ -390,7 +390,7 @@ where
 
                 if state.t >= 1.0 {
                     //Animation is finished
-                    state.output = Some(T::interpolate(&start.1, &end.1, 1.0));
+                    state.output = Some(T::interpolate(&start.value, &end.value, 1.0));
 
                     if !state.persistent {
                         //state.output = Some(T::interpolate(&start.1, &end.1, 0.0));
@@ -400,9 +400,10 @@ where
                         state.t = 1.0;
                     }
                 } else if state.t <= 0.0 {
-                    state.output = Some(start.1.clone());
+                    state.output = Some(start.value.clone());
                 } else {
-                    state.output = Some(T::interpolate(&start.1, &end.1, state.t));
+                    let timing_t = start.timing_function.value(state.t);
+                    state.output = Some(T::interpolate(&start.value, &end.value, timing_t));
                 }
             }
 
@@ -428,7 +429,7 @@ where
     }
 
     /// Returns true if there is an animation with the given id
-    pub fn has_animation(&mut self, animation: Animation) -> bool {
+    pub(crate) fn has_animation(&mut self, animation: Animation) -> bool {
         self.animations.contains(animation)
     }
 
@@ -506,7 +507,7 @@ where
 
     /// Returns a reference to the active animation linked to the given entity if it exists,
     /// else returns None.
-    pub fn get_active_animation(&self, entity: Entity) -> Option<&AnimationState<T>> {
+    pub(crate) fn get_active_animation(&self, entity: Entity) -> Option<&AnimationState<T>> {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
             let anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
@@ -518,11 +519,14 @@ where
         None
     }
 
-    pub fn get_animation(&self, animation: Animation) -> Option<&AnimationState<T>> {
+    pub(crate) fn get_animation(&self, animation: Animation) -> Option<&AnimationState<T>> {
         self.animations.get(animation)
     }
 
-    pub fn get_animation_mut(&mut self, animation: Animation) -> Option<&mut AnimationState<T>> {
+    pub(crate) fn get_animation_mut(
+        &mut self,
+        animation: Animation,
+    ) -> Option<&mut AnimationState<T>> {
         self.animations.get_mut(animation)
     }
 
@@ -589,25 +593,20 @@ where
                             // Transitioning back to previous rule
                             current_anim_state.from_rule = current_anim_state.to_rule;
                             current_anim_state.to_rule = rule_data_index;
-                            *current_anim_state.keyframes.first_mut().unwrap() = (
-                                0.0,
-                                self.shared_data.dense[current_anim_state.from_rule].value.clone(),
-                            );
-                            *current_anim_state.keyframes.last_mut().unwrap() = (
-                                1.0,
-                                self.shared_data.dense[current_anim_state.to_rule].value.clone(),
-                            );
+                            current_anim_state.keyframes.first_mut().unwrap().value =
+                                self.shared_data.dense[current_anim_state.from_rule].value.clone();
+
+                            current_anim_state.keyframes.last_mut().unwrap().value =
+                                self.shared_data.dense[current_anim_state.to_rule].value.clone();
+
                             current_anim_state.delay = current_anim_state.t - 1.0;
                             current_anim_state.start_time = instant::Instant::now();
                         } else {
                             // Transitioning to new rule
                             current_anim_state.to_rule = rule_data_index;
-                            *current_anim_state.keyframes.first_mut().unwrap() =
-                                (0.0, current_value);
-                            *current_anim_state.keyframes.last_mut().unwrap() = (
-                                1.0,
-                                self.shared_data.dense[current_anim_state.to_rule].value.clone(),
-                            );
+                            current_anim_state.keyframes.first_mut().unwrap().value = current_value;
+                            current_anim_state.keyframes.last_mut().unwrap().value =
+                                self.shared_data.dense[current_anim_state.to_rule].value.clone();
                             current_anim_state.t = 0.0;
                             current_anim_state.t0 = 0.0;
                             current_anim_state.start_time = instant::Instant::now();
@@ -625,12 +624,12 @@ where
                         {
                             let start_data =
                                 self.shared_data.dense[entity_data_index.index()].value.clone();
-                            *transition_state.keyframes.first_mut().unwrap() = (0.0, start_data);
+                            transition_state.keyframes.first_mut().unwrap().value = start_data;
                         } else {
-                            *transition_state.keyframes.first_mut().unwrap() = (0.0, end.clone());
+                            transition_state.keyframes.first_mut().unwrap().value = end.clone();
                         }
 
-                        *transition_state.keyframes.last_mut().unwrap() = (1.0, end.clone());
+                        transition_state.keyframes.last_mut().unwrap().value = end.clone();
                         transition_state.from_rule =
                             self.inline_data.sparse[entity_index].data_index.index();
                         transition_state.to_rule = shared_data_index.index();

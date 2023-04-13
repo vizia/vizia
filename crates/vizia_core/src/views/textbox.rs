@@ -85,10 +85,11 @@ where
                 cx.text_context.with_buffer(parent, |fs, buf| {
                     buf.set_text(fs, &text_str, Attrs::new());
                 });
+
+                cx.needs_redraw();
             });
         })
         .text_wrap(kind == TextboxKind::MultiLineWrapped)
-        // .translate(Textbox::<L>::transform.map(|(x, y)| (Pixels(*x), Pixels(*y))))
         .cursor(CursorIcon::Text)
         .navigable(true)
         .role(Role::TextField)
@@ -98,8 +99,6 @@ where
     }
 
     fn set_caret(&mut self, cx: &mut EventContext) {
-        // let scale = cx.scale_factor();
-
         // calculate visible area for content and container
         let mut text_bounds = cx.text_context.get_bounds(cx.current).unwrap_or_default();
         let mut bounds = cx.bounds();

@@ -107,8 +107,8 @@ name = "dropdown"
 path = "examples/views/dropdown.rs"
 
 [[example]]
-name = "image"
-path = "examples/views/image.rs"
+name = "background_image"
+path = "examples/style/background_image.rs"
 
 [[example]]
 name = "knob"
@@ -299,6 +299,10 @@ path = "examples/style/filter.rs"
 [[example]]
 name = "clipping"
 path = "examples/style/clipping.rs"
+
+[[example]]
+name = "transition"
+path = "examples/style/transition.rs"
 
 [[example]]
 name = "zorder"

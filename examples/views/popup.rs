@@ -4,8 +4,6 @@ use vizia::prelude::*;
 
 fn main() {
     Application::new(|cx| {
-        view_controls(cx);
-
         PopupData::default().build(cx);
 
         VStack::new(cx, |cx| {

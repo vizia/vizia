@@ -330,16 +330,6 @@ impl Context {
         self.focus_with_visibility(old_focus_visible)
     }
 
-    /// Sets the checked flag of the current entity
-    pub fn set_selected(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClassFlags::SELECTED, flag);
-        }
-
-        self.style.needs_restyle();
-    }
-
     pub(crate) fn remove_children(&mut self, entity: Entity) {
         let child_iter = ChildIterator::new(&self.tree, entity);
         let children = child_iter.collect::<Vec<_>>();
@@ -492,22 +482,6 @@ impl Context {
         self.resource_manager.stylesheets.push(path.as_ref().to_owned());
         self.style.parse_theme(&style_string);
         Ok(())
-    }
-
-    /// Adds a new property animation returning an animation builder
-    ///
-    /// # Example
-    /// Create an animation which animates the `left` property from 0 to 100 pixels in 5 seconds
-    /// and play the animation on an entity:
-    /// ```ignore
-    /// let animation_id = cx.add_animation(instant::Duration::from_secs(5))
-    ///     .add_keyframe(0.0, |keyframe| keyframe.set_left(Pixels(0.0)))
-    ///     .add_keyframe(1.0, |keyframe| keyframe.set_left(Pixels(100.0)))
-    ///     .build();
-    /// ```
-    pub fn add_animation(&mut self, duration: std::time::Duration) -> AnimationBuilder {
-        let id = self.style.animation_manager.create();
-        AnimationBuilder::new(id, self, duration)
     }
 
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {

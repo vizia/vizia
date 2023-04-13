@@ -36,8 +36,6 @@ fn main() {
 
         PopupData::default().build(cx);
 
-        view_controls(cx);
-
         VStack::new(cx, |cx| {
             ZStack::new(cx, |cx| {
                 Textbox::new(

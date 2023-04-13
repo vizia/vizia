@@ -12,14 +12,10 @@ fn main() {
     Application::new(|cx| {
         AppData { chip1: "Chip".to_string(), chip2: "Another Chip".to_string() }.build(cx);
 
-        view_controls(cx);
-
-        VStack::new(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             Chip::new(cx, AppData::chip1).background_color(Color::from("#00ffff44"));
             Chip::new(cx, AppData::chip2).background_color(Color::from("#ff004444"));
-        })
-        .disabled(ControlsData::disabled)
-        .class("container");
+        });
     })
     .title("Chip")
     .inner_size((400, 200))

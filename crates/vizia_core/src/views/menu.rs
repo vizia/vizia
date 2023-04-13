@@ -26,12 +26,12 @@ where
             .navigable(true)
             .bind(MenuData::selected, move |handle, selected| {
                 let selected = selected.get(handle.cx) == Some(i);
-                handle.cx.set_selected(selected);
                 if selected {
                     on_select(handle.cx);
                 } else {
                     on_deselect(handle.cx);
                 }
+                handle.checked(selected);
             })
             .on_over(move |cx| {
                 if cx.data::<MenuControllerData>().unwrap().active {

@@ -43,8 +43,6 @@ fn main() {
         }
         .build(cx);
 
-        view_controls(cx);
-
         HStack::new(cx, |cx| {
             Spinbox::new(
                 cx,

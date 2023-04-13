@@ -8,6 +8,6 @@ use vizia_id::{
 /// An animation id is returned by `cx.add_animation()` and can be used to configure animations
 /// as well as to play, pause, and stop animations on entities (see [`AnimExt`](crate::prelude::AnimExt)).
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Animation(u32);
+pub(crate) struct Animation(u32);
 
 impl_generational_id!(Animation);

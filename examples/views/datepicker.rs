@@ -27,8 +27,6 @@ fn main() {
     Application::new(|cx| {
         AppState { date: Utc::now().date_naive() }.build(cx);
 
-        view_controls(cx);
-
         VStack::new(cx, |cx| {
             Datepicker::new(cx, AppState::date)
                 .on_select(|cx, date| cx.emit(AppEvent::SetDate(date)));

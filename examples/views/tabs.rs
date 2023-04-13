@@ -13,8 +13,6 @@ fn main() {
     Application::new(|cx| {
         AppData { list: vec!["Tab1", "Tab2"] }.build(cx);
 
-        view_controls(cx);
-
         VStack::new(cx, |cx| {
             TabView::new(cx, AppData::list, |cx, item| match item.get(cx) {
                 "Tab1" => TabPair::new(

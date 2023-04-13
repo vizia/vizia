@@ -1,7 +1,7 @@
 /* General */
 
-.icon {
-    font: "icons";
+label.icon {
+    font-family: "tabler-icons", sans-serif;
 }
 
 root {
@@ -36,13 +36,13 @@ button {
     border-width: 1px;
     border-color: #d2d2d2;
     background-color: #fdfdfd;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
     color: #181818;
 }
 
 button:over {
     background-color: #f9f9f9;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 button:active {
@@ -54,8 +54,8 @@ button:active {
 button:disabled {
     border-color: #ebebeb;
     color: #626262;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 button:focus-visible {
@@ -67,28 +67,28 @@ button:focus-visible {
 button.accent {
     border-width: 0px;
     background-color: #51afef;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
     color: #181818;
 }
 
 button.accent:over {
     background-color: #73bff2;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 button.accent:active {
     background-color: #59a4d9;
     color: #363636;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 button.accent:disabled {
     background-color: #c4c4c4;
     color: white;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 button.outline {
@@ -96,13 +96,13 @@ button.outline {
     border-width: 1px;
     border-color: #51afef;
     color: #51afef;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 button.outline:over {
     background-color: #80caff10;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 button.outline:active {
@@ -112,31 +112,31 @@ button.outline:active {
 button.outline:disabled {
     border-color: #ebebeb;
     color: #626262;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 button.ghost {
     border-width: 0px;
     background-color: transparent;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
     color: #51afef;
 }
 
 button.ghost:over {
     background-color: #80caff10;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 button.ghost:active {
     background-color: #3995d610;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 button.ghost:disabled {
     color: #626262;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 /* Checkbox */
@@ -147,30 +147,30 @@ checkbox {
     border-color: #626262;
     background-color: #f4f4f4;
     child-space: 1s;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
     font: "icons";
 }
 
 checkbox:hover {
     border-color: #626262;
     background-color: #ebebeb;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 checkbox:active {
     border-color: #c4c4c4;
     background-color: #e2e2e2;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 checkbox:disabled {
     border-color: #c4c4c4;
     background-color: #f4f4f400;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 checkbox:focus-visible {
@@ -183,30 +183,30 @@ checkbox:checked {
     background-color: #51afef;
     border-color: #51afef;
     color: #fff;
-    transition: background-color 0.2 0;
-    transition: border-color 0.1 0;
+    transition: background-color 200ms;
+    transition: border-color 100ms;
 }
 
 checkbox:checked:hover {
     background-color: #73bff2;
     border-color: #73bff2;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 checkbox:checked:active {
     background-color: #59a4d9;
     border-color: #59a4d9;
     color: #e0e0e0;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 checkbox:checked:disabled {
     background-color: #c4c4c4;
     border-color: #c4c4c4;
-    transition: background-color 0.1 0;
-    transition: border-color 0.1 0;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
 }
 
 /* Chip */
@@ -355,14 +355,14 @@ dropdown list label:focus-visible {
 /* Popup */
 
 popup {
-    outer-shadow: 0 0 8 #00000026;
+    box-shadow: 0px 0px 8px #00000026;
     opacity: 0%;
-    transition: opacity 0.1 0;
+    transition: opacity 100ms;
 }
 
 popup:checked {
     opacity: 100%;
-    transition: opacity 0.1 0;
+    transition: opacity 100ms;
 }
 
 /*
@@ -595,7 +595,7 @@ spinbox picklist.spinbox-value .title {
 switch .switch-handle-bg {
     border-radius: 6px;
     background-color: #888;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch .switch-handle {
@@ -603,13 +603,13 @@ switch .switch-handle {
     border-color: #d9d9d9;
     background-color: #ececec;
     border-radius: 50%;
-    transition: background-color 0.1 0;
-    transition: left 0.1 0;
+    transition: background-color 100ms;
+    transition: left 100ms;
 }
 
 switch:hover .switch-handle {
     background-color: #f0f0f0;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:focus-visible {
@@ -620,37 +620,37 @@ switch:focus-visible {
 
 switch:checked .switch-handle-bg {
     background-color: #51afef40;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:checked .switch-handle {
     background-color: #51afef;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:checked:hover .switch-handle {
     background-color: #80caff;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:disabled * {
     background-color: #cccccc;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:hover:disabled * {
     background-color: #cccccc;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:checked:disabled * {
     background-color: #cccccc;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:checked:hover:disabled * {
     background-color: #cccccc;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 table {
@@ -670,13 +670,13 @@ tablecolumn {
     child-left: 5px;
     width: 1s;
     height: 1s;
-    font: "roboto-bold";
+    font-family: "roboto-bold";
 }
 
 .table-column-icon {
     width: 30px;
     child-space: 1s;
-    font: "icons";
+    font-family: "icons";
 }
 
 .table-row-divisor {

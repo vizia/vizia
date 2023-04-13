@@ -27,8 +27,6 @@ fn main() {
     Application::new(|cx| {
         AppState { x: 0.2, y: 0.5 }.build(cx);
 
-        view_controls(cx);
-
         VStack::new(cx, |cx| {
             XYPad::new(cx, AppState::root.map(|app_state| (app_state.x, app_state.y)))
                 .on_change(|cx, x, y| cx.emit(AppEvent::SetValue(x, y)));

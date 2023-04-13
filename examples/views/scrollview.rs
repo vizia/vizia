@@ -5,8 +5,6 @@ use vizia_core::binding::RatioLens;
 
 fn main() {
     Application::new(|cx| {
-        view_controls(cx);
-
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 // TODO: Link scrollviews to the same scroll data

@@ -32,8 +32,6 @@ fn main() {
     Application::new(|cx| {
         AppData { option1: true, option2: false }.build(cx);
 
-        view_controls(cx);
-
         VStack::new(cx, |cx| {
             Label::new(cx, "Basic Switches");
 

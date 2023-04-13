@@ -5,8 +5,17 @@ use vizia_id::GenerationalId;
 
 use crate::prelude::*;
 
+use super::{Animation, TimingFunction};
+
+#[derive(Debug, Clone)]
+pub(crate) struct Keyframe<T: Interpolator> {
+    pub time: f32,
+    pub value: T,
+    pub timing_function: TimingFunction,
+}
+
 #[derive(Clone, Debug)]
-pub struct AnimationState<Prop: Interpolator> {
+pub(crate) struct AnimationState<T: Interpolator> {
     /// ID of the animation description.
     pub id: Animation,
     /// List of property indices that this animation applies to.
@@ -18,9 +27,9 @@ pub struct AnimationState<Prop: Interpolator> {
     /// The delay before the animation starts.
     pub delay: f32,
     /// List of animation keyframes as (normalized time, value).
-    pub keyframes: Vec<(f32, Prop)>,
+    pub keyframes: Vec<Keyframe<T>>,
     /// The output of value of the animation.
-    pub output: Option<Prop>,
+    pub output: Option<T>,
     /// Whether the animation should persist after finishing.
     pub persistent: bool,
 
@@ -42,11 +51,11 @@ pub struct AnimationState<Prop: Interpolator> {
     pub entities: HashSet<Entity>,
 }
 
-impl<Prop> AnimationState<Prop>
+impl<T> AnimationState<T>
 where
-    Prop: Interpolator,
+    T: Interpolator,
 {
-    pub fn new(id: Animation) -> Self {
+    pub(crate) fn new(id: Animation) -> Self {
         AnimationState {
             id,
             indices: Vec::new(),
@@ -66,13 +75,13 @@ where
         }
     }
 
-    pub fn with_duration(mut self, duration: Duration) -> Self {
+    pub(crate) fn with_duration(mut self, duration: Duration) -> Self {
         self.duration = duration;
 
         self
     }
 
-    pub fn with_delay(mut self, delay: Option<Duration>) -> Self {
+    pub(crate) fn with_delay(mut self, delay: Option<Duration>) -> Self {
         if let Some(delay) = delay {
             self.delay = delay.as_secs_f32() / self.duration.as_secs_f32();
         }
@@ -80,19 +89,19 @@ where
         self
     }
 
-    pub fn set_delay(&mut self, delay: Duration) -> &mut Self {
+    pub(crate) fn set_delay(&mut self, delay: Duration) -> &mut Self {
         self.delay = delay.as_secs_f32() / self.duration.as_secs_f32();
 
         self
     }
 
-    pub fn with_keyframe(mut self, key: (f32, Prop)) -> Self {
+    pub(crate) fn with_keyframe(mut self, key: Keyframe<T>) -> Self {
         self.keyframes.push(key);
 
         self
     }
 
-    pub fn interpolate(&mut self, current_time: Instant) -> bool {
+    pub(crate) fn interpolate(&mut self, current_time: Instant) -> bool {
         if current_time > self.start_time + self.duration {
             return false;
         }
@@ -111,13 +120,13 @@ where
         true
     }
 
-    pub fn set_persistent(mut self, flag: bool) -> Self {
+    pub(crate) fn set_persistent(mut self, flag: bool) -> Self {
         self.persistent = flag;
 
         self
     }
 
-    pub fn get_output(&self) -> Option<&Prop> {
+    pub(crate) fn get_output(&self) -> Option<&T> {
         self.output.as_ref()
     }
 

@@ -48,7 +48,6 @@ pub mod icons {
 /// Members which we recommend you wildcard-import.
 #[doc(hidden)]
 pub mod prelude {
-    pub use super::animation::{Animation, AnimationBuilder};
     pub use super::binding::{
         Binding, Data, Index, Lens, LensExt, Res, Setter, StaticLens, Then, Wrapper,
     };

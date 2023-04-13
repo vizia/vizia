@@ -26,15 +26,11 @@ fn main() {
     Application::new(|cx| {
         AppState { options: vec!["One", "Two", "Three"], selected_option: 0 }.build(cx);
 
-        view_controls(cx);
-
-        VStack::new(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             PickList::new(cx, AppState::options, AppState::selected_option, true)
                 .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)))
                 .width(Pixels(140.0));
-        })
-        .disabled(ControlsData::disabled)
-        .class("container");
+        });
     })
     .title("Picklist")
     .run();

@@ -266,7 +266,7 @@ menu > menustack {
     display: none;
 }
 
-menu:selected > menustack {
+menu:checked > menustack {
     display: flex;
 }
 
@@ -297,7 +297,6 @@ menustack.horizontal > menu > menustack {
 
 menustack.vertical > menu > hstack > .menu_arrow {
     display: flex;
-    font: "material";
     left: 1s;
     top: 1s;
     bottom: 1s;
@@ -637,7 +636,7 @@ switch .switch-handle {
     left: 0px;
     width: 18px;
     height: 18px;
-    transition: left 0.1 0;
+    transition: left 100ms;
 }
 
 switch .switch-handle-bg {
@@ -645,12 +644,12 @@ switch .switch-handle-bg {
     height: 12px;
     top: 1s;
     bottom: 1s;
-    transition: background-color 0.1 0;
+    transition: background-color 100ms;
 }
 
 switch:checked .switch-handle {
     left: 12px;
-    transition: left 0.1 0;
+    transition: left 100ms;
 }
 
 /* Tab */
@@ -958,7 +957,7 @@ menu > menustack {
     display: none;
 }
 
-menu:selected > menustack {
+menu:checked > menustack {
     display: flex;
 }
 
@@ -976,7 +975,6 @@ menustack.horizontal > menu > menustack {
 
 menustack.vertical > menu > hstack > .menu_arrow {
     display: flex;
-    font-family: "Material Icons";
     left: 1s;
     top: 1s;
     bottom: 1s;

@@ -26,8 +26,6 @@ fn main() {
     Application::new(|cx| {
         AppState { time: Utc::now().naive_utc().time() }.build(cx);
 
-        view_controls(cx);
-
         HStack::new(cx, |cx| {
             Timepicker::new(cx, AppState::time).on_change(|cx, time| {
                 cx.emit(AppEvent::SetTime(time));

@@ -1,4 +1,5 @@
-use vizia::icons::ICON_CHEVRON_DOWN;
+mod helpers;
+use helpers::*;
 use vizia::prelude::*;
 
 #[derive(Lens, Model, Setter)]
@@ -15,10 +16,7 @@ fn main() {
         }
         .build(cx);
 
-        view_controls(cx);
-
-        VStack::new(cx, |cx| {
-            // Dropdown List
+        ExamplePage::new(cx, |cx| {
             Dropdown::new(
                 cx,
                 move |cx| Label::new(cx, AppData::choice),
@@ -44,9 +42,7 @@ fn main() {
             )
             .top(Pixels(40.0))
             .width(Pixels(100.0));
-        })
-        .disabled(ControlsData::disabled)
-        .class("container");
+        });
     })
     .title("Dropdown")
     .inner_size((350, 300))

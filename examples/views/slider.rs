@@ -6,8 +6,6 @@ fn main() {
     Application::new(|cx| {
         AppData { value: 0.0 }.build(cx);
 
-        view_controls(cx);
-
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 Slider::new(cx, AppData::value.map(|val| (val + 50.0) / 100.0))

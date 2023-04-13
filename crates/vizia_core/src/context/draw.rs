@@ -232,8 +232,8 @@ impl<'a> DrawContext<'a> {
             if let Some(animation_state) = self.style.transform.get_active_animation(self.current) {
                 if let Some(start) = animation_state.keyframes.first() {
                     if let Some(end) = animation_state.keyframes.last() {
-                        let start_transform = start.1.into_transform(bounds, scale_factor);
-                        let end_transform = end.1.into_transform(bounds, scale_factor);
+                        let start_transform = start.value.into_transform(bounds, scale_factor);
+                        let end_transform = end.value.into_transform(bounds, scale_factor);
                         let t = animation_state.t;
                         let animated_transform =
                             Transform2D::interpolate(&start_transform, &end_transform, t);
