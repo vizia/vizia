@@ -26,17 +26,16 @@ fn main() {
     Application::new(|cx| {
         AppState { time: Utc::now().naive_utc().time() }.build(cx);
 
-        HStack::new(cx, |cx| {
-            Timepicker::new(cx, AppState::time).on_change(|cx, time| {
-                cx.emit(AppEvent::SetTime(time));
-            });
-            DigitalTimepicker::new(cx, AppState::time).on_change(|cx, time| {
-                cx.emit(AppEvent::SetTime(time));
-            });
+        ExamplePage::new(cx, |cx| {
+            // Timepicker::new(cx, AppState::time).on_change(|cx, time| {
+            //     cx.emit(AppEvent::SetTime(time));
+            // });
+            // DigitalTimepicker::new(cx, AppState::time).on_change(|cx, time| {
+            //     cx.emit(AppEvent::SetTime(time));
+            // });
             AnalogTimepicker::new(cx, AppState::time)
                 .on_change(|cx, time| cx.emit(AppEvent::SetTime(time)));
-        })
-        .class("container");
+        });
     })
     .title("Timepicker")
     .run();

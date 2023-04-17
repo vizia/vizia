@@ -56,10 +56,11 @@ mod tests {
         Translate, parse_translate,
 
         success {
-            "10%, 20%" => Translate::new(Percentage(0.1), Percentage(0.2)),
-            "10%, 20px" => Translate::new(Percentage(0.1), Length(Length::px(20.0))),
-            "10px, 20%" => Translate::new(Length(Length::px(10.0)), Percentage(0.2)),
+            "10%, 20%" => Translate::new(Percentage(10.0), Percentage(20.0)),
+            "10%, 20px" => Translate::new(Percentage(10.0), Length(Length::px(20.0))),
+            "10px, 20%" => Translate::new(Length(Length::px(10.0)), Percentage(20.0)),
             "10px, 20px" => Translate::new(Length(Length::px(10.0)), Length(Length::px(20.0))),
+
         }
 
         failure {

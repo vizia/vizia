@@ -259,6 +259,12 @@ label.describing {
 }
 
 /* List */
+list {
+    width: auto;
+    height: auto;
+    row-between: 4px;
+    col-between: 4px;
+}
 
 /* Menu */
 
@@ -836,7 +842,9 @@ analogtimepicker .clock-face {
 
 analogtimepicker .clock-hand {
     width: 1px;
-    height: 80px;
+    height: 50%;
+    translate: 0px -50%;
+    transform-origin: bottom center;
 }
 
 analogtimepicker .center-dot {
@@ -846,10 +854,16 @@ analogtimepicker .center-dot {
 
 analogtimepicker .marker {
     width: 32px;
-    height: 32px;
-    child-space: 1s;
+    height: 50%;
+    /* background-color: blue; */
+    translate: 0px -50%;
+    transform-origin: bottom center;
+    /* child-space: 1s; */
+    child-left: 1s;
+    child-right: 1s;
 }
 
+/*
 analogtimepicker .controls-wrapper {
     top: 1s;
     bottom: 1s;
@@ -883,7 +897,7 @@ analogtimepicker .time-selector-wrapper button label {
     width: 1s;
     height: 1s;
     child-space: 1s;
-}
+} */
 
 scrollview > .scroll_content {
     min-width: 100%;

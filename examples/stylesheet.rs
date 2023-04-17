@@ -31,14 +31,15 @@ fn main() {
     // .title("Stylesheet")
     // .run();
     Application::new(|cx| {
+        Element::new(cx).size(Pixels(100.0)).background_color(Color::red()).space(Pixels(100.0));
         // Label::new(cx, "textسلام").width(Pixels(200.0)).background_color(Color::green());
         // Label::new(cx, "سلام").background_color(Color::green());
         // Label::new(cx, "سلام").background_color(Color::green());
-        Button::new(
-            cx,
-            |_| {},
-            |cx| Label::new(cx, "سلام").width(Pixels(100.0)).background_color(Color::red()),
-        );
+        // Button::new(
+        //     cx,
+        //     |_| {},
+        //     |cx| Label::new(cx, "سلام").width(Pixels(100.0)).background_color(Color::red()),
+        // );
         // Button::new(
         //     cx,
         //     |_| {},

@@ -215,6 +215,25 @@ chip {
     border-radius: 4px;
 }
 
+chip .icon {
+    scale: 1;
+    transition: scale 100ms;
+    transition: background-color 100ms;
+    border-radius: 50%;
+}
+
+chip .icon:hover {
+    background-color: #00000022;
+    scale: 1.2;
+    transition: scale 100ms;
+    transition: background-color 100ms;
+}
+
+chip:disabled .icon {
+    background-color: transparent;
+    scale: 1;
+}
+
 /* Datepicker */
 
 datepicker {

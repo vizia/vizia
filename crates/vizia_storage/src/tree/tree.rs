@@ -48,15 +48,15 @@ where
     }
 
     /// Returns the last child of an entity.
-    pub fn get_last_child(&self, entity: I) -> Option<I> {
+    pub fn get_last_child(&self, entity: I) -> Option<&I> {
         //check if entity exists
         let index = entity.index();
         if index < self.first_child.len() {
-            let mut f = self.first_child[index];
+            let mut f = self.first_child[index].as_ref();
             let mut r = None;
             while f.is_some() {
                 r = f;
-                f = self.next_sibling[f.unwrap().index()];
+                f = self.next_sibling[f.unwrap().index()].as_ref();
             }
 
             r

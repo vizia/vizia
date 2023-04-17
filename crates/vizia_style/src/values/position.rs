@@ -72,14 +72,14 @@ impl<S: Copy + Into<LengthOrPercentage>> PositionComponent<S> {
     fn is_center(&self) -> bool {
         match self {
             PositionComponent::Center => true,
-            PositionComponent::Length(LengthOrPercentage::Percentage(p)) => *p == 0.5,
+            PositionComponent::Length(LengthOrPercentage::Percentage(p)) => *p == 50.0,
             _ => false,
         }
     }
 
     pub fn to_length_or_percentage(&self) -> LengthOrPercentage {
         match self {
-            PositionComponent::Center => LengthOrPercentage::Percentage(0.5),
+            PositionComponent::Center => LengthOrPercentage::Percentage(50.0),
             PositionComponent::Length(len) => len.clone(),
             PositionComponent::Side(side) => (*side).into(),
         }
@@ -105,7 +105,7 @@ impl Into<LengthOrPercentage> for HorizontalPositionKeyword {
     fn into(self) -> LengthOrPercentage {
         match self {
             HorizontalPositionKeyword::Left => LengthOrPercentage::Length(Length::px(0.0)),
-            HorizontalPositionKeyword::Right => LengthOrPercentage::Percentage(1.0),
+            HorizontalPositionKeyword::Right => LengthOrPercentage::Percentage(100.0),
         }
     }
 }
@@ -114,7 +114,7 @@ impl Into<LengthOrPercentage> for VerticalPositionKeyword {
     fn into(self) -> LengthOrPercentage {
         match self {
             VerticalPositionKeyword::Top => LengthOrPercentage::Length(Length::px(0.0)),
-            VerticalPositionKeyword::Bottom => LengthOrPercentage::Percentage(1.0),
+            VerticalPositionKeyword::Bottom => LengthOrPercentage::Percentage(100.0),
         }
     }
 }

@@ -303,7 +303,6 @@ impl TextContext {
 
                 let mut q = Quad::default();
                 let it = 1.0 / TEXTURE_SIZE as f32;
-
                 q.x0 = (position_x + glyph.x_int + rendered.offset_x - GLYPH_PADDING as i32) as f32;
                 q.y0 = (position_y + run.line_y as i32 + glyph.y_int
                     - rendered.offset_y

@@ -392,25 +392,33 @@ where
 
                             let angle = (hours) as f32 * 30.0;
 
-                            let mut transform = Transform2D::identity();
-                            transform.rotate(angle);
-                            transform.premultiply(&Transform2D::identity().translate(0.0, -44.0));
+                            // let mut transform = Transform2D::identity();
+                            // transform.rotate(angle);
+                            // transform.premultiply(&Transform2D::identity().translate(0.0, -44.0));
                             Element::new(cx)
-                                .transform(transform)
+                                // .transform(vec![
+                                //     Transform::Rotate(Angle::Deg(angle)),
+                                //     Transform::TranslateY(Pixels(-44.0).into()),
+                                // ])
+                                .rotate(Angle::Deg(angle))
                                 .position_type(PositionType::SelfDirected)
                                 .class("clock-hand");
                         });
 
                         for i in 0..12 {
-                            let mut transform = Transform2D::identity();
-                            transform.rotate(30.0 * (i + 1) as f32);
-                            transform.premultiply(&Transform2D::identity().translate(0.0, -74.0));
-                            transform.premultiply(
-                                &Transform2D::identity().rotate(-30.0 * (i + 1) as f32),
-                            );
+                            // let mut transform = Transform2D::identity();
+                            // transform.rotate(30.0 * (i + 1) as f32);
+                            // transform.premultiply(&Transform2D::identity().translate(0.0, -74.0));
+                            // transform.premultiply(
+                            //     &Transform2D::identity().rotate(-30.0 * (i + 1) as f32),
+                            // );
 
                             Label::new(cx, i + 1)
-                                .transform(transform)
+                                // .transform(vec![
+                                //     Transform::Rotate(Angle::Deg(30.0 * (i + 1) as f32)),
+                                //     Transform::TranslateY(Pixels(-74.0).into()),
+                                // ])
+                                .rotate(Angle::Deg(30.0 * (i + 1) as f32))
                                 .position_type(PositionType::SelfDirected)
                                 .on_press(move |ex| ex.emit(AnalogTimepickerEvent::SetHours(i + 1)))
                                 .class("marker")
@@ -426,24 +434,24 @@ where
 
                             let angle = (minutes / 5) as f32 * 30.0;
 
-                            let mut transform = Transform2D::identity();
-                            transform.rotate(angle);
-                            transform.premultiply(&Transform2D::identity().translate(0.0, -44.0));
+                            // let mut transform = Transform2D::identity();
+                            // transform.rotate(angle);
+                            // transform.premultiply(&Transform2D::identity().translate(0.0, -44.0));
                             Element::new(cx)
-                                .transform(transform)
+                                .rotate(Angle::Deg(angle))
                                 .position_type(PositionType::SelfDirected)
                                 .class("clock-hand");
                         });
 
                         for i in 0..12 {
-                            let mut transform = Transform2D::identity();
-                            transform.rotate(30.0 * i as f32);
-                            transform.premultiply(&Transform2D::identity().translate(0.0, -74.0));
-                            transform
-                                .premultiply(&Transform2D::identity().rotate(-30.0 * i as f32));
+                            // let mut transform = Transform2D::identity();
+                            // transform.rotate(30.0 * i as f32);
+                            // transform.premultiply(&Transform2D::identity().translate(0.0, -74.0));
+                            // transform
+                            //     .premultiply(&Transform2D::identity().rotate(-30.0 * i as f32));
 
                             Label::new(cx, &format!("{:#02}", i * 5))
-                                .transform(transform)
+                                .rotate(Angle::Deg(-30.0 * i as f32))
                                 .position_type(PositionType::SelfDirected)
                                 .on_press(move |ex| {
                                     ex.emit(AnalogTimepickerEvent::SetMinutes(i * 5))
@@ -456,38 +464,39 @@ where
                     }
 
                     AnalogTimepickerPage::Seconds => {
-                        Binding::new(cx, lens.clone().map(|time| time.second()), |cx, seconds| {
-                            let seconds = seconds.get(cx);
+                        todo!();
+                        // Binding::new(cx, lens.clone().map(|time| time.second()), |cx, seconds| {
+                        //     let seconds = seconds.get(cx);
 
-                            let angle = (seconds / 5) as f32 * 30.0;
+                        //     let angle = (seconds / 5) as f32 * 30.0;
 
-                            let mut transform = Transform2D::identity();
-                            transform.rotate(angle);
-                            transform.premultiply(&Transform2D::identity().translate(0.0, -44.0));
-                            Element::new(cx)
-                                .transform(transform)
-                                .position_type(PositionType::SelfDirected)
-                                .class("clock-hand");
-                        });
+                        //     let mut transform = Transform2D::identity();
+                        //     transform.rotate(angle);
+                        //     transform.premultiply(&Transform2D::identity().translate(0.0, -44.0));
+                        //     Element::new(cx)
+                        //         .transform(transform)
+                        //         .position_type(PositionType::SelfDirected)
+                        //         .class("clock-hand");
+                        // });
 
-                        for i in 0..12 {
-                            let mut transform = Transform2D::identity();
-                            transform.rotate(30.0 * i as f32);
-                            transform.premultiply(&Transform2D::identity().translate(0.0, -74.0));
-                            transform
-                                .premultiply(&Transform2D::identity().rotate(-30.0 * i as f32));
+                        // for i in 0..12 {
+                        //     let mut transform = Transform2D::identity();
+                        //     transform.rotate(30.0 * i as f32);
+                        //     transform.premultiply(&Transform2D::identity().translate(0.0, -74.0));
+                        //     transform
+                        //         .premultiply(&Transform2D::identity().rotate(-30.0 * i as f32));
 
-                            Label::new(cx, &format!("{:#02}", i * 5))
-                                .transform(transform)
-                                .position_type(PositionType::SelfDirected)
-                                .on_press(move |ex| {
-                                    ex.emit(AnalogTimepickerEvent::SetSeconds(i * 5))
-                                })
-                                .class("marker")
-                                .checked(
-                                    lens.clone().map(move |time| time.second() / 5 == i as u32),
-                                );
-                        }
+                        //     Label::new(cx, &format!("{:#02}", i * 5))
+                        //         .transform(vec![])
+                        //         .position_type(PositionType::SelfDirected)
+                        //         .on_press(move |ex| {
+                        //             ex.emit(AnalogTimepickerEvent::SetSeconds(i * 5))
+                        //         })
+                        //         .class("marker")
+                        //         .checked(
+                        //             lens.clone().map(move |time| time.second() / 5 == i as u32),
+                        //         );
+                        // }
                     }
                 });
 
@@ -495,82 +504,82 @@ where
             })
             .class("clock-face");
 
-            Binding::new(cx, Self::show_controls, move |cx, show_controls| {
-                if show_controls.get(cx) {
-                    VStack::new(cx, |cx| {
-                        Binding::new(cx, lens1.clone(), |cx, lens| {
-                            let (hour, minute, second) =
-                                (lens.get(cx).hour(), lens.get(cx).minute(), lens.get(cx).second());
+            // Binding::new(cx, Self::show_controls, move |cx, show_controls| {
+            //     if show_controls.get(cx) {
+            //         VStack::new(cx, |cx| {
+            //             Binding::new(cx, lens1.clone(), |cx, lens| {
+            //                 let (hour, minute, second) =
+            //                     (lens.get(cx).hour(), lens.get(cx).minute(), lens.get(cx).second());
 
-                            HStack::new(cx, |cx| {
-                                Button::new(
-                                    cx,
-                                    |ex| {
-                                        ex.emit(AnalogTimepickerEvent::SetPage(
-                                            AnalogTimepickerPage::Hours,
-                                        ))
-                                    },
-                                    |cx| {
-                                        Label::new(cx, hour).hoverable(false);
-                                        Element::new(cx).class("indicator")
-                                    },
-                                )
-                                .checked(
-                                    Self::page.map(|page| page == &AnalogTimepickerPage::Hours),
-                                );
-                                Button::new(
-                                    cx,
-                                    |ex| {
-                                        ex.emit(AnalogTimepickerEvent::SetPage(
-                                            AnalogTimepickerPage::Minutes,
-                                        ))
-                                    },
-                                    |cx| {
-                                        Label::new(cx, minute).hoverable(false);
-                                        Element::new(cx).class("indicator")
-                                    },
-                                )
-                                .checked(
-                                    Self::page.map(|page| page == &AnalogTimepickerPage::Minutes),
-                                );
-                                Button::new(
-                                    cx,
-                                    |ex| {
-                                        ex.emit(AnalogTimepickerEvent::SetPage(
-                                            AnalogTimepickerPage::Seconds,
-                                        ))
-                                    },
-                                    |cx| {
-                                        Label::new(cx, second).hoverable(false);
-                                        Element::new(cx).class("indicator")
-                                    },
-                                )
-                                .checked(
-                                    Self::page.map(|page| page == &AnalogTimepickerPage::Seconds),
-                                );
-                            })
-                            .class("time-selector-wrapper");
+            //                 HStack::new(cx, |cx| {
+            //                     Button::new(
+            //                         cx,
+            //                         |ex| {
+            //                             ex.emit(AnalogTimepickerEvent::SetPage(
+            //                                 AnalogTimepickerPage::Hours,
+            //                             ))
+            //                         },
+            //                         |cx| {
+            //                             Label::new(cx, hour).hoverable(false);
+            //                             Element::new(cx).class("indicator")
+            //                         },
+            //                     )
+            //                     .checked(
+            //                         Self::page.map(|page| page == &AnalogTimepickerPage::Hours),
+            //                     );
+            //                     Button::new(
+            //                         cx,
+            //                         |ex| {
+            //                             ex.emit(AnalogTimepickerEvent::SetPage(
+            //                                 AnalogTimepickerPage::Minutes,
+            //                             ))
+            //                         },
+            //                         |cx| {
+            //                             Label::new(cx, minute).hoverable(false);
+            //                             Element::new(cx).class("indicator")
+            //                         },
+            //                     )
+            //                     .checked(
+            //                         Self::page.map(|page| page == &AnalogTimepickerPage::Minutes),
+            //                     );
+            //                     Button::new(
+            //                         cx,
+            //                         |ex| {
+            //                             ex.emit(AnalogTimepickerEvent::SetPage(
+            //                                 AnalogTimepickerPage::Seconds,
+            //                             ))
+            //                         },
+            //                         |cx| {
+            //                             Label::new(cx, second).hoverable(false);
+            //                             Element::new(cx).class("indicator")
+            //                         },
+            //                     )
+            //                     .checked(
+            //                         Self::page.map(|page| page == &AnalogTimepickerPage::Seconds),
+            //                     );
+            //                 })
+            //                 .class("time-selector-wrapper");
 
-                            Button::new(
-                                cx,
-                                |ex| ex.emit(AnalogTimepickerEvent::ToggleAMOrPM),
-                                |cx| {
-                                    Label::new(cx, "AM").bind(lens, |h, lens| {
-                                        if lens.get(h.cx).hour12().0 {
-                                            h.text("PM");
-                                        } else {
-                                            h.text("AM");
-                                        }
-                                    })
-                                },
-                            )
-                            .class("accent");
-                        })
-                    })
-                    .position_type(PositionType::SelfDirected)
-                    .class("controls-wrapper");
-                }
-            })
+            //                 Button::new(
+            //                     cx,
+            //                     |ex| ex.emit(AnalogTimepickerEvent::ToggleAMOrPM),
+            //                     |cx| {
+            //                         Label::new(cx, "AM").bind(lens, |h, lens| {
+            //                             if lens.get(h.cx).hour12().0 {
+            //                                 h.text("PM");
+            //                             } else {
+            //                                 h.text("AM");
+            //                             }
+            //                         })
+            //                     },
+            //                 )
+            //                 .class("accent");
+            //             })
+            //         })
+            //         .position_type(PositionType::SelfDirected)
+            //         .class("controls-wrapper");
+            //     }
+            // })
         })
     }
 }

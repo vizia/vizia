@@ -332,6 +332,10 @@ path = "examples/binding/boolean.rs"
 name = "text_layout"
 path = "examples/text_layout.rs"
 
+[[example]]
+name = "custom_modifiers"
+path = "examples/custom_modifiers.rs"
+
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
 clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]

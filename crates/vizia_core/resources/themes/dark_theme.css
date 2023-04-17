@@ -10,6 +10,10 @@ label.icon {
     font-family: "tabler-icons", sans-serif;
 }
 
+label:disabled {
+    color: #a0a0a0;
+}
+
 :root {
     background-color: #1d1d1d;
 }
@@ -237,6 +241,25 @@ tooltip.vis {
 
 chip {
     border-radius: 4px;
+}
+
+chip .icon {
+    scale: 1;
+    transition: scale 100ms;
+    transition: background-color 100ms;
+    border-radius: 50%;
+}
+
+chip .icon:hover {
+    background-color: #ffffff22;
+    scale: 1.2;
+    transition: scale 100ms;
+    transition: background-color 100ms;
+}
+
+chip:disabled .icon {
+    background-color: transparent;
+    scale: 1;
 }
 
 /* Color Picker */
@@ -841,13 +864,14 @@ analogtimepicker {
     border-radius: 4px;
     width: 160px;
     height: 160px;
+    child-space: 4px;
 }
 
 analogtimepicker .clock-face {
     border-radius: 50%;
     background-color: #484848;
-    width: 180px;
-    height: 180px;
+    width: 1s;
+    height: 1s;
 }
 
 analogtimepicker .clock-hand {

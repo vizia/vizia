@@ -223,8 +223,10 @@ impl<V: 'static> Model for ActionsModel<V> {
                     return;
                 }
 
-                if let Some(action) = &self.on_press {
-                    (action)(&mut EventHandle::<V>::new(cx));
+                if !cx.is_disabled() {
+                    if let Some(action) = &self.on_press {
+                        (action)(&mut EventHandle::<V>::new(cx));
+                    }
                 }
             }
 
@@ -233,13 +235,15 @@ impl<V: 'static> Model for ActionsModel<V> {
                 if cx.current() != over && !over.is_descendant_of(cx.tree, cx.current()) {
                     return;
                 }
-                if let Some(action) = &self.on_press_down {
-                    (action)(&mut EventHandle::<V>::new(cx));
+                if !cx.is_disabled() {
+                    if let Some(action) = &self.on_press_down {
+                        (action)(&mut EventHandle::<V>::new(cx));
+                    }
                 }
             }
 
             WindowEvent::MouseDoubleClick(button) => {
-                if meta.target == cx.current {
+                if meta.target == cx.current && !cx.is_disabled() {
                     if let Some(action) = &self.on_double_click {
                         (action)(&mut EventHandle::<V>::new(cx), *button);
                     }

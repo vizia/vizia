@@ -27,7 +27,7 @@ mod switch;
 mod tab;
 mod table;
 mod textbox;
-// mod timepicker;
+mod timepicker;
 mod tooltip;
 mod xypad;
 
@@ -57,10 +57,10 @@ pub use switch::Switch;
 pub use tab::{TabPair, TabView};
 pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};
-// pub use timepicker::{
-//     AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,
-//     DigitalTimepicker, DigitalTimepickerEvent, Timepicker,
-// };
+pub use timepicker::{
+    AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,
+    DigitalTimepicker, DigitalTimepickerEvent, Timepicker,
+};
 pub use tooltip::Tooltip;
 pub use xypad::XYPad;
 

@@ -18,7 +18,7 @@ where
             tree,
             tours: DoubleEndedTreeTour::new(
                 tree.first_child[node.index()],
-                tree.get_last_child(node),
+                tree.get_last_child(node).copied(),
             ),
         }
     }

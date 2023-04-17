@@ -53,7 +53,7 @@ where
                 TourStep::EnterLastChild => {
                     if let Some(child) = tree.get_last_child(current) {
                         self.direction = TourDirection::Entering;
-                        self.current = Some(child);
+                        self.current = Some(*child);
                     } else {
                         self.direction = TourDirection::Leaving;
                     }

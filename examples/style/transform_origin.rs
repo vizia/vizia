@@ -21,6 +21,10 @@ const STYLE: &str = r#"
     .top-left {
         transform-origin: top left;
     }
+
+    .bottom-center {
+        transform-origin: top right;
+    }
 "#;
 
 fn main() {
@@ -30,9 +34,11 @@ fn main() {
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 Element::new(cx).class("top-left");
+                Element::new(cx).class("bottom-center");
             })
             .size(Auto)
             .col_between(Pixels(10.0));
+
             // Element::new(cx).text("rotate").class("rotate");
             // HStack::new(cx, |cx| {
             //     Element::new(cx).class("scale").text("scale");
