@@ -19,10 +19,6 @@ name = "action_modifier"
 path = "examples/action_modifier.rs"
 
 [[example]]
-name = "animation"
-path = "examples/animation.rs"
-
-[[example]]
 name = "datepicker"
 path = "examples/views/datepicker.rs"
 
@@ -38,9 +34,9 @@ path = "examples/views/xypad.rs"
 name = "picklist"
 path = "examples/views/picklist.rs"
 
-[[example]]
-name = "datetimepicker"
-path = "examples/views/datetimepicker.rs"
+# [[example]]
+# name = "datetimepicker"
+# path = "examples/views/datetimepicker.rs"
 
 [[example]]
 name = "cursor_icon"
@@ -53,10 +49,6 @@ path = "examples/localization/l10n.rs"
 [[example]]
 name = "modal"
 path = "examples/modal.rs"
-
-[[example]]
-name = "more_knobs"
-path = "examples/more_knobs.rs"
 
 [[example]]
 name = "proxy"
@@ -229,10 +221,6 @@ name = "keymap_change_entries"
 path = "examples/keymap_change_entries.rs"
 
 [[example]]
-name = "mouse_delta"
-path = "examples/mouse_delta.rs"
-
-[[example]]
 name = "window_modifiers"
 path = "examples/window_modifiers.rs"
 
@@ -247,10 +235,6 @@ path = "examples/lists/long_list.rs"
 [[example]]
 name = "locale_binding"
 path = "examples/localization/locale_binding.rs"
-
-[[example]]
-name = "ignore_default_theme"
-path = "examples/ignore_default_theme.rs"
 
 [[example]]
 name = "outline"

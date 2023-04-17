@@ -12,7 +12,7 @@ rust-version = "1.60"
 cssparser = "0.29.6"
 femtovg = "0.6.0"
 selectors = { version = "0.23.0", path = "./selectors" }
-morphorm = {path = "../../../morphorm" }
-# morphorm = {git = "https://github.com/vizia/morphorm", features = ["rounding"], rev = "3d74358fe976249738f58724854270aa2f0fdb4a" }
+# morphorm = {path = "../../../morphorm" }
+morphorm = {git = "https://github.com/vizia/morphorm", branch = "new-layout-no-wrap" }
 smallvec = "1.0"
 bitflags = "*"

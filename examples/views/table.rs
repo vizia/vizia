@@ -2,12 +2,6 @@ use vizia::icons::{ICON_CHEVRON_DOWN, ICON_CHEVRON_UP};
 use vizia::prelude::*;
 use vizia::style::FontWeightKeyword;
 
-const CENTER_LAYOUT: &str = "crates/vizia_core/resources/themes/center_layout.css";
-#[allow(dead_code)]
-const DARK_THEME: &str = "crates/vizia_core/resources/themes/dark_theme.css";
-#[allow(dead_code)]
-const LIGHT_THEME: &str = "crates/vizia_core/resources/themes/light_theme.css";
-
 fn column_header<L, M>(cx: &mut Context, text: &str, lens: L, on_press: M)
 where
     L: Lens<Target = Sorted>,
@@ -98,9 +92,6 @@ fn main() {
         }
         .build(cx);
 
-        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
-        cx.add_stylesheet(DARK_THEME).expect("Failed to find stylesheet");
-
         Table::new(cx, TableData::people, |cx, list| {
             TableColumn::new(
                 cx,
@@ -153,7 +144,6 @@ fn main() {
             .width(Pixels(120.0));
         });
     })
-    .ignore_default_theme()
     .title("Table")
     .run();
 }
