@@ -7,12 +7,9 @@ use accesskit::{Action, NodeBuilder, TreeUpdate};
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit_winit;
 use std::cell::RefCell;
-#[cfg(not(target_arch = "wasm32"))]
-use vizia_core::accessibility::IntoNode;
-use vizia_core::context::backend::*;
+use vizia_core::backend::*;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
-use vizia_core::events::EventManager;
 use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 use vizia_window::Position;
@@ -235,18 +232,14 @@ impl Application {
         }
 
         let scale_factor = window.window().scale_factor() as f32;
-        BackendContext::new(&mut context).add_main_window(
-            &self.window_description,
-            canvas,
-            scale_factor,
-        );
-        BackendContext::new(&mut context).add_window(window);
+        cx.add_main_window(&self.window_description, canvas, scale_factor);
+        cx.add_window(window);
 
-        let mut event_manager = EventManager::new();
+        // let mut event_manager = EventManager::new();
 
-        context.remove_user_themes();
+        cx.0.remove_user_themes();
         if let Some(builder) = self.builder.take() {
-            (builder)(&mut context);
+            (builder)(cx.0);
         }
 
         let on_idle = self.on_idle.take();
@@ -257,7 +250,7 @@ impl Application {
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
         #[cfg(not(target_arch = "wasm32"))]
-        BackendContext::new(&mut context).process_tree_updates(|tree_updates| {
+        cx.process_tree_updates(|tree_updates| {
             for update in tree_updates.iter() {
                 accesskit.update(update.clone());
             }
@@ -267,7 +260,7 @@ impl Application {
         let mut cursor = (0.0f32, 0.0f32);
 
         event_loop.run(move |event, _, control_flow| {
-            let mut cx = BackendContext::new(&mut context);
+            let mut cx = BackendContext::new_with_event_manager(&mut context);
 
             match event {
                 winit::event::Event::UserEvent(user_event) => match user_event {
@@ -313,7 +306,9 @@ impl Application {
                     }
 
                     // Events
-                    while event_manager.flush_events(cx.0) {}
+                    // while event_manager.flush_events(cx.0) {}
+
+                    cx.process_events();
 
                     cx.process_data_updates();
 

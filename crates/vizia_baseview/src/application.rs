@@ -3,8 +3,7 @@ use baseview::{Window, WindowHandle, WindowScalePolicy};
 use raw_window_handle::HasRawWindowHandle;
 
 use crate::proxy::queue_get;
-use vizia_core::context::backend::*;
-use vizia_core::events::EventManager;
+use vizia_core::backend::*;
 use vizia_core::layout::BoundingBox;
 use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
@@ -169,7 +168,6 @@ where
 
 pub(crate) struct ApplicationRunner {
     context: Context,
-    event_manager: EventManager,
     should_redraw: bool,
 
     /// If this is set to `true`, then `window_scale_factor` will be updated during
@@ -195,10 +193,8 @@ pub(crate) struct ApplicationRunner {
 impl ApplicationRunner {
     pub fn new(mut context: Context, use_system_scaling: bool, window_scale_factor: f64) -> Self {
         let mut cx = BackendContext::new(&mut context);
-        let event_manager = EventManager::new();
 
         ApplicationRunner {
-            event_manager,
             should_redraw: true,
 
             use_system_scaling,
@@ -213,14 +209,14 @@ impl ApplicationRunner {
     /// Handle all reactivity within a frame. The window instance is used to resize the window when
     /// needed.
     pub fn on_frame_update(&mut self, window: &mut Window) {
-        let mut cx = BackendContext::new(&mut self.context);
+        let mut cx = BackendContext::new_with_event_manager(&mut self.context);
 
         while let Some(event) = queue_get() {
             cx.send_event(event);
         }
 
         // Events
-        while self.event_manager.flush_events(cx.context()) {}
+        cx.process_events();
 
         if *cx.window_size() != self.current_window_size
             || *cx.user_scale_factor() != self.current_user_scale_factor
@@ -254,7 +250,8 @@ impl ApplicationRunner {
 
             cx.needs_refresh();
 
-            self.event_manager.flush_events(cx.context());
+            // hmmm why are we flushing events again?
+            // self.event_manager.flush_events(cx.context());
         }
 
         // Force restyle on every frame for baseview backend to avoid style inheritance issues

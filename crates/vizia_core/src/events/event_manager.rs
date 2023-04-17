@@ -17,7 +17,7 @@ const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 /// The [EventManager] is responsible for taking the events in the event queue in context
 /// and dispatching them to views and models based on the target and propagation metadata of the event.
 #[doc(hidden)]
-pub struct EventManager {
+pub(crate) struct EventManager {
     // Queue of events to be processed
     event_queue: Vec<Event>,
 }
@@ -29,7 +29,7 @@ impl EventManager {
 
     /// Flush the event queue, dispatching events to their targets.
     /// Returns whether there are still more events to process, i.e. the event handlers sent events.
-    pub fn flush_events(&mut self, context: &mut Context) -> bool {
+    pub(crate) fn flush_events(&mut self, context: &mut Context) -> bool {
         // Clear the event queue in the event manager
         self.event_queue.clear();
 
@@ -561,7 +561,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
     }
 }
 
-pub fn mutate_direct_or_up(meta: &mut EventMeta, direct: Entity, up: Entity, root: bool) {
+fn mutate_direct_or_up(meta: &mut EventMeta, direct: Entity, up: Entity, root: bool) {
     if direct != Entity::null() {
         meta.target = direct;
         meta.propagation = Propagation::Direct;
@@ -573,7 +573,7 @@ pub fn mutate_direct_or_up(meta: &mut EventMeta, direct: Entity, up: Entity, roo
     }
 }
 
-pub fn emit_direct_or_up<M: Any + Send>(
+fn emit_direct_or_up<M: Any + Send>(
     context: &mut Context,
     message: M,
     direct: Entity,

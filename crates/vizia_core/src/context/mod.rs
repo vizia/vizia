@@ -49,8 +49,12 @@ use vizia_storage::TreeExt;
 use vizia_storage::{ChildIterator, SparseSet};
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
-pub static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
-pub static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
+static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
+static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
+
+type Views = FnvHashMap<Entity, Box<dyn ViewHandler>>;
+type Models = SparseSet<ModelDataStore>;
+type Bindings = FnvHashMap<Entity, Box<dyn BindingHandler>>;
 
 /// The main storage and control object for a Vizia application.
 pub struct Context {
@@ -58,9 +62,9 @@ pub struct Context {
     pub(crate) entity_identifiers: HashMap<String, Entity>,
     pub(crate) tree: Tree<Entity>,
     pub(crate) current: Entity,
-    pub(crate) views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
-    pub(crate) data: SparseSet<ModelDataStore>,
-    pub(crate) bindings: FnvHashMap<Entity, Box<dyn BindingHandler>>,
+    pub(crate) views: Views,
+    pub(crate) data: Models,
+    pub(crate) bindings: Bindings,
     pub(crate) event_queue: VecDeque<Event>,
     pub(crate) tree_updates: Vec<accesskit::TreeUpdate>,
     pub(crate) listeners:
@@ -68,7 +72,6 @@ pub struct Context {
     pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,
     pub(crate) style: Style,
     pub(crate) cache: CachedData,
-    pub(crate) draw_cache: DrawCache,
 
     pub(crate) canvases: HashMap<Entity, crate::prelude::Canvas>,
     pub(crate) mouse: MouseState<Entity>,
@@ -121,10 +124,10 @@ impl Context {
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
 
-        // Add default fonts
         let mut db = Database::new();
         db.load_system_fonts();
 
+        // Add default fonts if the feature is enabled.
         #[cfg(feature = "embedded_fonts")]
         {
             db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
@@ -143,9 +146,7 @@ impl Context {
             bindings: FnvHashMap::default(),
             style: Style::default(),
             cache,
-            draw_cache: DrawCache::new(),
             canvases: HashMap::new(),
-            // environment: Environment::new(),
             event_queue: VecDeque::new(),
             tree_updates: Vec::new(),
             listeners: HashMap::default(),
@@ -194,6 +195,7 @@ impl Context {
         result.style.needs_relayout();
         result.style.needs_redraw();
 
+        // Build the environment model at the root.
         Environment::new().build(&mut result);
 
         result.entity_manager.create();
@@ -213,7 +215,7 @@ impl Context {
     /// Set the current entity. This is useful in user code when you're performing black magic and
     /// want to trick other parts of the code into thinking you're processing some other part of the
     /// tree.
-    pub fn set_current(&mut self, e: Entity) {
+    pub(crate) fn set_current(&mut self, e: Entity) {
         self.current = e;
     }
 
@@ -225,6 +227,7 @@ impl Context {
         self.current = prev;
     }
 
+    /// Returns a reference to the Environment model.
     pub fn environment(&self) -> &Environment {
         self.data::<Environment>().unwrap()
     }
@@ -338,7 +341,7 @@ impl Context {
         }
     }
 
-    pub fn remove(&mut self, entity: Entity) {
+    pub(crate) fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         if !delete_list.is_empty() {
@@ -381,7 +384,6 @@ impl Context {
 
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
-            self.draw_cache.remove(*entity);
             self.style.remove(*entity);
             self.data.remove(*entity);
             self.views.remove(entity);
@@ -458,12 +460,14 @@ impl Context {
             .collect();
     }
 
+    /// Add a style string to the application.
     pub fn add_theme(&mut self, theme: &str) {
         self.resource_manager.themes.push(theme.to_owned());
 
         EventContext::new(self).reload_styles().expect("Failed to reload styles");
     }
 
+    /// Remove all user themes from the application.
     pub fn remove_user_themes(&mut self) {
         self.resource_manager.themes.clear();
 
@@ -491,7 +495,6 @@ impl Context {
 
         self.style.remove_rules();
 
-        // self.style.rules.clear();
         self.style.selectors.clear();
 
         self.style.clear_style_rules();

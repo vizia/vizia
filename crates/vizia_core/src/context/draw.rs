@@ -13,28 +13,13 @@ use crate::prelude::*;
 use crate::resource::{ImageOrId, ResourceManager};
 use crate::style::{ImageOrGradient, IntoTransform, Style};
 use crate::text::{TextConfig, TextContext};
-use crate::vg::{ImageId, Paint, Path};
+use crate::vg::{Paint, Path};
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
 use vizia_style::{
     BackgroundSize, BoxShadow, ClipPath, Filter, Gradient, HorizontalPositionKeyword,
     LengthPercentageOrAuto, LineDirection, VerticalPositionKeyword,
 };
-
-/// Cached data used for drawing.
-pub struct DrawCache {
-    pub shadow_image: SparseSet<Vec<(ImageId, ImageId)>>,
-}
-
-impl DrawCache {
-    pub fn new() -> Self {
-        Self { shadow_image: SparseSet::new() }
-    }
-
-    pub fn remove(&mut self, entity: Entity) {
-        self.shadow_image.remove(entity);
-    }
-}
 
 /// A context used when drawing.
 ///
@@ -67,28 +52,18 @@ impl DrawCache {
 /// }
 /// ```
 pub struct DrawContext<'a> {
-    /// The current view being drawn.
     pub(crate) current: Entity,
-    /// The view which has captured mouse events.
-    pub captured: &'a Entity,
-    /// The view which has keyboard focus.
-    pub focused: &'a Entity,
-    /// The currently hovered view.
-    pub hovered: &'a Entity,
-    /// Mutable reference to the style store.
-    pub style: &'a Style,
-    ///
-    pub cache: &'a CachedData,
-    pub draw_cache: &'a mut DrawCache,
+    pub(crate) style: &'a Style,
+    pub(crate) cache: &'a CachedData,
     pub tree: &'a Tree<Entity>,
     pub(crate) data: &'a SparseSet<ModelDataStore>,
     pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
-    pub resource_manager: &'a ResourceManager,
-    pub text_context: &'a mut TextContext,
-    pub text_config: &'a TextConfig,
-    pub modifiers: &'a Modifiers,
-    pub mouse: &'a MouseState<Entity>,
-    pub opacity: f32,
+    pub(crate) resource_manager: &'a ResourceManager,
+    pub(crate) text_context: &'a mut TextContext,
+    pub(crate) text_config: &'a TextConfig,
+    pub(crate) modifiers: &'a Modifiers,
+    pub(crate) mouse: &'a MouseState<Entity>,
+    pub(crate) opacity: f32,
 }
 
 macro_rules! style_getter_units {
@@ -111,9 +86,7 @@ macro_rules! style_getter_units {
 macro_rules! get_color_property {
     ($ty:ty, $name:ident) => {
         pub fn $name(&self) -> $ty {
-            // let opacity = self.style.opacity.get(self.current).copied().unwrap_or(Opacity(1.0)).0;
             let opacity = self.opacity();
-            // let opacity = 1.0;
             if let Some(col) = self.style.$name.get(self.current) {
                 Color::rgba(col.r(), col.g(), col.b(), (opacity * col.a() as f32) as u8)
             } else {
@@ -141,6 +114,14 @@ macro_rules! get_length_property {
 impl<'a> DrawContext<'a> {
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
+    }
+
+    pub fn modifiers(&self) -> &Modifiers {
+        self.modifiers
+    }
+
+    pub fn mouse(&self) -> &MouseState<Entity> {
+        self.mouse
     }
 
     /// Returns the bounding box of the clip region of the current view.
@@ -343,6 +324,7 @@ impl<'a> DrawContext<'a> {
         self.style.dpi_factor as f32
     }
 
+    /// Get the vector path of the current view.
     pub fn build_path(&mut self) -> Path {
         // Length proportional to radius of a cubic bezier handle for 90deg arcs.
         const KAPPA90: f32 = 0.5522847493;
@@ -469,6 +451,7 @@ impl<'a> DrawContext<'a> {
         path
     }
 
+    /// Draw backdrop filters for the current view.
     pub fn draw_backdrop_filter(&self, canvas: &mut Canvas, path: &mut Path) {
         let window_width = self.cache.get_width(Entity::root());
         let window_height = self.cache.get_height(Entity::root());
@@ -557,6 +540,7 @@ impl<'a> DrawContext<'a> {
         }
     }
 
+    /// Draw background color or background image (including gradients) for the current view.
     pub fn draw_background(&mut self, canvas: &mut Canvas, path: &mut Path) {
         let background_color = self.background_color();
         let paint = Paint::color(background_color.into());
@@ -626,12 +610,13 @@ impl<'a> DrawContext<'a> {
 
             self.text_context.sync_styles(self.current, &self.style);
 
-            self.draw_highlights(canvas, (origin_x, origin_y), (justify_x, justify_y));
-            self.draw_caret(canvas, (origin_x, origin_y), (justify_x, justify_y), 1.0);
+            self.draw_text_selection(canvas, (origin_x, origin_y), (justify_x, justify_y));
+            self.draw_text_caret(canvas, (origin_x, origin_y), (justify_x, justify_y), 1.0);
             self.draw_text(canvas, (origin_x, origin_y), (justify_x, justify_y));
         }
     }
 
+    /// Draw the border of the current view.
     pub fn draw_border(&mut self, canvas: &mut Canvas, path: &mut Path) {
         let border_color = self.border_color();
         let border_width = self.border_width();
@@ -641,6 +626,7 @@ impl<'a> DrawContext<'a> {
         canvas.stroke_path(path, &paint);
     }
 
+    /// Draw the outline of the current view.
     pub fn draw_outline(&mut self, canvas: &mut Canvas) {
         let bounds = self.bounds();
 
@@ -670,6 +656,7 @@ impl<'a> DrawContext<'a> {
         canvas.stroke_path(&mut outline_path, &outline_paint);
     }
 
+    /// Draw inset box shadows for the current view.
     pub fn draw_inset_box_shadows(&self, canvas: &mut Canvas, path: &mut Path) {
         if let Some(box_shadows) = self.box_shadows() {
             for box_shadow in box_shadows.iter().rev().filter(|shadow| shadow.inset) {
@@ -786,6 +773,7 @@ impl<'a> DrawContext<'a> {
         }
     }
 
+    /// Draw non-inset box shadows for the current view.
     pub fn draw_shadows(&mut self, canvas: &mut Canvas, path: &mut Path) {
         if let Some(box_shadows) = self.box_shadows() {
             for box_shadow in box_shadows.iter().rev().filter(|shadow| !shadow.inset) {
@@ -895,6 +883,7 @@ impl<'a> DrawContext<'a> {
         }
     }
 
+    /// Draw background images (including gradients) for the current view.
     fn draw_background_images(&self, canvas: &mut Canvas, path: &mut Path) {
         let bounds = self.bounds();
 
@@ -1130,10 +1119,7 @@ impl<'a> DrawContext<'a> {
         }
     }
 
-    pub fn sync_text_styles(&mut self) {
-        self.text_context.sync_styles(self.current, self.style);
-    }
-
+    /// Draw any text for the current view.
     pub fn draw_text(&mut self, canvas: &mut Canvas, origin: (f32, f32), justify: (f32, f32)) {
         if let Ok(draw_commands) =
             self.text_context.fill_to_cmds(canvas, self.current, origin, justify, *self.text_config)
@@ -1157,7 +1143,8 @@ impl<'a> DrawContext<'a> {
         }
     }
 
-    pub fn draw_highlights(
+    /// Draw the selection box for the text of the current view.
+    pub fn draw_text_selection(
         &mut self,
         canvas: &mut Canvas,
         origin: (f32, f32),
@@ -1171,7 +1158,8 @@ impl<'a> DrawContext<'a> {
         canvas.fill_path(&mut path, &Paint::color(selection_color.into()));
     }
 
-    pub fn draw_caret(
+    /// Draw text caret for the current view.
+    pub fn draw_text_caret(
         &mut self,
         canvas: &mut Canvas,
         origin: (f32, f32),

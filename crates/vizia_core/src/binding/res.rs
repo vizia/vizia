@@ -21,7 +21,7 @@ macro_rules! impl_res_simple {
     };
 }
 
-/// A trait which allows passing a value or a lens to a view or view modifier.
+/// A trait which allows passing a value or a lens to a view or modifier.
 ///
 /// For example, the `Label` view constructor takes a type which implements `Res<T>` where
 /// `T` implements `ToString`. This allows the user to pass a type which implements `ToString`,

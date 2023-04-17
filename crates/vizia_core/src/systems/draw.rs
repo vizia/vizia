@@ -22,12 +22,8 @@ pub(crate) fn draw_system(cx: &mut Context) {
         draw_entity(
             &mut DrawContext {
                 current: zentity.entity,
-                captured: &cx.captured,
-                focused: &cx.focused,
-                hovered: &cx.hovered,
                 style: &cx.style,
                 cache: &mut cx.cache,
-                draw_cache: &mut cx.draw_cache,
                 tree: &cx.tree,
                 data: &cx.data,
                 views: &mut cx.views,
@@ -105,7 +101,7 @@ fn draw_entity(
     cx.current = current;
 }
 
-pub struct ZEntity {
+struct ZEntity {
     pub index: i32,
     pub entity: Entity,
     pub opacity: f32,

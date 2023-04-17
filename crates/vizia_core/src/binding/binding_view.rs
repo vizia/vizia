@@ -38,6 +38,7 @@ where
     ///     let value = *lens.get(cx);
     ///     Label::new(cx, value.to_string());
     /// });
+    /// ```
     #[allow(clippy::new_ret_no_self)]
     pub fn new<F>(cx: &mut Context, lens: L, builder: F)
     where

@@ -24,7 +24,7 @@ use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
-use super::{DrawCache, DARK_THEME, LIGHT_THEME};
+use super::{DARK_THEME, LIGHT_THEME};
 
 /// A context used when handling events.
 ///
@@ -67,7 +67,6 @@ pub struct EventContext<'a> {
     pub style: &'a mut Style,
     entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a CachedData,
-    pub draw_cache: &'a DrawCache,
     pub tree: &'a Tree<Entity>,
     pub(crate) data: &'a mut SparseSet<ModelDataStore>,
     pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
@@ -97,7 +96,6 @@ impl<'a> EventContext<'a> {
             entity_identifiers: &cx.entity_identifiers,
             style: &mut cx.style,
             cache: &cx.cache,
-            draw_cache: &cx.draw_cache,
             tree: &cx.tree,
             data: &mut cx.data,
             views: &mut cx.views,

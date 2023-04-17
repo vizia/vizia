@@ -58,21 +58,21 @@ impl TextContext {
         self.font_system
     }
 
-    pub fn clear_buffer(&mut self, entity: Entity) {
+    pub(crate) fn clear_buffer(&mut self, entity: Entity) {
         self.buffers.remove(&entity);
     }
 
-    pub fn has_buffer(&self, entity: Entity) -> bool {
+    pub(crate) fn has_buffer(&self, entity: Entity) -> bool {
         self.buffers.contains_key(&entity)
     }
 
-    pub fn set_text(&mut self, entity: Entity, text: &str) {
+    pub(crate) fn set_text(&mut self, entity: Entity, text: &str) {
         self.with_buffer(entity, |fs, buf| {
             buf.set_text(fs, text, Attrs::new());
         });
     }
 
-    pub fn with_editor<O>(
+    pub(crate) fn with_editor<O>(
         &mut self,
         entity: Entity,
         f: impl FnOnce(&mut FontSystem, &mut Editor) -> O,
@@ -84,7 +84,7 @@ impl TextContext {
         f(&mut self.font_system, editor)
     }
 
-    pub fn with_buffer<O>(
+    pub(crate) fn with_buffer<O>(
         &mut self,
         entity: Entity,
         f: impl FnOnce(&mut FontSystem, &mut Buffer) -> O,
@@ -92,15 +92,15 @@ impl TextContext {
         self.with_editor(entity, |fs, ed| f(fs, ed.buffer_mut()))
     }
 
-    pub fn set_bounds(&mut self, entity: Entity, size: BoundingBox) {
+    pub(crate) fn set_bounds(&mut self, entity: Entity, size: BoundingBox) {
         self.bounds.insert(entity, size).unwrap();
     }
 
-    pub fn get_bounds(&self, entity: Entity) -> Option<BoundingBox> {
+    pub(crate) fn get_bounds(&self, entity: Entity) -> Option<BoundingBox> {
         self.bounds.get(entity).copied()
     }
 
-    pub fn sync_styles(&mut self, entity: Entity, style: &Style) {
+    pub(crate) fn sync_styles(&mut self, entity: Entity, style: &Style) {
         let (families, font_weight, font_style) = {
             let families = style
                 .font_family
@@ -481,7 +481,7 @@ impl TextContext {
 }
 
 impl TextContext {
-    pub fn new_from_locale_and_db(locale: String, font_db: Database) -> Self {
+    pub(crate) fn new_from_locale_and_db(locale: String, font_db: Database) -> Self {
         Self {
             font_system: FontSystem::new_with_locale_and_db(locale, font_db),
             scale_context: Default::default(),

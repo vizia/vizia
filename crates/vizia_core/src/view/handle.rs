@@ -13,7 +13,7 @@ impl<'a, V> Handle<'a, V> {
         self.entity
     }
 
-    pub fn ignore(self) -> Self {
+    pub(crate) fn ignore(self) -> Self {
         self.cx.tree.set_ignored(self.entity, true);
         self.focusable(false)
     }

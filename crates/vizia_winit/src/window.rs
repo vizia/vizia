@@ -21,6 +21,7 @@ use glutin::{
     surface::{SurfaceAttributesBuilder, WindowSurface},
 };
 
+use vizia_core::backend::*;
 use vizia_core::prelude::*;
 use winit::event_loop::EventLoop;
 use winit::window::{CursorGrabMode, WindowBuilder};

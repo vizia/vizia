@@ -37,7 +37,7 @@ impl<T: Lens> LensCache for T {}
 
 /// Helpers for constructing more complex `Lens`es.
 pub trait LensExt: Lens {
-    /// Retrieve a copy of the lensed data from context.
+    /// Retrieve a copy of the lensed data from context. This will clone the data.
     ///
     /// Example
     /// ```ignore

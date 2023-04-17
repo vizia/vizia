@@ -41,23 +41,27 @@ impl AccessNode {
         self.node_id
     }
 
+    /// Adds a child accessibility node.
     pub fn add_child(&mut self, child: AccessNode) {
         self.children.push(child);
     }
 
+    /// Sets the role of the node.
     pub fn set_role(&mut self, role: Role) {
         self.node_builder.set_role(role);
     }
 
+    /// Sets the direction of any text within the node.
     pub fn set_text_direction(&mut self, text_direction: TextDirection) {
         self.node_builder.set_text_direction(text_direction);
     }
 
+    /// Sets the specified selection of any text within the node.
     pub fn set_text_selection(&mut self, text_selection: TextSelection) {
         self.node_builder.set_text_selection(text_selection);
     }
 
-    // TODO: switch to bounding box
+    /// Sets the accessibility bounds of the node. This is not the same as the layout bounds.
     pub fn set_bounds(&mut self, bounds: BoundingBox) {
         self.node_builder.set_bounds(Rect {
             x0: bounds.left() as f64,

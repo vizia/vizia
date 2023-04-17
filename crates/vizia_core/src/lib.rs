@@ -3,8 +3,8 @@
 extern crate serde;
 
 #[doc(hidden)]
-pub mod accessibility;
-pub mod animation;
+mod accessibility;
+pub(crate) mod animation;
 pub mod binding;
 #[doc(hidden)]
 pub mod cache;
@@ -45,6 +45,15 @@ pub mod icons {
     pub use super::fonts::icons::*;
 }
 
+#[doc(hidden)]
+pub mod backend {
+    #[cfg(not(target_arch = "wasm32"))]
+    pub use super::accessibility::IntoNode;
+    pub use super::context::backend::BackendContext;
+    pub use super::text::cosmic::TextConfig;
+    pub use vizia_window::WindowDescription;
+}
+
 /// Members which we recommend you wildcard-import.
 #[doc(hidden)]
 pub mod prelude {
@@ -77,7 +86,7 @@ pub mod prelude {
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};
     pub use vizia_storage::{Tree, TreeExt};
-    pub use vizia_window::{WindowDescription, WindowEvent, WindowSize};
+    pub use vizia_window::{WindowEvent, WindowSize};
 
     pub use super::style::{
         Angle, BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, FontStyle,

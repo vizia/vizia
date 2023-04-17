@@ -85,7 +85,7 @@
 //! ```
 
 mod event_manager;
-pub use event_manager::EventManager;
+pub(crate) use event_manager::EventManager;
 
 mod event;
 pub use event::{Event, EventMeta, Propagation};

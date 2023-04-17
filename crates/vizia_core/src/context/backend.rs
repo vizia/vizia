@@ -2,8 +2,10 @@ use std::any::Any;
 use std::collections::HashSet;
 
 use femtovg::{renderer::OpenGl, Canvas};
+use vizia_window::WindowDescription;
 
 use super::EventProxy;
+use crate::events::EventManager;
 use crate::model::ModelOrView;
 use crate::style::SystemFlags;
 use crate::{
@@ -18,12 +20,12 @@ pub use crate::text::cosmic::TextConfig;
 use copypasta::ClipboardProvider;
 
 /// Context used to integrate vizia with windowing backends such as winit and baseview.
-pub struct BackendContext<'a>(pub &'a mut Context);
+pub struct BackendContext<'a>(pub &'a mut Context, Option<EventManager>);
 
 impl<'a> BackendContext<'a> {
     /// Creates a new instance of a backend context.
     pub fn new(cx: &'a mut Context) -> Self {
-        Self(cx)
+        Self(cx, None)
     }
 
     pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &W)>(&mut self, f: F) {
@@ -182,6 +184,16 @@ impl<'a> BackendContext<'a> {
 
     pub fn accesskit_node_classes(&mut self) -> &mut accesskit::NodeClassSet {
         &mut self.style().accesskit_node_classes
+    }
+
+    pub fn new_with_event_manager(cx: &'a mut Context) -> Self {
+        Self(cx, Some(EventManager::new()))
+    }
+
+    pub fn process_events(&mut self) {
+        if let Some(event_manager) = &mut self.1 {
+            while event_manager.flush_events(self.0) {}
+        }
     }
 
     /// For each binding or data observer, check if its data has changed, and if so, rerun its

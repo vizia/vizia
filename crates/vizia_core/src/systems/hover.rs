@@ -164,7 +164,7 @@ fn hover_entity(
     }
 }
 
-pub struct ZEntity {
+struct ZEntity {
     pub index: i32,
     pub entity: Entity,
 }
