@@ -80,4 +80,8 @@ impl<'a, V> Handle<'a, V> {
     pub fn bounds(&self) -> BoundingBox {
         self.cx.cache.get_bounds(self.entity)
     }
+
+    pub fn scale_factor(&self) -> f32 {
+        self.cx.scale_factor()
+    }
 }

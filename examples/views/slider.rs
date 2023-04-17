@@ -6,7 +6,7 @@ fn main() {
     Application::new(|cx| {
         AppData { value: 0.0 }.build(cx);
 
-        VStack::new(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 Slider::new(cx, AppData::value.map(|val| (val + 50.0) / 100.0))
                     .range(0.0..1.0)
@@ -30,15 +30,16 @@ fn main() {
             .height(Auto)
             .col_between(Pixels(8.0));
 
-            HStack::new(cx, |cx| {
-                NamedSlider::new(cx, AppData::value, "Slider Name")
-                    .range(-50.0..50.0)
-                    .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
-            })
-            .child_top(Stretch(1.0))
-            .child_bottom(Stretch(1.0))
-            .height(Auto)
-            .col_between(Pixels(8.0));
+            // TODO: Needs restyling
+            // HStack::new(cx, |cx| {
+            //     NamedSlider::new(cx, AppData::value, "Slider Name")
+            //         .range(-50.0..50.0)
+            //         .on_changing(move |cx, val| cx.emit(AppEvent::SetValue(val)));
+            // })
+            // .child_top(Stretch(1.0))
+            // .child_bottom(Stretch(1.0))
+            // .height(Auto)
+            // .col_between(Pixels(8.0));
 
             VStack::new(cx, |cx| {
                 Slider::new(cx, AppData::value)
@@ -52,9 +53,7 @@ fn main() {
             .child_left(Stretch(1.0))
             .child_right(Stretch(1.0))
             .row_between(Pixels(8.0));
-        })
-        .disabled(ControlsData::disabled)
-        .class("container");
+        });
     })
     .title("Slider")
     .run();

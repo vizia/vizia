@@ -121,7 +121,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         VStack::new(cx, content)
             .class("scroll_content")
             .bind(data.clone(), |handle, data| {
-                let dpi_factor = handle.cx.style.dpi_factor;
+                let dpi_factor = handle.scale_factor();
                 if dpi_factor > 0.0 {
                     let data = data.get(handle.cx);
                     let left = ((data.child_x - data.parent_x) * data.scroll_x).round()
@@ -188,13 +188,13 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
 
                 // what percentage of the negative space does this cross?
                 let data = self.data.get(cx);
-                if x != 0.0 {
+                if x != 0.0 && data.child_x > data.parent_x {
                     let negative_space = data.child_x - data.parent_x;
                     let logical_delta = x * SCROLL_SENSITIVITY / negative_space;
                     cx.emit(ScrollEvent::ScrollX(logical_delta));
                 }
                 let data = cx.data::<ScrollData>().unwrap();
-                if y != 0.0 {
+                if y != 0.0 && data.child_y > data.parent_y {
                     let negative_space = data.child_y - data.parent_y;
                     let logical_delta = y * SCROLL_SENSITIVITY / negative_space;
                     cx.emit(ScrollEvent::ScrollY(logical_delta));

@@ -1,6 +1,5 @@
 use vizia::icons::{ICON_CHEVRON_DOWN, ICON_CHEVRON_UP};
 use vizia::prelude::*;
-use vizia::style::FontWeightKeyword;
 
 fn column_header<L, M>(cx: &mut Context, text: &str, lens: L, on_press: M)
 where

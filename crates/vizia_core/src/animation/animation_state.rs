@@ -9,6 +9,7 @@ use super::{Animation, TimingFunction};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Keyframe<T: Interpolator> {
+    #[allow(dead_code)]
     pub time: f32,
     pub value: T,
     pub timing_function: TimingFunction,
