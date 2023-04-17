@@ -1,7 +1,6 @@
 mod helpers;
 use helpers::*;
 use vizia::prelude::*;
-use vizia_core::binding::RatioLens;
 
 fn main() {
     Application::new(|cx| {
@@ -46,31 +45,6 @@ fn main() {
                 })
                 .size(Units::Pixels(300.0))
                 .class("bg-default");
-
-                // HStack::new(cx, |cx| {
-                //     ScrollView::custom(cx, false, false, ScrollData::root, |cx| {
-                //         Label::new(cx, "Label 1")
-                //             .width(Units::Pixels(1000.0))
-                //             .background_color(Color::from("51AFEF"));
-                //     })
-                //     .size(Units::Pixels(300.0));
-                //     ScrollView::custom(cx, false, false, ScrollData::root, |cx| {
-                //         Label::new(cx, "Label 2")
-                //             .width(Units::Pixels(1000.0))
-                //             .background_color(Color::from("EF5151"));
-                //     })
-                //     .size(Units::Pixels(300.0));
-                // });
-                // Scrollbar::new(
-                //     cx,
-                //     ScrollData::scroll_x,
-                //     RatioLens::new(ScrollData::parent_x, ScrollData::child_x),
-                //     Orientation::Horizontal,
-                //     |cx, scroll| {
-                //         cx.emit(ScrollEvent::SetX(scroll));
-                //     },
-                // )
-                // .width(Units::Pixels(600.0));
             })
             .size(Stretch(1.0))
             .space(Pixels(0.0))

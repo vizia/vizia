@@ -4,6 +4,40 @@ pub const ROBOTO_ITALIC: &[u8] = include_bytes!("../resources/fonts/Roboto-Itali
 pub const TABLER_ICONS: &[u8] = include_bytes!("../resources/fonts/tabler-icons.ttf");
 
 pub mod icons {
+
+    // Numbers
+    pub const ICON_123: &str = "\u{f554}";
+    pub const ICON_BOX_MULTIPLE_0: &str = "\u{ee0d}";
+    pub const ICON_BOX_MULTIPLE_1: &str = "\u{ee0d}";
+    pub const ICON_BOX_MULTIPLE_2: &str = "\u{ee0f}";
+    pub const ICON_BOX_MULTIPLE_3: &str = "\u{ee10}";
+    pub const ICON_BOX_MULTIPLE_4: &str = "\u{ee11}";
+    pub const ICON_BOX_MULTIPLE_5: &str = "\u{ee12}";
+    pub const ICON_BOX_MULTIPLE_6: &str = "\u{ee13}";
+    pub const ICON_BOX_MULTIPLE_7: &str = "\u{ee14}";
+    pub const ICON_BOX_MULTIPLE_8: &str = "\u{ee15}";
+    pub const ICON_BOX_MULTIPLE_9: &str = "\u{ee16}";
+    pub const ICON_CIRCLE_NUMBER_0: &str = "\u{ee34}";
+    pub const ICON_CIRCLE_NUMBER_1: &str = "\u{ee35}";
+    pub const ICON_CIRCLE_NUMBER_2: &str = "\u{ee36}";
+    pub const ICON_CIRCLE_NUMBER_3: &str = "\u{ee37}";
+    pub const ICON_CIRCLE_NUMBER_4: &str = "\u{ee38}";
+    pub const ICON_CIRCLE_NUMBER_5: &str = "\u{ee39}";
+    pub const ICON_CIRCLE_NUMBER_6: &str = "\u{ee3a}";
+    pub const ICON_CIRCLE_NUMBER_7: &str = "\u{ee3b}";
+    pub const ICON_CIRCLE_NUMBER_8: &str = "\u{ee3c}";
+    pub const ICON_CIRCLE_NUMBER_9: &str = "\u{ee3d}";
+    pub const ICON_HEXAGON_NUMBER_0: &str = "\u{f459}";
+    pub const ICON_HEXAGON_NUMBER_1: &str = "\u{f45a}";
+    pub const ICON_HEXAGON_NUMBER_2: &str = "\u{f45b}";
+    pub const ICON_HEXAGON_NUMBER_3: &str = "\u{f45c}";
+    pub const ICON_HEXAGON_NUMBER_4: &str = "\u{f45d}";
+    pub const ICON_HEXAGON_NUMBER_5: &str = "\u{f45e}";
+    pub const ICON_HEXAGON_NUMBER_6: &str = "\u{f45f}";
+    pub const ICON_HEXAGON_NUMBER_7: &str = "\u{f460}";
+    pub const ICON_HEXAGON_NUMBER_8: &str = "\u{f461}";
+    pub const ICON_HEXAGON_NUMBER_9: &str = "\u{f462}";
+
     // Animals
     pub const ICON_BAT: &str = "\u{f284}";
     pub const ICON_CAT: &str = "\u{f65b}";
