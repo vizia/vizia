@@ -4,32 +4,30 @@ use vizia::prelude::*;
 
 #[derive(Lens, Setter, Model)]
 pub struct AppData {
-    text: String,
+    editable_text: String,
+    multiline_text: String,
+    non_editable_text: String,
 }
 
 fn main() {
     Application::new(|cx| {
-        AppData { text: "This is some editable text".to_string() }.build(cx);
+        AppData {
+            editable_text: "This is some editable text".to_string(),
+            multiline_text: "This is some text which is editable and spans multiple lines"
+                .to_string(),
+            non_editable_text: "This text can be selected but not edited".to_string(),
+        }
+        .build(cx);
 
         ExamplePage::vertical(cx, |cx| {
-            Textbox::new(cx, AppData::text)
+            Textbox::new(cx, AppData::editable_text)
                 .width(Pixels(300.0))
-                .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)));
-            Textbox::new(cx, AppData::text)
+                .on_edit(|cx, text| cx.emit(AppDataSetter::EditableText(text)));
+            Textbox::new_multiline(cx, AppData::multiline_text, true)
                 .width(Pixels(300.0))
-                .on_edit(|cx, text| cx.emit(AppDataSetter::Text(text)))
-                .read_only(true);
+                .on_edit(|cx, text| cx.emit(AppDataSetter::MultilineText(text)));
+            Textbox::new(cx, AppData::non_editable_text).width(Pixels(300.0)).read_only(true);
         });
-
-        // Textbox::new_multiline(
-        //     cx,
-        //     StaticLens::new(
-        //         &"This text is editable, but will reset on blur. Good luck editing it, haha!",
-        //     ),
-        //     true,
-        // )
-        // .width(Pixels(200.0))
-        // .height(Pixels(200.0));
     })
     .title("Textbox")
     .run();

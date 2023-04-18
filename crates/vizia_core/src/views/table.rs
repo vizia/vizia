@@ -51,19 +51,13 @@ where
     R: Lens<Target = Vec<T>>,
     L: Lens<Source = T, Target = U>,
 {
-    pub fn new<F, Label>(
-        cx: &mut Context,
-        list: R,
-        item: L,
-        label: Label,
-        content: F,
-    ) -> Handle<Self>
+    pub fn new<F, Lab>(cx: &mut Context, list: R, item: L, label: Lab, content: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context, usize, Then<Then<R, Index<<R as Lens>::Target, T>>, L>),
-        Label: 'static + Fn(&mut Context),
+        Lab: 'static + Fn(&mut Context),
         <R as Lens>::Source: Model,
     {
-        Self { p1: PhantomData::default(), p2: PhantomData::default() }.build(cx, move |cx| {
+        Self { p1: PhantomData, p2: PhantomData }.build(cx, move |cx| {
             //VStack::new(cx, move |cx|{
             (label)(cx);
             //    Element::new(cx).height(Pixels(1.0)).background_color(Color::black());
@@ -79,9 +73,11 @@ where
                     Binding::new(cx, it.then(item), move |cx, l| {
                         (content)(cx, index, l);
                     });
-                });
+                })
+                .height(Auto);
             })
-            .width(Stretch(1.0));
+            .width(Stretch(1.0))
+            .height(Auto);
         })
     }
 }

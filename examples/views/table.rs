@@ -29,22 +29,12 @@ where
         })
         .child_top(Stretch(1.0))
         .child_bottom(Stretch(1.0))
+        .height(Stretch(1.0))
         .on_press(move |cx| cx.emit(on_press.clone()));
 
         Element::new(cx).class("table-row-divisor");
     })
     .class("table-column-header");
-}
-
-fn table_element<'a, T>(cx: &mut Context, lens: impl Res<T> + Clone, checked: bool)
-where
-    T: ToString,
-{
-    if checked {
-        Chip::new(cx, lens).background_color(Color::from("#51afef88"));
-    } else {
-        Label::new(cx, lens).class("table-element");
-    }
 }
 
 fn main() {
@@ -104,7 +94,9 @@ fn main() {
                         AppEvent::ToggleSortFirstName,
                     )
                 },
-                |cx, _, first_name| table_element(cx, first_name, false),
+                |cx, _, first_name| {
+                    Label::new(cx, first_name).class("table-element");
+                },
             )
             .width(Pixels(120.0));
 
@@ -120,7 +112,9 @@ fn main() {
                         AppEvent::ToggleSortLastName,
                     )
                 },
-                |cx, _, last_name| table_element(cx, last_name, false),
+                |cx, _, last_name| {
+                    Label::new(cx, last_name).class("table-element");
+                },
             )
             .width(Pixels(120.0));
 
@@ -129,7 +123,9 @@ fn main() {
                 list,
                 Person::age,
                 |cx| column_header(cx, "Age", TableData::age_sorted, AppEvent::ToggleSortAge),
-                |cx, _, age| table_element(cx, age, false),
+                |cx, _, age| {
+                    Label::new(cx, age).class("table-element");
+                },
             )
             .width(Pixels(120.0));
 
@@ -138,9 +134,11 @@ fn main() {
                 list,
                 Person::email,
                 |cx| column_header(cx, "Email", TableData::email_sorted, AppEvent::ToggleSortEmail),
-                |cx, _, email| table_element(cx, email, true),
+                |cx, _, email| {
+                    Label::new(cx, email).class("table-element");
+                },
             )
-            .width(Pixels(120.0));
+            .width(Pixels(200.0));
         });
     })
     .title("Table")

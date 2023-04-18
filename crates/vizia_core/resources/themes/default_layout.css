@@ -214,11 +214,6 @@ knob {
     height: 32px;
 }
 
-knob.small {
-    width: 24px;
-    height: 24px;
-}
-
 .knob-track {
     width: 1s;
     height: 1s;
@@ -240,10 +235,6 @@ knob.small {
     right: 1s;
     top: 2px;
     bottom: 1s;
-}
-
-knob.small .knob-tick {
-    height: 4px;
 }
 
 /* Label */
@@ -424,13 +415,13 @@ scrollview {
     overflow: hidden;
 }
 
-/* scrollview > .scroll_content {
+scrollview > .scroll_content {
     width: auto;
     height: auto;
     min-width: 100%;
     min-height: 100%;
     position-type: self-directed;
-} */
+}
 
 scrollview > scrollbar.horizontal {
     width: 1s;
@@ -720,14 +711,14 @@ tablecolumn * {
 }
 
 .table-column-header {
-    height: 30px;
+    height: 32px;
     bottom: 8px;
 }
 
 .table-column-title {
     child-left: 5px;
     width: 1s;
-    height: 1s;
+    height: auto;
 }
 
 .table-column-icon {
@@ -768,6 +759,12 @@ textbox {
     child-top: 1s;
     child-bottom: 1s;
     cursor: text;
+}
+
+textbox.multiline {
+    height: auto;
+    child-top: 4px;
+    child-bottom: 4px;
 }
 
 textbox:disabled {
@@ -854,13 +851,14 @@ analogtimepicker .center-dot {
 
 analogtimepicker .marker {
     width: 32px;
-    height: 50%;
+    height: 32px;
     /* background-color: blue; */
-    translate: 0px -50%;
-    transform-origin: bottom center;
-    /* child-space: 1s; */
-    child-left: 1s;
-    child-right: 1s;
+    transform: translateY(-60px);
+    /* translate: 0px -50%; */
+    /* transform-origin: bottom center; */
+    child-space: 1s;
+    /* child-left: 1s; */
+    /* child-right: 1s; */
 }
 
 /*

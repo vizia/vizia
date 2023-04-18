@@ -140,6 +140,7 @@ impl Datepicker {
                     |cx| {
                         Textbox::new(cx, Datepicker::view_date.map(|date| date.year()))
                             .on_edit(|ex, v| ex.emit(DatepickerEvent::SelectYear(v)))
+                            .width(Stretch(1.0))
                     },
                     SpinboxKind::Horizontal,
                     SpinboxIcons::PlusMinus,

@@ -35,7 +35,7 @@ fn main() {
         cx.add_theme(THEME);
 
         HStack::new(cx, |cx| {
-            AppData { long_list: (0..10000).collect() }.build(cx);
+            AppData { long_list: (0..1000).collect() }.build(cx);
 
             ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                 List::new(cx, AppData::long_list, |cx, _, item| {

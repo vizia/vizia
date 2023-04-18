@@ -451,7 +451,7 @@ where
                             //     .premultiply(&Transform2D::identity().rotate(-30.0 * i as f32));
 
                             Label::new(cx, &format!("{:#02}", i * 5))
-                                .rotate(Angle::Deg(-30.0 * i as f32))
+                                .rotate(Angle::Deg(30.0 * i as f32))
                                 .position_type(PositionType::SelfDirected)
                                 .on_press(move |ex| {
                                     ex.emit(AnalogTimepickerEvent::SetMinutes(i * 5))
@@ -464,39 +464,29 @@ where
                     }
 
                     AnalogTimepickerPage::Seconds => {
-                        todo!();
-                        // Binding::new(cx, lens.clone().map(|time| time.second()), |cx, seconds| {
-                        //     let seconds = seconds.get(cx);
+                        Binding::new(cx, lens.clone().map(|time| time.second()), |cx, seconds| {
+                            let seconds = seconds.get(cx);
 
-                        //     let angle = (seconds / 5) as f32 * 30.0;
+                            let angle = (seconds / 5) as f32 * 30.0;
 
-                        //     let mut transform = Transform2D::identity();
-                        //     transform.rotate(angle);
-                        //     transform.premultiply(&Transform2D::identity().translate(0.0, -44.0));
-                        //     Element::new(cx)
-                        //         .transform(transform)
-                        //         .position_type(PositionType::SelfDirected)
-                        //         .class("clock-hand");
-                        // });
+                            Element::new(cx)
+                                .rotate(Angle::Deg(angle))
+                                .position_type(PositionType::SelfDirected)
+                                .class("clock-hand");
+                        });
 
-                        // for i in 0..12 {
-                        //     let mut transform = Transform2D::identity();
-                        //     transform.rotate(30.0 * i as f32);
-                        //     transform.premultiply(&Transform2D::identity().translate(0.0, -74.0));
-                        //     transform
-                        //         .premultiply(&Transform2D::identity().rotate(-30.0 * i as f32));
-
-                        //     Label::new(cx, &format!("{:#02}", i * 5))
-                        //         .transform(vec![])
-                        //         .position_type(PositionType::SelfDirected)
-                        //         .on_press(move |ex| {
-                        //             ex.emit(AnalogTimepickerEvent::SetSeconds(i * 5))
-                        //         })
-                        //         .class("marker")
-                        //         .checked(
-                        //             lens.clone().map(move |time| time.second() / 5 == i as u32),
-                        //         );
-                        // }
+                        for i in 0..12 {
+                            Label::new(cx, &format!("{:#02}", i * 5))
+                                .rotate(Angle::Deg(30.0 * i as f32))
+                                .position_type(PositionType::SelfDirected)
+                                .on_press(move |ex| {
+                                    ex.emit(AnalogTimepickerEvent::SetSeconds(i * 5))
+                                })
+                                .class("marker")
+                                .checked(
+                                    lens.clone().map(move |time| time.second() / 5 == i as u32),
+                                );
+                        }
                     }
                 });
 

@@ -25,6 +25,26 @@ where
                     .size(Pixels(200.0))
                     .background_color(Color::red());
 
+                // XYPad::new(
+                //     cx,
+                //     lens.clone().map(|col| {
+                //         let (h, s, v) = rgb_to_hsv(
+                //             col.r() as f64 / 255.0,
+                //             col.g() as f64 / 255.0,
+                //             col.b() as f64 / 255.0,
+                //         );
+                //         (s as f32, v as f32)
+                //     }),
+                // )
+                // .on_change(|cx, sat, val| {
+                //     let (h, s, l) = hsv_to_hsl(0.0, sat as f64, val as f64);
+                //     cx.emit(ColorPickerEvent::SetColor(Color::RGBA(RGBA::hsl(
+                //         0.0, s as f32, l as f32,
+                //     ))))
+                // })
+                // .size(Pixels(200.0))
+                // .background_color(Color::red());
+
                 // Hue Slider
                 // Alpha Slider
                 HStack::new(cx, |cx| {
@@ -37,7 +57,8 @@ where
                                 color.g() as f64 / 255.0,
                                 color.b() as f64 / 255.0,
                             );
-                            h
+                            // h
+                            color.r()
                         }),
                     )
                     .width(Stretch(1.0));
@@ -49,7 +70,8 @@ where
                                 color.g() as f64 / 255.0,
                                 color.b() as f64 / 255.0,
                             );
-                            s
+                            // s
+                            color.g()
                         }),
                     )
                     .width(Stretch(1.0));
@@ -61,7 +83,8 @@ where
                                 color.g() as f64 / 255.0,
                                 color.b() as f64 / 255.0,
                             );
-                            v
+                            // v
+                            color.b()
                         }),
                     )
                     .width(Stretch(1.0));
@@ -225,17 +248,17 @@ where
 
                     self.is_dragging = true;
 
-                    // if let Some(callback) = &self.on_change {
-                    //     let current = self.lens.get(cx);
-                    //     let (h, _, _) = rgb_to_hsv(
-                    //         current.r() as f64 / 255.0,
-                    //         current.g() as f64 / 255.0,
-                    //         current.b() as f64 / 255.0,
-                    //     );
-                    //     let (h, s, l) = hsv_to_hsl(h, saturation as f64, value as f64);
-                    //     let new = Color::hsl(h as f32, s as f32, l as f32);
-                    //     (callback)(cx, new);
-                    // }
+                    if let Some(callback) = &self.on_change {
+                        let current = self.lens.get(cx);
+                        let (h, _, _) = rgb_to_hsv(
+                            current.r() as f64 / 255.0,
+                            current.g() as f64 / 255.0,
+                            current.b() as f64 / 255.0,
+                        );
+                        let (h, s, l) = hsv_to_hsl(h, self.saturation as f64, self.value as f64);
+                        let new = Color::RGBA(RGBA::hsl(h as f32, s as f32, l as f32));
+                        (callback)(cx, new);
+                    }
                 }
             }
 
@@ -276,17 +299,18 @@ where
                     //     self.thumb_checked = false;
                     // }
 
-                    // if let Some(callback) = &self.on_change {
-                    //     let current = self.lens.get(cx);
-                    //     let (h, _, _) = rgb_to_hsv(
-                    //         current.r() as f64 / 255.0,
-                    //         current.g() as f64 / 255.0,
-                    //         current.b() as f64 / 255.0,
-                    //     );
-                    //     let (h, s, l) = hsv_to_hsl(h, saturation as f64, value as f64);
-                    //     let new = Color::hsl(h as f32, s as f32, l as f32);
-                    //     (callback)(cx, new);
-                    // }
+                    if let Some(callback) = &self.on_change {
+                        let current = self.lens.get(cx);
+                        // let (h, _, _) = rgb_to_hsv(
+                        //     current.r() as f64 / 255.0,
+                        //     current.g() as f64 / 255.0,
+                        //     current.b() as f64 / 255.0,
+                        // );
+                        let (h, s, l) = hsv_to_hsl(0.0, self.saturation as f64, self.value as f64);
+                        println!("{} {}", s, l);
+                        let new = Color::RGBA(RGBA::hsl(h as f32, s as f32, l as f32));
+                        (callback)(cx, new);
+                    }
                 }
             }
 

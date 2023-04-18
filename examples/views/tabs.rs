@@ -37,7 +37,8 @@ fn main() {
 
                 _ => unreachable!(),
             })
-            .size(Auto);
+            .width(Pixels(500.0))
+            .height(Pixels(300.0));
         });
     })
     .title("Tabs")

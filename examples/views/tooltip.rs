@@ -2,12 +2,21 @@ mod helpers;
 pub use helpers::*;
 use vizia::prelude::*;
 
+const STYLE: &str = r#"
+    element {
+        background-color: rgb(100, 100, 100);
+        size: 100px;
+        child-space: 1s;
+    }
+"#;
+
 fn main() {
     Application::new(|cx| {
+        cx.add_theme(STYLE);
+
         ExamplePage::new(cx, |cx| {
-            Tooltip::new(cx, |cx| {
-                Label::new(cx, "Subtitle").class("subtitle");
-                Label::new(cx, "Very serious tooltip explanation here.");
+            Element::new(cx).text("Hover Me").tooltip(|cx| {
+                Label::new(cx, "Basic Tooltip");
             });
         });
     })

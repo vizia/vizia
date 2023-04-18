@@ -89,6 +89,7 @@ where
                 cx.needs_redraw();
             });
         })
+        .toggle_class("multiline", kind == TextboxKind::MultiLineWrapped)
         .text_wrap(kind == TextboxKind::MultiLineWrapped)
         // .cursor(CursorIcon::Text)
         .navigable(true)

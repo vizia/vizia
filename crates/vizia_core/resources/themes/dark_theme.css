@@ -11,7 +11,7 @@ label.icon {
 }
 
 label:disabled {
-    color: #a0a0a0;
+    color: #585858;;
 }
 
 :root {
@@ -271,6 +271,10 @@ datepicker {
     border-radius: 4px;
     child-space: 8px;
     row-between: 8px;
+}
+
+.datepicker-header textbox {
+    background-color: transparent;
 }
 
 .datepicker-divisor {
@@ -818,7 +822,7 @@ textbox:read-only {
 }
 
 textbox:disabled {
-    color: #888;
+    color: #585858;
     transition: color 100ms;
 }
 
