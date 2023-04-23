@@ -158,7 +158,7 @@ where
         // );
 
         Self {
-            lens: lens.clone(),
+            lens,
             image: Rc::new(RefCell::new(None)),
             thumb_left: Pixels(0.0),
             thumb_top: Pixels(0.0),
@@ -336,8 +336,8 @@ where
                 canvas.clear_rect(0, 0, size.0 as u32, size.1 as u32, femtovg::Color::rgb(0, 0, 0));
                 for x in 0..64 {
                     for y in 0..64 {
-                        let x_ratio = x as f64 / 63 as f64;
-                        let y_ratio = y as f64 / 63 as f64;
+                        let x_ratio = x as f64 / 63_f64;
+                        let y_ratio = y as f64 / 63_f64;
 
                         let (_, s, v) = hsv_to_hsl(0.0, x_ratio, y_ratio);
 

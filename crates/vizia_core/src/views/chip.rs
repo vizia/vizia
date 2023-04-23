@@ -7,7 +7,7 @@ pub struct Chip {
 }
 
 impl Chip {
-    pub fn new<'a, T>(cx: &'a mut Context, text: impl Res<T> + Clone) -> Handle<'a, Self>
+    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone) -> Handle<Self>
     where
         T: ToString,
     {

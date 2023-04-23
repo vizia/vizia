@@ -77,7 +77,7 @@ where
         .build(cx, move |cx| {
             let parent = cx.current;
 
-            Binding::new(cx, lens.clone(), move |cx, text| {
+            Binding::new(cx, lens, move |cx, text| {
                 let text_str = text.view(
                     cx.data().expect("Failed to find data, is it built into the tree?"),
                     |text| text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned()),

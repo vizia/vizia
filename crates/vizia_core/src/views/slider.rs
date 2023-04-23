@@ -185,7 +185,7 @@ where
         })
         .role(Role::Slider)
         .numeric_value(value_lens.clone().map(|val| (*val as f64 * 100.0).round() / 100.0))
-        .text_value(value_lens.clone().map(|val| {
+        .text_value(value_lens.map(|val| {
             let v = (*val as f64 * 100.0).round() / 100.0;
             format!("{}", v)
         }))
@@ -515,7 +515,7 @@ pub struct NamedSlider {
 }
 
 impl NamedSlider {
-    pub fn new<'a, L, T>(cx: &'a mut Context, lens: L, name: impl Res<T>) -> Handle<'a, Self>
+    pub fn new<L, T>(cx: &mut Context, lens: L, name: impl Res<T>) -> Handle<Self>
     where
         L: Lens<Target = f32>,
         T: ToString,
@@ -524,13 +524,11 @@ impl NamedSlider {
         Self { on_changing: None }
             .build(cx, move |cx| {
                 Binding::new(cx, lens.clone(), move |cx, lens| {
-                    Textbox::new(cx, lens.clone().map(|v| format!("{:.2}", v))).on_submit(
-                        |cx, txt, _| {
-                            if let Ok(val) = txt.parse() {
-                                cx.emit(NamedSliderEvent::Change(val));
-                            }
-                        },
-                    );
+                    Textbox::new(cx, lens.map(|v| format!("{:.2}", v))).on_submit(|cx, txt, _| {
+                        if let Ok(val) = txt.parse() {
+                            cx.emit(NamedSliderEvent::Change(val));
+                        }
+                    });
                 });
                 Slider::custom(cx, lens.clone(), move |cx| {
                     Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {

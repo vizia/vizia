@@ -34,7 +34,7 @@ pub(crate) fn image_system(cx: &mut Context) {
     cx.resource_manager.evict_unused_images();
 }
 
-fn load_image(cx: &mut ResourceContext, entity: Entity, image_name: &String) {
+fn load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) {
     if !try_load_image(cx, entity, image_name) {
         // Image doesn't exists yet so call the image loader
         if let Some(callback) = cx.resource_manager.image_loader.take() {

@@ -68,7 +68,7 @@ impl<L: Lens<Target = f32>> Knob<L> {
                 HStack::new(cx, |cx| {
                     Element::new(cx).class("knob-tick");
                 })
-                .rotate(lens.clone().map(|v| Angle::Deg(*v * 300.0 - 150.0)))
+                .rotate(lens.map(|v| Angle::Deg(*v * 300.0 - 150.0)))
                 .class("knob-head");
             });
         })

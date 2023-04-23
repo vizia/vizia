@@ -99,7 +99,7 @@ impl Label {
     /// #
     /// Label::new(cx, "Text");
     /// ```
-    pub fn new<'a, T>(cx: &'a mut Context, text: impl Res<T> + Clone) -> Handle<'a, Self>
+    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone) -> Handle<Self>
     where
         T: ToString,
     {
@@ -107,7 +107,7 @@ impl Label {
             .build(cx, |_| {})
             .text(text.clone())
             .role(Role::StaticText)
-            .name(text.clone())
+            .name(text)
     }
 }
 

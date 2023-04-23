@@ -280,19 +280,15 @@ impl Application {
                             let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
 
                             // Handle focus action from screen reader
-                            match action_request_event.request.action {
-                                Action::Focus => {
-                                    cx.0.with_current(entity, |cx| {
-                                        cx.focus();
-                                    });
-                                }
-
-                                _ => {}
+                            if action_request_event.request.action == Action::Focus {
+                                cx.0.with_current(entity, |cx| {
+                                    cx.focus();
+                                });
                             }
 
                             cx.send_event(
                                 Event::new(WindowEvent::ActionRequest(
-                                    action_request_event.request.clone(),
+                                    action_request_event.request,
                                 ))
                                 .direct(entity),
                             );

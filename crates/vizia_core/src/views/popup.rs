@@ -86,7 +86,7 @@ where
                         if flag {
                             if meta.origin != cx.current() {
                                 // Check if the mouse was pressed outside of any descendants
-                                if !cx.hovered.is_descendant_of(&cx.tree, cx.current) {
+                                if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
                                     (focus_event)(cx);
                                     meta.consume();
                                 }

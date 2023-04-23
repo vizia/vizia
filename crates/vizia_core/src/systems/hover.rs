@@ -157,7 +157,7 @@ fn hover_entity(
         }
     }
 
-    let child_iter = LayoutChildIterator::new(&cx.tree, cx.current);
+    let child_iter = LayoutChildIterator::new(cx.tree, cx.current);
     for child in child_iter {
         cx.current = child;
         hover_entity(cx, current_z, queue, hovered, transform, &clipping);

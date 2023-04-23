@@ -13,7 +13,7 @@ where
 }
 
 impl<L: 'static + Lens<Target = Vec<T>>, T: Data> Table<L, T> {
-    pub fn new<'a, F>(cx: &'a mut Context, lens: L, list_builder: F) -> Handle<'a, Self>
+    pub fn new<F>(cx: &mut Context, lens: L, list_builder: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context, L),
         <L as Lens>::Source: Model,

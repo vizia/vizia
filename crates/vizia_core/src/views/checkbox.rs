@@ -138,7 +138,7 @@ impl Checkbox {
         Self { on_toggle: None }
             .build(cx, |_| {})
             .text(checked.clone().map(|flag| if *flag { ICON_CHECK } else { "" }))
-            .checked(checked.clone())
+            .checked(checked)
             .checkable(true)
             .role(Role::CheckBox)
             .default_action_verb(DefaultActionVerb::Click)
@@ -165,7 +165,7 @@ impl Checkbox {
                     }
                 });
             })
-            .checked(checked.clone())
+            .checked(checked)
             .cursor(CursorIcon::Hand)
             .navigable(true)
     }

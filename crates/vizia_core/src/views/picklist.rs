@@ -50,7 +50,7 @@ impl PickList {
                 move |cx| {
                     let s = selected.clone();
                     let l = list_lens.clone();
-                    List::new(cx, l.clone(), move |cx, index, item| {
+                    List::new(cx, l, move |cx, index, item| {
                         Label::new(cx, item)
                             .child_top(Stretch(1.0))
                             .child_bottom(Stretch(1.0))

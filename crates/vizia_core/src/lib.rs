@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)]
+#![allow(clippy::single_match)]
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;

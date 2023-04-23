@@ -148,9 +148,9 @@ impl TextContext {
             families.into_iter().map(|(name, _)| FamilyOwned::Name(name)).collect::<Vec<_>>();
 
         let family = if let Some(font_family) = font_families.first() {
-            font_family.as_family().clone()
+            font_family.as_family()
         } else {
-            style.default_font.first().unwrap().as_family().clone()
+            style.default_font.first().unwrap().as_family()
         };
 
         self.with_buffer(entity, |fs, buf| {
@@ -200,7 +200,7 @@ impl TextContext {
                 let position_x = position.0 + cache_key.x_bin.as_float();
                 let position_y = position.1 + cache_key.y_bin.as_float();
                 let position_x = position_x - run.line_w * justify.0;
-                let position_y = position_y - total_height as f32 * justify.1;
+                let position_y = position_y - total_height * justify.1;
                 let (position_x, subpixel_x) = SubpixelBin::new(position_x);
                 let (position_y, subpixel_y) = SubpixelBin::new(position_y);
                 cache_key.x_bin = subpixel_x;
@@ -362,10 +362,10 @@ impl TextContext {
 
                 for run in buffer.layout_runs() {
                     if let Some((x, w)) = run.highlight(cursor_start, cursor_end) {
-                        let y = run.line_y as f32 - buffer.metrics().font_size as f32;
+                        let y = run.line_y - buffer.metrics().font_size;
                         let x = x + position.0 - run.line_w * justify.0;
-                        let y = y + position.1 - total_height as f32 * justify.1;
-                        result.push((x, y, w, buffer.metrics().line_height as f32));
+                        let y = y + position.1 - total_height * justify.1;
+                        result.push((x, y, w, buffer.metrics().line_height));
                     }
                 }
             }
@@ -384,7 +384,7 @@ impl TextContext {
             let buffer = buf.buffer();
             let total_height = buffer.layout_runs().len() as f32 * buffer.metrics().line_height;
 
-            let position_y = position.1 - total_height as f32 * justify.1;
+            let position_y = position.1 - total_height * justify.1;
 
             let font_size = buffer.metrics().font_size;
             let line_height = buffer.metrics().line_height;

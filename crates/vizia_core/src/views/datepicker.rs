@@ -84,8 +84,8 @@ impl Datepicker {
     }
 
     fn get_day_number(y: u32, x: u32, view_date: &NaiveDate) -> (u32, bool) {
-        let (_, days_prev_month) = Self::view_month_info(&view_date, -1);
-        let (first_day_this_month, days_this_month) = Self::view_month_info(&view_date, 0);
+        let (_, days_prev_month) = Self::view_month_info(view_date, -1);
+        let (first_day_this_month, days_this_month) = Self::view_month_info(view_date, 0);
 
         let mut fdtm_i = first_day_this_month as usize as u32;
         if fdtm_i == 0 {
@@ -113,7 +113,7 @@ impl Datepicker {
         L: Lens<Target = D>,
         D: Datelike + Data,
     {
-        let view_date = lens.clone().get(cx);
+        let view_date = lens.get(cx);
 
         Self {
             months: MONTHS.to_vec().iter_mut().map(|v| v.to_string()).collect(),

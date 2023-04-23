@@ -37,13 +37,13 @@ fn has_ability(cx: &Context, node: Entity, ability: Abilities) -> bool {
     cx.style.abilities.get(node).map(|abilities| abilities.contains(ability)).unwrap_or(false)
 }
 
-pub fn focus_forward<'a>(cx: &Context, node: Entity, lock_focus_to: Entity) -> Option<Entity> {
+pub fn focus_forward(cx: &Context, node: Entity, lock_focus_to: Entity) -> Option<Entity> {
     TreeIterator::new(&cx.tree, DoubleEndedTreeTour::new(Some(node), Some(Entity::root())))
         .skip(1)
         .find(|node| is_navigatable(cx, *node, lock_focus_to))
 }
 
-pub fn focus_backward<'a>(cx: &Context, node: Entity, lock_focus_to: Entity) -> Option<Entity> {
+pub fn focus_backward(cx: &Context, node: Entity, lock_focus_to: Entity) -> Option<Entity> {
     let mut iter = TreeIterator::new(
         &cx.tree,
         DoubleEndedTreeTour::new_raw(

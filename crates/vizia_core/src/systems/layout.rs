@@ -54,8 +54,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
                                 .filter_map(|r| (!r.line_w.is_nan()).then_some(r.line_w))
                                 .max_by(|f1, f2| f1.partial_cmp(f2).unwrap())
                                 .unwrap_or_default();
-                            let h =
-                                buf.layout_runs().len() as f32 * buf.metrics().line_height as f32;
+                            let h = buf.layout_runs().len() as f32 * buf.metrics().line_height;
                             (w, h)
                         });
                     cx.text_context.set_bounds(
