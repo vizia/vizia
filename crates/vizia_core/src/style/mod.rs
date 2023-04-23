@@ -1259,11 +1259,11 @@ impl Style {
 }
 
 pub(crate) trait IntoTransform {
-    fn into_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D;
+    fn as_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D;
 }
 
 impl IntoTransform for Translate {
-    fn into_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
+    fn as_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
         let mut result = Transform2D::identity();
         let tx = self.x.to_pixels(parent_bounds.w, scale_factor);
         let ty = self.y.to_pixels(parent_bounds.h, scale_factor);
@@ -1275,7 +1275,7 @@ impl IntoTransform for Translate {
 }
 
 impl IntoTransform for Scale {
-    fn into_transform(&self, _parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
+    fn as_transform(&self, _parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
         let mut result = Transform2D::identity();
         let sx = self.x.to_factor();
         let sy = self.y.to_factor();
@@ -1286,7 +1286,7 @@ impl IntoTransform for Scale {
 }
 
 impl IntoTransform for Angle {
-    fn into_transform(&self, _parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
+    fn as_transform(&self, _parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
         let mut result = Transform2D::identity();
         let r = self.to_radians();
         result.rotate(r);
@@ -1296,7 +1296,7 @@ impl IntoTransform for Angle {
 }
 
 impl IntoTransform for Vec<Transform> {
-    fn into_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
+    fn as_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
         let mut result = Transform2D::identity();
         for transform in self.iter() {
             let mut t = Transform2D::identity();

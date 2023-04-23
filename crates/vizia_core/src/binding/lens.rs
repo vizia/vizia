@@ -28,7 +28,7 @@ pub(crate) trait LensCache: Lens {
         if std::mem::size_of::<Self>() == 0 {
             StoreId::Type(TypeId::of::<Self>())
         } else {
-            StoreId::UUID(next_uuid())
+            StoreId::Uuid(next_uuid())
         }
     }
 }

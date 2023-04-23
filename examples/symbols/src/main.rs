@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use symbols::{Symbol, SYMBOLS};
 use vizia::prelude::*;
 
@@ -7,7 +5,6 @@ mod app_data;
 use app_data::*;
 
 mod app_event;
-use app_event::*;
 
 mod categories;
 mod controls;

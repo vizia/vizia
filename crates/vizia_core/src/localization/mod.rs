@@ -256,7 +256,7 @@ impl Res<String> for Localized {
         let self2 = self.clone();
         cx.with_current(entity, move |cx| {
             Binding::new(cx, Environment::locale, move |cx, _| {
-                let lenses = self2.args.values().map(|x| x.make_clone()).collect();
+                let lenses = self2.args.values().map(|x| x.make_clone()).collect::<Vec<_>>();
                 let self3 = self2.clone();
                 let closure = closure.clone();
                 bind_recursive(cx, &lenses, move |cx| {
@@ -267,12 +267,12 @@ impl Res<String> for Localized {
     }
 }
 
-fn bind_recursive<F>(cx: &mut Context, lenses: &Vec<Box<dyn FluentStore>>, closure: F)
+fn bind_recursive<F>(cx: &mut Context, lenses: &[Box<dyn FluentStore>], closure: F)
 where
     F: 'static + Clone + Fn(&mut Context),
 {
     if let Some((lens, rest)) = lenses.split_last() {
-        let rest = rest.iter().map(|x| x.make_clone()).collect();
+        let rest = rest.iter().map(|x| x.make_clone()).collect::<Vec<_>>();
         lens.bind(
             cx,
             Box::new(move |cx| {

@@ -101,18 +101,18 @@ impl<'i, S: Parse<'i> + Copy + Into<LengthOrPercentage>> Parse<'i> for PositionC
     }
 }
 
-impl Into<LengthOrPercentage> for HorizontalPositionKeyword {
-    fn into(self) -> LengthOrPercentage {
-        match self {
+impl From<HorizontalPositionKeyword> for LengthOrPercentage {
+    fn from(value: HorizontalPositionKeyword) -> Self {
+        match value {
             HorizontalPositionKeyword::Left => LengthOrPercentage::Length(Length::px(0.0)),
             HorizontalPositionKeyword::Right => LengthOrPercentage::Percentage(100.0),
         }
     }
 }
 
-impl Into<LengthOrPercentage> for VerticalPositionKeyword {
-    fn into(self) -> LengthOrPercentage {
-        match self {
+impl From<VerticalPositionKeyword> for LengthOrPercentage {
+    fn from(value: VerticalPositionKeyword) -> Self {
+        match value {
             VerticalPositionKeyword::Top => LengthOrPercentage::Length(Length::px(0.0)),
             VerticalPositionKeyword::Bottom => LengthOrPercentage::Percentage(100.0),
         }

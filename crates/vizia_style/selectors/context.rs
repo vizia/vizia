@@ -134,6 +134,7 @@ where
 
     /// An optional hook function for checking whether a pseudo-element
     /// should match when matching_mode is ForStatelessPseudoElement.
+    #[allow(clippy::type_complexity)]
     pub pseudo_element_matching_fn: Option<&'a dyn Fn(&Impl::PseudoElement) -> bool>,
 
     /// Extra implementation-dependent matching data.

@@ -62,7 +62,7 @@ pub trait NonTSPseudoClass: Sized + ToCss {
 /// Returns a Cow::Borrowed if `s` is already ASCII lowercase, and a
 /// Cow::Owned if `s` had to be converted into ASCII lowercase.
 fn to_ascii_lowercase(s: &str) -> Cow<str> {
-    if let Some(first_uppercase) = s.bytes().position(|byte| byte >= b'A' && byte <= b'Z') {
+    if let Some(first_uppercase) = s.bytes().position(|byte| byte.is_ascii_uppercase()) {
         let mut string = s.to_owned();
         string[first_uppercase..].make_ascii_lowercase();
         string.into()
@@ -705,6 +705,7 @@ impl<Impl: SelectorImpl> Selector<Impl> {
 
     /// Returns count of simple selectors and combinators in the Selector.
     #[inline]
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.0 .1.len()
     }
@@ -1706,6 +1707,7 @@ enum SimpleSelectorParseResult<Impl: SelectorImpl> {
 }
 
 #[derive(Debug)]
+#[allow(clippy::enum_variant_names)]
 enum QNamePrefix<Impl: SelectorImpl> {
     ImplicitNoNamespace,                          // `foo` in attr selectors
     ImplicitAnyNamespace,                         // `foo` in type selectors, without a default ns
@@ -1961,6 +1963,7 @@ enum AttributeFlags {
 }
 
 impl AttributeFlags {
+    #[allow(clippy::wrong_self_convention)]
     fn to_case_sensitivity(self, local_name: &str, have_namespace: bool) -> ParsedCaseSensitivity {
         match self {
             AttributeFlags::CaseSensitive => ParsedCaseSensitivity::ExplicitCaseSensitive,

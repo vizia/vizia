@@ -204,7 +204,7 @@ impl<'a> EventContext<'a> {
             .get(self.current)
             .map(|transform_origin| {
                 let mut origin = Transform2D::new_translation(bounds.left(), bounds.top());
-                let offset = transform_origin.into_transform(bounds, scale_factor);
+                let offset = transform_origin.as_transform(bounds, scale_factor);
                 origin.premultiply(&offset);
                 origin
             })
@@ -214,17 +214,17 @@ impl<'a> EventContext<'a> {
 
         // Apply translation.
         if let Some(translate) = self.style.translate.get(self.current) {
-            transform.premultiply(&translate.into_transform(bounds, scale_factor));
+            transform.premultiply(&translate.as_transform(bounds, scale_factor));
         }
 
         // Apply rotation.
         if let Some(rotate) = self.style.rotate.get(self.current) {
-            transform.premultiply(&rotate.into_transform(bounds, scale_factor));
+            transform.premultiply(&rotate.as_transform(bounds, scale_factor));
         }
 
         // Apply scaling.
         if let Some(scale) = self.style.scale.get(self.current) {
-            transform.premultiply(&scale.into_transform(bounds, scale_factor));
+            transform.premultiply(&scale.as_transform(bounds, scale_factor));
         }
 
         // Apply transform functions.
@@ -235,8 +235,8 @@ impl<'a> EventContext<'a> {
             if let Some(animation_state) = self.style.transform.get_active_animation(self.current) {
                 if let Some(start) = animation_state.keyframes.first() {
                     if let Some(end) = animation_state.keyframes.last() {
-                        let start_transform = start.value.into_transform(bounds, scale_factor);
-                        let end_transform = end.value.into_transform(bounds, scale_factor);
+                        let start_transform = start.value.as_transform(bounds, scale_factor);
+                        let end_transform = end.value.as_transform(bounds, scale_factor);
                         let t = animation_state.t;
                         let animated_transform =
                             Transform2D::interpolate(&start_transform, &end_transform, t);
@@ -244,7 +244,7 @@ impl<'a> EventContext<'a> {
                     }
                 }
             } else {
-                transform.premultiply(&transforms.into_transform(bounds, scale_factor));
+                transform.premultiply(&transforms.as_transform(bounds, scale_factor));
             }
         }
 

@@ -281,7 +281,7 @@ pub(crate) fn hoverability_system(cx: &mut Context) {
     }
 }
 
-fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>) {
+fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     let mut should_relayout = false;
     let mut should_redraw = false;
 

@@ -147,9 +147,9 @@ impl TryAdd<Length> for Length {
     }
 }
 
-impl std::convert::Into<Calc<Length>> for Length {
-    fn into(self) -> Calc<Length> {
-        match self {
+impl From<Length> for Calc<Length> {
+    fn from(value: Length) -> Self {
+        match value {
             Length::Calc(c) => *c,
             b => Calc::Value(Box::new(b)),
         }

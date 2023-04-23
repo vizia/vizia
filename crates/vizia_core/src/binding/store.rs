@@ -13,7 +13,7 @@ pub(crate) fn next_uuid() -> u64 {
 #[derive(Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum StoreId {
     Type(TypeId),
-    UUID(u64),
+    Uuid(u64),
 }
 
 pub(crate) trait Store {

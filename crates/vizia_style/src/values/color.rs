@@ -710,6 +710,7 @@ impl RGBA {
 
     /// Creates a new RGBA from RGBA values
     #[must_use]
+    #[allow(clippy::self_named_constructors)]
     pub const fn rgba(red: u8, green: u8, blue: u8, alpha: u8) -> Self {
         RGBA { red, green, blue, alpha }
     }

@@ -103,6 +103,7 @@ impl Clone for ContextProxy {
 }
 
 pub trait EventProxy: Send {
+    #[allow(clippy::result_unit_err)]
     fn send(&self, event: Event) -> Result<(), ()>;
     fn make_clone(&self) -> Box<dyn EventProxy>;
 }

@@ -172,9 +172,9 @@ impl<
     }
 }
 
-impl<D> std::convert::Into<Calc<DimensionPercentage<D>>> for DimensionPercentage<D> {
-    fn into(self) -> Calc<DimensionPercentage<D>> {
-        match self {
+impl<D> From<DimensionPercentage<D>> for Calc<DimensionPercentage<D>> {
+    fn from(value: DimensionPercentage<D>) -> Self {
+        match value {
             DimensionPercentage::Calc(c) => *c,
             b => Calc::Value(Box::new(b)),
         }
