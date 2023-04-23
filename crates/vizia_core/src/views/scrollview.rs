@@ -21,6 +21,8 @@ pub enum ScrollEvent {
     SetY(f32),
     ScrollX(f32),
     ScrollY(f32),
+    ScrollXPx(f32),
+    ScrollYPx(f32),
     ChildGeo(f32, f32),
     ParentGeo(f32, f32),
 }
@@ -54,6 +56,14 @@ impl Model for ScrollData {
                     self.parent_x = *x;
                     self.parent_y = *y;
                     self.reset();
+                }
+                ScrollEvent::ScrollXPx(delta) => {
+                    self.scroll_x = delta / self.parent_x - self.child_x;
+                }
+                ScrollEvent::ScrollYPx(delta) => {
+                    let d = delta / (self.child_y - self.parent_y);
+                    self.scroll_y += d;
+                    self.scroll_y = self.scroll_y.clamp(0.0, 1.0);
                 }
             }
 

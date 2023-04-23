@@ -13,6 +13,8 @@ pub trait TextModifiers: internal::Modifiable {
             cx.text_context.set_text(entity, &text_data);
 
             cx.style.needs_text_layout.insert(entity, true).unwrap();
+            cx.needs_relayout();
+            cx.needs_redraw();
         });
 
         self

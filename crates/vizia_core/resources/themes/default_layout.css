@@ -420,7 +420,7 @@ scrollview > .scroll_content {
     height: auto;
     min-width: 100%;
     min-height: 100%;
-    position-type: self-directed;
+    /* position-type: self-directed; */
 }
 
 scrollview > scrollbar.horizontal {

@@ -573,6 +573,13 @@ impl Context {
         std::thread::spawn(move || target(&mut cxp));
     }
 
+    pub fn get_proxy(&self) -> ContextProxy {
+        ContextProxy {
+            current: self.current,
+            event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
+        }
+    }
+
     /// Finds the entity that identifier identifies
     pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
         self.entity_identifiers.get(identity).cloned()

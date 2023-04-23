@@ -163,8 +163,12 @@ impl Application {
         self
     }
 
-    pub fn get_proxy(&self) -> EventLoopProxy<UserEvent> {
-        self.event_loop.create_proxy()
+    // pub fn get_proxy(&self) -> EventLoopProxy<UserEvent> {
+    //     self.event_loop.create_proxy()
+    // }
+
+    pub fn get_proxy(&self) -> ContextProxy {
+        self.context.get_proxy()
     }
 
     /// Sets the background color of the window.
