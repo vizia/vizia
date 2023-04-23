@@ -15,7 +15,7 @@ pub trait WindowModifiers {
     /// .title("Vizia Application")
     /// .run();
     /// ```
-    fn title<T: ToString>(self, title: impl Res<T>) -> Self;
+    fn title<T: ToString>(self, title: T) -> Self;
     /// Sets the inner size of the window to the given value. Accepts a value, or lens, which can be converted to a [`WindowSize`].
     ///
     /// The inner size is the window area excluding the window borders.
@@ -30,7 +30,7 @@ pub trait WindowModifiers {
     /// .inner_size((300, 300))
     /// .run();
     /// ```
-    fn inner_size<S: Into<WindowSize>>(self, size: impl Res<S>) -> Self;
+    fn inner_size<S: Into<WindowSize>>(self, size: S) -> Self;
     /// Sets the minimum inner size of the window to the given value. Accepts an optional value, or lens, which can be converted to a [`WindowSize`].
     ///
     /// Setting the minimum inner size to `None` removes the minimum inner size constraint from the window.
@@ -45,7 +45,7 @@ pub trait WindowModifiers {
     /// .min_inner_size(Some((300, 300)))
     /// .run();
     /// ```
-    fn min_inner_size<S: Into<WindowSize>>(self, size: impl Res<Option<S>>) -> Self;
+    fn min_inner_size<S: Into<WindowSize>>(self, size: Option<S>) -> Self;
     /// Sets the maximum inner size of the window to the given value. Accepts an optional value, or lens, which can be converted to a [`WindowSize`].
     ///
     /// Setting the maximum inner size to `None` removes the maximum inner size constraint from the window.
@@ -60,7 +60,7 @@ pub trait WindowModifiers {
     /// .max_inner_size(Some((1000, 1000)))
     /// .run();
     /// ```
-    fn max_inner_size<S: Into<WindowSize>>(self, size: impl Res<Option<S>>) -> Self;
+    fn max_inner_size<S: Into<WindowSize>>(self, size: Option<S>) -> Self;
     /// Sets the position of the window to the given value. Accepts a value, or lens, which can be converted to a [`Position`].
     ///
     /// # Example
@@ -73,7 +73,7 @@ pub trait WindowModifiers {
     /// .position((100, 200))
     /// .run();
     /// ```
-    fn position<P: Into<Position>>(self, position: impl Res<P>) -> Self;
+    fn position<P: Into<Position>>(self, position: P) -> Self;
     /// Sets whether the window can be resized. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
@@ -86,7 +86,7 @@ pub trait WindowModifiers {
     /// .resizable(false)
     /// .run();
     /// ```
-    fn resizable(self, flag: impl Res<bool>) -> Self;
+    fn resizable(self, flag: bool) -> Self;
     /// Sets whether the window is minimized. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
@@ -99,7 +99,7 @@ pub trait WindowModifiers {
     /// .minimized(true)
     /// .run();
     /// ```
-    fn minimized(self, flag: impl Res<bool>) -> Self;
+    fn minimized(self, flag: bool) -> Self;
     /// Sets whether the window is maximized. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
@@ -112,7 +112,7 @@ pub trait WindowModifiers {
     /// .maximized(true)
     /// .run();
     /// ```
-    fn maximized(self, flag: impl Res<bool>) -> Self;
+    fn maximized(self, flag: bool) -> Self;
     /// Sets whether the window is visible. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
@@ -125,7 +125,7 @@ pub trait WindowModifiers {
     /// .visible(false)
     /// .run();
     /// ```
-    fn visible(self, flag: impl Res<bool>) -> Self;
+    fn visible(self, flag: bool) -> Self;
     /// Sets whether the window is transparent. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
@@ -151,7 +151,7 @@ pub trait WindowModifiers {
     /// .decorations(false)
     /// .run();
     /// ```
-    fn decorations(self, flag: impl Res<bool>) -> Self;
+    fn decorations(self, flag: bool) -> Self;
     /// Sets whether the window should be on top of other windows. Accepts a boolean value, or lens to a boolean value.
     ///
     /// # Example
@@ -164,7 +164,7 @@ pub trait WindowModifiers {
     /// .always_on_top(true)
     /// .run();
     /// ```
-    fn always_on_top(self, flag: impl Res<bool>) -> Self;
+    fn always_on_top(self, flag: bool) -> Self;
     /// Sets whether the window has vsync enabled.
     ///
     /// # Example

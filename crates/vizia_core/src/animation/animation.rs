@@ -4,9 +4,6 @@ use vizia_id::{
 };
 
 /// An id used to reference style animations stored in context.
-///
-/// An animation id is returned by `cx.add_animation()` and can be used to configure animations
-/// as well as to play, pause, and stop animations on entities (see [`AnimExt`](crate::prelude::AnimExt)).
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) struct Animation(u32);
 

@@ -78,9 +78,10 @@ where
             let parent = cx.current;
 
             Binding::new(cx, lens.clone(), move |cx, text| {
-                let text_str = text.view(cx.data().unwrap(), |text| {
-                    text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned())
-                });
+                let text_str = text.view(
+                    cx.data().expect("Failed to find data, is it built into the tree?"),
+                    |text| text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned()),
+                );
 
                 cx.text_context.with_buffer(parent, |fs, buf| {
                     buf.set_text(fs, &text_str, Attrs::new());

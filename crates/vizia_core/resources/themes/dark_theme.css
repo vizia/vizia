@@ -11,7 +11,7 @@ label.icon {
 }
 
 label:disabled {
-    color: #585858;;
+    color: #585858;
 }
 
 :root {
@@ -47,8 +47,6 @@ button:over {
 
 button:active {
     background-color: #323232;
-    scale: 95%;
-    transition: scale 100ms;
 }
 
 button:focus-visible {

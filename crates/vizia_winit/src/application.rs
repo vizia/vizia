@@ -534,86 +534,57 @@ impl Application {
 }
 
 impl WindowModifiers for Application {
-    fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
-        self.window_description.title = title.get_val(&mut self.context).to_string();
-        title.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetTitle(val.to_string()));
-        });
+    fn title<T: ToString>(mut self, title: T) -> Self {
+        self.window_description.title = title.to_string();
 
         self
     }
 
-    fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
-        self.window_description.inner_size = size.get_val(&mut self.context).into();
+    fn inner_size<S: Into<WindowSize>>(mut self, size: S) -> Self {
+        self.window_description.inner_size = size.into();
         *BackendContext::new(&mut self.context).window_size() = self.window_description.inner_size;
-        size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetSize(val.into()));
-        });
 
         self
     }
 
-    fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.min_inner_size =
-            size.get_val(&mut self.context).map(|size| size.into());
-        size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMinSize(val.map(|size| size.into())));
-        });
+    fn min_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
+        self.window_description.min_inner_size = size.map(|size| size.into());
 
         self
     }
 
-    fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.max_inner_size =
-            size.get_val(&mut self.context).map(|size| size.into());
-        size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMaxSize(val.map(|size| size.into())));
-        });
+    fn max_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
+        self.window_description.max_inner_size = size.map(|size| size.into());
 
         self
     }
 
-    fn position<P: Into<Position>>(mut self, position: impl Res<P>) -> Self {
-        self.window_description.position = Some(position.get_val(&mut self.context).into());
-        position.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetPosition(val.into()));
-        });
+    fn position<P: Into<Position>>(mut self, position: P) -> Self {
+        self.window_description.position = Some(position.into());
 
         self
     }
 
-    fn resizable(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.resizable = flag.get_val(&mut self.context);
-        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetResizable(val));
-        });
+    fn resizable(mut self, flag: bool) -> Self {
+        self.window_description.resizable = flag;
 
         self
     }
 
-    fn minimized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.minimized = flag.get_val(&mut self.context);
-        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMinimized(val));
-        });
+    fn minimized(mut self, flag: bool) -> Self {
+        self.window_description.minimized = flag;
 
         self
     }
 
-    fn maximized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.maximized = flag.get_val(&mut self.context);
-        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMaximized(val));
-        });
+    fn maximized(mut self, flag: bool) -> Self {
+        self.window_description.maximized = flag;
 
         self
     }
 
-    fn visible(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.visible = flag.get_val(&mut self.context);
-        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetVisible(val));
-        });
+    fn visible(mut self, flag: bool) -> Self {
+        self.window_description.visible = flag;
 
         self
     }
@@ -624,21 +595,14 @@ impl WindowModifiers for Application {
         self
     }
 
-    fn decorations(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.decorations = flag.get_val(&mut self.context);
-        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetDecorations(val));
-        });
+    fn decorations(mut self, flag: bool) -> Self {
+        self.window_description.decorations = flag;
 
         self
     }
 
-    fn always_on_top(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.always_on_top = flag.get_val(&mut self.context);
-        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetAlwaysOnTop(val));
-        });
-
+    fn always_on_top(mut self, flag: bool) -> Self {
+        self.window_description.always_on_top = flag;
         self
     }
 
