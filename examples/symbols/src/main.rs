@@ -18,7 +18,7 @@ fn main() {
         AppData::new().build(cx);
         VStack::new(cx, |cx| {
             // Top Bar
-            HStack::new(cx, |cx| {
+            HStack::new(cx, |_| {
                 // Searchbox here
             })
             .class("top-bar");

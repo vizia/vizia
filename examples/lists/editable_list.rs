@@ -1,16 +1,5 @@
 use vizia::prelude::*;
 
-const STYLE: &str = r#"
-    
-    label {
-        background-color: white;
-    }
-
-    label:checked {
-        background-color: blue;
-    }
-"#;
-
 #[derive(Lens)]
 pub struct AppData {
     list: Vec<u32>,
@@ -62,8 +51,6 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
-
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list, selected: 0 }.build(cx);
 
@@ -73,16 +60,14 @@ fn main() {
                 |cx| cx.emit(AppEvent::Add(20)),
                 |cx| Label::new(cx, "Add").width(Stretch(1.0)),
             )
-            .width(Stretch(1.0))
-            .space(Pixels(0.0));
+            .width(Stretch(1.0));
 
             Button::new(
                 cx,
                 |cx| cx.emit(AppEvent::RemoveSelected),
                 |cx| Label::new(cx, "Remove").width(Stretch(1.0)),
             )
-            .width(Stretch(1.0))
-            .space(Pixels(0.0));
+            .width(Stretch(1.0));
 
             List::new(cx, AppData::list, move |cx, index, item| {
                 Label::new(cx, item)
@@ -101,9 +86,8 @@ fn main() {
         })
         .row_between(Pixels(5.0))
         .size(Auto)
-        .space(Stretch(1.0))
-        .top(Pixels(100.0))
-        .child_space(Stretch(1.0));
+        .width(Pixels(100.0))
+        .space(Stretch(1.0));
     })
     .title("List")
     .run();

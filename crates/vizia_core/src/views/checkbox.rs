@@ -1,7 +1,7 @@
 use crate::fonts::icons::ICON_CHECK;
 use crate::prelude::*;
 
-/// A checkbox used to display and toggle boolean state.
+/// A checkbox used to display and toggle a boolean state.
 ///
 /// Clicking on the checkbox with the left mouse button triggers the `on_toggle` callback.
 ///
@@ -61,6 +61,8 @@ use crate::prelude::*;
 /// wrapping the checkbox in an [`HStack`](crate::prelude::HStack) and adding a [`Label`](crate::prelude::Label)
 /// to it.
 ///
+/// The Label can be used to trigger the checkbox by assigning the checkbox an id name and using it with the `describing` modifier on the label.
+///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
@@ -76,8 +78,8 @@ use crate::prelude::*;
 /// # AppData { value: false }.build(cx);
 /// #
 /// HStack::new(cx, |cx| {
-///     Checkbox::new(cx, AppData::value);
-///     Label::new(cx, "Press me");
+///     Checkbox::new(cx, AppData::value).id("check1");
+///     Label::new(cx, "Press me").describing("check1");
 /// });
 /// ```
 ///

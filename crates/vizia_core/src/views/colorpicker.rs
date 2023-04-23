@@ -4,6 +4,7 @@ use std::rc::Rc;
 use crate::prelude::*;
 use crate::vg;
 
+/// A control used to select a color.
 pub struct ColorPicker<L> {
     _lens: L,
     on_change: Option<Box<dyn Fn(&mut EventContext, Color)>>,

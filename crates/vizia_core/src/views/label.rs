@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-/// A label used to display text to the screen.
+/// A label used to display text.
 ///
 /// # Examples
 ///

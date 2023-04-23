@@ -1,6 +1,7 @@
 use crate::{icons::ICON_X, prelude::*};
 use std::sync::Arc;
 
+/// A visual indicator such as a tag.
 #[derive(Lens)]
 pub struct Chip {
     on_close: Option<Arc<dyn Fn(&mut EventContext) + Send + Sync>>,

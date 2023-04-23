@@ -13,7 +13,7 @@ fn main() {
         AppData { user: String::from("Jane") }.build(cx);
 
         // Add fluent file for the `fr` locale (french).
-        cx.add_translation(langid!("fr"), include_str!("../resources/fr/hello.ftl"));
+        cx.add_translation(langid!("fr"), include_str!("../resources/translations/fr/hello.ftl"));
 
         // Force application to use the `fr` locale.
         cx.emit(EnvironmentEvent::SetLocale(langid!("fr")));

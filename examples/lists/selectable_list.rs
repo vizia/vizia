@@ -34,7 +34,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(include_str!("../resources/list_style.css"));
+        cx.add_theme(include_str!("../resources/themes/list_style.css"));
 
         let list: Vec<u32> = (0..4u32).collect();
         AppData { list, selected: 0 }.build(cx);

@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-/// A Switch used to display and toggle boolean state.
+/// A Switch used to display and toggle a boolean state.
 ///
 /// Clicking on the Switch with the left mouse button triggers the `on_toggle` callback.
 ///

@@ -34,9 +34,9 @@ path = "examples/views/xypad.rs"
 name = "picklist"
 path = "examples/views/picklist.rs"
 
-# [[example]]
-# name = "datetimepicker"
-# path = "examples/views/datetimepicker.rs"
+[[example]]
+name = "datetimepicker"
+path = "examples/views/datetimepicker.rs"
 
 [[example]]
 name = "cursor_icon"
@@ -53,10 +53,6 @@ path = "examples/modal.rs"
 [[example]]
 name = "proxy"
 path = "examples/proxy.rs"
-
-[[example]]
-name = "key_input_propagation"
-path = "examples/key_input_propagation.rs"
 
 [[example]]
 name = "scrollview"
@@ -209,10 +205,6 @@ name = "crud"
 path = "examples/7GUIs/crud.rs"
 
 [[example]]
-name = "focus_order"
-path = "examples/accessibility/focus_order.rs"
-
-[[example]]
 name = "keymap_basic"
 path = "examples/keymap_basic.rs"
 
@@ -307,10 +299,6 @@ path = "examples/style/pseudo_classes.rs"
 [[example]]
 name = "background_size"
 path = "examples/style/background_size.rs"
-
-[[example]]
-name = "boolean"
-path = "examples/binding/boolean.rs"
 
 [[example]]
 name = "text_layout"

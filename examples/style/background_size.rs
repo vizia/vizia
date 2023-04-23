@@ -60,7 +60,7 @@ fn main() {
         cx.load_image(
             "sample.png",
             image::load_from_memory_with_format(
-                include_bytes!("../resources/sample-hut-400x300.png"),
+                include_bytes!("../resources/images/sample-hut-400x300.png"),
                 image::ImageFormat::Png,
             )
             .unwrap(),
