@@ -86,7 +86,7 @@ fn draw_entity(
         }
     }
 
-    let child_iter = LayoutChildIterator::new(&cx.tree, cx.current);
+    let child_iter = LayoutChildIterator::new(cx.tree, cx.current);
 
     let parent_opacity = cx.opacity();
     // Draw its children

@@ -57,8 +57,7 @@ where
                                 color.g() as f64 / 255.0,
                                 color.b() as f64 / 255.0,
                             );
-                            // h
-                            color.r()
+                            h
                         }),
                     )
                     .width(Stretch(1.0));
@@ -70,8 +69,7 @@ where
                                 color.g() as f64 / 255.0,
                                 color.b() as f64 / 255.0,
                             );
-                            // s
-                            color.g()
+                            s
                         }),
                     )
                     .width(Stretch(1.0));
@@ -83,8 +81,7 @@ where
                                 color.g() as f64 / 255.0,
                                 color.b() as f64 / 255.0,
                             );
-                            // v
-                            color.b()
+                            v
                         }),
                     )
                     .width(Stretch(1.0));
@@ -300,7 +297,7 @@ where
                     // }
 
                     if let Some(callback) = &self.on_change {
-                        let current = self.lens.get(cx);
+                        // let current = self.lens.get(cx);
                         // let (h, _, _) = rgb_to_hsv(
                         //     current.r() as f64 / 255.0,
                         //     current.g() as f64 / 255.0,

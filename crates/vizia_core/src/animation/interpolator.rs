@@ -47,14 +47,14 @@ impl Interpolator for Units {
             Units::Pixels(e) => Units::Pixels(f32::interpolate(s, e, t)),
             Units::Percentage(e) => Units::Percentage(f32::interpolate(s, e, t)),
             Units::Stretch(e) => Units::Stretch(f32::interpolate(s, e, t)),
-            Units::Auto => return *end,
+            Units::Auto => *end,
         }
     }
 }
 
 impl Interpolator for Opacity {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        return Opacity(start.0 + (end.0 - start.0) * t);
+        Opacity(start.0 + (end.0 - start.0) * t)
     }
 }
 
@@ -82,7 +82,7 @@ impl Interpolator for LengthValue {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (end, start) {
             (LengthValue::Px(end_val), LengthValue::Px(start_val)) => {
-                return LengthValue::Px(f32::interpolate(start_val, end_val, t));
+                LengthValue::Px(f32::interpolate(start_val, end_val, t))
             }
 
             _ => LengthValue::default(),
@@ -94,7 +94,7 @@ impl Interpolator for Length {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (end, start) {
             (Length::Value(end_val), Length::Value(start_val)) => {
-                return Length::Value(LengthValue::interpolate(start_val, end_val, t));
+                Length::Value(LengthValue::interpolate(start_val, end_val, t))
             }
 
             _ => Length::default(),
@@ -106,15 +106,13 @@ impl Interpolator for LengthOrPercentage {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
             (LengthOrPercentage::Length(start_val), LengthOrPercentage::Length(end_val)) => {
-                return LengthOrPercentage::Length(Length::interpolate(start_val, end_val, t));
+                LengthOrPercentage::Length(Length::interpolate(start_val, end_val, t))
             }
 
             (
                 LengthOrPercentage::Percentage(start_val),
                 LengthOrPercentage::Percentage(end_val),
-            ) => {
-                return LengthOrPercentage::Percentage(f32::interpolate(start_val, end_val, t));
-            }
+            ) => LengthOrPercentage::Percentage(f32::interpolate(start_val, end_val, t)),
 
             _ => LengthOrPercentage::default(),
         }
@@ -127,11 +125,9 @@ impl Interpolator for LengthPercentageOrAuto {
             (
                 LengthPercentageOrAuto::LengthPercentage(start_val),
                 LengthPercentageOrAuto::LengthPercentage(end_val),
-            ) => {
-                return LengthPercentageOrAuto::LengthPercentage(LengthOrPercentage::interpolate(
-                    start_val, end_val, t,
-                ));
-            }
+            ) => LengthPercentageOrAuto::LengthPercentage(LengthOrPercentage::interpolate(
+                start_val, end_val, t,
+            )),
 
             _ => end.clone(),
         }
@@ -142,15 +138,13 @@ impl Interpolator for PercentageOrNumber {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
             (PercentageOrNumber::Number(start_val), PercentageOrNumber::Number(end_val)) => {
-                return PercentageOrNumber::Number(f32::interpolate(start_val, end_val, t));
+                PercentageOrNumber::Number(f32::interpolate(start_val, end_val, t))
             }
 
             (
                 PercentageOrNumber::Percentage(start_val),
                 PercentageOrNumber::Percentage(end_val),
-            ) => {
-                return PercentageOrNumber::Percentage(f32::interpolate(start_val, end_val, t));
-            }
+            ) => PercentageOrNumber::Percentage(f32::interpolate(start_val, end_val, t)),
 
             _ => PercentageOrNumber::default(),
         }
@@ -258,7 +252,7 @@ impl Interpolator for LineDirection {
                 LineDirection::Angle(Angle::interpolate(start_angle, end_angle, t))
             }
 
-            _ => end.clone(),
+            _ => *end,
         }
     }
 }

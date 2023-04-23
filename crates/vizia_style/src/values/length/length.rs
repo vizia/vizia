@@ -89,19 +89,19 @@ impl Length {
         }
 
         match (a, b) {
-            (Length::Calc(a), Length::Calc(b)) => return Length::Calc(Box::new(*a + *b)),
+            (Length::Calc(a), Length::Calc(b)) => Length::Calc(Box::new(*a + *b)),
             (Length::Calc(calc), b) => {
                 if let Calc::Value(a) = *calc {
                     a.add(b)
                 } else {
-                    Length::Calc(Box::new(Calc::Sum(Box::new((*calc).into()), Box::new(b.into()))))
+                    Length::Calc(Box::new(Calc::Sum(Box::new(*calc), Box::new(b.into()))))
                 }
             }
             (a, Length::Calc(calc)) => {
                 if let Calc::Value(b) = *calc {
                     a.add(*b)
                 } else {
-                    Length::Calc(Box::new(Calc::Sum(Box::new(a.into()), Box::new((*calc).into()))))
+                    Length::Calc(Box::new(Calc::Sum(Box::new(a.into()), Box::new(*calc))))
                 }
             }
             (a, b) => Length::Calc(Box::new(Calc::Sum(Box::new(a.into()), Box::new(b.into())))),
@@ -112,13 +112,7 @@ impl Length {
 impl TryAdd<Length> for Length {
     fn try_add(&self, other: &Length) -> Option<Length> {
         match (self, other) {
-            (Length::Value(a), Length::Value(b)) => {
-                if let Some(res) = a.try_add(b) {
-                    Some(Length::Value(res))
-                } else {
-                    None
-                }
-            }
+            (Length::Value(a), Length::Value(b)) => a.try_add(b).map(Length::Value),
             (Length::Calc(a), other) => match &**a {
                 Calc::Value(v) => v.try_add(other),
                 Calc::Sum(a, b) => {
@@ -135,7 +129,7 @@ impl TryAdd<Length> for Length {
                 _ => None,
             },
             (other, Length::Calc(b)) => match &**b {
-                Calc::Value(v) => other.try_add(&*v),
+                Calc::Value(v) => other.try_add(v),
                 Calc::Sum(a, b) => {
                     if let Some(res) = other.try_add(&Length::Calc(Box::new(*a.clone()))) {
                         return Some(res.add(Length::from(*b.clone())));

@@ -15,7 +15,7 @@ impl<'a> std::convert::From<CowRcStr<'a>> for SelectorString {
     }
 }
 
-impl<'a> std::convert::From<&str> for SelectorString {
+impl std::convert::From<&str> for SelectorString {
     fn from(s: &str) -> SelectorString {
         SelectorString(s.to_string())
     }
@@ -33,7 +33,7 @@ impl ToCss for SelectorString {
 #[derive(Debug, Clone, PartialEq, Eq, Default, Hash)]
 pub struct SelectorIdent(pub String);
 
-impl<'a> std::convert::From<&str> for SelectorIdent {
+impl std::convert::From<&str> for SelectorIdent {
     fn from(s: &str) -> SelectorIdent {
         SelectorIdent(s.to_string())
     }

@@ -1,5 +1,7 @@
 #![allow(clippy::type_complexity)]
 #![allow(clippy::single_match)]
+#![allow(clippy::enum_variant_names)]
+#![allow(clippy::new_without_default)]
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;

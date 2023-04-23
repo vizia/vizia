@@ -15,7 +15,7 @@ impl<'i> DeclarationBlock<'i> {
     ) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         let mut important_declarations = DeclarationList::new();
         let mut declarations = DeclarationList::new();
-        let mut parser = DeclarationListParser::new(
+        let parser = DeclarationListParser::new(
             input,
             PropertyDeclarationParser {
                 important_declarations: &mut important_declarations,
@@ -23,7 +23,7 @@ impl<'i> DeclarationBlock<'i> {
                 options,
             },
         );
-        while let Some(res) = parser.next() {
+        for res in parser {
             if let Err((err, _)) = res {
                 return Err(err);
             }
@@ -48,19 +48,13 @@ impl<'a, 'o, 'i> DeclarationParser<'i> for PropertyDeclarationParser<'a, 'o, 'i>
         name: CowRcStr<'i>,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::Declaration, ParseError<'i, Self::Error>> {
-        parse_declaration(
-            name,
-            input,
-            &mut self.declarations,
-            &mut self.important_declarations,
-            &mut self.options,
-        )
+        parse_declaration(name, input, self.declarations, self.important_declarations, self.options)
     }
 }
 
-pub(crate) fn parse_declaration<'i, 't>(
+pub(crate) fn parse_declaration<'i>(
     name: CowRcStr<'i>,
-    input: &mut cssparser::Parser<'i, 't>,
+    input: &mut cssparser::Parser<'i, '_>,
     declarations: &mut DeclarationList<'i>,
     important_declarations: &mut DeclarationList<'i>,
     _options: &ParserOptions,

@@ -32,7 +32,7 @@ impl<
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         let location = input.current_source_location();
         let f = input.expect_function()?;
-        match_ignore_ascii_case! { &f,
+        match_ignore_ascii_case! { f,
             "calc" => {
                 let calc = input.parse_nested_block(Calc::parse_sum)?;
                 match calc {
@@ -68,7 +68,7 @@ impl<
 
                 // According to the spec, the minimum should "win" over the maximum if they are in the wrong order.
                 let cmp = if let (Some(Calc::Value(max_val)), Calc::Value(center_val)) = (&max, &center) {
-                    center_val.partial_cmp(&max_val)
+                    center_val.partial_cmp(max_val)
                 } else {
                     None
                 };
@@ -86,7 +86,7 @@ impl<
                 }
 
                 let cmp = if let (Some(Calc::Value(min_val)), Calc::Value(center_val)) = (&min, &center) {
-                    center_val.partial_cmp(&min_val)
+                    center_val.partial_cmp(min_val)
                 } else {
                     None
                 };
@@ -238,25 +238,22 @@ impl<
         let mut reduced: Vec<Calc<V>> = vec![];
         for arg in args.drain(..) {
             let mut found = None;
-            match &arg {
-                Calc::Value(val) => {
-                    for b in reduced.iter_mut() {
-                        if let Calc::Value(v) = b {
-                            match val.partial_cmp(v) {
-                                Some(ord) if ord == cmp => {
-                                    found = Some(Some(b));
-                                    break;
-                                }
-                                Some(_) => {
-                                    found = Some(None);
-                                    break;
-                                }
-                                None => {}
+            if let Calc::Value(val) = &arg {
+                for b in reduced.iter_mut() {
+                    if let Calc::Value(v) = b {
+                        match val.partial_cmp(v) {
+                            Some(ord) if ord == cmp => {
+                                found = Some(Some(b));
+                                break;
                             }
+                            Some(_) => {
+                                found = Some(None);
+                                break;
+                            }
+                            None => {}
                         }
                     }
                 }
-                _ => {}
             }
             if let Some(r) = found {
                 if let Some(r) = r {

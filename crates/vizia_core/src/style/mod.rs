@@ -536,7 +536,7 @@ impl Style {
                 self.clip_path.insert_transition(rule_id, animation);
             }
 
-            _ => return,
+            _ => {}
         }
     }
 

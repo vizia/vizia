@@ -407,9 +407,8 @@ where
     match combinator {
         Combinator::NextSibling | Combinator::LaterSibling => element.prev_sibling_element(),
         Combinator::Child | Combinator::Descendant => {
-            match element.parent_element() {
-                Some(e) => return Some(e),
-                None => {}
+            if let Some(e) = element.parent_element() {
+                return Some(e);
             }
 
             if !element.parent_node_is_shadow_root() {
@@ -494,7 +493,7 @@ where
     };
 
     let mut next_element =
-        next_element_for_combinator(element, combinator, &selector_iter, &context);
+        next_element_for_combinator(element, combinator, &selector_iter, context);
 
     // Stop matching :visited as soon as we find a link, or a combinator for
     // something that isn't an ancestor.
@@ -558,7 +557,7 @@ where
             visited_handling = VisitedHandlingMode::AllLinksUnvisited;
         }
 
-        next_element = next_element_for_combinator(&element, combinator, &selector_iter, &context);
+        next_element = next_element_for_combinator(&element, combinator, &selector_iter, context);
     }
 }
 
@@ -590,26 +589,26 @@ where
     F: FnMut(&E, ElementSelectorFlags),
 {
     let matches_hover_and_active_quirk =
-        matches_hover_and_active_quirk(&selector_iter, context, rightmost);
+        matches_hover_and_active_quirk(selector_iter, context, rightmost);
 
     // Handle some common cases first.
     // We may want to get rid of this at some point if we can make the
     // generic case fast enough.
     let mut selector = selector_iter.next();
-    if let Some(&Component::LocalName(ref local_name)) = selector {
+    if let Some(Component::LocalName(local_name)) = selector {
         if !matches_local_name(element, local_name) {
             return false;
         }
         selector = selector_iter.next();
     }
     let class_and_id_case_sensitivity = context.classes_and_ids_case_sensitivity();
-    if let Some(&Component::ID(ref id)) = selector {
+    if let Some(Component::ID(id)) = selector {
         if !element.has_id(id, class_and_id_case_sensitivity) {
             return false;
         }
         selector = selector_iter.next();
     }
-    while let Some(&Component::Class(ref class)) = selector {
+    while let Some(Component::Class(class)) = selector {
         if !element.has_class(class, class_and_id_case_sensitivity) {
             return false;
         }
@@ -693,11 +692,11 @@ where
         Component::LocalName(ref local_name) => matches_local_name(element, local_name),
         Component::ExplicitUniversalType | Component::ExplicitAnyNamespace => true,
         Component::Namespace(_, ref url) | Component::DefaultNamespace(ref url) => {
-            element.has_namespace(&url.borrow())
+            element.has_namespace(url.borrow())
         }
         Component::ExplicitNoNamespace => {
             let ns = crate::parser::namespace_empty_string::<E::Impl>();
-            element.has_namespace(&ns.borrow())
+            element.has_namespace(ns.borrow())
         }
         Component::ID(ref id) => {
             element.has_id(id, context.shared.classes_and_ids_case_sensitivity())
@@ -773,7 +772,7 @@ where
                 return false;
             }
 
-            element.match_non_ts_pseudo_class(pc, &mut context.shared, flags_setter)
+            element.match_non_ts_pseudo_class(pc, context.shared, flags_setter)
         }
         Component::FirstChild => matches_first_child(element, flags_setter),
         Component::LastChild => matches_last_child(element, flags_setter),

@@ -795,7 +795,7 @@ impl From<RGBA> for femtovg::Color {
 
 impl From<&str> for Color {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(&s);
+        let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
         Color::parse(&mut parser).unwrap_or_default()
     }

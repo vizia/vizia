@@ -397,7 +397,7 @@ impl<'a> DrawContext<'a> {
     /// Get the vector path of the current view.
     pub fn build_path(&mut self) -> Path {
         // Length proportional to radius of a cubic bezier handle for 90deg arcs.
-        const KAPPA90: f32 = 0.5522847493;
+        const KAPPA90: f32 = 0.552_284_749_3;
 
         let bounds = self.bounds();
 
@@ -527,12 +527,9 @@ impl<'a> DrawContext<'a> {
         let window_height = self.cache.get_height(Entity::root());
         let bounds = self.bounds();
 
-        let blur_radius = self
-            .backdrop_filter()
-            .map(|filter| match filter {
-                Filter::Blur(r) => Some(r.to_px().unwrap_or_default()),
-            })
-            .flatten();
+        let blur_radius = self.backdrop_filter().map(|filter| match filter {
+            Filter::Blur(r) => r.to_px().unwrap_or_default(),
+        });
 
         if let Some(blur_radius) = blur_radius {
             let sigma = blur_radius / 2.0;
@@ -676,7 +673,7 @@ impl<'a> DrawContext<'a> {
             let origin_x = box_x + box_w * justify_x;
             let origin_y = box_y + (box_h * justify_y).round();
 
-            self.text_context.sync_styles(self.current, &self.style);
+            self.text_context.sync_styles(self.current, self.style);
 
             self.draw_text_selection(canvas, (origin_x, origin_y), (justify_x, justify_y));
             self.draw_text_caret(canvas, (origin_x, origin_y), (justify_x, justify_y), 1.0);
@@ -958,7 +955,7 @@ impl<'a> DrawContext<'a> {
         let parent = self
             .tree
             .get_layout_parent(self.current)
-            .expect(&format!("Failed to find parent somehow: {}", self.current));
+            .unwrap_or_else(|| panic!("Failed to find parent somehow: {}", self.current));
 
         let parent_width = self.cache.get_width(parent);
         let parent_height = self.cache.get_height(parent);

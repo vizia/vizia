@@ -155,7 +155,7 @@ pub(crate) fn get_access_node(
             .style
             .pseudo_classes
             .get(entity)
-            .and_then(|pseudoclass| Some(pseudoclass.contains(PseudoClassFlags::CHECKED)))
+            .map(|pseudoclass| pseudoclass.contains(PseudoClassFlags::CHECKED))
         {
             if checked {
                 node_builder.set_checked_state(CheckedState::True);
@@ -166,7 +166,7 @@ pub(crate) fn get_access_node(
     }
 
     let children =
-        entity.child_iter(&cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
+        entity.child_iter(cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
     if !children.is_empty() {
         node_builder.set_children(children);
     }
@@ -180,5 +180,5 @@ pub(crate) fn get_access_node(
         views.insert(entity, view);
     }
 
-    return Some(node);
+    Some(node)
 }

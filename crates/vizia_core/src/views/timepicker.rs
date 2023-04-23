@@ -383,7 +383,6 @@ where
             change_page_on_select: true,
         }
         .build(cx, move |cx| {
-            let lens1 = lens.clone();
             HStack::new(cx, move |cx| {
                 Binding::new(cx, Self::page, move |cx, page| match page.get(cx) {
                     AnalogTimepickerPage::Hours => {

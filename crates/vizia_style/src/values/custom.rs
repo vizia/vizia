@@ -108,7 +108,7 @@ impl<'i> TokenList<'i> {
                         last_is_whitespace = true;
                     }
                 }
-                Ok(&cssparser::Token::Function(ref f)) => {
+                Ok(cssparser::Token::Function(f)) => {
                     // Attempt to parse embedded color values into hex tokens.
                     let f = f.clone();
                     if let Some(color) = try_parse_color_token(&f, &state, input) {
@@ -138,7 +138,7 @@ impl<'i> TokenList<'i> {
                 }
                 Ok(&cssparser::Token::Hash(ref h)) | Ok(&cssparser::Token::IDHash(ref h)) => {
                     if let Ok(color) = Color::parse_hash(h.as_bytes()) {
-                        tokens.push(TokenOrValue::Color(color.into()));
+                        tokens.push(TokenOrValue::Color(color));
                     } else {
                         tokens.push(Token::Hash(h.clone()).into());
                     }
@@ -154,7 +154,7 @@ impl<'i> TokenList<'i> {
                 Ok(token @ &cssparser::Token::ParenthesisBlock)
                 | Ok(token @ &cssparser::Token::SquareBracketBlock)
                 | Ok(token @ &cssparser::Token::CurlyBracketBlock) => {
-                    tokens.push(Token::from(token.clone()).into());
+                    tokens.push(token.clone().into());
                     let closing_delimiter = match token {
                         cssparser::Token::ParenthesisBlock => Token::CloseParenthesis,
                         cssparser::Token::SquareBracketBlock => Token::CloseSquareBracket,
@@ -176,9 +176,9 @@ impl<'i> TokenList<'i> {
                     // replace the whitespace with the delimeter since both are not required.
                     if last_is_delim && last_is_whitespace {
                         let last = tokens.last_mut().unwrap();
-                        *last = Token::from(token.clone()).into();
+                        *last = token.clone().into();
                     } else {
-                        tokens.push(Token::from(token.clone()).into());
+                        tokens.push(token.clone().into());
                     }
 
                     last_is_whitespace = false;
@@ -192,15 +192,15 @@ impl<'i> TokenList<'i> {
 }
 
 #[inline]
-fn try_parse_color_token<'i, 't>(
+fn try_parse_color_token<'i>(
     f: &CowRcStr<'i>,
     state: &ParserState,
-    input: &mut Parser<'i, 't>,
+    input: &mut Parser<'i, '_>,
 ) -> Option<Color> {
-    match_ignore_ascii_case! { &*f,
+    match_ignore_ascii_case! { f,
         "rgb" | "rgba" | "hsl" | "hsla" | "hwb" | "lab" | "lch" | "oklab" | "oklch" | "color" | "color-mix" => {
         let s = input.state();
-        input.reset(&state);
+        input.reset(state);
         if let Ok(color) = Color::parse(input) {
             return Some(color)
         }

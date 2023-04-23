@@ -1,3 +1,6 @@
+#![allow(clippy::new_without_default)]
+#![allow(clippy::module_inception)]
+
 //! # Tree of Widgets
 //!
 //! The [Tree] struct describes the visual hierarchy of widgets built into the application. A series of iterators

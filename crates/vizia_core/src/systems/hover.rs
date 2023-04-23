@@ -103,13 +103,13 @@ fn hover_entity(
     let cursorx = cx.mouse.cursorx;
     let cursory = cx.mouse.cursory;
 
-    let mut transform = parent_transform.clone();
+    let mut transform = parent_transform;
 
     transform.premultiply(&cx.transform());
 
     // println!("{} {:?} {:?} {:?}", cx.current, bounds, transform, parent_transform);
 
-    let mut t = transform.clone();
+    let mut t = transform;
     t.inverse();
     let (tx, ty) = t.transform_point(cursorx, cursory);
 
@@ -138,22 +138,20 @@ fn hover_entity(
                 pseudo_class.set(PseudoClassFlags::OVER, true);
             }
         }
-    } else {
-        if cx
-            .style
-            .pseudo_classes
-            .get(cx.current)
-            .copied()
-            .unwrap_or_default()
-            .contains(PseudoClassFlags::OVER)
-        {
-            // cx.event_queue.push_back(
-            //     Event::new(WindowEvent::MouseOut).target(cx.current).propagate(Propagation::Direct),
-            // );
+    } else if cx
+        .style
+        .pseudo_classes
+        .get(cx.current)
+        .copied()
+        .unwrap_or_default()
+        .contains(PseudoClassFlags::OVER)
+    {
+        // cx.event_queue.push_back(
+        //     Event::new(WindowEvent::MouseOut).target(cx.current).propagate(Propagation::Direct),
+        // );
 
-            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
-                pseudo_class.set(PseudoClassFlags::OVER, false);
-            }
+        if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
+            pseudo_class.set(PseudoClassFlags::OVER, false);
         }
     }
 

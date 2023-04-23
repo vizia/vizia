@@ -32,9 +32,9 @@ impl Default for Position {
 
 impl<'i> Parse<'i> for Position {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        if let Some(x) = input.try_parse(HorizontalPosition::parse).ok() {
+        if let Ok(x) = input.try_parse(HorizontalPosition::parse) {
             // Try parsing a vertical position next.
-            if let Some(y) = input.try_parse(VerticalPosition::parse).ok() {
+            if let Ok(y) = input.try_parse(VerticalPosition::parse) {
                 return Ok(Position { x, y });
             }
 
@@ -42,11 +42,11 @@ impl<'i> Parse<'i> for Position {
             // and the next is an x position. e.g. `center left` rather than `left center`.
             let x =
                 input.try_parse(HorizontalPosition::parse).unwrap_or(HorizontalPosition::Center);
-            let y = VerticalPosition::Center;
-            return Ok(Position { x, y });
-        } else if let Some(y) = input.try_parse(VerticalPosition::parse).ok() {
+            let y: PositionComponent<VerticalPositionKeyword> = VerticalPosition::Center;
+            Ok(Position { x, y })
+        } else if let Ok(y) = input.try_parse(VerticalPosition::parse) {
             // Try parsing a horizontal position next.
-            if let Some(x) = input.try_parse(HorizontalPosition::parse).ok() {
+            if let Ok(x) = input.try_parse(HorizontalPosition::parse) {
                 return Ok(Position { x, y });
             } else {
                 return Ok(Position { x: HorizontalPosition::Center, y: VerticalPosition::Center });

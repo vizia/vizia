@@ -11,10 +11,7 @@ pub enum BackgroundImage<'i> {
 
 impl<'i> BackgroundImage<'i> {
     pub fn is_gradient(&self) -> bool {
-        match self {
-            BackgroundImage::Gradient(_) => true,
-            _ => false,
-        }
+        matches!(self, BackgroundImage::Gradient(_))
     }
 }
 
@@ -46,7 +43,7 @@ impl<'i> From<Gradient> for BackgroundImage<'i> {
 
 impl<'i> From<&'i str> for BackgroundImage<'i> {
     fn from(s: &'i str) -> Self {
-        let mut input = ParserInput::new(&s);
+        let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
         BackgroundImage::parse(&mut parser).expect("Failed to parse background-image")
     }

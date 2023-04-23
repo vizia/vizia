@@ -83,7 +83,7 @@ impl From<Rect<LengthOrPercentage>> for BorderRadius {
 impl<T: Into<LengthOrPercentage>> From<T> for BorderRadius {
     fn from(value: T) -> Self {
         let length: LengthOrPercentage = value.into();
-        BorderRadius::new(length.clone(), length.clone(), length.clone(), length.clone())
+        BorderRadius::new(length.clone(), length.clone(), length.clone(), length)
     }
 }
 
@@ -91,7 +91,7 @@ impl<T1: Into<LengthOrPercentage>, T2: Into<LengthOrPercentage>> From<(T1, T2)> 
     fn from(value: (T1, T2)) -> Self {
         let length1: LengthOrPercentage = value.0.into();
         let length2: LengthOrPercentage = value.1.into();
-        BorderRadius::new(length1.clone(), length2.clone(), length1.clone(), length2.clone())
+        BorderRadius::new(length1.clone(), length2.clone(), length1, length2)
     }
 }
 
@@ -102,7 +102,7 @@ impl<T1: Into<LengthOrPercentage>, T2: Into<LengthOrPercentage>, T3: Into<Length
         let length1: LengthOrPercentage = value.0.into();
         let length2: LengthOrPercentage = value.1.into();
         let length3: LengthOrPercentage = value.2.into();
-        BorderRadius::new(length1.clone(), length2.clone(), length3.clone(), length2.clone())
+        BorderRadius::new(length1, length2.clone(), length3, length2)
     }
 }
 
@@ -118,7 +118,7 @@ impl<
         let length2: LengthOrPercentage = value.1.into();
         let length3: LengthOrPercentage = value.2.into();
         let length4: LengthOrPercentage = value.3.into();
-        BorderRadius::new(length1.clone(), length2.clone(), length3.clone(), length4.clone())
+        BorderRadius::new(length1, length2, length3, length4)
     }
 }
 

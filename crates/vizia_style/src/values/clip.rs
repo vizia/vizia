@@ -17,7 +17,7 @@ impl<'i> Parse<'i> for ClipPath {
     fn parse<'t>(
         input: &mut cssparser::Parser<'i, 't>,
     ) -> Result<Self, cssparser::ParseError<'i, crate::CustomParseError<'i>>> {
-        if let Ok(_) = input.try_parse(AutoKeyword::parse) {
+        if input.try_parse(AutoKeyword::parse).is_ok() {
             Ok(ClipPath::Auto)
         } else {
             let function = input.expect_function()?.clone();

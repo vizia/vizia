@@ -273,12 +273,10 @@ pub(crate) fn hoverability_system(cx: &mut Context) {
 
         if !cx.cache.get_hoverability(parent) {
             cx.cache.set_hoverability(entity, false);
+        } else if let Some(abilities) = cx.style.abilities.get(entity) {
+            cx.cache.set_hoverability(entity, abilities.contains(Abilities::HOVERABLE));
         } else {
-            if let Some(abilities) = cx.style.abilities.get(entity) {
-                cx.cache.set_hoverability(entity, abilities.contains(Abilities::HOVERABLE));
-            } else {
-                cx.cache.set_hoverability(entity, false);
-            }
+            cx.cache.set_hoverability(entity, false);
         }
     }
 }

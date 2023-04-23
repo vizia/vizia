@@ -77,11 +77,7 @@ impl<
     fn add_recursive(&self, other: &DimensionPercentage<D>) -> Option<DimensionPercentage<D>> {
         match (self, other) {
             (DimensionPercentage::Dimension(a), DimensionPercentage::Dimension(b)) => {
-                if let Some(res) = a.try_add(b) {
-                    Some(DimensionPercentage::Dimension(res))
-                } else {
-                    None
-                }
+                a.try_add(b).map(DimensionPercentage::Dimension)
             }
             (DimensionPercentage::Percentage(a), DimensionPercentage::Percentage(b)) => {
                 Some(DimensionPercentage::Percentage(Percentage(a.0 + b.0)))
@@ -106,7 +102,7 @@ impl<
                 _ => None,
             },
             (other, DimensionPercentage::Calc(b)) => match &**b {
-                Calc::Value(v) => other.add_recursive(&*v),
+                Calc::Value(v) => other.add_recursive(v),
                 Calc::Sum(a, b) => {
                     if let Some(res) =
                         other.add_recursive(&DimensionPercentage::Calc(Box::new(*a.clone())))
@@ -146,14 +142,14 @@ impl<
 
         match (a, b) {
             (DimensionPercentage::Calc(a), DimensionPercentage::Calc(b)) => {
-                return DimensionPercentage::Calc(Box::new(*a + *b))
+                DimensionPercentage::Calc(Box::new(*a + *b))
             }
             (DimensionPercentage::Calc(calc), b) => {
                 if let Calc::Value(a) = *calc {
                     a.add(b)
                 } else {
                     DimensionPercentage::Calc(Box::new(Calc::Sum(
-                        Box::new((*calc).into()),
+                        Box::new(*calc),
                         Box::new(b.into()),
                     )))
                 }
@@ -164,7 +160,7 @@ impl<
                 } else {
                     DimensionPercentage::Calc(Box::new(Calc::Sum(
                         Box::new(a.into()),
-                        Box::new((*calc).into()),
+                        Box::new(*calc),
                     )))
                 }
             }

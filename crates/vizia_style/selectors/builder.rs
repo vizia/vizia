@@ -341,7 +341,7 @@ where
 
     let mut specificity = Default::default();
     for simple_selector in iter {
-        simple_selector_specificity(&simple_selector, &mut specificity);
+        simple_selector_specificity(simple_selector, &mut specificity);
     }
     specificity
 }

@@ -91,7 +91,7 @@ pub trait StyleModifiers: internal::Modifiable {
         state.set_or_bind(self.context(), entity, |cx, entity, val| {
             let val = val.into();
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
-                pseudo_classes.set(PseudoClassFlags::CHECKED, val.into());
+                pseudo_classes.set(PseudoClassFlags::CHECKED, val);
             }
 
             if val {
@@ -112,7 +112,7 @@ pub trait StyleModifiers: internal::Modifiable {
         state.set_or_bind(self.context(), entity, |cx, entity, val| {
             let val = val.into();
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
-                pseudo_classes.set(PseudoClassFlags::READ_ONLY, val.into());
+                pseudo_classes.set(PseudoClassFlags::READ_ONLY, val);
             }
 
             cx.needs_restyle();
@@ -126,7 +126,7 @@ pub trait StyleModifiers: internal::Modifiable {
         state.set_or_bind(self.context(), entity, |cx, entity, val| {
             let val = val.into();
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
-                pseudo_classes.set(PseudoClassFlags::READ_WRITE, val.into());
+                pseudo_classes.set(PseudoClassFlags::READ_WRITE, val);
             }
 
             cx.needs_restyle();

@@ -1149,7 +1149,7 @@ impl<Impl: SelectorImpl> Component<Impl> {
             }
 
             Negation(ref list) | Is(ref list) | Where(ref list) => {
-                if !visitor.visit_selector_list(&list) {
+                if !visitor.visit_selector_list(list) {
                     return false;
                 }
             }
@@ -1745,7 +1745,7 @@ where
         let location = input.current_source_location();
         match input.next_including_whitespace() {
             Ok(&Token::Delim('*')) if !in_attr_selector => Ok(OptionalQName::Some(namespace, None)),
-            Ok(&Token::Ident(ref local_name)) => {
+            Ok(Token::Ident(local_name)) => {
                 Ok(OptionalQName::Some(namespace, Some(local_name.clone())))
             }
             Ok(t) if in_attr_selector => {
@@ -1982,8 +1982,8 @@ impl AttributeFlags {
     }
 }
 
-fn parse_attribute_flags<'i, 't>(
-    input: &mut CssParser<'i, 't>,
+fn parse_attribute_flags<'i>(
+    input: &mut CssParser<'i, '_>,
 ) -> Result<AttributeFlags, BasicParseError<'i>> {
     let location = input.current_source_location();
     let token = match input.next() {

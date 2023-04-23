@@ -74,7 +74,7 @@ impl From<Percentage> for LengthPercentageOrAuto {
 
 impl From<&str> for LengthPercentageOrAuto {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(&s);
+        let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
         LengthPercentageOrAuto::parse(&mut parser).unwrap_or_default()
     }

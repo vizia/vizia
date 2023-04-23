@@ -479,11 +479,9 @@ where
                             selection_active_line = line_node.node_id();
                             selection_active_cursor = cursor.index;
                         }
-                    } else {
-                        if cursor.index > current_cursor {
-                            selection_active_line = line_node.node_id();
-                            selection_active_cursor = cursor.index - current_cursor;
-                        }
+                    } else if cursor.index > current_cursor {
+                        selection_active_line = line_node.node_id();
+                        selection_active_cursor = cursor.index - current_cursor;
                     }
                 }
 
@@ -497,11 +495,9 @@ where
                             selection_anchor_line = line_node.node_id();
                             selection_anchor_cursor = selection.index;
                         }
-                    } else {
-                        if selection.index > current_cursor {
-                            selection_anchor_line = line_node.node_id();
-                            selection_anchor_cursor = selection.index - current_cursor;
-                        }
+                    } else if selection.index > current_cursor {
+                        selection_anchor_line = line_node.node_id();
+                        selection_anchor_cursor = selection.index - current_cursor;
                     }
                 }
 

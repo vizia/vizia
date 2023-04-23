@@ -36,7 +36,7 @@ impl<'i> Parse<'i> for FontStretch {
                 }),
             },
 
-            Err(_) => return input.try_parse(Percentage::parse).map(|val| val.into()),
+            Err(_) => input.try_parse(Percentage::parse).map(|val| val.into()),
         }
     }
 }

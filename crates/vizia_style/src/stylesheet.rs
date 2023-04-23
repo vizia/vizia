@@ -19,7 +19,7 @@ impl<'i, 'o> StyleSheet<'i, 'o> {
         code: &'i str,
         options: ParserOptions<'o>,
     ) -> Result<Self, Error<CustomParseError<'i>>> {
-        let mut input = ParserInput::new(&code);
+        let mut input = ParserInput::new(code);
         let mut parser = Parser::new(&mut input);
         let rule_list_parser =
             RuleListParser::new_for_stylesheet(&mut parser, TopLevelRuleParser::new(&options));

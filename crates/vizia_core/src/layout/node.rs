@@ -143,10 +143,10 @@ impl Node for Entity {
         })
     }
 
-    fn content_size<'a>(
+    fn content_size(
         &self,
         store: &Self::Store,
-        sublayout: &mut Self::SubLayout<'a>,
+        sublayout: &mut Self::SubLayout<'_>,
         width: Option<f32>,
         height: Option<f32>,
     ) -> Option<(f32, f32)> {
@@ -160,12 +160,10 @@ impl Node for Entity {
                     store.child_right.get(*self).cloned().unwrap_or_default().to_px(width, 0.0)
                         * store.scale_factor();
                 (width.ceil() - child_left - child_right) as i32
+            } else if store.text_wrap.get(*self).copied().unwrap_or(true) {
+                0
             } else {
-                if store.text_wrap.get(*self).copied().unwrap_or(true) {
-                    0
-                } else {
-                    999999
-                }
+                999999
             };
 
             let child_left = store.child_left.get(*self).cloned().unwrap_or_default();
@@ -205,14 +203,14 @@ impl Node for Entity {
                         .max_by(|f1, f2| f1.partial_cmp(f2).unwrap())
                         .unwrap_or_default();
                     let lines = buffer.layout_runs().filter(|run| run.line_w != 0.0).count();
-                    let h = lines as f32 * buffer.metrics().line_height as f32;
+                    let h = lines as f32 * buffer.metrics().line_height;
                     (w, h)
                 });
 
             if height.is_none() {
                 text_height = sublayout.text_context.with_buffer(*self, |fs, buffer| {
                     buffer.set_size(fs, text_width, f32::MAX);
-                    let h = buffer.layout_runs().len() as f32 * buffer.metrics().line_height as f32;
+                    let h = buffer.layout_runs().len() as f32 * buffer.metrics().line_height;
                     h
                 });
             }
@@ -234,20 +232,14 @@ impl Node for Entity {
             for image in images.iter() {
                 match image {
                     ImageOrGradient::Image(image_name) => {
-                        if let Some(img) = sublayout
+                        if let Some(ImageOrId::Id(_, dim)) = sublayout
                             .resource_manager
                             .images
                             .get(image_name)
                             .map(|stored_img| &stored_img.image)
                         {
-                            match img {
-                                ImageOrId::Id(_, dim) => {
-                                    max_width = max_width.max(dim.0 as f32);
-                                    max_height = max_height.max(dim.1 as f32);
-                                }
-
-                                _ => {}
-                            }
+                            max_width = max_width.max(dim.0 as f32);
+                            max_height = max_height.max(dim.1 as f32);
                         }
                     }
                     _ => {}

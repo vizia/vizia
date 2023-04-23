@@ -162,59 +162,61 @@ impl<V> ActionsModel<V> {
 
 impl<V: 'static> Model for ActionsModel<V> {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.take().map(|actions_event| match actions_event {
-            ActionsEvent::OnPress(on_press) => {
-                self.on_press = Some(on_press);
-            }
+        if let Some(actions_event) = event.take() {
+            match actions_event {
+                ActionsEvent::OnPress(on_press) => {
+                    self.on_press = Some(on_press);
+                }
 
-            ActionsEvent::OnPressDown(on_press_down) => {
-                self.on_press_down = Some(on_press_down);
-            }
+                ActionsEvent::OnPressDown(on_press_down) => {
+                    self.on_press_down = Some(on_press_down);
+                }
 
-            ActionsEvent::OnDoubleClick(on_double_click) => {
-                self.on_double_click = Some(on_double_click);
-            }
+                ActionsEvent::OnDoubleClick(on_double_click) => {
+                    self.on_double_click = Some(on_double_click);
+                }
 
-            ActionsEvent::OnHover(on_hover) => {
-                self.on_hover = Some(on_hover);
-            }
+                ActionsEvent::OnHover(on_hover) => {
+                    self.on_hover = Some(on_hover);
+                }
 
-            ActionsEvent::OnHoverOut(on_hover_out) => {
-                self.on_hover_out = Some(on_hover_out);
-            }
+                ActionsEvent::OnHoverOut(on_hover_out) => {
+                    self.on_hover_out = Some(on_hover_out);
+                }
 
-            ActionsEvent::OnOver(on_over) => {
-                self.on_over = Some(on_over);
-            }
+                ActionsEvent::OnOver(on_over) => {
+                    self.on_over = Some(on_over);
+                }
 
-            ActionsEvent::OnOverOut(on_over_out) => {
-                self.on_over_out = Some(on_over_out);
-            }
+                ActionsEvent::OnOverOut(on_over_out) => {
+                    self.on_over_out = Some(on_over_out);
+                }
 
-            ActionsEvent::OnMouseMove(on_move) => {
-                self.on_mouse_move = Some(on_move);
-            }
+                ActionsEvent::OnMouseMove(on_move) => {
+                    self.on_mouse_move = Some(on_move);
+                }
 
-            ActionsEvent::OnMouseDown(on_mouse_down) => {
-                self.on_mouse_down = Some(on_mouse_down);
-            }
+                ActionsEvent::OnMouseDown(on_mouse_down) => {
+                    self.on_mouse_down = Some(on_mouse_down);
+                }
 
-            ActionsEvent::OnMouseUp(on_mouse_up) => {
-                self.on_mouse_up = Some(on_mouse_up);
-            }
+                ActionsEvent::OnMouseUp(on_mouse_up) => {
+                    self.on_mouse_up = Some(on_mouse_up);
+                }
 
-            ActionsEvent::OnFocusIn(on_focus_in) => {
-                self.on_focus_in = Some(on_focus_in);
-            }
+                ActionsEvent::OnFocusIn(on_focus_in) => {
+                    self.on_focus_in = Some(on_focus_in);
+                }
 
-            ActionsEvent::OnFocusOut(on_focus_out) => {
-                self.on_focus_out = Some(on_focus_out);
-            }
+                ActionsEvent::OnFocusOut(on_focus_out) => {
+                    self.on_focus_out = Some(on_focus_out);
+                }
 
-            ActionsEvent::OnGeoChanged(on_geo_changed) => {
-                self.on_geo_changed = Some(on_geo_changed);
+                ActionsEvent::OnGeoChanged(on_geo_changed) => {
+                    self.on_geo_changed = Some(on_geo_changed);
+                }
             }
-        });
+        }
 
         event.map(|window_event, meta| match window_event {
             WindowEvent::Press { mouse } => {

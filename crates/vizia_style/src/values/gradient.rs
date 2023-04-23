@@ -39,7 +39,7 @@ impl<'i> Parse<'i> for Gradient {
 
 impl From<&str> for Gradient {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(&s);
+        let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
         Gradient::parse(&mut parser).unwrap_or_default()
     }
@@ -115,7 +115,7 @@ fn parse_items<'i, 't, D: Parse<'i>>(
             let stop = ColorStop::parse(input)?;
 
             if let Ok(position) = input.try_parse(D::parse) {
-                let color = stop.color.clone();
+                let color = stop.color;
                 items.push(stop);
 
                 items.push(ColorStop { color, position: Some(position) })

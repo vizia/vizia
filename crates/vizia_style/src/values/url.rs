@@ -9,7 +9,7 @@ pub struct Url<'a> {
 
 impl<'i> Parse<'i> for Url<'i> {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let url = input.expect_url()?.into();
+        let url = input.expect_url()?;
         Ok(Url { url })
     }
 }

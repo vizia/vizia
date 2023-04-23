@@ -111,7 +111,7 @@ where
                             &ancestors,
                             &mut model_data_store.stores,
                             ModelOrView::View(view_handler.as_ref()),
-                            lens.clone(),
+                            lens,
                             id,
                         );
 

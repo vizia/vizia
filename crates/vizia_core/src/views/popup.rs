@@ -83,13 +83,11 @@ where
                 let flag: bool = popup.lens.get(cx).into();
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
-                        if flag {
-                            if meta.origin != cx.current() {
-                                // Check if the mouse was pressed outside of any descendants
-                                if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
-                                    (focus_event)(cx);
-                                    meta.consume();
-                                }
+                        if flag && meta.origin != cx.current() {
+                            // Check if the mouse was pressed outside of any descendants
+                            if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                (focus_event)(cx);
+                                meta.consume();
                             }
                         }
                     }

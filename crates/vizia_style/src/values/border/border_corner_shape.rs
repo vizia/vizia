@@ -19,7 +19,7 @@ impl Default for BorderCornerShape {
 
 impl From<&str> for BorderCornerShape {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(&s);
+        let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
         BorderCornerShape::parse(&mut parser).unwrap_or_default()
     }

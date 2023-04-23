@@ -127,7 +127,7 @@ impl<'s> Res<&'s String> for &'s String {
     }
 }
 
-impl<'s> Res<Transform> for Transform {
+impl Res<Transform> for Transform {
     fn get_val(&self, _: &Context) -> Transform {
         self.clone()
     }
@@ -272,14 +272,14 @@ impl Res<LengthOrPercentage> for LengthOrPercentage {
 
 impl Res<RGBA> for RGBA {
     fn get_val(&self, _: &Context) -> Self {
-        self.clone()
+        *self
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
         F: 'static + Clone + Fn(&mut Context, Entity, Self),
     {
-        (closure)(cx, entity, self.clone())
+        (closure)(cx, entity, *self)
     }
 }
 

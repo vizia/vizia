@@ -27,7 +27,7 @@ impl<'a, 'o, 'b, 'i> TopLevelRuleParser<'a, 'o, 'i> {
     }
 
     fn nested<'x: 'b>(&'x mut self) -> NestedRuleParser<'_, 'o, 'i> {
-        NestedRuleParser { default_namespace: &mut self.default_namespace, options: &self.options }
+        NestedRuleParser { default_namespace: &mut self.default_namespace, options: self.options }
     }
 }
 
@@ -98,14 +98,14 @@ struct NestedRuleParser<'a, 'o, 'i> {
     options: &'a ParserOptions<'o>,
 }
 
-impl<'a, 'o, 'b, 'i> NestedRuleParser<'a, 'o, 'i> {
+impl<'a, 'o, 'i> NestedRuleParser<'a, 'o, 'i> {
     fn _parse_nested_rules<'t>(&mut self, input: &mut Parser<'i, 't>) -> CssRuleList<'i> {
         let nested_parser =
             NestedRuleParser { default_namespace: self.default_namespace, options: self.options };
 
-        let mut iter = RuleListParser::new_for_nested_rule(input, nested_parser);
+        let iter = RuleListParser::new_for_nested_rule(input, nested_parser);
         let mut rules = Vec::new();
-        while let Some(result) = iter.next() {
+        for result in iter {
             match result {
                 Ok(CssRule::Ignored) => {}
                 Ok(rule) => rules.push(rule),
@@ -124,7 +124,7 @@ impl<'a, 'o, 'b, 'i> NestedRuleParser<'a, 'o, 'i> {
     }
 }
 
-impl<'a, 'o, 'b, 'i> AtRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
+impl<'a, 'o, 'i> AtRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
     type Prelude = AtRulePrelude<'i>;
     type AtRule = CssRule<'i>;
     type Error = CustomParseError<'i>;
@@ -148,7 +148,7 @@ impl<'a, 'o, 'b, 'i> AtRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
     // }
 }
 
-impl<'a, 'o, 'b, 'i> QualifiedRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
+impl<'a, 'o, 'i> QualifiedRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
     type Prelude = SelectorList<Selectors>;
     type QualifiedRule = CssRule<'i>;
     type Error = CustomParseError<'i>;
@@ -180,10 +180,10 @@ impl<'a, 'o, 'b, 'i> QualifiedRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
     }
 }
 
-fn parse_declarations_and_nested_rules<'a, 'o, 'i, 't>(
-    input: &mut Parser<'i, 't>,
+fn parse_declarations_and_nested_rules<'a, 'i>(
+    input: &mut Parser<'i, '_>,
     default_namespace: &'a Option<CowRcStr<'i>>,
-    options: &'a ParserOptions<'o>,
+    options: &'a ParserOptions<'_>,
 ) -> Result<(DeclarationBlock<'i>, CssRuleList<'i>), ParseError<'i, CustomParseError<'i>>> {
     let mut important_declarations = DeclarationList::new();
     let mut declarations = DeclarationList::new();
@@ -210,9 +210,9 @@ fn parse_declarations_and_nested_rules<'a, 'o, 'i, 't>(
         last = declaration_parser.input.state();
     }
 
-    let mut iter =
+    let iter =
         RuleListParser::new_for_nested_rule(declaration_parser.input, declaration_parser.parser);
-    while let Some(result) = iter.next() {
+    for result in iter {
         if let Err((err, _)) = result {
             return Err(err);
         }
@@ -243,13 +243,7 @@ impl<'a, 'o, 'i> cssparser::DeclarationParser<'i> for StyleRuleParser<'a, 'o, 'i
             // Declarations cannot come after nested rules.
             return Err(input.new_custom_error(CustomParseError::InvalidNesting));
         }
-        parse_declaration(
-            name,
-            input,
-            &mut self.declarations,
-            &mut self.important_declarations,
-            &self.options,
-        )
+        parse_declaration(name, input, self.declarations, self.important_declarations, self.options)
     }
 }
 
@@ -310,7 +304,7 @@ impl<'a, 'o, 'i> AtRuleParser<'i> for StyleRuleParser<'a, 'o, 'i> {
 //     Ok(rules)
 // }
 
-impl<'a, 'o, 'b, 'i> QualifiedRuleParser<'i> for StyleRuleParser<'a, 'o, 'i> {
+impl<'a, 'o, 'i> QualifiedRuleParser<'i> for StyleRuleParser<'a, 'o, 'i> {
     type Prelude = SelectorList<Selectors>;
     type QualifiedRule = ();
     type Error = CustomParseError<'i>;

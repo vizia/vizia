@@ -1,7 +1,7 @@
 use crate::{impl_parse, traits::Parse, LengthOrPercentage};
 
 /// A translate defining a translate value on the x and the y axis.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct Translate {
     /// The translate value on the x axis.
     pub x: LengthOrPercentage,
@@ -13,12 +13,6 @@ impl Translate {
     /// Creates a new translate.
     pub fn new(x: LengthOrPercentage, y: LengthOrPercentage) -> Self {
         Self { x, y }
-    }
-}
-
-impl Default for Translate {
-    fn default() -> Self {
-        Self { x: LengthOrPercentage::default(), y: LengthOrPercentage::default() }
     }
 }
 

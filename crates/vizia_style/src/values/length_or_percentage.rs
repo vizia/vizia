@@ -22,13 +22,11 @@ impl LengthOrPercentage {
         match self {
             LengthOrPercentage::Length(length) => {
                 match length {
-                    Length::Value(val) => match val {
-                        LengthValue::Px(pixels) => {
+                    Length::Value(val) => {
+                        if let LengthValue::Px(pixels) = val {
                             return *pixels * scale;
                         }
-
-                        _ => {}
-                    },
+                    }
 
                     // TODO
                     Length::Calc(_l) => {
@@ -79,7 +77,7 @@ impl From<Percentage> for LengthOrPercentage {
 
 impl From<&str> for LengthOrPercentage {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(&s);
+        let mut input = ParserInput::new(s);
         let mut parser = Parser::new(&mut input);
         LengthOrPercentage::parse(&mut parser).unwrap_or_default()
     }
