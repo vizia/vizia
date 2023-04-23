@@ -28,6 +28,12 @@ impl<'a> BackendContext<'a> {
         Self(cx, None)
     }
 
+    /// Creates a new instance of a backend context which includes an event manager.
+    pub fn new_with_event_manager(cx: &'a mut Context) -> Self {
+        Self(cx, Some(EventManager::new()))
+    }
+
+    /// Helper function for mutating the state of the root window.
     pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &W)>(&mut self, f: F) {
         if let Some(window_event_handler) = self.0.views.remove(&Entity::root()) {
             if let Some(window) = window_event_handler.downcast_ref::<W>() {
@@ -52,10 +58,12 @@ impl<'a> BackendContext<'a> {
         &mut self.0.cache
     }
 
+    /// Returns a reference to the keyboard modifiers state.
     pub fn modifiers(&mut self) -> &mut Modifiers {
         &mut self.0.modifiers
     }
 
+    /// Returns the entity id of the currently focused view.
     pub fn focused(&self) -> Entity {
         self.0.focused
     }
@@ -184,10 +192,6 @@ impl<'a> BackendContext<'a> {
 
     pub fn accesskit_node_classes(&mut self) -> &mut accesskit::NodeClassSet {
         &mut self.style().accesskit_node_classes
-    }
-
-    pub fn new_with_event_manager(cx: &'a mut Context) -> Self {
-        Self(cx, Some(EventManager::new()))
     }
 
     pub fn process_events(&mut self) {

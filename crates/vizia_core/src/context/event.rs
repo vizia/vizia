@@ -65,7 +65,7 @@ pub struct EventContext<'a> {
     pub(crate) focused: &'a mut Entity,
     pub(crate) hovered: &'a Entity,
     pub style: &'a mut Style,
-    entity_identifiers: &'a HashMap<String, Entity>,
+    pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a CachedData,
     pub tree: &'a Tree<Entity>,
     pub(crate) data: &'a mut SparseSet<ModelDataStore>,
@@ -115,14 +115,34 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    /// Finds the entity that identifier identifies.
-    pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
-        self.entity_identifiers.get(identity).cloned()
+    /// Returns the [Entity] id associated with the given identifier.
+    pub fn resolve_entity_identifier(&self, id: &str) -> Option<Entity> {
+        self.entity_identifiers.get(id).cloned()
     }
 
-    /// Returns the entity id of the current view.
+    /// Returns the [Entity] id of the current view.
     pub fn current(&self) -> Entity {
         self.current
+    }
+
+    /// Returns the bounds of the current view.
+    pub fn bounds(&self) -> BoundingBox {
+        self.cache.get_bounds(self.current)
+    }
+
+    /// Returns the scale factor.
+    pub fn scale_factor(&self) -> f32 {
+        self.style.dpi_factor as f32
+    }
+
+    /// Converts logical points to physical pixels.
+    pub fn logical_to_physical(&self, logical: f32) -> f32 {
+        self.style.logical_to_physical(logical)
+    }
+
+    /// Convert physical pixels to logical points.
+    pub fn physical_to_logical(&self, physical: f32) -> f32 {
+        self.style.physical_to_logical(physical)
     }
 
     /// Returns the clip bounds of the current view.
@@ -168,26 +188,6 @@ impl<'a> EventContext<'a> {
             }
             (Overflow::Hidden, Overflow::Hidden) => clip_bounds,
         }
-    }
-
-    /// Returns the bounds of the current view.
-    pub fn bounds(&self) -> BoundingBox {
-        self.cache.get_bounds(self.current)
-    }
-
-    /// Returns the scale factor.
-    pub fn scale_factor(&self) -> f32 {
-        self.style.dpi_factor as f32
-    }
-
-    /// Converts logical points to physical pixels.
-    pub fn logical_to_physical(&self, logical: f32) -> f32 {
-        self.style.logical_to_physical(logical)
-    }
-
-    /// Convert physical pixels to logical points.
-    pub fn physical_to_logical(&self, physical: f32) -> f32 {
-        self.style.physical_to_logical(physical)
     }
 
     /// Returns the transform of the current view.
@@ -273,15 +273,6 @@ impl<'a> EventContext<'a> {
         );
     }
 
-    /// Set the active state for the current view.
-    pub fn set_active(&mut self, active: bool) {
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(self.current) {
-            pseudo_classes.set(PseudoClassFlags::ACTIVE, active);
-        }
-
-        self.style.needs_restyle();
-    }
-
     /// Capture mouse input for the current view.
     pub fn capture(&mut self) {
         *self.captured = self.current;
@@ -327,6 +318,8 @@ impl<'a> EventContext<'a> {
     }
 
     /// Sets application focus to the current view using the previous focus visibility.
+    ///
+    /// Focused elements receive keyboard input events and can be selected with the `:focus` CSS pseudo-class selector.
     pub fn focus(&mut self) {
         let focused = self.focused();
         let old_focus_visible = self
@@ -346,6 +339,16 @@ impl<'a> EventContext<'a> {
     /// Returns the currently focused view.
     pub fn focused(&self) -> Entity {
         *self.focused
+    }
+
+    /// Returns true if the current view is being hovered.
+    pub fn is_hovered(&self) -> bool {
+        self.hovered() == self.current
+    }
+
+    /// Returns true if the current view is focused.
+    pub fn is_focused(&self) -> bool {
+        self.focused() == self.current
     }
 
     /// Returns true if the current view is disabled.
@@ -389,7 +392,31 @@ impl<'a> EventContext<'a> {
         *self.cursor_icon_locked
     }
 
+    /// Set the active state for the current view.
+    ///
+    /// Active elements can be selected with the `:active` CSS pseudo-class selector:
+    /// ```css
+    /// element:active {
+    ///     background-color: red;
+    /// }
+    /// ```
+    pub fn set_active(&mut self, active: bool) {
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(self.current) {
+            pseudo_classes.set(PseudoClassFlags::ACTIVE, active);
+        }
+
+        self.style.needs_restyle();
+    }
+
     /// Sets the hover state of the current view.
+    ///
+    /// Hovered elements can be selected with the `:hover` CSS pseudo-class selector:
+    /// ```css
+    /// element:hover {
+    ///     background-color: red;
+    /// }
+    /// ```
+    /// Typically this is set by the hover system and should not be set manually.
     pub fn set_hover(&mut self, flag: bool) {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
@@ -400,6 +427,13 @@ impl<'a> EventContext<'a> {
     }
 
     /// Sets the checked state of the current view.
+    ///
+    /// Checked elements can be selected with the `:checked` CSS pseudo-class selector:
+    /// ```css
+    /// element:checked {
+    ///     background-color: red;
+    /// }
+    /// ```
     pub fn set_checked(&mut self, flag: bool) {
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
@@ -429,6 +463,11 @@ impl<'a> EventContext<'a> {
     }
 
     /// Toggles the addition/removal of a class name for the current view.
+    ///
+    /// # Example
+    /// ```rust
+    ///
+    /// ```
     pub fn toggle_class(&mut self, class_name: &str, applied: bool) {
         let current = self.current();
         if let Some(class_list) = self.style.classes.get_mut(current) {
@@ -446,12 +485,12 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle();
     }
 
-    /// Returns a reference to the environment model.
+    /// Returns a reference to the [Environment] model.
     pub fn environment(&self) -> &Environment {
         self.data::<Environment>().unwrap()
     }
 
-    /// Sets the current theme mode.
+    /// Sets the current [theme mode](ThemeMode).
     pub fn set_theme_mode(&mut self, theme_mode: ThemeMode) {
         if !self.ignore_default_theme {
             match theme_mode {
@@ -509,6 +548,7 @@ impl<'a> EventContext<'a> {
         Ok(())
     }
 
+    /// Spawns a thread and provides a [ContextProxy] for sending events back to the main thread.
     pub fn spawn<F>(&self, target: F)
     where
         F: 'static + Send + FnOnce(&mut ContextProxy),
@@ -521,7 +561,7 @@ impl<'a> EventContext<'a> {
         std::thread::spawn(move || target(&mut cxp));
     }
 
-    /// The window's size in logical pixels, before
+    /// Returns the window's size in logical pixels, before
     /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
     /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will
     /// be emitted.

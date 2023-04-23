@@ -55,7 +55,7 @@ pub struct DrawContext<'a> {
     pub(crate) current: Entity,
     pub(crate) style: &'a Style,
     pub(crate) cache: &'a CachedData,
-    pub tree: &'a Tree<Entity>,
+    pub(crate) tree: &'a Tree<Entity>,
     pub(crate) data: &'a SparseSet<ModelDataStore>,
     pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
     pub(crate) resource_manager: &'a ResourceManager,
@@ -66,7 +66,7 @@ pub struct DrawContext<'a> {
     pub(crate) opacity: f32,
 }
 
-macro_rules! style_getter_units {
+macro_rules! get_units_property {
     (
         $(#[$meta:meta])*
         $name:ident
@@ -84,7 +84,11 @@ macro_rules! style_getter_units {
 }
 
 macro_rules! get_color_property {
-    ($ty:ty, $name:ident) => {
+    (
+        $(#[$meta:meta])*
+        $ty:ty, $name:ident
+    ) => {
+        $(#[$meta])*
         pub fn $name(&self) -> $ty {
             let opacity = self.opacity();
             if let Some(col) = self.style.$name.get(self.current) {
@@ -97,7 +101,11 @@ macro_rules! get_color_property {
 }
 
 macro_rules! get_length_property {
-    ($name:ident) => {
+    (
+        $(#[$meta:meta])*
+        $name:ident
+    ) => {
+        $(#[$meta])*
         pub fn $name(&self) -> f32 {
             if let Some(length) = self.style.$name.get(self.current) {
                 let bounds = self.bounds();
@@ -112,14 +120,22 @@ macro_rules! get_length_property {
 }
 
 impl<'a> DrawContext<'a> {
+    /// Returns the bounds of the current view.
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
     }
 
+    /// Returns the scale factor.
+    pub fn scale_factor(&self) -> f32 {
+        self.style.dpi_factor as f32
+    }
+
+    /// Returns a reference to the keyboard modifiers state.
     pub fn modifiers(&self) -> &Modifiers {
         self.modifiers
     }
 
+    /// Returns a reference to the mouse state.
     pub fn mouse(&self) -> &MouseState<Entity> {
         self.mouse
     }
@@ -169,6 +185,7 @@ impl<'a> DrawContext<'a> {
         }
     }
 
+    /// Returns the 2D transform of the current view.
     pub fn transform(&self) -> Transform2D {
         let mut transform = Transform2D::identity();
 
@@ -231,14 +248,17 @@ impl<'a> DrawContext<'a> {
         transform
     }
 
+    /// Returns the visibility of the current view.
     pub fn visibility(&self) -> Option<Visibility> {
         self.style.visibility.get(self.current).copied()
     }
 
+    /// Returns the display of the current view.
     pub fn display(&self) -> Display {
         self.style.display.get(self.current).copied().unwrap_or(Display::Flex)
     }
 
+    /// Returns the opacity of the current view.
     pub fn opacity(&self) -> f32 {
         self.opacity
     }
@@ -265,63 +285,113 @@ impl<'a> DrawContext<'a> {
         self.style.physical_to_logical(physical)
     }
 
-    get_length_property!(border_width);
-    get_length_property!(outline_width);
-    get_length_property!(outline_offset);
-    get_length_property!(border_top_left_radius);
-    get_length_property!(border_top_right_radius);
-    get_length_property!(border_bottom_left_radius);
-    get_length_property!(border_bottom_right_radius);
+    get_length_property!(
+        /// Returns the border width of the current view in physical pixels.
+        border_width
+    );
 
+    get_color_property!(
+        /// Returns the outline color of the current view.
+        Color,
+        outline_color
+    );
+
+    get_length_property!(
+        /// Returns the outline width of the current view in physical pixels.
+        outline_width
+    );
+
+    get_length_property!(
+        /// Returns the outline offset of the current view in physcial pixels.
+        outline_offset
+    );
+
+    get_length_property!(
+        /// Returns the border radius for the top-left corner of the current view.
+        border_top_left_radius
+    );
+
+    get_length_property!(
+        /// Returns the border radius for the top-right corner of the current view.
+        border_top_right_radius
+    );
+
+    get_length_property!(
+        /// Returns the border radius for the bottom-left corner of the current view.    
+        border_bottom_left_radius
+    );
+
+    get_length_property!(
+        /// Returns the border radius for the bottom-right corner of the current view.
+        border_bottom_right_radius
+    );
+
+    /// Returns the border corner shape for the top-left corner of the current view.
     pub fn border_top_left_shape(&self) -> BorderCornerShape {
         self.style.border_top_left_shape.get(self.current).copied().unwrap_or_default()
     }
 
+    /// Returns the border corner shape for the top-left corner of the current view.
     pub fn border_top_right_shape(&self) -> BorderCornerShape {
         self.style.border_top_right_shape.get(self.current).copied().unwrap_or_default()
     }
 
+    /// Returns the border corner shape for the top-left corner of the current view.
     pub fn border_bottom_left_shape(&self) -> BorderCornerShape {
         self.style.border_bottom_left_shape.get(self.current).copied().unwrap_or_default()
     }
 
+    /// Returns the border corner shape for the top-left corner of the current view.
     pub fn border_bottom_right_shape(&self) -> BorderCornerShape {
         self.style.border_bottom_right_shape.get(self.current).copied().unwrap_or_default()
     }
 
-    style_getter_units!(child_left);
-    style_getter_units!(child_right);
-    style_getter_units!(child_top);
-    style_getter_units!(child_bottom);
+    get_units_property!(
+        /// Returns the child-left space of the current view.
+        child_left
+    );
+
+    get_units_property!(
+        /// Returns the child-right space of the current view.
+        child_right
+    );
+
+    get_units_property!(
+        /// Returns the child-top space of the current view.
+        child_top
+    );
+
+    get_units_property!(
+        /// Returns the child-bottom space of the current view.
+        child_bottom
+    );
+
     get_color_property!(Color, background_color);
     get_color_property!(Color, border_color);
-    get_color_property!(Color, outline_color);
+
     get_color_property!(Color, selection_color);
     get_color_property!(Color, caret_color);
+    get_color_property!(Color, font_color);
 
-    pub fn font_color(&self) -> Color {
-        let opacity = self.opacity();
-        if let Some(col) = self.style.font_color.get(self.current) {
-            Color::rgba(col.r(), col.g(), col.b(), (opacity * col.a() as f32) as u8)
-        } else {
-            Color::rgba(0, 0, 0, 255)
-        }
-    }
-
+    /// Returns whether the current view should have its text wrapped.
     pub fn text_wrap(&self) -> bool {
         self.style.text_wrap.get(self.current).copied().unwrap_or(true)
-    }
-
-    pub fn image(&self) -> Option<&String> {
-        self.style.image.get(self.current)
     }
 
     pub fn box_shadows(&self) -> Option<&Vec<BoxShadow>> {
         self.style.box_shadow.get(self.current)
     }
 
-    pub fn scale_factor(&self) -> f32 {
-        self.style.dpi_factor as f32
+    pub fn backdrop_filter(&self) -> Option<&Filter> {
+        self.style.backdrop_filter.get(self.current)
+    }
+
+    pub fn background_images(&self) -> Option<&Vec<ImageOrGradient>> {
+        self.style.background_image.get(self.current)
+    }
+
+    pub fn background_size(&self) -> Vec<BackgroundSize> {
+        self.style.background_size.get(self.current).cloned().unwrap_or_default()
     }
 
     /// Get the vector path of the current view.
@@ -458,9 +528,7 @@ impl<'a> DrawContext<'a> {
         let bounds = self.bounds();
 
         let blur_radius = self
-            .style
-            .backdrop_filter
-            .get(self.current)
+            .backdrop_filter()
             .map(|filter| match filter {
                 Filter::Blur(r) => Some(r.to_px().unwrap_or_default()),
             })
@@ -895,9 +963,8 @@ impl<'a> DrawContext<'a> {
         let parent_width = self.cache.get_width(parent);
         let parent_height = self.cache.get_height(parent);
 
-        if let Some(images) = self.style.background_image.get(self.current) {
-            let image_sizes =
-                self.style.background_size.get(self.current).cloned().unwrap_or_default();
+        if let Some(images) = self.background_images() {
+            let image_sizes = self.background_size();
 
             for (index, image) in images.iter().enumerate() {
                 match image {
@@ -1182,19 +1249,20 @@ impl<'a> DrawContext<'a> {
 
 impl<'a> DataContext for DrawContext<'a> {
     fn data<T: 'static>(&self) -> Option<&T> {
-        // return data for the static model.
+        // Return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);
         }
 
         for entity in self.current.parent_iter(self.tree) {
+            // Return model data.
             if let Some(model_data_store) = self.data.get(entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }
 
-            // Get view data.
+            // Return view data.
             if let Some(view_handler) = self.views.get(&entity) {
                 if let Some(data) = view_handler.downcast_ref::<T>() {
                     return Some(data);

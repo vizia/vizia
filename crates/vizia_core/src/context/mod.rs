@@ -120,6 +120,7 @@ impl Default for Context {
 }
 
 impl Context {
+    /// Creates a new context.
     pub fn new(window_size: WindowSize, user_scale_factor: f64) -> Self {
         let mut cache = CachedData::default();
         cache.add(Entity::root()).expect("Failed to add entity to cache");
@@ -227,7 +228,7 @@ impl Context {
         self.current = prev;
     }
 
-    /// Returns a reference to the Environment model.
+    /// Returns a reference to the [Environment] model.
     pub fn environment(&self) -> &Environment {
         self.data::<Environment>().unwrap()
     }
@@ -249,6 +250,7 @@ impl Context {
         self.user_scale_factor
     }
 
+    /// Returns the scale factor of the display.
     pub fn scale_factor(&self) -> f32 {
         self.style.dpi_factor as f32
     }
@@ -333,6 +335,7 @@ impl Context {
         self.focus_with_visibility(old_focus_visible)
     }
 
+    /// Removes the children of the provided entity from the application.
     pub(crate) fn remove_children(&mut self, entity: Entity) {
         let child_iter = ChildIterator::new(&self.tree, entity);
         let children = child_iter.collect::<Vec<_>>();
@@ -341,6 +344,7 @@ impl Context {
         }
     }
 
+    /// Removes the provided entity from the application.
     pub(crate) fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
@@ -392,11 +396,6 @@ impl Context {
         }
     }
 
-    /// Check whether there are any events in the queue waiting for the next event dispatch cycle.
-    // pub fn has_queued_events(&self) -> bool {
-    //     !self.event_queue.is_empty()
-    // }
-
     /// Add a listener to an entity.
     ///
     /// A listener can be used to handle events which would not normally propagate to the entity.
@@ -430,6 +429,14 @@ impl Context {
     }
 
     /// Add a font from memory to the application.
+    ///
+    ///
+    /// The `include_bytes!()` macro can be used to embed a font into the application binary.
+    /// # Example
+    /// ```
+    /// # let mut context = Context::new();
+    /// cx.add_font_mem(include_bytes!("Roboto-Regular.ttf"));
+    /// ```
     pub fn add_fonts_mem(&mut self, data: &[&[u8]]) {
         self.text_context.take_buffers();
         replace_with_or_abort(&mut self.text_context, |mut ccx| {
@@ -467,6 +474,13 @@ impl Context {
         EventContext::new(self).reload_styles().expect("Failed to reload styles");
     }
 
+    pub fn add_stylesheet(&mut self, path: impl AsRef<Path>) -> Result<(), std::io::Error> {
+        let style_string = std::fs::read_to_string(path.as_ref())?;
+        self.resource_manager.stylesheets.push(path.as_ref().to_owned());
+        self.style.parse_theme(&style_string);
+        Ok(())
+    }
+
     /// Remove all user themes from the application.
     pub fn remove_user_themes(&mut self) {
         self.resource_manager.themes.clear();
@@ -479,13 +493,6 @@ impl Context {
                 ThemeMode::DarkMode => self.add_theme(DARK_THEME),
             }
         }
-    }
-
-    pub fn add_stylesheet(&mut self, path: impl AsRef<Path>) -> Result<(), std::io::Error> {
-        let style_string = std::fs::read_to_string(path.as_ref())?;
-        self.resource_manager.stylesheets.push(path.as_ref().to_owned());
-        self.style.parse_theme(&style_string);
-        Ok(())
     }
 
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {

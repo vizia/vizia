@@ -17,7 +17,7 @@ pub enum Propagation {
     Direct,
 }
 
-/// A wrapper around a message, providing metadata on how the event travels through the view [tree](crate::tree::Tree).
+/// A wrapper around a message, providing metadata on how the event travels through the view tree.
 pub struct Event {
     /// The meta data of the event
     pub(crate) meta: EventMeta,
@@ -159,12 +159,12 @@ impl Event {
 pub struct EventMeta {
     /// The entity that produced the event. Entity::null() for OS events or unspecified.
     pub origin: Entity,
-    /// The entity the event should be sent to. Entity::null() to send to all entities.
+    /// The entity the event should be sent to.
     pub target: Entity,
     /// How the event propagates through the tree.
     pub propagation: Propagation,
     /// Whether the event can be consumed.
-    pub consumable: bool,
+    pub(crate) consumable: bool,
     /// Determines whether the event should continue to be propagated.
     pub(crate) consumed: bool,
     /// Specifies an order index which is used to sort the event queue.
@@ -174,7 +174,9 @@ pub struct EventMeta {
 impl EventMeta {
     /// Consumes the event to prevent it from continuing on its propagation path.
     pub fn consume(&mut self) {
-        self.consumed = true;
+        if self.consumable {
+            self.consumed = true;
+        }
     }
 }
 
