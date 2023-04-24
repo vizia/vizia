@@ -1,18 +1,50 @@
 use crate::prelude::*;
-use std::marker::PhantomData;
+use std::{
+    any::{Any, TypeId},
+    marker::PhantomData,
+};
 
 /// A handle to a view which has been already built into the tree.
 pub struct Handle<'a, V> {
-    pub entity: Entity,
-    pub p: PhantomData<V>,
-    pub cx: &'a mut Context,
+    pub(crate) entity: Entity,
+    pub(crate) p: PhantomData<V>,
+    pub(crate) cx: &'a mut Context,
+}
+
+impl<'a, V> DataContext for Handle<'a, V> {
+    fn data<T: 'static>(&self) -> Option<&T> {
+        // Return data for the static model.
+        if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
+            return Some(t);
+        }
+
+        for entity in self.entity.parent_iter(&self.cx.tree) {
+            // Return any model data.
+            if let Some(model_data_store) = self.cx.data.get(entity) {
+                if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
+                    return model.downcast_ref::<T>();
+                }
+            }
+
+            // Return any view data.
+            if let Some(view_handler) = self.cx.views.get(&entity) {
+                if let Some(data) = view_handler.downcast_ref::<T>() {
+                    return Some(data);
+                }
+            }
+        }
+
+        None
+    }
 }
 
 impl<'a, V> Handle<'a, V> {
+    /// Returns the [`Entity`] id of the view.
     pub fn entity(&self) -> Entity {
         self.entity
     }
 
+    /// Marks the view as being ignored.
     pub(crate) fn ignore(self) -> Self {
         self.cx.tree.set_ignored(self.entity, true);
         self.focusable(false)
@@ -31,6 +63,7 @@ impl<'a, V> Handle<'a, V> {
         self
     }
 
+    /// Mody the internal data of the view.
     pub fn modify<F>(self, f: F) -> Self
     where
         F: FnOnce(&mut V),
@@ -76,10 +109,12 @@ impl<'a, V> Handle<'a, V> {
         self
     }
 
+    /// Returns the bounding box of the view.
     pub fn bounds(&self) -> BoundingBox {
         self.cx.cache.get_bounds(self.entity)
     }
 
+    /// Returns the scale factor of the device.
     pub fn scale_factor(&self) -> f32 {
         self.cx.scale_factor()
     }

@@ -506,8 +506,6 @@ impl Context {
 
         self.style.remove_rules();
 
-        self.style.selectors.clear();
-
         self.style.clear_style_rules();
 
         let mut overall_theme = String::new();
@@ -610,30 +608,35 @@ pub(crate) enum InternalEvent {
 ///
 /// This lets e.g Lens::get be generic over any of these types.
 pub trait DataContext {
-    /// Get stored data from the context.
+    /// Get model/view data from the context. Returns `None` if the data does not exist.
     fn data<T: 'static>(&self) -> Option<&T>;
 }
 
 pub trait EmitContext {
+    /// Send an event containing the provided message up the tree from the current entity.
     fn emit<M: Any + Send>(&mut self, message: M);
+    /// Send an event containing the provided message directly to a specified entity from the current entity.
     fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
+    /// Send a custom event with custom origin and propagation information.
     fn emit_custom(&mut self, event: Event);
 }
 
 impl DataContext for Context {
     fn data<T: 'static>(&self) -> Option<&T> {
-        // return data for the static model
+        // return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);
         }
 
         for entity in self.current.parent_iter(&self.tree) {
+            // Return any model data.
             if let Some(model_data_store) = self.data.get(entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }
 
+            // Return any view data.
             if let Some(view_handler) = self.views.get(&entity) {
                 if let Some(data) = view_handler.downcast_ref::<T>() {
                     return Some(data);
@@ -646,7 +649,6 @@ impl DataContext for Context {
 }
 
 impl EmitContext for Context {
-    /// Send an event containing a message up the tree from the current entity.
     fn emit<M: Any + Send>(&mut self, message: M) {
         self.event_queue.push_back(
             Event::new(message)
@@ -656,14 +658,12 @@ impl EmitContext for Context {
         );
     }
 
-    /// Send an event containing a message directly to a specified entity.
     fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
         self.event_queue.push_back(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
         );
     }
 
-    /// Send an event with custom origin and propagation information.
     fn emit_custom(&mut self, event: Event) {
         self.event_queue.push_back(event);
     }

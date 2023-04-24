@@ -100,6 +100,7 @@ impl TextContext {
         self.bounds.get(entity).copied()
     }
 
+    /// Sync the style data from vizia with the style attribites stored in cosmic-text buffers.
     pub(crate) fn sync_styles(&mut self, entity: Entity, style: &Style) {
         let (families, font_weight, font_style) = {
             let families = style
@@ -176,6 +177,7 @@ impl TextContext {
         });
     }
 
+    /// Generate a series of canvas path operations to render the text of a particular entity.
     pub(crate) fn fill_to_cmds<T: Renderer>(
         &mut self,
         canvas: &mut Canvas<T>,

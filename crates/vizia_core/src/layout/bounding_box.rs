@@ -1,6 +1,6 @@
 use femtovg::Transform2D;
 
-/// Respresents an axis-aligned bounding box of an entity.
+/// Respresents the axis-aligned bounding box of a view.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct BoundingBox {
     pub x: f32,
@@ -28,98 +28,97 @@ impl BoundingBox {
         BoundingBox { x: min_x, y: min_y, w: max_x - min_x, h: max_y - min_y }
     }
 
-    /// Left side of bounds equivalent to `x`
+    /// Left side of bounds equivalent to `x`.
     #[inline(always)]
     pub fn left(&self) -> f32 {
         self.x
     }
 
-    /// Top of bounds equivalent to `y`
+    /// Top of bounds equivalent to `y`.
     #[inline(always)]
     pub fn top(&self) -> f32 {
         self.y
     }
 
-    /// Bounds width equivalent to `w`
+    /// Bounds width equivalent to `w`.
     #[inline(always)]
     pub fn width(&self) -> f32 {
         self.w
     }
 
-    /// Bounds height equivalent to `h`
+    /// Bounds height equivalent to `h`.
     #[inline(always)]
     pub fn height(&self) -> f32 {
         self.h
     }
 
-    /// Right side of bounds
+    /// Right side of bounds.
     #[inline(always)]
     pub fn right(&self) -> f32 {
         self.left() + self.width()
     }
 
-    /// Bottom of bounds
+    /// Bottom side of bounds.
     #[inline(always)]
     pub fn bottom(&self) -> f32 {
         self.top() + self.height()
     }
 
-    /// Horizontal and vertical center of bounds
+    /// Horizontal and vertical center of bounds.
     #[inline(always)]
     pub fn center(&self) -> (f32, f32) {
         ((self.width() / 2f32) + self.x, (self.height() / 2f32) + self.y)
     }
 
-    /// Left center of bounds
+    /// Left center of bounds.
     #[inline(always)]
     pub fn center_left(&self) -> (f32, f32) {
         (self.left(), (self.height() / 2f32) + self.top())
     }
 
-    /// Right center of bounds
+    /// Right center of bounds.
     #[inline(always)]
     pub fn center_right(&self) -> (f32, f32) {
         (self.right(), (self.height() / 2f32) + self.top())
     }
 
-    /// Top center of bounds
+    /// Top center of bounds.
     #[inline(always)]
     pub fn center_top(&self) -> (f32, f32) {
         ((self.width() / 2f32) + self.left(), self.top())
     }
 
-    /// Bottom center of bounds
+    /// Bottom center of bounds.
     #[inline(always)]
     pub fn center_bottom(&self) -> (f32, f32) {
         ((self.width() / 2f32) + self.left(), self.bottom())
     }
 
-    /// Bottom left point of bounds
+    /// Bottom left point of bounds.
     #[inline(always)]
     pub fn bottom_left(&self) -> (f32, f32) {
         (self.bottom(), self.left())
     }
 
-    /// Bottom right point of bounds
+    /// Bottom right point of bounds.
     #[inline(always)]
     pub fn bottom_right(&self) -> (f32, f32) {
         (self.bottom(), self.right())
     }
 
-    /// Top left point of bounds
+    /// Top left point of bounds.
     #[inline(always)]
     pub fn top_left(&self) -> (f32, f32) {
         (self.top(), self.left())
     }
 
-    /// Top right point of bounds
+    /// Top right point of bounds.
     #[inline(always)]
     pub fn top_right(&self) -> (f32, f32) {
         (self.top(), self.right())
     }
 
-    /// Shrinks by some `amount` in both directions and returns a new
-    /// [`BoundingBox`].
+    /// Shrinks by some `amount` in both directions and returns a new [`BoundingBox`].
     #[inline(always)]
     #[must_use]
     pub fn shrink(&self, amount: f32) -> BoundingBox {
@@ -155,6 +154,7 @@ impl BoundingBox {
         )
     }
 
+    /// Shrinks each side by the given separate amounts and returns a new [`BoundingBox`].
     pub fn shrink_sides(&self, left: f32, top: f32, right: f32, bottom: f32) -> BoundingBox {
         BoundingBox::from_min_max(
             self.left() + left,
@@ -164,8 +164,7 @@ impl BoundingBox {
         )
     }
 
-    /// Expands by some `amount` in both directions and returns a new
-    /// [`BoundingBox`].
+    /// Expands by some `amount` in both directions and returns a new [`BoundingBox`].
     #[inline(always)]
     #[must_use]
     pub fn expand(&self, amount: f32) -> BoundingBox {

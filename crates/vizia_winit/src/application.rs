@@ -163,21 +163,9 @@ impl Application {
         self
     }
 
-    // pub fn get_proxy(&self) -> EventLoopProxy<UserEvent> {
-    //     self.event_loop.create_proxy()
-    // }
-
+    /// Returns a `ContextProxy` which can be used to send events from another thread.
     pub fn get_proxy(&self) -> ContextProxy {
         self.context.get_proxy()
-    }
-
-    /// Sets the background color of the window.
-    /// TODO: Remove this is favour of root selector.
-    pub fn background_color(mut self, color: Color) -> Self {
-        let mut cx = BackendContext::new(&mut self.context);
-        cx.style().background_color.insert(Entity::root(), color);
-
-        self
     }
 
     /// Starts the application and enters the main event loop.
@@ -238,8 +226,6 @@ impl Application {
         let scale_factor = window.window().scale_factor() as f32;
         cx.add_main_window(&self.window_description, canvas, scale_factor);
         cx.add_window(window);
-
-        // let mut event_manager = EventManager::new();
 
         cx.0.remove_user_themes();
         if let Some(builder) = self.builder.take() {
@@ -303,9 +289,6 @@ impl Application {
                         cx.emit_origin(WindowEvent::MouseMove(cursor.0, cursor.1));
                         cursor_moved = false;
                     }
-
-                    // Events
-                    // while event_manager.flush_events(cx.0) {}
 
                     cx.process_events();
 
@@ -384,12 +367,12 @@ impl Application {
                             scale_factor,
                             new_inner_size,
                         } => {
-                            cx.style().dpi_factor = scale_factor;
+                            cx.set_scale_factor(scale_factor);
                             cx.cache().set_width(Entity::root(), new_inner_size.width as f32);
                             cx.cache().set_height(Entity::root(), new_inner_size.height as f32);
 
                             let logical_size: LogicalSize<f32> =
-                                new_inner_size.to_logical(cx.style().dpi_factor);
+                                new_inner_size.to_logical(scale_factor);
 
                             cx.style()
                                 .width
@@ -497,7 +480,7 @@ impl Application {
                             });
 
                             let logical_size: LogicalSize<f32> =
-                                physical_size.to_logical(cx.style().dpi_factor);
+                                physical_size.to_logical(cx.style().scale_factor() as f64);
 
                             cx.style()
                                 .width

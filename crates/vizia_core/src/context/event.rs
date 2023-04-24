@@ -65,18 +65,18 @@ pub struct EventContext<'a> {
     pub(crate) captured: &'a mut Entity,
     pub(crate) focused: &'a mut Entity,
     pub(crate) hovered: &'a Entity,
-    pub style: &'a mut Style,
+    pub(crate) style: &'a mut Style,
     pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a CachedData,
     pub(crate) tree: &'a Tree<Entity>,
     pub(crate) data: &'a mut SparseSet<ModelDataStore>,
     pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
-    listeners:
+    pub(crate) listeners:
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
-    pub resource_manager: &'a mut ResourceManager,
-    pub text_context: &'a mut TextContext,
-    pub modifiers: &'a Modifiers,
-    pub mouse: &'a MouseState<Entity>,
+    pub(crate) resource_manager: &'a mut ResourceManager,
+    pub(crate) text_context: &'a mut TextContext,
+    pub(crate) modifiers: &'a Modifiers,
+    pub(crate) mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
     cursor_icon_locked: &'a mut bool,
     window_size: &'a mut WindowSize,
@@ -126,6 +126,14 @@ impl<'a> EventContext<'a> {
     /// Returns the [Entity] id of the current view.
     pub fn current(&self) -> Entity {
         self.current
+    }
+
+    pub fn with_current<T>(&mut self, entity: Entity, f: impl FnOnce(&mut Self) -> T) -> T {
+        let prev = self.current();
+        self.current = entity;
+        let ret = (f)(self);
+        self.current = prev;
+        ret
     }
 
     // Returns true if in a drop state.
@@ -363,7 +371,7 @@ impl<'a> EventContext<'a> {
         self.style
             .abilities
             .get(self.current)
-            .map(|abilities| abilities.contains(Abilities::DRAGABLE))
+            .map(|abilities| abilities.contains(Abilities::DRAGGABLE))
             .unwrap_or_default()
     }
 
@@ -581,6 +589,16 @@ impl<'a> EventContext<'a> {
         std::thread::spawn(move || target(&mut cxp));
     }
 
+    pub fn modify<V: View>(&mut self, f: impl FnOnce(&mut V)) {
+        if let Some(view) = self
+            .views
+            .get_mut(&self.current)
+            .and_then(|view_handler| view_handler.downcast_mut::<V>())
+        {
+            (f)(view);
+        }
+    }
+
     /// Returns the window's size in logical pixels, before
     /// [`user_scale_factor()`][Self::user_scale_factor()] gets applied to it. If this value changed
     /// during a frame then the window will be resized and a [`WindowEvent::GeometryChanged`] will
@@ -617,6 +635,15 @@ impl<'a> EventContext<'a> {
     // pub fn append_child(&mut self, child: Entity) {
     //     self.tree.set_parent(child, self.current);
     // }
+
+    // TODO: Abstract this to shared trait for all contexts
+
+    /// Returns the background color of the view.
+    ///
+    /// Returns a transparent color if the view does not have a background color.
+    pub fn background_color(&mut self) -> Color {
+        self.style.background_color.get(self.current).copied().unwrap_or_default()
+    }
 
     // Setters
     pub fn set_background_color(&mut self, background_color: Color) {

@@ -24,11 +24,6 @@ pub(crate) fn image_system(cx: &mut Context) {
                 }
             }
         }
-
-        // // Load an image if the entity has one
-        // if let Some(image_name) = cx.style.image.get(entity).cloned() {
-        //     load_image(cx, entity, &image_name);
-        // }
     }
 
     cx.resource_manager.evict_unused_images();

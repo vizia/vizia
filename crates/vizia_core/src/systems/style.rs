@@ -16,6 +16,7 @@ use vizia_style::{
     Element, MatchingContext, MatchingMode, PseudoClass, QuirksMode, SelectorIdent, Selectors,
 };
 
+/// A node used for style matching.
 #[derive(Clone)]
 pub(crate) struct Node<'s, 't, 'v> {
     entity: Entity,
@@ -30,6 +31,7 @@ impl<'s, 't, 'v> std::fmt::Debug for Node<'s, 't, 'v> {
     }
 }
 
+/// Used for selector matching.
 impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     type Impl = Selectors;
 
@@ -116,7 +118,15 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     }
 
     fn is_same_type(&self, other: &Self) -> bool {
-        self.store.elements.get(self.entity) == other.store.elements.get(self.entity)
+        if let Some(element) = self.views.get(&self.entity).and_then(|view| view.element()) {
+            if let Some(other_element) =
+                self.views.get(&other.entity).and_then(|view| view.element())
+            {
+                return element == other_element;
+            }
+        }
+
+        false
     }
 
     fn is_link(&self) -> bool {
@@ -227,6 +237,7 @@ impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
     }
 }
 
+/// Link inheritable inline properties to their parent.
 pub(crate) fn inline_inheritance_system(cx: &mut Context) {
     for entity in cx.tree.into_iter() {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
@@ -243,6 +254,7 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context) {
     }
 }
 
+/// Link inheritable shared properties to their parent.
 pub(crate) fn shared_inheritance_system(cx: &mut Context) {
     for entity in cx.tree.into_iter() {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
@@ -257,6 +269,7 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context) {
     }
 }
 
+/// TODO: Move this to the hover system
 pub(crate) fn hoverability_system(cx: &mut Context) {
     let draw_tree = DrawIterator::full(&cx.tree);
 
@@ -603,12 +616,13 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     }
 }
 
+/// Compute a list of matching style rules for a given entity.
 pub(crate) fn compute_matched_rules(
     cx: &Context,
     entity: Entity,
     matched_rules: &mut Vec<(Rule, u32)>,
 ) {
-    for (rule, selector_list) in cx.style.selectors.iter() {
+    for (rule, selector_list) in cx.style.rules.iter() {
         let mut context =
             MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
@@ -627,23 +641,24 @@ pub(crate) fn compute_matched_rules(
     matched_rules.reverse();
 }
 
-// Iterate tree and determine the matched style rules for each entity. Link the entity to the style data.
+// Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
     if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
         hoverability_system(cx);
 
         let iterator = LayoutTreeIterator::full(&cx.tree);
 
-        // Loop through all entities
         for entity in iterator {
             let mut matched_rules = Vec::with_capacity(5);
             compute_matched_rules(cx, entity, &mut matched_rules);
 
-            link_style_data(
-                &mut cx.style,
-                entity,
-                &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
-            );
+            if !matched_rules.is_empty() {
+                link_style_data(
+                    &mut cx.style,
+                    entity,
+                    &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
+                );
+            }
         }
 
         cx.style.system_flags.set(SystemFlags::RESTYLE, false);

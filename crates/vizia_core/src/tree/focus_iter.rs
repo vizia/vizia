@@ -26,31 +26,33 @@ pub(crate) fn is_navigatable(cx: &Context, node: Entity, lock_focus_to: Entity) 
         return false;
     }
 
-    has_ability(cx, node, Abilities::NAVIGABLE)
-}
-
-fn has_ability(cx: &Context, node: Entity, ability: Abilities) -> bool {
     // Skip ignored widgets
     if cx.tree.is_ignored(node) {
         return false;
     }
-    cx.style.abilities.get(node).map(|abilities| abilities.contains(ability)).unwrap_or(false)
+
+    cx.style
+        .abilities
+        .get(node)
+        .map(|abilities| abilities.contains(Abilities::NAVIGABLE))
+        .unwrap_or(false)
 }
 
-pub fn focus_forward(cx: &Context, node: Entity, lock_focus_to: Entity) -> Option<Entity> {
+/// Get the next entity to be focused during forward keyboard navigation.
+pub(crate) fn focus_forward(cx: &Context, node: Entity, lock_focus_to: Entity) -> Option<Entity> {
     TreeIterator::new(&cx.tree, DoubleEndedTreeTour::new(Some(node), Some(Entity::root())))
         .skip(1)
         .find(|node| is_navigatable(cx, *node, lock_focus_to))
 }
 
-pub fn focus_backward(cx: &Context, node: Entity, lock_focus_to: Entity) -> Option<Entity> {
+/// Get the next entity to be focused during backward keybaord navigation.
+pub(crate) fn focus_backward(cx: &Context, node: Entity, lock_focus_to: Entity) -> Option<Entity> {
     let mut iter = TreeIterator::new(
         &cx.tree,
         DoubleEndedTreeTour::new_raw(
             TreeTour::new(Some(Entity::root())),
             TreeTour::with_direction(Some(node), TourDirection::Leaving),
         ),
-        //tours: DoubleEndedTreeTour::new(Some(Entity::root()), Some(node)),
     );
     iter.next_back();
     iter.filter(|node| is_navigatable(cx, *node, lock_focus_to)).next_back()

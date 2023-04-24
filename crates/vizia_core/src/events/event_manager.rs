@@ -436,7 +436,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     context.cache.get_height(entity)
                 );
                 for rule in result.into_iter() {
-                    for selectors in context.style.selectors.iter() {
+                    for selectors in context.style.rules.iter() {
                         if selectors.0 == rule.0 {
                             println!("{:?}", selectors.1);
                         }

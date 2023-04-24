@@ -199,7 +199,7 @@ impl ApplicationRunner {
 
             use_system_scaling,
             window_scale_factor,
-            current_user_scale_factor: *cx.user_scale_factor(),
+            current_user_scale_factor: cx.user_scale_factor(),
             current_window_size: *cx.window_size(),
 
             context,
@@ -219,10 +219,10 @@ impl ApplicationRunner {
         cx.process_events();
 
         if *cx.window_size() != self.current_window_size
-            || *cx.user_scale_factor() != self.current_user_scale_factor
+            || cx.user_scale_factor() != self.current_user_scale_factor
         {
             self.current_window_size = *cx.window_size();
-            self.current_user_scale_factor = *cx.user_scale_factor();
+            self.current_user_scale_factor = cx.user_scale_factor();
 
             // The user scale factor is not part of the HiDPI scaling, so baseview should treat it
             // as part of our logical size
@@ -233,7 +233,7 @@ impl ApplicationRunner {
 
             // TODO: These calculations are now repeated in three places, should probably be moved
             //       to a function
-            cx.style().dpi_factor = self.window_scale_factor * self.current_user_scale_factor;
+            cx.set_scale_factor(self.window_scale_factor * self.current_user_scale_factor);
             cx.style()
                 .width
                 .insert(Entity::root(), Units::Pixels(self.current_window_size.width as f32));
@@ -242,9 +242,9 @@ impl ApplicationRunner {
                 .insert(Entity::root(), Units::Pixels(self.current_window_size.height as f32));
 
             let new_physical_width =
-                self.current_window_size.width as f32 * cx.style().dpi_factor as f32;
+                self.current_window_size.width as f32 * cx.style().scale_factor() as f32;
             let new_physical_height =
-                self.current_window_size.height as f32 * cx.style().dpi_factor as f32;
+                self.current_window_size.height as f32 * cx.style().scale_factor() as f32;
             cx.cache().set_width(Entity::root(), new_physical_width);
             cx.cache().set_height(Entity::root(), new_physical_height);
 
@@ -396,10 +396,9 @@ impl ApplicationRunner {
                     // baseview's logical size includes that factor so we need to compensate for it
                     self.current_window_size = *cx.window_size();
                     self.current_window_size.width =
-                        (window_info.logical_size().width / *cx.user_scale_factor()).round() as u32;
-                    self.current_window_size.height = (window_info.logical_size().height
-                        / *cx.user_scale_factor())
-                    .round() as u32;
+                        (window_info.logical_size().width / cx.user_scale_factor()).round() as u32;
+                    self.current_window_size.height =
+                        (window_info.logical_size().height / cx.user_scale_factor()).round() as u32;
                     *cx.window_size() = self.current_window_size;
 
                     // Only use new DPI settings when `WindowScalePolicy::SystemScaleFactor` was
@@ -408,13 +407,17 @@ impl ApplicationRunner {
                         self.window_scale_factor = window_info.scale();
                     }
 
-                    cx.style().dpi_factor = self.window_scale_factor * *cx.user_scale_factor();
+                    let user_scale_factor = cx.user_scale_factor();
+
+                    cx.set_scale_factor(self.window_scale_factor * user_scale_factor);
 
                     // Since we apply a user scale factor, our logical size may not match baseview's
                     // logical size
                     let logical_size = (
-                        (window_info.physical_size().width as f64 / cx.style().dpi_factor),
-                        (window_info.physical_size().height as f64 / cx.style().dpi_factor),
+                        (window_info.physical_size().width as f64
+                            / cx.style().scale_factor() as f64),
+                        (window_info.physical_size().height as f64
+                            / cx.style().scale_factor() as f64),
                     );
 
                     let physical_size =

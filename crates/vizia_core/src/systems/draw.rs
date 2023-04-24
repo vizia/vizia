@@ -54,6 +54,7 @@ fn draw_entity(
 ) {
     let current = cx.current;
 
+    // Skip views with display: none.
     if cx.display() == Display::None {
         return;
     }
@@ -94,6 +95,7 @@ fn draw_entity(
         cx.current = child;
         let opactiy = cx.style.opacity.get(child).copied().unwrap_or(Opacity(1.0)).0;
         cx.opacity = parent_opacity * opactiy;
+        // TODO: Skip views with zero-sized bounding boxes here? Or let user decide if they want to skip?
         draw_entity(cx, canvas, current_z, queue, is_visible);
     }
 

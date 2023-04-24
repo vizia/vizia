@@ -60,7 +60,6 @@
 //! Element::new(cx).class("foo");
 //! ```
 
-use femtovg::Transform2D;
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::HashSet;
 use vizia_id::GenerationalId;
@@ -80,8 +79,11 @@ use vizia_style::{EasingFunction, ParserOptions, Property, SelectorList, Selecto
 mod rule;
 pub(crate) use rule::Rule;
 
-mod selector;
-pub(crate) use selector::*;
+mod pseudoclass;
+pub(crate) use pseudoclass::*;
+
+mod transform;
+pub(crate) use transform::*;
 
 use crate::animation::{Animation, AnimationState, Interpolator, Keyframe, TimingFunction};
 use crate::storage::animatable_set::AnimatableSet;
@@ -95,14 +97,22 @@ bitflags! {
     /// Describes the capabilities of a view with respect to user interaction.
     #[derive(Debug, Clone, Copy)]
     pub(crate) struct Abilities: u8 {
-        const HOVERABLE = 1;
+        // Whether a view will be included in hit tests and receive mouse input events.
+        const HOVERABLE = 1 << 0;
+        // Whether a view can be focused to receive keyboard events.
         const FOCUSABLE = 1 << 1;
+        // Whether a view can be checked.
         const CHECKABLE = 1 << 2;
-        const SELECTABLE = 1 << 3;
-        /// The element should be focusable in sequential keyboard navigation -
-        /// allowing the equivilant of a negative tabindex in html.
-        const NAVIGABLE = 1 << 4;
-        const DRAGABLE = 1 << 5;
+        // Whether a view can be focused via keyboard navigation.
+        const NAVIGABLE = 1 << 3;
+        // Whether a view can be dragged during a drag and drop.
+        const DRAGGABLE = 1 << 4;
+    }
+}
+
+impl Default for Abilities {
+    fn default() -> Abilities {
+        Abilities::HOVERABLE
     }
 }
 
@@ -125,12 +135,6 @@ impl Default for SystemFlags {
     }
 }
 
-impl Default for Abilities {
-    fn default() -> Abilities {
-        Abilities::HOVERABLE
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum ImageOrGradient {
     Image(String),
@@ -142,22 +146,25 @@ pub enum ImageOrGradient {
 pub struct Style {
     pub(crate) rule_manager: IdManager<Rule>,
 
-    /// Creates and destroys animation ids
+    // Creates and destroys animation ids
     pub(crate) animation_manager: IdManager<Animation>,
 
-    pub(crate) selectors: Vec<(Rule, SelectorList<Selectors>)>,
+    // List of rules
+    pub(crate) rules: Vec<(Rule, SelectorList<Selectors>)>,
 
-    pub default_font: Vec<FamilyOwned>,
+    pub(crate) default_font: Vec<FamilyOwned>,
 
-    pub elements: SparseSet<String>,
-    pub ids: SparseSet<String>,
-    pub classes: SparseSet<HashSet<String>>,
-    pub pseudo_classes: SparseSet<PseudoClassFlags>,
-    pub disabled: StyleSet<bool>,
+    // CSS Selector Properties
+    pub(crate) ids: SparseSet<String>,
+    pub(crate) classes: SparseSet<HashSet<String>>,
+    pub(crate) pseudo_classes: SparseSet<PseudoClassFlags>,
+    pub(crate) disabled: StyleSet<bool>,
     pub(crate) abilities: SparseSet<Abilities>,
 
-    pub accesskit_node_classes: accesskit::NodeClassSet,
+    pub(crate) accesskit_node_classes: accesskit::NodeClassSet,
 
+    // Accessibility Properties
+    pub name: StyleSet<String>,
     pub roles: SparseSet<Role>,
     pub default_action_verb: SparseSet<DefaultActionVerb>,
     pub live: SparseSet<Live>,
@@ -181,6 +188,7 @@ pub struct Style {
     // Clipping
     pub clip_path: AnimatableSet<ClipPath>,
 
+    // Filters
     pub backdrop_filter: StyleSet<Filter>,
 
     // Transform
@@ -215,9 +223,6 @@ pub struct Style {
     pub outline_color: AnimatableSet<Color>,
     pub outline_offset: AnimatableSet<LengthOrPercentage>,
 
-    // Focus Order
-    // pub focus_order: SparseSet<FocusOrder>,
-
     // Background
     pub background_color: AnimatableSet<Color>,
     pub background_image: AnimatableSet<Vec<ImageOrGradient>>,
@@ -235,10 +240,8 @@ pub struct Style {
     pub caret_color: AnimatableSet<Color>,
     pub selection_color: AnimatableSet<Color>,
 
-    // Image
-    pub image: StyleSet<String>,
-
-    pub tooltip: SparseSet<String>,
+    // cursor Icon
+    pub cursor: StyleSet<CursorIcon>,
 
     // LAYOUT
 
@@ -254,6 +257,14 @@ pub struct Style {
     pub top: AnimatableSet<Units>,
     pub bottom: AnimatableSet<Units>,
 
+    // Child Spacing
+    pub child_left: AnimatableSet<Units>,
+    pub child_right: AnimatableSet<Units>,
+    pub child_top: AnimatableSet<Units>,
+    pub child_bottom: AnimatableSet<Units>,
+    pub row_between: AnimatableSet<Units>,
+    pub col_between: AnimatableSet<Units>,
+
     // Size
     pub width: AnimatableSet<Units>,
     pub height: AnimatableSet<Units>,
@@ -263,8 +274,6 @@ pub struct Style {
     pub max_height: AnimatableSet<Units>,
     pub min_width: AnimatableSet<Units>,
     pub min_height: AnimatableSet<Units>,
-    pub content_width: StyleSet<f32>,
-    pub content_height: StyleSet<f32>,
 
     // Spacing Constraints
     pub min_left: AnimatableSet<Units>,
@@ -276,28 +285,7 @@ pub struct Style {
     pub min_bottom: AnimatableSet<Units>,
     pub max_bottom: AnimatableSet<Units>,
 
-    // Grid
-    pub grid_rows: StyleSet<Vec<Units>>,
-    pub row_between: AnimatableSet<Units>,
-    pub grid_cols: StyleSet<Vec<Units>>,
-    pub col_between: AnimatableSet<Units>,
-
-    pub row_index: StyleSet<usize>,
-    pub col_index: StyleSet<usize>,
-    pub row_span: StyleSet<usize>,
-    pub col_span: StyleSet<usize>,
-
-    // Child Spacing
-    pub child_left: AnimatableSet<Units>,
-    pub child_right: AnimatableSet<Units>,
-    pub child_top: AnimatableSet<Units>,
-    pub child_bottom: AnimatableSet<Units>,
-
-    pub name: StyleSet<String>,
-
-    pub cursor: StyleSet<CursorIcon>,
-
-    pub system_flags: SystemFlags,
+    pub(crate) system_flags: SystemFlags,
 
     // TODO: When we can do incremental updates on a per entity basis, change this to a bitflag
     // for layout, text layout, rendering, etc. to replace the above `needs_` members.
@@ -306,16 +294,10 @@ pub struct Style {
     pub needs_access_update: SparseSet<bool>,
 
     /// This includes both the system's HiDPI scaling factor as well as `cx.user_scale_factor`.
-    pub dpi_factor: f64,
+    pub(crate) dpi_factor: f64,
 }
 
 impl Style {
-    //         self.rules.reverse();
-    //     }
-
-    //     self.set_style_properties();
-    // }
-
     pub fn scale_factor(&self) -> f32 {
         self.dpi_factor as f32
     }
@@ -330,14 +312,14 @@ impl Style {
         physical / self.dpi_factor as f32
     }
 
-    pub fn remove_rules(&mut self) {
+    pub(crate) fn remove_rules(&mut self) {
         self.rule_manager.reset();
         self.animation_manager.reset();
 
-        self.selectors.clear();
+        self.rules.clear();
     }
 
-    pub fn parse_theme(&mut self, stylesheet: &str) {
+    pub(crate) fn parse_theme(&mut self, stylesheet: &str) {
         if let Ok(theme) = StyleSheet::parse("test.css", stylesheet, ParserOptions::default()) {
             let rules = theme.rules.0;
 
@@ -348,7 +330,7 @@ impl Style {
 
                         let selectors = style_rule.selectors;
 
-                        self.selectors.push((rule_id, selectors));
+                        self.rules.push((rule_id, selectors));
 
                         for property in style_rule.declarations.declarations {
                             match property {
@@ -379,48 +361,9 @@ impl Style {
                 self.opacity.insert_transition(rule_id, animation);
             }
 
-            "background-color" => {
-                self.background_color.insert_animation(animation, self.add_transition(transition));
-                self.background_color.insert_transition(rule_id, animation);
-            }
-
-            "border" => {
-                self.border_width.insert_animation(animation, self.add_transition(transition));
-                self.border_width.insert_transition(rule_id, animation);
-                self.border_color.insert_animation(animation, self.add_transition(transition));
-                self.border_color.insert_transition(rule_id, animation);
-            }
-
-            "border-width" => {
-                self.border_width.insert_animation(animation, self.add_transition(transition));
-                self.border_width.insert_transition(rule_id, animation);
-            }
-
-            "border-color" => {
-                self.border_color.insert_animation(animation, self.add_transition(transition));
-                self.border_color.insert_transition(rule_id, animation);
-            }
-
-            "outline" => {
-                self.outline_width.insert_animation(animation, self.add_transition(transition));
-                self.outline_width.insert_transition(rule_id, animation);
-                self.outline_color.insert_animation(animation, self.add_transition(transition));
-                self.outline_color.insert_transition(rule_id, animation);
-            }
-
-            "outline-width" => {
-                self.outline_width.insert_animation(animation, self.add_transition(transition));
-                self.outline_width.insert_transition(rule_id, animation);
-            }
-
-            "outline-color" => {
-                self.outline_color.insert_animation(animation, self.add_transition(transition));
-                self.outline_color.insert_transition(rule_id, animation);
-            }
-
-            "outline-offset" => {
-                self.outline_offset.insert_animation(animation, self.add_transition(transition));
-                self.outline_offset.insert_transition(rule_id, animation);
+            "clip-path" => {
+                self.clip_path.insert_animation(animation, self.add_transition(transition));
+                self.clip_path.insert_transition(rule_id, animation);
             }
 
             "transform" => {
@@ -448,14 +391,21 @@ impl Style {
                 self.scale.insert_transition(rule_id, animation);
             }
 
-            "background-image" => {
-                self.background_image.insert_animation(animation, self.add_transition(transition));
-                self.background_image.insert_transition(rule_id, animation);
+            "border" => {
+                self.border_width.insert_animation(animation, self.add_transition(transition));
+                self.border_width.insert_transition(rule_id, animation);
+                self.border_color.insert_animation(animation, self.add_transition(transition));
+                self.border_color.insert_transition(rule_id, animation);
             }
 
-            "background-size" => {
-                self.background_size.insert_animation(animation, self.add_transition(transition));
-                self.background_size.insert_transition(rule_id, animation);
+            "border-width" => {
+                self.border_width.insert_animation(animation, self.add_transition(transition));
+                self.border_width.insert_transition(rule_id, animation);
+            }
+
+            "border-color" => {
+                self.border_color.insert_animation(animation, self.add_transition(transition));
+                self.border_color.insert_transition(rule_id, animation);
             }
 
             "border-radius" => {
@@ -473,18 +423,6 @@ impl Style {
                 self.border_top_right_radius.insert_transition(rule_id, animation);
             }
 
-            "border-bottom-left-radius" => {
-                self.border_bottom_left_radius
-                    .insert_animation(animation, self.add_transition(transition));
-                self.border_bottom_left_radius.insert_transition(rule_id, animation);
-            }
-
-            "border-bottom-right-radius" => {
-                self.border_bottom_right_radius
-                    .insert_animation(animation, self.add_transition(transition));
-                self.border_bottom_right_radius.insert_transition(rule_id, animation);
-            }
-
             "border-top-left-radius" => {
                 self.border_top_left_radius
                     .insert_animation(animation, self.add_transition(transition));
@@ -497,16 +435,76 @@ impl Style {
                 self.border_top_right_radius.insert_transition(rule_id, animation);
             }
 
-            "width" => {
-                self.width.insert_animation(animation, self.add_transition(transition));
-                self.width.insert_transition(rule_id, animation);
+            "border-bottom-left-radius" => {
+                self.border_bottom_left_radius
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_bottom_left_radius.insert_transition(rule_id, animation);
             }
 
-            "height" => {
-                self.height.insert_animation(animation, self.add_transition(transition));
-                self.height.insert_transition(rule_id, animation);
+            "border-bottom-right-radius" => {
+                self.border_bottom_right_radius
+                    .insert_animation(animation, self.add_transition(transition));
+                self.border_bottom_right_radius.insert_transition(rule_id, animation);
             }
 
+            "outline" => {
+                self.outline_width.insert_animation(animation, self.add_transition(transition));
+                self.outline_width.insert_transition(rule_id, animation);
+                self.outline_color.insert_animation(animation, self.add_transition(transition));
+                self.outline_color.insert_transition(rule_id, animation);
+            }
+
+            "outline-width" => {
+                self.outline_width.insert_animation(animation, self.add_transition(transition));
+                self.outline_width.insert_transition(rule_id, animation);
+            }
+
+            "outline-color" => {
+                self.outline_color.insert_animation(animation, self.add_transition(transition));
+                self.outline_color.insert_transition(rule_id, animation);
+            }
+
+            "outline-offset" => {
+                self.outline_offset.insert_animation(animation, self.add_transition(transition));
+                self.outline_offset.insert_transition(rule_id, animation);
+            }
+
+            "background-color" => {
+                self.background_color.insert_animation(animation, self.add_transition(transition));
+                self.background_color.insert_transition(rule_id, animation);
+            }
+
+            "background-image" => {
+                self.background_image.insert_animation(animation, self.add_transition(transition));
+                self.background_image.insert_transition(rule_id, animation);
+            }
+
+            "background-size" => {
+                self.background_size.insert_animation(animation, self.add_transition(transition));
+                self.background_size.insert_transition(rule_id, animation);
+            }
+
+            "box-shadow" => {
+                self.box_shadow.insert_animation(animation, self.add_transition(transition));
+                self.box_shadow.insert_transition(rule_id, animation);
+            }
+
+            "color" => {
+                self.font_color.insert_animation(animation, self.add_transition(transition));
+                self.font_color.insert_transition(rule_id, animation);
+            }
+
+            "font-size" => {
+                self.font_size.insert_animation(animation, self.add_transition(transition));
+                self.font_size.insert_transition(rule_id, animation);
+            }
+
+            "caret-color" => {
+                self.caret_color.insert_animation(animation, self.add_transition(transition));
+                self.caret_color.insert_transition(rule_id, animation);
+            }
+
+            // TODO: Selection Color
             "left" => {
                 self.left.insert_animation(animation, self.add_transition(transition));
                 self.left.insert_transition(rule_id, animation);
@@ -527,14 +525,94 @@ impl Style {
                 self.bottom.insert_transition(rule_id, animation);
             }
 
-            "box-shadow" => {
-                self.box_shadow.insert_animation(animation, self.add_transition(transition));
-                self.box_shadow.insert_transition(rule_id, animation);
+            "child-left" => {
+                self.child_left.insert_animation(animation, self.add_transition(transition));
+                self.child_left.insert_transition(rule_id, animation);
             }
 
-            "clip-path" => {
-                self.clip_path.insert_animation(animation, self.add_transition(transition));
-                self.clip_path.insert_transition(rule_id, animation);
+            "child-right" => {
+                self.child_right.insert_animation(animation, self.add_transition(transition));
+                self.child_right.insert_transition(rule_id, animation);
+            }
+
+            "child-top" => {
+                self.child_top.insert_animation(animation, self.add_transition(transition));
+                self.child_top.insert_transition(rule_id, animation);
+            }
+
+            "child-bottom" => {
+                self.child_bottom.insert_animation(animation, self.add_transition(transition));
+                self.child_bottom.insert_transition(rule_id, animation);
+            }
+
+            "width" => {
+                self.width.insert_animation(animation, self.add_transition(transition));
+                self.width.insert_transition(rule_id, animation);
+            }
+
+            "height" => {
+                self.height.insert_animation(animation, self.add_transition(transition));
+                self.height.insert_transition(rule_id, animation);
+            }
+
+            "max-width" => {
+                self.max_width.insert_animation(animation, self.add_transition(transition));
+                self.max_width.insert_transition(rule_id, animation);
+            }
+
+            "max-height" => {
+                self.max_height.insert_animation(animation, self.add_transition(transition));
+                self.max_height.insert_transition(rule_id, animation);
+            }
+
+            "min-width" => {
+                self.min_width.insert_animation(animation, self.add_transition(transition));
+                self.min_width.insert_transition(rule_id, animation);
+            }
+
+            "min-height" => {
+                self.min_height.insert_animation(animation, self.add_transition(transition));
+                self.min_height.insert_transition(rule_id, animation);
+            }
+
+            "min-left" => {
+                self.min_left.insert_animation(animation, self.add_transition(transition));
+                self.min_left.insert_transition(rule_id, animation);
+            }
+
+            "max-left" => {
+                self.max_left.insert_animation(animation, self.add_transition(transition));
+                self.max_left.insert_transition(rule_id, animation);
+            }
+
+            "min-right" => {
+                self.min_right.insert_animation(animation, self.add_transition(transition));
+                self.min_right.insert_transition(rule_id, animation);
+            }
+
+            "max-right" => {
+                self.max_right.insert_animation(animation, self.add_transition(transition));
+                self.max_right.insert_transition(rule_id, animation);
+            }
+
+            "min-top" => {
+                self.min_top.insert_animation(animation, self.add_transition(transition));
+                self.min_top.insert_transition(rule_id, animation);
+            }
+
+            "max-top" => {
+                self.max_top.insert_animation(animation, self.add_transition(transition));
+                self.max_top.insert_transition(rule_id, animation);
+            }
+
+            "min-bottom" => {
+                self.min_bottom.insert_animation(animation, self.add_transition(transition));
+                self.min_bottom.insert_transition(rule_id, animation);
+            }
+
+            "max-bottom" => {
+                self.max_bottom.insert_animation(animation, self.add_transition(transition));
+                self.max_bottom.insert_transition(rule_id, animation);
             }
 
             _ => {}
@@ -548,18 +626,22 @@ impl Style {
                 self.display.insert_rule(rule_id, display);
             }
 
+            // Visibility
             Property::Visibility(visibility) => {
                 self.visibility.insert_rule(rule_id, visibility);
             }
 
+            // Opacity
             Property::Opacity(opacity) => {
                 self.opacity.insert_rule(rule_id, opacity);
             }
 
+            // Clipping
             Property::ClipPath(clip) => {
                 self.clip_path.insert_rule(rule_id, clip);
             }
 
+            // Filters
             Property::BackdropFilter(filter) => {
                 self.backdrop_filter.insert_rule(rule_id, filter);
             }
@@ -644,6 +726,7 @@ impl Style {
                 self.col_between.insert_rule(rule_id, col_between);
             }
 
+            // Space Constraints
             Property::MinSpace(min_space) => {
                 self.min_left.insert_rule(rule_id, min_space);
                 self.min_right.insert_rule(rule_id, min_space);
@@ -690,6 +773,7 @@ impl Style {
                 self.max_bottom.insert_rule(rule_id, max_bottom);
             }
 
+            // Size Constraints
             Property::MinSize(min_size) => {
                 self.min_width.insert_rule(rule_id, min_size);
                 self.min_height.insert_rule(rule_id, min_size);
@@ -716,7 +800,7 @@ impl Style {
                 self.max_height.insert_rule(rule_id, max_height);
             }
 
-            // Background
+            // Background Colour
             Property::BackgroundColor(color) => {
                 self.background_color.insert_rule(rule_id, color);
             }
@@ -732,6 +816,7 @@ impl Style {
                 }
             }
 
+            // Border
             Property::BorderWidth(border_width) => {
                 self.border_width.insert_rule(rule_id, border_width.top.0);
             }
@@ -817,14 +902,17 @@ impl Style {
                 self.font_size.insert_rule(rule_id, font_size);
             }
 
+            // Font Weight
             Property::FontWeight(font_weight) => {
                 self.font_weight.insert_rule(rule_id, font_weight);
             }
 
+            // Font Style
             Property::FontStyle(font_style) => {
                 self.font_style.insert_rule(rule_id, font_style);
             }
 
+            // Font Stretch
             Property::FontStretch(font_stretch) => {
                 self.font_stretch.insert_rule(rule_id, font_stretch);
             }
@@ -862,6 +950,7 @@ impl Style {
                 self.scale.insert_rule(rule_id, scale);
             }
 
+            // Overflow
             Property::Overflow(overflow) => {
                 self.overflowx.insert_rule(rule_id, overflow);
                 self.overflowy.insert_rule(rule_id, overflow);
@@ -875,8 +964,10 @@ impl Style {
                 self.overflowy.insert_rule(rule_id, overflow);
             }
 
+            // Z Index
             Property::ZIndex(z_index) => self.z_index.insert_rule(rule_id, z_index),
 
+            // Outline
             Property::Outline(outline) => {
                 if let Some(outline_color) = outline.color {
                     self.outline_color.insert_rule(rule_id, outline_color);
@@ -899,6 +990,7 @@ impl Style {
                 self.outline_offset.insert_rule(rule_id, outline_offset);
             }
 
+            // Background Images & Gradients
             Property::BackgroundImage(images) => {
                 let images = images
                     .into_iter()
@@ -916,23 +1008,32 @@ impl Style {
                 self.background_image.insert_rule(rule_id, images);
             }
 
+            // Background Size
             Property::BackgroundSize(sizes) => {
                 self.background_size.insert_rule(rule_id, sizes);
             }
 
+            // Text Wrapping
             Property::TextWrap(text_wrap) => {
                 self.text_wrap.insert_rule(rule_id, text_wrap);
             }
+
+            // Box Shadows
             Property::BoxShadow(box_shadows) => {
                 self.box_shadow.insert_rule(rule_id, box_shadows);
             }
 
+            // Cursor Icon
             Property::Cursor(cursor) => {
                 self.cursor.insert_rule(rule_id, cursor);
             }
+
+            // Unparsed. TODO: Log the error.
             Property::Unparsed(unparsed) => {
                 println!("Unparsed: {}", unparsed.name);
             }
+
+            // TODO: Custom property support
             Property::Custom(custom) => {
                 println!("Custom Property: {}", custom.name);
             }
@@ -941,6 +1042,7 @@ impl Style {
         }
     }
 
+    // Helper function for generating AnimationState from a transition definition.
     fn add_transition<T: Default + Interpolator>(
         &self,
         transition: &Transition,
@@ -964,20 +1066,18 @@ impl Style {
             .with_keyframe(Keyframe { time: 1.0, value: Default::default(), timing_function })
     }
 
-    // Add style data to an entity
+    // Add style data for the given entity.
     pub fn add(&mut self, entity: Entity) {
         self.pseudo_classes
             .insert(entity, PseudoClassFlags::empty())
             .expect("Failed to add pseudoclasses");
         self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
         self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
-        // self.visibility.insert(entity, Default::default());
-        // self.focus_order.insert(entity, Default::default()).unwrap();
         self.system_flags = SystemFlags::all();
     }
 
+    // Remove style data for the given entity.
     pub fn remove(&mut self, entity: Entity) {
-        self.elements.remove(entity);
         self.ids.remove(entity);
         self.classes.remove(entity);
         self.pseudo_classes.remove(entity);
@@ -1076,8 +1176,6 @@ impl Style {
         self.max_width.remove(entity);
         self.min_height.remove(entity);
         self.max_height.remove(entity);
-        self.content_width.remove(entity);
-        self.content_height.remove(entity);
 
         // Child Space
         self.child_left.remove(entity);
@@ -1086,14 +1184,6 @@ impl Style {
         self.child_bottom.remove(entity);
         self.col_between.remove(entity);
         self.row_between.remove(entity);
-
-        // Grid
-        self.grid_cols.remove(entity);
-        self.grid_rows.remove(entity);
-        self.col_index.remove(entity);
-        self.col_span.remove(entity);
-        self.row_index.remove(entity);
-        self.row_span.remove(entity);
 
         // Text and Font
         self.text_wrap.remove(entity);
@@ -1109,8 +1199,6 @@ impl Style {
         self.cursor.remove(entity);
 
         self.name.remove(entity);
-
-        self.image.remove(entity);
 
         self.needs_text_layout.remove(entity);
         self.needs_access_update.remove(entity);
@@ -1139,6 +1227,7 @@ impl Style {
         }
     }
 
+    // Remove all shared style data.
     pub fn clear_style_rules(&mut self) {
         self.disabled.clear_rules();
         // Display
@@ -1222,8 +1311,6 @@ impl Style {
         self.max_width.clear_rules();
         self.min_height.clear_rules();
         self.max_height.clear_rules();
-        self.content_width.clear_rules();
-        self.content_height.clear_rules();
 
         // Child Space
         self.child_left.clear_rules();
@@ -1232,14 +1319,6 @@ impl Style {
         self.child_bottom.clear_rules();
         self.col_between.clear_rules();
         self.row_between.clear_rules();
-
-        // Grid
-        self.grid_cols.clear_rules();
-        self.grid_rows.clear_rules();
-        self.col_index.clear_rules();
-        self.col_span.clear_rules();
-        self.row_index.clear_rules();
-        self.row_span.clear_rules();
 
         // Text and Font
         self.text_wrap.clear_rules();
@@ -1254,121 +1333,5 @@ impl Style {
         self.cursor.clear_rules();
 
         self.name.clear_rules();
-
-        self.image.clear_rules();
-    }
-}
-
-pub(crate) trait IntoTransform {
-    fn as_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D;
-}
-
-impl IntoTransform for Translate {
-    fn as_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
-        let mut result = Transform2D::identity();
-        let tx = self.x.to_pixels(parent_bounds.w, scale_factor);
-        let ty = self.y.to_pixels(parent_bounds.h, scale_factor);
-
-        result.translate(tx, ty);
-
-        result
-    }
-}
-
-impl IntoTransform for Scale {
-    fn as_transform(&self, _parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
-        let mut result = Transform2D::identity();
-        let sx = self.x.to_factor();
-        let sy = self.y.to_factor();
-        result.scale(sx, sy);
-
-        result
-    }
-}
-
-impl IntoTransform for Angle {
-    fn as_transform(&self, _parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
-        let mut result = Transform2D::identity();
-        let r = self.to_radians();
-        result.rotate(r);
-
-        result
-    }
-}
-
-impl IntoTransform for Vec<Transform> {
-    fn as_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
-        let mut result = Transform2D::identity();
-        for transform in self.iter() {
-            let mut t = Transform2D::identity();
-            match transform {
-                Transform::Translate(translate) => {
-                    let tx = translate.0.to_pixels(parent_bounds.w, scale_factor);
-                    let ty = translate.1.to_pixels(parent_bounds.h, scale_factor);
-
-                    t.translate(tx, ty);
-                }
-
-                Transform::TranslateX(x) => {
-                    let tx = x.to_pixels(parent_bounds.h, scale_factor);
-
-                    t.translate(tx, 0.0)
-                }
-
-                Transform::TranslateY(y) => {
-                    let ty = y.to_pixels(parent_bounds.h, scale_factor);
-
-                    t.translate(0.0, ty)
-                }
-
-                Transform::Scale(scale) => {
-                    let sx = scale.0.to_factor();
-                    let sy = scale.1.to_factor();
-
-                    t.scale(sx, sy)
-                }
-
-                Transform::ScaleX(x) => {
-                    let sx = x.to_factor();
-
-                    t.scale(sx, 1.0)
-                }
-
-                Transform::ScaleY(y) => {
-                    let sy = y.to_factor();
-
-                    t.scale(1.0, sy)
-                }
-
-                Transform::Rotate(angle) => t.rotate(angle.to_radians()),
-
-                Transform::Skew(x, y) => {
-                    let cx = x.to_radians().tan();
-                    let cy = y.to_radians().tan();
-
-                    t = t.new(1.0, cx, cy, 1.0, 0.0, 0.0);
-                }
-
-                Transform::SkewX(angle) => {
-                    let cx = angle.to_radians().tan();
-
-                    t.skew_x(cx)
-                }
-
-                Transform::SkewY(angle) => {
-                    let cy = angle.to_radians().tan();
-
-                    t.skew_y(cy)
-                }
-
-                Transform::Matrix(matrix) => {
-                    t = t.new(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
-                }
-            };
-
-            result.premultiply(&t);
-        }
-
-        result
     }
 }

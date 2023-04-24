@@ -81,8 +81,8 @@ impl<'a> BackendContext<'a> {
     /// changes during a frame, then the window will be resized at the end of the frame and a
     /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
     /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
-    pub fn user_scale_factor(&mut self) -> &mut f64 {
-        &mut self.0.user_scale_factor
+    pub fn user_scale_factor(&mut self) -> f64 {
+        self.0.user_scale_factor
     }
 
     pub fn add_main_window(
@@ -153,6 +153,10 @@ impl<'a> BackendContext<'a> {
     /// Sets the default text configuration to use for text rendering.
     pub fn set_text_config(&mut self, text_config: TextConfig) {
         self.0.text_config = text_config;
+    }
+
+    pub fn set_scale_factor(&mut self, scale: f64) {
+        self.0.style.dpi_factor = scale;
     }
 
     /// Temporarily sets the current entity, calls the provided closure, and then resets the current entity back to previous.

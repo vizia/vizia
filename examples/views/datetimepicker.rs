@@ -35,40 +35,41 @@ fn main() {
         AppState { datetime: Utc::now().naive_utc(), show_popup: false }.build(cx);
 
         PopupData::default().build(cx);
+        ExamplePage::new(cx, |cx| {
+            VStack::new(cx, |cx| {
+                ZStack::new(cx, |cx| {
+                    Textbox::new(
+                        cx,
+                        AppState::datetime
+                            .map(|datetime| format!("{}", datetime.format("%d/%m/%Y  %H:%M:%S"))),
+                    )
+                    .child_top(Stretch(1.0))
+                    .child_bottom(Stretch(1.0))
+                    .width(Pixels(252.0))
+                    .height(Pixels(32.0));
 
-        VStack::new(cx, |cx| {
-            ZStack::new(cx, |cx| {
-                Textbox::new(
-                    cx,
-                    AppState::datetime
-                        .map(|datetime| format!("{}", datetime.format("%d/%m/%Y  %H:%M:%S"))),
-                )
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
+                    Label::new(cx, ICON_CALENDAR)
+                        .height(Pixels(32.0))
+                        .width(Pixels(32.0))
+                        .left(Stretch(1.0))
+                        .right(Pixels(0.0))
+                        .child_space(Stretch(1.0))
+                        .class("icon")
+                        .cursor(CursorIcon::Hand)
+                        .on_press(|cx| cx.emit(PopupEvent::Switch));
+                })
                 .width(Pixels(252.0))
                 .height(Pixels(32.0));
 
-                Label::new(cx, ICON_CALENDAR)
-                    .height(Pixels(32.0))
-                    .width(Pixels(32.0))
-                    .left(Stretch(1.0))
-                    .right(Pixels(0.0))
-                    .child_space(Stretch(1.0))
-                    .class("icon")
-                    .cursor(CursorIcon::Hand)
-                    .on_press(|cx| cx.emit(PopupEvent::Switch));
+                Popup::new(cx, PopupData::is_open, false, |cx| {
+                    DatetimePicker::new(cx, AppState::datetime)
+                        .on_change(|cx, datetime| cx.emit(AppEvent::SetDateTime(datetime)));
+                })
+                .on_blur(|cx| cx.emit(PopupEvent::Close))
+                .top(Pixels(36.0));
             })
-            .width(Pixels(252.0))
-            .height(Pixels(32.0));
-
-            Popup::new(cx, PopupData::is_open, false, |cx| {
-                DatetimePicker::new(cx, AppState::datetime)
-                    .on_change(|cx, datetime| cx.emit(AppEvent::SetDateTime(datetime)));
-            })
-            .on_blur(|cx| cx.emit(PopupEvent::Close))
-            .top(Pixels(36.0));
-        })
-        .row_between(Pixels(8.0));
+            .row_between(Pixels(8.0));
+        });
     })
     .title("Datepicker")
     .run();

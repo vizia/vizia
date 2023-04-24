@@ -29,7 +29,7 @@ impl From<PathBuf> for DropData {
 pub enum WindowEvent {
     /// Emitted when a window is closed. Can also be emitted by a view or model to close the window.
     WindowClose,
-
+    /// Emitted when a file is dragged and then dropped onto the window.
     Drop(DropData),
     /// Emitted when a mouse button is double clicked.
     MouseDoubleClick(MouseButton),

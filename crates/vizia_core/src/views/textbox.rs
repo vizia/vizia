@@ -11,10 +11,11 @@ use unicode_segmentation::UnicodeSegmentation;
 use vizia_input::Code;
 use vizia_storage::TreeExt;
 
-/// Events for modifying a textbox
+/// Events for modifying a textbox.
 pub enum TextEvent {
-    /// Insert a string of text into the buffer.
+    /// Insert a string of text into the textbox.
     InsertText(String),
+    /// Reset the text of the textbox to the bound data.
     ResetText(String),
     DeleteText(Movement),
     MoveCursor(Movement, bool),
@@ -41,8 +42,9 @@ pub struct Textbox<L: Lens> {
     on_submit: Option<Box<dyn Fn(&mut EventContext, String, bool) + Send + Sync>>,
 }
 
+// Determines whether the enter key submits the text or inserts a new line.
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub enum TextboxKind {
+enum TextboxKind {
     SingleLine,
     MultiLineUnwrapped,
     MultiLineWrapped,
@@ -387,8 +389,6 @@ where
     fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode) {
         let bounds = cx.bounds();
 
-        // We need a child node per line
-        // let mut children: Vec<(NodeId, NodeBuilder)> = Vec::new();
         let node_id = node.node_id();
         cx.text_context.with_editor(cx.current, |_, editor| {
             let cursor = editor.cursor();
@@ -405,6 +405,7 @@ where
             for (index, line) in editor.buffer().layout_runs().enumerate() {
                 let text = line.text;
 
+                // We need a child node per line
                 let mut line_node = AccessNode::new_from_parent(node_id, index);
                 line_node.set_role(Role::InlineTextBox);
 
@@ -960,10 +961,15 @@ where
         });
     }
 
+    // Use custom drawing for the textbox so a transform can be applied to just the text.
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let mut path = cx.build_path();
+        cx.draw_shadows(canvas, &mut path);
+        cx.draw_backdrop_filter(canvas, &mut path);
         cx.draw_background(canvas, &mut path);
         cx.draw_border(canvas, &mut path);
+        cx.draw_inset_box_shadows(canvas, &mut path);
+        cx.draw_outline(canvas);
         canvas.save();
         canvas.translate(self.transform.0, self.transform.1);
         cx.draw_text_and_selection(canvas);

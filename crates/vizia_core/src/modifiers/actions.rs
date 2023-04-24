@@ -701,7 +701,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
         build_action_model::<V>(self.cx, self.entity);
 
         if let Some(abilities) = self.cx.style.abilities.get_mut(self.entity) {
-            abilities.set(Abilities::DRAGABLE, true);
+            abilities.set(Abilities::DRAGGABLE, true);
         }
 
         self.cx.emit_custom(

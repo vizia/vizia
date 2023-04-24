@@ -9,10 +9,10 @@ use accesskit::{CheckedState, NodeBuilder, Rect, TreeUpdate};
 use fnv::FnvHashMap;
 use vizia_storage::LayoutTreeIterator;
 
-// Updates node properties from view properties
-// Should be run after layout so that things like bounding box are correct
-// This system doesn't change the structure of the accessibility tree as this is done when views are built/removed
-// TODO: Change this to incrementally update nodes when required instead of updating all nodes every frame
+/// Updates node properties from view properties
+/// Should be run after layout so that things like bounding box are correct.
+/// This system doesn't change the structure of the accessibility tree as this is done when views are built/removed.
+/// TODO: Change this to incrementally update nodes when required instead of updating all nodes every frame.
 pub(crate) fn accessibility_system(cx: &mut Context) {
     let iterator = LayoutTreeIterator::full(&cx.tree);
 

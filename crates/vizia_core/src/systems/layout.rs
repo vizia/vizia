@@ -4,6 +4,11 @@ use crate::layout::node::SubLayout;
 use crate::prelude::*;
 use crate::style::SystemFlags;
 
+/// Determines the size and position of views.
+/// TODO: Currently relayout is done on an entire tree rather than incrementally.
+/// Incremental relayout can be done by keeping a list of nodes that need relayout,
+/// and when a node undergoes relayout remove the descendants that have been processed from the list,
+/// then continue relayout on the remaining nodes in the list.
 pub(crate) fn layout_system(cx: &mut Context) {
     // text_constraints_system(cx);
 
@@ -86,6 +91,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
                 }
             }
 
+            // Morphorm produces relative positions so convert to absolute.
             if let Some(parent) = cx.tree.get_layout_parent(entity) {
                 let parent_bounds = cx.cache.get_bounds(parent);
                 if let Some(bounds) = cx.cache.bounds.get_mut(entity) {
