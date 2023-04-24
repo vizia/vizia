@@ -156,10 +156,8 @@ where
                         .class("thumb")
                         .on_geo_changed(|cx, geo| {
                             if geo {
-                                let current = cx.current();
-                                let width = cx.cache().get_width(current);
-                                let height = cx.cache().get_height(current);
-                                cx.emit(SliderEventInternal::SetThumbSize(width, height));
+                                let bounds = cx.bounds();
+                                cx.emit(SliderEventInternal::SetThumbSize(bounds.w, bounds.h));
                             }
                         })
                         .bind(lens, move |handle, value| {

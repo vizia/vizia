@@ -29,7 +29,7 @@ impl Chip {
                             .width(Pixels(16.0))
                             .right(Pixels(2.0))
                             .child_space(Stretch(1.0))
-                            .on_press(move |cx| (on_close)(cx.cx));
+                            .on_press(move |cx| (on_close)(cx));
                     }
                 });
             })

@@ -143,10 +143,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             })
             .on_geo_changed(|cx, geo| {
                 if geo {
-                    let current = cx.current();
-                    let width = cx.cache().get_width(current);
-                    let height = cx.cache().get_height(current);
-                    cx.emit(ScrollEvent::ChildGeo(width, height));
+                    let bounds = cx.bounds();
+                    cx.emit(ScrollEvent::ChildGeo(bounds.w, bounds.h));
                 }
             });
         if scroll_y {

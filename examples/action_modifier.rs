@@ -29,7 +29,7 @@ impl CustomView {
                 Label::new(cx, CustomView::text).hoverable(false);
             })
             .on_press(|cx| {
-                cx.modify(|custom_view| custom_view.text = String::from("Testy Test"));
+                cx.modify::<Self>(|custom_view| custom_view.text = String::from("Testy Test"));
             })
             .size(Auto)
     }
