@@ -19,23 +19,17 @@ fn main() {
     Application::new(|cx| {
         cx.add_theme(STYLE);
         HStack::new(cx, |cx| {
-            Element::new(cx).size(Pixels(50.0)).background_color(Color::red()).on_drag_start(
-                |ex| {
-                    ex.cx.set_drop_data(ex.current());
-                },
-            );
+            Element::new(cx).size(Pixels(50.0)).background_color(Color::red()).on_drag(|ex| {
+                ex.cx.set_drop_data(ex.current());
+            });
 
-            Element::new(cx).size(Pixels(50.0)).background_color(Color::green()).on_drag_start(
-                |ex| {
-                    ex.cx.set_drop_data(ex.current());
-                },
-            );
+            Element::new(cx).size(Pixels(50.0)).background_color(Color::green()).on_drag(|ex| {
+                ex.cx.set_drop_data(ex.current());
+            });
 
-            Element::new(cx).size(Pixels(50.0)).background_color(Color::blue()).on_drag_start(
-                |ex| {
-                    ex.cx.set_drop_data(ex.current());
-                },
-            );
+            Element::new(cx).size(Pixels(50.0)).background_color(Color::blue()).on_drag(|ex| {
+                ex.cx.set_drop_data(ex.current());
+            });
         })
         .height(Pixels(100.0))
         .width(Auto)
@@ -50,6 +44,9 @@ fn main() {
                     let bg = ex.cx.style.background_color.get(id).cloned().unwrap_or_default();
                     ex.cx.set_background_color(bg);
                     ex.emit(WindowEvent::SetCursor(CursorIcon::Default));
+                }
+                if let DropData::File(file) = data {
+                    println!("Dropped File: {:?}", file);
                 }
             })
             .on_hover(|ex| {

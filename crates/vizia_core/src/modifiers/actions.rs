@@ -304,6 +304,13 @@ impl<V: 'static> Model for ActionsModel<V> {
                 if let Some(action) = &self.on_mouse_move {
                     (action)(&mut EventHandle::<V>::new(cx), *x, *y);
                 }
+                if cx.mouse.left.state == MouseButtonState::Released {
+                    if let Some(drop_data) = cx.drop_data.take() {
+                        if let Some(action) = &self.on_drop {
+                            (action)(&mut EventHandle::<V>::new(cx), drop_data);
+                        }
+                    }
+                }
             }
 
             WindowEvent::MouseDown(mouse_button) => {
@@ -536,7 +543,7 @@ pub trait ActionModifiers<V> {
 
     fn tooltip<C: FnOnce(&mut Context)>(self, content: C) -> Self;
 
-    fn on_drag_start<F>(self, action: F) -> Self
+    fn on_drag<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventHandle<V>) + Send + Sync;
 
@@ -786,7 +793,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
         self
     }
 
-    fn on_drag_start<F>(self, action: F) -> Self
+    fn on_drag<F>(self, action: F) -> Self
     where
         F: 'static + Fn(&mut EventHandle<V>) + Send + Sync,
     {

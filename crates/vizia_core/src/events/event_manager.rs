@@ -187,9 +187,8 @@ fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
 
 fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, meta: &mut EventMeta) {
     match window_event {
-        WindowEvent::Drop(data) => {
-            // println!("event manager: {:?}", path);
-            // context.dropped_file = Some(path.clone());
+        WindowEvent::Drop(drop_data) => {
+            context.drop_data = Some(drop_data.clone());
         }
 
         WindowEvent::MouseMove(x, y) => {
