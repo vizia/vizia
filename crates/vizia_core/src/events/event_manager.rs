@@ -187,6 +187,11 @@ fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
 
 fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, meta: &mut EventMeta) {
     match window_event {
+        WindowEvent::Drop(data) => {
+            // println!("event manager: {:?}", path);
+            // context.dropped_file = Some(path.clone());
+        }
+
         WindowEvent::MouseMove(x, y) => {
             context.mouse.previous_cursorx = context.mouse.cursorx;
             context.mouse.previous_cursory = context.mouse.cursory;
@@ -195,6 +200,16 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
 
             hover_system(context);
             mutate_direct_or_up(meta, context.captured, context.hovered, false);
+
+            // if let Some(dropped_file) = context.dropped_file.take() {
+            //     emit_direct_or_up(
+            //         context,
+            //         WindowEvent::DroppedFile(dropped_file),
+            //         context.captured,
+            //         context.hovered,
+            //         true,
+            //     );
+            // }
         }
         WindowEvent::MouseDown(button) => {
             // do direct state-updates
@@ -222,6 +237,9 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                         .get(context.hovered)
                         .filter(|abilities| abilities.contains(Abilities::FOCUSABLE))
                         .is_some();
+
+                    // Reset drag data
+                    context.drop_data = None;
 
                     context.with_current(
                         if focusable { context.hovered } else { context.focused },

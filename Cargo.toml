@@ -245,6 +245,10 @@ name = "save_dialog"
 path = "examples/save_dialog.rs"
 
 [[example]]
+name = "dragdrop"
+path = "examples/dragdrop.rs"
+
+[[example]]
 name = "transform"
 path = "examples/style/transform.rs"
 

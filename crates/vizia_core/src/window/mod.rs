@@ -3,4 +3,5 @@
 mod window_modifiers;
 pub use window_modifiers::*;
 
-pub use vizia_window::WindowEvent;
+mod window_event;
+pub use window_event::*;

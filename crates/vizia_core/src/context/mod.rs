@@ -13,7 +13,7 @@ use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::iter::once;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
@@ -111,6 +111,8 @@ pub struct Context {
 
     pub ignore_default_theme: bool,
     pub window_has_focus: bool,
+
+    pub(crate) drop_data: Option<DropData>,
 }
 
 impl Default for Context {
@@ -190,6 +192,8 @@ impl Context {
 
             ignore_default_theme: false,
             window_has_focus: true,
+
+            drop_data: None,
         };
 
         result.style.needs_restyle();

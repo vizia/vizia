@@ -102,6 +102,7 @@ bitflags! {
         /// The element should be focusable in sequential keyboard navigation -
         /// allowing the equivilant of a negative tabindex in html.
         const NAVIGABLE = 1 << 4;
+        const DRAGABLE = 1 << 5;
     }
 }
 

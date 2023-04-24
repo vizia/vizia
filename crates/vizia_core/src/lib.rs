@@ -84,13 +84,13 @@ pub mod prelude {
     pub use super::resource::ImageRetentionPolicy;
     pub use super::view::{Canvas, Handle, View};
     pub use super::views::*;
-    pub use super::window::WindowModifiers;
+    pub use super::window::{DropData, WindowEvent, WindowModifiers};
     pub use accesskit::{Action, DefaultActionVerb, Live, Role};
     pub use vizia_derive::{Data, Lens, Model, Setter};
     pub use vizia_id::GenerationalId;
     pub use vizia_input::{Code, Key, KeyChord, Modifiers, MouseButton, MouseButtonState};
     pub use vizia_storage::{Tree, TreeExt};
-    pub use vizia_window::{WindowEvent, WindowSize};
+    pub use vizia_window::WindowSize;
 
     pub use super::style::{
         Angle, BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, FontStyle,

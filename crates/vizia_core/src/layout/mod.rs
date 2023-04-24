@@ -35,11 +35,10 @@ pub use morphorm::{LayoutType, PositionType, Units};
 pub mod bounding_box;
 
 pub use bounding_box::*;
-use vizia_window::WindowEvent;
 
 use crate::{
     context::Context,
-    events::{Event, Propagation},
+    events::{Event, Propagation, WindowEvent},
     style::SystemFlags,
 };
 

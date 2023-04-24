@@ -14,7 +14,8 @@ use crate::events::ViewHandler;
 use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
-use crate::style::{IntoTransform, PseudoClassFlags, Style, SystemFlags};
+use crate::style::{Abilities, IntoTransform, PseudoClassFlags, Style, SystemFlags};
+use crate::window::DropData;
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
 use vizia_storage::SparseSet;
@@ -67,7 +68,7 @@ pub struct EventContext<'a> {
     pub style: &'a mut Style,
     pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
     pub cache: &'a CachedData,
-    pub tree: &'a Tree<Entity>,
+    pub(crate) tree: &'a Tree<Entity>,
     pub(crate) data: &'a mut SparseSet<ModelDataStore>,
     pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
     listeners:
@@ -84,6 +85,7 @@ pub struct EventContext<'a> {
     clipboard: &'a mut Box<dyn ClipboardProvider>,
     event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
     pub(crate) ignore_default_theme: &'a bool,
+    pub(crate) drop_data: &'a mut Option<DropData>,
 }
 
 impl<'a> EventContext<'a> {
@@ -112,6 +114,7 @@ impl<'a> EventContext<'a> {
             clipboard: &mut cx.clipboard,
             event_proxy: &mut cx.event_proxy,
             ignore_default_theme: &cx.ignore_default_theme,
+            drop_data: &mut cx.drop_data,
         }
     }
 
@@ -123,6 +126,11 @@ impl<'a> EventContext<'a> {
     /// Returns the [Entity] id of the current view.
     pub fn current(&self) -> Entity {
         self.current
+    }
+
+    // Returns true if in a drop state.
+    pub fn has_drop_data(&self) -> bool {
+        self.drop_data.is_some()
     }
 
     /// Returns the bounds of the current view.
@@ -351,6 +359,14 @@ impl<'a> EventContext<'a> {
         self.focused() == self.current
     }
 
+    pub fn is_draggable(&self) -> bool {
+        self.style
+            .abilities
+            .get(self.current)
+            .map(|abilities| abilities.contains(Abilities::DRAGABLE))
+            .unwrap_or_default()
+    }
+
     /// Returns true if the current view is disabled.
     pub fn is_disabled(&self) -> bool {
         self.style.disabled.get(self.current()).cloned().unwrap_or_default()
@@ -390,6 +406,10 @@ impl<'a> EventContext<'a> {
     /// Returns true if the cursor icon is locked.
     pub fn is_cursor_icon_locked(&self) -> bool {
         *self.cursor_icon_locked
+    }
+
+    pub fn set_drop_data(&mut self, data: impl Into<DropData>) {
+        *self.drop_data = Some(data.into())
     }
 
     /// Set the active state for the current view.
@@ -590,6 +610,18 @@ impl<'a> EventContext<'a> {
         *self.user_scale_factor = new_factor;
         self.style.system_flags.set(SystemFlags::RELAYOUT, true);
         self.style.system_flags.set(SystemFlags::REFLOW, true);
+    }
+
+    // Mutate tree
+
+    // pub fn append_child(&mut self, child: Entity) {
+    //     self.tree.set_parent(child, self.current);
+    // }
+
+    // Setters
+    pub fn set_background_color(&mut self, background_color: Color) {
+        self.style.background_color.insert(self.current, background_color);
+        self.needs_redraw();
     }
 }
 

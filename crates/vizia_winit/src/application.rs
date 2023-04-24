@@ -265,7 +265,6 @@ impl Application {
 
         event_loop.run(move |event, _, control_flow| {
             let mut cx = BackendContext::new_with_event_manager(&mut context);
-
             match event {
                 winit::event::Event::UserEvent(user_event) => match user_event {
                     UserEvent::Event(event) => {
@@ -400,6 +399,10 @@ impl Application {
                                 .height
                                 .insert(Entity::root(), Units::Pixels(logical_size.height));
                             cx.needs_refresh();
+                        }
+
+                        winit::event::WindowEvent::DroppedFile(path) => {
+                            cx.emit_origin(WindowEvent::Drop(DropData::File(path)));
                         }
 
                         #[allow(deprecated)]
