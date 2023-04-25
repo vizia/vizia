@@ -181,7 +181,6 @@ impl Application {
         #[cfg(not(target_arch = "wasm32"))]
         let event_loop_proxy = event_loop.create_proxy();
 
-        #[cfg(not(target_arch = "wasm32"))]
         let mut cx = BackendContext::new(&mut context);
 
         #[cfg(not(target_arch = "wasm32"))]

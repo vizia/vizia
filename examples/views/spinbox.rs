@@ -80,12 +80,10 @@ fn main() {
                         },
                         |cx| {
                             List::new(cx, AppState::spinbox_value_3_choices, |cx, _, item| {
-                                Label::new(cx, &format!("{}", item.get(cx))).on_press(
-                                    move |cx| {
-                                        cx.emit(AppEvent::Set3(item.get(cx)));
-                                        cx.emit(PopupEvent::Close);
-                                    },
-                                );
+                                Label::new(cx, &format!("{}", item.get(cx))).on_press(move |cx| {
+                                    cx.emit(AppEvent::Set3(item.get(cx)));
+                                    cx.emit(PopupEvent::Close);
+                                });
                             })
                             .child_right(Pixels(4.0));
                         },
