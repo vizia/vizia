@@ -164,7 +164,7 @@ impl<'a> BackendContext<'a> {
         self.0.cache.set_height(Entity::root(), physical_height);
 
         let logical_width = self.0.style.physical_to_logical(physical_width);
-        let logical_height = self.0.style.physical_to_logical(physical_width);
+        let logical_height = self.0.style.physical_to_logical(physical_height);
         self.0.style.width.insert(Entity::root(), Units::Pixels(logical_width));
         self.0.style.height.insert(Entity::root(), Units::Pixels(logical_height));
     }
