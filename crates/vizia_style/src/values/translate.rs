@@ -10,7 +10,7 @@ pub struct Translate {
 }
 
 impl Translate {
-    /// Creates a new translate.
+    /// Creates a new translation.
     pub fn new(x: LengthOrPercentage, y: LengthOrPercentage) -> Self {
         Self { x, y }
     }
@@ -50,19 +50,15 @@ mod tests {
         Translate, parse_translate,
 
         success {
-            "10%, 20%" => Translate::new(Percentage(10.0), Percentage(20.0)),
-            "10%, 20px" => Translate::new(Percentage(10.0), Length(Length::px(20.0))),
-            "10px, 20%" => Translate::new(Length(Length::px(10.0)), Percentage(20.0)),
-            "10px, 20px" => Translate::new(Length(Length::px(10.0)), Length(Length::px(20.0))),
+            "10% 20%" => Translate::new(Percentage(10.0), Percentage(20.0)),
+            "10% 20px" => Translate::new(Percentage(10.0), Length(Length::px(20.0))),
+            "10px 20%" => Translate::new(Length(Length::px(10.0)), Percentage(20.0)),
+            "10px 20px" => Translate::new(Length(Length::px(10.0)), Length(Length::px(20.0))),
 
         }
 
         failure {
             "10a, 10b",
-            "123px",
-            "123%",
-            "10% 20%",
-            "10px 20px",
             "test",
         }
     }

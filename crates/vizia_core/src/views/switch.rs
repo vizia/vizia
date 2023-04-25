@@ -20,7 +20,7 @@ use crate::prelude::*;
 /// #
 /// # impl Model for AppData {}
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// # AppData { value: false }.build(cx);
 /// #
@@ -46,7 +46,7 @@ use crate::prelude::*;
 /// #     ToggleValue,
 /// # }
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// # AppData { value: false }.build(cx);
 /// #
@@ -70,7 +70,7 @@ use crate::prelude::*;
 /// #
 /// # impl Model for AppData {}
 /// #
-/// # let cx = &mut Context::new();
+/// # let cx = &mut Context::default();
 /// #
 /// # AppData { value: false }.build(cx);
 /// #
@@ -98,7 +98,7 @@ impl Switch {
     /// #
     /// # impl Model for AppData {}
     /// #
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::default();
     /// #
     /// # AppData { value: false }.build(cx);
     /// #
@@ -141,7 +141,7 @@ impl Handle<'_, Switch> {
     /// #     ToggleValue,
     /// # }
     /// #
-    /// # let cx = &mut Context::new();
+    /// # let cx = &mut Context::default();
     /// #
     /// # AppData { value: false }.build(cx);
     /// #

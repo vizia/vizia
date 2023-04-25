@@ -104,11 +104,11 @@ use crate::prelude::*;
 /// # let cx = &mut Context::default();
 /// #
 /// # AppData { value: false }.build(cx);
-/// # use vizia_core::fonts::icons_names::CANCEL;
+/// # use vizia_core::icons::ICON_X;
 ///
 /// Checkbox::new(cx, AppData::value)
 ///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue))
-///     .text(AppData::value.map(|flag| if *flag {CANCEL} else {""}));
+///     .text(AppData::value.map(|flag| if *flag {ICON_X} else {""}));
 /// ```
 pub struct Checkbox {
     on_toggle: Option<Box<dyn Fn(&mut EventContext)>>,

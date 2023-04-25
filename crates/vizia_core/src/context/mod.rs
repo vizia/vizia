@@ -438,8 +438,9 @@ impl Context {
     /// The `include_bytes!()` macro can be used to embed a font into the application binary.
     /// # Example
     /// ```
-    /// # let mut context = Context::new();
-    /// cx.add_font_mem(include_bytes!("Roboto-Regular.ttf"));
+    /// # use vizia_core::prelude::*;
+    /// # let cx = &mut Context::default();
+    /// cx.add_fonts_mem(&[include_bytes!("../../resources/fonts/Roboto-Regular.ttf")]);
     /// ```
     pub fn add_fonts_mem(&mut self, data: &[&[u8]]) {
         self.text_context.take_buffers();

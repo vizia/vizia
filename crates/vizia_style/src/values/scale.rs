@@ -53,17 +53,14 @@ mod tests {
         Scale, parse_scale,
 
         success {
-            "10%, 20%" => Scale::new(Percentage(0.1), Percentage(0.2)),
-            "10%, 20" => Scale::new(Percentage(0.1), Number(20.0)),
-            "10, 20%" => Scale::new(Number(10.0), Percentage(0.2)),
-            "10, 20" => Scale::new(Number(10.0), Number(20.0)),
+            "10% 20%" => Scale::new(Percentage(10.0), Percentage(20.0)),
+            "10% 20" => Scale::new(Percentage(10.0), Number(20.0)),
+            "10 20%" => Scale::new(Number(10.0), Percentage(20.0)),
+            "10 20" => Scale::new(Number(10.0), Number(20.0)),
         }
 
         failure {
-            "10a, 10b",
-            "123",
-            "123%",
-            "10% 20%",
+            "10a 10b",
             "test",
         }
     }

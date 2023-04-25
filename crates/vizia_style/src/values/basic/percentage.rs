@@ -10,7 +10,7 @@ impl_parse! {
 
     tokens {
         custom {
-            Token::Percentage { unit_value, .. } => Percentage(*unit_value * 100.0),
+            Token::Percentage {unit_value, .. } => Percentage(*unit_value * 100.0),
         }
     }
 }

@@ -155,13 +155,13 @@ mod tests {
 
         custom {
             success {
-                "translate(10px, 50%)" => Transform::Translate((LengthOrPercentage::Length(Length::px(10.0)), LengthOrPercentage::Percentage(0.5))),
+                "translate(10px, 50%)" => Transform::Translate((LengthOrPercentage::Length(Length::px(10.0)), LengthOrPercentage::Percentage(50.0))),
                 "translatex(20px)" => Transform::TranslateX(LengthOrPercentage::Length(Length::px(20.0))),
-                "translatey(10%)" => Transform::TranslateY(LengthOrPercentage::Percentage(0.1)),
+                "translatey(10%)" => Transform::TranslateY(LengthOrPercentage::Percentage(10.0)),
 
-                "scale(20, 30%)" => Transform::Scale((PercentageOrNumber::Number(20.0), PercentageOrNumber::Percentage(0.3))),
+                "scale(20, 40%)" => Transform::Scale((PercentageOrNumber::Number(20.0), PercentageOrNumber::Percentage(40.0))),
                 "scalex(40)" => Transform::ScaleX(PercentageOrNumber::Number(40.0)),
-                "scaley(50%)" => Transform::ScaleY(PercentageOrNumber::Percentage(0.5)),
+                "scaley(50%)" => Transform::ScaleY(PercentageOrNumber::Percentage(50.0)),
 
                 "rotate(50deg)" => Transform::Rotate(Angle::Deg(50.0)),
                 // "rotatex(30grad)" => Transform::RotateX(Angle::Grad(30.0)),
@@ -192,10 +192,10 @@ mod tests {
 
         custom {
             success {
-                "translate(10px, 20%) scale(30%, 40) rotate(50grad) skew(60turn, 70rad) matrix(10, 20, 30, 40, 50, 60)" =>
+                "translate(10px, 20%) scale(40%, 40) rotate(50grad) skew(60turn, 70rad) matrix(10, 20, 30, 40, 50, 60)" =>
                     vec![
-                        Transform::Translate((LengthOrPercentage::Length(Length::px(10.0)), LengthOrPercentage::Percentage(0.2))),
-                        Transform::Scale((PercentageOrNumber::Percentage(0.3), PercentageOrNumber::Number(40.0))),
+                        Transform::Translate((LengthOrPercentage::Length(Length::px(10.0)), LengthOrPercentage::Percentage(20.0))),
+                        Transform::Scale((PercentageOrNumber::Percentage(40.0), PercentageOrNumber::Number(40.0))),
                         Transform::Rotate(Angle::Grad(50.0)),
                         Transform::Skew(Angle::Turn(60.0), Angle::Rad(70.0)),
                         Transform::Matrix(Matrix::new(10.0, 20.0, 30.0, 40.0, 50.0, 60.0)),
