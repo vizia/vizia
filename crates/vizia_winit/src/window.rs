@@ -188,8 +188,6 @@ impl Window {
         canvas.set_size(size.width, size.height, 1.0);
         canvas.clear_rect(0, 0, size.width, size.height, Color::rgb(255, 80, 80));
 
-        //cx.canvases.insert(Entity::root(), canvas);
-
         // Build our window
         let win =
             Window { id: window.id(), context: gl_context, surface, window, should_close: false };

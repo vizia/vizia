@@ -27,7 +27,6 @@ use winit::event_loop::EventLoopBuilder;
 ))]
 use winit::platform::wayland::WindowExtWayland;
 use winit::{
-    dpi::LogicalSize,
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop, EventLoopProxy},
 };
@@ -52,6 +51,9 @@ impl From<vizia_core::events::Event> for UserEvent {
     }
 }
 
+type AppBuilder = Option<Box<dyn FnOnce(&mut Context)>>;
+type IdleCallback = Option<Box<dyn Fn(&mut Context)>>;
+
 ///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
 ///
 /// # Example
@@ -67,8 +69,8 @@ impl From<vizia_core::events::Event> for UserEvent {
 pub struct Application {
     context: Context,
     event_loop: EventLoop<UserEvent>,
-    builder: Option<Box<dyn FnOnce(&mut Context)>>,
-    on_idle: Option<Box<dyn Fn(&mut Context)>>,
+    builder: AppBuilder,
+    on_idle: IdleCallback,
     window_description: WindowDescription,
     should_poll: bool,
 }
@@ -202,7 +204,9 @@ impl Application {
             event_loop_proxy,
         );
 
-        window.window().set_visible(true);
+        // Accesskit requires that the window starts invisible until accesskit has been initialised.
+        // At this point we can set the visibility based on the desired visibility from the window description.
+        window.window().set_visible(self.window_description.visible);
 
         #[cfg(all(
             feature = "clipboard",
@@ -301,7 +305,7 @@ impl Application {
 
                         event_loop_proxy
                             .send_event(UserEvent::Event(Event::new(WindowEvent::Redraw)))
-                            .unwrap();
+                            .expect("Failed to send redraw event");
 
                         cx.mutate_window(|_, window: &Window| {
                             window.window().request_redraw();
@@ -343,14 +347,17 @@ impl Application {
                 }
 
                 winit::event::Event::RedrawRequested(_) => {
-                    // Redraw here
-                    context_draw(&mut cx);
+                    // Redraw
+                    cx.mutate_window(|cx, window: &Window| {
+                        cx.draw();
+                        window.swap_buffers();
+                    });
                 }
 
                 winit::event::Event::WindowEvent { window_id: _, event } => {
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
-                            cx.0.emit(WindowEvent::WindowClose);
+                            cx.emit_origin(WindowEvent::WindowClose);
                         }
 
                         winit::event::WindowEvent::Focused(is_focused) => {
@@ -368,19 +375,10 @@ impl Application {
                             new_inner_size,
                         } => {
                             cx.set_scale_factor(scale_factor);
-                            cx.cache().set_width(Entity::root(), new_inner_size.width as f32);
-                            cx.cache().set_height(Entity::root(), new_inner_size.height as f32);
-
-                            let logical_size: LogicalSize<f32> =
-                                new_inner_size.to_logical(scale_factor);
-
-                            cx.style()
-                                .width
-                                .insert(Entity::root(), Units::Pixels(logical_size.width));
-
-                            cx.style()
-                                .height
-                                .insert(Entity::root(), Units::Pixels(logical_size.height));
+                            cx.set_window_size(
+                                new_inner_size.width as f32,
+                                new_inner_size.height as f32,
+                            );
                             cx.needs_refresh();
                         }
 
@@ -394,6 +392,8 @@ impl Application {
                             position,
                             modifiers: _,
                         } => {
+                            // To avoid calling the hover system multiple times in one frame when multiple cursor moved
+                            // events are received, instead we set a flag here and emit the MouseMove event during MainEventsCleared.
                             if !cursor_moved {
                                 cursor_moved = true;
                                 cursor.0 = position.x as f32;
@@ -458,6 +458,7 @@ impl Application {
                             let key = virtual_key_code_to_key(
                                 input.virtual_keycode.unwrap_or(VirtualKeyCode::NoConvert),
                             );
+
                             let event = match input.state {
                                 winit::event::ElementState::Pressed => {
                                     WindowEvent::KeyDown(code, key)
@@ -479,19 +480,10 @@ impl Application {
                                 window.resize(physical_size);
                             });
 
-                            let logical_size: LogicalSize<f32> =
-                                physical_size.to_logical(cx.style().scale_factor() as f64);
-
-                            cx.style()
-                                .width
-                                .insert(Entity::root(), Units::Pixels(logical_size.width));
-
-                            cx.style()
-                                .height
-                                .insert(Entity::root(), Units::Pixels(logical_size.height));
-
-                            cx.cache().set_width(Entity::root(), physical_size.width as f32);
-                            cx.cache().set_height(Entity::root(), physical_size.height as f32);
+                            cx.set_window_size(
+                                physical_size.width as f32,
+                                physical_size.height as f32,
+                            );
 
                             cx.needs_refresh();
                         }
@@ -524,7 +516,6 @@ impl WindowModifiers for Application {
 
     fn inner_size<S: Into<WindowSize>>(mut self, size: S) -> Self {
         self.window_description.inner_size = size.into();
-        *BackendContext::new(&mut self.context).window_size() = self.window_description.inner_size;
 
         self
     }
@@ -608,11 +599,4 @@ impl WindowModifiers for Application {
 
         self
     }
-}
-
-fn context_draw(cx: &mut BackendContext) {
-    cx.mutate_window(|cx, window: &Window| {
-        cx.draw();
-        window.swap_buffers();
-    });
 }

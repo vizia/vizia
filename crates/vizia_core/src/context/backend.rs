@@ -159,6 +159,16 @@ impl<'a> BackendContext<'a> {
         self.0.style.dpi_factor = scale;
     }
 
+    pub fn set_window_size(&mut self, physical_width: f32, physical_height: f32) {
+        self.0.cache.set_width(Entity::root(), physical_width);
+        self.0.cache.set_height(Entity::root(), physical_height);
+
+        let logical_width = self.0.style.physical_to_logical(physical_width);
+        let logical_height = self.0.style.physical_to_logical(physical_width);
+        self.0.style.width.insert(Entity::root(), Units::Pixels(logical_width));
+        self.0.style.height.insert(Entity::root(), Units::Pixels(logical_height));
+    }
+
     /// Temporarily sets the current entity, calls the provided closure, and then resets the current entity back to previous.
     pub fn with_current(&mut self, e: Entity, f: impl FnOnce(&mut Context)) {
         let prev = self.0.current;

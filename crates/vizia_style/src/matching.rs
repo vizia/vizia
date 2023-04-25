@@ -41,6 +41,7 @@ mod test {
 
     bitflags! {
         /// A bitflag of possible pseudoclasses.
+        #[derive(Debug)]
         pub struct PseudoClass: u8 {
             const HOVER = 1;
             const OVER = 1 << 1;

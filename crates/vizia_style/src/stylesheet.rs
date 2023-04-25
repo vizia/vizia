@@ -37,26 +37,6 @@ impl<'i, 'o> StyleSheet<'i, 'o> {
 
         Ok(StyleSheet { rules: CssRuleList(rules), options })
     }
-    // pub fn parse(code: &'i str, options: &ParserOptions<'i>) -> Result<Self, Error<CustomParseError<'i>>> {
-    //     let mut input = ParserInput::new(&code);
-    //     let mut parser = Parser::new(&mut input);
-    //     let rule_list_parser = RuleListParser::new_for_stylesheet(&mut parser, TopLevelRuleParser::new(&options));
-
-    // }
-
-    // pub fn from_string(
-    //     string: &'i str,
-    // ) -> Result<Self, (ParseError<'i, CustomParseError<'i>>, &str)> {
-    //     let mut input = ParserInput::new(string);
-    //     let mut parser = Parser::new(&mut input);
-    //     let rule_parser = RuleParser::new();
-    //     let parsed_rules = RuleListParser::new_for_stylesheet(&mut parser, rule_parser).collect();
-
-    //     match parsed_rules {
-    //         Ok(rules) => Ok(Self { rules }),
-    //         Err(error) => Err(error),
-    //     }
-    // }
 }
 
 #[cfg(test)]
