@@ -44,6 +44,7 @@ impl<'a> BackendContext<'a> {
         }
     }
 
+    /// Adds a root window view to the context.
     pub fn add_window<W: View>(&mut self, window: W) {
         self.0.views.insert(Entity::root(), Box::new(window));
     }

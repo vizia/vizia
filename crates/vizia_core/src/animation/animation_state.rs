@@ -7,14 +7,16 @@ use crate::prelude::*;
 
 use super::{Animation, TimingFunction};
 
+/// An keyframe in an animation state.
 #[derive(Debug, Clone)]
 pub(crate) struct Keyframe<T: Interpolator> {
-    #[allow(dead_code)]
+    #[allow(dead_code)] // FIXME
     pub time: f32,
     pub value: T,
     pub timing_function: TimingFunction,
 }
 
+/// Represents an animation of a property with type `T`.
 #[derive(Clone, Debug)]
 pub(crate) struct AnimationState<T: Interpolator> {
     /// ID of the animation description.
@@ -51,6 +53,7 @@ impl<T> AnimationState<T>
 where
     T: Interpolator,
 {
+    /// Create a new animation state with the given [Animation] id.
     pub(crate) fn new(id: Animation) -> Self {
         AnimationState {
             id,

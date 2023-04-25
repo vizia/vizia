@@ -115,7 +115,7 @@ impl Event {
     /// return the message by value and consume the event. Otherwise, do nothing.
     ///
     /// # Example
-    /// ```no_run
+    /// ```
     /// # use vizia_core::prelude::*;
     /// # let cx = &mut Context::default();
     /// # use vizia_winit::application::Application;
@@ -124,19 +124,21 @@ impl Event {
     /// # }
     /// # pub enum AppEvent {
     /// #     Increment,
-    /// #     Decrement,    
+    /// #     Decrement,
     /// # }
     /// # impl Model for AppData {
     /// #     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-    /// event.take().map(|app_event| match app_event {
-    ///     AppEvent::Increment => {
-    ///         self.count += 1;
-    ///     }
+    /// if let Some(app_event) = event.take() {
+    ///     match app_event {
+    ///         AppEvent::Increment => {
+    ///             self.count += 1;
+    ///         }
     ///
-    ///     AppEvent::Decrement => {
-    ///         self.count -= 1;
+    ///         AppEvent::Decrement => {
+    ///             self.count -= 1;
+    ///         }
     ///     }
-    /// });
+    /// }
     /// #     }
     /// # }
     /// ```
@@ -159,24 +161,18 @@ impl Event {
 pub struct EventMeta {
     /// The entity that produced the event. Entity::null() for OS events or unspecified.
     pub origin: Entity,
-    /// The entity the event should be sent to.
+    /// The entity the event should be sent to (or from in the case of subtree propagation).
     pub target: Entity,
     /// How the event propagates through the tree.
     pub propagation: Propagation,
-    /// Whether the event can be consumed.
-    pub(crate) consumable: bool,
     /// Determines whether the event should continue to be propagated.
     pub(crate) consumed: bool,
-    /// Specifies an order index which is used to sort the event queue.
-    pub order: i32,
 }
 
 impl EventMeta {
     /// Consumes the event to prevent it from continuing on its propagation path.
     pub fn consume(&mut self) {
-        if self.consumable {
-            self.consumed = true;
-        }
+        self.consumed = true;
     }
 }
 
@@ -186,9 +182,7 @@ impl Default for EventMeta {
             origin: Entity::null(),
             target: Entity::root(),
             propagation: Propagation::Up,
-            consumable: true,
             consumed: false,
-            order: 0,
         }
     }
 }

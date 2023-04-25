@@ -38,6 +38,8 @@ use crate::environment::{Environment, ThemeMode};
 use crate::events::ViewHandler;
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
+
+use crate::fonts::TABLER_ICONS;
 use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
@@ -139,7 +141,7 @@ impl Context {
         }
 
         // Add icon font
-        db.load_font_data(Vec::from(fonts::TABLER_ICONS));
+        db.load_font_data(Vec::from(TABLER_ICONS));
 
         let mut result = Self {
             entity_manager: IdManager::new(),

@@ -33,7 +33,7 @@ use super::{DARK_THEME, LIGHT_THEME};
 /// desired style and layout properties of the current view.
 ///
 /// # Example
-/// ```no_run
+/// ```
 /// # use vizia_core::prelude::*;
 /// # use vizia_core::vg;
 /// # let cx = &mut Context::default();
@@ -49,7 +49,7 @@ use super::{DARK_THEME, LIGHT_THEME};
 /// impl View for CustomView {
 ///     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
 ///         event.map(|window_event, _| match window_event {
-///             WindowEvent::Press{mouse} => {
+///             WindowEvent::Press{..} => {
 ///                 // Change the view background color to red when pressed.
 ///                 cx.set_background_color(Color::red());
 ///             }
@@ -632,13 +632,9 @@ impl<'a> EventContext<'a> {
         self.style.system_flags.set(SystemFlags::REFLOW, true);
     }
 
-    // Mutate tree
-
-    // pub fn append_child(&mut self, child: Entity) {
-    //     self.tree.set_parent(child, self.current);
-    // }
-
     // TODO: Abstract this to shared trait for all contexts
+
+    // Getters
 
     /// Returns the background color of the view.
     ///

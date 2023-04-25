@@ -108,6 +108,7 @@ where
     fn make_clone(&self) -> Box<dyn FluentStore> {
         Box::new(self.clone())
     }
+
     fn bind(&self, cx: &mut Context, closure: Box<dyn Fn(&mut Context)>) {
         Binding::new(cx, self.lens.clone(), move |cx, _| closure(cx));
     }

@@ -86,10 +86,10 @@ macro_rules! get_units_property {
 macro_rules! get_color_property {
     (
         $(#[$meta:meta])*
-        $ty:ty, $name:ident
+        $name:ident
     ) => {
         $(#[$meta])*
-        pub fn $name(&self) -> $ty {
+        pub fn $name(&self) -> Color {
             let opacity = self.opacity();
             if let Some(col) = self.style.$name.get(self.current) {
                 Color::rgba(col.r(), col.g(), col.b(), (opacity * col.a() as f32) as u8)
@@ -292,7 +292,6 @@ impl<'a> DrawContext<'a> {
 
     get_color_property!(
         /// Returns the outline color of the current view.
-        Color,
         outline_color
     );
 
@@ -366,12 +365,12 @@ impl<'a> DrawContext<'a> {
         child_bottom
     );
 
-    get_color_property!(Color, background_color);
-    get_color_property!(Color, border_color);
+    get_color_property!(background_color);
+    get_color_property!(border_color);
 
-    get_color_property!(Color, selection_color);
-    get_color_property!(Color, caret_color);
-    get_color_property!(Color, font_color);
+    get_color_property!(selection_color);
+    get_color_property!(caret_color);
+    get_color_property!(font_color);
 
     /// Returns whether the current view should have its text wrapped.
     pub fn text_wrap(&self) -> bool {
@@ -1270,3 +1269,89 @@ impl<'a> DataContext for DrawContext<'a> {
         None
     }
 }
+
+// // Inside private module to hide implementation details.
+// mod internal {
+//     use crate::{
+//         prelude::{DrawContext, Entity},
+//         style::Style,
+//     };
+
+//     // Allows a modifier trait to access to context and entity from `self`.
+//     pub trait Getter: Sized {
+//         fn style(&self) -> &Style;
+//         fn entity(&self) -> Entity;
+//     }
+
+//     impl<'a> Getter for DrawContext<'a> {
+//         fn style(&self) -> &Style {
+//             &self.style
+//         }
+
+//         fn entity(&self) -> Entity {
+//             self.current
+//         }
+//     }
+// }
+
+// macro_rules! get_color_prop {
+//     (
+//         $(#[$meta:meta])*
+//         $name:ident
+//     ) => {
+//         $(#[$meta])*
+//         fn $name(&self) -> Color {
+//             if let Some(col) = self.style().$name.get(self.entity()) {
+//                 Color::rgba(col.r(), col.g(), col.b(), col.a())
+//             } else {
+//                 Color::rgba(0, 0, 0, 0)
+//             }
+//         }
+//     };
+// }
+
+// macro_rules! get_prop {
+//     (
+//         $(#[$meta:meta])*
+//         $ty:ty, $name:ident
+//     ) => {
+//         $(#[$meta])*
+//         fn $name(&self) -> $ty {
+//             self.style().$name.get(self.entity()).copied().unwrap_or_default()
+//         }
+//     };
+// }
+
+// pub trait StyleGet: internal::Getter {
+//     /// Returns the display of the current view.
+//     fn display(&self) -> Display {
+//         self.style().display.get(self.entity()).copied().unwrap_or(Display::Flex)
+//     }
+
+//     /// Returns the visibility of the current view.
+//     fn visibility(&self) -> Option<Visibility> {
+//         self.style().visibility.get(self.entity()).copied()
+//     }
+
+//     get_color_prop!(
+//         /// Returns the background color of the current view.
+//         background_color
+//     );
+
+//     get_prop!(
+//         /// Returns the opacity of the current view.
+//         Opacity,
+//         opacity
+//     );
+
+//     get_prop!(
+//         /// Returns the z-index of the current view.
+//         i32,
+//         z_index
+//     );
+
+//     // TODO: Clip Path
+
+// }
+
+// impl<'a> StyleGet for DrawContext<'a> {}
