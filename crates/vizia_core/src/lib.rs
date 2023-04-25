@@ -45,6 +45,7 @@ pub mod image {
     pub use image::*;
 }
 
+/// A collection of codepoints for built-in icons.
 pub mod icons {
     pub use super::fonts::icons::*;
 }

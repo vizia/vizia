@@ -3,7 +3,7 @@ use crate::prelude::*;
 use std::marker::PhantomData;
 use vizia_input::Code;
 
-/// A view for creating a list of items from a binding to a Vec<T>
+/// A view for creating a list of items from a binding to a `Vec<T>`
 pub struct List<L, T: 'static>
 where
     L: Lens<Target = Vec<T>>,

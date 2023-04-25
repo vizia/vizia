@@ -1,4 +1,4 @@
-//! The `Context` is where the retained data of a vizia application lives.
+//! Context types for retained state, used during view building, event handling, and drawing.
 
 mod access;
 #[doc(hidden)]
@@ -99,7 +99,7 @@ pub struct Context {
     /// `window_size` gets multplied with this factor to get the actual logical window size. If this
     /// changes during a frame, then the window will be resized at the end of the frame and a
     /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
-    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    /// [`WindowDescription::user_scale_factor`](vizia_window::WindowDescription::user_scale_factor).
     pub(crate) user_scale_factor: f64,
 
     #[cfg(feature = "clipboard")]
@@ -136,8 +136,10 @@ impl Context {
             db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
             db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
             db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
-            db.load_font_data(Vec::from(fonts::TABLER_ICONS));
         }
+
+        // Add icon font
+        db.load_font_data(Vec::from(fonts::TABLER_ICONS));
 
         let mut result = Self {
             entity_manager: IdManager::new(),
@@ -249,7 +251,7 @@ impl Context {
     /// `window_size` gets multplied with this factor to get the actual logical window size. If this
     /// changes during a frame, then the window will be resized at the end of the frame and a
     /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
-    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    /// [`WindowDescription::user_scale_factor`](vizia_window::WindowDescription::user_scale_factor).
     pub fn user_scale_factor(&self) -> f64 {
         self.user_scale_factor
     }

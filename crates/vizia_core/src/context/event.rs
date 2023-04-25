@@ -493,7 +493,10 @@ impl<'a> EventContext<'a> {
     ///
     /// # Example
     /// ```rust
-    ///
+    /// # use vizia_core::prelude::*;
+    /// # let context = &mut Context::default();
+    /// # let mut cx = &mut EventContext::new(context);
+    /// cx.toggle_class("foo", true);
     /// ```
     pub fn toggle_class(&mut self, class_name: &str, applied: bool) {
         let current = self.current();
@@ -616,7 +619,7 @@ impl<'a> EventContext<'a> {
     /// `window_size` gets multplied with this factor to get the actual logical window size. If this
     /// changes during a frame, then the window will be resized at the end of the frame and a
     /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
-    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    /// [`WindowDescription::user_scale_factor`](vizia_window::WindowDescription::user_scale_factor).
     pub fn user_scale_factor(&self) -> f64 {
         *self.user_scale_factor
     }

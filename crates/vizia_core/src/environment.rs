@@ -36,9 +36,13 @@ impl Environment {
 
 /// Events for setting the state in the [Environment].  
 pub enum EnvironmentEvent {
+    /// Set the locale used for the whole application.
     SetLocale(LanguageIdentifier),
+    /// Set the default theme mode.
     SetThemeMode(ThemeMode),
+    /// Reset the locale to use the system provided locale.
     UseSystemLocale,
+    /// Alternate between dark and light theme modes.
     ToggleThemeMode,
 }
 

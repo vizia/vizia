@@ -2,10 +2,10 @@
 //!
 //! # Stacks
 //! By default, vizia will position the children of a view one after another into a vertical column called a stack.
-//! The [`layout_type()`] modifier (or `layout-type` css property) is used to determine how a container positions its children,
+//! The [`layout_type()`](crate::modifiers::LayoutModifiers::layout_type) modifier (or `layout-type` css property) is used to determine how a container positions its children,
 //! and can be used to select between a vertical `Column`, horizontal `Row`, or `Grid`.
 //!
-//! The [`position_type()`] modifier (or `position-type` css property) is used to determine whether a child view respects the
+//! The [`position_type()`](crate::modifiers::LayoutModifiers::position_type) modifier (or `position-type` css property) is used to determine whether a child view respects the
 //! stack position determined by the parent (`parent-directed`), or whether to position itself relative to the top-left of its parent
 //! and ignore its siblings (`self-directed`).
 //!

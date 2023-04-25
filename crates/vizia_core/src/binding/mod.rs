@@ -19,7 +19,7 @@
 //!     Decrement,
 //! }
 //! ```
-//! Then we implement the [`Model`] trait on our data, which allows us to modify the it in response to an [`Event`](crate::events::Event):
+//! Then we implement the [`Model`](crate::model::Model) trait on our data, which allows us to modify the it in response to an [`Event`](crate::events::Event):
 //! ```
 //! # use vizia_core::prelude::*;
 //! # use vizia_derive::*;
@@ -192,7 +192,7 @@
 //! ```
 //!
 //! Note that even though the `count` value is `i32`, the label accepts a lens to this data because it implements `ToString` and is converted internally.
-//! If the data is the wrong type and cannot be converted internally, use the [`map()`](crate::binding::lens::LensExt::map()) method on the lens.
+//! If the data is the wrong type and cannot be converted internally, use the [`map()`](crate::binding::LensExt::map) method on the lens.
 mod lens;
 pub use lens::*;
 

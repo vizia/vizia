@@ -3,7 +3,7 @@ use cssparser::{ParseError, Parser};
 
 /// A generic type that allows any kind of dimension and percentage to be
 /// used standalone or mixed within a calc() expression.
-/// https://drafts.csswg.org/css-values-4/#mixed-percentages
+/// <https://drafts.csswg.org/css-values-4/#mixed-percentages>
 #[derive(Debug, Clone, PartialEq)]
 pub enum DimensionPercentage<D> {
     Dimension(D),

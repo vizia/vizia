@@ -70,7 +70,7 @@ impl VisitedHandlingMode {
 
 /// Which quirks mode is this document in.
 ///
-/// See: https://quirks.spec.whatwg.org/
+/// See: <https://quirks.spec.whatwg.org/>
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum QuirksMode {
     /// Quirks mode.
@@ -114,7 +114,7 @@ where
     ///
     /// When this is None, :scope will match the root element.
     ///
-    /// See https://drafts.csswg.org/selectors-4/#scope-pseudo
+    /// See <https://drafts.csswg.org/selectors-4/#scope-pseudo>
     pub scope_element: Option<OpaqueElement>,
 
     /// The current shadow host we're collecting :host rules for.

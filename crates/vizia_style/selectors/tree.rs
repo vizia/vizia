@@ -91,10 +91,10 @@ pub trait Element: Sized + Clone + Debug {
     /// Whether this element is a `link`.
     fn is_link(&self) -> bool;
 
-    /// Returns whether the element is an HTML <slot> element.
+    /// Returns whether the element is an HTML `<slot>` element.
     fn is_html_slot_element(&self) -> bool;
 
-    /// Returns the assigned <slot> element this element is assigned to.
+    /// Returns the assigned `<slot>` element this element is assigned to.
     ///
     /// Necessary for the `::slotted` pseudo-class.
     fn assigned_slot(&self) -> Option<Self> {
@@ -125,7 +125,7 @@ pub trait Element: Sized + Clone + Debug {
     /// Returns whether this element matches `:empty`.
     ///
     /// That is, whether it does not contain any child element or any non-zero-length text node.
-    /// See http://dev.w3.org/csswg/selectors-3/#empty-pseudo
+    /// See <http://dev.w3.org/csswg/selectors-3/#empty-pseudo>
     fn is_empty(&self) -> bool;
 
     /// Returns whether this element matches `:root`,
