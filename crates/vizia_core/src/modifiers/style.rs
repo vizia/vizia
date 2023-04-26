@@ -28,7 +28,7 @@ pub trait StyleModifiers: internal::Modifiable {
         // TODO - What should happen if the id already exists?
         let id = id.into();
         let entity = self.entity();
-        self.context().style.ids.insert(entity, id.clone()).expect("Could not insert id");
+        self.context().style.ids.insert(entity, id.clone());
         self.context().needs_restyle();
 
         self.context().entity_identifiers.insert(id, entity);

@@ -47,7 +47,7 @@ where
         let id = cx.entity_manager.create();
         let current = cx.current();
         cx.tree.add(id, current).expect("Failed to add to tree");
-        cx.cache.add(id).expect("Failed to add to cache");
+        cx.cache.add(id);
         cx.style.add(id);
         cx.tree.set_ignored(id, true);
 

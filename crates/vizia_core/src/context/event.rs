@@ -458,7 +458,7 @@ impl<'a> EventContext<'a> {
         } else if applied {
             let mut class_list = HashSet::new();
             class_list.insert(class_name.to_string());
-            self.style.classes.insert(current, class_list).expect("Failed to insert class name");
+            self.style.classes.insert(current, class_list);
         }
 
         self.style.needs_restyle();
@@ -595,7 +595,7 @@ impl<'a> EventContext<'a> {
     // Setters
 
     pub fn set_id(&mut self, id: &str) {
-        self.style.ids.insert(self.current, id.to_string()).unwrap()
+        self.style.ids.insert(self.current, id.to_string())
     }
 
     // Pseudoclass Setters

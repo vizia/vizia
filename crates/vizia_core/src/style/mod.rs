@@ -1068,11 +1068,9 @@ impl Style {
 
     // Add style data for the given entity.
     pub fn add(&mut self, entity: Entity) {
-        self.pseudo_classes
-            .insert(entity, PseudoClassFlags::empty())
-            .expect("Failed to add pseudoclasses");
-        self.classes.insert(entity, HashSet::new()).expect("Failed to add class list");
-        self.abilities.insert(entity, Abilities::default()).expect("Failed to add abilities");
+        self.pseudo_classes.insert(entity, PseudoClassFlags::empty());
+        self.classes.insert(entity, HashSet::new());
+        self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::all();
     }
 
@@ -1217,7 +1215,7 @@ impl Style {
     }
 
     pub fn needs_access_update(&mut self, entity: Entity) {
-        self.needs_access_update.insert(entity, true).unwrap();
+        self.needs_access_update.insert(entity, true);
     }
 
     pub fn should_redraw<F: FnOnce()>(&mut self, f: F) {

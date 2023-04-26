@@ -127,7 +127,7 @@ impl Context {
     /// Creates a new context.
     pub fn new(window_size: WindowSize, user_scale_factor: f64) -> Self {
         let mut cache = CachedData::default();
-        cache.add(Entity::root()).expect("Failed to add entity to cache");
+        cache.add(Entity::root());
 
         let mut db = Database::new();
         db.load_system_fonts();
@@ -210,7 +210,7 @@ impl Context {
         result.entity_manager.create();
         result.set_default_font(&["Roboto Regular"]);
 
-        result.style.role.insert(Entity::root(), Role::Window).unwrap();
+        result.style.role.insert(Entity::root(), Role::Window);
 
         result
     }

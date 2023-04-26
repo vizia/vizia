@@ -4,7 +4,6 @@
 use crate::prelude::*;
 use crate::style::Abilities;
 use vizia_storage::SparseSet;
-use vizia_storage::SparseSetError;
 
 /// Computed properties used for layout and drawing.
 
@@ -45,11 +44,9 @@ pub struct CachedData {
 }
 
 impl CachedData {
-    pub(crate) fn add(&mut self, entity: Entity) -> Result<(), SparseSetError> {
-        self.bounds.insert(entity, Default::default())?;
-        self.abilities.insert(entity, Default::default())?;
-
-        Ok(())
+    pub(crate) fn add(&mut self, entity: Entity) {
+        self.bounds.insert(entity, Default::default());
+        self.abilities.insert(entity, Default::default());
     }
 
     pub(crate) fn remove(&mut self, entity: Entity) {

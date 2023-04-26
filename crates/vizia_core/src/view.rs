@@ -122,7 +122,7 @@ pub trait View: 'static + Sized {
         let id = cx.entity_manager.create();
         let current = cx.current();
         cx.tree.add(id, current).expect("Failed to add to tree");
-        cx.cache.add(id).expect("Failed to add to cache");
+        cx.cache.add(id);
         cx.style.add(id);
         cx.views.insert(id, Box::new(self));
         let parent_id = cx.tree.get_layout_parent(id).unwrap();
@@ -152,7 +152,7 @@ pub trait View: 'static + Sized {
             });
         }
 
-        cx.data.insert(id, ModelDataStore::default()).expect("Failed to insert model data store");
+        cx.data.insert(id, ModelDataStore::default());
 
         let handle = Handle { entity: id, p: Default::default(), cx };
 

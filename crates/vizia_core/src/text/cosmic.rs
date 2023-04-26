@@ -93,7 +93,7 @@ impl TextContext {
     }
 
     pub(crate) fn set_bounds(&mut self, entity: Entity, size: BoundingBox) {
-        self.bounds.insert(entity, size).unwrap();
+        self.bounds.insert(entity, size);
     }
 
     pub(crate) fn get_bounds(&self, entity: Entity) -> Option<BoundingBox> {

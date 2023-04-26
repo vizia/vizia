@@ -1,4 +1,4 @@
-use crate::{Entry, SparseSetError, SparseSetIndex};
+use crate::{Entry, SparseSetIndex};
 use vizia_id::GenerationalId;
 
 pub type SparseSet<V> = SparseSetGeneric<usize, V>;
@@ -67,15 +67,17 @@ where
         self.dense_idx(key).map(move |dense_idx| &mut self.dense[dense_idx.index()].value)
     }
 
-    /// Inserts data for a given key into the sparse set
-    pub fn insert<K: GenerationalId>(&mut self, key: K, value: V) -> Result<(), SparseSetError> {
+    /// Inserts data for a given key into the sparse set.
+    ///
+    /// Panics if the key is null.
+    pub fn insert<K: GenerationalId>(&mut self, key: K, value: V) {
         if key.is_null() {
-            return Err(SparseSetError::NullKey);
+            panic!("Key is null");
         }
 
         if let Some(stored_value) = self.get_mut(key) {
             *stored_value = value;
-            return Ok(());
+            return;
         }
 
         let sparse_idx = key.index();
@@ -86,8 +88,6 @@ where
 
         self.sparse[sparse_idx] = I::new(self.dense.len());
         self.dense.push(Entry { key: I::new(sparse_idx), value });
-
-        Ok(())
     }
 
     /// Removes the data for a given key from the sparse set
@@ -139,7 +139,7 @@ mod tests {
     fn insert() {
         let mut sparse_set = SparseSetGeneric::<usize, usize>::new();
 
-        assert_eq!(sparse_set.insert(Entity::new(0, 0), 42), Ok(()));
+        sparse_set.insert(Entity::new(0, 0), 42);
         assert_eq!(sparse_set.sparse, [0]);
         assert_eq!(sparse_set.dense[0].key, 0);
         assert_eq!(sparse_set.dense[0].value, 42);
@@ -150,8 +150,8 @@ mod tests {
     fn multiple_insert() {
         let mut sparse_set = SparseSetGeneric::<usize, usize>::new();
 
-        assert_eq!(sparse_set.insert(Entity::new(0, 0), 42), Ok(()));
-        assert_eq!(sparse_set.insert(Entity::new(1, 0), 69), Ok(()));
+        sparse_set.insert(Entity::new(0, 0), 42);
+        sparse_set.insert(Entity::new(1, 0), 69);
         assert_eq!(sparse_set.dense[0].key, 0);
         assert_eq!(sparse_set.dense[0].value, 42);
         assert_eq!(sparse_set.dense[1].key, 1);
@@ -163,20 +163,21 @@ mod tests {
     fn overlapping_insert() {
         let mut sparse_set = SparseSetGeneric::<usize, usize>::new();
 
-        assert_eq!(sparse_set.insert(Entity::new(0, 0), 42), Ok(()));
+        sparse_set.insert(Entity::new(0, 0), 42);
         assert_eq!(sparse_set.dense[0].key, 0);
         assert_eq!(sparse_set.dense[0].value, 42);
-        assert_eq!(sparse_set.insert(Entity::new(0, 0), 69), Ok(()));
+        sparse_set.insert(Entity::new(0, 0), 69);
         assert_eq!(sparse_set.dense[0].key, 0);
         assert_eq!(sparse_set.dense[0].value, 69);
     }
 
     /// Test inserting data with a null id
     #[test]
+    #[should_panic]
     fn insert_invalid() {
         let mut sparse_set = SparseSetGeneric::<usize, usize>::new();
 
-        assert_eq!(sparse_set.insert(Entity::null(), 42), Err(SparseSetError::NullKey));
+        sparse_set.insert(Entity::null(), 42);
     }
 
     /// Test removing item when sparse set contains only one item
@@ -184,7 +185,7 @@ mod tests {
     fn remove_single() {
         let mut sparse_set = SparseSetGeneric::<usize, usize>::new();
 
-        assert_eq!(sparse_set.insert(Entity::new(0, 0), 42), Ok(()));
+        sparse_set.insert(Entity::new(0, 0), 42);
         assert_eq!(sparse_set.sparse, [0]);
         assert_eq!(sparse_set.dense[0].key, 0);
         assert_eq!(sparse_set.dense[0].value, 42);
@@ -196,8 +197,8 @@ mod tests {
     fn remove_first() {
         let mut sparse_set = SparseSetGeneric::<usize, usize>::new();
 
-        assert_eq!(sparse_set.insert(Entity::new(0, 0), 42), Ok(()));
-        assert_eq!(sparse_set.insert(Entity::new(1, 0), 69), Ok(()));
+        sparse_set.insert(Entity::new(0, 0), 42);
+        sparse_set.insert(Entity::new(1, 0), 69);
         assert_eq!(sparse_set.sparse, [0, 1]);
         assert_eq!(sparse_set.dense[0].key, 0);
         assert_eq!(sparse_set.dense[0].value, 42);
@@ -211,8 +212,8 @@ mod tests {
     fn remove_last() {
         let mut sparse_set = SparseSetGeneric::<usize, usize>::new();
 
-        assert_eq!(sparse_set.insert(Entity::new(0, 0), 42), Ok(()));
-        assert_eq!(sparse_set.insert(Entity::new(1, 0), 69), Ok(()));
+        sparse_set.insert(Entity::new(0, 0), 42);
+        sparse_set.insert(Entity::new(1, 0), 69);
         assert_eq!(sparse_set.sparse, [0, 1]);
         assert_eq!(sparse_set.dense[0].key, 0);
         assert_eq!(sparse_set.dense[0].value, 42);
@@ -226,9 +227,9 @@ mod tests {
     fn remove_middle() {
         let mut sparse_set = SparseSetGeneric::<usize, usize>::new();
 
-        assert_eq!(sparse_set.insert(Entity::new(0, 0), 42), Ok(()));
-        assert_eq!(sparse_set.insert(Entity::new(1, 0), 69), Ok(()));
-        assert_eq!(sparse_set.insert(Entity::new(2, 0), 33), Ok(()));
+        sparse_set.insert(Entity::new(0, 0), 42);
+        sparse_set.insert(Entity::new(1, 0), 69);
+        sparse_set.insert(Entity::new(2, 0), 33);
         assert_eq!(sparse_set.sparse, [0, 1, 2]);
         assert_eq!(sparse_set.dense[0].key, 0);
         assert_eq!(sparse_set.dense[0].value, 42);
@@ -244,9 +245,9 @@ mod tests {
     fn remove_sparse() {
         let mut sparse_set = SparseSetGeneric::<usize, usize>::new();
 
-        assert_eq!(sparse_set.insert(Entity::new(0, 0), 42), Ok(()));
-        assert_eq!(sparse_set.insert(Entity::new(12, 0), 69), Ok(()));
-        assert_eq!(sparse_set.insert(Entity::new(5, 0), 33), Ok(()));
+        sparse_set.insert(Entity::new(0, 0), 42);
+        sparse_set.insert(Entity::new(12, 0), 69);
+        sparse_set.insert(Entity::new(5, 0), 33);
 
         assert_eq!(
             sparse_set.sparse,

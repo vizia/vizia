@@ -12,7 +12,7 @@ pub trait TextModifiers: internal::Modifiable {
             let text_data = val.to_string();
             cx.text_context.set_text(entity, &text_data);
 
-            cx.style.needs_text_layout.insert(entity, true).unwrap();
+            cx.style.needs_text_layout.insert(entity, true);
             cx.needs_relayout();
             cx.needs_redraw();
         });
@@ -65,7 +65,7 @@ pub trait TextModifiers: internal::Modifiable {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             cx.style.font_size.insert(entity, v.into());
-            cx.style.needs_text_layout.insert(entity, true).unwrap();
+            cx.style.needs_text_layout.insert(entity, true);
         });
         self
     }
