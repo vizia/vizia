@@ -156,7 +156,7 @@ pub trait StyleModifiers: internal::Modifiable {
     modifier!(
         /// Sets whether the view should be rendered.
         ///
-        /// The layout system will still compute the size and position of an invisible view.
+        /// The layout system will still compute the size and position of an invisible (hidden) view.
         visibility,
         Visibility,
         SystemFlags::REDRAW
@@ -164,20 +164,22 @@ pub trait StyleModifiers: internal::Modifiable {
 
     modifier!(
         /// Sets the opacity of the view.
+        ///
+        /// Exects a value between 0.0 (transparent) and 1.0 (opaque).
         opacity,
         Opacity,
         SystemFlags::REDRAW
     );
 
-    /// Sets the z-order index of the view.
+    /// Sets the z-index of the view.
     ///
-    /// Views with a higher z-order will be rendered on top of those with a lower z-order.
-    /// Views with the same z-order are rendered in tree order.
-    fn z_order<U: Into<i32>>(mut self, value: impl Res<U>) -> Self {
+    /// Views with a higher z-index will be rendered on top of those with a lower z-order.
+    /// Views with the same z-index are rendered in tree order.
+    fn z_index<U: Into<i32>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.into();
-            cx.tree.set_z_order(entity, value);
+            cx.tree.set_z_index(entity, value);
             cx.needs_redraw();
         });
 

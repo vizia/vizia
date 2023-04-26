@@ -7,7 +7,7 @@ fn main() {
                 .size(Pixels(50.0))
                 .background_color(RGBA::GREEN)
                 .position_type(PositionType::SelfDirected)
-                .z_order(1);
+                .z_index(1);
             Element::new(cx)
                 .size(Pixels(50.0))
                 .background_color(RGBA::BLUE)

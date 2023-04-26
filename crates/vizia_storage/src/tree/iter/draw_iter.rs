@@ -10,7 +10,7 @@ where
 {
     tree: &'a Tree<I>,
     tours: DoubleEndedTreeTour<I>,
-    current_z_order: i32,
+    current_z_index: i32,
     queue: BinaryHeap<ZEntity<I>>,
 }
 
@@ -25,7 +25,7 @@ where
     pub fn subtree(tree: &'a Tree<I>, root: I) -> Self {
         Self {
             tree,
-            current_z_order: 0,
+            current_z_index: 0,
             tours: DoubleEndedTreeTour::new_same(Some(root)),
             queue: BinaryHeap::new(),
         }
@@ -45,12 +45,12 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         let result = self.tours.next_with(self.tree, |node, direction| match direction {
             TourDirection::Entering => {
-                let z_order = self.tree.z_order(node);
+                let z_index = self.tree.z_index(node);
                 // If z-order is higher than current, store the node in a sorted queue for later and skip the subtree.
                 if self.tree.is_ignored(node) {
                     (None, TourStep::EnterFirstChild)
-                } else if z_order > self.current_z_order {
-                    self.queue.push(ZEntity(z_order, node));
+                } else if z_index > self.current_z_index {
+                    self.queue.push(ZEntity(z_index, node));
                     (None, TourStep::EnterNextSibling)
                 } else {
                     (Some(node), TourStep::EnterFirstChild)
@@ -64,7 +64,7 @@ where
             // and continue iterating with the new z-order.
             let node = self.queue.pop().unwrap().1;
             self.tours = DoubleEndedTreeTour::new_same(Some(node));
-            self.current_z_order = self.tree.z_order(node);
+            self.current_z_index = self.tree.z_index(node);
             return self.next();
         }
 
@@ -122,9 +122,9 @@ mod tests {
         tree.add(baa, ba).unwrap();
         tree.add(bb, b).unwrap();
         tree.add(c, root).unwrap();
-        // tree.set_z_order(a, 5);
-        tree.set_z_order(ba, 10);
-        // tree.set_z_order(baa, 7);
+        // tree.set_z_index(a, 5);
+        tree.set_z_index(ba, 10);
+        // tree.set_z_index(baa, 7);
 
         let mut iter = DrawIterator::full(&mut tree);
 

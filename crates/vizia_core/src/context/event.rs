@@ -5,7 +5,7 @@ use std::error::Error;
 
 use femtovg::Transform2D;
 use fnv::FnvHashMap;
-use vizia_style::ClipPath;
+use vizia_style::{ClipPath, Filter, Scale, Translate};
 
 use crate::animation::Interpolator;
 use crate::cache::CachedData;
@@ -673,7 +673,98 @@ impl<'a> EventContext<'a> {
         self.style.live.insert(self.current, live);
     }
 
-    // TODO: Labelled by
+    /// Sets the view, by id name, which labels the current view for accessibility.  
+    pub fn labelled_by(&mut self, id: &str) {
+        if let Some(entity) = self.resolve_entity_identifier(id) {
+            self.style.labelled_by.insert(self.current, entity);
+        }
+    }
+
+    /// Sets whether the view should be explicitely hidden from accessibility.
+    pub fn set_hidden(&mut self, hidden: bool) {
+        self.style.hidden.insert(self.current, hidden)
+    }
+
+    /// Sets a text value used for accessbility for the current view.
+    pub fn text_value(&mut self, text: &str) {
+        self.style.text_value.insert(self.current, text.to_string());
+    }
+
+    /// Sets a numeric value used for accessibility for the current view.
+    pub fn numeric_value(&mut self, value: f64) {
+        self.style.numeric_value.insert(self.current, value);
+    }
+
+    /// Sets the display type of the current view.
+    ///
+    /// A display value of `Display::None` causes the view to be ignored by both layout and rendering.
+    pub fn set_display(&mut self, display: Display) {
+        self.style.display.insert(self.current, display);
+    }
+
+    /// Sets the visibility of the current view.
+    ///
+    /// The layout system will still compute the size and position of an invisible (hidden) view.
+    pub fn set_visibility(&mut self, visibility: Visibility) {
+        self.style.visibility.insert(self.current, visibility);
+    }
+
+    /// Sets the opacity of the current view.
+    ///
+    /// Expects a number between 0.0 (transparent) and 1.0 (opaque).
+    pub fn set_opacity(&mut self, opacity: f32) {
+        self.style.opacity.insert(self.current, Opacity(opacity));
+    }
+
+    /// Sets the z-index of the current view.
+    pub fn set_z_index(&mut self, z_index: i32) {
+        self.style.z_index.insert(self.current, z_index);
+    }
+
+    /// Sets the clip path of the current view.
+    pub fn set_clip_path(&mut self, clip_path: ClipPath) {
+        self.style.clip_path.insert(self.current, clip_path);
+    }
+
+    /// Sets the backdrop filter of the current view.
+    pub fn set_backdrop_filter(&mut self, filter: Filter) {
+        self.style.backdrop_filter.insert(self.current, filter);
+    }
+
+    /// Sets the transform of the current view.
+    pub fn set_transform(&mut self, transform: impl Into<Vec<Transform>>) {
+        self.style.transform.insert(self.current, transform.into());
+    }
+
+    /// Sets the transform origin of the current view.
+    pub fn set_transform_origin(&mut self, transform_origin: Translate) {
+        self.style.transform_origin.insert(self.current, transform_origin);
+    }
+
+    /// Sets the translation of the current view.
+    pub fn set_translate(&mut self, translate: impl Into<Translate>) {
+        self.style.translate.insert(self.current, translate.into());
+    }
+
+    /// Sets the rotation of the current view.
+    pub fn set_rotate(&mut self, angle: impl Into<Angle>) {
+        self.style.rotate.insert(self.current, angle.into());
+    }
+
+    /// Sets the scale of the current view.
+    pub fn set_scale(&mut self, scale: impl Into<Scale>) {
+        self.style.scale.insert(self.current, scale.into());
+    }
+
+    /// Sets the overflow type on the horizontal axis of the current view.
+    pub fn set_overflowx(&mut self, overflowx: impl Into<Overflow>) {
+        self.style.overflowx.insert(self.current, overflowx.into());
+    }
+
+    /// Sets the overflow type on the vertical axis of the current view.
+    pub fn set_overflowy(&mut self, overflowy: impl Into<Overflow>) {
+        self.style.overflowy.insert(self.current, overflowy.into());
+    }
 
     pub fn set_background_color(&mut self, background_color: Color) {
         self.style.background_color.insert(self.current, background_color);
@@ -689,12 +780,14 @@ impl<'a> DataContext for EventContext<'a> {
         }
 
         for entity in self.current.parent_iter(self.tree) {
+            // Return model data.
             if let Some(model_data_store) = self.data.get(entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }
 
+            // Return view data.
             if let Some(view_handler) = self.views.get(&entity) {
                 if let Some(data) = view_handler.downcast_ref::<T>() {
                     return Some(data);

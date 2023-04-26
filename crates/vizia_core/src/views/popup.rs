@@ -62,7 +62,7 @@ where
             .role(Role::Dialog)
             .checked(lens)
             .position_type(PositionType::SelfDirected)
-            .z_order(100)
+            .z_index(100)
     }
 }
 

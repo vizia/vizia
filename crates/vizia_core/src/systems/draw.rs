@@ -59,9 +59,9 @@ fn draw_entity(
         return;
     }
 
-    let z_order = cx.tree.z_order(current);
-    if z_order > current_z {
-        queue.push(ZEntity { index: z_order, entity: current, opacity: cx.opacity, visible });
+    let z_index = cx.tree.z_index(current);
+    if z_index > current_z {
+        queue.push(ZEntity { index: z_index, entity: current, opacity: cx.opacity, visible });
         return;
     }
 

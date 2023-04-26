@@ -7,7 +7,7 @@ impl Tooltip {
         Self {}
             .build(cx, |cx| (content)(cx))
             .position_type(PositionType::SelfDirected)
-            .z_order(100)
+            .z_index(100)
             .size(Auto)
             .top(Percentage(100.0))
             .translate((Pixels(0.0), Pixels(10.0)))

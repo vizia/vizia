@@ -188,7 +188,7 @@ impl MenuStack {
                 MenuData::default().build(cx);
                 builder(cx);
             })
-            .z_order(100)
+            .z_index(100)
     }
 
     pub fn new_vertical<F: FnOnce(&mut Context)>(cx: &mut Context, builder: F) -> Handle<'_, Self> {

@@ -92,9 +92,9 @@ fn hover_entity(
         return;
     }
 
-    let z_order = cx.tree.z_order(cx.current);
-    if z_order > current_z {
-        queue.push(ZEntity { index: z_order, entity: cx.current });
+    let z_index = cx.tree.z_index(cx.current);
+    if z_index > current_z {
+        queue.push(ZEntity { index: z_index, entity: cx.current });
         return;
     }
 

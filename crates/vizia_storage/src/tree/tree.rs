@@ -14,7 +14,7 @@ where
     pub ignored: Vec<bool>,
     pub lock_focus_within: Vec<bool>,
     pub changed: bool,
-    pub z_order: Vec<i32>,
+    pub z_index: Vec<i32>,
 }
 
 impl<I> Tree<I>
@@ -31,7 +31,7 @@ where
             ignored: vec![false],
             lock_focus_within: vec![true],
             changed: true,
-            z_order: vec![0],
+            z_index: vec![0],
         }
     }
 
@@ -105,8 +105,8 @@ where
         self.ignored.get(entity.index()).map_or_else(|| false, |ignored| *ignored)
     }
 
-    pub fn z_order(&self, entity: I) -> i32 {
-        self.z_order.get(entity.index()).copied().unwrap_or_default()
+    pub fn z_index(&self, entity: I) -> i32 {
+        self.z_index.get(entity.index()).copied().unwrap_or_default()
     }
 
     /// Returns the first ancestor to have the lock_focus_within flag set
@@ -463,9 +463,9 @@ where
         }
     }
 
-    pub fn set_z_order(&mut self, entity: I, index: i32) {
-        if let Some(z_order) = self.z_order.get_mut(entity.index()) {
-            *z_order = index;
+    pub fn set_z_index(&mut self, entity: I, index: i32) {
+        if let Some(z_index) = self.z_index.get_mut(entity.index()) {
+            *z_index = index;
         }
     }
 
@@ -496,7 +496,7 @@ where
             self.prev_sibling.resize(entity_index + 1, None);
             self.ignored.resize(entity_index + 1, false);
             self.lock_focus_within.resize(entity_index + 1, false);
-            self.z_order.resize(entity_index + 1, 0);
+            self.z_index.resize(entity_index + 1, 0);
         }
 
         self.parent[entity_index] = Some(parent);
@@ -505,7 +505,7 @@ where
         self.prev_sibling[entity_index] = None;
         self.ignored[entity_index] = false;
         self.lock_focus_within[entity_index] = false;
-        self.z_order[entity_index] = 0;
+        self.z_index[entity_index] = 0;
 
         // If the parent has no first child then this entity is the first child
         if self.first_child[parent_index].is_none() {
