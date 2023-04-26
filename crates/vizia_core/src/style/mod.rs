@@ -165,7 +165,7 @@ pub struct Style {
 
     // Accessibility Properties
     pub name: StyleSet<String>,
-    pub roles: SparseSet<Role>,
+    pub role: SparseSet<Role>,
     pub default_action_verb: SparseSet<DefaultActionVerb>,
     pub live: SparseSet<Live>,
     pub labelled_by: SparseSet<Entity>,
@@ -1084,7 +1084,7 @@ impl Style {
         self.disabled.remove(entity);
         self.abilities.remove(entity);
 
-        self.roles.remove(entity);
+        self.role.remove(entity);
         self.default_action_verb.remove(entity);
         self.live.remove(entity);
         self.labelled_by.remove(entity);

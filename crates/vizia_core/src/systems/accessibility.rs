@@ -77,7 +77,7 @@ pub(crate) fn get_access_node(
 ) -> Option<AccessNode> {
     let mut node_builder = NodeBuilder::default();
 
-    if let Some(role) = cx.style.roles.get(entity) {
+    if let Some(role) = cx.style.role.get(entity) {
         node_builder.set_role(*role);
     }
 

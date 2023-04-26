@@ -210,7 +210,7 @@ impl Context {
         result.entity_manager.create();
         result.set_default_font(&["Roboto Regular"]);
 
-        result.style.roles.insert(Entity::root(), Role::Window).unwrap();
+        result.style.role.insert(Entity::root(), Role::Window).unwrap();
 
         result
     }

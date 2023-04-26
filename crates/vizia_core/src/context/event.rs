@@ -419,57 +419,6 @@ impl<'a> EventContext<'a> {
         *self.drop_data = Some(data.into())
     }
 
-    /// Set the active state for the current view.
-    ///
-    /// Active elements can be selected with the `:active` CSS pseudo-class selector:
-    /// ```css
-    /// element:active {
-    ///     background-color: red;
-    /// }
-    /// ```
-    pub fn set_active(&mut self, active: bool) {
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(self.current) {
-            pseudo_classes.set(PseudoClassFlags::ACTIVE, active);
-        }
-
-        self.style.needs_restyle();
-    }
-
-    /// Sets the hover state of the current view.
-    ///
-    /// Hovered elements can be selected with the `:hover` CSS pseudo-class selector:
-    /// ```css
-    /// element:hover {
-    ///     background-color: red;
-    /// }
-    /// ```
-    /// Typically this is set by the hover system and should not be set manually.
-    pub fn set_hover(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClassFlags::HOVER, flag);
-        }
-
-        self.style.needs_restyle();
-    }
-
-    /// Sets the checked state of the current view.
-    ///
-    /// Checked elements can be selected with the `:checked` CSS pseudo-class selector:
-    /// ```css
-    /// element:checked {
-    ///     background-color: red;
-    /// }
-    /// ```
-    pub fn set_checked(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClassFlags::CHECKED, flag);
-        }
-
-        self.style.needs_restyle();
-    }
-
     /// Get the contents of the system clipboard.
     ///
     /// This may fail for a variety of backend-specific reasons.
@@ -644,6 +593,88 @@ impl<'a> EventContext<'a> {
     }
 
     // Setters
+
+    pub fn set_id(&mut self, id: &str) {
+        self.style.ids.insert(self.current, id.to_string()).unwrap()
+    }
+
+    // Pseudoclass Setters
+
+    /// Sets the hover state of the current view.
+    ///
+    /// Hovered elements can be selected with the `:hover` CSS pseudo-class selector:
+    /// ```css
+    /// element:hover {
+    ///     background-color: red;
+    /// }
+    /// ```
+    /// Typically this is set by the hover system and should not be set manually.
+    pub fn set_hover(&mut self, flag: bool) {
+        let current = self.current();
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
+            pseudo_classes.set(PseudoClassFlags::HOVER, flag);
+        }
+
+        self.style.needs_restyle();
+    }
+
+    /// Set the active state for the current view.
+    ///
+    /// Active elements can be selected with the `:active` CSS pseudo-class selector:
+    /// ```css
+    /// element:active {
+    ///     background-color: red;
+    /// }
+    /// ```
+    pub fn set_active(&mut self, active: bool) {
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(self.current) {
+            pseudo_classes.set(PseudoClassFlags::ACTIVE, active);
+        }
+
+        self.style.needs_restyle();
+    }
+
+    /// Sets the checked state of the current view.
+    ///
+    /// Checked elements can be selected with the `:checked` CSS pseudo-class selector:
+    /// ```css
+    /// element:checked {
+    ///     background-color: red;
+    /// }
+    /// ```
+    pub fn set_checked(&mut self, flag: bool) {
+        let current = self.current();
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
+            pseudo_classes.set(PseudoClassFlags::CHECKED, flag);
+        }
+
+        self.style.needs_restyle();
+    }
+
+    // Accessibility Properties
+
+    /// Sets the accessibility name of the view.
+    pub fn set_name(&mut self, name: &str) {
+        self.style.name.insert(self.current, name.to_string());
+    }
+
+    /// Sets the accessibility role of the view.
+    pub fn set_role(&mut self, role: Role) {
+        self.style.role.insert(self.current, role);
+    }
+
+    /// Sets the accessibility default action verb of the view.
+    pub fn set_default_action_verb(&mut self, default_action_verb: DefaultActionVerb) {
+        self.style.default_action_verb.insert(self.current, default_action_verb);
+    }
+
+    /// Sets the view to be an accessibility live region.
+    pub fn set_live(&mut self, live: Live) {
+        self.style.live.insert(self.current, live);
+    }
+
+    // TODO: Labelled by
+
     pub fn set_background_color(&mut self, background_color: Color) {
         self.style.background_color.insert(self.current, background_color);
         self.needs_redraw();

@@ -7,7 +7,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     fn role(mut self, role: Role) -> Self {
         let id = self.entity();
 
-        self.context().style.roles.insert(id, role).unwrap();
+        self.context().style.role.insert(id, role).unwrap();
 
         self.context().style.needs_access_update(id);
 
