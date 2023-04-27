@@ -32,9 +32,9 @@ pub(crate) mod node;
 
 pub use morphorm::{LayoutType, PositionType, Units};
 
-pub mod bounding_box;
+pub mod bounds;
 
-pub use bounding_box::*;
+pub use bounds::*;
 
 use crate::{
     context::Context,

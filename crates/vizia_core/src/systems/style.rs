@@ -1,11 +1,11 @@
 use crate::{
     events::ViewHandler,
     prelude::*,
-    style::{Abilities, PseudoClassFlags, Rule, Style, SystemFlags},
+    style::{PseudoClassFlags, Rule, Style, SystemFlags},
 };
 use fnv::FnvHashMap;
 use vizia_id::GenerationalId;
-use vizia_storage::{DrawIterator, LayoutTreeIterator};
+use vizia_storage::LayoutTreeIterator;
 use vizia_style::{
     matches_selector_list,
     selectors::{
@@ -265,31 +265,6 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context) {
             cx.style.font_style.inherit_shared(entity, parent);
             cx.style.caret_color.inherit_shared(entity, parent);
             cx.style.selection_color.inherit_shared(entity, parent);
-        }
-    }
-}
-
-/// TODO: Move this to the hover system
-pub(crate) fn hoverability_system(cx: &mut Context) {
-    let draw_tree = DrawIterator::full(&cx.tree);
-
-    for entity in draw_tree {
-        if entity == Entity::root() {
-            continue;
-        }
-
-        if cx.tree.is_ignored(entity) {
-            continue;
-        }
-
-        let parent = cx.tree.get_layout_parent(entity).unwrap();
-
-        if !cx.cache.get_hoverability(parent) {
-            cx.cache.set_hoverability(entity, false);
-        } else if let Some(abilities) = cx.style.abilities.get(entity) {
-            cx.cache.set_hoverability(entity, abilities.contains(Abilities::HOVERABLE));
-        } else {
-            cx.cache.set_hoverability(entity, false);
         }
     }
 }
@@ -644,8 +619,6 @@ pub(crate) fn compute_matched_rules(
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
     if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
-        hoverability_system(cx);
-
         let iterator = LayoutTreeIterator::full(&cx.tree);
 
         for entity in iterator {

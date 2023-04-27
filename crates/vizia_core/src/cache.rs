@@ -2,36 +2,7 @@
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
 use crate::prelude::*;
-use crate::style::Abilities;
 use vizia_storage::SparseSet;
-
-/// Computed properties used for layout and drawing.
-
-#[derive(Clone, Copy, Debug)]
-struct Pos {
-    pub x: f32,
-    pub y: f32,
-}
-
-impl Default for Pos {
-    fn default() -> Self {
-        Pos { x: 0.0, y: 0.0 }
-    }
-}
-
-impl std::ops::Add for Pos {
-    type Output = Pos;
-
-    fn add(self, other: Pos) -> Self {
-        Pos { x: self.x + other.x, y: self.y + other.y }
-    }
-}
-
-#[derive(Debug, Default, Clone, PartialEq)]
-pub(crate) struct Size {
-    pub width: f32,
-    pub height: f32,
-}
 
 /// Stores data which can be cached between system runs.
 ///
@@ -40,18 +11,15 @@ pub(crate) struct Size {
 #[derive(Default)]
 pub struct CachedData {
     pub(crate) bounds: SparseSet<BoundingBox>,
-    pub(crate) abilities: SparseSet<Abilities>,
 }
 
 impl CachedData {
     pub(crate) fn add(&mut self, entity: Entity) {
         self.bounds.insert(entity, Default::default());
-        self.abilities.insert(entity, Default::default());
     }
 
     pub(crate) fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
-        self.abilities.remove(entity);
     }
 
     /// Returns the bounding box of the entity, determined by the layout system.
@@ -79,41 +47,31 @@ impl CachedData {
         self.bounds.get(entity).cloned().unwrap_or_default().h
     }
 
+    /// Sets the x position of the entity.
     pub fn set_posx(&mut self, entity: Entity, val: f32) {
         if let Some(bounds) = self.bounds.get_mut(entity) {
             bounds.x = val;
         }
     }
 
+    /// Sets the y position of the entity.
     pub fn set_posy(&mut self, entity: Entity, val: f32) {
         if let Some(bounds) = self.bounds.get_mut(entity) {
             bounds.y = val;
         }
     }
 
+    /// Sets the width of the entity.
     pub fn set_width(&mut self, entity: Entity, val: f32) {
         if let Some(bounds) = self.bounds.get_mut(entity) {
             bounds.w = val;
         }
     }
 
+    /// Sets the height of the entity.
     pub fn set_height(&mut self, entity: Entity, val: f32) {
         if let Some(bounds) = self.bounds.get_mut(entity) {
             bounds.h = val;
-        }
-    }
-
-    pub fn get_hoverability(&self, entity: Entity) -> bool {
-        if let Some(abilities) = self.abilities.get(entity) {
-            abilities.contains(Abilities::HOVERABLE)
-        } else {
-            false
-        }
-    }
-
-    pub(crate) fn set_hoverability(&mut self, entity: Entity, val: bool) {
-        if let Some(abilities) = self.abilities.get_mut(entity) {
-            abilities.set(Abilities::HOVERABLE, val);
         }
     }
 }

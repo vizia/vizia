@@ -14,7 +14,9 @@ use crate::{binding::Lens, context::EventContext, events::Event};
 /// A model for system specific state which can be accessed by any model or view.
 #[derive(Lens)]
 pub struct Environment {
+    // The locale used for localization.
     pub locale: LanguageIdentifier,
+    // The theme mode used when using the built-in theming.
     pub theme_mode: ThemeMode,
 
     pub tooltips_visible: bool,
