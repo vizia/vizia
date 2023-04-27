@@ -3,14 +3,16 @@
 button {
     width: auto;
     height: 32px;
-    child-left: 8px;
-    child-right: 8px;
+    child-left: 1s;
+    child-right: 1s;
     child-top: 1s;
     child-bottom: 1s;
 }
 
 button label {
     child-space: 1s;
+    min-left: 8px;
+    min-right: 8px;
 }
 
 button.icon {
@@ -375,6 +377,10 @@ notification .icon label {
 }
 
 /* Picklist */
+
+picklist {
+    size: auto;
+}
 
 /* Popup */
 

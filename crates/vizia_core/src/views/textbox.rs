@@ -40,6 +40,7 @@ pub struct Textbox<L: Lens> {
     transform: (f32, f32),
     on_edit: Option<Box<dyn Fn(&mut EventContext, String) + Send + Sync>>,
     on_submit: Option<Box<dyn Fn(&mut EventContext, String, bool) + Send + Sync>>,
+    validate: Option<Box<dyn Fn(&String) -> bool>>,
 }
 
 // Determines whether the enter key submits the text or inserts a new line.
@@ -75,21 +76,27 @@ where
             transform: (0.0, 0.0),
             on_edit: None,
             on_submit: None,
+            validate: None,
         }
         .build(cx, move |cx| {
             let parent = cx.current;
 
             Binding::new(cx, lens, move |cx, text| {
-                let text_str = text.view(
-                    cx.data().expect("Failed to find data, is it built into the tree?"),
-                    |text| text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned()),
-                );
+                let mut ex = EventContext::new(cx);
+                ex.with_current(parent, |ex| {
+                    if !ex.is_focused() {
+                        let text_str = text.view(
+                            ex.data().expect("Failed to find data, is it built into the tree?"),
+                            |text| text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned()),
+                        );
 
-                cx.text_context.with_buffer(parent, |fs, buf| {
-                    buf.set_text(fs, &text_str, Attrs::new());
+                        ex.text_context.with_buffer(parent, |fs, buf| {
+                            buf.set_text(fs, &text_str, Attrs::new());
+                        });
+
+                        ex.needs_redraw();
+                    }
                 });
-
-                cx.needs_redraw();
             });
         })
         .toggle_class("multiline", kind == TextboxKind::MultiLineWrapped)
@@ -363,6 +370,9 @@ where
 }
 
 impl<'a, L: Lens> Handle<'a, Textbox<L>> {
+    /// Sets the callback triggered when a textbox is edited, i.e. text is inserted/deleted.
+    ///
+    /// Callback provides the current text of the textbox.
     pub fn on_edit<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, String) + Send + Sync,
@@ -370,11 +380,25 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
         self.modify(|textbox: &mut Textbox<L>| textbox.on_edit = Some(Box::new(callback)))
     }
 
+    /// Sets the callback triggered when a textbox is submitted,
+    /// i.e. when the enter key is pressed with a single-line textbox or the textbox loses focus.
+    ///
+    /// Callback provides the text of the textbox and a flag to indicate if the submit was due to a key press or a loss of focus.
     pub fn on_submit<F>(self, callback: F) -> Self
     where
         F: 'static + Fn(&mut EventContext, String, bool) + Send + Sync,
     {
         self.modify(|textbox: &mut Textbox<L>| textbox.on_submit = Some(Box::new(callback)))
+    }
+
+    /// Sets a validation closure which is called when the textbox is edited and sets the validity attribute to the output of the closure.
+    ///
+    /// If a textbox is modified with the validate modifier then the `on_submit` will not be called if the text is invalid.
+    pub fn validate<F>(self, is_valid: F) -> Self
+    where
+        F: 'static + Fn(&String) -> bool + Send + Sync,
+    {
+        self.modify(|textbox| textbox.validate = Some(Box::new(is_valid)))
     }
 }
 
@@ -830,8 +854,14 @@ where
                     self.insert_text(cx, text);
                     self.set_caret(cx);
 
+                    if let Some(validate) = &self.validate {
+                        let text = self.clone_text(cx);
+                        cx.set_valid(validate(&text));
+                    }
+
                     if let Some(callback) = &self.on_edit {
                         let text = self.clone_text(cx);
+
                         (callback)(cx, text);
                     }
                 }
@@ -846,6 +876,11 @@ where
                 if self.edit {
                     self.delete_text(cx, *movement);
                     self.set_caret(cx);
+
+                    if let Some(validate) = &self.validate {
+                        let text = self.clone_text(cx);
+                        cx.set_valid(validate(&text));
+                    }
 
                     if let Some(callback) = &self.on_edit {
                         let text = self.clone_text(cx);
@@ -879,8 +914,10 @@ where
 
             TextEvent::Submit(reason) => {
                 if let Some(callback) = self.on_submit.take() {
-                    let text = self.clone_text(cx);
-                    (callback)(cx, text, *reason);
+                    if cx.is_valid() {
+                        let text = self.clone_text(cx);
+                        (callback)(cx, text, *reason);
+                    }
 
                     self.on_submit = Some(callback);
                 }
@@ -948,6 +985,10 @@ where
                             cx.set_clipboard(selected_text)
                                 .expect("Failed to add text to clipboard");
                             self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
+                            if let Some(validate) = &self.validate {
+                                let text = self.clone_text(cx);
+                                cx.set_valid(validate(&text));
+                            }
                             if let Some(callback) = self.on_edit.take() {
                                 let text = self.clone_text(cx);
                                 (callback)(cx, text);

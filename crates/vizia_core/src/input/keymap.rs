@@ -42,6 +42,7 @@ use std::collections::HashMap;
 ///     (KeyChord::new(Modifiers::CTRL | Modifiers::SHIFT, Code::KeyC), KeymapEntry::new(Action::Three, |_| println!("Action Three"))),
 /// ]);
 /// ```
+#[derive(Default)]
 pub struct Keymap<T>
 where
     T: 'static + Clone + PartialEq + Send + Sync,

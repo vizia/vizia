@@ -651,6 +651,35 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle();
     }
 
+    /// Sets the valid state of the current view.
+    ///
+    /// Checked elements can be selected with the `:checked` CSS pseudo-class selector:
+    /// ```css
+    /// element:checked {
+    ///     background-color: red;
+    /// }
+    /// ```
+    pub fn set_valid(&mut self, flag: bool) {
+        println!("do this");
+        let current = self.current();
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
+            pseudo_classes.set(PseudoClassFlags::VALID, flag);
+            pseudo_classes.set(PseudoClassFlags::INVALID, !flag);
+            println!("{}", pseudo_classes.contains(PseudoClassFlags::INVALID));
+        }
+
+        self.style.needs_restyle();
+    }
+
+    // TODO: Move me
+    pub fn is_valid(&self) -> bool {
+        self.style
+            .pseudo_classes
+            .get(self.current)
+            .map(|pseudo_classes| pseudo_classes.contains(PseudoClassFlags::OVER))
+            .unwrap_or_default()
+    }
+
     // Accessibility Properties
 
     /// Sets the accessibility name of the view.

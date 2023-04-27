@@ -288,6 +288,7 @@ impl<T> StaticLens<T> {
     }
 }
 
+#[derive(Debug, Default)]
 pub struct UnwrapLens<T> {
     t: PhantomData<T>,
 }
@@ -315,7 +316,7 @@ impl<T: 'static> Lens for UnwrapLens<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct IntoLens<T, U> {
     t: PhantomData<T>,
     u: PhantomData<U>,

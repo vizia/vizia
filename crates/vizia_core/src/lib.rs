@@ -1,7 +1,8 @@
-#![allow(clippy::type_complexity)]
+#![allow(clippy::type_complexity)] // TODO: Fix these
+// To allow a match syntax in event handlers with one event variant
 #![allow(clippy::single_match)]
+// To allow enum names with the same prefix
 #![allow(clippy::enum_variant_names)]
-#![allow(clippy::new_without_default)]
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;
