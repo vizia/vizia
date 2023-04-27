@@ -48,18 +48,6 @@ impl EventManager {
                 }
             });
 
-            // Handle state updates for window events
-            event.map(|window_event, meta| {
-                if meta.origin == Entity::root() {
-                    internal_state_updates(cx, window_event, meta);
-                }
-            });
-
-            // Skip to next event if the current event was consumed when handling state updates.
-            if event.meta.consumed {
-                continue 'events;
-            }
-
             // Send events to any global listeners
             let mut global_listeners = vec![];
             std::mem::swap(&mut cx.global_listeners, &mut global_listeners);
@@ -86,6 +74,18 @@ impl EventManager {
                 if event.meta.consumed {
                     continue 'events;
                 }
+            }
+
+            // Handle state updates for window events
+            event.map(|window_event, meta| {
+                if meta.origin == Entity::root() {
+                    internal_state_updates(cx, window_event, meta);
+                }
+            });
+
+            // Skip to next event if the current event was consumed when handling state updates.
+            if event.meta.consumed {
+                continue 'events;
             }
 
             let cx = &mut EventContext::new(cx);
