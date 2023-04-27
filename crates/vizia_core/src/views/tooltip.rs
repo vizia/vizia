@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{modifiers::TooltipModel, prelude::*};
 
 pub struct Tooltip {}
 
@@ -11,6 +11,21 @@ impl Tooltip {
             .size(Auto)
             .top(Percentage(100.0))
             .translate((Pixels(0.0), Pixels(10.0)))
+            .hoverable(false)
+            .on_build(|ex| {
+                ex.add_listener(move |_: &mut Tooltip, ex, event| {
+                    let flag = TooltipModel::tooltip_visible.get(ex);
+                    event.map(|window_event, meta| match window_event {
+                        WindowEvent::MouseDown(_) => {
+                            if flag && meta.origin != ex.current() {
+                                ex.toggle_class("vis", false);
+                            }
+                        }
+
+                        _ => {}
+                    });
+                });
+            })
     }
 }
 

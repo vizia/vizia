@@ -4,7 +4,7 @@ use std::any::TypeId;
 
 #[derive(Lens)]
 pub struct TooltipModel {
-    tooltip_visible: bool,
+    pub tooltip_visible: bool,
 }
 
 pub enum TooltipEvent {
@@ -491,9 +491,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
             .on_hover_out(|cx| cx.emit(TooltipEvent::HideTooltip));
 
         s.cx.with_current(entity, |cx| {
-            Tooltip::new(cx, content)
-                .toggle_class("vis", TooltipModel::tooltip_visible)
-                .toggle_class("vis2", Environment::tooltips_visible);
+            Tooltip::new(cx, content).toggle_class("vis", TooltipModel::tooltip_visible);
         });
 
         s
