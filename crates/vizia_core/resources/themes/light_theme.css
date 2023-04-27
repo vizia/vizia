@@ -455,6 +455,8 @@ knob:focus-visible {
     outline-offset: 3px;
 }
 
+/* Radiobutton */
+
 radiobutton {
     width: 16px;
     height: 16px;
@@ -508,6 +510,43 @@ radiobutton:disabled .inner {
     width: 8px;
     height: 8px;
     background-color: #b6b6b6;
+}
+
+/* Rating */
+
+/* Rating */
+rating .icon {
+    color: #c4c4c4;
+    font-size: x-large;
+    width: 20px;
+    height: 20px;
+    cursor: hand;
+}
+
+rating .icon:checked {
+    color: gold;
+}
+
+rating > .rating-container:over .icon:enabled {
+    color: #c4c4c4;
+}
+
+rating > .rating-container:over .icon.foo:enabled {
+    color: gold;
+}
+
+rating .icon:hover {
+    scale: 1.2;
+    transition: scale 100ms;
+}
+
+rating .icon:disabled {
+    color: #e5e5e5;
+    scale: 1;
+}
+
+rating .icon:checked:disabled {
+    color: #dacf93;
 }
 
 scrollbar {

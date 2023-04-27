@@ -549,6 +549,41 @@ radiobutton:disabled .inner {
     transition: scale 100ms;
 }
 
+/* Rating */
+rating .icon {
+    color: #484848;
+    font-size: x-large;
+    width: 20px;
+    height: 20px;
+    cursor: hand;
+}
+
+rating .icon:checked {
+    color: gold;
+}
+
+rating > .rating-container:over .icon:enabled {
+    color: #484848;
+}
+
+rating > .rating-container:over .icon.foo:enabled {
+    color: gold;
+}
+
+rating .icon:hover {
+    scale: 1.2;
+    transition: scale 100ms;
+}
+
+rating .icon:disabled {
+    color: #404040;
+    scale: 1;
+}
+
+rating .icon:checked:disabled {
+    color: #bfac40;
+}
+
 /* Searchbox */
 
 /* Scroll View */

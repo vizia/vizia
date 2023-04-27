@@ -413,6 +413,13 @@ radiobutton .inner {
     height: 8px;
 }
 
+/* Rating */
+
+rating {
+    size: auto;
+    child-space: auto;
+}
+
 /* Searchbox */
 
 /* Scroll View */

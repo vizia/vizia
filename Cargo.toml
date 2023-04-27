@@ -79,6 +79,10 @@ name = "chip"
 path = "examples/views/chip.rs"
 
 [[example]]
+name = "rating"
+path = "examples/views/rating.rs"
+
+[[example]]
 name = "textbox_list"
 path = "examples/textbox_list.rs"
 
@@ -184,8 +188,8 @@ name = "menu"
 path = "examples/views/menu.rs"
 
 [[example]]
-name = "tabs"
-path = "examples/views/tabs.rs"
+name = "tabview"
+path = "examples/views/tabview.rs"
 
 
 [[example]]

@@ -74,4 +74,6 @@ pub mod icons {
 
     pub const ICON_EYE: &str = "\u{ea9a}";
     pub const ICON_EYE_OFF: &str = "\u{ecf0}";
+
+    pub const ICON_STAR_FILLED: &str = "\u{f6a6}";
 }
