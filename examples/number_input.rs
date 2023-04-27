@@ -3,8 +3,8 @@
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
-textbox.validation_error {
-    background-color: #ffc0c0;
+textbox:invalid {
+    border-color: #ff0000;
 }
 
 .validation_error_label {
@@ -50,20 +50,18 @@ fn main() {
 
         HStack::new(cx, |cx| {
             Textbox::new(cx, AppData::number)
-                .on_edit(|cx, text| {
+                .validate(|text| text.parse::<f32>().is_ok())
+                .on_submit(|cx, text, _| {
                     if let Ok(valid_number) = text.parse::<i32>() {
                         cx.emit(AppEvent::SetNumber(valid_number));
-                    } else {
-                        cx.emit(AppEvent::SetInvalid);
                     }
                 })
                 .width(Pixels(200.0))
-                .child_left(Pixels(5.0))
-                .toggle_class("validation_error", AppData::invalid);
+                .child_left(Pixels(5.0));
 
-            Label::new(cx, "Please enter a number")
-                .class("validation_error_label")
-                .toggle_class("validation_error", AppData::invalid);
+            // Label::new(cx, "Please enter a number")
+            //     .class("validation_error_label")
+            //     .toggle_class("validation_error", AppData::invalid);
 
             Label::new(cx, AppData::number)
                 .width(Pixels(200.0))

@@ -4,6 +4,7 @@ pub trait CustomModifier {
     fn title(self) -> Self;
 }
 
+// Implement custom modifier for all views
 impl<'a, V: View> CustomModifier for Handle<'a, V> {
     fn title(self) -> Self {
         self.font_size(24.0).font_weight(FontWeightKeyword::Bold)

@@ -1,19 +1,8 @@
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
-
-    /*
-    * {
-        border-width: 1px;
-        border-color: red;
-    }
-    */
-    
     textbox {
         width: 1s;
-        height: 32px;
-        child-top: 1s;
-        child-bottom: 1s;
     }
 
     hstack {
@@ -56,11 +45,8 @@ const STYLE: &str = r#"
 #[derive(Lens)]
 pub struct AppData {
     filter_prefix: String,
-
     list: Vec<(String, String)>,
-
     selected: Option<usize>,
-
     name: String,
     surname: String,
 }

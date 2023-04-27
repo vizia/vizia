@@ -6,7 +6,7 @@ fn main() {
         // Add fluent file for the `fr` locale (french).
         cx.add_translation(langid!("fr"), include_str!("../resources/translations/fr/hello.ftl"));
 
-        // Force application to use the `fr` locale.
+        // Force application to use the `fr` locale using environment event.
         cx.emit(EnvironmentEvent::SetLocale(langid!("fr")));
 
         // Use the `Localized` type with a `Label` to provide a translation key.

@@ -18,8 +18,8 @@ fn main() {
         // Force application to use the `fr` locale.
         cx.emit(EnvironmentEvent::SetLocale(langid!("fr")));
 
-        // Use the `Localized` type with a `Label` to provide a translation key.
-        // The key is used to look up the corresponding translation from the fluent file.
+        // Use the `arg` method on the `Localized` type to supply a lens argument.
+        // When localization is resolved the arguement will be used with the fluent file to select an appropriate translation.
         Label::new(cx, Localized::new("intro").arg("name", AppData::user));
         Label::new(cx, Localized::new("emails").arg_const("unread_emails", 5));
     })
