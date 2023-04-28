@@ -164,6 +164,10 @@ name = "list"
 path = "examples/views/list.rs"
 
 [[example]]
+name = "virtual_list"
+path = "examples/views/virtual_list.rs"
+
+[[example]]
 name = "selectable_list"
 path = "examples/lists/selectable_list.rs"
 

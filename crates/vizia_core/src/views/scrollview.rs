@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use morphorm::PositionType;
 
 use crate::binding::RatioLens;
@@ -6,7 +8,7 @@ use crate::views::Orientation;
 
 pub(crate) const SCROLL_SENSITIVITY: f32 = 35.0;
 
-#[derive(Lens, Data, Clone, Debug)]
+#[derive(Lens, Data, Clone)]
 pub struct ScrollData {
     pub scroll_x: f32,
     pub scroll_y: f32,
@@ -14,6 +16,9 @@ pub struct ScrollData {
     pub child_y: f32,
     pub parent_x: f32,
     pub parent_y: f32,
+
+    #[lens(ignore)]
+    pub on_scroll: Option<Arc<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
 }
 
 pub enum ScrollEvent {
@@ -25,6 +30,7 @@ pub enum ScrollEvent {
     ScrollYPx(f32),
     ChildGeo(f32, f32),
     ParentGeo(f32, f32),
+    SetOnScroll(Option<Arc<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>),
 }
 
 impl ScrollData {
@@ -40,13 +46,34 @@ impl ScrollData {
 }
 
 impl Model for ScrollData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|scroll_update, meta| {
             match scroll_update {
-                ScrollEvent::ScrollX(f) => self.scroll_x = (self.scroll_x + *f).clamp(0.0, 1.0),
-                ScrollEvent::ScrollY(f) => self.scroll_y = (self.scroll_y + *f).clamp(0.0, 1.0),
-                ScrollEvent::SetX(f) => self.scroll_x = *f,
-                ScrollEvent::SetY(f) => self.scroll_y = *f,
+                ScrollEvent::ScrollX(f) => {
+                    self.scroll_x = (self.scroll_x + *f).clamp(0.0, 1.0);
+
+                    if let Some(callback) = &self.on_scroll {
+                        (callback)(cx, self.scroll_x, self.scroll_y);
+                    }
+                }
+                ScrollEvent::ScrollY(f) => {
+                    self.scroll_y = (self.scroll_y + *f).clamp(0.0, 1.0);
+                    if let Some(callback) = &self.on_scroll {
+                        (callback)(cx, self.scroll_x, self.scroll_y);
+                    }
+                }
+                ScrollEvent::SetX(f) => {
+                    self.scroll_x = *f;
+                    if let Some(callback) = &self.on_scroll {
+                        (callback)(cx, self.scroll_x, self.scroll_y);
+                    }
+                }
+                ScrollEvent::SetY(f) => {
+                    self.scroll_y = *f;
+                    if let Some(callback) = &self.on_scroll {
+                        (callback)(cx, self.scroll_x, self.scroll_y);
+                    }
+                }
                 ScrollEvent::ChildGeo(x, y) => {
                     self.child_x = *x;
                     self.child_y = *y;
@@ -64,6 +91,9 @@ impl Model for ScrollData {
                     let d = delta / (self.child_y - self.parent_y);
                     self.scroll_y += d;
                     self.scroll_y = self.scroll_y.clamp(0.0, 1.0);
+                }
+                ScrollEvent::SetOnScroll(on_scroll) => {
+                    self.on_scroll = on_scroll.clone();
                 }
             }
 
@@ -96,6 +126,7 @@ impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
                 child_y: 0.0,
                 parent_x: 0.0,
                 parent_y: 0.0,
+                on_scroll: None,
             }
             .build(cx);
 
@@ -211,5 +242,15 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
 
             _ => {}
         });
+    }
+}
+
+impl<'a, L: Lens> Handle<'a, ScrollView<L>> {
+    pub fn on_scroll(
+        self,
+        callback: impl Fn(&mut EventContext, f32, f32) + 'static + Send + Sync,
+    ) -> Self {
+        self.cx.emit_to(self.entity(), ScrollEvent::SetOnScroll(Some(Arc::new(callback))));
+        self
     }
 }

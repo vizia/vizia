@@ -31,6 +31,7 @@ mod table;
 mod textbox;
 mod timepicker;
 mod tooltip;
+mod virtual_list;
 mod xypad;
 
 pub use self::image::Image;
@@ -66,6 +67,7 @@ pub use timepicker::{
     DigitalTimepicker, DigitalTimepickerEvent, Timepicker,
 };
 pub use tooltip::Tooltip;
+pub use virtual_list::*;
 pub use xypad::XYPad;
 
 use crate::prelude::*;
