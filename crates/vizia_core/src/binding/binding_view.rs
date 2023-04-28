@@ -81,7 +81,7 @@ where
 
                 let old = lens.view(model, |t| t.cloned());
 
-                let store = Box::new(BasicStore { entity: id, lens, old, observers });
+                let store = Box::new(BasicStore { lens, old, observers });
 
                 stores.insert(key, store);
             }

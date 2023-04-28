@@ -71,6 +71,7 @@ impl AccessNode {
         });
     }
 
+    /// Sets the value of a node.
     pub fn set_value(&mut self, value: impl Into<Box<str>>) {
         self.node_builder.set_value(value);
     }

@@ -10,7 +10,15 @@ lazy_static! {
     pub static ref THEME_MODES: Vec<&'static str> = vec!["Light", "Dark"];
 }
 
-pub const CENTER_LAYOUT: &str = "crates/vizia_core/resources/themes/center_layout.css";
+pub const CENTER_LAYOUT: &str = r#"
+    .container {
+        width: 1s;
+        height: 1s;
+        child-space: 1s;
+        col-between: 20px;
+        row-between: 20px;
+    }
+"#;
 
 #[derive(Lens)]
 pub struct ControlsData {
@@ -35,7 +43,7 @@ pub struct ExamplePage {}
 
 impl ExamplePage {
     pub fn vertical(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
-        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
+        cx.add_theme(CENTER_LAYOUT);
 
         Self {}.build(cx, |cx| {
             ControlsData { disabled: false }.build(cx);
@@ -94,7 +102,7 @@ impl ExamplePage {
         })
     }
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
-        cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to find stylesheet");
+        cx.add_theme(CENTER_LAYOUT);
 
         Self {}.build(cx, |cx| {
             ControlsData { disabled: false }.build(cx);

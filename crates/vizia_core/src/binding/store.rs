@@ -4,7 +4,7 @@ use crate::{model::ModelOrView, prelude::*};
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
-// Generates a unique ID
+// Generates a unique ID.
 pub(crate) fn next_uuid() -> u64 {
     static UUID: AtomicU64 = AtomicU64::new(0);
     UUID.fetch_add(1, Ordering::Relaxed)
@@ -17,17 +17,19 @@ pub(crate) enum StoreId {
 }
 
 pub(crate) trait Store {
+    /// Updates the model data, returning true if the data changed.
     fn update(&mut self, model: ModelOrView) -> bool;
+    /// Returns the set of observers for the store.
     fn observers(&self) -> &HashSet<Entity>;
+    /// Adds an observer to the store.
     fn add_observer(&mut self, observer: Entity);
+    /// Removes an observer from the store.
     fn remove_observer(&mut self, observer: &Entity);
+    /// Returns the number of obersers for the store.
     fn num_observers(&self) -> usize;
-    fn entity(&self) -> Entity;
 }
 
 pub(crate) struct BasicStore<L: Lens, T> {
-    // The entity which declared the binding
-    pub entity: Entity,
     pub lens: L,
     pub old: Option<T>,
     pub observers: HashSet<Entity>,
@@ -38,10 +40,6 @@ where
     L: Lens<Target = T>,
     <L as Lens>::Target: Data,
 {
-    fn entity(&self) -> Entity {
-        self.entity
-    }
-
     fn update(&mut self, model: ModelOrView) -> bool {
         if let Some(data) = model.downcast_ref::<L::Source>() {
             let result = self.lens.view(data, |t| match (&self.old, t) {

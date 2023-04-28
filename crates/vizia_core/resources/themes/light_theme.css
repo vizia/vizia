@@ -149,7 +149,6 @@ checkbox {
     child-space: 1s;
     transition: background-color 100ms;
     transition: border-color 100ms;
-    font: "icons";
 }
 
 checkbox:hover {
@@ -300,10 +299,6 @@ datepicker {
 datetimepicker {
     border-radius: 4px;
     background-color: #343434;
-}
-
-datetimepicker tabheader label {
-    font: "icons";
 }
 
 datetimepicker tabheader:checked label {
@@ -766,38 +761,45 @@ tablecolumn {
 }
 
 textbox {
-    width: auto;
-    height: auto;
     border-width: 1px;
-    border-color: #e4e4e4;
     border-radius: 4px;
+    border-color: #e4e4e4;
     background-color: #fff;
-    child-left: 5px;
-    child-right: 5px;
-    child-top: 2px;
-    child-bottom: 2px;
+    transition: border-color 100ms;
+    transition: background-color 100ms;
 }
 
 textbox:checked {
     border-color: #51afef;
+    transition: border-color 100ms;
+    caret-color: red;
+    selection-color: #6464c888;
 }
-textbox:checked .textbox_content {
-    caret-color: #51afef;
-    selection-color: #51afef40;
+
+textbox:read-only {
+    background-color: transparent;
+    border-width: 0px;
+    caret-color: transparent;
+    selection-color: #6464c888;
 }
 
 textbox:disabled {
     color: #888;
+    transition: color 100ms;
 }
 
 textbox:focus-visible {
     border-color: #51afef80;
+    transition: border-color 100ms;
 }
 
-textbox.error {
+textbox:invalid {
     border-color: #ef5151;
+    transition: border-color 100ms;
     border-width: 2px;
 }
+
+/* Time Picker */
 
 .modal {
     space: 1s;
@@ -823,7 +825,7 @@ textbox.error {
 
 .modal .title {
     color: #000000;
-    font-size: 18px;
+    font-size: 18;
     bottom: 4px;
 }
 
@@ -838,7 +840,7 @@ tooltip .tooltip-wrapper {
 }
 
 tooltip .title {
-    font-size: 18px;
+    font-size: 18;
 }
 
 tooltip label {

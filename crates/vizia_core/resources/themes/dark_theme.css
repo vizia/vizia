@@ -147,7 +147,7 @@ button:disabled label {
 
 checkbox {
     border-radius: 2px;
-    border-width: 2px;
+    border-width: 1px;
     border-color: #888;
     background-color: transparent;
     transition: background-color 100ms;
@@ -836,7 +836,6 @@ textbox {
     background-color: #323232;
     transition: border-color 100ms;
     transition: background-color 100ms;
-    /* box-shadow: 0 0 0 transparent; */
 }
 
 textbox:checked {
@@ -864,7 +863,7 @@ textbox:focus-visible {
     transition: border-color 100ms;
 }
 
-textbox.error {
+textbox:invalid {
     border-color: #ef5151;
     border-width: 1px;
     transition: border-color 100ms;

@@ -1,5 +1,5 @@
 //! A model for system specific state which can be accessed by any model or view.
-use crate::{model::Model, modifiers::TooltipEvent, prelude::Wrapper};
+use crate::{model::Model, prelude::Wrapper};
 use unic_langid::LanguageIdentifier;
 use vizia_derive::Lens;
 
@@ -18,8 +18,6 @@ pub struct Environment {
     pub locale: LanguageIdentifier,
     // The theme mode used when using the built-in theming.
     pub theme_mode: ThemeMode,
-
-    pub tooltips_visible: bool,
 }
 
 impl Default for Environment {
@@ -32,7 +30,7 @@ impl Environment {
     pub fn new() -> Self {
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
 
-        Self { locale, theme_mode: ThemeMode::DarkMode, tooltips_visible: false }
+        Self { locale, theme_mode: ThemeMode::LightMode }
     }
 }
 
@@ -76,11 +74,6 @@ impl Model for Environment {
                 cx.set_theme_mode(self.theme_mode);
                 cx.reload_styles().unwrap();
             }
-        });
-
-        event.map(|tooltip_event, _| match tooltip_event {
-            TooltipEvent::ShowTooltip => self.tooltips_visible = true,
-            TooltipEvent::HideTooltip => self.tooltips_visible = false,
         });
     }
 }

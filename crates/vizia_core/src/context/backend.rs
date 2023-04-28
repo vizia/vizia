@@ -1,12 +1,10 @@
 use std::any::Any;
-use std::collections::HashSet;
 
 use femtovg::{renderer::OpenGl, Canvas};
 use vizia_window::WindowDescription;
 
 use super::EventProxy;
 use crate::events::EventManager;
-use crate::model::ModelOrView;
 use crate::style::SystemFlags;
 use crate::{
     cache::CachedData, environment::Environment, layout::geometry_changed, prelude::*,
@@ -124,24 +122,19 @@ impl<'a> BackendContext<'a> {
         self.0.canvases.insert(Entity::root(), canvas);
     }
 
+    /// Returns a reference to the [`Environment`] model.
     pub fn environment(&self) -> &Environment {
         self.0.data::<Environment>().unwrap()
     }
 
+    /// Returns a mutable reference to the inner context.
     pub fn context(&mut self) -> &mut Context {
         self.0
     }
 
-    pub fn remove_all_children(&mut self) {
-        self.0.remove_children(Entity::root());
-    }
-
+    /// Calls the draw system.
     pub fn draw(&mut self) {
         draw_system(self.0);
-    }
-
-    pub fn load_images(&mut self) {
-        image_system(self.0);
     }
 
     /// Set the current entity. This is useful in user code when you're performing black magic and
@@ -156,10 +149,12 @@ impl<'a> BackendContext<'a> {
         self.0.text_config = text_config;
     }
 
+    /// Sets the scale factor used by the application.
     pub fn set_scale_factor(&mut self, scale: f64) {
         self.0.style.dpi_factor = scale;
     }
 
+    /// Sets the size of the root window.
     pub fn set_window_size(&mut self, physical_width: f32, physical_height: f32) {
         self.0.cache.set_width(Entity::root(), physical_width);
         self.0.cache.set_height(Entity::root(), physical_height);
@@ -205,10 +200,12 @@ impl<'a> BackendContext<'a> {
         !self.0.event_queue.is_empty()
     }
 
+    /// Returns a mutable reference to the accesskit node classes.
     pub fn accesskit_node_classes(&mut self) -> &mut accesskit::NodeClassSet {
         &mut self.style().accesskit_node_classes
     }
 
+    /// Calls the event manager to process any queued events.
     pub fn process_events(&mut self) {
         if let Some(event_manager) = &mut self.1 {
             while event_manager.flush_events(self.0) {}
@@ -218,60 +215,10 @@ impl<'a> BackendContext<'a> {
     /// For each binding or data observer, check if its data has changed, and if so, rerun its
     /// builder/body.
     pub fn process_data_updates(&mut self) {
-        let mut observers: HashSet<Entity> = HashSet::new();
-
-        for entity in self.0.tree.into_iter() {
-            if let Some(model_data_store) = self.0.data.get_mut(entity) {
-                // Determine observers of model data
-                for (_, model) in model_data_store.models.iter() {
-                    let model = ModelOrView::Model(model.as_ref());
-
-                    for (_, store) in model_data_store.stores.iter_mut() {
-                        if store.update(model) {
-                            observers.extend(store.observers().iter())
-                        }
-                    }
-                }
-
-                // Determine observers of view data
-                for (_, store) in model_data_store.stores.iter_mut() {
-                    if let Some(view_handler) = self.0.views.get(&entity) {
-                        let view_model = ModelOrView::View(view_handler.as_ref());
-
-                        if store.update(view_model) {
-                            observers.extend(store.observers().iter())
-                        }
-                    }
-                }
-            }
-        }
-
-        for img in self.0.resource_manager.images.values_mut() {
-            if img.dirty {
-                observers.extend(img.observers.iter());
-                img.dirty = false;
-            }
-        }
-
-        let ordered_observers =
-            self.0.tree.into_iter().filter(|ent| observers.contains(ent)).collect::<Vec<_>>();
-
-        // Update observers in tree order
-        for observer in ordered_observers.into_iter() {
-            if !self.0.entity_manager.is_alive(observer) {
-                continue;
-            }
-
-            if let Some(mut binding) = self.0.bindings.remove(&observer) {
-                let prev = self.0.current;
-                self.0.current = observer;
-                binding.update(self.0);
-                self.0.current = prev;
-                self.0.bindings.insert(observer, binding);
-            }
-        }
+        binding_system(self.0);
     }
 
+    /// Calls the accessibility system and updates the accesskit node tree.
     pub fn process_tree_updates(&mut self, process: impl Fn(&Vec<accesskit::TreeUpdate>)) {
         accessibility_system(self.0);
 
@@ -280,6 +227,7 @@ impl<'a> BackendContext<'a> {
         self.0.tree_updates.clear();
     }
 
+    /// Calls the style system to match entities with shared styles.
     pub fn process_style_updates(&mut self) {
         // Apply any inline style inheritance.
         inline_inheritance_system(self.0);
