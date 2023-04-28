@@ -6,6 +6,7 @@ label.icon {
 
 root {
     background-color: #fafafa;
+    color: #181818;
 }
 
 .container {
@@ -432,22 +433,36 @@ dropdown vstack {
 } */
 
 knob {
-    width: 48px;
-    height: 48;
-    background-color: #242424;
-    border-radius: 38px;
     border-width: 2px;
-    border-color: #2f2f2f;
-}
-
-knob .track {
-    background-color: #51afef;
 }
 
 knob:focus-visible {
     outline-width: 1px;
     outline-color: #51afef80;
     outline-offset: 3px;
+}
+
+knob .knob-track {
+    color: #51afef;
+}
+
+knob:disabled .knob-track {
+    color: #ebebeb;
+}
+
+knob .knob-head {
+    background-color: #fdfdfd;
+    border-width: 2px;
+    border-color: #d2d2d2;
+}
+
+knob:disabled .knob-head {
+    border-color: #ebebeb;
+}
+
+knob .knob-tick {
+    background-color: #d2d2d2;
+    border-radius: 1px;
 }
 
 /* Radiobutton */
@@ -833,40 +848,6 @@ textbox:invalid {
     left: 1s;
 }
 
-tooltip .tooltip-wrapper {
-    background-color: #51afef;
-    border-radius: 4px;
-    child-space: 8px;
-}
-
-tooltip .title {
-    font-size: 18;
-}
-
-tooltip label {
-    color: #181818;
-}
-
-tooltip button {
-    top: 8px;
-    left: 1s;
-    border-color: #181818;
-}
-
-.tooltip-pointer-wrapper {
-    width: 16px;
-    height: 12px;
-    overflow: hidden;
-    left: 4px;
-}
-
-.tooltip-pointer {
-    width: 12px;
-    height: 12px;
-    background-color: #51afef;
-    border-radius: 2px;
-}
-
 timepicker {
     background-color: #fff;
     border-radius: 4px;
@@ -1050,4 +1031,30 @@ tabheader:disabled label {
     width: 1s;
     height: 1s;
     background-color: #fff;
+}
+
+/* Tooltip */
+
+tooltip {
+    child-space: 4px;
+    background-color: #181818;
+    border-radius: 4px;
+    color: #fafafa;
+    opacity: 0;
+    transition: opacity 100ms 500ms;
+}
+
+tooltip.vis {
+    opacity: 1;
+    transition: opacity 100ms 500ms;
+}
+
+/* XY Pad */
+
+xypad {
+    background-color: #d4d4d4;
+}
+
+xypad .marker {
+    border-color: #181818;
 }

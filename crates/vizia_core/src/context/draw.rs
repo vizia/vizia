@@ -416,16 +416,12 @@ impl<'a> DrawContext<'a> {
         let mut path = Path::new();
 
         if bounds.w == bounds.h
-            && border_bottom_left_radius == (bounds.w - 2.0 * border_width) / 2.0
-            && border_bottom_right_radius == (bounds.w - 2.0 * border_width) / 2.0
-            && border_top_left_radius == (bounds.w - 2.0 * border_width) / 2.0
-            && border_top_right_radius == (bounds.w - 2.0 * border_width) / 2.0
+            && border_bottom_left_radius == bounds.w / 2.0
+            && border_bottom_right_radius == bounds.w / 2.0
+            && border_top_left_radius == bounds.h / 2.0
+            && border_top_right_radius == bounds.h / 2.0
         {
-            path.circle(
-                bounds.x + (border_width / 2.0) + (bounds.w - border_width) / 2.0,
-                bounds.y + (border_width / 2.0) + (bounds.h - border_width) / 2.0,
-                bounds.w / 2.0,
-            );
+            path.circle(bounds.center().0, bounds.center().1, bounds.w / 2.0 - border_width / 2.0);
         } else {
             let x = bounds.x + border_width / 2.0;
             let y = bounds.y + border_width / 2.0;

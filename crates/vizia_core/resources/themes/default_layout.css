@@ -214,6 +214,7 @@ image {
 knob {
     width: 32px;
     height: 32px;
+    border-radius: 50%;
 }
 
 .knob-track {
@@ -228,6 +229,7 @@ knob {
     left: 2px;
     right: 2px;
     bottom: 2px;
+    border-radius: 50%;
 }
 
 .knob-tick {
@@ -1041,4 +1043,12 @@ tooltip .tooltip-button-wrapper {
 
 .modal .accent {
     left: 1s;
+}
+
+/* XY Pad */
+
+xypad .marker {
+    border-radius: 50%;
+    size: 10px;
+    border-width: 2px;
 }

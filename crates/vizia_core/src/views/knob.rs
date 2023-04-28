@@ -156,7 +156,7 @@ impl<L: Lens<Target = f32>> View for Knob<L> {
             }
 
             WindowEvent::MouseMove(_, y) => {
-                if self.is_dragging {
+                if self.is_dragging && !cx.is_disabled() {
                     let mut delta_normal = (*y - self.prev_drag_y) * self.drag_scalar;
 
                     self.prev_drag_y = *y;
@@ -249,10 +249,9 @@ impl View for ArcTrack {
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas) {
         let opacity = cx.opacity();
 
-        let mut foreground_color: femtovg::Color = cx.background_color().into();
-        foreground_color.set_alphaf(foreground_color.a * opacity);
+        let foreground_color = cx.font_color().into();
 
-        let background_color = femtovg::Color::rgb(54, 54, 54);
+        let background_color = cx.background_color().into();
 
         let bounds = cx.bounds();
 

@@ -15,19 +15,18 @@ impl XYPad {
                     .left(lens.clone().map(|(x, _)| Percentage(*x * 100.0)))
                     .top(lens.clone().map(|(_, y)| Percentage((1.0 - *y) * 100.0)))
                     .translate((Pixels(-5.0), Pixels(-5.0)))
-                    .size(Pixels(10.0))
-                    .border_radius(Percentage(50.0))
-                    .border_width(Pixels(2.0))
-                    .border_color(Color::white())
-                    .hoverable(false);
+                    .hoverable(false)
+                    .class("marker");
             })
             .overflow(Overflow::Hidden)
-            .size(Pixels(200.0))
-            .background_color(Color::rgb(40, 40, 40))
     }
 }
 
 impl View for XYPad {
+    fn element(&self) -> Option<&'static str> {
+        Some("xypad")
+    }
+
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {

@@ -1,10 +1,9 @@
 /* General */
 
-* {
-    color: #fafafa;
-    /* border-color: blue;
-    border-width: 1px; */
-}
+/* * {
+    border-color: blue;
+    border-width: 1px;
+} */
 
 label.icon {
     font-family: "tabler-icons", sans-serif;
@@ -16,6 +15,7 @@ label:disabled {
 
 :root {
     background-color: #1d1d1d;
+    color: #fafafa;
 }
 
 /* Backgrounds */
@@ -222,10 +222,10 @@ label.h2 {
 
 /* TOOLTIP */
 tooltip {
-    child-space: 10px;
-    border-color: #070707;
-    background-color: #353535;
-    border-width: 1px;
+    child-space: 4px;
+    background-color: #fafafa;
+    color: #181818;
+    border-radius: 4px;
     opacity: 0;
     transition: opacity 100ms 500ms;
 }
@@ -400,11 +400,6 @@ dropdown list label:hover {
 
 knob {
     background-color: #1d1d1d;
-    border-radius: 100px;
-}
-
-knob .knob-track {
-    background-color: #51afef;
 }
 
 knob:focus-visible {
@@ -413,17 +408,31 @@ knob:focus-visible {
     outline-offset: 3px;
 }
 
+knob .knob-track {
+    color: #51afef;
+}
+
+knob:disabled .knob-track {
+    color: #404040;
+}
+
 .knob-head {
     background-color: #343434;
     border-width: 2px;
     border-color: #1d1d1d;
-    border-radius: 100px;
-    /* box-shadow: 0 4 4 #00000088; BUGGY */
 }
 
-.knob-tick {
+knob:disabled .knob-head {
+    background-color: #404040;
+}
+
+knob .knob-tick {
     background-color: #fff;
     border-radius: 1px;
+}
+
+knob:disabled .knob-tick {
+    background-color: #c4c4c4;
 }
 
 /* Label */
@@ -965,44 +974,6 @@ analogtimepicker .time-selector-wrapper button .indicator {
 analogtimepicker .time-selector-wrapper button:checked .indicator {
     background-color: #51afef;
 }
-
-/* Tooltip */
-
-tooltip .tooltip-wrapper {
-    background-color: #51afef;
-    border-radius: 4px;
-}
-
-tooltip .title {
-    font-size: 18;
-}
-
-tooltip .subtitle {
-    color: #00000088;
-}
-
-tooltip .tooltip-wrapper > label {
-    color: #181818;
-}
-
-tooltip button {
-    border-color: #181818;
-}
-
-.tooltip-pointer-wrapper {
-    width: 16px;
-    height: 12px;
-    overflow: hidden;
-    left: 4px;
-}
-
-.tooltip-pointer {
-    width: 12px;
-    height: 12px;
-    background-color: #51afef;
-    border-radius: 2px;
-}
-
 /* Tree */
 
 /* Modal */
@@ -1021,4 +992,14 @@ tooltip button {
 .modal .title {
     color: #fff;
     font-size: 18;
+}
+
+/* XY Pad */
+
+xypad {
+    background-color: #323232;
+}
+
+xypad .marker {
+    border-color: #fafafa;
 }
