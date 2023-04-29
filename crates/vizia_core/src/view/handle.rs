@@ -109,6 +109,21 @@ impl<'a, V> Handle<'a, V> {
         self
     }
 
+    /// Marks the view as needing a relayout.
+    pub fn needs_relayout(&mut self) {
+        self.cx.needs_relayout();
+    }
+
+    /// Marks the view as needing a restyle.
+    pub fn needs_restyle(&mut self) {
+        self.cx.needs_restyle();
+    }
+
+    /// Marks the view as needing a redraw.
+    pub fn needs_redraw(&mut self) {
+        self.cx.needs_redraw();
+    }
+
     /// Returns the bounding box of the view.
     pub fn bounds(&self) -> BoundingBox {
         self.cx.cache.get_bounds(self.entity)

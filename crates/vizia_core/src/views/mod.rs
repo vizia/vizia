@@ -44,7 +44,7 @@ pub use datepicker::Datepicker;
 pub use datetimepicker::DatetimePicker;
 pub use dropdown::Dropdown;
 pub use element::Element;
-pub use knob::{Knob, KnobMode};
+pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 pub use label::Label;
 pub use list::List;
 pub use menu::{setup_menu_entry, Menu, MenuButton, MenuController, MenuEvent, MenuStack};

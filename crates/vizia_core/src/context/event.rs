@@ -127,6 +127,16 @@ impl<'a> EventContext<'a> {
         self.current
     }
 
+    /// Returns a reference to the keyboard modifiers state.
+    pub fn modifiers(&self) -> &Modifiers {
+        self.modifiers
+    }
+
+    /// Returns a reference to the mouse state.
+    pub fn mouse(&self) -> &MouseState<Entity> {
+        self.mouse
+    }
+
     pub fn with_current<T>(&mut self, entity: Entity, f: impl FnOnce(&mut Self) -> T) -> T {
         let prev = self.current();
         self.current = entity;
