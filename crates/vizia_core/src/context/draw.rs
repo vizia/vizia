@@ -1209,12 +1209,15 @@ impl<'a> DrawContext<'a> {
         origin: (f32, f32),
         justify: (f32, f32),
     ) {
-        let selection_color = self.selection_color();
-        let mut path = Path::new();
-        for (x, y, w, h) in self.text_context.layout_selection(self.current, origin, justify) {
-            path.rect(x, y, w, h);
+        let selections = self.text_context.layout_selection(self.current, origin, justify);
+        if !selections.is_empty() {
+            let mut path = Path::new();
+            for (x, y, w, h) in selections {
+                path.rect(x, y, w, h);
+            }
+            let selection_color = self.selection_color();
+            canvas.fill_path(&mut path, &Paint::color(selection_color.into()));
         }
-        canvas.fill_path(&mut path, &Paint::color(selection_color.into()));
     }
 
     /// Draw text caret for the current view.

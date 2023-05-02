@@ -1,9 +1,16 @@
-/* General */
+/* GENERAL */
 
 /* * {
     border-color: blue;
     border-width: 1px;
 } */
+
+:root {
+    background-color: #1d1d1d;
+    color: #fafafa;
+}
+
+/* LABEL */
 
 label.icon {
     font-family: "tabler-icons", sans-serif;
@@ -13,12 +20,8 @@ label:disabled {
     color: #585858;
 }
 
-:root {
-    background-color: #1d1d1d;
-    color: #fafafa;
-}
 
-/* Backgrounds */
+/* BACKGROUNDS */
 
 .bg-default {
     background-color: #343434;
@@ -209,33 +212,7 @@ checkbox.intermediate {
     transition: border-color 100ms;
 }
 
-/* LABEL */
-
-label.icon {
-    font-family: "tabler-icons", sans-serif;
-}
-
-label.h2 {
-    font-size: medium;
-    font-weight: bold;
-}
-
-/* TOOLTIP */
-tooltip {
-    child-space: 4px;
-    background-color: #fafafa;
-    color: #181818;
-    border-radius: 4px;
-    opacity: 0;
-    transition: opacity 100ms 500ms;
-}
-
-tooltip.vis {
-    opacity: 1;
-    transition: opacity 100ms 500ms;
-}
-
-/* Chip */
+/* CHIP */
 
 chip {
     border-radius: 4px;
@@ -975,6 +952,21 @@ analogtimepicker .time-selector-wrapper button:checked .indicator {
     background-color: #51afef;
 }
 /* Tree */
+
+/* TOOLTIP */
+tooltip {
+    child-space: 4px;
+    background-color: #fafafa;
+    color: #181818;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 100ms 500ms;
+}
+
+tooltip.vis {
+    opacity: 1;
+    transition: opacity 100ms 500ms;
+}
 
 /* Modal */
 

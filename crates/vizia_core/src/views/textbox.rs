@@ -166,7 +166,14 @@ where
     }
 
     pub fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
-        if cx.text_context.with_editor(cx.current, |_, buf| !buf.delete_selection()) {
+        if cx.text_context.with_editor(cx.current, |_, buf| {
+            let no_selection = match (buf.cursor(), buf.select_opt()) {
+                (cursor, Some(selection)) => cursor == selection,
+                (_, None) => true,
+            };
+            buf.delete_selection();
+            no_selection
+        }) {
             self.move_cursor(cx, movement, true);
             cx.text_context.with_editor(cx.current, |_, buf| {
                 buf.delete_selection();
@@ -312,7 +319,7 @@ where
     pub fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         let (x, y) = self.coordinates_global_to_text(cx, x, y);
         cx.text_context.with_editor(cx.current, |fs, buf| {
-            buf.action(fs, Action::Click { x: x as i32, y: y as i32 })
+            buf.action(fs, Action::Click { x: x as i32, y: y as i32 });
         });
         cx.needs_redraw();
     }
@@ -321,7 +328,7 @@ where
     pub fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         let (x, y) = self.coordinates_global_to_text(cx, x, y);
         cx.text_context.with_editor(cx.current, |fs, buf| {
-            buf.action(fs, Action::Drag { x: x as i32, y: y as i32 })
+            buf.action(fs, Action::Drag { x: x as i32, y: y as i32 });
         });
         cx.needs_redraw();
     }
@@ -572,6 +579,7 @@ where
                         cx.set_checked(true);
                         cx.lock_cursor_icon();
 
+                        cx.emit(TextEvent::StartEdit);
                         cx.emit(TextEvent::Hit(cx.mouse.cursorx, cx.mouse.cursory));
                     }
                 } else {
@@ -622,9 +630,9 @@ where
 
             WindowEvent::MouseUp(MouseButton::Left) => {
                 cx.unlock_cursor_icon();
-                if cx.mouse.left.pressed == cx.current() {
-                    cx.emit(TextEvent::StartEdit);
-                }
+                // if cx.mouse.left.pressed == cx.current() {
+                //     cx.emit(TextEvent::StartEdit);
+                // }
             }
 
             WindowEvent::MouseMove(_, _) => {

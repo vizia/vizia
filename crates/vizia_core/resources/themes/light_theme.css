@@ -1,26 +1,20 @@
-/* General */
+/* GENERAL */
 
-label.icon {
-    font-family: "tabler-icons", sans-serif;
-}
+/* * {
+    border-color: blue;
+    border-width: 1px;
+} */
 
 root {
     background-color: #fafafa;
     color: #181818;
 }
 
-.container {
-    width: auto;
-    height: auto;
-    row-between: 8px;
-    col-between: 8px;
+/* LABEL */
+
+label.icon {
+    font-family: "tabler-icons", sans-serif;
 }
-
-/* Label */
-
-/* label {
-    color: #181818;
-} */
 
 label:disabled {
     color: #a0a0a0;
@@ -30,7 +24,7 @@ label.describing {
     cursor: hand;
 }
 
-/* Button  */
+/* BUTTON  */
 
 button {
     border-radius: 4px;
@@ -52,12 +46,6 @@ button:active {
     color: #626262;
 }
 
-button:disabled {
-    border-color: #ebebeb;
-    color: #626262;
-    transition: background-color 100ms;
-    transition: border-color 100ms;
-}
 
 button:focus-visible {
     outline-width: 2px;
@@ -140,7 +128,15 @@ button.ghost:disabled {
     transition: border-color 100ms;
 }
 
-/* Checkbox */
+button:disabled {
+    border-color: #ebebeb;
+    color: #626262;
+    transition: background-color 100ms;
+    transition: border-color 100ms;
+}
+
+
+/* CHECKBOX */
 
 checkbox {
     border-radius: 2px;

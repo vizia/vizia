@@ -356,8 +356,10 @@ impl TextContext {
             if let Some(cursor_end) = buf.select_opt() {
                 let (cursor_start, cursor_end) = if buf.cursor() < cursor_end {
                     (buf.cursor(), cursor_end)
-                } else {
+                } else if buf.cursor() > cursor_end {
                     (cursor_end, buf.cursor())
+                } else {
+                    return result;
                 };
                 let buffer = buf.buffer();
                 let total_height = buffer.layout_runs().len() as f32 * buffer.metrics().line_height;
