@@ -12,14 +12,9 @@
 
 /* LABEL */
 
-label.icon {
-    font-family: "tabler-icons", sans-serif;
-}
-
 label:disabled {
     color: #585858;
 }
-
 
 /* BACKGROUNDS */
 

@@ -12,10 +12,6 @@ root {
 
 /* LABEL */
 
-label.icon {
-    font-family: "tabler-icons", sans-serif;
-}
-
 label:disabled {
     color: #a0a0a0;
 }
@@ -45,7 +41,6 @@ button:active {
     border-color: #ebebeb;
     color: #626262;
 }
-
 
 button:focus-visible {
     outline-width: 2px;
@@ -134,7 +129,6 @@ button:disabled {
     transition: background-color 100ms;
     transition: border-color 100ms;
 }
-
 
 /* CHECKBOX */
 
