@@ -668,12 +668,13 @@ spinbox .spinbox-value {
 }
 
 spinbox textbox.spinbox-value {
+    background-color: transparent;
     border-width: 0px;
     border-radius: 0px;
 }
 
-spinbox dropdown.spinbox-value {
-    background-color: red;
+spinbox picklist.spinbox-value dropdown {
+    background-color: transparent;
     border-width: 0px;
 }
 

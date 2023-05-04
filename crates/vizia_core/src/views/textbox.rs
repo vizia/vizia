@@ -84,11 +84,13 @@ where
             Binding::new(cx, lens, move |cx, text| {
                 let mut ex = EventContext::new(cx);
                 ex.with_current(parent, |ex| {
-                    if !ex.is_focused() {
+                    if !ex.is_checked() {
                         let text_str = text.view(
                             ex.data().expect("Failed to find data, is it built into the tree?"),
                             |text| text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned()),
                         );
+
+                        println!("{}", text_str);
 
                         ex.text_context.with_buffer(parent, |fs, buf| {
                             buf.set_text(fs, &text_str, Attrs::new());

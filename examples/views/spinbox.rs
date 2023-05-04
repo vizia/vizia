@@ -9,7 +9,7 @@ struct AppState {
     spinbox_value_1: i64,
     spinbox_value_2: usize,
     spinbox_value_3_choices: Vec<Spinbox3Values>,
-    spinbox_value_3: Spinbox3Values,
+    spinbox_value_3: usize,
 }
 
 #[derive(Clone, PartialEq, Copy, Eq, Data)]
@@ -30,7 +30,7 @@ enum AppEvent {
 
     Increment3,
     Decrement3,
-    Set3(Spinbox3Values),
+    Set3(usize),
 }
 
 fn main() {
@@ -38,7 +38,7 @@ fn main() {
         AppState {
             spinbox_value_1: 99,
             spinbox_value_2: 0,
-            spinbox_value_3: Spinbox3Values::One,
+            spinbox_value_3: 0,
             spinbox_value_3_choices: Spinbox3Values::values(),
         }
         .build(cx);
@@ -50,6 +50,7 @@ fn main() {
                 SpinboxKind::Horizontal,
                 SpinboxIcons::PlusMinus,
             )
+            .width(Pixels(100.0))
             .on_increment(|ex| ex.emit(AppEvent::Increment1))
             .on_decrement(|ex| ex.emit(AppEvent::Decrement1));
 
@@ -59,36 +60,44 @@ fn main() {
                     Textbox::new(cx, AppState::spinbox_value_2)
                         .on_edit(|ex, v| ex.emit(AppEvent::Set2(v)))
                 },
-                SpinboxKind::Vertical,
+                SpinboxKind::Horizontal,
                 SpinboxIcons::PlusMinus,
             )
+            // .width(Pixels(100.0))
             .on_increment(|ex| ex.emit(AppEvent::Increment2))
             .on_decrement(|ex| ex.emit(AppEvent::Decrement2));
 
             Spinbox::custom(
                 cx,
                 |cx| {
-                    Dropdown::new(
+                    PickList::new(
                         cx,
-                        |cx| {
-                            HStack::new(cx, move |cx| {
-                                Label::new(cx, AppState::spinbox_value_3);
-                            })
-                            .child_left(Pixels(5.0))
-                            .child_right(Pixels(5.0))
-                            .col_between(Stretch(1.0))
-                        },
-                        |cx| {
-                            List::new(cx, AppState::spinbox_value_3_choices, |cx, _, item| {
-                                Label::new(cx, &format!("{}", item.get(cx))).on_press(move |cx| {
-                                    cx.emit(AppEvent::Set3(item.get(cx)));
-                                    cx.emit(PopupEvent::Close);
-                                });
-                            })
-                            .child_right(Pixels(4.0));
-                        },
+                        AppState::spinbox_value_3_choices,
+                        AppState::spinbox_value_3,
+                        false,
                     )
-                    .width(Pixels(50.0))
+                    .on_select(|cx, val| cx.emit(AppEvent::Set3(val)))
+                    // Dropdown::new(
+                    //     cx,
+                    //     |cx| {
+                    //         HStack::new(cx, move |cx| {
+                    //             Label::new(cx, AppState::spinbox_value_3);
+                    //         })
+                    //         .child_left(Pixels(5.0))
+                    //         .child_right(Pixels(5.0))
+                    //         .col_between(Stretch(1.0))
+                    //     },
+                    //     |cx| {
+                    //         List::new(cx, AppState::spinbox_value_3_choices, |cx, _, item| {
+                    //             Label::new(cx, &format!("{}", item.get(cx))).on_press(move |cx| {
+                    //                 cx.emit(AppEvent::Set3(item.get(cx)));
+                    //                 cx.emit(PopupEvent::Close);
+                    //             });
+                    //         })
+                    //         .child_right(Pixels(4.0));
+                    //     },
+                    // )
+                    // .width(Pixels(50.0))
                 },
                 SpinboxKind::Horizontal,
                 SpinboxIcons::Chevrons,
@@ -130,8 +139,7 @@ impl Model for AppState {
             }
 
             AppEvent::Increment3 => {
-                let index = self.spinbox_value_3 as usize;
-                self.spinbox_value_3 = Spinbox3Values::from_number((index + 1) % 3).unwrap();
+                self.spinbox_value_3 = (self.spinbox_value_3 + 1) % 3;
             }
 
             AppEvent::Decrement3 => {
@@ -139,7 +147,7 @@ impl Model for AppState {
                 if index == 0 {
                     index = 3
                 }
-                self.spinbox_value_3 = Spinbox3Values::from_number(index - 1).unwrap();
+                self.spinbox_value_3 = index - 1;
             }
 
             AppEvent::Set3(v) => self.spinbox_value_3 = *v,
@@ -148,15 +156,6 @@ impl Model for AppState {
 }
 
 impl Spinbox3Values {
-    pub fn from_number(num: usize) -> Result<Self, ()> {
-        match num {
-            0 => Ok(Spinbox3Values::One),
-            1 => Ok(Spinbox3Values::Two),
-            2 => Ok(Spinbox3Values::Three),
-            _ => Err(()),
-        }
-    }
-
     pub fn values() -> Vec<Self> {
         vec![Spinbox3Values::One, Spinbox3Values::Two, Spinbox3Values::Three]
     }

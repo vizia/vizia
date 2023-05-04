@@ -543,11 +543,15 @@ spinbox {
 spinbox.horizontal {
     layout-type: row;
     height: 32px;
+    width: 100px;
 }
 
 spinbox.vertical {
     layout-type: column;
     width: 32px;
+    height: auto;
+    child-left: 1s;
+    child-right: 1s;
 }
 
 spinbox.vertical {
@@ -555,9 +559,9 @@ spinbox.vertical {
     child-bottom: 4px;
 }
 
-spinbox .container {
+/* spinbox .container {
     width: auto;
-}
+} */
 
 spinbox .spinbox-button {
     height: 24px;
@@ -572,36 +576,38 @@ spinbox.vertical .spinbox-button {
     width: 1s;
 }
 
-spinbox .spinbox-value {
+/* spinbox .spinbox-value {
     width: 1s;
     height: 1s;
     child-space: 1s;
-}
+} */
 
 spinbox label.spinbox-value {
-    width: auto;
-    left: 1s;
-    right: 1s;
-}
-
-spinbox textbox.spinbox-value {
-    width: auto;
-    min-width: 24px;
-    height: 24px;
+    width: 1s;
     child-space: 1s;
-    left: 4px;
-    right: 4px;
 }
 
-spinbox textbox.spinbox-value textboxcontainer {
+spinbox.vertical textbox.spinbox-value {
+    width: 1s;
+    height: auto;
+    child-space: 1s;
+}
+
+spinbox.horizontal textbox.spinbox-value {
+    width: 1s;
+    height: auto;
+    child-space: 1s;
+}
+
+/* spinbox textbox.spinbox-value {
     min-width: 32px;
     child-space: 1s;
     width: auto;
 }
 
-spinbox textbox.spinbox-value textboxlabel {
+spinbox textbox.spinbox-value {
     width: auto;
-}
+} */
 
 spinbox picklist.spinbox-value {
     width: 1s;
@@ -618,6 +624,12 @@ spinbox picklist.spinbox-value .title {
 }
 
 spinbox picklist.spinbox-value .title label {
+    left: 1s;
+    right: 1s;
+}
+
+spinbox picklist popup {
+    width: 100px;
     left: 1s;
     right: 1s;
 }

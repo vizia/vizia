@@ -398,6 +398,24 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    /// Returns true if the current view is active.
+    pub fn is_active(&self) -> bool {
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get(self.current) {
+            pseudo_classes.contains(PseudoClassFlags::ACTIVE)
+        } else {
+            false
+        }
+    }
+
+    /// Returns true if the current view is checked.
+    pub fn is_checked(&self) -> bool {
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get(self.current) {
+            pseudo_classes.contains(PseudoClassFlags::CHECKED)
+        } else {
+            false
+        }
+    }
+
     /// Returns true if the view is in a read-only state.
     pub fn is_read_only(&self) -> bool {
         if let Some(pseudo_classes) = self.style.pseudo_classes.get(self.current) {

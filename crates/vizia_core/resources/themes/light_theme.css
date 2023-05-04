@@ -639,11 +639,17 @@ spinbox .spinbox-value {
 }
 
 spinbox textbox.spinbox-value {
+    background-color: transparent;
     border-width: 0px;
     border-radius: 0px;
 }
 
-spinbox dropdown.spinbox-value {
+spinbox picklist.spinbox-value dropdown {
+    background-color: transparent;
+    border-width: 0px;
+}
+
+spinbox picklist.spinbox-value {
     background-color: transparent;
     border-width: 0px;
 }
@@ -651,7 +657,6 @@ spinbox dropdown.spinbox-value {
 spinbox picklist.spinbox-value .title {
     background-color: transparent;
     border-width: 0px;
-    col-between: 4px;
 }
 
 /* Switch */

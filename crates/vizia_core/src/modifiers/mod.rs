@@ -95,3 +95,6 @@ pub use text::*;
 
 mod abilities;
 pub use abilities::*;
+
+// Re-export here for docs
+pub use crate::window::WindowModifiers;
