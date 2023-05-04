@@ -827,6 +827,17 @@ impl<'a> EventContext<'a> {
         self.style.background_color.insert(self.current, background_color);
         self.needs_redraw();
     }
+
+    // TEXT
+
+    /// Sets the text of the current view.
+    pub fn set_text(&mut self, text: &str) {
+        self.text_context.set_text(self.current, text);
+
+        self.style.needs_text_layout.insert(self.current, true);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
 }
 
 impl<'a> DataContext for EventContext<'a> {

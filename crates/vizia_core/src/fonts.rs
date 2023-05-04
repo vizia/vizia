@@ -76,4 +76,14 @@ pub mod icons {
     pub const ICON_EYE_OFF: &str = "\u{ecf0}";
 
     pub const ICON_STAR_FILLED: &str = "\u{f6a6}";
+
+    pub const ICON_EDIT_CIRCLE_OFF: &str = "\u{f11d}";
+    pub const ICON_EDIT_CIRCLE: &str = "\u{ee85}";
+    pub const ICON_EDIT_OFF: &str = "\u{f11e}";
+    pub const ICON_EDIT: &str = "\u{ea98}";
+    pub const ICON_FILE_PENCIL: &str = "\u{f039}";
+    pub const ICON_PENCIL_MINUS: &str = "\u{f1eb}";
+    pub const ICON_PENCIL_OFF: &str = "\u{f173}";
+    pub const ICON_PENCIL_PLUS: &str = "\u{f1ec}";
+    pub const ICON_PENCIL: &str = "\u{eb04}";
 }

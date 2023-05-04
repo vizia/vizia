@@ -64,7 +64,7 @@ pub mod backend {
 #[doc(hidden)]
 pub mod prelude {
     pub use super::binding::{
-        Binding, Data, Index, Lens, LensExt, Res, Setter, StaticLens, Then, Wrapper,
+        Binding, Data, Index, Lens, LensExt, Res, Setter, StaticLens, Then, UnwrapLens, Wrapper,
     };
 
     pub use crate::model::Model;

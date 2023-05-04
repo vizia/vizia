@@ -66,8 +66,8 @@ impl_data_simple!(Translate);
 impl_data_simple!(NaiveDate);
 impl_data_simple!(NaiveTime);
 impl_data_simple!(Angle);
-
 impl_data_simple!(String);
+impl_data_simple!(Entity);
 
 impl Data for &'static str {
     fn same(&self, other: &Self) -> bool {

@@ -44,6 +44,10 @@ impl<'a, V> Handle<'a, V> {
         self.entity
     }
 
+    pub fn parent(&self) -> Entity {
+        self.cx.tree.get_parent(self.entity).unwrap_or(Entity::root())
+    }
+
     /// Marks the view as being ignored.
     pub(crate) fn ignore(self) -> Self {
         self.cx.tree.set_ignored(self.entity, true);
