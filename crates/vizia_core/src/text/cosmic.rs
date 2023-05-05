@@ -138,7 +138,11 @@ impl TextContext {
                     })
                     .unwrap_or_default(),
             };
-            let id = self.font_system.db().query(&query).unwrap(); // TODO worst-case default handling
+            let id = self
+                .font_system
+                .db()
+                .query(&query)
+                .expect(&format!("Failed to find font: {:?}", query)); // TODO worst-case default handling
             let info = self.font_system.db().face(id).unwrap();
             (info.families.clone(), info.weight, info.style)
         };
