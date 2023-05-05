@@ -117,7 +117,7 @@ fn hover_entity(
 
     let b = bounds.intersection(&clipping);
 
-    if tx >= b.left() && tx <= b.right() && ty >= b.top() && ty <= b.bottom() {
+    if tx >= b.left() && tx < b.right() && ty >= b.top() && ty < b.bottom() {
         *hovered = cx.current;
 
         if !cx
@@ -128,11 +128,11 @@ fn hover_entity(
             .unwrap_or_default()
             .contains(PseudoClassFlags::OVER)
         {
-            // cx.event_queue.push_back(
-            //     Event::new(WindowEvent::MouseOver)
-            //         .target(cx.current)
-            //         .propagate(Propagation::Direct),
-            // );
+            cx.event_queue.push_back(
+                Event::new(WindowEvent::MouseOver)
+                    .target(cx.current)
+                    .propagate(Propagation::Direct),
+            );
 
             if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
                 pseudo_class.set(PseudoClassFlags::OVER, true);
@@ -146,9 +146,9 @@ fn hover_entity(
         .unwrap_or_default()
         .contains(PseudoClassFlags::OVER)
     {
-        // cx.event_queue.push_back(
-        //     Event::new(WindowEvent::MouseOut).target(cx.current).propagate(Propagation::Direct),
-        // );
+        cx.event_queue.push_back(
+            Event::new(WindowEvent::MouseOut).target(cx.current).propagate(Propagation::Direct),
+        );
 
         if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
             pseudo_class.set(PseudoClassFlags::OVER, false);
