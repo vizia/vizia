@@ -208,7 +208,7 @@ impl Context {
         Environment::new().build(&mut result);
 
         result.entity_manager.create();
-        result.set_default_font(&["Roboto Regular"]);
+        result.set_default_font(&["Roboto"]);
 
         result.style.role.insert(Entity::root(), Role::Window);
 
