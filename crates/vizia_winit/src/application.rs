@@ -222,7 +222,7 @@ impl Application {
             if let Some(display) = window.window().wayland_display() {
                 let (_, clipboard) =
                     copypasta::wayland_clipboard::create_clipboards_from_external(display);
-                BackendContext::new(&mut context).set_clipboard_provider(Box::new(clipboard));
+                cx.set_clipboard_provider(Box::new(clipboard));
             }
         }
 
