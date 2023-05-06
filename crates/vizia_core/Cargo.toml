@@ -26,7 +26,7 @@ accesskit = "0.11.0"
 femtovg = "0.6.0"
 image = { version = "0.24.0", default-features = false, features = ["png"] } # inherited from femtovg
 # morphorm = {path = "../../../morphorm" }
-morphorm = {git = "https://github.com/vizia/morphorm", rev = "55ae8440e7be55bc9bfc26086f52388c0659c500" }
+morphorm = {git = "https://github.com/vizia/morphorm", rev = "a4b6ddee4537d52e4890947195b62f29df8fcc2f" }
 #morphorm = { path = "../../../morphorm", features = ["rounding"] }
 bitflags = "2.1.0"
 fnv = "1.0.7"
