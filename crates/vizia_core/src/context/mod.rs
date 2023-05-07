@@ -394,6 +394,33 @@ impl Context {
                 self.captured = Entity::null();
             }
 
+            // Remove any cached filter images associated with the entity.
+            if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
+                if let Some((s, t)) = self.cache.filter_image.get(*entity).cloned().flatten() {
+                    canvas.delete_image(s);
+                    canvas.delete_image(t);
+                }
+            }
+
+            // Remove any cached screenshot images associated with the entity.
+            if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
+                if let Some(s) = self.cache.screenshot_image.get(*entity).cloned().flatten() {
+                    canvas.delete_image(s);
+                }
+            }
+
+            // Remove any cached shadow images associated with the entity.
+            if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
+                if let Some(shadows) = self.cache.shadow_images.get(*entity).cloned() {
+                    for shadow in shadows.into_iter() {
+                        if let Some((s, t)) = shadow {
+                            canvas.delete_image(s);
+                            canvas.delete_image(t);
+                        }
+                    }
+                }
+            }
+
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
             self.style.remove(*entity);

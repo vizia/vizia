@@ -24,6 +24,9 @@ impl CachedData {
 
     pub(crate) fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
+        self.filter_image.remove(entity);
+        self.screenshot_image.remove(entity);
+        self.shadow_images.remove(entity);
     }
 
     /// Returns the bounding box of the entity, determined by the layout system.
