@@ -145,9 +145,6 @@ fn main() {
             Element::new(cx).class("shadow-inset-blur");
             Element::new(cx).class("shadow-inset");
         });
-
-        // Element::new(cx).box_shadow(&[])
-        // Element::new(cx).class("inner-shadow");
     })
     .title("Box Shadows")
     .inner_size((1000, 600))

@@ -1,5 +1,5 @@
 use cosmic_text::FamilyOwned;
-use femtovg::Transform2D;
+use femtovg::{ImageId, Transform2D};
 use std::any::{Any, TypeId};
 
 use fnv::FnvHashMap;
@@ -54,7 +54,7 @@ use vizia_style::{
 pub struct DrawContext<'a> {
     pub(crate) current: Entity,
     pub(crate) style: &'a Style,
-    pub(crate) cache: &'a CachedData,
+    pub(crate) cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
     pub(crate) data: &'a SparseSet<ModelDataStore>,
     pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
@@ -517,7 +517,7 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Draw backdrop filters for the current view.
-    pub fn draw_backdrop_filter(&self, canvas: &mut Canvas, path: &mut Path) {
+    pub fn draw_backdrop_filter(&mut self, canvas: &mut Canvas, path: &mut Path) {
         let window_width = self.cache.get_width(Entity::root());
         let window_height = self.cache.get_height(Entity::root());
         let bounds = self.bounds();
@@ -528,34 +528,72 @@ impl<'a> DrawContext<'a> {
 
         if let Some(blur_radius) = blur_radius {
             let sigma = blur_radius / 2.0;
-            // TODO - Cache this
-            let (source, target) = {
+
+            let filter_image =
+                self.cache.filter_image.get(self.current).cloned().unwrap_or_default();
+
+            fn create_images(canvas: &mut Canvas, w: usize, h: usize) -> (ImageId, ImageId) {
                 (
                     canvas
                         .create_image_empty(
-                            bounds.w as usize,
-                            bounds.h as usize,
+                            w,
+                            h,
                             femtovg::PixelFormat::Rgba8,
                             femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
                         )
                         .unwrap(),
                     canvas
                         .create_image_empty(
-                            bounds.w as usize,
-                            bounds.h as usize,
+                            w,
+                            h,
                             femtovg::PixelFormat::Rgba8,
                             femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
                         )
                         .unwrap(),
                 )
+            }
+
+            let (source, target) = match filter_image {
+                Some((s, t)) => {
+                    if canvas.image_size(s).unwrap().0 != bounds.w as usize {
+                        canvas.delete_image(s);
+                        canvas.delete_image(t);
+
+                        create_images(canvas, bounds.w as usize, bounds.h as usize)
+                    } else {
+                        (s, t)
+                    }
+                }
+
+                None => create_images(canvas, bounds.w as usize, bounds.h as usize),
             };
 
-            // TODO: Cache these
-            let screenshot_image = canvas.screenshot().unwrap();
+            self.cache.filter_image.insert(self.current, Some((source, target)));
 
-            let screenshot_image_id = canvas
-                .create_image(screenshot_image.as_ref(), femtovg::ImageFlags::empty())
-                .unwrap();
+            // TODO: Cache these
+            let screenshot = canvas.screenshot().unwrap();
+
+            let screenshot_image =
+                self.cache.screenshot_image.get(self.current).cloned().unwrap_or_default();
+
+            let screenshot_image_id = if let Some(s) = screenshot_image {
+                let image_size = canvas.image_size(s).unwrap();
+                if image_size.0 != screenshot.width() as usize
+                    || image_size.1 != screenshot.height() as usize
+                {
+                    canvas.delete_image(s);
+                    canvas.create_image(screenshot.as_ref(), femtovg::ImageFlags::empty()).unwrap()
+                } else {
+                    canvas
+                        .update_image(s, screenshot.as_ref(), 0, 0)
+                        .expect("Failed to update image");
+                    s
+                }
+            } else {
+                canvas.create_image(screenshot.as_ref(), femtovg::ImageFlags::empty()).unwrap()
+            };
+
+            self.cache.screenshot_image.insert(self.current, Some(screenshot_image_id));
 
             // Draw canvas to source image
             canvas.save();
@@ -717,9 +755,30 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Draw inset box shadows for the current view.
-    pub fn draw_inset_box_shadows(&self, canvas: &mut Canvas, path: &mut Path) {
+    pub fn draw_inset_box_shadows(&mut self, canvas: &mut Canvas, path: &mut Path) {
         if let Some(box_shadows) = self.box_shadows() {
-            for box_shadow in box_shadows.iter().rev().filter(|shadow| shadow.inset) {
+            if box_shadows.is_empty() {
+                return;
+            }
+
+            let mut shadow_images =
+                self.cache.shadow_images.get(self.current).cloned().unwrap_or_default();
+
+            if shadow_images.len() < box_shadows.len() {
+                shadow_images.resize(box_shadows.len(), None);
+            } else {
+                let excess = shadow_images.split_off(box_shadows.len());
+                for item in excess {
+                    if let Some((s, t)) = item {
+                        canvas.delete_image(s);
+                        canvas.delete_image(t);
+                    }
+                }
+            }
+
+            for (index, box_shadow) in
+                box_shadows.iter().enumerate().rev().filter(|(_, shadow)| shadow.inset)
+            {
                 let color = box_shadow.color.unwrap_or_default();
                 let x_offset = box_shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
                 let y_offset = box_shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();
@@ -734,27 +793,50 @@ impl<'a> DrawContext<'a> {
 
                 let bounds = self.bounds();
 
-                // TODO: Cache shadow images
-                let (source, target) = {
+                let (source, target) =
+                    shadow_images[index].map(|(s, t)| (Some(s), Some(t))).unwrap_or((None, None));
+
+                fn create_images(canvas: &mut Canvas, w: usize, h: usize) -> (ImageId, ImageId) {
                     (
                         canvas
                             .create_image_empty(
-                                (bounds.w + d) as usize,
-                                (bounds.h + d) as usize,
+                                w,
+                                h,
                                 femtovg::PixelFormat::Rgba8,
                                 femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
                             )
                             .unwrap(),
                         canvas
                             .create_image_empty(
-                                (bounds.w + d) as usize,
-                                (bounds.h + d) as usize,
+                                w,
+                                h,
                                 femtovg::PixelFormat::Rgba8,
                                 femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
                             )
                             .unwrap(),
                     )
+                }
+
+                let (source, target) = match (source, target) {
+                    (Some(s), Some(t)) => {
+                        if canvas.image_size(s).unwrap().0 != (bounds.w + d) as usize {
+                            canvas.delete_image(s);
+                            canvas.delete_image(t);
+
+                            create_images(canvas, (bounds.w + d) as usize, (bounds.h + d) as usize)
+                        } else {
+                            (s, t)
+                        }
+                    }
+
+                    (None, None) => {
+                        create_images(canvas, (bounds.w + d) as usize, (bounds.h + d) as usize)
+                    }
+
+                    _ => unreachable!(),
                 };
+
+                shadow_images[index] = Some((source, target));
 
                 canvas.save();
                 canvas.set_render_target(femtovg::RenderTarget::Image(source));
@@ -826,17 +908,36 @@ impl<'a> DrawContext<'a> {
                 canvas.fill_path(path, &paint);
 
                 canvas.restore();
-
-                // canvas.delete_image(source);
-                // canvas.delete_image(target);
             }
+            self.cache.shadow_images.insert(self.current, shadow_images);
         }
     }
 
     /// Draw non-inset box shadows for the current view.
     pub fn draw_shadows(&mut self, canvas: &mut Canvas, path: &mut Path) {
         if let Some(box_shadows) = self.box_shadows() {
-            for box_shadow in box_shadows.iter().rev().filter(|shadow| !shadow.inset) {
+            if box_shadows.is_empty() {
+                return;
+            }
+
+            let mut shadow_images =
+                self.cache.shadow_images.get(self.current).cloned().unwrap_or_default();
+
+            if shadow_images.len() < box_shadows.len() {
+                shadow_images.resize(box_shadows.len(), None);
+            } else {
+                let excess = shadow_images.split_off(box_shadows.len());
+                for item in excess {
+                    if let Some((s, t)) = item {
+                        canvas.delete_image(s);
+                        canvas.delete_image(t);
+                    }
+                }
+            }
+
+            for (index, box_shadow) in
+                box_shadows.iter().enumerate().rev().filter(|(_, shadow)| !shadow.inset)
+            {
                 let color = box_shadow.color.unwrap_or_default();
                 let x_offset = box_shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
                 let y_offset = box_shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();
@@ -851,27 +952,50 @@ impl<'a> DrawContext<'a> {
 
                 let bounds = self.bounds();
 
-                // TODO: Cache shadow images
-                let (source, target) = {
+                let (source, target) =
+                    shadow_images[index].map(|(s, t)| (Some(s), Some(t))).unwrap_or((None, None));
+
+                fn create_images(canvas: &mut Canvas, w: usize, h: usize) -> (ImageId, ImageId) {
                     (
                         canvas
                             .create_image_empty(
-                                (bounds.w + d) as usize,
-                                (bounds.h + d) as usize,
+                                w,
+                                h,
                                 femtovg::PixelFormat::Rgba8,
                                 femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
                             )
                             .unwrap(),
                         canvas
                             .create_image_empty(
-                                (bounds.w + d) as usize,
-                                (bounds.h + d) as usize,
+                                w,
+                                h,
                                 femtovg::PixelFormat::Rgba8,
                                 femtovg::ImageFlags::FLIP_Y | femtovg::ImageFlags::PREMULTIPLIED,
                             )
                             .unwrap(),
                     )
+                }
+
+                let (source, target) = match (source, target) {
+                    (Some(s), Some(t)) => {
+                        if canvas.image_size(s).unwrap().0 != (bounds.w + d) as usize {
+                            canvas.delete_image(s);
+                            canvas.delete_image(t);
+
+                            create_images(canvas, (bounds.w + d) as usize, (bounds.h + d) as usize)
+                        } else {
+                            (s, t)
+                        }
+                    }
+
+                    (None, None) => {
+                        create_images(canvas, (bounds.w + d) as usize, (bounds.h + d) as usize)
+                    }
+
+                    _ => unreachable!(),
                 };
+
+                shadow_images[index] = Some((source, target));
 
                 canvas.save();
                 canvas.set_render_target(femtovg::RenderTarget::Image(source));
@@ -936,10 +1060,8 @@ impl<'a> DrawContext<'a> {
                 );
 
                 canvas.restore();
-
-                // canvas.delete_image(source);
-                // canvas.delete_image(target);
             }
+            self.cache.shadow_images.insert(self.current, shadow_images);
         }
     }
 
@@ -1028,7 +1150,6 @@ impl<'a> DrawContext<'a> {
                                         index as f32 / (num_stops - 1) as f32
                                     };
                                     let col: femtovg::Color = stop.color.into();
-                                    println!("{} {:?}", pos, col);
                                     (pos, col)
                                 })
                                 .collect::<Vec<_>>();
@@ -1073,7 +1194,6 @@ impl<'a> DrawContext<'a> {
                                         index as f32 / (num_stops - 1) as f32
                                     };
                                     let col: femtovg::Color = stop.color.into();
-                                    println!("{} {:?}", pos, col);
                                     (pos, col)
                                 })
                                 .collect::<Vec<_>>();

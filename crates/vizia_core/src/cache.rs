@@ -2,6 +2,7 @@
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
 use crate::prelude::*;
+use femtovg::ImageId;
 use vizia_storage::SparseSet;
 
 /// Stores data which can be cached between system runs.
@@ -11,6 +12,9 @@ use vizia_storage::SparseSet;
 #[derive(Default)]
 pub struct CachedData {
     pub(crate) bounds: SparseSet<BoundingBox>,
+    pub(crate) shadow_images: SparseSet<Vec<Option<(ImageId, ImageId)>>>,
+    pub(crate) filter_image: SparseSet<Option<(ImageId, ImageId)>>,
+    pub(crate) screenshot_image: SparseSet<Option<ImageId>>,
 }
 
 impl CachedData {
