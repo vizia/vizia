@@ -1,3 +1,5 @@
+use image::Pixel;
+
 use crate::icons::ICON_CHEVRON_DOWN;
 use crate::prelude::*;
 
@@ -50,16 +52,23 @@ impl PickList {
                 move |cx| {
                     let s = selected.clone();
                     let l = list_lens.clone();
-                    List::new(cx, l, move |cx, index, item| {
-                        Label::new(cx, item)
-                            .child_top(Stretch(1.0))
-                            .child_bottom(Stretch(1.0))
-                            .checked(s.clone().map(move |selected| *selected == index))
-                            .on_press(move |cx| {
-                                cx.emit(PickListEvent::SetOption(index));
-                                cx.emit(PopupEvent::Close);
-                            });
-                    });
+                    let window_height = cx.cache.get_height(Entity::root());
+                    let scale = cx.scale_factor();
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        List::new(cx, l, move |cx, index, item| {
+                            Label::new(cx, item)
+                                .child_top(Stretch(1.0))
+                                .child_bottom(Stretch(1.0))
+                                .checked(s.clone().map(move |selected| *selected == index))
+                                .navigable(true)
+                                .on_press(move |cx| {
+                                    cx.emit(PickListEvent::SetOption(index));
+                                    cx.emit(PopupEvent::Close);
+                                });
+                        });
+                    })
+                    .height(Auto)
+                    .max_height(Pixels(window_height / scale));
                 },
             );
         })

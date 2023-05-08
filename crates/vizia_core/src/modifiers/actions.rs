@@ -1,3 +1,4 @@
+use crate::layout::cache::GeoChanged;
 use crate::prelude::*;
 use crate::style::Abilities;
 use std::any::TypeId;
@@ -39,7 +40,7 @@ pub(crate) struct ActionsModel {
     pub(crate) on_mouse_up: Option<Box<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>>,
     pub(crate) on_focus_in: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_focus_out: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
-    pub(crate) on_geo_changed: Option<Box<dyn Fn(&mut EventContext, bool) + Send + Sync>>,
+    pub(crate) on_geo_changed: Option<Box<dyn Fn(&mut EventContext, GeoChanged) + Send + Sync>>,
     pub(crate) on_drag_start: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     pub(crate) on_drop: Option<Box<dyn Fn(&mut EventContext, DropData) + Send + Sync>>,
 }
@@ -119,6 +120,7 @@ impl Model for ActionsModel {
                 }
 
                 ActionsEvent::OnGeoChanged(on_geo_changed) => {
+                    println!("add geo chnaged: {}", cx.current);
                     self.on_geo_changed = Some(on_geo_changed);
                 }
 
@@ -269,7 +271,7 @@ pub(crate) enum ActionsEvent {
     OnMouseUp(Box<dyn Fn(&mut EventContext, MouseButton) + Send + Sync>),
     OnFocusIn(Box<dyn Fn(&mut EventContext) + Send + Sync>),
     OnFocusOut(Box<dyn Fn(&mut EventContext) + Send + Sync>),
-    OnGeoChanged(Box<dyn Fn(&mut EventContext, bool) + Send + Sync>),
+    OnGeoChanged(Box<dyn Fn(&mut EventContext, GeoChanged) + Send + Sync>),
     OnDragStart(Box<dyn Fn(&mut EventContext) + Send + Sync>),
     OnDrop(Box<dyn Fn(&mut EventContext, DropData) + Send + Sync>),
 }
@@ -440,7 +442,7 @@ pub trait ActionModifiers<V> {
     /// ```
     fn on_geo_changed<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, bool) + Send + Sync;
+        F: 'static + Fn(&mut EventContext, GeoChanged) + Send + Sync;
 
     fn tooltip<C: FnOnce(&mut Context)>(self, content: C) -> Self;
 
@@ -679,7 +681,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
 
     fn on_geo_changed<F>(self, action: F) -> Self
     where
-        F: 'static + Fn(&mut EventContext, bool) + Send + Sync,
+        F: 'static + Fn(&mut EventContext, GeoChanged) + Send + Sync,
     {
         build_action_model::<V>(self.cx, self.entity);
 

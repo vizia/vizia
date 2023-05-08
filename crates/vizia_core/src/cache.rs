@@ -1,9 +1,16 @@
 //! The cache is a store for intermediate data produced while computing state, notably layout
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
-use crate::prelude::*;
+use crate::{layout::cache::GeoChanged, prelude::*};
 use femtovg::ImageId;
 use vizia_storage::SparseSet;
+use vizia_window::Position;
+
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub(crate) struct Pos {
+    pub(crate) x: f32,
+    pub(crate) y: f32,
+}
 
 /// Stores data which can be cached between system runs.
 ///
@@ -12,21 +19,27 @@ use vizia_storage::SparseSet;
 #[derive(Default)]
 pub struct CachedData {
     pub(crate) bounds: SparseSet<BoundingBox>,
+    pub(crate) relative_position: SparseSet<Pos>,
     pub(crate) shadow_images: SparseSet<Vec<Option<(ImageId, ImageId)>>>,
     pub(crate) filter_image: SparseSet<Option<(ImageId, ImageId)>>,
     pub(crate) screenshot_image: SparseSet<Option<ImageId>>,
+    pub(crate) geo_changed: SparseSet<GeoChanged>,
 }
 
 impl CachedData {
     pub(crate) fn add(&mut self, entity: Entity) {
         self.bounds.insert(entity, Default::default());
+        self.relative_position.insert(entity, Default::default());
+        self.geo_changed.insert(entity, GeoChanged::empty());
     }
 
     pub(crate) fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
+        self.relative_position.remove(entity);
         self.filter_image.remove(entity);
         self.screenshot_image.remove(entity);
         self.shadow_images.remove(entity);
+        self.geo_changed.remove(entity);
     }
 
     /// Returns the bounding box of the entity, determined by the layout system.
@@ -52,6 +65,12 @@ impl CachedData {
     /// Returns the height of the entity.
     pub fn get_height(&self, entity: Entity) -> f32 {
         self.bounds.get(entity).cloned().unwrap_or_default().h
+    }
+
+    pub fn set_bounds(&mut self, entity: Entity, bounds: BoundingBox) {
+        if let Some(b) = self.bounds.get_mut(entity) {
+            *b = bounds;
+        }
     }
 
     /// Sets the x position of the entity.

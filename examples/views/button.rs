@@ -24,9 +24,6 @@ fn main() {
                         Label::new(cx, ICON_CHECK).class("icon");
                         Label::new(cx, "Button with Icon");
                     })
-                    .size(Auto)
-                    .child_space(Stretch(1.0))
-                    .col_between(Pixels(4.0))
                 },
             );
         });

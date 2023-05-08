@@ -146,7 +146,7 @@ impl<'a> DrawContext<'a> {
         let overflowx = self.style.overflowx.get(self.current).copied().unwrap_or_default();
         let overflowy = self.style.overflowy.get(self.current).copied().unwrap_or_default();
 
-        let root_bounds = self.cache.get_bounds(Entity::root());
+        // let root_bounds = self.cache.get_bounds(Entity::root());
 
         let scale = self.scale_factor();
 
@@ -164,6 +164,9 @@ impl<'a> DrawContext<'a> {
                 ),
             })
             .unwrap_or(bounds);
+
+        let root_bounds: BoundingBox =
+            BoundingBox { x: -f32::MAX / 2.0, y: -f32::MAX / 2.0, w: f32::MAX, h: f32::MAX };
 
         match (overflowx, overflowy) {
             (Overflow::Visible, Overflow::Visible) => root_bounds,

@@ -36,6 +36,8 @@ pub mod bounds;
 
 pub use bounds::*;
 
+pub use cache::GeoChanged;
+
 use crate::{
     context::Context,
     events::{Event, Propagation, WindowEvent},
@@ -43,15 +45,15 @@ use crate::{
 };
 
 pub(crate) fn geometry_changed(cx: &mut Context) {
-    if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {
-        for node in cx.tree.into_iter() {
-            cx.event_queue.push_back(
-                Event::new(WindowEvent::GeometryChanged(true))
-                    .target(node)
-                    .propagate(Propagation::Up),
-            );
-        }
-    }
+    // if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {
+    //     for node in cx.tree.into_iter() {
+    //         cx.event_queue.push_back(
+    //             Event::new(WindowEvent::GeometryChanged(true))
+    //                 .target(node)
+    //                 .propagate(Propagation::Up),
+    //         );
+    //     }
+    // }
 
     if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {
         // A relayout, retransform, or reclip, can cause the element under the cursor to change. So we push a mouse move event here to force

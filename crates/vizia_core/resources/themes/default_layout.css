@@ -15,8 +15,10 @@ button {
     child-bottom: 1s;
 }
 
-button label {
+button > .inner {
+    size: auto;
     child-space: 1s;
+    col-between: 4px;
     min-left: 8px;
     min-right: 8px;
 }
@@ -194,6 +196,12 @@ dropdown popup list {
     child-bottom: 4px;
 }
 
+dropdown popup scrollview scrollbar.vertical {
+    top: 4px;
+    bottom: 4px;
+    right: 2px;
+}
+
 dropdown list label {
     width: 100%;
     height: 32px;
@@ -263,8 +271,6 @@ label.describing {
 list {
     width: auto;
     height: auto;
-    row-between: 4px;
-    col-between: 4px;
 }
 
 /* Menu */
@@ -396,12 +402,12 @@ popup {
     width: auto;
     height: auto;
     display: none;
-    opacity: 0;
+    /* opacity: 0; */
 }
 
 popup:checked {
     display: flex;
-    opacity: 1;
+    /* opacity: 1; */
 }
 
 /* Progress Bar */
@@ -932,12 +938,12 @@ analogtimepicker .time-selector-wrapper button label {
 
 popup {
     display: none;
-    opacity: 0;
+    /* opacity: 0; */
 }
 
 popup:checked {
     display: flex;
-    opacity: 1;
+    /* opacity: 1; */
 }
 
 menucontroller {

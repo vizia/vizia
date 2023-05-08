@@ -2,6 +2,7 @@ use std::ops::Range;
 
 use accesskit::ActionData;
 
+use crate::layout::cache::GeoChanged;
 use crate::prelude::*;
 use crate::views::Orientation;
 
@@ -155,7 +156,9 @@ where
                     Element::new(cx)
                         .class("thumb")
                         .on_geo_changed(|cx, geo| {
-                            if geo {
+                            if geo.contains(GeoChanged::WIDTH_CHANGED)
+                                || geo.contains(GeoChanged::HEIGHT_CHANGED)
+                            {
                                 let bounds = cx.bounds();
                                 cx.emit(SliderEventInternal::SetThumbSize(bounds.w, bounds.h));
                             }
@@ -352,7 +355,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                 let max = self.internal.range.end;
                 let step = self.internal.step;
                 let mut val = self.lens.get(cx) + step;
-                val = step * (val / step).ceil();
+                // val = step * (val / step).ceil();
                 val = val.clamp(min, max);
                 if let Some(callback) = &self.on_changing {
                     (callback)(cx, val);
@@ -364,7 +367,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
                 let max = self.internal.range.end;
                 let step = self.internal.step;
                 let mut val = self.lens.get(cx) - step;
-                val = step * (val / step).ceil();
+                // val = step * (val / step).ceil();
                 val = val.clamp(min, max);
                 if let Some(callback) = &self.on_changing {
                     (callback)(cx, val);

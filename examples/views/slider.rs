@@ -2,6 +2,25 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
+#[derive(Debug, Lens)]
+pub struct AppData {
+    value: f32,
+}
+
+pub enum AppEvent {
+    SetValue(f32),
+}
+
+impl Model for AppData {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            AppEvent::SetValue(val) => {
+                self.value = *val;
+            }
+        });
+    }
+}
+
 fn main() {
     Application::new(|cx| {
         AppData { value: 0.0 }.build(cx);
@@ -57,23 +76,4 @@ fn main() {
     })
     .title("Slider")
     .run();
-}
-
-#[derive(Debug, Lens)]
-pub struct AppData {
-    value: f32,
-}
-
-pub enum AppEvent {
-    SetValue(f32),
-}
-
-impl Model for AppData {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            AppEvent::SetValue(val) => {
-                self.value = *val;
-            }
-        });
-    }
 }

@@ -80,7 +80,7 @@ impl Button {
     {
         Self { action: Some(Box::new(action)) }
             .build(cx, move |cx| {
-                (content)(cx).hoverable(false);
+                (content)(cx).hoverable(false).class("inner");
             })
             .role(Role::Button)
             .default_action_verb(DefaultActionVerb::Click)

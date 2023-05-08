@@ -14,7 +14,9 @@ pub(crate) fn hover_system(cx: &mut Context) {
     queue.push(ZEntity { index: 0, entity: Entity::root() });
     let mut hovered = Entity::root();
     let transform = Transform2D::identity();
-    let clip_bounds = cx.cache.get_bounds(Entity::root());
+    // let clip_bounds = cx.cache.get_bounds(Entity::root());
+    let clip_bounds: BoundingBox =
+        BoundingBox { x: -f32::MAX / 2.0, y: -f32::MAX / 2.0, w: f32::MAX, h: f32::MAX };
     while !queue.is_empty() {
         let zentity = queue.pop().unwrap();
         cx.with_current(zentity.entity, |cx| {

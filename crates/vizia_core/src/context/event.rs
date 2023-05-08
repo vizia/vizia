@@ -66,7 +66,7 @@ pub struct EventContext<'a> {
     pub(crate) hovered: &'a Entity,
     pub(crate) style: &'a mut Style,
     pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
-    pub cache: &'a CachedData,
+    pub cache: &'a mut CachedData,
     pub(crate) tree: &'a Tree<Entity>,
     pub(crate) data: &'a mut SparseSet<ModelDataStore>,
     pub(crate) views: &'a mut FnvHashMap<Entity, Box<dyn ViewHandler>>,
@@ -96,7 +96,7 @@ impl<'a> EventContext<'a> {
             hovered: &cx.hovered,
             entity_identifiers: &cx.entity_identifiers,
             style: &mut cx.style,
-            cache: &cx.cache,
+            cache: &mut cx.cache,
             tree: &cx.tree,
             data: &mut cx.data,
             views: &mut cx.views,
@@ -155,6 +155,10 @@ impl<'a> EventContext<'a> {
         self.cache.get_bounds(self.current)
     }
 
+    pub fn set_bounds(&mut self, bounds: BoundingBox) {
+        self.cache.set_bounds(self.current, bounds);
+    }
+
     /// Returns the scale factor.
     pub fn scale_factor(&self) -> f32 {
         self.style.dpi_factor as f32
@@ -176,7 +180,7 @@ impl<'a> EventContext<'a> {
         let overflowx = self.style.overflowx.get(self.current).copied().unwrap_or_default();
         let overflowy = self.style.overflowy.get(self.current).copied().unwrap_or_default();
 
-        let root_bounds = self.cache.get_bounds(Entity::root());
+        // let root_bounds = self.cache.get_bounds(Entity::root());
 
         let scale = self.scale_factor();
 
@@ -194,6 +198,9 @@ impl<'a> EventContext<'a> {
                 ),
             })
             .unwrap_or(bounds);
+
+        let root_bounds: BoundingBox =
+            BoundingBox { x: -f32::MAX / 2.0, y: -f32::MAX / 2.0, w: f32::MAX, h: f32::MAX };
 
         match (overflowx, overflowy) {
             (Overflow::Visible, Overflow::Visible) => root_bounds,

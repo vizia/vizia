@@ -77,7 +77,7 @@ pub mod prelude {
     pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};
     pub use super::events::{Event, Propagation};
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
-    pub use super::layout::BoundingBox;
+    pub use super::layout::{BoundingBox, GeoChanged};
     pub use super::localization::Localized;
     pub use super::modifiers::{
         AbilityModifiers, AccessibilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers,

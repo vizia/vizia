@@ -49,7 +49,12 @@ where
     {
         Self { lens: lens.clone() }
             .build(cx, |cx| {
+                let parent = cx.current;
                 Binding::new(cx, lens.clone(), move |cx, lens| {
+                    if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
+                        geo.set(GeoChanged::WIDTH_CHANGED, true);
+                    }
+
                     if lens.get(cx) {
                         if capture_focus {
                             VStack::new(cx, &content).lock_focus_to_within();
@@ -114,5 +119,33 @@ where
 {
     fn element(&self) -> Option<&'static str> {
         Some("popup")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|window_event, _| match window_event {
+            WindowEvent::GeometryChanged(_) => {
+                let bounds = cx.bounds();
+                let window_bounds = cx.cache.get_bounds(Entity::root());
+
+                let dist_bottom = window_bounds.bottom() - bounds.bottom();
+                let dist_top = bounds.top() - window_bounds.top();
+
+                let scale = cx.scale_factor();
+
+                if dist_bottom < 0.0 {
+                    if dist_top.abs() < dist_bottom.abs() {
+                        // bounds.y = 0.0;
+                        cx.set_translate((Pixels(0.0), Pixels(-dist_top.abs() / scale)));
+                    } else {
+                        // bounds.y += dist_bottom;
+                        cx.set_translate((Pixels(0.0), Pixels(-dist_bottom.abs() / scale)));
+                    }
+                } else {
+                    cx.set_translate((Pixels(0.0), Pixels(4.0)));
+                }
+            }
+
+            _ => {}
+        });
     }
 }

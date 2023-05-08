@@ -118,20 +118,22 @@ impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        Self { data: ScrollData::root }.build(cx, move |cx| {
-            ScrollData {
-                scroll_x: initial_x,
-                scroll_y: initial_y,
-                child_x: 0.0,
-                child_y: 0.0,
-                parent_x: 0.0,
-                parent_y: 0.0,
-                on_scroll: None,
-            }
-            .build(cx);
+        Self { data: ScrollData::root }
+            .build(cx, move |cx| {
+                ScrollData {
+                    scroll_x: initial_x,
+                    scroll_y: initial_y,
+                    child_x: 0.0,
+                    child_y: 0.0,
+                    parent_x: 0.0,
+                    parent_y: 0.0,
+                    on_scroll: None,
+                }
+                .build(cx);
 
-            Self::common_builder(cx, ScrollData::root, content, scroll_x, scroll_y);
-        })
+                Self::common_builder(cx, ScrollData::root, content, scroll_x, scroll_y);
+            })
+            .checked(ScrollData::root.map(|data| data.parent_y != data.child_y))
     }
 }
 
@@ -159,9 +161,9 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        VStack::new(cx, content)
-            .class("scroll_content")
-            .bind(data.clone(), |handle, data| {
+        ScrollContent::new(cx, content).class("scroll_content").bind(
+            data.clone(),
+            |mut handle, data| {
                 let dpi_factor = handle.scale_factor();
                 if dpi_factor > 0.0 {
                     let data = data.get(handle.cx);
@@ -171,13 +173,9 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                         / handle.cx.style.dpi_factor as f32;
                     handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
                 }
-            })
-            .on_geo_changed(|cx, geo| {
-                if geo {
-                    let bounds = cx.bounds();
-                    cx.emit(ScrollEvent::ChildGeo(bounds.w, bounds.h));
-                }
-            });
+            },
+        );
+
         if scroll_y {
             Scrollbar::new(
                 cx,
@@ -190,6 +188,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             )
             .position_type(PositionType::SelfDirected);
         }
+
         if scroll_x {
             Scrollbar::new(
                 cx,
@@ -211,17 +210,18 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
+        event.map(|window_event, meta| match window_event {
             WindowEvent::GeometryChanged(geo) => {
-                if *geo {
-                    let current = cx.current();
-                    let width = cx.cache.get_width(current);
-                    let height = cx.cache.get_height(current);
-                    cx.emit(ScrollEvent::ParentGeo(width, height));
+                if geo.contains(GeoChanged::WIDTH_CHANGED)
+                    || geo.contains(GeoChanged::HEIGHT_CHANGED)
+                {
+                    let bounds = cx.bounds();
+                    cx.emit(ScrollEvent::ParentGeo(bounds.w, bounds.h));
                 }
             }
 
             WindowEvent::MouseScroll(x, y) => {
+                cx.set_active(true);
                 let (x, y) =
                     if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, -*x) } else { (-*x, -*y) };
 
@@ -240,6 +240,10 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
                 }
             }
 
+            WindowEvent::MouseOut => {
+                cx.set_active(false);
+            }
+
             _ => {}
         });
     }
@@ -252,5 +256,30 @@ impl<'a, L: Lens> Handle<'a, ScrollView<L>> {
     ) -> Self {
         self.cx.emit_to(self.entity(), ScrollEvent::SetOnScroll(Some(Arc::new(callback))));
         self
+    }
+}
+
+pub struct ScrollContent {}
+
+impl ScrollContent {
+    pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
+        Self {}.build(cx, content).class("scroll_content")
+    }
+}
+
+impl View for ScrollContent {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|window_event, _| match window_event {
+            WindowEvent::GeometryChanged(geo) => {
+                if geo.contains(GeoChanged::WIDTH_CHANGED)
+                    || geo.contains(GeoChanged::HEIGHT_CHANGED)
+                {
+                    let bounds = cx.bounds();
+                    cx.emit(ScrollEvent::ChildGeo(bounds.w, bounds.h));
+                }
+            }
+
+            _ => {}
+        });
     }
 }

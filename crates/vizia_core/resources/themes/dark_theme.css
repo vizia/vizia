@@ -239,8 +239,6 @@ chip:disabled .icon {
 datepicker {
     background-color: #343434;
     border-radius: 4px;
-    child-space: 8px;
-    row-between: 8px;
 }
 
 .datepicker-header textbox {
@@ -249,13 +247,6 @@ datepicker {
 
 .datepicker-divisor {
     background-color: #2f2f2f;
-}
-
-.datepicker-calendar {
-    width: auto;
-    height: auto;
-    left: 1s;
-    right: 1s;
 }
 
 .datepicker-calendar-day {

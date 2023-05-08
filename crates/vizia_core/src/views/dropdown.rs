@@ -153,6 +153,7 @@ impl Dropdown {
                     .role(Role::PopupButton)
                     .width(Stretch(1.0))
                     .cursor(CursorIcon::Hand)
+                    .navigable(true)
                     .on_press(|cx| cx.emit(PopupEvent::Switch));
 
                 Popup::new(cx, PopupData::is_open, false, move |cx| {

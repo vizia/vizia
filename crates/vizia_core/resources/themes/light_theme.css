@@ -224,67 +224,6 @@ chip:disabled .icon {
     scale: 1;
 }
 
-/* Datepicker */
-
-datepicker {
-    background-color: #343434;
-    border-radius: 4px;
-    child-space: 8px;
-    row-between: 8px;
-}
-
-.datepicker-divisor {
-    background-color: #2f2f2f;
-}
-
-.datepicker-calendar {
-    width: auto;
-    height: auto;
-    left: 1s;
-    right: 1s;
-}
-
-.datepicker-calendar-day {
-    color: #888;
-    cursor: hand;
-}
-
-.datepicker-calendar-day:checked {
-    color: #181818;
-    background-color: #51afef;
-    border-radius: 4px;
-}
-
-.datepicker-calendar-day-disabled {
-    color: #585858;
-    cursor: arrow;
-}
-
-.datepicker-selected-date {
-    color: #b0b0b0;
-}
-
-.datepicker-cancel {
-    border-width: 2px;
-    border-color: #ef5151;
-    border-radius: 4px;
-}
-
-.datepicker-cancel label {
-    color: #ef5151;
-}
-
-.datepicker-apply {
-    border-radius: 4px;
-    border-width: 2px;
-    border-color: #51afef;
-    background-color: #51afef;
-}
-
-.datepicker-apply label {
-    color: #181818;
-}
-
 /* Date Time Picker */
 
 datetimepicker {
@@ -360,14 +299,14 @@ dropdown list label:focus-visible {
 /* Popup */
 
 popup {
-    box-shadow: 0px 0px 8px #00000026;
-    opacity: 0%;
-    transition: opacity 100ms;
+    box-shadow: 0px 3px 12px #00000038;
+    /* opacity: 0%;
+    transition: opacity 100ms; */
 }
 
 popup:checked {
-    opacity: 100%;
-    transition: opacity 100ms;
+    /* opacity: 100%;
+    transition: opacity 100ms; */
 }
 
 /*
@@ -453,6 +392,13 @@ knob:disabled .knob-head {
 knob .knob-tick {
     background-color: #d2d2d2;
     border-radius: 1px;
+}
+
+/* PiCKLIST */
+picklist:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
+    outline-offset: 3px;
 }
 
 /* Radiobutton */
@@ -549,8 +495,16 @@ rating .icon:checked:disabled {
     color: #dacf93;
 }
 
+scrollview > scrollbar {
+    display: none;
+}
+
+scrollview:checked > scrollbar {
+    display: flex;
+}
+
 scrollbar {
-    background-color: #f8f8f8;
+    background-color: transparent;
 }
 
 scrollbar.horizontal {
@@ -563,24 +517,35 @@ scrollbar.vertical {
 
 scrollbar .thumb {
     background-color: #b6b6b6;
-    min-width: 4px;
-    min-height: 4px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 200ms 0s linear;
 }
 
 scrollbar.horizontal .thumb {
-    height: 8px;
+    height: 1s;
 }
 
 scrollbar.vertical .thumb {
-    width: 8px;
+    width: 1s;
 }
 
-scrollbar .thumb:hover {
-    background-color: #888;
+scrollview:checked > scrollbar:over .thumb {
+    background-color: #b6b6b6;
+    opacity: 1;
+    transition: opacity 200ms 0s linear;
 }
 
-scrollbar .thumb:focus {
-    background-color: #888;
+scrollview:checked:active scrollbar .thumb {
+    background-color: #b6b6b6;
+    opacity: 1;
+    transition: opacity 200ms 0s linear;
+}
+
+scrollview:checked > scrollbar:active .thumb {
+    background-color: #b6b6b6;
+    opacity: 1;
+    transition: opacity 200ms 0s linear;
 }
 
 /* slider */
@@ -620,16 +585,7 @@ spinbox {
 }
 
 spinbox .spinbox-button {
-    color: #505050;
     cursor: hand;
-}
-
-spinbox .spinbox-button:hover {
-    color: #000;
-}
-
-spinbox .spinbox-value {
-    color: #000;
 }
 
 spinbox textbox.spinbox-value {
@@ -871,56 +827,25 @@ timepicker .timepicker-dot {
     background-color: #b6b6b6;
 }
 
+/* DATEPICKER */
+
 datepicker {
     background-color: #fff;
-    width: 285px;
-    /* height: 324px; */
-    height: auto;
-
     border-radius: 4px;
-
-    child-top: 8px;
-    child-bottom: 8px;
-    child-left: 16px;
-    child-right: 16px;
-
-    row-between: 8px;
+    border-color: #d2d2d2;
+    border-width: 1px;
 }
 
-.datepicker-header {
-    width: 1s;
-    height: auto;
-
-    col-between: 4px;
-}
-
-.datepicker-header spinbox {
-    width: auto;
+.datepicker-header textbox {
+    background-color: transparent;
 }
 
 .datepicker-divisor {
-    width: 1s;
-    height: 1px;
-    background-color: #2f2f2f;
-}
-
-.datepicker-calendar {
-    left: 1s;
-    right: 1s;
-}
-
-.datepicker-calendar-header {
-    child-space: 1s;
-    width: 32px;
-    height: 32px;
+    background-color: #d2d2d2;
 }
 
 .datepicker-calendar-day {
-    width: 32px;
-    height: 32px;
-    color: #888;
-    child-space: 1s;
-
+    color: #525252;
     cursor: hand;
 }
 
@@ -931,39 +856,21 @@ datepicker {
 }
 
 .datepicker-calendar-day-disabled {
-    width: 32px;
-    height: 32px;
-    color: #d9d9d9;
-    child-space: 1s;
-
+    color: #a0a0a0;
     cursor: arrow;
 }
 
 .datepicker-selected-date {
-    left: 1s;
-    right: 1s;
     color: #b0b0b0;
-}
-
-.datepicker-actions-container {
-    left: 1s;
-    right: 1s;
-    col-between: 4px;
 }
 
 .datepicker-cancel {
     border-width: 2px;
     border-color: #ef5151;
     border-radius: 4px;
-    height: auto;
-    width: auto;
 }
 
 .datepicker-cancel label {
-    top: 2px;
-    bottom: 2px;
-    right: 8px;
-    left: 8px;
     color: #ef5151;
 }
 
@@ -972,17 +879,13 @@ datepicker {
     border-color: #51afef;
     background-color: #51afef;
     border-radius: 4px;
-    height: auto;
-    width: auto;
 }
 
 .datepicker-apply label {
-    top: 2px;
-    bottom: 2px;
-    right: 8px;
-    left: 8px;
     color: #ffffff;
 }
+
+/* TABVIEW */
 
 tabview {
     width: 1s;
