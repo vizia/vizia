@@ -196,6 +196,13 @@ dropdown popup list {
     child-bottom: 4px;
 }
 
+dropdown popup .list {
+    width: 100%;
+    height: auto;
+    child-top: 4px;
+    child-bottom: 4px;
+}
+
 dropdown popup scrollview scrollbar.vertical {
     top: 4px;
     bottom: 4px;
@@ -203,6 +210,14 @@ dropdown popup scrollview scrollbar.vertical {
 }
 
 dropdown list label {
+    width: 100%;
+    height: 32px;
+    child-left: 6px;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+dropdown .list label {
     width: 100%;
     height: 32px;
     child-left: 6px;

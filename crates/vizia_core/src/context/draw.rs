@@ -558,7 +558,8 @@ impl<'a> DrawContext<'a> {
 
             let (source, target) = match filter_image {
                 Some((s, t)) => {
-                    if canvas.image_size(s).unwrap().0 != bounds.w as usize {
+                    let image_size = canvas.image_size(s).unwrap();
+                    if image_size.0 != bounds.w as usize || image_size.1 != bounds.h as usize {
                         canvas.delete_image(s);
                         canvas.delete_image(t);
 
@@ -981,7 +982,10 @@ impl<'a> DrawContext<'a> {
 
                 let (source, target) = match (source, target) {
                     (Some(s), Some(t)) => {
-                        if canvas.image_size(s).unwrap().0 != (bounds.w + d) as usize {
+                        let image_size = canvas.image_size(s).unwrap();
+                        if image_size.0 != (bounds.w + d) as usize
+                            || image_size.1 != (bounds.h + d) as usize
+                        {
                             canvas.delete_image(s);
                             canvas.delete_image(t);
 

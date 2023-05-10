@@ -16,7 +16,7 @@ pub enum TextEvent {
     /// Insert a string of text into the textbox.
     InsertText(String),
     /// Reset the text of the textbox to the bound data.
-    ResetText(String),
+    Clear,
     DeleteText(Movement),
     MoveCursor(Movement, bool),
     SelectAll,
@@ -31,16 +31,22 @@ pub enum TextEvent {
     Copy,
     Paste,
     Cut,
+    SetPlaceholder(String),
+    Blur,
 }
 
+#[derive(Lens)]
 pub struct Textbox<L: Lens> {
     lens: L,
+    #[lens(ignore)]
     kind: TextboxKind,
     edit: bool,
     transform: (f32, f32),
     on_edit: Option<Box<dyn Fn(&mut EventContext, String) + Send + Sync>>,
     on_submit: Option<Box<dyn Fn(&mut EventContext, String, bool) + Send + Sync>>,
+    on_blur: Option<Box<dyn Fn(&mut EventContext) + Send + Sync>>,
     validate: Option<Box<dyn Fn(&String) -> bool>>,
+    placeholder: String,
 }
 
 // Determines whether the enter key submits the text or inserts a new line.
@@ -76,28 +82,52 @@ where
             transform: (0.0, 0.0),
             on_edit: None,
             on_submit: None,
+            on_blur: None,
             validate: None,
+            placeholder: String::from(""),
         }
         .build(cx, move |cx| {
+            cx.add_listener(move |textbox: &mut Self, cx, event| {
+                let flag: bool = textbox.edit;
+                event.map(|window_event, meta| match window_event {
+                    WindowEvent::MouseDown(_) => {
+                        if flag && meta.origin != cx.current() {
+                            // Check if the mouse was pressed outside of any descendants
+                            if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                cx.emit(TextEvent::Blur);
+                                // TODO: This might be needed
+                                // meta.consume();
+                            }
+                        }
+                    }
+
+                    _ => {}
+                });
+            });
+
             let parent = cx.current;
 
-            Binding::new(cx, lens, move |cx, text| {
-                let mut ex = EventContext::new(cx);
-                ex.with_current(parent, |ex| {
-                    if !ex.is_checked() {
-                        let text_str = text.view(
-                            ex.data().expect("Failed to find data, is it built into the tree?"),
-                            |text| text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned()),
-                        );
+            Binding::new(cx, Self::placeholder, move |cx, placeholder| {
+                Binding::new(cx, lens.clone(), move |cx, text| {
+                    let mut ex = EventContext::new(cx);
+                    ex.with_current(parent, |ex| {
+                        if !ex.is_checked() {
+                            let mut text_str = text.view(
+                                ex.data().expect("Failed to find data, is it built into the tree?"),
+                                |text| text.map(|x| x.to_string()).unwrap_or_else(|| "".to_owned()),
+                            );
 
-                        println!("{}", text_str);
+                            if text_str.is_empty() {
+                                text_str = placeholder.get(ex);
+                            }
 
-                        ex.text_context.with_buffer(parent, |fs, buf| {
-                            buf.set_text(fs, &text_str, Attrs::new());
-                        });
+                            ex.text_context.with_buffer(parent, |fs, buf| {
+                                buf.set_text(fs, &text_str, Attrs::new());
+                            });
 
-                        ex.needs_redraw();
-                    }
+                            ex.needs_redraw();
+                        }
+                    });
                 });
             });
         })
@@ -185,12 +215,11 @@ where
         cx.needs_redraw();
     }
 
-    pub fn reset_text(&mut self, cx: &mut EventContext, text: &str) {
-        cx.text_context.with_buffer(cx.current, |fs, buf| {
-            buf.set_text(fs, text, Attrs::new());
+    pub fn reset_text(&mut self, cx: &mut EventContext) {
+        self.select_all(cx);
+        cx.text_context.with_editor(cx.current, |_, buf| {
+            buf.delete_selection();
         });
-        cx.needs_relayout();
-        cx.needs_redraw();
     }
 
     pub fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
@@ -400,6 +429,13 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
         self.modify(|textbox: &mut Textbox<L>| textbox.on_submit = Some(Box::new(callback)))
     }
 
+    pub fn on_blur<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext) + Send + Sync,
+    {
+        self.modify(|textbox: &mut Textbox<L>| textbox.on_blur = Some(Box::new(callback)))
+    }
+
     /// Sets a validation closure which is called when the textbox is edited and sets the validity attribute to the output of the closure.
     ///
     /// If a textbox is modified with the validate modifier then the `on_submit` will not be called if the text is invalid.
@@ -408,6 +444,19 @@ impl<'a, L: Lens> Handle<'a, Textbox<L>> {
         F: 'static + Fn(&String) -> bool + Send + Sync,
     {
         self.modify(|textbox| textbox.validate = Some(Box::new(is_valid)))
+    }
+
+    pub fn placeholder<T: ToString>(self, text: impl Res<T>) -> Self {
+        text.set_or_bind(self.cx, self.entity, |cx, entity, val| {
+            // self.modify(|textbox| textbox.placeholder = val.to_string());
+            cx.with_current(entity, |cx| {
+                cx.emit(TextEvent::SetPlaceholder(val.to_string()));
+                cx.needs_relayout();
+                cx.needs_redraw();
+            });
+        });
+
+        self
     }
 }
 
@@ -586,17 +635,17 @@ where
                     }
                 } else {
                     cx.emit(TextEvent::Submit(false));
-                    if let Some(source) = cx.data::<L::Source>() {
-                        let text = self.lens.view(source, |t| {
-                            if let Some(t) = t {
-                                t.to_string()
-                            } else {
-                                "".to_owned()
-                            }
-                        });
+                    // if let Some(source) = cx.data::<L::Source>() {
+                    //     let text = self.lens.view(source, |t| {
+                    //         if let Some(t) = t {
+                    //             t.to_string()
+                    //         } else {
+                    //             "".to_owned()
+                    //         }
+                    //     });
 
-                        cx.emit(TextEvent::ResetText(text));
-                    };
+                    //     cx.emit(TextEvent::ResetText(text));
+                    // };
                     cx.release();
                     cx.set_checked(false);
 
@@ -632,6 +681,7 @@ where
 
             WindowEvent::MouseUp(MouseButton::Left) => {
                 cx.unlock_cursor_icon();
+                cx.release();
                 // if cx.mouse.left.pressed == cx.current() {
                 //     cx.emit(TextEvent::StartEdit);
                 // }
@@ -666,18 +716,19 @@ where
                     // Finish editing
                     if matches!(self.kind, TextboxKind::SingleLine) {
                         cx.emit(TextEvent::Submit(true));
-                        if let Some(source) = cx.data::<L::Source>() {
-                            let text = self.lens.view(source, |t| {
-                                if let Some(t) = t {
-                                    t.to_string()
-                                } else {
-                                    "".to_owned()
-                                }
-                            });
+                        // if let Some(source) = cx.data::<L::Source>() {
+                        //     let text = self.lens.view(source, |t| {
+                        //         if let Some(t) = t {
+                        //             t.to_string()
+                        //         } else {
+                        //             "".to_owned()
+                        //         }
+                        //     });
 
-                            cx.emit(TextEvent::SelectAll);
-                            cx.emit(TextEvent::InsertText(text));
-                        };
+                        //     // cx.emit(TextEvent::SelectAll);
+                        //     // cx.emit(TextEvent::InsertText(text));
+                        //     // cx.emit(TextEvent::EndEdit);
+                        // };
 
                         cx.set_checked(false);
                         cx.release();
@@ -713,17 +764,21 @@ where
                 }
 
                 Code::ArrowUp => {
-                    cx.emit(TextEvent::MoveCursor(
-                        Movement::Line(Direction::Upstream),
-                        cx.modifiers.contains(Modifiers::SHIFT),
-                    ));
+                    if self.kind != TextboxKind::SingleLine {
+                        cx.emit(TextEvent::MoveCursor(
+                            Movement::Line(Direction::Upstream),
+                            cx.modifiers.contains(Modifiers::SHIFT),
+                        ));
+                    }
                 }
 
                 Code::ArrowDown => {
-                    cx.emit(TextEvent::MoveCursor(
-                        Movement::Line(Direction::Downstream),
-                        cx.modifiers.contains(Modifiers::SHIFT),
-                    ));
+                    if self.kind != TextboxKind::SingleLine {
+                        cx.emit(TextEvent::MoveCursor(
+                            Movement::Line(Direction::Downstream),
+                            cx.modifiers.contains(Modifiers::SHIFT),
+                        ));
+                    }
                 }
 
                 Code::Backspace => {
@@ -877,9 +932,11 @@ where
                 }
             }
 
-            TextEvent::ResetText(text) => {
-                self.reset_text(cx, text);
+            TextEvent::Clear => {
+                self.reset_text(cx);
                 self.scroll(cx, 0.0, 0.0); // ensure_visible
+                cx.needs_relayout();
+                cx.needs_redraw();
             }
 
             TextEvent::DeleteText(movement) => {
@@ -906,12 +963,35 @@ where
                 }
             }
 
+            TextEvent::SetPlaceholder(text) => {
+                self.placeholder = text.clone();
+            }
+
             TextEvent::StartEdit => {
                 if !cx.is_disabled() && !self.edit && !cx.is_read_only() {
                     self.edit = true;
                     cx.focus_with_visibility(false);
-                    cx.capture();
+                    // cx.capture();
                     cx.set_checked(true);
+
+                    if let Some(source) = cx.data::<L::Source>() {
+                        let text = self.lens.view(source, |t| {
+                            if let Some(t) = t {
+                                t.to_string()
+                            } else {
+                                "".to_owned()
+                            }
+                        });
+
+                        self.select_all(cx);
+                        self.insert_text(cx, &text);
+                        self.set_caret(cx);
+
+                        if let Some(validate) = &self.validate {
+                            let text = self.clone_text(cx);
+                            cx.set_valid(validate(&text));
+                        }
+                    };
                 }
             }
 
@@ -920,6 +1000,37 @@ where
                 self.edit = false;
                 cx.set_checked(false);
                 cx.release();
+
+                if let Some(source) = cx.data::<L::Source>() {
+                    let mut text = self.lens.view(source, |t| {
+                        if let Some(t) = t {
+                            t.to_string()
+                        } else {
+                            "".to_owned()
+                        }
+                    });
+
+                    if text.is_empty() {
+                        text = self.placeholder.clone();
+                    };
+
+                    self.select_all(cx);
+                    self.insert_text(cx, &text);
+                    self.set_caret(cx);
+
+                    if let Some(validate) = &self.validate {
+                        let text = self.clone_text(cx);
+                        cx.set_valid(validate(&text));
+                    }
+                };
+            }
+
+            TextEvent::Blur => {
+                if let Some(callback) = &self.on_blur {
+                    (callback)(cx);
+                } else {
+                    cx.emit(TextEvent::Submit(false));
+                }
             }
 
             TextEvent::Submit(reason) => {

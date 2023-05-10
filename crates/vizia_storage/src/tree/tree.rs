@@ -1,4 +1,4 @@
-use crate::{TreeError, TreeExt, TreeIterator};
+use crate::{LayoutChildIterator, TreeError, TreeExt, TreeIterator};
 use vizia_id::GenerationalId;
 
 /// The [Tree] describes the tree of entities.
@@ -141,15 +141,7 @@ where
     }
 
     pub fn get_layout_first_child(&self, entity: I) -> Option<I> {
-        let mut i = self.get_first_child(entity);
-        while let Some(child) = i {
-            if !self.is_ignored(child) {
-                return Some(child);
-            }
-
-            i = self.get_next_sibling(child);
-        }
-        None
+        LayoutChildIterator::new(self, entity).next()
     }
 
     /// Returns the next sibling of an entity or `None` if t here isn't one.

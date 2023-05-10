@@ -163,7 +163,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
     {
         ScrollContent::new(cx, content).class("scroll_content").bind(
             data.clone(),
-            |mut handle, data| {
+            |handle, data| {
                 let dpi_factor = handle.scale_factor();
                 if dpi_factor > 0.0 {
                     let data = data.get(handle.cx);

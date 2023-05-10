@@ -296,6 +296,28 @@ dropdown list label:focus-visible {
     outline-offset: 3px;
 }
 
+dropdown .list label {
+    cursor: hand;
+}
+
+/* dropdown .list label:hover {
+    background-color: #51afef11;
+} */
+
+dropdown .list label.nav {
+    background-color: #51b0ef34;
+}
+
+dropdown .list label:checked {
+    background-color: #5dc4ec;
+}
+
+dropdown .list label:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
 /* Popup */
 
 popup {
