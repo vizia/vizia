@@ -134,10 +134,8 @@ where
 
                 if dist_bottom < 0.0 {
                     if dist_top.abs() < dist_bottom.abs() {
-                        // bounds.y = 0.0;
                         cx.set_translate((Pixels(0.0), Pixels(-dist_top.abs() / scale)));
                     } else {
-                        // bounds.y += dist_bottom;
                         cx.set_translate((Pixels(0.0), Pixels(-dist_bottom.abs() / scale)));
                     }
                 } else {

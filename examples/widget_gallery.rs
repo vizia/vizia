@@ -31,6 +31,7 @@ fn main() {
                 switch(cx);
                 radiobutton(cx);
                 slider(cx);
+                rating(cx);
             });
         });
     })
@@ -290,7 +291,7 @@ impl Model for SliderData {
 pub fn slider(cx: &mut Context) -> Handle<impl View> {
     SliderData { value: 0.0 }.build(cx);
 
-    Label::new(cx, "Switch")
+    Label::new(cx, "Slider")
         .font_size(30.0)
         .font_weight(FontWeightKeyword::Bold)
         .bottom(Pixels(8.0));
@@ -310,4 +311,33 @@ pub fn slider(cx: &mut Context) -> Handle<impl View> {
     .child_bottom(Stretch(1.0))
     .height(Auto)
     .col_between(Pixels(8.0))
+}
+
+#[derive(Clone, Lens)]
+struct RatingData {
+    rating: u32,
+}
+
+impl Model for RatingData {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            RatingEvent::SetRating(val) => self.rating = *val,
+        })
+    }
+}
+
+enum RatingEvent {
+    SetRating(u32),
+}
+
+pub fn rating(cx: &mut Context) -> Handle<impl View> {
+    RatingData { rating: 3 }.build(cx);
+
+    Label::new(cx, "Rating")
+        .font_size(30.0)
+        .font_weight(FontWeightKeyword::Bold)
+        .bottom(Pixels(8.0));
+
+    Rating::new(cx, RatingData::rating)
+        .on_change(|ex, rating| ex.emit(RatingEvent::SetRating(rating)))
 }
