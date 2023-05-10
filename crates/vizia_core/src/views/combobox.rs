@@ -303,6 +303,8 @@ where
 
                         // Emit an event instead of setting is_open because the StartEdit will cause the popup to reopen
                         cx.emit(ComboBoxEvent::Close);
+                    } else {
+                        cx.emit(TextEvent::Submit(false));
                     }
                 }
 
