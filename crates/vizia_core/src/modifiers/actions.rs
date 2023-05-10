@@ -456,7 +456,7 @@ pub trait ActionModifiers<V> {
 }
 
 // If the entity doesn't have an `ActionsModel` then add one to the entity
-fn build_action_model<V: 'static>(cx: &mut Context, entity: Entity) {
+fn build_action_model(cx: &mut Context, entity: Entity) {
     if cx
         .data
         .get(entity)
@@ -503,7 +503,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnPress(Box::new(action)))
@@ -518,7 +518,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnPressDown(Box::new(action)))
@@ -533,7 +533,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext, MouseButton) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnDoubleClick(Box::new(action)))
@@ -548,7 +548,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnHover(Box::new(action)))
@@ -563,7 +563,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnHoverOut(Box::new(action)))
@@ -578,7 +578,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnOver(Box::new(action)))
@@ -593,7 +593,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnOverOut(Box::new(action)))
@@ -608,7 +608,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext, f32, f32) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnMouseMove(Box::new(action)))
@@ -623,7 +623,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext, MouseButton) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnMouseDown(Box::new(action)))
@@ -638,7 +638,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext, MouseButton) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnMouseUp(Box::new(action)))
@@ -653,7 +653,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnFocusIn(Box::new(action)))
@@ -668,7 +668,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnFocusOut(Box::new(action)))
@@ -683,7 +683,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext, GeoChanged) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnGeoChanged(Box::new(action)))
@@ -698,7 +698,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         if let Some(abilities) = self.cx.style.abilities.get_mut(self.entity) {
             abilities.set(Abilities::DRAGGABLE, true);
@@ -717,7 +717,7 @@ impl<'a, V: View> ActionModifiers<V> for Handle<'a, V> {
     where
         F: 'static + Fn(&mut EventContext, DropData) + Send + Sync,
     {
-        build_action_model::<V>(self.cx, self.entity);
+        build_action_model(self.cx, self.entity);
 
         self.cx.emit_custom(
             Event::new(ActionsEvent::OnDrop(Box::new(action)))

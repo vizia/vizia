@@ -38,11 +38,7 @@ pub use bounds::*;
 
 pub use cache::GeoChanged;
 
-use crate::{
-    context::Context,
-    events::{Event, Propagation, WindowEvent},
-    style::SystemFlags,
-};
+use crate::{context::Context, style::SystemFlags};
 
 pub(crate) fn geometry_changed(cx: &mut Context) {
     // if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {

@@ -4,7 +4,6 @@
 use crate::{layout::cache::GeoChanged, prelude::*};
 use femtovg::ImageId;
 use vizia_storage::SparseSet;
-use vizia_window::Position;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub(crate) struct Pos {

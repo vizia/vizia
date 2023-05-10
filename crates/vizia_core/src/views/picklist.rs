@@ -1,5 +1,3 @@
-use image::Pixel;
-
 use crate::icons::ICON_CHEVRON_DOWN;
 use crate::prelude::*;
 

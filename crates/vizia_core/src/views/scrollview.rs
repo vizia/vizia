@@ -210,7 +210,7 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, meta| match window_event {
+        event.map(|window_event, _| match window_event {
             WindowEvent::GeometryChanged(geo) => {
                 if geo.contains(GeoChanged::WIDTH_CHANGED)
                     || geo.contains(GeoChanged::HEIGHT_CHANGED)
