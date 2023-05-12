@@ -141,7 +141,7 @@ impl Model for ActionsModel {
                     return;
                 }
 
-                if !cx.is_disabled() {
+                if !cx.is_disabled() && cx.current == meta.target {
                     if let Some(action) = &self.on_press {
                         (action)(cx);
                     }
@@ -153,7 +153,7 @@ impl Model for ActionsModel {
                 if cx.current() != over && !over.is_descendant_of(cx.tree, cx.current()) {
                     return;
                 }
-                if !cx.is_disabled() {
+                if !cx.is_disabled() && cx.current == meta.target {
                     if let Some(action) = &self.on_press_down {
                         (action)(cx);
                     }
@@ -196,11 +196,11 @@ impl Model for ActionsModel {
             }
 
             WindowEvent::MouseOut => {
-                if meta.target == cx.current() {
-                    if let Some(action) = &self.on_over_out {
-                        (action)(cx);
-                    }
+                // if meta.target == cx.current() {
+                if let Some(action) = &self.on_over_out {
+                    (action)(cx);
                 }
+                // }
             }
 
             WindowEvent::MouseMove(x, y) => {

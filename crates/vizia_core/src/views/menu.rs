@@ -1,15 +1,35 @@
-use crate::prelude::*;
+use crate::{icons::ICON_CHEVRON_RIGHT, prelude::*};
 
 #[derive(Lens)]
 pub struct MenuBar {
     is_open: bool,
-    open_menu: Option<Entity>,
 }
 
 impl MenuBar {
     pub fn new(cx: &mut Context, content: impl Fn(&mut Context)) -> Handle<Self> {
-        Self { is_open: false, open_menu: None }
+        Self { is_open: false }
             .build(cx, |cx| {
+                cx.add_listener(move |menu_bar: &mut Self, cx, event| {
+                    let flag: bool = menu_bar.is_open;
+                    event.map(
+                        |window_event, meta: &mut crate::events::EventMeta| match window_event {
+                            WindowEvent::MouseDown(_) => {
+                                if flag && meta.origin != cx.current() {
+                                    // Check if the mouse was pressed outside of any descendants
+                                    if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                        cx.emit(MenuEvent::CloseAll);
+                                        // TODO: This might be needed
+                                        // meta.consume();
+                                    }
+                                }
+                            }
+
+                            _ => {}
+                        },
+                    );
+                });
+
+                // MenuController { open_menu: None }.build(cx);
                 (content)(cx);
             })
             .layout_type(LayoutType::Row)
@@ -22,20 +42,18 @@ impl View for MenuBar {
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|menu_event, meta| match menu_event {
-            MenuEvent::Open => {
-                self.open_menu = Some(meta.origin);
+        event.map(|menu_event, _| match menu_event {
+            MenuEvent::MenuIsOpen => {
+                self.is_open = true;
             }
-            MenuEvent::Close => {
-                if self.open_menu == Some(meta.origin) {
-                    self.open_menu = None;
-                }
+
+            MenuEvent::CloseAll => {
+                self.is_open = false;
+                cx.emit_custom(
+                    Event::new(MenuEvent::Close).target(cx.current).propagate(Propagation::Subtree),
+                );
             }
-            MenuEvent::HoverMenu => {
-                if self.open_menu.is_some() {
-                    self.open_menu = Some(meta.origin);
-                }
-            }
+
             _ => {}
         });
     }
@@ -46,36 +64,132 @@ pub enum MenuEvent {
     HoverMenu,
     Open,
     Close,
+    CloseAll,
+    MenuIsOpen,
 }
 
 #[derive(Lens)]
-pub struct MenuButton {
+pub struct Submenu {
     is_open: bool,
+    open_on_hover: bool,
 }
 
-impl MenuButton {
-    pub fn new(cx: &mut Context) -> Handle<Self> {
-        Self { is_open: false }
+impl Submenu {
+    pub fn new<V: View>(
+        cx: &mut Context,
+        content: impl Fn(&mut Context) -> Handle<V> + 'static,
+        menu: impl Fn(&mut Context) + 'static,
+    ) -> Handle<Self> {
+        let handle = Self { is_open: false, open_on_hover: false }
             .build(cx, |cx| {
-                Menu::new(cx)
-                    .top(Percentage(100.0))
-                    .background_color(Color::green())
-                    .width(Pixels(200.0))
-                    .height(Pixels(400.0))
-                    .position_type(PositionType::SelfDirected)
-                    .bind(MenuBar::open_menu, |handle, open_menu| {
-                        // let current = handle.entity();
-                        let parent = handle.parent();
-                        if let Some(menu_id) = open_menu.get(&handle) {
-                            println!("{}{}", parent, menu_id);
-                            handle.visibility(menu_id == parent);
-                        } else {
-                            handle.visibility(false);
-                        }
-                    });
+                cx.add_listener(move |menu_button: &mut Self, cx, event| {
+                    let flag: bool = menu_button.is_open;
+                    event.map(
+                        |window_event, meta: &mut crate::events::EventMeta| match window_event {
+                            WindowEvent::MouseDown(_) => {
+                                if flag && meta.origin != cx.current() {
+                                    // Check if the mouse was pressed outside of any descendants
+                                    if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                        cx.emit(MenuEvent::CloseAll);
+                                        cx.emit(MenuEvent::Close);
+                                        // TODO: This might be needed
+                                        // meta.consume();
+                                    }
+                                }
+                            }
+
+                            _ => {}
+                        },
+                    );
+                });
+                // HStack::new(cx, |cx| {
+                (content)(cx).hoverable(false);
+                Label::new(cx, ICON_CHEVRON_RIGHT).class("icon").class("arrow").hoverable(false);
+                // });
+                MenuPopup::new(cx, Submenu::is_open, false, move |cx| {
+                    (menu)(cx);
+                });
+                // .on_press_down(|cx| cx.emit(MenuEvent::CloseAll));
+                // .on_blur(|cx| cx.emit(MenuEvent::CloseAll));
             })
-            .on_press(|cx| cx.emit(MenuEvent::ToggleOpen))
-            .on_hover(|cx| cx.emit(MenuEvent::HoverMenu))
+            .layout_type(LayoutType::Row)
+            .on_press(|cx| cx.emit(MenuEvent::ToggleOpen));
+
+        if handle.data::<MenuBar>().is_some() {
+            handle.bind(MenuBar::is_open, |handle, is_open| {
+                let is_open = is_open.get(&handle);
+                handle.modify(|menu_button| menu_button.open_on_hover = is_open);
+            })
+        } else {
+            handle
+        }
+    }
+}
+
+impl View for Submenu {
+    fn element(&self) -> Option<&'static str> {
+        Some("submenu")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseEnter => {
+                if meta.target == cx.current && self.open_on_hover {
+                    let parent = cx.tree.get_parent(cx.current).unwrap();
+                    cx.emit_custom(
+                        Event::new(MenuEvent::Close).target(parent).propagate(Propagation::Subtree),
+                    );
+                    cx.emit(MenuEvent::Open);
+                }
+            }
+
+            _ => {}
+        });
+
+        event.map(|menu_event, meta| match menu_event {
+            MenuEvent::Open => {
+                println!("open: {}", cx.current);
+                self.is_open = true;
+                meta.consume();
+            }
+
+            MenuEvent::Close => {
+                println!("close: {}", cx.current);
+                self.is_open = false;
+                // meta.consume();
+            }
+
+            MenuEvent::ToggleOpen => {
+                println!("do this");
+                self.is_open ^= true;
+                if self.is_open {
+                    cx.emit(MenuEvent::MenuIsOpen);
+                }
+                meta.consume();
+            }
+
+            _ => {}
+        });
+    }
+}
+
+#[derive(Lens)]
+pub struct MenuButton {}
+
+impl MenuButton {
+    pub fn new<V: View>(
+        cx: &mut Context,
+        action: impl Fn(&mut EventContext) + Send + Sync + 'static,
+        content: impl Fn(&mut Context) -> Handle<V> + 'static,
+    ) -> Handle<Self> {
+        Self {}
+            .build(cx, |cx| {
+                (content)(cx).hoverable(false);
+            })
+            .on_press(move |cx| {
+                (action)(cx);
+                cx.emit(MenuEvent::CloseAll);
+            })
     }
 }
 
@@ -85,18 +199,15 @@ impl View for MenuButton {
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        // event.map(|window_event, _| match window_event {
-        //     WindowEvent::
-        // });
-
-        event.map(|menu_event, meta| match menu_event {
-            MenuEvent::ToggleOpen => {
-                self.is_open ^= true;
-                meta.consume();
-                if self.is_open {
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseEnter => {
+                if meta.target == cx.current {
+                    let parent = cx.tree.get_parent(cx.current).unwrap();
+                    cx.emit_custom(
+                        Event::new(MenuEvent::Close).target(parent).propagate(Propagation::Subtree),
+                    );
+                    println!("do this");
                     cx.emit(MenuEvent::Open);
-                } else {
-                    cx.emit(MenuEvent::Close);
                 }
             }
 
@@ -105,360 +216,132 @@ impl View for MenuButton {
     }
 }
 
+// TODO
 pub struct Menu {}
 
 impl Menu {
-    pub fn new(cx: &mut Context) -> Handle<Self> {
+    pub fn new(cx: &mut Context, content: impl Fn(&mut Context) + 'static) -> Handle<Self> {
         Self {}.build(cx, |cx| {})
     }
 }
 
 impl View for Menu {}
 
-// use std::cell::RefCell;
+pub struct MenuPopup<L> {
+    lens: L,
+}
 
-// use crate::fonts::icons::{ICON_CHECK, ICON_CHEVRON_RIGHT};
-// use crate::prelude::*;
-// use vizia_storage::TreeExt;
+impl<L> MenuPopup<L>
+where
+    L: Lens<Target = bool>,
+{
+    pub fn new<F>(cx: &mut Context, lens: L, capture_focus: bool, content: F) -> Handle<Self>
+    where
+        F: 'static + Fn(&mut Context),
+    {
+        Self { lens: lens.clone() }
+            .build(cx, |cx| {
+                let parent = cx.current;
+                Binding::new(cx, lens.clone(), move |cx, lens| {
+                    if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
+                        geo.set(GeoChanged::WIDTH_CHANGED, true);
+                    }
+                });
 
-// /// A helper function which sets up the necessary attributes on a view to be a menu entry.
-// /// Call this with a handle to an object you would like to be considered a menu entry.
-// /// It adds an on_over event handler updating the current selected menu entry and binds to
-// /// said selection, updating the `selected` pseudo-class accordingly and calling the `on_select`
-// /// and `on_deselect` callbacks appropriately.
-// pub fn setup_menu_entry<T, F1, F2>(
-//     handle: Handle<'_, T>,
-//     on_select: F1,
-//     on_deselect: F2,
-// ) -> Handle<'_, T>
-// where
-//     T: View,
-//     F1: 'static + Fn(&mut Context),
-//     F2: 'static + Fn(&mut Context),
-// {
-//     if let Some(data) = handle.cx.data::<MenuData>() {
-//         let i = *data.counter.borrow();
-//         *data.counter.borrow_mut() += 1;
-//         handle
-//             .navigable(true)
-//             .bind(MenuData::selected, move |handle, selected| {
-//                 let selected = selected.get(handle.cx) == Some(i);
-//                 if selected {
-//                     on_select(handle.cx);
-//                 } else {
-//                     on_deselect(handle.cx);
-//                 }
-//                 handle.checked(selected);
-//             })
-//             .on_over(move |cx| {
-//                 if cx.data::<MenuControllerData>().unwrap().active {
-//                     cx.emit(MenuEvent::SetSelected(Some(i)));
-//                 }
-//             })
-//     } else {
-//         panic!("Using a menu entry outside of a menu")
-//     }
-// }
+                // if lens.get(cx) {
+                // if capture_focus {
+                //     VStack::new(cx, &content).lock_focus_to_within();
+                // } else {
+                (content)(cx);
+                // }
+                // }
+            })
+            .role(Role::Dialog)
+            .checked(lens.clone())
+            .hoverable(lens)
+            .position_type(PositionType::SelfDirected)
+            .z_index(100)
+    }
+}
 
-// /// The data storage for the current selected index of a menu
-// /// This is automatically created when you construct a MenuStack.
-// #[derive(Lens, Default)]
-// struct MenuData {
-//     selected: Option<usize>,
-//     counter: RefCell<usize>,
-// }
+impl<'a, L> Handle<'a, MenuPopup<L>>
+where
+    L: Lens,
+    L::Target: Clone + Into<bool>,
+{
+    /// Registers a callback for when the user clicks off of the popup, usually with the intent of
+    /// closing it.
+    pub fn on_blur<F>(self, f: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext),
+    {
+        let focus_event = Box::new(f);
+        self.cx.with_current(self.entity, |cx| {
+            cx.add_listener(move |popup: &mut MenuPopup<L>, cx, event| {
+                let flag: bool = popup.lens.get(cx).into();
+                event.map(|window_event, meta| match window_event {
+                    WindowEvent::MouseDown(_) => {
+                        if flag && meta.origin != cx.current() {
+                            // Check if the mouse was pressed outside of any descendants
+                            if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
+                                (focus_event)(cx);
+                                meta.consume();
+                            }
+                        }
+                    }
 
-// struct MenuControllerData {
-//     active: bool,
-// }
+                    WindowEvent::KeyDown(code, _) => {
+                        if flag && *code == Code::Escape {
+                            (focus_event)(cx);
+                        }
+                    }
 
-// /// Menu control events.
-// pub enum MenuEvent {
-//     SetSelected(Option<usize>),
-//     Close,
-//     Activate,
-// }
+                    _ => {}
+                });
+            });
+        });
 
-// impl Model for MenuData {
-//     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-//         event.map(|menu_event, meta| match menu_event {
-//             MenuEvent::SetSelected(sel) => {
-//                 self.selected = *sel;
-//                 meta.consume();
-//             }
-//             MenuEvent::Close => self.selected = None,
-//             MenuEvent::Activate => {}
-//         });
-//     }
-// }
+        self
+    }
+}
 
-// impl Model for MenuControllerData {
-//     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-//         event.map(|menu_event, _| match menu_event {
-//             MenuEvent::Close => {
-//                 self.active = false;
-//                 cx.release();
-//             }
-//             MenuEvent::Activate => self.active = true,
-//             _ => {}
-//         });
-//     }
-// }
+impl<L> View for MenuPopup<L>
+where
+    L: Lens,
+    L::Target: Into<bool>,
+{
+    fn element(&self) -> Option<&'static str> {
+        Some("popup")
+    }
+}
 
-// /// A MenuController is a container object which holds a menu. It is responsible for managing
-// /// the focus of the menu, i.e. grabbing click events until the menu is closed.
-// pub struct MenuController {}
+pub struct MenuDivider {}
 
-// impl MenuController {
-//     pub fn new<F: FnOnce(&mut Context)>(
-//         cx: &mut Context,
-//         active: bool,
-//         builder: F,
-//     ) -> Handle<'_, Self> {
-//         if cx.data::<MenuControllerData>().is_some() {
-//             panic!("Building a MenuController inside a MenuController. This is illegal.")
-//         }
+impl MenuDivider {
+    pub fn new(cx: &mut Context) -> Handle<Self> {
+        Self {}.build(cx, |cx| {
+            Element::new(cx).class("line");
+        })
+    }
+}
 
-//         Self {}
-//             .build(cx, move |cx| {
-//                 MenuControllerData { active }.build(cx);
-//                 builder(cx);
-//             })
-//             .on_build(|cx| {
-//                 if active {
-//                     cx.capture();
-//                 }
-//             })
-//     }
-// }
+impl View for MenuDivider {
+    fn element(&self) -> Option<&'static str> {
+        Some("menu-divider")
+    }
 
-// impl View for MenuController {
-//     fn element(&self) -> Option<&'static str> {
-//         Some("menucontroller")
-//     }
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseEnter => {
+                if meta.target == cx.current {
+                    let parent = cx.tree.get_parent(cx.current).unwrap();
+                    cx.emit_custom(
+                        Event::new(MenuEvent::Close).target(parent).propagate(Propagation::Subtree),
+                    );
+                }
+            }
 
-//     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-//         let active = cx.data::<MenuControllerData>().unwrap().active;
-
-//         event.map(|window_event, meta| {
-//             if active {
-//                 let current = cx.current();
-//                 let is_child = cx.hovered().is_descendant_of(cx.tree, current);
-//                 // we capture focus in order to see clicks outside the menus, but we don't want
-//                 // to deprive our children of their events.
-//                 // We also want mouse scroll events to be seen by everyone
-//                 if meta.propagation == Propagation::Direct {
-//                     if (is_child
-//                         && matches!(
-//                             window_event,
-//                             WindowEvent::MouseMove(_, _)
-//                                 | WindowEvent::PressDown { .. }
-//                                 | WindowEvent::MouseScroll(_, _)
-//                                 | WindowEvent::MouseDoubleClick(_)
-//                         ))
-//                         || (!is_child && matches!(window_event, WindowEvent::MouseScroll(_, _)))
-//                     {
-//                         cx.event_queue.push_back(
-//                             Event::new(window_event.clone())
-//                                 .propagate(Propagation::Up)
-//                                 .target(cx.hovered())
-//                                 .origin(cx.current()),
-//                         );
-//                     }
-//                     // if we click outside the menu, close everything
-//                     if matches!(window_event, WindowEvent::MouseDown(_)) && !is_child {
-//                         cx.event_queue.push_back(
-//                             Event::new(MenuEvent::Close)
-//                                 .propagate(Propagation::Subtree)
-//                                 .target(cx.current())
-//                                 .origin(cx.current()),
-//                         );
-//                     }
-//                 }
-//             } else if let WindowEvent::PressDown { .. } = window_event {
-//                 // capture focus on click
-//                 cx.capture();
-//                 cx.emit(MenuEvent::Activate);
-//                 // send an over event to highlight whatever we're hovered on
-//                 cx.event_queue.push_back(
-//                     Event::new(WindowEvent::MouseOver)
-//                         .propagate(Propagation::Up)
-//                         .target(cx.hovered())
-//                         .origin(cx.current()),
-//                 );
-//             }
-//         });
-//     }
-// }
-
-// /// A MenuStack is a stack of views which can be menu entries. The only interesting thing about it
-// /// is that it builds a MenuData into itself.
-// pub struct MenuStack {}
-
-// impl MenuStack {
-//     fn new<F: FnOnce(&mut Context)>(cx: &mut Context, builder: F) -> Handle<'_, Self> {
-//         if cx.data::<MenuControllerData>().is_none() {
-//             panic!("MenuStacks must be built inside a MenuController");
-//         }
-//         Self {}
-//             .build(cx, move |cx| {
-//                 MenuData::default().build(cx);
-//                 builder(cx);
-//             })
-//             .z_index(100)
-//     }
-
-//     pub fn new_vertical<F: FnOnce(&mut Context)>(cx: &mut Context, builder: F) -> Handle<'_, Self> {
-//         Self::new(cx, builder).class("vertical")
-//     }
-
-//     pub fn new_horizontal<F: FnOnce(&mut Context)>(
-//         cx: &mut Context,
-//         builder: F,
-//     ) -> Handle<'_, Self> {
-//         Self::new(cx, builder).class("horizontal")
-//     }
-// }
-
-// impl View for MenuStack {
-//     fn element(&self) -> Option<&'static str> {
-//         Some("menustack")
-//     }
-// }
-
-// /// A button containing a menu when you click/hover it.
-// pub struct Menu {}
-
-// impl Menu {
-//     /// Construct a new menu. The first closure is the label/stack/etc that will be displayed
-//     /// while the menu is closed, and the second closure will be passed to a vertical MenuStack
-//     /// to be constructed and then displayed when the menu is opened
-//     pub fn new<F1, F2, Lbl>(cx: &mut Context, label: F1, items: F2) -> Handle<'_, Self>
-//     where
-//         F1: 'static + FnOnce(&mut Context) -> Handle<'_, Lbl>,
-//         F2: 'static + FnOnce(&mut Context),
-//     {
-//         let result = Self {}.build(cx, move |cx| {
-//             HStack::new(cx, move |cx| {
-//                 label(cx);
-//                 Label::new(cx, ICON_CHEVRON_RIGHT).class("menu_arrow");
-//             });
-//             MenuStack::new_vertical(cx, items);
-//         });
-//         let entity = result.entity;
-//         setup_menu_entry(
-//             result,
-//             move |_| {},
-//             move |cx| {
-//                 cx.event_queue.push_back(
-//                     Event::new(MenuEvent::Close)
-//                         .target(entity)
-//                         .propagate(Propagation::Subtree)
-//                         .origin(cx.current()),
-//                 );
-//             },
-//         )
-//     }
-// }
-
-// impl View for Menu {
-//     fn element(&self) -> Option<&'static str> {
-//         Some("menu")
-//     }
-// }
-
-// /// A MenuButton is an entry in a menu that can be clicked to perform some action. It has various
-// /// constructors depending on whether you want to make this button show a check icon conditionally.
-// pub struct MenuButton {
-//     action: Option<Box<dyn Fn(&mut EventContext)>>,
-// }
-
-// impl MenuButton {
-//     pub fn new<F, A, V>(cx: &mut Context, contents: F, action: A) -> Handle<'_, Self>
-//     where
-//         F: 'static + FnOnce(&mut Context) -> Handle<V>,
-//         A: 'static + Fn(&mut EventContext),
-//         V: 'static + View,
-//     {
-//         setup_menu_entry(
-//             Self { action: Some(Box::new(action)) }
-//                 .build(cx, move |cx| {
-//                     contents(cx).hoverable(false);
-//                 })
-//                 .navigable(true),
-//             |_| {},
-//             |_| {},
-//         )
-//     }
-
-//     pub fn new_simple<U: ToString, A>(
-//         cx: &mut Context,
-//         text: impl 'static + Res<U> + Clone,
-//         action: A,
-//     ) -> Handle<'_, Self>
-//     where
-//         A: 'static + Fn(&mut EventContext),
-//     {
-//         Self::new(cx, move |cx| Label::new(cx, text), action)
-//     }
-
-//     pub fn new_check<F, A, L>(cx: &mut Context, builder: F, action: A, lens: L) -> Handle<'_, Self>
-//     where
-//         F: 'static + FnOnce(&mut Context),
-//         A: 'static + Fn(&mut EventContext),
-//         L: Lens<Target = bool>,
-//     {
-//         Self::new(
-//             cx,
-//             move |cx| {
-//                 HStack::new(cx, move |cx| {
-//                     builder(cx);
-//                     Label::new(cx, "").left(Units::Stretch(1.0)).bind(lens, move |handle, lens| {
-//                         let val = lens.get_fallible(handle.cx);
-//                         handle.text(if val == Some(true) { ICON_CHECK } else { "" });
-//                     });
-//                 })
-//             },
-//             action,
-//         )
-//     }
-
-//     pub fn new_check_simple<U: ToString, A, L>(
-//         cx: &mut Context,
-//         text: impl 'static + Res<U> + Clone,
-//         action: A,
-//         lens: L,
-//     ) -> Handle<'_, Self>
-//     where
-//         A: 'static + Fn(&mut EventContext),
-//         L: 'static + Lens<Target = bool>,
-//     {
-//         Self::new_check(
-//             cx,
-//             move |cx| {
-//                 Label::new(cx, text);
-//             },
-//             action,
-//             lens,
-//         )
-//     }
-// }
-
-// impl View for MenuButton {
-//     fn element(&self) -> Option<&'static str> {
-//         Some("menubutton")
-//     }
-
-//     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-//         event.map(|window_event, meta| match window_event {
-//             WindowEvent::PressDown { .. } => {
-//                 if let Some(callback) = &self.action {
-//                     callback(cx);
-//                     cx.emit(MenuEvent::Close);
-//                     meta.consume();
-//                 }
-//             }
-//             _ => {}
-//         });
-//     }
-// }
+            _ => {}
+        });
+    }
+}

@@ -1,4 +1,7 @@
 use vizia::prelude::*;
+use vizia_core::icons::{
+    ICON_CLIPBOARD, ICON_COMMAND, ICON_COPY, ICON_CURSOR_TEXT, ICON_CUT, ICON_SHARE_3, ICON_TRASH,
+};
 
 const STYLE: &str = r#"
     * {
@@ -14,18 +17,172 @@ impl Model for AppData {}
 
 fn main() {
     Application::new(|cx: &mut Context| {
-        cx.add_theme(STYLE);
+        // cx.add_theme(STYLE);
 
         AppData {}.build(cx);
 
         MenuBar::new(cx, |cx| {
-            MenuButton::new(cx).width(Pixels(100.0)).height(Pixels(30.0));
-            MenuButton::new(cx).width(Pixels(100.0)).height(Pixels(30.0));
-            MenuButton::new(cx).width(Pixels(100.0)).height(Pixels(30.0));
-            MenuButton::new(cx).width(Pixels(100.0)).height(Pixels(30.0));
-        })
-        .height(Pixels(30.0))
-        .width(Stretch(1.0));
+            Submenu::new(
+                cx,
+                |cx| Label::new(cx, "File"),
+                |cx| {
+                    MenuButton::new(
+                        cx,
+                        |cx| {},
+                        |cx| {
+                            HStack::new(cx, |cx| {
+                                Label::new(cx, "New");
+                                Label::new(cx, &format!("Ctrl + N")).class("shortcut");
+                            })
+                        },
+                    );
+                    MenuButton::new(
+                        cx,
+                        |cx| {},
+                        |cx| {
+                            HStack::new(cx, |cx| {
+                                Label::new(cx, "Open");
+                                Label::new(cx, &format!("Ctrl + O")).class("shortcut");
+                            })
+                        },
+                    );
+                    Submenu::new(
+                        cx,
+                        |cx| Label::new(cx, "Open Recent"),
+                        |cx| {
+                            MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "Doc 1"));
+                            MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "Doc 2"));
+                            MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "Doc 3"));
+                        },
+                    );
+                    MenuDivider::new(cx);
+                    MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "Save"));
+                    MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "Save As"));
+                    MenuDivider::new(cx);
+                    MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "Quit"));
+                },
+            );
+            Submenu::new(
+                cx,
+                |cx| Label::new(cx, "Edit"),
+                |cx| {
+                    MenuButton::new(
+                        cx,
+                        |cx| {},
+                        |cx| {
+                            HStack::new(cx, |cx| {
+                                Label::new(cx, ICON_CUT).class("icon");
+                                Label::new(cx, "Cut");
+                            })
+                        },
+                    );
+                    MenuButton::new(
+                        cx,
+                        |cx| {},
+                        |cx| {
+                            HStack::new(cx, |cx| {
+                                Label::new(cx, ICON_COPY).class("icon");
+                                Label::new(cx, "Copy");
+                            })
+                        },
+                    );
+                    MenuButton::new(
+                        cx,
+                        |cx| {},
+                        |cx| {
+                            HStack::new(cx, |cx| {
+                                Label::new(cx, ICON_CLIPBOARD).class("icon");
+                                Label::new(cx, "Paste");
+                            })
+                        },
+                    );
+                },
+            );
+            Submenu::new(
+                cx,
+                |cx| Label::new(cx, "View"),
+                |cx| {
+                    MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "Zoom In"));
+                    MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "Zoom Out"));
+                    Submenu::new(
+                        cx,
+                        |cx| Label::new(cx, "Zoom Level"),
+                        |cx| {
+                            MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "10%"));
+                            MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "20%"));
+                            MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "50%"));
+                            MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "100%"));
+                            MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "150%"));
+                            MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "200%"));
+                        },
+                    );
+                },
+            );
+            Submenu::new(
+                cx,
+                |cx| Label::new(cx, "Help"),
+                |cx| {
+                    MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "Show License"));
+                    MenuButton::new(cx, |cx| {}, |cx| Label::new(cx, "About"));
+                },
+            );
+        });
+
+        Submenu::new(
+            cx,
+            |cx| Label::new(cx, "Options"),
+            |cx| {
+                MenuButton::new(
+                    cx,
+                    |cx| {},
+                    |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, ICON_SHARE_3).class("icon");
+                            Label::new(cx, "Share");
+                        })
+                    },
+                );
+                MenuButton::new(
+                    cx,
+                    |cx| {},
+                    |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, ICON_CURSOR_TEXT).class("icon");
+                            Label::new(cx, "Rename");
+                        })
+                    },
+                );
+                MenuButton::new(
+                    cx,
+                    |cx| {},
+                    |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, ICON_TRASH).class("icon");
+                            Label::new(cx, "Delete");
+                        })
+                    },
+                );
+            },
+        )
+        .space(Stretch(1.0));
+
+        // MenuController { open_menu: None }.build(cx);
+
+        // MenuButton::new(cx, |cx| {
+        //     Label::new(cx, "first").width(Pixels(100.0)).height(Pixels(30.0));
+        //     MenuButton::new(cx, |cx| {
+        //         Label::new(cx, "first").width(Pixels(100.0)).height(Pixels(30.0));
+        //         Label::new(cx, "first").width(Pixels(100.0)).height(Pixels(30.0));
+        //         Label::new(cx, "first").width(Pixels(100.0)).height(Pixels(30.0));
+        //         Label::new(cx, "first").width(Pixels(100.0)).height(Pixels(30.0));
+        //     })
+        //     .width(Pixels(100.0))
+        //     .height(Pixels(30.0));
+        //     Label::new(cx, "first").width(Pixels(100.0)).height(Pixels(30.0));
+        //     Label::new(cx, "first").width(Pixels(100.0)).height(Pixels(30.0));
+        // })
+        // .width(Pixels(100.0))
+        // .height(Pixels(30.0));
 
         // MenuController::new(cx, false, |cx| {
         //     MenuStack::new_horizontal(cx, |cx| {

@@ -61,9 +61,46 @@ pub(crate) fn hover_system(cx: &mut Context) {
             pseudo_classes.set(PseudoClassFlags::HOVER, false);
         }
 
-        cx.event_queue.push_back(Event::new(WindowEvent::MouseEnter).target(hovered));
-        cx.event_queue.push_back(Event::new(WindowEvent::MouseLeave).target(cx.hovered));
+        cx.event_queue.push_back(Event::new(WindowEvent::MouseEnter).direct(hovered));
+        cx.event_queue.push_back(Event::new(WindowEvent::MouseLeave).direct(cx.hovered));
 
+        cx.event_queue.push_back(Event::new(WindowEvent::MouseOver).target(hovered));
+        cx.event_queue.push_back(Event::new(WindowEvent::MouseOut).target(cx.hovered));
+
+        // if !cx.hovered.is_child_of(&cx.tree, hovered) {
+        //     cx.event_queue.push_back(Event::new(WindowEvent::MouseOver).direct(hovered));
+        // }
+
+        // if let Some(parent) = cx.tree.get_parent(hovered) {
+        //     if !hovered.is_sibling(&cx.tree, cx.hovered) {
+        //         cx.event_queue.push_back(Event::new(WindowEvent::MouseOver).direct(parent));
+        //     }
+        // }
+
+        // if !hovered.is_child_of(&cx.tree, cx.hovered) {
+        //     cx.event_queue.push_back(Event::new(WindowEvent::MouseOut).direct(cx.hovered));
+        // }
+
+        // if let Some(parent) = cx.tree.get_parent(cx.hovered) {
+        //     if !hovered.is_sibling(&cx.tree, cx.hovered) && parent != hovered {
+        //         cx.event_queue.push_back(Event::new(WindowEvent::MouseOut).direct(parent));
+        //     }
+        // }
+
+        // if !hovered.is_child_of(&cx.tree, parent) {
+        //     println!("do this: {} {}", hovered, cx.hovered);
+        //     cx.event_queue.push_back(Event::new(WindowEvent::MouseOver).target(hovered));
+
+        //     if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(hovered) {
+        //         pseudo_class.set(PseudoClassFlags::OVER, true);
+        //     }
+
+        //     cx.event_queue.push_back(Event::new(WindowEvent::MouseOut).target(cx.hovered));
+
+        //     if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.hovered) {
+        //         pseudo_class.set(PseudoClassFlags::OVER, false);
+        //     }
+        // }
         cx.hovered = hovered;
 
         cx.style.needs_restyle();
@@ -130,11 +167,11 @@ fn hover_entity(
             .unwrap_or_default()
             .contains(PseudoClassFlags::OVER)
         {
-            cx.event_queue.push_back(
-                Event::new(WindowEvent::MouseOver)
-                    .target(cx.current)
-                    .propagate(Propagation::Direct),
-            );
+            // cx.event_queue.push_back(
+            //     Event::new(WindowEvent::MouseOver)
+            //         .target(cx.current)
+            //         .propagate(Propagation::Direct),
+            // );
 
             if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
                 pseudo_class.set(PseudoClassFlags::OVER, true);
@@ -148,9 +185,9 @@ fn hover_entity(
         .unwrap_or_default()
         .contains(PseudoClassFlags::OVER)
     {
-        cx.event_queue.push_back(
-            Event::new(WindowEvent::MouseOut).target(cx.current).propagate(Propagation::Direct),
-        );
+        // cx.event_queue.push_back(
+        //     Event::new(WindowEvent::MouseOut).target(cx.current).propagate(Propagation::Direct),
+        // );
 
         if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
             pseudo_class.set(PseudoClassFlags::OVER, false);

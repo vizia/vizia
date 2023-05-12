@@ -290,65 +290,122 @@ list {
 
 /* Menu */
 
-menu {
-    overflow: visible;
-}
-
-menu > menustack {
-    position-type: self-directed;
-    z-index: 1000;
-    display: none;
-}
-
-menu:checked > menustack {
-    display: flex;
-}
-
-menustack {
-    width: auto;
+menubar {
+    child-space: 8px;
     height: auto;
-    overflow: visible;
-    col-between: 4px;
 }
 
-menustack.vertical {
-    layout-type: column;
-    child-top: 4px;
-    child-bottom: 4px;
+menubutton {
+    height: 32px;
+    width: 1s;
+    child-left: 8px;
+    child-right: 8px;
 }
 
-menustack.horizontal {
-    layout-type: row;
+submenu {
+    height: 32px;
+    width: auto;
+    child-left: 8px;
+    child-right: 8px;
 }
 
-menustack.vertical > menu > menustack {
+submenu submenu {
+    width: 1s;
+}
+
+menubutton label {
+    child-top: 1s;
+    child-bottom: 1s;
+    width: 1s;
+}
+
+menubutton .icon,
+menubutton .shortcut {
+    child-space: 1s;
+    width: auto;
+    height: 1s;
+}
+
+menubutton .icon {
+    child-right: 4px;
+}
+
+menubutton .shortcut {
+    child-left: 4px;
+    child-right: 4px;
+}
+
+submenu label {
+    child-top: 1s;
+    child-bottom: 1s;
+    size: 1s;
+}
+
+submenu > label {
+    width: auto;
+}
+
+submenu submenu label {
+    child-top: 1s;
+    child-bottom: 1s;
+    size: 1s;
+    width: 1s;
+}
+
+submenu > popup {
+    top: 100%;
+    height: auto;
+    width: 160px;
+    child-space: 8px;
+    left: 1s;
+    right: 1s;
+}
+
+submenu submenu > popup {
+    opacity: 0;
+    /* display: none; */
+    /* transition: display 0ms 500ms; */
+    transition: opacity 200ms;
+}
+
+submenu submenu > popup:checked {
+    opacity: 1;
+    /* display: flex; */
+}
+
+submenu submenu > popup {
+    top: 0px;
     left: 100%;
 }
 
-menustack.horizontal > menu > menustack {
+menubar > submenu {
+    width: auto;
+    child-left: 16px;
+    child-right: 16px;
+}
+
+menubar > submenu > label {
+    width: auto;
+}
+
+menubar > submenu > popup {
+    left: 0px;
     top: 100%;
 }
 
-menustack.vertical > menu > hstack > .menu_arrow {
-    display: flex;
-    left: 1s;
-    top: 1s;
-    bottom: 1s;
-}
-
-menucontroller {
-    width: 0px;
-    height: 0px;
-    overflow: visible;
-}
-
-menucontroller label {
-    left: 8px;
-    right: 8px;
-}
-
-.menu_arrow {
+submenu > .arrow {
     display: none;
+}
+
+submenu submenu > .arrow {
+    display: flex;
+}
+
+submenu > .arrow {
+    width: auto;
+    height: 1s;
+    child-space: 1s;
+    /* child-right: 0px; */
 }
 
 /* Notification */
@@ -416,13 +473,13 @@ picklist {
 popup {
     width: auto;
     height: auto;
-    display: none;
-    /* opacity: 0; */
+    /* display: none; */
+    opacity: 0;
 }
 
 popup:checked {
-    display: flex;
-    /* opacity: 1; */
+    /* display: flex; */
+    opacity: 1;
 }
 
 /* Progress Bar */
@@ -462,7 +519,6 @@ scrollview > .scroll_content {
     height: auto;
     min-width: 100%;
     min-height: 100%;
-    /* position-type: self-directed; */
 }
 
 scrollview > scrollbar.horizontal {
@@ -950,16 +1006,6 @@ analogtimepicker .time-selector-wrapper button label {
     height: 1s;
     child-space: 1s;
 } */
-
-popup {
-    display: none;
-    /* opacity: 0; */
-}
-
-popup:checked {
-    display: flex;
-    /* opacity: 1; */
-}
 
 menucontroller {
     width: 0px;

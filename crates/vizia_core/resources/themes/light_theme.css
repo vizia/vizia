@@ -318,6 +318,62 @@ dropdown .list label:focus-visible {
     outline-offset: 3px;
 }
 
+/* MENU */
+
+menubutton {
+    background-color: transparent;
+    border-radius: 4px;
+}
+
+menubutton:hover {
+    background-color: #f0f0f0;
+}
+
+menubutton .shortcut {
+    color: #c4c4c4;
+    font-size: medium;
+}
+
+submenu {
+    background-color: transparent;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #d2d2d2;
+}
+
+menubar submenu {
+    border-width: 0px;
+}
+
+submenu submenu {
+    border-width: 0px;
+}
+
+submenu:hover {
+    background-color: #f0f0f0;
+}
+
+submenu > popup {
+    border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
+    child-space: 8px;
+    border-radius: 4px;
+    box-shadow: 0px 2px 16px #4f4f4f38;
+}
+
+menu-divider {
+    height: 9px;
+    width: 1s;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+menu-divider .line {
+    height: 1px;
+    background-color: #d2d2d2;
+}
+
 /* Popup */
 
 popup {
