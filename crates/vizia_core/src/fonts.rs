@@ -64,6 +64,22 @@ pub mod icons {
     pub const ICON_CHEVRON_UP_RIGHT: &str = "\u{ed0c}";
     pub const ICON_CHEVRON_UP: &str = "\u{ea62}";
 
+    pub const ICON_ARROW_BIG_UP: &str = "\u{eddd}";
+
+    pub const ICON_COMMAND: &str = "\u{ea78}";
+
+    pub const ICON_CUT: &str = "\u{ea86}";
+    pub const ICON_COPY: &str = "\u{ea7a}";
+    pub const ICON_CLIPBOARD: &str = "\u{ea6f}";
+
+    pub const ICON_SHARE: &str = "\u{eb21}";
+    pub const ICON_SHARE_2: &str = "\u{f799}";
+    pub const ICON_SHARE_3: &str = "\u{f7bd}";
+
+    pub const ICON_CURSOR_TEXT: &str = "\u{ee6d}";
+
+    pub const ICON_TRASH: &str = "\u{eb41}";
+
     pub const ICON_PLUS: &str = "\u{eb0b}";
     pub const ICON_MINUS: &str = "\u{eaf2}";
     pub const ICON_CHECK: &str = "\u{ea5e}";

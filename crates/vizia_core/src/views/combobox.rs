@@ -9,17 +9,25 @@ pub struct ComboBox<
     L2: Lens<Target = usize>,
     T: 'static + Data + ToString,
 > {
+    // Text to filter the list.
     filter_text: String,
+    // Text to display when the combobox is unfocused.
     placeholder: String,
+    // Callback triggered when an item is selected.
     on_select: Option<Box<dyn Fn(&mut EventContext, usize)>>,
+    // Lens to a list of values.
     list_lens: L1,
+    // Lens to the selected value.
     selected: L2,
-    p: PhantomData<T>,
+    // Whether the popup list is visible.
     is_open: bool,
+    // Index of value hovered (or selected by arrow keys).
     hovered: usize,
+    p: PhantomData<T>,
 }
 
 pub enum ComboBoxEvent {
+    ///
     SetOption(usize),
     SetFilterText(String),
     SetHovered(usize),
@@ -36,21 +44,22 @@ where
         Self {
             filter_text: String::from(""),
             on_select: None,
-            list_lens: list_lens.clone(),
-            selected: selected.clone(),
+            list_lens,
+            selected,
             p: PhantomData::default(),
             is_open: false,
             hovered: selected.get(cx),
             placeholder: String::from("One"),
         }
         .build(cx, |cx| {
-            // Add listener to defocus when mouse is pressed outside the combobox
+            // Add listener to defocus when mouse is pressed outside the combobox.
             cx.add_listener(move |popup: &mut Self, cx, event| {
                 let flag: bool = popup.is_open;
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
                         if flag && meta.origin != cx.current() {
-                            // Check if the mouse was pressed outside of any descendants
+                            // Check if the mouse was pressed outside of any descendants.
+                            // TODO: Replace with a check to is_over when that works correctly.
                             if !cx.hovered.is_descendant_of(cx.tree, cx.current) {
                                 cx.emit(TextEvent::Submit(false));
                                 cx.emit_custom(
@@ -69,17 +78,23 @@ where
 
             Textbox::new(cx, Self::filter_text)
                 .on_edit(|cx, txt| cx.emit(ComboBoxEvent::SetFilterText(txt)))
-                .on_blur(|_| {}) // Prevent the textbox from losing focus on blur
+                // Prevent the textbox from losing focus on blur. We control that with the listener instead.
+                .on_blur(|_| {})
                 .width(Stretch(1.0))
                 .height(Pixels(32.0))
                 .space(Pixels(0.0))
                 .placeholder(Self::placeholder);
 
             ComboPopup::new(cx, Self::is_open, false, move |cx: &mut Context| {
+                // Binding to the filter text.
                 Binding::new(cx, Self::filter_text, move |cx, _filter_text| {
-                    Binding::new(cx, list_lens.clone(), move |cx, list| {
+                    // Binding to the list of values.
+                    Binding::new(cx, list_lens, move |cx, list| {
+                        // Seems that the layout bugs out when rebuilding the contents of a scrollview that's been scrolled to 100%.
+                        // So instead we just rebuild the whole scrollview.
                         ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
                             let f = Self::filter_text.get(cx);
+                            // List view doesn't have an option for filtering (yet) so we do it manually instead.
                             VStack::new(cx, |cx| {
                                 for (index, item) in
                                     list.get(cx).iter().enumerate().filter(|(_, item)| {
@@ -122,7 +137,7 @@ where
             .height(Auto);
         })
         .bind(selected, move |handle, selected| {
-            let selected_item = list_lens.clone().index(selected.get(&handle)).get(&handle);
+            let selected_item = list_lens.index(selected.get(&handle)).get(&handle);
             handle.modify(|combobox| combobox.placeholder = selected_item.to_string());
         })
     }
@@ -141,25 +156,29 @@ where
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|combobox_event, _| match combobox_event {
             ComboBoxEvent::SetOption(index) => {
+                // Set the placeholder text to the selected item.
                 let selected_item = self.list_lens.clone().index(*index).get(cx);
-
                 self.placeholder = selected_item.to_string();
 
+                // Call the on_select callback.
                 if let Some(callback) = &self.on_select {
                     (callback)(cx, *index);
                 }
 
+                // Close the popup.
                 self.is_open = false;
 
+                // Reset the filter text.
                 self.filter_text = String::new();
 
+                // Set the textbox to non-edit state.
                 cx.emit_custom(
                     Event::new(TextEvent::EndEdit)
                         .target(cx.current)
                         .propagate(Propagation::Subtree),
                 );
 
-                cx.needs_redraw();
+                // cx.needs_redraw();
             }
 
             ComboBoxEvent::SetHovered(index) => {
@@ -169,7 +188,7 @@ where
             ComboBoxEvent::SetFilterText(text) => {
                 self.filter_text = text.clone();
 
-                // Reopen the popup in case it was closed with the ESC key
+                // Reopen the popup in case it was closed with the ESC key.
                 self.is_open = true;
 
                 let filter = |(_, txt): &(usize, &T)| {
@@ -184,12 +203,8 @@ where
 
                 let list = self.list_lens.get(cx);
 
-                if let Some((next_index, _)) = list
-                    .iter()
-                    .enumerate()
-                    .skip_while(|(idx, _)| *idx != self.hovered)
-                    .filter(filter)
-                    .next()
+                if let Some((next_index, _)) =
+                    list.iter().enumerate().skip_while(|(idx, _)| *idx != self.hovered).find(filter)
                 {
                     self.hovered = next_index;
                 } else {
@@ -197,8 +212,7 @@ where
                     self.hovered = list
                         .iter()
                         .enumerate()
-                        .filter(filter)
-                        .next()
+                        .find(filter)
                         .map(|(index, _)| index)
                         .unwrap_or(list_len);
                 }
@@ -251,12 +265,11 @@ where
                             .enumerate()
                             .filter(filter)
                             .skip_while(|(idx, _)| *idx != self.hovered)
-                            .skip(1)
-                            .next()
+                            .nth(1)
                         {
                             self.hovered = next_index;
                         } else {
-                            self.hovered = list.iter().enumerate().filter(filter).next().unwrap().0;
+                            self.hovered = list.iter().enumerate().find(filter).unwrap().0;
                         }
                     }
                 }
@@ -281,13 +294,11 @@ where
                             .rev()
                             .filter(filter)
                             .skip_while(|(idx, _)| *idx != self.hovered)
-                            .skip(1)
-                            .next()
+                            .nth(1)
                         {
                             self.hovered = next_index;
                         } else {
-                            self.hovered =
-                                list.iter().enumerate().rev().filter(filter).next().unwrap().0;
+                            self.hovered = list.iter().enumerate().rev().find(filter).unwrap().0;
                         }
                     }
                 }

@@ -939,10 +939,18 @@ impl<'a> DrawContext<'a> {
                 }
             }
 
+            let opacity = self.opacity();
+
             for (index, box_shadow) in
                 box_shadows.iter().enumerate().rev().filter(|(_, shadow)| !shadow.inset)
             {
                 let color = box_shadow.color.unwrap_or_default();
+                let color = Color::rgba(
+                    color.r(),
+                    color.g(),
+                    color.b(),
+                    (opacity * color.a() as f32) as u8,
+                );
                 let x_offset = box_shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
                 let y_offset = box_shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();
                 let spread_radius =

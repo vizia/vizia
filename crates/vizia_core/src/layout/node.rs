@@ -217,7 +217,9 @@ impl Node for Entity {
 
             let height =
                 if let Some(height) = height { height } else { text_height + child_space_y };
-            let width = if let Some(width) = width { width } else { text_width + child_space_x };
+            // let width = if let Some(width) = width { width } else { text_width + child_space_x };
+
+            let width = text_width + child_space_x;
 
             // Cache the text_width/ text_height in the text context so we can use it to compute transforms later
             sublayout.text_context.set_bounds(
