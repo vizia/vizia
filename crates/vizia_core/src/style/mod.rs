@@ -174,7 +174,7 @@ pub struct Style {
     pub numeric_value: SparseSet<f64>,
 
     // Display
-    pub display: StyleSet<Display>,
+    pub display: AnimatableSet<Display>,
 
     // Visibility
     pub visibility: StyleSet<Visibility>,

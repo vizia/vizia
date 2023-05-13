@@ -325,6 +325,10 @@ menubutton {
     border-radius: 4px;
 }
 
+menubutton:focus {
+    background-color: #f0f0f0;
+}
+
 menubutton:hover {
     background-color: #f0f0f0;
 }
@@ -347,6 +351,14 @@ menubar submenu {
 
 submenu submenu {
     border-width: 0px;
+}
+
+submenu:checked {
+    background-color: #f0f0f0;
+}
+
+submenu:focus {
+    background-color: #f0f0f0;
 }
 
 submenu:hover {

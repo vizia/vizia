@@ -363,14 +363,14 @@ submenu > popup {
 
 submenu submenu > popup {
     opacity: 0;
-    /* display: none; */
-    /* transition: display 0ms 500ms; */
+    display: none;
+    transition: display 500ms 500ms;
     transition: opacity 200ms;
 }
 
 submenu submenu > popup:checked {
     opacity: 1;
-    /* display: flex; */
+    display: flex;
 }
 
 submenu submenu > popup {
@@ -473,12 +473,12 @@ picklist {
 popup {
     width: auto;
     height: auto;
-    /* display: none; */
+    display: none;
     opacity: 0;
 }
 
 popup:checked {
-    /* display: flex; */
+    display: flex;
     opacity: 1;
 }
 

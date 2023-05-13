@@ -112,6 +112,7 @@ impl Submenu {
                 // .on_press_down(|cx| cx.emit(MenuEvent::CloseAll));
                 // .on_blur(|cx| cx.emit(MenuEvent::CloseAll));
             })
+            .checked(Submenu::is_open)
             .layout_type(LayoutType::Row)
             .on_press(|cx| cx.emit(MenuEvent::ToggleOpen));
 
@@ -134,33 +135,57 @@ impl View for Submenu {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseEnter => {
-                if meta.target == cx.current && self.open_on_hover {
-                    let parent = cx.tree.get_parent(cx.current).unwrap();
-                    cx.emit_custom(
-                        Event::new(MenuEvent::Close).target(parent).propagate(Propagation::Subtree),
-                    );
-                    cx.emit(MenuEvent::Open);
+                if meta.target == cx.current {
+                    // if self.open_on_hover {
+                    //     cx.focus();
+                    // }
+                    if self.open_on_hover {
+                        let parent = cx.tree.get_parent(cx.current).unwrap();
+                        cx.emit_custom(
+                            Event::new(MenuEvent::Close)
+                                .target(parent)
+                                .propagate(Propagation::Subtree),
+                        );
+                        cx.emit(MenuEvent::Open);
+                    }
                 }
             }
+
+            WindowEvent::KeyDown(code, _) => match code {
+                Code::ArrowLeft => {
+                    // if cx.is_focused() {
+                    if self.is_open {
+                        self.is_open = false;
+                        cx.focus();
+                        meta.consume();
+                    }
+                    // }
+                }
+
+                Code::ArrowRight => {
+                    if !self.is_open {
+                        self.is_open = true;
+                    }
+                }
+
+                _ => {}
+            },
 
             _ => {}
         });
 
         event.map(|menu_event, meta| match menu_event {
             MenuEvent::Open => {
-                println!("open: {}", cx.current);
                 self.is_open = true;
                 meta.consume();
             }
 
             MenuEvent::Close => {
-                println!("close: {}", cx.current);
                 self.is_open = false;
                 // meta.consume();
             }
 
             MenuEvent::ToggleOpen => {
-                println!("do this");
                 self.is_open ^= true;
                 if self.is_open {
                     cx.emit(MenuEvent::MenuIsOpen);
@@ -189,6 +214,7 @@ impl MenuButton {
             .on_press(move |cx| {
                 (action)(cx);
                 cx.emit(MenuEvent::CloseAll);
+                // cx.emit(MenuEvent::Close);
             })
     }
 }
@@ -206,10 +232,18 @@ impl View for MenuButton {
                     cx.emit_custom(
                         Event::new(MenuEvent::Close).target(parent).propagate(Propagation::Subtree),
                     );
-                    println!("do this");
-                    cx.emit(MenuEvent::Open);
+                    // println!("do this");
+                    // cx.emit(MenuEvent::Open);
+                    // cx.focus();
                 }
             }
+
+            WindowEvent::KeyDown(code, _) => match code {
+                Code::ArrowDown => {
+                    if let Some(next_sibling) = cx.tree.get_next_sibling(cx.current) {}
+                }
+                _ => {}
+            },
 
             _ => {}
         });
@@ -242,11 +276,6 @@ where
         Self { lens: lens.clone() }
             .build(cx, |cx| {
                 let parent = cx.current;
-                Binding::new(cx, lens.clone(), move |cx, lens| {
-                    if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
-                        geo.set(GeoChanged::WIDTH_CHANGED, true);
-                    }
-                });
 
                 // if lens.get(cx) {
                 // if capture_focus {
@@ -255,10 +284,22 @@ where
                 (content)(cx);
                 // }
                 // }
+
+                Binding::new(cx, lens.clone(), move |cx, lens| {
+                    if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
+                        geo.set(GeoChanged::WIDTH_CHANGED, true);
+                    }
+
+                    // if let Some(first_child) = cx.tree.get_first_child(parent) {
+                    //     println!("first child: {}", first_child);
+                    //     cx.with_current(first_child, |cx| {
+                    //         cx.focus();
+                    //     })
+                    // }
+                });
             })
             .role(Role::Dialog)
             .checked(lens.clone())
-            .hoverable(lens)
             .position_type(PositionType::SelfDirected)
             .z_index(100)
     }

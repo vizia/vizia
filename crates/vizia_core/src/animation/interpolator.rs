@@ -1,7 +1,7 @@
 use morphorm::Units;
 use vizia_style::{
-    Angle, BackgroundSize, BoxShadow, ClipPath, Color, ColorStop, FontSize, Gradient, Length,
-    LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LinearGradient,
+    Angle, BackgroundSize, BoxShadow, ClipPath, Color, ColorStop, Display, FontSize, Gradient,
+    Length, LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LinearGradient,
     Opacity, PercentageOrNumber, Rect, Scale, Transform, Translate, RGBA,
 };
 
@@ -48,6 +48,12 @@ impl Interpolator for Units {
             Units::Stretch(e) => Units::Stretch(f32::interpolate(s, e, t)),
             Units::Auto => *end,
         }
+    }
+}
+
+impl Interpolator for Display {
+    fn interpolate(_start: &Self, end: &Self, _t: f32) -> Self {
+        *end
     }
 }
 
