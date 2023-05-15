@@ -3,53 +3,38 @@ use crate::{icons::ICON_STAR_FILLED, prelude::*};
 #[derive(Lens)]
 pub struct Rating {
     rating: u32,
+    max_rating: u32,
     on_change: Option<Box<dyn Fn(&mut EventContext, u32)>>,
 }
 
 pub(crate) enum RatingEvent {
     SetRating(u32),
     EmitRating,
+    Increment,
+    Decrement,
 }
 
 impl Rating {
-    pub fn new(cx: &mut Context, lens: impl Lens<Target = u32>) -> Handle<Self> {
-        Self { rating: lens.get(cx), on_change: None }
+    pub fn new(cx: &mut Context, max_rating: u32, lens: impl Lens<Target = u32>) -> Handle<Self> {
+        Self { rating: lens.get(cx), max_rating, on_change: None }
             .build(cx, |cx| {
-                HStack::new(cx, |cx| {
+                for i in 1..max_rating + 1 {
                     Label::new(cx, ICON_STAR_FILLED)
+                        // .navigable(true)
+                        .checkable(true)
+                        .numeric_value(1)
+                        .role(Role::RadioButton)
+                        .default_action_verb(DefaultActionVerb::Click)
                         .class("icon")
-                        .checked(lens.clone().map(|val| *val >= 1))
-                        .toggle_class("foo", Rating::rating.map(|val| *val >= 1))
-                        .on_hover(|ex| ex.emit(RatingEvent::SetRating(1)))
+                        .checked(lens.clone().map(move |val| *val >= i))
+                        .toggle_class("foo", Rating::rating.map(move |val| *val >= i))
+                        .on_hover(move |ex| ex.emit(RatingEvent::SetRating(i)))
                         .on_press(|ex| ex.emit(RatingEvent::EmitRating));
-                    Label::new(cx, ICON_STAR_FILLED)
-                        .class("icon")
-                        .checked(lens.clone().map(|val| *val >= 2))
-                        .toggle_class("foo", Rating::rating.map(|val| *val >= 2))
-                        .on_hover(|ex| ex.emit(RatingEvent::SetRating(2)))
-                        .on_press(|ex| ex.emit(RatingEvent::EmitRating));
-                    Label::new(cx, ICON_STAR_FILLED)
-                        .class("icon")
-                        .checked(lens.clone().map(|val| *val >= 3))
-                        .toggle_class("foo", Rating::rating.map(|val| *val >= 3))
-                        .on_hover(|ex| ex.emit(RatingEvent::SetRating(3)))
-                        .on_press(|ex| ex.emit(RatingEvent::EmitRating));
-                    Label::new(cx, ICON_STAR_FILLED)
-                        .class("icon")
-                        .checked(lens.clone().map(|val| *val >= 4))
-                        .toggle_class("foo", Rating::rating.map(|val| *val >= 4))
-                        .on_hover(|ex| ex.emit(RatingEvent::SetRating(4)))
-                        .on_press(|ex: &mut EventContext| ex.emit(RatingEvent::EmitRating));
-                    Label::new(cx, ICON_STAR_FILLED)
-                        .class("icon")
-                        .checked(lens.clone().map(|val| *val >= 5))
-                        .toggle_class("foo", Rating::rating.map(|val| *val >= 5))
-                        .on_hover(|ex| ex.emit(RatingEvent::SetRating(5)))
-                        .on_press(|ex| ex.emit(RatingEvent::EmitRating));
-                })
-                .class("rating-container")
-                .size(Auto);
+                }
             })
+            .numeric_value(Self::rating)
+            .navigable(true)
+            .role(Role::RadioGroup)
             .bind(lens.clone(), |handle, lens| {
                 let val = lens.get(handle.cx);
                 handle.modify(|rating| rating.rating = val);
@@ -70,7 +55,32 @@ impl View for Rating {
                     (callback)(cx, self.rating)
                 }
             }
-        })
+            RatingEvent::Increment => {
+                self.rating += 1;
+                self.rating %= 6;
+                cx.emit(RatingEvent::EmitRating);
+            }
+            RatingEvent::Decrement => {
+                self.rating = if self.rating == 0 { 5 } else { self.rating.saturating_sub(1) };
+                cx.emit(RatingEvent::EmitRating);
+            }
+        });
+
+        event.map(|window_event, _| match window_event {
+            WindowEvent::KeyDown(code, _) => match code {
+                Code::ArrowLeft => {
+                    cx.emit(RatingEvent::Decrement);
+                }
+
+                Code::ArrowRight => {
+                    cx.emit(RatingEvent::Increment);
+                }
+
+                _ => {}
+            },
+
+            _ => {}
+        });
     }
 }
 

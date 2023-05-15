@@ -4,28 +4,33 @@ use vizia::prelude::*;
 
 #[derive(Clone, Lens)]
 struct AppData {
-    rating: u32,
+    rating1: u32,
+    rating2: u32,
 }
 
 impl Model for AppData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetRating(val) => self.rating = *val,
+            AppEvent::SetRating1(val) => self.rating1 = *val,
+            AppEvent::SetRating2(val) => self.rating2 = *val,
         })
     }
 }
 
 enum AppEvent {
-    SetRating(u32),
+    SetRating1(u32),
+    SetRating2(u32),
 }
 
 fn main() {
     Application::new(|cx| {
-        AppData { rating: 3 }.build(cx);
+        AppData { rating1: 3, rating2: 7 }.build(cx);
 
-        ExamplePage::new(cx, |cx| {
-            Rating::new(cx, AppData::rating)
-                .on_change(|ex, rating| ex.emit(AppEvent::SetRating(rating)));
+        ExamplePage::vertical(cx, |cx| {
+            Rating::new(cx, 5, AppData::rating1)
+                .on_change(|ex, rating| ex.emit(AppEvent::SetRating1(rating)));
+            Rating::new(cx, 10, AppData::rating2)
+                .on_change(|ex, rating| ex.emit(AppEvent::SetRating2(rating)));
         });
     })
     .title("Rating")

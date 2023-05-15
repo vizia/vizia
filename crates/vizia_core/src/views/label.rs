@@ -177,3 +177,31 @@ impl View for Label {
         });
     }
 }
+
+pub struct Icon {}
+
+impl Icon {
+    /// Creates a new label.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// Label::new(cx, "Text");
+    /// ```
+    pub fn new<T>(cx: &mut Context, icon_code: impl Res<T> + Clone) -> Handle<Self>
+    where
+        T: ToString,
+    {
+        Self {}.build(cx, |_| {}).text(icon_code.clone()).role(Role::StaticText)
+    }
+}
+
+impl View for Icon {
+    fn element(&self) -> Option<&'static str> {
+        Some("icon")
+    }
+}

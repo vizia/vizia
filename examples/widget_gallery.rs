@@ -5,6 +5,7 @@ use vizia::{
 
 mod helpers;
 use helpers::*;
+use vizia_core::icons::ICON_CHEVRON_RIGHT;
 
 const STYLE: &str = r#"
     .container {
@@ -15,7 +16,91 @@ const STYLE: &str = r#"
         child-space: 20px;
         row-between: 15px;
     }
+
+    panel {
+        height: auto;
+        max-height: 40px;
+        overflow: hidden;
+        transition: max-height 200ms ease-out;
+    }
+
+    panel:checked {
+        max-height: 110px;
+        transition: max-height 200ms ease-out;
+    }
+
+    panel > .panel-header {
+        child-top: 1s;
+        child-bottom: 1s;
+        col-between: 8px;
+    }
+
+    panel > .panel-header > .icon {
+        font-size: 30;
+        font-weight: bold;
+        rotate: 0deg;
+        transition: rotate 200ms ease-out;
+    }
+
+    panel:checked > .panel-header > .icon {
+        rotate: 90deg;
+        transition: rotate 200ms ease-out;
+    }
 "#;
+
+#[derive(Lens)]
+pub struct Panel {
+    is_open: bool,
+}
+
+pub enum PanelEvent {
+    ToggleOpen,
+    Open,
+    Close,
+}
+
+impl Panel {
+    pub fn new<V: View>(
+        cx: &mut Context,
+        header: impl Fn(&mut Context) -> Handle<V>,
+        content: impl Fn(&mut Context),
+    ) -> Handle<Self> {
+        Self { is_open: false }
+            .build(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    Label::new(cx, ICON_CHEVRON_RIGHT).class("icon").hoverable(false);
+                    (header)(cx).hoverable(false);
+                })
+                .class("panel-header")
+                .on_press(|cx| cx.emit(PanelEvent::ToggleOpen))
+                .height(Pixels(40.0));
+                (content)(cx);
+            })
+            .checked(Panel::is_open)
+    }
+}
+
+impl View for Panel {
+    fn element(&self) -> Option<&'static str> {
+        Some("panel")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|panel_event, _| match panel_event {
+            PanelEvent::ToggleOpen => {
+                self.is_open ^= true;
+            }
+
+            PanelEvent::Open => {
+                self.is_open = true;
+            }
+
+            PanelEvent::Close => {
+                self.is_open = false;
+            }
+        });
+    }
+}
 
 #[derive(Lens)]
 pub struct AppData {}
@@ -25,7 +110,16 @@ fn main() {
         ExamplePage::vertical(cx, |cx| {
             cx.add_theme(STYLE);
             ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                label(cx);
+                Panel::new(
+                    cx,
+                    |cx| {
+                        Label::new(cx, "Label").font_size(30.0).font_weight(FontWeightKeyword::Bold)
+                    },
+                    |cx| {
+                        label(cx);
+                    },
+                );
+
                 buttons(cx);
                 checkbox(cx);
                 switch(cx);
@@ -102,24 +196,21 @@ pub fn checkbox(cx: &mut Context) -> Handle<impl View> {
         Checkbox::new(cx, CheckboxData::check).on_toggle(|cx| cx.emit(CheckboxEvent::Toggle));
 
         HStack::new(cx, |cx| {
-            Checkbox::new(cx, CheckboxData::check);
-            Label::new(cx, "Checkbox with label");
+            Checkbox::new(cx, CheckboxData::check)
+                .id("checky")
+                .on_toggle(|cx| cx.emit(CheckboxEvent::Toggle));
+            Label::new(cx, "Checkbox with label").describing("checky");
         })
         .size(Auto)
         .child_top(Stretch(1.0))
         .child_bottom(Stretch(1.0))
-        .col_between(Pixels(5.0))
-        .on_press(|cx| cx.emit(CheckboxEvent::Toggle));
+        .col_between(Pixels(5.0));
     })
     .height(Auto)
     .row_between(Pixels(15.0))
 }
 
 pub fn label(cx: &mut Context) {
-    Label::new(cx, "Label")
-        .font_size(30.0)
-        .font_weight(FontWeightKeyword::Bold)
-        .bottom(Pixels(8.0));
     VStack::new(cx, |cx| {
         Label::new(cx, "This is some simple text");
         Label::new(cx, "This is some simple text");
@@ -315,29 +406,35 @@ pub fn slider(cx: &mut Context) -> Handle<impl View> {
 
 #[derive(Clone, Lens)]
 struct RatingData {
-    rating: u32,
+    rating1: u32,
+    rating2: u32,
 }
 
 impl Model for RatingData {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            RatingEvent::SetRating(val) => self.rating = *val,
+            RatingEvent::SetRating1(val) => self.rating1 = *val,
+            RatingEvent::SetRating2(val) => self.rating2 = *val,
         })
     }
 }
 
 enum RatingEvent {
-    SetRating(u32),
+    SetRating1(u32),
+    SetRating2(u32),
 }
 
-pub fn rating(cx: &mut Context) -> Handle<impl View> {
-    RatingData { rating: 3 }.build(cx);
+pub fn rating(cx: &mut Context) {
+    RatingData { rating1: 3, rating2: 7 }.build(cx);
 
     Label::new(cx, "Rating")
         .font_size(30.0)
         .font_weight(FontWeightKeyword::Bold)
         .bottom(Pixels(8.0));
 
-    Rating::new(cx, RatingData::rating)
-        .on_change(|ex, rating| ex.emit(RatingEvent::SetRating(rating)))
+    Rating::new(cx, 5, RatingData::rating1)
+        .on_change(|ex, rating| ex.emit(RatingEvent::SetRating1(rating)));
+
+    Rating::new(cx, 10, RatingData::rating2)
+        .on_change(|ex, rating| ex.emit(RatingEvent::SetRating2(rating)));
 }

@@ -548,9 +548,15 @@ radiobutton:disabled .inner {
     background-color: #b6b6b6;
 }
 
-/* Rating */
+/* RATING */
 
-/* Rating */
+rating:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
 rating .icon {
     color: #c4c4c4;
     font-size: x-large;
@@ -559,15 +565,22 @@ rating .icon {
     cursor: hand;
 }
 
+rating .icon:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
 rating .icon:checked {
     color: gold;
 }
 
-rating > .rating-container:over .icon:enabled {
+rating:over > .icon:enabled {
     color: #c4c4c4;
 }
 
-rating > .rating-container:over .icon.foo:enabled {
+rating:over > .icon.foo:enabled {
     color: gold;
 }
 
@@ -584,6 +597,8 @@ rating .icon:disabled {
 rating .icon:checked:disabled {
     color: #dacf93;
 }
+
+/* SCROLLVIEW */
 
 scrollview > scrollbar {
     display: none;

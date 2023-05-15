@@ -4,6 +4,12 @@ label.icon {
     font-family: "tabler-icons", sans-serif;
 }
 
+icon {
+    font-family: "tabler-icons", sans-serif;
+    size: 32px;
+    child-space: 1s;
+}
+
 /* Button */
 
 button {
@@ -24,8 +30,7 @@ button > .inner {
 }
 
 button.icon {
-    width: 32px;
-    height: 32px;
+    size: 32px;
     child-space: 1s;
 }
 
@@ -499,11 +504,12 @@ radiobutton .inner {
     height: 8px;
 }
 
-/* Rating */
+/* RATING */
 
 rating {
     size: auto;
     child-space: auto;
+    layout-type: row;
 }
 
 /* Searchbox */
