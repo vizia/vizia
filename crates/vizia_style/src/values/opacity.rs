@@ -1,3 +1,5 @@
+use cssparser::{Parser, ParserInput};
+
 use crate::{macros::impl_parse, Parse, Percentage};
 
 /// An opacity value in the range of 0 to 1.
@@ -16,6 +18,14 @@ impl_parse! {
     try_parse {
         Percentage,
         f32,
+    }
+}
+
+impl From<&str> for Opacity {
+    fn from(s: &str) -> Self {
+        let mut input = ParserInput::new(s);
+        let mut parser = Parser::new(&mut input);
+        Opacity::parse(&mut parser).unwrap_or_default()
     }
 }
 

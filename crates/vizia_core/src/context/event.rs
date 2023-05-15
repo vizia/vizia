@@ -5,9 +5,10 @@ use std::error::Error;
 
 use femtovg::Transform2D;
 use fnv::FnvHashMap;
+use instant::Duration;
 use vizia_style::{ClipPath, Filter, Scale, Translate};
 
-use crate::animation::Interpolator;
+use crate::animation::{Animation, Interpolator};
 use crate::cache::CachedData;
 use crate::environment::ThemeMode;
 use crate::events::ViewHandler;
@@ -135,6 +136,10 @@ impl<'a> EventContext<'a> {
     /// Returns a reference to the mouse state.
     pub fn mouse(&self) -> &MouseState<Entity> {
         self.mouse
+    }
+
+    pub fn nth_child(&self, n: usize) -> Option<Entity> {
+        self.tree.get_child(self.current, n)
     }
 
     pub fn with_current<T>(&mut self, entity: Entity, f: impl FnOnce(&mut Self) -> T) -> T {
@@ -283,6 +288,10 @@ impl<'a> EventContext<'a> {
         transform.premultiply(&origin);
 
         transform
+    }
+
+    pub fn play_animation(&mut self, anim_id: Animation, duration: Duration) {
+        self.style.play_animation(self.current, anim_id, duration);
     }
 
     /// Add a listener to an entity.
@@ -832,6 +841,32 @@ impl<'a> EventContext<'a> {
 
     pub fn set_background_color(&mut self, background_color: Color) {
         self.style.background_color.insert(self.current, background_color);
+        self.needs_redraw();
+    }
+
+    // SPACE
+
+    pub fn set_left(&mut self, left: Units) {
+        self.style.left.insert(self.current, left);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
+
+    pub fn set_top(&mut self, left: Units) {
+        self.style.top.insert(self.current, left);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
+
+    pub fn set_right(&mut self, left: Units) {
+        self.style.right.insert(self.current, left);
+        self.needs_relayout();
+        self.needs_redraw();
+    }
+
+    pub fn set_bottom(&mut self, left: Units) {
+        self.style.bottom.insert(self.current, left);
+        self.needs_relayout();
         self.needs_redraw();
     }
 

@@ -19,6 +19,10 @@ name = "action_modifier"
 path = "examples/action_modifier.rs"
 
 [[example]]
+name = "animation"
+path = "examples/animation.rs"
+
+[[example]]
 name = "datepicker"
 path = "examples/views/datepicker.rs"
 
@@ -94,6 +98,10 @@ path = "examples/textbox_list.rs"
 [[example]]
 name = "button"
 path = "examples/views/button.rs"
+
+[[example]]
+name = "ripple_button"
+path = "examples/views/ripple_button.rs"
 
 [[example]]
 name = "checkbox"

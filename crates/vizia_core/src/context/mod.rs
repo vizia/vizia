@@ -562,6 +562,10 @@ impl Context {
         Ok(())
     }
 
+    pub fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {
+        self.style.add_animation(animation)
+    }
+
     pub fn set_image_loader<F: 'static + Fn(&mut ResourceContext, &str)>(&mut self, loader: F) {
         self.resource_manager.image_loader = Some(Box::new(loader));
     }

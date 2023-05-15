@@ -1,3 +1,5 @@
+use cssparser::{Parser, ParserInput};
+
 use crate::{impl_parse, traits::Parse, PercentageOrNumber};
 
 /// A scale defining a scale value on the x and the y axis.
@@ -34,6 +36,14 @@ impl_parse! {
                 Ok(Scale { x, y: x })
             }
         }
+    }
+}
+
+impl From<&str> for Scale {
+    fn from(s: &str) -> Self {
+        let mut input = ParserInput::new(s);
+        let mut parser = Parser::new(&mut input);
+        Scale::parse(&mut parser).unwrap_or_default()
     }
 }
 

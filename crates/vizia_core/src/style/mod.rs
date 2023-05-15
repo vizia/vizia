@@ -60,8 +60,10 @@
 //! Element::new(cx).class("foo");
 //! ```
 
+use instant::Duration;
 use morphorm::{LayoutType, PositionType, Units};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+use std::fmt::Debug;
 use vizia_id::GenerationalId;
 
 use crate::prelude::*;
@@ -85,7 +87,9 @@ pub(crate) use pseudoclass::*;
 mod transform;
 pub(crate) use transform::*;
 
-use crate::animation::{Animation, AnimationState, Interpolator, Keyframe, TimingFunction};
+use crate::animation::{
+    Animation, AnimationProperty, AnimationState, Interpolator, Keyframe, TimingFunction,
+};
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
 use bitflags::bitflags;
@@ -148,6 +152,7 @@ pub struct Style {
 
     // Creates and destroys animation ids
     pub(crate) animation_manager: IdManager<Animation>,
+    pub(crate) animation_definitions: HashMap<Animation, AnimationBuilder>,
 
     // List of rules
     pub(crate) rules: Vec<(Rule, SelectorList<Selectors>)>,
@@ -317,6 +322,81 @@ impl Style {
         self.animation_manager.reset();
 
         self.rules.clear();
+    }
+
+    pub(crate) fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {
+        let animation_id = self.animation_manager.create();
+
+        fn add_keyframe<T: 'static + Interpolator + Debug + Clone + PartialEq + Default>(
+            storage: &mut AnimatableSet<T>,
+            animation_id: Animation,
+            time: f32,
+            value: T,
+        ) {
+            let keyframe = Keyframe { time, value, timing_function: TimingFunction::linear() };
+            println!("{:?}", keyframe);
+            if let Some(anim_state) = storage.get_animation_mut(animation_id) {
+                anim_state.keyframes.push(keyframe)
+            } else {
+                let anim_state = AnimationState::new(animation_id).with_keyframe(keyframe);
+                storage.insert_animation(animation_id, anim_state);
+            }
+        }
+
+        for keyframe in animation.keyframes.iter() {
+            for property in keyframe.properties.iter() {
+                match property {
+                    AnimationProperty::Left(value) => {
+                        add_keyframe(&mut self.left, animation_id, keyframe.time, value.clone());
+                    }
+
+                    AnimationProperty::Right(value) => {
+                        add_keyframe(&mut self.right, animation_id, keyframe.time, value.clone());
+                    }
+
+                    AnimationProperty::Top(value) => {
+                        add_keyframe(&mut self.top, animation_id, keyframe.time, value.clone());
+                    }
+
+                    AnimationProperty::Bottom(value) => {
+                        add_keyframe(&mut self.bottom, animation_id, keyframe.time, value.clone());
+                    }
+
+                    AnimationProperty::Translate(value) => {
+                        add_keyframe(
+                            &mut self.translate,
+                            animation_id,
+                            keyframe.time,
+                            value.clone(),
+                        );
+                    }
+
+                    AnimationProperty::Rotate(value) => {
+                        add_keyframe(&mut self.rotate, animation_id, keyframe.time, value.clone());
+                    }
+
+                    AnimationProperty::Scale(value) => {
+                        add_keyframe(&mut self.scale, animation_id, keyframe.time, value.clone());
+                    }
+
+                    AnimationProperty::Opacity(value) => {
+                        add_keyframe(&mut self.opacity, animation_id, keyframe.time, value.clone());
+                    }
+                }
+            }
+        }
+        animation_id
+    }
+
+    pub(crate) fn play_animation(
+        &mut self,
+        entity: Entity,
+        animation: Animation,
+        duration: Duration,
+    ) {
+        self.top.play_animation(entity, animation, duration);
+        self.scale.play_animation(entity, animation, duration);
+        self.opacity.play_animation(entity, animation, duration);
     }
 
     pub(crate) fn parse_theme(&mut self, stylesheet: &str) {

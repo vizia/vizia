@@ -62,7 +62,7 @@ button.accent:over {
 }
 
 button.accent:active {
-    background-color: #59a4d9;
+    /* background-color: #59a4d9; */
     color: #363636;
     transition: background-color 100ms;
     transition: border-color 100ms;

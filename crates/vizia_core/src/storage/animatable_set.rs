@@ -1,6 +1,7 @@
 use crate::animation::{Animation, AnimationState, Interpolator};
 use crate::prelude::*;
 use crate::style::Rule;
+use instant::Duration;
 use vizia_id::GenerationalId;
 use vizia_storage::{SparseSet, SparseSetGeneric, SparseSetIndex};
 
@@ -292,7 +293,12 @@ where
         }
     }
 
-    pub(crate) fn play_animation(&mut self, entity: Entity, animation: Animation) {
+    pub(crate) fn play_animation(
+        &mut self,
+        entity: Entity,
+        animation: Animation,
+        duration: Duration,
+    ) {
         let entity_index = entity.index();
 
         if !self.animations.contains(animation) {
@@ -342,6 +348,7 @@ where
 
             // Safe to unwrap because already checked that the animation exists
             let mut anim_state = self.animations.get(animation).cloned().unwrap();
+            anim_state.duration = duration;
             anim_state.output = Some(
                 self.animations
                     .get(animation)
@@ -496,6 +503,13 @@ where
     //     self.shared_data.get_mut(rule)
     // }
 
+    pub(crate) fn get_animation_mut(
+        &mut self,
+        animation: Animation,
+    ) -> Option<&mut AnimationState<T>> {
+        self.animations.get_mut(animation)
+    }
+
     /// Returns a reference to the active animation linked to the given entity if it exists,
     /// else returns None.
     pub(crate) fn get_active_animation(&self, entity: Entity) -> Option<&AnimationState<T>> {
@@ -611,8 +625,10 @@ where
                         self.inline_data.sparse[entity_index].data_index.index();
                     transition_state.to_rule = shared_data_index.index();
 
+                    let duration = transition_state.duration;
+
                     if transition_state.from_rule != transition_state.to_rule {
-                        self.play_animation(entity, rule_animation);
+                        self.play_animation(entity, rule_animation, duration);
                     }
                     //}
                 }
