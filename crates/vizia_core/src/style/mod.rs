@@ -62,7 +62,7 @@
 
 use instant::Duration;
 use morphorm::{LayoutType, PositionType, Units};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fmt::Debug;
 use vizia_id::GenerationalId;
 
@@ -152,7 +152,6 @@ pub struct Style {
 
     // Creates and destroys animation ids
     pub(crate) animation_manager: IdManager<Animation>,
-    pub(crate) animation_definitions: HashMap<Animation, AnimationBuilder>,
 
     // List of rules
     pub(crate) rules: Vec<(Rule, SelectorList<Selectors>)>,
@@ -346,6 +345,7 @@ impl Style {
         for keyframe in animation.keyframes.iter() {
             for property in keyframe.properties.iter() {
                 match property {
+                    // SPACE
                     AnimationProperty::Left(value) => {
                         add_keyframe(&mut self.left, animation_id, keyframe.time, value.clone());
                     }
@@ -362,6 +362,71 @@ impl Style {
                         add_keyframe(&mut self.bottom, animation_id, keyframe.time, value.clone());
                     }
 
+                    // SIZE
+                    AnimationProperty::Width(value) => {
+                        add_keyframe(&mut self.width, animation_id, keyframe.time, value.clone());
+                    }
+
+                    AnimationProperty::Height(value) => {
+                        add_keyframe(&mut self.height, animation_id, keyframe.time, value.clone());
+                    }
+
+                    // CHILD SPACE
+                    AnimationProperty::ChildLeft(value) => {
+                        add_keyframe(
+                            &mut self.child_left,
+                            animation_id,
+                            keyframe.time,
+                            value.clone(),
+                        );
+                    }
+
+                    AnimationProperty::ChildRight(value) => {
+                        add_keyframe(
+                            &mut self.child_right,
+                            animation_id,
+                            keyframe.time,
+                            value.clone(),
+                        );
+                    }
+
+                    AnimationProperty::ChildTop(value) => {
+                        add_keyframe(
+                            &mut self.child_top,
+                            animation_id,
+                            keyframe.time,
+                            value.clone(),
+                        );
+                    }
+
+                    AnimationProperty::ChildBottom(value) => {
+                        add_keyframe(
+                            &mut self.child_bottom,
+                            animation_id,
+                            keyframe.time,
+                            value.clone(),
+                        );
+                    }
+
+                    AnimationProperty::ColBetween(value) => {
+                        add_keyframe(
+                            &mut self.col_between,
+                            animation_id,
+                            keyframe.time,
+                            value.clone(),
+                        );
+                    }
+
+                    AnimationProperty::RowBetween(value) => {
+                        add_keyframe(
+                            &mut self.row_between,
+                            animation_id,
+                            keyframe.time,
+                            value.clone(),
+                        );
+                    }
+
+                    // TRANSFORM
                     AnimationProperty::Translate(value) => {
                         add_keyframe(
                             &mut self.translate,
@@ -394,8 +459,25 @@ impl Style {
         animation: Animation,
         duration: Duration,
     ) {
+        self.left.play_animation(entity, animation, duration);
+        self.right.play_animation(entity, animation, duration);
         self.top.play_animation(entity, animation, duration);
+        self.bottom.play_animation(entity, animation, duration);
+
+        self.width.play_animation(entity, animation, duration);
+        self.height.play_animation(entity, animation, duration);
+
+        self.child_left.play_animation(entity, animation, duration);
+        self.child_right.play_animation(entity, animation, duration);
+        self.child_top.play_animation(entity, animation, duration);
+        self.child_bottom.play_animation(entity, animation, duration);
+        self.col_between.play_animation(entity, animation, duration);
+        self.row_between.play_animation(entity, animation, duration);
+
+        self.translate.play_animation(entity, animation, duration);
+        self.rotate.play_animation(entity, animation, duration);
         self.scale.play_animation(entity, animation, duration);
+
         self.opacity.play_animation(entity, animation, duration);
     }
 

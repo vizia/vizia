@@ -31,7 +31,8 @@ fn main() {
     // .title("Stylesheet")
     // .run();
     Application::new(|cx| {
-        Element::new(cx).size(Pixels(100.0)).background_color(Color::red()).space(Pixels(100.0));
+        // Element::new(cx).size(Pixels(100.0)).background_color(Color::red()).space(Pixels(100.0));
+        Label::new(cx, "Test").background_color(Color::red()).width(Stretch(1.0));
         // Label::new(cx, "textسلام").width(Pixels(200.0)).background_color(Color::green());
         // Label::new(cx, "سلام").background_color(Color::green());
         // Label::new(cx, "سلام").background_color(Color::green());

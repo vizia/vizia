@@ -1,7 +1,4 @@
-use vizia::{
-    icons::{ICON_CHECK, ICON_PLUS},
-    prelude::*,
-};
+use vizia::{icons::ICON_CHECK, prelude::*};
 
 mod helpers;
 use helpers::*;
@@ -85,7 +82,7 @@ impl View for Panel {
         Some("panel")
     }
 
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|panel_event, _| match panel_event {
             PanelEvent::ToggleOpen => {
                 self.is_open ^= true;
@@ -120,12 +117,77 @@ fn main() {
                     },
                 );
 
-                buttons(cx);
-                checkbox(cx);
-                switch(cx);
-                radiobutton(cx);
-                slider(cx);
-                rating(cx);
+                Panel::new(
+                    cx,
+                    |cx| {
+                        Label::new(cx, "Button")
+                            .font_size(30.0)
+                            .font_weight(FontWeightKeyword::Bold)
+                    },
+                    |cx| {
+                        button(cx);
+                    },
+                );
+
+                Panel::new(
+                    cx,
+                    |cx| {
+                        Label::new(cx, "Checkbox")
+                            .font_size(30.0)
+                            .font_weight(FontWeightKeyword::Bold)
+                    },
+                    |cx| {
+                        checkbox(cx);
+                    },
+                );
+
+                Panel::new(
+                    cx,
+                    |cx| {
+                        Label::new(cx, "Switch")
+                            .font_size(30.0)
+                            .font_weight(FontWeightKeyword::Bold)
+                    },
+                    |cx| {
+                        switch(cx);
+                    },
+                );
+
+                Panel::new(
+                    cx,
+                    |cx| {
+                        Label::new(cx, "Radiobutton")
+                            .font_size(30.0)
+                            .font_weight(FontWeightKeyword::Bold)
+                    },
+                    |cx| {
+                        radiobutton(cx);
+                    },
+                );
+
+                Panel::new(
+                    cx,
+                    |cx| {
+                        Label::new(cx, "Slider")
+                            .font_size(30.0)
+                            .font_weight(FontWeightKeyword::Bold)
+                    },
+                    |cx| {
+                        slider(cx);
+                    },
+                );
+
+                Panel::new(
+                    cx,
+                    |cx| {
+                        Label::new(cx, "Rating")
+                            .font_size(30.0)
+                            .font_weight(FontWeightKeyword::Bold)
+                    },
+                    |cx| {
+                        rating(cx);
+                    },
+                );
             });
         });
     })
@@ -134,12 +196,7 @@ fn main() {
     .run();
 }
 
-pub fn buttons(cx: &mut Context) -> Handle<impl View> {
-    Label::new(cx, "Button")
-        .font_size(30.0)
-        .font_weight(FontWeightKeyword::Bold)
-        .bottom(Pixels(8.0));
-
+pub fn button(cx: &mut Context) -> Handle<impl View> {
     HStack::new(cx, |cx| {
         // Basic Button
         Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
@@ -186,11 +243,6 @@ impl Model for CheckboxData {
 
 pub fn checkbox(cx: &mut Context) -> Handle<impl View> {
     CheckboxData { check: false }.build(cx);
-
-    Label::new(cx, "Checkbox")
-        .font_size(30.0)
-        .font_weight(FontWeightKeyword::Bold)
-        .bottom(Pixels(8.0));
 
     VStack::new(cx, |cx| {
         Checkbox::new(cx, CheckboxData::check).on_toggle(|cx| cx.emit(CheckboxEvent::Toggle));
@@ -258,11 +310,6 @@ impl Model for RadioData {
 
 pub fn radiobutton(cx: &mut Context) -> Handle<impl View> {
     RadioData { option: Options::First }.build(cx);
-
-    Label::new(cx, "Radiobutton")
-        .font_size(30.0)
-        .font_weight(FontWeightKeyword::Bold)
-        .bottom(Pixels(8.0));
 
     VStack::new(cx, |cx| {
         HStack::new(cx, |cx| {
@@ -341,11 +388,6 @@ impl Model for SwitchData {
 pub fn switch(cx: &mut Context) -> Handle<impl View> {
     SwitchData { option1: true, option2: false }.build(cx);
 
-    Label::new(cx, "Switch")
-        .font_size(30.0)
-        .font_weight(FontWeightKeyword::Bold)
-        .bottom(Pixels(8.0));
-
     Switch::new(cx, SwitchData::option1).on_toggle(|cx| cx.emit(SwitchEvent::ToggleOption1));
 
     HStack::new(cx, |cx| {
@@ -381,11 +423,6 @@ impl Model for SliderData {
 
 pub fn slider(cx: &mut Context) -> Handle<impl View> {
     SliderData { value: 0.0 }.build(cx);
-
-    Label::new(cx, "Slider")
-        .font_size(30.0)
-        .font_weight(FontWeightKeyword::Bold)
-        .bottom(Pixels(8.0));
 
     Slider::new(cx, SliderData::value.map(|val| (val + 50.0) / 100.0))
         .range(0.0..1.0)
@@ -426,11 +463,6 @@ enum RatingEvent {
 
 pub fn rating(cx: &mut Context) {
     RatingData { rating1: 3, rating2: 7 }.build(cx);
-
-    Label::new(cx, "Rating")
-        .font_size(30.0)
-        .font_weight(FontWeightKeyword::Bold)
-        .bottom(Pixels(8.0));
 
     Rating::new(cx, 5, RatingData::rating1)
         .on_change(|ex, rating| ex.emit(RatingEvent::SetRating1(rating)));

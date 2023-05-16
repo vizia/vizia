@@ -63,7 +63,7 @@ fn main() {
                 SpinboxKind::Horizontal,
                 SpinboxIcons::PlusMinus,
             )
-            // .width(Pixels(100.0))
+            .width(Pixels(100.0))
             .on_increment(|ex| ex.emit(AppEvent::Increment2))
             .on_decrement(|ex| ex.emit(AppEvent::Decrement2));
 

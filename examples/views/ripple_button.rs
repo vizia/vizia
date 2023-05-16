@@ -3,7 +3,6 @@ use vizia::prelude::*;
 
 mod helpers;
 use helpers::*;
-use vizia_core::style::Scale;
 
 const STYLE: &str = r#"
 

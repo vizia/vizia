@@ -14,6 +14,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
     // text_constraints_system(cx);
 
     if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {
+        // Perform layout on the whole tree.
         Entity::root().layout(
             &mut cx.cache,
             &cx.tree,

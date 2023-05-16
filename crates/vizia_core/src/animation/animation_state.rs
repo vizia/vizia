@@ -7,7 +7,7 @@ use crate::prelude::*;
 
 use super::{Animation, TimingFunction};
 
-/// An keyframe in an animation state.
+/// A keyframe in an animation state.
 #[derive(Debug, Clone)]
 pub(crate) struct Keyframe<T: Interpolator> {
     #[allow(dead_code)] // FIXME

@@ -376,11 +376,19 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     if let Some(element_name) = views.get(&entity).and_then(|view| view.element()) {
                         let w = cache.get_bounds(entity).w;
                         let h = cache.get_bounds(entity).h;
+                        let classes = context.style.classes.get(entity);
+                        let mut class_names = String::new();
+                        if let Some(classes) = classes {
+                            for class in classes.iter() {
+                                class_names += &format!(".{}", class);
+                            }
+                        }
                         println!(
-                            "{}{} {} bounds=[x: {} y: {} w: {} h: {}]",
+                            "{}{} {}{} [x: {} y: {} w: {} h: {}]",
                             indents(entity),
                             entity,
                             element_name,
+                            class_names,
                             cache.get_bounds(entity).x,
                             cache.get_bounds(entity).y,
                             if w == f32::MAX { "inf".to_string() } else { w.to_string() },

@@ -285,7 +285,7 @@ where
                 // }
                 // }
 
-                Binding::new(cx, lens.clone(), move |cx, lens| {
+                Binding::new(cx, lens.clone(), move |cx, _| {
                     if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
                         geo.set(GeoChanged::WIDTH_CHANGED, true);
                     }
