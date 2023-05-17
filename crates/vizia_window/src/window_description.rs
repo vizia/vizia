@@ -85,7 +85,7 @@ impl Default for WindowDescription {
             transparent: false,
             decorations: true,
             always_on_top: false,
-            vsync: false,
+            vsync: true,
 
             icon: None,
             icon_width: 0,

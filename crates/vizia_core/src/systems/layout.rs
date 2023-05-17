@@ -108,6 +108,8 @@ pub(crate) fn layout_system(cx: &mut Context) {
             }
 
             if let Some(geo) = cx.cache.geo_changed.get(entity).copied() {
+                // TODO: Use geo changed to determine whether an entity needs to be redrawn.
+
                 if !geo.is_empty() {
                     let mut event = Event::new(WindowEvent::GeometryChanged(geo))
                         .target(entity)
