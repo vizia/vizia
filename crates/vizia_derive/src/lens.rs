@@ -38,7 +38,7 @@ pub(crate) fn derive_lens_impl(
 fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn::Error> {
     let struct_type = &input.ident;
 
-    // The generated module should have the same visibilty as the struct. If the struct is private
+    // The generated module should have the same visibility as the struct. If the struct is private
     // then the generated structs within the new module should be visible only to the module the
     // original struct was in.
     let module_vis = &input.vis;

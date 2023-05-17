@@ -19,6 +19,8 @@ const STYLE: &str = r#"
         max-height: 40px;
         overflow: hidden;
         transition: max-height 200ms ease-out;
+        border-color: black;
+        border-width: 1px;
     }
 
     panel:checked {
@@ -71,7 +73,11 @@ impl Panel {
                 .class("panel-header")
                 .on_press(|cx| cx.emit(PanelEvent::ToggleOpen))
                 .height(Pixels(40.0));
-                (content)(cx);
+                VStack::new(cx, |cx| {
+                    (content)(cx);
+                })
+                .height(Auto)
+                .child_space(Pixels(10.0));
             })
             .checked(Panel::is_open)
     }

@@ -704,7 +704,6 @@ impl<'a> EventContext<'a> {
     /// }
     /// ```
     pub fn set_valid(&mut self, flag: bool) {
-        println!("do this");
         let current = self.current();
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
             pseudo_classes.set(PseudoClassFlags::VALID, flag);
@@ -720,7 +719,7 @@ impl<'a> EventContext<'a> {
         self.style
             .pseudo_classes
             .get(self.current)
-            .map(|pseudo_classes| pseudo_classes.contains(PseudoClassFlags::OVER))
+            .map(|pseudo_classes| pseudo_classes.contains(PseudoClassFlags::VALID))
             .unwrap_or_default()
     }
 

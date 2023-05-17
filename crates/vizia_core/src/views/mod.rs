@@ -36,6 +36,7 @@ mod virtual_list;
 mod xypad;
 
 pub use self::image::Image;
+pub use crate::binding::Binding;
 pub use button::Button;
 pub use checkbox::Checkbox;
 pub use chip::Chip;
@@ -49,7 +50,6 @@ pub use element::Element;
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
 pub use label::{Icon, Label};
 pub use list::List;
-// pub use menu::{setup_menu_entry, Menu, MenuButton, MenuController, MenuEvent, MenuStack};
 pub use menu::*;
 pub use notification::Notification;
 pub use picklist::PickList;

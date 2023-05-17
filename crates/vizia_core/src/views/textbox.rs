@@ -1034,13 +1034,11 @@ where
             }
 
             TextEvent::Submit(reason) => {
-                if let Some(callback) = self.on_submit.take() {
+                if let Some(callback) = &self.on_submit {
                     if cx.is_valid() {
                         let text = self.clone_text(cx);
                         (callback)(cx, text, *reason);
                     }
-
-                    self.on_submit = Some(callback);
                 }
                 cx.emit(TextEvent::EndEdit);
             }

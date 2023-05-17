@@ -120,7 +120,6 @@ impl Model for ActionsModel {
                 }
 
                 ActionsEvent::OnGeoChanged(on_geo_changed) => {
-                    println!("add geo chnaged: {}", cx.current);
                     self.on_geo_changed = Some(on_geo_changed);
                 }
 

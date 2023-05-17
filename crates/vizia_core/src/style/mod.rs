@@ -1230,7 +1230,7 @@ impl Style {
 
     // Add style data for the given entity.
     pub fn add(&mut self, entity: Entity) {
-        self.pseudo_classes.insert(entity, PseudoClassFlags::empty());
+        self.pseudo_classes.insert(entity, PseudoClassFlags::VALID);
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
         self.system_flags = SystemFlags::all();

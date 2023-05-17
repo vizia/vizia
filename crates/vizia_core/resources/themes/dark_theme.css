@@ -98,7 +98,7 @@ button.outline:active {
 }
 
 button.ghost {
-    background-color: transparent;
+    background-color: #80caff00;
     transition: background-color 100ms;
 }
 
@@ -107,7 +107,7 @@ button.ghost label {
 }
 
 button.ghost:over {
-    background-color: #80caff10;
+    background-color: #80caff40;
     transition: background-color 100ms;
 }
 

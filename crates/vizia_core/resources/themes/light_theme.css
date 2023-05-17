@@ -102,13 +102,13 @@ button.outline:disabled {
 
 button.ghost {
     border-width: 0px;
-    background-color: transparent;
+    background-color: #80caff00;
     transition: background-color 100ms;
     color: #51afef;
 }
 
 button.ghost:over {
-    background-color: #80caff10;
+    background-color: #80caff40;
     transition: background-color 100ms;
 }
 

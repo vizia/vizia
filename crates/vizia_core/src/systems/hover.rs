@@ -61,46 +61,14 @@ pub(crate) fn hover_system(cx: &mut Context) {
             pseudo_classes.set(PseudoClassFlags::HOVER, false);
         }
 
+        // Send mouse enter/leave events directly to entity.
         cx.event_queue.push_back(Event::new(WindowEvent::MouseEnter).direct(hovered));
         cx.event_queue.push_back(Event::new(WindowEvent::MouseLeave).direct(cx.hovered));
 
+        // Send mouse over/out events to entity and ancestors.
         cx.event_queue.push_back(Event::new(WindowEvent::MouseOver).target(hovered));
         cx.event_queue.push_back(Event::new(WindowEvent::MouseOut).target(cx.hovered));
 
-        // if !cx.hovered.is_child_of(&cx.tree, hovered) {
-        //     cx.event_queue.push_back(Event::new(WindowEvent::MouseOver).direct(hovered));
-        // }
-
-        // if let Some(parent) = cx.tree.get_parent(hovered) {
-        //     if !hovered.is_sibling(&cx.tree, cx.hovered) {
-        //         cx.event_queue.push_back(Event::new(WindowEvent::MouseOver).direct(parent));
-        //     }
-        // }
-
-        // if !hovered.is_child_of(&cx.tree, cx.hovered) {
-        //     cx.event_queue.push_back(Event::new(WindowEvent::MouseOut).direct(cx.hovered));
-        // }
-
-        // if let Some(parent) = cx.tree.get_parent(cx.hovered) {
-        //     if !hovered.is_sibling(&cx.tree, cx.hovered) && parent != hovered {
-        //         cx.event_queue.push_back(Event::new(WindowEvent::MouseOut).direct(parent));
-        //     }
-        // }
-
-        // if !hovered.is_child_of(&cx.tree, parent) {
-        //     println!("do this: {} {}", hovered, cx.hovered);
-        //     cx.event_queue.push_back(Event::new(WindowEvent::MouseOver).target(hovered));
-
-        //     if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(hovered) {
-        //         pseudo_class.set(PseudoClassFlags::OVER, true);
-        //     }
-
-        //     cx.event_queue.push_back(Event::new(WindowEvent::MouseOut).target(cx.hovered));
-
-        //     if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.hovered) {
-        //         pseudo_class.set(PseudoClassFlags::OVER, false);
-        //     }
-        // }
         cx.hovered = hovered;
 
         cx.style.needs_restyle();
@@ -115,7 +83,7 @@ fn hover_entity(
     parent_transform: Transform2D,
     clip_bounds: &BoundingBox,
 ) {
-    // Skip non-hoverable
+    // Skip if non-hoverable (will skip any descendants)
     let hoverable = cx
         .style
         .abilities
@@ -127,10 +95,13 @@ fn hover_entity(
         return;
     }
 
+    // Skip if not displayed.
+    // TODO: Should this skip descendants? Probably not...?
     if cx.style.display.get(cx.current).copied().unwrap_or_default() == Display::None {
         return;
     }
 
+    // Push to queue if the z-index is higher than the current z-index.
     let z_index = cx.tree.z_index(cx.current);
     if z_index > current_z {
         queue.push(ZEntity { index: z_index, entity: cx.current });
@@ -145,8 +116,6 @@ fn hover_entity(
     let mut transform = parent_transform;
 
     transform.premultiply(&cx.transform());
-
-    // println!("{} {:?} {:?} {:?}", cx.current, bounds, transform, parent_transform);
 
     let mut t = transform;
     t.inverse();
@@ -167,12 +136,6 @@ fn hover_entity(
             .unwrap_or_default()
             .contains(PseudoClassFlags::OVER)
         {
-            // cx.event_queue.push_back(
-            //     Event::new(WindowEvent::MouseOver)
-            //         .target(cx.current)
-            //         .propagate(Propagation::Direct),
-            // );
-
             if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
                 pseudo_class.set(PseudoClassFlags::OVER, true);
             }
@@ -185,10 +148,6 @@ fn hover_entity(
         .unwrap_or_default()
         .contains(PseudoClassFlags::OVER)
     {
-        // cx.event_queue.push_back(
-        //     Event::new(WindowEvent::MouseOut).target(cx.current).propagate(Propagation::Direct),
-        // );
-
         if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
             pseudo_class.set(PseudoClassFlags::OVER, false);
         }
