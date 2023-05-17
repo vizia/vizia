@@ -347,8 +347,8 @@ impl Application {
 
                 winit::event::Event::RedrawRequested(_) => {
                     // Redraw
-                    cx.mutate_window(|cx, window: &Window| {
-                        cx.draw();
+                    cx.draw();
+                    cx.mutate_window(|_, window: &Window| {
                         window.swap_buffers();
                     });
                 }

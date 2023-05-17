@@ -1084,10 +1084,7 @@ impl<'a> DrawContext<'a> {
     fn draw_background_images(&self, canvas: &mut Canvas, path: &mut Path) {
         let bounds = self.bounds();
 
-        let parent = self
-            .tree
-            .get_layout_parent(self.current)
-            .unwrap_or_else(|| panic!("Failed to find parent somehow: {}", self.current));
+        let parent = self.tree.get_layout_parent(self.current).unwrap_or(Entity::root());
 
         let parent_width = self.cache.get_width(parent);
         let parent_height = self.cache.get_height(parent);
