@@ -238,28 +238,10 @@ impl View for MenuButton {
                 }
             }
 
-            WindowEvent::KeyDown(code, _) => match code {
-                Code::ArrowDown => {
-                    if let Some(next_sibling) = cx.tree.get_next_sibling(cx.current) {}
-                }
-                _ => {}
-            },
-
             _ => {}
         });
     }
 }
-
-// TODO
-pub struct Menu {}
-
-impl Menu {
-    pub fn new(cx: &mut Context, content: impl Fn(&mut Context) + 'static) -> Handle<Self> {
-        Self {}.build(cx, |cx| {})
-    }
-}
-
-impl View for Menu {}
 
 pub struct MenuPopup<L> {
     lens: L,
@@ -269,7 +251,7 @@ impl<L> MenuPopup<L>
 where
     L: Lens<Target = bool>,
 {
-    pub fn new<F>(cx: &mut Context, lens: L, capture_focus: bool, content: F) -> Handle<Self>
+    pub fn new<F>(cx: &mut Context, lens: L, _capture_focus: bool, content: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context),
     {
