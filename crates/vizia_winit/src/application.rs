@@ -252,8 +252,10 @@ impl Application {
         let mut cursor_moved = false;
         let mut cursor = (0.0f32, 0.0f32);
 
+        let mut main_events = false;
         event_loop.run(move |event, _, control_flow| {
             let mut cx = BackendContext::new_with_event_manager(&mut context);
+
             match event {
                 winit::event::Event::UserEvent(user_event) => match user_event {
                     UserEvent::Event(event) => {
@@ -285,6 +287,8 @@ impl Application {
                 },
 
                 winit::event::Event::MainEventsCleared => {
+                    main_events = true;
+
                     *stored_control_flow.borrow_mut() =
                         if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
 
@@ -346,11 +350,13 @@ impl Application {
                 }
 
                 winit::event::Event::RedrawRequested(_) => {
-                    // Redraw
-                    cx.draw();
-                    cx.mutate_window(|_, window: &Window| {
-                        window.swap_buffers();
-                    });
+                    if main_events {
+                        // Redraw
+                        cx.draw();
+                        cx.mutate_window(|_, window: &Window| {
+                            window.swap_buffers();
+                        });
+                    }
                 }
 
                 winit::event::Event::WindowEvent { window_id: _, event } => {

@@ -7,7 +7,7 @@ use cosmic_text::{
     fontdb::Database, Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor,
     FontSystem, Metrics, SubpixelBin, Weight, Wrap,
 };
-use cosmic_text::{Cursor, FamilyOwned};
+use cosmic_text::{Align, Cursor, FamilyOwned};
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
@@ -15,13 +15,14 @@ use femtovg::{
     Quad, Renderer,
 };
 use fnv::FnvHashMap;
+use morphorm::Units;
 use std::collections::HashMap;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
 use swash::zeno::{Format, Vector};
 use unicode_segmentation::UnicodeSegmentation;
 use vizia_storage::SparseSet;
-use vizia_style::{FontStretch, FontStyle};
+use vizia_style::{FontStretch, FontStyle, TextAlign};
 
 const GLYPH_PADDING: u32 = 1;
 const GLYPH_MARGIN: u32 = 1;
@@ -158,6 +159,38 @@ impl TextContext {
             style.default_font.first().unwrap().as_family()
         };
 
+        let child_left = style.child_left.get(entity).copied().unwrap_or_default();
+        let col_between = style.col_between.get(entity).copied().unwrap_or_default();
+        let child_right = style.child_right.get(entity).copied().unwrap_or_default();
+
+        let width = style.width.get(entity).copied().unwrap_or_default();
+
+        let mut alignment = match (child_left, col_between, child_right) {
+            (Units::Stretch(_), _, Units::Stretch(_)) => Some(Align::Center),
+
+            (Units::Stretch(_), _, _) => Some(Align::Right),
+
+            (_, _, Units::Stretch(_)) => Some(Align::Left),
+
+            (_, Units::Stretch(_), _) => Some(Align::Justified),
+
+            _ => None,
+        };
+
+        if let Some(text_align) = style.text_align.get(entity).copied() {
+            alignment = match text_align {
+                TextAlign::Left => Some(Align::Left),
+                TextAlign::Right => Some(Align::Right),
+                TextAlign::Center => Some(Align::Center),
+                TextAlign::Justify => Some(Align::Justified),
+                _ => None,
+            };
+        }
+
+        if width.is_auto() {
+            alignment = None;
+        }
+
         self.with_buffer(entity, |fs, buf| {
             let attrs = Attrs::new().family(family).weight(font_weight).style(font_style).color(
                 FontColor::rgba(font_color.r(), font_color.g(), font_color.b(), font_color.a()),
@@ -172,12 +205,15 @@ impl TextContext {
             for line in buf.lines.iter_mut() {
                 // TODO spans
                 line.set_attrs_list(AttrsList::new(attrs));
+                line.set_align(alignment);
             }
             let font_size = style.font_size.get(entity).copied().map(|f| f.0).unwrap_or(16.0)
                 * style.dpi_factor as f32;
             // TODO configurable line spacing
             buf.set_metrics(fs, Metrics::new(font_size, font_size * 1.25));
-            buf.shape_until_scroll(fs);
+            // buf.set_size(fs, 200.0, 200.0);
+            // buf.shape_until_scroll(fs);
+            buf.shape_until(fs, i32::MAX);
         });
     }
 
@@ -186,7 +222,7 @@ impl TextContext {
         &mut self,
         canvas: &mut Canvas<T>,
         entity: Entity,
-        position: (f32, f32),
+        bounds: BoundingBox,
         justify: (f32, f32),
         config: TextConfig,
     ) -> Result<Vec<(FontColor, GlyphDrawCommands)>, ErrorKind> {
@@ -203,10 +239,11 @@ impl TextContext {
         for run in buffer.layout_runs() {
             for glyph in run.glyphs.iter() {
                 let mut cache_key = glyph.cache_key;
-                let position_x = position.0 + cache_key.x_bin.as_float();
-                let position_y = position.1 + cache_key.y_bin.as_float();
-                let position_x = position_x - run.line_w * justify.0;
-                let position_y = position_y - total_height * justify.1;
+                let position_x = bounds.x + cache_key.x_bin.as_float();
+                let position_y = bounds.y + cache_key.y_bin.as_float();
+
+                let position_y = position_y + bounds.h * justify.1 - total_height * justify.1;
+
                 let (position_x, subpixel_x) = SubpixelBin::new(position_x);
                 let (position_y, subpixel_y) = SubpixelBin::new(position_y);
                 cache_key.x_bin = subpixel_x;
@@ -280,7 +317,6 @@ impl TextContext {
                                 }
                             }
                             canvas.update_image::<ImageSource>(self.glyph_textures[texture_index].image_id, ImgRef::new(&src_buf, content_w, content_h).into(), atlas_content_x as usize, atlas_content_y as usize).unwrap();
-
                             RenderedGlyph {
                                 texture_index,
                                 width: used_w,
@@ -352,7 +388,7 @@ impl TextContext {
     pub(crate) fn layout_selection(
         &mut self,
         entity: Entity,
-        position: (f32, f32),
+        bounds: BoundingBox,
         justify: (f32, f32),
     ) -> Vec<(f32, f32, f32, f32)> {
         self.with_editor(entity, |_, buf| {
@@ -371,8 +407,12 @@ impl TextContext {
                 for run in buffer.layout_runs() {
                     if let Some((x, w)) = run.highlight(cursor_start, cursor_end) {
                         let y = run.line_y - buffer.metrics().font_size;
-                        let x = x + position.0 - run.line_w * justify.0;
-                        let y = y + position.1 - total_height * justify.1;
+                        // let x = x + position.0 - run.line_w * justify.0;
+                        // let y = y + position.1 - total_height * justify.1;
+
+                        let x = if run.rtl { x + bounds.x } else { x + bounds.x };
+
+                        let y = y + bounds.y + bounds.h * justify.1 - total_height * justify.1;
                         result.push((x, y, w, buffer.metrics().line_height));
                     }
                 }
@@ -384,7 +424,7 @@ impl TextContext {
     pub(crate) fn layout_caret(
         &mut self,
         entity: Entity,
-        position: (f32, f32),
+        bounds: BoundingBox,
         justify: (f32, f32),
         width: f32,
     ) -> Option<(f32, f32, f32, f32)> {
@@ -392,7 +432,7 @@ impl TextContext {
             let buffer = buf.buffer();
             let total_height = buffer.layout_runs().len() as f32 * buffer.metrics().line_height;
 
-            let position_y = position.1 - total_height * justify.1;
+            let position_y = bounds.y + bounds.h * justify.1 - total_height * justify.1;
 
             let font_size = buffer.metrics().font_size;
             let line_height = buffer.metrics().line_height;
@@ -401,7 +441,9 @@ impl TextContext {
                 let line_i = run.line_i;
                 let line_y = run.line_y;
 
-                let position_x = position.0 - run.line_w * justify.0;
+                // let position_x = bounds.x - run.line_w * justify.0;
+
+                let position_x = if run.rtl { bounds.x } else { bounds.x };
 
                 let cursor_glyph_opt = |cursor: &Cursor| -> Option<(usize, f32)> {
                     if cursor.line == line_i {

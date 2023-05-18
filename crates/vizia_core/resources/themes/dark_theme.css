@@ -732,12 +732,7 @@ switch:checked:hover:disabled * {
     background-color: #404040;
     transition: background-color 100ms;
 }
-/* Tab */
-
-tabview {
-    background-color: #343434;
-    layout-type: column;
-}
+/* TABVIEW */
 
 tabview tabheader label {
     color: #888;
@@ -769,6 +764,10 @@ tabview.vertical tabheader .indicator {
 
 tabview tabheader:checked .indicator {
     background-color: #51afef;
+}
+
+tabview .tabview-divider {
+    background-color: #c4c4c4;
 }
 
 /* Table */

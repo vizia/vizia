@@ -172,13 +172,13 @@ where
 
         (tx, ty) = enforce_text_bounds(&text_bounds, &bounds, (tx, ty));
 
+        text_bounds.x += child_left;
+        text_bounds.y += child_top;
+
         // TODO justify????
-        if let Some((x, y, _, h)) = cx.text_context.layout_caret(
-            cx.current,
-            (text_bounds.x + child_left, text_bounds.y + child_top),
-            (0., 0.),
-            1.0 * cx.scale_factor(),
-        ) {
+        if let Some((x, y, _, h)) =
+            cx.text_context.layout_caret(cx.current, text_bounds, (0., 0.), 1.0 * cx.scale_factor())
+        {
             let caret_box = BoundingBox { x, y, w: 0.0, h };
             bounds.x += child_left;
             bounds.y += child_top;
@@ -300,39 +300,36 @@ where
     /// These input coordinates should be physical coordinates, i.e. what the mouse events provide.
     /// The output text coordinates will also be physical, but relative to the top of the text
     /// glyphs, appropriate for passage to cosmic.
-    pub fn coordinates_global_to_text(&self, cx: &EventContext, x: f32, y: f32) -> (f32, f32) {
+    pub fn coordinates_global_to_text(&self, cx: &mut EventContext, x: f32, y: f32) -> (f32, f32) {
         let bounds = cx.bounds();
 
         let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
         let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
+        let child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
+        let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
 
-        // let justify_x = match (child_left, child_right) {
-        //     (Stretch(left), Stretch(right)) => {
-        //         if left + right == 0.0 {
-        //             0.5
-        //         } else {
-        //             left / (left + right)
-        //         }
-        //     }
-        //     (Stretch(_), _) => 1.0,
-        //     _ => 0.0,
-        // };
-        // let justify_y = match (child_top, child_bottom) {
-        //     (Stretch(top), Stretch(bottom)) => {
-        //         if top + bottom == 0.0 {
-        //             0.5
-        //         } else {
-        //             top / (top + bottom)
-        //         }
-        //     }
-        //     (Stretch(_), _) => 1.0,
-        //     _ => 0.0,
-        // };
-
-        // let bounds = cx.bounds();
-
-        // let origin_x = bounds.w * justify_x;
-        // let origin_y = bounds.h * justify_y;
+        let justify_x = match (child_left, child_right) {
+            (Stretch(left), Stretch(right)) => {
+                if left + right == 0.0 {
+                    0.5
+                } else {
+                    left / (left + right)
+                }
+            }
+            (Stretch(_), _) => 1.0,
+            _ => 0.0,
+        };
+        let justify_y = match (child_top, child_bottom) {
+            (Stretch(top), Stretch(bottom)) => {
+                if top + bottom == 0.0 {
+                    0.5
+                } else {
+                    top / (top + bottom)
+                }
+            }
+            (Stretch(_), _) => 1.0,
+            _ => 0.0,
+        };
 
         let logical_parent_width = cx.physical_to_logical(bounds.w);
         let logical_parent_height = cx.physical_to_logical(bounds.h);
@@ -340,8 +337,12 @@ where
         let child_left = child_left.to_px(logical_parent_width, 0.0) * cx.scale_factor();
         let child_top = child_top.to_px(logical_parent_height, 0.0) * cx.scale_factor();
 
-        let x = x - self.transform.0 - bounds.x - child_left;
-        let y = y - self.transform.1 - bounds.y - child_top;
+        let total_height = cx.text_context.with_buffer(cx.current, |_, buffer| {
+            buffer.layout_runs().len() as f32 * buffer.metrics().line_height
+        });
+
+        let x = x - bounds.x - self.transform.0 - child_left;
+        let y = y - self.transform.1 - bounds.y - (bounds.h - total_height) * justify_y - child_top;
 
         (x, y)
     }

@@ -64,7 +64,7 @@ fn main() {
 
         FilterElement::new(cx);
     })
-    .title("Overlflow and Clipping")
+    .title("Backdrop Filter")
     .inner_size((800, 400))
     .run();
 }
@@ -80,7 +80,7 @@ impl FilterElement {
         Self { left: Units::Pixels(0.0), top: Units::Pixels(0.0) }
             .build(cx, |cx| {
                 VStack::new(cx, |cx| {
-                    Label::new(cx, "This is some text");
+                    // Label::new(cx, "This is some text");
                 })
                 .class("filter")
                 .left(FilterElement::left)

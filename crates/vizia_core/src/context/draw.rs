@@ -380,6 +380,10 @@ impl<'a> DrawContext<'a> {
         self.style.text_wrap.get(self.current).copied().unwrap_or(true)
     }
 
+    pub fn text_align(&self) -> Option<TextAlign> {
+        self.style.text_align.get(self.current).copied()
+    }
+
     pub fn box_shadows(&self) -> Option<&Vec<BoxShadow>> {
         self.style.box_shadow.get(self.current)
     }
@@ -653,13 +657,15 @@ impl<'a> DrawContext<'a> {
 
     pub fn draw_text_and_selection(&mut self, canvas: &mut Canvas) {
         if self.text_context.has_buffer(self.current) {
-            let bounds = self.bounds();
+            let mut bounds = self.bounds();
             let border_width = self.border_width();
 
-            let mut box_x = bounds.x + border_width;
-            let mut box_y = bounds.y + border_width;
-            let mut box_w = bounds.w - border_width * 2.0;
-            let mut box_h = bounds.h - border_width * 2.0;
+            // let mut box_x = bounds.x + border_width;
+            // let mut box_y = bounds.y + border_width;
+            // let mut box_w = bounds.w - border_width * 2.0;
+            // let mut box_h = bounds.h - border_width * 2.0;
+
+            bounds = bounds.shrink(border_width);
 
             let child_left = self.child_left();
             let child_right = self.child_right();
@@ -667,24 +673,16 @@ impl<'a> DrawContext<'a> {
             let child_bottom = self.child_bottom();
 
             // shrink the bounding box based on pixel values
-            if let Pixels(val) = child_left {
-                box_x += val;
-                box_w -= val;
-            }
-            if let Pixels(val) = child_right {
-                box_w -= val;
-            }
-            if let Pixels(val) = child_top {
-                box_y += val;
-                box_h -= val;
-            }
-            if let Pixels(val) = child_bottom {
-                box_h -= val;
-            }
+            let left = child_left.to_px(bounds.w, 0.0);
+            let right = child_right.to_px(bounds.w, 0.0);
+            let top = child_top.to_px(bounds.h, 0.0);
+            let bottom = child_bottom.to_px(bounds.h, 0.0);
+
+            bounds = bounds.shrink_sides(left, top, right, bottom);
 
             // Draw text
 
-            let justify_x = match (child_left, child_right) {
+            let mut justify_x = match (child_left, child_right) {
                 (Stretch(left), Stretch(right)) => {
                     if left + right == 0.0 {
                         0.5
@@ -695,6 +693,16 @@ impl<'a> DrawContext<'a> {
                 (Stretch(_), _) => 1.0,
                 _ => 0.0,
             };
+
+            if let Some(text_align) = self.text_align() {
+                justify_x = match text_align {
+                    TextAlign::Left => 0.0,
+                    TextAlign::Right => 1.0,
+                    TextAlign::Center => 0.5,
+                    _ => 0.0,
+                };
+            }
+
             let justify_y = match (child_top, child_bottom) {
                 (Stretch(top), Stretch(bottom)) => {
                     if top + bottom == 0.0 {
@@ -707,14 +715,19 @@ impl<'a> DrawContext<'a> {
                 _ => 0.0,
             };
 
-            let origin_x = box_x + box_w * justify_x;
-            let origin_y = box_y + (box_h * justify_y).round();
+            // let origin_x = box_x + box_w * justify_x;
+            // let origin_y = box_y + (box_h * justify_y).round();
+
+            // let justify_x = 0.0;
+            // let justify_y = 0.0;
+            // let origin_x = box_x;
+            // let origin_y = box_y;
 
             self.text_context.sync_styles(self.current, self.style);
 
-            self.draw_text_selection(canvas, (origin_x, origin_y), (justify_x, justify_y));
-            self.draw_text_caret(canvas, (origin_x, origin_y), (justify_x, justify_y), 1.0);
-            self.draw_text(canvas, (origin_x, origin_y), (justify_x, justify_y));
+            self.draw_text_selection(canvas, bounds, (justify_x, justify_y));
+            self.draw_text_caret(canvas, bounds, (justify_x, justify_y), 1.0);
+            self.draw_text(canvas, bounds, (justify_x, justify_y));
         }
     }
 
@@ -1311,9 +1324,9 @@ impl<'a> DrawContext<'a> {
     }
 
     /// Draw any text for the current view.
-    pub fn draw_text(&mut self, canvas: &mut Canvas, origin: (f32, f32), justify: (f32, f32)) {
+    pub fn draw_text(&mut self, canvas: &mut Canvas, bounds: BoundingBox, justify: (f32, f32)) {
         if let Ok(draw_commands) =
-            self.text_context.fill_to_cmds(canvas, self.current, origin, justify, *self.text_config)
+            self.text_context.fill_to_cmds(canvas, self.current, bounds, justify, *self.text_config)
         {
             let opacity = self.opacity();
             for (color, cmds) in draw_commands.into_iter() {
@@ -1338,10 +1351,10 @@ impl<'a> DrawContext<'a> {
     pub fn draw_text_selection(
         &mut self,
         canvas: &mut Canvas,
-        origin: (f32, f32),
+        bounds: BoundingBox,
         justify: (f32, f32),
     ) {
-        let selections = self.text_context.layout_selection(self.current, origin, justify);
+        let selections = self.text_context.layout_selection(self.current, bounds, justify);
         if !selections.is_empty() {
             let mut path = Path::new();
             for (x, y, w, h) in selections {
@@ -1356,14 +1369,14 @@ impl<'a> DrawContext<'a> {
     pub fn draw_text_caret(
         &mut self,
         canvas: &mut Canvas,
-        origin: (f32, f32),
+        bounds: BoundingBox,
         justify: (f32, f32),
         width: f32,
     ) {
         let caret_color = self.caret_color();
         if let Some((x, y, w, h)) = self.text_context.layout_caret(
             self.current,
-            origin,
+            bounds,
             justify,
             self.logical_to_physical(width),
         ) {

@@ -37,6 +37,8 @@ impl TabView {
             })
             .class("tabview-tabheader-wrapper");
 
+            Element::new(cx).class("tabview-divider");
+
             // Tab content
             VStack::new(cx, |cx| {
                 Binding::new(cx, TabView::selected_index, move |cx, selected| {

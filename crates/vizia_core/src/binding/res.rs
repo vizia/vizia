@@ -60,6 +60,7 @@ impl_res_simple!(FontWeightKeyword);
 impl_res_simple!(FontStyle);
 impl_res_simple!(BorderCornerShape);
 impl_res_simple!(Angle);
+impl_res_simple!(TextAlign);
 
 impl<T, L> Res<T> for L
 where

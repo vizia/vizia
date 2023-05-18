@@ -90,6 +90,13 @@ pub trait TextModifiers: internal::Modifiable {
         bool,
         SystemFlags::REFLOW
     );
+
+    modifier!(
+        /// Sets the horizontal alignment of text within the view.
+        text_align,
+        TextAlign,
+        SystemFlags::REDRAW
+    );
 }
 
 impl<'a, V> TextModifiers for Handle<'a, V> {}

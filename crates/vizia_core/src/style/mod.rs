@@ -72,8 +72,8 @@ pub use vizia_style::{
     Angle, BackgroundImage, BackgroundSize, BorderCornerShape, BoxShadow, ClipPath, Color, CssRule,
     CursorIcon, Display, Filter, FontFamily, FontSize, FontStretch, FontStyle, FontWeight,
     FontWeightKeyword, GenericFontFamily, Gradient, Length, LengthOrPercentage, LengthValue,
-    LineDirection, LinearGradient, Matrix, Opacity, Overflow, Scale, Transform, Transition,
-    Translate, Visibility, RGBA,
+    LineDirection, LinearGradient, Matrix, Opacity, Overflow, Scale, TextAlign, Transform,
+    Transition, Translate, Visibility, RGBA,
 };
 
 use vizia_style::{EasingFunction, ParserOptions, Property, SelectorList, Selectors, StyleSheet};
@@ -235,6 +235,7 @@ pub struct Style {
 
     // Text & Font
     pub text_wrap: StyleSet<bool>,
+    pub text_align: StyleSet<TextAlign>,
     pub font_family: StyleSet<Vec<FamilyOwned>>,
     pub font_color: AnimatableSet<Color>,
     pub font_size: AnimatableSet<FontSize>,
@@ -1180,6 +1181,11 @@ impl Style {
                 self.text_wrap.insert_rule(rule_id, text_wrap);
             }
 
+            // Text Alignment
+            Property::TextAlign(text_align) => {
+                self.text_align.insert_rule(rule_id, text_align);
+            }
+
             // Box Shadows
             Property::BoxShadow(box_shadows) => {
                 self.box_shadow.insert_rule(rule_id, box_shadows);
@@ -1233,7 +1239,7 @@ impl Style {
         self.pseudo_classes.insert(entity, PseudoClassFlags::VALID);
         self.classes.insert(entity, HashSet::new());
         self.abilities.insert(entity, Abilities::default());
-        self.system_flags = SystemFlags::all();
+        self.system_flags = SystemFlags::RESTYLE | SystemFlags::RELAYOUT;
     }
 
     // Remove style data for the given entity.
@@ -1347,6 +1353,7 @@ impl Style {
 
         // Text and Font
         self.text_wrap.remove(entity);
+        self.text_align.remove(entity);
         self.font_family.remove(entity);
         self.font_weight.remove(entity);
         self.font_style.remove(entity);
@@ -1482,6 +1489,7 @@ impl Style {
 
         // Text and Font
         self.text_wrap.clear_rules();
+        self.text_align.clear_rules();
         self.font_family.clear_rules();
         self.font_weight.clear_rules();
         self.font_style.clear_rules();

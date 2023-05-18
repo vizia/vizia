@@ -790,15 +790,19 @@ tabheader {
 }
 
 tabheader label {
-    height: 1s;
-    child-left: 4px;
-    child-right: 4px;
+    height: 30px;
+    child-left: 12px;
+    child-right: 12px;
     child-top: 1s;
     child-bottom: 1s;
 }
 
 tabheader .indicator {
     height: 2px;
+}
+
+tabview .tabview-divider {
+    height: 1px;
 }
 
 /* tabheader label {

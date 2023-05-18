@@ -3,8 +3,8 @@ use crate::{
     BorderRadius, BorderWidth, BorderWidthValue, BoxShadow, ClipPath, Color, CursorIcon,
     CustomParseError, CustomProperty, Display, Filter, FontFamily, FontSize, FontStretch,
     FontStyle, FontWeight, LayoutType, LengthOrPercentage, Opacity, Outline, Overflow, Parse,
-    Position, PositionType, Rect, Scale, Transform, Transition, Translate, Units, UnparsedProperty,
-    Visibility,
+    Position, PositionType, Rect, Scale, TextAlign, Transform, Transition, Translate, Units,
+    UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -150,6 +150,7 @@ define_property! {
         "selection-color": SelectionColor(Color), // TODO: Remove this once we have the pseudoselector version.
         "caret-color": CaretColor(Color),
         "text-wrap": TextWrap(bool),
+        "text-align": TextAlign(TextAlign),
 
         // Box Shadow
         "box-shadow": BoxShadow(Vec<BoxShadow>),
