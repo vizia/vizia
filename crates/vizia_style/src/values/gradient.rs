@@ -53,6 +53,12 @@ pub enum LineDirection {
     Corner { horizontal: HorizontalPositionKeyword, vertical: VerticalPositionKeyword },
 }
 
+impl Default for LineDirection {
+    fn default() -> Self {
+        LineDirection::Horizontal(HorizontalPositionKeyword::Right)
+    }
+}
+
 impl<'i> Parse<'i> for LineDirection {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         if let Ok(angle) = input.try_parse(Angle::parse) {
@@ -73,6 +79,38 @@ impl<'i> Parse<'i> for LineDirection {
             return Ok(LineDirection::Corner { horizontal: x, vertical: y });
         }
         Ok(LineDirection::Vertical(y))
+    }
+}
+
+impl From<&str> for LineDirection {
+    fn from(s: &str) -> Self {
+        let mut input = ParserInput::new(s);
+        let mut parser = Parser::new(&mut input);
+        LineDirection::parse(&mut parser).unwrap_or_default()
+    }
+}
+
+impl From<Angle> for LineDirection {
+    fn from(angle: Angle) -> Self {
+        LineDirection::Angle(angle)
+    }
+}
+
+impl From<HorizontalPositionKeyword> for LineDirection {
+    fn from(horizontal_position_keyword: HorizontalPositionKeyword) -> Self {
+        LineDirection::Horizontal(horizontal_position_keyword)
+    }
+}
+
+impl From<VerticalPositionKeyword> for LineDirection {
+    fn from(vertical_position_keyword: VerticalPositionKeyword) -> Self {
+        LineDirection::Vertical(vertical_position_keyword)
+    }
+}
+
+impl From<(HorizontalPositionKeyword, VerticalPositionKeyword)> for LineDirection {
+    fn from(corner: (HorizontalPositionKeyword, VerticalPositionKeyword)) -> Self {
+        LineDirection::Corner { horizontal: corner.0, vertical: corner.1 }
     }
 }
 
@@ -179,5 +217,17 @@ impl<'i, D: Parse<'i>> Parse<'i> for ColorStop<D> {
         let color = Color::parse(input)?;
         let position = input.try_parse(D::parse).ok();
         Ok(ColorStop { color, position })
+    }
+}
+
+impl<D> From<Color> for ColorStop<D> {
+    fn from(value: Color) -> Self {
+        ColorStop { color: value, position: None }
+    }
+}
+
+impl<D> From<(Color, D)> for ColorStop<D> {
+    fn from(value: (Color, D)) -> Self {
+        ColorStop { color: value.0, position: Some(value.1) }
     }
 }

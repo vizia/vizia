@@ -767,6 +767,8 @@ impl<'a> EventContext<'a> {
         self.style.numeric_value.insert(self.current, value);
     }
 
+    // DISPLAY
+
     /// Sets the display type of the current view.
     ///
     /// A display value of `Display::None` causes the view to be ignored by both layout and rendering.
@@ -798,10 +800,17 @@ impl<'a> EventContext<'a> {
         self.style.clip_path.insert(self.current, clip_path);
     }
 
-    /// Sets the backdrop filter of the current view.
-    pub fn set_backdrop_filter(&mut self, filter: Filter) {
-        self.style.backdrop_filter.insert(self.current, filter);
+    /// Sets the overflow type on the horizontal axis of the current view.
+    pub fn set_overflowx(&mut self, overflowx: impl Into<Overflow>) {
+        self.style.overflowx.insert(self.current, overflowx.into());
     }
+
+    /// Sets the overflow type on the vertical axis of the current view.
+    pub fn set_overflowy(&mut self, overflowy: impl Into<Overflow>) {
+        self.style.overflowy.insert(self.current, overflowy.into());
+    }
+
+    // TRANSFORM
 
     /// Sets the transform of the current view.
     pub fn set_transform(&mut self, transform: impl Into<Vec<Transform>>) {
@@ -828,15 +837,18 @@ impl<'a> EventContext<'a> {
         self.style.scale.insert(self.current, scale.into());
     }
 
-    /// Sets the overflow type on the horizontal axis of the current view.
-    pub fn set_overflowx(&mut self, overflowx: impl Into<Overflow>) {
-        self.style.overflowx.insert(self.current, overflowx.into());
+    // FILTER
+
+    /// Sets the backdrop filter of the current view.
+    pub fn set_backdrop_filter(&mut self, filter: Filter) {
+        self.style.backdrop_filter.insert(self.current, filter);
     }
 
-    /// Sets the overflow type on the vertical axis of the current view.
-    pub fn set_overflowy(&mut self, overflowy: impl Into<Overflow>) {
-        self.style.overflowy.insert(self.current, overflowy.into());
-    }
+    // BOX SHADOW
+
+    // TODO
+
+    // BACKGROUND
 
     pub fn set_background_color(&mut self, background_color: Color) {
         self.style.background_color.insert(self.current, background_color);

@@ -21,14 +21,21 @@ pub struct BoxShadow {
 impl BoxShadow {
     /// Creates a new box shadow.
     pub fn new(
-        x_offset: Length,
-        y_offset: Length,
+        x_offset: impl Into<Length>,
+        y_offset: impl Into<Length>,
         blur_radius: Option<Length>,
         spread_radius: Option<Length>,
         color: Option<Color>,
         inset: bool,
     ) -> Self {
-        Self { x_offset, y_offset, blur_radius, spread_radius, color, inset }
+        Self {
+            x_offset: x_offset.into(),
+            y_offset: y_offset.into(),
+            blur_radius,
+            spread_radius,
+            color,
+            inset,
+        }
     }
 }
 

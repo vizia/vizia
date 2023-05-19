@@ -82,8 +82,8 @@ pub mod prelude {
     pub use super::layout::{BoundingBox, GeoChanged};
     pub use super::localization::Localized;
     pub use super::modifiers::{
-        AbilityModifiers, AccessibilityModifiers, ActionModifiers, LayoutModifiers, StyleModifiers,
-        TextModifiers,
+        AbilityModifiers, AccessibilityModifiers, ActionModifiers, BoxShadowBuilder,
+        LayoutModifiers, LinearGradientBuilder, StyleModifiers, TextModifiers,
     };
     pub use super::resource::ImageRetentionPolicy;
     pub use super::view::{Canvas, Handle, View};
@@ -97,9 +97,10 @@ pub mod prelude {
     pub use vizia_window::WindowSize;
 
     pub use super::style::{
-        Angle, BackgroundImage, BorderCornerShape, Color, CursorIcon, Display, FontStyle,
-        FontWeight, FontWeightKeyword, Length, LengthOrPercentage, LengthValue, LineDirection,
-        LinearGradient, Matrix, Opacity, Overflow, TextAlign, Transform, Visibility, RGBA,
+        Angle, BackgroundImage, BorderCornerShape, ClipPath, Color, CursorIcon, Display, Filter,
+        FontStyle, FontWeight, FontWeightKeyword, Length, LengthOrPercentage, LengthValue,
+        LineDirection, LinearGradient, Matrix, Opacity, Overflow, TextAlign, Transform, Visibility,
+        RGBA,
     };
 
     pub use cosmic_text::FamilyOwned;

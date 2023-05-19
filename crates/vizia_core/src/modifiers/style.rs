@@ -1,4 +1,4 @@
-use vizia_style::{BorderRadius, Position, Rect, Scale, Transform, Translate};
+use vizia_style::{BorderRadius, BoxShadow, ColorStop, Gradient, Position, Rect, Scale, Translate};
 
 use super::internal;
 use crate::prelude::*;
@@ -185,6 +185,19 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets the clip path for the the view.
+    fn clip_path<U: Into<ClipPath>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.clip_path.insert(entity, value);
+
+            cx.needs_redraw();
+        });
+
+        self
+    }
+
     fn overflow<U: Into<Overflow>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
@@ -215,6 +228,52 @@ pub trait StyleModifiers: internal::Modifiable {
         Overflow,
         SystemFlags::REDRAW
     );
+
+    /// Sets the backdrop filter for the view.
+    fn backdrop_filter<U: Into<Filter>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.backdrop_filter.insert(entity, value);
+
+            cx.needs_redraw();
+        });
+
+        self
+    }
+
+    /// Add a box-shadow to the view.
+    fn box_shadow<U: Into<BoxShadow>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            if let Some(box_shadows) = cx.style.box_shadow.get_inline_mut(entity) {
+                box_shadows.push(value);
+            } else {
+                cx.style.box_shadow.insert(entity, vec![value]);
+            }
+
+            cx.needs_redraw();
+        });
+
+        self
+    }
+
+    fn background_gradient<U: Into<Gradient>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            if let Some(background_images) = cx.style.background_image.get_inline_mut(entity) {
+                background_images.push(ImageOrGradient::Gradient(value));
+            } else {
+                cx.style.background_image.insert(entity, vec![ImageOrGradient::Gradient(value)]);
+            }
+
+            cx.needs_redraw();
+        });
+
+        self
+    }
 
     // Background Properties
     modifier!(
@@ -357,7 +416,7 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
-    // Outine Properties
+    // Outline Properties
     modifier!(
         /// Sets the outline width of the view.
         outline_width,
@@ -372,7 +431,6 @@ pub trait StyleModifiers: internal::Modifiable {
         SystemFlags::REDRAW
     );
 
-    // Outline Offset
     modifier!(
         /// Sets the outline offset of the view.
         outline_offset,
@@ -443,8 +501,95 @@ pub trait StyleModifiers: internal::Modifiable {
         Scale,
         SystemFlags::REDRAW
     );
-
-    // modifier!(transform, Transform2D);
 }
 
 impl<'a, V: View> StyleModifiers for Handle<'a, V> {}
+
+#[derive(Debug, Clone)]
+pub struct LinearGradientBuilder {
+    direction: LineDirection,
+    stops: Vec<ColorStop<LengthOrPercentage>>,
+}
+
+impl LinearGradientBuilder {
+    pub fn new() -> Self {
+        LinearGradientBuilder { direction: LineDirection::default(), stops: Vec::new() }
+    }
+
+    pub fn with_direction(direction: impl Into<LineDirection>) -> Self {
+        LinearGradientBuilder { direction: direction.into(), stops: Vec::new() }
+    }
+
+    fn build(self) -> Gradient {
+        Gradient::Linear(LinearGradient { direction: self.direction, stops: self.stops })
+    }
+
+    pub fn add_stop(mut self, stop: impl Into<ColorStop<LengthOrPercentage>>) -> Self {
+        self.stops.push(stop.into());
+
+        self
+    }
+}
+
+impl From<LinearGradientBuilder> for Gradient {
+    fn from(value: LinearGradientBuilder) -> Self {
+        value.build()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct BoxShadowBuilder {
+    box_shadow: BoxShadow,
+}
+
+impl BoxShadowBuilder {
+    pub fn new() -> Self {
+        Self { box_shadow: BoxShadow::default() }
+    }
+
+    fn build(self) -> BoxShadow {
+        self.box_shadow
+    }
+
+    pub fn x_offset(mut self, offset: impl Into<Length>) -> Self {
+        self.box_shadow.x_offset = offset.into();
+
+        self
+    }
+
+    pub fn y_offset(mut self, offset: impl Into<Length>) -> Self {
+        self.box_shadow.y_offset = offset.into();
+
+        self
+    }
+
+    pub fn blur(mut self, radius: Length) -> Self {
+        self.box_shadow.blur_radius = Some(radius);
+
+        self
+    }
+
+    pub fn spread(mut self, radius: Length) -> Self {
+        self.box_shadow.spread_radius = Some(radius);
+
+        self
+    }
+
+    pub fn color(mut self, color: Color) -> Self {
+        self.box_shadow.color = Some(color);
+
+        self
+    }
+
+    pub fn inset(mut self) -> Self {
+        self.box_shadow.inset = true;
+
+        self
+    }
+}
+
+impl From<BoxShadowBuilder> for BoxShadow {
+    fn from(value: BoxShadowBuilder) -> Self {
+        value.build()
+    }
+}

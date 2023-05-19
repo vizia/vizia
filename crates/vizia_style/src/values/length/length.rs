@@ -188,3 +188,9 @@ impl std::cmp::PartialOrd<Length> for Length {
         }
     }
 }
+
+impl From<f32> for Length {
+    fn from(value: f32) -> Self {
+        Length::px(value)
+    }
+}

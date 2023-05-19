@@ -1,4 +1,5 @@
 use vizia::prelude::*;
+use vizia_core::{modifiers::BoxShadowBuilder, style::BoxShadow};
 
 const STYLE: &str = r#"
 
@@ -145,6 +146,17 @@ fn main() {
             Element::new(cx).class("shadow-inset-blur");
             Element::new(cx).class("shadow-inset");
         });
+
+        Element::new(cx)
+            .box_shadow(BoxShadowBuilder::new().x_offset(5.0).y_offset(5.0).color(Color::black()))
+            .box_shadow(BoxShadow::new(
+                Length::px(10.0),
+                Length::px(10.0),
+                None,
+                None,
+                Some(Color::red()),
+                false,
+            ));
     })
     .title("Box Shadows")
     .inner_size((1000, 600))

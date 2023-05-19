@@ -1,8 +1,8 @@
 use morphorm::Units;
 use vizia_style::{
-    Angle, BackgroundSize, BoxShadow, ClipPath, Color, ColorStop, Display, FontSize, Gradient,
-    Length, LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LinearGradient,
-    Opacity, PercentageOrNumber, Rect, Scale, Transform, Translate, RGBA,
+    Angle, BackgroundSize, BoxShadow, ClipPath, Color, ColorStop, Display, Filter, FontSize,
+    Gradient, Length, LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection,
+    LinearGradient, Opacity, PercentageOrNumber, Rect, Scale, Transform, Translate, RGBA,
 };
 
 use femtovg::Transform2D;
@@ -80,6 +80,16 @@ impl Interpolator for RGBA {
         let b = (end.b() as f64 - start.b() as f64).mul_add(t as f64, start.b() as f64) as u8;
         let a = (end.a() as f64 - start.a() as f64).mul_add(t as f64, start.a() as f64) as u8;
         RGBA::rgba(r, g, b, a)
+    }
+}
+
+impl Interpolator for Filter {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (Filter::Blur(start), Filter::Blur(end)) => {
+                Filter::Blur(Length::interpolate(start, end, t))
+            }
+        }
     }
 }
 

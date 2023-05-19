@@ -1,4 +1,5 @@
 use vizia::prelude::*;
+use vizia_core::modifiers::LinearGradientBuilder;
 
 const STYLE: &str = r#"
 
@@ -38,7 +39,13 @@ fn main() {
     Application::new(|cx| {
         cx.add_theme(STYLE);
         // Element::new(cx).class("linear-gradient");
-        Element::new(cx).class("grad2").width(Pixels(200.0));
+        // Element::new(cx).class("grad2").width(Pixels(200.0));
+
+        Element::new(cx).background_gradient(
+            LinearGradientBuilder::with_direction("to right")
+                .add_stop(Color::red())
+                .add_stop(Color::blue()),
+        );
     })
     .run();
 }

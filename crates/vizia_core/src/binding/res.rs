@@ -1,6 +1,9 @@
-use vizia_style::{FontStyle, FontWeight, FontWeightKeyword};
+use vizia_style::{BoxShadow, FontStyle, FontWeight, FontWeightKeyword};
 
-use crate::prelude::*;
+use crate::{
+    modifiers::{BoxShadowBuilder, LinearGradientBuilder},
+    prelude::*,
+};
 
 macro_rules! impl_res_simple {
     ($t:ty) => {
@@ -15,6 +18,25 @@ macro_rules! impl_res_simple {
             {
                 cx.with_current(entity, |cx| {
                     (closure)(cx, entity, *self);
+                });
+            }
+        }
+    };
+}
+
+macro_rules! impl_res_clone {
+    ($t:ty) => {
+        impl Res<$t> for $t {
+            fn get_val(&self, _: &Context) -> $t {
+                self.clone()
+            }
+
+            fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+            where
+                F: 'static + Fn(&mut Context, Entity, Self),
+            {
+                cx.with_current(entity, |cx| {
+                    (closure)(cx, entity, self.clone());
                 });
             }
         }
@@ -61,6 +83,9 @@ impl_res_simple!(FontStyle);
 impl_res_simple!(BorderCornerShape);
 impl_res_simple!(Angle);
 impl_res_simple!(TextAlign);
+impl_res_clone!(BoxShadow);
+impl_res_clone!(LinearGradientBuilder);
+impl_res_clone!(BoxShadowBuilder);
 
 impl<T, L> Res<T> for L
 where

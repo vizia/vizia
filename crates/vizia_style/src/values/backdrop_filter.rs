@@ -6,6 +6,12 @@ pub enum Filter {
     Blur(Length),
 }
 
+impl Default for Filter {
+    fn default() -> Self {
+        Filter::Blur(Length::default())
+    }
+}
+
 impl<'i> Parse<'i> for Filter {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
         let function = input.expect_function()?.clone();
