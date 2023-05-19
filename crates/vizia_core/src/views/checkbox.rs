@@ -136,12 +136,10 @@ impl Checkbox {
     /// Checkbox::new(cx, AppData::value);
     /// ```
     pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
-        //let checked = checked.get_val_fallible(cx).unwrap_or(false);
         Self { on_toggle: None }
             .build(cx, |_| {})
             .text(checked.clone().map(|flag| if *flag { ICON_CHECK } else { "" }))
             .checked(checked)
-            .checkable(true)
             .role(Role::CheckBox)
             .default_action_verb(DefaultActionVerb::Click)
             .cursor(CursorIcon::Hand)

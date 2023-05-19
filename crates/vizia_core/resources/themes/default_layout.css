@@ -571,16 +571,14 @@ scrollbar.vertical .thumb {
 /* Slider */
 
 slider {
-    height: 8px;
+    height: 5px;
     width: 1s;
-    border-radius: 2px;
+    border-radius: 50%;
 }
 
 slider.vertical {
-    top: auto;
-    bottom: auto;
     height: 1s;
-    width: 8px;
+    width: 5px;
 }
 
 slider .thumb {
@@ -621,85 +619,34 @@ namedslider slider label {
     right: 4px;
 }
 
-/* Spinbox */
+/* SPINBOX */
 
 spinbox {
     child-space: 1s;
-    child-left: 4px;
-    child-right: 4px;
 }
 
 spinbox.horizontal {
     layout-type: row;
     height: 32px;
-    width: 100px;
+    child-left: 4px;
+    child-right: 4px;
 }
 
 spinbox.vertical {
     layout-type: column;
     width: 32px;
-    height: auto;
-    child-left: 1s;
-    child-right: 1s;
-}
-
-spinbox.vertical {
     child-top: 4px;
     child-bottom: 4px;
 }
 
-/* spinbox .container {
-    width: auto;
-} */
-
 spinbox .spinbox-button {
-    height: 24px;
+    size: 24px;
     child-space: 1s;
 }
 
-spinbox.horizontal .spinbox-button {
-    width: 24px;
-}
-
-spinbox.vertical .spinbox-button {
-    width: 1s;
-}
-
-/* spinbox .spinbox-value {
-    width: 1s;
-    height: 1s;
-    child-space: 1s;
-} */
-
-spinbox label.spinbox-value {
-    width: 1s;
-    child-space: 1s;
-}
-
-spinbox.vertical textbox.spinbox-value {
+spinbox .spinbox-value {
     width: 1s;
     height: auto;
-    child-space: 1s;
-}
-
-spinbox.horizontal textbox.spinbox-value {
-    width: 1s;
-    height: auto;
-    child-space: 1s;
-}
-
-/* spinbox textbox.spinbox-value {
-    min-width: 32px;
-    child-space: 1s;
-    width: auto;
-}
-
-spinbox textbox.spinbox-value {
-    width: auto;
-} */
-
-spinbox picklist.spinbox-value {
-    width: 1s;
     child-space: 1s;
 }
 
@@ -729,7 +676,7 @@ zstack > * {
     position-type: self-directed;
 }
 
-/* Switch */
+/* SWITCH */
 
 switch {
     width: 30px;
@@ -817,7 +764,7 @@ tabview .tabview-divider {
     height: 1s;
 } */
 
-/* Table */
+/* TABLE */
 
 table {
     child-left: 4px;
@@ -904,11 +851,6 @@ image {
 
 zstack > * {
     position-type: self-directed;
-}
-
-slider {
-    height: 5px;
-    width: 1s;
 }
 
 timepicker digitaltimepicker .digitaltimepicker-button-wrapper {

@@ -305,20 +305,9 @@ where
 
         let child_left = cx.style.child_left.get(cx.current).copied().unwrap_or_default();
         let child_top = cx.style.child_top.get(cx.current).copied().unwrap_or_default();
-        let child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
+        let _child_right = cx.style.child_right.get(cx.current).copied().unwrap_or_default();
         let child_bottom = cx.style.child_bottom.get(cx.current).copied().unwrap_or_default();
 
-        let justify_x = match (child_left, child_right) {
-            (Stretch(left), Stretch(right)) => {
-                if left + right == 0.0 {
-                    0.5
-                } else {
-                    left / (left + right)
-                }
-            }
-            (Stretch(_), _) => 1.0,
-            _ => 0.0,
-        };
         let justify_y = match (child_top, child_bottom) {
             (Stretch(top), Stretch(bottom)) => {
                 if top + bottom == 0.0 {

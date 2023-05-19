@@ -53,36 +53,39 @@ where
                     Textbox::new(
                         cx,
                         lens.clone().map(|color| {
-                            let (h, _, _) = rgb_to_hsv(
-                                color.r() as f64 / 255.0,
-                                color.g() as f64 / 255.0,
-                                color.b() as f64 / 255.0,
-                            );
-                            h
+                            // let (h, _, _) = rgb_to_hsv(
+                            //     color.r() as f64 / 255.0,
+                            //     color.g() as f64 / 255.0,
+                            //     color.b() as f64 / 255.0,
+                            // );
+                            // h
+                            color.r()
                         }),
                     )
                     .width(Stretch(1.0));
                     Textbox::new(
                         cx,
                         lens.clone().map(|color| {
-                            let (_, s, _) = rgb_to_hsv(
-                                color.r() as f64 / 255.0,
-                                color.g() as f64 / 255.0,
-                                color.b() as f64 / 255.0,
-                            );
-                            s
+                            // let (_, s, _) = rgb_to_hsv(
+                            //     color.r() as f64 / 255.0,
+                            //     color.g() as f64 / 255.0,
+                            //     color.b() as f64 / 255.0,
+                            // );
+                            // s
+                            color.g()
                         }),
                     )
                     .width(Stretch(1.0));
                     Textbox::new(
                         cx,
                         lens.clone().map(|color| {
-                            let (_, _, v) = rgb_to_hsv(
-                                color.r() as f64 / 255.0,
-                                color.g() as f64 / 255.0,
-                                color.b() as f64 / 255.0,
-                            );
-                            v
+                            // let (_, _, v) = rgb_to_hsv(
+                            //     color.r() as f64 / 255.0,
+                            //     color.g() as f64 / 255.0,
+                            //     color.b() as f64 / 255.0,
+                            // );
+                            // v
+                            color.b()
                         }),
                     )
                     .width(Stretch(1.0));

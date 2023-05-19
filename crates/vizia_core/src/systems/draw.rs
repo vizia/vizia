@@ -1,12 +1,10 @@
 use crate::prelude::*;
-use crate::style::SystemFlags;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use vizia_id::GenerationalId;
 use vizia_storage::LayoutChildIterator;
 
 pub(crate) fn draw_system(cx: &mut Context) {
-    // if cx.style.system_flags.contains(SystemFlags::REDRAW) {
     let canvas = cx.canvases.get_mut(&Entity::root()).unwrap();
     cx.resource_manager.mark_images_unused();
     let window_width = cx.cache.get_width(Entity::root());
@@ -45,9 +43,6 @@ pub(crate) fn draw_system(cx: &mut Context) {
     }
 
     canvas.flush();
-
-    // cx.style.system_flags.set(SystemFlags::RESTYLE, false);
-    // }
 }
 
 fn draw_entity(

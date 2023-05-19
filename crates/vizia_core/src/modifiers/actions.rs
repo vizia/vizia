@@ -121,6 +121,8 @@ impl Model for ActionsModel {
 
                 ActionsEvent::OnGeoChanged(on_geo_changed) => {
                     self.on_geo_changed = Some(on_geo_changed);
+                    cx.cache.set_bounds(cx.current, BoundingBox::default());
+                    cx.needs_relayout();
                 }
 
                 ActionsEvent::OnDragStart(on_drag_start) => {

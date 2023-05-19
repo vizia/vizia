@@ -779,7 +779,6 @@ switch:checked:hover:disabled * {
 
 table {
     border-radius: 4px;
-    space: 1s;
 }
 
 tablecolumn {
@@ -794,7 +793,7 @@ tablecolumn {
     child-left: 5px;
     width: 1s;
     height: 1s;
-    font-family: "roboto-bold";
+    font-weight: bold;
 }
 
 .table-column-icon {

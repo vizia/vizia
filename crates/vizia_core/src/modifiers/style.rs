@@ -88,17 +88,16 @@ pub trait StyleModifiers: internal::Modifiable {
     /// Sets the state of the view to checked.
     fn checked<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
+
+        // Setting a checked state should make it checkable
+        if let Some(abilities) = self.context().style.abilities.get_mut(entity) {
+            abilities.set(Abilities::CHECKABLE, true);
+        }
+
         state.set_or_bind(self.context(), entity, |cx, entity, val| {
             let val = val.into();
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
                 pseudo_classes.set(PseudoClassFlags::CHECKED, val);
-            }
-
-            if val {
-                // Setting a checked state should make it checkable... probably
-                if let Some(abilities) = cx.style.abilities.get_mut(entity) {
-                    abilities.set(Abilities::CHECKABLE, true);
-                }
             }
 
             cx.needs_restyle();
