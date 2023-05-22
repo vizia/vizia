@@ -29,6 +29,11 @@ button > .inner {
     min-right: 8px;
 }
 
+button > icon.inner {
+    min-left: 0px;
+    min-right: 0px;
+}
+
 button.icon {
     size: 32px;
     child-space: 1s;

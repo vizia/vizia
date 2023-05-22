@@ -102,4 +102,19 @@ pub mod icons {
     pub const ICON_PENCIL_OFF: &str = "\u{f173}";
     pub const ICON_PENCIL_PLUS: &str = "\u{f1ec}";
     pub const ICON_PENCIL: &str = "\u{eb04}";
+
+    pub const ICON_PLAYER_PAUSE: &str = "\u{ed45}";
+    pub const ICON_PLAYER_PLAY: &str = "\u{ed46}";
+    pub const ICON_PLAYER_RECORD: &str = "\u{ed47}";
+    pub const ICON_PLAYER_SKIP_BACK: &str = "\u{ed48}";
+    pub const ICON_PLAYER_SKIP_FORWARD: &str = "\u{ed49}";
+    pub const ICON_PLAYER_STOP: &str = "\u{ed4a}";
+    pub const ICON_REPEAT: &str = "\u{eb72}";
+
+    pub const ICON_SETTINGS_AUTOMATION: &str = "\u{eb72}";
+    pub const ICON_ADJUSTMENTS_ALT: &str = "\u{ec37}";
+
+    pub const ICON_POINTER: &str = "\u{f265}";
+    pub const ICON_SEARCH: &str = "\u{eb1c}";
+    pub const ICON_SLICE: &str = "\u{ebdb}";
 }
