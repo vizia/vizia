@@ -24,7 +24,7 @@ use glutin::{
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
 use winit::event_loop::EventLoop;
-use winit::window::{CursorGrabMode, WindowBuilder};
+use winit::window::{CursorGrabMode, WindowBuilder, WindowLevel};
 use winit::{dpi::*, window::WindowId};
 
 pub struct Window {
@@ -322,6 +322,11 @@ fn apply_window_description(
         .with_maximized(description.maximized)
         // Accesskit requires that the window start invisible until accesskit is initialized.
         .with_visible(false)
+        .with_window_level(if description.always_on_top {
+            WindowLevel::AlwaysOnTop
+        } else {
+            WindowLevel::Normal
+        })
         .with_transparent(description.transparent)
         .with_decorations(description.decorations)
         .with_window_icon(description.icon.as_ref().map(|icon| {
