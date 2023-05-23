@@ -117,7 +117,7 @@ impl Window {
         // Apply generic WindowBuilder properties
         let window_builder = apply_window_description(window_builder, window_description);
 
-        let template = ConfigTemplateBuilder::new().with_alpha_size(8);
+        let template = ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(true);
         let display_builder = DisplayBuilder::new().with_window_builder(Some(window_builder));
 
         let (window, gl_config) = display_builder

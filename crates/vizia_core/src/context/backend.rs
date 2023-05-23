@@ -100,7 +100,7 @@ impl<'a> BackendContext<'a> {
             0,
             physical_width as u32,
             physical_height as u32,
-            femtovg::Color::rgb(255, 0, 0),
+            femtovg::Color::rgba(0, 0, 0, 0),
         );
 
         self.0.style.dpi_factor = dpi_factor as f64;

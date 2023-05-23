@@ -10,7 +10,7 @@ pub(crate) fn draw_system(cx: &mut Context) {
     let window_width = cx.cache.get_width(Entity::root());
     let window_height = cx.cache.get_height(Entity::root());
     let clear_color =
-        cx.style.background_color.get(Entity::root()).cloned().unwrap_or(RGBA::WHITE.into());
+        cx.style.background_color.get(Entity::root()).cloned().unwrap_or(RGBA::TRANSPARENT.into());
     canvas.set_size(window_width as u32, window_height as u32, 1.0);
     canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
 

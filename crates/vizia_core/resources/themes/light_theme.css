@@ -5,7 +5,7 @@
     border-width: 1px;
 } */
 
-root {
+:root {
     background-color: #fafafa;
     color: #181818;
 }
