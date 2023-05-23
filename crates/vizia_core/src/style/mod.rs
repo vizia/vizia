@@ -754,14 +754,41 @@ impl Style {
     ) {
         self.display.play_animation(entity, animation, duration);
         self.opacity.play_animation(entity, animation, duration);
+        self.clip_path.play_animation(entity, animation, duration);
+
+        self.transform.play_animation(entity, animation, duration);
+        self.transform_origin.play_animation(entity, animation, duration);
+        self.translate.play_animation(entity, animation, duration);
+        self.rotate.play_animation(entity, animation, duration);
+        self.scale.play_animation(entity, animation, duration);
+
+        self.border_width.play_animation(entity, animation, duration);
+        self.border_color.play_animation(entity, animation, duration);
+
+        self.border_top_left_radius.play_animation(entity, animation, duration);
+        self.border_top_right_radius.play_animation(entity, animation, duration);
+        self.border_bottom_left_radius.play_animation(entity, animation, duration);
+        self.border_bottom_right_radius.play_animation(entity, animation, duration);
+
+        self.outline_width.play_animation(entity, animation, duration);
+        self.outline_color.play_animation(entity, animation, duration);
+        self.outline_offset.play_animation(entity, animation, duration);
+
+        self.background_color.play_animation(entity, animation, duration);
+        self.background_image.play_animation(entity, animation, duration);
+        self.background_size.play_animation(entity, animation, duration);
+
+        self.box_shadow.play_animation(entity, animation, duration);
+
+        self.font_color.play_animation(entity, animation, duration);
+        self.font_size.play_animation(entity, animation, duration);
+        self.caret_color.play_animation(entity, animation, duration);
+        self.selection_color.play_animation(entity, animation, duration);
 
         self.left.play_animation(entity, animation, duration);
         self.right.play_animation(entity, animation, duration);
         self.top.play_animation(entity, animation, duration);
         self.bottom.play_animation(entity, animation, duration);
-
-        self.width.play_animation(entity, animation, duration);
-        self.height.play_animation(entity, animation, duration);
 
         self.child_left.play_animation(entity, animation, duration);
         self.child_right.play_animation(entity, animation, duration);
@@ -770,9 +797,22 @@ impl Style {
         self.col_between.play_animation(entity, animation, duration);
         self.row_between.play_animation(entity, animation, duration);
 
-        self.translate.play_animation(entity, animation, duration);
-        self.rotate.play_animation(entity, animation, duration);
-        self.scale.play_animation(entity, animation, duration);
+        self.width.play_animation(entity, animation, duration);
+        self.height.play_animation(entity, animation, duration);
+
+        self.min_width.play_animation(entity, animation, duration);
+        self.max_width.play_animation(entity, animation, duration);
+        self.min_height.play_animation(entity, animation, duration);
+        self.max_height.play_animation(entity, animation, duration);
+
+        self.min_left.play_animation(entity, animation, duration);
+        self.max_left.play_animation(entity, animation, duration);
+        self.min_right.play_animation(entity, animation, duration);
+        self.max_right.play_animation(entity, animation, duration);
+        self.min_top.play_animation(entity, animation, duration);
+        self.max_top.play_animation(entity, animation, duration);
+        self.min_bottom.play_animation(entity, animation, duration);
+        self.max_bottom.play_animation(entity, animation, duration);
     }
 
     pub(crate) fn parse_theme(&mut self, stylesheet: &str) {
