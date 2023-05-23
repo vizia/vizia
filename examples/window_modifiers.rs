@@ -1,4 +1,5 @@
 use vizia::prelude::*;
+use vizia_winit::GetRawWindowHandle;
 
 #[cfg(feature = "baseview")]
 fn main() {
@@ -10,7 +11,17 @@ pub struct AppData {
     title: String,
 }
 
-impl Model for AppData {}
+impl Model for AppData {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|window_event, _| match window_event {
+            WindowEvent::MouseMove(_, _) => {
+                let raw = cx.raw_window_handle();
+            }
+
+            _ => {}
+        })
+    }
+}
 
 #[cfg(all(not(feature = "baseview")))]
 fn main() {

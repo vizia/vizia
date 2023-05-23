@@ -118,6 +118,10 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    pub fn get_view<V: View>(&self) -> Option<&V> {
+        self.views.get(&self.current).and_then(|view| view.downcast_ref::<V>())
+    }
+
     /// Returns the [Entity] id associated with the given identifier.
     pub fn resolve_entity_identifier(&self, id: &str) -> Option<Entity> {
         self.entity_identifiers.get(id).cloned()
