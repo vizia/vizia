@@ -54,7 +54,14 @@ pub(crate) fn layout_system(cx: &mut Context) {
                         .unwrap_or_default()
                         .to_px(width, 0.0)
                         * cx.scale_factor();
-                    let width = width.ceil() - child_left - child_right;
+                    let border_width = cx
+                        .style
+                        .border_width
+                        .get(entity)
+                        .cloned()
+                        .unwrap_or_default()
+                        .to_pixels(width, cx.scale_factor());
+                    let width = width.ceil() - child_left - child_right - 2.0 * border_width;
                     cx.text_context.sync_styles(entity, cx.style);
                     let (text_width, text_height) =
                         cx.text_context.with_buffer(entity, |fs, buf| {
@@ -89,7 +96,14 @@ pub(crate) fn layout_system(cx: &mut Context) {
                         .unwrap_or_default()
                         .to_px(width, 0.0)
                         * cx.scale_factor();
-                    let width = width.ceil() - child_left - child_right;
+                    let border_width = cx
+                        .style
+                        .border_width
+                        .get(entity)
+                        .cloned()
+                        .unwrap_or_default()
+                        .to_pixels(width, cx.scale_factor());
+                    let width = width.ceil() - child_left - child_right - 2.0 * border_width;
 
                     cx.text_context.with_buffer(entity, |fs, buffer| {
                         buffer.set_size(fs, width, f32::MAX);
