@@ -12,6 +12,6 @@ rust-version = "1.60"
 vizia_input = { path = "../vizia_input" }
 vizia_style = { path = "../vizia_style" }
 # morphorm = {path = "../../../morphorm" }
-morphorm = {git = "https://github.com/vizia/morphorm", rev = "a4b6ddee4537d52e4890947195b62f29df8fcc2f" }
+morphorm = {git = "https://github.com/vizia/morphorm", rev = "15a6b861f87b232aa3392c4a948f6ac9e50d3202" }
 accesskit = "0.11.0"
 #morphorm = { path = "../../../morphorm", features = ["rounding"] }
