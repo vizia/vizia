@@ -16,6 +16,10 @@ impl Model for AppData {
         event.map(|window_event, _| match window_event {
             WindowEvent::MouseMove(_, _) => {
                 let raw = cx.raw_window_handle();
+
+                cx.mutate_window(|window| {
+                    // Do stuff with window here
+                });
             }
 
             _ => {}
@@ -27,6 +31,8 @@ impl Model for AppData {
 fn main() {
     Application::new(|cx| {
         AppData { title: "Window Modifiers".to_string() }.build(cx);
+
+        let raw = cx.raw_window_handle();
 
         Label::new(cx, "Hello Vizia");
         Textbox::new(cx, AppData::title)

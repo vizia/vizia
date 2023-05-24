@@ -229,11 +229,12 @@ impl Context {
     }
 
     /// Makes the above black magic more explicit
-    pub fn with_current(&mut self, e: Entity, f: impl FnOnce(&mut Context)) {
+    pub fn with_current<T>(&mut self, e: Entity, f: impl FnOnce(&mut Context) -> T) -> T {
         let prev = self.current;
         self.current = e;
-        f(self);
+        let ret = f(self);
         self.current = prev;
+        ret
     }
 
     /// Returns a reference to the [Environment] model.
