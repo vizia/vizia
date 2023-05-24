@@ -3,11 +3,8 @@
 mod button;
 mod checkbox;
 mod chip;
-mod codeblock;
-mod colorpicker;
 mod combobox;
 mod datepicker;
-mod datetimepicker;
 mod dropdown;
 mod element;
 mod image;
@@ -28,23 +25,18 @@ mod spinbox;
 mod stack;
 mod switch;
 mod tab;
-mod table;
 mod textbox;
 mod timepicker;
 mod tooltip;
 mod virtual_list;
-mod xypad;
 
 pub use self::image::Image;
 pub use crate::binding::Binding;
 pub use button::Button;
 pub use checkbox::Checkbox;
 pub use chip::Chip;
-pub use codeblock::*;
-pub use colorpicker::ColorPicker;
 pub use combobox::*;
 pub use datepicker::Datepicker;
-pub use datetimepicker::DatetimePicker;
 pub use dropdown::Dropdown;
 pub use element::Element;
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
@@ -63,7 +55,6 @@ pub use spinbox::{Spinbox, SpinboxEvent, SpinboxIcons, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
 pub use switch::Switch;
 pub use tab::{TabPair, TabView};
-pub use table::{Table, TableColumn};
 pub use textbox::{TextEvent, Textbox};
 pub use timepicker::{
     AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,
@@ -71,7 +62,6 @@ pub use timepicker::{
 };
 pub use tooltip::Tooltip;
 pub use virtual_list::*;
-pub use xypad::XYPad;
 
 use crate::prelude::*;
 
