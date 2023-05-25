@@ -1,5 +1,9 @@
 pub mod style;
 pub use style::*;
+
+pub mod keyframes;
+pub use keyframes::*;
+
 pub mod property;
 pub use property::*;
 
@@ -11,5 +15,5 @@ pub enum CssRule<'i> {
     Style(StyleRule<'i>),
     Property(PropertyRule<'i>),
     Ignored,
-    //Keyframes(KeyframesRule<'i>),
+    Keyframes(KeyframesRule<'i>),
 }

@@ -1,6 +1,9 @@
+use std::println;
+
 use crate::{
     parse_declaration, CssRule, CssRuleList, CustomParseError, DashedIdent, DeclarationBlock,
-    DeclarationList, Location, ParserOptions, SelectorParser, Selectors, StyleRule,
+    DeclarationList, KeyframeListParser, KeyframesName, KeyframesRule, Location, Parse,
+    ParserOptions, SelectorParser, Selectors, StyleRule,
 };
 use cssparser::*;
 use selectors::SelectorList;
@@ -32,7 +35,8 @@ impl<'a, 'o, 'b, 'i> TopLevelRuleParser<'a, 'o, 'i> {
 }
 
 pub enum AtRulePrelude<'i> {
-    Property(DashedIdent<'i>),
+    // Property(DashedIdent<'i>),
+    Keyframes(KeyframesName<'i>),
 }
 
 impl<'a, 'o, 'i> AtRuleParser<'i> for TopLevelRuleParser<'a, 'o, 'i> {
@@ -135,17 +139,32 @@ impl<'a, 'o, 'i> AtRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
         match_ignore_ascii_case! { &*name,
+            "keyframes" => {
+                println!("do this: {}", name);
+                let name = input.try_parse(KeyframesName::parse)?;
+                Ok(AtRulePrelude::Keyframes(name))
+            },
             _=> Err(input.new_error(BasicParseErrorKind::AtRuleInvalid(name)))
         }
     }
 
-    // fn parse_block<'t>(&mut self, prelude: Self::Prelude, start: &ParserState, input: &mut Parser<'i, 't>) -> Result<Self::AtRule, ParseError<'i, Self::Error>> {
-    //     let loc = self.loc(start);
-
-    //     match prelude {
-    //         AtRulePrelude::Property(name) => Ok(CssRule::Property(PropertyRule::parse(name, input, loc)?)),
-    //     }
-    // }
+    fn parse_block<'t>(
+        &mut self,
+        prelude: Self::Prelude,
+        start: &ParserState,
+        input: &mut Parser<'i, 't>,
+    ) -> Result<Self::AtRule, ParseError<'i, Self::Error>> {
+        let _loc = self.loc(start);
+        match prelude {
+            AtRulePrelude::Keyframes(name) => {
+                let iter = RuleListParser::new_for_nested_rule(input, KeyframeListParser);
+                Ok(CssRule::Keyframes(KeyframesRule {
+                    name,
+                    keyframes: iter.filter_map(Result::ok).collect(),
+                }))
+            }
+        }
+    }
 }
 
 impl<'a, 'o, 'i> QualifiedRuleParser<'i> for NestedRuleParser<'a, 'o, 'i> {
@@ -258,6 +277,10 @@ impl<'a, 'o, 'i> AtRuleParser<'i> for StyleRuleParser<'a, 'o, 'i> {
         input: &mut Parser<'i, 't>,
     ) -> Result<Self::Prelude, ParseError<'i, Self::Error>> {
         match_ignore_ascii_case! { &*name,
+            "keyframes" => {
+                let name = input.try_parse(KeyframesName::parse)?;
+                Ok(AtRulePrelude::Keyframes(name))
+            },
             _ => Err(input.new_error(BasicParseErrorKind::AtRuleInvalid(name)))
         }
     }

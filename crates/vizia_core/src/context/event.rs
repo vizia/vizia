@@ -8,7 +8,7 @@ use fnv::FnvHashMap;
 use instant::Duration;
 use vizia_style::{ClipPath, Filter, Scale, Translate};
 
-use crate::animation::{Animation, Interpolator};
+use crate::animation::{AnimId, Animation, Interpolator};
 use crate::cache::CachedData;
 use crate::environment::ThemeMode;
 use crate::events::ViewHandler;
@@ -294,8 +294,18 @@ impl<'a> EventContext<'a> {
         transform
     }
 
-    pub fn play_animation(&mut self, anim_id: Animation, duration: Duration) {
-        self.style.play_animation(self.current, anim_id, duration);
+    pub fn play_animation(&mut self, anim_id: impl AnimId, duration: Duration) {
+        if let Some(animation_id) = anim_id.get(self) {
+            self.style.play_animation(self.current, animation_id, duration);
+        }
+    }
+
+    pub fn play_animation_for(&mut self, anim_id: impl AnimId, target: &str, duration: Duration) {
+        if let Some(target_entity) = self.resolve_entity_identifier(target) {
+            if let Some(animation_id) = anim_id.get(self) {
+                self.style.play_animation(target_entity, animation_id, duration);
+            }
+        }
     }
 
     /// Add a listener to an entity.

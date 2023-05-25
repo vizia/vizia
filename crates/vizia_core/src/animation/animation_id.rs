@@ -3,8 +3,26 @@ use vizia_id::{
     GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
 };
 
+use crate::context::EventContext;
+
 /// An id used to reference style animations stored in style.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Animation(u32);
 
 impl_generational_id!(Animation);
+
+pub trait AnimId {
+    fn get(&self, cx: &mut EventContext) -> Option<Animation>;
+}
+
+impl AnimId for Animation {
+    fn get(&self, _cx: &mut EventContext) -> Option<Animation> {
+        Some(*self)
+    }
+}
+
+impl AnimId for &'static str {
+    fn get(&self, cx: &mut EventContext) -> Option<Animation> {
+        cx.style.get_animation(self).copied()
+    }
+}

@@ -60,10 +60,12 @@
 //! Element::new(cx).class("foo");
 //! ```
 
+use fnv::FnvHashMap;
 use instant::Duration;
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::HashSet;
 use std::fmt::Debug;
+use std::println;
 use vizia_id::GenerationalId;
 
 use crate::prelude::*;
@@ -76,7 +78,9 @@ pub use vizia_style::{
     Transition, Translate, Visibility, RGBA,
 };
 
-use vizia_style::{EasingFunction, ParserOptions, Property, SelectorList, Selectors, StyleSheet};
+use vizia_style::{
+    EasingFunction, KeyframeSelector, ParserOptions, Property, SelectorList, Selectors, StyleSheet,
+};
 
 mod rule;
 pub(crate) use rule::Rule;
@@ -152,6 +156,7 @@ pub struct Style {
 
     // Creates and destroys animation ids
     pub(crate) animation_manager: IdManager<Animation>,
+    pub(crate) animations: FnvHashMap<String, Animation>,
 
     // List of rules
     pub(crate) rules: Vec<(Rule, SelectorList<Selectors>)>,
@@ -324,6 +329,10 @@ impl Style {
         self.animation_manager.reset();
 
         self.rules.clear();
+    }
+
+    pub(crate) fn get_animation(&self, name: &str) -> Option<&Animation> {
+        self.animations.get(name)
     }
 
     pub(crate) fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {
@@ -816,8 +825,9 @@ impl Style {
     }
 
     pub(crate) fn parse_theme(&mut self, stylesheet: &str) {
-        if let Ok(theme) = StyleSheet::parse("test.css", stylesheet, ParserOptions::default()) {
-            let rules = theme.rules.0;
+        if let Ok(stylesheet) = StyleSheet::parse("test.css", stylesheet, ParserOptions::default())
+        {
+            let rules = stylesheet.rules.0;
 
             for rule in rules {
                 match rule {
@@ -841,6 +851,36 @@ impl Style {
                                 }
                             }
                         }
+                    }
+
+                    CssRule::Keyframes(keyframes_rule) => {
+                        let name = keyframes_rule.name.as_string();
+                        let mut anim_builder = AnimationBuilder::new();
+                        for keyframes in keyframes_rule.keyframes {
+                            for selector in keyframes.selectors.iter() {
+                                let time = match selector {
+                                    KeyframeSelector::From => 0.0,
+                                    KeyframeSelector::To => 1.0,
+                                    KeyframeSelector::Percentage(percentage) => percentage.0,
+                                };
+                                anim_builder = anim_builder.keyframe(time, |mut keyframe| {
+                                    for property in keyframes.declarations.declarations.iter() {
+                                        match property {
+                                            Property::Transform(transform) => {
+                                                keyframe = keyframe.transform(transform.clone());
+                                            }
+
+                                            _ => {}
+                                        }
+                                    }
+
+                                    keyframe
+                                });
+                            }
+                        }
+                        let animation = self.add_animation(anim_builder);
+                        self.animations.insert(name, animation);
+                        println!("{:?}", animation);
                     }
 
                     _ => {}

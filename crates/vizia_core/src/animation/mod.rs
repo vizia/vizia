@@ -1,5 +1,5 @@
 mod animation_id;
-pub use animation_id::Animation;
+pub use animation_id::{AnimId, Animation};
 
 mod animation_state;
 pub(crate) use animation_state::{AnimationState, Keyframe};
