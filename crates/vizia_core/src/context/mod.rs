@@ -12,8 +12,6 @@ use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::iter::once;
-use std::path::Path;
 use std::sync::Mutex;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
@@ -500,21 +498,22 @@ impl Context {
         self.style.default_font = names
             .iter()
             .map(|x| FamilyOwned::Name(x.to_string()))
-            .chain(once(FamilyOwned::SansSerif))
+            .chain(std::iter::once(FamilyOwned::SansSerif))
             .collect();
     }
 
     /// Add a style string to the application.
-    pub fn add_theme(&mut self, theme: &str) {
+    pub(crate) fn add_theme(&mut self, theme: &str) {
         self.resource_manager.themes.push(theme.to_owned());
 
         EventContext::new(self).reload_styles().expect("Failed to reload styles");
     }
 
-    pub fn add_stylesheet(&mut self, path: impl AsRef<Path>) -> Result<(), std::io::Error> {
-        let style_string = std::fs::read_to_string(path.as_ref())?;
-        self.resource_manager.stylesheets.push(path.as_ref().to_owned());
-        self.style.parse_theme(&style_string);
+    pub fn add_stylesheet(&mut self, style: impl IntoCssStr) -> Result<(), std::io::Error> {
+        self.resource_manager.styles.push(Box::new(style));
+
+        EventContext::new(self).reload_styles().expect("Failed to reload styles");
+
         Ok(())
     }
 
@@ -530,37 +529,6 @@ impl Context {
                 ThemeMode::DarkMode => self.add_theme(DARK_THEME),
             }
         }
-    }
-
-    pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
-        if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
-            return Ok(());
-        }
-
-        self.style.remove_rules();
-
-        self.style.clear_style_rules();
-
-        let mut overall_theme = String::new();
-
-        // Reload the stored themes
-        for theme in self.resource_manager.themes.iter() {
-            overall_theme += theme;
-        }
-
-        // Reload the stored stylesheets
-        for stylesheet in self.resource_manager.stylesheets.iter() {
-            let theme = std::fs::read_to_string(stylesheet)?;
-            overall_theme += &theme;
-        }
-
-        self.style.parse_theme(&overall_theme);
-
-        self.style.needs_restyle();
-        self.style.needs_relayout();
-        self.style.needs_redraw();
-
-        Ok(())
     }
 
     pub fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {

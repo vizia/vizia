@@ -43,7 +43,7 @@ pub struct ExamplePage {}
 
 impl ExamplePage {
     pub fn vertical(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
-        cx.add_theme(CENTER_LAYOUT);
+        cx.add_stylesheet(CENTER_LAYOUT);
 
         Self {}.build(cx, |cx| {
             ControlsData { disabled: false }.build(cx);
@@ -102,7 +102,7 @@ impl ExamplePage {
         })
     }
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
-        cx.add_theme(CENTER_LAYOUT);
+        cx.add_stylesheet(CENTER_LAYOUT);
 
         Self {}.build(cx, |cx| {
             ControlsData { disabled: false }.build(cx);

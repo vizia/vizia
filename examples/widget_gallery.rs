@@ -111,7 +111,7 @@ pub struct AppData {}
 fn main() {
     Application::new(|cx| {
         ExamplePage::vertical(cx, |cx| {
-            cx.add_theme(STYLE);
+            cx.add_stylesheet(STYLE);
             ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                 Panel::new(
                     cx,

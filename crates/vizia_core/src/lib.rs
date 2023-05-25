@@ -30,6 +30,7 @@ mod systems;
 pub(crate) mod text;
 #[doc(hidden)]
 pub mod tree;
+pub mod util;
 pub mod view;
 pub mod views;
 pub mod window;
@@ -70,7 +71,6 @@ pub mod prelude {
     pub use crate::model::Model;
 
     pub use super::animation::{Animation, AnimationBuilder, KeyframeBuilder};
-
     pub use super::context::{
         AccessContext, AccessNode, Context, ContextProxy, DataContext, DrawContext, EmitContext,
         EventContext, ProxyEmitError,
@@ -78,6 +78,7 @@ pub mod prelude {
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};
     pub use super::events::{Event, Propagation};
+    pub use super::include_style;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     pub use super::layout::{BoundingBox, GeoChanged};
     pub use super::localization::Localized;
@@ -86,6 +87,7 @@ pub mod prelude {
         LayoutModifiers, LinearGradientBuilder, StyleModifiers, TextModifiers,
     };
     pub use super::resource::ImageRetentionPolicy;
+    pub use super::util::{IntoCssStr, CSS};
     pub use super::view::{Canvas, Handle, View};
     pub use super::views::*;
     pub use super::window::{DropData, WindowEvent, WindowModifiers};

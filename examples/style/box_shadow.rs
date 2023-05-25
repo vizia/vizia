@@ -128,7 +128,7 @@ const STYLE: &str = r#"
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
+        cx.add_stylesheet(STYLE);
         HStack::new(cx, |cx| {
             Element::new(cx).class("shadow-offsetx");
             Element::new(cx).class("shadow-offsety");

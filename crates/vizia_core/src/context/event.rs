@@ -8,7 +8,7 @@ use fnv::FnvHashMap;
 use instant::Duration;
 use vizia_style::{ClipPath, Filter, Scale, Translate};
 
-use crate::animation::{AnimId, Animation, Interpolator};
+use crate::animation::{AnimId, Interpolator};
 use crate::cache::CachedData;
 use crate::environment::ThemeMode;
 use crate::events::ViewHandler;
@@ -555,7 +555,7 @@ impl<'a> EventContext<'a> {
 
     /// Reloads the stylesheets linked to the application.
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
-        if self.resource_manager.themes.is_empty() && self.resource_manager.stylesheets.is_empty() {
+        if self.resource_manager.themes.is_empty() && self.resource_manager.styles.is_empty() {
             return Ok(());
         }
 
@@ -565,15 +565,15 @@ impl<'a> EventContext<'a> {
 
         let mut overall_theme = String::new();
 
-        // Reload the stored themes
+        // Reload built-in themes
         for theme in self.resource_manager.themes.iter() {
             overall_theme += theme;
         }
 
-        // Reload the stored stylesheets
-        for stylesheet in self.resource_manager.stylesheets.iter() {
-            let theme = std::fs::read_to_string(stylesheet)?;
-            overall_theme += &theme;
+        for style_string in self.resource_manager.styles.iter().map(|style| style.get_style()) {
+            if let Ok(style_string) = style_string {
+                overall_theme += &style_string;
+            }
         }
 
         self.style.parse_theme(&overall_theme);

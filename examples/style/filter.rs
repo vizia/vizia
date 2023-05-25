@@ -47,7 +47,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
+        cx.add_stylesheet(STYLE);
 
         // Load an image into the binary
         cx.load_image(

@@ -59,7 +59,7 @@ use crate::views::popup::PopupData;
 /// # use vizia_core::prelude::*;
 /// # let cx = &mut Context::default();
 /// #
-/// # cx.add_theme(r#"
+/// # cx.add_stylesheet(r#"
 /// #     dropdown popup {
 /// #         background-color: white;
 /// #     }

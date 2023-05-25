@@ -36,7 +36,7 @@ pub struct AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
+        cx.add_stylesheet(STYLE);
 
         AppData { text: "This text is editable!".to_string() }.build(cx);
 

@@ -43,7 +43,7 @@
 //!     }
 //! "#;
 //!
-//! cx.add_theme(STYLE);
+//! cx.add_stylesheet(STYLE);
 //!
 //! Element::new(cx).class("foo");
 //! ```

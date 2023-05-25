@@ -42,7 +42,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
+        cx.add_stylesheet(STYLE);
 
         let list: Vec<u32> = (1..100000u32).collect();
         AppData { list, selected: 312 }.build(cx);

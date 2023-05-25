@@ -81,7 +81,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
+        cx.add_stylesheet(STYLE);
 
         AppData { disabled: false, checked: false }.build(cx);
 

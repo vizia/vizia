@@ -114,7 +114,7 @@ const STYLE: &str = r#"
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
+        cx.add_stylesheet(STYLE);
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {

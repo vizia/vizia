@@ -20,7 +20,8 @@ fn main() {
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
+        cx.add_stylesheet(STYLE);
+        cx.add_stylesheet(include_style!("examples/resources/themes/test.css"));
         Element::new(cx);
     })
     .run();

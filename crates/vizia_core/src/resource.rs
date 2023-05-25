@@ -2,12 +2,12 @@
 
 use crate::context::ResourceContext;
 use crate::entity::Entity;
+use crate::prelude::IntoCssStr;
 use crate::view::Canvas;
 use fluent_bundle::{FluentBundle, FluentResource};
 use image::GenericImageView;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
 use unic_langid::LanguageIdentifier;
 
 pub(crate) struct StoredImage {
@@ -52,8 +52,8 @@ pub enum ImageRetentionPolicy {
 #[doc(hidden)]
 #[derive(Default)]
 pub struct ResourceManager {
-    pub stylesheets: Vec<PathBuf>, // Stylesheets refer to a file path
-    pub themes: Vec<String>,       // Themes are the string content stylesheets
+    pub themes: Vec<String>, // Themes are the string content stylesheets
+    pub styles: Vec<Box<dyn IntoCssStr>>,
     pub(crate) images: HashMap<String, StoredImage>,
     pub translations: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
 
@@ -93,9 +93,9 @@ impl ResourceManager {
         let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> = None;
 
         ResourceManager {
-            stylesheets: Vec::new(),
             themes: Vec::new(),
             images: HashMap::new(),
+            styles: Vec::new(),
 
             translations: HashMap::from([(
                 LanguageIdentifier::default(),

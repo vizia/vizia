@@ -26,13 +26,6 @@ path = "examples/animation.rs"
 name = "datepicker"
 path = "examples/views/datepicker.rs"
 
-[[example]]
-name = "colorpicker"
-path = "examples/views/colorpicker.rs"
-
-[[example]]
-name = "xypad"
-path = "examples/views/xypad.rs"
 
 [[example]]
 name = "picklist"
@@ -41,11 +34,6 @@ path = "examples/views/picklist.rs"
 [[example]]
 name = "combobox"
 path = "examples/views/combobox.rs"
-
-
-[[example]]
-name = "datetimepicker"
-path = "examples/views/datetimepicker.rs"
 
 [[example]]
 name = "cursor_icon"
@@ -76,10 +64,6 @@ name = "switch"
 path = "examples/views/switch.rs"
 
 [[example]]
-name = "table"
-path = "examples/views/table.rs"
-
-[[example]]
 name = "notification"
 path = "examples/views/notification.rs"
 
@@ -98,10 +82,6 @@ path = "examples/textbox_list.rs"
 [[example]]
 name = "button"
 path = "examples/views/button.rs"
-
-[[example]]
-name = "ripple_button"
-path = "examples/views/ripple_button.rs"
 
 [[example]]
 name = "checkbox"

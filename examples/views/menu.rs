@@ -17,7 +17,7 @@ impl Model for AppData {}
 
 fn main() {
     Application::new(|cx: &mut Context| {
-        // cx.add_theme(STYLE);
+        // cx.add_stylesheet(STYLE);
 
         AppData {}.build(cx);
 

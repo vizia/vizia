@@ -106,8 +106,11 @@ impl View for Button {
                     if let Some(callback) = &self.action {
                         (callback)(cx);
                     }
-                    cx.release();
                 }
+            }
+
+            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+                cx.release();
             }
 
             WindowEvent::ActionRequest(action) => match action.action {
