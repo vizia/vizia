@@ -34,7 +34,7 @@ pub(crate) struct AnimationState<T: Interpolator> {
     /// Whether the animation should persist after finishing.
     pub persistent: bool,
 
-    pub t0: f32,
+    // pub t0: f32,
     /// How far through the animation between 0.0 and 1.0.
     pub t: f32,
 
@@ -63,7 +63,6 @@ where
             keyframes: Vec::new(),
             output: None,
             persistent: false,
-            t0: 0.0,
             t: 0.0,
             active: false,
             entities: HashSet::new(),
@@ -97,7 +96,6 @@ where
     }
 
     pub(crate) fn play(&mut self, entity: Entity) {
-        self.t0 = 0.0;
         self.active = true;
         self.t = 0.0;
         self.start_time = instant::Instant::now();
@@ -122,7 +120,6 @@ where
             keyframes: Vec::new(),
             output: None,
             persistent: true,
-            t0: 0.0,
             t: 0.0,
             active: false,
             entities: HashSet::new(),
