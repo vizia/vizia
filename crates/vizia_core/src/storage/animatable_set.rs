@@ -579,29 +579,39 @@ where
                     let current_value = self.get(entity).cloned().unwrap_or_default();
                     let current_anim_state = &mut self.active_animations[entity_anim_index];
                     let rule_data_index = shared_data_index.data_index as usize;
-                    // Skip if the transition hasn't changed
-                    if current_anim_state.to_rule != rule_data_index {
-                        if rule_data_index == current_anim_state.from_rule {
-                            // Transitioning back to previous rule
-                            current_anim_state.from_rule = current_anim_state.to_rule;
-                            current_anim_state.to_rule = rule_data_index;
-                            current_anim_state.keyframes.first_mut().unwrap().value =
-                                self.shared_data.dense[current_anim_state.from_rule].value.clone();
 
-                            current_anim_state.keyframes.last_mut().unwrap().value =
-                                self.shared_data.dense[current_anim_state.to_rule].value.clone();
+                    if current_anim_state.is_transition() {
+                        // Skip if the transition hasn't changed
+                        if current_anim_state.to_rule != rule_data_index {
+                            if rule_data_index == current_anim_state.from_rule {
+                                // Transitioning back to previous rule
+                                current_anim_state.from_rule = current_anim_state.to_rule;
+                                current_anim_state.to_rule = rule_data_index;
+                                current_anim_state.keyframes.first_mut().unwrap().value =
+                                    self.shared_data.dense[current_anim_state.from_rule]
+                                        .value
+                                        .clone();
 
-                            current_anim_state.delay = current_anim_state.t - 1.0;
-                            current_anim_state.start_time = instant::Instant::now();
-                        } else {
-                            // Transitioning to new rule
-                            current_anim_state.to_rule = rule_data_index;
-                            current_anim_state.keyframes.first_mut().unwrap().value = current_value;
-                            current_anim_state.keyframes.last_mut().unwrap().value =
-                                self.shared_data.dense[current_anim_state.to_rule].value.clone();
-                            current_anim_state.t = 0.0;
-                            current_anim_state.t0 = 0.0;
-                            current_anim_state.start_time = instant::Instant::now();
+                                current_anim_state.keyframes.last_mut().unwrap().value =
+                                    self.shared_data.dense[current_anim_state.to_rule]
+                                        .value
+                                        .clone();
+
+                                current_anim_state.delay = current_anim_state.t - 1.0;
+                                current_anim_state.start_time = instant::Instant::now();
+                            } else {
+                                // Transitioning to new rule
+                                current_anim_state.to_rule = rule_data_index;
+                                current_anim_state.keyframes.first_mut().unwrap().value =
+                                    current_value;
+                                current_anim_state.keyframes.last_mut().unwrap().value =
+                                    self.shared_data.dense[current_anim_state.to_rule]
+                                        .value
+                                        .clone();
+                                current_anim_state.t = 0.0;
+                                current_anim_state.t0 = 0.0;
+                                current_anim_state.start_time = instant::Instant::now();
+                            }
                         }
                     }
                 } else if let Some(transition_state) = self.animations.get_mut(rule_animation) {

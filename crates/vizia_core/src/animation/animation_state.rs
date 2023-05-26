@@ -103,6 +103,10 @@ where
         self.start_time = instant::Instant::now();
         self.entities.insert(entity);
     }
+
+    pub(crate) fn is_transition(&self) -> bool {
+        !(self.from_rule == usize::MAX && self.to_rule == usize::MAX)
+    }
 }
 
 impl<Prop> Default for AnimationState<Prop>
