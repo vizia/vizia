@@ -3,12 +3,14 @@ use vizia::prelude::*;
 
 const STYLE: &str = r#"
     @keyframes slidein {
-        from {
-            transform: translateX(0px);
+        0% {
+            left: 0px;
         }
-
-        to {
-            transform: translateX(100px);
+        50% {
+            left: 50px;
+        }
+        100% {
+            left: 200px;
         }
     }
 "#;
@@ -23,7 +25,7 @@ fn main() {
 
         let anim_id = cx.add_animation(animation);
 
-        Element::new(cx).size(Pixels(100.0)).background_color(Color::red()).id("elem");
+        Element::new(cx).background_color(Color::red()).size(Pixels(100.0)).id("elem");
 
         Button::new(
             cx,

@@ -91,9 +91,7 @@ pub(crate) use pseudoclass::*;
 mod transform;
 pub(crate) use transform::*;
 
-use crate::animation::{
-    Animation, AnimationProperty, AnimationState, Interpolator, Keyframe, TimingFunction,
-};
+use crate::animation::{Animation, AnimationState, Interpolator, Keyframe, TimingFunction};
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
 use bitflags::bitflags;
@@ -335,17 +333,20 @@ impl Style {
         self.animations.get(name)
     }
 
-    pub(crate) fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {
-        let animation_id = self.animation_manager.create();
-
-        fn add_keyframe<T: 'static + Interpolator + Debug + Clone + PartialEq + Default>(
+    pub(crate) fn add_keyframe(
+        &mut self,
+        animation_id: Animation,
+        time: f32,
+        properties: &Vec<Property>,
+    ) {
+        fn insert_keyframe<T: 'static + Interpolator + Debug + Clone + PartialEq + Default>(
             storage: &mut AnimatableSet<T>,
             animation_id: Animation,
             time: f32,
             value: T,
         ) {
             let keyframe = Keyframe { time, value, timing_function: TimingFunction::linear() };
-            println!("{:?}", keyframe);
+
             if let Some(anim_state) = storage.get_animation_mut(animation_id) {
                 anim_state.keyframes.push(keyframe)
             } else {
@@ -354,404 +355,273 @@ impl Style {
             }
         }
 
-        for keyframe in animation.keyframes.iter() {
-            for property in keyframe.properties.iter() {
-                match property {
-                    // DISPLAY
-                    AnimationProperty::Display(value) => {
-                        add_keyframe(&mut self.display, animation_id, keyframe.time, value.clone());
-                    }
-
-                    AnimationProperty::Opacity(value) => {
-                        add_keyframe(&mut self.opacity, animation_id, keyframe.time, value.clone());
-                    }
-
-                    AnimationProperty::ClipPath(value) => {
-                        add_keyframe(
-                            &mut self.clip_path,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    // TRANSFORM
-                    AnimationProperty::Transform(value) => {
-                        add_keyframe(
-                            &mut self.transform,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::TransformOrigin(value) => {
-                        add_keyframe(
-                            &mut self.transform_origin,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::Translate(value) => {
-                        add_keyframe(
-                            &mut self.translate,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::Rotate(value) => {
-                        add_keyframe(&mut self.rotate, animation_id, keyframe.time, value.clone());
-                    }
-
-                    AnimationProperty::Scale(value) => {
-                        add_keyframe(&mut self.scale, animation_id, keyframe.time, value.clone());
-                    }
-
-                    // BORDER
-                    AnimationProperty::BorderWidth(value) => {
-                        add_keyframe(
-                            &mut self.border_width,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::BorderColor(value) => {
-                        add_keyframe(
-                            &mut self.border_color,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::BorderTopLeftRadius(value) => {
-                        add_keyframe(
-                            &mut self.border_top_left_radius,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::BorderTopRightRadius(value) => {
-                        add_keyframe(
-                            &mut self.border_top_right_radius,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::BorderBottomLeftRadius(value) => {
-                        add_keyframe(
-                            &mut self.border_bottom_left_radius,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::BorderBottomRightRadius(value) => {
-                        add_keyframe(
-                            &mut self.border_bottom_right_radius,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    // OUTLINE
-                    AnimationProperty::OutlineWidth(value) => {
-                        add_keyframe(
-                            &mut self.outline_width,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::OutlineColor(value) => {
-                        add_keyframe(
-                            &mut self.outline_color,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::OutlineOffset(value) => {
-                        add_keyframe(
-                            &mut self.outline_offset,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    // BACKGROUND
-                    AnimationProperty::BackgroundColor(value) => {
-                        add_keyframe(
-                            &mut self.background_color,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::BackgroundImage(value) => {
-                        add_keyframe(
-                            &mut self.background_image,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::BackgroundSize(value) => {
-                        add_keyframe(
-                            &mut self.background_size,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    // BOX SHADOW
-                    AnimationProperty::BoxShadow(value) => {
-                        add_keyframe(
-                            &mut self.box_shadow,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    // TEXT
-                    AnimationProperty::FontColor(value) => {
-                        add_keyframe(
-                            &mut self.font_color,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::FontSize(value) => {
-                        add_keyframe(
-                            &mut self.font_size,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::CaretColor(value) => {
-                        add_keyframe(
-                            &mut self.caret_color,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::SelectionColor(value) => {
-                        add_keyframe(
-                            &mut self.selection_color,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    // SPACE
-                    AnimationProperty::Left(value) => {
-                        add_keyframe(&mut self.left, animation_id, keyframe.time, value.clone());
-                    }
-
-                    AnimationProperty::Right(value) => {
-                        add_keyframe(&mut self.right, animation_id, keyframe.time, value.clone());
-                    }
-
-                    AnimationProperty::Top(value) => {
-                        add_keyframe(&mut self.top, animation_id, keyframe.time, value.clone());
-                    }
-
-                    AnimationProperty::Bottom(value) => {
-                        add_keyframe(&mut self.bottom, animation_id, keyframe.time, value.clone());
-                    }
-
-                    // CHILD SPACE
-                    AnimationProperty::ChildLeft(value) => {
-                        add_keyframe(
-                            &mut self.child_left,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::ChildRight(value) => {
-                        add_keyframe(
-                            &mut self.child_right,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::ChildTop(value) => {
-                        add_keyframe(
-                            &mut self.child_top,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::ChildBottom(value) => {
-                        add_keyframe(
-                            &mut self.child_bottom,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::ColBetween(value) => {
-                        add_keyframe(
-                            &mut self.col_between,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::RowBetween(value) => {
-                        add_keyframe(
-                            &mut self.row_between,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    // SIZE
-                    AnimationProperty::Width(value) => {
-                        add_keyframe(&mut self.width, animation_id, keyframe.time, value.clone());
-                    }
-
-                    AnimationProperty::Height(value) => {
-                        add_keyframe(&mut self.height, animation_id, keyframe.time, value.clone());
-                    }
-
-                    // SIZE CONSTRAINTS
-                    AnimationProperty::MinWidth(value) => {
-                        add_keyframe(
-                            &mut self.min_width,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::MaxWidth(value) => {
-                        add_keyframe(
-                            &mut self.max_width,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::MinHeight(value) => {
-                        add_keyframe(
-                            &mut self.min_height,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::MaxHeight(value) => {
-                        add_keyframe(
-                            &mut self.max_height,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    // SPACE CONSTRAINTS
-                    AnimationProperty::MinLeft(value) => {
-                        add_keyframe(
-                            &mut self.min_left,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::MaxLeft(value) => {
-                        add_keyframe(
-                            &mut self.max_left,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::MinRight(value) => {
-                        add_keyframe(
-                            &mut self.min_right,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::MaxRight(value) => {
-                        add_keyframe(
-                            &mut self.max_right,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::MinTop(value) => {
-                        add_keyframe(&mut self.min_top, animation_id, keyframe.time, value.clone());
-                    }
-
-                    AnimationProperty::MaxTop(value) => {
-                        add_keyframe(&mut self.max_top, animation_id, keyframe.time, value.clone());
-                    }
-
-                    AnimationProperty::MinBottom(value) => {
-                        add_keyframe(
-                            &mut self.min_bottom,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
-
-                    AnimationProperty::MaxBottom(value) => {
-                        add_keyframe(
-                            &mut self.max_bottom,
-                            animation_id,
-                            keyframe.time,
-                            value.clone(),
-                        );
-                    }
+        for property in properties.iter() {
+            match property {
+                // DISPLAY
+                Property::Display(value) => {
+                    insert_keyframe(&mut self.display, animation_id, time, value.clone());
                 }
+
+                Property::Opacity(value) => {
+                    insert_keyframe(&mut self.opacity, animation_id, time, value.clone());
+                }
+
+                Property::ClipPath(value) => {
+                    insert_keyframe(&mut self.clip_path, animation_id, time, value.clone());
+                }
+
+                // TRANSFORM
+                Property::Transform(value) => {
+                    insert_keyframe(&mut self.transform, animation_id, time, value.clone());
+                }
+
+                Property::TransformOrigin(transform_origin) => {
+                    let x = transform_origin.x.to_length_or_percentage();
+                    let y = transform_origin.y.to_length_or_percentage();
+                    let value = Translate { x, y };
+                    insert_keyframe(&mut self.transform_origin, animation_id, time, value);
+                }
+
+                Property::Translate(value) => {
+                    insert_keyframe(&mut self.translate, animation_id, time, value.clone());
+                }
+
+                Property::Rotate(value) => {
+                    insert_keyframe(&mut self.rotate, animation_id, time, value.clone());
+                }
+
+                Property::Scale(value) => {
+                    insert_keyframe(&mut self.scale, animation_id, time, value.clone());
+                }
+
+                // BORDER
+                Property::BorderWidth(value) => {
+                    insert_keyframe(
+                        &mut self.border_width,
+                        animation_id,
+                        time,
+                        value.left.0.clone(),
+                    );
+                }
+
+                Property::BorderColor(value) => {
+                    insert_keyframe(&mut self.border_color, animation_id, time, value.clone());
+                }
+
+                Property::BorderTopLeftRadius(value) => {
+                    insert_keyframe(
+                        &mut self.border_top_left_radius,
+                        animation_id,
+                        time,
+                        value.clone(),
+                    );
+                }
+
+                Property::BorderTopRightRadius(value) => {
+                    insert_keyframe(
+                        &mut self.border_top_right_radius,
+                        animation_id,
+                        time,
+                        value.clone(),
+                    );
+                }
+
+                Property::BorderBottomLeftRadius(value) => {
+                    insert_keyframe(
+                        &mut self.border_bottom_left_radius,
+                        animation_id,
+                        time,
+                        value.clone(),
+                    );
+                }
+
+                Property::BorderBottomRightRadius(value) => {
+                    insert_keyframe(
+                        &mut self.border_bottom_right_radius,
+                        animation_id,
+                        time,
+                        value.clone(),
+                    );
+                }
+
+                // OUTLINE
+                Property::OutlineWidth(value) => {
+                    insert_keyframe(
+                        &mut self.outline_width,
+                        animation_id,
+                        time,
+                        value.left.0.clone(),
+                    );
+                }
+
+                Property::OutlineColor(value) => {
+                    insert_keyframe(&mut self.outline_color, animation_id, time, value.clone());
+                }
+
+                Property::OutlineOffset(value) => {
+                    insert_keyframe(&mut self.outline_offset, animation_id, time, value.clone());
+                }
+
+                // BACKGROUND
+                Property::BackgroundColor(value) => {
+                    insert_keyframe(&mut self.background_color, animation_id, time, value.clone());
+                }
+
+                Property::BackgroundImage(images) => {
+                    let images = images
+                        .into_iter()
+                        .filter_map(|img| match img {
+                            BackgroundImage::None => None,
+                            BackgroundImage::Gradient(gradient) => {
+                                Some(ImageOrGradient::Gradient(*gradient.clone()))
+                            }
+                            BackgroundImage::Url(url) => {
+                                Some(ImageOrGradient::Image(url.url.to_string()))
+                            }
+                        })
+                        .collect::<Vec<_>>();
+                    insert_keyframe(&mut self.background_image, animation_id, time, images);
+                }
+
+                Property::BackgroundSize(value) => {
+                    insert_keyframe(&mut self.background_size, animation_id, time, value.clone());
+                }
+
+                // BOX SHADOW
+                Property::BoxShadow(value) => {
+                    insert_keyframe(&mut self.box_shadow, animation_id, time, value.clone());
+                }
+
+                // TEXT
+                Property::FontColor(value) => {
+                    insert_keyframe(&mut self.font_color, animation_id, time, value.clone());
+                }
+
+                Property::FontSize(value) => {
+                    insert_keyframe(&mut self.font_size, animation_id, time, value.clone());
+                }
+
+                Property::CaretColor(value) => {
+                    insert_keyframe(&mut self.caret_color, animation_id, time, value.clone());
+                }
+
+                Property::SelectionColor(value) => {
+                    insert_keyframe(&mut self.selection_color, animation_id, time, value.clone());
+                }
+
+                // SPACE
+                Property::Left(value) => {
+                    insert_keyframe(&mut self.left, animation_id, time, value.clone());
+                }
+
+                Property::Right(value) => {
+                    insert_keyframe(&mut self.right, animation_id, time, value.clone());
+                }
+
+                Property::Top(value) => {
+                    insert_keyframe(&mut self.top, animation_id, time, value.clone());
+                }
+
+                Property::Bottom(value) => {
+                    insert_keyframe(&mut self.bottom, animation_id, time, value.clone());
+                }
+
+                // CHILD SPACE
+                Property::ChildLeft(value) => {
+                    insert_keyframe(&mut self.child_left, animation_id, time, value.clone());
+                }
+
+                Property::ChildRight(value) => {
+                    insert_keyframe(&mut self.child_right, animation_id, time, value.clone());
+                }
+
+                Property::ChildTop(value) => {
+                    insert_keyframe(&mut self.child_top, animation_id, time, value.clone());
+                }
+
+                Property::ChildBottom(value) => {
+                    insert_keyframe(&mut self.child_bottom, animation_id, time, value.clone());
+                }
+
+                Property::ColBetween(value) => {
+                    insert_keyframe(&mut self.col_between, animation_id, time, value.clone());
+                }
+
+                Property::RowBetween(value) => {
+                    insert_keyframe(&mut self.row_between, animation_id, time, value.clone());
+                }
+
+                // SIZE
+                Property::Width(value) => {
+                    insert_keyframe(&mut self.width, animation_id, time, value.clone());
+                }
+
+                Property::Height(value) => {
+                    insert_keyframe(&mut self.height, animation_id, time, value.clone());
+                }
+
+                // SIZE CONSTRAINTS
+                Property::MinWidth(value) => {
+                    insert_keyframe(&mut self.min_width, animation_id, time, value.clone());
+                }
+
+                Property::MaxWidth(value) => {
+                    insert_keyframe(&mut self.max_width, animation_id, time, value.clone());
+                }
+
+                Property::MinHeight(value) => {
+                    insert_keyframe(&mut self.min_height, animation_id, time, value.clone());
+                }
+
+                Property::MaxHeight(value) => {
+                    insert_keyframe(&mut self.max_height, animation_id, time, value.clone());
+                }
+
+                // SPACE CONSTRAINTS
+                Property::MinLeft(value) => {
+                    insert_keyframe(&mut self.min_left, animation_id, time, value.clone());
+                }
+
+                Property::MaxLeft(value) => {
+                    insert_keyframe(&mut self.max_left, animation_id, time, value.clone());
+                }
+
+                Property::MinRight(value) => {
+                    insert_keyframe(&mut self.min_right, animation_id, time, value.clone());
+                }
+
+                Property::MaxRight(value) => {
+                    insert_keyframe(&mut self.max_right, animation_id, time, value.clone());
+                }
+
+                Property::MinTop(value) => {
+                    insert_keyframe(&mut self.min_top, animation_id, time, value.clone());
+                }
+
+                Property::MaxTop(value) => {
+                    insert_keyframe(&mut self.max_top, animation_id, time, value.clone());
+                }
+
+                Property::MinBottom(value) => {
+                    insert_keyframe(&mut self.min_bottom, animation_id, time, value.clone());
+                }
+
+                Property::MaxBottom(value) => {
+                    insert_keyframe(&mut self.max_bottom, animation_id, time, value.clone());
+                }
+
+                _ => {}
             }
         }
+    }
+
+    pub(crate) fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {
+        let animation_id = self.animation_manager.create();
+        println!("add animation: {:?}", animation_id);
+        for keyframe in animation.keyframes.iter() {
+            self.add_keyframe(animation_id, keyframe.time, &keyframe.properties);
+        }
+
         animation_id
     }
 
@@ -761,6 +631,7 @@ impl Style {
         animation: Animation,
         duration: Duration,
     ) {
+        println!("play anim: {} {:?}", entity, animation);
         self.display.play_animation(entity, animation, duration);
         self.opacity.play_animation(entity, animation, duration);
         self.clip_path.play_animation(entity, animation, duration);
@@ -855,32 +726,30 @@ impl Style {
 
                     CssRule::Keyframes(keyframes_rule) => {
                         let name = keyframes_rule.name.as_string();
-                        let mut anim_builder = AnimationBuilder::new();
+
+                        let animation_id = self.animation_manager.create();
+
+                        // let mut anim_builder = AnimationBuilder::new();
                         for keyframes in keyframes_rule.keyframes {
+                            println!("{:?}", keyframes);
                             for selector in keyframes.selectors.iter() {
                                 let time = match selector {
                                     KeyframeSelector::From => 0.0,
                                     KeyframeSelector::To => 1.0,
-                                    KeyframeSelector::Percentage(percentage) => percentage.0,
-                                };
-                                anim_builder = anim_builder.keyframe(time, |mut keyframe| {
-                                    for property in keyframes.declarations.declarations.iter() {
-                                        match property {
-                                            Property::Transform(transform) => {
-                                                keyframe = keyframe.transform(transform.clone());
-                                            }
-
-                                            _ => {}
-                                        }
+                                    KeyframeSelector::Percentage(percentage) => {
+                                        percentage.0 / 100.0
                                     }
+                                };
 
-                                    keyframe
-                                });
+                                self.add_keyframe(
+                                    animation_id,
+                                    time,
+                                    &keyframes.declarations.declarations,
+                                );
                             }
                         }
-                        let animation = self.add_animation(anim_builder);
-                        self.animations.insert(name, animation);
-                        println!("{:?}", animation);
+
+                        self.animations.insert(name, animation_id);
                     }
 
                     _ => {}

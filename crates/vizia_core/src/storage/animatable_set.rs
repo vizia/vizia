@@ -1,3 +1,5 @@
+use std::println;
+
 use crate::animation::{Animation, AnimationState, Interpolator};
 use crate::prelude::*;
 use crate::style::Rule;
@@ -74,7 +76,7 @@ impl std::fmt::Debug for DataIndex {
     }
 }
 
-/// An Index is used by the AnimatableStorage and contains a data index and an animation index.
+/// An Index is used by the AnimatableSet and contains a data index and an animation index.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct InlineIndex {
     data_index: DataIndex,
@@ -127,7 +129,7 @@ impl SparseSetIndex for SharedIndex {
     }
 }
 
-/// Animatable storage is used for storing inline and shared data for entities as well as definitions for
+/// Animatable set is used for storing inline and shared data for entities as well as definitions for
 /// animations, which can be played for entities, and transitions, which play when an entity matches a new shared style
 /// rule which defines a trnasition.
 ///
@@ -315,7 +317,6 @@ where
             if active_anim_index < self.active_animations.len() {
                 let anim_state = &mut self.active_animations[active_anim_index];
                 if anim_state.id == animation {
-                    anim_state.t0 = 0.0;
                     anim_state.active = true;
                     anim_state.t = 0.0;
                     anim_state.start_time = instant::Instant::now();
@@ -369,45 +370,37 @@ where
     pub fn tick(&mut self, time: instant::Instant) -> bool {
         if self.has_animations() {
             for state in self.active_animations.iter_mut() {
-                // If the animation is already finished then return false
-                if state.t0 == 1.0 {
+                // If the animation is already finished then skip
+                if state.t == 1.0 {
                     continue;
                 }
 
-                let start = state.keyframes.first().unwrap();
-                let end = state.keyframes.last().unwrap();
-
-                if start.value == end.value {
-                    state.t0 = 1.0;
-                    state.output = Some(end.value.clone());
-                    continue;
+                if state.keyframes.len() == 1 {
+                    state.output = Some(state.keyframes[0].value.clone());
+                    return true;
                 }
 
                 let elapsed_time = time.duration_since(state.start_time);
+                let mut normalised_time =
+                    (elapsed_time.as_secs_f32() / state.duration.as_secs_f32()) - state.delay;
 
-                // Store previous time state
-                state.t0 = state.t;
+                normalised_time = normalised_time.clamp(0.0, 1.0);
 
-                // Update time state
-                state.t = (elapsed_time.as_secs_f32() / state.duration.as_secs_f32()) - state.delay;
-
-                if state.t >= 1.0 {
-                    //Animation is finished
-                    state.output = Some(T::interpolate(&start.value, &end.value, 1.0));
-
-                    if !state.persistent {
-                        //state.output = Some(T::interpolate(&start.1, &end.1, 0.0));
-                        state.t = 1.0;
-                        state.active = false;
-                    } else {
-                        state.t = 1.0;
-                    }
-                } else if state.t <= 0.0 {
-                    state.output = Some(start.value.clone());
-                } else {
-                    let timing_t = start.timing_function.value(state.t);
-                    state.output = Some(T::interpolate(&start.value, &end.value, timing_t));
+                let mut i = 0;
+                while i < state.keyframes.len() - 1 && state.keyframes[i + 1].time < normalised_time
+                {
+                    i += 1;
                 }
+                let start = &state.keyframes[i];
+                let end = &state.keyframes[i + 1];
+
+                let normalised_elapsed_time =
+                    (normalised_time - start.time) / (end.time - start.time);
+
+                state.t = normalised_time;
+
+                let timing_t = start.timing_function.value(normalised_elapsed_time);
+                state.output = Some(T::interpolate(&start.value, &end.value, timing_t));
             }
 
             self.remove_innactive_animations();
@@ -436,13 +429,13 @@ where
         let inactive: Vec<AnimationState<T>> = self
             .active_animations
             .iter()
-            .filter(|e| e.t0 == 1.0 && !e.persistent)
+            .filter(|e| e.t == 1.0 && !e.persistent)
             .cloned()
             .collect();
 
         // Remove inactive animation states from active animations list
         // Retains persistent animations
-        self.active_animations.retain(|e| e.t0 < 1.0 || e.persistent);
+        self.active_animations.retain(|e| e.t < 1.0 || e.persistent);
 
         for state in inactive.into_iter() {
             for entity in state.entities.iter() {
@@ -459,7 +452,7 @@ where
 
     pub fn has_animations(&self) -> bool {
         for state in self.active_animations.iter() {
-            if state.t0 < 1.0 {
+            if state.t < 1.0 {
                 return true;
             }
         }
@@ -609,7 +602,6 @@ where
                                         .value
                                         .clone();
                                 current_anim_state.t = 0.0;
-                                current_anim_state.t0 = 0.0;
                                 current_anim_state.start_time = instant::Instant::now();
                             }
                         }
