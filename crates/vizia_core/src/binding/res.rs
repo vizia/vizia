@@ -86,6 +86,7 @@ impl_res_simple!(TextAlign);
 impl_res_clone!(BoxShadow);
 impl_res_clone!(LinearGradientBuilder);
 impl_res_clone!(BoxShadowBuilder);
+impl_res_clone!(Filter);
 
 impl<T, L> Res<T> for L
 where
