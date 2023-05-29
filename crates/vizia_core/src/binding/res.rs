@@ -87,6 +87,7 @@ impl_res_clone!(BoxShadow);
 impl_res_clone!(LinearGradientBuilder);
 impl_res_clone!(BoxShadowBuilder);
 impl_res_clone!(Filter);
+impl_res_simple!(Opacity);
 
 impl<T, L> Res<T> for L
 where
