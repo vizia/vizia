@@ -65,7 +65,6 @@ use instant::Duration;
 use morphorm::{LayoutType, PositionType, Units};
 use std::collections::HashSet;
 use std::fmt::Debug;
-use std::println;
 use vizia_id::GenerationalId;
 
 use crate::prelude::*;
@@ -615,7 +614,6 @@ impl Style {
 
     pub(crate) fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {
         let animation_id = self.animation_manager.create();
-        println!("add animation: {:?}", animation_id);
         for keyframe in animation.keyframes.iter() {
             self.add_keyframe(animation_id, keyframe.time, &keyframe.properties);
         }
@@ -629,7 +627,6 @@ impl Style {
         animation: Animation,
         duration: Duration,
     ) {
-        println!("play anim: {} {:?}", entity, animation);
         self.display.play_animation(entity, animation, duration);
         self.opacity.play_animation(entity, animation, duration);
         self.clip_path.play_animation(entity, animation, duration);
@@ -727,9 +724,7 @@ impl Style {
 
                         let animation_id = self.animation_manager.create();
 
-                        // let mut anim_builder = AnimationBuilder::new();
                         for keyframes in keyframes_rule.keyframes {
-                            println!("{:?}", keyframes);
                             for selector in keyframes.selectors.iter() {
                                 let time = match selector {
                                     KeyframeSelector::From => 0.0,

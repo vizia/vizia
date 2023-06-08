@@ -54,7 +54,47 @@ pub mod icons {
     pub const ICON_PIG_OFF: &str = "\u{f177}";
     pub const ICON_PIG: &str = "\u{ef52}";
     pub const ICON_SPIDER: &str = "\u{f293}";
+
     // Arrows
+    pub const ICON_ARROW_AUTOFIT_CONTENT: &str = "\u{ef31}";
+    pub const ICON_ARROW_AUTOFIT_DOWN: &str = "\u{ef32}";
+    pub const ICON_ARROW_AUTOFIT_HEIGHT: &str = "\u{ef33}";
+    pub const ICON_ARROW_AUTOFIT_LEFT: &str = "\u{ef34}";
+    pub const ICON_ARROW_AUTOFIT_RIGHT: &str = "\u{ef35}";
+    pub const ICON_ARROW_AUTOFIT_UP: &str = "\u{ef36}";
+    pub const ICON_ARROW_AUTOFIT_WIDTH: &str = "\u{ef37}";
+    pub const ICON_ARROW_BACK_UP_DOUBLE: &str = "\u{f9ec}";
+    pub const ICON_ARROW_BACK_UP: &str = "\u{eb77}";
+    pub const ICON_ARROW_BACK: &str = "\u{ea0c}";
+    pub const ICON_ARROW_BADGE_DOWN: &str = "\u{f60b}";
+    pub const ICON_ARROW_BADGE_LEFT: &str = "\u{f60c}";
+    pub const ICON_ARROW_BADGE_RIGHT: &str = "\u{f60d}";
+    pub const ICON_ARROW_BADGE_UP: &str = "\u{f60e}";
+    pub const ICON_ARROW_BAR_DOWN: &str = "\u{ea0d}";
+    pub const ICON_ARROW_BAR_LEFT: &str = "\u{ea0e}";
+    pub const ICON_ARROW_BAR_RIGHT: &str = "\u{ea0f}";
+    pub const ICON_ARROW_BAR_TO_DOWN: &str = "\u{ec88}";
+    pub const ICON_ARROW_BAR_TO_LEFT: &str = "\u{ec89}";
+    pub const ICON_ARROW_BAR_TO_RIGHT: &str = "\u{ec8a}";
+    pub const ICON_ARROW_BAR_TO_UP: &str = "\u{ec8b}";
+    pub const ICON_ARROW_BAR_UP: &str = "\u{ea10}";
+    pub const ICON_ARROW_BEAR_LEFT_2: &str = "\u{f044}";
+    pub const ICON_ARROW_BEAR_LEFT: &str = "\u{f045}";
+    pub const ICON_ARROW_BEAR_RIGHT_2: &str = "\u{f046}";
+    pub const ICON_ARROW_BEAR_RIGHT: &str = "\u{f047}";
+    pub const ICON_ARROW_BIG_DOWN_LINE: &str = "\u{efe8}";
+    pub const ICON_ARROW_BIG_DOWN_LINES: &str = "\u{efe9}";
+    pub const ICON_ARROW_BIG_DOWN: &str = "\u{edda}";
+    pub const ICON_ARROW_BIG_LEFT_LINE: &str = "\u{efea}";
+    pub const ICON_ARROW_BIG_LEFT_LINES: &str = "\u{efeb}";
+    pub const ICON_ARROW_BIG_LEFT: &str = "\u{eddb}";
+    pub const ICON_ARROW_BIG_RIGHT_LINE: &str = "\u{efec}";
+    pub const ICON_ARROW_BIG_RIGHT_LINES: &str = "\u{efed}";
+    pub const ICON_ARROW_BIG_RIGHT: &str = "\u{eddc}";
+    pub const ICON_ARROW_BIG_UP_LINE: &str = "\u{efee}";
+    pub const ICON_ARROW_BIG_UP_LINES: &str = "\u{efef}";
+    pub const ICON_ARROW_BIG_UP: &str = "\u{eddd}";
+
     pub const ICON_CHEVRON_DOWN_LEFT: &str = "\u{ed09}";
     pub const ICON_CHEVRON_DOWN_RIGHT: &str = "\u{ed0a}";
     pub const ICON_CHEVRON_DOWN: &str = "\u{ea5f}";
@@ -63,8 +103,6 @@ pub mod icons {
     pub const ICON_CHEVRON_UP_LEFT: &str = "\u{ed0b}";
     pub const ICON_CHEVRON_UP_RIGHT: &str = "\u{ed0c}";
     pub const ICON_CHEVRON_UP: &str = "\u{ea62}";
-
-    pub const ICON_ARROW_BIG_UP: &str = "\u{eddd}";
 
     pub const ICON_COMMAND: &str = "\u{ea78}";
 

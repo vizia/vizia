@@ -20,7 +20,7 @@ pub(crate) struct StoredImage {
 
 pub(crate) enum ImageOrId {
     Image(image::DynamicImage, femtovg::ImageFlags),
-    Id(femtovg::ImageId, (u32, u32)), // need to be able to get dimensions without a canvas
+    Id(femtovg::ImageId, (u32, u32)),
 }
 
 impl ImageOrId {
@@ -45,9 +45,6 @@ pub enum ImageRetentionPolicy {
     DropWhenUnusedForOneFrame,
     DropWhenNoObservers,
 }
-
-// #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-// pub struct Resource(u32);
 
 #[doc(hidden)]
 #[derive(Default)]
@@ -154,13 +151,8 @@ impl ResourceManager {
     }
 
     pub fn evict_unused_images(&mut self) {
-        self.images.retain(|name, img| match img.retention_policy {
-            ImageRetentionPolicy::DropWhenUnusedForOneFrame => {
-                if !img.used {
-                    println!("Evict image: {}", name);
-                }
-                img.used
-            }
+        self.images.retain(|_, img| match img.retention_policy {
+            ImageRetentionPolicy::DropWhenUnusedForOneFrame => img.used,
 
             ImageRetentionPolicy::DropWhenNoObservers => !img.observers.is_empty(),
 

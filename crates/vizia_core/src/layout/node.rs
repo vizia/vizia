@@ -192,7 +192,6 @@ impl Node for Entity {
                 child_space_y += val;
             }
 
-            // println!("maxx_width: {}", max_width);
             sublayout.text_context.sync_styles(*self, store);
             let (text_width, mut text_height) =
                 sublayout.text_context.with_buffer(*self, |fs, buffer| {

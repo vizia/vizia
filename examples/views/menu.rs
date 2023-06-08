@@ -1,14 +1,5 @@
 use vizia::prelude::*;
-use vizia_core::icons::{
-    ICON_CLIPBOARD, ICON_COMMAND, ICON_COPY, ICON_CURSOR_TEXT, ICON_CUT, ICON_SHARE_3, ICON_TRASH,
-};
-
-const STYLE: &str = r#"
-    * {
-        border-width: 1px;
-        border-color: red;
-    }
-"#;
+use vizia_core::icons::{ICON_CLIPBOARD, ICON_COPY, ICON_CUT};
 
 #[derive(Lens)]
 pub struct AppData {}

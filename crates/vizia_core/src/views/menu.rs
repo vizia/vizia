@@ -232,9 +232,6 @@ impl View for MenuButton {
                     cx.emit_custom(
                         Event::new(MenuEvent::Close).target(parent).propagate(Propagation::Subtree),
                     );
-                    // println!("do this");
-                    // cx.emit(MenuEvent::Open);
-                    // cx.focus();
                 }
             }
 
@@ -259,25 +256,12 @@ where
             .build(cx, |cx| {
                 let parent = cx.current;
 
-                // if lens.get(cx) {
-                // if capture_focus {
-                //     VStack::new(cx, &content).lock_focus_to_within();
-                // } else {
                 (content)(cx);
-                // }
-                // }
 
                 Binding::new(cx, lens.clone(), move |cx, _| {
                     if let Some(geo) = cx.cache.geo_changed.get_mut(parent) {
                         geo.set(GeoChanged::WIDTH_CHANGED, true);
                     }
-
-                    // if let Some(first_child) = cx.tree.get_first_child(parent) {
-                    //     println!("first child: {}", first_child);
-                    //     cx.with_current(first_child, |cx| {
-                    //         cx.focus();
-                    //     })
-                    // }
                 });
             })
             .role(Role::Dialog)

@@ -1,9 +1,7 @@
-use std::println;
-
 use crate::{
-    parse_declaration, CssRule, CssRuleList, CustomParseError, DashedIdent, DeclarationBlock,
-    DeclarationList, KeyframeListParser, KeyframesName, KeyframesRule, Location, Parse,
-    ParserOptions, SelectorParser, Selectors, StyleRule,
+    parse_declaration, CssRule, CssRuleList, CustomParseError, DeclarationBlock, DeclarationList,
+    KeyframeListParser, KeyframesName, KeyframesRule, Location, Parse, ParserOptions,
+    SelectorParser, Selectors, StyleRule,
 };
 use cssparser::*;
 use selectors::SelectorList;

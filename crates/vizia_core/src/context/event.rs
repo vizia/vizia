@@ -396,9 +396,29 @@ impl<'a> EventContext<'a> {
         *self.focused
     }
 
+    // PseudoClass Getters
+
     /// Returns true if the current view is being hovered.
     pub fn is_hovered(&self) -> bool {
         self.hovered() == self.current
+    }
+
+    /// Returns true if the current view is active.
+    pub fn is_active(&self) -> bool {
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get(self.current) {
+            pseudo_classes.contains(PseudoClassFlags::ACTIVE)
+        } else {
+            false
+        }
+    }
+
+    /// Returns true if the mouse cursor is over the current view.
+    pub fn is_over(&self) -> bool {
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get(self.current) {
+            pseudo_classes.contains(PseudoClassFlags::OVER)
+        } else {
+            false
+        }
     }
 
     /// Returns true if the current view is focused.
@@ -419,24 +439,6 @@ impl<'a> EventContext<'a> {
         self.style.disabled.get(self.current()).cloned().unwrap_or_default()
     }
 
-    /// Returns true if the mouse cursor is over the current view.
-    pub fn is_over(&self) -> bool {
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get(self.current) {
-            pseudo_classes.contains(PseudoClassFlags::OVER)
-        } else {
-            false
-        }
-    }
-
-    /// Returns true if the current view is active.
-    pub fn is_active(&self) -> bool {
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get(self.current) {
-            pseudo_classes.contains(PseudoClassFlags::ACTIVE)
-        } else {
-            false
-        }
-    }
-
     /// Returns true if the current view is checked.
     pub fn is_checked(&self) -> bool {
         if let Some(pseudo_classes) = self.style.pseudo_classes.get(self.current) {
@@ -454,6 +456,8 @@ impl<'a> EventContext<'a> {
             false
         }
     }
+
+    //
 
     /// Prevents the cursor icon from changing until the lock is released.
     pub fn lock_cursor_icon(&mut self) {
@@ -692,6 +696,24 @@ impl<'a> EventContext<'a> {
         self.style.needs_restyle();
     }
 
+    pub fn set_read_only(&mut self, flag: bool) {
+        let current = self.current();
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
+            pseudo_classes.set(PseudoClassFlags::READ_ONLY, flag);
+        }
+
+        self.style.needs_restyle();
+    }
+
+    pub fn set_read_write(&mut self, flag: bool) {
+        let current = self.current();
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
+            pseudo_classes.set(PseudoClassFlags::READ_WRITE, flag);
+        }
+
+        self.style.needs_restyle();
+    }
+
     /// Sets the checked state of the current view.
     ///
     /// Checked elements can be selected with the `:checked` CSS pseudo-class selector:
@@ -722,7 +744,6 @@ impl<'a> EventContext<'a> {
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
             pseudo_classes.set(PseudoClassFlags::VALID, flag);
             pseudo_classes.set(PseudoClassFlags::INVALID, !flag);
-            println!("{}", pseudo_classes.contains(PseudoClassFlags::INVALID));
         }
 
         self.style.needs_restyle();
