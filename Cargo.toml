@@ -230,6 +230,10 @@ name = "locale_binding"
 path = "examples/localization/locale_binding.rs"
 
 [[example]]
+name = "inline"
+path = "examples/style/inline.rs"
+
+[[example]]
 name = "outline"
 path = "examples/style/outline.rs"
 

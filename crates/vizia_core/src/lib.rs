@@ -98,12 +98,7 @@ pub mod prelude {
     pub use vizia_storage::{Tree, TreeExt};
     pub use vizia_window::WindowSize;
 
-    pub use super::style::{
-        Angle, BackgroundImage, BorderCornerShape, ClipPath, Color, CursorIcon, Display, Filter,
-        FontStyle, FontWeight, FontWeightKeyword, Length, LengthOrPercentage, LengthValue,
-        LineDirection, LinearGradient, Matrix, Opacity, Overflow, TextAlign, Transform, Visibility,
-        RGBA,
-    };
+    pub use super::style::*;
 
     pub use cosmic_text::FamilyOwned;
     pub use morphorm::Units::*;

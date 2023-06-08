@@ -11,8 +11,6 @@ use crate::style::SystemFlags;
 /// and when a node undergoes relayout remove the descendants that have been processed from the list,
 /// then continue relayout on the remaining nodes in the list.
 pub(crate) fn layout_system(cx: &mut Context) {
-    // text_constraints_system(cx);
-
     if cx.style.system_flags.contains(SystemFlags::RELAYOUT) {
         // Perform layout on the whole tree.
         Entity::root().layout(
@@ -139,7 +137,19 @@ pub(crate) fn layout_system(cx: &mut Context) {
             }
         }
 
-        // Defer resetting the layout system flag to the geometry changed system
+        // A relayout, retransform, or reclip, can cause the element under the cursor to change. So we push a mouse move event here to force
+        // a new event cycle and the hover system to trigger.
+        #[cfg(feature = "winit")]
+        if let Some(proxy) = &cx.event_proxy {
+            let event = Event::new(WindowEvent::MouseMove(cx.mouse.cursorx, cx.mouse.cursory))
+                .target(Entity::root())
+                .origin(Entity::root())
+                .propagate(Propagation::Up);
+
+            proxy.send(event).expect("Failed to send event");
+        }
+
+        cx.style.system_flags.set(SystemFlags::RELAYOUT, false);
     }
 }
 

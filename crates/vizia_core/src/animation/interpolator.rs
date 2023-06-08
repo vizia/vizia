@@ -11,7 +11,7 @@ use crate::style::ImageOrGradient;
 
 /// A trait which describes how a property is interpolated for animations.
 /// TODO: Make this crate private when `AnimatableSet` can be made crate private.
-pub trait Interpolator {
+pub(crate) trait Interpolator {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self;
 }
 

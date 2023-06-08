@@ -13,8 +13,8 @@ pub struct Scale {
 
 impl Scale {
     /// Creates a new scale.
-    pub fn new(x: PercentageOrNumber, y: PercentageOrNumber) -> Self {
-        Self { x, y }
+    pub fn new<P1: Into<PercentageOrNumber>, P2: Into<PercentageOrNumber>>(x: P1, y: P2) -> Self {
+        Self { x: x.into(), y: y.into() }
     }
 }
 

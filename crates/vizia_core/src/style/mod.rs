@@ -72,9 +72,10 @@ use crate::prelude::*;
 pub use vizia_style::{
     Angle, BackgroundImage, BackgroundSize, BorderCornerShape, BoxShadow, ClipPath, Color, CssRule,
     CursorIcon, Display, Filter, FontFamily, FontSize, FontStretch, FontStyle, FontWeight,
-    FontWeightKeyword, GenericFontFamily, Gradient, Length, LengthOrPercentage, LengthValue,
-    LineDirection, LinearGradient, Matrix, Opacity, Overflow, Scale, TextAlign, Transform,
-    Transition, Translate, Visibility, RGBA,
+    FontWeightKeyword, GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword,
+    Length, LengthOrPercentage, LengthValue, LineDirection, LinearGradient, Matrix, Opacity,
+    Overflow, Position, Scale, TextAlign, Transform, Transition, Translate, VerticalPosition,
+    VerticalPositionKeyword, Visibility, RGBA,
 };
 
 use vizia_style::{
@@ -180,119 +181,119 @@ pub struct Style {
     pub numeric_value: SparseSet<f64>,
 
     // Display
-    pub display: AnimatableSet<Display>,
+    pub(crate) display: AnimatableSet<Display>,
 
     // Visibility
-    pub visibility: StyleSet<Visibility>,
+    pub(crate) visibility: StyleSet<Visibility>,
 
     // Opacity
-    pub opacity: AnimatableSet<Opacity>,
+    pub(crate) opacity: AnimatableSet<Opacity>,
 
     // Z Order
-    pub z_index: StyleSet<i32>,
+    pub(crate) z_index: StyleSet<i32>,
 
     // Clipping
-    pub clip_path: AnimatableSet<ClipPath>,
+    pub(crate) clip_path: AnimatableSet<ClipPath>,
 
     // Overflow
-    pub overflowx: StyleSet<Overflow>,
-    pub overflowy: StyleSet<Overflow>,
+    pub(crate) overflowx: StyleSet<Overflow>,
+    pub(crate) overflowy: StyleSet<Overflow>,
 
     // Filters
-    pub backdrop_filter: AnimatableSet<Filter>,
+    pub(crate) backdrop_filter: AnimatableSet<Filter>,
 
     // Transform
-    pub transform: AnimatableSet<Vec<Transform>>,
-    pub transform_origin: AnimatableSet<Translate>,
-    pub translate: AnimatableSet<Translate>,
-    pub rotate: AnimatableSet<Angle>,
-    pub scale: AnimatableSet<Scale>,
+    pub(crate) transform: AnimatableSet<Vec<Transform>>,
+    pub(crate) transform_origin: AnimatableSet<Translate>,
+    pub(crate) translate: AnimatableSet<Translate>,
+    pub(crate) rotate: AnimatableSet<Angle>,
+    pub(crate) scale: AnimatableSet<Scale>,
 
     // Border
-    pub border_width: AnimatableSet<LengthOrPercentage>,
-    pub border_color: AnimatableSet<Color>,
+    pub(crate) border_width: AnimatableSet<LengthOrPercentage>,
+    pub(crate) border_color: AnimatableSet<Color>,
 
     // Border Shape
-    pub border_top_left_shape: StyleSet<BorderCornerShape>,
-    pub border_top_right_shape: StyleSet<BorderCornerShape>,
-    pub border_bottom_left_shape: StyleSet<BorderCornerShape>,
-    pub border_bottom_right_shape: StyleSet<BorderCornerShape>,
+    pub(crate) border_top_left_shape: StyleSet<BorderCornerShape>,
+    pub(crate) border_top_right_shape: StyleSet<BorderCornerShape>,
+    pub(crate) border_bottom_left_shape: StyleSet<BorderCornerShape>,
+    pub(crate) border_bottom_right_shape: StyleSet<BorderCornerShape>,
 
     // Border Radius
-    pub border_top_left_radius: AnimatableSet<LengthOrPercentage>,
-    pub border_top_right_radius: AnimatableSet<LengthOrPercentage>,
-    pub border_bottom_left_radius: AnimatableSet<LengthOrPercentage>,
-    pub border_bottom_right_radius: AnimatableSet<LengthOrPercentage>,
+    pub(crate) border_top_left_radius: AnimatableSet<LengthOrPercentage>,
+    pub(crate) border_top_right_radius: AnimatableSet<LengthOrPercentage>,
+    pub(crate) border_bottom_left_radius: AnimatableSet<LengthOrPercentage>,
+    pub(crate) border_bottom_right_radius: AnimatableSet<LengthOrPercentage>,
 
     // Outline
-    pub outline_width: AnimatableSet<LengthOrPercentage>,
-    pub outline_color: AnimatableSet<Color>,
-    pub outline_offset: AnimatableSet<LengthOrPercentage>,
+    pub(crate) outline_width: AnimatableSet<LengthOrPercentage>,
+    pub(crate) outline_color: AnimatableSet<Color>,
+    pub(crate) outline_offset: AnimatableSet<LengthOrPercentage>,
 
     // Background
-    pub background_color: AnimatableSet<Color>,
-    pub background_image: AnimatableSet<Vec<ImageOrGradient>>,
-    pub background_size: AnimatableSet<Vec<BackgroundSize>>,
+    pub(crate) background_color: AnimatableSet<Color>,
+    pub(crate) background_image: AnimatableSet<Vec<ImageOrGradient>>,
+    pub(crate) background_size: AnimatableSet<Vec<BackgroundSize>>,
 
     // Box Shadow
-    pub box_shadow: AnimatableSet<Vec<BoxShadow>>,
+    pub(crate) box_shadow: AnimatableSet<Vec<BoxShadow>>,
 
     // Text & Font
-    pub text_wrap: StyleSet<bool>,
-    pub text_align: StyleSet<TextAlign>,
-    pub font_family: StyleSet<Vec<FamilyOwned>>,
-    pub font_color: AnimatableSet<Color>,
-    pub font_size: AnimatableSet<FontSize>,
-    pub font_weight: StyleSet<FontWeight>,
-    pub font_style: StyleSet<FontStyle>,
-    pub font_stretch: StyleSet<FontStretch>,
-    pub caret_color: AnimatableSet<Color>,
-    pub selection_color: AnimatableSet<Color>,
+    pub(crate) text_wrap: StyleSet<bool>,
+    pub(crate) text_align: StyleSet<TextAlign>,
+    pub(crate) font_family: StyleSet<Vec<FamilyOwned>>,
+    pub(crate) font_color: AnimatableSet<Color>,
+    pub(crate) font_size: AnimatableSet<FontSize>,
+    pub(crate) font_weight: StyleSet<FontWeight>,
+    pub(crate) font_style: StyleSet<FontStyle>,
+    pub(crate) font_stretch: StyleSet<FontStretch>,
+    pub(crate) caret_color: AnimatableSet<Color>,
+    pub(crate) selection_color: AnimatableSet<Color>,
 
     // cursor Icon
-    pub cursor: StyleSet<CursorIcon>,
+    pub(crate) cursor: StyleSet<CursorIcon>,
 
     // LAYOUT
 
     // Layout Type
-    pub layout_type: StyleSet<LayoutType>,
+    pub(crate) layout_type: StyleSet<LayoutType>,
 
     // Position Type
-    pub position_type: StyleSet<PositionType>,
+    pub(crate) position_type: StyleSet<PositionType>,
 
     // Spacing
-    pub left: AnimatableSet<Units>,
-    pub right: AnimatableSet<Units>,
-    pub top: AnimatableSet<Units>,
-    pub bottom: AnimatableSet<Units>,
+    pub(crate) left: AnimatableSet<Units>,
+    pub(crate) right: AnimatableSet<Units>,
+    pub(crate) top: AnimatableSet<Units>,
+    pub(crate) bottom: AnimatableSet<Units>,
 
     // Child Spacing
-    pub child_left: AnimatableSet<Units>,
-    pub child_right: AnimatableSet<Units>,
-    pub child_top: AnimatableSet<Units>,
-    pub child_bottom: AnimatableSet<Units>,
-    pub row_between: AnimatableSet<Units>,
-    pub col_between: AnimatableSet<Units>,
+    pub(crate) child_left: AnimatableSet<Units>,
+    pub(crate) child_right: AnimatableSet<Units>,
+    pub(crate) child_top: AnimatableSet<Units>,
+    pub(crate) child_bottom: AnimatableSet<Units>,
+    pub(crate) row_between: AnimatableSet<Units>,
+    pub(crate) col_between: AnimatableSet<Units>,
 
     // Size
-    pub width: AnimatableSet<Units>,
-    pub height: AnimatableSet<Units>,
+    pub(crate) width: AnimatableSet<Units>,
+    pub(crate) height: AnimatableSet<Units>,
 
     // Size Constraints
-    pub min_width: AnimatableSet<Units>,
-    pub max_width: AnimatableSet<Units>,
-    pub min_height: AnimatableSet<Units>,
-    pub max_height: AnimatableSet<Units>,
+    pub(crate) min_width: AnimatableSet<Units>,
+    pub(crate) max_width: AnimatableSet<Units>,
+    pub(crate) min_height: AnimatableSet<Units>,
+    pub(crate) max_height: AnimatableSet<Units>,
 
     // Spacing Constraints
-    pub min_left: AnimatableSet<Units>,
-    pub max_left: AnimatableSet<Units>,
-    pub min_right: AnimatableSet<Units>,
-    pub max_right: AnimatableSet<Units>,
-    pub min_top: AnimatableSet<Units>,
-    pub max_top: AnimatableSet<Units>,
-    pub min_bottom: AnimatableSet<Units>,
-    pub max_bottom: AnimatableSet<Units>,
+    pub(crate) min_left: AnimatableSet<Units>,
+    pub(crate) max_left: AnimatableSet<Units>,
+    pub(crate) min_right: AnimatableSet<Units>,
+    pub(crate) max_right: AnimatableSet<Units>,
+    pub(crate) min_top: AnimatableSet<Units>,
+    pub(crate) max_top: AnimatableSet<Units>,
+    pub(crate) min_bottom: AnimatableSet<Units>,
+    pub(crate) max_bottom: AnimatableSet<Units>,
 
     pub(crate) system_flags: SystemFlags,
 

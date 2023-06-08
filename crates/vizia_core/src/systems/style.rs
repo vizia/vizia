@@ -621,6 +621,8 @@ pub(crate) fn style_system(cx: &mut Context) {
     if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
         let iterator = LayoutTreeIterator::full(&cx.tree);
 
+        // Restyle the entire application.
+        // TODO: Make this incremental.
         for entity in iterator {
             let mut matched_rules = Vec::with_capacity(5);
             compute_matched_rules(cx, entity, &mut matched_rules);

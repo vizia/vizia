@@ -234,19 +234,12 @@ impl ApplicationRunner {
             // TODO: These calculations are now repeated in three places, should probably be moved
             //       to a function
             cx.set_scale_factor(self.window_scale_factor * self.current_user_scale_factor);
-            cx.style()
-                .width
-                .insert(Entity::root(), Units::Pixels(self.current_window_size.width as f32));
-            cx.style()
-                .height
-                .insert(Entity::root(), Units::Pixels(self.current_window_size.height as f32));
-
             let new_physical_width =
                 self.current_window_size.width as f32 * cx.style().scale_factor() as f32;
             let new_physical_height =
                 self.current_window_size.height as f32 * cx.style().scale_factor() as f32;
-            cx.cache().set_width(Entity::root(), new_physical_width);
-            cx.cache().set_height(Entity::root(), new_physical_height);
+
+            cx.set_window_size(new_physical_width, new_physical_height);
 
             cx.needs_refresh();
 
@@ -411,23 +404,10 @@ impl ApplicationRunner {
 
                     cx.set_scale_factor(self.window_scale_factor * user_scale_factor);
 
-                    // Since we apply a user scale factor, our logical size may not match baseview's
-                    // logical size
-                    let logical_size = (
-                        (window_info.physical_size().width as f64
-                            / cx.style().scale_factor() as f64),
-                        (window_info.physical_size().height as f64
-                            / cx.style().scale_factor() as f64),
-                    );
-
                     let physical_size =
                         (window_info.physical_size().width, window_info.physical_size().height);
 
-                    cx.style().width.insert(Entity::root(), Units::Pixels(logical_size.0 as f32));
-                    cx.style().height.insert(Entity::root(), Units::Pixels(logical_size.1 as f32));
-
-                    cx.cache().set_width(Entity::root(), physical_size.0 as f32);
-                    cx.cache().set_height(Entity::root(), physical_size.1 as f32);
+                    cx.set_window_size(physical_size.0 as f32, physical_size.1 as f32);
 
                     let mut bounding_box = BoundingBox::default();
                     bounding_box.w = physical_size.0 as f32;

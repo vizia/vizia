@@ -1,4 +1,4 @@
-use vizia_style::{BoxShadow, FontStyle, FontWeight, FontWeightKeyword};
+use vizia_style::{BoxShadow, FontStretch, FontStyle, FontWeight, FontWeightKeyword};
 
 use crate::{
     modifiers::{BoxShadowBuilder, LinearGradientBuilder},
@@ -88,6 +88,10 @@ impl_res_clone!(LinearGradientBuilder);
 impl_res_clone!(BoxShadowBuilder);
 impl_res_clone!(Filter);
 impl_res_simple!(Opacity);
+impl_res_simple!(FontStretch);
+impl_res_clone!(Translate);
+impl_res_clone!(Scale);
+impl_res_clone!(Position);
 
 impl<T, L> Res<T> for L
 where
@@ -113,6 +117,19 @@ where
                 }
             });
         });
+    }
+}
+
+impl<'i> Res<FontFamily<'i>> for FontFamily<'i> {
+    fn get_val(&self, _: &Context) -> Self {
+        self.clone()
+    }
+
+    fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
+    where
+        F: 'static + Fn(&mut Context, Entity, Self),
+    {
+        (closure)(cx, entity, self.clone());
     }
 }
 

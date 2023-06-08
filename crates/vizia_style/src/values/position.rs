@@ -12,6 +12,13 @@ pub struct Position {
 }
 
 impl Position {
+    pub fn new<H: Into<HorizontalPosition>, V: Into<VerticalPosition>>(
+        horizontal: H,
+        vertical: V,
+    ) -> Self {
+        Self { x: horizontal.into(), y: vertical.into() }
+    }
+
     pub fn center() -> Position {
         Position { x: HorizontalPosition::Center, y: VerticalPosition::Center }
     }
@@ -26,6 +33,19 @@ impl Default for Position {
         Position {
             x: HorizontalPosition::Length(LengthOrPercentage::Percentage(0.0)),
             y: VerticalPosition::Length(LengthOrPercentage::Percentage(0.0)),
+        }
+    }
+}
+
+impl<L1, L2> From<(L1, L2)> for Position
+where
+    L1: Into<LengthOrPercentage>,
+    L2: Into<LengthOrPercentage>,
+{
+    fn from(value: (L1, L2)) -> Self {
+        Position {
+            x: HorizontalPosition::Length(value.0.into()),
+            y: VerticalPosition::Length(value.1.into()),
         }
     }
 }
@@ -121,3 +141,35 @@ impl From<VerticalPositionKeyword> for LengthOrPercentage {
 
 pub type HorizontalPosition = PositionComponent<HorizontalPositionKeyword>;
 pub type VerticalPosition = PositionComponent<VerticalPositionKeyword>;
+
+impl From<HorizontalPosition> for LengthOrPercentage {
+    fn from(value: HorizontalPosition) -> Self {
+        match value {
+            HorizontalPosition::Center => LengthOrPercentage::Percentage(50.0),
+            HorizontalPosition::Length(val) => val,
+            HorizontalPosition::Side(side) => side.into(),
+        }
+    }
+}
+
+impl From<VerticalPosition> for LengthOrPercentage {
+    fn from(value: VerticalPosition) -> Self {
+        match value {
+            VerticalPosition::Center => LengthOrPercentage::Percentage(50.0),
+            VerticalPosition::Length(val) => val,
+            VerticalPosition::Side(side) => side.into(),
+        }
+    }
+}
+
+impl From<HorizontalPositionKeyword> for HorizontalPosition {
+    fn from(value: HorizontalPositionKeyword) -> Self {
+        HorizontalPosition::Side(value)
+    }
+}
+
+impl From<VerticalPositionKeyword> for VerticalPosition {
+    fn from(value: VerticalPositionKeyword) -> Self {
+        VerticalPosition::Side(value)
+    }
+}

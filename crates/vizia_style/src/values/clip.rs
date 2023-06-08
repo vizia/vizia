@@ -1,4 +1,4 @@
-use crate::{AutoKeyword, LengthOrPercentage, Parse, Rect};
+use crate::{AutoKeyword, Length, LengthOrPercentage, Parse, Rect};
 use cssparser::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -10,6 +10,29 @@ pub enum ClipPath {
 impl Default for ClipPath {
     fn default() -> Self {
         ClipPath::Auto
+    }
+}
+
+impl From<Rect<LengthOrPercentage>> for ClipPath {
+    fn from(value: Rect<LengthOrPercentage>) -> Self {
+        ClipPath::Shape(value)
+    }
+}
+
+impl From<LengthOrPercentage> for ClipPath {
+    fn from(value: LengthOrPercentage) -> Self {
+        ClipPath::Shape(Rect(value.clone(), value.clone(), value.clone(), value))
+    }
+}
+
+impl From<Length> for ClipPath {
+    fn from(value: Length) -> Self {
+        ClipPath::Shape(Rect(
+            value.clone().into(),
+            value.clone().into(),
+            value.clone().into(),
+            value.into(),
+        ))
     }
 }
 

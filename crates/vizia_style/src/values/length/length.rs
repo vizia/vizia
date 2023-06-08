@@ -1,3 +1,5 @@
+use morphorm::Units;
+
 use crate::{
     calc::Calc,
     impl_parse,
@@ -192,5 +194,14 @@ impl std::cmp::PartialOrd<Length> for Length {
 impl From<f32> for Length {
     fn from(value: f32) -> Self {
         Length::px(value)
+    }
+}
+
+impl From<Units> for Length {
+    fn from(value: Units) -> Self {
+        match value {
+            Units::Pixels(val) => Length::px(val),
+            _ => Length::default(),
+        }
     }
 }

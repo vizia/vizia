@@ -134,7 +134,7 @@ impl SparseSetIndex for SharedIndex {
 /// Animations are moved from animations to active_animations when played. This allows the active
 /// animations to be quickly iterated to update the value.
 #[derive(Default, Debug)]
-pub struct AnimatableSet<T: Interpolator> {
+pub(crate) struct AnimatableSet<T: Interpolator> {
     /// Shared data determined by style rules
     pub(crate) shared_data: SparseSetGeneric<SharedIndex, T>,
     /// Inline data defined on specific entities
@@ -150,7 +150,7 @@ where
     T: 'static + Default + Clone + Interpolator + PartialEq + std::fmt::Debug,
 {
     /// Create a new empty animatable storage.
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 

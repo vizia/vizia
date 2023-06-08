@@ -6,10 +6,7 @@ use vizia_window::WindowDescription;
 use super::EventProxy;
 use crate::events::EventManager;
 use crate::style::SystemFlags;
-use crate::{
-    cache::CachedData, environment::Environment, layout::geometry_changed, prelude::*,
-    style::Style, systems::*,
-};
+use crate::{cache::CachedData, environment::Environment, prelude::*, style::Style, systems::*};
 use vizia_id::GenerationalId;
 
 pub use crate::text::cosmic::TextConfig;
@@ -249,9 +246,6 @@ impl<'a> BackendContext<'a> {
     pub fn process_visual_updates(&mut self) {
         // Perform layout.
         layout_system(self.0);
-
-        // Emit any geometry changed events.
-        geometry_changed(self.0);
     }
 
     pub fn emit_origin<M: Send + Any>(&mut self, message: M) {

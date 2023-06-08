@@ -35,6 +35,12 @@ impl From<f32> for Opacity {
     }
 }
 
+impl From<f64> for Opacity {
+    fn from(number: f64) -> Self {
+        Opacity(number as f32)
+    }
+}
+
 impl From<Percentage> for Opacity {
     fn from(percentage: Percentage) -> Self {
         Opacity(percentage.0)

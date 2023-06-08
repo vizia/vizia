@@ -1,3 +1,5 @@
+use morphorm::Units;
+
 use crate::{macros::impl_parse, Parse, Percentage};
 
 /// A number or a percentage value.
@@ -50,6 +52,21 @@ impl From<Percentage> for PercentageOrNumber {
 impl From<f32> for PercentageOrNumber {
     fn from(number: f32) -> Self {
         PercentageOrNumber::Number(number)
+    }
+}
+
+impl From<f64> for PercentageOrNumber {
+    fn from(number: f64) -> Self {
+        PercentageOrNumber::Number(number as f32)
+    }
+}
+
+impl From<Units> for PercentageOrNumber {
+    fn from(value: Units) -> Self {
+        match value {
+            Units::Percentage(val) => PercentageOrNumber::Percentage(val),
+            _ => PercentageOrNumber::default(),
+        }
     }
 }
 

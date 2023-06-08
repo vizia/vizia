@@ -11,8 +11,8 @@ pub struct Translate {
 
 impl Translate {
     /// Creates a new translation.
-    pub fn new(x: LengthOrPercentage, y: LengthOrPercentage) -> Self {
-        Self { x, y }
+    pub fn new<L1: Into<LengthOrPercentage>, L2: Into<LengthOrPercentage>>(x: L1, y: L2) -> Self {
+        Self { x: x.into(), y: y.into() }
     }
 }
 
