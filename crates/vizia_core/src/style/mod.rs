@@ -324,8 +324,6 @@ impl Style {
 
     pub(crate) fn remove_rules(&mut self) {
         self.rule_manager.reset();
-        self.animation_manager.reset();
-
         self.rules.clear();
     }
 

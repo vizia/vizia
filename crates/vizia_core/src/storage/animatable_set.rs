@@ -1,5 +1,3 @@
-use std::println;
-
 use crate::animation::{Animation, AnimationState, Interpolator};
 use crate::prelude::*;
 use crate::style::Rule;
@@ -665,13 +663,12 @@ where
     }
 
     pub fn clear_rules(&mut self) {
-        // Remove transitions (TODO)
+        // Remove transitions
         for index in self.shared_data.sparse.iter() {
             let animation = index.animation;
             self.animations.remove(animation);
         }
-        self.animations.clear();
-        self.active_animations.clear();
+
         self.shared_data.clear();
 
         for index in self.inline_data.sparse.iter_mut() {
