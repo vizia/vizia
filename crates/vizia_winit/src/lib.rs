@@ -1,6 +1,6 @@
 pub mod application;
 mod convert;
-mod window;
+pub mod window;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub mod rwh {

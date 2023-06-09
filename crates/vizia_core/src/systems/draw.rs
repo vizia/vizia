@@ -1,21 +1,20 @@
 use crate::prelude::*;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use vizia_id::GenerationalId;
 use vizia_storage::LayoutChildIterator;
 
-pub(crate) fn draw_system(cx: &mut Context) {
-    let canvas = cx.canvases.get_mut(&Entity::root()).unwrap();
+pub(crate) fn draw_system(cx: &mut Context, window_entity: Entity) {
+    let canvas = cx.canvases.get_mut(&window_entity).unwrap();
     cx.resource_manager.mark_images_unused();
-    let window_width = cx.cache.get_width(Entity::root());
-    let window_height = cx.cache.get_height(Entity::root());
+    let window_width = cx.cache.get_width(window_entity);
+    let window_height = cx.cache.get_height(window_entity);
     let clear_color =
-        cx.style.background_color.get(Entity::root()).cloned().unwrap_or(RGBA::TRANSPARENT.into());
+        cx.style.background_color.get(window_entity).cloned().unwrap_or(RGBA::TRANSPARENT.into());
     canvas.set_size(window_width as u32, window_height as u32, 1.0);
     canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
 
     let mut queue = BinaryHeap::new();
-    queue.push(ZEntity { index: 0, entity: Entity::root(), opacity: 1.0, visible: true });
+    queue.push(ZEntity { index: 0, entity: window_entity, opacity: 1.0, visible: true });
     while !queue.is_empty() {
         let zentity = queue.pop().unwrap();
         canvas.save();

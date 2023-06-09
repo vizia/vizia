@@ -6,14 +6,13 @@ use crate::{
 use accesskit::{Action, NodeBuilder, TreeUpdate};
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit_winit;
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashMap, println};
 use vizia_core::backend::*;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
 use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 use vizia_window::Position;
-use winit::event_loop::EventLoopBuilder;
 #[cfg(all(
     feature = "clipboard",
     feature = "wayland",
@@ -30,6 +29,7 @@ use winit::{
     event::VirtualKeyCode,
     event_loop::{ControlFlow, EventLoop},
 };
+use winit::{event_loop::EventLoopBuilder, window::WindowId};
 
 #[cfg(not(target_arch = "wasm32"))]
 use winit::event_loop::EventLoopProxy;
@@ -179,7 +179,11 @@ impl Application {
 
         let event_loop = self.event_loop;
 
-        let (window, canvas) = Window::new(&event_loop, &self.window_description);
+        let (window, canvas) = Window::create(&event_loop, &self.window_description);
+
+        let root_window_id = window.id.unwrap();
+
+        context.subwindows.insert(Entity::root(), self.window_description.clone());
 
         // On windows cloak (hide) the window initially, we later reveal it after the first draw.
         // This is a workaround to hide the "white flash" that occurs during application startup.
@@ -244,7 +248,7 @@ impl Application {
         }
 
         let scale_factor = window.window().scale_factor() as f32;
-        cx.add_main_window(&self.window_description, canvas, scale_factor);
+        cx.add_main_window(Entity::root(), &self.window_description, canvas, scale_factor);
         cx.add_window(window);
 
         cx.0.remove_user_themes();
@@ -279,7 +283,11 @@ impl Application {
         cx.process_visual_updates();
 
         let mut main_events = false;
-        event_loop.run(move |event, _, control_flow| {
+
+        let mut windows: HashMap<WindowId, Entity> = HashMap::new();
+        windows.insert(root_window_id, Entity::root());
+
+        event_loop.run(move |event, event_loop_window_target, control_flow| {
             let mut cx = BackendContext::new_with_event_manager(&mut context);
 
             match event {
@@ -320,6 +328,13 @@ impl Application {
                 winit::event::Event::MainEventsCleared => {
                     main_events = true;
 
+                    cx.build_subwindows::<Window, WindowId>(&mut windows, |win_desc| {
+                        let (window, canvas) = Window::create(event_loop_window_target, win_desc);
+                        let window_id = window.id.unwrap();
+
+                        (window, window_id, canvas)
+                    });
+
                     *stored_control_flow.borrow_mut() =
                         if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
 
@@ -341,9 +356,11 @@ impl Application {
                             .send_event(UserEvent::Event(Event::new(WindowEvent::Redraw)))
                             .expect("Failed to send redraw event");
 
-                        cx.mutate_window(|_, window: &Window| {
-                            window.window().request_redraw();
-                        });
+                        for (_, window_entity) in windows.iter() {
+                            cx.mutate_window(window_entity, |_, window: &Window| {
+                                window.window().request_redraw();
+                            });
+                        }
                     }
 
                     cx.process_visual_updates();
@@ -355,11 +372,11 @@ impl Application {
                         }
                     });
 
-                    cx.mutate_window(|cx, window: &Window| {
-                        cx.style().should_redraw(|| {
+                    for (_, window_entity) in windows.iter() {
+                        cx.mutate_window(window_entity, |_, window: &Window| {
                             window.window().request_redraw();
                         });
-                    });
+                    }
 
                     if let Some(idle_callback) = &on_idle {
                         cx.set_current(Entity::root());
@@ -373,19 +390,11 @@ impl Application {
                             .expect("Failed to send event");
                     }
 
-                    cx.mutate_window(|_, window: &Window| {
-                        if window.should_close {
-                            *stored_control_flow.borrow_mut() = ControlFlow::Exit;
-                        }
-                    });
-                }
-
-                winit::event::Event::RedrawRequested(_) => {
-                    if main_events {
-                        // Redraw
-                        cx.draw();
-                        cx.mutate_window(|_, window: &Window| {
-                            window.swap_buffers();
+                    for (_, window_entity) in windows.iter() {
+                        cx.mutate_window(window_entity, |_, window: &Window| {
+                            if window.should_close {
+                                *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                            }
                         });
 
                         // Un-cloak
@@ -401,7 +410,24 @@ impl Application {
                     }
                 }
 
-                winit::event::Event::WindowEvent { window_id: _, event } => {
+                winit::event::Event::RedrawRequested(window_id) => {
+                    if main_events {
+                        // Redraw
+                        if let Some(window_entity) = windows.get(&window_id) {
+                            cx.mutate_window(window_entity, |_, window: &Window| {
+                                window.make_current();
+                            });
+
+                            cx.draw(*window_entity);
+
+                            cx.mutate_window(window_entity, |_, window: &Window| {
+                                window.swap_buffers();
+                            });
+                        }
+                    }
+                }
+
+                winit::event::Event::WindowEvent { window_id, event } => {
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
                             cx.emit_origin(WindowEvent::WindowClose);
@@ -421,11 +447,14 @@ impl Application {
                             scale_factor,
                             new_inner_size,
                         } => {
-                            cx.set_scale_factor(scale_factor);
-                            cx.set_window_size(
-                                new_inner_size.width as f32,
-                                new_inner_size.height as f32,
-                            );
+                            if let Some(window_entity) = windows.get(&window_id) {
+                                cx.set_scale_factor(scale_factor);
+                                cx.set_window_size(
+                                    *window_entity,
+                                    new_inner_size.width as f32,
+                                    new_inner_size.height as f32,
+                                );
+                            }
                             cx.needs_refresh();
                         }
 
@@ -549,14 +578,17 @@ impl Application {
                         }
 
                         winit::event::WindowEvent::Resized(physical_size) => {
-                            cx.mutate_window(|_, window: &Window| {
-                                window.resize(physical_size);
-                            });
+                            if let Some(window_entity) = windows.get(&window_id) {
+                                cx.mutate_window(window_entity, |_, window: &Window| {
+                                    window.resize(physical_size);
+                                });
 
-                            cx.set_window_size(
-                                physical_size.width as f32,
-                                physical_size.height as f32,
-                            );
+                                cx.set_window_size(
+                                    *window_entity,
+                                    physical_size.width as f32,
+                                    physical_size.height as f32,
+                                );
+                            }
 
                             cx.needs_refresh();
                         }

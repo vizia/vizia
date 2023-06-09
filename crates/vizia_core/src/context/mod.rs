@@ -17,6 +17,7 @@ use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 use std::rc::Rc;
 use std::sync::Mutex;
 use vizia_id::IdManager;
+use vizia_window::WindowDescription;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
 use copypasta::ClipboardContext;
@@ -124,6 +125,8 @@ pub struct Context {
     pub(crate) click_pos: (f32, f32),
     pub(crate) click_button: MouseButton,
 
+    pub subwindows: HashMap<Entity, WindowDescription>,
+
     pub ignore_default_theme: bool,
     pub window_has_focus: bool,
 
@@ -211,6 +214,8 @@ impl Context {
             clicks: 0,
             click_pos: (0.0, 0.0),
             click_button: MouseButton::Left,
+
+            subwindows: HashMap::new(),
 
             ignore_default_theme: false,
             window_has_focus: true,

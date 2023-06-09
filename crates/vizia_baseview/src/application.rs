@@ -238,7 +238,7 @@ impl ApplicationRunner {
             let new_physical_height =
                 self.current_window_size.height as f32 * cx.style().scale_factor();
 
-            cx.set_window_size(new_physical_width, new_physical_height);
+            cx.set_window_size(Entity::root(), new_physical_width, new_physical_height);
 
             cx.needs_refresh();
 
@@ -266,7 +266,7 @@ impl ApplicationRunner {
 
     pub fn render(&mut self) {
         let mut cx = BackendContext::new(&mut self.context);
-        cx.draw();
+        cx.draw(Entity::root());
         self.should_redraw = false;
     }
 
@@ -415,7 +415,11 @@ impl ApplicationRunner {
                     let physical_size =
                         (window_info.physical_size().width, window_info.physical_size().height);
 
-                    cx.set_window_size(physical_size.0 as f32, physical_size.1 as f32);
+                    cx.set_window_size(
+                        Entity::root(),
+                        physical_size.0 as f32,
+                        physical_size.1 as f32,
+                    );
 
                     // let mut bounding_box = BoundingBox::default();
                     // bounding_box.w = physical_size.0 as f32;

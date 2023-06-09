@@ -1,6 +1,7 @@
 use crate::application::UserEvent;
 #[cfg(not(target_arch = "wasm32"))]
 use std::num::NonZeroU32;
+// use std::task::Context;
 
 use crate::convert::cursor_icon_to_cursor_icon;
 use femtovg::{renderer::OpenGl, Canvas, Color};
@@ -23,17 +24,18 @@ use glutin::{
 
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
-use winit::event_loop::EventLoop;
+use vizia_window::WindowDescription;
+use winit::event_loop::{EventLoop, EventLoopWindowTarget};
 use winit::window::{CursorGrabMode, WindowBuilder, WindowLevel};
 use winit::{dpi::*, window::WindowId};
 
 pub struct Window {
-    pub id: WindowId,
+    pub id: Option<WindowId>,
     #[cfg(not(target_arch = "wasm32"))]
-    context: glutin::context::PossiblyCurrentContext,
+    context: Option<glutin::context::PossiblyCurrentContext>,
     #[cfg(not(target_arch = "wasm32"))]
-    surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
-    window: winit::window::Window,
+    surface: Option<glutin::surface::Surface<glutin::surface::WindowSurface>>,
+    window: Option<winit::window::Window>,
     pub should_close: bool,
 }
 
@@ -69,7 +71,7 @@ impl Window {
 
 #[cfg(target_arch = "wasm32")]
 impl Window {
-    pub fn new(
+    pub fn create(
         events_loop: &EventLoop<UserEvent>,
         window_description: &WindowDescription,
     ) -> (Self, Canvas<OpenGl>) {
@@ -131,8 +133,18 @@ impl Window {
 
 #[cfg(not(target_arch = "wasm32"))]
 impl Window {
-    pub fn new(
-        events_loop: &EventLoop<UserEvent>,
+    pub fn new(cx: &mut Context, content: impl Fn(&mut Context)) -> Handle<Self> {
+        Self { id: None, context: None, surface: None, window: None, should_close: false }.build(
+            cx,
+            |cx| {
+                cx.subwindows.insert(cx.current(), WindowDescription::new());
+                (content)(cx);
+            },
+        )
+    }
+
+    pub fn create(
+        events_loop: &EventLoopWindowTarget<UserEvent>,
         window_description: &WindowDescription,
     ) -> (Self, Canvas<OpenGl>) {
         let window_builder = WindowBuilder::new();
@@ -219,28 +231,45 @@ impl Window {
         canvas.clear_rect(0, 0, size.width, size.height, Color::rgb(255, 80, 80));
 
         // Build our window
-        let win =
-            Window { id: window.id(), context: gl_context, surface, window, should_close: false };
+        let win = Window {
+            id: Some(window.id()),
+            context: Some(gl_context),
+            surface: Some(surface),
+            window: Some(window),
+            should_close: false,
+        };
 
         (win, canvas)
     }
 
     pub fn window(&self) -> &winit::window::Window {
-        &self.window
+        self.window.as_ref().unwrap()
     }
 
     pub fn resize(&self, size: PhysicalSize<u32>) {
-        if size.width != 0 && size.height != 0 {
-            self.surface.resize(
-                &self.context,
-                size.width.try_into().unwrap(),
-                size.height.try_into().unwrap(),
-            );
+        if let Some(surface) = &self.surface {
+            if size.width != 0 && size.height != 0 {
+                surface.resize(
+                    self.context.as_ref().unwrap(),
+                    size.width.try_into().unwrap(),
+                    size.height.try_into().unwrap(),
+                );
+            }
+        }
+    }
+
+    pub fn make_current(&self) {
+        if let Some(context) = &self.context {
+            context.make_current(self.surface.as_ref().unwrap()).unwrap();
         }
     }
 
     pub fn swap_buffers(&self) {
-        self.surface.swap_buffers(&self.context).expect("Failed to swap buffers");
+        self.surface
+            .as_ref()
+            .unwrap()
+            .swap_buffers(self.context.as_ref().unwrap())
+            .expect("Failed to swap buffers");
     }
 }
 
@@ -331,6 +360,10 @@ impl View for Window {
         })
     }
 }
+
+// impl WindowModifiers for Handle<Window> {
+
+// }
 
 fn apply_window_description(
     mut builder: WindowBuilder,
