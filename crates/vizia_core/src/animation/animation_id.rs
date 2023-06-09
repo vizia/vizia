@@ -12,17 +12,17 @@ pub struct Animation(u32);
 impl_generational_id!(Animation);
 
 pub trait AnimId {
-    fn get(&self, cx: &mut EventContext) -> Option<Animation>;
+    fn get(&self, cx: &EventContext) -> Option<Animation>;
 }
 
 impl AnimId for Animation {
-    fn get(&self, _cx: &mut EventContext) -> Option<Animation> {
+    fn get(&self, _cx: &EventContext) -> Option<Animation> {
         Some(*self)
     }
 }
 
 impl AnimId for &'static str {
-    fn get(&self, cx: &mut EventContext) -> Option<Animation> {
+    fn get(&self, cx: &EventContext) -> Option<Animation> {
         cx.style.get_animation(self).copied()
     }
 }

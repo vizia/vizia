@@ -294,18 +294,29 @@ impl<'a> EventContext<'a> {
         transform
     }
 
+    /// Trigger an animation with the given id to play on the current view.
     pub fn play_animation(&mut self, anim_id: impl AnimId, duration: Duration) {
         if let Some(animation_id) = anim_id.get(self) {
             self.style.play_animation(self.current, animation_id, duration);
         }
     }
 
+    /// Trigger an animation with the given id to play on a target view.
     pub fn play_animation_for(&mut self, anim_id: impl AnimId, target: &str, duration: Duration) {
         if let Some(target_entity) = self.resolve_entity_identifier(target) {
             if let Some(animation_id) = anim_id.get(self) {
                 self.style.play_animation(target_entity, animation_id, duration);
             }
         }
+    }
+
+    /// Returns true if the current view is currently animating with the given animation id.
+    pub fn is_animating(&self, anim_id: impl AnimId) -> bool {
+        if let Some(animation_id) = anim_id.get(self) {
+            return self.style.is_animating(self.current, animation_id);
+        }
+
+        false
     }
 
     /// Add a listener to an entity.

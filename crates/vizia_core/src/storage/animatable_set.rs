@@ -410,7 +410,7 @@ where
     }
 
     /// Returns true if the given entity is linked to an active animation
-    pub fn is_animating(&mut self, entity: Entity) -> bool {
+    pub fn is_animating(&self, entity: Entity) -> bool {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
             let anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
@@ -452,6 +452,20 @@ where
         for state in self.active_animations.iter() {
             if state.t < 1.0 {
                 return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn has_active_animation(&self, entity: Entity, animation: Animation) -> bool {
+        let entity_index = entity.index();
+        if entity_index < self.inline_data.sparse.len() {
+            let anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
+            if anim_index < self.active_animations.len() {
+                if self.active_animations[anim_index].id == animation {
+                    return true;
+                }
             }
         }
 
