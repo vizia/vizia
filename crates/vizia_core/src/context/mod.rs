@@ -378,7 +378,7 @@ impl Context {
     }
 
     /// Removes the provided entity from the application.
-    pub(crate) fn remove(&mut self, entity: Entity) {
+    pub fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         if !delete_list.is_empty() {

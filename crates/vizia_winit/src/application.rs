@@ -1,12 +1,13 @@
 use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
     window::Window,
+    window_modifiers::WindowModifiers,
 };
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit::{Action, NodeBuilder, TreeUpdate};
 #[cfg(not(target_arch = "wasm32"))]
 use accesskit_winit;
-use std::{cell::RefCell, collections::HashMap, println};
+use std::{cell::RefCell, collections::HashMap};
 use vizia_core::backend::*;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
@@ -330,6 +331,7 @@ impl Application {
 
                     cx.build_subwindows::<Window, WindowId>(&mut windows, |win_desc| {
                         let (window, canvas) = Window::create(event_loop_window_target, win_desc);
+                        window.window().set_visible(true);
                         let window_id = window.id.unwrap();
 
                         (window, window_id, canvas)
@@ -390,24 +392,46 @@ impl Application {
                             .expect("Failed to send event");
                     }
 
-                    for (_, window_entity) in windows.iter() {
-                        cx.mutate_window(window_entity, |_, window: &Window| {
-                            if window.should_close {
-                                *stored_control_flow.borrow_mut() = ControlFlow::Exit;
-                            }
+                    // Un-cloak
+                    #[cfg(target_os = "windows")]
+                    if is_initially_cloaked {
+                        is_initially_cloaked = false;
+                        cx.draw();
+                        cx.mutate_window(|_, window: &Window| {
+                            window.swap_buffers();
+                            window.set_cloak(false);
                         });
+                    }
 
-                        // Un-cloak
-                        #[cfg(target_os = "windows")]
-                        if is_initially_cloaked {
-                            is_initially_cloaked = false;
-                            cx.draw();
-                            cx.mutate_window(|_, window: &Window| {
-                                window.swap_buffers();
-                                window.set_cloak(false);
-                            });
+                    let mut window_delete_list = Vec::new();
+
+                    for (window_id, window_entity) in windows.iter() {
+                        if cx.mutate_window(window_entity, |_, window: &Window| window.should_close)
+                        {
+                            window_delete_list.push((*window_id, *window_entity));
                         }
                     }
+
+                    for (window_id, window_entity) in window_delete_list.iter() {
+                        cx.mutate_window(window_entity, |_, window: &Window| {
+                            window.make_current();
+                        });
+                        cx.0.remove(*window_entity);
+                        cx.0.subwindows.remove(window_entity);
+                        windows.remove(&window_id);
+                    }
+
+                    if windows.is_empty() {
+                        *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                    }
+
+                    // for (_, window_entity) in windows.iter() {
+                    //     cx.mutate_window(window_entity, |_, window: &Window| {
+                    //         if window.should_close {
+                    //             *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                    //         }
+                    //     });
+                    // }
                 }
 
                 winit::event::Event::RedrawRequested(window_id) => {
@@ -430,7 +454,24 @@ impl Application {
                 winit::event::Event::WindowEvent { window_id, event } => {
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
-                            cx.emit_origin(WindowEvent::WindowClose);
+                            if let Some(window_entity) = windows.get(&window_id) {
+                                if *window_entity == Entity::root() {
+                                    *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                                } else {
+                                    cx.mutate_window(window_entity, |_, window: &Window| {
+                                        window.make_current();
+                                    });
+                                    cx.0.remove(*window_entity);
+                                    cx.0.subwindows.remove(window_entity);
+                                    windows.remove(&window_id);
+                                }
+                            }
+
+                            if windows.is_empty() {
+                                *stored_control_flow.borrow_mut() = ControlFlow::Exit;
+                            }
+
+                            // cx.emit_origin(WindowEvent::WindowClose);
                         }
 
                         winit::event::WindowEvent::Focused(is_focused) => {

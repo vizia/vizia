@@ -1,6 +1,7 @@
-use crate::application::UserEvent;
+use crate::{application::UserEvent, window_modifiers::WindowModifiers};
 #[cfg(not(target_arch = "wasm32"))]
 use std::num::NonZeroU32;
+use std::{println, todo};
 // use std::task::Context;
 
 use crate::convert::cursor_icon_to_cursor_icon;
@@ -137,7 +138,8 @@ impl Window {
         Self { id: None, context: None, surface: None, window: None, should_close: false }.build(
             cx,
             |cx| {
-                cx.subwindows.insert(cx.current(), WindowDescription::new());
+                cx.subwindows
+                    .insert(cx.current(), WindowDescription::new().with_title("Second Window"));
                 (content)(cx);
             },
         )
@@ -275,95 +277,230 @@ impl Window {
 
 impl View for Window {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
-            WindowEvent::GrabCursor(flag) => {
-                let grab_mode = if *flag { CursorGrabMode::Locked } else { CursorGrabMode::None };
-                self.window().set_cursor_grab(grab_mode).expect("Failed to set cursor grab");
-            }
-
-            WindowEvent::SetCursorPosition(x, y) => {
-                self.window()
-                    .set_cursor_position(winit::dpi::Position::Physical(PhysicalPosition::new(
-                        *x as i32, *y as i32,
-                    )))
-                    .expect("Failed to set cursor position");
-            }
-
-            WindowEvent::SetCursor(cursor) => {
-                if let Some(icon) = cursor_icon_to_cursor_icon(*cursor) {
-                    self.window().set_cursor_visible(true);
-                    self.window().set_cursor_icon(icon);
-                } else {
-                    self.window().set_cursor_visible(false);
+        event.map(|window_event, meta| {
+            match window_event {
+                WindowEvent::GrabCursor(flag) => {
+                    let grab_mode =
+                        if *flag { CursorGrabMode::Locked } else { CursorGrabMode::None };
+                    self.window().set_cursor_grab(grab_mode).expect("Failed to set cursor grab");
                 }
-            }
 
-            WindowEvent::SetTitle(title) => {
-                self.window().set_title(title);
-            }
+                WindowEvent::SetCursorPosition(x, y) => {
+                    self.window()
+                        .set_cursor_position(winit::dpi::Position::Physical(PhysicalPosition::new(
+                            *x as i32, *y as i32,
+                        )))
+                        .expect("Failed to set cursor position");
+                }
 
-            WindowEvent::SetSize(size) => {
-                self.window().set_inner_size(LogicalSize::new(size.width, size.height));
-            }
+                WindowEvent::SetCursor(cursor) => {
+                    if let Some(icon) = cursor_icon_to_cursor_icon(*cursor) {
+                        self.window().set_cursor_visible(true);
+                        self.window().set_cursor_icon(icon);
+                    } else {
+                        self.window().set_cursor_visible(false);
+                    }
+                }
 
-            WindowEvent::SetMinSize(size) => {
-                self.window()
-                    .set_min_inner_size(size.map(|size| LogicalSize::new(size.width, size.height)));
-            }
+                WindowEvent::SetTitle(title) => {
+                    self.window().set_title(title);
+                }
 
-            WindowEvent::SetMaxSize(size) => {
-                self.window()
-                    .set_max_inner_size(size.map(|size| LogicalSize::new(size.width, size.height)));
-            }
+                WindowEvent::SetSize(size) => {
+                    self.window().set_inner_size(LogicalSize::new(size.width, size.height));
+                }
 
-            WindowEvent::SetPosition(pos) => {
-                self.window().set_outer_position(LogicalPosition::new(pos.x, pos.y));
-            }
+                WindowEvent::SetMinSize(size) => {
+                    self.window().set_min_inner_size(
+                        size.map(|size| LogicalSize::new(size.width, size.height)),
+                    );
+                }
 
-            WindowEvent::SetResizable(flag) => {
-                self.window().set_resizable(*flag);
-            }
+                WindowEvent::SetMaxSize(size) => {
+                    self.window().set_max_inner_size(
+                        size.map(|size| LogicalSize::new(size.width, size.height)),
+                    );
+                }
 
-            WindowEvent::SetMinimized(flag) => {
-                self.window().set_minimized(*flag);
-            }
+                WindowEvent::SetPosition(pos) => {
+                    self.window().set_outer_position(LogicalPosition::new(pos.x, pos.y));
+                }
 
-            WindowEvent::SetMaximized(flag) => {
-                self.window().set_maximized(*flag);
-            }
+                WindowEvent::SetResizable(flag) => {
+                    self.window().set_resizable(*flag);
+                }
 
-            WindowEvent::SetVisible(flag) => {
-                self.window().set_visible(*flag);
-            }
+                WindowEvent::SetMinimized(flag) => {
+                    self.window().set_minimized(*flag);
+                }
 
-            WindowEvent::SetDecorations(flag) => {
-                self.window().set_decorations(*flag);
-            }
+                WindowEvent::SetMaximized(flag) => {
+                    self.window().set_maximized(*flag);
+                }
 
-            WindowEvent::ReloadStyles => {
-                cx.reload_styles().unwrap();
-            }
+                WindowEvent::SetVisible(flag) => {
+                    self.window().set_visible(*flag);
+                }
 
-            WindowEvent::WindowClose => {
-                self.should_close = true;
-            }
+                WindowEvent::SetDecorations(flag) => {
+                    self.window().set_decorations(*flag);
+                }
 
-            WindowEvent::FocusNext => {
-                cx.focus_next();
-            }
+                WindowEvent::FocusNext => {
+                    cx.focus_next();
+                }
 
-            WindowEvent::FocusPrev => {
-                cx.focus_prev();
-            }
+                WindowEvent::FocusPrev => {
+                    cx.focus_prev();
+                }
 
-            _ => {}
+                WindowEvent::ReloadStyles => {
+                    cx.reload_styles().unwrap();
+                }
+
+                WindowEvent::WindowClose => {
+                    println!("close window: {}", cx.current());
+                    self.should_close = true;
+                }
+
+                _ => {}
+            };
+
+            // Prevent event from propagating to other windows.
+            meta.consume()
         })
     }
 }
 
-// impl WindowModifiers for Handle<Window> {
+impl<'a> WindowModifiers for Handle<'a, Window> {
+    fn title<T: ToString>(mut self, title: T) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.title = title.to_string();
+        }
 
-// }
+        self
+    }
+
+    fn inner_size<S: Into<WindowSize>>(mut self, size: S) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.inner_size = size.into();
+        }
+
+        self
+    }
+
+    fn min_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.min_inner_size = size.map(|size| size.into())
+        }
+
+        self
+    }
+
+    fn max_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.max_inner_size = size.map(|size| size.into())
+        }
+
+        self
+    }
+
+    fn position<P: Into<vizia_window::Position>>(mut self, position: P) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.position = Some(position.into())
+        }
+
+        self
+    }
+
+    fn resizable(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.resizable = flag
+        }
+
+        self
+    }
+
+    fn minimized(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.minimized = flag
+        }
+
+        self
+    }
+
+    fn maximized(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.maximized = flag
+        }
+
+        self
+    }
+
+    fn visible(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.visible = flag
+        }
+
+        self
+    }
+
+    fn transparent(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.transparent = flag
+        }
+
+        self
+    }
+
+    fn decorations(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.decorations = flag
+        }
+
+        self
+    }
+
+    fn always_on_top(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.always_on_top = flag
+        }
+
+        self
+    }
+
+    fn vsync(mut self, flag: bool) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.vsync = flag
+        }
+
+        self
+    }
+
+    fn icon(mut self, image: Vec<u8>, width: u32, height: u32) -> Self {
+        let entity = self.entity();
+        if let Some(win_desc) = self.context().subwindows.get_mut(&entity) {
+            win_desc.icon = Some(image);
+            win_desc.icon_width = width;
+            win_desc.icon_height = height;
+        }
+
+        self
+    }
+}
 
 fn apply_window_description(
     mut builder: WindowBuilder,

@@ -1,5 +1,4 @@
-use crate::prelude::*;
-use vizia_window::Position;
+use vizia_core::prelude::*;
 
 /// Modifiers for setting the properties of a window.
 pub trait WindowModifiers {
@@ -181,20 +180,16 @@ pub trait WindowModifiers {
     /// Sets the icon used for the window.
     ///
     /// # Example
-    /// ```no_run, ignore
+    /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    ///
-    /// let icon = vizia::image::load_from_memory(include_bytes!("../icon.png"))
-    ///     .expect("Failed to load icon");
-    ///
     /// Application::new(|cx|{
     ///     // Content here
     /// })
-    /// .icon(icon.width(), icon.height(), icon.into_bytes())
+    /// // .icon() TODO
     /// .run();
     /// ```
-    fn icon(self, width: u32, height: u32, image: Vec<u8>) -> Self;
+    fn icon(self, image: Vec<u8>, width: u32, height: u32) -> Self;
     #[cfg(target_arch = "wasm32")]
     fn canvas(self, canvas: &str) -> Self;
 }

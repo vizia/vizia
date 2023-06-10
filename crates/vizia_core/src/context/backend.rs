@@ -31,17 +31,19 @@ impl<'a> BackendContext<'a> {
     }
 
     /// Helper function for mutating the state of the root window.
-    pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &W)>(
-        &mut self,
+    pub fn mutate_window<W: Any, F: Fn(&BackendContext, &W) -> T, T>(
+        &self,
         window_entity: &Entity,
         f: F,
-    ) {
-        if let Some(window_event_handler) = self.0.views.remove(&window_entity) {
+    ) -> T {
+        if let Some(window_event_handler) = self.0.views.get(&window_entity) {
             if let Some(window) = window_event_handler.downcast_ref::<W>() {
-                f(self, window);
+                f(self, window)
+            } else {
+                panic!();
             }
-
-            self.0.views.insert(*window_entity, window_event_handler);
+        } else {
+            panic!();
         }
     }
 
@@ -153,6 +155,7 @@ impl<'a> BackendContext<'a> {
         self.0.style.disabled.insert(window_entity, false);
 
         self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::OVER);
+        self.0.style.position_type.insert(window_entity, PositionType::SelfDirected);
 
         self.0.canvases.insert(window_entity, canvas);
     }
