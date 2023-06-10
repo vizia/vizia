@@ -7,6 +7,7 @@ mod parent_iter;
 mod tree_depth_iter;
 mod tree_iter;
 mod tree_tour_iter;
+mod window_tree_iter;
 
 pub use self::{
     child_iter::ChildIterator,
@@ -19,4 +20,5 @@ pub use self::{
     tree_depth_iter::TreeDepthIterator,
     tree_iter::TreeIterator,
     tree_tour_iter::TreeTourIterator,
+    window_tree_iter::WindowTreeIterator,
 };

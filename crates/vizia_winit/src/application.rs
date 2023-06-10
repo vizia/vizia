@@ -276,6 +276,7 @@ impl Application {
         let mut cursor = (0.0f32, 0.0f32);
         #[cfg(target_os = "windows")]
         let mut inside_window = false;
+        let mut active_window = Entity::root();
 
         // cx.process_events();
 
@@ -341,7 +342,11 @@ impl Application {
                         if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
 
                     if cursor_moved {
-                        cx.emit_origin(WindowEvent::MouseMove(cursor.0, cursor.1));
+                        // cx.emit_origin(WindowEvent::MouseMove(cursor.0, cursor.1));
+                        cx.emit_window_event(
+                            active_window,
+                            WindowEvent::MouseMove(cursor.0, cursor.1),
+                        );
                         cursor_moved = false;
                     }
 
@@ -452,6 +457,8 @@ impl Application {
                 }
 
                 winit::event::Event::WindowEvent { window_id, event } => {
+                    let window_entity = windows.get(&window_id).cloned().unwrap_or(Entity::root());
+
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
                             if let Some(window_entity) = windows.get(&window_id) {
@@ -509,6 +516,7 @@ impl Application {
                             position,
                             modifiers: _,
                         } => {
+                            active_window = window_entity;
                             // To avoid calling the hover system multiple times in one frame when multiple cursor moved
                             // events are received, instead we set a flag here and emit the MouseMove event during MainEventsCleared.
                             if !cursor_moved {

@@ -112,7 +112,7 @@ impl<'a> BackendContext<'a> {
 
                     *win = window;
 
-                    self.add_main_window(win_entity, &win_desc, canvas, 1.0);
+                    self.add_main_window(win_entity, &win_desc, canvas, 2.0);
                 }
             }
         }
@@ -156,6 +156,8 @@ impl<'a> BackendContext<'a> {
 
         self.0.style.pseudo_classes.insert(Entity::root(), PseudoClassFlags::OVER);
         self.0.style.position_type.insert(window_entity, PositionType::SelfDirected);
+
+        self.0.tree.set_window(window_entity, true);
 
         self.0.canvases.insert(window_entity, canvas);
     }
@@ -311,6 +313,15 @@ impl<'a> BackendContext<'a> {
             Event::new(message)
                 .target(self.0.current)
                 .origin(Entity::root())
+                .propagate(Propagation::Up),
+        );
+    }
+
+    pub fn emit_window_event<M: Send + Any>(&mut self, window_entity: Entity, message: M) {
+        self.0.event_queue.push_back(
+            Event::new(message)
+                .target(window_entity)
+                .origin(window_entity)
                 .propagate(Propagation::Up),
         );
     }

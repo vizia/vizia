@@ -10,8 +10,8 @@ use vizia_id::GenerationalId;
 use vizia_storage::{LayoutChildIterator, LayoutParentIterator};
 
 // Determines the hovered entity based on the mouse cursor position.
-pub(crate) fn hover_system(cx: &mut Context) {
-    if let Some(pseudo_classes) = cx.style.pseudo_classes.get(Entity::root()) {
+pub(crate) fn hover_system(cx: &mut Context, window_entity: Entity) {
+    if let Some(pseudo_classes) = cx.style.pseudo_classes.get(window_entity) {
         if !pseudo_classes.contains(PseudoClassFlags::OVER) {
             return;
         }
@@ -20,8 +20,9 @@ pub(crate) fn hover_system(cx: &mut Context) {
     let mut queue = BinaryHeap::new();
     let pointer_events: bool =
         cx.style.pointer_events.get(Entity::root()).copied().unwrap_or_default().into();
-    queue.push(ZEntity { index: 0, pointer_events, entity: Entity::root() });
-    let mut hovered = Entity::root();
+    queue.push(ZEntity { index: 0, pointer_events, entity: window_entity });
+    let mut hovered = window_entity;
+
     let transform = Transform2D::identity();
     // let clip_bounds = cx.cache.get_bounds(Entity::root());
     let clip_bounds: BoundingBox =

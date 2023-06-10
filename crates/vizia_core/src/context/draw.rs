@@ -1,6 +1,7 @@
 use cosmic_text::FamilyOwned;
 use femtovg::{ImageId, Transform2D};
 use std::any::{Any, TypeId};
+use std::println;
 
 use fnv::FnvHashMap;
 use morphorm::Units;
@@ -1311,6 +1312,7 @@ impl<'a> DrawContext<'a> {
 
     /// Draw any text for the current view.
     pub fn draw_text(&mut self, canvas: &mut Canvas, bounds: BoundingBox, justify: (f32, f32)) {
+        println!("draw text: {} {:?}", self.current, canvas.width());
         if let Ok(draw_commands) =
             self.text_context.fill_to_cmds(canvas, self.current, bounds, justify, *self.text_config)
         {

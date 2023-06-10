@@ -82,7 +82,7 @@ impl EventManager {
 
             // Handle state updates for window events
             event.map(|window_event, meta| {
-                if meta.origin == Entity::root() {
+                if cx.subwindows.contains_key(&meta.origin) {
                     internal_state_updates(cx, window_event, meta);
                 }
             });
@@ -202,7 +202,9 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
             // {
             // }
 
-            hover_system(context);
+            hover_system(context, meta.origin);
+            mutate_direct_or_up(meta, context.captured, context.hovered, false);
+
             // if let Some(dropped_file) = context.dropped_file.take() {
             //     emit_direct_or_up(
             //         context,
