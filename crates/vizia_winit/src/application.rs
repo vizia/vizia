@@ -28,8 +28,11 @@ use winit::event_loop::EventLoopBuilder;
 use winit::platform::wayland::WindowExtWayland;
 use winit::{
     event::VirtualKeyCode,
-    event_loop::{ControlFlow, EventLoop, EventLoopProxy},
+    event_loop::{ControlFlow, EventLoop},
 };
+
+#[cfg(not(target_arch = "wasm32"))]
+use winit::event_loop::EventLoopProxy;
 
 #[derive(Debug)]
 pub enum UserEvent {
