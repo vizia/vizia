@@ -1,3 +1,4 @@
+#[allow(unused)]
 use vizia::prelude::*;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::resource::ImageRetentionPolicy;
