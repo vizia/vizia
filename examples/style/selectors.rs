@@ -30,7 +30,7 @@ const STYLE: &str = r#"
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         Element::new(cx).text("element");
         Element::new(cx).id("id").text("id");

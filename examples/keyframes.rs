@@ -17,7 +17,7 @@ const STYLE: &str = r#"
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         let animation = AnimationBuilder::new()
             .keyframe(0.0, |key| key.scale("1"))

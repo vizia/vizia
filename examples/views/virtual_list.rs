@@ -31,7 +31,7 @@ pub enum AppEvent {
 }
 
 impl Model for AppData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::SetValue(index, value) => {
                 self.list[*index] = *value;
@@ -42,7 +42,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         let list: Vec<u32> = (1..100000u32).collect();
         AppData { list, selected: 312 }.build(cx);

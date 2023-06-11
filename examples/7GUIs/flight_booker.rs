@@ -57,7 +57,7 @@ fn input_box<L: Lens<Target = NaiveDate>>(
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         AppData {
             options: vec!["one-way flight", "return flight"],

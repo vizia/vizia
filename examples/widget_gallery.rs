@@ -111,7 +111,7 @@ pub struct AppData {}
 fn main() {
     Application::new(|cx| {
         ExamplePage::vertical(cx, |cx| {
-            cx.add_stylesheet(STYLE);
+            cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
             ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                 Label::new(cx, "Label").font_size(30.0).font_weight(FontWeightKeyword::Bold);
                 label(cx);

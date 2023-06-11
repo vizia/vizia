@@ -65,7 +65,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {

@@ -32,7 +32,7 @@ fn main() {
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         // Load an image into the binary
         cx.load_image(

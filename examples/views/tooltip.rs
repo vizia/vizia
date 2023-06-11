@@ -12,7 +12,7 @@ const STYLE: &str = r#"
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         ExamplePage::new(cx, |cx| {
             Element::new(cx).text("Hover Me").tooltip(|cx| {

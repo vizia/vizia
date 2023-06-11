@@ -11,7 +11,8 @@ impl Model for AppData {}
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(include_str!("../resources/themes/list_style.css"));
+        cx.add_stylesheet(include_str!("../resources/themes/list_style.css"))
+            .expect("Failed to add stylesheet");
 
         let list: Vec<u32> = (10..14u32).collect();
         AppData { list }.build(cx);

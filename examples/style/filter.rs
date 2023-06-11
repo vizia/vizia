@@ -47,7 +47,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         // Load an image into the binary
         cx.load_image(
@@ -79,7 +79,7 @@ impl FilterElement {
     pub fn new(cx: &mut Context) -> Handle<Self> {
         Self { left: Units::Pixels(0.0), top: Units::Pixels(0.0) }
             .build(cx, |cx| {
-                VStack::new(cx, |cx| {
+                VStack::new(cx, |_cx| {
                     // Label::new(cx, "This is some text");
                 })
                 .class("filter")
