@@ -196,7 +196,7 @@ impl Icon {
     where
         T: ToString,
     {
-        Self {}.build(cx, |_| {}).text(icon_code.clone()).role(Role::StaticText)
+        Self {}.build(cx, |_| {}).text(icon_code).role(Role::StaticText)
     }
 }
 

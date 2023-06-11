@@ -22,13 +22,13 @@ impl IntoCssStr for &'static str {
 
 impl IntoCssStr for PathBuf {
     fn get_style(&self) -> Result<String, std::io::Error> {
-        Ok(std::fs::read_to_string(self)?)
+        std::fs::read_to_string(self)
     }
 }
 
 impl IntoCssStr for Path {
     fn get_style(&self) -> Result<String, std::io::Error> {
-        Ok(std::fs::read_to_string(self)?)
+        std::fs::read_to_string(self)
     }
 }
 
@@ -38,7 +38,7 @@ pub enum CSS {
 }
 
 impl CSS {
-    pub fn from_str(style: &str) -> Self {
+    pub fn from_string(style: &str) -> Self {
         Self::String(style.to_owned())
     }
 
@@ -49,7 +49,7 @@ impl CSS {
 
 impl From<&str> for CSS {
     fn from(value: &str) -> Self {
-        CSS::from_str(value)
+        CSS::from_string(value)
     }
 }
 

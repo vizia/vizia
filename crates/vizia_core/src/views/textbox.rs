@@ -6,7 +6,7 @@ use crate::prelude::*;
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
-use cosmic_text::{Action, Attrs, Cursor, Edit};
+use cosmic_text::{Action, Attrs, Cursor, Edit, Editor, FontSystem};
 use unicode_segmentation::UnicodeSegmentation;
 use vizia_input::Code;
 use vizia_storage::TreeExt;
@@ -198,14 +198,16 @@ where
     }
 
     pub fn delete_text(&mut self, cx: &mut EventContext, movement: Movement) {
-        if cx.text_context.with_editor(cx.current, |_, buf| {
+        let x = |_: &mut FontSystem, buf: &mut Editor| {
             let no_selection = match (buf.cursor(), buf.select_opt()) {
                 (cursor, Some(selection)) => cursor == selection,
                 (_, None) => true,
             };
             buf.delete_selection();
             no_selection
-        }) {
+        };
+
+        if cx.text_context.with_editor(cx.current, x) {
             self.move_cursor(cx, movement, true);
             cx.text_context.with_editor(cx.current, |_, buf| {
                 buf.delete_selection();

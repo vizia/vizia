@@ -149,11 +149,6 @@ impl<T> AnimatableSet<T>
 where
     T: 'static + Default + Clone + Interpolator + PartialEq + std::fmt::Debug,
 {
-    /// Create a new empty animatable storage.
-    pub(crate) fn new() -> Self {
-        Self::default()
-    }
-
     /// Insert an inline value for an entity.
     pub fn insert(&mut self, entity: Entity, value: T) {
         self.inline_data.insert(entity, value);
@@ -410,17 +405,17 @@ where
     }
 
     /// Returns true if the given entity is linked to an active animation
-    pub fn is_animating(&self, entity: Entity) -> bool {
-        let entity_index = entity.index();
-        if entity_index < self.inline_data.sparse.len() {
-            let anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
-            if anim_index < self.active_animations.len() {
-                return true;
-            }
-        }
+    // pub fn is_animating(&self, entity: Entity) -> bool {
+    //     let entity_index = entity.index();
+    //     if entity_index < self.inline_data.sparse.len() {
+    //         let anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
+    //         if anim_index < self.active_animations.len() {
+    //             return true;
+    //         }
+    //     }
 
-        false
-    }
+    //     false
+    // }
 
     pub fn remove_innactive_animations(&mut self) {
         // Create a list of finished animations
@@ -462,10 +457,10 @@ where
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
             let anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
-            if anim_index < self.active_animations.len() {
-                if self.active_animations[anim_index].id == animation {
-                    return true;
-                }
+            if anim_index < self.active_animations.len()
+                && self.active_animations[anim_index].id == animation
+            {
+                return true;
             }
         }
 
@@ -473,17 +468,17 @@ where
     }
 
     /// Returns a reference to any inline data on the entity if it exists.
-    pub fn get_inline(&self, entity: Entity) -> Option<&T> {
-        let entity_index = entity.index();
-        if entity_index < self.inline_data.sparse.len() {
-            let data_index = self.inline_data.sparse[entity_index].data_index;
-            if data_index.is_inline() {
-                return self.inline_data.get(entity);
-            }
-        }
+    // pub fn get_inline(&self, entity: Entity) -> Option<&T> {
+    //     let entity_index = entity.index();
+    //     if entity_index < self.inline_data.sparse.len() {
+    //         let data_index = self.inline_data.sparse[entity_index].data_index;
+    //         if data_index.is_inline() {
+    //             return self.inline_data.get(entity);
+    //         }
+    //     }
 
-        None
-    }
+    //     None
+    // }
 
     /// Returns a mutable reference to any inline data on the entity if it exists.
     pub fn get_inline_mut(&mut self, entity: Entity) -> Option<&mut T> {

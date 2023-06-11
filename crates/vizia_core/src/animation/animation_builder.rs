@@ -1,17 +1,23 @@
 use crate::prelude::*;
-use instant::Duration;
+// use instant::Duration;
 use morphorm::Units;
 use vizia_style::{
     BackgroundSize, BorderWidth, BoxShadow, FontSize, Position, Property, Scale, Translate,
 };
 
-pub struct AnimationDescription {
-    duration: Duration,
-    delay: Duration,
-}
+// pub struct AnimationDescription {
+//     duration: Duration,
+//     delay: Duration,
+// }
 
 pub struct AnimationBuilder<'a> {
     pub(crate) keyframes: Vec<KeyframeBuilder<'a>>,
+}
+
+impl<'a> Default for AnimationBuilder<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<'a> AnimationBuilder<'a> {

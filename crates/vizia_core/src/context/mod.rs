@@ -411,11 +411,9 @@ impl Context {
             // Remove any cached shadow images associated with the entity.
             if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
                 if let Some(shadows) = self.cache.shadow_images.get(*entity).cloned() {
-                    for shadow in shadows.into_iter() {
-                        if let Some((s, t)) = shadow {
-                            canvas.delete_image(s);
-                            canvas.delete_image(t);
-                        }
+                    for (s, t) in shadows.into_iter().flatten() {
+                        canvas.delete_image(s);
+                        canvas.delete_image(t);
                     }
                 }
             }

@@ -586,9 +586,7 @@ impl<'a> DrawContext<'a> {
 
             let screenshot_image_id = if let Some(s) = screenshot_image {
                 let image_size = canvas.image_size(s).unwrap();
-                if image_size.0 != screenshot.width() as usize
-                    || image_size.1 != screenshot.height() as usize
-                {
+                if image_size.0 != screenshot.width() || image_size.1 != screenshot.height() {
                     canvas.delete_image(s);
                     canvas.create_image(screenshot.as_ref(), femtovg::ImageFlags::empty()).unwrap()
                 } else {
@@ -785,11 +783,9 @@ impl<'a> DrawContext<'a> {
                 shadow_images.resize(box_shadows.len(), None);
             } else {
                 let excess = shadow_images.split_off(box_shadows.len());
-                for item in excess {
-                    if let Some((s, t)) = item {
-                        canvas.delete_image(s);
-                        canvas.delete_image(t);
-                    }
+                for (s, t) in excess.into_iter().flatten() {
+                    canvas.delete_image(s);
+                    canvas.delete_image(t);
                 }
             }
 
@@ -944,11 +940,9 @@ impl<'a> DrawContext<'a> {
                 shadow_images.resize(box_shadows.len(), None);
             } else {
                 let excess = shadow_images.split_off(box_shadows.len());
-                for item in excess {
-                    if let Some((s, t)) = item {
-                        canvas.delete_image(s);
-                        canvas.delete_image(t);
-                    }
+                for (s, t) in excess.into_iter().flatten() {
+                    canvas.delete_image(s);
+                    canvas.delete_image(t);
                 }
             }
 

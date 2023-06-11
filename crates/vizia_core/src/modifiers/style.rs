@@ -511,6 +511,12 @@ pub struct LinearGradientBuilder {
     stops: Vec<ColorStop<LengthOrPercentage>>,
 }
 
+impl Default for LinearGradientBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LinearGradientBuilder {
     pub fn new() -> Self {
         LinearGradientBuilder { direction: LineDirection::default(), stops: Vec::new() }
@@ -540,6 +546,12 @@ impl From<LinearGradientBuilder> for Gradient {
 #[derive(Debug, Clone)]
 pub struct BoxShadowBuilder {
     box_shadow: BoxShadow,
+}
+
+impl Default for BoxShadowBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl BoxShadowBuilder {

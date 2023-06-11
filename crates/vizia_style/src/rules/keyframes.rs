@@ -22,7 +22,7 @@ impl<'i> Parse<'i> for KeyframesName<'i> {
         match input.next()?.clone() {
             Token::Ident(ref s) => {
                 // CSS-wide keywords without quotes throws an error.
-                match_ignore_ascii_case! { &*s,
+                match_ignore_ascii_case! { s,
                     "none" | "initial" | "inherit" | "unset" | "default" | "revert" | "revert-layer" => {
                         Err(input.new_unexpected_token_error(Token::Ident(s.clone())))
                     },
@@ -65,7 +65,7 @@ impl<'i> Parse<'i> for KeyframeSelector {
 
         let location = input.current_source_location();
         let ident = input.expect_ident()?;
-        match_ignore_ascii_case! { &*ident,
+        match_ignore_ascii_case! { ident,
             "from" => Ok(KeyframeSelector::From),
             "to" => Ok(KeyframeSelector::To),
             _ => Err(location.new_unexpected_token_error(
@@ -77,13 +77,13 @@ impl<'i> Parse<'i> for KeyframeSelector {
 
 pub struct KeyframeListParser;
 
-impl<'a, 'i> AtRuleParser<'i> for KeyframeListParser {
+impl<'i> AtRuleParser<'i> for KeyframeListParser {
     type Prelude = ();
     type AtRule = Keyframe<'i>;
     type Error = CustomParseError<'i>;
 }
 
-impl<'a, 'i> QualifiedRuleParser<'i> for KeyframeListParser {
+impl<'i> QualifiedRuleParser<'i> for KeyframeListParser {
     type Prelude = Vec<KeyframeSelector>;
     type QualifiedRule = Keyframe<'i>;
     type Error = CustomParseError<'i>;

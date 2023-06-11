@@ -16,6 +16,7 @@ use femtovg::{
 };
 use fnv::FnvHashMap;
 use morphorm::Units;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use swash::scale::image::Content;
 use swash::scale::{Render, ScaleContext, Source, StrikeWith};
@@ -394,23 +395,19 @@ impl TextContext {
         self.with_editor(entity, |_, buf| {
             let mut result = vec![];
             if let Some(cursor_end) = buf.select_opt() {
-                let (cursor_start, cursor_end) = if buf.cursor() < cursor_end {
-                    (buf.cursor(), cursor_end)
-                } else if buf.cursor() > cursor_end {
-                    (cursor_end, buf.cursor())
-                } else {
-                    return result;
+                let (cursor_start, cursor_end) = match buf.cursor().cmp(&cursor_end) {
+                    Ordering::Less => (buf.cursor(), cursor_end),
+                    Ordering::Greater => (cursor_end, buf.cursor()),
+                    Ordering::Equal => return result,
                 };
+
                 let buffer = buf.buffer();
                 let total_height = buffer.layout_runs().len() as f32 * buffer.metrics().line_height;
 
                 for run in buffer.layout_runs() {
                     if let Some((x, w)) = run.highlight(cursor_start, cursor_end) {
                         let y = run.line_y - buffer.metrics().font_size;
-                        // let x = x + position.0 - run.line_w * justify.0;
-                        // let y = y + position.1 - total_height * justify.1;
-
-                        let x = if run.rtl { x + bounds.x } else { x + bounds.x };
+                        let x = x + bounds.x;
 
                         let y = y + bounds.y + bounds.h * justify.1 - total_height * justify.1;
                         result.push((x, y, w, buffer.metrics().line_height));
@@ -441,9 +438,7 @@ impl TextContext {
                 let line_i = run.line_i;
                 let line_y = run.line_y;
 
-                // let position_x = bounds.x - run.line_w * justify.0;
-
-                let position_x = if run.rtl { bounds.x } else { bounds.x };
+                let position_x = bounds.x;
 
                 let cursor_glyph_opt = |cursor: &Cursor| -> Option<(usize, f32)> {
                     if cursor.line == line_i {

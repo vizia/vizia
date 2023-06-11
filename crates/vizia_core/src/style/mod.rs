@@ -335,7 +335,7 @@ impl Style {
         &mut self,
         animation_id: Animation,
         time: f32,
-        properties: &Vec<Property>,
+        properties: &[Property],
     ) {
         fn insert_keyframe<T: 'static + Interpolator + Debug + Clone + PartialEq + Default>(
             storage: &mut AnimatableSet<T>,
@@ -357,11 +357,11 @@ impl Style {
             match property {
                 // DISPLAY
                 Property::Display(value) => {
-                    insert_keyframe(&mut self.display, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.display, animation_id, time, *value);
                 }
 
                 Property::Opacity(value) => {
-                    insert_keyframe(&mut self.opacity, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.opacity, animation_id, time, *value);
                 }
 
                 Property::ClipPath(value) => {
@@ -385,11 +385,11 @@ impl Style {
                 }
 
                 Property::Rotate(value) => {
-                    insert_keyframe(&mut self.rotate, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.rotate, animation_id, time, *value);
                 }
 
                 Property::Scale(value) => {
-                    insert_keyframe(&mut self.scale, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.scale, animation_id, time, *value);
                 }
 
                 // BORDER
@@ -403,7 +403,7 @@ impl Style {
                 }
 
                 Property::BorderColor(value) => {
-                    insert_keyframe(&mut self.border_color, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.border_color, animation_id, time, *value);
                 }
 
                 Property::BorderTopLeftRadius(value) => {
@@ -453,7 +453,7 @@ impl Style {
                 }
 
                 Property::OutlineColor(value) => {
-                    insert_keyframe(&mut self.outline_color, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.outline_color, animation_id, time, *value);
                 }
 
                 Property::OutlineOffset(value) => {
@@ -462,12 +462,12 @@ impl Style {
 
                 // BACKGROUND
                 Property::BackgroundColor(value) => {
-                    insert_keyframe(&mut self.background_color, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.background_color, animation_id, time, *value);
                 }
 
                 Property::BackgroundImage(images) => {
                     let images = images
-                        .into_iter()
+                        .iter()
                         .filter_map(|img| match img {
                             BackgroundImage::None => None,
                             BackgroundImage::Gradient(gradient) => {
@@ -492,120 +492,120 @@ impl Style {
 
                 // TEXT
                 Property::FontColor(value) => {
-                    insert_keyframe(&mut self.font_color, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.font_color, animation_id, time, *value);
                 }
 
                 Property::FontSize(value) => {
-                    insert_keyframe(&mut self.font_size, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.font_size, animation_id, time, *value);
                 }
 
                 Property::CaretColor(value) => {
-                    insert_keyframe(&mut self.caret_color, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.caret_color, animation_id, time, *value);
                 }
 
                 Property::SelectionColor(value) => {
-                    insert_keyframe(&mut self.selection_color, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.selection_color, animation_id, time, *value);
                 }
 
                 // SPACE
                 Property::Left(value) => {
-                    insert_keyframe(&mut self.left, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.left, animation_id, time, *value);
                 }
 
                 Property::Right(value) => {
-                    insert_keyframe(&mut self.right, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.right, animation_id, time, *value);
                 }
 
                 Property::Top(value) => {
-                    insert_keyframe(&mut self.top, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.top, animation_id, time, *value);
                 }
 
                 Property::Bottom(value) => {
-                    insert_keyframe(&mut self.bottom, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.bottom, animation_id, time, *value);
                 }
 
                 // CHILD SPACE
                 Property::ChildLeft(value) => {
-                    insert_keyframe(&mut self.child_left, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.child_left, animation_id, time, *value);
                 }
 
                 Property::ChildRight(value) => {
-                    insert_keyframe(&mut self.child_right, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.child_right, animation_id, time, *value);
                 }
 
                 Property::ChildTop(value) => {
-                    insert_keyframe(&mut self.child_top, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.child_top, animation_id, time, *value);
                 }
 
                 Property::ChildBottom(value) => {
-                    insert_keyframe(&mut self.child_bottom, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.child_bottom, animation_id, time, *value);
                 }
 
                 Property::ColBetween(value) => {
-                    insert_keyframe(&mut self.col_between, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.col_between, animation_id, time, *value);
                 }
 
                 Property::RowBetween(value) => {
-                    insert_keyframe(&mut self.row_between, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.row_between, animation_id, time, *value);
                 }
 
                 // SIZE
                 Property::Width(value) => {
-                    insert_keyframe(&mut self.width, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.width, animation_id, time, *value);
                 }
 
                 Property::Height(value) => {
-                    insert_keyframe(&mut self.height, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.height, animation_id, time, *value);
                 }
 
                 // SIZE CONSTRAINTS
                 Property::MinWidth(value) => {
-                    insert_keyframe(&mut self.min_width, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.min_width, animation_id, time, *value);
                 }
 
                 Property::MaxWidth(value) => {
-                    insert_keyframe(&mut self.max_width, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.max_width, animation_id, time, *value);
                 }
 
                 Property::MinHeight(value) => {
-                    insert_keyframe(&mut self.min_height, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.min_height, animation_id, time, *value);
                 }
 
                 Property::MaxHeight(value) => {
-                    insert_keyframe(&mut self.max_height, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.max_height, animation_id, time, *value);
                 }
 
                 // SPACE CONSTRAINTS
                 Property::MinLeft(value) => {
-                    insert_keyframe(&mut self.min_left, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.min_left, animation_id, time, *value);
                 }
 
                 Property::MaxLeft(value) => {
-                    insert_keyframe(&mut self.max_left, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.max_left, animation_id, time, *value);
                 }
 
                 Property::MinRight(value) => {
-                    insert_keyframe(&mut self.min_right, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.min_right, animation_id, time, *value);
                 }
 
                 Property::MaxRight(value) => {
-                    insert_keyframe(&mut self.max_right, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.max_right, animation_id, time, *value);
                 }
 
                 Property::MinTop(value) => {
-                    insert_keyframe(&mut self.min_top, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.min_top, animation_id, time, *value);
                 }
 
                 Property::MaxTop(value) => {
-                    insert_keyframe(&mut self.max_top, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.max_top, animation_id, time, *value);
                 }
 
                 Property::MinBottom(value) => {
-                    insert_keyframe(&mut self.min_bottom, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.min_bottom, animation_id, time, *value);
                 }
 
                 Property::MaxBottom(value) => {
-                    insert_keyframe(&mut self.max_bottom, animation_id, time, value.clone());
+                    insert_keyframe(&mut self.max_bottom, animation_id, time, *value);
                 }
 
                 _ => {}

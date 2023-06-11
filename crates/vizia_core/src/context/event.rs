@@ -585,10 +585,9 @@ impl<'a> EventContext<'a> {
             overall_theme += theme;
         }
 
-        for style_string in self.resource_manager.styles.iter().map(|style| style.get_style()) {
-            if let Ok(style_string) = style_string {
-                overall_theme += &style_string;
-            }
+        for style_string in self.resource_manager.styles.iter().flat_map(|style| style.get_style())
+        {
+            overall_theme += &style_string;
         }
 
         self.style.parse_theme(&overall_theme);
