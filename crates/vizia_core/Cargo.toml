@@ -23,7 +23,7 @@ vizia_window = { path = "../vizia_window" }
 vizia_style = { path = "../vizia_style"}
 accesskit = "0.11.0"
 
-femtovg = "0.6.0"
+femtovg = "0.7.0"
 image = { version = "0.24.0", default-features = false, features = ["png"] } # inherited from femtovg
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm", rev = "15a6b861f87b232aa3392c4a948f6ac9e50d3202" }

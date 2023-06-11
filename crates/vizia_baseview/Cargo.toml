@@ -14,5 +14,5 @@ vizia_id = { path = "../vizia_id" }
 
 baseview = { git = "https://github.com/RustAudio/baseview.git", rev = "7001c2521fa1a439a01967cb881b411cd75d9ee0", features = ["opengl"] }
 raw-window-handle = "0.4.2"
-femtovg = "0.6.0"
+femtovg = "0.7.0"
 lazy_static = "1.4.0"

@@ -10,7 +10,7 @@ rust-version = "1.60"
 
 [dependencies]
 cssparser = "0.29.6"
-femtovg = "0.6.0"
+femtovg = "0.7.0"
 selectors = { version = "0.23.0", path = "./selectors" }
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm", rev = "15a6b861f87b232aa3392c4a948f6ac9e50d3202" }
