@@ -8,6 +8,7 @@ mod event;
 mod proxy;
 mod resource;
 
+use cosmic_text::Shaping;
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
@@ -483,7 +484,9 @@ impl Context {
                 new_ccx.with_buffer(entity, move |_, buf| {
                     buf.lines = lines
                         .into_iter()
-                        .map(|line| BufferLine::new(line, AttrsList::new(Attrs::new())))
+                        .map(|line| {
+                            BufferLine::new(line, AttrsList::new(Attrs::new()), Shaping::Advanced)
+                        })
                         .collect();
                 });
             }

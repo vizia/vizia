@@ -616,7 +616,7 @@ impl<'a> DrawContext<'a> {
             let mut p = femtovg::Path::new();
             p.rect(0.0, 0.0, bounds.w, bounds.h);
             canvas.fill_path(
-                &mut p,
+                &p,
                 &Paint::image(
                     screenshot_image_id,
                     -bounds.x,
@@ -766,7 +766,7 @@ impl<'a> DrawContext<'a> {
         );
         let mut outline_paint = Paint::color(outline_color.into());
         outline_paint.set_line_width(outline_width);
-        canvas.stroke_path(&mut outline_path, &outline_paint);
+        canvas.stroke_path(&outline_path, &outline_paint);
     }
 
     /// Draw inset box shadows for the current view.
@@ -884,7 +884,7 @@ impl<'a> DrawContext<'a> {
                 );
 
                 shadow_path.solidity(femtovg::Solidity::Hole);
-                canvas.fill_path(&mut shadow_path, &paint);
+                canvas.fill_path(&shadow_path, &paint);
                 canvas.restore();
 
                 let target_image = if blur_radius > 0.0 {
@@ -1043,7 +1043,7 @@ impl<'a> DrawContext<'a> {
                     (bounds.h / 2.0 + d / 2.0) / scaley,
                 );
                 let paint = Paint::color(color.into());
-                canvas.fill_path(&mut path.clone(), &paint);
+                canvas.fill_path(&path.clone(), &paint);
                 canvas.restore();
 
                 let target_image = if blur_radius > 0.0 {
@@ -1069,7 +1069,7 @@ impl<'a> DrawContext<'a> {
                 );
 
                 canvas.fill_path(
-                    &mut shadow_path,
+                    &shadow_path,
                     &Paint::image(
                         target_image,
                         bounds.x - d / 2.0,
@@ -1355,7 +1355,7 @@ impl<'a> DrawContext<'a> {
                 path.rect(x, y, w, h);
             }
             let selection_color = self.selection_color();
-            canvas.fill_path(&mut path, &Paint::color(selection_color.into()));
+            canvas.fill_path(&path, &Paint::color(selection_color.into()));
         }
     }
 
@@ -1376,7 +1376,7 @@ impl<'a> DrawContext<'a> {
         ) {
             let mut path = Path::new();
             path.rect(x, y, w * self.scale_factor(), h);
-            canvas.fill_path(&mut path, &Paint::color(caret_color.into()));
+            canvas.fill_path(&path, &Paint::color(caret_color.into()));
         }
     }
 }

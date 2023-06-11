@@ -6,7 +6,7 @@ use crate::prelude::*;
 use crate::text::{enforce_text_bounds, ensure_visible, Direction, Movement};
 use crate::views::scrollview::SCROLL_SENSITIVITY;
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
-use cosmic_text::{Action, Attrs, Cursor, Edit, Editor, FontSystem};
+use cosmic_text::{Action, Attrs, Cursor, Edit, Editor, FontSystem, Shaping};
 use unicode_segmentation::UnicodeSegmentation;
 use vizia_input::Code;
 use vizia_storage::TreeExt;
@@ -122,7 +122,7 @@ where
                             }
 
                             ex.text_context.with_buffer(parent, |fs, buf| {
-                                buf.set_text(fs, &text_str, Attrs::new());
+                                buf.set_text(fs, &text_str, Attrs::new(), Shaping::Advanced);
                             });
 
                             ex.needs_redraw();

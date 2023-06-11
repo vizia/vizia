@@ -42,7 +42,7 @@ instant = "0.1.12"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 chrono = "0.4.22"
 # cosmic-text = "0.8.0"
-cosmic-text = { git="https://github.com/nicoburns/cosmic-text", rev="79cd8eecaede090b5b9bde7acbaaa516d37c7b22" }
+cosmic-text = { git="https://github.com/pop-os/cosmic-text", rev="79275d15e857428e9b8874f28413197e878f3788" }
 swash = "^0.1"
 replace_with = "0.1.7"
 reqwest = { version = "0.11.9", features = ["blocking"] }

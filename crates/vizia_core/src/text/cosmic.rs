@@ -7,7 +7,7 @@ use cosmic_text::{
     fontdb::Database, Attrs, AttrsList, Buffer, CacheKey, Color as FontColor, Edit, Editor,
     FontSystem, Metrics, SubpixelBin, Weight, Wrap,
 };
-use cosmic_text::{Align, Cursor, FamilyOwned};
+use cosmic_text::{Align, Cursor, FamilyOwned, Shaping};
 use femtovg::imgref::{Img, ImgRef};
 use femtovg::rgb::RGBA8;
 use femtovg::{
@@ -70,7 +70,7 @@ impl TextContext {
 
     pub(crate) fn set_text(&mut self, entity: Entity, text: &str) {
         self.with_buffer(entity, |fs, buf| {
-            buf.set_text(fs, text, Attrs::new());
+            buf.set_text(fs, text, Attrs::new(), Shaping::Advanced);
         });
     }
 

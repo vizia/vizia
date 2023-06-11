@@ -15,4 +15,4 @@ selectors = { version = "0.23.0", path = "./selectors" }
 # morphorm = {path = "../../../morphorm" }
 morphorm = {git = "https://github.com/vizia/morphorm", rev = "15a6b861f87b232aa3392c4a948f6ac9e50d3202" }
 smallvec = "1.0"
-bitflags = "*"
+bitflags = "2.1.0"

@@ -278,7 +278,7 @@ impl View for ArcTrack {
         let mut paint = Paint::color(background_color);
         paint.set_line_width(span);
         paint.set_line_cap(LineCap::Round);
-        canvas.stroke_path(&mut path, &paint);
+        canvas.stroke_path(&path, &paint);
 
         // Draw the active arc
         let mut path = Path::new();
@@ -309,7 +309,7 @@ impl View for ArcTrack {
         let mut paint = Paint::color(foreground_color);
         paint.set_line_width(span);
         paint.set_line_cap(LineCap::Round);
-        canvas.stroke_path(&mut path, &paint);
+        canvas.stroke_path(&path, &paint);
     }
 }
 
@@ -425,7 +425,7 @@ impl View for Ticks {
         let mut paint = Paint::color(foreground_color.into());
         paint.set_line_width(line_width);
         paint.set_line_cap(LineCap::Round);
-        canvas.stroke_path(&mut path, &paint);
+        canvas.stroke_path(&path, &paint);
     }
 }
 
@@ -495,7 +495,7 @@ impl View for TickKnob {
         let mut paint = Paint::color(background_color);
         paint.set_line_width(tick_width);
         paint.set_line_cap(LineCap::Round);
-        canvas.fill_path(&mut path, &paint);
+        canvas.fill_path(&path, &paint);
         // Draw the tick
         let mut path = Path::new();
         let angle = match self.mode {
@@ -519,7 +519,7 @@ impl View for TickKnob {
         let mut paint = Paint::color(foreground_color.into());
         paint.set_line_width(tick_width);
         paint.set_line_cap(LineCap::Round);
-        canvas.stroke_path(&mut path, &paint);
+        canvas.stroke_path(&path, &paint);
     }
 }
 
