@@ -350,8 +350,6 @@ submenu > popup {
 submenu submenu > popup {
     opacity: 0;
     display: none;
-    transition: display 500ms 500ms;
-    transition: opacity 200ms;
 }
 
 submenu submenu > popup:checked {
