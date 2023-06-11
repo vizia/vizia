@@ -232,9 +232,7 @@ chip:disabled .icon {
     scale: 1;
 }
 
-/* Color Picker */
-
-/* Datepicker */
+/* DATEPICKER */
 
 datepicker {
     background-color: #343434;
@@ -290,30 +288,7 @@ datepicker {
     color: #181818;
 }
 
-/* Date Time Picker */
-
-datetimepicker {
-    border-radius: 4px;
-    background-color: #343434;
-}
-
-datetimepicker tabheader label {
-    font-family: "tabler-icons", sans-serif;
-}
-
-datetimepicker tabheader:checked label {
-    color: #51afef;
-}
-
-datetimepicker tabheader .indicator {
-    background-color: #2f2f2f;
-}
-
-datetimepicker tabheader:checked .indicator {
-    background-color: #51afef;
-}
-
-/* Dropdown */
+/* DROPDOWN */
 
 dropdown {
     background-color: #282828;
@@ -325,11 +300,6 @@ dropdown:focus-visible {
     outline-color: #51afef;
     outline-offset: 3px;
 }
-
-/* dropdown label {
-    child-space: 1s;
-    background-color: red;
-} */
 
 dropdown popup {
     background-color: #282828;
@@ -355,11 +325,7 @@ dropdown list label:hover {
     background-color: #51afef11;
 }
 
-/* Element */
-
-/* Image */
-
-/* Knob */
+/* KNOB */
 
 knob {
     background-color: #1d1d1d;
@@ -398,36 +364,75 @@ knob:disabled .knob-tick {
     background-color: #c4c4c4;
 }
 
-/* Label */
+/* MENU */
 
-/* List */
-
-/* Menu */
-
-menucontroller {
-    background-color: #323232;
-}
-
-menustack {
+menubutton {
+    background-color: transparent;
     border-radius: 4px;
-    background-color: #323232;
 }
 
-menustack.vertical {
-    border-top-left-radius: 0px;
-    border-width: 1px;
-    border-color: #424242;
-}
-
-menu {
-    border-radius: 4px;
+menubutton:focus {
+    background-color: #f0f0f0;
 }
 
 menubutton:hover {
-    background-color: #424242;
+    background-color: #f0f0f0;
 }
 
-/* Notification */
+menubutton .shortcut {
+    color: #c4c4c4;
+    font-size: medium;
+}
+
+submenu {
+    background-color: transparent;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #d2d2d2;
+}
+
+menubar submenu {
+    border-width: 0px;
+}
+
+submenu submenu {
+    border-width: 0px;
+}
+
+submenu:checked {
+    background-color: #f0f0f0;
+}
+
+submenu:focus {
+    background-color: #f0f0f0;
+}
+
+submenu:hover {
+    background-color: #f0f0f0;
+}
+
+submenu > popup {
+    border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
+    child-space: 8px;
+    border-radius: 4px;
+    box-shadow: 0px 2px 16px #4f4f4f38;
+}
+
+menu-divider {
+    height: 9px;
+    width: 1s;
+    child-top: 1s;
+    child-bottom: 1s;
+}
+
+menu-divider .line {
+    height: 1px;
+    background-color: #d2d2d2;
+}
+
+/* NOTIFICATION */
 
 notification {
     background-color: #242424;
@@ -437,9 +442,9 @@ notification .notification-header button {
     background-color: transparent;
 }
 
-/* Picklist */
+/* PICKLIST */
 
-/* Popup */
+/* POPUP */
 
 popup {
     box-shadow: 0px 0px 8px #00000026;
@@ -452,11 +457,7 @@ popup:checked {
     transition: opacity 100ms;
 }
 
-/* Progress Bar */
-
-/* Progress Steps */
-
-/* Radio Button */
+/* RADIOBUTTON */
 
 radiobutton {
     border-width: 2px;
@@ -521,7 +522,7 @@ radiobutton:disabled .inner {
     transition: scale 100ms;
 }
 
-/* Rating */
+/* RATING */
 rating .icon {
     color: #484848;
     font-size: x-large;
@@ -556,11 +557,7 @@ rating .icon:checked:disabled {
     color: #3c3826;
 }
 
-/* Searchbox */
-
-/* Scroll View */
-
-/* Scroll Bar */
+/* SCROLL BAR */
 
 scrollbar {
     background-color: #181818;
@@ -578,7 +575,7 @@ scrollbar .thumb:focus {
     background-color: #888;
 }
 
-/* Slider */
+/* SLIDER */
 
 slider {
     background-color: #51afef20;
@@ -618,22 +615,7 @@ slider:disabled .thumb {
     background-color: #404040;
 }
 
-/* Named Slider */
-
-namedslider {
-    background-color: #282828;
-    border-radius: 4px;
-}
-
-namedslider > textbox {
-    color: #888;
-}
-
-namedslider slider label {
-    background-color: transparent;
-}
-
-/* Spinbox */
+/* SPINBOX */
 
 spinbox {
     background-color: #282828;
@@ -670,9 +652,7 @@ spinbox picklist.spinbox-value {
     col-between: 4px;
 }
 
-/* Stack */
-
-/* Switch */
+/* SWITCH */
 
 switch .switch-handle-bg {
     border-radius: 6px;
@@ -770,36 +750,7 @@ tabview .tabview-divider {
     background-color: #c4c4c4;
 }
 
-/* Table */
-
-table {
-    border-radius: 4px;
-    background-color: #343434;
-}
-
-.table-column-title {
-    font-family: "Roboto", sans-serif;
-}
-
-.table-column-icon {
-    font-family: "tabler-icons", sans-serif;
-}
-
-.table-row-divisor {
-    background-color: #404040;
-}
-
-.table-element {
-    background-color: transparent;
-}
-
-.table-element-colored {
-    background-color: #51afef20;
-    border-radius: 4px;
-    color: #51afef;
-}
-
-/* Textbox */
+/* TEXTBOX */
 
 textbox {
     border-width: 1px;
@@ -842,7 +793,7 @@ textbox:invalid {
     background-color: #3c2c2c;
 }
 
-/* Time Picker */
+/* TIMEPICKER */
 
 timepicker {
     background-color: #343434;
@@ -937,7 +888,6 @@ analogtimepicker .time-selector-wrapper button .indicator {
 analogtimepicker .time-selector-wrapper button:checked .indicator {
     background-color: #51afef;
 }
-/* Tree */
 
 /* TOOLTIP */
 tooltip {
@@ -954,7 +904,7 @@ tooltip.vis {
     transition: opacity 100ms 500ms;
 }
 
-/* Modal */
+/* MODAL */
 
 .modal {
     background-color: #323232;
@@ -970,14 +920,4 @@ tooltip.vis {
 .modal .title {
     color: #fff;
     font-size: 18;
-}
-
-/* XY Pad */
-
-xypad {
-    background-color: #323232;
-}
-
-xypad .marker {
-    border-color: #fafafa;
 }

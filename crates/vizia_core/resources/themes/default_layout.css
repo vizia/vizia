@@ -1,8 +1,4 @@
-/* Label */
-
-label.icon {
-    font-family: "tabler-icons", sans-serif;
-}
+/* ICON */
 
 icon {
     font-family: "tabler-icons", sans-serif;
@@ -10,7 +6,7 @@ icon {
     child-space: 1s;
 }
 
-/* Button */
+/* BUTTON */
 
 button {
     width: auto;
@@ -39,7 +35,7 @@ button.icon {
     child-space: 1s;
 }
 
-/* Checkbox */
+/* CHECKBOX */
 
 checkbox {
     width: 20px;
@@ -48,7 +44,7 @@ checkbox {
     font-family: "tabler-icons", sans-serif;
 }
 
-/* Chip */
+/* CHIP */
 
 chip {
     width: auto;
@@ -65,9 +61,7 @@ chip label {
     width: auto;
 }
 
-/* Color picker */
-
-/* Datepicker */
+/* DATEPICKER */
 
 datepicker {
     width: 252px;
@@ -158,28 +152,7 @@ datepicker {
     left: 8px;
 }
 
-/* Date Time Picker */
-
-datetimepicker {
-    height: 322px;
-    width: 252px;
-}
-
-datetimepicker tabheader {
-    width: 1s;
-}
-
-datetimepicker tabheader label {
-    width: 1s;
-    height: 32px;
-    child-space: 1s;
-}
-
-datetimepicker tabheader .indicator {
-    height: 1px;
-}
-
-/* Dropdown */
+/* DROPDOWN */
 
 dropdown {
     height: 32px;
@@ -239,16 +212,14 @@ dropdown vstack {
     child-space: auto;
 }
 
-/* Element */
-
-/* Image */
+/* IMAGE */
 
 image {
     width: auto;
     height: auto;
 }
 
-/* Knob */
+/* KNOB */
 
 knob {
     width: 32px;
@@ -280,7 +251,7 @@ knob {
     bottom: 1s;
 }
 
-/* Label */
+/* LABEL */
 
 label {
     width: auto;
@@ -292,13 +263,18 @@ label.describing {
     cursor: hand;
 }
 
-/* List */
+label.icon {
+    font-family: "tabler-icons", sans-serif;
+}
+
+/* LIST */
+
 list {
     width: auto;
     height: auto;
 }
 
-/* Menu */
+/* MENU */
 
 menubar {
     child-space: 8px;
@@ -418,7 +394,7 @@ submenu > .arrow {
     /* child-right: 0px; */
 }
 
-/* Notification */
+/* NOTIFICATION */
 
 notification {
     width: 300px;
@@ -472,13 +448,13 @@ notification .icon label {
     height: auto;
 }
 
-/* Picklist */
+/* PICKLIST */
 
 picklist {
     size: auto;
 }
 
-/* Popup */
+/* POPUP */
 
 popup {
     width: auto;
@@ -492,11 +468,7 @@ popup:checked {
     opacity: 1;
 }
 
-/* Progress Bar */
-
-/* Progress Steps */
-
-/* Radiobutton */
+/* RADIOBUTTON */
 
 radiobutton {
     width: 16px;
@@ -517,9 +489,7 @@ rating {
     layout-type: row;
 }
 
-/* Searchbox */
-
-/* Scroll View */
+/* SCROLLVIEW */
 
 scrollview {
     overflow: hidden;
@@ -550,7 +520,7 @@ scrollview > scrollbar.vertical {
     right: 0px;
 }
 
-/* Scroll Bar */
+/* SCROLLBAR */
 
 scrollbar.horizontal {
     height: 8px;
@@ -573,7 +543,7 @@ scrollbar.vertical .thumb {
     width: 1s;
 }
 
-/* Slider */
+/* SLIDER */
 
 slider {
     height: 5px;
@@ -592,36 +562,6 @@ slider .thumb {
     top: 1s;
     bottom: 1s;
     child-space: 1s;
-}
-
-/* Named Slider */
-
-namedslider {
-    height: 28px;
-    child-top: 1s;
-    child-bottom: 1s;
-    child-space: 2px;
-    child-left: 2px;
-    child-right: 0px;
-    col-between: 4px;
-}
-
-namedslider > textbox {
-    min-width: 55px;
-}
-
-namedslider slider {
-    width: 1s;
-    height: 1s;
-    top: 0px;
-    bottom: 0px;
-}
-
-namedslider slider label {
-    left: 4px;
-    top: 1s;
-    bottom: 1s;
-    right: 4px;
 }
 
 /* SPINBOX */
@@ -675,7 +615,7 @@ spinbox picklist popup {
     right: 1s;
 }
 
-/* Stack */
+/* STACK */
 
 zstack > * {
     position-type: self-directed;
@@ -708,7 +648,7 @@ switch:checked .switch-handle {
     transition: left 100ms;
 }
 
-/* Tab */
+/* TABVIEW */
 
 tabview {
     width: 1s;
@@ -757,70 +697,7 @@ tabview .tabview-divider {
     height: 1px;
 }
 
-/* tabheader label {
-    top: 4px;
-    bottom: 4px;
-    left: 8px;
-    right: 8px;
-} 
-
-.tabview-content-wrapper {
-    width: 1s;
-    height: 1s;
-} */
-
-/* TABLE */
-
-table {
-    child-left: 4px;
-    child-top: 4px;
-    child-right: 4px;
-    child-bottom: 4px;
-}
-
-tablecolumn * {
-    row-between: 4px;
-}
-
-.table-column-header {
-    height: 32px;
-    bottom: 8px;
-}
-
-.table-column-title {
-    child-left: 5px;
-    width: 1s;
-    height: auto;
-}
-
-.table-column-icon {
-    width: 30px;
-    child-space: 1s;
-}
-
-.table-row-divisor {
-    height: 1px;
-}
-
-.table-element {
-    width: 1s;
-    height: 32px;
-    child-space: 1s;
-    child-left: 4px;
-}
-
-.table-element-colored {
-    left: 4px;
-    top: 1s;
-    bottom: 1s;
-    child-space: 1s;
-    child-left: 8px;
-    child-right: 8px;
-    child-top: 2px;
-    child-bottom: 2px;
-}
-
-/* Textbox */
+/* TEXTBOX */
 
 textbox {
     overflow: hidden;
@@ -841,56 +718,6 @@ textbox.multiline {
 
 textbox:disabled {
     cursor: default;
-}
-
-/* Time Picker */
-
-timepicker digitaltimepicker {
-    width: 1s;
-}
-
-image {
-    width: auto;
-    height: auto;
-}
-
-zstack > * {
-    position-type: self-directed;
-}
-
-timepicker digitaltimepicker .digitaltimepicker-button-wrapper {
-    left: 1s;
-}
-
-/* Digital Time Picker */
-
-digitaltimepicker {
-    height: auto;
-    width: auto;
-    child-space: 8px;
-    col-between: 8px;
-}
-
-digitaltimepicker > spinbox {
-    width: 120px;
-}
-
-digitaltimepicker .digitaltimepicker-button-wrapper {
-    child-top: 1s;
-    child-bottom: 1s;
-    height: 1s;
-}
-
-digitaltimepicker .digitaltimepicker-dots-wrapper {
-    width: auto;
-    height: 1s;
-    child-space: 1s;
-    row-between: 8px;
-}
-
-digitaltimepicker .digitaltimepicker-dot {
-    width: 6px;
-    height: 6px;
 }
 
 /* Radial Time Picker */
@@ -964,69 +791,13 @@ analogtimepicker .time-selector-wrapper button label {
     child-space: 1s;
 } */
 
-menucontroller {
-    width: 0px;
-    height: 0px;
-    overflow: visible;
-}
-
-menustack {
-    width: auto;
-    height: auto;
-    overflow: visible;
-}
-
-menu {
-    overflow: visible;
-}
-
-menustack.vertical {
-    layout-type: column;
-}
-
-menustack.horizontal {
-    layout-type: row;
-}
-
-menu > menustack {
-    position-type: self-directed;
-    z-index: 1000;
-    display: none;
-}
-
-menu:checked > menustack {
-    display: flex;
-}
-
-menustack.vertical > menu > menustack {
-    left: 100%;
-}
-
-menustack.horizontal > menu > menustack {
-    top: 100%;
-}
-
-.menu_arrow {
-    display: none;
-}
-
-menustack.vertical > menu > hstack > .menu_arrow {
-    display: flex;
-    left: 1s;
-    top: 1s;
-    bottom: 1s;
-    width: 1s;
-    height: 1s;
-    child-space: 1s;
-}
-
 analogtimepicker .time-selector-wrapper button .indicator {
     top: 1s;
     width: 100%;
     height: 2px;
 }
 
-/* Tooltip */
+/* TOOLTIP */
 
 tooltip {
     height: auto;
@@ -1058,8 +829,6 @@ tooltip .tooltip-button-wrapper {
     border-radius: 2px;
 }
 
-/* Tree */
-
 /* Modal */
 
 .modal {
@@ -1085,12 +854,4 @@ tooltip .tooltip-button-wrapper {
 
 .modal .accent {
     left: 1s;
-}
-
-/* XY Pad */
-
-xypad .marker {
-    border-radius: 50%;
-    size: 10px;
-    border-width: 2px;
 }

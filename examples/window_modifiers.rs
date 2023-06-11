@@ -1,5 +1,4 @@
 use vizia::prelude::*;
-use vizia_winit::GetRawWindowHandle;
 
 #[cfg(feature = "baseview")]
 fn main() {

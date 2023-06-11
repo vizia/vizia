@@ -23,7 +23,6 @@ fn main() {
 
         HStack::new(cx, |cx| {
             Button::new(cx, |cx| cx.emit(AppEvent::Increment), |cx| Label::new(cx, "Increment"));
-
             Label::new(cx, AppData::count).width(Pixels(50.0)).live(Live::Polite);
         })
         .child_space(Stretch(1.0))

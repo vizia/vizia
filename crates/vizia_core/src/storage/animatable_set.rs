@@ -745,7 +745,7 @@ mod tests {
     /// Test for constructing a new empty animatable storage.
     #[test]
     fn new() {
-        let animatable_storage = AnimatableSet::<f32>::new();
+        let animatable_storage = AnimatableSet::<f32>::default();
         assert_eq!(animatable_storage.inline_data.is_empty(), true);
         assert_eq!(animatable_storage.shared_data.is_empty(), true);
         assert_eq!(animatable_storage.animations.is_empty(), true);
@@ -755,7 +755,7 @@ mod tests {
     /// Test inserting inline data into the storage.
     #[test]
     fn insert_inline() {
-        let mut animatable_storage = AnimatableSet::new();
+        let mut animatable_storage = AnimatableSet::default();
         animatable_storage.insert(Entity::root(), 5.0);
         //assert_eq!(animatable_storage.entity_indices.first().unwrap().data_index, DataIndex::inline(0));
     }

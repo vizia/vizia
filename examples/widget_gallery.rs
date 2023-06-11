@@ -113,92 +113,30 @@ fn main() {
         ExamplePage::vertical(cx, |cx| {
             cx.add_stylesheet(STYLE);
             ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                Panel::new(
-                    cx,
-                    |cx| {
-                        Label::new(cx, "Label").font_size(30.0).font_weight(FontWeightKeyword::Bold)
-                    },
-                    |cx| {
-                        label(cx);
-                    },
-                );
+                Label::new(cx, "Label").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                label(cx);
 
-                Panel::new(
-                    cx,
-                    |cx| {
-                        Label::new(cx, "Button")
-                            .font_size(30.0)
-                            .font_weight(FontWeightKeyword::Bold)
-                    },
-                    |cx| {
-                        button(cx);
-                    },
-                );
+                Label::new(cx, "Button").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                button(cx);
 
-                Panel::new(
-                    cx,
-                    |cx| {
-                        Label::new(cx, "Checkbox")
-                            .font_size(30.0)
-                            .font_weight(FontWeightKeyword::Bold)
-                    },
-                    |cx| {
-                        checkbox(cx);
-                    },
-                );
+                Label::new(cx, "Checkbox").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                checkbox(cx);
 
-                Panel::new(
-                    cx,
-                    |cx| {
-                        Label::new(cx, "Switch")
-                            .font_size(30.0)
-                            .font_weight(FontWeightKeyword::Bold)
-                    },
-                    |cx| {
-                        switch(cx);
-                    },
-                );
+                Label::new(cx, "Switch").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                switch(cx);
 
-                Panel::new(
-                    cx,
-                    |cx| {
-                        Label::new(cx, "Radiobutton")
-                            .font_size(30.0)
-                            .font_weight(FontWeightKeyword::Bold)
-                    },
-                    |cx| {
-                        radiobutton(cx);
-                    },
-                );
+                Label::new(cx, "Radiobutton").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                radiobutton(cx);
 
-                Panel::new(
-                    cx,
-                    |cx| {
-                        Label::new(cx, "Slider")
-                            .font_size(30.0)
-                            .font_weight(FontWeightKeyword::Bold)
-                    },
-                    |cx| {
-                        slider(cx);
-                    },
-                );
+                Label::new(cx, "Slider").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                slider(cx);
 
-                Panel::new(
-                    cx,
-                    |cx| {
-                        Label::new(cx, "Rating")
-                            .font_size(30.0)
-                            .font_weight(FontWeightKeyword::Bold)
-                    },
-                    |cx| {
-                        rating(cx);
-                    },
-                );
+                Label::new(cx, "Rating").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                rating(cx);
             });
         });
     })
     .title("Widget Gallery")
-    //.background_color(Color::rgb(249, 249, 249))
     .run();
 }
 

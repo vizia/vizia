@@ -224,25 +224,6 @@ chip:disabled .icon {
     scale: 1;
 }
 
-/* Date Time Picker */
-
-datetimepicker {
-    border-radius: 4px;
-    background-color: #343434;
-}
-
-datetimepicker tabheader:checked label {
-    color: #51afef;
-}
-
-datetimepicker tabheader .indicator {
-    background-color: #2f2f2f;
-}
-
-datetimepicker tabheader:checked .indicator {
-    background-color: #51afef;
-}
-
 /* Dropdown */
 
 dropdown {
@@ -394,62 +375,13 @@ popup {
     transition: opacity 100ms; */
 }
 
+/* 
 popup:checked {
-    /* opacity: 100%;
-    transition: opacity 100ms; */
-}
-
-/*
-dropdown .title {
-    width: auto;
-    height: 30px;
-    background-color: #fff;
-    border-radius: 4px;
-    border-width: 1px;
-    border-color: #e4e4e4;
-    child-space: 1s;
-    child-left: 5px;
-    overflow: visible;
-}
-
-dropdown .title:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
-}
-
-dropdown popup {
-    top: 4px;
-    background-color: #fff;
-    border-radius: 4px;
-    border-width: 1px;
-    border-color: #e4e4e4;
-}
-
-dropdown popup list {
-    width: 1s;
-}
-
-dropdown list label {
-    width: 1s;
-    height: 30px;
-    child-left: 6px;
-    color: #888;
-}
-
-dropdown list label:checked {
-    color: #000;
-}
-
-dropdown list label:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
-}
-
-dropdown vstack {
-    child-space: auto;
+    opacity: 100%;
+    transition: opacity 100ms;
 } */
+
+/* KNOB */
 
 knob {
     border-width: 2px;
@@ -485,13 +417,14 @@ knob .knob-tick {
 }
 
 /* PiCKLIST */
+
 picklist:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
     outline-offset: 3px;
 }
 
-/* Radiobutton */
+/* RADIOBUTTON */
 
 radiobutton {
     width: 16px;
@@ -653,7 +586,7 @@ scrollview:checked > scrollbar:active .thumb {
     transition: opacity 200ms 0s linear;
 }
 
-/* slider */
+/* SLIDER */
 
 slider * {
     background-color: #51afef20;
@@ -680,7 +613,7 @@ slider .thumb {
     child-space: 1s;
 }
 
-/* Spinbox */
+/* SPINBOX */
 
 spinbox {
     background-color: #fff;
@@ -714,7 +647,7 @@ spinbox picklist.spinbox-value .title {
     border-width: 0px;
 }
 
-/* Switch */
+/* SWITCH */
 
 switch .switch-handle-bg {
     border-radius: 6px;
@@ -777,58 +710,7 @@ switch:checked:hover:disabled * {
     transition: background-color 100ms;
 }
 
-table {
-    border-radius: 4px;
-}
-
-tablecolumn {
-    width: 120px;
-}
-
-.table-column-header {
-    height: 30px;
-}
-
-.table-column-title {
-    child-left: 5px;
-    width: 1s;
-    height: 1s;
-    font-weight: bold;
-}
-
-.table-column-icon {
-    width: 30px;
-    child-space: 1s;
-    font-family: "icons";
-}
-
-.table-row-divisor {
-    height: 1px;
-    background-color: #404040;
-}
-
-.table-element {
-    child-left: 5px;
-    width: 1s;
-    height: 32px;
-    child-space: 1s;
-    child-left: 4px;
-    background-color: transparent;
-}
-
-.table-element-colored {
-    left: 4px;
-    top: 1s;
-    bottom: 1s;
-    background-color: #51afef20;
-    child-space: 1s;
-    child-left: 8px;
-    child-right: 8px;
-    child-top: 2px;
-    child-bottom: 2px;
-    border-radius: 4px;
-    color: #51afef;
-}
+/* TEXTBOX */
 
 textbox {
     border-width: 1px;
@@ -869,7 +751,7 @@ textbox:invalid {
     border-width: 2px;
 }
 
-/* Time Picker */
+/* MODAL */
 
 .modal {
     space: 1s;
@@ -902,6 +784,8 @@ textbox:invalid {
 .modal .accent {
     left: 1s;
 }
+
+/* TIMEPICKER */
 
 timepicker {
     background-color: #fff;
@@ -1007,7 +891,7 @@ tabview .tabview-divider {
     background-color: #c4c4c4;
 }
 
-/* Tooltip */
+/* TOOLTIP */
 
 tooltip {
     child-space: 4px;
@@ -1021,14 +905,4 @@ tooltip {
 tooltip.vis {
     opacity: 1;
     transition: opacity 100ms 500ms;
-}
-
-/* XY Pad */
-
-xypad {
-    background-color: #d4d4d4;
-}
-
-xypad .marker {
-    border-color: #181818;
 }
