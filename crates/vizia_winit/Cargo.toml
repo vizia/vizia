@@ -19,20 +19,16 @@ vizia_core = { path = "../vizia_core" }
 vizia_id = { path = "../vizia_id" }
 vizia_window = { path = "../vizia_window" }
 
-accesskit = "0.10.1"
+accesskit = "0.11.0"
 winit = { version = "0.28.1", default-features = false }
-femtovg = "0.6.0"
-# femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "09f4837fff4d2cd58ddc4674d0d7e1296a4123aa", default-features = false }
-#femtovg = { path = "../../../femtovg", default-features = false }
+femtovg = "0.7.0"
 glutin = { version = "0.30.3", default-features = false, optional = true }
 copypasta = {version = "0.8.1", optional = true, default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-accesskit_winit = "0.12.4"
+accesskit_winit = "0.14.0"
 glutin = { version = "0.30.3", default-features = false }
-femtovg = "0.6.0"
-# femtovg = { git = "https://github.com/rhelmot/femtovg", rev = "09f4837fff4d2cd58ddc4674d0d7e1296a4123aa", features = ["glutin"] }
-#femtovg = { path = "../../../femtovg", default-features = false, features = ["glutin"] }
+femtovg = "0.7.0"
 glutin-winit = "0.3.0"
 raw-window-handle = "0.5.0"
 

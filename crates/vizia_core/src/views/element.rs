@@ -92,8 +92,7 @@ use crate::prelude::*;
 /// #
 /// Element::new(cx)
 ///     .width(Pixels(100.0))
-///     .height(Pixels(100.0))
-///     .background_image(AppData::picture);
+///     .height(Pixels(100.0));
 /// ```
 pub struct Element;
 

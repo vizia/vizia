@@ -1,13 +1,13 @@
-#![allow(dead_code)]
+//! Resource management for fonts, themes, images, and translations.
 
 use crate::context::ResourceContext;
 use crate::entity::Entity;
+use crate::prelude::IntoCssStr;
 use crate::view::Canvas;
 use fluent_bundle::{FluentBundle, FluentResource};
 use image::GenericImageView;
 use std::borrow::Borrow;
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
 use unic_langid::LanguageIdentifier;
 
 pub(crate) struct StoredImage {
@@ -18,9 +18,9 @@ pub(crate) struct StoredImage {
     pub observers: HashSet<Entity>,
 }
 
-pub enum ImageOrId {
+pub(crate) enum ImageOrId {
     Image(image::DynamicImage, femtovg::ImageFlags),
-    Id(femtovg::ImageId, (u32, u32)), // need to be able to get dimensions without a canvas
+    Id(femtovg::ImageId, (u32, u32)),
 }
 
 impl ImageOrId {
@@ -37,13 +37,6 @@ impl ImageOrId {
             ImageOrId::Id(i, _) => *i,
         }
     }
-
-    pub fn dimensions(&self) -> (u32, u32) {
-        match self {
-            ImageOrId::Image(image, _) => image.dimensions(),
-            ImageOrId::Id(_, dim) => *dim,
-        }
-    }
 }
 
 #[derive(Copy, Clone, PartialEq)]
@@ -53,37 +46,61 @@ pub enum ImageRetentionPolicy {
     DropWhenNoObservers,
 }
 
-// #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-// pub struct Resource(u32);
-
+#[doc(hidden)]
 #[derive(Default)]
 pub struct ResourceManager {
-    pub stylesheets: Vec<PathBuf>, // Stylesheets refer to a file path
-    pub themes: Vec<String>,       // Themes are the string content stylesheets
+    pub themes: Vec<String>, // Themes are the string content stylesheets
+    pub styles: Vec<Box<dyn IntoCssStr>>,
     pub(crate) images: HashMap<String, StoredImage>,
     pub translations: HashMap<LanguageIdentifier, FluentBundle<FluentResource>>,
+
     pub language: LanguageIdentifier,
 
     pub image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>>,
-
-    count: u32,
 }
 
 impl ResourceManager {
     pub fn new() -> Self {
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
 
+        #[cfg(not(target_arch = "wasm32"))]
+        let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> =
+            Some(Box::new(|cx: &mut ResourceContext, path: &str| {
+                if path.starts_with("https://") {
+                    let path = path.to_string();
+                    cx.spawn(move |cx| {
+                        let data = reqwest::blocking::get(&path).unwrap().bytes().unwrap();
+                        cx.load_image(
+                            path,
+                            image::load_from_memory_with_format(
+                                &data,
+                                image::guess_format(&data).unwrap(),
+                            )
+                            .unwrap(),
+                            ImageRetentionPolicy::DropWhenUnusedForOneFrame,
+                        )
+                        .unwrap();
+                    });
+                } else {
+                    // TODO: Try to load path from file
+                }
+            }));
+
+        #[cfg(target_arch = "wasm32")]
+        let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> = None;
+
         ResourceManager {
-            stylesheets: Vec::new(),
             themes: Vec::new(),
             images: HashMap::new(),
+            styles: Vec::new(),
+
             translations: HashMap::from([(
                 LanguageIdentifier::default(),
                 FluentBundle::new(vec![LanguageIdentifier::default()]),
             )]),
+
             language: locale,
-            image_loader: None,
-            count: 0,
+            image_loader: default_image_loader,
         }
     }
 
@@ -127,15 +144,6 @@ impl ResourceManager {
         }
     }
 
-    pub(crate) fn add_font(&mut self, _name: &str, _path: &str) {}
-    // pub fn add_stylesheet(&mut self, path: String) -> Result<(), std::io::Error> {
-
-    //     let style_string = std::fs::read_to_string(path.clone())?;
-    //     self.stylesheets.push(path);
-
-    //     Ok(())
-    // }
-
     pub fn mark_images_unused(&mut self) {
         for (_, img) in self.images.iter_mut() {
             img.used = false;
@@ -143,13 +151,8 @@ impl ResourceManager {
     }
 
     pub fn evict_unused_images(&mut self) {
-        self.images.retain(|name, img| match img.retention_policy {
-            ImageRetentionPolicy::DropWhenUnusedForOneFrame => {
-                if !img.used {
-                    println!("Evict image: {}", name);
-                }
-                img.used
-            }
+        self.images.retain(|_, img| match img.retention_policy {
+            ImageRetentionPolicy::DropWhenUnusedForOneFrame => img.used,
 
             ImageRetentionPolicy::DropWhenNoObservers => !img.observers.is_empty(),
 

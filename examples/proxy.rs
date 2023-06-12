@@ -19,10 +19,10 @@ fn main() {
         })
         .title("Proxy");
 
-    let proxy = app.get_proxy();
+    let mut proxy = app.get_proxy();
 
     std::thread::spawn(move || loop {
-        proxy.send_event(Event::new(()).into()).expect("Failed to send proxy event");
+        proxy.emit(()).expect("Failed to send proxy event");
         std::thread::sleep(std::time::Duration::from_secs(2));
     });
 

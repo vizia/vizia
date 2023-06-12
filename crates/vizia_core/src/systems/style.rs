@@ -1,10 +1,244 @@
-use crate::prelude::*;
-use crate::style::SystemFlags;
-use crate::style::{Rule, Selector, SelectorRelation, Style, StyleRule};
+use crate::{
+    events::ViewHandler,
+    prelude::*,
+    style::{PseudoClassFlags, Rule, Style, SystemFlags},
+};
+use fnv::FnvHashMap;
 use vizia_id::GenerationalId;
-use vizia_storage::{DrawIterator, LayoutTreeIterator, TreeExt};
+use vizia_storage::LayoutTreeIterator;
+use vizia_style::{
+    matches_selector_list,
+    selectors::{
+        attr::{AttrSelectorOperation, CaseSensitivity, NamespaceConstraint},
+        SelectorImpl,
+    },
+    selectors::{matching::ElementSelectorFlags, OpaqueElement},
+    Element, MatchingContext, MatchingMode, PseudoClass, QuirksMode, SelectorIdent, Selectors,
+};
 
-pub fn inline_inheritance_system(cx: &mut Context) {
+/// A node used for style matching.
+#[derive(Clone)]
+pub(crate) struct Node<'s, 't, 'v> {
+    entity: Entity,
+    store: &'s Style,
+    tree: &'t Tree<Entity>,
+    views: &'v FnvHashMap<Entity, Box<dyn ViewHandler>>,
+}
+
+impl<'s, 't, 'v> std::fmt::Debug for Node<'s, 't, 'v> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.entity)
+    }
+}
+
+/// Used for selector matching.
+impl<'s, 't, 'v> Element for Node<'s, 't, 'v> {
+    type Impl = Selectors;
+
+    fn opaque(&self) -> OpaqueElement {
+        OpaqueElement::new(self)
+    }
+
+    fn is_html_slot_element(&self) -> bool {
+        false
+    }
+
+    fn parent_node_is_shadow_root(&self) -> bool {
+        false
+    }
+
+    fn containing_shadow_host(&self) -> Option<Self> {
+        None
+    }
+
+    fn parent_element(&self) -> Option<Self> {
+        self.tree.get_parent(self.entity).map(|parent| Node {
+            entity: parent,
+            store: self.store,
+            tree: self.tree,
+            views: self.views,
+        })
+    }
+
+    fn prev_sibling_element(&self) -> Option<Self> {
+        self.tree.get_prev_sibling(self.entity).map(|parent| Node {
+            entity: parent,
+            store: self.store,
+            tree: self.tree,
+            views: self.views,
+        })
+    }
+
+    fn next_sibling_element(&self) -> Option<Self> {
+        self.tree.get_next_sibling(self.entity).map(|parent| Node {
+            entity: parent,
+            store: self.store,
+            tree: self.tree,
+            views: self.views,
+        })
+    }
+
+    fn is_empty(&self) -> bool {
+        !self.tree.has_children(self.entity)
+    }
+
+    fn is_root(&self) -> bool {
+        self.entity == Entity::root()
+    }
+
+    fn is_html_element_in_html_document(&self) -> bool {
+        false
+    }
+
+    fn has_local_name(&self, local_name: &SelectorIdent) -> bool {
+        if let Some(element) = self.views.get(&self.entity).and_then(|view| view.element()) {
+            return element == local_name.0;
+        }
+
+        false
+    }
+
+    fn has_namespace(&self, _ns: &<Self::Impl as SelectorImpl>::BorrowedNamespaceUrl) -> bool {
+        false
+    }
+
+    fn is_part(&self, _name: &<Self::Impl as SelectorImpl>::Identifier) -> bool {
+        false
+    }
+
+    fn imported_part(
+        &self,
+        _name: &<Self::Impl as SelectorImpl>::Identifier,
+    ) -> Option<<Self::Impl as SelectorImpl>::Identifier> {
+        None
+    }
+
+    fn is_pseudo_element(&self) -> bool {
+        false
+    }
+
+    fn is_same_type(&self, other: &Self) -> bool {
+        if let Some(element) = self.views.get(&self.entity).and_then(|view| view.element()) {
+            if let Some(other_element) =
+                self.views.get(&other.entity).and_then(|view| view.element())
+            {
+                return element == other_element;
+            }
+        }
+
+        false
+    }
+
+    fn is_link(&self) -> bool {
+        false
+    }
+
+    fn has_id(
+        &self,
+        name: &<Self::Impl as SelectorImpl>::Identifier,
+        _case_sensitivity: CaseSensitivity,
+    ) -> bool {
+        if let Some(id) = self.store.ids.get(self.entity) {
+            *id == name.0
+        } else {
+            false
+        }
+    }
+
+    fn has_class(
+        &self,
+        name: &<Self::Impl as SelectorImpl>::Identifier,
+        _case_sensitivity: CaseSensitivity,
+    ) -> bool {
+        if let Some(classes) = self.store.classes.get(self.entity) {
+            return classes.contains(&name.0);
+        }
+
+        false
+    }
+
+    fn attr_matches(
+        &self,
+        _ns: &NamespaceConstraint<&<Self::Impl as SelectorImpl>::NamespaceUrl>,
+        _local_name: &<Self::Impl as SelectorImpl>::LocalName,
+        _operation: &AttrSelectorOperation<&<Self::Impl as SelectorImpl>::AttrValue>,
+    ) -> bool {
+        false
+    }
+
+    fn match_pseudo_element(
+        &self,
+        _pe: &<Self::Impl as SelectorImpl>::PseudoElement,
+        _context: &mut MatchingContext<'_, Self::Impl>,
+    ) -> bool {
+        false
+    }
+
+    fn match_non_ts_pseudo_class<F>(
+        &self,
+        pc: &<Self::Impl as SelectorImpl>::NonTSPseudoClass,
+        _context: &mut MatchingContext<'_, Self::Impl>,
+        _flags_setter: &mut F,
+    ) -> bool
+    where
+        F: FnMut(&Self, ElementSelectorFlags),
+    {
+        if let Some(psudeo_class_flag) = self.store.pseudo_classes.get(self.entity) {
+            match pc {
+                PseudoClass::Hover => psudeo_class_flag.contains(PseudoClassFlags::HOVER),
+                PseudoClass::Active => psudeo_class_flag.contains(PseudoClassFlags::ACTIVE),
+                PseudoClass::Over => psudeo_class_flag.contains(PseudoClassFlags::OVER),
+                PseudoClass::Focus => psudeo_class_flag.contains(PseudoClassFlags::FOCUS),
+                PseudoClass::FocusVisible => {
+                    psudeo_class_flag.contains(PseudoClassFlags::FOCUS_VISIBLE)
+                }
+                PseudoClass::FocusWithin => {
+                    psudeo_class_flag.contains(PseudoClassFlags::FOCUS_WITHIN)
+                }
+                PseudoClass::Enabled => {
+                    self.store.disabled.get(self.entity).map(|disabled| !*disabled).unwrap_or(true)
+                }
+                PseudoClass::Disabled => {
+                    self.store.disabled.get(self.entity).copied().unwrap_or_default()
+                }
+                PseudoClass::ReadOnly => psudeo_class_flag.contains(PseudoClassFlags::READ_ONLY),
+                PseudoClass::ReadWrite => psudeo_class_flag.contains(PseudoClassFlags::READ_WRITE),
+                PseudoClass::PlaceHolderShown => {
+                    psudeo_class_flag.contains(PseudoClassFlags::PLACEHOLDER_SHOWN)
+                }
+                PseudoClass::Default => psudeo_class_flag.contains(PseudoClassFlags::DEFAULT),
+                PseudoClass::Checked => psudeo_class_flag.contains(PseudoClassFlags::CHECKED),
+                PseudoClass::Indeterminate => {
+                    psudeo_class_flag.contains(PseudoClassFlags::INDETERMINATE)
+                }
+                PseudoClass::Blank => psudeo_class_flag.contains(PseudoClassFlags::BLANK),
+                PseudoClass::Valid => psudeo_class_flag.contains(PseudoClassFlags::VALID),
+                PseudoClass::Invalid => psudeo_class_flag.contains(PseudoClassFlags::INVALID),
+                PseudoClass::InRange => psudeo_class_flag.contains(PseudoClassFlags::IN_RANGE),
+                PseudoClass::OutOfRange => {
+                    psudeo_class_flag.contains(PseudoClassFlags::OUT_OF_RANGE)
+                }
+                PseudoClass::Required => psudeo_class_flag.contains(PseudoClassFlags::REQUIRED),
+                PseudoClass::Optional => psudeo_class_flag.contains(PseudoClassFlags::OPTIONAL),
+                PseudoClass::UserValid => psudeo_class_flag.contains(PseudoClassFlags::USER_VALID),
+                PseudoClass::UserInvalid => {
+                    psudeo_class_flag.contains(PseudoClassFlags::USER_INVALID)
+                }
+                PseudoClass::Lang(_) => todo!(),
+                PseudoClass::Dir(_) => todo!(),
+                PseudoClass::Custom(name) => {
+                    println!("custom: {}", name);
+                    todo!()
+                }
+            }
+        } else {
+            false
+        }
+    }
+}
+
+/// Link inheritable inline properties to their parent.
+pub(crate) fn inline_inheritance_system(cx: &mut Context) {
     for entity in cx.tree.into_iter() {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             cx.style.disabled.inherit_inline(entity, parent);
@@ -20,7 +254,8 @@ pub fn inline_inheritance_system(cx: &mut Context) {
     }
 }
 
-pub fn shared_inheritance_system(cx: &mut Context) {
+/// Link inheritable shared properties to their parent.
+pub(crate) fn shared_inheritance_system(cx: &mut Context) {
     for entity in cx.tree.into_iter() {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             cx.style.font_color.inherit_shared(entity, parent);
@@ -34,201 +269,39 @@ pub fn shared_inheritance_system(cx: &mut Context) {
     }
 }
 
-pub fn hoverability_system(cx: &mut Context) {
-    let draw_tree = DrawIterator::full(&cx.tree);
-
-    for entity in draw_tree {
-        if entity == Entity::root() {
-            continue;
-        }
-
-        let parent = cx.tree.get_layout_parent(entity).unwrap();
-
-        if !cx.cache.get_hoverability(parent) {
-            cx.cache.set_hoverability(entity, false);
-        } else if let Some(abilities) = cx.style.abilities.get(entity) {
-            cx.cache.set_hoverability(entity, abilities.contains(Abilities::HOVERABLE));
-        } else {
-            cx.cache.set_hoverability(entity, false);
-        }
-    }
-}
-
-// Returns the selector of an entity
-#[allow(unused)] // can be used for a potential optimization where styling is cached between
-                 // similar siblings. needs some work.
-fn entity_selector(cx: &Context, entity: Entity) -> Selector {
-    Selector {
-        asterisk: false,
-        id: cx.style.ids.get(entity).cloned(),
-        element: cx
-            .views
-            .get(&entity)
-            .and_then(|view| view.element())
-            .map(|element| element.to_owned()),
-        classes: cx.style.classes.get(entity).cloned().unwrap_or_default(),
-        pseudo_classes: {
-            let mut pseudo_classes =
-                cx.style.pseudo_classes.get(entity).cloned().unwrap_or_default();
-            if let Some(disabled) = cx.style.disabled.get(entity) {
-                pseudo_classes.set(PseudoClass::DISABLED, *disabled);
-            }
-            pseudo_classes
-        },
-        relation: SelectorRelation::None,
-    }
-}
-
-// Returns true if the widget matches the selector
-fn check_match(cx: &Context, entity: Entity, selector: &Selector) -> bool {
-    // Universal selector always matches
-    if selector.asterisk {
-        if let Some(mut pseudo_classes) = cx.style.pseudo_classes.get(entity).cloned() {
-            if let Some(disabled) = cx.style.disabled.get(entity) {
-                pseudo_classes.set(PseudoClass::DISABLED, *disabled);
-            }
-            let selector_pseudo_classes = selector.pseudo_classes;
-            return !(!pseudo_classes.is_empty()
-                && !pseudo_classes.contains(selector_pseudo_classes));
-        } else {
-            return true;
-        }
-    }
-
-    // If there's an id in the selector, it must match the entity's id
-    if let Some(id) = &selector.id {
-        if Some(id) != cx.style.ids.get(entity) {
-            return false;
-        }
-    }
-
-    // Check for element name match
-    if let Some(selector_element) = &selector.element {
-        if let Some(element) = cx.views.get(&entity).and_then(|view| view.element()) {
-            if selector_element != &element {
-                return false;
-            }
-        } else if entity == Entity::root() {
-            if selector_element != "root" {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    // Check for classes match
-    if let Some(classes) = cx.style.classes.get(entity) {
-        if !selector.classes.is_subset(classes) {
-            return false;
-        }
-    } else if !selector.classes.is_empty() {
-        return false;
-    }
-
-    // Check for pseudo-class match
-    if let Some(mut pseudo_classes) = cx.style.pseudo_classes.get(entity).cloned() {
-        if let Some(disabled) = cx.style.disabled.get(entity) {
-            pseudo_classes.set(PseudoClass::DISABLED, *disabled);
-        }
-        let selector_pseudo_classes = selector.pseudo_classes;
-
-        if !selector_pseudo_classes.is_empty() && !pseudo_classes.contains(selector_pseudo_classes)
-        {
-            return false;
-        }
-    }
-
-    true
-}
-
-pub(crate) fn compute_matched_rules<'a>(
-    cx: &'a Context,
-    tree: &Tree<Entity>,
-    entity: Entity,
-    matched_rules: &mut Vec<&'a StyleRule>,
-) {
-    // Loop through all of the style rules
-    'rule_loop: for rule in cx.style.rules.iter() {
-        let mut relation_entity = entity;
-        // Loop through selectors (Should be from right to left)
-        // All the selectors need to match for the rule to apply
-        'selector_loop: for rule_selector in rule.selectors.iter().rev() {
-            // Get the relation of the selector
-            match rule_selector.relation {
-                SelectorRelation::None => {
-                    if !check_match(cx, entity, rule_selector) {
-                        continue 'rule_loop;
-                    }
-                }
-
-                SelectorRelation::Parent => {
-                    // Get the parent
-                    // Contrust the selector for the parent
-                    // Check if the parent selector matches the rule_seletor
-                    if let Some(parent) = tree.get_layout_parent(relation_entity) {
-                        if !check_match(cx, parent, rule_selector) {
-                            continue 'rule_loop;
-                        }
-
-                        relation_entity = parent;
-                    } else {
-                        continue 'rule_loop;
-                    }
-                }
-
-                SelectorRelation::Ancestor => {
-                    // Walk up the tree
-                    // Check if each entity matches the selector
-                    // If any of them match, move on to the next selector
-                    // If none of them do, move on to the next rule
-                    for ancestor in relation_entity.parent_iter(tree) {
-                        if ancestor == relation_entity {
-                            continue;
-                        }
-                        if tree.is_ignored(ancestor) {
-                            continue;
-                        }
-
-                        if check_match(cx, ancestor, rule_selector) {
-                            relation_entity = ancestor;
-
-                            continue 'selector_loop;
-                        }
-                    }
-
-                    continue 'rule_loop;
-                }
-            }
-        }
-
-        // If all the selectors match then add the rule to the matched rules list
-        matched_rules.push(rule);
-    }
-}
-
-fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>) {
+fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
     let mut should_relayout = false;
     let mut should_redraw = false;
-    let mut should_reorder = false;
-    let mut should_reclip = false;
-    let mut should_rehide = false;
 
     // Display
     if style.display.link(entity, matched_rules) {
-        should_rehide = true;
+        should_relayout = true;
+        should_redraw = true;
     }
 
     if style.visibility.link(entity, matched_rules) {
-        should_rehide = true;
+        should_relayout = true;
+        should_redraw = true;
     }
 
-    if style.z_order.link(entity, matched_rules) {
-        should_reorder = true;
+    if style.z_index.link(entity, matched_rules) {
+        should_redraw = true;
     }
 
-    if style.overflow.link(entity, matched_rules) {
-        should_reclip = true;
+    if style.overflowx.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.overflowy.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.clip_path.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.backdrop_filter.link(entity, matched_rules) {
+        should_redraw = true;
     }
 
     // Opacity
@@ -238,84 +311,135 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
 
     if style.left.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.right.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.top.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.bottom.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.min_left.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.min_right.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.min_top.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.min_bottom.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.max_left.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.max_right.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.max_top.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
+    if style.max_bottom.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
     }
 
     // Size
     if style.width.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.height.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     // Size Constraints
     if style.max_width.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.min_width.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.max_height.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.min_height.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     // Border
     if style.border_width.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.border_color.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_shape_top_left.link(entity, matched_rules) {
+    if style.border_top_left_shape.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_shape_top_right.link(entity, matched_rules) {
+    if style.border_top_right_shape.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_shape_bottom_left.link(entity, matched_rules) {
+    if style.border_bottom_left_shape.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_shape_bottom_right.link(entity, matched_rules) {
+    if style.border_bottom_right_shape.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_radius_top_left.link(entity, matched_rules) {
+    if style.border_top_left_radius.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_radius_top_right.link(entity, matched_rules) {
+    if style.border_top_right_radius.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_radius_bottom_left.link(entity, matched_rules) {
+    if style.border_bottom_left_radius.link(entity, matched_rules) {
         should_redraw = true;
     }
 
-    if style.border_radius_bottom_right.link(entity, matched_rules) {
+    if style.border_bottom_right_radius.link(entity, matched_rules) {
         should_redraw = true;
     }
 
@@ -333,10 +457,12 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
 
     if style.layout_type.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.position_type.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     // Background
@@ -348,6 +474,10 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
         should_redraw = true;
     }
 
+    if style.background_size.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
     // Font
     if style.font_color.link(entity, matched_rules) {
         should_redraw = true;
@@ -355,21 +485,31 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
 
     if style.font_size.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.font_family.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.font_weight.link(entity, matched_rules) {
         should_redraw = true;
+        should_relayout = true;
     }
 
     if style.font_style.link(entity, matched_rules) {
         should_redraw = true;
+        should_relayout = true;
+    }
+
+    if style.font_stretch.link(entity, matched_rules) {
+        should_redraw = true;
+        should_relayout = true;
     }
 
     if style.text_wrap.link(entity, matched_rules) {
+        should_redraw = true;
         should_relayout = true;
     }
 
@@ -382,36 +522,7 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
     }
 
     // Outer Shadow
-    if style.outer_shadow_h_offset.link(entity, matched_rules) {
-        should_redraw = true;
-    }
-
-    if style.outer_shadow_v_offset.link(entity, matched_rules) {
-        should_redraw = true;
-    }
-
-    if style.outer_shadow_blur.link(entity, matched_rules) {
-        should_redraw = true;
-    }
-
-    if style.outer_shadow_color.link(entity, matched_rules) {
-        should_redraw = true;
-    }
-
-    // Inner Shadow
-    if style.inner_shadow_h_offset.link(entity, matched_rules) {
-        should_redraw = true;
-    }
-
-    if style.inner_shadow_v_offset.link(entity, matched_rules) {
-        should_redraw = true;
-    }
-
-    if style.inner_shadow_blur.link(entity, matched_rules) {
-        should_redraw = true;
-    }
-
-    if style.inner_shadow_color.link(entity, matched_rules) {
+    if style.box_shadow.link(entity, matched_rules) {
         should_redraw = true;
     }
 
@@ -422,28 +533,55 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
 
     if style.child_right.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.child_top.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.child_bottom.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.row_between.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.col_between.link(entity, matched_rules) {
         should_relayout = true;
+        should_redraw = true;
     }
 
     if style.cursor.link(entity, matched_rules) {
         should_redraw = true;
     }
 
+    // Transform
+    if style.transform.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.transform_origin.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.translate.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.rotate.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.scale.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    //
     if should_relayout {
         style.system_flags.set(SystemFlags::RELAYOUT, true);
     }
@@ -451,67 +589,50 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &Vec<Rule>)
     if should_redraw {
         style.system_flags.set(SystemFlags::REDRAW, true);
     }
-
-    if should_reorder {
-        style.system_flags.set(SystemFlags::REORDER, true);
-    }
-
-    if should_reclip {
-        style.system_flags.set(SystemFlags::RECLIP, true);
-    }
-
-    if should_rehide {
-        style.system_flags.set(SystemFlags::REHIDE, true);
-    }
 }
 
-// Iterate tree and determine the matched style rules for each entity. Link the entity to the style data.
-pub fn style_system(cx: &mut Context) {
-    if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
-        hoverability_system(cx);
+/// Compute a list of matching style rules for a given entity.
+pub(crate) fn compute_matched_rules(
+    cx: &Context,
+    entity: Entity,
+    matched_rules: &mut Vec<(Rule, u32)>,
+) {
+    for (rule, selector_list) in cx.style.rules.iter() {
+        let mut context =
+            MatchingContext::new(MatchingMode::Normal, None, None, QuirksMode::NoQuirks);
 
-        let mut matched_rule_ids = Vec::with_capacity(100);
-        let mut prev_matched_rule_ids = Vec::with_capacity(100);
+        let (matches, specificity) = matches_selector_list(
+            selector_list,
+            &Node { entity, store: &cx.style, tree: &cx.tree, views: &cx.views },
+            &mut context,
+        );
 
-        let iterator = LayoutTreeIterator::full(&cx.tree);
-
-        // Loop through all entities
-        for entity in iterator {
-            // If the entity and the previous entity have the same parent and selectors then they share the same rules
-            //if let Some(prev) = prev_entity {
-            //    if let Some(parent) = tree.get_layout_parent(entity) {
-            //        if let Some(prev_parent) = tree.get_layout_parent(prev) {
-            //            if parent == prev_parent {
-            //                if entity_selector(cx, entity).same(&entity_selector(cx, prev)) {
-            //                    prev_entity = Some(entity);
-            //                    link_style_data(cx, entity, &prev_matched_rule_ids);
-            //                    continue 'ent;
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
-
-            let mut matched_rules = Vec::with_capacity(100);
-            compute_matched_rules(cx, &cx.tree, entity, &mut matched_rules);
-            matched_rule_ids.extend(matched_rules.into_iter().map(|r| r.id));
-            link_style_data(&mut cx.style, entity, &matched_rule_ids);
-
-            prev_matched_rule_ids.clear();
-            prev_matched_rule_ids.append(&mut matched_rule_ids);
+        if matches {
+            matched_rules.push((*rule, specificity));
         }
+    }
 
-        // Z-Order system
+    matched_rules.sort_by_cached_key(|(_, s)| *s);
+    matched_rules.reverse();
+}
+
+// Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
+pub(crate) fn style_system(cx: &mut Context) {
+    if cx.style.system_flags.contains(SystemFlags::RESTYLE) {
         let iterator = LayoutTreeIterator::full(&cx.tree);
-        if cx.style.system_flags.contains(SystemFlags::REORDER) {
-            let mut entities = Vec::new();
-            for entity in iterator {
-                if let Some(z_order) = cx.style.z_order.get(entity) {
-                    entities.push((entity, *z_order));
-                }
-            }
-            for (entity, z_order) in entities {
-                cx.tree.set_z_order(entity, z_order);
+
+        // Restyle the entire application.
+        // TODO: Make this incremental.
+        for entity in iterator {
+            let mut matched_rules = Vec::with_capacity(5);
+            compute_matched_rules(cx, entity, &mut matched_rules);
+
+            if !matched_rules.is_empty() {
+                link_style_data(
+                    &mut cx.style,
+                    entity,
+                    &matched_rules.iter().map(|(rule, _)| *rule).collect::<Vec<_>>(),
+                );
             }
         }
 

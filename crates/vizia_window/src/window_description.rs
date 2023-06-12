@@ -1,6 +1,4 @@
 /// The logical size of an application window.
-///
-/// This type is part of the prelude.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WindowSize {
     /// The width of the window.
@@ -38,9 +36,13 @@ impl Position {
     }
 }
 
+impl From<(u32, u32)> for Position {
+    fn from(s: (u32, u32)) -> Self {
+        Position::new(s.0, s.1)
+    }
+}
+
 /// Passed to the window to set initial window properties.
-///
-/// This type is part of the prelude.
 pub struct WindowDescription {
     pub title: String,
     pub inner_size: WindowSize,
@@ -83,7 +85,7 @@ impl Default for WindowDescription {
             transparent: false,
             decorations: true,
             always_on_top: false,
-            vsync: false,
+            vsync: true,
 
             icon: None,
             icon_width: 0,

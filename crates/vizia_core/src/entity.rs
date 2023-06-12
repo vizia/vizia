@@ -8,15 +8,13 @@ use vizia_id::{
 /// Rather than having widgets own their data, all state is stored in a single database and
 /// is stored and loaded using entities.
 ///
-/// The [root entity] represents the main window and is always valid. It can be used to set
+/// The [root entity](GenerationalId::root) represents the main window and is always valid. It can be used to set
 /// properties on the primary window, such as background color, as well as sending events
 /// to the window such as [`Restyle`] and [`Redraw`] events.
 ///
 /// [root entity]: GenerationalId::root()
 /// [`Restyle`]: crate::prelude::WindowEvent::Restyle
 /// [`Redraw`]: crate::prelude::WindowEvent::Redraw
-///
-/// This type is part of the prelude.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Entity(u32);
 

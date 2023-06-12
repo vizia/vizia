@@ -1,21 +1,12 @@
 use std::any::Any;
-use std::collections::HashSet;
 
 use femtovg::{renderer::OpenGl, Canvas};
-use fnv::FnvHashMap;
+use vizia_window::WindowDescription;
 
 use super::EventProxy;
+use crate::events::EventManager;
 use crate::style::SystemFlags;
-use crate::{
-    cache::{BoundingBox, CachedData},
-    environment::Environment,
-    events::ViewHandler,
-    layout::geometry_changed,
-    prelude::*,
-    state::ModelOrView,
-    style::Style,
-    systems::*,
-};
+use crate::{cache::CachedData, environment::Environment, prelude::*, style::Style, systems::*};
 use vizia_id::GenerationalId;
 
 pub use crate::text::cosmic::TextConfig;
@@ -23,29 +14,52 @@ pub use crate::text::cosmic::TextConfig;
 #[cfg(feature = "clipboard")]
 use copypasta::ClipboardProvider;
 
-pub struct BackendContext<'a>(pub &'a mut Context);
+/// Context used to integrate vizia with windowing backends such as winit and baseview.
+pub struct BackendContext<'a>(pub &'a mut Context, Option<EventManager>);
 
 impl<'a> BackendContext<'a> {
+    /// Creates a new instance of a backend context.
     pub fn new(cx: &'a mut Context) -> Self {
-        Self(cx)
+        Self(cx, None)
     }
 
-    pub fn views(&mut self) -> &mut FnvHashMap<Entity, Box<dyn ViewHandler>> {
-        &mut self.0.views
+    /// Creates a new instance of a backend context which includes an event manager.
+    pub fn new_with_event_manager(cx: &'a mut Context) -> Self {
+        Self(cx, Some(EventManager::new()))
     }
 
+    /// Helper function for mutating the state of the root window.
+    pub fn mutate_window<W: Any, F: Fn(&mut BackendContext, &W)>(&mut self, f: F) {
+        if let Some(window_event_handler) = self.0.views.remove(&Entity::root()) {
+            if let Some(window) = window_event_handler.downcast_ref::<W>() {
+                f(self, window);
+            }
+
+            self.0.views.insert(Entity::root(), window_event_handler);
+        }
+    }
+
+    /// Adds a root window view to the context.
+    pub fn add_window<W: View>(&mut self, window: W) {
+        self.0.views.insert(Entity::root(), Box::new(window));
+    }
+
+    /// Returns a mutable reference to the style data.
     pub fn style(&mut self) -> &mut Style {
         &mut self.0.style
     }
 
+    /// Returns a mutable reference to the cache of computed properties data.
     pub fn cache(&mut self) -> &mut CachedData {
         &mut self.0.cache
     }
 
+    /// Returns a reference to the keyboard modifiers state.
     pub fn modifiers(&mut self) -> &mut Modifiers {
         &mut self.0.modifiers
     }
 
+    /// Returns the entity id of the currently focused view.
     pub fn focused(&self) -> Entity {
         self.0.focused
     }
@@ -63,8 +77,8 @@ impl<'a> BackendContext<'a> {
     /// changes during a frame, then the window will be resized at the end of the frame and a
     /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
     /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
-    pub fn user_scale_factor(&mut self) -> &mut f64 {
-        &mut self.0.user_scale_factor
+    pub fn user_scale_factor(&mut self) -> f64 {
+        self.0.user_scale_factor
     }
 
     pub fn add_main_window(
@@ -83,7 +97,7 @@ impl<'a> BackendContext<'a> {
             0,
             physical_width as u32,
             physical_height as u32,
-            femtovg::Color::rgb(255, 0, 0),
+            femtovg::Color::rgba(0, 0, 0, 0),
         );
 
         self.0.style.dpi_factor = dpi_factor as f64;
@@ -100,35 +114,24 @@ impl<'a> BackendContext<'a> {
             .height
             .insert(Entity::root(), Units::Pixels(window_description.inner_size.height as f32));
 
-        self.0.style.pseudo_classes.insert(Entity::root(), PseudoClass::ROOT).unwrap();
         self.0.style.disabled.insert(Entity::root(), false);
-
-        let bounding_box =
-            BoundingBox { w: physical_width, h: physical_height, ..Default::default() };
-
-        self.0.cache.set_clip_region(Entity::root(), bounding_box);
 
         self.0.canvases.insert(Entity::root(), canvas);
     }
 
+    /// Returns a reference to the [`Environment`] model.
     pub fn environment(&self) -> &Environment {
         self.0.data::<Environment>().unwrap()
     }
 
+    /// Returns a mutable reference to the inner context.
     pub fn context(&mut self) -> &mut Context {
         self.0
     }
 
-    pub fn remove_all_children(&mut self) {
-        self.0.remove_children(Entity::root());
-    }
-
+    /// Calls the draw system.
     pub fn draw(&mut self) {
         draw_system(self.0);
-    }
-
-    pub fn load_images(&mut self) {
-        image_system(self.0);
     }
 
     /// Set the current entity. This is useful in user code when you're performing black magic and
@@ -141,6 +144,22 @@ impl<'a> BackendContext<'a> {
     /// Sets the default text configuration to use for text rendering.
     pub fn set_text_config(&mut self, text_config: TextConfig) {
         self.0.text_config = text_config;
+    }
+
+    /// Sets the scale factor used by the application.
+    pub fn set_scale_factor(&mut self, scale: f64) {
+        self.0.style.dpi_factor = scale;
+    }
+
+    /// Sets the size of the root window.
+    pub fn set_window_size(&mut self, physical_width: f32, physical_height: f32) {
+        self.0.cache.set_width(Entity::root(), physical_width);
+        self.0.cache.set_height(Entity::root(), physical_height);
+
+        let logical_width = self.0.style.physical_to_logical(physical_width);
+        let logical_height = self.0.style.physical_to_logical(physical_height);
+        self.0.style.width.insert(Entity::root(), Units::Pixels(logical_width));
+        self.0.style.height.insert(Entity::root(), Units::Pixels(logical_height));
     }
 
     /// Temporarily sets the current entity, calls the provided closure, and then resets the current entity back to previous.
@@ -178,67 +197,25 @@ impl<'a> BackendContext<'a> {
         !self.0.event_queue.is_empty()
     }
 
+    /// Returns a mutable reference to the accesskit node classes.
     pub fn accesskit_node_classes(&mut self) -> &mut accesskit::NodeClassSet {
         &mut self.style().accesskit_node_classes
+    }
+
+    /// Calls the event manager to process any queued events.
+    pub fn process_events(&mut self) {
+        if let Some(event_manager) = &mut self.1 {
+            while event_manager.flush_events(self.0) {}
+        }
     }
 
     /// For each binding or data observer, check if its data has changed, and if so, rerun its
     /// builder/body.
     pub fn process_data_updates(&mut self) {
-        let mut observers: HashSet<Entity> = HashSet::new();
-
-        for entity in self.0.tree.into_iter() {
-            if let Some(model_data_store) = self.0.data.get_mut(entity) {
-                // Determine observers of model data
-                for (_, model) in model_data_store.models.iter() {
-                    let model = ModelOrView::Model(model.as_ref());
-
-                    for (_, store) in model_data_store.stores.iter_mut() {
-                        if store.update(model) {
-                            observers.extend(store.observers().iter())
-                        }
-                    }
-                }
-
-                // Determine observers of view data
-                for (_, store) in model_data_store.stores.iter_mut() {
-                    if let Some(view_handler) = self.0.views.get(&entity) {
-                        let view_model = ModelOrView::View(view_handler.as_ref());
-
-                        if store.update(view_model) {
-                            observers.extend(store.observers().iter())
-                        }
-                    }
-                }
-            }
-        }
-
-        for img in self.0.resource_manager.images.values_mut() {
-            if img.dirty {
-                observers.extend(img.observers.iter());
-                img.dirty = false;
-            }
-        }
-
-        let ordered_observers =
-            self.0.tree.into_iter().filter(|ent| observers.contains(ent)).collect::<Vec<_>>();
-
-        // Update observers in tree order
-        for observer in ordered_observers.into_iter() {
-            if !self.0.entity_manager.is_alive(observer) {
-                continue;
-            }
-
-            if let Some(mut binding) = self.0.bindings.remove(&observer) {
-                let prev = self.0.current;
-                self.0.current = observer;
-                binding.update(self.0);
-                self.0.current = prev;
-                self.0.bindings.insert(observer, binding);
-            }
-        }
+        binding_system(self.0);
     }
 
+    /// Calls the accessibility system and updates the accesskit node tree.
     pub fn process_tree_updates(&mut self, process: impl Fn(&Vec<accesskit::TreeUpdate>)) {
         accessibility_system(self.0);
 
@@ -247,6 +224,7 @@ impl<'a> BackendContext<'a> {
         self.0.tree_updates.clear();
     }
 
+    /// Calls the style system to match entities with shared styles.
     pub fn process_style_updates(&mut self) {
         // Apply any inline style inheritance.
         inline_inheritance_system(self.0);
@@ -266,20 +244,8 @@ impl<'a> BackendContext<'a> {
 
     /// Massages the style system until everything is coherent
     pub fn process_visual_updates(&mut self) {
-        // Apply visibility inheritance.
-        visibility_system(self.0);
-
         // Perform layout.
         layout_system(self.0);
-
-        // Apply transform inheritance.
-        transform_system(self.0);
-
-        // Apply clipping inheritance.
-        clipping_system(self.0);
-
-        // Emit any geometry changed events.
-        geometry_changed(self.0);
     }
 
     pub fn emit_origin<M: Send + Any>(&mut self, message: M) {

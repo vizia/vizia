@@ -1,3 +1,5 @@
+mod helpers;
+use helpers::*;
 use vizia::prelude::*;
 
 #[derive(Lens)]
@@ -31,7 +33,7 @@ fn main() {
         }
         .build(cx);
 
-        VStack::new(cx, |cx| {
+        ExamplePage::vertical(cx, |cx| {
             Label::new(cx, "A label can display a static string of unicode 😂");
 
             Label::new(cx, AppData::text);
@@ -39,6 +41,7 @@ fn main() {
             Label::new(cx, AppData::value);
 
             Label::new(cx, "Text which is too long for the label will be wrapped.")
+                .text_wrap(true)
                 .width(Pixels(200.0));
 
             Label::new(cx, "Unless text wrapping is disabled.")
@@ -49,15 +52,19 @@ fn main() {
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, AppData::checked)
                     .on_toggle(|cx| cx.emit(AppEvent::Toggle))
-                    .id("checkbox_1");
+                    .id("checkbox_1")
+                    .top(Units::Pixels(2.0))
+                    .bottom(Units::Pixels(2.0));
 
                 Label::new(cx, "A label that is describing a form element also acts as a trigger")
                     .describing("checkbox_1");
             })
-            .col_between(Pixels(5.0));
-        })
-        .child_space(Stretch(1.0))
-        .row_between(Pixels(20.0));
+            .width(Auto)
+            .height(Auto)
+            .child_top(Stretch(1.0))
+            .child_bottom(Stretch(1.0))
+            .col_between(Pixels(8.0));
+        });
     })
     .title("Label")
     .run();

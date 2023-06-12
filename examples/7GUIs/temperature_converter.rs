@@ -12,11 +12,31 @@ pub enum AppEvent {
 impl Model for AppData {
     fn event(&mut self, _: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::SetTemperature(temp) => {
-                self.temperature = *temp;
-            }
+            AppEvent::SetTemperature(temp) => self.temperature = *temp,
         });
     }
+}
+
+fn input_box<L: Lens<Target = f32>>(
+    cx: &mut Context,
+    date_lens: L,
+    convert: impl Fn(f32) -> f32 + Send + Sync + 'static,
+) {
+    Textbox::new(cx, date_lens.map(|num| format!("{:.0}", num)))
+        .on_edit(move |ex, text| {
+            if let Ok(val) = text.parse() {
+                ex.emit(AppEvent::SetTemperature(convert(val)));
+            }
+        })
+        .width(Stretch(1.0));
+}
+
+fn celcius_to_fahrenheit(temp: &f32) -> f32 {
+    *temp * (9. / 5.) + 32.
+}
+
+fn fahrenheit_to_celcius(temp: f32) -> f32 {
+    (temp - 32.) * (5. / 9.)
 }
 
 fn main() {
@@ -24,25 +44,13 @@ fn main() {
         AppData { temperature: 5.0 }.build(cx);
 
         HStack::new(cx, |cx| {
-            Textbox::new(cx, AppData::temperature)
-                .on_edit(|cx, text| {
-                    if let Ok(val) = text.parse::<f32>() {
-                        cx.emit(AppEvent::SetTemperature(val));
-                    }
-                })
-                .width(Stretch(1.0));
+            input_box(cx, AppData::temperature, |val| val);
             Label::new(cx, "Celcius");
-            Textbox::new(cx, AppData::temperature.map(|temp| temp * (9.0 / 5.0) + 32.0))
-                .on_edit(|cx, text| {
-                    if let Ok(val) = text.parse::<f32>() {
-                        cx.emit(AppEvent::SetTemperature((val - 32.0) * (5.0 / 9.0)));
-                    }
-                })
-                .width(Stretch(1.0));
+            input_box(cx, AppData::temperature.map(celcius_to_fahrenheit), fahrenheit_to_celcius);
             Label::new(cx, "Fahrenheit");
         })
         .child_space(Stretch(1.0))
-        .col_between(Pixels(20.0));
+        .col_between(Pixels(10.0));
     })
     .title("Temperature Converter")
     .inner_size((450, 100))

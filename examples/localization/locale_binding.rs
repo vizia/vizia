@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use vizia::prelude::*;
 
 fn main() {
@@ -47,5 +48,6 @@ fn main() {
             }
         });
     })
+    .ignore_default_theme()
     .run();
 }

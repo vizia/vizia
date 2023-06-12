@@ -1,6 +1,8 @@
+use vizia_style::{BorderRadius, BoxShadow, ColorStop, Gradient, Position, Rect, Scale, Translate};
+
 use super::internal;
 use crate::prelude::*;
-use crate::style::SystemFlags;
+use crate::style::{Abilities, ImageOrGradient, PseudoClassFlags, SystemFlags};
 
 /// Modifiers for changing the style properties of a view.
 pub trait StyleModifiers: internal::Modifiable {
@@ -8,7 +10,8 @@ pub trait StyleModifiers: internal::Modifiable {
 
     /// Sets the ID name of the view.
     ///
-    /// The ID name can be references by a CSS selector.
+    /// A view can have only one ID name and it must be unique.
+    /// The ID name can be referenced by a CSS selector.
     /// # Example
     /// ```
     /// # use vizia_core::prelude::*;
@@ -22,9 +25,10 @@ pub trait StyleModifiers: internal::Modifiable {
     /// }
     ///```
     fn id(mut self, id: impl Into<String>) -> Self {
+        // TODO - What should happen if the id already exists?
         let id = id.into();
         let entity = self.entity();
-        self.context().style.ids.insert(entity, id.clone()).expect("Could not insert id");
+        self.context().style.ids.insert(entity, id.clone());
         self.context().needs_restyle();
 
         self.context().entity_identifiers.insert(id, entity);
@@ -33,6 +37,21 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     /// Adds a class name to the view.
+    ///
+    /// A view can have multiple classes.
+    /// The class name can be referenced by a CSS selector.
+    /// # Example
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let cx = &mut Context::default();
+    /// Element::new(cx).class("foo");
+    /// ```
+    /// css
+    /// ```css
+    /// .foo {
+    ///     background-color: red;
+    /// }
+    ///```
     fn class(mut self, name: &str) -> Self {
         let entity = self.entity();
         if let Some(class_list) = self.context().style.classes.get_mut(entity) {
@@ -63,31 +82,50 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
-    // Pseudoclass
+    // PseudoClassFlags
     // TODO: Should these have their own modifiers trait?
 
     /// Sets the state of the view to checked.
     fn checked<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
+
+        // Setting a checked state should make it checkable
+        if let Some(abilities) = self.context().style.abilities.get_mut(entity) {
+            abilities.set(Abilities::CHECKABLE, true);
+        }
+
         state.set_or_bind(self.context(), entity, |cx, entity, val| {
             let val = val.into();
             if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
-                pseudo_classes.set(PseudoClass::CHECKED, val.into());
-            } else {
-                let mut pseudoclass = PseudoClass::empty();
-                pseudoclass.set(PseudoClass::CHECKED, val.into());
-                cx.style.pseudo_classes.insert(entity, pseudoclass).unwrap();
+                pseudo_classes.set(PseudoClassFlags::CHECKED, val);
             }
 
-            if val {
-                // Setting a checked state should make it checkable... probably
-                if let Some(abilities) = cx.style.abilities.get_mut(entity) {
-                    abilities.set(Abilities::CHECKABLE, true);
-                } else {
-                    let mut abilities = Abilities::empty();
-                    abilities.set(Abilities::CHECKABLE, true);
-                    cx.style.abilities.insert(entity, abilities).unwrap();
-                }
+            cx.needs_restyle();
+        });
+
+        self
+    }
+
+    fn read_only<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
+        let entity = self.entity();
+        state.set_or_bind(self.context(), entity, |cx, entity, val| {
+            let val = val.into();
+            if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
+                pseudo_classes.set(PseudoClassFlags::READ_ONLY, val);
+            }
+
+            cx.needs_restyle();
+        });
+
+        self
+    }
+
+    fn read_write<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
+        let entity = self.entity();
+        state.set_or_bind(self.context(), entity, |cx, entity, val| {
+            let val = val.into();
+            if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(entity) {
+                pseudo_classes.set(PseudoClassFlags::READ_WRITE, val);
             }
 
             cx.needs_restyle();
@@ -111,27 +149,62 @@ pub trait StyleModifiers: internal::Modifiable {
         /// A display value of `Display::None` causes the view to be ignored by both layout and rendering.
         display,
         Display,
-        SystemFlags::REHIDE | SystemFlags::RELAYOUT | SystemFlags::REDRAW
+        SystemFlags::RELAYOUT | SystemFlags::REDRAW
     );
 
     modifier!(
         /// Sets whether the view should be rendered.
         ///
-        /// The layout system will still compute the size and position of an invisible view.
+        /// The layout system will still compute the size and position of an invisible (hidden) view.
         visibility,
         Visibility,
-        SystemFlags::REHIDE | SystemFlags::REDRAW
+        SystemFlags::REDRAW
     );
 
-    /// Sets the z-order index of the view.
+    modifier!(
+        /// Sets the opacity of the view.
+        ///
+        /// Exects a value between 0.0 (transparent) and 1.0 (opaque).
+        opacity,
+        Opacity,
+        SystemFlags::REDRAW
+    );
+
+    /// Sets the z-index of the view.
     ///
-    /// Views with a higher z-order will be rendered on top of those with a lower z-order.
-    /// Views with the same z-order are rendered in tree order.
-    fn z_order<U: Into<i32>>(mut self, value: impl Res<U>) -> Self {
+    /// Views with a higher z-index will be rendered on top of those with a lower z-order.
+    /// Views with the same z-index are rendered in tree order.
+    fn z_index<U: Into<i32>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.into();
-            cx.tree.set_z_order(entity, value);
+            cx.tree.set_z_index(entity, value);
+            cx.needs_redraw();
+        });
+
+        self
+    }
+
+    /// Sets the clip path for the the view.
+    fn clip_path<U: Into<ClipPath>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.clip_path.insert(entity, value);
+
+            cx.needs_redraw();
+        });
+
+        self
+    }
+
+    fn overflow<U: Into<Overflow>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.overflowx.insert(entity, value);
+            cx.style.overflowy.insert(entity, value);
+
             cx.needs_redraw();
         });
 
@@ -139,13 +212,68 @@ pub trait StyleModifiers: internal::Modifiable {
     }
 
     modifier!(
-        /// Sets the overflow behavior of the view.
+        /// Sets the overflow behavior of the view in the horizontal direction.
         ///
         /// The overflow behavior determines whether child views can render outside the bounds of their parent.
-        overflow,
+        overflowx,
         Overflow,
-        SystemFlags::RECLIP | SystemFlags::REDRAW
+        SystemFlags::REDRAW
     );
+
+    modifier!(
+        /// Sets the overflow behavior of the view in the vertical direction.
+        ///
+        /// The overflow behavior determines whether child views can render outside the bounds of their parent.
+        overflowy,
+        Overflow,
+        SystemFlags::REDRAW
+    );
+
+    /// Sets the backdrop filter for the view.
+    fn backdrop_filter<U: Into<Filter>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.backdrop_filter.insert(entity, value);
+
+            cx.needs_redraw();
+        });
+
+        self
+    }
+
+    /// Add a box-shadow to the view.
+    fn box_shadow<U: Into<BoxShadow>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            if let Some(box_shadows) = cx.style.box_shadow.get_inline_mut(entity) {
+                box_shadows.push(value);
+            } else {
+                cx.style.box_shadow.insert(entity, vec![value]);
+            }
+
+            cx.needs_redraw();
+        });
+
+        self
+    }
+
+    fn background_gradient<U: Into<Gradient>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            if let Some(background_images) = cx.style.background_image.get_inline_mut(entity) {
+                background_images.push(ImageOrGradient::Gradient(value));
+            } else {
+                cx.style.background_image.insert(entity, vec![ImageOrGradient::Gradient(value)]);
+            }
+
+            cx.needs_redraw();
+        });
+
+        self
+    }
 
     // Background Properties
     modifier!(
@@ -154,31 +282,26 @@ pub trait StyleModifiers: internal::Modifiable {
         Color,
         SystemFlags::REDRAW
     );
-    modifier!(
-        /// Sets the background image of the view.
-        ///
-        /// Background image will override any background gradient or color.
-        background_image,
-        String,
-        SystemFlags::REDRAW
-    );
 
-    // TODO: Docs for this.
-    fn image<U: ToString>(mut self, value: impl Res<U>) -> Self {
+    fn background_image<'i, U: Into<Vec<BackgroundImage<'i>>>>(
+        mut self,
+        value: impl Res<U>,
+    ) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, val| {
-            let val = val.to_string();
-            if let Some(prev_data) = cx.style.image.get(entity) {
-                if prev_data != &val {
-                    cx.style.image.insert(entity, val);
-                    cx.style.needs_text_layout.insert(entity, true).unwrap();
-                    cx.needs_redraw();
-                }
-            } else {
-                cx.style.image.insert(entity, val);
-                cx.style.needs_text_layout.insert(entity, true).unwrap();
-                cx.needs_redraw();
-            }
+            let images = val.into();
+            let images = images
+                .into_iter()
+                .filter_map(|img| match img {
+                    BackgroundImage::Gradient(gradient) => {
+                        Some(ImageOrGradient::Gradient(*gradient))
+                    }
+                    BackgroundImage::Url(url) => Some(ImageOrGradient::Image(url.url.to_string())),
+                    _ => None,
+                })
+                .collect::<Vec<_>>();
+            cx.style.background_image.insert(entity, images);
+            cx.needs_redraw();
         });
 
         self
@@ -188,7 +311,7 @@ pub trait StyleModifiers: internal::Modifiable {
     modifier!(
         /// Sets the border width of the view.
         border_width,
-        Units,
+        LengthOrPercentage,
         SystemFlags::RELAYOUT | SystemFlags::REDRAW
     );
 
@@ -201,38 +324,44 @@ pub trait StyleModifiers: internal::Modifiable {
 
     modifier!(
         /// Sets the border radius for the top-left corner of the view.
-        border_radius_top_left,
-        Units,
+        border_top_left_radius,
+        LengthOrPercentage,
         SystemFlags::REDRAW
     );
+
     modifier!(
         /// Sets the border radius for the top-right corner of the view.
-        border_radius_top_right,
-        Units,
+        border_top_right_radius,
+        LengthOrPercentage,
         SystemFlags::REDRAW
     );
+
     modifier!(
         /// Sets the border radius for the bottom-left corner of the view.
-        border_radius_bottom_left,
-        Units,
+        border_bottom_left_radius,
+        LengthOrPercentage,
         SystemFlags::REDRAW
     );
+
     modifier!(
         /// Sets the border radius for the bottom-right corner of the view.
-        border_radius_bottom_right,
-        Units,
+        border_bottom_right_radius,
+        LengthOrPercentage,
         SystemFlags::REDRAW
     );
 
     /// Sets the border radius for all four corners of the view.
-    fn border_radius<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
+    fn border_radius<U: std::fmt::Debug + Into<BorderRadius>>(
+        mut self,
+        value: impl Res<U>,
+    ) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.into();
-            cx.style.border_radius_top_left.insert(entity, value);
-            cx.style.border_radius_top_right.insert(entity, value);
-            cx.style.border_radius_bottom_left.insert(entity, value);
-            cx.style.border_radius_bottom_right.insert(entity, value);
+            cx.style.border_top_left_radius.insert(entity, value.top_left);
+            cx.style.border_top_right_radius.insert(entity, value.top_right);
+            cx.style.border_bottom_left_radius.insert(entity, value.bottom_left);
+            cx.style.border_bottom_right_radius.insert(entity, value.bottom_right);
 
             cx.needs_redraw();
         });
@@ -242,38 +371,44 @@ pub trait StyleModifiers: internal::Modifiable {
 
     modifier!(
         /// Sets the border corner shape for the top-left corner of the view.
-        border_shape_top_left,
+        border_top_left_shape,
         BorderCornerShape,
         SystemFlags::REDRAW
     );
+
     modifier!(
         /// Sets the border corner shape for the top-right corner of the view.
-        border_shape_top_right,
+        border_top_right_shape,
         BorderCornerShape,
         SystemFlags::REDRAW
     );
+
     modifier!(
         /// Sets the border corner shape for the bottom-left corner of the view.
-        border_shape_bottom_left,
+        border_bottom_left_shape,
         BorderCornerShape,
         SystemFlags::REDRAW
     );
+
     modifier!(
         /// Sets the border corner shape for the bottom-right corner of the view.
-        border_shape_bottom_right,
+        border_bottom_right_shape,
         BorderCornerShape,
         SystemFlags::REDRAW
     );
 
     /// Sets the border corner shape for all four corners of the view.
-    fn border_corner_shape<U: Into<BorderCornerShape>>(mut self, value: impl Res<U>) -> Self {
+    fn border_corner_shape<U: std::fmt::Debug + Into<Rect<BorderCornerShape>>>(
+        mut self,
+        value: impl Res<U>,
+    ) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             let value = v.into();
-            cx.style.border_shape_top_left.insert(entity, value);
-            cx.style.border_shape_top_right.insert(entity, value);
-            cx.style.border_shape_bottom_left.insert(entity, value);
-            cx.style.border_shape_bottom_right.insert(entity, value);
+            cx.style.border_top_left_shape.insert(entity, value.0);
+            cx.style.border_top_right_shape.insert(entity, value.1);
+            cx.style.border_bottom_right_shape.insert(entity, value.2);
+            cx.style.border_bottom_left_shape.insert(entity, value.3);
 
             cx.needs_redraw();
         });
@@ -281,11 +416,11 @@ pub trait StyleModifiers: internal::Modifiable {
         self
     }
 
-    // Outine Properties
+    // Outline Properties
     modifier!(
         /// Sets the outline width of the view.
         outline_width,
-        Units,
+        LengthOrPercentage,
         SystemFlags::REDRAW
     );
 
@@ -295,13 +430,15 @@ pub trait StyleModifiers: internal::Modifiable {
         Color,
         SystemFlags::REDRAW
     );
+
     modifier!(
         /// Sets the outline offset of the view.
         outline_offset,
-        Units,
+        LengthOrPercentage,
         SystemFlags::REDRAW
     );
 
+    // Cursor Icon
     modifier!(
         /// Sets the mouse cursor used when the view is hovered.
         cursor,
@@ -309,31 +446,162 @@ pub trait StyleModifiers: internal::Modifiable {
         SystemFlags::empty()
     );
 
-    // Transform Properties
-    modifier!(
-        /// Sets the angle of rotation for the view.
-        ///
-        /// Rotation applies to the rendered view and does not affect layout.
-        rotate,
-        f32,
-        SystemFlags::RETRANSFORM | SystemFlags::REDRAW
-    );
+    /// Sets the transform of the view with a list of transform functions.
+    fn transform<U: Into<Vec<Transform>>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value = v.into();
+            cx.style.transform.insert(entity, value);
+            cx.needs_redraw();
+        });
+
+        self
+    }
+
+    /// Sets the transform origin of the the view.
+    fn transform_origin<U: Into<Position>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let value: Position = v.into();
+            let x = value.x.to_length_or_percentage();
+            let y = value.y.to_length_or_percentage();
+            cx.style.transform_origin.insert(entity, Translate { x, y });
+            cx.needs_redraw();
+        });
+
+        self
+    }
+
+    // Translate
     modifier!(
         /// Sets the translation offset of the view.
         ///
         /// Translation applies to the rendered view and does not affect layout.
         translate,
-        (f32, f32),
-        SystemFlags::RETRANSFORM | SystemFlags::REDRAW
+        Translate,
+        SystemFlags::REDRAW
     );
+
+    // Rotate
+    modifier!(
+        /// Sets the angle of rotation for the view.
+        ///
+        /// Rotation applies to the rendered view and does not affect layout.
+        rotate,
+        Angle,
+        SystemFlags::REDRAW
+    );
+
+    // Scale
     modifier!(
         /// Sets the scale of the view.
         ///
         /// Scale applies to the rendered view and does not affect layout.
         scale,
-        (f32, f32),
-        SystemFlags::RETRANSFORM | SystemFlags::REDRAW
+        Scale,
+        SystemFlags::REDRAW
     );
 }
 
 impl<'a, V: View> StyleModifiers for Handle<'a, V> {}
+
+#[derive(Debug, Clone)]
+pub struct LinearGradientBuilder {
+    direction: LineDirection,
+    stops: Vec<ColorStop<LengthOrPercentage>>,
+}
+
+impl Default for LinearGradientBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl LinearGradientBuilder {
+    pub fn new() -> Self {
+        LinearGradientBuilder { direction: LineDirection::default(), stops: Vec::new() }
+    }
+
+    pub fn with_direction(direction: impl Into<LineDirection>) -> Self {
+        LinearGradientBuilder { direction: direction.into(), stops: Vec::new() }
+    }
+
+    fn build(self) -> Gradient {
+        Gradient::Linear(LinearGradient { direction: self.direction, stops: self.stops })
+    }
+
+    pub fn add_stop(mut self, stop: impl Into<ColorStop<LengthOrPercentage>>) -> Self {
+        self.stops.push(stop.into());
+
+        self
+    }
+}
+
+impl From<LinearGradientBuilder> for Gradient {
+    fn from(value: LinearGradientBuilder) -> Self {
+        value.build()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct BoxShadowBuilder {
+    box_shadow: BoxShadow,
+}
+
+impl Default for BoxShadowBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl BoxShadowBuilder {
+    pub fn new() -> Self {
+        Self { box_shadow: BoxShadow::default() }
+    }
+
+    fn build(self) -> BoxShadow {
+        self.box_shadow
+    }
+
+    pub fn x_offset(mut self, offset: impl Into<Length>) -> Self {
+        self.box_shadow.x_offset = offset.into();
+
+        self
+    }
+
+    pub fn y_offset(mut self, offset: impl Into<Length>) -> Self {
+        self.box_shadow.y_offset = offset.into();
+
+        self
+    }
+
+    pub fn blur(mut self, radius: Length) -> Self {
+        self.box_shadow.blur_radius = Some(radius);
+
+        self
+    }
+
+    pub fn spread(mut self, radius: Length) -> Self {
+        self.box_shadow.spread_radius = Some(radius);
+
+        self
+    }
+
+    pub fn color(mut self, color: Color) -> Self {
+        self.box_shadow.color = Some(color);
+
+        self
+    }
+
+    pub fn inset(mut self) -> Self {
+        self.box_shadow.inset = true;
+
+        self
+    }
+}
+
+impl From<BoxShadowBuilder> for BoxShadow {
+    fn from(value: BoxShadowBuilder) -> Self {
+        value.build()
+    }
+}

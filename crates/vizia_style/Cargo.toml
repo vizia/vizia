@@ -1,0 +1,18 @@
+[package]
+name = "vizia_style"
+version = "0.1.0"
+authors = ["George Atkinson"]
+license = "MIT"
+repository = "https://github.com/vizia/vizia"
+edition = "2021"
+description = "The style components of vizia"
+rust-version = "1.60"
+
+[dependencies]
+cssparser = "0.29.6"
+femtovg = "0.7.0"
+selectors = { version = "0.23.0", path = "./selectors" }
+# morphorm = {path = "../../../morphorm" }
+morphorm = {git = "https://github.com/vizia/morphorm", rev = "15a6b861f87b232aa3392c4a948f6ac9e50d3202" }
+smallvec = "1.0"
+bitflags = "2.1.0"

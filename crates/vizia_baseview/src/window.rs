@@ -6,7 +6,7 @@ use baseview::{
 use raw_window_handle::HasRawWindowHandle;
 
 use crate::proxy::BaseviewProxy;
-use vizia_core::context::backend::*;
+use vizia_core::backend::*;
 use vizia_core::prelude::*;
 
 /// Handles a vizia_baseview application

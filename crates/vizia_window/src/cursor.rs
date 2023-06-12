@@ -3,8 +3,6 @@ use std::fmt::Formatter;
 /// Describes the icon the mouse cursor should use.
 ///
 /// See the cursor_icon example for a gallery of icons and sample usage.
-///
-/// This type is part of the prelude.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CursorIcon {
     Default,

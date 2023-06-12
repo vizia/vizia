@@ -33,7 +33,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         AppData { list: vec![12, 5, 65, 31, 18, 7] }.build(cx);
 

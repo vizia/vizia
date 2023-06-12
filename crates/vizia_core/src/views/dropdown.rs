@@ -59,7 +59,7 @@ use crate::views::popup::PopupData;
 /// # use vizia_core::prelude::*;
 /// # let cx = &mut Context::default();
 /// #
-/// # cx.add_theme(r#"
+/// # cx.add_stylesheet(r#"
 /// #     dropdown popup {
 /// #         background-color: white;
 /// #     }
@@ -152,6 +152,8 @@ impl Dropdown {
                     .class("title")
                     .role(Role::PopupButton)
                     .width(Stretch(1.0))
+                    .cursor(CursorIcon::Hand)
+                    .navigable(true)
                     .on_press(|cx| cx.emit(PopupEvent::Switch));
 
                 Popup::new(cx, PopupData::is_open, false, move |cx| {
@@ -159,9 +161,10 @@ impl Dropdown {
                 })
                 .on_blur(|cx| cx.emit(PopupEvent::Close))
                 .top(Percentage(100.0))
+                .translate((Pixels(0.0), Pixels(4.0)))
                 .height(Auto);
             })
-            .size(Auto)
+            .cursor(CursorIcon::Hand)
     }
 }
 

@@ -1,47 +1,34 @@
-use vizia::fonts::icons_names::CHECK;
+mod helpers;
+use helpers::*;
+
+use vizia::icons::ICON_CHECK;
 use vizia::prelude::*;
 
 fn main() {
     Application::new(|cx| {
-        HStack::new(cx, |cx| {
+        ExamplePage::new(cx, |cx| {
             // Basic Button
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Simple Button"));
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
             // Accent Button
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Accent Button")).class("accent");
+            // Outline Button
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Outline Button")).class("outline");
+            // Ghost Button
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Ghost Button")).class("ghost");
             // Button with Icon
             Button::new(
                 cx,
                 |_| {},
                 |cx| {
                     HStack::new(cx, |cx| {
-                        Label::new(cx, CHECK).class("icon");
+                        Label::new(cx, ICON_CHECK).class("icon");
                         Label::new(cx, "Button with Icon");
                     })
-                    .size(Auto)
-                    .child_space(Stretch(1.0))
-                    .col_between(Pixels(2.0))
                 },
             );
-
-            Button::new(
-                cx,
-                |_| {},
-                |cx| {
-                    HStack::new(cx, |cx| {
-                        Label::new(cx, CHECK).class("icon");
-                        // Hidden from layout and display but used for accessibility
-                        Label::new(cx, "Icon Button").display(Display::None);
-                    })
-                    .size(Auto)
-                    .child_space(Stretch(1.0))
-                    .col_between(Pixels(2.0))
-                },
-            );
-        })
-        .size(Auto)
-        .space(Stretch(1.0))
-        .col_between(Pixels(10.0));
+        });
     })
     .title("Button")
+    .inner_size((700, 200))
     .run();
 }

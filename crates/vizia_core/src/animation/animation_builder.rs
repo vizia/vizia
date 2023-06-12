@@ -1,414 +1,365 @@
-use crate::animation::AnimationState;
-use morphorm::Units;
-
 use crate::prelude::*;
+// use instant::Duration;
+use morphorm::Units;
+use vizia_style::{
+    BackgroundSize, BorderWidth, BoxShadow, FontSize, Position, Property, Scale, Translate,
+};
 
-pub(crate) struct AnimationDescription {
-    duration: instant::Duration,
-    delay: instant::Duration,
-    persistent: bool,
+// pub struct AnimationDescription {
+//     duration: Duration,
+//     delay: Duration,
+// }
+
+pub struct AnimationBuilder<'a> {
+    pub(crate) keyframes: Vec<KeyframeBuilder<'a>>,
 }
 
-/// A builder for constructing animations.
-///
-/// Returned from `cx.add_animation(duration)`.
-///
-/// # Example
-/// ```ignore
-/// let animation_id = cx.create_animation(std::time::Duration::from_secs(1))
-///     .add_keyframe(0.0, |keyframe|
-///         keyframe
-///             .set_background_color(Color::red())
-///             .set_border_color(Color::blue())
-///     )
-///     .add_keyframe(1.0, |keyframe|
-///         keyframe
-///             .set_background_color(Color::blue()))
-///             .set_border_color(Color::red())
-///     .build();
-/// ```
-///
-/// This type is part of the prelude.
-pub struct AnimationBuilder<'a> {
-    id: Animation,
-    cx: &'a mut Context,
-    animation_description: AnimationDescription,
+impl<'a> Default for AnimationBuilder<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<'a> AnimationBuilder<'a> {
-    /// Creates a new animation builder with the specified duration.
-    pub(crate) fn new(id: Animation, cx: &'a mut Context, duration: std::time::Duration) -> Self {
-        Self {
-            id,
-            cx,
-            animation_description: AnimationDescription {
-                duration,
-                delay: instant::Duration::from_secs(0),
-                persistent: false,
-            },
-        }
+    pub fn new() -> Self {
+        Self { keyframes: Vec::new() }
     }
 
-    /// Sets the delay before the animation will play.
-    ///
-    ///
-    pub fn with_delay(mut self, delay: instant::Duration) -> Self {
-        self.animation_description.delay = delay;
-
-        self
-    }
-
-    /// Sets the animation to persist after completion.
-    ///
-    /// Normally, after an animation is finished, the animated property will return to the the previous value
-    /// before the animation was played. Setting an animation to persistent causes the property to be set to the last
-    /// value of the animation.
-    pub fn persistent(mut self) -> Self {
-        self.animation_description.persistent = true;
-
-        self
-    }
-
-    /// Adds a keyframe to the animation.
-    ///
-    ///
-    pub fn add_keyframe<F>(self, time: f32, keyframe: F) -> KeyframeBuilder<'a>
-    where
-        F: FnOnce(KeyframeBuilder<'a>) -> KeyframeBuilder<'a>,
-    {
-        (keyframe)(KeyframeBuilder::new(self.id, self.cx, time, self.animation_description))
-    }
-}
-
-/// A builder for constructing keyframes.
-///
-/// # Example
-/// ```ignore
-/// let animation_id = cx.create_animation(std::time::Duration::from_secs(1))
-///     .add_keyframe(0.0, |keyframe|
-///         keyframe
-///             .set_background_color(Color::red())
-///             .set_border_color(Color::blue())
-///     )
-///     .add_keyframe(1.0, |keyframe|
-///         keyframe
-///             .set_background_color(Color::blue()))
-///             .set_border_color(Color::red())
-///     .build();
-/// ```
-pub struct KeyframeBuilder<'a> {
-    id: Animation,
-    cx: &'a mut Context,
-    time: f32,
-    animation_description: AnimationDescription,
-}
-
-impl<'a> KeyframeBuilder<'a> {
-    pub(crate) fn new(
-        id: Animation,
-        cx: &'a mut Context,
+    pub fn keyframe(
+        mut self,
         time: f32,
-        animation_description: AnimationDescription,
+        keyframe: impl FnOnce(KeyframeBuilder) -> KeyframeBuilder,
     ) -> Self {
-        Self { id, cx, time, animation_description }
+        let keyframe = (keyframe)(KeyframeBuilder::new(time));
+        self.keyframes.push(keyframe);
+
+        self
+    }
+}
+
+pub struct KeyframeBuilder<'a> {
+    pub(crate) time: f32,
+    pub(crate) properties: Vec<Property<'a>>,
+}
+
+// TODO: Make a macro for these
+impl<'a> KeyframeBuilder<'a> {
+    pub(crate) fn new(time: f32) -> Self {
+        Self { time, properties: Vec::new() }
     }
 
-    /// Finish building the animation, returning an [Animation] id.
-    pub fn build(self) -> Animation {
-        self.id
-    }
+    // DISPLAY
 
-    /// Sets the delay before the animation will play.
-    pub fn with_delay(mut self, delay: instant::Duration) -> Self {
-        self.animation_description.delay = delay;
+    pub fn display(mut self, val: impl Into<Display>) -> Self {
+        self.properties.push(Property::Display(val.into()));
 
         self
     }
 
-    /// Add another keyframe to the animation.
-    pub fn add_keyframe<F>(self, time: f32, keyframe: F) -> Self
-    where
-        F: FnOnce(KeyframeBuilder<'a>) -> KeyframeBuilder<'a>,
-    {
-        (keyframe)(KeyframeBuilder::new(self.id, self.cx, time, self.animation_description))
-    }
-
-    /// Adds a background-color property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_background_color(Color::red()))
-    /// ```
-    pub fn set_background_color(self, color: Color) -> Self {
-        if let Some(anim_cx) = self.cx.style.background_color.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, color));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, color));
-
-            self.cx.style.background_color.insert_animation(self.id, anim_cx);
-        }
+    pub fn opacity(mut self, val: impl Into<Opacity>) -> Self {
+        self.properties.push(Property::Opacity(val.into()));
 
         self
     }
 
-    /// Adds a left property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_left(Pixels(50.0)))
-    /// ```
-    pub fn set_left(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style.left.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, value));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, value));
-
-            self.cx.style.left.insert_animation(self.id, anim_cx);
-        }
+    pub fn clip_path(mut self, val: impl Into<ClipPath>) -> Self {
+        self.properties.push(Property::ClipPath(val.into()));
 
         self
     }
 
-    /// Adds a right property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_right(Pixels(50.0)))
-    /// ```
-    pub fn set_right(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style.right.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, value));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, value));
+    // TRANSFORM
 
-            self.cx.style.right.insert_animation(self.id, anim_cx);
-        }
+    pub fn transform(mut self, val: impl Into<Vec<Transform>>) -> Self {
+        self.properties.push(Property::Transform(val.into()));
 
         self
     }
 
-    /// Adds a top property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_top(Pixels(50.0)))
-    /// ```
-    pub fn set_top(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style.top.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, value));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, value));
-
-            self.cx.style.top.insert_animation(self.id, anim_cx);
-        }
+    pub fn transform_origin(mut self, val: impl Into<Position>) -> Self {
+        self.properties.push(Property::TransformOrigin(val.into()));
 
         self
     }
 
-    /// Adds a bottom property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_bottom(Pixels(50.0)))
-    /// ```
-    pub fn set_bottom(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style.bottom.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, value));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, value));
-
-            self.cx.style.bottom.insert_animation(self.id, anim_cx);
-        }
+    pub fn translate(mut self, val: impl Into<Translate>) -> Self {
+        self.properties.push(Property::Translate(val.into()));
 
         self
     }
 
-    /// Adds a width property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_width(Pixels(50.0)))
-    /// ```
-    pub fn set_width(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style.width.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, value));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, value));
-
-            self.cx.style.width.insert_animation(self.id, anim_cx);
-        }
+    pub fn rotate(mut self, val: impl Into<Angle>) -> Self {
+        self.properties.push(Property::Rotate(val.into()));
 
         self
     }
 
-    /// Adds a height property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_height(Pixels(50.0)))
-    /// ```
-    pub fn set_height(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style.height.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, value));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, value));
-
-            self.cx.style.height.insert_animation(self.id, anim_cx);
-        }
+    pub fn scale(mut self, val: impl Into<Scale>) -> Self {
+        self.properties.push(Property::Scale(val.into()));
 
         self
     }
 
-    /// Adds a child-left property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_child_left(Pixels(50.0)))
-    /// ```
-    pub fn set_child_left(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style.child_left.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, value));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, value));
+    // BORDER
 
-            self.cx.style.child_left.insert_animation(self.id, anim_cx);
-        }
+    pub fn border_width(mut self, val: impl Into<BorderWidth>) -> Self {
+        self.properties.push(Property::BorderWidth(val.into()));
 
         self
     }
 
-    /// Adds a child-right property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_child_right(Pixels(50.0)))
-    /// ```
-    pub fn set_child_right(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style.child_right.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, value));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, value));
-
-            self.cx.style.child_right.insert_animation(self.id, anim_cx);
-        }
+    pub fn border_color(mut self, val: impl Into<Color>) -> Self {
+        self.properties.push(Property::BorderColor(val.into()));
 
         self
     }
 
-    /// Adds a child-top property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_child_top(Pixels(50.0)))
-    /// ```
-    pub fn set_child_top(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style.child_top.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, value));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, value));
-
-            self.cx.style.child_top.insert_animation(self.id, anim_cx);
-        }
+    pub fn border_top_left_radius(mut self, val: impl Into<LengthOrPercentage>) -> Self {
+        self.properties.push(Property::BorderTopLeftRadius(val.into()));
 
         self
     }
 
-    /// Adds a child-bottom property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_child_bottom(Pixels(50.0)))
-    /// ```
-    pub fn set_child_bottom(self, value: Units) -> Self {
-        if let Some(anim_cx) = self.cx.style.child_bottom.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, value));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, value));
-
-            self.cx.style.child_bottom.insert_animation(self.id, anim_cx);
-        }
+    pub fn border_top_right_radius(mut self, val: impl Into<LengthOrPercentage>) -> Self {
+        self.properties.push(Property::BorderTopRightRadius(val.into()));
 
         self
     }
 
-    /// Adds a rotate transform property to the keyframe.
-    ///
-    /// # Example
-    /// ```ignore
-    /// .add_keyframe(0.0, |keyframe| keyframe.set_rotate(Pixels(50.0)))
-    /// ```
-    pub fn set_rotate(self, value: f32) -> Self {
-        if let Some(anim_cx) = self.cx.style.rotate.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, value));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, value));
-
-            self.cx.style.rotate.insert_animation(self.id, anim_cx);
-        }
+    pub fn border_bottom_left_radius(mut self, val: impl Into<LengthOrPercentage>) -> Self {
+        self.properties.push(Property::BorderBottomLeftRadius(val.into()));
 
         self
     }
 
-    pub fn set_opacity(self, value: f32) -> Self {
-        if let Some(anim_cx) = self.cx.style.opacity.get_animation_mut(self.id) {
-            anim_cx.keyframes.push((self.time, Opacity(value)));
-        } else {
-            let anim_cx = AnimationState::new(self.id)
-                .with_duration(self.animation_description.duration)
-                .with_delay(self.animation_description.delay)
-                .set_persistent(self.animation_description.persistent)
-                .with_keyframe((self.time, Opacity(value)));
+    pub fn border_bottom_right_radius(mut self, val: impl Into<LengthOrPercentage>) -> Self {
+        self.properties.push(Property::BorderBottomRightRadius(val.into()));
 
-            self.cx.style.opacity.insert_animation(self.id, anim_cx);
-        }
+        self
+    }
+
+    // OUTLINE
+
+    pub fn outline_width(mut self, val: impl Into<BorderWidth>) -> Self {
+        self.properties.push(Property::OutlineWidth(val.into()));
+
+        self
+    }
+
+    pub fn outline_color(mut self, val: impl Into<Color>) -> Self {
+        self.properties.push(Property::OutlineColor(val.into()));
+
+        self
+    }
+
+    pub fn outline_offset(mut self, val: impl Into<LengthOrPercentage>) -> Self {
+        self.properties.push(Property::OutlineOffset(val.into()));
+
+        self
+    }
+
+    // BACKGROUND
+
+    pub fn background_color(mut self, val: impl Into<Color>) -> Self {
+        self.properties.push(Property::BackgroundColor(val.into()));
+
+        self
+    }
+
+    pub fn background_image(mut self, val: impl Into<Vec<BackgroundImage<'a>>>) -> Self {
+        self.properties.push(Property::BackgroundImage(val.into()));
+
+        self
+    }
+
+    pub fn background_size(mut self, val: impl Into<Vec<BackgroundSize>>) -> Self {
+        self.properties.push(Property::BackgroundSize(val.into()));
+
+        self
+    }
+
+    // BOX SHADOW
+
+    pub fn box_shadow(mut self, val: impl Into<Vec<BoxShadow>>) -> Self {
+        self.properties.push(Property::BoxShadow(val.into()));
+
+        self
+    }
+
+    // TEXT
+
+    pub fn color(mut self, val: impl Into<Color>) -> Self {
+        self.properties.push(Property::FontColor(val.into()));
+
+        self
+    }
+
+    pub fn font_size(mut self, val: impl Into<FontSize>) -> Self {
+        self.properties.push(Property::FontSize(val.into()));
+
+        self
+    }
+
+    pub fn caret_color(mut self, val: impl Into<Color>) -> Self {
+        self.properties.push(Property::CaretColor(val.into()));
+
+        self
+    }
+
+    pub fn selection_color(mut self, val: impl Into<Color>) -> Self {
+        self.properties.push(Property::SelectionColor(val.into()));
+
+        self
+    }
+
+    // SPACE
+
+    pub fn left(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::Left(val.into()));
+
+        self
+    }
+
+    pub fn right(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::Right(val.into()));
+
+        self
+    }
+
+    pub fn top(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::Top(val.into()));
+
+        self
+    }
+
+    pub fn bottom(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::Bottom(val.into()));
+
+        self
+    }
+
+    // CHILD SPACE
+
+    pub fn child_left(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::ChildLeft(val.into()));
+
+        self
+    }
+
+    pub fn child_right(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::ChildRight(val.into()));
+
+        self
+    }
+
+    pub fn child_top(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::ChildTop(val.into()));
+
+        self
+    }
+
+    pub fn child_bottom(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::ChildBottom(val.into()));
+
+        self
+    }
+
+    pub fn col_between(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::ColBetween(val.into()));
+
+        self
+    }
+
+    pub fn row_between(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::RowBetween(val.into()));
+
+        self
+    }
+
+    // SIZE
+
+    pub fn width(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::Width(val.into()));
+
+        self
+    }
+
+    pub fn height(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::Height(val.into()));
+
+        self
+    }
+
+    // SIZE CONSTRAINTS
+    pub fn min_width(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::MinWidth(val.into()));
+
+        self
+    }
+
+    pub fn max_width(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::MaxWidth(val.into()));
+
+        self
+    }
+
+    pub fn min_height(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::MinHeight(val.into()));
+
+        self
+    }
+
+    pub fn max_height(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::MaxHeight(val.into()));
+
+        self
+    }
+
+    // SPACE CONSTRAINTS
+    pub fn min_left(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::MinLeft(val.into()));
+
+        self
+    }
+
+    pub fn max_left(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::MaxLeft(val.into()));
+
+        self
+    }
+
+    pub fn min_right(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::MinRight(val.into()));
+
+        self
+    }
+
+    pub fn max_right(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::MaxRight(val.into()));
+
+        self
+    }
+
+    pub fn min_top(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::MinTop(val.into()));
+
+        self
+    }
+
+    pub fn max_top(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::MaxTop(val.into()));
+
+        self
+    }
+
+    pub fn min_bottom(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::MinBottom(val.into()));
+
+        self
+    }
+
+    pub fn max_bottom(mut self, val: impl Into<Units>) -> Self {
+        self.properties.push(Property::MaxBottom(val.into()));
 
         self
     }

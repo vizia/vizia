@@ -8,13 +8,11 @@ fn main() {
             for i in 0..3 {
                 Element::new(cx)
                     .size(Pixels(100.0))
-                    .top(Pixels(10.0 * i as f32))
-                    .left(Pixels(10.0 * i as f32))
+                    .translate(Pixels(10.0 * i as f32))
                     .background_color(COLORS[i]);
             }
         })
-        .left(Pixels(10.0))
-        .top(Pixels(10.0));
+        .child_space(Stretch(1.0));
     })
     .title("ZStack")
     .run();

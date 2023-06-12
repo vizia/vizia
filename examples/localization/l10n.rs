@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use vizia::prelude::*;
 
 #[derive(Lens)]
@@ -32,11 +33,11 @@ fn main() {
     Application::new(|cx| {
         cx.add_translation(
             "en-US".parse().unwrap(),
-            include_str!("../resources/en-US/hello.ftl").to_owned(),
+            include_str!("../resources/translations/en-US/hello.ftl").to_owned(),
         );
         cx.add_translation(
             "fr".parse().unwrap(),
-            include_str!("../resources/fr/hello.ftl").to_owned(),
+            include_str!("../resources/translations/fr/hello.ftl").to_owned(),
         );
 
         AppData { name: "Audrey".to_owned(), emails: 1 }.build(cx);

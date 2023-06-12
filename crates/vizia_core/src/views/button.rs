@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-/// A simple push button with an action and views inside of it.
+/// A simple push button with an action and a contained view.
 ///
 /// # Examples
 ///
@@ -72,15 +72,15 @@ impl Button {
     /// #
     /// Button::new(cx, |_| {}, |cx| Label::new(cx, "Text"));
     /// ```
-    pub fn new<A, F, V>(cx: &mut Context, action: A, content: F) -> Handle<Self>
+    pub fn new<A, C, V>(cx: &mut Context, action: A, content: C) -> Handle<Self>
     where
         A: 'static + Fn(&mut EventContext),
-        F: FnOnce(&mut Context) -> Handle<V>,
+        C: FnOnce(&mut Context) -> Handle<V>,
         V: 'static + View,
     {
         Self { action: Some(Box::new(action)) }
             .build(cx, move |cx| {
-                (content)(cx).hoverable(false);
+                (content)(cx).hoverable(false).class("inner");
             })
             .role(Role::Button)
             .default_action_verb(DefaultActionVerb::Click)
@@ -106,8 +106,11 @@ impl View for Button {
                     if let Some(callback) = &self.action {
                         (callback)(cx);
                     }
-                    cx.release();
                 }
+            }
+
+            WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
+                cx.release();
             }
 
             WindowEvent::ActionRequest(action) => match action.action {
