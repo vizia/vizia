@@ -11,6 +11,7 @@ const STYLE: &str = r#"
         outer-shadow: 0 3 10 #00000055;
         overflow: visible;
         child-space: 10px;
+        height: auto;
     }
 
     .modal>vstack>label {
@@ -108,7 +109,8 @@ fn main() {
                         |cx| Label::new(cx, "Cancel"),
                     )
                     .width(Pixels(120.0));
-                });
+                })
+                .height(Auto);
             })
             .row_between(Pixels(20.0))
             .height(Auto);

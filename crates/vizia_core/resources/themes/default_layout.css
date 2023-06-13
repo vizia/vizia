@@ -467,6 +467,10 @@ popup:checked {
     opacity: 1;
 }
 
+popup vstack {
+    height: auto;
+}
+
 /* RADIOBUTTON */
 
 radiobutton {
