@@ -57,7 +57,9 @@ type Models = SparseSet<ModelDataStore>;
 type Bindings = FnvHashMap<Entity, Box<dyn BindingHandler>>;
 
 thread_local! {
+    // Store of mapping functions used for lens maps.
     pub static MAPS: RefCell<Vec<(Entity, Box<dyn Any>)>> = RefCell::new(Vec::new());
+    // The 'current' entity which is used for storing lens map mapping functions as per above.
     pub static CURRENT: RefCell<Entity> = RefCell::new(Entity::root());
 }
 

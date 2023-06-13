@@ -11,7 +11,7 @@ fn main() {
     Application::new(|cx| {
         AppData { value: 3.14 }.build(cx);
 
-        Label::new(cx, AppData::value.map(|val| val.to_string()));
+        Label::new(cx, AppData::value.map(|_val| String::from("Hello World")));
     })
     .title("Lens Map")
     .run();
