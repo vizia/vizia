@@ -113,26 +113,80 @@ fn main() {
         ExamplePage::vertical(cx, |cx| {
             cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
             ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                Label::new(cx, "Label").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                label(cx);
-
                 Label::new(cx, "Button").font_size(30.0).font_weight(FontWeightKeyword::Bold);
                 button(cx);
 
                 Label::new(cx, "Checkbox").font_size(30.0).font_weight(FontWeightKeyword::Bold);
                 checkbox(cx);
 
-                Label::new(cx, "Switch").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                switch(cx);
+                Label::new(cx, "Chip").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // chip(cx);
+
+                Label::new(cx, "Combobox").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // combobox(cx);
+
+                Label::new(cx, "Datepicker").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // datepicker(cx);
+
+                Label::new(cx, "HStack").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // hstack(cx);
+
+                Label::new(cx, "Knob").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // knob(cx);
+
+                Label::new(cx, "Label").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                label(cx);
+
+                Label::new(cx, "List").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // list(cx);
+
+                Label::new(cx, "Menu").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // menu(cx);
+
+                Label::new(cx, "Notification").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // notification(cx);
+
+                Label::new(cx, "Picklist").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // picklist(cx);
+
+                Label::new(cx, "Popup").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // popup(cx);
 
                 Label::new(cx, "Radiobutton").font_size(30.0).font_weight(FontWeightKeyword::Bold);
                 radiobutton(cx);
 
+                Label::new(cx, "Rating").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                rating(cx);
+
+                Label::new(cx, "Scrollview").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // scrollview(cx);
+
                 Label::new(cx, "Slider").font_size(30.0).font_weight(FontWeightKeyword::Bold);
                 slider(cx);
 
-                Label::new(cx, "Rating").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                rating(cx);
+                Label::new(cx, "Spinbox").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // spinbox(cx);
+
+                Label::new(cx, "Switch").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                switch(cx);
+
+                Label::new(cx, "Tabview").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // tabview(cx);
+
+                Label::new(cx, "Textbox").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // textbox(cx);
+
+                Label::new(cx, "Timepicker").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // timepicker(cx);
+
+                Label::new(cx, "Tooltip").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // tooltip(cx);
+
+                Label::new(cx, "VStack").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // vstack(cx);
+
+                Label::new(cx, "zstack").font_size(30.0).font_weight(FontWeightKeyword::Bold);
+                // zstack(cx);
             });
         });
     })

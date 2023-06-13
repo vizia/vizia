@@ -10,12 +10,6 @@
     color: #fafafa;
 }
 
-/* LABEL */
-
-label:disabled {
-    color: #585858;
-}
-
 /* BACKGROUNDS */
 
 .bg-default {
@@ -307,12 +301,15 @@ dropdown popup {
 }
 
 dropdown list label {
-    color: #888;
     cursor: hand;
 }
 
+dropdown list label:hover {
+    background-color: #51afef11;
+}
+
 dropdown list label:checked {
-    color: #fff;
+    background-color: #5dc4ec;
 }
 
 dropdown list label:focus-visible {
@@ -321,8 +318,22 @@ dropdown list label:focus-visible {
     outline-offset: 3px;
 }
 
-dropdown list label:hover {
-    background-color: #51afef11;
+dropdown .list label {
+    cursor: hand;
+}
+
+dropdown .list label.nav {
+    background-color: #51b0ef34;
+}
+
+dropdown .list label:checked {
+    background-color: #5dc4ec;
+}
+
+dropdown .list label:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
 }
 
 /* KNOB */
@@ -362,6 +373,12 @@ knob .knob-tick {
 
 knob:disabled .knob-tick {
     background-color: #c4c4c4;
+}
+
+/* LABEL */
+
+label:disabled {
+    color: #585858;
 }
 
 /* MENU */
@@ -444,17 +461,16 @@ notification .notification-header button {
 
 /* PICKLIST */
 
+picklist:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
+    outline-offset: 3px;
+}
+
 /* POPUP */
 
 popup {
     box-shadow: 0px 0px 8px #00000026;
-    opacity: 0%;
-    transition: opacity 100ms;
-}
-
-popup:checked {
-    opacity: 100%;
-    transition: opacity 100ms;
 }
 
 /* PROGRESSBAR */
@@ -731,6 +747,7 @@ switch:checked:hover:disabled * {
     background-color: #404040;
     transition: background-color 100ms;
 }
+
 /* TABVIEW */
 
 tabview tabheader label {
@@ -819,22 +836,6 @@ timepicker {
     border-radius: 4px;
 }
 
-/* Digital Time Picker */
-
-digitaltimepicker {
-    background-color: #343434;
-    border-radius: 4px;
-}
-
-digitaltimepicker .digitaltimepicker-dot {
-    border-radius: 4px;
-    background-color: #282828;
-}
-
-digitaltimepicker textbox {
-    font-size: 24;
-}
-
 /* Radial Time Picker */
 
 analogtimepicker {
@@ -921,22 +922,4 @@ tooltip {
 tooltip.vis {
     opacity: 1;
     transition: opacity 100ms 500ms;
-}
-
-/* MODAL */
-
-.modal {
-    background-color: #323232;
-    border-radius: 4px;
-    border-width: 1px;
-    border-color: #424242;
-}
-
-.modal label {
-    color: #888;
-}
-
-.modal .title {
-    color: #fff;
-    font-size: 18;
 }

@@ -10,16 +10,6 @@
     color: #181818;
 }
 
-/* LABEL */
-
-label:disabled {
-    color: #a0a0a0;
-}
-
-label.describing {
-    cursor: hand;
-}
-
 /* BUTTON  */
 
 button {
@@ -199,7 +189,7 @@ checkbox:checked:disabled {
     transition: border-color 100ms;
 }
 
-/* Chip */
+/* CHIP */
 
 chip {
     border-radius: 4px;
@@ -224,7 +214,65 @@ chip:disabled .icon {
     scale: 1;
 }
 
-/* Dropdown */
+/* DATEPICKER */
+
+datepicker {
+    background-color: #fff;
+    border-radius: 4px;
+    border-color: #d2d2d2;
+    border-width: 1px;
+}
+
+.datepicker-header textbox {
+    background-color: transparent;
+}
+
+.datepicker-divisor {
+    background-color: #d2d2d2;
+}
+
+.datepicker-calendar-day {
+    color: #525252;
+    cursor: hand;
+}
+
+.datepicker-calendar-day:checked {
+    color: #fff;
+    background-color: #51afef;
+    border-radius: 4px;
+}
+
+.datepicker-calendar-day-disabled {
+    color: #a0a0a0;
+    cursor: arrow;
+}
+
+.datepicker-selected-date {
+    color: #b0b0b0;
+}
+
+.datepicker-cancel {
+    border-width: 2px;
+    border-color: #ef5151;
+    border-radius: 4px;
+}
+
+.datepicker-cancel label {
+    color: #ef5151;
+}
+
+.datepicker-apply {
+    border-width: 2px;
+    border-color: #51afef;
+    background-color: #51afef;
+    border-radius: 4px;
+}
+
+.datepicker-apply label {
+    color: #ffffff;
+}
+
+/* DROPDOWN */
 
 dropdown {
     border-radius: 4px;
@@ -285,10 +333,6 @@ dropdown .list label {
     cursor: hand;
 }
 
-/* dropdown .list label:hover {
-    background-color: #51afef11;
-} */
-
 dropdown .list label.nav {
     background-color: #51b0ef34;
 }
@@ -301,6 +345,51 @@ dropdown .list label:focus-visible {
     outline-width: 1px;
     outline-color: #51afef80;
     outline-offset: 3px;
+}
+
+/* KNOB */
+
+knob {
+    border-width: 2px;
+}
+
+knob:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef80;
+    outline-offset: 3px;
+}
+
+knob .knob-track {
+    color: #51afef;
+}
+
+knob:disabled .knob-track {
+    color: #ebebeb;
+}
+
+knob .knob-head {
+    background-color: #fdfdfd;
+    border-width: 2px;
+    border-color: #d2d2d2;
+}
+
+knob:disabled .knob-head {
+    border-color: #ebebeb;
+}
+
+knob .knob-tick {
+    background-color: #d2d2d2;
+    border-radius: 1px;
+}
+
+/* LABEL */
+
+label:disabled {
+    color: #a0a0a0;
+}
+
+label.describing {
+    cursor: hand;
 }
 
 /* MENU */
@@ -371,12 +460,10 @@ menu-divider .line {
     background-color: #d2d2d2;
 }
 
-/* Popup */
+/* NOTIFICATION */
 
-popup {
-    box-shadow: 0px 3px 12px #00000038;
-    /* opacity: 0%;
-    transition: opacity 100ms; */
+notification {
+    background-color: #242424;
 }
 
 /* 
@@ -403,47 +490,22 @@ progressbar:disabled .progressbar-bar {
     background-color: #418abb;
 }
 
-/* KNOB */
-
-knob {
-    border-width: 2px;
+notification .notification-header button {
+    background-color: transparent;
 }
 
-knob:focus-visible {
-    outline-width: 1px;
-    outline-color: #51afef80;
-    outline-offset: 3px;
-}
-
-knob .knob-track {
-    color: #51afef;
-}
-
-knob:disabled .knob-track {
-    color: #ebebeb;
-}
-
-knob .knob-head {
-    background-color: #fdfdfd;
-    border-width: 2px;
-    border-color: #d2d2d2;
-}
-
-knob:disabled .knob-head {
-    border-color: #ebebeb;
-}
-
-knob .knob-tick {
-    background-color: #d2d2d2;
-    border-radius: 1px;
-}
-
-/* PiCKLIST */
+/* PICKLIST */
 
 picklist:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
     outline-offset: 3px;
+}
+
+/* POPUP */
+
+popup {
+    box-shadow: 0px 3px 12px #00000038;
 }
 
 /* RADIOBUTTON */
@@ -732,6 +794,24 @@ switch:checked:hover:disabled * {
     transition: background-color 100ms;
 }
 
+/* TABVIEW */
+
+tabheader:disabled {
+    background-color: transparent;
+}
+
+tabheader:disabled label {
+    color: #888;
+}
+
+tabheader:checked .indicator {
+    background-color: #51afef;
+}
+
+tabview .tabview-divider {
+    background-color: #c4c4c4;
+}
+
 /* TEXTBOX */
 
 textbox {
@@ -773,40 +853,6 @@ textbox:invalid {
     border-width: 2px;
 }
 
-/* MODAL */
-
-.modal {
-    space: 1s;
-    background-color: #e4e4e4;
-    border-radius: 4px;
-    border-width: 1px;
-    border-color: #b6b6b6;
-    overflow: visible;
-    child-space: 8px;
-    width: 200px;
-    row-between: 16px;
-}
-
-.modal label {
-    width: auto;
-    height: auto;
-    color: #888;
-}
-
-.modal button {
-    top: 8px;
-}
-
-.modal .title {
-    color: #000000;
-    font-size: 18;
-    bottom: 4px;
-}
-
-.modal .accent {
-    left: 1s;
-}
-
 /* TIMEPICKER */
 
 timepicker {
@@ -835,82 +881,6 @@ timepicker .timepicker-dot {
     height: 6px;
     border-radius: 4px;
     background-color: #b6b6b6;
-}
-
-/* DATEPICKER */
-
-datepicker {
-    background-color: #fff;
-    border-radius: 4px;
-    border-color: #d2d2d2;
-    border-width: 1px;
-}
-
-.datepicker-header textbox {
-    background-color: transparent;
-}
-
-.datepicker-divisor {
-    background-color: #d2d2d2;
-}
-
-.datepicker-calendar-day {
-    color: #525252;
-    cursor: hand;
-}
-
-.datepicker-calendar-day:checked {
-    color: #fff;
-    background-color: #51afef;
-    border-radius: 4px;
-}
-
-.datepicker-calendar-day-disabled {
-    color: #a0a0a0;
-    cursor: arrow;
-}
-
-.datepicker-selected-date {
-    color: #b0b0b0;
-}
-
-.datepicker-cancel {
-    border-width: 2px;
-    border-color: #ef5151;
-    border-radius: 4px;
-}
-
-.datepicker-cancel label {
-    color: #ef5151;
-}
-
-.datepicker-apply {
-    border-width: 2px;
-    border-color: #51afef;
-    background-color: #51afef;
-    border-radius: 4px;
-}
-
-.datepicker-apply label {
-    color: #ffffff;
-}
-
-/* TABVIEW */
-
-tabheader:disabled {
-    background-color: transparent;
-}
-
-tabheader:disabled label {
-    color: #888;
-}
-
-tabheader:checked .indicator {
-    background-color: #51afef;
-}
-
-tabview .tabview-divider {
-    background-color: #c4c4c4;
 }
 
 /* TOOLTIP */

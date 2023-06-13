@@ -37,7 +37,8 @@ fn main() {
                     .on_close(move |cx| cx.emit(AppEvent::CloseChip(index)))
                     .background_color(Color::from("#ff000044"));
             })
-            .layout_type(LayoutType::Row);
+            .layout_type(LayoutType::Row)
+            .col_between(Pixels(4.0));
         });
     })
     .title("Chip")
