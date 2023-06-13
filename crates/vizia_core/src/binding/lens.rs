@@ -107,13 +107,6 @@ pub trait LensExt: Lens {
         self.then(Index::new(index))
     }
 
-    // fn map<G: Clone, B: 'static + Clone>(self, get: G) -> Then<Self, Map<G, Self::Target, B>>
-    // where
-    //     G: 'static + Fn(&Self::Target) -> B,
-    // {
-    //     self.then(Map::new(get))
-    // }
-
     fn map<O: 'static, F: 'static + Fn(&Self::Target) -> O>(self, map: F) -> Map<Self, O> {
         let id = MAPS.with(|f| f.borrow().len());
         let entity = CURRENT.with(|f| *f.borrow());
@@ -159,7 +152,6 @@ impl<L: Lens, O: 'static> Clone for Map<L, O> {
 }
 
 impl<L: Lens, O: 'static> Lens for Map<L, O> {
-    // TODO can we get rid of these static bounds?
     type Source = L::Source;
     type Target = O;
 
@@ -173,6 +165,7 @@ impl<L: Lens, O: 'static> Lens for Map<L, O> {
             .view(source, |target| {
                 let mut value = None;
                 if let Some(t) = target {
+                    // Get and apply mapping function from thread local store.
                     MAPS.with(|f| {
                         if let Some(map) = f.borrow().get(self.id) {
                             if let Some(mapping) = map.1.downcast_ref::<MapState<L::Target, O>>() {
