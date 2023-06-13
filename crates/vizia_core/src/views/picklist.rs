@@ -52,7 +52,7 @@ impl PickList {
                     let l = list_lens.clone();
                     let window_height = cx.cache.get_height(Entity::root());
                     let scale = cx.scale_factor();
-                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
                         List::new(cx, l, move |cx, index, item| {
                             Label::new(cx, item)
                                 .child_top(Stretch(1.0))

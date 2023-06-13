@@ -12,7 +12,7 @@
 //! .run();
 //! ```
 
-use crate::context::AccessNode;
+use crate::context::{AccessNode, CURRENT};
 use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::systems::get_access_node;
@@ -130,6 +130,8 @@ pub trait View: 'static + Sized {
         let node_id = id.accesskit_id();
         let children =
             parent_id.child_iter(&cx.tree).map(|entity| entity.accesskit_id()).collect::<Vec<_>>();
+
+        CURRENT.with(|f| *f.borrow_mut() = id);
 
         let mut access_context = AccessContext {
             current: id,

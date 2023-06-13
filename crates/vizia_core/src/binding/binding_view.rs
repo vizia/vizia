@@ -2,6 +2,7 @@ use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
 
 use crate::binding::{BasicStore, LensCache, Store, StoreId};
+use crate::context::{CURRENT, MAPS};
 use crate::model::ModelOrView;
 use crate::prelude::*;
 
@@ -144,7 +145,14 @@ pub(crate) trait BindingHandler {
 impl<L: 'static + Lens> BindingHandler for Binding<L> {
     fn update(&mut self, cx: &mut Context) {
         cx.remove_children(cx.current());
+
+        // Remove any maps associated with this binding
+        MAPS.with(|f| {
+            f.borrow_mut().retain(|map| map.0 != self.entity);
+        });
+
         if let Some(builder) = &self.content {
+            CURRENT.with(|f| *f.borrow_mut() = self.entity);
             (builder)(cx, self.lens.clone());
         }
     }
