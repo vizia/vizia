@@ -10,6 +10,7 @@ mod resource;
 
 use instant::Instant;
 use std::any::{Any, TypeId};
+use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Mutex;
@@ -54,6 +55,11 @@ static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css"
 type Views = FnvHashMap<Entity, Box<dyn ViewHandler>>;
 type Models = SparseSet<ModelDataStore>;
 type Bindings = FnvHashMap<Entity, Box<dyn BindingHandler>>;
+
+thread_local! {
+    pub static MAPS: RefCell<Vec<(Entity, Box<dyn Any>)>> = RefCell::new(Vec::new());
+    pub static CURRENT: RefCell<Entity> = RefCell::new(Entity::root());
+}
 
 /// The main storage and control object for a Vizia application.
 pub struct Context {
@@ -416,6 +422,11 @@ impl Context {
                     }
                 }
             }
+
+            // Remove any map lenses associated with the entity.
+            MAPS.with(|f| {
+                f.borrow_mut().retain(|map| map.0 != *entity);
+            });
 
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
