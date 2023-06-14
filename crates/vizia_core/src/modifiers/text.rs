@@ -1,6 +1,7 @@
 use super::internal;
 use crate::{prelude::*, style::SystemFlags};
-use cosmic_text::{FamilyOwned, Weight};
+use cosmic_text::FamilyOwned;
+use vizia_style::{FontSize, FontStretch, FontStyle, FontWeight};
 
 /// Modifiers for changing the text properties of a view.
 pub trait TextModifiers: internal::Modifiable {
@@ -11,8 +12,9 @@ pub trait TextModifiers: internal::Modifiable {
             let text_data = v.get_val(cx).to_string();
             cx.text_context.set_text(entity, &text_data);
 
-            cx.style.needs_text_layout.insert(entity, true).unwrap();
-            cx.style.system_flags |= SystemFlags::REFLOW;
+            cx.style.needs_text_layout.insert(entity, true);
+            cx.needs_relayout();
+            cx.needs_redraw();
         });
 
         self
@@ -30,7 +32,7 @@ pub trait TextModifiers: internal::Modifiable {
     modifier!(
         /// Sets the font weight that should be used by the view.
         font_weight,
-        Weight,
+        FontWeight,
         SystemFlags::REDRAW
     );
 
@@ -38,6 +40,13 @@ pub trait TextModifiers: internal::Modifiable {
         /// Sets the font style that should be used by the view.
         font_style,
         FontStyle,
+        SystemFlags::REDRAW
+    );
+
+    modifier!(
+        /// Sets the font stretch that should be used by the view if the font supports it.
+        font_stretch,
+        FontStretch,
         SystemFlags::REDRAW
     );
 
@@ -52,7 +61,7 @@ pub trait TextModifiers: internal::Modifiable {
     }
 
     /// Sets the font size of the view.
-    fn font_size(mut self, value: impl Res<f32>) -> Self {
+    fn font_size<U: Into<FontSize>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, v| {
             cx.style.font_size.insert(entity, v.get_val(cx).into());
@@ -80,6 +89,13 @@ pub trait TextModifiers: internal::Modifiable {
         text_wrap,
         bool,
         SystemFlags::REFLOW
+    );
+
+    modifier!(
+        /// Sets the horizontal alignment of text within the view.
+        text_align,
+        TextAlign,
+        SystemFlags::REDRAW
     );
 }
 

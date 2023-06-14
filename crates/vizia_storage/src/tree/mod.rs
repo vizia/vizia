@@ -1,10 +1,12 @@
+#![allow(clippy::new_without_default)]
+#![allow(clippy::module_inception)]
+
 //! # Tree of Widgets
 //!
 //! The [Tree] struct describes the visual hierarchy of widgets built into the application. A series of iterators
 //! are used to traverse the tree, which is used by nearly all systems, including for example, for calculating layout,
 //! propagating events, and rendering the UI.
 
-mod hierarchy;
 mod iter;
 mod tour_direction;
 mod tour_step;

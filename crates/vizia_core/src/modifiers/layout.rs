@@ -396,55 +396,6 @@ pub trait LayoutModifiers: internal::Modifiable {
 
         self
     }
-
-    /// Sets the grid rows of the view.
-    fn grid_rows(mut self, rows: Vec<Units>) -> Self {
-        let entity = self.entity();
-        self.context().style.grid_rows.insert(entity, rows);
-        self.context().needs_relayout();
-        self
-    }
-
-    /// Sets the grid columns of the view.
-    fn grid_cols(mut self, cols: Vec<Units>) -> Self {
-        let entity = self.entity();
-        self.context().style.grid_cols.insert(entity, cols);
-        self.context().needs_relayout();
-        self
-    }
-
-    modifier!(
-        /// Sets the grid row index of the view.
-        ///
-        /// This index relates to the grid rows of the parent view when the parent layout type is set to `Grid`.
-        row_index,
-        usize,
-        SystemFlags::RELAYOUT
-    );
-    modifier!(
-        /// Sets the grid row span of the view.
-        ///
-        /// This relates to the range of occupied grid rows of the parent view when the parent layout type is set to `Grid`.
-        row_span,
-        usize,
-        SystemFlags::RELAYOUT
-    );
-    modifier!(
-        /// Sets the grid column index of the view.
-        ///
-        /// This index relates to the grid columns of the parent view when the parent layout type is set to `Grid`.
-        col_index,
-        usize,
-        SystemFlags::RELAYOUT
-    );
-    modifier!(
-        /// Sets the grid column span of the view.
-        ///
-        /// This relates to the range of occupied grid columns of the parent view when the parent layout type is set to `Grid`.
-        col_span,
-        usize,
-        SystemFlags::RELAYOUT
-    );
 }
 
 impl<'a, V: View> LayoutModifiers for Handle<'a, V> {}

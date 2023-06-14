@@ -1,103 +1,119 @@
-use std::ops::{Index, IndexMut};
+use femtovg::Transform2D;
+use vizia_style::{Angle, Scale, Transform, Translate};
 
-/// A 2D transform matrix.
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
-pub struct Transform2D(pub [f32; 6]);
+use crate::layout::BoundingBox;
 
-impl Transform2D {
-    pub fn new(a: f32, b: f32, c: f32, d: f32, e: f32, f: f32) -> Self {
-        Self([a, b, c, d, e, f])
+/// Trait for converting a transform definition into a `Transform2D`.
+pub(crate) trait IntoTransform {
+    fn as_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D;
+}
+
+impl IntoTransform for Translate {
+    fn as_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
+        let mut result = Transform2D::identity();
+        let tx = self.x.to_pixels(parent_bounds.w, scale_factor);
+        let ty = self.y.to_pixels(parent_bounds.h, scale_factor);
+
+        result.translate(tx, ty);
+
+        result
     }
+}
 
-    pub fn identity() -> Self {
-        Self([1.0, 0.0, 0.0, 1.0, 0.0, 0.0])
+impl IntoTransform for Scale {
+    fn as_transform(&self, _parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
+        let mut result = Transform2D::identity();
+        let sx = self.x.to_factor();
+        let sy = self.y.to_factor();
+        result.scale(sx, sy);
+
+        result
     }
+}
 
-    pub fn rotate(&mut self, a: f32) {
-        let cs = a.cos();
-        let sn = a.sin();
+impl IntoTransform for Angle {
+    fn as_transform(&self, _parent_bounds: BoundingBox, _scale_factor: f32) -> Transform2D {
+        let mut result = Transform2D::identity();
+        let r = self.to_radians();
+        result.rotate(r);
 
-        self[0] = cs;
-        self[1] = sn;
-        self[2] = -sn;
-        self[3] = cs;
-        self[4] = 0.0;
-        self[5] = 0.0;
+        result
     }
+}
 
-    pub fn get_rotate(&self) -> f32 {
-        self[0].acos().to_degrees()
-    }
+impl IntoTransform for Vec<Transform> {
+    fn as_transform(&self, parent_bounds: BoundingBox, scale_factor: f32) -> Transform2D {
+        let mut result = Transform2D::identity();
+        for transform in self.iter() {
+            let mut t = Transform2D::identity();
+            match transform {
+                Transform::Translate(translate) => {
+                    let tx = translate.0.to_pixels(parent_bounds.w, scale_factor);
+                    let ty = translate.1.to_pixels(parent_bounds.h, scale_factor);
 
-    pub fn inverse(&mut self) {
-        let t = *self;
-        let det = t[0] as f64 * t[3] as f64 - t[2] as f64 * t[1] as f64;
+                    t.translate(tx, ty);
+                }
 
-        if det > -1e-6 && det < 1e-6 {
-            *self = Self::identity();
+                Transform::TranslateX(x) => {
+                    let tx = x.to_pixels(parent_bounds.h, scale_factor);
+
+                    t.translate(tx, 0.0)
+                }
+
+                Transform::TranslateY(y) => {
+                    let ty = y.to_pixels(parent_bounds.h, scale_factor);
+
+                    t.translate(0.0, ty)
+                }
+
+                Transform::Scale(scale) => {
+                    let sx = scale.0.to_factor();
+                    let sy = scale.1.to_factor();
+
+                    t.scale(sx, sy)
+                }
+
+                Transform::ScaleX(x) => {
+                    let sx = x.to_factor();
+
+                    t.scale(sx, 1.0)
+                }
+
+                Transform::ScaleY(y) => {
+                    let sy = y.to_factor();
+
+                    t.scale(1.0, sy)
+                }
+
+                Transform::Rotate(angle) => t.rotate(angle.to_radians()),
+
+                Transform::Skew(x, y) => {
+                    let cx = x.to_radians().tan();
+                    let cy = y.to_radians().tan();
+
+                    t = t.new(1.0, cx, cy, 1.0, 0.0, 0.0);
+                }
+
+                Transform::SkewX(angle) => {
+                    let cx = angle.to_radians().tan();
+
+                    t.skew_x(cx)
+                }
+
+                Transform::SkewY(angle) => {
+                    let cy = angle.to_radians().tan();
+
+                    t.skew_y(cy)
+                }
+
+                Transform::Matrix(matrix) => {
+                    t = t.new(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
+                }
+            };
+
+            result.premultiply(&t);
         }
 
-        let invdet = 1.0 / det;
-
-        self[0] = (t[3] as f64 * invdet) as f32;
-        self[2] = (-t[2] as f64 * invdet) as f32;
-        self[4] = ((t[2] as f64 * t[5] as f64 - t[3] as f64 * t[4] as f64) * invdet) as f32;
-        self[1] = (-t[1] as f64 * invdet) as f32;
-        self[3] = (t[0] as f64 * invdet) as f32;
-        self[5] = ((t[1] as f64 * t[4] as f64 - t[0] as f64 * t[5] as f64) * invdet) as f32;
-    }
-
-    pub fn translate(&mut self, tx: f32, ty: f32) {
-        self[4] = tx;
-        self[5] = ty;
-    }
-
-    pub fn scale(&mut self, sx: f32, sy: f32) {
-        self[0] = sx;
-        self[3] = sy;
-    }
-
-    pub fn transform_point(&self, sx: f32, sy: f32) -> (f32, f32) {
-        let dx = sx * self[0] + sy * self[2] + self[4];
-        let dy = sx * self[1] + sy * self[3] + self[5];
-        (dx, dy)
-    }
-
-    pub fn multiply(&mut self, other: &Self) {
-        let t0 = self[0] * other[0] + self[1] * other[2];
-        let t2 = self[2] * other[0] + self[3] * other[2];
-        let t4 = self[4] * other[0] + self[5] * other[2] + other[4];
-        self[1] = self[0] * other[1] + self[1] * other[3];
-        self[3] = self[2] * other[1] + self[3] * other[3];
-        self[5] = self[4] * other[1] + self[5] * other[3] + other[5];
-        self[0] = t0;
-        self[2] = t2;
-        self[4] = t4;
-    }
-
-    pub fn premultiply(&mut self, other: &Self) {
-        let mut other = *other;
-        other.multiply(self);
-        *self = other;
-    }
-}
-
-impl Default for Transform2D {
-    fn default() -> Self {
-        Self::identity()
-    }
-}
-
-impl Index<usize> for Transform2D {
-    type Output = f32;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.0[index]
-    }
-}
-
-impl IndexMut<usize> for Transform2D {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.0[index]
+        result
     }
 }

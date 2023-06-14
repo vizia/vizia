@@ -1,9 +1,8 @@
 use crate::context::{InternalEvent, ResourceContext};
 use crate::events::EventMeta;
 use crate::prelude::*;
-#[cfg(debug_assertions)]
-use crate::systems::compute_matched_rules;
-use crate::systems::hover_system;
+use crate::style::{Abilities, PseudoClassFlags};
+use crate::systems::{compute_matched_rules, hover_system};
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use instant::{Duration, Instant};
 use std::any::Any;
@@ -18,74 +17,58 @@ const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(500);
 /// The [EventManager] is responsible for taking the events in the event queue in context
 /// and dispatching them to views and models based on the target and propagation metadata of the event.
 #[doc(hidden)]
-pub struct EventManager {
+pub(crate) struct EventManager {
     // Queue of events to be processed
     event_queue: Vec<Event>,
 }
 
 impl EventManager {
     pub fn new() -> Self {
-        EventManager { event_queue: Vec::new() }
+        EventManager { event_queue: Vec::with_capacity(10) }
     }
 
     /// Flush the event queue, dispatching events to their targets.
     /// Returns whether there are still more events to process, i.e. the event handlers sent events.
-    pub fn flush_events(&mut self, context: &mut Context) -> bool {
+    pub(crate) fn flush_events(&mut self, cx: &mut Context) -> bool {
         // Clear the event queue in the event manager
         self.event_queue.clear();
 
         // Move events from state to event manager
-        self.event_queue.extend(context.event_queue.drain(0..));
+        self.event_queue.extend(cx.event_queue.drain(0..));
 
         // Loop over the events in the event queue
         'events: for event in self.event_queue.iter_mut() {
-            // handle internal events
+            // Handle internal events
             event.map(|internal_event, _| match internal_event {
-                InternalEvent::Redraw => context.needs_redraw(),
+                InternalEvent::Redraw => cx.needs_redraw(),
                 InternalEvent::LoadImage { path, image, policy } => {
                     if let Some(image) = image.lock().unwrap().take() {
-                        ResourceContext::new(context).load_image(path.clone(), image, *policy);
+                        ResourceContext::new(cx).load_image(path.clone(), image, *policy);
                     }
                 }
             });
-
-            // handle state updates for window events
-            event.map(|window_event, meta| {
-                if meta.origin == Entity::root() {
-                    internal_state_updates(context, window_event, meta);
-                }
-            });
-
-            if event.meta.consumed {
-                continue 'events;
-            }
 
             // Send events to any global listeners
             let mut global_listeners = vec![];
-            std::mem::swap(&mut context.global_listeners, &mut global_listeners);
+            std::mem::swap(&mut cx.global_listeners, &mut global_listeners);
             for listener in &global_listeners {
-                context
-                    .with_current(Entity::root(), |cx| listener(&mut EventContext::new(cx), event));
+                cx.with_current(Entity::root(), |cx| listener(&mut EventContext::new(cx), event));
             }
-            std::mem::swap(&mut context.global_listeners, &mut global_listeners);
+            std::mem::swap(&mut cx.global_listeners, &mut global_listeners);
 
             // Send events to any local listeners
-            let listeners = context.listeners.keys().copied().collect::<Vec<Entity>>();
+            let listeners = cx.listeners.keys().copied().collect::<Vec<Entity>>();
             for entity in listeners {
-                if let Some(listener) = context.listeners.remove(&entity) {
-                    if let Some(mut event_handler) = context.views.remove(&entity) {
-                        context.with_current(entity, |context| {
-                            (listener)(
-                                event_handler.as_mut(),
-                                &mut EventContext::new(context),
-                                event,
-                            );
+                if let Some(listener) = cx.listeners.remove(&entity) {
+                    if let Some(mut event_handler) = cx.views.remove(&entity) {
+                        cx.with_current(entity, |cx| {
+                            (listener)(event_handler.as_mut(), &mut EventContext::new(cx), event);
                         });
 
-                        context.views.insert(entity, event_handler);
+                        cx.views.insert(entity, event_handler);
                     }
 
-                    context.listeners.insert(entity, listener);
+                    cx.listeners.insert(entity, listener);
                 }
 
                 if event.meta.consumed {
@@ -93,29 +76,39 @@ impl EventManager {
                 }
             }
 
-            let context = &mut EventContext::new(context);
+            // Handle state updates for window events
+            event.map(|window_event, meta| {
+                if meta.origin == Entity::root() {
+                    internal_state_updates(cx, window_event, meta);
+                }
+            });
 
-            // Define the target to prevent multiple mutable borrows error
+            // Skip to next event if the current event was consumed when handling state updates.
+            if event.meta.consumed {
+                continue 'events;
+            }
+
+            let cx = &mut EventContext::new(cx);
+
+            // Copy the target to prevent multiple mutable borrows error.
             let target = event.meta.target;
 
             // Send event to target
-            visit_entity(context, target, event);
+            visit_entity(cx, target, event);
 
+            // Skip to next event if the current event was consumed.
             if event.meta.consumed {
                 continue 'events;
             }
 
             // Propagate up from target to root (not including target)
             if event.meta.propagation == Propagation::Up {
+                // Create a parent iterator and skip the first element which is the target.
+                let iter = target.parent_iter(cx.tree).skip(1);
                 // Walk up the tree from parent to parent
-                for entity in target.parent_iter(context.tree) {
-                    // Skip the target entity
-                    if entity == event.meta.target {
-                        continue;
-                    }
-
+                for entity in iter {
                     // Send event to all entities before the target
-                    visit_entity(context, entity, event);
+                    visit_entity(cx, entity, event);
 
                     // Skip to the next event if the current event is consumed
                     if event.meta.consumed {
@@ -125,14 +118,12 @@ impl EventManager {
             }
 
             if event.meta.propagation == Propagation::Subtree {
-                for entity in target.branch_iter(context.tree) {
-                    // Skip the target entity
-                    if entity == event.meta.target {
-                        continue;
-                    }
-
-                    // Send event to all entities before the target
-                    visit_entity(context, entity, event);
+                // Create a parent iterator and skip the first element which is the target.
+                let iter = target.branch_iter(cx.tree).skip(1);
+                // Walk down the subtree
+                for entity in iter {
+                    // Send event to all entities in the subtree after the target
+                    visit_entity(cx, entity, event);
 
                     // Skip to the next event if the current event is consumed
                     if event.meta.consumed {
@@ -142,7 +133,8 @@ impl EventManager {
             }
         }
 
-        !context.event_queue.is_empty()
+        // Return true if there are new events in the queue
+        !cx.event_queue.is_empty()
     }
 }
 
@@ -177,17 +169,20 @@ fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
 
     // Send event to the view attached to the entity
     if let Some(mut view) = cx.views.remove(&entity) {
-        // cx.with_current(entity, |cx| {
         cx.current = entity;
         view.event(cx, event);
-        // });
 
         cx.views.insert(entity, view);
     }
 }
 
+/// Update the internal state of the context based on received window event and emit window event to relevant target.
 fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, meta: &mut EventMeta) {
     match window_event {
+        WindowEvent::Drop(drop_data) => {
+            context.drop_data = Some(drop_data.clone());
+        }
+
         WindowEvent::MouseMove(x, y) => {
             context.mouse.previous_cursorx = context.mouse.cursorx;
             context.mouse.previous_cursory = context.mouse.cursory;
@@ -196,6 +191,16 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
 
             hover_system(context);
             mutate_direct_or_up(meta, context.captured, context.hovered, false);
+
+            // if let Some(dropped_file) = context.dropped_file.take() {
+            //     emit_direct_or_up(
+            //         context,
+            //         WindowEvent::DroppedFile(dropped_file),
+            //         context.captured,
+            //         context.hovered,
+            //         true,
+            //     );
+            // }
         }
         WindowEvent::MouseDown(button) => {
             // do direct state-updates
@@ -206,10 +211,16 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     context.mouse.left.pos_down = (context.mouse.cursorx, context.mouse.cursory);
                     context.mouse.left.pressed = context.hovered;
                     context.triggered = context.hovered;
+
+                    let disabled =
+                        context.style.disabled.get(context.hovered).copied().unwrap_or_default();
+
                     if let Some(pseudo_classes) =
                         context.style.pseudo_classes.get_mut(context.triggered)
                     {
-                        pseudo_classes.set(PseudoClass::ACTIVE, true);
+                        if !disabled {
+                            pseudo_classes.set(PseudoClassFlags::ACTIVE, true);
+                        }
                     }
                     let focusable = context
                         .style
@@ -217,6 +228,9 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                         .get(context.hovered)
                         .filter(|abilities| abilities.contains(Abilities::FOCUSABLE))
                         .is_some();
+
+                    // Reset drag data
+                    context.drop_data = None;
 
                     context.with_current(
                         if focusable { context.hovered } else { context.focused },
@@ -304,7 +318,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 if let Some(pseudo_classes) =
                     context.style.pseudo_classes.get_mut(context.triggered)
                 {
-                    pseudo_classes.set(PseudoClass::ACTIVE, false);
+                    pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
                 }
                 context.needs_restyle();
 
@@ -360,37 +374,48 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
 
                 for entity in TreeIterator::full(tree).skip(1) {
                     if let Some(element_name) = views.get(&entity).and_then(|view| view.element()) {
+                        let w = cache.get_bounds(entity).w;
+                        let h = cache.get_bounds(entity).h;
+                        let classes = context.style.classes.get(entity);
+                        let mut class_names = String::new();
+                        if let Some(classes) = classes {
+                            for class in classes.iter() {
+                                class_names += &format!(".{}", class);
+                            }
+                        }
                         println!(
-                            "{}{} {} {:?} display={:?} bounds={} clip={}",
+                            "{}{} {}{} [x: {} y: {} w: {} h: {}]",
                             indents(entity),
                             entity,
                             element_name,
-                            cache.get_visibility(entity),
-                            cache.get_display(entity),
-                            cache.get_bounds(entity),
-                            cache.get_clip_region(entity),
-                        );
-                    } else if let Some(binding_name) =
-                        context.bindings.get(&entity).and_then(|binding| binding.name())
-                    {
-                        println!(
-                            "{}{} binding observing {}",
-                            indents(entity),
-                            entity,
-                            binding_name
-                        );
-                    } else {
-                        println!(
-                            "{}{} {}",
-                            indents(entity),
-                            entity,
-                            if views.get(&entity).is_some() {
-                                "unnamed view"
-                            } else {
-                                "no binding or view"
-                            }
+                            class_names,
+                            cache.get_bounds(entity).x,
+                            cache.get_bounds(entity).y,
+                            if w == f32::MAX { "inf".to_string() } else { w.to_string() },
+                            if h == f32::MAX { "inf".to_string() } else { h.to_string() },
                         );
                     }
+                    // else if let Some(binding_name) =
+                    //     context.bindings.get(&entity).and_then(|binding| binding.name())
+                    // {
+                    //     println!(
+                    //         "{}{} binding observing {}",
+                    //         indents(entity),
+                    //         entity,
+                    //         binding_name
+                    //     );
+                    // } else {
+                    //     println!(
+                    //         "{}{} {}",
+                    //         indents(entity),
+                    //         entity,
+                    //         if views.get(&entity).is_some() {
+                    //             "unnamed view"
+                    //         } else {
+                    //             "no binding or view"
+                    //         }
+                    //     );
+                    // }
                 }
             }
 
@@ -399,7 +424,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 && context.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
                 let mut result = vec![];
-                compute_matched_rules(context, &context.tree, context.hovered, &mut result);
+                compute_matched_rules(context, context.hovered, &mut result);
 
                 let entity = context.hovered;
                 println!("/* Matched rules for Entity: {} Parent: {:?} View: {} posx: {} posy: {} width: {} height: {}",
@@ -415,7 +440,11 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                     context.cache.get_height(entity)
                 );
                 for rule in result.into_iter() {
-                    println!("{}", rule);
+                    for selectors in context.style.rules.iter() {
+                        if selectors.0 == rule.0 {
+                            println!("{:?}", selectors.1);
+                        }
+                    }
                 }
             }
 
@@ -424,10 +453,10 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 && context.modifiers == Modifiers::CTRL | Modifiers::SHIFT | Modifiers::ALT
             {
                 println!("Loaded font face info:");
-                for face in context.text_context.font_system().db().faces().iter() {
+                for face in context.text_context.font_system().db().faces() {
                     println!(
                         "family: {:?}\npost_script_name: {:?}\nstyle: {:?}\nweight: {:?}\nstretch: {:?}\nmonospaced: {:?}\n",
-                        face.family,
+                        face.families,
                         face.post_script_name,
                         face.style,
                         face.weight,
@@ -470,7 +499,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                         if let Some(pseudo_classes) =
                             context.style.pseudo_classes.get_mut(context.triggered)
                         {
-                            pseudo_classes.set(PseudoClass::ACTIVE, false);
+                            pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
                         }
                         context.needs_restyle();
                         context.triggered = Entity::null();
@@ -501,7 +530,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                         if let Some(pseudo_classes) =
                             context.style.pseudo_classes.get_mut(context.triggered)
                         {
-                            pseudo_classes.set(PseudoClass::ACTIVE, false);
+                            pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
                         }
                         context.needs_restyle();
                         context.triggered = Entity::null();
@@ -514,7 +543,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 if let Some(pseudo_classes) =
                     context.style.pseudo_classes.get_mut(context.triggered)
                 {
-                    pseudo_classes.set(PseudoClass::ACTIVE, true);
+                    pseudo_classes.set(PseudoClassFlags::ACTIVE, true);
                 }
                 context.with_current(context.focused, |cx| {
                     cx.emit(WindowEvent::PressDown { mouse: false })
@@ -532,7 +561,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
                 if let Some(pseudo_classes) =
                     context.style.pseudo_classes.get_mut(context.triggered)
                 {
-                    pseudo_classes.set(PseudoClass::ACTIVE, false);
+                    pseudo_classes.set(PseudoClassFlags::ACTIVE, false);
                 }
                 context.needs_restyle();
                 context.triggered = Entity::null();
@@ -553,7 +582,7 @@ fn internal_state_updates(context: &mut Context, window_event: &WindowEvent, met
     }
 }
 
-pub fn mutate_direct_or_up(meta: &mut EventMeta, direct: Entity, up: Entity, root: bool) {
+fn mutate_direct_or_up(meta: &mut EventMeta, direct: Entity, up: Entity, root: bool) {
     if direct != Entity::null() {
         meta.target = direct;
         meta.propagation = Propagation::Direct;
@@ -565,7 +594,7 @@ pub fn mutate_direct_or_up(meta: &mut EventMeta, direct: Entity, up: Entity, roo
     }
 }
 
-pub fn emit_direct_or_up<M: Any + Send>(
+fn emit_direct_or_up<M: Any + Send>(
     context: &mut Context,
     message: M,
     direct: Entity,

@@ -34,22 +34,21 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(include_str!("../resources/list_style.css"));
+        cx.add_stylesheet(include_style!("../resources/themes/list_style.css"))
+            .expect("Failed to add stylesheet");
 
-        let list: Vec<u32> = (10..14u32).collect();
+        let list: Vec<u32> = (0..4u32).collect();
         AppData { list, selected: 0 }.build(cx);
 
         VStack::new(cx, move |cx| {
             List::new(cx, AppData::list, move |cx, index, item| {
                 let item_text = item.get_val(cx).to_string();
                 //let item_index = item.idx();
-                VStack::new(cx, move |cx| {
-                    Label::new(cx, &item_text)
-                        // Set the checked state based on whether this item is selected
-                        .checked(AppData::selected.map(move |selected| *selected == index))
-                        // Set the selected item to this one if pressed
-                        .on_press(move |cx| cx.emit(AppEvent::Select(index)));
-                });
+                Label::new(cx, &item_text)
+                    // Set the checked state based on whether this item is selected
+                    .checked(AppData::selected.map(move |selected| *selected == index))
+                    // Set the selected item to this one if pressed
+                    .on_press(move |cx| cx.emit(AppEvent::Select(index)));
             })
             .on_increment(move |cx| cx.emit(AppEvent::IncrementSelection))
             .on_decrement(move |cx| cx.emit(AppEvent::DecrementSelection));
@@ -57,9 +56,7 @@ fn main() {
             Label::new(
                 cx,
                 AppData::selected.map(|selected| format!("You have selected: {}", selected)),
-            )
-            .height(Pixels(30.0))
-            .width(Pixels(200.0));
+            );
         })
         .class("container");
     })

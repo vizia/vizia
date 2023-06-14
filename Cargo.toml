@@ -11,12 +11,29 @@ rust-version = "1.60"
 members = [ "crates/*", "run-wasm" ]
 
 [[example]]
+name = "accesskit"
+path = "examples/accessibility/accesskit.rs"
+
+[[example]]
 name = "action_modifier"
 path = "examples/action_modifier.rs"
 
 [[example]]
 name = "animation"
 path = "examples/animation.rs"
+
+[[example]]
+name = "datepicker"
+path = "examples/views/datepicker.rs"
+
+
+[[example]]
+name = "picklist"
+path = "examples/views/picklist.rs"
+
+[[example]]
+name = "combobox"
+path = "examples/views/combobox.rs"
 
 [[example]]
 name = "cursor_icon"
@@ -31,16 +48,8 @@ name = "modal"
 path = "examples/modal.rs"
 
 [[example]]
-name = "more_knobs"
-path = "examples/more_knobs.rs"
-
-[[example]]
 name = "proxy"
 path = "examples/proxy.rs"
-
-[[example]]
-name = "key_input_propagation"
-path = "examples/key_input_propagation.rs"
 
 [[example]]
 name = "scrollview"
@@ -51,8 +60,20 @@ name = "stylesheet"
 path = "examples/stylesheet.rs"
 
 [[example]]
-name = "table"
-path = "examples/views/table.rs"
+name = "switch"
+path = "examples/views/switch.rs"
+
+[[example]]
+name = "notification"
+path = "examples/views/notification.rs"
+
+[[example]]
+name = "chip"
+path = "examples/views/chip.rs"
+
+[[example]]
+name = "rating"
+path = "examples/views/rating.rs"
 
 [[example]]
 name = "textbox_list"
@@ -71,8 +92,8 @@ name = "dropdown"
 path = "examples/views/dropdown.rs"
 
 [[example]]
-name = "image"
-path = "examples/views/image.rs"
+name = "background_image"
+path = "examples/style/background_image.rs"
 
 [[example]]
 name = "knob"
@@ -81,6 +102,18 @@ path = "examples/views/knob.rs"
 [[example]]
 name = "label"
 path = "examples/views/label.rs"
+
+[[example]]
+name = "tooltip"
+path = "examples/views/tooltip.rs"
+
+[[example]]
+name = "timepicker"
+path = "examples/views/timepicker.rs"
+
+[[example]]
+name = "spinbox"
+path = "examples/views/spinbox.rs"
 
 [[example]]
 name = "slider"
@@ -107,8 +140,6 @@ path = "examples/views/vstack.rs"
 name = "popup"
 path = "examples/views/popup.rs"
 
-
-
 [[example]]
 name = "textbox"
 path = "examples/views/textbox.rs"
@@ -124,6 +155,10 @@ path = "examples/widget_gallery.rs"
 [[example]]
 name = "list"
 path = "examples/views/list.rs"
+
+[[example]]
+name = "virtual_list"
+path = "examples/views/virtual_list.rs"
 
 [[example]]
 name = "selectable_list"
@@ -145,11 +180,13 @@ path = "examples/lists/sortable_list.rs"
 name = "static_list"
 path = "examples/lists/static_list.rs"
 
-
-
 [[example]]
 name = "menu"
 path = "examples/views/menu.rs"
+
+[[example]]
+name = "tabview"
+path = "examples/views/tabview.rs"
 
 
 [[example]]
@@ -169,20 +206,12 @@ name = "crud"
 path = "examples/7GUIs/crud.rs"
 
 [[example]]
-name = "focus_order"
-path = "examples/accessibility/focus_order.rs"
-
-[[example]]
 name = "keymap_basic"
 path = "examples/keymap_basic.rs"
 
 [[example]]
 name = "keymap_change_entries"
 path = "examples/keymap_change_entries.rs"
-
-[[example]]
-name = "mouse_delta"
-path = "examples/mouse_delta.rs"
 
 [[example]]
 name = "window_modifiers"
@@ -201,24 +230,101 @@ name = "locale_binding"
 path = "examples/localization/locale_binding.rs"
 
 [[example]]
-name = "ignore_default_theme"
-path = "examples/ignore_default_theme.rs"
+name = "inline"
+path = "examples/style/inline.rs"
 
 [[example]]
 name = "outline"
 path = "examples/style/outline.rs"
 
 [[example]]
+name = "fluent_translation"
+path = "examples/localization/fluent_translation.rs"
+
+[[example]]
+name = "fluent_variables"
+path = "examples/localization/fluent_variables.rs"
+
+[[example]]
 name = "save_dialog"
 path = "examples/save_dialog.rs"
 
 [[example]]
-name = "boolean"
-path = "examples/binding/boolean.rs"
+name = "dragdrop"
+path = "examples/dragdrop.rs"
+
+[[example]]
+name = "transform"
+path = "examples/style/transform.rs"
+
+[[example]]
+name = "transform_origin"
+path = "examples/style/transform_origin.rs"
+
+[[example]]
+name = "gradient"
+path = "examples/style/gradient.rs"
+
+[[example]]
+name = "box_shadow"
+path = "examples/style/box_shadow.rs"
+
+[[example]]
+name = "border"
+path = "examples/style/border.rs"
+
+[[example]]
+name = "text"
+path = "examples/style/text.rs"
+
+[[example]]
+name = "filter"
+path = "examples/style/filter.rs"
+
+[[example]]
+name = "clipping"
+path = "examples/style/clipping.rs"
+
+[[example]]
+name = "transition"
+path = "examples/style/transition.rs"
+
+[[example]]
+name = "zorder"
+path = "examples/style/zorder.rs"
+
+[[example]]
+name = "combinators"
+path = "examples/style/combinators.rs"
+
+[[example]]
+name = "selectors"
+path = "examples/style/selectors.rs"
+
+[[example]]
+name = "pseudo_classes"
+path = "examples/style/pseudo_classes.rs"
+
+[[example]]
+name = "background_size"
+path = "examples/style/background_size.rs"
+
+[[example]]
+name = "text_layout"
+path = "examples/text_layout.rs"
+
+[[example]]
+name = "custom_modifiers"
+path = "examples/custom_modifiers.rs"
+
+[[example]]
+name = "keyframes"
+path = "examples/keyframes.rs"
+
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
-clipboard = ["vizia_core/clipboard", "vizia_winit/clipboard"]
+clipboard = ["vizia_core/clipboard", "vizia_winit?/clipboard"]
 serde = ["vizia_core/serde"]
 winit = ["vizia_winit"]
 baseview = ["vizia_baseview"]

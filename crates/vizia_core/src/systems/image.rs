@@ -1,11 +1,12 @@
 use crate::context::{Context, ResourceContext};
 use crate::resource::{ImageRetentionPolicy, StoredImage};
+use crate::style::ImageOrGradient;
 use crate::{prelude::*, resource::ImageOrId};
 use std::collections::HashSet;
 use vizia_id::GenerationalId;
 
-// Iterate he tree and load any images used by entities which aren't already loaded. Remove any images no longer being used.
-pub fn image_system(cx: &mut Context) {
+// Iterate the tree and load any images used by entities which aren't already loaded. Remove any images no longer being used.
+pub(crate) fn image_system(cx: &mut Context) {
     let cx = &mut ResourceContext::new(cx);
 
     cx.resource_manager.mark_images_unused();
@@ -13,20 +14,22 @@ pub fn image_system(cx: &mut Context) {
     // Iterate the tree and load any defined images that aren't already loaded
     for entity in cx.tree.into_iter() {
         // Load a background-image if the entity has one
-        if let Some(background_image) = cx.style.background_image.get(entity).cloned() {
-            load_image(cx, entity, &background_image);
-        }
-
-        // Load an image if the entity has one
-        if let Some(image_name) = cx.style.image.get(entity).cloned() {
-            load_image(cx, entity, &image_name);
+        if let Some(background_images) = cx.style.background_image.get(entity).cloned() {
+            for image in background_images.iter() {
+                match image {
+                    ImageOrGradient::Image(name) => {
+                        load_image(cx, entity, name);
+                    }
+                    _ => {}
+                }
+            }
         }
     }
 
     cx.resource_manager.evict_unused_images();
 }
 
-fn load_image(cx: &mut ResourceContext, entity: Entity, image_name: &String) {
+fn load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) {
     if !try_load_image(cx, entity, image_name) {
         // Image doesn't exists yet so call the image loader
         if let Some(callback) = cx.resource_manager.image_loader.take() {
@@ -76,7 +79,7 @@ fn try_load_image(cx: &mut ResourceContext, entity: Entity, image_name: &str) ->
                         image::ImageFormat::Png,
                     )
                     .unwrap(),
-                    femtovg::ImageFlags::NEAREST,
+                    femtovg::ImageFlags::empty(),
                 ),
                 retention_policy: ImageRetentionPolicy::Forever,
                 used: true,

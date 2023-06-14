@@ -4,7 +4,7 @@ use std::{collections::VecDeque, marker::PhantomData};
 const MINIMUM_FREE_INDICES: usize = 1024;
 const IDX_MAX: u32 = std::u32::MAX >> 8;
 
-/// The IdManager is responsible for allocating generational IDs.
+/// The IdManager is responsible for allocating and destroying generational IDs.
 ///
 /// The IdManager is generic on ID type, requiring only that the ID type implements [GenerationalId].
 pub struct IdManager<I>
@@ -39,9 +39,14 @@ where
         }
     }
 
-    /// Creates a new generational id
+    pub fn reset(&mut self) {
+        self.generation.clear();
+        self.free_list.clear();
+    }
+
+    /// Creates a new generational id.
     ///
-    /// A generational id has an index, used for indexing into arrays, and a generation, used to check the alive status of the id
+    /// A generational id has an index, used for indexing into arrays, and a generation, used to check the alive status of the id.
     pub fn create(&mut self) -> I {
         let index = if self.free_list.len() >= MINIMUM_FREE_INDICES {
             self.free_list.pop_front().unwrap()
@@ -92,7 +97,7 @@ mod tests {
 
     impl_generational_id!(Entity);
 
-    /// Test for creating a new IdManager
+    /// Test for creating a new IdManager.
     #[test]
     fn new() {
         let id_manager = IdManager::<Entity>::new();
@@ -100,7 +105,7 @@ mod tests {
         assert_eq!(id_manager.free_list.is_empty(), true);
     }
 
-    /// Test for creating a new id
+    /// Test for creating a new id.
     #[test]
     fn create() {
         let mut id_manager = IdManager::<Entity>::new();
@@ -108,7 +113,7 @@ mod tests {
         assert_eq!(id, Entity::new(0, 0));
     }
 
-    /// Test for creating mutiple ids
+    /// Test for creating mutiple ids.
     #[test]
     fn create_multiple() {
         let mut id_manager = IdManager::<Entity>::new();
@@ -122,7 +127,7 @@ mod tests {
         assert_eq!(id4, Entity::new(3, 0));
     }
 
-    /// Test for creating an id past the maximum
+    /// Test for creating an id past the maximum.
     #[test]
     #[should_panic]
     fn create_all() {
@@ -132,7 +137,7 @@ mod tests {
         }
     }
 
-    /// Test for removing an id
+    /// Test for removing an id.
     #[test]
     fn destroy() {
         let mut id_manager = IdManager::<Entity>::new();
@@ -143,7 +148,7 @@ mod tests {
         assert_eq!(*id_manager.free_list.front().unwrap(), id.index() as u32);
     }
 
-    /// Test of removing an invalid id
+    /// Test of removing an invalid id.
     #[test]
     #[should_panic]
     fn destroy_invalid() {
@@ -151,7 +156,7 @@ mod tests {
         id_manager.destroy(Entity::new(5, 0));
     }
 
-    /// Test of removing an already removed id
+    /// Test of removing an already removed id.
     #[test]
     fn destroy_twice() {
         let mut id_manager = IdManager::<Entity>::new();
@@ -162,7 +167,7 @@ mod tests {
         assert_eq!(success, false);
     }
 
-    /// Test for reusing an id
+    /// Test for reusing an id.
     #[test]
     fn resuse() {
         let mut id_manager = IdManager::<Entity>::new();
@@ -179,7 +184,7 @@ mod tests {
         assert_eq!(id3, Entity::new(0, 1));
     }
 
-    /// Test the is_alive() method
+    /// Test the is_alive() method.
     #[test]
     fn alive() {
         let mut id_manager = IdManager::<Entity>::new();

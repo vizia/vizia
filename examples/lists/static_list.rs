@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 
 use vizia::prelude::*;
-use vizia_core::state::StaticLens;
+use vizia_core::binding::StaticLens;
 
 lazy_static! {
     pub static ref STATIC_LIST: Vec<u32> = (20..24).collect();
@@ -40,7 +40,8 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(include_str!("../resources/list_style.css"));
+        cx.add_stylesheet(include_style!("../resources/themes/list_style.css"))
+            .expect("Failed to add stylesheet");
 
         AppData { selected: 0 }.build(cx);
 

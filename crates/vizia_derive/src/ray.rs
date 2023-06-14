@@ -63,10 +63,10 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         apply_arms.push(quote! { #ray_name::#variant_name(v) => source.#field_name = v });
     }
 
-    let enum_docs = format!("Setter enum for [`{ty}`](super::{ty}).", ty = enum_type,);
+    // let enum_docs = format!("Setter enum for [`{ty}`](super::{ty}).", ty = enum_type,);
 
     let expanded = quote! {
-        #[doc = #enum_docs]
+        // #[doc = #enum_docs]
         #[allow(non_camel_case_types)]
         #[derive(Debug)]
         #enum_vis enum #ray_name #ty_generics #where_clause {

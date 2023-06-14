@@ -1,7 +1,7 @@
-use crate::fonts::icons_names::CHECK;
+use crate::fonts::icons::ICON_CHECK;
 use crate::prelude::*;
 
-/// A checkbox used to display and toggle boolean state.
+/// A checkbox used to display and toggle a boolean state.
 ///
 /// Clicking on the checkbox with the left mouse button triggers the `on_toggle` callback.
 ///
@@ -61,6 +61,8 @@ use crate::prelude::*;
 /// wrapping the checkbox in an [`HStack`](crate::prelude::HStack) and adding a [`Label`](crate::prelude::Label)
 /// to it.
 ///
+/// The Label can be used to trigger the checkbox by assigning the checkbox an id name and using it with the `describing` modifier on the label.
+///
 /// ```
 /// # use vizia_core::prelude::*;
 /// #
@@ -76,8 +78,8 @@ use crate::prelude::*;
 /// # AppData { value: false }.build(cx);
 /// #
 /// HStack::new(cx, |cx| {
-///     Checkbox::new(cx, AppData::value);
-///     Label::new(cx, "Press me");
+///     Checkbox::new(cx, AppData::value).id("check1");
+///     Label::new(cx, "Press me").describing("check1");
 /// });
 /// ```
 ///
@@ -102,11 +104,11 @@ use crate::prelude::*;
 /// # let cx = &mut Context::default();
 /// #
 /// # AppData { value: false }.build(cx);
-/// # use vizia_core::fonts::icons_names::CANCEL;
+/// # use vizia_core::icons::ICON_X;
 ///
 /// Checkbox::new(cx, AppData::value)
 ///     .on_toggle(|cx| cx.emit(AppEvent::ToggleValue))
-///     .text(AppData::value.map(|flag| if *flag {CANCEL} else {""}));
+///     .text(AppData::value.map(|flag| if *flag {ICON_X} else {""}));
 /// ```
 pub struct Checkbox {
     on_toggle: Option<Box<dyn Fn(&mut EventContext)>>,
@@ -134,14 +136,36 @@ impl Checkbox {
     /// Checkbox::new(cx, AppData::value);
     /// ```
     pub fn new(cx: &mut Context, checked: impl Lens<Target = bool>) -> Handle<Self> {
-        //let checked = checked.get_val_fallible(cx).unwrap_or(false);
         Self { on_toggle: None }
             .build(cx, |_| {})
-            .bind(checked, |handle, checked| {
-                if let Some(flag) = checked.get(handle.cx) {
-                    handle.text(if flag { CHECK } else { "" }).checked(flag);
-                }
+            .text(checked.clone().map(|flag| if *flag { ICON_CHECK } else { "" }))
+            .checked(checked)
+            .role(Role::CheckBox)
+            .default_action_verb(DefaultActionVerb::Click)
+            .cursor(CursorIcon::Hand)
+            .navigable(true)
+    }
+
+    pub fn intermediate(
+        cx: &mut Context,
+        checked: impl Lens<Target = bool>,
+        intermediate: impl Lens<Target = bool>,
+    ) -> Handle<Self> {
+        Self { on_toggle: None }
+            .build(cx, |_| {})
+            .bind(checked.clone(), move |handle, c| {
+                let intermediate = intermediate.clone();
+                handle.bind(intermediate, move |handle, i| {
+                    if c.get_val(handle.cx) {
+                        handle.text(ICON_CHECK).toggle_class("intermediate", false);
+                    } else if i.get_val(handle.cx) {
+                        handle.text("-").toggle_class("intermediate", true);
+                    } else {
+                        handle.text("").toggle_class("intermediate", false);
+                    }
+                });
             })
+            .checked(checked)
             .cursor(CursorIcon::Hand)
             .navigable(true)
     }
@@ -195,6 +219,16 @@ impl View for Checkbox {
                     }
                 }
             }
+
+            WindowEvent::ActionRequest(action) => match action.action {
+                Action::Default => {
+                    if let Some(callback) = &self.on_toggle {
+                        (callback)(cx);
+                    }
+                }
+
+                _ => {}
+            },
 
             _ => {}
         });

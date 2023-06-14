@@ -2,7 +2,8 @@ use crate::prelude::*;
 
 use std::any::Any;
 
-pub trait ViewHandler: Any {
+#[doc(hidden)]
+pub(crate) trait ViewHandler: Any {
     fn element(&self) -> Option<&'static str> {
         None
     }
@@ -10,6 +11,8 @@ pub trait ViewHandler: Any {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event);
 
     fn draw(&self, cx: &mut DrawContext, canvas: &mut Canvas);
+
+    fn accessibility(&self, cx: &mut AccessContext, node: &mut AccessNode);
 
     fn as_any_ref(&self) -> &dyn Any;
 

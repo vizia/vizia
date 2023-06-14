@@ -3,12 +3,24 @@ use baseview::{Window, WindowHandle, WindowScalePolicy};
 use raw_window_handle::HasRawWindowHandle;
 
 use crate::proxy::queue_get;
-use vizia_core::cache::BoundingBox;
-use vizia_core::context::backend::*;
-use vizia_core::events::EventManager;
+use vizia_core::backend::*;
+use vizia_core::layout::BoundingBox;
 use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 
+///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
+///
+/// # Example
+/// ```no_run
+/// # use vizia_core::prelude::*;
+/// # use vizia_baseview::Application;
+///
+/// Application::new(|cx|{
+///    // Content goes here
+/// })
+/// .run();
+///```
+/// Calling `run()` on the `Application` causes the program to enter the event loop and for the main window to display.
 pub struct Application<F>
 where
     F: Fn(&mut Context) + Send + 'static,
@@ -37,6 +49,7 @@ where
         }
     }
 
+    /// Sets the default built-in theming to be ignored.
     pub fn ignore_default_theme(mut self) -> Self {
         self.ignore_default_theme = true;
         self
@@ -155,7 +168,6 @@ where
 
 pub(crate) struct ApplicationRunner {
     context: Context,
-    event_manager: EventManager,
     should_redraw: bool,
 
     /// If this is set to `true`, then `window_scale_factor` will be updated during
@@ -181,15 +193,13 @@ pub(crate) struct ApplicationRunner {
 impl ApplicationRunner {
     pub fn new(mut context: Context, use_system_scaling: bool, window_scale_factor: f64) -> Self {
         let mut cx = BackendContext::new(&mut context);
-        let event_manager = EventManager::new();
 
         ApplicationRunner {
-            event_manager,
             should_redraw: true,
 
             use_system_scaling,
             window_scale_factor,
-            current_user_scale_factor: *cx.user_scale_factor(),
+            current_user_scale_factor: cx.user_scale_factor(),
             current_window_size: *cx.window_size(),
 
             context,
@@ -199,20 +209,20 @@ impl ApplicationRunner {
     /// Handle all reactivity within a frame. The window instance is used to resize the window when
     /// needed.
     pub fn on_frame_update(&mut self, window: &mut Window) {
-        let mut cx = BackendContext::new(&mut self.context);
+        let mut cx = BackendContext::new_with_event_manager(&mut self.context);
 
         while let Some(event) = queue_get() {
             cx.send_event(event);
         }
 
         // Events
-        while self.event_manager.flush_events(cx.context()) {}
+        cx.process_events();
 
         if *cx.window_size() != self.current_window_size
-            || *cx.user_scale_factor() != self.current_user_scale_factor
+            || cx.user_scale_factor() != self.current_user_scale_factor
         {
             self.current_window_size = *cx.window_size();
-            self.current_user_scale_factor = *cx.user_scale_factor();
+            self.current_user_scale_factor = cx.user_scale_factor();
 
             // The user scale factor is not part of the HiDPI scaling, so baseview should treat it
             // as part of our logical size
@@ -223,41 +233,28 @@ impl ApplicationRunner {
 
             // TODO: These calculations are now repeated in three places, should probably be moved
             //       to a function
-            cx.style().dpi_factor = self.window_scale_factor * self.current_user_scale_factor;
-            cx.style()
-                .width
-                .insert(Entity::root(), Units::Pixels(self.current_window_size.width as f32));
-            cx.style()
-                .height
-                .insert(Entity::root(), Units::Pixels(self.current_window_size.height as f32));
-
+            cx.set_scale_factor(self.window_scale_factor * self.current_user_scale_factor);
             let new_physical_width =
-                self.current_window_size.width as f32 * cx.style().dpi_factor as f32;
+                self.current_window_size.width as f32 * cx.style().scale_factor() as f32;
             let new_physical_height =
-                self.current_window_size.height as f32 * cx.style().dpi_factor as f32;
-            cx.cache().set_width(Entity::root(), new_physical_width);
-            cx.cache().set_height(Entity::root(), new_physical_height);
+                self.current_window_size.height as f32 * cx.style().scale_factor() as f32;
 
-            cx.cache().set_clip_region(
-                Entity::root(),
-                BoundingBox {
-                    w: new_physical_width,
-                    h: new_physical_height,
-                    ..BoundingBox::default()
-                },
-            );
+            cx.set_window_size(new_physical_width, new_physical_height);
 
             cx.needs_refresh();
 
-            self.event_manager.flush_events(cx.context());
+            // hmmm why are we flushing events again?
+            // self.event_manager.flush_events(cx.context());
         }
-
-        cx.load_images();
 
         // Force restyle on every frame for baseview backend to avoid style inheritance issues
         cx.style().needs_restyle();
         cx.process_data_updates();
+
+        let context = window.gl_context().expect("Window was created without OpenGL support");
+        unsafe { context.make_current() };
         cx.process_style_updates();
+        unsafe { context.make_not_current() };
 
         cx.process_animations();
 
@@ -392,10 +389,9 @@ impl ApplicationRunner {
                     // baseview's logical size includes that factor so we need to compensate for it
                     self.current_window_size = *cx.window_size();
                     self.current_window_size.width =
-                        (window_info.logical_size().width / *cx.user_scale_factor()).round() as u32;
-                    self.current_window_size.height = (window_info.logical_size().height
-                        / *cx.user_scale_factor())
-                    .round() as u32;
+                        (window_info.logical_size().width / cx.user_scale_factor()).round() as u32;
+                    self.current_window_size.height =
+                        (window_info.logical_size().height / cx.user_scale_factor()).round() as u32;
                     *cx.window_size() = self.current_window_size;
 
                     // Only use new DPI settings when `WindowScalePolicy::SystemScaleFactor` was
@@ -404,29 +400,18 @@ impl ApplicationRunner {
                         self.window_scale_factor = window_info.scale();
                     }
 
-                    cx.style().dpi_factor = self.window_scale_factor * *cx.user_scale_factor();
+                    let user_scale_factor = cx.user_scale_factor();
 
-                    // Since we apply a user scale factor, our logical size may not match baseview's
-                    // logical size
-                    let logical_size = (
-                        (window_info.physical_size().width as f64 / cx.style().dpi_factor),
-                        (window_info.physical_size().height as f64 / cx.style().dpi_factor),
-                    );
+                    cx.set_scale_factor(self.window_scale_factor * user_scale_factor);
 
                     let physical_size =
                         (window_info.physical_size().width, window_info.physical_size().height);
 
-                    cx.style().width.insert(Entity::root(), Units::Pixels(logical_size.0 as f32));
-                    cx.style().height.insert(Entity::root(), Units::Pixels(logical_size.1 as f32));
-
-                    cx.cache().set_width(Entity::root(), physical_size.0 as f32);
-                    cx.cache().set_height(Entity::root(), physical_size.1 as f32);
+                    cx.set_window_size(physical_size.0 as f32, physical_size.1 as f32);
 
                     let mut bounding_box = BoundingBox::default();
                     bounding_box.w = physical_size.0 as f32;
                     bounding_box.h = physical_size.1 as f32;
-
-                    cx.cache().set_clip_region(Entity::root(), bounding_box);
 
                     cx.needs_refresh();
                 }

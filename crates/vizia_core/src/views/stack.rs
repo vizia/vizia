@@ -8,13 +8,15 @@ use crate::prelude::*;
 pub struct VStack {}
 
 impl VStack {
-    pub fn new<'a, F>(cx: &'a mut Context, content: F) -> Handle<Self>
+    pub fn new<F>(cx: &mut Context, content: F) -> Handle<Self>
     where
         F: FnOnce(&mut Context),
     {
-        Self {}.build(cx, |cx| {
-            (content)(cx);
-        })
+        Self {}
+            .build(cx, |cx| {
+                (content)(cx);
+            })
+            .role(Role::GenericContainer)
     }
 }
 
@@ -37,6 +39,7 @@ impl HStack {
                 (content)(cx);
             })
             .layout_type(LayoutType::Row)
+            .role(Role::GenericContainer)
     }
 }
 

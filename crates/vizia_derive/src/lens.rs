@@ -38,7 +38,7 @@ pub(crate) fn derive_lens_impl(
 fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, syn::Error> {
     let struct_type = &input.ident;
 
-    // The generated module should have the same visibilty as the struct. If the struct is private
+    // The generated module should have the same visibility as the struct. If the struct is private
     // then the generated structs within the new module should be visible only to the module the
     // original struct was in.
     let module_vis = &input.vis;
@@ -182,12 +182,15 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
     });
 
     let mod_docs = format!("Derived lenses for [`{}`].", struct_type);
+    let root_docs = format!("Lens for the whole [`{ty}`](super::{ty}) struct.", ty = struct_type);
+    //let lens_docs = format!("# Lenses for [`{ty}`](super::{ty})", ty = struct_type);
 
     let expanded = quote! {
         #[doc = #mod_docs]
         #module_vis mod #twizzled_name {
             #(#defs)*
             #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+            #[doc = #root_docs]
             #[allow(non_camel_case_types)]
             #struct_vis struct root#lens_ty_generics(#(#phantom_decls),*);
 
@@ -210,6 +213,7 @@ fn derive_struct(input: &syn::DeriveInput) -> Result<proc_macro2::TokenStream, s
         }
 
         #[allow(non_upper_case_globals)]
+        #[doc(hidden)]
         impl #impl_generics #struct_type #ty_generics #where_clause {
             #(#associated_items)*
 

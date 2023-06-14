@@ -1,9 +1,9 @@
+use crate::binding::{Index, Then};
 use crate::prelude::*;
-use crate::state::{Index, Then};
 use std::marker::PhantomData;
 use vizia_input::Code;
 
-/// A view for creating a list of items from a binding to a Vec<T>
+/// A view for creating a list of items from a binding to a `Vec<T>`
 pub struct List<L, T: 'static>
 where
     L: Lens<Target = Vec<T>>,
@@ -19,7 +19,6 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
     pub fn new<F>(cx: &mut Context, lens: L, item: F) -> Handle<Self>
     where
         F: 'static + Fn(&mut Context, usize, Then<L, Index<Vec<T>, T>>),
-        <L as Lens>::Source: Model,
     {
         //let item_template = Rc::new(item);
         List {
@@ -29,7 +28,6 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
             clear_callback: None,
         }
         .build(cx, move |cx| {
-            //let list_lens = lens.clone();
             // Bind to the list data
             Binding::new(cx, lens.clone().map(|lst| lst.len()), move |cx, list_len| {
                 // If the number of list items is different to the number of children of the ListView

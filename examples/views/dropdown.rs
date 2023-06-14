@@ -1,4 +1,5 @@
-use vizia::fonts::icons_names::DOWN;
+mod helpers;
+use helpers::*;
 use vizia::prelude::*;
 
 #[derive(Lens, Model, Setter)]
@@ -15,43 +16,35 @@ fn main() {
         }
         .build(cx);
 
-        HStack::new(cx, move |cx| {
-            // Dropdown List
+        ExamplePage::new(cx, |cx| {
             Dropdown::new(
                 cx,
-                move |cx|
-                // A Label and an Icon
-                HStack::new(cx, move |cx|{
-                    Label::new(cx, AppData::choice);
-                    Label::new(cx, DOWN).class("icon");
-                })
-                .child_left(Pixels(5.0))
-                .child_right(Pixels(5.0))
-                .col_between(Stretch(1.0)),
+                move |cx| Label::new(cx, AppData::choice),
                 move |cx| {
                     List::new(cx, AppData::list, |cx, _, item| {
                         Label::new(cx, item)
                             .width(Stretch(1.0))
-                            .child_top(Stretch(1.0))
-                            .child_bottom(Stretch(1.0))
+                            //.child_top(Stretch(1.0))
+                            //.child_bottom(Stretch(1.0))
+                            .cursor(CursorIcon::Hand)
                             .bind(AppData::choice, move |handle, selected| {
-                                if item.get_val(handle.cx) == selected.get_val(handle.cx) {
-                                    handle.background_color(Color::from("#f8ac14"));
-                                } else {
-                                    handle.background_color(Color::white());
+                                if item.get(&handle) == selected.get(&handle) {
+                                    handle.checked(true);
                                 }
                             })
                             .on_press(move |cx| {
                                 cx.emit(AppDataSetter::Choice(item.get_val(cx)));
                                 cx.emit(PopupEvent::Close);
                             });
-                    });
+                    })
+                    .width(Stretch(1.0));
                 },
             )
+            .top(Pixels(40.0))
             .width(Pixels(100.0));
-        })
-        .child_space(Stretch(1.0));
+        });
     })
     .title("Dropdown")
+    .inner_size((350, 300))
     .run();
 }

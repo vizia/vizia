@@ -2,12 +2,14 @@ use crate::{
     convert::{scan_code_to_code, virtual_key_code_to_code, virtual_key_code_to_key},
     window::Window,
 };
+#[cfg(not(target_arch = "wasm32"))]
+use accesskit::{Action, NodeBuilder, TreeUpdate};
+#[cfg(not(target_arch = "wasm32"))]
+use accesskit_winit;
 use std::cell::RefCell;
-use vizia_core::cache::BoundingBox;
-use vizia_core::context::backend::*;
+use vizia_core::backend::*;
 #[cfg(not(target_arch = "wasm32"))]
 use vizia_core::context::EventProxy;
-use vizia_core::events::EventManager;
 use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 use vizia_window::Position;
@@ -25,28 +27,64 @@ use winit::event_loop::EventLoopBuilder;
 ))]
 use winit::platform::wayland::WindowExtWayland;
 use winit::{
-    dpi::LogicalSize,
     event::VirtualKeyCode,
-    event_loop::{ControlFlow, EventLoop, EventLoopProxy},
+    event_loop::{ControlFlow, EventLoop},
 };
 
+#[cfg(not(target_arch = "wasm32"))]
+use winit::event_loop::EventLoopProxy;
+
+#[derive(Debug)]
+pub enum UserEvent {
+    Event(Event),
+    #[cfg(not(target_arch = "wasm32"))]
+    AccessKitActionRequest(accesskit_winit::ActionRequestEvent),
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl From<accesskit_winit::ActionRequestEvent> for UserEvent {
+    fn from(action_request_event: accesskit_winit::ActionRequestEvent) -> Self {
+        UserEvent::AccessKitActionRequest(action_request_event)
+    }
+}
+
+impl From<vizia_core::events::Event> for UserEvent {
+    fn from(event: vizia_core::events::Event) -> Self {
+        UserEvent::Event(event)
+    }
+}
+
+type AppBuilder = Option<Box<dyn FnOnce(&mut Context)>>;
+type IdleCallback = Option<Box<dyn Fn(&mut Context)>>;
+
+///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
+///
+/// # Example
+/// ```no_run
+/// # use vizia_core::prelude::*;
+/// # use vizia_winit::application::Application;
+/// Application::new(|cx|{
+///    // Content goes here
+/// })
+/// .run();
+///```
+/// Calling `run()` on the `Application` causes the program to enter the event loop and for the main window to display.
 pub struct Application {
     context: Context,
-    event_loop: EventLoop<Event>,
-    builder: Option<Box<dyn FnOnce(&mut Context)>>,
-    on_idle: Option<Box<dyn Fn(&mut Context)>>,
+    event_loop: EventLoop<UserEvent>,
+    builder: AppBuilder,
+    on_idle: IdleCallback,
     window_description: WindowDescription,
     should_poll: bool,
 }
 
-// TODO uhhhhhhhhhhhhhhhhhhhhhh I think it's a winit bug that EventLoopProxy isn't Send on web
 #[cfg(not(target_arch = "wasm32"))]
-pub struct WinitEventProxy(EventLoopProxy<Event>);
+pub struct WinitEventProxy(EventLoopProxy<UserEvent>);
 
 #[cfg(not(target_arch = "wasm32"))]
 impl EventProxy for WinitEventProxy {
     fn send(&self, event: Event) -> Result<(), ()> {
-        self.0.send_event(event).map_err(|_| ())
+        self.0.send_event(UserEvent::Event(event)).map_err(|_| ())
     }
 
     fn make_clone(&self) -> Box<dyn EventProxy> {
@@ -87,6 +125,7 @@ impl Application {
         }
     }
 
+    /// Sets the default built-in theming to be ignored.
     pub fn ignore_default_theme(mut self) -> Self {
         self.context.ignore_default_theme = true;
         self
@@ -129,17 +168,9 @@ impl Application {
         self
     }
 
-    // TODO - Rename this
-    pub fn get_proxy(&self) -> EventLoopProxy<Event> {
-        self.event_loop.create_proxy()
-    }
-
-    /// Sets the background color of the window.
-    pub fn background_color(mut self, color: Color) -> Self {
-        let mut cx = BackendContext::new(&mut self.context);
-        cx.style().background_color.insert(Entity::root(), color);
-
-        self
+    /// Returns a `ContextProxy` which can be used to send events from another thread.
+    pub fn get_proxy(&self) -> ContextProxy {
+        self.context.get_proxy()
     }
 
     /// Starts the application and enters the main event loop.
@@ -149,6 +180,35 @@ impl Application {
         let event_loop = self.event_loop;
 
         let (window, canvas) = Window::new(&event_loop, &self.window_description);
+
+        #[cfg(not(target_arch = "wasm32"))]
+        let event_loop_proxy = event_loop.create_proxy();
+
+        let mut cx = BackendContext::new(&mut context);
+
+        #[cfg(not(target_arch = "wasm32"))]
+        let root_node = NodeBuilder::new(Role::Window).build(cx.accesskit_node_classes());
+        #[cfg(not(target_arch = "wasm32"))]
+        let accesskit = accesskit_winit::Adapter::new(
+            window.window(),
+            move || {
+                // TODO: set a flag to signify that a screen reader has been attached
+                use accesskit::Tree;
+
+                let root_id = Entity::root().accesskit_id();
+
+                TreeUpdate {
+                    nodes: vec![(root_id, root_node)],
+                    tree: Some(Tree::new(root_id)),
+                    focus: Some(Entity::root().accesskit_id()),
+                }
+            },
+            event_loop_proxy,
+        );
+
+        // Accesskit requires that the window starts invisible until accesskit has been initialised.
+        // At this point we can set the visibility based on the desired visibility from the window description.
+        window.window().set_visible(self.window_description.visible);
 
         #[cfg(all(
             feature = "clipboard",
@@ -165,23 +225,17 @@ impl Application {
             if let Some(display) = window.window().wayland_display() {
                 let (_, clipboard) =
                     copypasta::wayland_clipboard::create_clipboards_from_external(display);
-                BackendContext::new(&mut context).set_clipboard_provider(Box::new(clipboard));
+                cx.set_clipboard_provider(Box::new(clipboard));
             }
         }
 
         let scale_factor = window.window().scale_factor() as f32;
-        BackendContext::new(&mut context).add_main_window(
-            &self.window_description,
-            canvas,
-            scale_factor,
-        );
-        context.views.insert(Entity::root(), Box::new(window));
+        cx.add_main_window(&self.window_description, canvas, scale_factor);
+        cx.add_window(window);
 
-        let mut event_manager = EventManager::new();
-
-        context.remove_user_themes();
+        cx.0.remove_user_themes();
         if let Some(builder) = self.builder.take() {
-            (builder)(&mut context);
+            (builder)(cx.0);
         }
 
         let on_idle = self.on_idle.take();
@@ -191,18 +245,53 @@ impl Application {
         let default_should_poll = self.should_poll;
         let stored_control_flow = RefCell::new(ControlFlow::Poll);
 
+        #[cfg(not(target_arch = "wasm32"))]
+        cx.process_tree_updates(|tree_updates| {
+            for update in tree_updates.iter() {
+                accesskit.update(update.clone());
+            }
+        });
+
         let mut cursor_moved = false;
         let mut cursor = (0.0f32, 0.0f32);
 
+        let mut main_events = false;
         event_loop.run(move |event, _, control_flow| {
-            let mut cx = BackendContext::new(&mut context);
+            let mut cx = BackendContext::new_with_event_manager(&mut context);
 
             match event {
-                winit::event::Event::UserEvent(event) => {
-                    cx.send_event(event);
-                }
+                winit::event::Event::UserEvent(user_event) => match user_event {
+                    UserEvent::Event(event) => {
+                        cx.send_event(event);
+                    }
+
+                    #[cfg(not(target_arch = "wasm32"))]
+                    UserEvent::AccessKitActionRequest(action_request_event) => {
+                        let node_id = action_request_event.request.target;
+
+                        if action_request_event.request.action != Action::ScrollIntoView {
+                            let entity = Entity::new(node_id.0.get() as u32 - 1, 0);
+
+                            // Handle focus action from screen reader
+                            if action_request_event.request.action == Action::Focus {
+                                cx.0.with_current(entity, |cx| {
+                                    cx.focus();
+                                });
+                            }
+
+                            cx.send_event(
+                                Event::new(WindowEvent::ActionRequest(
+                                    action_request_event.request,
+                                ))
+                                .direct(entity),
+                            );
+                        }
+                    }
+                },
 
                 winit::event::Event::MainEventsCleared => {
+                    main_events = true;
+
                     *stored_control_flow.borrow_mut() =
                         if default_should_poll { ControlFlow::Poll } else { ControlFlow::Wait };
 
@@ -211,37 +300,38 @@ impl Application {
                         cursor_moved = false;
                     }
 
-                    // Events
-                    while event_manager.flush_events(cx.0) {}
+                    cx.process_events();
 
                     cx.process_data_updates();
+
                     cx.process_style_updates();
 
                     if cx.process_animations() {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
 
-                        event_loop_proxy.send_event(Event::new(WindowEvent::Redraw)).unwrap();
-                        //window.handle.window().request_redraw();
-                        if let Some(window_event_handler) = cx.views().remove(&Entity::root()) {
-                            if let Some(window) = window_event_handler.downcast_ref::<Window>() {
-                                window.window().request_redraw();
-                            }
+                        event_loop_proxy
+                            .send_event(UserEvent::Event(Event::new(WindowEvent::Redraw)))
+                            .expect("Failed to send redraw event");
 
-                            cx.views().insert(Entity::root(), window_event_handler);
-                        }
+                        cx.mutate_window(|_, window: &Window| {
+                            window.window().request_redraw();
+                        });
                     }
 
                     cx.process_visual_updates();
 
-                    if let Some(window_view) = cx.views().remove(&Entity::root()) {
-                        if let Some(window) = window_view.downcast_ref::<Window>() {
-                            cx.style().should_redraw(|| {
-                                window.window().request_redraw();
-                            });
+                    #[cfg(not(target_arch = "wasm32"))]
+                    cx.process_tree_updates(|tree_updates| {
+                        for update in tree_updates.iter() {
+                            accesskit.update(update.clone());
                         }
+                    });
 
-                        cx.views().insert(Entity::root(), window_view);
-                    }
+                    cx.mutate_window(|cx, window: &Window| {
+                        cx.style().should_redraw(|| {
+                            window.window().request_redraw();
+                        });
+                    });
 
                     if let Some(idle_callback) = &on_idle {
                         cx.set_current(Entity::root());
@@ -250,50 +340,58 @@ impl Application {
 
                     if cx.has_queued_events() {
                         *stored_control_flow.borrow_mut() = ControlFlow::Poll;
-                        event_loop_proxy.send_event(Event::new(())).expect("Failed to send event");
+                        event_loop_proxy
+                            .send_event(UserEvent::Event(Event::new(())))
+                            .expect("Failed to send event");
                     }
 
-                    if let Some(window_event_handler) = cx.views().remove(&Entity::root()) {
-                        if let Some(window) = window_event_handler.downcast_ref::<Window>() {
-                            if window.should_close {
-                                *stored_control_flow.borrow_mut() = ControlFlow::Exit;
-                            }
+                    cx.mutate_window(|_, window: &Window| {
+                        if window.should_close {
+                            *stored_control_flow.borrow_mut() = ControlFlow::Exit;
                         }
-
-                        cx.views().insert(Entity::root(), window_event_handler);
-                    }
+                    });
                 }
 
                 winit::event::Event::RedrawRequested(_) => {
-                    // Redraw here
-                    context_draw(&mut cx);
+                    if main_events {
+                        // Redraw
+                        cx.draw();
+                        cx.mutate_window(|_, window: &Window| {
+                            window.swap_buffers();
+                        });
+                    }
                 }
 
                 winit::event::Event::WindowEvent { window_id: _, event } => {
                     match event {
                         winit::event::WindowEvent::CloseRequested => {
-                            cx.0.emit(WindowEvent::WindowClose);
+                            cx.emit_origin(WindowEvent::WindowClose);
+                        }
+
+                        winit::event::WindowEvent::Focused(is_focused) => {
+                            cx.0.window_has_focus = is_focused;
+                            #[cfg(not(target_arch = "wasm32"))]
+                            accesskit.update_if_active(|| TreeUpdate {
+                                nodes: vec![],
+                                tree: None,
+                                focus: is_focused.then_some(cx.focused().accesskit_id()),
+                            });
                         }
 
                         winit::event::WindowEvent::ScaleFactorChanged {
                             scale_factor,
                             new_inner_size,
                         } => {
-                            cx.style().dpi_factor = scale_factor;
-                            cx.cache().set_width(Entity::root(), new_inner_size.width as f32);
-                            cx.cache().set_height(Entity::root(), new_inner_size.height as f32);
-
-                            let logical_size: LogicalSize<f32> =
-                                new_inner_size.to_logical(cx.style().dpi_factor);
-
-                            cx.style()
-                                .width
-                                .insert(Entity::root(), Units::Pixels(logical_size.width));
-
-                            cx.style()
-                                .height
-                                .insert(Entity::root(), Units::Pixels(logical_size.height));
+                            cx.set_scale_factor(scale_factor);
+                            cx.set_window_size(
+                                new_inner_size.width as f32,
+                                new_inner_size.height as f32,
+                            );
                             cx.needs_refresh();
+                        }
+
+                        winit::event::WindowEvent::DroppedFile(path) => {
+                            cx.emit_origin(WindowEvent::Drop(DropData::File(path)));
                         }
 
                         #[allow(deprecated)]
@@ -302,6 +400,8 @@ impl Application {
                             position,
                             modifiers: _,
                         } => {
+                            // To avoid calling the hover system multiple times in one frame when multiple cursor moved
+                            // events are received, instead we set a flag here and emit the MouseMove event during MainEventsCleared.
                             if !cursor_moved {
                                 cursor_moved = true;
                                 cursor.0 = position.x as f32;
@@ -366,6 +466,7 @@ impl Application {
                             let key = virtual_key_code_to_key(
                                 input.virtual_keycode.unwrap_or(VirtualKeyCode::NoConvert),
                             );
+
                             let event = match input.state {
                                 winit::event::ElementState::Pressed => {
                                     WindowEvent::KeyDown(code, key)
@@ -383,33 +484,14 @@ impl Application {
                         }
 
                         winit::event::WindowEvent::Resized(physical_size) => {
-                            if let Some(mut window_view) = cx.views().remove(&Entity::root()) {
-                                if let Some(window) = window_view.downcast_mut::<Window>() {
-                                    window.resize(physical_size);
-                                }
+                            cx.mutate_window(|_, window: &Window| {
+                                window.resize(physical_size);
+                            });
 
-                                cx.views().insert(Entity::root(), window_view);
-                            }
-
-                            let logical_size: LogicalSize<f32> =
-                                physical_size.to_logical(cx.style().dpi_factor);
-
-                            cx.style()
-                                .width
-                                .insert(Entity::root(), Units::Pixels(logical_size.width));
-
-                            cx.style()
-                                .height
-                                .insert(Entity::root(), Units::Pixels(logical_size.height));
-
-                            cx.cache().set_width(Entity::root(), physical_size.width as f32);
-                            cx.cache().set_height(Entity::root(), physical_size.height as f32);
-
-                            let mut bounding_box = BoundingBox::default();
-                            bounding_box.w = physical_size.width as f32;
-                            bounding_box.h = physical_size.height as f32;
-
-                            cx.cache().set_clip_region(Entity::root(), bounding_box);
+                            cx.set_window_size(
+                                physical_size.width as f32,
+                                physical_size.height as f32,
+                            );
 
                             cx.needs_refresh();
                         }
@@ -434,86 +516,56 @@ impl Application {
 }
 
 impl WindowModifiers for Application {
-    fn title<T: ToString>(mut self, title: impl Res<T>) -> Self {
-        self.window_description.title = title.get_val(&mut self.context).to_string();
-        title.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetTitle(val.get_val(cx).to_string()));
-        });
+    fn title<T: ToString>(mut self, title: T) -> Self {
+        self.window_description.title = title.to_string();
 
         self
     }
 
-    fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
-        self.window_description.inner_size = size.get_val(&mut self.context).into();
-        *BackendContext::new(&mut self.context).window_size() = self.window_description.inner_size;
-        size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetSize(val.get_val(cx).into()));
-        });
+    fn inner_size<S: Into<WindowSize>>(mut self, size: S) -> Self {
+        self.window_description.inner_size = size.into();
 
         self
     }
 
-    fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.min_inner_size =
-            size.get_val(&mut self.context).map(|size| size.into());
-        size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMinSize(val.get_val(cx).map(|size| size.into())));
-        });
+    fn min_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
+        self.window_description.min_inner_size = size.map(|size| size.into());
 
         self
     }
 
-    fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.max_inner_size =
-            size.get_val(&mut self.context).map(|size| size.into());
-        size.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMaxSize(val.get_val(cx).map(|size| size.into())));
-        });
+    fn max_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
+        self.window_description.max_inner_size = size.map(|size| size.into());
 
         self
     }
 
-    fn position<P: Into<Position>>(mut self, position: impl Res<P>) -> Self {
-        self.window_description.position = Some(position.get_val(&mut self.context).into());
-        position.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetPosition(val.get_val(cx).into()));
-        });
+    fn position<P: Into<Position>>(mut self, position: P) -> Self {
+        self.window_description.position = Some(position.into());
 
         self
     }
 
-    fn resizable(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.resizable = flag.get_val(&mut self.context);
-        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetResizable(val.get_val(cx)));
-        });
+    fn resizable(mut self, flag: bool) -> Self {
+        self.window_description.resizable = flag;
 
         self
     }
 
-    fn minimized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.minimized = flag.get_val(&mut self.context);
-        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMinimized(val.get_val(cx)));
-        });
+    fn minimized(mut self, flag: bool) -> Self {
+        self.window_description.minimized = flag;
 
         self
     }
 
-    fn maximized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.maximized = flag.get_val(&mut self.context);
-        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetMaximized(val.get_val(cx)));
-        });
+    fn maximized(mut self, flag: bool) -> Self {
+        self.window_description.maximized = flag;
 
         self
     }
 
-    fn visible(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.visible = flag.get_val(&mut self.context);
-        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetVisible(val.get_val(cx)));
-        });
+    fn visible(mut self, flag: bool) -> Self {
+        self.window_description.visible = flag;
 
         self
     }
@@ -524,21 +576,14 @@ impl WindowModifiers for Application {
         self
     }
 
-    fn decorations(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.decorations = flag.get_val(&mut self.context);
-        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetDecorations(val.get_val(cx)));
-        });
+    fn decorations(mut self, flag: bool) -> Self {
+        self.window_description.decorations = flag;
 
         self
     }
 
-    fn always_on_top(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.always_on_top = flag.get_val(&mut self.context);
-        flag.set_or_bind(&mut self.context, Entity::root(), |cx, _, val| {
-            cx.emit(WindowEvent::SetAlwaysOnTop(val.get_val(cx)));
-        });
-
+    fn always_on_top(mut self, flag: bool) -> Self {
+        self.window_description.always_on_top = flag;
         self
     }
 
@@ -561,24 +606,5 @@ impl WindowModifiers for Application {
         self.window_description.target_canvas = Some(canvas.to_owned());
 
         self
-    }
-}
-
-// fn debug(cx: &mut Context, entity: Entity) -> String {
-//     if let Some(view) = cx.views.get(&entity) {
-//         view.debug(entity)
-//     } else {
-//         "None".to_string()
-//     }
-// }
-
-fn context_draw(cx: &mut BackendContext) {
-    if let Some(mut window_view) = cx.views().remove(&Entity::root()) {
-        if let Some(window) = window_view.downcast_mut::<Window>() {
-            cx.draw();
-            window.swap_buffers();
-        }
-
-        cx.views().insert(Entity::root(), window_view);
     }
 }

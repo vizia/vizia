@@ -1,3 +1,4 @@
+#[allow(unused_imports)]
 use vizia::prelude::*;
 
 #[derive(Lens)]
@@ -32,11 +33,11 @@ fn main() {
     Application::new(|cx| {
         cx.add_translation(
             "en-US".parse().unwrap(),
-            include_str!("../resources/en-US/hello.ftl").to_owned(),
+            include_str!("../resources/translations/en-US/hello.ftl").to_owned(),
         );
         cx.add_translation(
             "fr".parse().unwrap(),
-            include_str!("../resources/fr/hello.ftl").to_owned(),
+            include_str!("../resources/translations/fr/hello.ftl").to_owned(),
         );
 
         AppData { name: "Audrey".to_owned(), emails: 1 }.build(cx);
@@ -44,12 +45,13 @@ fn main() {
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, Environment::locale.map(|locale| *locale == "en-US"))
+                    .id("toggle-language")
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleLanguage));
-                Label::new(cx, "Toggle Language");
+                Label::new(cx, "Toggle Language").describing("toggle-language").hidden(true);
             })
             .child_top(Stretch(1.0))
             .child_bottom(Stretch(1.0))
-            .col_between(Pixels(20.0))
+            .col_between(Pixels(10.0))
             .height(Auto);
 
             Label::new(cx, Localized::new("hello-world"));

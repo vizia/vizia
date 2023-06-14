@@ -1,9 +1,10 @@
-//! This is the module where all types which implement View live.
-//!
-//! Every member of this module is part of the prelude.
+//! Built-in views provided by vizia.
 
 mod button;
 mod checkbox;
+mod chip;
+mod combobox;
+mod datepicker;
 mod dropdown;
 mod element;
 mod image;
@@ -12,32 +13,55 @@ mod label;
 mod list;
 mod menu;
 pub mod normalized_map;
+mod notification;
+mod picklist;
 mod popup;
-mod radio_buttons;
+mod radio;
+mod rating;
 mod scrollbar;
 mod scrollview;
 mod slider;
+mod spinbox;
 mod stack;
-mod table;
+mod switch;
+mod tab;
 mod textbox;
+mod timepicker;
+mod tooltip;
+mod virtual_list;
 
 pub use self::image::Image;
+pub use crate::binding::Binding;
 pub use button::Button;
 pub use checkbox::Checkbox;
+pub use chip::Chip;
+pub use combobox::*;
+pub use datepicker::Datepicker;
 pub use dropdown::Dropdown;
 pub use element::Element;
 pub use knob::{ArcTrack, Knob, KnobMode, TickKnob, Ticks};
-pub use label::Label;
+pub use label::{Icon, Label};
 pub use list::List;
-pub use menu::{setup_menu_entry, Menu, MenuButton, MenuController, MenuEvent, MenuStack};
+pub use menu::*;
+pub use notification::Notification;
+pub use picklist::PickList;
 pub use popup::{Popup, PopupData, PopupEvent};
-pub use radio_buttons::RadioButton;
+pub use radio::RadioButton;
+pub use rating::Rating;
 pub use scrollbar::Scrollbar;
 pub use scrollview::{ScrollData, ScrollEvent, ScrollView};
-pub use slider::Slider;
+pub use slider::{NamedSlider, Slider};
+pub use spinbox::{Spinbox, SpinboxEvent, SpinboxIcons, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
-pub use table::{Table, TableColumn};
+pub use switch::Switch;
+pub use tab::{TabPair, TabView};
 pub use textbox::{TextEvent, Textbox};
+pub use timepicker::{
+    AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,
+    DigitalTimepicker, DigitalTimepickerEvent, Timepicker,
+};
+pub use tooltip::Tooltip;
+pub use virtual_list::*;
 
 use crate::prelude::*;
 

@@ -1,5 +1,8 @@
 use std::ops::Range;
 
+use accesskit::ActionData;
+
+use crate::layout::cache::GeoChanged;
 use crate::prelude::*;
 use crate::views::Orientation;
 
@@ -16,6 +19,7 @@ pub struct SliderDataInternal {
     pub size: f32,
     pub thumb_size: f32,
     pub range: Range<f32>,
+    pub step: f32,
     pub keyboard_fraction: f32,
 }
 
@@ -98,6 +102,7 @@ where
     ///     });
     /// ```
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
+        let value_lens = lens.clone();
         Self {
             lens: lens.clone(),
             is_dragging: false,
@@ -107,6 +112,7 @@ where
                 thumb_size: 0.0,
                 size: 0.0,
                 range: 0.0..1.0,
+                step: 0.01,
                 keyboard_fraction: 0.1,
             },
 
@@ -149,11 +155,11 @@ where
                     Element::new(cx)
                         .class("thumb")
                         .on_geo_changed(|cx, geo| {
-                            if geo.contains(GeometryChanged::WIDTH_CHANGED) {
-                                let current = cx.current();
-                                let width = cx.cache().get_width(current);
-                                let height = cx.cache().get_height(current);
-                                cx.emit(SliderEventInternal::SetThumbSize(width, height));
+                            if geo.contains(GeoChanged::WIDTH_CHANGED)
+                                || geo.contains(GeoChanged::HEIGHT_CHANGED)
+                            {
+                                let bounds = cx.bounds();
+                                cx.emit(SliderEventInternal::SetThumbSize(bounds.w, bounds.h));
                             }
                         })
                         .bind(lens.clone(), move |handle, value| {
@@ -177,6 +183,37 @@ where
                 });
             });
         })
+        .role(Role::Slider)
+        .numeric_value(value_lens.clone().map(|val| (*val as f64 * 100.0).round() / 100.0))
+        .text_value(value_lens.map(|val| {
+            let v = (*val as f64 * 100.0).round() / 100.0;
+            format!("{}", v)
+        }))
+        .navigable(true)
+    }
+
+    pub fn custom<F>(cx: &mut Context, lens: L, content: F) -> Handle<Self>
+    where
+        F: FnOnce(&mut Context),
+    {
+        Self {
+            lens,
+            is_dragging: false,
+
+            internal: SliderDataInternal {
+                orientation: Orientation::Horizontal,
+                thumb_size: 0.0,
+                size: 0.0,
+                range: 0.0..1.0,
+                step: 0.01,
+                keyboard_fraction: 0.1,
+            },
+
+            on_changing: None,
+        }
+        .build(cx, move |cx| {
+            (content)(cx);
+        })
         .navigable(true)
     }
 }
@@ -184,6 +221,12 @@ where
 impl<L: Lens<Target = f32>> View for Slider<L> {
     fn element(&self) -> Option<&'static str> {
         Some("slider")
+    }
+
+    fn accessibility(&self, _cx: &mut AccessContext, node: &mut AccessNode) {
+        node.set_numeric_value_step(self.internal.step as f64);
+        node.set_min_numeric_value(self.internal.range.start as f64);
+        node.set_max_numeric_value(self.internal.range.end as f64);
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
@@ -223,44 +266,52 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             }
 
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
-                self.is_dragging = true;
-                cx.capture();
-                cx.focus_with_visibility(false);
+                if !cx.is_disabled() {
+                    self.is_dragging = true;
+                    cx.capture();
+                    cx.focus_with_visibility(false);
 
-                let thumb_size = self.internal.thumb_size;
-                let min = self.internal.range.start;
-                let max = self.internal.range.end;
+                    let thumb_size = self.internal.thumb_size;
+                    let min = self.internal.range.start;
+                    let max = self.internal.range.end;
+                    let step = self.internal.step;
 
-                let current = cx.current();
-                let width = cx.cache.get_width(current);
-                let height = cx.cache.get_height(current);
-                let posx = cx.cache.get_posx(current);
-                let posy = cx.cache.get_posy(current);
+                    let current = cx.current();
+                    let width = cx.cache.get_width(current);
+                    let height = cx.cache.get_height(current);
+                    let posx = cx.cache.get_posx(current);
+                    let posy = cx.cache.get_posy(current);
 
-                let mut dx = match self.internal.orientation {
-                    Orientation::Horizontal => {
-                        (cx.mouse.left.pos_down.0 - posx - thumb_size / 2.0) / (width - thumb_size)
+                    let mut dx = match self.internal.orientation {
+                        Orientation::Horizontal => {
+                            (cx.mouse.left.pos_down.0 - posx - thumb_size / 2.0)
+                                / (width - thumb_size)
+                        }
+
+                        Orientation::Vertical => {
+                            (height - (cx.mouse.left.pos_down.1 - posy) - thumb_size / 2.0)
+                                / (height - thumb_size)
+                        }
+                    };
+
+                    dx = dx.clamp(0.0, 1.0);
+
+                    let mut val = min + dx * (max - min);
+
+                    val = step * (val / step).ceil();
+                    val = val.clamp(min, max);
+
+                    if let Some(callback) = self.on_changing.take() {
+                        (callback)(cx, val);
+
+                        self.on_changing = Some(callback);
                     }
-
-                    Orientation::Vertical => {
-                        (height - (cx.mouse.left.pos_down.1 - posy) - thumb_size / 2.0)
-                            / (height - thumb_size)
-                    }
-                };
-
-                dx = dx.clamp(0.0, 1.0);
-
-                let val = min + dx * (max - min);
-
-                if let Some(callback) = self.on_changing.take() {
-                    (callback)(cx, val);
-
-                    self.on_changing = Some(callback);
                 }
             }
 
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
+                cx.focus_with_visibility(false);
                 cx.release();
             }
 
@@ -270,6 +321,7 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
 
                     let min = self.internal.range.start;
                     let max = self.internal.range.end;
+                    let step = self.internal.step;
 
                     let current = cx.current();
                     let width = cx.cache.get_width(current);
@@ -289,7 +341,10 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
 
                     dx = dx.clamp(0.0, 1.0);
 
-                    let val = min + dx * (max - min);
+                    let mut val = min + dx * (max - min);
+
+                    val = step * (val / step).ceil();
+                    val = val.clamp(min, max);
 
                     if let Some(callback) = &self.on_changing {
                         (callback)(cx, val);
@@ -300,7 +355,10 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             WindowEvent::KeyDown(Code::ArrowUp | Code::ArrowRight, _) => {
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
-                let val = (self.lens.get_val(cx) + 0.1 * (max - min)).clamp(min, max);
+                let step = self.internal.step;
+                let mut val = self.lens.get_val(cx) + step;
+                // val = step * (val / step).ceil();
+                val = val.clamp(min, max);
                 if let Some(callback) = &self.on_changing {
                     (callback)(cx, val);
                 }
@@ -309,11 +367,54 @@ impl<L: Lens<Target = f32>> View for Slider<L> {
             WindowEvent::KeyDown(Code::ArrowDown | Code::ArrowLeft, _) => {
                 let min = self.internal.range.start;
                 let max = self.internal.range.end;
-                let val = (self.lens.get_val(cx) - 0.1 * (max - min)).clamp(min, max);
+                let step = self.internal.step;
+                let mut val = self.lens.get_val(cx) - step;
+                // val = step * (val / step).ceil();
+                val = val.clamp(min, max);
                 if let Some(callback) = &self.on_changing {
                     (callback)(cx, val);
                 }
             }
+
+            WindowEvent::ActionRequest(action) => match action.action {
+                Action::Increment => {
+                    let min = self.internal.range.start;
+                    let max = self.internal.range.end;
+                    let step = self.internal.step;
+                    let mut val = self.lens.get_val(cx) + step;
+                    val = step * (val / step).ceil();
+                    val = val.clamp(min, max);
+                    if let Some(callback) = &self.on_changing {
+                        (callback)(cx, val);
+                    }
+                }
+
+                Action::Decrement => {
+                    let min = self.internal.range.start;
+                    let max = self.internal.range.end;
+                    let step = self.internal.step;
+                    let mut val = self.lens.get_val(cx) - step;
+                    val = step * (val / step).ceil();
+                    val = val.clamp(min, max);
+                    if let Some(callback) = &self.on_changing {
+                        (callback)(cx, val);
+                    }
+                }
+
+                Action::SetValue => {
+                    if let Some(ActionData::NumericValue(val)) = action.data {
+                        let min = self.internal.range.start;
+                        let max = self.internal.range.end;
+                        let mut v = val as f32;
+                        v = v.clamp(min, max);
+                        if let Some(callback) = &self.on_changing {
+                            (callback)(cx, v);
+                        }
+                    }
+                }
+
+                _ => {}
+            },
 
             _ => {}
         });
@@ -377,6 +478,10 @@ impl<L: Lens> Handle<'_, Slider<L>> {
         self
     }
 
+    pub fn step(self, step: f32) -> Self {
+        self.modify(|slider: &mut Slider<L>| slider.internal.step = step)
+    }
+
     /// Sets the fraction of a slider that a press of an arrow key will change.
     ///
     /// # Example
@@ -398,6 +503,116 @@ impl<L: Lens> Handle<'_, Slider<L>> {
     /// ```
     pub fn keyboard_fraction(self, keyboard_fraction: f32) -> Self {
         self.cx.emit_to(self.entity, SliderEventInternal::SetKeyboardFraction(keyboard_fraction));
+
+        self
+    }
+}
+
+enum NamedSliderEvent {
+    Change(f32),
+}
+
+#[derive(Lens)]
+pub struct NamedSlider {
+    on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
+}
+
+impl NamedSlider {
+    pub fn new<L, T>(cx: &mut Context, lens: L, name: impl Res<T>) -> Handle<Self>
+    where
+        L: Lens<Target = f32>,
+        T: ToString,
+    {
+        let name = name.get_val(cx).to_string();
+        Self { on_changing: None }
+            .build(cx, move |cx| {
+                Binding::new(cx, lens.clone(), move |cx, lens| {
+                    Textbox::new(cx, lens.map(|v| format!("{:.2}", v))).on_submit(|cx, txt, _| {
+                        if let Ok(val) = txt.parse() {
+                            cx.emit(NamedSliderEvent::Change(val));
+                        }
+                    });
+                });
+                Slider::custom(cx, lens.clone(), move |cx| {
+                    Binding::new(cx, Slider::<L>::internal, move |cx, slider_data| {
+                        ZStack::new(cx, |cx| {
+                            let slider_data = slider_data.get_val(cx);
+                            let thumb_size = slider_data.thumb_size;
+                            let size = slider_data.size;
+                            let range = slider_data.range;
+
+                            // Active track
+                            Element::new(cx).class("active").bind(
+                                lens.clone(),
+                                move |handle, value| {
+                                    let val = value.get_val(handle.cx);
+                                    let normal_val =
+                                        (val - range.start) / (range.end - range.start);
+                                    let min = thumb_size / size;
+                                    let max = 1.0;
+                                    let dx = min + normal_val * (max - min);
+
+                                    handle
+                                        .height(Stretch(1.0))
+                                        .left(Pixels(0.0))
+                                        .right(Stretch(1.0))
+                                        .width(Percentage(dx * 100.0));
+                                },
+                            );
+
+                            Label::new(cx, &name);
+                        });
+                    })
+                })
+                .on_changing(|cx, v| cx.emit(NamedSliderEvent::Change(v)));
+            })
+            .layout_type(LayoutType::Row)
+    }
+}
+
+impl View for NamedSlider {
+    fn element(&self) -> Option<&'static str> {
+        Some("namedslider")
+    }
+
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|e, _| match e {
+            NamedSliderEvent::Change(v) => {
+                if let Some(callback) = self.on_changing.take() {
+                    (callback)(cx, *v);
+
+                    self.on_changing = Some(callback);
+                }
+            }
+        })
+    }
+}
+
+impl Handle<'_, NamedSlider> {
+    pub fn on_changing<F>(self, callback: F) -> Self
+    where
+        F: 'static + Fn(&mut EventContext, f32),
+    {
+        self.modify(|slider| slider.on_changing = Some(Box::new(callback)))
+    }
+
+    pub fn range(self, range: Range<f32>) -> Self {
+        self.cx.emit_custom(
+            Event::new(SliderEventInternal::SetRange(range))
+                .target(self.entity())
+                .origin(self.entity())
+                .propagate(Propagation::Subtree),
+        );
+
+        self
+    }
+
+    pub fn keyboard_fraction(self, keyboard_fraction: f32) -> Self {
+        self.cx.emit_custom(
+            Event::new(SliderEventInternal::SetKeyboardFraction(keyboard_fraction))
+                .origin(self.entity())
+                .propagate(Propagation::Subtree),
+        );
 
         self
     }

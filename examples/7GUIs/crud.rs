@@ -1,12 +1,8 @@
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
-
     textbox {
         width: 1s;
-        height: 30px;
-        child-top: 1s;
-        child-bottom: 1s;
     }
 
     hstack {
@@ -22,24 +18,24 @@ const STYLE: &str = r#"
     }
 
     button {
-        width: 100px;
+        width: 1s;
+        child-space: 1s;
     }
 
-    label {
+    list label {
         width: 1s;
-        height: 30px;
+        height: 32px;
         child-left: 5px;
         child-top: 1s;
         child-bottom: 1s;
     }
 
-    label:checked {
-        background-color: blue;
-        color: white;
+    list label:checked {
+        background-color: #5050AA40;
     }
 
     list {
-        border-color: black;
+        border-color: white;
         border-width: 1px;
         width: 1s;
         height: 1s;
@@ -49,11 +45,8 @@ const STYLE: &str = r#"
 #[derive(Lens)]
 pub struct AppData {
     filter_prefix: String,
-
     list: Vec<(String, String)>,
-
     selected: Option<usize>,
-
     name: String,
     surname: String,
 }
@@ -116,7 +109,7 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
         AppData {
             filter_prefix: "".to_string(),
@@ -132,7 +125,7 @@ fn main() {
                 VStack::new(cx, |cx| {
                     HStack::new(cx, |cx| {
                         Label::new(cx, "Filter prefix:");
-                        Textbox::new(cx, AppData::filter_prefix).width(Pixels(80.0));
+                        Textbox::new(cx, AppData::filter_prefix);
                     });
 
                     List::new(cx, AppData::list, |cx, index, item| {
@@ -149,23 +142,19 @@ fn main() {
 
                 VStack::new(cx, |cx| {
                     HStack::new(cx, |cx| {
-                        Label::new(cx, "Name:");
+                        Label::new(cx, "Name:").width(Pixels(80.0));
 
-                        Textbox::new(cx, AppData::name)
-                            .on_edit(move |cx, text| {
-                                cx.emit(AppEvent::SetName(text));
-                            })
-                            .width(Pixels(120.0));
+                        Textbox::new(cx, AppData::name).on_edit(move |cx, text| {
+                            cx.emit(AppEvent::SetName(text.clone()));
+                        });
                     });
 
                     HStack::new(cx, |cx| {
-                        Label::new(cx, "Surname:");
+                        Label::new(cx, "Surname:").width(Pixels(80.0));
 
-                        Textbox::new(cx, AppData::surname)
-                            .on_edit(move |cx, text| {
-                                cx.emit(AppEvent::SetSurname(text));
-                            })
-                            .width(Pixels(120.0));
+                        Textbox::new(cx, AppData::surname).on_edit(move |cx, text| {
+                            cx.emit(AppEvent::SetSurname(text.clone()));
+                        });
                     });
                 });
             })

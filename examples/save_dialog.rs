@@ -80,7 +80,7 @@ pub enum AppEvent {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(STYLE);
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
         AppData { is_saved: false, show_dialog: false }.build(cx);
 
         HStack::new(cx, |cx| {

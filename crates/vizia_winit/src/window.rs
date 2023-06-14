@@ -1,3 +1,4 @@
+use crate::application::UserEvent;
 #[cfg(not(target_arch = "wasm32"))]
 use std::num::NonZeroU32;
 
@@ -20,9 +21,10 @@ use glutin::{
     surface::{SurfaceAttributesBuilder, WindowSurface},
 };
 
+use vizia_core::backend::*;
 use vizia_core::prelude::*;
 use winit::event_loop::EventLoop;
-use winit::window::{CursorGrabMode, WindowBuilder};
+use winit::window::{CursorGrabMode, WindowBuilder, WindowLevel};
 use winit::{dpi::*, window::WindowId};
 
 pub struct Window {
@@ -38,7 +40,7 @@ pub struct Window {
 #[cfg(target_arch = "wasm32")]
 impl Window {
     pub fn new(
-        events_loop: &EventLoop<Event>,
+        events_loop: &EventLoop<UserEvent>,
         window_description: &WindowDescription,
     ) -> (Self, Canvas<OpenGl>) {
         let window_builder = WindowBuilder::new();
@@ -100,7 +102,7 @@ impl Window {
 #[cfg(not(target_arch = "wasm32"))]
 impl Window {
     pub fn new(
-        events_loop: &EventLoop<Event>,
+        events_loop: &EventLoop<UserEvent>,
         window_description: &WindowDescription,
     ) -> (Self, Canvas<OpenGl>) {
         let window_builder = WindowBuilder::new();
@@ -115,7 +117,7 @@ impl Window {
         // Apply generic WindowBuilder properties
         let window_builder = apply_window_description(window_builder, window_description);
 
-        let template = ConfigTemplateBuilder::new().with_alpha_size(8);
+        let template = ConfigTemplateBuilder::new().with_alpha_size(8).with_transparency(true);
         let display_builder = DisplayBuilder::new().with_window_builder(Some(window_builder));
 
         let (window, gl_config) = display_builder
@@ -185,8 +187,6 @@ impl Window {
         let size = window.inner_size();
         canvas.set_size(size.width, size.height, 1.0);
         canvas.clear_rect(0, 0, size.width, size.height, Color::rgb(255, 80, 80));
-
-        //cx.canvases.insert(Entity::root(), canvas);
 
         // Build our window
         let win =
@@ -320,7 +320,13 @@ fn apply_window_description(
     builder
         .with_resizable(description.resizable)
         .with_maximized(description.maximized)
-        .with_visible(description.visible)
+        // Accesskit requires that the window start invisible until accesskit is initialized.
+        .with_visible(false)
+        .with_window_level(if description.always_on_top {
+            WindowLevel::AlwaysOnTop
+        } else {
+            WindowLevel::Normal
+        })
         .with_transparent(description.transparent)
         .with_decorations(description.decorations)
         .with_window_icon(description.icon.as_ref().map(|icon| {

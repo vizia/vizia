@@ -1,14 +1,18 @@
+//! Context types for retained state, used during view building, event handling, and drawing.
+
+mod access;
+#[doc(hidden)]
 pub mod backend;
 mod draw;
 mod event;
 mod proxy;
 mod resource;
 
+use cosmic_text::Shaping;
 use instant::Instant;
 use std::any::{Any, TypeId};
-use std::collections::{HashMap, VecDeque};
-use std::iter::once;
-use std::path::Path;
+use std::collections::hash_map::Entry;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Mutex;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
@@ -18,56 +22,59 @@ use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
 use cosmic_text::{fontdb::Database, Attrs, AttrsList, BufferLine, FamilyOwned};
 use fnv::FnvHashMap;
 use replace_with::replace_with_or_abort;
+
 use unic_langid::LanguageIdentifier;
 
+pub use access::*;
 pub use draw::*;
 pub use event::*;
 pub use proxy::*;
 pub use resource::*;
 
+use crate::binding::BindingHandler;
 use crate::cache::CachedData;
-use crate::environment::Environment;
+use crate::environment::{Environment, ThemeMode};
 use crate::events::ViewHandler;
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
+
+use crate::fonts::TABLER_ICONS;
+use crate::model::ModelDataStore;
 use crate::prelude::*;
-use crate::resource::{ImageRetentionPolicy, ResourceManager};
-use crate::state::{BindingHandler, ModelDataStore};
-use crate::style::Style;
+use crate::resource::{ImageOrId, ImageRetentionPolicy, ResourceManager, StoredImage};
+use crate::style::{PseudoClassFlags, Style};
 use crate::text::{TextConfig, TextContext};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
-use vizia_storage::SparseSet;
 use vizia_storage::TreeExt;
+use vizia_storage::{ChildIterator, SparseSet};
 
-static DEFAULT_THEME: &str = include_str!("../../resources/themes/default_theme.css");
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
+static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");
+static LIGHT_THEME: &str = include_str!("../../resources/themes/light_theme.css");
 
-pub(crate) type DataStore = SparseSet<ModelDataStore>;
-pub(crate) type Views = FnvHashMap<Entity, Box<dyn BindingHandler>>;
+type Views = FnvHashMap<Entity, Box<dyn ViewHandler>>;
+type Models = SparseSet<ModelDataStore>;
+type Bindings = FnvHashMap<Entity, Box<dyn BindingHandler>>;
 
 /// The main storage and control object for a Vizia application.
-///
-/// This type is part of the prelude.
 pub struct Context {
     pub(crate) entity_manager: IdManager<Entity>,
     pub(crate) entity_identifiers: HashMap<String, Entity>,
     pub(crate) tree: Tree<Entity>,
     pub(crate) current: Entity,
-    /// TODO make this private when there's no longer a need to mutate views after building
-    pub views: FnvHashMap<Entity, Box<dyn ViewHandler>>,
-    pub(crate) data: DataStore,
-    pub(crate) bindings: Views,
+    pub(crate) views: Views,
+    pub(crate) data: Models,
+    pub(crate) bindings: Bindings,
     pub(crate) event_queue: VecDeque<Event>,
+    pub(crate) tree_updates: Vec<accesskit::TreeUpdate>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) global_listeners: Vec<Box<dyn Fn(&mut EventContext, &mut Event)>>,
     pub(crate) style: Style,
     pub(crate) cache: CachedData,
-    pub(crate) draw_cache: DrawCache,
 
     pub(crate) canvases: HashMap<Entity, crate::prelude::Canvas>,
-    //environment: Environment,
     pub(crate) mouse: MouseState<Entity>,
     pub(crate) modifiers: Modifiers,
 
@@ -93,7 +100,7 @@ pub struct Context {
     /// `window_size` gets multplied with this factor to get the actual logical window size. If this
     /// changes during a frame, then the window will be resized at the end of the frame and a
     /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
-    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    /// [`WindowDescription::user_scale_factor`](vizia_window::WindowDescription::user_scale_factor).
     pub(crate) user_scale_factor: f64,
 
     #[cfg(feature = "clipboard")]
@@ -104,6 +111,9 @@ pub struct Context {
     pub(crate) click_pos: (f32, f32),
 
     pub ignore_default_theme: bool,
+    pub window_has_focus: bool,
+
+    pub(crate) drop_data: Option<DropData>,
 }
 
 impl Default for Context {
@@ -113,24 +123,24 @@ impl Default for Context {
 }
 
 impl Context {
+    /// Creates a new context.
     pub fn new(window_size: WindowSize, user_scale_factor: f64) -> Self {
         let mut cache = CachedData::default();
-        cache.add(Entity::root()).expect("Failed to add entity to cache");
+        cache.add(Entity::root());
 
-        // Add default fonts
         let mut db = Database::new();
         db.load_system_fonts();
 
+        // Add default fonts if the feature is enabled.
         #[cfg(feature = "embedded_fonts")]
         {
             db.load_font_data(Vec::from(fonts::ROBOTO_REGULAR));
             db.load_font_data(Vec::from(fonts::ROBOTO_BOLD));
             db.load_font_data(Vec::from(fonts::ROBOTO_ITALIC));
-            db.load_font_data(Vec::from(fonts::ENTYPO));
-            db.load_font_data(Vec::from(fonts::OPEN_SANS_EMOJI));
-            db.load_font_data(Vec::from(fonts::AMIRI_REGULAR));
-            db.load_font_data(Vec::from(fonts::MATERIAL_ICONS_REGULAR));
         }
+
+        // Add icon font
+        db.load_font_data(Vec::from(TABLER_ICONS));
 
         let mut result = Self {
             entity_manager: IdManager::new(),
@@ -142,10 +152,9 @@ impl Context {
             bindings: FnvHashMap::default(),
             style: Style::default(),
             cache,
-            draw_cache: DrawCache::new(),
             canvases: HashMap::new(),
-            // environment: Environment::new(),
             event_queue: VecDeque::new(),
+            tree_updates: Vec::new(),
             listeners: HashMap::default(),
             global_listeners: vec![],
             mouse: MouseState::default(),
@@ -185,16 +194,22 @@ impl Context {
             click_pos: (0.0, 0.0),
 
             ignore_default_theme: false,
+            window_has_focus: true,
+
+            drop_data: None,
         };
 
         result.style.needs_restyle();
         result.style.needs_relayout();
         result.style.needs_redraw();
 
+        // Build the environment model at the root.
         Environment::new().build(&mut result);
 
         result.entity_manager.create();
         result.set_default_font(&["Roboto"]);
+
+        result.style.role.insert(Entity::root(), Role::Window);
 
         result
     }
@@ -208,18 +223,20 @@ impl Context {
     /// Set the current entity. This is useful in user code when you're performing black magic and
     /// want to trick other parts of the code into thinking you're processing some other part of the
     /// tree.
-    pub fn set_current(&mut self, e: Entity) {
+    pub(crate) fn set_current(&mut self, e: Entity) {
         self.current = e;
     }
 
     /// Makes the above black magic more explicit
-    pub(crate) fn with_current(&mut self, e: Entity, f: impl FnOnce(&mut Context)) {
+    pub fn with_current<T>(&mut self, e: Entity, f: impl FnOnce(&mut Context) -> T) -> T {
         let prev = self.current;
         self.current = e;
-        f(self);
+        let ret = f(self);
         self.current = prev;
+        ret
     }
 
+    /// Returns a reference to the [Environment] model.
     pub fn environment(&self) -> &Environment {
         self.data::<Environment>().unwrap()
     }
@@ -236,9 +253,14 @@ impl Context {
     /// `window_size` gets multplied with this factor to get the actual logical window size. If this
     /// changes during a frame, then the window will be resized at the end of the frame and a
     /// [`WindowEvent::GeometryChanged`] will be emitted. This can be initialized using
-    /// [`WindowDescription::user_scale_factor`][crate::WindowDescription::user_scale_factor].
+    /// [`WindowDescription::user_scale_factor`](vizia_window::WindowDescription::user_scale_factor).
     pub fn user_scale_factor(&self) -> f64 {
         self.user_scale_factor
+    }
+
+    /// Returns the scale factor of the display.
+    pub fn scale_factor(&self) -> f32 {
+        self.style.dpi_factor as f32
     }
 
     /// Mark the application as needing to rerun the draw method
@@ -256,7 +278,7 @@ impl Context {
         self.style.needs_relayout();
     }
 
-    /// Enables or disables pseudoclasses for the focus of an entity
+    /// Enables or disables PseudoClasses for the focus of an entity
     pub(crate) fn set_focus_pseudo_classes(
         &mut self,
         focused: Entity,
@@ -280,16 +302,16 @@ impl Context {
         }
 
         if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {
-            pseudo_classes.set(PseudoClass::FOCUS, enabled);
+            pseudo_classes.set(PseudoClassFlags::FOCUS, enabled);
             if !enabled || focus_visible {
-                pseudo_classes.set(PseudoClass::FOCUS_VISIBLE, enabled);
+                pseudo_classes.set(PseudoClassFlags::FOCUS_VISIBLE, enabled);
             }
         }
 
         for ancestor in focused.parent_iter(&self.tree) {
             let entity = ancestor;
             if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
-                pseudo_classes.set(PseudoClass::FOCUS_WITHIN, enabled);
+                pseudo_classes.set(PseudoClassFlags::FOCUS_WITHIN, enabled);
             }
         }
     }
@@ -316,29 +338,22 @@ impl Context {
             .style
             .pseudo_classes
             .get_mut(focused)
-            .filter(|class| class.contains(PseudoClass::FOCUS_VISIBLE))
+            .filter(|class| class.contains(PseudoClassFlags::FOCUS_VISIBLE))
             .is_some();
         self.focus_with_visibility(old_focus_visible)
     }
 
-    /// Sets the checked flag of the current entity
-    pub fn set_selected(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClass::SELECTED, flag);
-        }
-
-        self.style.needs_restyle();
-    }
-
+    /// Removes the children of the provided entity from the application.
     pub(crate) fn remove_children(&mut self, entity: Entity) {
-        let children = entity.child_iter(&self.tree).collect::<Vec<_>>();
+        let child_iter = ChildIterator::new(&self.tree, entity);
+        let children = child_iter.collect::<Vec<_>>();
         for child in children.into_iter() {
             self.remove(child);
         }
     }
 
-    pub fn remove(&mut self, entity: Entity) {
+    /// Removes the provided entity from the application.
+    pub(crate) fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
         if !delete_list.is_empty() {
@@ -367,11 +382,11 @@ impl Context {
                 self.focus_stack.remove(index);
             }
 
-            if self.focused == *entity
-                && delete_list.contains(&self.tree.lock_focus_within(*entity))
-            {
+            if self.focused == *entity {
                 if let Some(new_focus) = self.focus_stack.pop() {
                     self.with_current(new_focus, |cx| cx.focus());
+                } else {
+                    self.with_current(Entity::root(), |cx| cx.focus());
                 }
             }
 
@@ -379,9 +394,33 @@ impl Context {
                 self.captured = Entity::null();
             }
 
+            // Remove any cached filter images associated with the entity.
+            if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
+                if let Some((s, t)) = self.cache.filter_image.get(*entity).cloned().flatten() {
+                    canvas.delete_image(s);
+                    canvas.delete_image(t);
+                }
+            }
+
+            // Remove any cached screenshot images associated with the entity.
+            if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
+                if let Some(s) = self.cache.screenshot_image.get(*entity).cloned().flatten() {
+                    canvas.delete_image(s);
+                }
+            }
+
+            // Remove any cached shadow images associated with the entity.
+            if let Some(canvas) = self.canvases.get_mut(&Entity::root()) {
+                if let Some(shadows) = self.cache.shadow_images.get(*entity).cloned() {
+                    for (s, t) in shadows.into_iter().flatten() {
+                        canvas.delete_image(s);
+                        canvas.delete_image(t);
+                    }
+                }
+            }
+
             self.tree.remove(*entity).expect("");
             self.cache.remove(*entity);
-            self.draw_cache.remove(*entity);
             self.style.remove(*entity);
             self.data.remove(*entity);
             self.views.remove(entity);
@@ -389,11 +428,6 @@ impl Context {
             self.text_context.clear_buffer(*entity);
         }
     }
-
-    /// Check whether there are any events in the queue waiting for the next event dispatch cycle.
-    // pub fn has_queued_events(&self) -> bool {
-    //     !self.event_queue.is_empty()
-    // }
 
     /// Add a listener to an entity.
     ///
@@ -428,6 +462,15 @@ impl Context {
     }
 
     /// Add a font from memory to the application.
+    ///
+    ///
+    /// The `include_bytes!()` macro can be used to embed a font into the application binary.
+    /// # Example
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// # let cx = &mut Context::default();
+    /// cx.add_fonts_mem(&[include_bytes!("../../resources/fonts/Roboto-Regular.ttf")]);
+    /// ```
     pub fn add_fonts_mem(&mut self, data: &[&[u8]]) {
         self.text_context.take_buffers();
         replace_with_or_abort(&mut self.text_context, |mut ccx| {
@@ -438,10 +481,12 @@ impl Context {
             }
             let mut new_ccx = TextContext::new_from_locale_and_db(locale, db);
             for (entity, lines) in buffers {
-                new_ccx.with_buffer(entity, move |buf| {
+                new_ccx.with_buffer(entity, move |_, buf| {
                     buf.lines = lines
                         .into_iter()
-                        .map(|line| BufferLine::new(line, AttrsList::new(Attrs::new())))
+                        .map(|line| {
+                            BufferLine::new(line, AttrsList::new(Attrs::new()), Shaping::Advanced)
+                        })
                         .collect();
                 });
             }
@@ -454,56 +499,81 @@ impl Context {
         self.style.default_font = names
             .iter()
             .map(|x| FamilyOwned::Name(x.to_string()))
-            .chain(once(FamilyOwned::SansSerif))
+            .chain(std::iter::once(FamilyOwned::SansSerif))
             .collect();
     }
 
-    pub fn add_theme(&mut self, theme: &str) {
+    /// Add a style string to the application.
+    pub(crate) fn add_theme(&mut self, theme: &str) {
         self.resource_manager.themes.push(theme.to_owned());
 
         EventContext::new(self).reload_styles().expect("Failed to reload styles");
     }
 
+    pub fn add_stylesheet(&mut self, style: impl IntoCssStr) -> Result<(), std::io::Error> {
+        self.resource_manager.styles.push(Box::new(style));
+
+        EventContext::new(self).reload_styles().expect("Failed to reload styles");
+
+        Ok(())
+    }
+
+    /// Remove all user themes from the application.
     pub fn remove_user_themes(&mut self) {
         self.resource_manager.themes.clear();
 
         self.add_theme(DEFAULT_LAYOUT);
         if !self.ignore_default_theme {
-            self.add_theme(DEFAULT_THEME);
+            let environment = self.data::<Environment>().expect("Failed to get environment");
+            match environment.theme_mode {
+                ThemeMode::LightMode => self.add_theme(LIGHT_THEME),
+                ThemeMode::DarkMode => self.add_theme(DARK_THEME),
+            }
         }
     }
 
-    pub fn add_stylesheet(&mut self, path: impl AsRef<Path>) -> Result<(), std::io::Error> {
-        let style_string = std::fs::read_to_string(path.as_ref())?;
-        self.resource_manager.stylesheets.push(path.as_ref().to_owned());
-        self.style.parse_theme(&style_string);
-
-        Ok(())
-    }
-
-    /// Adds a new property animation returning an animation builder
-    ///
-    /// # Example
-    /// Create an animation which animates the `left` property from 0 to 100 pixels in 5 seconds
-    /// and play the animation on an entity:
-    /// ```ignore
-    /// let animation_id = cx.add_animation(instant::Duration::from_secs(5))
-    ///     .add_keyframe(0.0, |keyframe| keyframe.set_left(Pixels(0.0)))
-    ///     .add_keyframe(1.0, |keyframe| keyframe.set_left(Pixels(100.0)))
-    ///     .build();
-    /// ```
-    pub fn add_animation(&mut self, duration: std::time::Duration) -> AnimationBuilder {
-        let id = self.style.animation_manager.create();
-        AnimationBuilder::new(id, self, duration)
+    pub fn add_animation(&mut self, animation: AnimationBuilder) -> Animation {
+        self.style.add_animation(animation)
     }
 
     pub fn set_image_loader<F: 'static + Fn(&mut ResourceContext, &str)>(&mut self, loader: F) {
         self.resource_manager.image_loader = Some(Box::new(loader));
     }
 
-    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: String) {
-        self.resource_manager.add_translation(lang, ftl);
+    pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: impl ToString) {
+        self.resource_manager.add_translation(lang, ftl.to_string());
         self.emit(EnvironmentEvent::SetLocale(self.resource_manager.language.clone()));
+    }
+
+    pub fn load_image(
+        &mut self,
+        path: &str,
+        image: image::DynamicImage,
+        policy: ImageRetentionPolicy,
+    ) {
+        match self.resource_manager.images.entry(path.to_string()) {
+            Entry::Occupied(mut occ) => {
+                occ.get_mut().image = ImageOrId::Image(
+                    image,
+                    femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
+                );
+                occ.get_mut().dirty = true;
+                occ.get_mut().retention_policy = policy;
+            }
+            Entry::Vacant(vac) => {
+                vac.insert(StoredImage {
+                    image: ImageOrId::Image(
+                        image,
+                        femtovg::ImageFlags::REPEAT_X | femtovg::ImageFlags::REPEAT_Y,
+                    ),
+                    retention_policy: policy,
+                    used: true,
+                    dirty: false,
+                    observers: HashSet::new(),
+                });
+            }
+        }
+        self.style.needs_relayout();
     }
 
     pub fn spawn<F>(&self, target: F)
@@ -516,6 +586,18 @@ impl Context {
         };
 
         std::thread::spawn(move || target(&mut cxp));
+    }
+
+    pub fn get_proxy(&self) -> ContextProxy {
+        ContextProxy {
+            current: self.current,
+            event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
+        }
+    }
+
+    /// Finds the entity that identifier identifies
+    pub fn resolve_entity_identifier(&self, identity: &str) -> Option<Entity> {
+        self.entity_identifiers.get(identity).cloned()
     }
 }
 
@@ -531,10 +613,8 @@ pub(crate) enum InternalEvent {
 /// A trait for any Context-like object that lets you access stored model data.
 ///
 /// This lets e.g Lens::get be generic over any of these types.
-///
-/// This type is part of the prelude.
 pub trait DataContext {
-    /// Get stored data from the context.
+    /// Get model/view data from the context. Returns `None` if the data does not exist.
     fn data<T: 'static>(&self) -> Option<&T>;
 
     fn as_context(&self) -> Option<&Context> {
@@ -543,25 +623,30 @@ pub trait DataContext {
 }
 
 pub trait EmitContext {
+    /// Send an event containing the provided message up the tree from the current entity.
     fn emit<M: Any + Send>(&mut self, message: M);
+    /// Send an event containing the provided message directly to a specified entity from the current entity.
     fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
+    /// Send a custom event with custom origin and propagation information.
     fn emit_custom(&mut self, event: Event);
 }
 
 impl DataContext for Context {
     fn data<T: 'static>(&self) -> Option<&T> {
-        // return data for the static model
+        // return data for the static model.
         if let Some(t) = <dyn Any>::downcast_ref::<T>(&()) {
             return Some(t);
         }
 
         for entity in self.current.parent_iter(&self.tree) {
+            // Return any model data.
             if let Some(model_data_store) = self.data.get(entity) {
                 if let Some(model) = model_data_store.models.get(&TypeId::of::<T>()) {
                     return model.downcast_ref::<T>();
                 }
             }
 
+            // Return any view data.
             if let Some(view_handler) = self.views.get(&entity) {
                 if let Some(data) = view_handler.downcast_ref::<T>() {
                     return Some(data);
@@ -578,7 +663,6 @@ impl DataContext for Context {
 }
 
 impl EmitContext for Context {
-    /// Send an event containing a message up the tree from the current entity.
     fn emit<M: Any + Send>(&mut self, message: M) {
         self.event_queue.push_back(
             Event::new(message)
@@ -588,14 +672,12 @@ impl EmitContext for Context {
         );
     }
 
-    /// Send an event containing a message directly to a specified entity.
     fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
         self.event_queue.push_back(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
         );
     }
 
-    /// Send an event with custom origin and propagation information.
     fn emit_custom(&mut self, event: Event) {
         self.event_queue.push_back(event);
     }

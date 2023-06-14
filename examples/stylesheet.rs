@@ -9,15 +9,9 @@ fn main() {
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     Application::new(|cx| {
-        cx.add_stylesheet("examples/resources/test.css").expect("Failed to find file");
-
-        VStack::new(cx, |cx| {
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
-            Button::new(cx, |cx| cx.emit(WindowEvent::ReloadStyles), |cx| Label::new(cx, "Reload"));
-        })
-        .row_between(Pixels(10.0))
-        .space(Pixels(20.0));
+        cx.add_stylesheet(include_style!("examples/resources/themes/test.css"))
+            .expect("Failed to add stylesheet");
+        Element::new(cx);
     })
-    .title("Stylesheet")
     .run();
 }

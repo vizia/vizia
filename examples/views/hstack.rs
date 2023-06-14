@@ -9,7 +9,7 @@ fn main() {
                 Element::new(cx).size(Pixels(100.0)).background_color(COLORS[i]);
             }
         })
-        .space(Pixels(10.0));
+        .child_space(Stretch(1.0));
     })
     .title("HStack")
     .run();

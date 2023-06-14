@@ -1,4 +1,40 @@
-//! Methods on views for changing their style properties or for adding actions.
+//! Methods on views for changing their properties or for adding actions.
+//!
+//! # Examples
+//! Modifiers can be used to apply inline [style](StyleModifiers) and [layout](LayoutModifiers) properties to a view:
+//! ```no_run
+//! # use vizia_core::prelude::*;
+//! # let cx = &mut Context::default();
+//! # use vizia_winit::application::Application;
+//! # Application::new(|cx|{
+//! // Sets the background color of the label to red.
+//! Label::new(cx, "Hello World")
+//!     .background_color(Color::red());
+//! # }).run();
+//! ```
+//!
+//! ```no_run
+//! # use vizia_core::prelude::*;
+//! # let cx = &mut Context::default();
+//! # use vizia_winit::application::Application;
+//! # Application::new(|cx|{
+//! // Sets the width of the label to be 100 pixels.
+//! Label::new(cx, "Hello World")
+//!     .width(Pixels(100.0));
+//! # }).run();
+//! ```
+//!
+//! Modifiers can also be used to add [actions](ActionModifiers) to a view:
+//! ```no_run
+//! # use vizia_core::prelude::*;
+//! # let cx = &mut Context::default();
+//! # use vizia_winit::application::Application;
+//! # Application::new(|cx|{
+//! // Closes the window when the label is pressed.
+//! Label::new(cx, "Hello World")
+//!     .on_press(|cx| cx.emit(WindowEvent::WindowClose));
+//! # }).run();
+//! ```
 
 // Macro used within modifier traits to set style properties.
 macro_rules! modifier {
@@ -42,6 +78,9 @@ mod internal {
     }
 }
 
+mod accessibility;
+pub use accessibility::*;
+
 mod actions;
 pub use actions::*;
 
@@ -56,3 +95,6 @@ pub use text::*;
 
 mod abilities;
 pub use abilities::*;
+
+// Re-export here for docs
+pub use crate::window::WindowModifiers;

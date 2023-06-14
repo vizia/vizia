@@ -1,21 +1,16 @@
+pub(crate) mod accessibility;
 pub(crate) mod animation;
-pub(crate) mod clipping;
+pub(crate) mod binding;
 pub(crate) mod draw;
 pub(crate) mod hover;
 pub(crate) mod image;
 pub(crate) mod layout;
 pub(crate) mod style;
-pub(crate) mod text_constraints;
-pub(crate) mod transform;
-pub(crate) mod visibility;
-
 pub(crate) use self::image::*;
+pub(crate) use accessibility::*;
 pub(crate) use animation::*;
-pub(crate) use clipping::*;
+pub(crate) use binding::*;
 pub(crate) use draw::*;
 pub(crate) use hover::*;
 pub(crate) use layout::*;
 pub(crate) use style::*;
-pub(crate) use text_constraints::*;
-pub(crate) use transform::*;
-pub(crate) use visibility::*;

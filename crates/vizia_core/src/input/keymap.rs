@@ -42,8 +42,7 @@ use std::collections::HashMap;
 ///     (KeyChord::new(Modifiers::CTRL | Modifiers::SHIFT, Code::KeyC), KeymapEntry::new(Action::Three, |_| println!("Action Three"))),
 /// ]);
 /// ```
-///
-/// This type is part of the prelude.
+#[derive(Default)]
 pub struct Keymap<T>
 where
     T: 'static + Clone + PartialEq + Send + Sync,
@@ -205,8 +204,6 @@ where
 }
 
 /// An event used to interact with a [`Keymap`] at runtime.
-///
-/// This type is part of the prelude.
 pub enum KeymapEvent<T>
 where
     T: 'static + Clone + PartialEq + Send + Sync,

@@ -1,16 +1,5 @@
 use vizia::prelude::*;
 
-const THEME: &str = r#"
-
-    label {
-        background-color: white;
-    }
-
-    label:hover {
-        background-color: blue;
-    }
-"#;
-
 #[derive(Lens)]
 pub struct AppData {
     pub long_list: Vec<u32>,
@@ -32,10 +21,8 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
-        cx.add_theme(THEME);
-
         HStack::new(cx, |cx| {
-            AppData { long_list: (0..10000).collect() }.build(cx);
+            AppData { long_list: (0..1000).collect() }.build(cx);
 
             ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
                 List::new(cx, AppData::long_list, |cx, _, item| {

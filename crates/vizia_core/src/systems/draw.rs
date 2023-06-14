@@ -1,98 +1,131 @@
-use crate::context::Context;
 use crate::prelude::*;
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
 use vizia_id::GenerationalId;
-use vizia_storage::DrawIterator;
+use vizia_storage::LayoutChildIterator;
 
-pub fn draw_system(cx: &mut Context) {
+pub(crate) fn draw_system(cx: &mut Context) {
     let canvas = cx.canvases.get_mut(&Entity::root()).unwrap();
     cx.resource_manager.mark_images_unused();
-
     let window_width = cx.cache.get_width(Entity::root());
     let window_height = cx.cache.get_height(Entity::root());
-
-    canvas.set_size(window_width as u32, window_height as u32, 1.0);
     let clear_color =
-        cx.style.background_color.get(Entity::root()).cloned().unwrap_or(Color::white());
+        cx.style.background_color.get(Entity::root()).cloned().unwrap_or(RGBA::TRANSPARENT.into());
+    canvas.set_size(window_width as u32, window_height as u32, 1.0);
     canvas.clear_rect(0, 0, window_width as u32, window_height as u32, clear_color.into());
 
-    let draw_tree = DrawIterator::full(&cx.tree);
-
-    for entity in draw_tree {
-        let window_bounds = cx.cache.get_bounds(Entity::root());
-
-        // Skip if the entity is invisible or out of bounds
-        // Unfortunately we can't skip the subtree because even if a parent is invisible
-        // a child might be explicitly set to be visible.
-        if entity == Entity::root()
-            || cx.cache.get_visibility(entity) == Visibility::Invisible
-            || cx.cache.get_display(entity) == Display::None
-            || cx.cache.get_opacity(entity) == 0.0
-            || !window_bounds.intersects(&cx.cache.get_bounds(entity))
-        {
-            continue;
-        }
-
-        // Apply clipping
-        let clip_region = cx.cache.get_clip_region(entity);
-
-        // Skips drawing views with zero-sized clip regions
-        // This skips calling the `draw` method of the view
-        if clip_region.height() == 0.0 || clip_region.width() == 0.0 {
-            continue;
-        }
-
-        canvas.scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
-
-        // Apply transform
-        let transform = cx.cache.get_transform(entity);
+    let mut queue = BinaryHeap::new();
+    queue.push(ZEntity { index: 0, entity: Entity::root(), opacity: 1.0, visible: true });
+    while !queue.is_empty() {
+        let zentity = queue.pop().unwrap();
         canvas.save();
-        canvas.set_transform(
-            transform[0],
-            transform[1],
-            transform[2],
-            transform[3],
-            transform[4],
-            transform[5],
+        draw_entity(
+            &mut DrawContext {
+                current: zentity.entity,
+                style: &cx.style,
+                cache: &mut cx.cache,
+                tree: &cx.tree,
+                data: &cx.data,
+                views: &mut cx.views,
+                resource_manager: &cx.resource_manager,
+                text_context: &mut cx.text_context,
+                text_config: &cx.text_config,
+                modifiers: &cx.modifiers,
+                mouse: &cx.mouse,
+                opacity: zentity.opacity,
+            },
+            canvas,
+            zentity.index,
+            &mut queue,
+            zentity.visible,
         );
-
-        if let Some(view) = cx.views.remove(&entity) {
-            cx.current = entity;
-            view.draw(
-                &mut DrawContext {
-                    current: cx.current,
-                    captured: &cx.captured,
-                    focused: &cx.focused,
-                    hovered: &cx.hovered,
-                    style: &cx.style,
-                    cache: &mut cx.cache,
-                    draw_cache: &mut cx.draw_cache,
-                    tree: &cx.tree,
-                    data: &cx.data,
-                    views: &cx.views,
-                    resource_manager: &cx.resource_manager,
-                    text_context: &mut cx.text_context,
-                    text_config: &cx.text_config,
-                    modifiers: &cx.modifiers,
-                    mouse: &cx.mouse,
-                },
-                canvas,
-            );
-
-            cx.views.insert(entity, view);
-        }
-
         canvas.restore();
-
-        // Uncomment this for debug outlines
-        // TODO - Hook this up to a key in debug mode
-        // let mut path = Path::new();
-        // path.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-        // let mut paint = Paint::color(femtovg::Color::rgb(255, 0, 0));
-        // paint.set_line_width(1.0);
-        // canvas.stroke_path(&mut path, paint);
     }
 
     canvas.flush();
-
-    //cx.resource_manager.evict_unused_images();
 }
+
+fn draw_entity(
+    cx: &mut DrawContext,
+    canvas: &mut Canvas,
+    current_z: i32,
+    queue: &mut BinaryHeap<ZEntity>,
+    visible: bool,
+) {
+    let current = cx.current;
+
+    // Skip views with display: none.
+    if cx.display() == Display::None {
+        return;
+    }
+
+    // TODO: Looks like I'll need to keep track of the current transform manually instead of within femtovg
+    // because elements with a higher z-index aren't getting the transform of their parent.
+    let z_index = cx.tree.z_index(current);
+    if z_index > current_z {
+        queue.push(ZEntity { index: z_index, entity: current, opacity: cx.opacity, visible });
+        return;
+    }
+
+    canvas.save();
+
+    canvas.set_transform(&cx.transform());
+
+    let clip_region = cx.clip_region();
+
+    canvas.intersect_scissor(clip_region.x, clip_region.y, clip_region.w, clip_region.h);
+
+    let is_visible = match (visible, cx.visibility()) {
+        (v, None) => v,
+        (_, Some(Visibility::Hidden)) => false,
+        (_, Some(Visibility::Visible)) => true,
+    };
+
+    // Draw the view
+    if is_visible {
+        if let Some(view) = cx.views.remove(&current) {
+            view.draw(cx, canvas);
+            cx.views.insert(current, view);
+        }
+    }
+
+    let child_iter = LayoutChildIterator::new(cx.tree, cx.current);
+
+    let parent_opacity = cx.opacity();
+    // Draw its children
+    for child in child_iter {
+        cx.current = child;
+        let opactiy = cx.style.opacity.get(child).copied().unwrap_or(Opacity(1.0)).0;
+        cx.opacity = parent_opacity * opactiy;
+        // TODO: Skip views with zero-sized bounding boxes here? Or let user decide if they want to skip?
+        draw_entity(cx, canvas, current_z, queue, is_visible);
+    }
+
+    canvas.restore();
+    cx.current = current;
+}
+
+struct ZEntity {
+    pub index: i32,
+    pub entity: Entity,
+    pub opacity: f32,
+    pub visible: bool,
+}
+
+impl Ord for ZEntity {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.index.cmp(&self.index)
+    }
+}
+impl PartialOrd for ZEntity {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl PartialEq for ZEntity {
+    fn eq(&self, other: &Self) -> bool {
+        self.index == other.index
+    }
+}
+
+impl Eq for ZEntity {}

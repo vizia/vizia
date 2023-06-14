@@ -21,7 +21,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
     where
         F: 'static + Fn(&mut EventContext, f32),
     {
-        let result = Self {
+        Self {
             value: value.clone(),
             orientation,
             reference_points: None,
@@ -30,6 +30,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
         .build(cx, move |cx| {
             Element::new(cx)
                 .class("thumb")
+                .focusable(true)
                 .bind(value, move |handle, value| {
                     let value = value.get_val(handle.cx);
                     match orientation {
@@ -48,12 +49,11 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
                         Orientation::Vertical => handle.height(Units::Percentage(ratio * 100.0)),
                     };
                 });
-        });
-
-        match orientation {
-            Orientation::Horizontal => result.class("horizontal"),
-            Orientation::Vertical => result.class("vertical"),
-        }
+        })
+        .class(match orientation {
+            Orientation::Horizontal => "horizontal",
+            Orientation::Vertical => "vertical",
+        })
     }
 
     fn container_and_thumb_size(&self, cx: &mut EventContext) -> (f32, f32) {
@@ -112,6 +112,7 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                     if meta.target != cx.current() {
                         self.reference_points = Some((pos, self.value.get_val(cx)));
                         cx.capture();
+                        cx.set_active(true);
                     } else {
                         let (_, jump) = self.container_and_thumb_size(cx);
                         let (tx, ty, tw, th) = self.thumb_bounds(cx);
@@ -143,7 +144,9 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
 
                 WindowEvent::MouseUp(MouseButton::Left) => {
                     self.reference_points = None;
+                    cx.focus_with_visibility(false);
                     cx.release();
+                    cx.set_active(false);
                 }
 
                 WindowEvent::MouseMove(_, _) => {

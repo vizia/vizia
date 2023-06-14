@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-/// A label used to display text to the screen.
+/// A label used to display text.
 ///
 /// # Examples
 ///
@@ -99,11 +99,15 @@ impl Label {
     /// #
     /// Label::new(cx, "Text");
     /// ```
-    pub fn new<'a, T>(cx: &'a mut Context, text: impl Res<T>) -> Handle<'a, Self>
+    pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone) -> Handle<Self>
     where
         T: ToString,
     {
-        Self { describing: None }.build(cx, |_| {}).text(text)
+        Self { describing: None }
+            .build(cx, |_| {})
+            .text(text.clone())
+            .role(Role::StaticText)
+            .name(text)
     }
 }
 
@@ -134,7 +138,11 @@ impl Handle<'_, Label> {
     /// Label::new(cx, "hello").describing("checkbox_identifier");
     /// ```
     pub fn describing(self, entity_identifier: impl Into<String>) -> Self {
-        self.modify(|label| label.describing = Some(entity_identifier.into())).class("describing")
+        let identifier = entity_identifier.into();
+        if let Some(id) = self.cx.resolve_entity_identifier(&identifier) {
+            self.cx.style.labelled_by.insert(id, self.entity);
+        }
+        self.modify(|label| label.describing = Some(identifier)).class("describing")
     }
 }
 
@@ -167,5 +175,33 @@ impl View for Label {
             }
             _ => {}
         });
+    }
+}
+
+pub struct Icon {}
+
+impl Icon {
+    /// Creates a new label.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use vizia_core::prelude::*;
+    /// #
+    /// # let cx = &mut Context::default();
+    /// #
+    /// Label::new(cx, "Text");
+    /// ```
+    pub fn new<T>(cx: &mut Context, icon_code: impl Res<T> + Clone) -> Handle<Self>
+    where
+        T: ToString,
+    {
+        Self {}.build(cx, |_| {}).text(icon_code).role(Role::StaticText)
+    }
+}
+
+impl View for Icon {
+    fn element(&self) -> Option<&'static str> {
+        Some("icon")
     }
 }
