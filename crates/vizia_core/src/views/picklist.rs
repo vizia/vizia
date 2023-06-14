@@ -35,7 +35,7 @@ impl PickList {
                         Label::new(cx, "")
                             .bind(l.clone(), move |handle, list| {
                                 handle.bind(s.clone(), move |handle, sel| {
-                                    let selected_index = sel.get(handle.cx);
+                                    let selected_index = sel.get_val(handle.cx);
 
                                     handle.text(list.clone().index(selected_index));
                                 });

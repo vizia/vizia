@@ -206,7 +206,7 @@ where
         event.map(|e, _| match e {
             DigitalTimepickerEvent::SetHour(mut hour) => {
                 if let Some(callback) = &self.on_change {
-                    let current = self.lens.get(cx);
+                    let current = self.lens.get_val(cx);
 
                     if hour == 12 {
                         hour = 0;
@@ -225,7 +225,7 @@ where
 
             DigitalTimepickerEvent::SetMinutes(minutes) => {
                 if let Some(callback) = &self.on_change {
-                    let current = self.lens.get(cx);
+                    let current = self.lens.get_val(cx);
 
                     let new = NaiveTime::from_hms_opt(current.hour(), *minutes, current.second())
                         .unwrap();
@@ -236,7 +236,7 @@ where
 
             DigitalTimepickerEvent::IncrementHour => {
                 if let Some(callback) = &self.on_change {
-                    let current = self.lens.get(cx);
+                    let current = self.lens.get_val(cx);
 
                     let mut hours = current.hour() + 1;
 
@@ -257,7 +257,7 @@ where
 
             DigitalTimepickerEvent::IncrementMinutes => {
                 if let Some(callback) = &self.on_change {
-                    let current = self.lens.get(cx);
+                    let current = self.lens.get_val(cx);
 
                     let mut minutes = current.minute() + 1;
 
@@ -274,7 +274,7 @@ where
 
             DigitalTimepickerEvent::DecrementHour => {
                 if let Some(callback) = &self.on_change {
-                    let current = self.lens.get(cx);
+                    let current = self.lens.get_val(cx);
 
                     let mut hours = current.hour() as i32 - 1;
 
@@ -296,7 +296,7 @@ where
 
             DigitalTimepickerEvent::DecrementMinutes => {
                 if let Some(callback) = &self.on_change {
-                    let current = self.lens.get(cx);
+                    let current = self.lens.get_val(cx);
 
                     let mut minutes = current.minute() as i32 - 1;
 
@@ -314,7 +314,7 @@ where
 
             DigitalTimepickerEvent::ToggleAMOrPM => {
                 if let Some(callback) = &self.on_change {
-                    let current = self.lens.get(cx);
+                    let current = self.lens.get_val(cx);
 
                     let new = match current.hour12().0 {
                         false => NaiveTime::from_hms_opt(
@@ -384,10 +384,10 @@ where
         }
         .build(cx, move |cx| {
             HStack::new(cx, move |cx| {
-                Binding::new(cx, Self::page, move |cx, page| match page.get(cx) {
+                Binding::new(cx, Self::page, move |cx, page| match page.get_val(cx) {
                     AnalogTimepickerPage::Hours => {
                         Binding::new(cx, lens.clone().map(|time| time.hour()), |cx, hours| {
-                            let hours = hours.get(cx);
+                            let hours = hours.get_val(cx);
 
                             let angle = (hours) as f32 * 30.0;
 
@@ -429,7 +429,7 @@ where
 
                     AnalogTimepickerPage::Minutes => {
                         Binding::new(cx, lens.clone().map(|time| time.minute()), |cx, minutes| {
-                            let minutes = minutes.get(cx);
+                            let minutes = minutes.get_val(cx);
 
                             let angle = (minutes / 5) as f32 * 30.0;
 
@@ -464,7 +464,7 @@ where
 
                     AnalogTimepickerPage::Seconds => {
                         Binding::new(cx, lens.clone().map(|time| time.second()), |cx, seconds| {
-                            let seconds = seconds.get(cx);
+                            let seconds = seconds.get_val(cx);
 
                             let angle = (seconds / 5) as f32 * 30.0;
 
@@ -586,7 +586,7 @@ where
         event.map(|timepicker_event, _| match timepicker_event {
             AnalogTimepickerEvent::SetHours(hours) => {
                 if let Some(callback) = &self.on_change {
-                    let current = self.lens.get(cx);
+                    let current = self.lens.get_val(cx);
                     let mut new_hours =
                         if current.hour12().0 { *hours as u32 + 12 } else { *hours as u32 };
                     if new_hours == 24 {
@@ -605,7 +605,7 @@ where
 
             AnalogTimepickerEvent::SetMinutes(minutes) => {
                 if let Some(callback) = &self.on_change {
-                    let current = self.lens.get(cx);
+                    let current = self.lens.get_val(cx);
                     (callback)(
                         cx,
                         NaiveTime::from_hms_opt(current.hour(), *minutes as u32, current.second())
@@ -619,7 +619,7 @@ where
 
             AnalogTimepickerEvent::SetSeconds(seconds) => {
                 if let Some(callback) = &self.on_change {
-                    let current = self.lens.get(cx);
+                    let current = self.lens.get_val(cx);
                     (callback)(
                         cx,
                         NaiveTime::from_hms_opt(current.hour(), current.minute(), *seconds as u32)
@@ -633,12 +633,12 @@ where
             }
 
             AnalogTimepickerEvent::ToggleAMOrPM => {
-                cx.emit(AnalogTimepickerEvent::SetZone(!self.lens.get(cx).hour12().0))
+                cx.emit(AnalogTimepickerEvent::SetZone(!self.lens.get_val(cx).hour12().0))
             }
 
             AnalogTimepickerEvent::SetZone(zone) => {
                 if let Some(callback) = &self.on_change {
-                    let current = self.lens.get(cx);
+                    let current = self.lens.get_val(cx);
 
                     match (current.hour12().0, zone) {
                         (false, true) => {

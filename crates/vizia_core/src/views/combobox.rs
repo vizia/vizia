@@ -48,7 +48,7 @@ where
             selected,
             p: PhantomData::default(),
             is_open: false,
-            hovered: selected.get(cx),
+            hovered: selected.get_val(cx),
             placeholder: String::from("One"),
         }
         .build(cx, |cx| {
@@ -93,21 +93,30 @@ where
                         // Seems that the layout bugs out when rebuilding the contents of a scrollview that's been scrolled to 100%.
                         // So instead we just rebuild the whole scrollview.
                         ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
-                            let f = Self::filter_text.get(cx);
+                            let f = Self::filter_text.get_val(cx);
                             // List view doesn't have an option for filtering (yet) so we do it manually instead.
                             VStack::new(cx, |cx| {
-                                for (index, item) in
-                                    list.get(cx).iter().enumerate().filter(|(_, item)| {
-                                        if f.is_empty() {
-                                            true
-                                        } else {
-                                            item.to_string()
-                                                .to_ascii_lowercase()
-                                                .contains(&f.to_ascii_lowercase())
-                                        }
-                                    })
-                                {
-                                    Label::new(cx, &item.to_string())
+                                let ll: Vec<usize> = if let Some(l) = list.get(cx) {
+                                    l.iter()
+                                        .enumerate()
+                                        .filter(|(_, item)| {
+                                            if f.is_empty() {
+                                                true
+                                            } else {
+                                                item.to_string()
+                                                    .to_ascii_lowercase()
+                                                    .contains(&f.to_ascii_lowercase())
+                                            }
+                                        })
+                                        .map(|(idx, _)| idx)
+                                        .collect::<Vec<_>>()
+                                } else {
+                                    Vec::new()
+                                };
+
+                                for index in ll.into_iter() {
+                                    let item = list.index(index);
+                                    Label::new(cx, item)
                                         .child_top(Stretch(1.0))
                                         .child_bottom(Stretch(1.0))
                                         .checked(selected.map(move |selected| *selected == index))
@@ -123,6 +132,36 @@ where
                                             cx.emit(ComboBoxEvent::SetOption(index));
                                         });
                                 }
+
+                                // if let Some(l) = list.get(cx) {
+                                //     for (index, item) in l.iter().enumerate().filter(|(_, item)| {
+                                //         if f.is_empty() {
+                                //             true
+                                //         } else {
+                                //             item.to_string()
+                                //                 .to_ascii_lowercase()
+                                //                 .contains(&f.to_ascii_lowercase())
+                                //         }
+                                //     }) {
+                                //         Label::new(cx, &item.to_string())
+                                //             .child_top(Stretch(1.0))
+                                //             .child_bottom(Stretch(1.0))
+                                //             .checked(
+                                //                 selected.map(move |selected| *selected == index),
+                                //             )
+                                //             .navigable(true)
+                                //             .toggle_class(
+                                //                 "nav",
+                                //                 Self::hovered.map(move |nav| *nav == index),
+                                //             )
+                                //             .on_hover(move |cx| {
+                                //                 cx.emit(ComboBoxEvent::SetHovered(index))
+                                //             })
+                                //             .on_press(move |cx| {
+                                //                 cx.emit(ComboBoxEvent::SetOption(index));
+                                //             });
+                                //     }
+                                // }
                             })
                             .height(Auto)
                             .class("list");
@@ -137,7 +176,7 @@ where
             .height(Auto);
         })
         .bind(selected, move |handle, selected| {
-            let selected_item = list_lens.index(selected.get(&handle)).get(&handle);
+            let selected_item = list_lens.index(selected.get_val(&handle)).get_val(&handle);
             handle.modify(|combobox| combobox.placeholder = selected_item.to_string());
         })
     }
@@ -157,7 +196,7 @@ where
         event.map(|combobox_event, _| match combobox_event {
             ComboBoxEvent::SetOption(index) => {
                 // Set the placeholder text to the selected item.
-                let selected_item = self.list_lens.clone().index(*index).get(cx);
+                let selected_item = self.list_lens.clone().index(*index).get_val(cx);
                 self.placeholder = selected_item.to_string();
 
                 // Call the on_select callback.
@@ -201,20 +240,23 @@ where
                     }
                 };
 
-                let list = self.list_lens.get(cx);
-
-                if let Some((next_index, _)) =
-                    list.iter().enumerate().skip_while(|(idx, _)| *idx != self.hovered).find(filter)
-                {
-                    self.hovered = next_index;
-                } else {
-                    let list_len = list.len();
-                    self.hovered = list
+                if let Some(list) = self.list_lens.get(cx) {
+                    if let Some((next_index, _)) = list
                         .iter()
                         .enumerate()
+                        .skip_while(|(idx, _)| *idx != self.hovered)
                         .find(filter)
-                        .map(|(index, _)| index)
-                        .unwrap_or(list_len);
+                    {
+                        self.hovered = next_index;
+                    } else {
+                        let list_len = list.len();
+                        self.hovered = list
+                            .iter()
+                            .enumerate()
+                            .find(filter)
+                            .map(|(index, _)| index)
+                            .unwrap_or(list_len);
+                    }
                 }
             }
 
@@ -227,12 +269,12 @@ where
             // User pressed on the textbox or focused it
             TextEvent::StartEdit => {
                 self.is_open = true;
-                self.hovered = self.selected.get(cx);
+                self.hovered = self.selected.get_val(cx);
             }
 
             TextEvent::Submit(enter) => {
-                let selected = self.selected.get(cx);
-                if *enter && self.hovered < self.list_lens.get(cx).len() {
+                let selected = self.selected.get_val(cx);
+                if *enter && self.hovered < self.list_lens.get_val(cx).len() {
                     // User pressed the enter key
                     cx.emit(ComboBoxEvent::SetOption(self.hovered));
                 } else {
@@ -258,18 +300,18 @@ where
                             }
                         };
 
-                        let list = self.list_lens.get(cx);
-
-                        if let Some((next_index, _)) = list
-                            .iter()
-                            .enumerate()
-                            .filter(filter)
-                            .skip_while(|(idx, _)| *idx != self.hovered)
-                            .nth(1)
-                        {
-                            self.hovered = next_index;
-                        } else {
-                            self.hovered = list.iter().enumerate().find(filter).unwrap().0;
+                        if let Some(list) = self.list_lens.get(cx) {
+                            if let Some((next_index, _)) = list
+                                .iter()
+                                .enumerate()
+                                .filter(filter)
+                                .skip_while(|(idx, _)| *idx != self.hovered)
+                                .nth(1)
+                            {
+                                self.hovered = next_index;
+                            } else {
+                                self.hovered = list.iter().enumerate().find(filter).unwrap().0;
+                            }
                         }
                     }
                 }
@@ -286,19 +328,20 @@ where
                             }
                         };
 
-                        let list = self.list_lens.get(cx);
-
-                        if let Some((next_index, _)) = list
-                            .iter()
-                            .enumerate()
-                            .rev()
-                            .filter(filter)
-                            .skip_while(|(idx, _)| *idx != self.hovered)
-                            .nth(1)
-                        {
-                            self.hovered = next_index;
-                        } else {
-                            self.hovered = list.iter().enumerate().rev().find(filter).unwrap().0;
+                        if let Some(list) = self.list_lens.get(cx) {
+                            if let Some((next_index, _)) = list
+                                .iter()
+                                .enumerate()
+                                .rev()
+                                .filter(filter)
+                                .skip_while(|(idx, _)| *idx != self.hovered)
+                                .nth(1)
+                            {
+                                self.hovered = next_index;
+                            } else {
+                                self.hovered =
+                                    list.iter().enumerate().rev().find(filter).unwrap().0;
+                            }
                         }
                     }
                 }
@@ -363,7 +406,7 @@ impl ComboPopup {
                         geo.set(GeoChanged::WIDTH_CHANGED, true);
                     }
 
-                    if lens.get(cx) {
+                    if lens.get_val(cx) {
                         if capture_focus {
                             VStack::new(cx, &content).lock_focus_to_within();
                         } else {

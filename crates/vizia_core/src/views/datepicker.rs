@@ -114,7 +114,7 @@ impl Datepicker {
         L: Lens<Target = D>,
         D: Datelike + Data,
     {
-        let view_date = lens.get(cx);
+        let view_date = lens.get_val(cx);
 
         Self {
             months: MONTHS.to_vec().iter_mut().map(|v| v.to_string()).collect(),
@@ -172,13 +172,13 @@ impl Datepicker {
                                 Label::new(cx, "").bind(
                                     Datepicker::view_date,
                                     move |handle, view_date| {
-                                        let view_date = view_date.get(handle.cx);
+                                        let view_date = view_date.get_val(handle.cx);
 
                                         let (day_number, disabled) =
                                             Self::get_day_number(y, x, &view_date);
 
                                         handle.bind(l.clone(), move |handle, selected_date| {
-                                            let selected_date = selected_date.get(handle.cx);
+                                            let selected_date = selected_date.get_val(handle.cx);
 
                                             handle
                                                 .text(&day_number.to_string())

@@ -71,10 +71,9 @@ pub trait AbilityModifiers: internal::Modifiable {
     fn checkable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
         state.set_or_bind(self.context(), entity, |cx, entity, v| {
+            let state = v.get_val(cx).into();
             if let Some(abilities) = cx.style.abilities.get_mut(entity) {
-                let state = v.into();
                 abilities.set(Abilities::CHECKABLE, state);
-
                 cx.needs_restyle();
             }
         });

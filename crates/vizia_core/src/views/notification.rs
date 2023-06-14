@@ -47,7 +47,7 @@ impl Notification {
                 .class("notification-header");
 
                 Binding::new(cx, Notification::container_open, move |cx, open| {
-                    if open.get(cx) {
+                    if open.get_val(cx) {
                         if let Some(text) = &content {
                             HStack::new(cx, move |cx| {
                                 Label::new(cx, text).text_wrap(true);

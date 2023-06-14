@@ -22,13 +22,13 @@ impl TabView {
             // Tab headers
             VStack::new(cx, move |cx| {
                 Binding::new(cx, lens.clone().map(|list| list.len()), move |cx, list_length| {
-                    let list_length = list_length.get_fallible(cx).map_or(0, |d| d);
+                    let list_length = list_length.get(cx).map_or(0, |d| *d);
                     for index in 0..list_length {
                         let l = lens.clone().index(index);
                         let builder = (content2)(cx, l).header;
                         TabHeader::new(cx, index, builder)
                             .bind(TabView::selected_index, move |handle, selected_index| {
-                                let selected_index = selected_index.get(handle.cx);
+                                let selected_index = selected_index.get_val(handle.cx);
                                 handle.checked(selected_index == index);
                             })
                             .cursor(CursorIcon::Hand);
@@ -42,7 +42,7 @@ impl TabView {
             // Tab content
             VStack::new(cx, |cx| {
                 Binding::new(cx, TabView::selected_index, move |cx, selected| {
-                    let selected = selected.get(cx);
+                    let selected = selected.get_val(cx);
                     let l = lens2.clone().index(selected);
                     ((content)(cx, l).content)(cx);
                 });

@@ -23,7 +23,7 @@ impl VirtualList {
         L: Lens<Target = Vec<T>>,
         T: Data + 'static,
     {
-        let num_items = list.get(cx).len();
+        let num_items = list.get_val(cx).len();
 
         Self { num_items, item_height: height, visible_items: (0..10).collect::<Vec<_>>() }.build(
             cx,
@@ -31,7 +31,7 @@ impl VirtualList {
                 ScrollView::new(cx, 0.0, 0.0, false, true, move |cx| {
                     VStack::new(cx, |cx| {
                         Binding::new(cx, VirtualList::visible_items, move |cx, visible_list| {
-                            for i in visible_list.get(cx) {
+                            for i in visible_list.get_val(cx) {
                                 let ptr = list.clone().index(i);
                                 (item)(cx, i, ptr)
                                     .top(Pixels(i as f32 * height))
