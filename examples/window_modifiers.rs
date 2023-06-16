@@ -12,7 +12,7 @@ pub struct AppData {
 
 impl Model for AppData {}
 
-#[cfg(all(not(feature = "baseview")))]
+#[cfg(not(feature = "baseview"))]
 fn main() {
     Application::new(|cx| {
         AppData { title: "Window Modifiers".to_string() }.build(cx);

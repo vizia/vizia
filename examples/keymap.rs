@@ -66,7 +66,7 @@ fn main() {
         ])
         .build(cx);
     })
-    .title("Keymap - Basic")
+    .title("Keymap")
     .run();
 }
 

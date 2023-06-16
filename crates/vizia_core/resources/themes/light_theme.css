@@ -407,6 +407,10 @@ menubutton:hover {
     background-color: #f0f0f0;
 }
 
+menubutton:disabled {
+    background-color: transparent;
+}
+
 menubutton .shortcut {
     color: #c4c4c4;
     font-size: medium;
@@ -437,6 +441,10 @@ submenu:focus {
 
 submenu:hover {
     background-color: #f0f0f0;
+}
+
+submenu:disabled {
+    background-color: transparent;
 }
 
 submenu > popup {
@@ -492,6 +500,12 @@ progressbar:disabled .progressbar-bar {
 
 notification .notification-header button {
     background-color: transparent;
+    border-width: 1px;
+    border-color: #d2d2d2;
+    background-color: #fdfdfd;
+    child-space: 8px;
+    border-radius: 4px;
+    box-shadow: 0px 2px 16px #4f4f4f38;
 }
 
 /* PICKLIST */

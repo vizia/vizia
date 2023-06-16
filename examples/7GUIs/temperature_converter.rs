@@ -45,7 +45,7 @@ fn main() {
 
         HStack::new(cx, |cx| {
             input_box(cx, AppData::temperature, |val| val);
-            Label::new(cx, "Celcius");
+            Label::new(cx, "Celsius");
             input_box(cx, AppData::temperature.map(celcius_to_fahrenheit), fahrenheit_to_celcius);
             Label::new(cx, "Fahrenheit");
         })

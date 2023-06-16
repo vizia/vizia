@@ -2,7 +2,6 @@ use vizia::{icons::ICON_CHECK, prelude::*};
 
 mod helpers;
 use helpers::*;
-use vizia_core::icons::ICON_CHEVRON_RIGHT;
 
 const STYLE: &str = r#"
     .container {
@@ -13,97 +12,7 @@ const STYLE: &str = r#"
         child-space: 20px;
         row-between: 15px;
     }
-
-    panel {
-        height: auto;
-        max-height: 40px;
-        overflow: hidden;
-        transition: max-height 200ms ease-out;
-        border-color: black;
-        border-width: 1px;
-    }
-
-    panel:checked {
-        max-height: 110px;
-        transition: max-height 200ms ease-out;
-    }
-
-    panel > .panel-header {
-        child-top: 1s;
-        child-bottom: 1s;
-        col-between: 8px;
-    }
-
-    panel > .panel-header > .icon {
-        font-size: 30;
-        font-weight: bold;
-        rotate: 0deg;
-        transition: rotate 200ms ease-out;
-    }
-
-    panel:checked > .panel-header > .icon {
-        rotate: 90deg;
-        transition: rotate 200ms ease-out;
-    }
 "#;
-
-#[derive(Lens)]
-pub struct Panel {
-    is_open: bool,
-}
-
-pub enum PanelEvent {
-    ToggleOpen,
-    Open,
-    Close,
-}
-
-impl Panel {
-    pub fn new<V: View>(
-        cx: &mut Context,
-        header: impl Fn(&mut Context) -> Handle<V>,
-        content: impl Fn(&mut Context),
-    ) -> Handle<Self> {
-        Self { is_open: false }
-            .build(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    Label::new(cx, ICON_CHEVRON_RIGHT).class("icon").hoverable(false);
-                    (header)(cx).hoverable(false);
-                })
-                .class("panel-header")
-                .on_press(|cx| cx.emit(PanelEvent::ToggleOpen))
-                .height(Pixels(40.0));
-                VStack::new(cx, |cx| {
-                    (content)(cx);
-                })
-                .height(Auto)
-                .child_space(Pixels(10.0));
-            })
-            .checked(Panel::is_open)
-    }
-}
-
-impl View for Panel {
-    fn element(&self) -> Option<&'static str> {
-        Some("panel")
-    }
-
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|panel_event, _| match panel_event {
-            PanelEvent::ToggleOpen => {
-                self.is_open ^= true;
-            }
-
-            PanelEvent::Open => {
-                self.is_open = true;
-            }
-
-            PanelEvent::Close => {
-                self.is_open = false;
-            }
-        });
-    }
-}
 
 #[derive(Lens)]
 pub struct AppData {}

@@ -676,6 +676,7 @@ tabview.vertical .tabview-tabheader-wrapper {
 
 .tabview-tabheader-wrapper {
     height: auto;
+    width: auto;
     col-between: 1px;
 }
 
@@ -694,10 +695,22 @@ tabheader label {
 
 tabheader .indicator {
     height: 2px;
+    width: 1s;
+}
+
+tabview.vertical tabheader .indicator {
+    width: 2px;
+    height: 1s;
 }
 
 tabview .tabview-divider {
     height: 1px;
+    width: 1s;
+}
+
+tabview.vertical .tabview-divider {
+    width: 1px;
+    height: 1s;
 }
 
 /* TEXTBOX */

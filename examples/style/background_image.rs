@@ -57,6 +57,6 @@ fn main() {
         Image::new(cx, "https://download.samplelib.com/png/sample-bumblebee-400x300.png");
         Label::new(cx, "Wait for the image to load :)");
     })
-    .title("Image")
+    .title("Background Image")
     .run()
 }

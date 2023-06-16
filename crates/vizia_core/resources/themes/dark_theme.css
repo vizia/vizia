@@ -389,11 +389,15 @@ menubutton {
 }
 
 menubutton:focus {
-    background-color: #f0f0f0;
+    background-color: #333333;
 }
 
 menubutton:hover {
-    background-color: #f0f0f0;
+    background-color: #333333;
+}
+
+menubutton:disabled {
+    background-color: transparent;
 }
 
 menubutton .shortcut {
@@ -404,8 +408,6 @@ menubutton .shortcut {
 submenu {
     background-color: transparent;
     border-radius: 4px;
-    border-width: 1px;
-    border-color: #d2d2d2;
 }
 
 menubar submenu {
@@ -417,24 +419,26 @@ submenu submenu {
 }
 
 submenu:checked {
-    background-color: #f0f0f0;
+    background-color: #333333;
 }
 
 submenu:focus {
-    background-color: #f0f0f0;
+    background-color: #333333;
 }
 
 submenu:hover {
-    background-color: #f0f0f0;
+    background-color: #333333;
+}
+
+submenu:disabled {
+    background-color: transparent;
 }
 
 submenu > popup {
-    border-width: 1px;
-    border-color: #d2d2d2;
-    background-color: #fdfdfd;
+    background-color: #242424;
     child-space: 8px;
     border-radius: 4px;
-    box-shadow: 0px 2px 16px #4f4f4f38;
+    box-shadow: 0px 2px 16px #00000038;
 }
 
 menu-divider {
@@ -446,17 +450,16 @@ menu-divider {
 
 menu-divider .line {
     height: 1px;
-    background-color: #d2d2d2;
+    background-color: #565656;
 }
 
 /* NOTIFICATION */
 
 notification {
     background-color: #242424;
-}
-
-notification .notification-header button {
-    background-color: transparent;
+    child-space: 8px;
+    border-radius: 4px;
+    box-shadow: 0px 2px 16px #00000038;
 }
 
 /* PICKLIST */

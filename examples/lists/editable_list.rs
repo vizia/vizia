@@ -3,7 +3,7 @@ use vizia::prelude::*;
 #[derive(Lens)]
 pub struct AppData {
     list: Vec<u32>,
-    selected: usize,
+    selected: Option<usize>,
 }
 
 #[derive(Debug)]
@@ -20,30 +20,32 @@ impl Model for AppData {
         event.map(|app_event, _| match app_event {
             AppEvent::Add(value) => {
                 self.list.push(*value);
-                self.selected = self.selected.clamp(0, self.list.len() - 1);
+                // self.selected = self.selected.clamp(0, self.list.len() - 1);
             }
 
             AppEvent::RemoveSelected => {
-                if !self.list.is_empty() {
-                    self.list.remove(self.selected);
-                }
-                if !self.list.is_empty() {
-                    self.selected = self.selected.clamp(0, self.list.len() - 1);
+                if let Some(selected) = self.selected {
+                    if !self.list.is_empty() {
+                        self.list.remove(selected);
+                    }
+                    self.selected = None;
                 }
             }
 
             AppEvent::Select(idx) => {
-                self.selected = *idx;
+                self.selected = Some(*idx);
             }
 
             AppEvent::IncrementSelection => {
-                cx.emit(AppEvent::Select(
-                    (self.selected + 1).min(self.list.len().saturating_sub(1)),
-                ));
+                if let Some(selected) = &mut self.selected {
+                    *selected += 1;
+                }
             }
 
             AppEvent::DecrementSelection => {
-                cx.emit(AppEvent::Select(self.selected.saturating_sub(1)));
+                if let Some(selected) = &mut self.selected {
+                    *selected = selected.saturating_sub(1);
+                }
             }
         });
     }
@@ -51,8 +53,11 @@ impl Model for AppData {
 
 fn main() {
     Application::new(|cx| {
+        cx.add_stylesheet(include_style!("examples/resources/themes/list_style.css"))
+            .expect("Failed to add stylesheet");
+
         let list: Vec<u32> = (10..14u32).collect();
-        AppData { list, selected: 0 }.build(cx);
+        AppData { list, selected: None }.build(cx);
 
         VStack::new(cx, |cx| {
             Button::new(
@@ -67,6 +72,7 @@ fn main() {
                 |cx| cx.emit(AppEvent::RemoveSelected),
                 |cx| Label::new(cx, "Remove").width(Stretch(1.0)),
             )
+            .disabled(AppData::selected.map(|selected| selected.is_none()))
             .width(Stretch(1.0));
 
             List::new(cx, AppData::list, move |cx, index, item| {
@@ -76,7 +82,10 @@ fn main() {
                     .border_color(Color::black())
                     .border_width(Pixels(1.0))
                     // Set the checked state based on whether this item is selected
-                    .checked(AppData::selected.map(move |selected| *selected == index))
+                    .checked(
+                        AppData::selected
+                            .map(move |selected| selected.map(|s| s == index).unwrap_or_default()),
+                    )
                     // Set the selected item to this one if pressed
                     .on_press(move |cx| cx.emit(AppEvent::Select(index)));
             })
@@ -89,6 +98,6 @@ fn main() {
         .width(Pixels(100.0))
         .space(Stretch(1.0));
     })
-    .title("List")
+    .title("Editable List")
     .run();
 }

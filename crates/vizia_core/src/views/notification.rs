@@ -38,6 +38,7 @@ impl Notification {
                                 .class("icon")
                             },
                         )
+                        .class("ghost")
                         .class("icon")
                         .checked(Notification::container_open);
                     }

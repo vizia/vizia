@@ -104,7 +104,7 @@ fn main() {
         })
         .class("row");
     })
-    .title("Overlflow and Clipping")
+    .title("Overflow and Clipping")
     .inner_size((800, 400))
     .run();
 }

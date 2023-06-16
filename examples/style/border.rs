@@ -71,5 +71,6 @@ fn main() {
         })
         .class("row");
     })
+    .title("Border")
     .run();
 }
