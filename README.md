@@ -129,28 +129,30 @@ To run an example with the [winit](https://github.com/rust-windowing/winit) (def
 ```bash
 cargo run --release --example name_of_example
 ```
- <details>
-<summary>Baseview</summary>
+
+### Baseview
+
 To run an example with the [baseview](https://github.com/RustAudio/baseview) windowing backend:
+
 ```bash
 cargo run --release --example name_of_example --no-default-features --features baseview
 ```
-</details>
 
-<details>
-<summary>Web</summary>
+### Web
 To run an example as a web application, first ensure that the `wasm32-unknown-unknown` toolchain is installed:
+
 ```bash
 rustup target add wasm32-unknown-unknown
 ```
+
 Then run an example with the following:
+
 ```bash
 cargo run-wasm --release --example name_of_example
 ```
-> **NOTE** - Some examples are not compatible with the web target and will intentionally panic if run on web.
-</details>
 
-<br />
+> **Note**
+> Some examples are not compatible with the web target and will intentionally panic if run on web.
 
 # Contributing and Community
 
