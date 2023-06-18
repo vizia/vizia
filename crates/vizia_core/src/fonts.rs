@@ -142,12 +142,19 @@ pub mod icons {
     pub const ICON_PENCIL: &str = "\u{eb04}";
 
     pub const ICON_PLAYER_PAUSE: &str = "\u{ed45}";
+    pub const ICON_PLAYER_PAUSE_FILLED: &str = "\u{f690}";
     pub const ICON_PLAYER_PLAY: &str = "\u{ed46}";
+    pub const ICON_PLAYER_PLAY_FILLED: &str = "\u{f691}";
     pub const ICON_PLAYER_RECORD: &str = "\u{ed47}";
+    pub const ICON_PLAYER_RECORD_FILLED: &str = "\u{f692}";
     pub const ICON_PLAYER_SKIP_BACK: &str = "\u{ed48}";
+    pub const ICON_PLAYER_SKIP_BACK_FILLED: &str = "\u{f693}";
     pub const ICON_PLAYER_SKIP_FORWARD: &str = "\u{ed49}";
+    pub const ICON_PLAYER_SKIP_FORWARD_FILLED: &str = "\u{f694}";
     pub const ICON_PLAYER_STOP: &str = "\u{ed4a}";
+    pub const ICON_PLAYER_STOP_FILLED: &str = "\u{f695}";
     pub const ICON_REPEAT: &str = "\u{eb72}";
+    pub const ICON_REPEAT_OFF: &str = "\u{f18e}";
 
     pub const ICON_SETTINGS_AUTOMATION: &str = "\u{eb72}";
     pub const ICON_ADJUSTMENTS_ALT: &str = "\u{ec37}";
