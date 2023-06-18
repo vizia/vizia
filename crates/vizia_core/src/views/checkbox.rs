@@ -1,4 +1,4 @@
-use crate::fonts::icons::ICON_CHECK;
+use crate::icons::ICON_CHECK;
 use crate::prelude::*;
 
 /// A checkbox used to display and toggle a boolean state.

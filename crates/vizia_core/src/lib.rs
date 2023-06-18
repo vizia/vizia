@@ -18,7 +18,6 @@ pub mod context;
 pub mod entity;
 pub mod environment;
 pub mod events;
-mod fonts;
 pub mod input;
 pub mod layout;
 pub mod localization;
@@ -48,9 +47,11 @@ pub mod image {
 }
 
 /// A collection of codepoints for built-in icons.
-pub mod icons {
-    pub use super::fonts::icons::*;
-}
+pub mod icons;
+pub use icons::*;
+
+pub mod fonts;
+pub use fonts::*;
 
 #[doc(hidden)]
 pub mod backend {

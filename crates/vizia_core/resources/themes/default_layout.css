@@ -494,7 +494,7 @@ scrollview {
     overflow: hidden;
 }
 
-scrollview > .scroll_content {
+scrollview > scroll_content {
     width: auto;
     height: auto;
     min-width: 100%;

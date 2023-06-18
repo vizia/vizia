@@ -900,13 +900,6 @@ impl<'a> DrawContext<'a> {
 
                 canvas.set_render_target(femtovg::RenderTarget::Screen);
                 canvas.save();
-                let mut shadow_path = Path::new();
-                shadow_path.rect(
-                    bounds.x - d / 2.0,
-                    bounds.y - d / 2.0,
-                    bounds.w + d,
-                    bounds.h + d,
-                );
 
                 let paint = Paint::image(
                     target_image,
@@ -1489,7 +1482,6 @@ impl<'a> DataContext for DrawContext<'a> {
 //     );
 
 //     // TODO: Clip Path
-
 // }
 
 // impl<'a> StyleGet for DrawContext<'a> {}
