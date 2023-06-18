@@ -506,6 +506,10 @@ impl Context {
         }
     }
 
+    pub fn add_font_mem(&mut self, data: impl AsRef<[u8]>) {
+        self.text_context.font_system().db_mut().load_font_data(data.as_ref().to_vec());
+    }
+
     /// Sets the global default font for the application.
     pub fn set_default_font(&mut self, names: &[&str]) {
         self.style.default_font = names

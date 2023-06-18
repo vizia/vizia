@@ -268,6 +268,11 @@ impl ScrollContent {
 }
 
 impl View for ScrollContent {
+
+    fn element(&self) -> Option<&'static str> {
+        Some("scroll_content")
+    }
+
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, _| match window_event {
             WindowEvent::GeometryChanged(geo) => {
