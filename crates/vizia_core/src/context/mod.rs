@@ -8,7 +8,6 @@ mod event;
 mod proxy;
 mod resource;
 
-use cosmic_text::Shaping;
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
@@ -19,9 +18,8 @@ use std::sync::Mutex;
 use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
-use cosmic_text::{fontdb::Database, Attrs, AttrsList, BufferLine, FamilyOwned};
+use cosmic_text::{fontdb::Database, FamilyOwned};
 use fnv::FnvHashMap;
-use replace_with::replace_with_or_abort;
 
 use unic_langid::LanguageIdentifier;
 
@@ -459,39 +457,6 @@ impl Context {
         F: 'static + Fn(&mut EventContext, &mut Event),
     {
         self.global_listeners.push(Box::new(listener));
-    }
-
-    /// Add a font from memory to the application.
-    ///
-    ///
-    /// The `include_bytes!()` macro can be used to embed a font into the application binary.
-    /// # Example
-    /// ```
-    /// # use vizia_core::prelude::*;
-    /// # let cx = &mut Context::default();
-    /// cx.add_fonts_mem(&[include_bytes!("../../resources/fonts/Roboto-Regular.ttf")]);
-    /// ```
-    pub fn add_fonts_mem(&mut self, data: &[&[u8]]) {
-        self.text_context.take_buffers();
-        replace_with_or_abort(&mut self.text_context, |mut ccx| {
-            let buffers = ccx.take_buffers();
-            let (locale, mut db) = ccx.into_font_system().into_locale_and_db();
-            for font_data in data {
-                db.load_font_data(Vec::from(*font_data));
-            }
-            let mut new_ccx = TextContext::new_from_locale_and_db(locale, db);
-            for (entity, lines) in buffers {
-                new_ccx.with_buffer(entity, move |_, buf| {
-                    buf.lines = lines
-                        .into_iter()
-                        .map(|line| {
-                            BufferLine::new(line, AttrsList::new(Attrs::new()), Shaping::Advanced)
-                        })
-                        .collect();
-                });
-            }
-            new_ccx
-        });
     }
 
     /// Sets the language used by the application for localization.

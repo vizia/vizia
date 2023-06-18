@@ -161,20 +161,17 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        ScrollContent::new(cx, content).class("scroll_content").bind(
-            data.clone(),
-            |handle, data| {
-                let dpi_factor = handle.scale_factor();
-                if dpi_factor > 0.0 {
-                    let data = data.get(handle.cx);
-                    let left = ((data.child_x - data.parent_x) * data.scroll_x).round()
-                        / handle.cx.style.dpi_factor as f32;
-                    let top = ((data.child_y - data.parent_y) * data.scroll_y).round()
-                        / handle.cx.style.dpi_factor as f32;
-                    handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
-                }
-            },
-        );
+        ScrollContent::new(cx, content).bind(data.clone(), |handle, data| {
+            let dpi_factor = handle.scale_factor();
+            if dpi_factor > 0.0 {
+                let data = data.get(handle.cx);
+                let left = ((data.child_x - data.parent_x) * data.scroll_x).round()
+                    / handle.cx.style.dpi_factor as f32;
+                let top = ((data.child_y - data.parent_y) * data.scroll_y).round()
+                    / handle.cx.style.dpi_factor as f32;
+                handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
+            }
+        });
 
         if scroll_y {
             Scrollbar::new(
@@ -268,7 +265,6 @@ impl ScrollContent {
 }
 
 impl View for ScrollContent {
-
     fn element(&self) -> Option<&'static str> {
         Some("scroll_content")
     }

@@ -56,10 +56,6 @@ impl TextContext {
         &mut self.font_system
     }
 
-    pub(crate) fn into_font_system(self) -> FontSystem {
-        self.font_system
-    }
-
     pub(crate) fn clear_buffer(&mut self, entity: Entity) {
         self.buffers.remove(&entity);
     }
@@ -512,16 +508,6 @@ impl TextContext {
             }
             None
         })
-    }
-
-    pub(crate) fn take_buffers(&mut self) -> HashMap<Entity, Vec<String>> {
-        // TODO no clone please
-        self.buffers
-            .drain()
-            .map(|(k, mut v)| {
-                (k, v.buffer_mut().lines.drain(..).map(|l| l.text().to_owned()).collect())
-            })
-            .collect()
     }
 }
 
