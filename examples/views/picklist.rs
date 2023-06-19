@@ -2,7 +2,7 @@ mod helpers;
 use helpers::*;
 use vizia::prelude::*;
 
-#[derive(Clone, Lens)]
+#[derive(Lens)]
 struct AppState {
     options: Vec<&'static str>,
     selected_option: usize,

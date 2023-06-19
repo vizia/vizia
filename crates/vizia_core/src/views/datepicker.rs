@@ -185,6 +185,7 @@ impl Datepicker {
                                             handle
                                                 .text(&day_number.to_string())
                                                 .class("datepicker-calendar-day")
+                                                .navigable(!disabled)
                                                 .toggle_class(
                                                     "datepicker-calendar-day-disabled",
                                                     disabled,
@@ -221,7 +222,6 @@ impl Datepicker {
             })
             .class("datepicker-calendar");
         })
-        .navigable(true)
     }
 }
 

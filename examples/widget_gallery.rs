@@ -1,3 +1,4 @@
+use chrono::{NaiveDate, Utc};
 use vizia::{icons::ICON_CHECK, prelude::*};
 
 mod helpers;
@@ -8,7 +9,7 @@ const STYLE: &str = r#"
         child-space: 0px;
     }
 
-    scrollview .scroll_content {
+    scrollview.widgets > .scroll_content {
         child-space: 20px;
         row-between: 15px;
     }
@@ -29,13 +30,13 @@ fn main() {
                 checkbox(cx);
 
                 Label::new(cx, "Chip").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // chip(cx);
+                chip(cx);
 
                 Label::new(cx, "Combobox").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // combobox(cx);
+                combobox(cx);
 
                 Label::new(cx, "Datepicker").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // datepicker(cx);
+                datepicker(cx);
 
                 Label::new(cx, "HStack").font_size(30.0).font_weight(FontWeightKeyword::Bold);
                 // hstack(cx);
@@ -56,7 +57,7 @@ fn main() {
                 // notification(cx);
 
                 Label::new(cx, "Picklist").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // picklist(cx);
+                picklist(cx);
 
                 Label::new(cx, "Popup").font_size(30.0).font_weight(FontWeightKeyword::Bold);
                 // popup(cx);
@@ -96,12 +97,15 @@ fn main() {
 
                 Label::new(cx, "zstack").font_size(30.0).font_weight(FontWeightKeyword::Bold);
                 // zstack(cx);
-            });
+            })
+            .class("widgets");
         });
     })
     .title("Widget Gallery")
     .run();
 }
+
+// BUTTON
 
 pub fn button(cx: &mut Context) -> Handle<impl View> {
     HStack::new(cx, |cx| {
@@ -128,6 +132,8 @@ pub fn button(cx: &mut Context) -> Handle<impl View> {
     .col_between(Pixels(15.0))
     .size(Auto)
 }
+
+// CHECKBOX
 
 #[derive(Lens)]
 pub struct CheckboxData {
@@ -169,6 +175,110 @@ pub fn checkbox(cx: &mut Context) -> Handle<impl View> {
     .row_between(Pixels(15.0))
 }
 
+// CHIP
+
+#[derive(Lens)]
+struct ChipData {
+    chip: String,
+    chips: Vec<String>,
+}
+
+impl Model for ChipData {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            ChipEvent::CloseChip(index) => {
+                self.chips.remove(*index);
+            }
+        })
+    }
+}
+
+enum ChipEvent {
+    CloseChip(usize),
+}
+
+pub fn chip(cx: &mut Context) {
+    ChipData {
+        chip: "Chip".to_string(),
+        chips: vec!["red".to_string(), "green".to_string(), "blue".to_string()],
+    }
+    .build(cx);
+
+    Chip::new(cx, ChipData::chip).background_color(Color::from("#ff004444"));
+    List::new(cx, ChipData::chips, |cx, index, item| {
+        Chip::new(cx, item)
+            .on_close(move |cx| cx.emit(ChipEvent::CloseChip(index)))
+            .background_color(Color::from("#ff000044"));
+    })
+    .layout_type(LayoutType::Row)
+    .col_between(Pixels(4.0));
+}
+
+#[derive(Clone, Lens)]
+struct ComboBoxData {
+    options: Vec<&'static str>,
+    selected_option: usize,
+}
+
+pub enum ComboBoxEvent {
+    SetOption(usize),
+}
+
+impl Model for ComboBoxData {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            ComboBoxEvent::SetOption(index) => {
+                self.selected_option = *index;
+            }
+        });
+    }
+}
+
+pub fn combobox(cx: &mut Context) {
+    ComboBoxData {
+        options: vec![
+            "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+        ],
+
+        selected_option: 0,
+    }
+    .build(cx);
+
+    ComboBox::new(cx, ComboBoxData::options, ComboBoxData::selected_option)
+        .on_select(|cx, index| cx.emit(ComboBoxEvent::SetOption(index)))
+        .width(Pixels(140.0));
+}
+
+// DATEPICKER
+#[derive(Lens)]
+struct DatepickerData {
+    date: NaiveDate,
+}
+
+pub enum DatepickerEvent {
+    SetDate(NaiveDate),
+}
+
+impl Model for DatepickerData {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            DatepickerEvent::SetDate(date) => {
+                println!("Date changed to: {}", date);
+                self.date = *date;
+            }
+        });
+    }
+}
+
+pub fn datepicker(cx: &mut Context) {
+    DatepickerData { date: Utc::now().date_naive() }.build(cx);
+
+    Datepicker::new(cx, DatepickerData::date)
+        .on_select(|cx, date| cx.emit(DatepickerEvent::SetDate(date)));
+}
+
+// LABEL
+
 pub fn label(cx: &mut Context) {
     VStack::new(cx, |cx| {
         Label::new(cx, "This is some simple text");
@@ -177,6 +287,8 @@ pub fn label(cx: &mut Context) {
     .height(Auto)
     .row_between(Pixels(15.0));
 }
+
+// RADIOBUTTON
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Options {
@@ -264,6 +376,43 @@ fn index_to_option(index: usize) -> Options {
         2 => Options::Third,
         _ => unreachable!(),
     }
+}
+
+// PICKLIST
+
+#[derive(Lens)]
+struct PicklistData {
+    options: Vec<&'static str>,
+    selected_option: usize,
+}
+
+pub enum PicklistEvent {
+    SetOption(usize),
+}
+
+impl Model for PicklistData {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            PicklistEvent::SetOption(index) => {
+                self.selected_option = *index;
+            }
+        });
+    }
+}
+
+pub fn picklist(cx: &mut Context) {
+    PicklistData {
+        options: vec![
+            "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+            "Eleven", "Twelve",
+        ],
+        selected_option: 0,
+    }
+    .build(cx);
+
+    PickList::new(cx, PicklistData::options, PicklistData::selected_option, true)
+        .on_select(|cx, index| cx.emit(PicklistEvent::SetOption(index)))
+        .width(Pixels(140.0));
 }
 
 #[derive(Debug, Lens)]

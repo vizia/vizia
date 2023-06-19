@@ -33,8 +33,8 @@ button:active {
 }
 
 button:focus-visible {
-    outline-width: 2px;
-    outline-color: #51afef80;
+    outline-width: 1px;
+    outline-color: #51afef;
     outline-offset: 3px;
 }
 
@@ -234,6 +234,12 @@ datepicker {
 .datepicker-calendar-day {
     color: #525252;
     cursor: hand;
+    border-radius: 4px;
+}
+
+.datepicker-calendar-day:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
 }
 
 .datepicker-calendar-day:checked {
@@ -279,6 +285,10 @@ dropdown {
     background-color: #fdfdfd;
 }
 
+dropdown .title {
+    border-radius: 4px;
+}
+
 dropdown:over {
     background-color: #f9f9f9;
 }
@@ -300,7 +310,7 @@ dropdown:active .title {
 
 dropdown .title:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef80;
+    outline-color: #51afef;
     outline-offset: 3px;
 }
 
@@ -325,7 +335,7 @@ dropdown list label:checked {
 
 dropdown list label:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef80;
+    outline-color: #51afef;
     outline-offset: 3px;
 }
 
@@ -341,11 +351,11 @@ dropdown .list label:checked {
     background-color: #5dc4ec;
 }
 
-dropdown .list label:focus-visible {
+/* dropdown .list label:focus-visible {
     outline-width: 1px;
     outline-color: #51afef80;
     outline-offset: 3px;
-}
+} */
 
 /* KNOB */
 
@@ -355,7 +365,7 @@ knob {
 
 knob:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef80;
+    outline-color: #51afef;
     outline-offset: 3px;
 }
 
@@ -510,6 +520,10 @@ notification .notification-header button {
 
 /* PICKLIST */
 
+picklist {
+    border-radius: 4px;
+}
+
 picklist:focus-visible {
     outline-width: 1px;
     outline-color: #51afef;
@@ -540,7 +554,7 @@ radiobutton:hover {
 
 radiobutton:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef80;
+    outline-color: #51afef;
     outline-offset: 3px;
 }
 
@@ -583,7 +597,7 @@ radiobutton:disabled .inner {
 
 rating:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef80;
+    outline-color: #51afef;
     outline-offset: 3px;
     border-radius: 4px;
 }
@@ -598,7 +612,7 @@ rating .icon {
 
 rating .icon:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef80;
+    outline-color: #51afef;
     outline-offset: 3px;
     border-radius: 4px;
 }
@@ -693,7 +707,7 @@ slider * {
 
 slider:focus-visible {
     outline-width: 1px;
-    outline-color: #51afef80;
+    outline-color: #51afef;
     outline-offset: 3px;
     border-radius: 4px;
 }
@@ -722,6 +736,12 @@ spinbox {
 
 spinbox .spinbox-button {
     cursor: hand;
+    border-radius: 4px;
+}
+
+spinbox .spinbox-button:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
 }
 
 spinbox textbox.spinbox-value {
@@ -745,7 +765,17 @@ spinbox picklist.spinbox-value .title {
     border-width: 0px;
 }
 
+spinbox:focus-visible {
+    outline-width: 1px;
+    outline-color: #51afef;
+    outline-offset: 3px;
+}
+
 /* SWITCH */
+
+switch {
+    border-radius: 4px;
+}
 
 switch .switch-handle-bg {
     border-radius: 6px;

@@ -77,6 +77,7 @@ impl Spinbox {
                             }
                         }
                     })
+                    .navigable(true)
                     .class("spinbox-button");
                 (content)(cx).class("spinbox-value").width(Stretch(1.0));
                 Label::new(cx, "")
@@ -102,6 +103,7 @@ impl Spinbox {
                             }
                         }
                     })
+                    .navigable(true)
                     .class("spinbox-button");
             })
             .toggle_class("horizontal", Spinbox::kind.map(|kind| kind == &SpinboxKind::Horizontal))
