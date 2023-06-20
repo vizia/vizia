@@ -667,31 +667,17 @@ tabview.vertical {
     layout-type: row;
 }
 
-tabview.vertical > scrollview {
+tabview.vertical > scrollview.vertical {
     width: auto;
     height: 1s;
 }
 
-tabview.vertical
-    > scrollview
-    > .scroll_content
-    > .tabview-tabheader-wrapper
-    > tabheader {
+tabview > scrollview > scroll_content {
     layout-type: row;
 }
 
-.tabview-tabheader-wrapper {
-    layout-type: row;
-}
-
-.tabview-tabheader-wrapper.vertical {
+tabview.vertical > scrollview.vertical > scroll_content {
     layout-type: column;
-}
-
-.tabview-tabheader-wrapper {
-    height: auto;
-    width: auto;
-    col-between: 1px;
 }
 
 tabheader {
@@ -700,7 +686,7 @@ tabheader {
 }
 
 tabheader label {
-    height: 30px;
+    height: 32px;
     child-left: 12px;
     child-right: 12px;
     child-top: 1s;

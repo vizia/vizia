@@ -19,7 +19,6 @@ use crate::style::{Abilities, IntoTransform, PseudoClassFlags, Style, SystemFlag
 use crate::window::DropData;
 use vizia_id::GenerationalId;
 use vizia_input::{Modifiers, MouseState};
-use vizia_storage::SparseSet;
 
 use crate::context::EmitContext;
 use crate::text::TextContext;

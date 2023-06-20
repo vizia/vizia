@@ -15,7 +15,6 @@ use crate::style::{ImageOrGradient, IntoTransform, Style};
 use crate::text::{TextConfig, TextContext};
 use crate::vg::{Paint, Path};
 use vizia_input::{Modifiers, MouseState};
-use vizia_storage::SparseSet;
 use vizia_style::{
     BackgroundSize, BoxShadow, ClipPath, Filter, Gradient, HorizontalPositionKeyword,
     LengthPercentageOrAuto, LineDirection, VerticalPositionKeyword,

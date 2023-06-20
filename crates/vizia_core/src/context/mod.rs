@@ -44,8 +44,8 @@ use crate::style::{PseudoClassFlags, Style};
 use crate::text::{TextConfig, TextContext};
 use vizia_id::{GenerationalId, IdManager};
 use vizia_input::{Modifiers, MouseState};
+use vizia_storage::ChildIterator;
 use vizia_storage::TreeExt;
-use vizia_storage::{ChildIterator, SparseSet};
 
 static DEFAULT_LAYOUT: &str = include_str!("../../resources/themes/default_layout.css");
 static DARK_THEME: &str = include_str!("../../resources/themes/dark_theme.css");

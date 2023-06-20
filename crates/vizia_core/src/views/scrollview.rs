@@ -109,7 +109,7 @@ impl Model for ScrollData {
 }
 
 pub struct ScrollView<L> {
-    data: L,
+    lens: L,
 }
 
 impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
@@ -124,7 +124,7 @@ impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        Self { data: ScrollData::root }
+        Self { lens: ScrollData::root }
             .build(cx, move |cx| {
                 ScrollData {
                     scroll_x: initial_x,
@@ -148,42 +148,35 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         cx: &mut Context,
         scroll_x: bool,
         scroll_y: bool,
-        data: L,
+        lens: L,
         content: F,
     ) -> Handle<Self>
     where
         F: 'static + FnOnce(&mut Context),
     {
-        if cx.data::<ScrollData>().is_none() {
-            panic!("ScrollView::custom requires a ScrollData to be built into a parent");
-        }
-
-        Self { data: data.clone() }.build(cx, |cx| {
-            Self::common_builder(cx, data, content, scroll_x, scroll_y);
+        Self { lens: lens.clone() }.build(cx, |cx| {
+            Self::common_builder(cx, lens, content, scroll_x, scroll_y);
         })
     }
 
-    fn common_builder<F>(cx: &mut Context, data: L, content: F, scroll_x: bool, scroll_y: bool)
+    fn common_builder<F>(cx: &mut Context, lens: L, content: F, scroll_x: bool, scroll_y: bool)
     where
         F: 'static + FnOnce(&mut Context),
     {
-        ScrollContent::new(cx, content).bind(data.clone(), |handle, data| {
-            let dpi_factor = handle.scale_factor();
-            if dpi_factor > 0.0 {
-                let data = data.get(handle.cx);
-                let left = ((data.child_x - data.parent_x) * data.scroll_x).round()
-                    / handle.cx.style.dpi_factor as f32;
-                let top = ((data.child_y - data.parent_y) * data.scroll_y).round()
-                    / handle.cx.style.dpi_factor as f32;
-                handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
-            }
+        ScrollContent::new(cx, content).bind(lens.clone(), |handle, data| {
+            let scale_factor = handle.scale_factor();
+            let data = data.get(handle.cx);
+            let left = ((data.child_x - data.parent_x) * data.scroll_x).round() / scale_factor;
+            let top = ((data.child_y - data.parent_y) * data.scroll_y).round() / scale_factor;
+            handle.left(Units::Pixels(-left.abs())).top(Units::Pixels(-top.abs()));
+            // handle.translate((Units::Pixels(-left.abs()), Units::Pixels(-top.abs())));
         });
 
         if scroll_y {
             Scrollbar::new(
                 cx,
-                data.clone().then(ScrollData::scroll_y),
-                data.clone().then(RatioLens::new(ScrollData::parent_y, ScrollData::child_y)),
+                lens.clone().then(ScrollData::scroll_y),
+                lens.clone().then(RatioLens::new(ScrollData::parent_y, ScrollData::child_y)),
                 Orientation::Vertical,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetY(value));
@@ -195,8 +188,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
         if scroll_x {
             Scrollbar::new(
                 cx,
-                data.clone().then(ScrollData::scroll_x),
-                data.then(RatioLens::new(ScrollData::parent_x, ScrollData::child_x)),
+                lens.clone().then(ScrollData::scroll_x),
+                lens.then(RatioLens::new(ScrollData::parent_x, ScrollData::child_x)),
                 Orientation::Horizontal,
                 |cx, value| {
                     cx.emit(ScrollEvent::SetX(value));
@@ -229,21 +222,22 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
                     if cx.modifiers.contains(Modifiers::SHIFT) { (-*y, -*x) } else { (-*x, -*y) };
 
                 // what percentage of the negative space does this cross?
-                let data = self.data.get(cx);
+                let data = self.lens.get(cx);
                 if x != 0.0 && data.child_x > data.parent_x {
                     let negative_space = data.child_x - data.parent_x;
                     let logical_delta = x * SCROLL_SENSITIVITY / negative_space;
                     cx.emit(ScrollEvent::ScrollX(logical_delta));
+                    // Prevent event propagating to ancestor scrollviews.
+                    meta.consume();
                 }
-                let data = cx.data::<ScrollData>().unwrap();
+
                 if y != 0.0 && data.child_y > data.parent_y {
                     let negative_space = data.child_y - data.parent_y;
                     let logical_delta = y * SCROLL_SENSITIVITY / negative_space;
                     cx.emit(ScrollEvent::ScrollY(logical_delta));
+                    // Prevent event propagating to ancestor scrollviews.
+                    meta.consume();
                 }
-
-                // Prevent event propagating to ancestor scrollviews.
-                meta.consume();
             }
 
             WindowEvent::MouseOut => {
@@ -269,7 +263,7 @@ pub struct ScrollContent {}
 
 impl ScrollContent {
     pub fn new(cx: &mut Context, content: impl FnOnce(&mut Context)) -> Handle<Self> {
-        Self {}.build(cx, content).class("scroll_content")
+        Self {}.build(cx, content)
     }
 }
 

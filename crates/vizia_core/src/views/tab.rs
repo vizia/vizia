@@ -23,31 +23,24 @@ impl TabView {
                 let content2 = content.clone();
                 // Tab headers
                 ScrollView::new(cx, 0.0, 0.0, true, true, |cx| {
-                    VStack::new(cx, move |cx| {
-                        Binding::new(
-                            cx,
-                            lens.clone().map(|list| list.len()),
-                            move |cx, list_length| {
-                                let list_length = list_length.get_fallible(cx).map_or(0, |d| d);
-                                for index in 0..list_length {
-                                    let l = lens.clone().index(index);
-                                    let builder = (content2)(cx, l).header;
-                                    TabHeader::new(cx, index, builder)
-                                        .bind(
-                                            TabView::selected_index,
-                                            move |handle, selected_index| {
-                                                let selected_index = selected_index.get(handle.cx);
-                                                handle.checked(selected_index == index);
-                                            },
-                                        )
-                                        .toggle_class("vertical", TabView::is_vertical)
-                                        .cursor(CursorIcon::Hand);
-                                }
-                            },
-                        )
+                    //VStack::new(cx, move |cx| {
+                    Binding::new(cx, lens.clone().map(|list| list.len()), move |cx, list_length| {
+                        let list_length = list_length.get_fallible(cx).map_or(0, |d| d);
+                        for index in 0..list_length {
+                            let l = lens.clone().index(index);
+                            let builder = (content2)(cx, l).header;
+                            TabHeader::new(cx, index, builder)
+                                .bind(TabView::selected_index, move |handle, selected_index| {
+                                    let selected_index = selected_index.get(handle.cx);
+                                    handle.checked(selected_index == index);
+                                })
+                                .toggle_class("vertical", TabView::is_vertical)
+                                .cursor(CursorIcon::Hand);
+                        }
                     })
-                    .toggle_class("vertical", TabView::is_vertical)
-                    .class("tabview-tabheader-wrapper");
+                    //})
+                    //.toggle_class("vertical", TabView::is_vertical)
+                    //.class("tabview-tabheader-wrapper");
                 })
                 .toggle_class("vertical", TabView::is_vertical);
 

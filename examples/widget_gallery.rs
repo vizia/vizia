@@ -13,9 +13,13 @@ const STYLE: &str = r#"
         child-space: 0px;
     }
 
-    scrollview.widgets > .scroll_content {
+    scrollview.widgets > scroll_content {
         child-space: 20px;
         row-between: 15px;
+    }
+
+    tabview.widgets > scrollview > scroll_content {
+        child-space: 8px;
     }
 
     tabview.widgets tabheader label {
@@ -23,7 +27,8 @@ const STYLE: &str = r#"
     }
 
     tabview.widgets tabheader:checked label {
-        background-color: blue;
+        border-radius: 4px;
+        background-color: #51afef;
     }
 
     vstack.panel {
@@ -51,6 +56,7 @@ fn main() {
         AppData {
             tabs: vec![
                 "All",
+                "Button",
                 "Label",
                 "Checkbox",
                 "Chip",
