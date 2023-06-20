@@ -658,19 +658,33 @@ tabview {
     height: 1s;
 }
 
+tabview > scrollview {
+    width: 1s;
+    height: auto;
+}
+
 tabview.vertical {
     layout-type: row;
 }
 
-tabview.vertical tabheader {
+tabview.vertical > scrollview {
+    width: auto;
+    height: 1s;
+}
+
+tabview.vertical
+    > scrollview
+    > .scroll_content
+    > .tabview-tabheader-wrapper
+    > tabheader {
     layout-type: row;
 }
 
-tabview .tabview-tabheader-wrapper {
+.tabview-tabheader-wrapper {
     layout-type: row;
 }
 
-tabview.vertical .tabview-tabheader-wrapper {
+.tabview-tabheader-wrapper.vertical {
     layout-type: column;
 }
 
@@ -698,17 +712,17 @@ tabheader .indicator {
     width: 1s;
 }
 
-tabview.vertical tabheader .indicator {
+tabheader.vertical .indicator {
     width: 2px;
     height: 1s;
 }
 
-tabview .tabview-divider {
+.tabview-divider {
     height: 1px;
     width: 1s;
 }
 
-tabview.vertical .tabview-divider {
+.tabview-divider.vertical {
     width: 1px;
     height: 1s;
 }

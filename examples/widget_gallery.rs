@@ -1,8 +1,12 @@
 use chrono::{NaiveDate, Utc};
-use vizia::{icons::ICON_CHECK, prelude::*};
+use vizia::prelude::*;
+use vizia_core::icons::{ICON_CHECK, ICON_CLIPBOARD, ICON_COPY, ICON_CUT};
 
 mod helpers;
 use helpers::*;
+
+const COLORS: [Color; 3] =
+    [Color::rgb(200, 50, 50), Color::rgb(50, 200, 50), Color::rgb(50, 50, 200)];
 
 const STYLE: &str = r#"
     .container {
@@ -13,124 +17,651 @@ const STYLE: &str = r#"
         child-space: 20px;
         row-between: 15px;
     }
+
+    tabview.widgets tabheader label {
+        width: 120px;
+    }
+
+    tabview.widgets tabheader:checked label {
+        background-color: blue;
+    }
+
+    vstack.panel {
+        height: auto;
+        row-between: 12px;
+        bottom: 20px;
+    }
+
+    label.title {
+        font-size: 30;
+        font-weight: bold;
+        bottom: 20px;
+    }
 "#;
 
 #[derive(Lens)]
-pub struct AppData {}
+pub struct AppData {
+    tabs: Vec<&'static str>,
+}
+
+impl Model for AppData {}
 
 fn main() {
     Application::new(|cx| {
-        ExamplePage::vertical(cx, |cx| {
-            cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
-            ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                Label::new(cx, "Button").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                button(cx);
+        AppData {
+            tabs: vec![
+                "All",
+                "Label",
+                "Checkbox",
+                "Chip",
+                "Combobox",
+                "Datepicker",
+                "HStack",
+                "Knob",
+                "List",
+                "Menu",
+                "Notification",
+                "Picklist",
+                "Popup",
+                "Radiobutton",
+                "Rating",
+                "Scrollview",
+                "Slider",
+                "Spinbox",
+                "Switch",
+                "Tabview",
+                "Textbox",
+                "Timepicker",
+                "Tooltip",
+                "VStack",
+                "ZStack",
+            ],
+        }
+        .build(cx);
 
-                Label::new(cx, "Checkbox").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                checkbox(cx);
+        // ExamplePage::vertical(cx, |cx| {
+        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-                Label::new(cx, "Chip").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                chip(cx);
+        TabView::new(cx, AppData::tabs, |cx, item| match item.get(cx) {
+            "All" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        button(cx);
+                        checkbox(cx);
+                        chip(cx);
+                        combobox(cx);
+                        datepicker(cx);
+                        hstack(cx);
+                        knob(cx);
+                        label(cx);
+                        list(cx);
+                        menu(cx);
+                        notification(cx);
+                        picklist(cx);
+                        popup(cx);
+                        radiobutton(cx);
+                        rating(cx);
+                        scrollview(cx);
+                        slider(cx);
+                        spinbox(cx);
+                        switch(cx);
+                        tabview(cx);
+                        textbox(cx);
+                        timepicker(cx);
+                        tooltip(cx);
+                        vstack(cx);
+                        zstack(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Combobox").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                combobox(cx);
+            "Button" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        button(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Datepicker").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                datepicker(cx);
+            "Checkbox" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        checkbox(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "HStack").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // hstack(cx);
+            "Chip" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        chip(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Knob").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // knob(cx);
+            "Combobox" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        combobox(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Label").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                label(cx);
+            "Datepicker" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        datepicker(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "List").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // list(cx);
+            "HStack" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        hstack(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Menu").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // menu(cx);
+            "Knob" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        knob(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Notification").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // notification(cx);
+            "Label" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        label(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Picklist").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                picklist(cx);
+            "List" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        list(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Popup").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // popup(cx);
+            "Menu" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        menu(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Radiobutton").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                radiobutton(cx);
+            "Notification" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        notification(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Rating").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                rating(cx);
+            "Picklist" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        picklist(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Scrollview").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // scrollview(cx);
+            "Popup" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        popup(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Slider").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                slider(cx);
+            "Radiobutton" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        radiobutton(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Spinbox").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // spinbox(cx);
+            "Rating" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        rating(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Switch").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                switch(cx);
+            "Scrollview" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        scrollview(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Tabview").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // tabview(cx);
+            "Slider" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        slider(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Textbox").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // textbox(cx);
+            "Spinbox" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        spinbox(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Timepicker").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // timepicker(cx);
+            "Switch" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        switch(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "Tooltip").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // tooltip(cx);
+            "Tabview" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        tabview(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "VStack").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // vstack(cx);
+            "Textbox" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        textbox(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
 
-                Label::new(cx, "zstack").font_size(30.0).font_weight(FontWeightKeyword::Bold);
-                // zstack(cx);
-            })
-            .class("widgets");
-        });
+            "Timepicker" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        timepicker(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
+
+            "Tooltip" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        tooltip(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
+
+            "VStack" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        vstack(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
+
+            "ZStack" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                },
+                |cx| {
+                    ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
+                        zstack(cx);
+                    })
+                    .class("widgets");
+                },
+            ),
+
+            _ => TabPair::new(|_| {}, |_| {}),
+        })
+        .class("widgets")
+        .vertical();
+        // });
     })
     .title("Widget Gallery")
     .run();
 }
 
-// BUTTON
+fn zstack(cx: &mut Context) {
+    Label::new(cx, "ZStack").class("title");
+}
 
-pub fn button(cx: &mut Context) -> Handle<impl View> {
-    HStack::new(cx, |cx| {
-        // Basic Button
-        Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
-        // Accent Button
-        Button::new(cx, |_| {}, |cx| Label::new(cx, "Accent Button")).class("accent");
-        // Outline Button
-        Button::new(cx, |_| {}, |cx| Label::new(cx, "Outline Button")).class("outline");
-        // Ghost Button
-        Button::new(cx, |_| {}, |cx| Label::new(cx, "Ghost Button")).class("ghost");
-        // Button with Icon
-        Button::new(
+fn vstack(cx: &mut Context) {
+    VStack::new(cx, |cx| {
+        Label::new(cx, "VStack").class("title");
+
+        VStack::new(cx, |cx| {
+            for i in 0..3 {
+                Element::new(cx).size(Pixels(100.0)).background_color(COLORS[i]);
+            }
+        })
+        .size(Auto)
+        .child_space(Stretch(1.0));
+    })
+    .class("panel");
+}
+
+fn tooltip(cx: &mut Context) {
+    Label::new(cx, "Tooltip").class("title");
+}
+
+fn timepicker(cx: &mut Context) {
+    Label::new(cx, "Timepicker").class("title");
+}
+
+fn spinbox(cx: &mut Context) {
+    Label::new(cx, "Spinbox").class("title");
+}
+
+fn scrollview(cx: &mut Context) {
+    Label::new(cx, "Scrollview").class("title");
+}
+
+fn popup(cx: &mut Context) {
+    Label::new(cx, "Popup").class("title");
+}
+
+fn notification(cx: &mut Context) {
+    Label::new(cx, "Notification").class("title");
+}
+
+fn menu(cx: &mut Context) {
+    Label::new(cx, "Menu").class("title");
+
+    MenuBar::new(cx, |cx| {
+        Submenu::new(
             cx,
-            |_| {},
+            |cx| Label::new(cx, "File"),
             |cx| {
-                HStack::new(cx, |cx| {
-                    Label::new(cx, ICON_CHECK).class("icon");
-                    Label::new(cx, "Button with Icon");
-                })
+                MenuButton::new(
+                    cx,
+                    |_| println!("File"),
+                    |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, "New");
+                            Label::new(cx, &format!("Ctrl + N")).class("shortcut");
+                        })
+                    },
+                );
+                MenuButton::new(
+                    cx,
+                    |_| println!("Open"),
+                    |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, "Open");
+                            Label::new(cx, &format!("Ctrl + O")).class("shortcut");
+                        })
+                    },
+                );
+                Submenu::new(
+                    cx,
+                    |cx| Label::new(cx, "Open Recent"),
+                    |cx| {
+                        MenuButton::new(cx, |_| println!("Doc 1"), |cx| Label::new(cx, "Doc 1"));
+                        Submenu::new(
+                            cx,
+                            |cx| Label::new(cx, "Doc 2"),
+                            |cx| {
+                                MenuButton::new(
+                                    cx,
+                                    |_| println!("Version 1"),
+                                    |cx| Label::new(cx, "Version 1"),
+                                );
+                                MenuButton::new(
+                                    cx,
+                                    |_| println!("Version 2"),
+                                    |cx| Label::new(cx, "Version 2"),
+                                );
+                                MenuButton::new(
+                                    cx,
+                                    |_| println!("Version 3"),
+                                    |cx| Label::new(cx, "Version 3"),
+                                );
+                            },
+                        );
+                        MenuButton::new(cx, |_| println!("Doc 3"), |cx| Label::new(cx, "Doc 3"));
+                    },
+                );
+                MenuDivider::new(cx);
+                MenuButton::new(cx, |_| println!("Save"), |cx| Label::new(cx, "Save"));
+                MenuButton::new(cx, |_| println!("Save As"), |cx| Label::new(cx, "Save As"));
+                MenuDivider::new(cx);
+                MenuButton::new(cx, |_| println!("Quit"), |cx| Label::new(cx, "Quit"));
+            },
+        );
+
+        Submenu::new(
+            cx,
+            |cx| Label::new(cx, "Edit"),
+            |cx| {
+                MenuButton::new(
+                    cx,
+                    |_| println!("Cut"),
+                    |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, ICON_CUT).class("icon");
+                            Label::new(cx, "Cut");
+                        })
+                    },
+                );
+                MenuButton::new(
+                    cx,
+                    |_| println!("Copy"),
+                    |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, ICON_COPY).class("icon");
+                            Label::new(cx, "Copy");
+                        })
+                    },
+                );
+                MenuButton::new(
+                    cx,
+                    |_| println!("Paste"),
+                    |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, ICON_CLIPBOARD).class("icon");
+                            Label::new(cx, "Paste");
+                        })
+                    },
+                );
+            },
+        );
+        Submenu::new(
+            cx,
+            |cx| Label::new(cx, "View"),
+            |cx| {
+                MenuButton::new(cx, |_| println!("Zoom In"), |cx| Label::new(cx, "Zoom In"));
+                MenuButton::new(cx, |_| println!("Zoom Out"), |cx| Label::new(cx, "Zoom Out"));
+                Submenu::new(
+                    cx,
+                    |cx| Label::new(cx, "Zoom Level"),
+                    |cx| {
+                        MenuButton::new(cx, |_| println!("10%"), |cx| Label::new(cx, "10%"));
+                        MenuButton::new(cx, |_| println!("20%"), |cx| Label::new(cx, "20%"));
+                        MenuButton::new(cx, |_| println!("50%"), |cx| Label::new(cx, "50%"));
+                        MenuButton::new(cx, |_| println!("100%"), |cx| Label::new(cx, "100%"));
+                        MenuButton::new(cx, |_| println!("150%"), |cx| Label::new(cx, "150%"));
+                        MenuButton::new(cx, |_| println!("200%"), |cx| Label::new(cx, "200%"));
+                    },
+                );
+            },
+        );
+        Submenu::new(
+            cx,
+            |cx| Label::new(cx, "Help"),
+            |cx| {
+                MenuButton::new(
+                    cx,
+                    |_| println!("Show License"),
+                    |cx| Label::new(cx, "Show License"),
+                );
+                MenuButton::new(cx, |_| println!("About"), |cx| Label::new(cx, "About"));
             },
         );
     })
-    .col_between(Pixels(15.0))
-    .size(Auto)
+    .top(Pixels(0.0));
+}
+
+fn list(cx: &mut Context) {
+    Label::new(cx, "List").class("title");
+}
+
+fn knob(cx: &mut Context) {
+    Label::new(cx, "Knob").class("title");
+}
+
+fn hstack(cx: &mut Context) {
+    VStack::new(cx, |cx| {
+        Label::new(cx, "HStack").class("title");
+
+        HStack::new(cx, |cx| {
+            for i in 0..3 {
+                Element::new(cx).size(Pixels(100.0)).background_color(COLORS[i]);
+            }
+        })
+        .size(Auto)
+        .child_space(Stretch(1.0));
+    })
+    .class("panel");
+}
+
+// BUTTON
+
+pub fn button(cx: &mut Context) {
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Button").class("title");
+        HStack::new(cx, |cx| {
+            // Basic Button
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
+            // Accent Button
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Accent Button")).class("accent");
+            // Outline Button
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Outline Button")).class("outline");
+            // Ghost Button
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Ghost Button")).class("ghost");
+            // Button with Icon
+            Button::new(
+                cx,
+                |_| {},
+                |cx| {
+                    HStack::new(cx, |cx| {
+                        Label::new(cx, ICON_CHECK).class("icon");
+                        Label::new(cx, "Button with Icon");
+                    })
+                },
+            );
+        })
+        .height(Auto)
+        .col_between(Pixels(8.0));
+    })
+    .class("panel");
 }
 
 // CHECKBOX
@@ -154,10 +685,12 @@ impl Model for CheckboxData {
     }
 }
 
-pub fn checkbox(cx: &mut Context) -> Handle<impl View> {
+pub fn checkbox(cx: &mut Context) {
     CheckboxData { check: false }.build(cx);
 
     VStack::new(cx, |cx| {
+        Label::new(cx, "Checkbox").class("title");
+
         Checkbox::new(cx, CheckboxData::check).on_toggle(|cx| cx.emit(CheckboxEvent::Toggle));
 
         HStack::new(cx, |cx| {
@@ -171,8 +704,7 @@ pub fn checkbox(cx: &mut Context) -> Handle<impl View> {
         .child_bottom(Stretch(1.0))
         .col_between(Pixels(5.0));
     })
-    .height(Auto)
-    .row_between(Pixels(15.0))
+    .class("panel");
 }
 
 // CHIP
@@ -204,14 +736,20 @@ pub fn chip(cx: &mut Context) {
     }
     .build(cx);
 
-    Chip::new(cx, ChipData::chip).background_color(Color::from("#ff004444"));
-    List::new(cx, ChipData::chips, |cx, index, item| {
-        Chip::new(cx, item)
-            .on_close(move |cx| cx.emit(ChipEvent::CloseChip(index)))
-            .background_color(Color::from("#ff000044"));
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Chip").class("title");
+
+        Chip::new(cx, ChipData::chip).background_color(Color::from("#ff004444"));
+
+        List::new(cx, ChipData::chips, |cx, index, item| {
+            Chip::new(cx, item)
+                .on_close(move |cx| cx.emit(ChipEvent::CloseChip(index)))
+                .background_color(Color::from("#ff000044"));
+        })
+        .layout_type(LayoutType::Row)
+        .col_between(Pixels(4.0));
     })
-    .layout_type(LayoutType::Row)
-    .col_between(Pixels(4.0));
+    .class("panel");
 }
 
 #[derive(Clone, Lens)]
@@ -244,9 +782,14 @@ pub fn combobox(cx: &mut Context) {
     }
     .build(cx);
 
-    ComboBox::new(cx, ComboBoxData::options, ComboBoxData::selected_option)
-        .on_select(|cx, index| cx.emit(ComboBoxEvent::SetOption(index)))
-        .width(Pixels(140.0));
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Combobox").class("title");
+
+        ComboBox::new(cx, ComboBoxData::options, ComboBoxData::selected_option)
+            .on_select(|cx, index| cx.emit(ComboBoxEvent::SetOption(index)))
+            .width(Pixels(140.0));
+    })
+    .class("panel");
 }
 
 // DATEPICKER
@@ -273,19 +816,67 @@ impl Model for DatepickerData {
 pub fn datepicker(cx: &mut Context) {
     DatepickerData { date: Utc::now().date_naive() }.build(cx);
 
-    Datepicker::new(cx, DatepickerData::date)
-        .on_select(|cx, date| cx.emit(DatepickerEvent::SetDate(date)));
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Datepicker").class("title");
+
+        Datepicker::new(cx, DatepickerData::date)
+            .on_select(|cx, date| cx.emit(DatepickerEvent::SetDate(date)));
+    })
+    .class("panel");
 }
 
 // LABEL
 
 pub fn label(cx: &mut Context) {
     VStack::new(cx, |cx| {
+        Label::new(cx, "Label").font_size(30.0).class("title");
+
         Label::new(cx, "This is some simple text");
         Label::new(cx, "This is some simple text");
     })
-    .height(Auto)
-    .row_between(Pixels(15.0));
+    .class("panel");
+}
+
+// PICKLIST
+
+#[derive(Lens)]
+struct PicklistData {
+    options: Vec<&'static str>,
+    selected_option: usize,
+}
+
+pub enum PicklistEvent {
+    SetOption(usize),
+}
+
+impl Model for PicklistData {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            PicklistEvent::SetOption(index) => {
+                self.selected_option = *index;
+            }
+        });
+    }
+}
+
+pub fn picklist(cx: &mut Context) {
+    PicklistData {
+        options: vec![
+            "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+            "Eleven", "Twelve",
+        ],
+        selected_option: 0,
+    }
+    .build(cx);
+
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Picklist").class("title");
+
+        PickList::new(cx, PicklistData::options, PicklistData::selected_option, true)
+            .on_select(|cx, index| cx.emit(PicklistEvent::SetOption(index)))
+            .width(Pixels(140.0));
+    })
+    .class("panel");
 }
 
 // RADIOBUTTON
@@ -327,10 +918,12 @@ impl Model for RadioData {
     }
 }
 
-pub fn radiobutton(cx: &mut Context) -> Handle<impl View> {
+pub fn radiobutton(cx: &mut Context) {
     RadioData { option: Options::First }.build(cx);
 
     VStack::new(cx, |cx| {
+        Label::new(cx, "Radiobutton").class("title");
+
         HStack::new(cx, |cx| {
             for i in 0..3 {
                 let current_option = index_to_option(i);
@@ -365,8 +958,7 @@ pub fn radiobutton(cx: &mut Context) -> Handle<impl View> {
         .row_between(Pixels(10.0))
         .size(Auto);
     })
-    .row_between(Pixels(15.0))
-    .height(Auto)
+    .class("panel");
 }
 
 fn index_to_option(index: usize) -> Options {
@@ -378,124 +970,7 @@ fn index_to_option(index: usize) -> Options {
     }
 }
 
-// PICKLIST
-
-#[derive(Lens)]
-struct PicklistData {
-    options: Vec<&'static str>,
-    selected_option: usize,
-}
-
-pub enum PicklistEvent {
-    SetOption(usize),
-}
-
-impl Model for PicklistData {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            PicklistEvent::SetOption(index) => {
-                self.selected_option = *index;
-            }
-        });
-    }
-}
-
-pub fn picklist(cx: &mut Context) {
-    PicklistData {
-        options: vec![
-            "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
-            "Eleven", "Twelve",
-        ],
-        selected_option: 0,
-    }
-    .build(cx);
-
-    PickList::new(cx, PicklistData::options, PicklistData::selected_option, true)
-        .on_select(|cx, index| cx.emit(PicklistEvent::SetOption(index)))
-        .width(Pixels(140.0));
-}
-
-#[derive(Debug, Lens)]
-pub struct SwitchData {
-    pub option1: bool,
-    pub option2: bool,
-}
-
-#[derive(Debug)]
-pub enum SwitchEvent {
-    ToggleOption1,
-    ToggleOption2,
-}
-
-impl Model for SwitchData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            SwitchEvent::ToggleOption1 => {
-                self.option1 ^= true;
-            }
-
-            SwitchEvent::ToggleOption2 => {
-                self.option2 ^= true;
-            }
-        });
-    }
-}
-
-pub fn switch(cx: &mut Context) -> Handle<impl View> {
-    SwitchData { option1: true, option2: false }.build(cx);
-
-    Switch::new(cx, SwitchData::option1).on_toggle(|cx| cx.emit(SwitchEvent::ToggleOption1));
-
-    HStack::new(cx, |cx| {
-        Switch::new(cx, SwitchData::option2)
-            .on_toggle(|cx| cx.emit(SwitchEvent::ToggleOption2))
-            .id("Switch_1");
-        Label::new(cx, "Switch with label").describing("Switch_1");
-    })
-    .size(Auto)
-    .col_between(Pixels(5.0))
-    .child_top(Stretch(1.0))
-    .child_bottom(Stretch(1.0))
-}
-
-#[derive(Debug, Lens)]
-pub struct SliderData {
-    value: f32,
-}
-
-pub enum SliderEvent {
-    SetValue(f32),
-}
-
-impl Model for SliderData {
-    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            SliderEvent::SetValue(val) => {
-                self.value = *val;
-            }
-        });
-    }
-}
-
-pub fn slider(cx: &mut Context) -> Handle<impl View> {
-    SliderData { value: 0.0 }.build(cx);
-
-    Slider::new(cx, SliderData::value.map(|val| (val + 50.0) / 100.0))
-        .range(0.0..1.0)
-        .on_changing(move |cx, val| cx.emit(SliderEvent::SetValue(-50.0 + (val * 100.0))));
-
-    HStack::new(cx, |cx| {
-        Slider::new(cx, SliderData::value.map(|val| (val + 50.0) / 100.0))
-            .range(0.0..1.0)
-            .on_changing(move |cx, val| cx.emit(SliderEvent::SetValue(-50.0 + (val * 100.0))));
-        Label::new(cx, SliderData::value.map(|val| format!("{:.2}", (val + 50.0) / 100.0)))
-            .width(Pixels(50.0));
-    })
-    .child_top(Stretch(1.0))
-    .child_bottom(Stretch(1.0))
-    .height(Auto)
-    .col_between(Pixels(8.0))
-}
+// RATING
 
 #[derive(Clone, Lens)]
 struct RatingData {
@@ -520,9 +995,196 @@ enum RatingEvent {
 pub fn rating(cx: &mut Context) {
     RatingData { rating1: 3, rating2: 7 }.build(cx);
 
-    Rating::new(cx, 5, RatingData::rating1)
-        .on_change(|ex, rating| ex.emit(RatingEvent::SetRating1(rating)));
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Rating").class("title");
 
-    Rating::new(cx, 10, RatingData::rating2)
-        .on_change(|ex, rating| ex.emit(RatingEvent::SetRating2(rating)));
+        Rating::new(cx, 5, RatingData::rating1)
+            .on_change(|ex, rating| ex.emit(RatingEvent::SetRating1(rating)));
+
+        Rating::new(cx, 10, RatingData::rating2)
+            .on_change(|ex, rating| ex.emit(RatingEvent::SetRating2(rating)));
+    })
+    .class("panel");
+}
+
+// SLIDER
+
+#[derive(Debug, Lens)]
+pub struct SliderData {
+    value: f32,
+}
+
+pub enum SliderEvent {
+    SetValue(f32),
+}
+
+impl Model for SliderData {
+    fn event(&mut self, _: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            SliderEvent::SetValue(val) => {
+                self.value = *val;
+            }
+        });
+    }
+}
+
+pub fn slider(cx: &mut Context) {
+    SliderData { value: 0.0 }.build(cx);
+
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Slider").class("title");
+
+        Slider::new(cx, SliderData::value.map(|val| (val + 50.0) / 100.0))
+            .range(0.0..1.0)
+            .on_changing(move |cx, val| cx.emit(SliderEvent::SetValue(-50.0 + (val * 100.0))));
+
+        HStack::new(cx, |cx| {
+            Slider::new(cx, SliderData::value.map(|val| (val + 50.0) / 100.0))
+                .range(0.0..1.0)
+                .on_changing(move |cx, val| cx.emit(SliderEvent::SetValue(-50.0 + (val * 100.0))));
+            Label::new(cx, SliderData::value.map(|val| format!("{:.2}", (val + 50.0) / 100.0)))
+                .width(Pixels(50.0));
+        })
+        .child_top(Stretch(1.0))
+        .child_bottom(Stretch(1.0))
+        .height(Auto)
+        .col_between(Pixels(8.0));
+    })
+    .class("panel");
+}
+#[derive(Debug, Lens)]
+pub struct SwitchData {
+    pub option1: bool,
+    pub option2: bool,
+}
+
+// SWITCH
+
+#[derive(Debug)]
+pub enum SwitchEvent {
+    ToggleOption1,
+    ToggleOption2,
+}
+
+impl Model for SwitchData {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            SwitchEvent::ToggleOption1 => {
+                self.option1 ^= true;
+            }
+
+            SwitchEvent::ToggleOption2 => {
+                self.option2 ^= true;
+            }
+        });
+    }
+}
+
+pub fn switch(cx: &mut Context) {
+    SwitchData { option1: true, option2: false }.build(cx);
+
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Switch").class("title");
+
+        Switch::new(cx, SwitchData::option1).on_toggle(|cx| cx.emit(SwitchEvent::ToggleOption1));
+
+        HStack::new(cx, |cx| {
+            Switch::new(cx, SwitchData::option2)
+                .on_toggle(|cx| cx.emit(SwitchEvent::ToggleOption2))
+                .id("Switch_1");
+            Label::new(cx, "Switch with label").describing("Switch_1");
+        })
+        .size(Auto)
+        .col_between(Pixels(5.0))
+        .child_top(Stretch(1.0))
+        .child_bottom(Stretch(1.0));
+    })
+    .class("panel");
+}
+
+// TABVIEW
+
+#[derive(Lens)]
+pub struct TabviewData {
+    tabs: Vec<&'static str>,
+}
+
+impl Model for TabviewData {}
+
+pub fn tabview(cx: &mut Context) {
+    TabviewData { tabs: vec!["Tab1", "Tab2"] }.build(cx);
+    VStack::new(cx, |cx| {
+        TabView::new(cx, TabviewData::tabs, |cx, item| match item.get(cx) {
+            "Tab1" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                    Element::new(cx).class("indicator");
+                },
+                |cx| {
+                    Label::new(cx, "Content for first tab");
+                },
+            ),
+
+            "Tab2" => TabPair::new(
+                move |cx| {
+                    Label::new(cx, item).hoverable(false);
+                    Element::new(cx).class("indicator");
+                },
+                |cx| {
+                    Label::new(cx, "Content for second tab");
+                },
+            ),
+
+            _ => unreachable!(),
+        })
+        .height(Pixels(100.0));
+    })
+    .class("panel");
+}
+
+// TEXTBOX
+
+#[derive(Lens)]
+pub struct TextboxData {
+    editable_text: String,
+    multiline_text: String,
+    non_editable_text: String,
+}
+
+impl Model for TextboxData {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        event.map(|app_event, _| match app_event {
+            TextboxEvent::SetEditableText(text) => self.editable_text = text.clone(),
+            TextboxEvent::SetMultilineText(text) => self.multiline_text = text.clone(),
+        });
+    }
+}
+
+pub enum TextboxEvent {
+    SetEditableText(String),
+    SetMultilineText(String),
+}
+
+pub fn textbox(cx: &mut Context) {
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Textbox").class("title");
+
+        TextboxData {
+            editable_text: "This is some editable text".to_string(),
+            multiline_text: "This is some text which is editable and spans multiple lines"
+                .to_string(),
+            non_editable_text: "This text can be selected but not edited".to_string(),
+        }
+        .build(cx);
+
+        Textbox::new(cx, TextboxData::editable_text)
+            .width(Pixels(300.0))
+            .on_edit(|cx, text| cx.emit(TextboxEvent::SetEditableText(text)));
+        Textbox::new_multiline(cx, TextboxData::multiline_text, true)
+            .width(Pixels(300.0))
+            .height(Pixels(300.0))
+            .on_edit(|cx, text| cx.emit(TextboxEvent::SetMultilineText(text)));
+        Textbox::new(cx, TextboxData::non_editable_text).width(Pixels(300.0)).read_only(true);
+    })
+    .class("panel");
 }

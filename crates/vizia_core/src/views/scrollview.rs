@@ -21,6 +21,12 @@ pub struct ScrollData {
     pub on_scroll: Option<Arc<dyn Fn(&mut EventContext, f32, f32) + Send + Sync>>,
 }
 
+impl std::fmt::Debug for ScrollData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.scroll_x.to_string())
+    }
+}
+
 pub enum ScrollEvent {
     SetX(f32),
     SetY(f32),
@@ -207,7 +213,7 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|window_event, _| match window_event {
+        event.map(|window_event, meta| match window_event {
             WindowEvent::GeometryChanged(geo) => {
                 if geo.contains(GeoChanged::WIDTH_CHANGED)
                     || geo.contains(GeoChanged::HEIGHT_CHANGED)
@@ -235,6 +241,9 @@ impl<L: Lens<Target = ScrollData>> View for ScrollView<L> {
                     let logical_delta = y * SCROLL_SENSITIVITY / negative_space;
                     cx.emit(ScrollEvent::ScrollY(logical_delta));
                 }
+
+                // Prevent event propagating to ancestor scrollviews.
+                meta.consume();
             }
 
             WindowEvent::MouseOut => {

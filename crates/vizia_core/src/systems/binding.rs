@@ -5,12 +5,12 @@ pub(crate) fn binding_system(cx: &mut Context) {
     let mut observers: HashSet<Entity> = HashSet::new();
 
     // Loop through all model data and check for changes.
-    for entry in cx.data.dense.iter_mut() {
+    for (entity, model_data_store) in cx.data.iter_mut() {
         // Determine observers of model data.
-        for (_, model) in entry.value.models.iter() {
+        for (_, model) in model_data_store.models.iter() {
             let model = ModelOrView::Model(model.as_ref());
 
-            for (_, store) in entry.value.stores.iter_mut() {
+            for (_, store) in model_data_store.stores.iter_mut() {
                 if store.update(model) {
                     observers.extend(store.observers().iter())
                 }
@@ -18,8 +18,8 @@ pub(crate) fn binding_system(cx: &mut Context) {
         }
 
         // Determine observers of view data.
-        for (_, store) in entry.value.stores.iter_mut() {
-            if let Some(view_handler) = cx.views.get(&Entity::new(entry.key as u32, 0)) {
+        for (_, store) in model_data_store.stores.iter_mut() {
+            if let Some(view_handler) = cx.views.get(entity) {
                 let view = ModelOrView::View(view_handler.as_ref());
 
                 if store.update(view) {

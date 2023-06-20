@@ -3,17 +3,8 @@ use helpers::*;
 use vizia::prelude::*;
 use vizia_core::icons::{ICON_CLIPBOARD, ICON_COPY, ICON_CUT};
 
-#[derive(Lens)]
-pub struct AppData {}
-
-impl Model for AppData {}
-
 fn main() {
     Application::new(|cx: &mut Context| {
-        // cx.add_stylesheet(STYLE);
-
-        AppData {}.build(cx);
-
         ExamplePage::new(cx, |cx| {
             MenuBar::new(cx, |cx| {
                 Submenu::new(

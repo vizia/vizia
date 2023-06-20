@@ -1579,6 +1579,7 @@ impl Style {
         self.disabled.remove(entity);
         self.abilities.remove(entity);
 
+        self.name.remove(entity);
         self.role.remove(entity);
         self.default_action_verb.remove(entity);
         self.live.remove(entity);
@@ -1598,6 +1599,9 @@ impl Style {
         // Clipping
         self.clip_path.remove(entity);
 
+        self.overflowx.remove(entity);
+        self.overflowy.remove(entity);
+
         // Backdrop Filter
         self.backdrop_filter.remove(entity);
 
@@ -1607,9 +1611,6 @@ impl Style {
         self.translate.remove(entity);
         self.rotate.remove(entity);
         self.scale.remove(entity);
-
-        self.overflowx.remove(entity);
-        self.overflowy.remove(entity);
 
         // Border
         self.border_width.remove(entity);
@@ -1640,6 +1641,21 @@ impl Style {
         // Box Shadow
         self.box_shadow.remove(entity);
 
+        // Text and Font
+        self.text_wrap.remove(entity);
+        self.text_align.remove(entity);
+        self.font_family.remove(entity);
+        self.font_color.remove(entity);
+        self.font_size.remove(entity);
+        self.font_weight.remove(entity);
+        self.font_style.remove(entity);
+        self.font_stretch.remove(entity);
+        self.caret_color.remove(entity);
+        self.selection_color.remove(entity);
+
+        // Cursor
+        self.cursor.remove(entity);
+
         // Layout Type
         self.layout_type.remove(entity);
 
@@ -1652,9 +1668,23 @@ impl Style {
         self.top.remove(entity);
         self.bottom.remove(entity);
 
+        // Child Space
+        self.child_left.remove(entity);
+        self.child_right.remove(entity);
+        self.child_top.remove(entity);
+        self.child_bottom.remove(entity);
+        self.row_between.remove(entity);
+        self.col_between.remove(entity);
+
         // Size
         self.width.remove(entity);
         self.height.remove(entity);
+
+        // Size Constraints
+        self.min_width.remove(entity);
+        self.max_width.remove(entity);
+        self.min_height.remove(entity);
+        self.max_height.remove(entity);
 
         // Space Constraints
         self.min_left.remove(entity);
@@ -1665,36 +1695,6 @@ impl Style {
         self.max_top.remove(entity);
         self.min_bottom.remove(entity);
         self.max_bottom.remove(entity);
-
-        // Size Constraints
-        self.min_width.remove(entity);
-        self.max_width.remove(entity);
-        self.min_height.remove(entity);
-        self.max_height.remove(entity);
-
-        // Child Space
-        self.child_left.remove(entity);
-        self.child_right.remove(entity);
-        self.child_top.remove(entity);
-        self.child_bottom.remove(entity);
-        self.col_between.remove(entity);
-        self.row_between.remove(entity);
-
-        // Text and Font
-        self.text_wrap.remove(entity);
-        self.text_align.remove(entity);
-        self.font_family.remove(entity);
-        self.font_weight.remove(entity);
-        self.font_style.remove(entity);
-        self.font_color.remove(entity);
-        self.font_size.remove(entity);
-        self.selection_color.remove(entity);
-        self.caret_color.remove(entity);
-
-        // Cursor
-        self.cursor.remove(entity);
-
-        self.name.remove(entity);
 
         self.needs_text_layout.remove(entity);
         self.needs_access_update.remove(entity);
