@@ -56,7 +56,7 @@ pub use slider::{NamedSlider, Slider};
 pub use spinbox::{Spinbox, SpinboxEvent, SpinboxIcons, SpinboxKind};
 pub use stack::{HStack, VStack, ZStack};
 pub use switch::Switch;
-pub use tab::{TabPair, TabView};
+pub use tab::{TabEvent, TabPair, TabView};
 pub use textbox::{TextEvent, Textbox};
 pub use timepicker::{
     AMOrPM, AnalogTimepicker, AnalogTimepickerEvent, AnalogTimepickerPage, DayTime,

@@ -2,7 +2,7 @@
 
 icon {
     font-family: "tabler-icons", sans-serif;
-    size: 32px;
+    size: 24px;
     child-space: 1s;
 }
 
@@ -25,9 +25,14 @@ button > .inner {
     min-right: 8px;
 }
 
-button > icon.inner {
+button icon.inner {
     min-left: 0px;
     min-right: 0px;
+    size: 32px;
+}
+
+button .inner > icon {
+    size: 16px;
 }
 
 button.icon {

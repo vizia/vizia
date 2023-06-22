@@ -1,12 +1,12 @@
 use chrono::{NaiveDate, Utc};
 use vizia::prelude::*;
-use vizia_core::icons::{ICON_CHECK, ICON_CLIPBOARD, ICON_COPY, ICON_CUT};
+use vizia_core::icons::{ICON_CHECK, ICON_CLIPBOARD, ICON_COPY, ICON_CUT, ICON_PENCIL, ICON_TRASH};
 
 mod helpers;
 use helpers::*;
 
 const COLORS: [Color; 3] =
-    [Color::rgb(200, 50, 50), Color::rgb(50, 200, 50), Color::rgb(50, 50, 200)];
+    [Color::rgb(240, 100, 100), Color::rgb(100, 240, 100), Color::rgb(100, 100, 240)];
 
 const STYLE: &str = r#"
     .container {
@@ -22,11 +22,11 @@ const STYLE: &str = r#"
         child-space: 8px;
     }
 
-    tabview.widgets tabheader label {
+    tabview.widgets tabheader label.tab-name {
         width: 120px;
     }
 
-    tabview.widgets tabheader:checked label {
+    tabview.widgets tabheader:checked label.tab-name {
         border-radius: 4px;
         background-color: #51afef;
     }
@@ -41,6 +41,12 @@ const STYLE: &str = r#"
         font-size: 30;
         font-weight: bold;
         bottom: 20px;
+    }
+
+    label.header {
+        font-size: 20;
+        font-weight: bold;
+        bottom: 12px;
     }
 "#;
 
@@ -91,7 +97,7 @@ fn main() {
         TabView::new(cx, AppData::tabs, |cx, item| match item.get(cx) {
             "All" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -127,11 +133,11 @@ fn main() {
 
             "Button" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
-                        button(cx);
+                        button2(cx);
                     })
                     .class("widgets");
                 },
@@ -139,7 +145,7 @@ fn main() {
 
             "Checkbox" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -151,7 +157,7 @@ fn main() {
 
             "Chip" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -163,7 +169,7 @@ fn main() {
 
             "Combobox" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -175,7 +181,7 @@ fn main() {
 
             "Datepicker" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -187,7 +193,7 @@ fn main() {
 
             "HStack" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -199,7 +205,7 @@ fn main() {
 
             "Knob" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -211,7 +217,7 @@ fn main() {
 
             "Label" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -223,7 +229,7 @@ fn main() {
 
             "List" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -235,7 +241,7 @@ fn main() {
 
             "Menu" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -247,7 +253,7 @@ fn main() {
 
             "Notification" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -259,7 +265,7 @@ fn main() {
 
             "Picklist" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -271,7 +277,7 @@ fn main() {
 
             "Popup" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -283,7 +289,7 @@ fn main() {
 
             "Radiobutton" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -295,7 +301,7 @@ fn main() {
 
             "Rating" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -307,7 +313,7 @@ fn main() {
 
             "Scrollview" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -319,7 +325,7 @@ fn main() {
 
             "Slider" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -331,7 +337,7 @@ fn main() {
 
             "Spinbox" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -343,7 +349,7 @@ fn main() {
 
             "Switch" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -355,7 +361,7 @@ fn main() {
 
             "Tabview" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -367,7 +373,7 @@ fn main() {
 
             "Textbox" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -379,7 +385,7 @@ fn main() {
 
             "Timepicker" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -391,7 +397,7 @@ fn main() {
 
             "Tooltip" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -403,7 +409,7 @@ fn main() {
 
             "VStack" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -415,7 +421,7 @@ fn main() {
 
             "ZStack" => TabPair::new(
                 move |cx| {
-                    Label::new(cx, item).hoverable(false);
+                    Label::new(cx, item).class("tab-name").hoverable(false);
                 },
                 |cx| {
                     ScrollView::new(cx, 0.0, 0.0, false, true, |cx| {
@@ -642,7 +648,7 @@ fn hstack(cx: &mut Context) {
 
 pub fn button(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Label::new(cx, "Button").class("title");
+        Label::new(cx, "Button").class("title").on_press(|cx| cx.emit(TabEvent::SetSelected(1)));
         HStack::new(cx, |cx| {
             // Basic Button
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
@@ -658,14 +664,72 @@ pub fn button(cx: &mut Context) {
                 |_| {},
                 |cx| {
                     HStack::new(cx, |cx| {
-                        Label::new(cx, ICON_CHECK).class("icon");
-                        Label::new(cx, "Button with Icon");
+                        Icon::new(cx, ICON_CHECK);
+                        Label::new(cx, "Icon and Label");
                     })
                 },
             );
+            // Icon Button
+            Button::new(cx, |_| {}, |cx| Icon::new(cx, ICON_CHECK));
         })
         .height(Auto)
         .col_between(Pixels(8.0));
+    })
+    .class("panel");
+}
+
+pub fn button2(cx: &mut Context) {
+    VStack::new(cx, |cx| {
+        Label::new(cx, "Basic Buttons").class("header");
+        HStack::new(cx, |cx| {
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Accent Button")).class("accent");
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Outline Button")).class("outline");
+            Button::new(cx, |_| {}, |cx| Label::new(cx, "Ghost Button")).class("ghost");
+        })
+        .height(Auto)
+        .col_between(Pixels(8.0));
+
+        Label::new(cx, "Buttons with Icons").class("header");
+
+        HStack::new(cx, |cx| {
+            Button::new(
+                cx,
+                |_| {},
+                |cx| {
+                    HStack::new(cx, |cx| {
+                        Icon::new(cx, ICON_TRASH);
+                        Label::new(cx, "Delete");
+                    })
+                },
+            )
+            .class("outline");
+
+            Button::new(
+                cx,
+                |_| {},
+                |cx| {
+                    HStack::new(cx, |cx| {
+                        Label::new(cx, "Edit");
+                        Icon::new(cx, ICON_PENCIL);
+                    })
+                },
+            )
+            .class("accent");
+
+            // Icon Button
+            Button::new(cx, |_| {}, |cx| Icon::new(cx, ICON_CHECK));
+        })
+        .height(Auto)
+        .col_between(Pixels(8.0));
+
+        Label::new(cx, "Icon Buttons").class("header");
+        // TODO
+        // HStack::new(cx, |cx| {
+        //     IconButton::new(cx, |_| {}, ICON_TRASH);
+        // })
+        // .height(Auto)
+        // .col_between(Pixels(8.0));
     })
     .class("panel");
 }
@@ -750,7 +814,7 @@ pub fn chip(cx: &mut Context) {
         List::new(cx, ChipData::chips, |cx, index, item| {
             Chip::new(cx, item)
                 .on_close(move |cx| cx.emit(ChipEvent::CloseChip(index)))
-                .background_color(Color::from("#ff000044"));
+                .background_color(COLORS[index]);
         })
         .layout_type(LayoutType::Row)
         .col_between(Pixels(4.0));
