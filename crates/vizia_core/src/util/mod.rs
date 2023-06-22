@@ -71,7 +71,7 @@ macro_rules! include_style {
 #[macro_export]
 macro_rules! include_style {
     ($filename:tt) => {
-        $crate::prelude::CSS::from_str(include_str!(concat!(
+        $crate::prelude::CSS::from_string(include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/",
             $filename
