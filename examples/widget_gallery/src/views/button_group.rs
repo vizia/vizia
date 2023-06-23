@@ -1,41 +1,4 @@
-use vizia::{
-    icons::{ICON_CHECK, ICON_PENCIL, ICON_TRASH},
-    prelude::*,
-};
-
-pub fn button(cx: &mut Context) {
-    VStack::new(cx, |cx| {
-        Label::new(cx, "Button").class("title").on_press(|cx| cx.emit(TabEvent::SetSelected(1)));
-        HStack::new(cx, |cx| {
-            // Basic Button
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
-            // Accent Button
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Accent Button")).class("accent");
-            // Outline Button
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Outline Button")).class("outline");
-            // Ghost Button
-            Button::new(cx, |_| {}, |cx| Label::new(cx, "Ghost Button")).class("ghost");
-            // Button with Icon
-            Button::new(
-                cx,
-                |_| {},
-                |cx| {
-                    HStack::new(cx, |cx| {
-                        Icon::new(cx, ICON_CHECK);
-                        Label::new(cx, "Icon and Label");
-                    })
-                },
-            );
-            // Icon Button
-            Button::new(cx, |_| {}, |cx| Icon::new(cx, ICON_CHECK));
-        })
-        .height(Auto)
-        .col_between(Pixels(8.0));
-    })
-    .class("panel");
-}
-
-pub fn button2(cx: &mut Context) {
+pub fn button_group(cx: &mut Context) {
     VStack::new(cx, |cx| {
         Label::new(cx, "Button").class("title");
         Label::new(cx, "A button can be used to send an event when pressed. Typically they are used to trigger an action.")
@@ -43,7 +6,7 @@ pub fn button2(cx: &mut Context) {
 
         Label::new(cx, r#"Button::new(cx, |cx|{...}, |cx| Label::new(cx, "Press Me"));"#).class("code");
         
-        Label::new(cx, "Basic buttons").class("header");
+        Label::new(cx, "Basic Buttons").class("header");
         HStack::new(cx, |cx| {
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Button"));
             Button::new(cx, |_| {}, |cx| Label::new(cx, "Accent Button")).class("accent");

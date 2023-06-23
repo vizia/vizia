@@ -53,9 +53,26 @@ hstack.region {
     border-width: 1px;
     border-color: rgb(210, 210, 210);
     border-radius: 10px;
-    child-space: 20px;
+    child-space: 40px;
+    child-left: 1s;
+    child-right: 1s;
     height: auto;
     col-between: 12px;
+}
+
+vstack.group {
+    size: auto;
+    row-between: 12px;
+}
+
+group {
+    size: auto;
+    row-between: 12px;
+}
+
+group > .legend {
+    bottom: 8px;
+    color: gray;
 }
 
 label.code {
