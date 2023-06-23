@@ -116,10 +116,39 @@ pub fn checkbox(cx: &mut Context) {
                 .col_between(Pixels(5.0));
             });
         }).class("region");
+
+        HStack::new(cx, |cx|{
+            CheckboxInput::new(cx, |cx| cx.emit(CheckboxEvent::Toggle), CheckboxData::check1, "Test");
+        }).class("region");
     })
     .class("panel");
 }
 
+
+pub struct CheckboxInput {
+
+}
+
+impl CheckboxInput {
+    pub fn new<T: ToString>(cx: &mut Context, action: impl Fn(&mut EventContext) + 'static, lens: impl Lens<Target = bool>, label: impl Res<T> + Clone) -> Handle<Self> {
+        let id = cx.current().to_string();
+        Self{}.build(cx, |cx|{
+            Checkbox::new(cx, lens)
+                .id(&id)
+                .on_toggle(action);
+            Label::new(cx, label).describing(&id);
+        })
+        .layout_type(LayoutType::Row)
+        .size(Auto)
+        .child_top(Stretch(1.0))
+        .child_bottom(Stretch(1.0))
+        .col_between(Pixels(5.0))
+    }
+}
+
+impl View for CheckboxInput {
+    
+}
 
 pub struct Group {}
 
