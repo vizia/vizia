@@ -268,7 +268,7 @@ impl Res<String> for Localized {
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Clone + Fn(&mut Context, Entity, String),
+        F: 'static + Clone + Fn(&mut EventContext, String),
     {
         let self2 = self.clone();
         cx.with_current(entity, move |cx| {
@@ -277,7 +277,9 @@ impl Res<String> for Localized {
                 let self3 = self2.clone();
                 let closure = closure.clone();
                 bind_recursive(cx, &lenses, move |cx| {
-                    closure(cx, entity, self3.get_val(cx));
+                    let val = self3.get_val(cx);
+                    let cx = &mut EventContext::new_with_current(cx, entity);
+                    closure(cx, val);
                 });
             });
         });

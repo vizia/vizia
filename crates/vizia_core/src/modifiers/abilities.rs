@@ -18,8 +18,8 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// ```
     fn hoverable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
-        state.set_or_bind(self.context(), entity, |cx, entity, v| {
-            if let Some(abilities) = cx.style.abilities.get_mut(entity) {
+        state.set_or_bind(self.context(), entity, |cx, v| {
+            if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                 abilities.set(Abilities::HOVERABLE, v.into());
                 cx.needs_restyle();
             }
@@ -40,8 +40,8 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// ```
     fn focusable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
-        state.set_or_bind(self.context(), entity, |cx, entity, v| {
-            if let Some(abilities) = cx.style.abilities.get_mut(entity) {
+        state.set_or_bind(self.context(), entity, |cx, v| {
+            if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                 let state = v.into();
                 abilities.set(Abilities::FOCUSABLE, state);
 
@@ -69,8 +69,8 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// ```
     fn checkable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
-        state.set_or_bind(self.context(), entity, |cx, entity, v| {
-            if let Some(abilities) = cx.style.abilities.get_mut(entity) {
+        state.set_or_bind(self.context(), entity, |cx, v| {
+            if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                 let state = v.into();
                 abilities.set(Abilities::CHECKABLE, state);
 
@@ -94,8 +94,8 @@ pub trait AbilityModifiers: internal::Modifiable {
     /// ```
     fn navigable<U: Into<bool>>(mut self, state: impl Res<U>) -> Self {
         let entity = self.entity();
-        state.set_or_bind(self.context(), entity, |cx, entity, v| {
-            if let Some(abilities) = cx.style.abilities.get_mut(entity) {
+        state.set_or_bind(self.context(), entity, |cx, v| {
+            if let Some(abilities) = cx.style.abilities.get_mut(cx.current) {
                 abilities.set(Abilities::NAVIGABLE, v.into());
                 cx.needs_restyle();
             }
