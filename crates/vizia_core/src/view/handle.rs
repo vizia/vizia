@@ -44,6 +44,11 @@ impl<'a, V> Handle<'a, V> {
         self.entity
     }
 
+    /// Returns a mutable reference to the context.
+    pub fn context(&mut self) -> &mut Context {
+        self.cx
+    }
+
     pub fn parent(&self) -> Entity {
         self.cx.tree.get_parent(self.entity).unwrap_or(Entity::root())
     }

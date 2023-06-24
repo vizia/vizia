@@ -118,6 +118,35 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    pub fn new_with_current(cx: &'a mut Context, current: Entity) -> Self {
+        Self {
+            current,
+            captured: &mut cx.captured,
+            focused: &mut cx.focused,
+            hovered: &cx.hovered,
+            entity_identifiers: &cx.entity_identifiers,
+            style: &mut cx.style,
+            cache: &mut cx.cache,
+            tree: &cx.tree,
+            data: &mut cx.data,
+            views: &mut cx.views,
+            listeners: &mut cx.listeners,
+            resource_manager: &mut cx.resource_manager,
+            text_context: &mut cx.text_context,
+            modifiers: &cx.modifiers,
+            mouse: &cx.mouse,
+            event_queue: &mut cx.event_queue,
+            cursor_icon_locked: &mut cx.cursor_icon_locked,
+            window_size: &mut cx.window_size,
+            user_scale_factor: &mut cx.user_scale_factor,
+            #[cfg(feature = "clipboard")]
+            clipboard: &mut cx.clipboard,
+            event_proxy: &mut cx.event_proxy,
+            ignore_default_theme: &cx.ignore_default_theme,
+            drop_data: &mut cx.drop_data,
+        }
+    }
+
     pub fn get_view<V: View>(&self) -> Option<&V> {
         self.views.get(&self.current).and_then(|view| view.downcast_ref::<V>())
     }
@@ -579,6 +608,10 @@ impl<'a> EventContext<'a> {
         self.style.needs_redraw();
     }
 
+    pub fn needs_restyle(&mut self) {
+        self.style.needs_restyle();
+    }
+
     /// Reloads the stylesheets linked to the application.
     pub fn reload_styles(&mut self) -> Result<(), std::io::Error> {
         if self.resource_manager.themes.is_empty() && self.resource_manager.styles.is_empty() {
@@ -994,5 +1027,23 @@ impl<'a> EmitContext for EventContext<'a> {
 
     fn emit_custom(&mut self, event: Event) {
         self.event_queue.push_back(event);
+    }
+}
+
+/// Trait for querying properties of the tree from a context.
+pub trait TreeProps {
+    /// Returns the id of the parent of the current view.
+    fn parent(&self) -> Entity;
+    /// Returns the id of the first_child of the current view.
+    fn first_child(&self) -> Entity;
+}
+
+impl<'a> TreeProps for EventContext<'a> {
+    fn parent(&self) -> Entity {
+        self.current.parent(&self.tree).unwrap()
+    }
+
+    fn first_child(&self) -> Entity {
+        self.current.first_child(&self.tree).unwrap()
     }
 }
