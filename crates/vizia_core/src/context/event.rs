@@ -1029,10 +1029,10 @@ pub trait TreeProps {
 
 impl<'a> TreeProps for EventContext<'a> {
     fn parent(&self) -> Entity {
-        self.current.parent(&self.tree).unwrap()
+        self.tree.get_layout_parent(self.current)
     }
 
     fn first_child(&self) -> Entity {
-        self.current.first_child(&self.tree).unwrap()
+        self.tree.get_layout_first_child(self.current).unwrap()
     }
 }
