@@ -381,6 +381,16 @@ popup:checked {
     transition: opacity 100ms;
 } */
 
+/* PROGRESSBAR */
+
+progressbar {
+    background-color: #51afef20;
+}
+
+progressbar .bar {
+    background-color: #51afef;
+}
+
 /* KNOB */
 
 knob {
