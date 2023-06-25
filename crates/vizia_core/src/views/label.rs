@@ -101,7 +101,7 @@ impl Label {
     /// ```
     pub fn new<T>(cx: &mut Context, text: impl Res<T> + Clone) -> Handle<Self>
     where
-        T: ToString,
+        T: ToStringLocalized,
     {
         Self { describing: None }
             .build(cx, |_| {})
@@ -194,7 +194,7 @@ impl Icon {
     /// ```
     pub fn new<T>(cx: &mut Context, icon_code: impl Res<T> + Clone) -> Handle<Self>
     where
-        T: ToString,
+        T: ToStringLocalized,
     {
         Self {}.build(cx, |_| {}).text(icon_code).role(Role::StaticText)
     }

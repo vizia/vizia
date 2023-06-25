@@ -197,6 +197,10 @@ impl<'a> BackendContext<'a> {
         !self.0.event_queue.is_empty()
     }
 
+    pub fn renegotiate_language(&mut self) {
+        self.0.resource_manager.renegotiate_language();
+    }
+
     /// Returns a mutable reference to the accesskit node classes.
     pub fn accesskit_node_classes(&mut self) -> &mut accesskit::NodeClassSet {
         &mut self.style().accesskit_node_classes

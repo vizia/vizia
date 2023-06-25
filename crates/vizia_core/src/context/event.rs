@@ -339,6 +339,17 @@ impl<'a> EventContext<'a> {
         );
     }
 
+    /// Sets the language used by the application for localization.
+    pub fn set_language(&mut self, lang: LanguageIdentifier) {
+        if let Some(mut model_data_store) = self.data.remove(Entity::root()) {
+            if let Some(model) = model_data_store.models.get_mut(&TypeId::of::<Environment>()) {
+                model.event(self, &mut Event::new(EnvironmentEvent::SetLocale(lang)));
+            }
+
+            self.data.insert(Entity::root(), model_data_store);
+        }
+    }
+
     /// Capture mouse input for the current view.
     pub fn capture(&mut self) {
         *self.captured = self.current;

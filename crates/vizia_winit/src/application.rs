@@ -234,6 +234,7 @@ impl Application {
         cx.add_window(window);
 
         cx.0.remove_user_themes();
+        cx.renegotiate_language();
         if let Some(builder) = self.builder.take() {
             (builder)(cx.0);
         }
