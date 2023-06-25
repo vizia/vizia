@@ -141,6 +141,10 @@ name = "popup"
 path = "examples/views/popup.rs"
 
 [[example]]
+name = "progressbar"
+path = "examples/views/progressbar.rs"
+
+[[example]]
 name = "textbox"
 path = "examples/views/textbox.rs"
 
