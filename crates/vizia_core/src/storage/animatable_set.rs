@@ -1,7 +1,7 @@
 use crate::animation::{Animation, AnimationState, Interpolator};
 use crate::prelude::*;
 use crate::style::Rule;
-use instant::Duration;
+use instant::{Duration, Instant};
 use vizia_id::GenerationalId;
 use vizia_storage::{SparseSet, SparseSetGeneric, SparseSetIndex};
 
@@ -292,6 +292,7 @@ where
         &mut self,
         entity: Entity,
         animation: Animation,
+        start_time: Instant,
         duration: Duration,
     ) {
         let entity_index = entity.index();
@@ -312,7 +313,7 @@ where
                 if anim_state.id == animation {
                     anim_state.active = true;
                     anim_state.t = 0.0;
-                    anim_state.start_time = instant::Instant::now();
+                    anim_state.start_time = start_time;
                     anim_state.output = Some(
                         self.animations
                             .get(animation)
@@ -637,7 +638,12 @@ where
                     let duration = transition_state.duration;
 
                     if transition_state.from_rule != transition_state.to_rule {
-                        self.play_animation(entity, rule_animation, duration);
+                        self.play_animation(
+                            entity,
+                            rule_animation,
+                            instant::Instant::now(),
+                            duration,
+                        );
                     }
                     //}
                 }
