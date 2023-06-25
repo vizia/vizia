@@ -326,7 +326,7 @@ impl<'a> EventContext<'a> {
     /// Trigger an animation with the given id to play on the current view.
     pub fn play_animation(&mut self, anim_id: impl AnimId, duration: Duration) {
         if let Some(animation_id) = anim_id.get(self) {
-            self.style.play_animation(self.current, animation_id, duration);
+            self.style.enqueue_animation(self.current, animation_id, duration);
         }
     }
 
@@ -334,7 +334,7 @@ impl<'a> EventContext<'a> {
     pub fn play_animation_for(&mut self, anim_id: impl AnimId, target: &str, duration: Duration) {
         if let Some(target_entity) = self.resolve_entity_identifier(target) {
             if let Some(animation_id) = anim_id.get(self) {
-                self.style.play_animation(target_entity, animation_id, duration);
+                self.style.enqueue_animation(target_entity, animation_id, duration)
             }
         }
     }
