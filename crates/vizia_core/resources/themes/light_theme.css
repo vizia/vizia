@@ -387,8 +387,16 @@ progressbar {
     background-color: #51afef20;
 }
 
-progressbar .bar {
+progressbar:disabled {
+    background-color: #d2d2d2;
+}
+
+progressbar .progressbar-bar {
     background-color: #51afef;
+}
+
+progressbar:disabled .progressbar-bar {
+    background-color: #418abb;
 }
 
 /* KNOB */
