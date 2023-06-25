@@ -464,8 +464,16 @@ progressbar {
     background-color: #1d1d1d;
 }
 
-progressbar .bar {
+progressbar:disabled {
+    background-color: #404040
+}
+
+progressbar .progressbar-bar {
     background-color: #51afef;
+}
+
+progressbar:disabled .progressbar-bar {
+    background-color: #418abb;
 }
 
 /* RADIOBUTTON */
