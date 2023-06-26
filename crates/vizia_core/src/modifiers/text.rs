@@ -9,7 +9,7 @@ pub trait TextModifiers: internal::Modifiable {
     fn text<T: ToStringLocalized>(mut self, value: impl Res<T>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, val| {
-            let text_data = val.to_string_local();
+            let text_data = val.to_string_local(cx);
             cx.text_context.set_text(cx.current, &text_data);
 
             cx.style.needs_text_layout.insert(cx.current, true);
