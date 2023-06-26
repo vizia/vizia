@@ -494,6 +494,18 @@ impl Context {
         });
     }
 
+    /// Sets the language used by the application for localization.
+    pub fn set_language(&mut self, lang: LanguageIdentifier) {
+        let cx = &mut EventContext::new(self);
+        if let Some(mut model_data_store) = cx.data.remove(Entity::root()) {
+            if let Some(model) = model_data_store.models.get_mut(&TypeId::of::<Environment>()) {
+                model.event(cx, &mut Event::new(EnvironmentEvent::SetLocale(lang)));
+            }
+
+            self.data.insert(Entity::root(), model_data_store);
+        }
+    }
+
     /// Sets the global default font for the application.
     pub fn set_default_font(&mut self, names: &[&str]) {
         self.style.default_font = names
@@ -542,7 +554,6 @@ impl Context {
 
     pub fn add_translation(&mut self, lang: LanguageIdentifier, ftl: impl ToString) {
         self.resource_manager.add_translation(lang, ftl.to_string());
-        self.emit(EnvironmentEvent::SetLocale(self.resource_manager.language.clone()));
     }
 
     pub fn load_image(

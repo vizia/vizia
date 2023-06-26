@@ -73,6 +73,7 @@ use crate::prelude::*;
 use fluent_bundle::FluentArgs;
 use fluent_bundle::FluentValue;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub(crate) trait FluentStore {
     fn get_val(&self, cx: &Context) -> FluentValue<'static>;
@@ -135,6 +136,13 @@ where
 pub struct Localized {
     key: String,
     args: HashMap<String, Box<dyn FluentStore>>,
+    map: Rc<dyn Fn(&str) -> String + 'static>,
+}
+
+impl PartialEq for Localized {
+    fn eq(&self, other: &Self) -> bool {
+        self.key == other.key
+    }
 }
 
 impl Clone for Localized {
@@ -142,6 +150,7 @@ impl Clone for Localized {
         Self {
             key: self.key.clone(),
             args: self.args.iter().map(|(k, v)| (k.clone(), v.make_clone())).collect(),
+            map: self.map.clone(),
         }
     }
 }
@@ -169,7 +178,14 @@ impl Localized {
     /// })
     /// .run();
     pub fn new(key: &str) -> Self {
-        Self { key: key.to_owned(), args: HashMap::new() }
+        Self { key: key.to_owned(), args: HashMap::new(), map: Rc::new(|s| s.to_string()) }
+    }
+
+    /// Sets a mapping function to apply to the translated text.
+    pub fn map(mut self, mapping: impl Fn(&str) -> String + 'static) -> Self {
+        self.map = Rc::new(mapping);
+
+        self
     }
 
     /// Add a variable argument binding to the Localized type.
@@ -230,13 +246,13 @@ impl Res<String> for Localized {
         let message = if let Some(msg) = bundle.get_message(&self.key) {
             msg
         } else {
-            return format!("{{MISSING: {}}}", self.key);
+            return (self.map)(&self.key);
         };
 
         let value = if let Some(value) = message.value() {
             value
         } else {
-            return format!("{{MISSING: {}}}", self.key);
+            return (self.map)(&self.key);
         };
 
         let mut err = vec![];
@@ -244,7 +260,7 @@ impl Res<String> for Localized {
         let res = bundle.format_pattern(value, Some(&args), &mut err);
 
         if err.is_empty() {
-            res.to_string()
+            (self.map)(&res)
         } else {
             format!("{} {{ERROR: {:?}}}", res, err)
         }
@@ -282,5 +298,45 @@ where
         );
     } else {
         closure(cx);
+    }
+}
+
+impl<T: ToString> ToStringLocalized for T {
+    fn to_string_local(&self, _cx: &Context) -> String {
+        self.to_string()
+    }
+}
+
+pub trait ToStringLocalized {
+    fn to_string_local(&self, cx: &Context) -> String;
+}
+
+impl ToStringLocalized for Localized {
+    fn to_string_local(&self, cx: &Context) -> String {
+        let locale = &cx.environment().locale;
+        let bundle = cx.resource_manager.current_translation(locale);
+        let message = if let Some(msg) = bundle.get_message(&self.key) {
+            msg
+        } else {
+            // Warn here of missing key
+            return (self.map)(&self.key);
+        };
+
+        let value = if let Some(value) = message.value() {
+            value
+        } else {
+            // Warn here of missing value
+            return (self.map)(&self.key);
+        };
+
+        let mut err = vec![];
+        let args = self.get_args(cx);
+        let res = bundle.format_pattern(value, Some(&args), &mut err);
+
+        if err.is_empty() {
+            (self.map)(&res)
+        } else {
+            format!("{} {{ERROR: {:?}}}", res, err)
+        }
     }
 }

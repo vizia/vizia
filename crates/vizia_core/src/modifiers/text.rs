@@ -6,10 +6,10 @@ use vizia_style::{FontSize, FontStretch, FontStyle, FontWeight};
 /// Modifiers for changing the text properties of a view.
 pub trait TextModifiers: internal::Modifiable {
     /// Sets the text content of the view.
-    fn text<U: ToString>(mut self, value: impl Res<U>) -> Self {
+    fn text<T: ToStringLocalized>(mut self, value: impl Res<T>) -> Self {
         let entity = self.entity();
         value.set_or_bind(self.context(), entity, |cx, entity, val| {
-            let text_data = val.to_string();
+            let text_data = val.to_string_local(cx);
             cx.text_context.set_text(entity, &text_data);
 
             cx.style.needs_text_layout.insert(entity, true);

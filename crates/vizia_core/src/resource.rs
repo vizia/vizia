@@ -104,7 +104,7 @@ impl ResourceManager {
         }
     }
 
-    fn renegotiate_language(&mut self) {
+    pub fn renegotiate_language(&mut self) {
         let available = self
             .translations
             .keys()

@@ -93,22 +93,22 @@ impl_res_clone!(Translate);
 impl_res_clone!(Scale);
 impl_res_clone!(Position);
 
-impl<T, L> Res<T> for L
+impl<L> Res<L::Target> for L
 where
-    L: Lens<Target = T> + LensExt,
-    T: Clone + Data,
+    L: Lens + LensExt,
+    L::Target: Clone + Data,
 {
-    fn get_val(&self, cx: &Context) -> T {
+    fn get_val(&self, cx: &Context) -> L::Target {
         self.get(cx)
     }
 
-    fn get_val_fallible(&self, cx: &Context) -> Option<T> {
+    fn get_val_fallible(&self, cx: &Context) -> Option<L::Target> {
         self.get_fallible(cx)
     }
 
     fn set_or_bind<F>(&self, cx: &mut Context, entity: Entity, closure: F)
     where
-        F: 'static + Fn(&mut Context, Entity, T),
+        F: 'static + Fn(&mut Context, Entity, L::Target),
     {
         cx.with_current(entity, |cx| {
             Binding::new(cx, self.clone(), move |cx, val| {
