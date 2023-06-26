@@ -18,7 +18,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     fn name<U: ToStringLocalized>(mut self, name: impl Res<U>) -> Self {
         let entity = self.entity();
         name.set_or_bind(self.context(), entity, |cx, name| {
-            cx.style.name.insert(cx.current, name.to_string_local());
+            cx.style.name.insert(cx.current, name.to_string_local(cx));
             cx.style.needs_access_update(cx.current);
         });
 
