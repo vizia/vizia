@@ -1,7 +1,8 @@
 use std::any::{Any, TypeId};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
+use std::time::Instant;
 
 use femtovg::Transform2D;
 use fnv::FnvHashMap;
@@ -11,7 +12,7 @@ use vizia_style::{ClipPath, Filter, Scale, Translate};
 use crate::animation::{AnimId, Interpolator};
 use crate::cache::CachedData;
 use crate::environment::ThemeMode;
-use crate::events::ViewHandler;
+use crate::events::{TimedEvent, TimedEventHandle, ViewHandler};
 use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
@@ -77,6 +78,8 @@ pub struct EventContext<'a> {
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
+    pub event_schedule: &'a mut BinaryHeap<TimedEvent>,
+    next_event_id: &'a mut usize,
     cursor_icon_locked: &'a mut bool,
     window_size: &'a mut WindowSize,
     user_scale_factor: &'a mut f64,
@@ -125,6 +128,8 @@ impl<'a> EventContext<'a> {
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
+            event_schedule: &mut cx.event_schedule,
+            next_event_id: &mut cx.next_event_id,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
             window_size: &mut cx.window_size,
             user_scale_factor: &mut cx.user_scale_factor,
@@ -154,6 +159,8 @@ impl<'a> EventContext<'a> {
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
+            event_schedule: &mut cx.event_schedule,
+            next_event_id: &mut cx.next_event_id,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
             window_size: &mut cx.window_size,
             user_scale_factor: &mut cx.user_scale_factor,
@@ -1066,6 +1073,40 @@ impl<'a> EmitContext for EventContext<'a> {
 
     fn emit_custom(&mut self, event: Event) {
         self.event_queue.push_back(event);
+    }
+
+    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle {
+        self.schedule_event(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+            at,
+        )
+    }
+
+    fn schedule_emit_to<M: Any + Send>(
+        &mut self,
+        message: M,
+        target: Entity,
+        at: Instant,
+    ) -> TimedEventHandle {
+        self.schedule_event(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+            at,
+        )
+    }
+
+    fn schedule_event(&mut self, event: Event, at: Instant) -> TimedEventHandle {
+        let handle = TimedEventHandle(*self.next_event_id);
+        self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
+        *self.next_event_id += 1;
+        handle
+    }
+
+    fn cancel_scheduled(&mut self, handle: TimedEventHandle) {
+        *self.event_schedule =
+            self.event_schedule.drain().filter(|item| item.ident != handle).collect();
     }
 }
 

@@ -329,6 +329,11 @@ path = "examples/keyframes.rs"
 name = "lens_map"
 path = "examples/lens_map.rs"
 
+[[example]]
+name = "timer"
+path = "examples/timer.rs"
+
+
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]

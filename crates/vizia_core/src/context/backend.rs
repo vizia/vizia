@@ -1,10 +1,11 @@
 use std::any::Any;
+use std::time::Instant;
 
 use femtovg::{renderer::OpenGl, Canvas};
 use vizia_window::WindowDescription;
 
 use super::EventProxy;
-use crate::events::EventManager;
+use crate::events::{EventManager, TimedEvent};
 use crate::style::SystemFlags;
 use crate::{cache::CachedData, environment::Environment, prelude::*, style::Style, systems::*};
 use vizia_id::GenerationalId;
@@ -265,5 +266,20 @@ impl<'a> BackendContext<'a> {
 
     pub fn needs_refresh(&mut self) {
         self.0.style.system_flags = SystemFlags::all();
+    }
+
+    pub fn emit_scheduled_events(&mut self) {
+        let now = Instant::now();
+        while let Some(timed_event) = self.0.event_schedule.peek() {
+            if timed_event.time <= now {
+                self.0.event_queue.push_back(self.0.event_schedule.pop().unwrap().event);
+            } else {
+                break;
+            }
+        }
+    }
+
+    pub fn get_next_timed_event(&self) -> Option<&TimedEvent> {
+        self.0.event_schedule.peek()
     }
 }
