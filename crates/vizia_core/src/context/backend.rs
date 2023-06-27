@@ -1,7 +1,7 @@
 use std::any::Any;
-use std::time::Instant;
 
 use femtovg::{renderer::OpenGl, Canvas};
+use instant::Instant;
 use vizia_window::WindowDescription;
 
 use super::EventProxy;

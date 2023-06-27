@@ -1,5 +1,5 @@
 use crate::entity::Entity;
-use std::time::Instant;
+use instant::Instant;
 use std::{any::Any, cmp::Ordering, fmt::Debug};
 use vizia_id::GenerationalId;
 
