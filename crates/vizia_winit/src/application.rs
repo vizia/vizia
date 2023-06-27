@@ -261,6 +261,10 @@ impl Application {
             let mut cx = BackendContext::new_with_event_manager(&mut context);
 
             match event {
+                winit::event::Event::NewEvents(_) => {
+                    cx.emit_scheduled_events();
+                }
+
                 winit::event::Event::UserEvent(user_event) => match user_event {
                     UserEvent::Event(event) => {
                         cx.send_event(event);
@@ -511,7 +515,11 @@ impl Application {
                 _ => {}
             }
 
-            *control_flow = *stored_control_flow.borrow();
+            if let Some(timed_event) = cx.get_next_timed_event() {
+                *control_flow = ControlFlow::WaitUntil(timed_event.time);
+            } else {
+                *control_flow = *stored_control_flow.borrow();
+            }
         });
     }
 }
