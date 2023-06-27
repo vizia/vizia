@@ -2,11 +2,10 @@ use std::any::{Any, TypeId};
 use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
-use std::time::Instant;
 
 use femtovg::Transform2D;
 use fnv::FnvHashMap;
-use instant::Duration;
+use instant::{Duration, Instant};
 use vizia_style::{ClipPath, Filter, Scale, Translate};
 
 use crate::animation::{AnimId, Interpolator};
