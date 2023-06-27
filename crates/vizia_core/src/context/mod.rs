@@ -12,7 +12,7 @@ use cosmic_text::Shaping;
 use instant::Instant;
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 use std::sync::Mutex;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
@@ -34,7 +34,7 @@ pub use resource::*;
 use crate::binding::BindingHandler;
 use crate::cache::CachedData;
 use crate::environment::{Environment, ThemeMode};
-use crate::events::ViewHandler;
+use crate::events::{TimedEvent, TimedEventHandle, ViewHandler};
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
 
@@ -67,6 +67,8 @@ pub struct Context {
     pub(crate) data: Models,
     pub(crate) bindings: Bindings,
     pub(crate) event_queue: VecDeque<Event>,
+    pub event_schedule: BinaryHeap<TimedEvent>,
+    next_event_id: usize,
     pub(crate) tree_updates: Vec<accesskit::TreeUpdate>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
@@ -154,6 +156,8 @@ impl Context {
             cache,
             canvases: HashMap::new(),
             event_queue: VecDeque::new(),
+            event_schedule: BinaryHeap::new(),
+            next_event_id: 0,
             tree_updates: Vec::new(),
             listeners: HashMap::default(),
             global_listeners: vec![],
@@ -636,6 +640,19 @@ pub trait EmitContext {
     fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
     /// Send a custom event with custom origin and propagation information.
     fn emit_custom(&mut self, event: Event);
+
+    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle;
+
+    fn schedule_emit_to<M: Any + Send>(
+        &mut self,
+        message: M,
+        target: Entity,
+        at: Instant,
+    ) -> TimedEventHandle;
+
+    fn schedule_event(&mut self, event: Event, at: Instant) -> TimedEventHandle;
+
+    fn cancel_scheduled(&mut self, handle: TimedEventHandle);
 }
 
 impl DataContext for Context {
@@ -683,5 +700,39 @@ impl EmitContext for Context {
 
     fn emit_custom(&mut self, event: Event) {
         self.event_queue.push_back(event);
+    }
+
+    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle {
+        self.schedule_event(
+            Event::new(message)
+                .target(self.current)
+                .origin(self.current)
+                .propagate(Propagation::Up),
+            at,
+        )
+    }
+
+    fn schedule_emit_to<M: Any + Send>(
+        &mut self,
+        message: M,
+        target: Entity,
+        at: Instant,
+    ) -> TimedEventHandle {
+        self.schedule_event(
+            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
+            at,
+        )
+    }
+
+    fn schedule_event(&mut self, event: Event, at: Instant) -> TimedEventHandle {
+        let handle = TimedEventHandle(self.next_event_id);
+        self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
+        self.next_event_id += 1;
+        handle
+    }
+
+    fn cancel_scheduled(&mut self, handle: TimedEventHandle) {
+        self.event_schedule =
+            self.event_schedule.drain().filter(|item| item.ident != handle).collect();
     }
 }
