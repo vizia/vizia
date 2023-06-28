@@ -75,7 +75,7 @@ pub mod prelude {
     };
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};
-    pub use super::events::{Event, Propagation, TimedEvent, TimedEventHandle};
+    pub use super::events::{Event, Propagation, Timer, TimerBuilder};
     pub use super::include_style;
     pub use super::input::{Keymap, KeymapEntry, KeymapEvent};
     pub use super::layout::{BoundingBox, GeoChanged};
