@@ -13,6 +13,7 @@ use instant::{Duration, Instant};
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::rc::Rc;
 use std::sync::Mutex;
 
 #[cfg(all(feature = "clipboard", feature = "x11"))]
@@ -563,10 +564,24 @@ impl Context {
     }
 
     /// Adds a timer to the application.
-    pub fn add_timer(&mut self, timer_builder: TimerBuilder) -> Timer {
-        let handle = Timer(self.timers.len());
-        self.timers.push(timer_builder.build(self.current, handle));
-        handle
+    pub fn add_timer(
+        &mut self,
+        interval: Duration,
+        duration: Option<Duration>,
+        callback: impl Fn(&mut EventContext, TimerAction) + 'static,
+    ) -> Timer {
+        let id = Timer(self.timers.len());
+        self.timers.push(TimerState {
+            entity: self.current,
+            id,
+            time: Instant::now(),
+            interval,
+            duration,
+            start_time: Instant::now(),
+            callback: Rc::new(callback),
+        });
+
+        id
     }
 
     pub fn start_timer(&mut self, timer: Timer) {
@@ -578,6 +593,10 @@ impl Context {
         let now = instant::Instant::now();
         timer_state.start_time = now;
         timer_state.time = now + instant::Duration::from_secs(1);
+        (timer_state.callback)(
+            &mut EventContext::new_with_current(self, timer_state.entity),
+            TimerAction::Start,
+        );
         self.running_timers.push(timer_state);
     }
 
@@ -592,21 +611,36 @@ impl Context {
     }
 
     pub fn stop_timer(&mut self, timer: Timer) {
-        self.running_timers = self.running_timers.drain().filter(|item| item.id != timer).collect();
+        while let Some(next_timer_state) = self.running_timers.peek() {
+            if next_timer_state.id == timer {
+                let timer_state = self.running_timers.pop().unwrap();
+                (timer_state.callback)(
+                    &mut EventContext::new_with_current(self, timer_state.entity),
+                    TimerAction::Stop,
+                );
+            }
+        }
     }
 
     pub fn tick_timers(&mut self) {
         let now = Instant::now();
-        while let Some(timed_event) = self.running_timers.peek() {
-            if timed_event.time <= now {
+        while let Some(next_timer_state) = self.running_timers.peek() {
+            if next_timer_state.time <= now {
                 // self.0.event_queue.push_back(self.0.event_schedule.pop().unwrap().event);
                 let mut timer_state = self.running_timers.pop().unwrap();
-                if let Some(callback) = &timer_state.callback {
-                    (callback)(&mut EventContext::new_with_current(self, timer_state.entity));
-                }
+                (timer_state.callback)(
+                    &mut EventContext::new_with_current(self, timer_state.entity),
+                    TimerAction::Tick(now - timer_state.time),
+                );
+
                 if timer_state.end_time().unwrap_or_else(|| now + Duration::from_secs(1)) > now {
                     timer_state.time = now + timer_state.interval;
                     self.running_timers.push(timer_state);
+                } else {
+                    (timer_state.callback)(
+                        &mut EventContext::new_with_current(self, timer_state.entity),
+                        TimerAction::Stop,
+                    );
                 }
             } else {
                 break;

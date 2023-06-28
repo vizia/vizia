@@ -4,45 +4,21 @@ use instant::{Duration, Instant};
 
 use crate::{context::EventContext, entity::Entity};
 
-pub struct TimerBuilder {
-    interval: instant::Duration,
-    duration: Option<instant::Duration>,
-    callback: Option<Rc<dyn Fn(&mut EventContext)>>,
-}
-
-impl TimerBuilder {
-    pub fn new(interval: Duration, callback: impl Fn(&mut EventContext) + 'static) -> TimerBuilder {
-        Self { interval, callback: Some(Rc::new(callback)), duration: None }
-    }
-
-    pub fn with_duration(mut self, duration: Duration) -> Self {
-        self.duration = Some(duration);
-
-        self
-    }
-
-    pub(crate) fn build(self, entity: Entity, id: Timer) -> TimerState {
-        TimerState {
-            entity,
-            id,
-            time: Instant::now(),
-            interval: self.interval,
-            duration: self.duration,
-            start_time: Instant::now(),
-            callback: self.callback,
-        }
-    }
+pub enum TimerAction {
+    Start,
+    Tick(Duration),
+    Stop,
 }
 
 #[derive(Clone)]
 pub(crate) struct TimerState {
     pub entity: Entity,
     pub id: Timer,
-    pub time: instant::Instant,
-    pub interval: instant::Duration,
+    pub time: Instant,
+    pub interval: Duration,
     pub duration: Option<instant::Duration>,
     pub start_time: instant::Instant,
-    pub callback: Option<Rc<dyn Fn(&mut EventContext)>>,
+    pub callback: Rc<dyn Fn(&mut EventContext, TimerAction)>,
 }
 
 impl TimerState {
