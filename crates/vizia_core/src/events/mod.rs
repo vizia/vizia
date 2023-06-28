@@ -97,6 +97,6 @@ pub(crate) use event_handler::ViewHandler;
 
 mod timer;
 pub(crate) use timer::TimerState;
-pub use timer::{Timer, TimerBuilder};
+pub use timer::{Timer, TimerAction};
 
 pub use crate::window::WindowEvent;

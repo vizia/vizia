@@ -2,10 +2,11 @@ use std::any::{Any, TypeId};
 use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 #[cfg(feature = "clipboard")]
 use std::error::Error;
+use std::rc::Rc;
 
 use femtovg::Transform2D;
 use fnv::FnvHashMap;
-use instant::Duration;
+use instant::{Duration, Instant};
 use vizia_style::{ClipPath, Filter, Scale, Translate};
 
 use crate::animation::{AnimId, Interpolator};
@@ -1026,14 +1027,38 @@ impl<'a> EventContext<'a> {
         )
     }
 
+    pub fn add_timer(
+        &mut self,
+        interval: Duration,
+        duration: Option<Duration>,
+        callback: impl Fn(&mut EventContext, TimerAction) + 'static,
+    ) -> Timer {
+        let id = Timer(self.timers.len());
+        self.timers.push(TimerState {
+            entity: self.current,
+            id,
+            time: Instant::now(),
+            interval,
+            duration,
+            start_time: Instant::now(),
+            callback: Rc::new(callback),
+        });
+
+        id
+    }
+
     pub fn start_timer(&mut self, timer: Timer) {
         if self.timer_is_running(timer) {
             self.stop_timer(timer);
         }
+        // Copy timer state from pending to playing
         let mut timer_state = self.timers[timer.0].clone();
         let now = instant::Instant::now();
         timer_state.start_time = now;
         timer_state.time = now + instant::Duration::from_secs(1);
+        self.with_current(timer_state.entity, |cx| {
+            (timer_state.callback)(cx, TimerAction::Start);
+        });
         self.running_timers.push(timer_state);
     }
 
@@ -1048,8 +1073,14 @@ impl<'a> EventContext<'a> {
     }
 
     pub fn stop_timer(&mut self, timer: Timer) {
-        *self.running_timers =
-            self.running_timers.drain().filter(|item| item.id != timer).collect();
+        while let Some(next_timer_state) = self.running_timers.peek() {
+            if next_timer_state.id == timer {
+                let timer_state = self.running_timers.pop().unwrap();
+                self.with_current(timer_state.entity, |cx| {
+                    (timer_state.callback)(cx, TimerAction::Stop);
+                });
+            }
+        }
     }
 }
 

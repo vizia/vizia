@@ -8,13 +8,13 @@ pub struct AppState {
 
 #[derive(Debug)]
 enum AppEvent {
-    Tick,
+    Increment,
 }
 
 impl Model for AppState {
     fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::Tick => {
+            AppEvent::Increment => {
                 self.count += 1;
             }
         });
@@ -26,10 +26,23 @@ fn main() {
         AppState { count: 0 }.build(cx);
 
         // Emit event every second
-        let timer = cx.add_timer(
-            TimerBuilder::new(Duration::from_secs(1), |cx| cx.emit(AppEvent::Tick))
-                .with_duration(Duration::from_secs(5)),
-        );
+        let timer =
+            cx.add_timer(Duration::from_secs(1), Some(Duration::from_secs(5)), |cx, action| {
+                match action {
+                    TimerAction::Start => {
+                        println!("Start timer");
+                    }
+
+                    TimerAction::Stop => {
+                        println!("Stop timer");
+                    }
+
+                    TimerAction::Tick(delta) => {
+                        println!("Tick timer: {:?}", delta);
+                        cx.emit(AppEvent::Increment);
+                    }
+                }
+            });
 
         VStack::new(cx, |cx| {
             Label::new(cx, AppState::count).font_size(100.0);
