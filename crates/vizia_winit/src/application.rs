@@ -269,6 +269,7 @@ impl Application {
             match event {
                 winit::event::Event::NewEvents(_) => {
                     cx.process_timers();
+                    cx.emit_scheduled_events();
                 }
 
                 winit::event::Event::UserEvent(user_event) => match user_event {
@@ -529,7 +530,9 @@ impl Application {
                 _ => {}
             }
 
-            if let Some(timer_time) = cx.get_next_timer_time() {
+            if *stored_control_flow.borrow() == ControlFlow::Exit {
+                *control_flow = ControlFlow::Exit;
+            } else if let Some(timer_time) = cx.get_next_timer_time() {
                 *control_flow = ControlFlow::WaitUntil(timer_time);
             } else {
                 *control_flow = *stored_control_flow.borrow();

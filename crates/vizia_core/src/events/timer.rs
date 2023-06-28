@@ -4,6 +4,7 @@ use instant::{Duration, Instant};
 
 use crate::{context::EventContext, entity::Entity};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TimerAction {
     Start,
     Tick(Duration),

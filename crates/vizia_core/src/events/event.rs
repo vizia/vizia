@@ -1,5 +1,6 @@
 use crate::entity::Entity;
-use std::{any::Any, fmt::Debug};
+use instant::Instant;
+use std::{any::Any, cmp::Ordering, fmt::Debug};
 use vizia_id::GenerationalId;
 
 /// Determines how an event propagates through the tree.
@@ -184,5 +185,30 @@ impl Default for EventMeta {
             propagation: Propagation::Up,
             consumed: false,
         }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub struct TimedEventHandle(pub usize);
+#[derive(Debug)]
+pub struct TimedEvent {
+    pub ident: TimedEventHandle,
+    pub event: Event,
+    pub time: Instant,
+}
+impl PartialEq<Self> for TimedEvent {
+    fn eq(&self, other: &Self) -> bool {
+        self.time.eq(&other.time)
+    }
+}
+impl Eq for TimedEvent {}
+impl PartialOrd for TimedEvent {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.time.partial_cmp(&other.time).map(|ord| ord.reverse())
+    }
+}
+impl Ord for TimedEvent {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.time.cmp(&other.time).reverse()
     }
 }
