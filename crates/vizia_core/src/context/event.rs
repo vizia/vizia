@@ -5,13 +5,13 @@ use std::error::Error;
 
 use femtovg::Transform2D;
 use fnv::FnvHashMap;
-use instant::{Duration, Instant};
+use instant::Duration;
 use vizia_style::{ClipPath, Filter, Scale, Translate};
 
 use crate::animation::{AnimId, Interpolator};
 use crate::cache::CachedData;
 use crate::environment::ThemeMode;
-use crate::events::{TimedEvent, TimedEventHandle, ViewHandler};
+use crate::events::{Timer, TimerState, ViewHandler};
 use crate::model::ModelDataStore;
 use crate::prelude::*;
 use crate::resource::ResourceManager;
@@ -78,8 +78,8 @@ pub struct EventContext<'a> {
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
-    pub event_schedule: &'a mut BinaryHeap<TimedEvent>,
-    next_event_id: &'a mut usize,
+    pub(crate) timers: &'a mut Vec<TimerState>,
+    pub(crate) running_timers: &'a mut BinaryHeap<TimerState>,
     cursor_icon_locked: &'a mut bool,
     window_size: &'a mut WindowSize,
     user_scale_factor: &'a mut f64,
@@ -128,8 +128,8 @@ impl<'a> EventContext<'a> {
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
-            event_schedule: &mut cx.event_schedule,
-            next_event_id: &mut cx.next_event_id,
+            timers: &mut cx.timers,
+            running_timers: &mut cx.running_timers,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
             window_size: &mut cx.window_size,
             user_scale_factor: &mut cx.user_scale_factor,
@@ -159,8 +159,8 @@ impl<'a> EventContext<'a> {
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
-            event_schedule: &mut cx.event_schedule,
-            next_event_id: &mut cx.next_event_id,
+            timers: &mut cx.timers,
+            running_timers: &mut cx.running_timers,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
             window_size: &mut cx.window_size,
             user_scale_factor: &mut cx.user_scale_factor,
@@ -1022,6 +1022,32 @@ impl<'a> EventContext<'a> {
             self.style.font_size.get(self.current).copied().map(|f| f.0).unwrap_or(16.0),
         )
     }
+
+    pub fn start_timer(&mut self, timer: Timer) {
+        if self.timer_is_running(timer) {
+            self.stop_timer(timer);
+        }
+        let mut timer_state = self.timers[timer.0].clone();
+        let now = instant::Instant::now();
+        timer_state.start_time = now;
+        timer_state.time = now + instant::Duration::from_secs(1);
+        self.running_timers.push(timer_state);
+    }
+
+    pub fn timer_is_running(&mut self, timer: Timer) -> bool {
+        for timer_state in self.running_timers.iter() {
+            if timer_state.id == timer {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn stop_timer(&mut self, timer: Timer) {
+        *self.running_timers =
+            self.running_timers.drain().filter(|item| item.id != timer).collect();
+    }
 }
 
 impl<'a> DataContext for EventContext<'a> {
@@ -1069,40 +1095,6 @@ impl<'a> EmitContext for EventContext<'a> {
 
     fn emit_custom(&mut self, event: Event) {
         self.event_queue.push_back(event);
-    }
-
-    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle {
-        self.schedule_event(
-            Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up),
-            at,
-        )
-    }
-
-    fn schedule_emit_to<M: Any + Send>(
-        &mut self,
-        message: M,
-        target: Entity,
-        at: Instant,
-    ) -> TimedEventHandle {
-        self.schedule_event(
-            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
-            at,
-        )
-    }
-
-    fn schedule_event(&mut self, event: Event, at: Instant) -> TimedEventHandle {
-        let handle = TimedEventHandle(*self.next_event_id);
-        self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
-        *self.next_event_id += 1;
-        handle
-    }
-
-    fn cancel_scheduled(&mut self, handle: TimedEventHandle) {
-        *self.event_schedule =
-            self.event_schedule.drain().filter(|item| item.ident != handle).collect();
     }
 }
 

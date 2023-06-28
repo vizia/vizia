@@ -8,7 +8,7 @@ mod event;
 mod proxy;
 mod resource;
 
-use instant::Instant;
+use instant::{Duration, Instant};
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
 use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
@@ -32,7 +32,7 @@ pub use resource::*;
 use crate::binding::BindingHandler;
 use crate::cache::CachedData;
 use crate::environment::{Environment, ThemeMode};
-use crate::events::{TimedEvent, TimedEventHandle, ViewHandler};
+use crate::events::{Timer, TimerState, ViewHandler};
 #[cfg(feature = "embedded_fonts")]
 use crate::fonts;
 
@@ -65,8 +65,8 @@ pub struct Context {
     pub(crate) data: Models,
     pub(crate) bindings: Bindings,
     pub(crate) event_queue: VecDeque<Event>,
-    pub event_schedule: BinaryHeap<TimedEvent>,
-    next_event_id: usize,
+    pub(crate) timers: Vec<TimerState>,
+    pub(crate) running_timers: BinaryHeap<TimerState>,
     pub(crate) tree_updates: Vec<accesskit::TreeUpdate>,
     pub(crate) listeners:
         HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
@@ -154,8 +154,10 @@ impl Context {
             cache,
             canvases: HashMap::new(),
             event_queue: VecDeque::new(),
-            event_schedule: BinaryHeap::new(),
-            next_event_id: 0,
+            // event_schedule: BinaryHeap::new(),
+            // next_event_id: 0,
+            timers: Vec::new(),
+            running_timers: BinaryHeap::new(),
             tree_updates: Vec::new(),
             listeners: HashMap::default(),
             global_listeners: vec![],
@@ -529,6 +531,58 @@ impl Context {
         self.resource_manager.add_translation(lang, ftl.to_string());
     }
 
+    /// Adds a timer to the application.
+    pub fn add_timer(&mut self, timer_builder: TimerBuilder) -> Timer {
+        let handle = Timer(self.timers.len());
+        self.timers.push(timer_builder.build(self.current, handle));
+        handle
+    }
+
+    pub fn start_timer(&mut self, timer: Timer) {
+        if self.timer_is_running(timer) {
+            self.stop_timer(timer);
+        }
+        // Copy timer state from pending to playing
+        let mut timer_state = self.timers[timer.0].clone();
+        let now = instant::Instant::now();
+        timer_state.start_time = now;
+        timer_state.time = now + instant::Duration::from_secs(1);
+        self.running_timers.push(timer_state);
+    }
+
+    pub fn timer_is_running(&mut self, timer: Timer) -> bool {
+        for timer_state in self.running_timers.iter() {
+            if timer_state.id == timer {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn stop_timer(&mut self, timer: Timer) {
+        self.running_timers = self.running_timers.drain().filter(|item| item.id != timer).collect();
+    }
+
+    pub fn tick_timers(&mut self) {
+        let now = Instant::now();
+        while let Some(timed_event) = self.running_timers.peek() {
+            if timed_event.time <= now {
+                // self.0.event_queue.push_back(self.0.event_schedule.pop().unwrap().event);
+                let mut timer_state = self.running_timers.pop().unwrap();
+                if let Some(callback) = &timer_state.callback {
+                    (callback)(&mut EventContext::new_with_current(self, timer_state.entity));
+                }
+                if timer_state.end_time().unwrap_or_else(|| now + Duration::from_secs(1)) > now {
+                    timer_state.time = now + timer_state.interval;
+                    self.running_timers.push(timer_state);
+                }
+            } else {
+                break;
+            }
+        }
+    }
+
     pub fn load_image(
         &mut self,
         path: &str,
@@ -609,19 +663,6 @@ pub trait EmitContext {
     fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
     /// Send a custom event with custom origin and propagation information.
     fn emit_custom(&mut self, event: Event);
-
-    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle;
-
-    fn schedule_emit_to<M: Any + Send>(
-        &mut self,
-        message: M,
-        target: Entity,
-        at: Instant,
-    ) -> TimedEventHandle;
-
-    fn schedule_event(&mut self, event: Event, at: Instant) -> TimedEventHandle;
-
-    fn cancel_scheduled(&mut self, handle: TimedEventHandle);
 }
 
 impl DataContext for Context {
@@ -669,39 +710,5 @@ impl EmitContext for Context {
 
     fn emit_custom(&mut self, event: Event) {
         self.event_queue.push_back(event);
-    }
-
-    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle {
-        self.schedule_event(
-            Event::new(message)
-                .target(self.current)
-                .origin(self.current)
-                .propagate(Propagation::Up),
-            at,
-        )
-    }
-
-    fn schedule_emit_to<M: Any + Send>(
-        &mut self,
-        message: M,
-        target: Entity,
-        at: Instant,
-    ) -> TimedEventHandle {
-        self.schedule_event(
-            Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
-            at,
-        )
-    }
-
-    fn schedule_event(&mut self, event: Event, at: Instant) -> TimedEventHandle {
-        let handle = TimedEventHandle(self.next_event_id);
-        self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
-        self.next_event_id += 1;
-        handle
-    }
-
-    fn cancel_scheduled(&mut self, handle: TimedEventHandle) {
-        self.event_schedule =
-            self.event_schedule.drain().filter(|item| item.ident != handle).collect();
     }
 }

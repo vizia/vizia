@@ -1,39 +1,21 @@
-use instant::{Duration, Instant};
+use instant::Duration;
 use vizia::prelude::*;
 
 #[derive(Lens)]
 pub struct AppState {
     pub count: u32,
-    pub current_timer: Option<TimedEventHandle>,
 }
 
 #[derive(Debug)]
 enum AppEvent {
-    Tick(Instant),
-    Stop,
-    Start,
+    Tick,
 }
 
 impl Model for AppState {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
-            AppEvent::Tick(instant) => {
+            AppEvent::Tick => {
                 self.count += 1;
-                let next = *instant + Duration::from_secs(1);
-                self.current_timer = Some(cx.schedule_emit(AppEvent::Tick(next), next));
-            }
-
-            AppEvent::Stop => {
-                if let Some(timer) = self.current_timer.take() {
-                    cx.cancel_scheduled(timer);
-                }
-            }
-
-            AppEvent::Start => {
-                if self.current_timer.is_none() {
-                    let next = Instant::now() + Duration::from_secs(1);
-                    self.current_timer = Some(cx.schedule_emit(AppEvent::Tick(next), next));
-                }
             }
         });
     }
@@ -41,21 +23,28 @@ impl Model for AppState {
 
 fn main() {
     Application::new(|cx| {
-        AppState { count: 0, current_timer: None }.build(cx);
+        AppState { count: 0 }.build(cx);
+
+        // Emit event every second
+        let timer = cx.add_timer(
+            TimerBuilder::new(Duration::from_secs(1), |cx| cx.emit(AppEvent::Tick))
+                .with_duration(Duration::from_secs(5)),
+        );
+
         VStack::new(cx, |cx| {
             Label::new(cx, AppState::count).font_size(100.0);
 
             Button::new(
                 cx,
-                |cx| {
-                    cx.emit(AppEvent::Start);
+                move |cx| {
+                    cx.start_timer(timer);
                 },
                 |cx| Label::new(cx, "Start"),
             );
             Button::new(
                 cx,
-                |cx| {
-                    cx.emit(AppEvent::Stop);
+                move |cx| {
+                    cx.stop_timer(timer);
                 },
                 |cx| Label::new(cx, "Stop"),
             );
@@ -65,5 +54,6 @@ fn main() {
         .row_between(Units::Pixels(10.0));
     })
     .title("Timer")
+    .inner_size((300, 300))
     .run();
 }
