@@ -1041,7 +1041,7 @@ impl<'a> EventContext<'a> {
     ) -> Timer {
         let id = Timer(self.timers.len());
         self.timers.push(TimerState {
-            entity: self.current,
+            entity: Entity::root(),
             id,
             time: Instant::now(),
             interval,
@@ -1062,9 +1062,9 @@ impl<'a> EventContext<'a> {
         let now = instant::Instant::now();
         timer_state.start_time = now;
         timer_state.time = now;
-        self.with_current(timer_state.entity, |cx| {
-            (timer_state.callback)(cx, TimerAction::Start);
-        });
+        timer_state.entity = self.current;
+        (timer_state.callback)(self, TimerAction::Start);
+
         self.running_timers.push(timer_state);
     }
 
