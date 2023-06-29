@@ -190,6 +190,7 @@ impl Default for EventMeta {
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct TimedEventHandle(pub usize);
+
 #[derive(Debug)]
 pub struct TimedEvent {
     pub ident: TimedEventHandle,

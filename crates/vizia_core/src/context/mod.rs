@@ -543,7 +543,7 @@ impl Context {
     ) -> Timer {
         let id = Timer(self.timers.len());
         self.timers.push(TimerState {
-            entity: self.current,
+            entity: Entity::root(),
             id,
             time: Instant::now(),
             interval,
@@ -564,6 +564,7 @@ impl Context {
         let now = instant::Instant::now();
         timer_state.start_time = now;
         timer_state.time = now + instant::Duration::from_secs(1);
+        timer_state.entity = self.current;
         (timer_state.callback)(
             &mut EventContext::new_with_current(self, timer_state.entity),
             TimerAction::Start,
