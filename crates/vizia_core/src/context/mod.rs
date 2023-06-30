@@ -635,14 +635,13 @@ impl Context {
         let now = Instant::now();
         while let Some(next_timer_state) = self.running_timers.peek() {
             if next_timer_state.time <= now {
-                // self.0.event_queue.push_back(self.0.event_schedule.pop().unwrap().event);
                 let mut timer_state = self.running_timers.pop().unwrap();
-                (timer_state.callback)(
-                    &mut EventContext::new_with_current(self, timer_state.entity),
-                    TimerAction::Tick(now - timer_state.time),
-                );
 
                 if timer_state.end_time().unwrap_or_else(|| now + Duration::from_secs(1)) > now {
+                    (timer_state.callback)(
+                        &mut EventContext::new_with_current(self, timer_state.entity),
+                        TimerAction::Tick(now - timer_state.time),
+                    );
                     timer_state.time = now + timer_state.interval - (now - timer_state.time);
                     self.running_timers.push(timer_state);
                 } else {
