@@ -23,7 +23,7 @@ impl Color {
         Self::RGBA(RGBA::rgba(red, green, blue, alpha))
     }
 
-    /// Create and return a new [RGBA] from the Color
+    /// Return a new [RGBA] from the Color
     pub fn get_rgba(&self) -> RGBA {
         match self {
             Color::CurrentColor => RGBA::rgba(0, 0, 0, 0),
