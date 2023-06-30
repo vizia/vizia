@@ -545,6 +545,15 @@ pub struct RGBA {
     pub alpha: u8,
 }
 
+impl From<Color> for RGBA {
+    fn from(color: Color) -> Self {
+        match color {
+            Color::CurrentColor => RGBA::rgba(0, 0, 0, 0),
+            Color::RGBA(rgba) => rgba,
+        }
+    }
+}
+
 impl From<cssparser::RGBA> for RGBA {
     fn from(rgba: cssparser::RGBA) -> Self {
         Self::rgba(rgba.red, rgba.green, rgba.blue, rgba.alpha)
