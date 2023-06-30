@@ -188,11 +188,12 @@ impl Default for EventMeta {
     }
 }
 
+/// A handle used to cancel a scheduled event before it is sent with `cx.cancel_scheduled`.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct TimedEventHandle(pub usize);
 
 #[derive(Debug)]
-pub struct TimedEvent {
+pub(crate) struct TimedEvent {
     pub ident: TimedEventHandle,
     pub event: Event,
     pub time: Instant,

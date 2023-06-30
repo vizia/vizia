@@ -66,8 +66,8 @@ pub struct Context {
     pub(crate) data: Models,
     pub(crate) bindings: Bindings,
     pub(crate) event_queue: VecDeque<Event>,
-    pub event_schedule: BinaryHeap<TimedEvent>,
-    next_event_id: usize,
+    pub(crate) event_schedule: BinaryHeap<TimedEvent>,
+    pub(crate) next_event_id: usize,
     pub(crate) timers: Vec<TimerState>,
     pub(crate) running_timers: BinaryHeap<TimerState>,
     pub(crate) tree_updates: Vec<accesskit::TreeUpdate>,
@@ -535,6 +535,35 @@ impl Context {
     }
 
     /// Adds a timer to the application.
+    ///
+    /// `interval` - The time between ticks of the timer.
+    /// `duration` - An optional duration for the timer. Pass `None` for a continuos timer.
+    /// `callback` - A callback which is called on when the timer is started, ticks, and stops. Disambiguated by the `TimerAction` parameter of the callback.
+    ///
+    /// Returns a `Timer` id which can be used to start and stop the timer.  
+    ///
+    /// # Example
+    /// Creates a timer which calls the provided callback every second for 5 seconds:
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context:default();
+    /// let timer = cx.add_timer(Duration::from_secs(1), Some(Duration::from_secs(5)), |cx, reason|{
+    ///     match reason {
+    ///         TimerAction::Start => {
+    ///             println!("Start timer");
+    ///         }
+    ///     
+    ///         TimerAction::Tick(delta) => {
+    ///             println!("Tick timer: {:?}", delta);
+    ///         }
+    ///
+    ///         TimerAction::Stop => {
+    ///             println!("Stop timer");
+    ///         }
+    ///     }
+    /// });
+    /// ```
     pub fn add_timer(
         &mut self,
         interval: Duration,
@@ -555,6 +584,9 @@ impl Context {
         id
     }
 
+    /// Starts a timer with the provided timer id.
+    ///
+    /// Events sent within the timer callback provided in `add_timer()` will target the current view.
     pub fn start_timer(&mut self, timer: Timer) {
         if self.timer_is_running(timer) {
             self.stop_timer(timer);
@@ -563,7 +595,7 @@ impl Context {
         let mut timer_state = self.timers[timer.0].clone();
         let now = instant::Instant::now();
         timer_state.start_time = now;
-        timer_state.time = now + instant::Duration::from_secs(1);
+        timer_state.time = now;
         timer_state.entity = self.current;
         (timer_state.callback)(
             &mut EventContext::new_with_current(self, timer_state.entity),
@@ -572,6 +604,7 @@ impl Context {
         self.running_timers.push(timer_state);
     }
 
+    /// Returns true if the timer with the provided timer id is currently running.
     pub fn timer_is_running(&mut self, timer: Timer) -> bool {
         for timer_state in self.running_timers.iter() {
             if timer_state.id == timer {
@@ -582,6 +615,9 @@ impl Context {
         false
     }
 
+    /// Stops the timer with the given timer id.
+    ///
+    /// Any events emitted in response to the timer stopping, as determined by the callback provided in `add_timer()`, will target the view which called `start_timer()`.
     pub fn stop_timer(&mut self, timer: Timer) {
         while let Some(next_timer_state) = self.running_timers.peek() {
             if next_timer_state.id == timer {
@@ -594,7 +630,8 @@ impl Context {
         }
     }
 
-    pub fn tick_timers(&mut self) {
+    // Tick all timers.
+    pub(crate) fn tick_timers(&mut self) {
         let now = Instant::now();
         while let Some(next_timer_state) = self.running_timers.peek() {
             if next_timer_state.time <= now {
@@ -695,20 +732,113 @@ pub trait DataContext {
 
 pub trait EmitContext {
     /// Send an event containing the provided message up the tree from the current entity.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// cx.emit(AppEvent::Increment);
+    /// ```
     fn emit<M: Any + Send>(&mut self, message: M);
+
     /// Send an event containing the provided message directly to a specified entity from the current entity.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// cx.emit_to(AppEvent::Increment, Entity::root);
+    /// ```
     fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
+
     /// Send a custom event with custom origin and propagation information.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// cx.emit_custom(
+    ///     Event::new(AppEvent::Increment)
+    ///         .origin(cx.current)
+    ///         .target(Entity::root())
+    ///         .propagation(Propagation::Subtree)
+    /// );
+    /// ```
     fn emit_custom(&mut self, event: Event);
 
+    /// Send an event containing the provided message up the tree at a particular time instant.
+    ///
+    /// Returns a `TimedEventHandle` which can be used to cancel the scheduled event.
+    ///
+    /// # Example
+    /// Emit an event after a delay of 2 seconds:
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// cx.schedule_emit(AppEvent::Increment, Instant::now() + Duration::from_secs(2));
+    /// ```
     fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle;
+
+    /// Send an event containing the provided message directly to a specified view at a particular time instant.
+    ///
+    /// Returns a `TimedEventHandle` which can be used to cancel the scheduled event.
+    ///
+    /// # Example
+    /// Emit an event to the root view (window) after a delay of 2 seconds:
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// cx.schedule_emit_to(AppEvent::Increment, Entity::root(), Instant::now() + Duration::from_secs(2));
+    /// ```
     fn schedule_emit_to<M: Any + Send>(
         &mut self,
         message: M,
         target: Entity,
         at: Instant,
     ) -> TimedEventHandle;
-    fn schedule_event(&mut self, event: Event, at: Instant) -> TimedEventHandle;
+
+    /// Send a custom event with custom origin and propagation information at a particular time instant.
+    ///
+    /// Returns a `TimedEventHandle` which can be used to cancel the scheduled event.
+    ///
+    /// # Example
+    /// Emit a custom event after a delay of 2 seconds:
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// # enum AppEvent {Increment}
+    /// cx.schedule_emit_custom(    
+    ///     Event::new(AppEvent::Increment)
+    ///         .target(Entity::root())
+    ///         .origin(cx.current)
+    ///         .propagation(Propagation::Subtree),
+    ///     Entity::root(),
+    ///     Instant::now() + Duration::from_secs(2)
+    /// );
+    /// ```
+    fn schedule_emit_custom(&mut self, event: Event, at: Instant) -> TimedEventHandle;
+
+    /// Cancel a scheduled event before it is sent.
+    ///
+    /// # Example
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// let timed_event = cx.schedule_emit_to(AppEvent::Increment, Entity::root(), Instant::now() + Duration::from_secs(2));
+    /// cx.cancel_scheduled(timed_event);
+    /// ```
     fn cancel_scheduled(&mut self, handle: TimedEventHandle);
 }
 
@@ -760,7 +890,7 @@ impl EmitContext for Context {
     }
 
     fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle {
-        self.schedule_event(
+        self.schedule_emit_custom(
             Event::new(message)
                 .target(self.current)
                 .origin(self.current)
@@ -774,12 +904,12 @@ impl EmitContext for Context {
         target: Entity,
         at: Instant,
     ) -> TimedEventHandle {
-        self.schedule_event(
+        self.schedule_emit_custom(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
             at,
         )
     }
-    fn schedule_event(&mut self, event: Event, at: Instant) -> TimedEventHandle {
+    fn schedule_emit_custom(&mut self, event: Event, at: Instant) -> TimedEventHandle {
         let handle = TimedEventHandle(self.next_event_id);
         self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
         self.next_event_id += 1;

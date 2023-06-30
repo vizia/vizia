@@ -79,8 +79,8 @@ pub struct EventContext<'a> {
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
-    pub event_schedule: &'a mut BinaryHeap<TimedEvent>,
-    next_event_id: &'a mut usize,
+    pub(crate) event_schedule: &'a mut BinaryHeap<TimedEvent>,
+    pub(crate) next_event_id: &'a mut usize,
     pub(crate) timers: &'a mut Vec<TimerState>,
     pub(crate) running_timers: &'a mut BinaryHeap<TimerState>,
     cursor_icon_locked: &'a mut bool,
@@ -1135,7 +1135,7 @@ impl<'a> EmitContext for EventContext<'a> {
     }
 
     fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle {
-        self.schedule_event(
+        self.schedule_emit_custom(
             Event::new(message)
                 .target(self.current)
                 .origin(self.current)
@@ -1149,12 +1149,12 @@ impl<'a> EmitContext for EventContext<'a> {
         target: Entity,
         at: Instant,
     ) -> TimedEventHandle {
-        self.schedule_event(
+        self.schedule_emit_custom(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
             at,
         )
     }
-    fn schedule_event(&mut self, event: Event, at: Instant) -> TimedEventHandle {
+    fn schedule_emit_custom(&mut self, event: Event, at: Instant) -> TimedEventHandle {
         let handle = TimedEventHandle(*self.next_event_id);
         self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
         *self.next_event_id += 1;
