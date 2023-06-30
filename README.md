@@ -40,12 +40,12 @@
 
 <div align="center">
   <h3>
+    <a href="https://book.vizia.dev/"> Book </a>
+    <span> • </span>
     <a href="https://docs.vizia.dev/"> Docs </a>
-    <span>  • </span>
-    <!-- <a href="https://book.vizia.dev/"> Guide </a>
-    <span> | </span> -->
+    <span> • </span>
     <a href="https://demo.vizia.dev/"> Demo </a>
-    <span>  • </span>
+    <span> • </span>
     <a href="https://discord.gg/aNkTPsRm2w"> Discord </a>
   </h3>
 </div>
@@ -53,17 +53,28 @@
 <br/>
 
 # Features
- - Multiplatform (Windows, Linux, MacOS, Web)
- - Declarative API
- - Fine-grained data-driven reactivity
- - Adaptive layout, powered by [morphorm](https://github.com/vizia/morphorm)
- - GPU rendering, powered by [femtovg](https://github.com/femtovg/femtovg)
- - CSS theming with hot reloading
- - Animations
- - Rich text rendering, powered by [cosmic-text](https://github.com/pop-os/cosmic-text) 
- - Accessibility and screen reader support, powered by [accesskit](https://github.com/accesskit/accesskit)
- - Localization, powered by [fluent](https://github.com/projectfluent/fluent-rs)
- - Alternative [baseview](https://github.com/RustAudio/baseview) backend for audio plugin development.
+- ### __Cross-platform (Windows, Linux, MacOS)__
+  Build desktop applications which look and behave the same for Windows, Mac, and Linux.
+- ### __Declarative__
+  Write GUI code in a declarative way in pure Rust (no DSL macros).
+- ### __Reactive__
+  Views derive from application state. Change the state and the views which bind to it update automatically.
+- ### __Flexible layout__
+  Create flexible layouts which adapt to changes in size. Powered by [morphorm](https://github.com/vizia/morphorm).
+- ### __Powerful styling__
+  Take advantage of CSS with hot-reloading to fully customize the style of your application.
+- ### __Animations__
+  Bring your application to life with animatable style properties.
+- ### __Built-in views and themes__
+  Utilize over 25 ready-made views as well as two built-in themes (light and dark) to get you started. Includes 4250+ icons, provided by [Tabler Icons](https://tabler-icons.io).
+- ### __Accessibility__
+  Make you applications accessible to assistive technologies such as screen readers, powered by [accesskit](https://github.com/accesskit/accesskit).
+- ### __Localization__
+  Adapt your application to different locales, including translating text with [fluent](https://github.com/projectfluent/fluent-rs).
+- ### __GPU accelerated rendering__
+  Vizia leverages the GPU for fast graphical updates, powered by [femtovg](https://github.com/femtovg/femtovg).
+- ### __Audio plugin development__
+  Vizia provides an alternative [baseview](https://github.com/RustAudio/baseview) windowing backend for audio plugin development, for example with the [nih-plug](https://github.com/robbert-vdh/nih-plug) framework.
 
 <br />
 
@@ -121,7 +132,12 @@ fn main() {
 <div align="center"><img src="https://raw.githubusercontent.com/vizia/vizia/main/assets/images/counter.png" width="400px" height="130px"/></div>
 
 
-# Running the Examples
+# Learning
+## Book
+A quickstart guide for vizia is available [here](https://book.vizia.dev).
+## Docs
+Auto-generated code documentation can be found [here](https://docs.vizia.dev).
+## Examples
 
 A list of [examples](https://github.com/vizia/vizia/tree/main/examples) is included in the repository.
 
@@ -155,7 +171,6 @@ cargo run-wasm --release --example name_of_example
 > Some examples are not compatible with the web target and will intentionally panic if run on web.
 
 # Contributing and Community
-
 For help with vizia, or to get involved with contributing to the project, come join us on [our discord](https://discord.gg/aNkTPsRm2w).
 
 # License and Attribution
