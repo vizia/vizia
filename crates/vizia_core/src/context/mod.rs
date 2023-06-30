@@ -643,7 +643,7 @@ impl Context {
                 );
 
                 if timer_state.end_time().unwrap_or_else(|| now + Duration::from_secs(1)) > now {
-                    timer_state.time = now + timer_state.interval;
+                    timer_state.time = now + timer_state.interval - (now - timer_state.time);
                     self.running_timers.push(timer_state);
                 } else {
                     (timer_state.callback)(
