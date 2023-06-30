@@ -228,8 +228,6 @@ chip:disabled .icon {
 
 dropdown {
     border-radius: 4px;
-    border-width: 1px;
-    border-color: #d2d2d2;
     background-color: #fdfdfd;
 }
 
@@ -240,6 +238,12 @@ dropdown:over {
 dropdown:active {
     border-color: #ebebeb;
     background-color: #fafafa;
+}
+
+dropdown .title {
+    border-width: 1px;
+    border-color: #d2d2d2;
+    border-radius: 4px;
 }
 
 dropdown:active .title {
