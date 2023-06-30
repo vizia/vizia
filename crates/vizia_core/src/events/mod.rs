@@ -90,7 +90,8 @@ mod event_manager;
 pub(crate) use event_manager::EventManager;
 
 mod event;
-pub use event::{Event, EventMeta, Propagation, TimedEvent, TimedEventHandle};
+pub(crate) use event::TimedEvent;
+pub use event::{Event, EventMeta, Propagation, TimedEventHandle};
 
 mod event_handler;
 pub(crate) use event_handler::ViewHandler;
