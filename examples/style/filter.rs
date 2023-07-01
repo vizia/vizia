@@ -1,3 +1,4 @@
+use vizia::image;
 use vizia::prelude::*;
 
 const STYLE: &str = r#"

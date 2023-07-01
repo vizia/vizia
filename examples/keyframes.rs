@@ -1,4 +1,3 @@
-use instant::Duration;
 use vizia::prelude::*;
 
 const STYLE: &str = r#"

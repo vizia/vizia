@@ -62,29 +62,29 @@ pub struct ResourceManager {
 impl ResourceManager {
     pub fn new() -> Self {
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
-
-        #[cfg(not(target_arch = "wasm32"))]
-        let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> =
-            Some(Box::new(|cx: &mut ResourceContext, path: &str| {
-                if path.starts_with("https://") {
-                    let path = path.to_string();
-                    cx.spawn(move |cx| {
-                        let data = reqwest::blocking::get(&path).unwrap().bytes().unwrap();
-                        cx.load_image(
-                            path,
-                            image::load_from_memory_with_format(
-                                &data,
-                                image::guess_format(&data).unwrap(),
-                            )
-                            .unwrap(),
-                            ImageRetentionPolicy::DropWhenUnusedForOneFrame,
-                        )
-                        .unwrap();
-                    });
-                } else {
-                    // TODO: Try to load path from file
-                }
-            }));
+        let default_image_loader = None;
+        // #[cfg(not(target_arch = "wasm32"))]
+        // let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> =
+        //     Some(Box::new(|cx: &mut ResourceContext, path: &str| {
+        //         if path.starts_with("https://") {
+        //             let path = path.to_string();
+        //             cx.spawn(move |cx| {
+        //                 let data = reqwest::blocking::get(&path).unwrap().bytes().unwrap();
+        //                 cx.load_image(
+        //                     path,
+        //                     image::load_from_memory_with_format(
+        //                         &data,
+        //                         image::guess_format(&data).unwrap(),
+        //                     )
+        //                     .unwrap(),
+        //                     ImageRetentionPolicy::DropWhenUnusedForOneFrame,
+        //                 )
+        //                 .unwrap();
+        //             });
+        //         } else {
+        //             // TODO: Try to load path from file
+        //         }
+        //     }));
 
         #[cfg(target_arch = "wasm32")]
         let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> = None;

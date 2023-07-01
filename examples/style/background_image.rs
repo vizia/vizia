@@ -1,3 +1,4 @@
+use vizia::image;
 #[allow(unused)]
 use vizia::prelude::*;
 #[cfg(not(target_arch = "wasm32"))]
