@@ -8,6 +8,8 @@ pub struct Scrollbar<L1> {
     reference_points: Option<(f32, f32)>,
 
     on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
+
+    scroll_to_cursor: bool,
 }
 
 impl<L1: Lens<Target = f32>> Scrollbar<L1> {
@@ -26,6 +28,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
             orientation,
             reference_points: None,
             on_changing: Some(Box::new(callback)),
+            scroll_to_cursor: false,
         }
         .build(cx, move |cx| {
             Element::new(cx)
@@ -109,36 +112,52 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
             };
             match window_event {
                 WindowEvent::MouseDown(MouseButton::Left) => {
-                    if meta.target != cx.current() {
-                        self.reference_points = Some((pos, self.value.get(cx)));
-                        cx.capture();
-                        cx.set_active(true);
-                    } else {
-                        let (_, jump) = self.container_and_thumb_size(cx);
-                        let (tx, ty, tw, th) = self.thumb_bounds(cx);
-                        let physical_delta = match &self.orientation {
+                    if self.scroll_to_cursor {
+                        match self.orientation {
                             Orientation::Horizontal => {
-                                if cx.mouse.cursorx < tx {
-                                    -jump
-                                } else if cx.mouse.cursorx >= tx + tw {
-                                    jump
-                                } else {
-                                    return;
-                                }
+                                let px = cx.mouse().left.pos_down.0;
+                                let x = (px - cx.bounds().x) / cx.bounds().w;
+                                println!("x {}", x);
                             }
+
                             Orientation::Vertical => {
-                                if cx.mouse.cursory < ty {
-                                    -jump
-                                } else if cx.mouse.cursory >= ty + th {
-                                    jump
-                                } else {
-                                    return;
-                                }
+                                let py = cx.mouse().left.pos_down.1;
+                                let y = (py - cx.bounds().y) / cx.bounds().h;
+                                println!("y {}", y);
                             }
-                        };
-                        let changed =
-                            self.compute_new_value(cx, physical_delta, self.value.get(cx));
-                        self.change(cx, changed);
+                        }
+                    } else {
+                        if meta.target != cx.current() {
+                            self.reference_points = Some((pos, self.value.get(cx)));
+                            cx.capture();
+                            cx.set_active(true);
+                        } else {
+                            let (_, jump) = self.container_and_thumb_size(cx);
+                            let (tx, ty, tw, th) = self.thumb_bounds(cx);
+                            let physical_delta = match &self.orientation {
+                                Orientation::Horizontal => {
+                                    if cx.mouse.cursorx < tx {
+                                        -jump
+                                    } else if cx.mouse.cursorx >= tx + tw {
+                                        jump
+                                    } else {
+                                        return;
+                                    }
+                                }
+                                Orientation::Vertical => {
+                                    if cx.mouse.cursory < ty {
+                                        -jump
+                                    } else if cx.mouse.cursory >= ty + th {
+                                        jump
+                                    } else {
+                                        return;
+                                    }
+                                }
+                            };
+                            let changed =
+                                self.compute_new_value(cx, physical_delta, self.value.get(cx));
+                            self.change(cx, changed);
+                        }
                     }
                 }
 
@@ -160,5 +179,11 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                 _ => {}
             }
         });
+    }
+}
+
+impl<'a, L1: 'static + Lens<Target = f32>> Handle<'a, Scrollbar<L1>> {
+    pub fn scroll_to_cursor(self, scroll_to_cursor: bool) -> Self {
+        self.modify(|scrollbar: &mut Scrollbar<L1>| scrollbar.scroll_to_cursor = scroll_to_cursor)
     }
 }
