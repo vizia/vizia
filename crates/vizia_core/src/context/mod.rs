@@ -637,7 +637,7 @@ impl Context {
             if next_timer_state.time <= now {
                 let mut timer_state = self.running_timers.pop().unwrap();
 
-                if timer_state.end_time().unwrap_or_else(|| now + Duration::from_secs(1)) > now {
+                if timer_state.end_time().unwrap_or_else(|| now + Duration::from_secs(1)) >= now {
                     (timer_state.callback)(
                         &mut EventContext::new_with_current(self, timer_state.entity),
                         TimerAction::Tick(now - timer_state.time),
