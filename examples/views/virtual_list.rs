@@ -8,6 +8,7 @@ const STYLE: &str = r#"
         child-bottom: 1s;
         child-left: 5px;
         width: 1s;
+        color: white;
     }
 
     virtual_list label.light {
@@ -44,25 +45,25 @@ fn main() {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        let list: Vec<u32> = (1..100000u32).collect();
+        let list: Vec<u32> = (1..100u32).collect();
         AppData { list, selected: 312 }.build(cx);
 
         ExamplePage::new(cx, |cx| {
             VirtualList::new(cx, AppData::list, 40.0, |cx, index, item| {
-                // Label::new(cx, item).toggle_class("light", index % 2 == 0)
-                HStack::new(cx, |cx| {
-                    Textbox::new(cx, item).width(Pixels(100.0)).height(Pixels(32.0)).on_submit(
-                        move |cx, txt, _| {
-                            if let Ok(val) = txt.parse() {
-                                cx.emit(AppEvent::SetValue(index, val));
-                            }
-                        },
-                    );
-                })
-                .child_top(Stretch(1.0))
-                .child_bottom(Stretch(1.0))
-                .child_left(Pixels(10.0))
-                .toggle_class("light", index % 2 == 0)
+                Label::new(cx, item).toggle_class("light", index % 2 == 0)
+                // HStack::new(cx, |cx| {
+                //     Textbox::new(cx, item).width(Pixels(100.0)).height(Pixels(32.0)).on_submit(
+                //         move |cx, txt, _| {
+                //             if let Ok(val) = txt.parse() {
+                //                 cx.emit(AppEvent::SetValue(index, val));
+                //             }
+                //         },
+                //     );
+                // })
+                // .child_top(Stretch(1.0))
+                // .child_bottom(Stretch(1.0))
+                // .child_left(Pixels(10.0))
+                // .toggle_class("light", index % 2 == 0)
             })
             .space(Pixels(0.0))
             .background_color(Color::from("#202020"));
