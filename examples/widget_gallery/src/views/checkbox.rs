@@ -153,14 +153,12 @@ impl View for CheckboxInput {
 pub struct Group {}
 
 impl Group {
-    pub fn new<T: ToString>(cx: &mut Context, label: impl  Res<T>, content: impl FnOnce(&mut Context)) -> Handle<Self> {
+    pub fn new<T: ToString>(cx: &mut Context, label: impl  Res<T> + Clone, content: impl FnOnce(&mut Context)) -> Handle<Self> {
         Group{}.build(cx, |cx|{
-            label.set_or_bind(cx, cx.current(), |cx, entity, val|{
-                let text = val.to_string();
-                if !text.is_empty() {
-                    Label::new(cx, &text).class("legend");
-                }
-            });
+
+            let has_text = !label.get_val(cx).to_string().is_empty();
+            Label::new(cx, label.clone()).class("legend").display(has_text);
+
             (content)(cx);
         })
     }

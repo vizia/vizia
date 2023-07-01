@@ -462,7 +462,7 @@ impl Context {
     /// Sets the language used by the application for localization.
     pub fn set_language(&mut self, lang: LanguageIdentifier) {
         let cx = &mut EventContext::new(self);
-        if let Some(mut model_data_store) = cx.data.remove(Entity::root()) {
+        if let Some(mut model_data_store) = cx.data.remove(&Entity::root()) {
             if let Some(model) = model_data_store.models.get_mut(&TypeId::of::<Environment>()) {
                 model.event(cx, &mut Event::new(EnvironmentEvent::SetLocale(lang)));
             }
