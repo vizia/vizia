@@ -1,7 +1,7 @@
+#[cfg(not(target_arch = "wasm32"))]
+use vizia::image;
 #[allow(unused)]
 use vizia::prelude::*;
-#[cfg(not(target_arch = "wasm32"))]
-use vizia_core::resource::ImageRetentionPolicy;
 
 #[allow(unused)]
 const STYLE: &str = r#"

@@ -3,9 +3,6 @@
 #![allow(clippy::single_match)]
 // To allow enum names with the same prefix
 #![allow(clippy::enum_variant_names)]
-#[cfg(feature = "serde")]
-#[macro_use]
-extern crate serde;
 
 #[doc(hidden)]
 mod accessibility;
@@ -102,6 +99,7 @@ pub mod prelude {
     pub use super::style::*;
 
     pub use cosmic_text::FamilyOwned;
+    pub use instant::{Duration, Instant};
     pub use morphorm::Units::*;
     pub use morphorm::{LayoutType, PositionType, Units};
     pub use unic_langid::{langid, LanguageIdentifier};
