@@ -1145,8 +1145,8 @@ impl<'a> EmitContext for EventContext<'a> {
     }
     fn schedule_emit_to<M: Any + Send>(
         &mut self,
-        message: M,
         target: Entity,
+        message: M,
         at: Instant,
     ) -> TimedEventHandle {
         self.schedule_emit_custom(
