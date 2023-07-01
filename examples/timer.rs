@@ -43,7 +43,7 @@ fn main() {
                     println!("Stop timer");
                 }
 
-                TimerAction::Tick(delta) => {
+                TimerAction::Tick(_delta) => {
                     // println!("Tick timer: {:?}", delta);
                     cx.emit(AppEvent::Increment);
                 }
