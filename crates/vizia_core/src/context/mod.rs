@@ -579,7 +579,7 @@ impl Context {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # use instant::{Instant, Duration};
-    /// # let cx = &mut Context:default();
+    /// # let cx = &mut Context::default();
     /// let timer = cx.add_timer(Duration::from_secs(1), Some(Duration::from_secs(5)), |cx, reason|{
     ///     match reason {
     ///         TimerAction::Start => {
@@ -782,7 +782,7 @@ pub trait EmitContext {
     /// # use instant::{Instant, Duration};
     /// # let cx = &mut Context::default();
     /// # enum AppEvent {Increment}
-    /// cx.emit_to(AppEvent::Increment, Entity::root);
+    /// cx.emit_to(Entity::root(), AppEvent::Increment);
     /// ```
     fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
 
@@ -796,9 +796,9 @@ pub trait EmitContext {
     /// # enum AppEvent {Increment}
     /// cx.emit_custom(
     ///     Event::new(AppEvent::Increment)
-    ///         .origin(cx.current)
+    ///         .origin(cx.current())
     ///         .target(Entity::root())
-    ///         .propagation(Propagation::Subtree)
+    ///         .propagate(Propagation::Subtree)
     /// );
     /// ```
     fn emit_custom(&mut self, event: Event);
@@ -829,12 +829,12 @@ pub trait EmitContext {
     /// # use instant::{Instant, Duration};
     /// # let cx = &mut Context::default();
     /// # enum AppEvent {Increment}
-    /// cx.schedule_emit_to(AppEvent::Increment, Entity::root(), Instant::now() + Duration::from_secs(2));
+    /// cx.schedule_emit_to(Entity::root(), AppEvent::Increment, Instant::now() + Duration::from_secs(2));
     /// ```
     fn schedule_emit_to<M: Any + Send>(
         &mut self,
-        message: M,
         target: Entity,
+        message: M,
         at: Instant,
     ) -> TimedEventHandle;
 
@@ -852,9 +852,8 @@ pub trait EmitContext {
     /// cx.schedule_emit_custom(    
     ///     Event::new(AppEvent::Increment)
     ///         .target(Entity::root())
-    ///         .origin(cx.current)
-    ///         .propagation(Propagation::Subtree),
-    ///     Entity::root(),
+    ///         .origin(cx.current())
+    ///         .propagate(Propagation::Subtree),
     ///     Instant::now() + Duration::from_secs(2)
     /// );
     /// ```
@@ -867,7 +866,8 @@ pub trait EmitContext {
     /// # use vizia_core::prelude::*;
     /// # use instant::{Instant, Duration};
     /// # let cx = &mut Context::default();
-    /// let timed_event = cx.schedule_emit_to(AppEvent::Increment, Entity::root(), Instant::now() + Duration::from_secs(2));
+    /// # enum AppEvent {Increment}
+    /// let timed_event = cx.schedule_emit_to(Entity::root(), AppEvent::Increment, Instant::now() + Duration::from_secs(2));
     /// cx.cancel_scheduled(timed_event);
     /// ```
     fn cancel_scheduled(&mut self, handle: TimedEventHandle);
@@ -929,10 +929,11 @@ impl EmitContext for Context {
             at,
         )
     }
+
     fn schedule_emit_to<M: Any + Send>(
         &mut self,
-        message: M,
         target: Entity,
+        message: M,
         at: Instant,
     ) -> TimedEventHandle {
         self.schedule_emit_custom(
@@ -940,12 +941,14 @@ impl EmitContext for Context {
             at,
         )
     }
+
     fn schedule_emit_custom(&mut self, event: Event, at: Instant) -> TimedEventHandle {
         let handle = TimedEventHandle(self.next_event_id);
         self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
         self.next_event_id += 1;
         handle
     }
+
     fn cancel_scheduled(&mut self, handle: TimedEventHandle) {
         self.event_schedule =
             self.event_schedule.drain().filter(|item| item.ident != handle).collect();
