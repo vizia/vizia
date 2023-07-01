@@ -36,6 +36,25 @@ fn main() {
     Application::new(|cx| {
         cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
+        cx.set_image_loader(|cx, path|{
+            if path.starts_with("https://") {
+                let path = path.to_string();
+                cx.spawn(move |cx| {
+                    let data = reqwest::blocking::get(&path).unwrap().bytes().unwrap();
+                    cx.load_image(
+                        path,
+                        image::load_from_memory_with_format(
+                            &data,
+                            image::guess_format(&data).unwrap(),
+                        )
+                        .unwrap(),
+                        ImageRetentionPolicy::DropWhenUnusedForOneFrame,
+                    )
+                    .unwrap();
+                });
+            }
+        });
+
         // Load an image into the binary
         cx.load_image(
             "sample.png", 

@@ -62,7 +62,9 @@ pub struct ResourceManager {
 impl ResourceManager {
     pub fn new() -> Self {
         let locale = sys_locale::get_locale().and_then(|l| l.parse().ok()).unwrap_or_default();
-        let default_image_loader = None;
+        let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> = None;
+
+        // Disable this for now because reqwest pulls in too many dependencies.
         // #[cfg(not(target_arch = "wasm32"))]
         // let default_image_loader: Option<Box<dyn Fn(&mut ResourceContext, &str)>> =
         //     Some(Box::new(|cx: &mut ResourceContext, path: &str| {
