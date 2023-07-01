@@ -31,20 +31,24 @@ fn main() {
         AppState { count: 0 }.build(cx);
 
         // Emit event every second
-        let timer = cx.add_timer(Duration::from_millis(100), None, |cx, action| match action {
-            TimerAction::Start => {
-                println!("Start timer");
-            }
+        let timer = cx.add_timer(
+            Duration::from_millis(10),
+            Some(Duration::from_millis(1000)),
+            |cx, action| match action {
+                TimerAction::Start => {
+                    println!("Start timer");
+                }
 
-            TimerAction::Stop => {
-                println!("Stop timer");
-            }
+                TimerAction::Stop => {
+                    println!("Stop timer");
+                }
 
-            TimerAction::Tick(delta) => {
-                println!("Tick timer: {:?}", delta);
-                cx.emit(AppEvent::Increment);
-            }
-        });
+                TimerAction::Tick(delta) => {
+                    // println!("Tick timer: {:?}", delta);
+                    cx.emit(AppEvent::Increment);
+                }
+            },
+        );
 
         VStack::new(cx, |cx| {
             Label::new(cx, AppState::count).font_size(100.0);
@@ -73,6 +77,7 @@ fn main() {
         })
         .size(Auto)
         .space(Units::Stretch(1.0))
+        .child_space(Stretch(1.0))
         .row_between(Units::Pixels(10.0));
     })
     .title("Timer")
