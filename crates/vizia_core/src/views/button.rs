@@ -97,7 +97,9 @@ impl View for Button {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::PressDown { mouse } => {
-                if *mouse { cx.capture() }
+                if *mouse {
+					cx.capture()
+				}
                 cx.focus();
             }
 
