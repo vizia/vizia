@@ -325,6 +325,10 @@ path = "examples/custom_modifiers.rs"
 name = "keyframes"
 path = "examples/keyframes.rs"
 
+[[example]]
+name = "resizable_stack"
+path = "examples/resizable_stack.rs"
+
 
 [features]
 default = ["winit", "clipboard", "x11", "wayland", "embedded_fonts"]
