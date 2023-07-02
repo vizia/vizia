@@ -115,8 +115,10 @@ impl Model for ScrollData {
     }
 }
 
-pub struct ScrollView<L> {
+#[derive(Lens)]
+pub struct ScrollView<L: Lens> {
     data: L,
+    scroll_to_cursor: bool,
 }
 
 impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
@@ -131,7 +133,7 @@ impl ScrollView<Wrapper<scroll_data_derived_lenses::root>> {
     where
         F: 'static + FnOnce(&mut Context),
     {
-        Self { data: ScrollData::root }
+        Self { data: ScrollData::root, scroll_to_cursor: false }
             .build(cx, move |cx| {
                 ScrollData {
                     scroll_x: initial_x,
@@ -168,7 +170,7 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
             panic!("ScrollView::custom requires a ScrollData to be built into a parent");
         }
 
-        Self { data: data.clone() }.build(cx, |cx| {
+        Self { data: data.clone(), scroll_to_cursor: false }.build(cx, |cx| {
             Self::common_builder(cx, data, content, scroll_x, scroll_y);
         })
     }
@@ -200,7 +202,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                     cx.emit(ScrollEvent::SetY(value));
                 },
             )
-            .position_type(PositionType::SelfDirected);
+            .position_type(PositionType::SelfDirected)
+            .scroll_to_cursor(Self::scroll_to_cursor);
         }
 
         if scroll_x {
@@ -213,7 +216,8 @@ impl<L: Lens<Target = ScrollData>> ScrollView<L> {
                     cx.emit(ScrollEvent::SetX(value));
                 },
             )
-            .position_type(PositionType::SelfDirected);
+            .position_type(PositionType::SelfDirected)
+            .scroll_to_cursor(Self::scroll_to_cursor);
         }
     }
 }
@@ -270,6 +274,10 @@ impl<'a, L: Lens> Handle<'a, ScrollView<L>> {
     ) -> Self {
         self.cx.emit_to(self.entity(), ScrollEvent::SetOnScroll(Some(Arc::new(callback))));
         self
+    }
+
+    pub fn scroll_to_cursor(self, scroll_to_cursor: bool) -> Self {
+        self.modify(|scrollview: &mut ScrollView<L>| scrollview.scroll_to_cursor = scroll_to_cursor)
     }
 }
 
