@@ -77,7 +77,8 @@ datepicker {
 }
 
 .datepicker-header picklist dropdown popup {
-    left: -28px;
+    left: 1s;
+    right: 1s;
     width: 131px;
 }
 
@@ -493,7 +494,7 @@ scrollview {
     overflow: hidden;
 }
 
-scrollview > .scroll_content {
+scrollview > scroll_content {
     width: auto;
     height: auto;
     min-width: 100%;

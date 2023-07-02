@@ -93,6 +93,25 @@ pub struct EventContext<'a> {
     pub(crate) drop_data: &'a mut Option<DropData>,
 }
 
+macro_rules! get_length_property {
+    (
+        $(#[$meta:meta])*
+        $name:ident
+    ) => {
+        $(#[$meta])*
+        pub fn $name(&self) -> f32 {
+            if let Some(length) = self.style.$name.get(self.current) {
+                let bounds = self.bounds();
+
+                let px = length.to_pixels(bounds.w.min(bounds.h), self.scale_factor());
+                return px.round();
+            }
+
+            0.0
+        }
+    };
+}
+
 impl<'a> EventContext<'a> {
     pub fn new(cx: &'a mut Context) -> Self {
         Self {
@@ -186,6 +205,10 @@ impl<'a> EventContext<'a> {
 
     pub fn nth_child(&self, n: usize) -> Option<Entity> {
         self.tree.get_child(self.current, n)
+    }
+
+    pub fn last_child(&self) -> Option<Entity> {
+        self.tree.get_last_child(self.current).copied()
     }
 
     pub fn with_current<T>(&mut self, entity: Entity, f: impl FnOnce(&mut Self) -> T) -> T {
@@ -994,6 +1017,19 @@ impl<'a> EventContext<'a> {
         self.needs_redraw();
     }
 
+    // GETTERS
+    get_length_property!(
+        /// Returns the border width of the current view in physical pixels.
+        border_width
+    );
+
+    /// Returns the font-size of the current view in physical pixels.
+    pub fn font_size(&self) -> f32 {
+        self.logical_to_physical(
+            self.style.font_size.get(self.current).copied().map(|f| f.0).unwrap_or(16.0),
+        )
+    }
+
     pub fn add_timer(
         &mut self,
         interval: Duration,
@@ -1109,8 +1145,8 @@ impl<'a> EmitContext for EventContext<'a> {
     }
     fn schedule_emit_to<M: Any + Send>(
         &mut self,
-        message: M,
         target: Entity,
+        message: M,
         at: Instant,
     ) -> TimedEventHandle {
         self.schedule_emit_custom(

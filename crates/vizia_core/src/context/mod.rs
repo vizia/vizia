@@ -8,7 +8,6 @@ mod event;
 mod proxy;
 mod resource;
 
-use cosmic_text::Shaping;
 use instant::{Duration, Instant};
 use std::any::{Any, TypeId};
 use std::collections::hash_map::Entry;
@@ -20,9 +19,8 @@ use std::sync::Mutex;
 use copypasta::ClipboardContext;
 #[cfg(feature = "clipboard")]
 use copypasta::{nop_clipboard::NopClipboardContext, ClipboardProvider};
-use cosmic_text::{fontdb::Database, Attrs, AttrsList, BufferLine, FamilyOwned};
+use cosmic_text::{fontdb::Database, FamilyOwned};
 use fnv::FnvHashMap;
-use replace_with::replace_with_or_abort;
 
 use unic_langid::LanguageIdentifier;
 
@@ -470,39 +468,6 @@ impl Context {
         self.global_listeners.push(Box::new(listener));
     }
 
-    /// Add a font from memory to the application.
-    ///
-    ///
-    /// The `include_bytes!()` macro can be used to embed a font into the application binary.
-    /// # Example
-    /// ```
-    /// # use vizia_core::prelude::*;
-    /// # let cx = &mut Context::default();
-    /// cx.add_fonts_mem(&[include_bytes!("../../resources/fonts/Roboto-Regular.ttf")]);
-    /// ```
-    pub fn add_fonts_mem(&mut self, data: &[&[u8]]) {
-        self.text_context.take_buffers();
-        replace_with_or_abort(&mut self.text_context, |mut ccx| {
-            let buffers = ccx.take_buffers();
-            let (locale, mut db) = ccx.into_font_system().into_locale_and_db();
-            for font_data in data {
-                db.load_font_data(Vec::from(*font_data));
-            }
-            let mut new_ccx = TextContext::new_from_locale_and_db(locale, db);
-            for (entity, lines) in buffers {
-                new_ccx.with_buffer(entity, move |_, buf| {
-                    buf.lines = lines
-                        .into_iter()
-                        .map(|line| {
-                            BufferLine::new(line, AttrsList::new(Attrs::new()), Shaping::Advanced)
-                        })
-                        .collect();
-                });
-            }
-            new_ccx
-        });
-    }
-
     /// Sets the language used by the application for localization.
     pub fn set_language(&mut self, lang: LanguageIdentifier) {
         let cx = &mut EventContext::new(self);
@@ -513,6 +478,10 @@ impl Context {
 
             self.data.insert(Entity::root(), model_data_store);
         }
+    }
+
+    pub fn add_font_mem(&mut self, data: impl AsRef<[u8]>) {
+        self.text_context.font_system().db_mut().load_font_data(data.as_ref().to_vec());
     }
 
     /// Sets the global default font for the application.
@@ -578,7 +547,7 @@ impl Context {
     /// ```rust
     /// # use vizia_core::prelude::*;
     /// # use instant::{Instant, Duration};
-    /// # let cx = &mut Context:default();
+    /// # let cx = &mut Context::default();
     /// let timer = cx.add_timer(Duration::from_secs(1), Some(Duration::from_secs(5)), |cx, reason|{
     ///     match reason {
     ///         TimerAction::Start => {
@@ -666,15 +635,14 @@ impl Context {
         let now = Instant::now();
         while let Some(next_timer_state) = self.running_timers.peek() {
             if next_timer_state.time <= now {
-                // self.0.event_queue.push_back(self.0.event_schedule.pop().unwrap().event);
                 let mut timer_state = self.running_timers.pop().unwrap();
-                (timer_state.callback)(
-                    &mut EventContext::new_with_current(self, timer_state.entity),
-                    TimerAction::Tick(now - timer_state.time),
-                );
 
-                if timer_state.end_time().unwrap_or_else(|| now + Duration::from_secs(1)) > now {
-                    timer_state.time = now + timer_state.interval;
+                if timer_state.end_time().unwrap_or_else(|| now + Duration::from_secs(1)) >= now {
+                    (timer_state.callback)(
+                        &mut EventContext::new_with_current(self, timer_state.entity),
+                        TimerAction::Tick(now - timer_state.time),
+                    );
+                    timer_state.time = now + timer_state.interval - (now - timer_state.time);
                     self.running_timers.push(timer_state);
                 } else {
                     (timer_state.callback)(
@@ -782,7 +750,7 @@ pub trait EmitContext {
     /// # use instant::{Instant, Duration};
     /// # let cx = &mut Context::default();
     /// # enum AppEvent {Increment}
-    /// cx.emit_to(AppEvent::Increment, Entity::root);
+    /// cx.emit_to(Entity::root(), AppEvent::Increment);
     /// ```
     fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M);
 
@@ -796,9 +764,9 @@ pub trait EmitContext {
     /// # enum AppEvent {Increment}
     /// cx.emit_custom(
     ///     Event::new(AppEvent::Increment)
-    ///         .origin(cx.current)
+    ///         .origin(cx.current())
     ///         .target(Entity::root())
-    ///         .propagation(Propagation::Subtree)
+    ///         .propagate(Propagation::Subtree)
     /// );
     /// ```
     fn emit_custom(&mut self, event: Event);
@@ -829,12 +797,12 @@ pub trait EmitContext {
     /// # use instant::{Instant, Duration};
     /// # let cx = &mut Context::default();
     /// # enum AppEvent {Increment}
-    /// cx.schedule_emit_to(AppEvent::Increment, Entity::root(), Instant::now() + Duration::from_secs(2));
+    /// cx.schedule_emit_to(Entity::root(), AppEvent::Increment, Instant::now() + Duration::from_secs(2));
     /// ```
     fn schedule_emit_to<M: Any + Send>(
         &mut self,
-        message: M,
         target: Entity,
+        message: M,
         at: Instant,
     ) -> TimedEventHandle;
 
@@ -852,9 +820,8 @@ pub trait EmitContext {
     /// cx.schedule_emit_custom(    
     ///     Event::new(AppEvent::Increment)
     ///         .target(Entity::root())
-    ///         .origin(cx.current)
-    ///         .propagation(Propagation::Subtree),
-    ///     Entity::root(),
+    ///         .origin(cx.current())
+    ///         .propagate(Propagation::Subtree),
     ///     Instant::now() + Duration::from_secs(2)
     /// );
     /// ```
@@ -867,7 +834,8 @@ pub trait EmitContext {
     /// # use vizia_core::prelude::*;
     /// # use instant::{Instant, Duration};
     /// # let cx = &mut Context::default();
-    /// let timed_event = cx.schedule_emit_to(AppEvent::Increment, Entity::root(), Instant::now() + Duration::from_secs(2));
+    /// # enum AppEvent {Increment}
+    /// let timed_event = cx.schedule_emit_to(Entity::root(), AppEvent::Increment, Instant::now() + Duration::from_secs(2));
     /// cx.cancel_scheduled(timed_event);
     /// ```
     fn cancel_scheduled(&mut self, handle: TimedEventHandle);
@@ -929,10 +897,11 @@ impl EmitContext for Context {
             at,
         )
     }
+
     fn schedule_emit_to<M: Any + Send>(
         &mut self,
-        message: M,
         target: Entity,
+        message: M,
         at: Instant,
     ) -> TimedEventHandle {
         self.schedule_emit_custom(
@@ -940,12 +909,14 @@ impl EmitContext for Context {
             at,
         )
     }
+
     fn schedule_emit_custom(&mut self, event: Event, at: Instant) -> TimedEventHandle {
         let handle = TimedEventHandle(self.next_event_id);
         self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
         self.next_event_id += 1;
         handle
     }
+
     fn cancel_scheduled(&mut self, handle: TimedEventHandle) {
         self.event_schedule =
             self.event_schedule.drain().filter(|item| item.ident != handle).collect();
