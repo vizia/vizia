@@ -98,8 +98,8 @@ impl View for Button {
         event.map(|window_event, meta| match window_event {
             WindowEvent::PressDown { mouse } => {
                 if *mouse {
-					cx.capture()
-				}
+                    cx.capture()
+                }
                 cx.focus();
             }
 
