@@ -210,6 +210,10 @@ name = "crud"
 path = "examples/7GUIs/crud.rs"
 
 [[example]]
+name = "timer7gui"
+path = "examples/7GUIs/timer.rs"
+
+[[example]]
 name = "keymap_basic"
 path = "examples/keymap_basic.rs"
 
