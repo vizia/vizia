@@ -41,8 +41,8 @@ impl TimerData {
     fn new(timer: Timer) -> Self {
         Self {
             timer,
-            total_time: Duration::default(),
-            elapsed_time: Duration::default(),
+            total_time: Duration::ZERO,
+            elapsed_time: Duration::ZERO,
             progress: 0.0,
         }
     }
@@ -65,22 +65,22 @@ impl Model for TimerData {
                     .clamp(0.0, 1.0);
 
                 if self.is_finisehd() {
-                    cx.stop_timer(self.timer);
+                    cx.stop_timer(self.timer, None);
                 }
             }
             TimerEvent::SetDuration(v) => {
                 self.total_time = Duration::from_secs_f32(*v);
 
                 if !self.should_start() {
-                    cx.stop_timer(self.timer);
+                    cx.stop_timer(self.timer, None);
                 } else if !cx.timer_is_running(self.timer) {
-                    cx.start_timer(self.timer);
+                    cx.start_timer(self.timer, None);
                 }
             }
             TimerEvent::Reset => {
                 self.elapsed_time = Duration::default();
                 if self.should_start() && !cx.timer_is_running(self.timer) {
-                    cx.start_timer(self.timer);
+                    cx.start_timer(self.timer, None);
                 }
             }
         })
