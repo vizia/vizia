@@ -26,12 +26,13 @@ impl TabView {
                     for index in 0..list_length {
                         let l = lens.clone().index(index);
                         let builder = (content2)(cx, l).header;
-                        TabHeader::new(cx, index, builder)
-                            .bind(TabView::selected_index, move |handle, selected_index| {
+                        TabHeader::new(cx, index, builder).bind(
+                            TabView::selected_index,
+                            move |handle, selected_index| {
                                 let selected_index = selected_index.get(handle.cx);
                                 handle.checked(selected_index == index);
-                            })
-                            .cursor(CursorIcon::Hand);
+                            },
+                        );
                     }
                 })
             })

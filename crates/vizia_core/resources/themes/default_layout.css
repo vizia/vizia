@@ -678,6 +678,7 @@ tabview.vertical .tabview-tabheader-wrapper {
 tabheader {
     width: auto;
     height: 32px;
+    cursor: hand;
 }
 
 tabheader label {

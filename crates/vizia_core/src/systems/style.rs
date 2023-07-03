@@ -560,6 +560,10 @@ fn link_style_data(style: &mut Style, entity: Entity, matched_rules: &[Rule]) {
         should_redraw = true;
     }
 
+    if style.pointer_events.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
     // Transform
     if style.transform.link(entity, matched_rules) {
         should_redraw = true;
