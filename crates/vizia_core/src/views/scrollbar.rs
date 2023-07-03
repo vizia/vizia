@@ -136,6 +136,27 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                         cx.with_current(Entity::root(), |cx| {
                             cx.set_pointer_events(false);
                         });
+                        let thumb_bounds = self.thumb_bounds(cx);
+                        let bounds = cx.bounds();
+                        let sx = bounds.w - thumb_bounds.w;
+                        let sy = bounds.h - thumb_bounds.h;
+                        match self.orientation {
+                            Orientation::Horizontal => {
+                                let px = cx.mouse.cursorx - cx.bounds().x - thumb_bounds.w / 2.0;
+                                let x = (px / sx).clamp(0.0, 1.0);
+                                if let Some(callback) = &self.on_changing {
+                                    (callback)(cx, x);
+                                }
+                            }
+
+                            Orientation::Vertical => {
+                                let py = cx.mouse.cursory - cx.bounds().y - thumb_bounds.h / 2.0;
+                                let y = (py / sy).clamp(0.0, 1.0);
+                                if let Some(callback) = &self.on_changing {
+                                    (callback)(cx, y);
+                                }
+                            }
+                        }
                     } else {
                         let (_, jump) = self.container_and_thumb_size(cx);
                         // let (tx, ty, tw, th) = self.thumb_bounds(cx);
