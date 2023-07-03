@@ -1030,6 +1030,36 @@ impl<'a> EventContext<'a> {
         )
     }
 
+    /// Adds a timer to the application.
+    ///
+    /// `interval` - The time between ticks of the timer.
+    /// `duration` - An optional duration for the timer. Pass `None` for a continuos timer.
+    /// `callback` - A callback which is called on when the timer is started, ticks, and stops. Disambiguated by the `TimerAction` parameter of the callback.
+    ///
+    /// Returns a `Timer` id which can be used to start and stop the timer.  
+    ///
+    /// # Example
+    /// Creates a timer which calls the provided callback every second for 5 seconds:
+    /// ```rust
+    /// # use vizia_core::prelude::*;
+    /// # use instant::{Instant, Duration};
+    /// # let cx = &mut Context::default();
+    /// let timer = cx.add_timer(Duration::from_secs(1), Some(Duration::from_secs(5)), |cx, reason|{
+    ///     match reason {
+    ///         TimerAction::Start => {
+    ///             println!("Start timer");
+    ///         }
+    ///     
+    ///         TimerAction::Tick(delta) => {
+    ///             println!("Tick timer: {:?}", delta);
+    ///         }
+    ///
+    ///         TimerAction::Stop => {
+    ///             println!("Stop timer");
+    ///         }
+    ///     }
+    /// });
+    /// ```
     pub fn add_timer(
         &mut self,
         interval: Duration,
@@ -1050,21 +1080,46 @@ impl<'a> EventContext<'a> {
         id
     }
 
-    pub fn start_timer(&mut self, timer: Timer) {
+    /// Starts a timer with the provided timer id.
+    ///
+    /// Events sent within the timer callback provided in `add_timer()` will target the current view.
+    pub fn start_timer(&mut self, timer: Timer, delay: Option<Duration>) {
         if self.timer_is_running(timer) {
-            self.stop_timer(timer);
+            self.stop_timer(timer, None);
         }
         // Copy timer state from pending to playing
         let mut timer_state = self.timers[timer.0].clone();
         let now = instant::Instant::now();
-        timer_state.start_time = now;
-        timer_state.time = now;
+        timer_state.start_time = now + delay.unwrap_or(Duration::ZERO);
+        timer_state.time = now + delay.unwrap_or(Duration::ZERO);
         timer_state.entity = self.current;
         (timer_state.callback)(self, TimerAction::Start);
 
         self.running_timers.push(timer_state);
     }
 
+    /// Modifies the state of an existing timer with the provided `Timer` id.
+    pub fn modify_timer(&mut self, timer: Timer, timer_function: impl Fn(&mut TimerState)) {
+        while let Some(next_timer_state) = self.running_timers.peek() {
+            if next_timer_state.id == timer {
+                let mut timer_state = self.running_timers.pop().unwrap();
+
+                (timer_function)(&mut timer_state);
+
+                self.running_timers.push(timer_state);
+
+                return;
+            }
+        }
+
+        for pending_timer in self.timers.iter_mut() {
+            if pending_timer.id == timer {
+                (timer_function)(pending_timer);
+            }
+        }
+    }
+
+    /// Returns true if the timer with the provided timer id is currently running.
     pub fn timer_is_running(&mut self, timer: Timer) -> bool {
         for timer_state in self.running_timers.iter() {
             if timer_state.id == timer {
@@ -1075,13 +1130,26 @@ impl<'a> EventContext<'a> {
         false
     }
 
-    pub fn stop_timer(&mut self, timer: Timer) {
-        while let Some(next_timer_state) = self.running_timers.peek() {
-            if next_timer_state.id == timer {
-                let timer_state = self.running_timers.pop().unwrap();
-                self.with_current(timer_state.entity, |cx| {
-                    (timer_state.callback)(cx, TimerAction::Stop);
-                });
+    /// Stops the timer with the given timer id.
+    ///
+    /// Any events emitted in response to the timer stopping, as determined by the callback provided in `add_timer()`, will target the view which called `start_timer()`.
+    pub fn stop_timer(&mut self, timer: Timer, delay: Option<Duration>) {
+        if let Some(delay) = delay {
+            if self.timer_is_running(timer) {
+                self.modify_timer(timer, |timer_state| {
+                    let current_time = timer_state.time;
+                    let duration = (current_time + delay) - timer_state.start_time;
+                    timer_state.set_duration(Some(duration));
+                })
+            }
+        } else {
+            while let Some(next_timer_state) = self.running_timers.peek() {
+                if next_timer_state.id == timer {
+                    let timer_state = self.running_timers.pop().unwrap();
+                    self.with_current(timer_state.entity, |cx| {
+                        (timer_state.callback)(cx, TimerAction::Stop);
+                    });
+                }
             }
         }
     }

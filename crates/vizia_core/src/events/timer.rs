@@ -20,19 +20,33 @@ pub enum TimerAction {
 }
 
 #[derive(Clone)]
-pub(crate) struct TimerState {
-    pub entity: Entity,
-    pub id: Timer,
-    pub time: Instant,
-    pub interval: Duration,
-    pub duration: Option<instant::Duration>,
-    pub start_time: instant::Instant,
-    pub callback: Rc<dyn Fn(&mut EventContext, TimerAction)>,
+pub struct TimerState {
+    pub(crate) entity: Entity,
+    pub(crate) id: Timer,
+    pub(crate) time: Instant,
+    pub(crate) interval: Duration,
+    pub(crate) duration: Option<instant::Duration>,
+    pub(crate) start_time: instant::Instant,
+    pub(crate) callback: Rc<dyn Fn(&mut EventContext, TimerAction)>,
 }
 
 impl TimerState {
-    pub fn end_time(&self) -> Option<instant::Instant> {
+    pub(crate) fn end_time(&self) -> Option<instant::Instant> {
         self.duration.map(|duration| self.start_time + duration)
+    }
+
+    /// Sets the tick interval of the timer.
+    pub fn set_interval(&mut self, interval: Duration) -> &mut Self {
+        self.interval = interval;
+
+        self
+    }
+
+    /// Sets the duration of the timer. Pass `None` for a timer which ticks forever.
+    pub fn set_duration(&mut self, duration: Option<Duration>) -> &mut Self {
+        self.duration = duration;
+
+        self
     }
 }
 
