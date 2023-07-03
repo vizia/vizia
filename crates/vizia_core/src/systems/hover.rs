@@ -11,7 +11,9 @@ use vizia_storage::LayoutChildIterator;
 // Determines the hovered entity based on the mouse cursor position.
 pub(crate) fn hover_system(cx: &mut Context) {
     let mut queue = BinaryHeap::new();
-    queue.push(ZEntity { index: 0, entity: Entity::root() });
+    let pointer_events: bool =
+        cx.style.pointer_events.get(Entity::root()).copied().unwrap_or_default().into();
+    queue.push(ZEntity { index: 0, pointer_events, entity: Entity::root() });
     let mut hovered = Entity::root();
     let transform = Transform2D::identity();
     // let clip_bounds = cx.cache.get_bounds(Entity::root());
@@ -23,6 +25,7 @@ pub(crate) fn hover_system(cx: &mut Context) {
             hover_entity(
                 &mut EventContext::new(cx),
                 zentity.index,
+                zentity.pointer_events,
                 &mut queue,
                 &mut hovered,
                 transform,
@@ -78,6 +81,7 @@ pub(crate) fn hover_system(cx: &mut Context) {
 fn hover_entity(
     cx: &mut EventContext,
     current_z: i32,
+    parent_pointer_events: bool,
     queue: &mut BinaryHeap<ZEntity>,
     hovered: &mut Entity,
     parent_transform: Transform2D,
@@ -101,10 +105,18 @@ fn hover_entity(
         return;
     }
 
+    let pointer_events = cx
+        .style
+        .pointer_events
+        .get(cx.current)
+        .copied()
+        .map(|pointer_events| pointer_events.into())
+        .unwrap_or(parent_pointer_events);
+
     // Push to queue if the z-index is higher than the current z-index.
     let z_index = cx.tree.z_index(cx.current);
     if z_index > current_z {
-        queue.push(ZEntity { index: z_index, entity: cx.current });
+        queue.push(ZEntity { index: z_index, entity: cx.current, pointer_events });
         return;
     }
 
@@ -125,10 +137,23 @@ fn hover_entity(
 
     let b = bounds.intersection(&clipping);
 
-    if tx >= b.left() && tx < b.right() && ty >= b.top() && ty < b.bottom() {
-        *hovered = cx.current;
+    if pointer_events {
+        if tx >= b.left() && tx < b.right() && ty >= b.top() && ty < b.bottom() {
+            *hovered = cx.current;
 
-        if !cx
+            if !cx
+                .style
+                .pseudo_classes
+                .get(cx.current)
+                .copied()
+                .unwrap_or_default()
+                .contains(PseudoClassFlags::OVER)
+            {
+                if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
+                    pseudo_class.set(PseudoClassFlags::OVER, true);
+                }
+            }
+        } else if cx
             .style
             .pseudo_classes
             .get(cx.current)
@@ -137,31 +162,21 @@ fn hover_entity(
             .contains(PseudoClassFlags::OVER)
         {
             if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
-                pseudo_class.set(PseudoClassFlags::OVER, true);
+                pseudo_class.set(PseudoClassFlags::OVER, false);
             }
-        }
-    } else if cx
-        .style
-        .pseudo_classes
-        .get(cx.current)
-        .copied()
-        .unwrap_or_default()
-        .contains(PseudoClassFlags::OVER)
-    {
-        if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
-            pseudo_class.set(PseudoClassFlags::OVER, false);
         }
     }
 
     let child_iter = LayoutChildIterator::new(cx.tree, cx.current);
     for child in child_iter {
         cx.current = child;
-        hover_entity(cx, current_z, queue, hovered, transform, &clipping);
+        hover_entity(cx, current_z, pointer_events, queue, hovered, transform, &clipping);
     }
 }
 
 struct ZEntity {
     pub index: i32,
+    pub pointer_events: bool,
     pub entity: Entity,
 }
 

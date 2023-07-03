@@ -7,6 +7,7 @@ pub struct Scrollbar<L1> {
     orientation: Orientation,
 
     reference_points: Option<(f32, f32)>,
+    dragging: bool,
 
     on_changing: Option<Box<dyn Fn(&mut EventContext, f32)>>,
 
@@ -34,6 +35,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
             reference_points: None,
             on_changing: Some(Box::new(callback)),
             scroll_to_cursor: false,
+            dragging: false,
         }
         .build(cx, move |cx| {
             Element::new(cx)
@@ -122,32 +124,11 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                         self.reference_points = Some((pos, self.value.get(cx)));
                         cx.capture();
                         cx.set_active(true);
+                        self.dragging = true;
                     } else if self.scroll_to_cursor {
-                        let thumb_bounds = self.thumb_bounds(cx);
-                        let bounds = cx.bounds();
-                        let sx = bounds.w - thumb_bounds.w;
-                        let sy = bounds.h - thumb_bounds.h;
-                        match self.orientation {
-                            Orientation::Horizontal => {
-                                let px = cx.mouse().left.pos_down.0
-                                    - cx.bounds().x
-                                    - thumb_bounds.w / 2.0;
-                                let x = (px / sx).clamp(0.0, 1.0);
-                                if let Some(callback) = &self.on_changing {
-                                    (callback)(cx, x);
-                                }
-                            }
-
-                            Orientation::Vertical => {
-                                let py = cx.mouse().left.pos_down.1
-                                    - cx.bounds().y
-                                    - thumb_bounds.h / 2.0;
-                                let y = (py / sy).clamp(0.0, 1.0);
-                                if let Some(callback) = &self.on_changing {
-                                    (callback)(cx, y);
-                                }
-                            }
-                        }
+                        cx.capture();
+                        cx.set_active(true);
+                        self.dragging = true;
                     } else {
                         let (_, jump) = self.container_and_thumb_size(cx);
                         // let (tx, ty, tw, th) = self.thumb_bounds(cx);
@@ -183,13 +164,40 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                     cx.focus_with_visibility(false);
                     cx.release();
                     cx.set_active(false);
+                    self.dragging = false;
                 }
 
                 WindowEvent::MouseMove(_, _) => {
-                    if let Some((mouse_ref, value_ref)) = self.reference_points {
-                        let physical_delta = pos - mouse_ref;
-                        let changed = self.compute_new_value(cx, physical_delta, value_ref);
-                        self.change(cx, changed);
+                    if self.dragging {
+                        if let Some((mouse_ref, value_ref)) = self.reference_points {
+                            let physical_delta = pos - mouse_ref;
+                            let changed = self.compute_new_value(cx, physical_delta, value_ref);
+                            self.change(cx, changed);
+                        } else if self.scroll_to_cursor {
+                            let thumb_bounds = self.thumb_bounds(cx);
+                            let bounds = cx.bounds();
+                            let sx = bounds.w - thumb_bounds.w;
+                            let sy = bounds.h - thumb_bounds.h;
+                            match self.orientation {
+                                Orientation::Horizontal => {
+                                    let px =
+                                        cx.mouse.cursorx - cx.bounds().x - thumb_bounds.w / 2.0;
+                                    let x = (px / sx).clamp(0.0, 1.0);
+                                    if let Some(callback) = &self.on_changing {
+                                        (callback)(cx, x);
+                                    }
+                                }
+
+                                Orientation::Vertical => {
+                                    let py =
+                                        cx.mouse.cursory - cx.bounds().y - thumb_bounds.h / 2.0;
+                                    let y = (py / sy).clamp(0.0, 1.0);
+                                    if let Some(callback) = &self.on_changing {
+                                        (callback)(cx, y);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 

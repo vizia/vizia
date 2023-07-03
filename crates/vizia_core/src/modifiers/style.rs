@@ -1,4 +1,6 @@
-use vizia_style::{BorderRadius, BoxShadow, ColorStop, Gradient, Position, Rect, Scale, Translate};
+use vizia_style::{
+    BorderRadius, BoxShadow, ColorStop, Gradient, PointerEvents, Position, Rect, Scale, Translate,
+};
 
 use super::internal;
 use crate::prelude::*;
@@ -447,6 +449,17 @@ pub trait StyleModifiers: internal::Modifiable {
         CursorIcon,
         SystemFlags::empty()
     );
+
+    /// Sets whether the view can be become the target of pointer events.
+    fn pointer_events<U: Into<PointerEvents>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), entity, |cx, v| {
+            let value = v.into();
+            cx.style.pointer_events.insert(cx.current, value);
+        });
+
+        self
+    }
 
     /// Sets the transform of the view with a list of transform functions.
     fn transform<U: Into<Vec<Transform>>>(mut self, value: impl Res<U>) -> Self {

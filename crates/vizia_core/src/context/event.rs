@@ -1004,6 +1004,10 @@ impl<'a> EventContext<'a> {
         self.needs_redraw();
     }
 
+    pub fn set_pointer_events(&mut self, pointer_events: impl Into<PointerEvents>) {
+        self.style.pointer_events.insert(self.current, pointer_events.into());
+    }
+
     // GETTERS
     get_length_property!(
         /// Returns the border width of the current view in physical pixels.

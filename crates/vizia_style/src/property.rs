@@ -3,8 +3,8 @@ use crate::{
     BorderRadius, BorderWidth, BorderWidthValue, BoxShadow, ClipPath, Color, CursorIcon,
     CustomParseError, CustomProperty, Display, Filter, FontFamily, FontSize, FontStretch,
     FontStyle, FontWeight, LayoutType, LengthOrPercentage, Opacity, Outline, Overflow, Parse,
-    Position, PositionType, Rect, Scale, TextAlign, Transform, Transition, Translate, Units,
-    UnparsedProperty, Visibility,
+    PointerEvents, Position, PositionType, Rect, Scale, TextAlign, Transform, Transition,
+    Translate, Units, UnparsedProperty, Visibility,
 };
 use cssparser::Parser;
 
@@ -170,6 +170,7 @@ define_property! {
 
         // Cursor
         "cursor": Cursor(CursorIcon),
+        "pointer-events": PointerEvents(PointerEvents),
     }
 }
 
