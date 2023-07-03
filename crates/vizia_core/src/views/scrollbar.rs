@@ -60,6 +60,7 @@ impl<L1: Lens<Target = f32>> Scrollbar<L1> {
                     };
                 });
         })
+        .pointer_events(PointerEvents::Auto)
         .class(match orientation {
             Orientation::Horizontal => "horizontal",
             Orientation::Vertical => "vertical",
@@ -125,10 +126,16 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                         cx.capture();
                         cx.set_active(true);
                         self.dragging = true;
+                        cx.with_current(Entity::root(), |cx| {
+                            cx.set_pointer_events(false);
+                        });
                     } else if self.scroll_to_cursor {
                         cx.capture();
                         cx.set_active(true);
                         self.dragging = true;
+                        cx.with_current(Entity::root(), |cx| {
+                            cx.set_pointer_events(false);
+                        });
                     } else {
                         let (_, jump) = self.container_and_thumb_size(cx);
                         // let (tx, ty, tw, th) = self.thumb_bounds(cx);
@@ -165,6 +172,9 @@ impl<L1: 'static + Lens<Target = f32>> View for Scrollbar<L1> {
                     cx.release();
                     cx.set_active(false);
                     self.dragging = false;
+                    cx.with_current(Entity::root(), |cx| {
+                        cx.set_pointer_events(true);
+                    });
                 }
 
                 WindowEvent::MouseMove(_, _) => {
