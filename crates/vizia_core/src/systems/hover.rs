@@ -6,7 +6,7 @@ use crate::{
 };
 use femtovg::Transform2D;
 use vizia_id::GenerationalId;
-use vizia_storage::LayoutChildIterator;
+use vizia_storage::{LayoutChildIterator, LayoutParentIterator};
 
 // Determines the hovered entity based on the mouse cursor position.
 pub(crate) fn hover_system(cx: &mut Context) {
@@ -34,6 +34,19 @@ pub(crate) fn hover_system(cx: &mut Context) {
         });
     }
 
+    // Set hover state for hovered view and ancestors
+    let parent_iter = LayoutParentIterator::new(&cx.tree, Some(hovered));
+    for ancestor in parent_iter {
+        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(ancestor) {
+            if pseudo_classes.contains(PseudoClassFlags::OVER) {
+                if !pseudo_classes.contains(PseudoClassFlags::HOVER) {
+                    pseudo_classes.set(PseudoClassFlags::HOVER, true);
+                    cx.style.needs_restyle();
+                }
+            }
+        }
+    }
+
     if hovered != cx.hovered {
         // Useful for debugging
         #[cfg(debug_assertions)]
@@ -52,16 +65,6 @@ pub(crate) fn hover_system(cx: &mut Context) {
         // TODO: Decide if not changing the cursor when the view is disabled is the correct thing to do
         if !cx.cursor_icon_locked && !cx.style.disabled.get(hovered).cloned().unwrap_or_default() {
             cx.emit(WindowEvent::SetCursor(cursor));
-        }
-
-        // Set current hovered pseudoclass to true
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(hovered) {
-            pseudo_classes.set(PseudoClassFlags::HOVER, true);
-        }
-
-        // Set previous hovered pseudoclass to false
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.hovered) {
-            pseudo_classes.set(PseudoClassFlags::HOVER, false);
         }
 
         // Send mouse enter/leave events directly to entity.
@@ -87,6 +90,7 @@ fn hover_entity(
     parent_transform: Transform2D,
     clip_bounds: &BoundingBox,
 ) {
+    let current = cx.current;
     // Skip if non-hoverable (will skip any descendants)
     let hoverable = cx
         .style
@@ -137,6 +141,10 @@ fn hover_entity(
 
     let b = bounds.intersection(&clipping);
 
+    if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
+        pseudo_classes.set(PseudoClassFlags::HOVER, false);
+    }
+
     if pointer_events {
         if tx >= b.left() && tx < b.right() && ty >= b.top() && ty < b.bottom() {
             *hovered = cx.current;
@@ -166,6 +174,8 @@ fn hover_entity(
             }
         }
     }
+
+    let parent_hovered = *hovered;
 
     let child_iter = LayoutChildIterator::new(cx.tree, cx.current);
     for child in child_iter {
