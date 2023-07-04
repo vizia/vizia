@@ -4,6 +4,7 @@ use vizia::prelude::*;
 #[derive(Lens)]
 pub struct AppState {
     pub count: u32,
+    pub timer: Timer,
 }
 
 #[derive(Debug)]
@@ -13,10 +14,13 @@ enum AppEvent {
 }
 
 impl Model for AppState {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|app_event, _| match app_event {
             AppEvent::Increment => {
                 self.count += 1;
+                if self.count == 100 {
+                    cx.stop_timer(self.timer, Some(Duration::from_secs(2)));
+                }
             }
 
             AppEvent::Reset => {
@@ -28,8 +32,6 @@ impl Model for AppState {
 
 fn main() {
     Application::new(|cx| {
-        AppState { count: 0 }.build(cx);
-
         // Emit event every second
         let timer = cx.add_timer(Duration::from_millis(10), None, |cx, action| match action {
             TimerAction::Start => {
@@ -45,6 +47,8 @@ fn main() {
                 cx.emit(AppEvent::Increment);
             }
         });
+
+        AppState { count: 0, timer }.build(cx);
 
         VStack::new(cx, |cx| {
             Label::new(cx, AppState::count).font_size(100.0);
