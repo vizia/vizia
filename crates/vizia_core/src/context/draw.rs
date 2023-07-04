@@ -1185,7 +1185,7 @@ impl<'a> DrawContext<'a> {
                                 bounds.y + start_y,
                                 bounds.x + end_x,
                                 bounds.y + end_y,
-                                stops.into_iter(),
+                                stops,
                             );
 
                             canvas.fill_path(path, &paint);
@@ -1228,7 +1228,7 @@ impl<'a> DrawContext<'a> {
                                 bounds.center().1,
                                 0.0,
                                 bounds.w.max(bounds.h),
-                                stops.into_iter(),
+                                stops,
                             );
 
                             canvas.fill_path(path, &paint);

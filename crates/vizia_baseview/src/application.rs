@@ -4,7 +4,6 @@ use raw_window_handle::HasRawWindowHandle;
 
 use crate::proxy::queue_get;
 use vizia_core::backend::*;
-use vizia_core::layout::BoundingBox;
 use vizia_core::prelude::*;
 use vizia_id::GenerationalId;
 
@@ -235,9 +234,9 @@ impl ApplicationRunner {
             //       to a function
             cx.set_scale_factor(self.window_scale_factor * self.current_user_scale_factor);
             let new_physical_width =
-                self.current_window_size.width as f32 * cx.style().scale_factor() as f32;
+                self.current_window_size.width as f32 * cx.style().scale_factor();
             let new_physical_height =
-                self.current_window_size.height as f32 * cx.style().scale_factor() as f32;
+                self.current_window_size.height as f32 * cx.style().scale_factor();
 
             cx.set_window_size(new_physical_width, new_physical_height);
 
@@ -409,9 +408,9 @@ impl ApplicationRunner {
 
                     cx.set_window_size(physical_size.0 as f32, physical_size.1 as f32);
 
-                    let mut bounding_box = BoundingBox::default();
-                    bounding_box.w = physical_size.0 as f32;
-                    bounding_box.h = physical_size.1 as f32;
+                    // let mut bounding_box = BoundingBox::default();
+                    // bounding_box.w = physical_size.0 as f32;
+                    // bounding_box.h = physical_size.1 as f32;
 
                     cx.needs_refresh();
                 }
@@ -439,12 +438,11 @@ pub fn requests_exit(event: &baseview::Event) -> bool {
         baseview::Event::Window(baseview::WindowEvent::WillClose) => true,
         #[cfg(target_os = "macos")]
         baseview::Event::Keyboard(event) => {
-            if event.code == vizia_input::Code::KeyQ {
-                if event.modifiers == vizia_input::KeyboardModifiers::META {
-                    if event.state == vizia_input::KeyState::Down {
-                        return true;
-                    }
-                }
+            if event.code == vizia_input::Code::KeyQ
+                && event.modifiers == vizia_input::KeyboardModifiers::META
+                && event.state == vizia_input::KeyState::Down
+            {
+                return true;
             }
 
             false

@@ -46,7 +46,7 @@ where
             on_select: None,
             list_lens,
             selected,
-            p: PhantomData::default(),
+            p: PhantomData,
             is_open: false,
             hovered: selected.get(cx),
             placeholder: String::from("One"),

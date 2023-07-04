@@ -22,7 +22,7 @@ impl<L: 'static + Lens<Target = Vec<T>>, T: Clone> List<L, T> {
     {
         //let item_template = Rc::new(item);
         List {
-            p: PhantomData::default(),
+            p: PhantomData,
             increment_callback: None,
             decrement_callback: None,
             clear_callback: None,
