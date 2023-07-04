@@ -611,6 +611,7 @@ impl Context {
             duration,
             start_time: Instant::now(),
             callback: Rc::new(callback),
+            ticking: false,
         });
 
         id
@@ -629,10 +630,6 @@ impl Context {
         timer_state.start_time = now + delay.unwrap_or(Duration::ZERO);
         timer_state.time = now + delay.unwrap_or(Duration::ZERO);
         timer_state.entity = self.current;
-        (timer_state.callback)(
-            &mut EventContext::new_with_current(self, timer_state.entity),
-            TimerAction::Start,
-        );
         self.running_timers.push(timer_state);
     }
 
@@ -701,6 +698,13 @@ impl Context {
                 let mut timer_state = self.running_timers.pop().unwrap();
 
                 if timer_state.end_time().unwrap_or_else(|| now + Duration::from_secs(1)) >= now {
+                    if !timer_state.ticking {
+                        (timer_state.callback)(
+                            &mut EventContext::new_with_current(self, timer_state.entity),
+                            TimerAction::Start,
+                        );
+                        timer_state.ticking = true;
+                    }
                     (timer_state.callback)(
                         &mut EventContext::new_with_current(self, timer_state.entity),
                         TimerAction::Tick(now - timer_state.time),

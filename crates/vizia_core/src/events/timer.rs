@@ -28,6 +28,7 @@ pub struct TimerState {
     pub(crate) duration: Option<instant::Duration>,
     pub(crate) start_time: instant::Instant,
     pub(crate) callback: Rc<dyn Fn(&mut EventContext, TimerAction)>,
+    pub(crate) ticking: bool,
 }
 
 impl TimerState {

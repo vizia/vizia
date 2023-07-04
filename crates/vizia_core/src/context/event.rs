@@ -1078,6 +1078,7 @@ impl<'a> EventContext<'a> {
             duration,
             start_time: Instant::now(),
             callback: Rc::new(callback),
+            ticking: false,
         });
 
         id
@@ -1096,7 +1097,6 @@ impl<'a> EventContext<'a> {
         timer_state.start_time = now + delay.unwrap_or(Duration::ZERO);
         timer_state.time = now + delay.unwrap_or(Duration::ZERO);
         timer_state.entity = self.current;
-        (timer_state.callback)(self, TimerAction::Start);
 
         self.running_timers.push(timer_state);
     }
