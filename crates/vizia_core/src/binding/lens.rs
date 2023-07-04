@@ -141,7 +141,7 @@ impl<G: Copy, I: Clone, O: Clone> std::marker::Copy for Map<G, I, O> {}
 
 impl<G: Clone, I, O> Clone for Map<G, I, O> {
     fn clone(&self) -> Self {
-        Map { get: self.get.clone(), i: PhantomData::default(), o: PhantomData::default() }
+        Map { get: self.get.clone(), i: PhantomData, o: PhantomData }
     }
 }
 
@@ -150,7 +150,7 @@ impl<G, I, O> Map<G, I, O> {
     where
         G: Fn(&I) -> O,
     {
-        Self { get, i: PhantomData::default(), o: PhantomData::default() }
+        Self { get, i: PhantomData, o: PhantomData }
     }
 }
 
@@ -218,7 +218,7 @@ pub struct Index<A, T> {
 
 impl<A, T> Index<A, T> {
     pub fn new(index: usize) -> Self {
-        Self { index, pa: PhantomData::default(), pt: PhantomData::default() }
+        Self { index, pa: PhantomData, pt: PhantomData }
     }
 
     pub fn idx(&self) -> usize {
@@ -228,7 +228,7 @@ impl<A, T> Index<A, T> {
 
 impl<A, T> Clone for Index<A, T> {
     fn clone(&self) -> Self {
-        Self { index: self.index, pa: PhantomData::default(), pt: PhantomData::default() }
+        *self
     }
 }
 
@@ -259,7 +259,7 @@ pub struct StaticLens<T: 'static> {
 
 impl<T> Clone for StaticLens<T> {
     fn clone(&self) -> Self {
-        StaticLens { data: self.data }
+        *self
     }
 }
 
@@ -295,13 +295,13 @@ pub struct UnwrapLens<T> {
 
 impl<T> Clone for UnwrapLens<T> {
     fn clone(&self) -> Self {
-        UnwrapLens::new()
+        *self
     }
 }
 
 impl<T> UnwrapLens<T> {
     pub fn new() -> Self {
-        Self { t: PhantomData::default() }
+        Self { t: PhantomData }
     }
 }
 
@@ -330,7 +330,7 @@ impl<T, U> IntoLens<T, U> {
 
 impl<T, U> Clone for IntoLens<T, U> {
     fn clone(&self) -> Self {
-        Self::new()
+        *self
     }
 }
 

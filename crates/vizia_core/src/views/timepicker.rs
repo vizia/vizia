@@ -103,7 +103,7 @@ where
     T: Timelike + Data,
 {
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
-        Self { lens: lens.clone(), p: PhantomData::default(), on_change: None }
+        Self { lens: lens.clone(), p: PhantomData, on_change: None }
             .build(cx, move |cx| {
                 Spinbox::custom(
                     cx,
@@ -376,7 +376,7 @@ where
     pub fn new(cx: &mut Context, lens: L) -> Handle<Self> {
         Self {
             lens: lens.clone(),
-            p: PhantomData::default(),
+            p: PhantomData,
             page: AnalogTimepickerPage::Hours,
             on_change: None,
             show_controls: true,

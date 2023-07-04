@@ -1,3 +1,4 @@
+#![allow(clippy::type_complexity)]
 mod application;
 mod parent_window;
 pub(crate) mod proxy;

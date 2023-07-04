@@ -38,11 +38,11 @@ pub(crate) fn hover_system(cx: &mut Context) {
     let parent_iter = LayoutParentIterator::new(&cx.tree, Some(hovered));
     for ancestor in parent_iter {
         if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(ancestor) {
-            if pseudo_classes.contains(PseudoClassFlags::OVER) {
-                if !pseudo_classes.contains(PseudoClassFlags::HOVER) {
-                    pseudo_classes.set(PseudoClassFlags::HOVER, true);
-                    cx.style.needs_restyle();
-                }
+            if pseudo_classes.contains(PseudoClassFlags::OVER)
+                && !pseudo_classes.contains(PseudoClassFlags::HOVER)
+            {
+                pseudo_classes.set(PseudoClassFlags::HOVER, true);
+                cx.style.needs_restyle();
             }
         }
     }
@@ -90,7 +90,6 @@ fn hover_entity(
     parent_transform: Transform2D,
     clip_bounds: &BoundingBox,
 ) {
-    let current = cx.current;
     // Skip if non-hoverable (will skip any descendants)
     let hoverable = cx
         .style
@@ -174,8 +173,6 @@ fn hover_entity(
             }
         }
     }
-
-    let parent_hovered = *hovered;
 
     let child_iter = LayoutChildIterator::new(cx.tree, cx.current);
     for child in child_iter {

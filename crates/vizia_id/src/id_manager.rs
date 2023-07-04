@@ -35,7 +35,7 @@ where
             generation: Vec::new(),
             free_list: VecDeque::with_capacity(MINIMUM_FREE_INDICES),
 
-            p: PhantomData::default(),
+            p: PhantomData,
         }
     }
 
